@@ -176,12 +176,34 @@ fi
 
 echo -e "\${GREEN}✓ kltun installed successfully!\${NC}"
 echo ""
+
+# Start daemon if not running
+echo -e "\${BLUE}Starting kltun daemon...\${NC}"
+if [ "$PLATFORM" = "windows" ]; then
+    # Windows: start daemon in background
+    if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
+        start /B $KLTUN_CMD daemon run
+        sleep 2
+    fi
+else
+    # Unix: use sudo if needed, start daemon in background
+    if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
+        if [ -n "$SUDO" ]; then
+            $SUDO $KLTUN_CMD daemon run &
+        else
+            $KLTUN_CMD daemon run &
+        fi
+        sleep 2
+    fi
+fi
+
 echo -e "\${BLUE}Connecting to VPN...\${NC}"
 
 # Connect to VPN
 if ! $KLTUN_CMD connect --token "$TOKEN" --server "$SERVER"; then
     echo -e "\${RED}Error: Failed to connect to VPN\${NC}"
     echo -e "\${YELLOW}You can retry manually with:\${NC}"
+    echo "  $KLTUN_CMD daemon run  # Start daemon first"
     echo "  $KLTUN_CMD connect --token $TOKEN --server $SERVER"
     exit 1
 fi
