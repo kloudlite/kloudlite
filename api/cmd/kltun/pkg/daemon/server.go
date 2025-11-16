@@ -388,6 +388,13 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 	}
 
 	s.connMutex.Lock()
+	// Disconnect all existing connections before starting new one
+	for existingSessionID, existingConn := range s.connections {
+		fmt.Printf("Disconnecting existing connection: %s\n", existingSessionID)
+		existingConn.CancelFunc()
+		delete(s.connections, existingSessionID)
+	}
+	// Add the new connection
 	s.connections[sessionID] = conn
 	s.connMutex.Unlock()
 
