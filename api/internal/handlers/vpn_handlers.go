@@ -151,7 +151,7 @@ func (h *VPNHandlers) GetWireGuardConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"wg_config": wgConfig})
+	c.JSON(http.StatusOK, wgConfig)
 }
 
 // GetCACert handles GET /api/vpn/ca-cert

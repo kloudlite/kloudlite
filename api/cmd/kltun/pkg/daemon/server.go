@@ -501,12 +501,12 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	}
 	defer wgDevice.Close()
 
-	if err := wgDevice.SetConfig(wgConfig); err != nil {
+	if err := wgDevice.SetConfig(wgConfig.Config); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
 		return
 	}
 
-	fmt.Printf("[Session %s] ✓ WireGuard device started\n", sessionID)
+	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, wgConfig.AssignedIP)
 
 	// 4. Start hosts polling goroutine (polls every 10 seconds)
 	fmt.Printf("[Session %s] Starting hosts polling (every 10 seconds)...\n", sessionID)

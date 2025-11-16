@@ -71,13 +71,20 @@ func (c *Client) Connect() (*ConnectResponse, error) {
 	return &connectResp, nil
 }
 
+// WireGuardConfigResponse represents WireGuard configuration with metadata
+type WireGuardConfigResponse struct {
+	Config     string `json:"config"`      // IPC format configuration
+	AssignedIP string `json:"assigned_ip"` // Device IP address (e.g., "10.17.0.2")
+	PublicKey  string `json:"public_key"`  // Device public key
+}
+
 // GetWireGuardConfig calls the VPN WireGuard config API endpoint
-func (c *Client) GetWireGuardConfig(deviceID string) (string, error) {
+func (c *Client) GetWireGuardConfig(deviceID string) (*WireGuardConfigResponse, error) {
 	url := fmt.Sprintf("%s/api/vpn/wireguard-config?device_id=%s", c.BaseURL, deviceID)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
@@ -85,23 +92,21 @@ func (c *Client) GetWireGuardConfig(deviceID string) (string, error) {
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to make request: %w", err)
+		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
-	var result struct {
-		WGConfig string `json:"wg_config"`
-	}
+	var result WireGuardConfigResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return result.WGConfig, nil
+	return &result, nil
 }
 
 // GetCACert calls the VPN CA certificate API endpoint
