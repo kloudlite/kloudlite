@@ -30,6 +30,7 @@ func NewVPNHandlers(vpnService services.VPNService, logger *zap.Logger, jwtSecre
 
 // GetVPNConnect handles GET /api/vpn/connect
 // Fetches VPN configuration via VPN service
+// Expects backend JWT token (forwarded from Next.js after validating permanent VPN token)
 func (h *VPNHandlers) GetVPNConnect(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -51,8 +52,8 @@ func (h *VPNHandlers) GetVPNConnect(c *gin.Context) {
 
 	tokenString := authHeader[len(bearerPrefix):]
 
-	// Parse and validate the JWT token
-	token, err := jwt.ParseWithClaims(tokenString, &ConnectionTokenClaims{}, func(token *jwt.Token) (any, error) {
+	// Parse and validate the backend JWT token (standard auth token)
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (any, error) {
 		// Validate signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -65,29 +66,34 @@ func (h *VPNHandlers) GetVPNConnect(c *gin.Context) {
 		return
 	}
 
-	claims, ok := token.Claims.(*ConnectionTokenClaims)
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
 	if !ok || !token.Valid {
 		h.logger.Warn("VPN connect: Invalid token claims")
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid token claims"})
 		return
 	}
 
-	h.logger.Info("VPN connect: Token validated", zap.String("user", claims.Email), zap.String("tokenId", claims.TokenID))
+	// Extract email from subject
+	userEmail := claims.Subject
+	if userEmail == "" {
+		h.logger.Warn("VPN connect: Missing user email in token")
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid token - missing user email"})
+		return
+	}
 
-	// Use VPN service to get configuration
-	vpnConfig, err := h.vpnService.GetVPNConfig(ctx, claims.TokenID, claims.Email)
+	h.logger.Info("VPN connect: Token validated", zap.String("user", userEmail))
+
+	// Use VPN service to get configuration (no tokenID needed anymore)
+	vpnConfig, err := h.vpnService.GetVPNConfig(ctx, "", userEmail)
 	if err != nil {
-		h.logger.Error("VPN connect: Failed to get VPN config", zap.Error(err), zap.String("user", claims.Email))
+		h.logger.Error("VPN connect: Failed to get VPN config", zap.Error(err), zap.String("user", userEmail))
 
 		// Determine appropriate HTTP status code based on error message
 		statusCode := http.StatusInternalServerError
 		errorMessage := "Failed to retrieve VPN configuration"
 
 		errMsg := err.Error()
-		if strings.Contains(errMsg, "revoked") {
-			statusCode = http.StatusUnauthorized
-			errorMessage = "Token has been revoked"
-		} else if strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "no work machine") {
+		if strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "no work machine") {
 			statusCode = http.StatusNotFound
 			errorMessage = errMsg
 		} else if strings.Contains(errMsg, "not configured") {
@@ -101,7 +107,7 @@ func (h *VPNHandlers) GetVPNConnect(c *gin.Context) {
 
 	// Build response
 	h.logger.Info("VPN connect: Successfully returned configuration",
-		zap.String("user", claims.Email),
+		zap.String("user", userEmail),
 		zap.Int("hostCount", len(vpnConfig.Hosts)))
 
 	c.JSON(http.StatusOK, vpnConfig)

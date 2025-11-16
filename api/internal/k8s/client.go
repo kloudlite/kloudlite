@@ -9,7 +9,6 @@ import (
 	"time"
 
 	certsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/certs/v1"
-	connectiontokenv1 "github.com/kloudlite/kloudlite/api/internal/controllers/connectiontoken/v1"
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
@@ -97,9 +96,6 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 	if err := workspacesv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add workspaces scheme: %w", err)
-	}
-	if err := connectiontokenv1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add connectiontoken scheme: %w", err)
 	}
 	if err := domainrequestsv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add domainrequests scheme: %w", err)

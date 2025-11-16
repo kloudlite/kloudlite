@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { jwtVerify } from 'jose'
 
 /**
  * VPN Connect API Route
- * Proxies VPN connection requests to the backend API server
- * Used by kltun CLI for establishing VPN connections
+ * Validates permanent VPN token and proxies requests to backend API server
+ * Used by kltun CLI for establishing VPN connections with permanent tokens
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,14 +18,51 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Extract token from Bearer header
+    const token = authHeader.replace('Bearer ', '')
+
+    // Get JWT secret
+    const jwtSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+    if (!jwtSecret) {
+      console.error('AUTH_SECRET or NEXTAUTH_SECRET environment variable not set')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+
+    // Verify permanent VPN token
+    let claims: any
+    try {
+      const secret = new TextEncoder().encode(jwtSecret)
+      const { payload } = await jwtVerify(token, secret, {
+        issuer: 'kloudlite-vpn',
+      })
+      claims = payload
+    } catch (error) {
+      console.error('Token verification failed:', error)
+      return NextResponse.json(
+        { error: 'Invalid or expired VPN token' },
+        { status: 401 }
+      )
+    }
+
+    // Validate token type
+    if (claims.type !== 'permanent') {
+      return NextResponse.json({ error: 'Invalid token type' }, { status: 401 })
+    }
+
+    // Extract backend token from claims
+    const backendToken = claims.backendToken
+    if (!backendToken) {
+      return NextResponse.json({ error: 'Invalid token - missing backend token' }, { status: 401 })
+    }
+
     // Get the backend API URL from environment
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
-    // Forward the request to the backend Go API
+    // Forward the request to the backend Go API using the backend token
     const backendResponse = await fetch(`${backendUrl}/api/v1/vpn/connect`, {
       method: 'GET',
       headers: {
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${backendToken}`,
         'Content-Type': 'application/json',
       },
     })
