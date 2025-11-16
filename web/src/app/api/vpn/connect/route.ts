@@ -3,8 +3,8 @@ import { jwtVerify } from 'jose'
 
 /**
  * VPN Connect API Route
- * Validates permanent VPN token and proxies requests to backend API server
- * Used by kltun CLI for establishing VPN connections with permanent tokens
+ * Validates VPN tokens (both temporary and permanent) and proxies requests to backend API server
+ * Used by kltun CLI for establishing VPN connections
  */
 export async function GET(request: NextRequest) {
   try {
@@ -28,14 +28,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
-    // Verify permanent VPN token
-    let claims: { type?: string; backendToken?: string }
+    // Verify VPN token (both temporary and permanent tokens)
+    // Temporary tokens: { e: email, b: backendToken, t: 'temp' } - no issuer
+    // Permanent tokens: { email, backendToken, type: 'permanent' } - has issuer 'kloudlite-vpn'
+    let claims: {
+      type?: string
+      backendToken?: string
+      t?: string
+      b?: string
+      e?: string
+      email?: string
+    }
+
     try {
       const secret = new TextEncoder().encode(jwtSecret)
-      const { payload } = await jwtVerify(token, secret, {
-        issuer: 'kloudlite-vpn',
-      })
-      claims = payload as { type?: string; backendToken?: string }
+      // Try without issuer check first (for temporary tokens)
+      const { payload } = await jwtVerify(token, secret)
+      claims = payload as typeof claims
     } catch (error) {
       console.error('Token verification failed:', error)
       return NextResponse.json(
@@ -44,13 +53,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Validate token type
-    if (claims.type !== 'permanent') {
-      return NextResponse.json({ error: 'Invalid token type' }, { status: 401 })
-    }
-
-    // Extract backend token from claims
-    const backendToken = claims.backendToken
+    // Extract backend token - support both temporary (b) and permanent (backendToken) token formats
+    const backendToken = claims.backendToken || claims.b
     if (!backendToken) {
       return NextResponse.json({ error: 'Invalid token - missing backend token' }, { status: 401 })
     }
