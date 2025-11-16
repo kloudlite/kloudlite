@@ -40,8 +40,15 @@ spec:
               value: "3000"
             - name: APP_MODE
               value: "dashboard"
+            - name: NEXT_PUBLIC_APP_MODE
+              value: "dashboard"
             - name: AUTH_TRUST_HOST
               value: "true"
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: frontend-secrets
+                  key: nextauth-secret
             - name: NEXTAUTH_SECRET
               valueFrom:
                 secretKeyRef:

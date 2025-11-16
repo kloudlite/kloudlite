@@ -50,11 +50,16 @@ export async function POST(_request: NextRequest) {
 
     console.log('[VPN Generate] Token generated, expires at:', new Date(expiresAt).toISOString())
 
+    // Get server URL from request headers (for multi-tenant support)
+    const protocol = _request.headers.get('x-forwarded-proto') || 'https'
+    const host = _request.headers.get('host') || _request.nextUrl.host
+    const serverUrl = `${protocol}://${host}`
+
     return NextResponse.json({
       temporary_token: temporaryToken,
       expires_at: new Date(expiresAt).toISOString(),
       expires_in: expiresIn,
-      server_url: process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000',
+      server_url: serverUrl,
     })
   } catch (error) {
     console.error('Generate temporary token error:', error)
