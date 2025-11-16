@@ -179,12 +179,24 @@ echo -e "\${GREEN}✓ kltun installed successfully!\${NC}"
 echo ""
 echo -e "\${BLUE}Connecting to VPN...\${NC}"
 
-# Connect to VPN
-if ! $KLTUN_CMD connect --token "$TOKEN" --server "$SERVER"; then
-    echo -e "\${RED}Error: Failed to connect to VPN\${NC}"
-    echo -e "\${YELLOW}You can retry manually with:\${NC}"
-    echo "  $KLTUN_CMD connect --token $TOKEN --server $SERVER"
-    exit 1
+# Connect to VPN with sudo (daemon needs elevated privileges)
+if [ "$PLATFORM" = "windows" ]; then
+    # Windows doesn't use sudo
+    if ! $KLTUN_CMD connect --token "$TOKEN" --server "$SERVER"; then
+        echo -e "\${RED}Error: Failed to connect to VPN\${NC}"
+        echo -e "\${YELLOW}You can retry manually with:\${NC}"
+        echo "  $KLTUN_CMD connect --token $TOKEN --server $SERVER"
+        exit 1
+    fi
+else
+    # Unix-like systems need sudo for daemon
+    echo -e "\${YELLOW}Note: sudo is required to run the VPN daemon\${NC}"
+    if ! sudo $KLTUN_CMD connect --token "$TOKEN" --server "$SERVER"; then
+        echo -e "\${RED}Error: Failed to connect to VPN\${NC}"
+        echo -e "\${YELLOW}You can retry manually with:\${NC}"
+        echo "  sudo $KLTUN_CMD connect --token $TOKEN --server $SERVER"
+        exit 1
+    fi
 fi
 
 echo ""
