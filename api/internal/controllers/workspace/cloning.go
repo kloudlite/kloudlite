@@ -86,16 +86,9 @@ func (r *WorkspaceReconciler) handleCloningPending(
 	logger.Info("Phase: Pending - Validating source workspace")
 
 	// Fetch source workspace
-	sourceWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom}, sourceWorkspace); err != nil {
-		logger.Error("Failed to get source workspace", zap.Error(err))
-		workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
-		workspace.Status.CloningStatus.ErrorMessage = fmt.Sprintf("Source workspace not found: %v", err)
-		workspace.Status.CloningStatus.CompletionTime = fn.Ptr(metav1.Now())
-		if err := r.Status().Update(ctx, workspace); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
+	sourceWorkspace, shouldReturn, result, err := r.getSourceWorkspaceOrFail(ctx, workspace, "Source workspace not found", logger)
+	if shouldReturn {
+		return result, err
 	}
 
 	// Validate source workspace state
@@ -137,15 +130,9 @@ func (r *WorkspaceReconciler) handleCloningSuspending(
 	logger.Info("Phase: Suspending - Suspending source workspace pod")
 
 	// Fetch source workspace
-	sourceWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom}, sourceWorkspace); err != nil {
-		logger.Error("Failed to get source workspace", zap.Error(err))
-		workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
-		workspace.Status.CloningStatus.ErrorMessage = fmt.Sprintf("Failed to get source workspace: %v", err)
-		if err := r.Status().Update(ctx, workspace); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
+	sourceWorkspace, shouldReturn, result, err := r.getSourceWorkspaceOrFail(ctx, workspace, "", logger)
+	if shouldReturn {
+		return result, err
 	}
 
 	// Set source cloning status
@@ -205,15 +192,9 @@ func (r *WorkspaceReconciler) handleCloningCreatingCopyJob(
 	logger.Info("Phase: CreatingCopyJob - Creating sender and receiver jobs")
 
 	// Fetch source workspace
-	sourceWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom}, sourceWorkspace); err != nil {
-		logger.Error("Failed to get source workspace", zap.Error(err))
-		workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
-		workspace.Status.CloningStatus.ErrorMessage = fmt.Sprintf("Failed to get source workspace: %v", err)
-		if err := r.Status().Update(ctx, workspace); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
+	sourceWorkspace, shouldReturn, result, err := r.getSourceWorkspaceOrFail(ctx, workspace, "", logger)
+	if shouldReturn {
+		return result, err
 	}
 
 	// Initialize directory copier
@@ -640,4 +621,34 @@ func (r *WorkspaceReconciler) suspendWorkspacePod(
 	}
 
 	return nil
+}
+
+// getSourceWorkspaceOrFail fetches the source workspace and handles errors by failing the cloning phase
+// Returns (sourceWorkspace, shouldReturn, result, error)
+// If shouldReturn is true, the caller should immediately return with the provided result and error
+func (r *WorkspaceReconciler) getSourceWorkspaceOrFail(
+	ctx context.Context,
+	workspace *workspacev1.Workspace,
+	errorMessage string,
+	logger *zap.Logger,
+) (*workspacev1.Workspace, bool, reconcile.Result, error) {
+	sourceWorkspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom}, sourceWorkspace); err != nil {
+		logger.Error("Failed to get source workspace", zap.Error(err))
+		workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
+		if errorMessage == "" {
+			errorMessage = fmt.Sprintf("Failed to get source workspace: %v", err)
+		} else {
+			errorMessage = fmt.Sprintf("%s: %v", errorMessage, err)
+		}
+		workspace.Status.CloningStatus.ErrorMessage = errorMessage
+		if workspace.Status.CloningStatus.CompletionTime == nil {
+			workspace.Status.CloningStatus.CompletionTime = fn.Ptr(metav1.Now())
+		}
+		if err := r.Status().Update(ctx, workspace); err != nil {
+			return nil, true, reconcile.Result{}, err
+		}
+		return nil, true, reconcile.Result{}, nil
+	}
+	return sourceWorkspace, false, reconcile.Result{}, nil
 }
