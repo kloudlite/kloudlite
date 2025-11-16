@@ -92,8 +92,8 @@ func (c *WorkspaceDirectoryCopier) createSenderJob(
 					RestartPolicy: corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
-							Name:  "sender",
-							Image: copierImage,
+							Name:    "sender",
+							Image:   copierImage,
 							Command: []string{"sh", "-c"},
 							Args: []string{
 								fmt.Sprintf(`
@@ -206,9 +206,9 @@ func (c *WorkspaceDirectoryCopier) createReceiverJob(
 			Name:      jobName,
 			Namespace: namespace,
 			Labels: map[string]string{
-				"kloudlite.io/job-type":     "workspace-clone-receiver",
-				"kloudlite.io/workspace":    workspace.Name,
-				"kloudlite.io/workmachine":  workspace.Spec.WorkmachineName,
+				"kloudlite.io/job-type":    "workspace-clone-receiver",
+				"kloudlite.io/workspace":   workspace.Name,
+				"kloudlite.io/workmachine": workspace.Spec.WorkmachineName,
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -217,9 +217,9 @@ func (c *WorkspaceDirectoryCopier) createReceiverJob(
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"kloudlite.io/job-type":     "workspace-clone-receiver",
-						"kloudlite.io/workspace":    workspace.Name,
-						"kloudlite.io/workmachine":  workspace.Spec.WorkmachineName,
+						"kloudlite.io/job-type":    "workspace-clone-receiver",
+						"kloudlite.io/workspace":   workspace.Name,
+						"kloudlite.io/workmachine": workspace.Spec.WorkmachineName,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -228,8 +228,8 @@ func (c *WorkspaceDirectoryCopier) createReceiverJob(
 					RestartPolicy: corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
-							Name:  "receiver",
-							Image: copierImage,
+							Name:    "receiver",
+							Image:   copierImage,
 							Command: []string{"sh", "-c"},
 							Args: []string{
 								fmt.Sprintf(`
