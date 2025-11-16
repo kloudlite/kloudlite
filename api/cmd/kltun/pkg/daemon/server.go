@@ -492,6 +492,9 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID string, vpnConf
 	// 2. Start WireGuard device
 	fmt.Printf("[Session %s] Starting WireGuard device...\n", sessionID)
 
+	// Debug: Print WireGuard config
+	fmt.Printf("[Session %s] WireGuard Configuration:\n%s\n", sessionID, vpnConfig.WGConfig)
+
 	// Write WireGuard config to temp file
 	wgConfigFile := fmt.Sprintf("/tmp/kltun-wg-%s.conf", sessionID)
 	if err := os.WriteFile(wgConfigFile, []byte(vpnConfig.WGConfig), 0600); err != nil {
