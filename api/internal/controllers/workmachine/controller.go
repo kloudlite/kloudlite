@@ -2,6 +2,7 @@ package workmachine
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -232,14 +233,23 @@ AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
 `, peer1Priv, serverPub)
 
-		// IPC format (for WireGuard-go)
+		// IPC format (for WireGuard-go - requires hex-encoded keys)
+		peer1PrivHex, err := keyToHex(peer1Priv)
+		if err != nil {
+			return fmt.Errorf("failed to convert peer1 private key to hex: %w", err)
+		}
+		serverPubHex, err := keyToHex(serverPub)
+		if err != nil {
+			return fmt.Errorf("failed to convert server public key to hex: %w", err)
+		}
+
 		secret.StringData["peer1.ipc"] = fmt.Sprintf(`private_key=%s
 listen_port=51820
 public_key=%s
 allowed_ip=10.17.0.0/24
 allowed_ip=10.43.0.0/16
 endpoint=127.0.0.1:51821
-`, peer1Priv, serverPub)
+`, peer1PrivHex, serverPubHex)
 
 		}
 
@@ -354,6 +364,15 @@ func generateWgKeys() (privateKey, publicKey string, err error) {
 	}
 
 	return key.String(), key.PublicKey().String(), nil
+}
+
+// keyToHex converts a WireGuard base64 key to lowercase hex format for UAPI
+func keyToHex(base64Key string) (string, error) {
+	key, err := wgtypes.ParseKey(base64Key)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(key[:]), nil
 }
 
 func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
