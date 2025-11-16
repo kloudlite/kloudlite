@@ -274,11 +274,14 @@ AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
 `, obj.Status.AssignedIP)
 
-		secret.StringData = map[string]string{
-			"private-key": privateKeyHex,
-			"peer.ipc":    ipcConfig,
-			"peer.conf":   iniConfig,
+		// Store keys directly in Data (not StringData) to avoid double base64 encoding
+		// Kubernetes automatically base64-encodes StringData, but we need raw hex
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
 		}
+		secret.Data["private-key"] = []byte(privateKeyHex)
+		secret.Data["peer.ipc"] = []byte(ipcConfig)
+		secret.Data["peer.conf"] = []byte(iniConfig)
 
 		return nil
 	}); err != nil {
