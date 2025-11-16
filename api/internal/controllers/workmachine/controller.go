@@ -216,19 +216,16 @@ PostDown = iptables -D FORWARD -o %%i -j ACCEPT;
 PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE;
 
 [Peer]
-# Client Peer 1
 PublicKey = %s
 AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 `, serverPriv, peer1Pub)
 
-			secret.StringData["peer1.conf"] = fmt.Sprintf(`# WireGuard Client Configuration
-[Interface]
+			secret.StringData["peer1.conf"] = fmt.Sprintf(`[Interface]
 PrivateKey = %s
 Address = 10.17.0.2/24
 ListenPort = 51820
 
 [Peer]
-# Server Peer
 PublicKey = %s
 AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
