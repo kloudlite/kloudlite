@@ -2,6 +2,7 @@ package composition
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	compositionsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -100,18 +101,39 @@ func (r *CompositionReconciler) updateStatusWithRetry(ctx context.Context, compo
 
 // updateStatus updates the status of the Composition (legacy method for compatibility)
 func (r *CompositionReconciler) updateStatus(ctx context.Context, composition *compositionsv1.Composition, environment *compositionsv1.Environment, state compositionsv1.CompositionState, message string, logger *zap.Logger) (reconcile.Result, error) {
-	composition.Status.State = state
-	composition.Status.Message = message
-	composition.Status.ObservedGeneration = composition.Generation
+	// Track if any status field actually changed
+	needsUpdate := false
+	oldStatus := composition.Status.DeepCopy()
+
+	if composition.Status.State != state {
+		composition.Status.State = state
+		needsUpdate = true
+	}
+
+	if composition.Status.Message != message {
+		composition.Status.Message = message
+		needsUpdate = true
+	}
+
+	if composition.Status.ObservedGeneration != composition.Generation {
+		composition.Status.ObservedGeneration = composition.Generation
+		needsUpdate = true
+	}
 
 	// Update environment activation state
 	if environment != nil {
-		composition.Status.EnvironmentActivated = environment.Spec.Activated
+		if composition.Status.EnvironmentActivated != environment.Spec.Activated {
+			composition.Status.EnvironmentActivated = environment.Spec.Activated
+			needsUpdate = true
+		}
 	}
 
 	now := metav1.Now()
 	if state == compositionsv1.CompositionStateRunning {
-		composition.Status.LastDeployedTime = &now
+		if composition.Status.LastDeployedTime == nil || !composition.Status.LastDeployedTime.Equal(&now) {
+			composition.Status.LastDeployedTime = &now
+			needsUpdate = true
+		}
 	}
 
 	// Create ready condition
@@ -129,14 +151,23 @@ func (r *CompositionReconciler) updateStatus(ctx context.Context, composition *c
 		readyCondition.Status = metav1.ConditionTrue
 	}
 
-	// Update or add condition
-	r.setCondition(composition, readyCondition)
+	// Update or add condition (returns true if changed)
+	if r.setCondition(composition, readyCondition) {
+		needsUpdate = true
+	}
+
+	// Only update status if something actually changed
+	if !needsUpdate && reflect.DeepEqual(oldStatus, &composition.Status) {
+		logger.Debug("Composition status unchanged, skipping status update")
+		return reconcile.Result{}, nil
+	}
 
 	return r.updateStatusWithRetry(ctx, composition, environment, state, message, logger)
 }
 
 // setCondition updates or adds a condition to the composition status
-func (r *CompositionReconciler) setCondition(composition *compositionsv1.Composition, condition metav1.Condition) {
+// Returns true if the condition was added or changed
+func (r *CompositionReconciler) setCondition(composition *compositionsv1.Composition, condition metav1.Condition) bool {
 	for i, existingCondition := range composition.Status.Conditions {
 		if existingCondition.Type == condition.Type {
 			// Only update if something actually changed
@@ -144,10 +175,12 @@ func (r *CompositionReconciler) setCondition(composition *compositionsv1.Composi
 				existingCondition.Reason != condition.Reason ||
 				existingCondition.Message != condition.Message {
 				composition.Status.Conditions[i] = condition
+				return true
 			}
-			return
+			return false
 		}
 	}
 	// Condition not found, add it
 	composition.Status.Conditions = append(composition.Status.Conditions, condition)
+	return true
 }

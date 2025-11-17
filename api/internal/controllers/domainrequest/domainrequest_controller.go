@@ -12,8 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -116,6 +118,7 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 		}
 
 		// Check if DomainRoutes have changed and need DNS reconciliation
+		// With GenerationChangedPredicate, this only runs when spec actually changes
 		currentRoutesHash, err := computeDomainRoutesHash(domainRequest.Spec.DomainRoutes)
 		if err != nil {
 			logger.Error("Failed to compute DomainRoutes hash", zap.Error(err))
@@ -194,7 +197,7 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 // SetupWithManager sets up the controller with the Manager
 func (r *DomainRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&domainrequestsv1.DomainRequest{}).
+		For(&domainrequestsv1.DomainRequest{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Secret{}).    // Watch Secrets owned by DomainRequest
 		Owns(&corev1.Pod{}).       // Watch HAProxy Pods owned by DomainRequest
 		Owns(&corev1.ConfigMap{}). // Watch HAProxy ConfigMaps owned by DomainRequest

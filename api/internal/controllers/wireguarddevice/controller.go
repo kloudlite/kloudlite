@@ -2,11 +2,12 @@ package wireguarddevice
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"net"
+	"sort"
 	"strings"
-	"time"
 
 	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -292,6 +293,35 @@ Endpoint = 127.0.0.1:51821
 	return check.Passed()
 }
 
+// computePeersHash computes a hash of all WireGuardDevice peers for a WorkMachine
+func (r *WireGuardDeviceReconciler) computePeersHash(ctx context.Context, workMachineRef string) (string, error) {
+	var deviceList wireguarddevicev1.WireGuardDeviceList
+	if err := r.List(ctx, &deviceList); err != nil {
+		return "", fmt.Errorf("failed to list WireGuardDevices: %w", err)
+	}
+
+	// Collect all devices for this WorkMachine
+	var peerConfigs []string
+	for _, device := range deviceList.Items {
+		if device.Spec.WorkMachineRef == workMachineRef && device.DeletionTimestamp == nil {
+			// Create a stable string representation of this peer
+			peerConfig := fmt.Sprintf("%s:%s:%s", device.Spec.DeviceID, device.Status.PublicKey, device.Status.AssignedIP)
+			peerConfigs = append(peerConfigs, peerConfig)
+		}
+	}
+
+	// Sort for deterministic hash
+	sort.Strings(peerConfigs)
+
+	// Compute SHA256 hash
+	hash := sha256.New()
+	for _, cfg := range peerConfigs {
+		hash.Write([]byte(cfg))
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
 // updateTunnelServer updates the tunnel-server configuration to include this device
 func (r *WireGuardDeviceReconciler) updateTunnelServer(check *reconciler.Check[*wireguarddevicev1.WireGuardDevice], obj *wireguarddevicev1.WireGuardDevice) reconciler.StepResult {
 	ctx := check.Context()
@@ -302,17 +332,25 @@ func (r *WireGuardDeviceReconciler) updateTunnelServer(check *reconciler.Check[*
 		return check.Failed(fmt.Errorf("failed to get WorkMachine: %w", err))
 	}
 
-	// Update an annotation on WorkMachine to trigger reconciliation
-	// This will cause the WorkMachine controller to regenerate tunnel-server config
+	// Compute current peers hash
+	currentHash, err := r.computePeersHash(ctx, obj.Spec.WorkMachineRef)
+	if err != nil {
+		return check.Failed(fmt.Errorf("failed to compute peers hash: %w", err))
+	}
+
+	// Update annotation only if hash changed
 	if workMachine.Annotations == nil {
 		workMachine.Annotations = make(map[string]string)
 	}
 
-	// Use current timestamp to ensure the annotation changes
-	workMachine.Annotations["vpn.kloudlite.io/peer-update-trigger"] = fmt.Sprintf("%d", time.Now().Unix())
+	existingHash := workMachine.Annotations["vpn.kloudlite.io/peers-config-hash"]
+	if existingHash != currentHash {
+		// Hash changed, update the annotation to trigger WorkMachine reconciliation
+		workMachine.Annotations["vpn.kloudlite.io/peers-config-hash"] = currentHash
 
-	if err := r.Update(ctx, workMachine); err != nil {
-		return check.Failed(fmt.Errorf("failed to trigger WorkMachine reconciliation: %w", err))
+		if err := r.Update(ctx, workMachine); err != nil {
+			return check.Failed(fmt.Errorf("failed to update WorkMachine peers hash: %w", err))
+		}
 	}
 
 	obj.Status.ConfigGeneration++
@@ -333,18 +371,25 @@ func (r *WireGuardDeviceReconciler) removePeerFromTunnelServer(check *reconciler
 		return check.Failed(fmt.Errorf("failed to get WorkMachine: %w", err))
 	}
 
-	// Update an annotation on WorkMachine to trigger reconciliation
-	// This will cause the WorkMachine controller to regenerate tunnel-server config
-	// without this deleted device
+	// Compute current peers hash (excluding this device since it's being deleted)
+	currentHash, err := r.computePeersHash(ctx, obj.Spec.WorkMachineRef)
+	if err != nil {
+		return check.Failed(fmt.Errorf("failed to compute peers hash: %w", err))
+	}
+
+	// Update annotation only if hash changed
 	if workMachine.Annotations == nil {
 		workMachine.Annotations = make(map[string]string)
 	}
 
-	// Use current timestamp to ensure the annotation changes
-	workMachine.Annotations["vpn.kloudlite.io/peer-update-trigger"] = fmt.Sprintf("%d", time.Now().Unix())
+	existingHash := workMachine.Annotations["vpn.kloudlite.io/peers-config-hash"]
+	if existingHash != currentHash {
+		// Hash changed, update the annotation to trigger WorkMachine reconciliation
+		workMachine.Annotations["vpn.kloudlite.io/peers-config-hash"] = currentHash
 
-	if err := r.Update(ctx, workMachine); err != nil {
-		return check.Failed(fmt.Errorf("failed to trigger WorkMachine reconciliation: %w", err))
+		if err := r.Update(ctx, workMachine); err != nil {
+			return check.Failed(fmt.Errorf("failed to update WorkMachine peers hash: %w", err))
+		}
 	}
 
 	return check.Passed()
