@@ -52,12 +52,12 @@ func generateAndSaveDeviceID(deviceIDPath string) (string, error) {
 
 	// Create directory if it doesn't exist
 	dir := filepath.Dir(deviceIDPath)
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", fmt.Errorf("failed to create device ID directory: %w", err)
 	}
 
 	// Write device ID to file with restrictive permissions
-	if err := os.WriteFile(deviceIDPath, []byte(deviceID), 0600); err != nil {
+	if err := os.WriteFile(deviceIDPath, []byte(deviceID), 0o600); err != nil {
 		return "", fmt.Errorf("failed to write device ID file: %w", err)
 	}
 
