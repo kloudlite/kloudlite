@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"regexp"
+	"strings"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -94,7 +96,13 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			// Get WorkMachine to construct domain URLs
 			wm, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
 			if err == nil && wm.Status.PublicIP != "" {
-				baseDomain := fmt.Sprintf("%s.%s.%s", workspace.Name, workspace.Spec.WorkmachineName, domainRequest.Status.Subdomain)
+				// Sanitize username for DNS compatibility (lowercase, replace invalid chars with hyphens)
+			sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
+			sanitizedUsername = regexp.MustCompile(`[^a-z0-9-]`).ReplaceAllString(sanitizedUsername, "-")
+
+			// Use pattern: {prefix}-{folderName}-{username}.{subdomain}.khost.dev
+			// Example: vscode-myworkspace-john.subdomain.khost.dev
+			baseDomain := fmt.Sprintf("%s-%s.%s.khost.dev", workspace.Spec.FolderName, sanitizedUsername, domainRequest.Status.Subdomain)
 				// Use public HTTPS domain URLs
 				accessURLs["code-server"] = fmt.Sprintf("https://vscode-%s", baseDomain)
 				accessURLs["ttyd"] = fmt.Sprintf("https://tty-%s", baseDomain)
