@@ -3,6 +3,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -44,11 +45,33 @@ func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context
 
 // updateWorkspaceStatus updates the workspace status based on pod state
 func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pod *corev1.Pod, phase, message string, logger *zap.Logger) (reconcile.Result, error) {
-	workspace.Status.Phase = phase
-	workspace.Status.Message = message
-	workspace.Status.PodName = pod.Name
-	workspace.Status.PodIP = pod.Status.PodIP
-	workspace.Status.NodeName = pod.Spec.NodeName
+	// Track if any status field actually changed
+	needsUpdate := false
+
+	if workspace.Status.Phase != phase {
+		workspace.Status.Phase = phase
+		needsUpdate = true
+	}
+
+	if workspace.Status.Message != message {
+		workspace.Status.Message = message
+		needsUpdate = true
+	}
+
+	if workspace.Status.PodName != pod.Name {
+		workspace.Status.PodName = pod.Name
+		needsUpdate = true
+	}
+
+	if workspace.Status.PodIP != pod.Status.PodIP {
+		workspace.Status.PodIP = pod.Status.PodIP
+		needsUpdate = true
+	}
+
+	if workspace.Status.NodeName != pod.Spec.NodeName {
+		workspace.Status.NodeName = pod.Spec.NodeName
+		needsUpdate = true
+	}
 
 	// Build access URLs for all services if pod is running
 	if pod.Status.PodIP != "" && phase == "Running" {
@@ -98,11 +121,21 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			accessURLs["vscode-tunnel"] = fmt.Sprintf("http://%s:8000", pod.Status.PodIP)
 		}
 
-		workspace.Status.AccessURLs = accessURLs
+		// Only update if AccessURLs changed
+		if !reflect.DeepEqual(workspace.Status.AccessURLs, accessURLs) {
+			workspace.Status.AccessURLs = accessURLs
+			needsUpdate = true
+		}
 
 		// Keep AccessURL for backward compatibility (default to code-server)
-		workspace.Status.AccessURL = accessURLs["code-server"]
+		if workspace.Status.AccessURL != accessURLs["code-server"] {
+			workspace.Status.AccessURL = accessURLs["code-server"]
+			needsUpdate = true
+		}
 	}
+
+	// Store old ConnectedEnvironment for comparison
+	oldConnectedEnvironment := workspace.Status.ConnectedEnvironment
 
 	// Update ConnectedEnvironment status if EnvironmentConnection is set
 	if workspace.Spec.EnvironmentConnection != nil {
@@ -143,8 +176,27 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		workspace.Status.ConnectedEnvironment = nil
 	}
 
+	// Check if ConnectedEnvironment changed
+	if !reflect.DeepEqual(oldConnectedEnvironment, workspace.Status.ConnectedEnvironment) {
+		needsUpdate = true
+	}
+
+	// Store old ActiveIntercepts for comparison
+	oldActiveIntercepts := workspace.Status.ActiveIntercepts
+
 	// Update ActiveIntercepts status
 	workspace.Status.ActiveIntercepts = r.collectActiveIntercepts(ctx, workspace, logger)
+
+	// Check if ActiveIntercepts changed
+	if !reflect.DeepEqual(oldActiveIntercepts, workspace.Status.ActiveIntercepts) {
+		needsUpdate = true
+	}
+
+	// Only update status if something actually changed
+	if !needsUpdate {
+		logger.Debug("Workspace status unchanged, skipping status update")
+		return reconcile.Result{}, nil
+	}
 
 	if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
 		logger.Error("Failed to update workspace status after retries", zap.Error(err))

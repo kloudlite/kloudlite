@@ -316,6 +316,15 @@ type WorkspaceStatus struct {
 	// +optional
 	ActiveConnections int `json:"activeConnections,omitempty"`
 
+	// IdleState tracks whether the workspace is idle or active
+	// +kubebuilder:validation:Enum=active;idle
+	// +optional
+	IdleState string `json:"idleState,omitempty"`
+
+	// IdleSince tracks when the workspace became idle
+	// +optional
+	IdleSince *metav1.Time `json:"idleSince,omitempty"`
+
 	// ConnectedEnvironment tracks the connected environment details
 	// +optional
 	ConnectedEnvironment *ConnectedEnvironmentInfo `json:"connectedEnvironment,omitempty"`

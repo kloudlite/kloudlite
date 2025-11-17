@@ -12,8 +12,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -149,6 +151,7 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			}
 		}
 
+		// Only update status if state actually changed
 		if environment.Status.State != desiredState {
 			message := "Environment is inactive"
 			if desiredState == environmentsv1.EnvironmentStateActive {
@@ -158,6 +161,8 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			if err := r.updateEnvironmentStatus(ctx, environment, desiredState, message, logger); err != nil {
 				logger.Error("Failed to update environment status after retries", zap.Error(err))
 			}
+		} else {
+			logger.Debug("Environment status unchanged, skipping status update")
 		}
 
 		return reconcile.Result{}, nil
@@ -189,7 +194,7 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 // SetupWithManager sets up the controller with the Manager
 func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&environmentsv1.Environment{}).
+		For(&environmentsv1.Environment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Namespace{}). // Watch Namespaces owned by Environments
 		Complete(r)
 	// Note: We don't watch WorkMachine here because Environment references WorkMachine by name

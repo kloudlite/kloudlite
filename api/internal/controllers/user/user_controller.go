@@ -15,8 +15,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -120,13 +122,11 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 			logger.Info("Successfully updated user password")
 			return reconcile.Result{Requeue: true}, nil
 		} else {
-			// Password hasn't changed, just clear the PasswordString field
-			user.Spec.PasswordString = ""
-			if err := r.Update(ctx, user); err != nil {
-				logger.Error("Failed to clear PasswordString field", zap.Error(err))
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{Requeue: true}, nil
+			// Password hasn't changed and hash matches
+			// The PasswordString field should have been cleared by webhook or client
+			// Don't trigger an unnecessary update here - just log and continue
+			logger.Debug("PasswordString set but hash matches existing password, skipping update")
+			// Continue with normal reconciliation
 		}
 	}
 
@@ -244,7 +244,7 @@ func (r *UserReconciler) handleUserDeletion(ctx context.Context, user *userv1alp
 // SetupWithManager sets up the controller with the Manager
 func (r *UserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&userv1alpha1.User{}).
+		For(&userv1alpha1.User{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&machinesv1.WorkMachine{}). // Watch WorkMachines owned by Users for garbage collection
 		Complete(r)
 }

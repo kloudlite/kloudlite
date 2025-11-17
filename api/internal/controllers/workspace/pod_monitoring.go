@@ -143,29 +143,50 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 		return nil // Don't fail reconciliation on metrics errors
 	}
 
-	// Update active connections count in workspace status
-	workspace.Status.ActiveConnections = connectionCount
+	// Track idle state transition instead of continuous timestamp updates
+	// This prevents continuous status writes every 30 seconds
+	now := metav1.Now()
+	needsStatusUpdate := false
+
+	// Update active connections count if it changed
+	if workspace.Status.ActiveConnections != connectionCount {
+		workspace.Status.ActiveConnections = connectionCount
+		needsStatusUpdate = true
+	}
 
 	if !isIdle {
-		// Workspace is active, update last activity time
-		now := metav1.Now()
-		if workspace.Status.LastActivityTime == nil ||
-			time.Since(workspace.Status.LastActivityTime.Time) > 30*time.Second {
+		// Workspace is active - only update status if state changed from idle to active
+		if workspace.Status.IdleState == "idle" || workspace.Status.IdleState == "" {
+			workspace.Status.IdleState = "active"
+			workspace.Status.IdleSince = nil
 			workspace.Status.LastActivityTime = &now
+			needsStatusUpdate = true
+			logger.Info("Workspace state changed to active", zap.String("workspace", workspace.Name))
+		}
+
+		// Only update status if something changed
+		if needsStatusUpdate {
 			if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
-				logger.Warn("Failed to update last activity time", zap.Error(err))
+				logger.Warn("Failed to update workspace activity state", zap.Error(err))
 			}
 		}
 		return nil
 	}
 
-	// Workspace is idle, check if idle timeout has been reached
-	if workspace.Status.LastActivityTime == nil {
-		// No last activity time set, initialize it
-		now := metav1.Now()
+	// Workspace is idle - only update status if state changed from active to idle
+	if workspace.Status.IdleState != "idle" {
+		workspace.Status.IdleState = "idle"
+		workspace.Status.IdleSince = &now
+		// Also update LastActivityTime to current time when transitioning to idle
 		workspace.Status.LastActivityTime = &now
+		needsStatusUpdate = true
+		logger.Info("Workspace state changed to idle", zap.String("workspace", workspace.Name))
+	}
+
+	// Only update status if something changed
+	if needsStatusUpdate {
 		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
-			logger.Warn("Failed to initialize last activity time", zap.Error(err))
+			logger.Warn("Failed to update idle state", zap.Error(err))
 		}
 		return nil
 	}
