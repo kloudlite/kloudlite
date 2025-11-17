@@ -4,6 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,12 +33,80 @@ func (c *Client) SetTimeout(timeout time.Duration) {
 	c.timeout = timeout
 }
 
+// startDaemon attempts to start the daemon if it's not running
+func (c *Client) startDaemon() error {
+	// Find kltun binary (look in same directory as current executable or in PATH)
+	kltunPath, err := exec.LookPath("kltun")
+	if err != nil {
+		// Try to find it relative to current executable
+		exe, err := os.Executable()
+		if err == nil {
+			exeDir := filepath.Dir(exe)
+			kltunPath = filepath.Join(exeDir, "kltun")
+			if _, err := os.Stat(kltunPath); err != nil {
+				return fmt.Errorf("kltun binary not found in PATH or %s", exeDir)
+			}
+		} else {
+			return fmt.Errorf("kltun binary not found: %w", err)
+		}
+	}
+
+	fmt.Printf("Starting daemon with: sudo %s daemon run\n", kltunPath)
+
+	// Create command with proper daemonization
+	cmd := exec.Command("sudo", kltunPath, "daemon", "run")
+
+	// Discard output to prevent blocking
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	cmd.Stdin = nil
+
+	// Platform-specific process attributes for proper daemonization
+	if runtime.GOOS != "windows" {
+		// On Unix-like systems, create a new session to detach from parent
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setsid: true, // Create new session (detach from controlling terminal)
+		}
+	}
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start daemon: %w", err)
+	}
+
+	// Release the process (don't wait for it)
+	go cmd.Wait()
+
+	// Wait for daemon to be ready (max 5 seconds)
+	for i := 0; i < 50; i++ {
+		time.Sleep(100 * time.Millisecond)
+		if c.IsRunning() {
+			fmt.Println("✓ Daemon started successfully")
+			return nil
+		}
+	}
+
+	return fmt.Errorf("daemon failed to start within 5 seconds")
+}
+
 // call makes an RPC call
 func (c *Client) call(method string, params interface{}, result interface{}) error {
 	// Connect to daemon
 	conn, err := net.DialTimeout("unix", c.socketPath, c.timeout)
 	if err != nil {
-		return fmt.Errorf("failed to connect to daemon: %w", err)
+		// Check if daemon is not running and try to start it
+		if _, statErr := os.Stat(c.socketPath); os.IsNotExist(statErr) {
+			fmt.Println("Daemon not running, attempting to start...")
+			if startErr := c.startDaemon(); startErr != nil {
+				return fmt.Errorf("failed to connect to daemon: %w (auto-start failed: %v)", err, startErr)
+			}
+			// Retry connection after starting daemon
+			conn, err = net.DialTimeout("unix", c.socketPath, c.timeout)
+			if err != nil {
+				return fmt.Errorf("failed to connect to daemon after auto-start: %w", err)
+			}
+		} else {
+			return fmt.Errorf("failed to connect to daemon: %w", err)
+		}
 	}
 	defer conn.Close()
 
