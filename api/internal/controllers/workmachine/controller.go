@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -200,12 +201,22 @@ PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE;
 `, serverPrivateKey)
 
 	// Add [Peer] section for each Ready WireGuardDevice
+	// Sort devices by name to ensure deterministic config generation
+	readyDevices := make([]wireguarddevicev1.WireGuardDevice, 0, len(deviceList.Items))
 	for _, device := range deviceList.Items {
 		// Only include Ready devices with valid public keys
 		if device.Status.Phase != "Ready" || device.Status.PublicKey == "" || device.Status.AssignedIP == "" {
 			continue
 		}
+		readyDevices = append(readyDevices, device)
+	}
 
+	// Sort by device name for deterministic ordering
+	sort.Slice(readyDevices, func(i, j int) bool {
+		return readyDevices[i].Name < readyDevices[j].Name
+	})
+
+	for _, device := range readyDevices {
 		config += fmt.Sprintf(`[Peer]
 PublicKey = %s
 AllowedIPs = %s/32
@@ -317,12 +328,28 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 	err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: obj.Spec.TargetNamespace}, existingPod)
 
 	if err == nil {
-		// Pod exists, check if it's running
-		if existingPod.Status.Phase == corev1.PodRunning || existingPod.Status.Phase == corev1.PodPending {
-			// Pod is fine, nothing to do
-			return check.Passed()
+		// Pod exists, check if it's running and ready
+		if existingPod.Status.Phase == corev1.PodRunning {
+			// Check if all containers are ready
+			allReady := true
+			for _, condition := range existingPod.Status.Conditions {
+				if condition.Type == corev1.ContainersReady && condition.Status != corev1.ConditionTrue {
+					allReady = false
+					break
+				}
+			}
+			if allReady {
+				// Pod is running and ready
+				return check.Passed()
+			}
+			// Pod is running but containers not ready yet, keep waiting
+			return check.UpdateMsg("waiting for tunnel-server containers to be ready").RequeueAfter(2 * time.Second)
 		}
-		// Pod is in a bad state, delete it and let next reconciliation recreate it
+		if existingPod.Status.Phase == corev1.PodPending {
+			// Pod is still starting up, wait
+			return check.UpdateMsg("tunnel-server pod is pending").RequeueAfter(2 * time.Second)
+		}
+		// Pod is in a bad state (Failed, Unknown, etc.), delete it and recreate
 		if err := r.Delete(check.Context(), existingPod); err != nil && !apiErrors.IsNotFound(err) {
 			return check.Failed(fmt.Errorf("failed to delete bad tunnel-server pod: %w", err))
 		}
@@ -386,6 +413,30 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							SubPath:   "tunnel-server.conf",
 							ReadOnly:  true,
 						},
+					},
+					ReadinessProbe: &corev1.Probe{
+						ProbeHandler: corev1.ProbeHandler{
+							Exec: &corev1.ExecAction{
+								Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
+							},
+						},
+						InitialDelaySeconds: 2,
+						PeriodSeconds:       5,
+						TimeoutSeconds:      2,
+						SuccessThreshold:    1,
+						FailureThreshold:    3,
+					},
+					LivenessProbe: &corev1.Probe{
+						ProbeHandler: corev1.ProbeHandler{
+							Exec: &corev1.ExecAction{
+								Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
+							},
+						},
+						InitialDelaySeconds: 10,
+						PeriodSeconds:       30,
+						TimeoutSeconds:      5,
+						SuccessThreshold:    1,
+						FailureThreshold:    3,
 					},
 				},
 			},
