@@ -2,7 +2,6 @@ package proxyguard
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -61,10 +60,10 @@ func (c *Client) Stop() {
 	c.wg.Wait()
 }
 
-// forwardUDPtoTCP forwards UDP packets to TLS/TCP connection
+// forwardUDPtoTCP forwards UDP packets to TCP connection
 func (c *Client) forwardUDPtoTCP(ctx context.Context, udpConn *net.UDPConn) {
 	var (
-		tlsConn  *tls.Conn
+		tcpConn  net.Conn
 		clientAddr *net.UDPAddr
 		mu       sync.Mutex
 	)
@@ -75,8 +74,8 @@ func (c *Client) forwardUDPtoTCP(ctx context.Context, udpConn *net.UDPConn) {
 	for {
 		select {
 		case <-ctx.Done():
-			if tlsConn != nil {
-				tlsConn.Close()
+			if tcpConn != nil {
+				tcpConn.Close()
 			}
 			return
 		default:
@@ -100,40 +99,36 @@ func (c *Client) forwardUDPtoTCP(ctx context.Context, udpConn *net.UDPConn) {
 			clientAddr = addr
 		}
 
-		// Establish TLS connection if not already connected
-		if tlsConn == nil {
-			tlsConfig := &tls.Config{
-				InsecureSkipVerify: true, // TODO: Add proper certificate verification
-			}
-
-			conn, err := tls.Dial("tcp", c.remoteAddr, tlsConfig)
+		// Establish TCP connection if not already connected
+		if tcpConn == nil {
+			conn, err := net.Dial("tcp", c.remoteAddr)
 			if err != nil {
 				fmt.Printf("Failed to connect to remote server: %v\n", err)
 				mu.Unlock()
 				continue
 			}
-			tlsConn = conn
+			tcpConn = conn
 
-			// Start goroutine to read responses from TLS and send back to UDP
+			// Start goroutine to read responses from TCP and send back to UDP
 			c.wg.Add(1)
 			go func() {
 				defer c.wg.Done()
-				c.forwardTCPtoUDP(ctx, tlsConn, udpConn, &clientAddr, &mu)
+				c.forwardTCPtoUDP(ctx, tcpConn, udpConn, &clientAddr, &mu)
 			}()
 		}
 
-		// Forward UDP packet to TLS connection
-		if _, err := tlsConn.Write(buf[:n]); err != nil {
-			fmt.Printf("Error writing to TLS connection: %v\n", err)
-			tlsConn.Close()
-			tlsConn = nil
+		// Forward UDP packet to TCP connection
+		if _, err := tcpConn.Write(buf[:n]); err != nil {
+			fmt.Printf("Error writing to TCP connection: %v\n", err)
+			tcpConn.Close()
+			tcpConn = nil
 		}
 		mu.Unlock()
 	}
 }
 
-// forwardTCPtoUDP forwards TCP/TLS responses back to UDP client
-func (c *Client) forwardTCPtoUDP(ctx context.Context, tlsConn *tls.Conn, udpConn *net.UDPConn, clientAddr **net.UDPAddr, mu *sync.Mutex) {
+// forwardTCPtoUDP forwards TCP responses back to UDP client
+func (c *Client) forwardTCPtoUDP(ctx context.Context, tcpConn net.Conn, udpConn *net.UDPConn, clientAddr **net.UDPAddr, mu *sync.Mutex) {
 	buf := make([]byte, 65536)
 
 	for {
@@ -143,10 +138,10 @@ func (c *Client) forwardTCPtoUDP(ctx context.Context, tlsConn *tls.Conn, udpConn
 		default:
 		}
 
-		n, err := tlsConn.Read(buf)
+		n, err := tcpConn.Read(buf)
 		if err != nil {
 			if err != io.EOF {
-				fmt.Printf("Error reading from TLS connection: %v\n", err)
+				fmt.Printf("Error reading from TCP connection: %v\n", err)
 			}
 			return
 		}
