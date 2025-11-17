@@ -49,6 +49,11 @@ const launchdPlistTemplate = `<?xml version="1.0" encoding="UTF-8"?>
     <string>root</string>
     <key>GroupName</key>
     <string>wheel</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/var/root</string>
+    </dict>
 </dict>
 </plist>
 `

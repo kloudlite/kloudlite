@@ -116,7 +116,7 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	fmt.Printf("[Session %s] Configuring network interface...\n", sessionID)
 	netCfg := &netconfig.InterfaceConfig{
 		InterfaceName: wgDevice.InterfaceName(),
-		IPAddress:     wgConfig.AssignedIP,
+		IPAddress:     fmt.Sprintf("%s/32", wgConfig.AssignedIP),
 		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
 		Gateway:       "10.17.0.1",
 	}
