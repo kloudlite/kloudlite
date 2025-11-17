@@ -3,6 +3,8 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -147,15 +149,18 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	// Service name that ingress will route to
 	serviceName := fmt.Sprintf("workspace-%s", workspace.Name)
 
+	// Sanitize username for DNS compatibility (lowercase, replace invalid chars with hyphens)
+	sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
+	sanitizedUsername = regexp.MustCompile(`[^a-z0-9-]`).ReplaceAllString(sanitizedUsername, "-")
+
 	// Build Ingress rules
 	var ingressRules []networkingv1.IngressRule
 	var tlsHosts []string
 
 	for prefix, svc := range httpServices {
-		// Use simplified naming without nested periods:
-		// {prefix}-{workspace}-{workmachine}.{subdomain}.khost.dev
-		// Example: vscode-myworkspace-myworkmachine.subdomain.khost.dev
-		host := fmt.Sprintf("%s-%s-%s.%s.khost.dev", prefix, workspace.Name, workspace.Spec.WorkmachineName, domainRequest.Status.Subdomain)
+		// Use pattern: {prefix}-{folderName}-{username}.{subdomain}.khost.dev
+		// Example: vscode-myworkspace-john.subdomain.khost.dev
+		host := fmt.Sprintf("%s-%s-%s.%s.khost.dev", prefix, workspace.Spec.FolderName, sanitizedUsername, domainRequest.Status.Subdomain)
 		tlsHosts = append(tlsHosts, host)
 
 		pathType := networkingv1.PathTypePrefix
@@ -185,6 +190,11 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: workspace.Name, Namespace: targetNamespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
+		// Set owner reference for automatic cleanup via garbage collection
+		if err := controllerutil.SetControllerReference(workspace, ingress, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference on Ingress: %w", err)
+		}
+
 		ingress.Spec.IngressClassName = fn.Ptr("traefik")
 		ingress.Spec.TLS = []networkingv1.IngressTLS{
 			{
