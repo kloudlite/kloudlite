@@ -7,8 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -62,12 +60,7 @@ func (c *Client) startDaemon() error {
 	cmd.Stdin = nil
 
 	// Platform-specific process attributes for proper daemonization
-	if runtime.GOOS != "windows" {
-		// On Unix-like systems, create a new session to detach from parent
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setsid: true, // Create new session (detach from controlling terminal)
-		}
-	}
+	setSysProcAttr(cmd)
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to start daemon: %w", err)
