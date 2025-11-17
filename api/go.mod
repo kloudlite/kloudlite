@@ -6,6 +6,7 @@ toolchain go1.24.7
 
 require (
 	cloud.google.com/go/compute v1.49.1
+	codeberg.org/eduVPN/proxyguard v0.0.0-20251029080421-4c455b7d31f8
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 v6.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/subscription/armsubscription v1.2.0
@@ -51,7 +52,6 @@ require (
 	cloud.google.com/go/auth v0.17.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
-	codeberg.org/eduVPN/proxyguard v0.0.0-20251029080421-4c455b7d31f8 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect

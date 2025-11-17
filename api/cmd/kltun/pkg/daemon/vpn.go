@@ -52,7 +52,7 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	if caCert != "" {
 		fmt.Printf("[Session %s] Installing CA certificate...\n", sessionID)
 		certFile := fmt.Sprintf("/tmp/kltun-ca-%s.crt", sessionID)
-		if err := os.WriteFile(certFile, []byte(caCert), 0600); err != nil {
+		if err := os.WriteFile(certFile, []byte(caCert), 0o600); err != nil {
 			fmt.Printf("[Session %s] Failed to write CA cert: %v\n", sessionID, err)
 			return
 		}
@@ -75,11 +75,11 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		// Initialize the official proxyguard client
 		// Peer field expects just IP:PORT (not a URL)
 		pgClient = &proxyguard.Client{
-			ListenPort:    51821,                   // Local port for WireGuard to connect to
-			TCPSourcePort: 0,                       // Let kernel choose source port
-			Fwmark:        -1,                      // Firewall mark disabled
-			PeerIPS:       []string{},              // Empty peer IPs
-			Peer:          wgConfig.ServerEndpoint, // Server endpoint (e.g., "203.0.113.1:443")
+			ListenPort:    51821,                               // Local port for WireGuard to connect to
+			TCPSourcePort: 0,                                   // Let kernel choose source port
+			Fwmark:        -1,                                  // Firewall mark disabled
+			PeerIPS:       []string{},                          // Empty peer IPs
+			Peer:          "http://" + wgConfig.ServerEndpoint, // Server endpoint (e.g., "203.0.113.1:443")
 		}
 
 		// Setup the client (creates UDP listener)
@@ -102,14 +102,27 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	// 4. Start WireGuard device
 	fmt.Printf("[Session %s] Starting WireGuard device...\n", sessionID)
 	wgDeviceConfig := &wireguard.Config{
-		InterfaceName: "utun", // macOS
-		ListenPort:    51820,
-		MTU:           1420,
+		ListenPort: 51820,
+		MTU:        1420,
 	}
 
 	wgDevice, err := wireguard.NewDevice(ctx, wgDeviceConfig)
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to create WireGuard device: %v\n", sessionID, err)
+		return
+	}
+
+	// Configure IP address and routes on the WireGuard interface
+	fmt.Printf("[Session %s] Configuring network interface...\n", sessionID)
+	netCfg := &netconfig.InterfaceConfig{
+		InterfaceName: wgDevice.InterfaceName(),
+		IPAddress:     wgConfig.AssignedIP,
+		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
+		Gateway:       "10.17.0.1",
+	}
+
+	if err := netconfig.ConfigureInterface(netCfg); err != nil {
+		fmt.Printf("[Session %s] Failed to configure network interface: %v\n", sessionID, err)
 		return
 	}
 
@@ -121,20 +134,6 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	fmt.Printf("[WGConfig] %s", wgConfig.Config)
 	if err := wgDevice.SetConfig(wgConfig.Config); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
-		return
-	}
-
-	// Configure IP address and routes on the WireGuard interface
-	fmt.Printf("[Session %s] Configuring network interface...\n", sessionID)
-	netCfg := &netconfig.InterfaceConfig{
-		InterfaceName: wgDevice.InterfaceName(),
-		IPAddress:     wgConfig.AssignedIP + "/24",
-		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
-		Gateway:       "10.17.0.1",
-	}
-
-	if err := netconfig.ConfigureInterface(netCfg); err != nil {
-		fmt.Printf("[Session %s] Failed to configure network interface: %v\n", sessionID, err)
 		return
 	}
 

@@ -55,9 +55,28 @@ func NewDevice(ctx context.Context, config *Config) (*Device, error) {
 		)
 	}
 
+	// Create TUN device
+	tunDevice, err := tun.CreateTUN(config.InterfaceName, config.MTU)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TUN device: %w", err)
+	}
+
+	// Get the actual interface name (may differ from requested on some platforms)
+	actualName, err := tunDevice.Name()
+	if err != nil {
+		tunDevice.Close()
+		return nil, fmt.Errorf("failed to get TUN device name: %w", err)
+	}
+
+	if actualName != config.InterfaceName {
+		config.Logger.Verbosef("TUN interface created with name: %s (requested: %s)", actualName, config.InterfaceName)
+		config.InterfaceName = actualName
+	}
+
 	d := &Device{
-		config: config,
-		logger: config.Logger,
+		tunDevice: tunDevice,
+		config:    config,
+		logger:    config.Logger,
 	}
 
 	return d, nil
@@ -67,28 +86,9 @@ func NewDevice(ctx context.Context, config *Config) (*Device, error) {
 func (d *Device) Start(ctx context.Context) error {
 	d.logger.Verbosef("Creating TUN interface: %s", d.config.InterfaceName)
 
-	// Create TUN device
-	tunDevice, err := tun.CreateTUN(d.config.InterfaceName, d.config.MTU)
-	if err != nil {
-		return fmt.Errorf("failed to create TUN device: %w", err)
-	}
-	d.tunDevice = tunDevice
-
-	// Get the actual interface name (may differ from requested on some platforms)
-	actualName, err := tunDevice.Name()
-	if err != nil {
-		tunDevice.Close()
-		return fmt.Errorf("failed to get TUN device name: %w", err)
-	}
-
-	if actualName != d.config.InterfaceName {
-		d.logger.Verbosef("TUN interface created with name: %s (requested: %s)", actualName, d.config.InterfaceName)
-		d.config.InterfaceName = actualName
-	}
-
 	// Create WireGuard device
 	d.logger.Verbosef("Starting WireGuard device")
-	wgDevice := device.NewDevice(tunDevice, conn.NewDefaultBind(), d.logger)
+	wgDevice := device.NewDevice(d.tunDevice, conn.NewDefaultBind(), d.logger)
 	d.wgDevice = wgDevice
 
 	// Load configuration if provided
