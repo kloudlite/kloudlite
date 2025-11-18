@@ -3,6 +3,7 @@ package reconciler
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 
 	"k8s.io/client-go/tools/record"
@@ -35,6 +36,31 @@ func getRes(obj client.Object) res {
 	return xRes
 }
 
+// filterAnnotations returns a new map containing only annotations that are not in the exclusion list
+// This prevents internal operator annotations from triggering unnecessary reconciliations
+func filterAnnotations(annotations map[string]string) map[string]string {
+	if annotations == nil {
+		return nil
+	}
+
+	// Excluded annotations that change frequently during reconciliation
+	excludedKeys := map[string]bool{
+		LastAppliedKey:                      true,
+		"deployment.kubernetes.io/revision": true,
+		AnnotationResourceReady:             true,
+		AnnotationResourceChecks:            true,
+	}
+
+	filtered := make(map[string]string)
+	for k, v := range annotations {
+		if !excludedKeys[k] {
+			filtered[k] = v
+		}
+	}
+
+	return filtered
+}
+
 const (
 	ReasonGenerationUpdated      string = "GENERATION_UPDATED"
 	ReasonDeletionTimestamp      string = "DELETION_TIMESTAMP"
@@ -53,7 +79,7 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 	}
 
 	fireEvent := func(obj client.Object, reason string, message string) {
-		if recorder != nil {
+		if os.Getenv("KLOUDLITE_CONTROLLER_DEBUG_EVENTS") == "true" && recorder != nil {
 			recorder.Event(obj, "Normal", reason, message)
 		}
 	}
@@ -62,8 +88,6 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 		UpdateFunc: func(ev event.UpdateEvent) bool {
 			oldObj := ev.ObjectOld
 			newObj := ev.ObjectNew
-
-			resourceName := oldObj.GetName()
 
 			if newObj.GetGeneration() > oldObj.GetGeneration() {
 				fireEvent(newObj, ReasonGenerationUpdated, fmt.Sprintf("generation change from (%d) to (%d)", oldObj.GetGeneration(), newObj.GetGeneration()))
@@ -80,25 +104,13 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 				return true
 			}
 
-			oldAnn := oldObj.GetAnnotations()
-			newAnn := newObj.GetAnnotations()
+			// Filter out internal operator annotations before comparison
+			// This prevents cascading reconciliations from excluded annotations
+			oldAnnFiltered := filterAnnotations(oldObj.GetAnnotations())
+			newAnnFiltered := filterAnnotations(newObj.GetAnnotations())
 
-			annHasChanged := false
-			for k, v := range oldAnn {
-				// Exclude internal operator annotations that change on every reconcile
-				if k != LastAppliedKey &&
-					k != "deployment.kubernetes.io/revision" &&
-					k != AnnotationResourceReady &&
-					k != AnnotationResourceChecks {
-					if v != newAnn[k] {
-						annHasChanged = true
-						break
-					}
-				}
-			}
-
-			if len(oldAnn) != len(newAnn) || annHasChanged {
-				fireEvent(newObj, ReasonAnnotationsUpdated, fmt.Sprintf("annotations updated from (%+v) to (%+v)", oldObj.GetAnnotations(), newObj.GetAnnotations()))
+			if !reflect.DeepEqual(oldAnnFiltered, newAnnFiltered) {
+				fireEvent(newObj, ReasonAnnotationsUpdated, fmt.Sprintf("annotations updated from (%+v) to (%+v)", oldAnnFiltered, newAnnFiltered))
 				return true
 			}
 
@@ -118,16 +130,13 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 				return true
 			}
 
-			if oldRes.Status.IsReady == nil || newRes.Status.IsReady == nil {
-				// INFO: it means this resource is not a kloudlite resource, in that case,
-				// it should just be always allowed, as it can be a pod or a job, that some kloudlite resource is watching over
-				// fireEvent(newObj, ReasonStatusIsReadyChanged, "resource isReady is nil")
-				return true
-			}
-
-			if *oldRes.Status.IsReady != *newRes.Status.IsReady {
-				fireEvent(newObj, ReasonStatusIsReadyChanged, fmt.Sprintf("resource isReady changed from (%v) to (%v)", *oldRes.Status.IsReady, *newRes.Status.IsReady))
-				return true
+			// Only check isReady for Kloudlite resources (where both old and new have isReady set)
+			// For non-Kloudlite resources (Pods, Jobs, etc.), rely on other predicates above
+			if oldRes.Status.IsReady != nil && newRes.Status.IsReady != nil {
+				if *oldRes.Status.IsReady != *newRes.Status.IsReady {
+					fireEvent(newObj, ReasonStatusIsReadyChanged, fmt.Sprintf("resource isReady changed from (%v) to (%v)", *oldRes.Status.IsReady, *newRes.Status.IsReady))
+					return true
+				}
 			}
 
 			if len(oldRes.Status.Checks) != len(newRes.Status.Checks) {
@@ -142,7 +151,6 @@ func ReconcileFilter(eventRecorder ...record.EventRecorder) predicate.Funcs {
 				}
 			}
 
-			_ = resourceName
 			return false
 		},
 	}
