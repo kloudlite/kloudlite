@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 import { env } from '@/lib/env'
 import { NextRequest } from 'next/server'
 
@@ -50,7 +50,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Create a TransformStream to proxy SSE events
     const { readable, writable } = new TransformStream()
     const writer = writable.getWriter()
-    const encoder = new TextEncoder()
 
     // Stream the response from backend to client
     if (!backendResponse.body) {
