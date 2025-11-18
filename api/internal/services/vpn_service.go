@@ -7,10 +7,14 @@ import (
 
 	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -147,20 +151,60 @@ func (s *vpnService) fetchWireGuardConfig(ctx context.Context, namespace string)
 
 // buildHostEntries creates host entries from Services in the namespace
 func (s *vpnService) buildHostEntries(ctx context.Context, namespace string) ([]HostEntry, error) {
-	var serviceList corev1.ServiceList
-	if err := s.k8sClient.List(ctx, &serviceList, client.InNamespace(namespace)); err != nil {
+	var ingressList networkingv1.IngressList
+	if err := s.k8sClient.List(ctx, &ingressList); err != nil {
 		return nil, err
 	}
 
-	hosts := make([]HostEntry, 0, len(serviceList.Items))
-	for _, svc := range serviceList.Items {
-		// Only include services with ClusterIP (not headless services)
-		if svc.Spec.ClusterIP != "" && svc.Spec.ClusterIP != "None" {
-			// Create hostname as {service-name}.{namespace}.svc.cluster.local
-			hostname := fmt.Sprintf("%s.%s.svc.cluster.local", svc.Name, svc.Namespace)
+	svcNotFound := false
+	var ingressSvc corev1.Service
+	if err := s.k8sClient.Get(ctx, fn.NN("kube-system", "ingress-controller"), &ingressSvc); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return nil, err
+		}
+		svcNotFound = true
+	}
+
+	if svcNotFound {
+		ingressSvc = corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "ingress-controller",
+				Namespace: "kube-system",
+			},
+			Spec: corev1.ServiceSpec{
+				Type: corev1.ServiceTypeClusterIP,
+				Ports: []corev1.ServicePort{
+					{
+						Name:       "https",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       443,
+						TargetPort: intstr.FromString("websecure"),
+					},
+				},
+				Selector: map[string]string{
+					"app.kubernetes.io/instance": "traefik-kube-system",
+					"app.kubernetes.io/name":     "traefik",
+				},
+			},
+		}
+
+		if err := s.k8sClient.Create(ctx, &ingressSvc); err != nil {
+			return nil, err
+		}
+
+		<-time.After(1 * time.Second)
+		if err := s.k8sClient.Get(ctx, fn.NN(ingressSvc.Namespace, ingressSvc.Name), &ingressSvc); err != nil {
+			return nil, err
+		}
+	}
+
+	hosts := make([]HostEntry, 0, len(ingressList.Items))
+
+	for i := range ingressList.Items {
+		for j := range ingressList.Items[i].Spec.Rules {
 			hosts = append(hosts, HostEntry{
-				Hostname: hostname,
-				IP:       svc.Spec.ClusterIP,
+				Hostname: ingressList.Items[i].Spec.Rules[j].Host,
+				IP:       ingressSvc.Spec.ClusterIP,
 			})
 		}
 	}
