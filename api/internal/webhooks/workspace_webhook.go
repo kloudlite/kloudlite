@@ -308,6 +308,39 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		}
 	}
 
+	// Validate FolderName is required
+	if workspace.Spec.FolderName == "" {
+		return fmt.Errorf("folderName is required")
+	}
+
+	// Validate FolderName is unique within the same WorkMachine
+	// List all workspaces in the cluster
+	workspaceList := &workspacesv1.WorkspaceList{}
+	if err := w.k8sClient.List(ctx, workspaceList); err != nil {
+		return fmt.Errorf("failed to list workspaces: %w", err)
+	}
+
+	// Check if any other workspace in the same WorkMachine has the same FolderName
+	for _, ws := range workspaceList.Items {
+		// Skip the current workspace (for UPDATE operations)
+		if ws.Name == workspace.Name {
+			continue
+		}
+
+		// Skip workspaces being deleted
+		if ws.DeletionTimestamp != nil {
+			continue
+		}
+
+		// Only check workspaces in the same WorkMachine
+		if ws.Spec.WorkmachineName == workspace.Spec.WorkmachineName {
+			// Check if FolderName matches
+			if ws.Spec.FolderName == workspace.Spec.FolderName {
+				return fmt.Errorf("folderName '%s' is already used by workspace '%s' in WorkMachine '%s'. FolderName must be unique within each WorkMachine", workspace.Spec.FolderName, ws.Name, workspace.Spec.WorkmachineName)
+			}
+		}
+	}
+
 	// Validate displayName
 	if workspace.Spec.DisplayName == "" {
 		return fmt.Errorf("displayName is required")
