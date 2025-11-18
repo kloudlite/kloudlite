@@ -209,8 +209,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				// Admin routes for all machines
 				workMachines.GET("", workMachineHandlers.ListAllWorkMachines)
 				workMachines.GET("/:name", workMachineHandlers.GetWorkMachine)
-				workMachines.GET("/:name/metrics", workMachineHandlers.GetWorkMachineMetrics)
-				workMachines.GET("/:name/gpu-metrics", workMachineHandlers.GetWorkMachineGPUMetrics)
+				workMachines.GET("/:name/metrics-stream", workMachineHandlers.GetWorkMachineMetricsStream)
 			}
 
 			// Workspace routes (namespaced)

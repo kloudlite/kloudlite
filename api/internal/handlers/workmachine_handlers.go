@@ -12,7 +12,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/managers"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -437,98 +436,6 @@ type NodeMetrics struct {
 	Timestamp string `json:"timestamp"`
 }
 
-// GetWorkMachineMetrics handles GET /api/v1/work-machines/:name/metrics
-func (h *WorkMachineHandlers) GetWorkMachineMetrics(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	// Get work machine name from URL parameter
-	workMachineName := c.Param("name")
-	if workMachineName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Work machine name is required",
-		})
-		return
-	}
-
-	// Fetch the WorkMachine resource to get the node name
-	wm, err := h.manager.WorkMachineRepository.Get(ctx, workMachineName)
-	if err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Work machine not found",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	// Get node metrics from Kubernetes metrics API using the WorkMachine's name as node name
-	var nodeMetrics metricsv1beta1.NodeMetrics
-	if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &nodeMetrics); err != nil {
-		// Return empty metrics if not found (node might not be ready yet)
-		if apiErrors.IsNotFound(err) {
-			c.JSON(http.StatusOK, &NodeMetrics{
-				Timestamp: time.Now().UTC().Format(time.RFC3339),
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to fetch node metrics",
-		})
-		return
-	}
-
-	// Get node to read capacity and allocatable resources
-	var node corev1.Node
-	if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &node); err != nil {
-		// Return empty metrics if node not found
-		if apiErrors.IsNotFound(err) {
-			c.JSON(http.StatusOK, &NodeMetrics{
-				Timestamp: time.Now().UTC().Format(time.RFC3339),
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to fetch node info",
-		})
-		return
-	}
-
-	metrics := &NodeMetrics{
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	}
-
-	// CPU metrics
-	if cpu, ok := nodeMetrics.Usage[corev1.ResourceCPU]; ok {
-		metrics.CPU.Usage = cpu.MilliValue()
-	}
-	if capacity, ok := node.Status.Capacity[corev1.ResourceCPU]; ok {
-		metrics.CPU.Capacity = capacity.MilliValue()
-	}
-	if allocatable, ok := node.Status.Allocatable[corev1.ResourceCPU]; ok {
-		metrics.CPU.Allocatable = allocatable.MilliValue()
-	}
-
-	// Memory metrics
-	if mem, ok := nodeMetrics.Usage[corev1.ResourceMemory]; ok {
-		metrics.Memory.Usage = mem.Value()
-	}
-	if capacity, ok := node.Status.Capacity[corev1.ResourceMemory]; ok {
-		metrics.Memory.Capacity = capacity.Value()
-	}
-	if allocatable, ok := node.Status.Allocatable[corev1.ResourceMemory]; ok {
-		metrics.Memory.Allocatable = allocatable.Value()
-	}
-
-	c.JSON(http.StatusOK, metrics)
-}
-
 // GPUMetrics represents GPU metrics from workmachine-node-manager
 type GPUMetrics struct {
 	Detected          bool    `json:"detected"`
@@ -545,10 +452,16 @@ type GPUMetrics struct {
 	PowerLimit        float32 `json:"powerLimit,omitempty"`
 }
 
-// GetWorkMachineGPUMetrics handles GET /api/v1/work-machines/:name/gpu-metrics
-func (h *WorkMachineHandlers) GetWorkMachineGPUMetrics(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-	defer cancel()
+// MetricsStreamEvent represents a combined metrics event for SSE
+type MetricsStreamEvent struct {
+	NodeMetrics *NodeMetrics `json:"nodeMetrics,omitempty"`
+	GPUMetrics  *GPUMetrics  `json:"gpuMetrics,omitempty"`
+}
+
+// GetWorkMachineMetricsStream handles GET /api/v1/work-machines/:name/metrics-stream
+// This endpoint streams metrics updates via Server-Sent Events (SSE)
+func (h *WorkMachineHandlers) GetWorkMachineMetricsStream(c *gin.Context) {
+	ctx := c.Request.Context()
 
 	// Get work machine name from URL parameter
 	workMachineName := c.Param("name")
@@ -560,7 +473,7 @@ func (h *WorkMachineHandlers) GetWorkMachineGPUMetrics(c *gin.Context) {
 	}
 
 	// Verify WorkMachine exists
-	_, err := h.manager.WorkMachineRepository.Get(c.Request.Context(), workMachineName)
+	wm, err := h.manager.WorkMachineRepository.Get(ctx, workMachineName)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -574,53 +487,133 @@ func (h *WorkMachineHandlers) GetWorkMachineGPUMetrics(c *gin.Context) {
 		return
 	}
 
-	// Construct URL to workmachine-host-manager metrics endpoint
-	// Service name: hm-{workmachine-name}
-	// Namespace: kloudlite-hostmanager (where host managers run)
-	// Port: 8081
-	// Endpoint: /metrics/gpu
-	metricsURL := "http://hm-" + workMachineName + ".kloudlite-hostmanager:8081/metrics/gpu"
+	// Set SSE headers
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
 
-	// Make HTTP request to metrics endpoint
-	req, err := http.NewRequestWithContext(ctx, "GET", metricsURL, nil)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create metrics request: " + err.Error(),
-		})
-		return
+	// Create a ticker for 5-second intervals
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	// Helper function to fetch node metrics
+	fetchNodeMetrics := func() *NodeMetrics {
+		reqCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+
+		metrics := &NodeMetrics{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		}
+
+		// Get node metrics from Kubernetes metrics API
+		var nodeMetrics metricsv1beta1.NodeMetrics
+		if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &nodeMetrics); err != nil {
+			return metrics
+		}
+
+		// Get node to read capacity and allocatable resources
+		var node corev1.Node
+		if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &node); err != nil {
+			return metrics
+		}
+
+		// CPU metrics
+		if cpu, ok := nodeMetrics.Usage[corev1.ResourceCPU]; ok {
+			metrics.CPU.Usage = cpu.MilliValue()
+		}
+		if capacity, ok := node.Status.Capacity[corev1.ResourceCPU]; ok {
+			metrics.CPU.Capacity = capacity.MilliValue()
+		}
+		if allocatable, ok := node.Status.Allocatable[corev1.ResourceCPU]; ok {
+			metrics.CPU.Allocatable = allocatable.MilliValue()
+		}
+
+		// Memory metrics
+		if mem, ok := nodeMetrics.Usage[corev1.ResourceMemory]; ok {
+			metrics.Memory.Usage = mem.Value()
+		}
+		if capacity, ok := node.Status.Capacity[corev1.ResourceMemory]; ok {
+			metrics.Memory.Capacity = capacity.Value()
+		}
+		if allocatable, ok := node.Status.Allocatable[corev1.ResourceMemory]; ok {
+			metrics.Memory.Allocatable = allocatable.Value()
+		}
+
+		return metrics
 	}
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
+	// Helper function to fetch GPU metrics
+	fetchGPUMetrics := func() *GPUMetrics {
+		reqCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+
+		metricsURL := "http://hm-" + workMachineName + ".kloudlite-hostmanager:8081/metrics/gpu"
+		req, err := http.NewRequestWithContext(reqCtx, "GET", metricsURL, nil)
+		if err != nil {
+			return nil
+		}
+
+		httpClient := &http.Client{
+			Timeout: 3 * time.Second,
+		}
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return nil
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil
+		}
+
+		var metrics GPUMetrics
+		if err := json.NewDecoder(resp.Body).Decode(&metrics); err != nil {
+			return nil
+		}
+
+		return &metrics
 	}
 
-	resp, err := client.Do(req)
-	if err != nil {
-		// If the host manager pod isn't running yet, return a helpful message
-		c.JSON(http.StatusServiceUnavailable, gin.H{
-			"error":   "GPU metrics not available - host manager may not be ready",
-			"details": err.Error(),
-		})
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		c.JSON(resp.StatusCode, gin.H{
-			"error": "Metrics endpoint returned error status",
-		})
-		return
+	// Send initial metrics immediately
+	event := MetricsStreamEvent{
+		NodeMetrics: fetchNodeMetrics(),
+		GPUMetrics:  fetchGPUMetrics(),
 	}
 
-	// Decode response
-	var metrics GPUMetrics
-	if err := json.NewDecoder(resp.Body).Decode(&metrics); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to decode metrics response: " + err.Error(),
-		})
-		return
+	eventData, err := json.Marshal(event)
+	if err == nil {
+		c.Writer.Write([]byte("event: metrics\n"))
+		c.Writer.Write([]byte("data: "))
+		c.Writer.Write(eventData)
+		c.Writer.Write([]byte("\n\n"))
+		c.Writer.Flush()
 	}
 
-	// Return metrics directly (frontend expects GPUMetrics structure)
-	c.JSON(http.StatusOK, metrics)
+	// Stream metrics at regular intervals
+	for {
+		select {
+		case <-ctx.Done():
+			// Client disconnected
+			return
+		case <-ticker.C:
+			event := MetricsStreamEvent{
+				NodeMetrics: fetchNodeMetrics(),
+				GPUMetrics:  fetchGPUMetrics(),
+			}
+
+			eventData, err := json.Marshal(event)
+			if err != nil {
+				continue
+			}
+
+			// Write SSE event
+			c.Writer.Write([]byte("event: metrics\n"))
+			c.Writer.Write([]byte("data: "))
+			c.Writer.Write(eventData)
+			c.Writer.Write([]byte("\n\n"))
+			c.Writer.Flush()
+		}
+	}
 }
