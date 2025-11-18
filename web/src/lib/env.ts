@@ -9,9 +9,7 @@ function validateEnv() {
   const isBuildTime =
     typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build'
 
-  // Website and console modes use Supabase for managing installations (don't need API_URL)
   // Dashboard mode runs in tenant installations and uses the API server (needs API_URL)
-  const isSupabaseMode = appMode === 'website' || appMode === 'console'
   const isDashboardMode = appMode === 'dashboard'
 
   // Dashboard mode requires API_URL
