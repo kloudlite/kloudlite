@@ -5,3 +5,7 @@ includes:
     taskfile: ./api/Taskfile.yml
     dir: ./api
 
+  wm-ingress:
+    taskfile: ./api/cmd/wm-ingress-controller/Taskfile.yml
+    dir: ./api/cmd/wm-ingress-controller
+

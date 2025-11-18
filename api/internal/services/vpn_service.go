@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -156,44 +155,9 @@ func (s *vpnService) buildHostEntries(ctx context.Context, namespace string) ([]
 		return nil, err
 	}
 
-	svcNotFound := false
-	var ingressSvc corev1.Service
-	if err := s.k8sClient.Get(ctx, fn.NN("kube-system", "ingress-controller"), &ingressSvc); err != nil {
+	var routerSvc corev1.Service
+	if err := s.k8sClient.Get(ctx, fn.NN(namespace, "wm-ingress-controller"), &routerSvc); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return nil, err
-		}
-		svcNotFound = true
-	}
-
-	if svcNotFound {
-		ingressSvc = corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "ingress-controller",
-				Namespace: "kube-system",
-			},
-			Spec: corev1.ServiceSpec{
-				Type: corev1.ServiceTypeClusterIP,
-				Ports: []corev1.ServicePort{
-					{
-						Name:       "https",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       443,
-						TargetPort: intstr.FromString("websecure"),
-					},
-				},
-				Selector: map[string]string{
-					"app.kubernetes.io/instance": "traefik-kube-system",
-					"app.kubernetes.io/name":     "traefik",
-				},
-			},
-		}
-
-		if err := s.k8sClient.Create(ctx, &ingressSvc); err != nil {
-			return nil, err
-		}
-
-		<-time.After(1 * time.Second)
-		if err := s.k8sClient.Get(ctx, fn.NN(ingressSvc.Namespace, ingressSvc.Name), &ingressSvc); err != nil {
 			return nil, err
 		}
 	}
@@ -204,7 +168,7 @@ func (s *vpnService) buildHostEntries(ctx context.Context, namespace string) ([]
 		for j := range ingressList.Items[i].Spec.Rules {
 			hosts = append(hosts, HostEntry{
 				Hostname: ingressList.Items[i].Spec.Rules[j].Host,
-				IP:       ingressSvc.Spec.ClusterIP,
+				IP:       routerSvc.Spec.ClusterIP,
 			})
 		}
 	}

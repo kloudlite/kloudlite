@@ -20,10 +20,13 @@ import (
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -71,7 +74,8 @@ const (
 	// SSHUserName is the username for the SSH server
 	SSHUserName = "kloudlite"
 
-	wireguardTunnelImage = "ghcr.io/kloudlite/kloudlite/wireguard-server:latest"
+	wireguardTunnelImage     = "ghcr.io/kloudlite/kloudlite/wireguard-server:latest"
+	wmIngressControllerImage = "ghcr.io/kloudlite/kloudlite/wm-ingress-controller:development"
 )
 
 // Reconcile handles WorkMachine CR reconciliation
@@ -110,6 +114,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			Name:     "ensure-workspace-sshd-config",
 			Title:    "Ensure workspace-sshd-config ConfigMap",
 			OnCreate: r.ensureWorkspaceSSHDConfigMapStep,
+			OnDelete: nil,
+		},
+		{
+			Name:     "ensure-wm-ingress-controller",
+			Title:    "Ensure Workmachine Ingress Controller",
+			OnCreate: r.ensureWorkmachineIngressController,
 			OnDelete: nil,
 		},
 		{
@@ -227,6 +237,231 @@ AllowedIPs = %s/32
 	return config, nil
 }
 
+func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	deploymentName := "wm-ingress-controller"
+	serviceAccountName := "wm-ingress-controller"
+	clusterRoleName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+	clusterRoleBindingName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+
+	labels := map[string]string{
+		"app":                      "wm-ingress-controller",
+		"kloudlite.io/workmachine": obj.Name,
+	}
+
+	// Create ServiceAccount
+	serviceAccount := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceAccountName,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, serviceAccount, func() error {
+		if !fn.IsOwner(serviceAccount, obj) {
+			serviceAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		serviceAccount.Labels = labels
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller service account: %w", err))
+	}
+
+	// Create ClusterRole
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRole, func() error {
+		if !fn.IsOwner(clusterRole, obj) {
+			clusterRole.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		clusterRole.Labels = labels
+		clusterRole.Rules = []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"networking.k8s.io"},
+				Resources: []string{"ingresses"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller cluster role: %w", err))
+	}
+
+	// Create ClusterRoleBinding
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleBindingName,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRoleBinding, func() error {
+		if !fn.IsOwner(clusterRoleBinding, obj) {
+			clusterRoleBinding.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		clusterRoleBinding.Labels = labels
+		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     clusterRoleName,
+		}
+		clusterRoleBinding.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      serviceAccountName,
+				Namespace: obj.Spec.TargetNamespace,
+			},
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller cluster role binding: %w", err))
+	}
+
+	// Create Deployment
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deploymentName,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, deployment, func() error {
+		if !fn.IsOwner(deployment, obj) {
+			deployment.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+
+		deployment.Labels = labels
+
+		deployment.Spec = appsv1.DeploymentSpec{
+			Replicas: fn.Ptr(int32(1)),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: serviceAccountName,
+					NodeName:           obj.Name,
+					RestartPolicy:      corev1.RestartPolicyAlways,
+					Containers: []corev1.Container{
+						{
+							Name:            "wm-ingress-controller",
+							Image:           wmIngressControllerImage,
+							ImagePullPolicy: "Always",
+							Args: []string{
+								"--http-port",
+								"80",
+								"--https-port",
+								"443",
+
+								"--health-probe-bind-address",
+								":17777",
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "http",
+									ContainerPort: 80,
+									Protocol:      corev1.ProtocolTCP,
+								},
+								{
+									Name:          "https",
+									ContainerPort: 443,
+									Protocol:      corev1.ProtocolTCP,
+								},
+								{
+									Name:          "health",
+									ContainerPort: 17777,
+									Protocol:      corev1.ProtocolTCP,
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/healthz",
+										Port: intstr.FromInt(17777),
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       5,
+								TimeoutSeconds:      2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/healthz",
+										Port: intstr.FromInt(17777),
+									},
+								},
+								InitialDelaySeconds: 10,
+								PeriodSeconds:       30,
+								TimeoutSeconds:      5,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller deployment: %w", err))
+	}
+
+	// Now ensure the service exists
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wm-ingress-controller",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, service, func() error {
+		if !fn.IsOwner(service, obj) {
+			service.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+
+		service.Labels = labels
+
+		service.Spec = corev1.ServiceSpec{
+			Type:     corev1.ServiceTypeClusterIP,
+			Selector: labels,
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Port:       80,
+					TargetPort: intstr.FromInt(80),
+					Protocol:   corev1.ProtocolTCP,
+				},
+				{
+					Name:       "https",
+					Port:       443,
+					TargetPort: intstr.FromInt(443),
+					Protocol:   corev1.ProtocolTCP,
+				},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller service: %w", err))
+	}
+
+	return check.Passed()
+}
+
 // ensureTunnelServer creates and maintains the WireGuard tunnel server for the workmachine
 // This function is called when the WorkMachine is in running state
 func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
@@ -249,8 +484,8 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		if secret.Data != nil {
 			if existingConf, exists := secret.Data["tunnel-server.conf"]; exists {
 				// Extract existing private key from config
-				lines := strings.Split(string(existingConf), "\n")
-				for _, line := range lines {
+				lines := strings.SplitSeq(string(existingConf), "\n")
+				for line := range lines {
 					line = strings.TrimSpace(line)
 					if strings.HasPrefix(line, "PrivateKey") {
 						parts := strings.SplitN(line, "=", 2)
@@ -593,6 +828,10 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine")
 	builder.Owns(&corev1.Namespace{})
 	builder.Owns(&corev1.Pod{})
+	builder.Owns(&appsv1.Deployment{})
+	builder.Owns(&corev1.ServiceAccount{})
+	builder.Owns(&rbacv1.ClusterRole{})
+	builder.Owns(&rbacv1.ClusterRoleBinding{})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor("workmachine")))
 
 	// Watch for workspaces and trigger reconciliation of their owning WorkMachine
