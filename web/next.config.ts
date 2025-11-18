@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: "script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;",
           },
+          {
+            key: 'Permissions-Policy',
+            value: 'interest-cohort=(), browsing-topics=()',
+          },
         ],
       },
     ]

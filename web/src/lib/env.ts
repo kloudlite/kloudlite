@@ -2,7 +2,6 @@
 // Validate required environment variables at module load time
 function validateEnv() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
-  const webUrl = process.env.NEXT_PUBLIC_WEB_URL
   const appMode = process.env.APP_MODE || process.env.NEXT_PUBLIC_APP_MODE
 
   // Check if we're in build phase (next build) vs runtime
@@ -10,25 +9,17 @@ function validateEnv() {
   const isBuildTime =
     typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build'
 
-  // Website and console modes use Supabase for managing installations (don't need API_URL/WEB_URL)
-  // Dashboard mode runs in tenant installations and uses the API server (needs API_URL but not WEB_URL)
+  // Website and console modes use Supabase for managing installations (don't need API_URL)
+  // Dashboard mode runs in tenant installations and uses the API server (needs API_URL)
   const isSupabaseMode = appMode === 'website' || appMode === 'console'
   const isDashboardMode = appMode === 'dashboard'
 
-  // Dashboard mode requires API_URL but not WEB_URL
+  // Dashboard mode requires API_URL
   if (process.env.NODE_ENV === 'production' && !isBuildTime && isDashboardMode && !apiUrl) {
     throw new Error(
       'CRITICAL: NEXT_PUBLIC_API_URL environment variable is not set. ' +
         'Dashboard mode requires this to connect to the API server. ' +
         'Please set NEXT_PUBLIC_API_URL in your environment variables.',
-    )
-  }
-
-  // Only non-dashboard, non-supabase modes need WEB_URL (currently none, but keeping for future extensibility)
-  // For multi-tenant deployments, we use the same image for all modes, so we just warn instead of throwing
-  if (process.env.NODE_ENV === 'production' && !isBuildTime && !isSupabaseMode && !isDashboardMode && !webUrl) {
-    console.warn(
-      '⚠️  NEXT_PUBLIC_WEB_URL environment variable is not set. Using fallback value.',
     )
   }
 
@@ -39,15 +30,8 @@ function validateEnv() {
     }
   }
 
-  if ((process.env.NODE_ENV === 'development' || isBuildTime) && !webUrl) {
-    if (!isBuildTime) {
-      console.warn('⚠️  NEXT_PUBLIC_WEB_URL is not set. Falling back to http://localhost:3000')
-    }
-  }
-
   return {
     apiUrl: apiUrl || 'http://localhost:8080',
-    webUrl: webUrl || 'http://localhost:3000',
     env: process.env.NEXT_PUBLIC_ENV || 'development',
     isDevelopment: process.env.NODE_ENV === 'development',
     isProduction: process.env.NODE_ENV === 'production',

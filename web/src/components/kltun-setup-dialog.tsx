@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button'
 import { Copy, Check, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { env } from '@/lib/env'
 
 interface KltunSetupDialogProps {
   open: boolean
@@ -92,7 +91,7 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const serverUrl = tokenData?.server_url || env.webUrl
+  const serverUrl = tokenData?.server_url || ''
   const token = tokenData?.temporary_token || ''
 
   const getOneLineInstallScript = () => {
