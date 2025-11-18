@@ -109,6 +109,16 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // findMatchingRoute finds a route matching the request
 func (r *Router) findMatchingRoute(req *http.Request) *Route {
 	host := req.Host
+
+	if strings.HasPrefix(host, "vpn.") {
+		return &Route{
+			Host:       host,
+			Path:       "/",
+			PathType:   networkingv1.PathTypeExact,
+			BackendURL: "localhost:51443",
+		}
+	}
+
 	// Strip port from host if present
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		host = h

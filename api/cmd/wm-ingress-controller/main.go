@@ -17,12 +17,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
+	"github.com/go-logr/zapr"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/wmingress"
 )
 
-var (
-	scheme = runtime.NewScheme()
-)
+var scheme = runtime.NewScheme()
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -31,32 +30,22 @@ func init() {
 func main() {
 	var (
 		healthProbeAddr  string
-		namespace        string
 		httpPort         int
 		httpsPort        int
 		ingressClassName string
 	)
 
 	flag.StringVar(&healthProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&namespace, "namespace", "", "The namespace this controller is running in.")
 	flag.IntVar(&httpPort, "http-port", 8000, "The HTTP port for the ingress server.")
 	flag.IntVar(&httpsPort, "https-port", 8443, "The HTTPS port for the ingress server.")
 	flag.StringVar(&ingressClassName, "ingress-class", "", "The ingress class name to watch for.")
 	flag.Parse()
 
 	// Validate required flags
-	if namespace == "" {
-		namespace = os.Getenv("POD_NAMESPACE")
-		if namespace == "" {
-			fmt.Println("Error: namespace must be provided via --namespace flag or POD_NAMESPACE env var")
-			os.Exit(1)
-		}
-	}
-
-	if ingressClassName == "" {
-		fmt.Println("Error: ingress-class must be provided via --ingress-class flag")
-		os.Exit(1)
-	}
+	// if ingressClassName == "" {
+	// 	fmt.Println("Error: ingress-class must be provided via --ingress-class flag")
+	// 	os.Exit(1)
+	// }
 
 	// Setup logger
 	logConfig := zap.NewProductionConfig()
@@ -69,8 +58,10 @@ func main() {
 	}
 	defer logger.Sync()
 
+	// Set controller-runtime logger to use our zap logger
+	ctrl.SetLogger(zapr.NewLogger(logger))
+
 	logger.Info("Starting Ingress Controller",
-		zap.String("namespace", namespace),
 		zap.String("ingress-class", ingressClassName),
 		zap.Int("http-port", httpPort),
 		zap.Int("https-port", httpsPort),
@@ -79,7 +70,8 @@ func main() {
 	// Setup controller-runtime manager
 	// No leader election needed - this is a read-only controller
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme: scheme,
+		HealthProbeBindAddress: healthProbeAddr,
+		Scheme:                 scheme,
 		// Watch all namespaces for Ingress resources
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{},
@@ -94,7 +86,6 @@ func main() {
 		Client:           mgr.GetClient(),
 		Scheme:           mgr.GetScheme(),
 		Logger:           logger,
-		Namespace:        namespace,
 		IngressClassName: ingressClassName,
 		HTTPPort:         httpPort,
 		HTTPSPort:        httpsPort,

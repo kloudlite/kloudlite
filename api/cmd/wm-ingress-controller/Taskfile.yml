@@ -1,0 +1,18 @@
+version: 3
+
+tasks:
+  build:binary:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags='-s -w' -o bin/wm-ingress .
+
+  build:image:
+    env:
+      IMAGE: "ghcr.io/kloudlite/kloudlite/wm-ingress-controller:development"
+    # deps:
+    #   - task: build:server
+    cmds:
+      - docker build -t $IMAGE .
+      - docker push $IMAGE
+

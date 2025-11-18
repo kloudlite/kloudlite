@@ -23,7 +23,6 @@ type IngressReconciler struct {
 	client.Client
 	Scheme           *runtime.Scheme
 	Logger           *zap.Logger
-	Namespace        string
 	IngressClassName string
 	HTTPPort         int
 	HTTPSPort        int
@@ -59,11 +58,7 @@ func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *IngressReconciler) shouldProcessResource(obj client.Object) bool {
 	switch o := obj.(type) {
 	case *networkingv1.Ingress:
-		// Only process Ingress with matching ingressClassName
-		if o.Spec.IngressClassName == nil || *o.Spec.IngressClassName != r.IngressClassName {
-			return false
-		}
-		return true
+		return r.IngressClassName == "" || o.Spec.IngressClassName != nil || *o.Spec.IngressClassName == r.IngressClassName
 	case *corev1.Secret:
 		// Process all TLS secrets (we'll check if they're used by Ingress later)
 		return o.Type == corev1.SecretTypeTLS
