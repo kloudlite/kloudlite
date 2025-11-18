@@ -1,0 +1,107 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-registry-config
+  namespace: kloudlite
+data:
+  config.yml: |
+    version: 0.1
+    log:
+      fields:
+        service: registry
+    storage:
+      s3:
+        # Authentication: Uses IAM role attached to the AWS node (auto-detected from EC2 metadata)
+        # Region: Auto-detected from EC2 instance metadata
+        # Required IAM permissions: s3:ListBucket, s3:GetObject, s3:PutObject, s3:DeleteObject
+        region: ${REGION}
+        bucket: ${BUCKET_NAME}
+        encrypt: false
+        secure: true
+        v4auth: true
+        rootdirectory: /image-registry
+      delete:
+        enabled: true
+      cache:
+        blobdescriptor: inmemory
+    http:
+      addr: :5000
+      headers:
+        X-Content-Type-Options: [nosniff]
+    health:
+      storagedriver:
+        enabled: true
+        interval: 10s
+        threshold: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-registry
+  namespace: kloudlite
+  labels: &labels
+    app: image-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *labels
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+      - name: image-registry
+        image: registry:3
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+        env:
+        - name: OTEL_TRACES_EXPORTER
+          value: "none"
+        volumeMounts:
+        - name: registry-config
+          mountPath: /etc/distribution/config.yml
+          subPath: config.yml
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: registry-config
+        configMap:
+          name: image-registry-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-registry
+  namespace: kloudlite
+  labels:
+    app: image-registry
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+    app: image-registry

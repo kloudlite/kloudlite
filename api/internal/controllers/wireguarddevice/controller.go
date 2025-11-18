@@ -409,5 +409,6 @@ func (r *WireGuardDeviceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&wireguarddevicev1.WireGuardDevice{}).
 		Owns(&corev1.Secret{}).
+		WithEventFilter(reconciler.ReconcileFilter()).
 		Complete(r)
 }
