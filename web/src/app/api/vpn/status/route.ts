@@ -27,7 +27,7 @@ export async function GET() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
 
-      const response = await fetch(`${backendUrl}/api/v1/health`, {
+      const response = await fetch(`${backendUrl}/health`, {
         method: 'GET',
         signal: controller.signal,
         headers: {

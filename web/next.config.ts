@@ -7,6 +7,21 @@ const nextConfig: NextConfig = {
   // Compress responses
   compress: true,
 
+  // Security headers to block third-party tracking scripts
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;",
+          },
+        ],
+      },
+    ]
+  },
+
   // Enable experimental features
   experimental: {
     // Optimize package imports
