@@ -60,7 +60,7 @@ func (s *Server) Start(socketPath string) error {
 
 	// Set socket permissions (allow all users to connect)
 	// 0666 allows all users to read/write to the socket
-	if err := os.Chmod(socketPath, 0666); err != nil {
+	if err := os.Chmod(socketPath, 0o666); err != nil {
 		listener.Close()
 		return fmt.Errorf("failed to set socket permissions: %w", err)
 	}

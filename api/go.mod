@@ -39,6 +39,7 @@ require (
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	google.golang.org/api v0.253.0
 	gopkg.in/yaml.v3 v3.0.1
+	gvisor.dev/gvisor v0.0.0-20250503011706-39ed1f5ac29c
 	howett.net/plist v1.0.1
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
