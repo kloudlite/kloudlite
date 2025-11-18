@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Cpu, MemoryStick, Zap } from 'lucide-react'
-import { getWorkMachineMetrics, getWorkMachineGPUMetrics } from '@/app/actions/workspace.actions'
 
 interface NodeMetrics {
   cpu: {
@@ -50,6 +49,7 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
   const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
   const [gpuMetrics, setGpuMetrics] = useState<GPUMetrics | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const eventSourceRef = useRef<EventSource | null>(null)
 
   useEffect(() => {
     // Don't fetch metrics when machine is stopped or no name provided
@@ -57,45 +57,45 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
       return
     }
 
-    const fetchMetrics = async () => {
-      try {
-        const result = await getWorkMachineMetrics(workMachineName)
-        if (result.success && result.data) {
-          setMetrics(result.data)
-          setError(null)
-        } else {
-          setError(result.error || 'Failed to load metrics')
-        }
-      } catch (err) {
-        console.error('Failed to fetch work machine metrics:', err)
-        setError('Failed to load metrics')
-      }
+    // Close existing connection if any
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
     }
 
-    const fetchGPUMetrics = async () => {
-      try {
-        const result = await getWorkMachineGPUMetrics(workMachineName)
-        if (result.success && result.data) {
-          setGpuMetrics(result.data)
-        }
-      } catch (err) {
-        console.error('Failed to fetch GPU metrics:', err)
-        // Don't set error state for GPU metrics - it's optional
-      }
+    // Create SSE connection
+    const eventSource = new EventSource(
+      `/api/v1/work-machines/${workMachineName}/metrics-stream`
+    )
+    eventSourceRef.current = eventSource
+
+    eventSource.onopen = () => {
+      console.log('SSE connection established for metrics')
+      setError(null)
     }
 
-    // Initial fetch
-    fetchMetrics()
-    fetchGPUMetrics()
+    eventSource.addEventListener('metrics', (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.nodeMetrics) {
+          setMetrics(data.nodeMetrics)
+        }
+        if (data.gpuMetrics) {
+          setGpuMetrics(data.gpuMetrics)
+        }
+      } catch (err) {
+        console.error('Failed to parse metrics event:', err)
+      }
+    })
 
-    // Poll every 3 seconds
-    const intervalId = setInterval(() => {
-      fetchMetrics()
-      fetchGPUMetrics()
-    }, 3000)
+    eventSource.onerror = (err) => {
+      console.error('SSE connection error:', err)
+      setError('Failed to load metrics - connection error')
+      eventSource.close()
+    }
 
     return () => {
-      clearInterval(intervalId)
+      eventSource.close()
+      eventSourceRef.current = null
     }
   }, [workMachineName, machineState])
 
