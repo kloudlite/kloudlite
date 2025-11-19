@@ -15,7 +15,7 @@ spec:
     listKind: WorkspaceList
     plural: workspaces
     singular: workspace
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.displayName

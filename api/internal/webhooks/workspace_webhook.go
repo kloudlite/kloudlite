@@ -313,17 +313,20 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		return fmt.Errorf("folderName is required")
 	}
 
-	// Validate FolderName is unique within the same WorkMachine
-	// List all workspaces in the cluster
+	// Use WorkMachine's target namespace for scoping workspace uniqueness validation
+	targetNamespace := workMachine.Spec.TargetNamespace
+
+	// Validate FolderName is unique within the same WorkMachine (now scoped by namespace)
+	// List workspaces only in the target namespace
 	workspaceList := &workspacesv1.WorkspaceList{}
-	if err := w.k8sClient.List(ctx, workspaceList); err != nil {
+	if err := w.k8sClient.List(ctx, workspaceList, client.InNamespace(targetNamespace)); err != nil {
 		return fmt.Errorf("failed to list workspaces: %w", err)
 	}
 
-	// Check if any other workspace in the same WorkMachine has the same FolderName
+	// Check if any other workspace in the same namespace has the same FolderName
 	for _, ws := range workspaceList.Items {
 		// Skip the current workspace (for UPDATE operations)
-		if ws.Name == workspace.Name {
+		if ws.Name == workspace.Name && ws.Namespace == workspace.Namespace {
 			continue
 		}
 
@@ -587,10 +590,10 @@ func (w *WorkspaceWebhook) validateServiceIntercepts(ctx context.Context, worksp
 func (w *WorkspaceWebhook) validateCloneSource(ctx context.Context, workspace *workspacesv1.Workspace) error {
 	sourceWorkspaceName := workspace.Spec.CopyFrom
 
-	// Fetch source workspace
+	// Fetch source workspace (need to look in same namespace since workspaces are now namespaced)
 	var sourceWorkspace workspacesv1.Workspace
-	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspaceName}, &sourceWorkspace); err != nil {
-		return fmt.Errorf("source workspace '%s' does not exist", sourceWorkspaceName)
+	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspaceName, Namespace: workspace.Namespace}, &sourceWorkspace); err != nil {
+		return fmt.Errorf("source workspace '%s' does not exist in namespace '%s'", sourceWorkspaceName, workspace.Namespace)
 	}
 
 	// Validate source workspace is not being deleted

@@ -55,10 +55,11 @@ func (r *CompositionReconciler) reconcileIntercepts(ctx context.Context, composi
 func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, composition *v1.Composition, intercept *v1.ServiceInterceptConfig, logger *zap.Logger) error {
 	logger = logger.With(zap.String("service", intercept.ServiceName))
 
-	// Step 1: Validate workspace (cluster-scoped)
+	// Step 1: Validate workspace (namespaced)
 	workspace := &workspacesv1.Workspace{}
 	err := r.Get(ctx, client.ObjectKey{
-		Name: intercept.WorkspaceRef.Name,
+		Name:      intercept.WorkspaceRef.Name,
+		Namespace: intercept.WorkspaceRef.Namespace,
 	}, workspace)
 
 	if err != nil {

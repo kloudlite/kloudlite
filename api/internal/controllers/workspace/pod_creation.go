@@ -55,6 +55,10 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 			Value: workspace.Name,
 		},
 		{
+			Name:  "WORKSPACE_NAMESPACE",
+			Value: workspace.Namespace,
+		},
+		{
 			Name:  "WORKSPACE_OWNER",
 			Value: workspace.Spec.OwnedBy,
 		},
