@@ -158,9 +158,9 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	var tlsHosts []string
 
 	for prefix, svc := range httpServices {
-		// Use pattern: {prefix}-{folderName}-{username}.{subdomain}
+		// Use pattern: {prefix}-{workspaceName}-{username}.{subdomain}
 		// Example: claude-mine-karthik.eastman.khost.dev
-		host := fmt.Sprintf("%s-%s-%s.%s", prefix, workspace.Spec.FolderName, sanitizedUsername, domainRequest.Status.Subdomain)
+		host := fmt.Sprintf("%s-%s-%s.%s", prefix, workspace.Name, sanitizedUsername, domainRequest.Status.Subdomain)
 		tlsHosts = append(tlsHosts, host)
 
 		pathType := networkingv1.PathTypePrefix

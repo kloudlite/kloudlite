@@ -88,12 +88,6 @@ type WorkspaceSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	OwnedBy string `json:"ownedBy"`
 
-	// FolderName is the name of the workspace folder on the host (without username prefix)
-	// This is the original workspace name without the username-- prefix
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	FolderName string `json:"folderName"`
-
 	// WorkmachineName references the WorkMachine this workspace belongs to
 	// The workspace will run in the WorkMachine's targetNamespace
 	// +kubebuilder:validation:Required

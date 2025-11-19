@@ -100,7 +100,7 @@ func (r *WorkspaceReconciler) handleCloningPending(
 	// Store source workspace details
 	workspace.Status.CloningStatus.SourceWorkspaceName = sourceWorkspace.Name
 	workspace.Status.CloningStatus.SourceWorkmachineName = sourceWorkspace.Spec.WorkmachineName
-	workspace.Status.CloningStatus.SourceFolderName = sourceWorkspace.Spec.FolderName
+	workspace.Status.CloningStatus.SourceFolderName = sourceWorkspace.Name
 
 	// Move to Suspending phase
 	workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseSuspending

@@ -48,7 +48,7 @@ func (c *WorkspaceDirectoryCopier) createSenderJob(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get job namespace: %w", err)
 	}
-	sourceFolderPath := fmt.Sprintf("/var/lib/kloudlite/home/workspaces/%s", sourceWorkspace.Spec.FolderName)
+	sourceFolderPath := fmt.Sprintf("/var/lib/kloudlite/home/workspaces/%s", sourceWorkspace.Name)
 
 	logger.Info("Creating sender job",
 		zap.String("jobName", jobName),
@@ -183,7 +183,7 @@ func (c *WorkspaceDirectoryCopier) createReceiverJob(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get job namespace: %w", err)
 	}
-	targetFolderPath := fmt.Sprintf("/var/lib/kloudlite/home/workspaces/%s", workspace.Spec.FolderName)
+	targetFolderPath := fmt.Sprintf("/var/lib/kloudlite/home/workspaces/%s", workspace.Name)
 
 	logger.Info("Creating receiver job",
 		zap.String("jobName", jobName),

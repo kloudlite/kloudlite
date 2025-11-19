@@ -108,8 +108,6 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	workspace.Spec.OwnedBy = username
 	// Set WorkmachineName to the actual WorkMachine name (not the namespace)
 	workspace.Spec.WorkmachineName = workMachine.Name
-	// Set FolderName to the original workspace name (without username prefix)
-	workspace.Spec.FolderName = req.Name
 
 	// Note: Default values are set by the admission webhook
 

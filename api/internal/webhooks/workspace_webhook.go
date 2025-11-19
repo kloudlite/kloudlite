@@ -148,15 +148,6 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 		})
 	}
 
-	// Auto-generate folderName if not specified (use workspace name)
-	if workspace.Spec.FolderName == "" {
-		patches = append(patches, map[string]interface{}{
-			"op":    "add",
-			"path":  "/spec/folderName",
-			"value": workspace.Name,
-		})
-	}
-
 	// Ensure labels map exists
 	if workspace.Labels == nil {
 		patches = append(patches, map[string]interface{}{
@@ -314,42 +305,6 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		// Check if WorkMachine is running - it must be in running state for workspace to be active
 		if workMachine.Status.State != machinesv1.MachineStateRunning {
 			return fmt.Errorf("cannot activate workspace: WorkMachine '%s' is currently '%s'. Please wait for the WorkMachine to be running before activating workspaces", workspace.Spec.WorkmachineName, workMachine.Status.State)
-		}
-	}
-
-	// Validate FolderName is required
-	if workspace.Spec.FolderName == "" {
-		return fmt.Errorf("folderName is required")
-	}
-
-	// Use WorkMachine's target namespace for scoping workspace uniqueness validation
-	targetNamespace := workMachine.Spec.TargetNamespace
-
-	// Validate FolderName is unique within the same WorkMachine (now scoped by namespace)
-	// List workspaces only in the target namespace
-	workspaceList := &workspacesv1.WorkspaceList{}
-	if err := w.k8sClient.List(ctx, workspaceList, client.InNamespace(targetNamespace)); err != nil {
-		return fmt.Errorf("failed to list workspaces: %w", err)
-	}
-
-	// Check if any other workspace in the same namespace has the same FolderName
-	for _, ws := range workspaceList.Items {
-		// Skip the current workspace (for UPDATE operations)
-		if ws.Name == workspace.Name && ws.Namespace == workspace.Namespace {
-			continue
-		}
-
-		// Skip workspaces being deleted
-		if ws.DeletionTimestamp != nil {
-			continue
-		}
-
-		// Only check workspaces in the same WorkMachine
-		if ws.Spec.WorkmachineName == workspace.Spec.WorkmachineName {
-			// Check if FolderName matches
-			if ws.Spec.FolderName == workspace.Spec.FolderName {
-				return fmt.Errorf("folderName '%s' is already used by workspace '%s' in WorkMachine '%s'. FolderName must be unique within each WorkMachine", workspace.Spec.FolderName, ws.Name, workspace.Spec.WorkmachineName)
-			}
 		}
 	}
 
