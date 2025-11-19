@@ -28,7 +28,6 @@ import { CloneEnvironmentDialog } from '@/components/dialogs/clone-environment'
 import { activateEnvironment, deactivateEnvironment } from '@/app/actions/environment.actions'
 import { toast } from 'sonner'
 import type { EnvironmentUIModel } from '@/types/environment'
-import { formatResourceName } from '@/lib/utils'
 
 interface EnvironmentsListProps {
   environments: EnvironmentUIModel[]
@@ -268,7 +267,7 @@ export function EnvironmentsList({
                     href={`/environments/${env.id}`}
                     className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                   >
-                    {formatResourceName(env.name)}
+                    {env.name}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 </td>
