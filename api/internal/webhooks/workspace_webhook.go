@@ -575,11 +575,6 @@ func (w *WorkspaceWebhook) validateCloneSource(ctx context.Context, workspace *w
 		return fmt.Errorf("source workspace's WorkMachine '%s' is currently '%s'. WorkMachine must be running to clone workspace", sourceWorkspace.Spec.WorkmachineName, sourceWorkMachine.Status.State)
 	}
 
-	// Validate target workspace has different FolderName than source
-	if workspace.Spec.FolderName == sourceWorkspace.Spec.FolderName {
-		return fmt.Errorf("target workspace must have a different folderName than source workspace. Both have folderName '%s'", workspace.Spec.FolderName)
-	}
-
 	// Validate user has permission to clone (must be same owner)
 	if workspace.Spec.OwnedBy != sourceWorkspace.Spec.OwnedBy {
 		return fmt.Errorf("can only clone workspaces you own. Source workspace is owned by '%s' but target is owned by '%s'", sourceWorkspace.Spec.OwnedBy, workspace.Spec.OwnedBy)
