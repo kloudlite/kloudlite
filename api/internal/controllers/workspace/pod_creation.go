@@ -17,7 +17,7 @@ import (
 
 // createWorkspacePod creates a pod with multiple containers for different access methods
 func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspace) (*corev1.Pod, error) {
-	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+	podName := workspace.Name
 
 	// Get nodeSelector from the user's WorkMachine to ensure workspace runs on the same node
 	// This is important for shared Nix store access via hostPath volumes
@@ -70,7 +70,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	// Include /home/kl/.local/bin for user-installed npm packages like Claude Code
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "PATH",
-		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/workspace-%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Spec.FolderName),
+		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Spec.FolderName),
 	})
 
 	// Add startup script from settings if provided

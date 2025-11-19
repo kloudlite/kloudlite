@@ -73,7 +73,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	}
 
 	// Check if pod already exists
-	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+	podName := workspace.Name
 	pod := &corev1.Pod{}
 	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
@@ -201,7 +201,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 	}
 
 	// Check if pod exists
-	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+	podName := workspace.Name
 	pod := &corev1.Pod{}
 	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
