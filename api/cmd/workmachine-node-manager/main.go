@@ -1298,13 +1298,14 @@ type WorkspaceCleanupReconciler struct {
 func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
 		zap2.String("workspace", req.Name),
+		zap2.String("namespace", req.Namespace),
 	)
 
 	logger.Info("Reconciling Workspace for directory cleanup")
 
-	// Fetch Workspace (cluster-scoped, no namespace)
+	// Fetch Workspace (namespaced)
 	workspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: req.Name}, workspace); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, workspace); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			logger.Info("Workspace deleted or not found")
 			return reconcile.Result{}, nil
