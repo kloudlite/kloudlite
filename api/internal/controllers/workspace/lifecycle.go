@@ -16,6 +16,41 @@ import (
 
 // handleActiveWorkspace ensures the workspace pod is running
 func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+	// Check if workspace is being used as a cloning source
+	if workspace.Status.SourceCloningStatus != nil {
+		logger.Info("Workspace is being used as cloning source, ensuring it's suspended",
+			zap.String("phase", string(workspace.Status.SourceCloningStatus.Phase)),
+			zap.String("targetWorkspace", workspace.Status.SourceCloningStatus.TargetWorkspaceName))
+
+		// Get target namespace to check and delete pod if needed
+		targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+		if err != nil {
+			logger.Warn("Failed to get target namespace for source workspace suspension", zap.Error(err))
+		} else {
+			// Check if pod exists and delete it to ensure data consistency during cloning
+			podName := workspace.Name
+			pod := &corev1.Pod{}
+			err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
+			if err == nil {
+				// Pod exists, delete it
+				logger.Info("Deleting source workspace pod for cloning", zap.String("pod", podName))
+				if err := r.Delete(ctx, pod); err != nil && !apierrors.IsNotFound(err) {
+					logger.Warn("Failed to delete source workspace pod", zap.Error(err))
+				}
+			}
+		}
+
+		// Ensure workspace pod is suspended while being cloned
+		workspace.Status.Phase = "Suspended"
+		workspace.Status.Message = fmt.Sprintf("Workspace suspended for cloning to %s", workspace.Status.SourceCloningStatus.TargetWorkspaceName)
+		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+			logger.Warn("Failed to update status for source cloning", zap.Error(err))
+		}
+
+		// Requeue to check again later
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
 	if err != nil {
