@@ -137,9 +137,32 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 			}
 		}
 
-		// Update workspace status
-		logger.Info("Workspace pod already exists", zap.String("pod", podName))
-		return r.updateWorkspaceStatus(ctx, workspace, pod, "Running", "Workspace is running", logger)
+		// Update workspace status based on pod phase
+		logger.Info("Workspace pod already exists", zap.String("pod", podName), zap.String("podPhase", string(pod.Status.Phase)))
+
+		// Set phase and message based on actual pod status
+		phase := "Creating"
+		message := "Workspace pod is starting"
+
+		switch pod.Status.Phase {
+		case corev1.PodRunning:
+			phase = "Running"
+			message = "Workspace is running"
+		case corev1.PodPending:
+			phase = "Creating"
+			message = "Workspace pod is pending"
+		case corev1.PodFailed:
+			phase = "Failed"
+			message = fmt.Sprintf("Workspace pod failed: %s", pod.Status.Message)
+		case corev1.PodSucceeded:
+			phase = "Stopped"
+			message = "Workspace pod completed"
+		default:
+			phase = "Creating"
+			message = fmt.Sprintf("Workspace pod status: %s", pod.Status.Phase)
+		}
+
+		return r.updateWorkspaceStatus(ctx, workspace, pod, phase, message, logger)
 	}
 
 	if !apierrors.IsNotFound(err) {

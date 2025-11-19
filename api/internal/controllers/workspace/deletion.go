@@ -173,6 +173,16 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		return reconcile.Result{}, nil
 	}
 
+	// Update status to show workspace is being deleted
+	if workspace.Status.Phase != "Terminating" {
+		workspace.Status.Phase = "Terminating"
+		workspace.Status.Message = "Workspace is being deleted"
+		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+			logger.Warn("Failed to update status to Terminating", zap.Error(err))
+			// Continue with deletion even if status update fails
+		}
+	}
+
 	// Check if WorkMachine owner is being deleted
 	workMachineBeingDeleted := false
 	if workspace.Spec.WorkmachineName != "" {
