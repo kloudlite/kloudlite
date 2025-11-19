@@ -70,7 +70,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	// Include /home/kl/.local/bin for user-installed npm packages like Claude Code
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "PATH",
-		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Spec.FolderName),
+		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
 	})
 
 	// Add startup script from settings if provided
@@ -184,7 +184,7 @@ cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 %s
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
-`, workspace.Spec.FolderName, workspace.Spec.FolderName, workspace.Spec.FolderName, searchDomains, contextJSON)
+`, workspace.Name, workspace.Name, workspace.Name, searchDomains, contextJSON)
 							}(),
 						},
 						VolumeMounts: []corev1.VolumeMount{
@@ -210,7 +210,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 
 				// Add git clone init container if git repository is specified
 				if workspace.Spec.GitRepository != nil && workspace.Spec.GitRepository.URL != "" {
-					workspaceDir := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Spec.FolderName)
+					workspaceDir := fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name)
 
 					// Build git clone command with SSH config to disable host key checking
 					// SSH keys are mounted from /var/lib/kloudlite/ssh-config on host to /root/.ssh
@@ -296,7 +296,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							Protocol:      corev1.ProtocolTCP,
 						},
 					},
-					WorkingDir: fmt.Sprintf("/home/kl/workspaces/%s", workspace.Spec.FolderName),
+					WorkingDir: fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name),
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "nix-store",

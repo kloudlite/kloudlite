@@ -100,9 +100,9 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
 			sanitizedUsername = regexp.MustCompile(`[^a-z0-9-]`).ReplaceAllString(sanitizedUsername, "-")
 
-			// Use pattern: {prefix}-{folderName}-{username}.{subdomain}
+			// Use pattern: {prefix}-{workspaceName}-{username}.{subdomain}
 			// Example: claude-mine-karthik.eastman.khost.dev
-			baseDomain := fmt.Sprintf("%s-%s.%s", workspace.Spec.FolderName, sanitizedUsername, domainRequest.Status.Subdomain)
+			baseDomain := fmt.Sprintf("%s-%s.%s", workspace.Name, sanitizedUsername, domainRequest.Status.Subdomain)
 				// Use public HTTPS domain URLs
 				accessURLs["code-server"] = fmt.Sprintf("https://vscode-%s", baseDomain)
 				accessURLs["ttyd"] = fmt.Sprintf("https://tty-%s", baseDomain)
