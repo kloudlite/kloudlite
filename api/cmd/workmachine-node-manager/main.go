@@ -1655,8 +1655,15 @@ func main() {
 		},
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{
-				namespace:       {}, // Watch PackageRequests and Secrets in kloudlite-hostmanager
-				workmachineName: {}, // Watch Workspaces in workmachine namespace (e.g., wm-karthik)
+				namespace: {}, // Watch PackageRequests and Secrets in kloudlite-hostmanager
+			},
+			ByObject: map[client.Object]cache.ByObject{
+				// Watch Workspaces in workmachine namespace (e.g., wm-karthik)
+				&workspacev1.Workspace{}: {
+					Namespaces: map[string]cache.Config{
+						workmachineName: {},
+					},
+				},
 			},
 			// Cluster-scoped resources (Nodes) are watched globally by default
 		},
