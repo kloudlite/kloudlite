@@ -42,7 +42,13 @@ func New() (*Client, error) {
 		workspaceName = os.Getenv("HOSTNAME")
 	}
 	if workspaceNamespace == "" {
-		workspaceNamespace = "default"
+		// Try to read namespace from serviceaccount (in-cluster)
+		namespaceBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+		if err == nil {
+			workspaceNamespace = strings.TrimSpace(string(namespaceBytes))
+		} else {
+			workspaceNamespace = "default"
+		}
 	}
 
 	// Create Kubernetes config
@@ -66,12 +72,13 @@ func New() (*Client, error) {
 	}, nil
 }
 
-// Get retrieves the current workspace (cluster-scoped resource)
+// Get retrieves the current workspace (namespaced resource)
 func (c *Client) Get(ctx context.Context) (*workspacesv1.Workspace, error) {
 	workspace := &workspacesv1.Workspace{}
-	// Workspace is cluster-scoped, so we only use Name (no Namespace)
+	// Workspace is now namespaced, so we need both Name and Namespace
 	err := c.K8sClient.Get(ctx, types.NamespacedName{
-		Name: c.Name,
+		Name:      c.Name,
+		Namespace: c.Namespace,
 	}, workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workspace: %w", err)

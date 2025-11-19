@@ -49,9 +49,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 
 	logger.Info("Reconciling Workspace")
 
-	// Fetch the Workspace instance (cluster-scoped, no namespace)
+	// Fetch the Workspace instance (namespaced)
 	workspace := &workspacev1.Workspace{}
-	err := r.Get(ctx, client.ObjectKey{Name: req.Name}, workspace)
+	err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, workspace)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Workspace not found, likely deleted")
@@ -220,10 +220,11 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		return fmt.Errorf("failed to create/update ServiceAccount: %w", err)
 	}
 
-	// Create workspace-specific ClusterRole with ResourceNames restrictions
-	clusterRole := &rbacv1.ClusterRole{
+	// Create workspace-specific Role with ResourceNames restrictions
+	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workspace-%s-access", workspaceName),
+			Name:      fmt.Sprintf("workspace-%s-access", workspaceName),
+			Namespace: namespace,
 			Labels: map[string]string{
 				"kloudlite.io/workspace-rbac": "true",
 				"kloudlite.io/workspace-name": workspaceName,
@@ -231,13 +232,13 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, role, func() error {
 		// Set Workspace as owner for cascade deletion
-		if err := controllerutil.SetControllerReference(workspace, clusterRole, r.Scheme); err != nil {
-			return fmt.Errorf("failed to set owner reference on ClusterRole: %w", err)
+		if err := controllerutil.SetControllerReference(workspace, role, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference on Role: %w", err)
 		}
 
-		clusterRole.Rules = []rbacv1.PolicyRule{
+		role.Rules = []rbacv1.PolicyRule{
 			{
 				// Allow access only to this specific workspace
 				APIGroups:     []string{"workspaces.kloudlite.io"},
@@ -294,13 +295,14 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("failed to create/update ClusterRole: %w", err)
+		return fmt.Errorf("failed to create/update Role: %w", err)
 	}
 
-	// Create ClusterRoleBinding for the workspace service account
-	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+	// Create RoleBinding for the workspace service account
+	roleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("workspace-%s-binding", workspaceName),
+			Name:      fmt.Sprintf("workspace-%s-binding", workspaceName),
+			Namespace: namespace,
 			Labels: map[string]string{
 				"kloudlite.io/workspace-rbac": "true",
 				"kloudlite.io/workspace-name": workspaceName,
@@ -308,13 +310,13 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, roleBinding, func() error {
 		// Set Workspace as owner for cascade deletion
-		if err := controllerutil.SetControllerReference(workspace, clusterRoleBinding, r.Scheme); err != nil {
-			return fmt.Errorf("failed to set owner reference on ClusterRoleBinding: %w", err)
+		if err := controllerutil.SetControllerReference(workspace, roleBinding, r.Scheme); err != nil {
+			return fmt.Errorf("failed to set owner reference on RoleBinding: %w", err)
 		}
 
-		clusterRoleBinding.Subjects = []rbacv1.Subject{
+		roleBinding.Subjects = []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
 				Name:      fmt.Sprintf("workspace-%s", workspaceName),
@@ -322,20 +324,20 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 			},
 		}
 
-		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
+		roleBinding.RoleRef = rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
+			Kind:     "Role",
 			Name:     fmt.Sprintf("workspace-%s-access", workspaceName),
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("failed to create/update ClusterRoleBinding: %w", err)
+		return fmt.Errorf("failed to create/update RoleBinding: %w", err)
 	}
 
 	logger.Info("Successfully created workspace-specific RBAC",
-		zap.String("clusterRole", clusterRole.Name),
-		zap.String("clusterRoleBinding", clusterRoleBinding.Name))
+		zap.String("role", role.Name),
+		zap.String("roleBinding", roleBinding.Name))
 
 	return nil
 }
