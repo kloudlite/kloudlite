@@ -82,14 +82,11 @@ export async function POST(request: NextRequest) {
       userName,
     )
 
-    // Generate origin certificate for all wildcard levels
+    // Generate origin certificate for exact subdomain only
     // This certificate will be used by ALL HAProxy instances for this installation
     console.log(`Generating origin certificate for installation: ${installationId}`)
     const originCertHostnames = [
       `${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-      `*.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-      `*.*.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
-      `*.*.*.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
     ]
 
     const originCert = await generateCertificate(originCertHostnames)
