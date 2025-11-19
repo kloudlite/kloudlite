@@ -91,9 +91,9 @@ func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 		zap.String("workMachine", workMachine.Name),
 		zap.String("namespace", workMachineNamespace))
 
-	// Prefix workspace name with username to avoid conflicts
-	// Format: {username}--{workspacename}
-	workspaceName := fmt.Sprintf("%s--%s", username, req.Name)
+	// Use workspace name directly (no username prefix)
+	// Workspaces are namespaced to WorkMachine, ensuring uniqueness
+	workspaceName := req.Name
 
 	// Create the workspace resource in the WorkMachine's namespace
 	workspace := &workspacesv1.Workspace{
