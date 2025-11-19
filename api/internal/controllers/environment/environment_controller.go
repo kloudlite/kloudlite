@@ -138,21 +138,54 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			desiredState = environmentsv1.EnvironmentStateActive
 		}
 
-		// Detect deactivation transition (from active to inactive)
-		wasActive := environment.Status.State == environmentsv1.EnvironmentStateActive
+		// Detect activation/deactivation transitions
+		currentState := environment.Status.State
+		wasActive := currentState == environmentsv1.EnvironmentStateActive
+		wasInactive := currentState == environmentsv1.EnvironmentStateInactive
+		willBeActive := desiredState == environmentsv1.EnvironmentStateActive
 		willBeInactive := desiredState == environmentsv1.EnvironmentStateInactive
 
+		// Handle deactivation transition
 		if wasActive && willBeInactive {
+			// Set to deactivating state first
+			if currentState != environmentsv1.EnvironmentStateDeactivating {
+				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateDeactivating, "Environment is being deactivated", logger); err != nil {
+					logger.Error("Failed to update status to deactivating", zap.Error(err))
+				}
+			}
+
 			// Environment is being deactivated - disconnect workspaces and remove service intercepts
 			logger.Info("Environment is being deactivated, cleaning up connections")
 			if err := r.handleEnvironmentDeactivation(ctx, environment, logger); err != nil {
 				logger.Error("Failed to complete environment deactivation cleanup", zap.Error(err))
 				// Continue with status update even if cleanup partially fails
 			}
+
+			// Now set to inactive
+			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateInactive, "Environment is inactive", logger); err != nil {
+				logger.Error("Failed to update environment status after retries", zap.Error(err))
+			}
+			return reconcile.Result{}, nil
 		}
 
-		// Only update status if state actually changed
-		if environment.Status.State != desiredState {
+		// Handle activation transition
+		if wasInactive && willBeActive {
+			// Set to activating state first
+			if currentState != environmentsv1.EnvironmentStateActivating {
+				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateActivating, "Environment is being activated", logger); err != nil {
+					logger.Error("Failed to update status to activating", zap.Error(err))
+				}
+			}
+
+			// Now set to active
+			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateActive, "Environment is active", logger); err != nil {
+				logger.Error("Failed to update environment status after retries", zap.Error(err))
+			}
+			return reconcile.Result{}, nil
+		}
+
+		// Only update status if state actually changed (no transition states)
+		if currentState != desiredState {
 			message := "Environment is inactive"
 			if desiredState == environmentsv1.EnvironmentStateActive {
 				message = "Environment is active"

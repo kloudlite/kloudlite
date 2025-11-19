@@ -127,6 +127,15 @@ func (r *EnvironmentReconciler) ensureNamespaceExists(ctx context.Context, envir
 	}
 
 	// Namespace doesn't exist, create it
+	// Update status to show namespace is being created
+	if environment.Status.State != environmentsv1.EnvironmentStateInactive {
+		// Only update if we're not already in an appropriate state
+		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateInactive, "Creating namespace for environment", logger); err != nil {
+			logger.Warn("Failed to update status to creating", zap.Error(err))
+			// Continue with namespace creation even if status update fails
+		}
+	}
+
 	if err := r.createNamespace(ctx, environment, logger); err != nil {
 		return false, err
 	}
