@@ -21,7 +21,7 @@ import (
 
 // ensureWorkspaceService ensures a Service is created for the workspace
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	serviceName := fmt.Sprintf("workspace-%s", workspace.Name)
+	serviceName := workspace.Name
 
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
@@ -147,7 +147,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	}
 
 	// Service name that ingress will route to
-	serviceName := fmt.Sprintf("workspace-%s", workspace.Name)
+	serviceName := workspace.Name
 
 	// Sanitize username for DNS compatibility (lowercase, replace invalid chars with hyphens)
 	sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
@@ -221,7 +221,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 // ensureWorkspaceHeadlessService ensures a headless Service is created for the workspace
 // This headless service is used by service intercepts to route traffic to workspace pods
 func (r *WorkspaceReconciler) ensureWorkspaceHeadlessService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	headlessServiceName := fmt.Sprintf("workspace-%s-headless", workspace.Name)
+	headlessServiceName := fmt.Sprintf("%s-headless", workspace.Name)
 
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)

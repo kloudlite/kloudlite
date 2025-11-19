@@ -37,7 +37,7 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 			Spec: packagesv1.PackageRequestSpec{
 				WorkspaceRef: workspace.Name,
 				Packages:     workspace.Spec.Packages,
-				ProfileName:  fmt.Sprintf("workspace-%s-packages", workspace.Name),
+				ProfileName:  fmt.Sprintf("%s-packages", workspace.Name),
 			},
 		}
 

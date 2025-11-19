@@ -194,11 +194,10 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 	namespace := workmachine.Spec.TargetNamespace
 	workspaceName := workspace.Name
 
-	// Create ServiceAccount for the workspace
-	serviceAccountName := fmt.Sprintf("workspace-%s", workspaceName)
+	// Create ServiceAccount for the workspace (no prefix needed since namespaced)
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      serviceAccountName,
+			Name:      workspaceName,
 			Namespace: namespace,
 		},
 	}
@@ -223,7 +222,7 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 	// Create workspace-specific Role with ResourceNames restrictions
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("workspace-%s-access", workspaceName),
+			Name:      workspaceName,
 			Namespace: namespace,
 			Labels: map[string]string{
 				"kloudlite.io/workspace-rbac": "true",
@@ -301,7 +300,7 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 	// Create RoleBinding for the workspace service account
 	roleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("workspace-%s-binding", workspaceName),
+			Name:      fmt.Sprintf("%s-binding", workspaceName),
 			Namespace: namespace,
 			Labels: map[string]string{
 				"kloudlite.io/workspace-rbac": "true",
@@ -319,7 +318,7 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		roleBinding.Subjects = []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      fmt.Sprintf("workspace-%s", workspaceName),
+				Name:      workspaceName,
 				Namespace: namespace,
 			},
 		}
@@ -327,7 +326,7 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		roleBinding.RoleRef = rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "Role",
-			Name:     fmt.Sprintf("workspace-%s-access", workspaceName),
+			Name:     workspaceName,
 		}
 
 		return nil
