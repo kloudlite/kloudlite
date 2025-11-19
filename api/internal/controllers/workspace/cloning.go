@@ -433,7 +433,7 @@ func (r *WorkspaceReconciler) handleCloningResuming(
 
 	// Fetch source workspace
 	sourceWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom}, sourceWorkspace); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom, Namespace: workspace.Namespace}, sourceWorkspace); err != nil {
 		logger.Warn("Failed to get source workspace for resume", zap.Error(err))
 		// Don't fail cloning if source workspace is gone, just log it
 	} else {
@@ -540,7 +540,7 @@ func (r *WorkspaceReconciler) handleCloningFailed(
 	// Try to resume source workspace
 	if workspace.Spec.CopyFrom != "" {
 		sourceWorkspace := &workspacev1.Workspace{}
-		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom}, sourceWorkspace); err == nil {
+		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom, Namespace: workspace.Namespace}, sourceWorkspace); err == nil {
 			// Clear source cloning status to allow it to resume
 			if sourceWorkspace.Status.SourceCloningStatus != nil {
 				sourceWorkspace.Status.SourceCloningStatus = nil
@@ -622,7 +622,7 @@ func (r *WorkspaceReconciler) getSourceWorkspaceOrFail(
 	logger *zap.Logger,
 ) (*workspacev1.Workspace, bool, reconcile.Result, error) {
 	sourceWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom}, sourceWorkspace); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom, Namespace: workspace.Namespace}, sourceWorkspace); err != nil {
 		logger.Error("Failed to get source workspace", zap.Error(err))
 		workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
 		if errorMessage == "" {
