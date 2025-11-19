@@ -149,14 +149,20 @@ export function WorkspacesList({
           </thead>
           <tbody className="divide-y">
             {filteredWorkspaces.map((workspace) => {
+              // Use runtime phase for display instead of desired spec.status
+              const phase = workspace.status?.phase || 'Pending'
               const statusColor =
-                workspace.spec.status === 'active'
+                phase === 'Running'
                   ? 'bg-success/10 text-success'
-                  : workspace.spec.status === 'suspended'
-                    ? 'bg-warning/10 text-warning'
-                    : workspace.spec.status === 'archived'
-                      ? 'bg-secondary text-secondary-foreground'
-                      : 'bg-secondary text-secondary-foreground'
+                  : phase === 'Creating' || phase === 'Pending'
+                    ? 'bg-info/10 text-info'
+                    : phase === 'Failed'
+                      ? 'bg-destructive/10 text-destructive'
+                      : phase === 'Terminating'
+                        ? 'bg-warning/10 text-warning'
+                        : phase === 'Stopped'
+                          ? 'bg-secondary text-secondary-foreground'
+                          : 'bg-secondary text-secondary-foreground'
 
               const packageCount = workspace.spec.packages?.length || 0
               const installedCount = workspace.status?.installedPackages?.length || 0
@@ -187,7 +193,7 @@ export function WorkspacesList({
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
                     >
-                      {workspace.spec.status || 'active'}
+                      {phase}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm whitespace-nowrap">

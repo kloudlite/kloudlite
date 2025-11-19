@@ -47,12 +47,20 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     { label: workspace.spec.displayName || workspace.metadata.name },
   ]
 
+  // Use runtime phase for status display
+  const phase = workspace.status?.phase || 'Pending'
   const statusColor =
-    workspace.spec.status === 'active'
+    phase === 'Running'
       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-      : workspace.spec.status === 'suspended'
-        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-        : 'bg-secondary text-secondary-foreground'
+      : phase === 'Creating' || phase === 'Pending'
+        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+        : phase === 'Failed'
+          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+          : phase === 'Terminating'
+            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+            : phase === 'Stopped'
+              ? 'bg-secondary text-secondary-foreground'
+              : 'bg-secondary text-secondary-foreground'
 
   const packageCount = workspace.spec.packages?.length || 0
   const installedCount = workspace.status?.installedPackages?.length || 0
@@ -89,12 +97,12 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}
                   >
-                    {workspace.spec.status || 'active'}
+                    {phase}
                   </span>
-                  {workspace.status?.phase && (
+                  {workspace.status?.message && (
                     <>
                       <span>•</span>
-                      <span>Phase: {workspace.status.phase}</span>
+                      <span className="text-xs">{workspace.status.message}</span>
                     </>
                   )}
                 </div>
