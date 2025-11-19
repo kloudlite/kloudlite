@@ -1306,12 +1306,10 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 	// Fetch Workspace (namespaced)
 	workspace := &workspacev1.Workspace{}
 	if err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, workspace); err != nil {
-		if client.IgnoreNotFound(err) == nil {
-			logger.Info("Workspace deleted or not found")
-			return reconcile.Result{}, nil
-		}
-		logger.Error("Failed to get Workspace", zap2.Error(err))
-		return reconcile.Result{}, err
+		// If workspace is not found, it's already fully deleted (including all finalizers)
+		// Nothing to do - this is expected when workspace is deleted
+		logger.Info("Workspace not found, already deleted")
+		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
 	// Check if workspace is being deleted
