@@ -148,6 +148,15 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 		})
 	}
 
+	// Auto-generate folderName if not specified (use workspace name)
+	if workspace.Spec.FolderName == "" {
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/folderName",
+			"value": workspace.Name,
+		})
+	}
+
 	// Ensure labels map exists
 	if workspace.Labels == nil {
 		patches = append(patches, map[string]interface{}{
