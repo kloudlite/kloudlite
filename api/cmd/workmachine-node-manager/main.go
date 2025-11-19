@@ -1655,9 +1655,10 @@ func main() {
 		},
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{
-				namespace: {}, // Watch namespace-scoped resources in this namespace
+				namespace:       {}, // Watch PackageRequests and Secrets in kloudlite-hostmanager
+				workmachineName: {}, // Watch Workspaces in workmachine namespace (e.g., wm-karthik)
 			},
-			// Cluster-scoped resources (Nodes, Workspaces) are watched globally by default
+			// Cluster-scoped resources (Nodes) are watched globally by default
 		},
 	})
 	if err != nil {
