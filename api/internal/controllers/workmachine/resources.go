@@ -56,7 +56,7 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 				Spec: corev1.PodSpec{
 					ServiceAccountName: "host-manager",
 					NodeSelector: map[string]string{
-						"kloudlite.io/node-name": obj.Name,
+						"kloudlite.io/workmachine": obj.Name,
 					},
 					Tolerations: []corev1.Toleration{
 						{
