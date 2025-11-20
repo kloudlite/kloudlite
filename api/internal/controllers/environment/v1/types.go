@@ -32,6 +32,11 @@ type EnvironmentSpec struct {
 	// +kubebuilder:validation:Required
 	TargetNamespace string `json:"targetNamespace"`
 
+	// Name is the simple environment name (e.g., "dev-env") used for display as {userName}/{envName}
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
+	// +optional
+	Name string `json:"name,omitempty"`
+
 	// OwnedBy is the username of the user who owns this environment
 	// +kubebuilder:validation:Required
 	OwnedBy string `json:"ownedBy"`
