@@ -55,7 +55,6 @@ export function VPNStatusIndicator() {
       }
 
       if (!subdomain) {
-        console.error('Could not determine subdomain from hostname:', hostname)
         setStatus('disconnected')
         return
       }
@@ -63,22 +62,26 @@ export function VPNStatusIndicator() {
       // Construct VPN check URL and hit it directly from browser
       const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
 
-      // Try to reach the VPN check endpoint with a short timeout
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+      // Use Image loading to test connectivity without console errors
+      // This avoids browser console errors for failed network requests
+      const img = new Image()
+      const timeoutId = setTimeout(() => {
+        img.src = '' // Cancel the request
+        setStatus('disconnected')
+      }, 3000)
 
-      const response = await fetch(vpnCheckUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeoutId)
-
-      if (response.ok) {
+      img.onload = () => {
+        clearTimeout(timeoutId)
         setStatus('connected')
-      } else {
+      }
+
+      img.onerror = () => {
+        clearTimeout(timeoutId)
         setStatus('disconnected')
       }
+
+      // Trigger the request with a cache-busting timestamp
+      img.src = `${vpnCheckUrl}/health?t=${Date.now()}`
     } catch (_error) {
       // Network error likely means VPN is not connected
       setStatus('disconnected')
