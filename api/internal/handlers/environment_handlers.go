@@ -110,6 +110,7 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	// Set the OwnedBy field with the username (User's metadata.name) from JWT token
 	// The webhook will handle adding ownership labels and metadata
 	env.Spec.OwnedBy = username
+	env.Spec.Name = req.Name // Store the simple name for display as {username}/{envname}
 	env.Spec.WorkMachineName = wm.Name
 
 	// Extract node name from WorkMachine's NodeLabels

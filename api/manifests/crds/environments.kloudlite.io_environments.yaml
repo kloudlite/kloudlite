@@ -147,6 +147,11 @@ spec:
                 required:
                 - enabled
                 type: object
+              name:
+                description: Name is the simple environment name (e.g., "dev-env")
+                  used for display as {userName}/{envName}
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
               nodeSelector:
                 additionalProperties:
                   type: string
