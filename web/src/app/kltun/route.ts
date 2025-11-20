@@ -218,6 +218,23 @@ fi
 
 if [ "$NEEDS_UPDATE" = true ]; then
     echo -e "\${GREEN}✓ kltun installed successfully!\${NC}"
+
+    # Stop daemon if running (to ensure new binary is used)
+    echo -e "\${BLUE}Restarting daemon with new binary...\${NC}"
+    if $KLTUN_CMD daemon status >/dev/null 2>&1; then
+        # Try to kill the daemon process
+        if [ "$PLATFORM" = "windows" ]; then
+            taskkill //F //IM kltun.exe 2>/dev/null || true
+        else
+            # Unix-like systems
+            if [ "$(id -u)" != "0" ] && [ ! -w "/usr/local/bin" ]; then
+                sudo pkill -9 kltun 2>/dev/null || true
+            else
+                pkill -9 kltun 2>/dev/null || true
+            fi
+        fi
+        sleep 1
+    fi
     echo ""
 fi
 echo ""
