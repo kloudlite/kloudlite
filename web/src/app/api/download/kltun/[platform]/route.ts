@@ -56,8 +56,9 @@ export async function GET(
       const releases = await releasesResponse.json();
 
       // Find the latest release with 'kltun-v' tag
-      const latestKltunRelease = releases.find((release: any) =>
-        release.tag_name && release.tag_name.startsWith('kltun-v')
+      const latestKltunRelease = releases.find(
+        (release: { tag_name?: string }) =>
+          release.tag_name && release.tag_name.startsWith('kltun-v')
       );
 
       if (!latestKltunRelease) {
@@ -68,7 +69,7 @@ export async function GET(
       }
 
       downloadUrl = `${GITHUB_RELEASES_BASE}/download/${latestKltunRelease.tag_name}/${binaryName}`;
-    } catch (error) {
+    } catch (_error) {
       return NextResponse.json(
         { error: 'Failed to determine latest kltun version' },
         { status: 500 }
