@@ -64,6 +64,18 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 							Operator: corev1.TolerationOpExists,
 							Effect:   corev1.TaintEffectNoSchedule,
 						},
+						{
+							Key:               "node.kubernetes.io/not-ready",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
+						{
+							Key:               "node.kubernetes.io/unreachable",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
 					},
 					HostPID: true,
 					InitContainers: []corev1.Container{
