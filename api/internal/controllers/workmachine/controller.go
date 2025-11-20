@@ -117,9 +117,19 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "ensure-wm-ingress-controller",
-			Title:    "Ensure Workmachine Ingress Controller",
+			Name:  "when-running/ensure-wm-ingress-controller",
+			Title: "Ensure Workmachine Ingress Controller",
 			OnCreate: r.ensureWorkmachineIngressController,
+			OnDelete: r.cleanupWorkmachineIngressController,
+		},
+		{
+			Name:  "when-stopped/cleanup-wm-ingress-controller",
+			Title: "Cleanup Workmachine Ingress Controller when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping
+			},
+			OnCreate: r.cleanupWorkmachineIngressController,
 			OnDelete: nil,
 		},
 		{
@@ -471,6 +481,72 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 		return nil
 	}); err != nil {
 		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller service: %w", err))
+	}
+
+	return check.Passed()
+}
+
+func (r *WorkMachineReconciler) cleanupWorkmachineIngressController(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	deploymentName := "wm-ingress-controller"
+	clusterRoleName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+	clusterRoleBindingName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+
+	// Delete Deployment
+	if err := r.Delete(check.Context(), &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deploymentName,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller deployment: %w", err))
+		}
+	}
+
+	// Delete Service
+	if err := r.Delete(check.Context(), &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wm-ingress-controller",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller service: %w", err))
+		}
+	}
+
+	// Delete ClusterRoleBinding
+	if err := r.Delete(check.Context(), &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleBindingName,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller cluster role binding: %w", err))
+		}
+	}
+
+	// Delete ClusterRole
+	if err := r.Delete(check.Context(), &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller cluster role: %w", err))
+		}
+	}
+
+	// Delete ServiceAccount
+	if err := r.Delete(check.Context(), &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wm-ingress-controller",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller service account: %w", err))
+		}
 	}
 
 	return check.Passed()
