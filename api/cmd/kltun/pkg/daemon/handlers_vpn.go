@@ -71,12 +71,30 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 	s.connections[sessionID] = conn
 	s.connMutex.Unlock()
 
+	// Channel to receive connection result
+	resultChan := make(chan error, 1)
+
 	// Start VPN connection in background with server and token
-	go s.runVPNConnection(ctx, sessionID, server, token, conn.DoneChan)
+	go s.runVPNConnectionWithResult(ctx, sessionID, server, token, conn.DoneChan, resultChan)
+
+	// Wait for initial connection setup (or failure)
+	if err := <-resultChan; err != nil {
+		// Remove failed connection
+		s.connMutex.Lock()
+		delete(s.connections, sessionID)
+		s.connMutex.Unlock()
+
+		result := VPNConnectResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to establish VPN connection: %v", err),
+		}
+		resp, _ := NewSuccessResponse(req.ID, result)
+		return resp
+	}
 
 	result := VPNConnectResult{
 		Success:   true,
-		Message:   "VPN connection started successfully",
+		Message:   "VPN connection established successfully",
 		SessionID: sessionID,
 	}
 	resp, _ := NewSuccessResponse(req.ID, result)
