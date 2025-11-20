@@ -35,7 +35,45 @@ export async function GET(
   // Build GitHub release URL
   let downloadUrl: string;
   if (version === 'latest') {
-    downloadUrl = `${GITHUB_RELEASES_BASE}/latest/download/${binaryName}`;
+    // For 'latest', we need to find the latest kltun-specific release
+    // GitHub's /latest endpoint returns the latest release overall, not filtered by tag prefix
+    // So we fetch all releases and find the latest kltun release
+    try {
+      const releasesResponse = await fetch(
+        'https://api.github.com/repos/kloudlite/kloudlite/releases',
+        {
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'User-Agent': 'kloudlite-web',
+          },
+        }
+      );
+
+      if (!releasesResponse.ok) {
+        throw new Error('Failed to fetch releases');
+      }
+
+      const releases = await releasesResponse.json();
+
+      // Find the latest release with 'kltun-v' tag
+      const latestKltunRelease = releases.find((release: any) =>
+        release.tag_name && release.tag_name.startsWith('kltun-v')
+      );
+
+      if (!latestKltunRelease) {
+        return NextResponse.json(
+          { error: 'No kltun releases found' },
+          { status: 404 }
+        );
+      }
+
+      downloadUrl = `${GITHUB_RELEASES_BASE}/download/${latestKltunRelease.tag_name}/${binaryName}`;
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Failed to determine latest kltun version' },
+        { status: 500 }
+      );
+    }
   } else {
     // Ensure version starts with 'kltun-v'
     const tag = version.startsWith('kltun-v') ? version : `kltun-v${version}`;
