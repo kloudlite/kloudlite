@@ -62,26 +62,32 @@ export function VPNStatusIndicator() {
       // Construct VPN check URL and hit it directly from browser
       const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
 
-      // Use Image loading to test connectivity without console errors
-      // This avoids browser console errors for failed network requests
-      const img = new Image()
-      const timeoutId = setTimeout(() => {
-        img.src = '' // Cancel the request
-        setStatus('disconnected')
-      }, 3000)
+      // Use fetch with mode: 'no-cors' to test connectivity without console errors
+      // no-cors mode won't let us check response status, but we can detect if the request completes
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000)
 
-      img.onload = () => {
+      try {
+        await fetch(vpnCheckUrl, {
+          method: 'HEAD',
+          mode: 'no-cors',
+          signal: controller.signal,
+          cache: 'no-cache',
+        })
         clearTimeout(timeoutId)
+        // If fetch completes without error, VPN is connected
         setStatus('connected')
-      }
-
-      img.onerror = () => {
+      } catch (fetchError) {
         clearTimeout(timeoutId)
-        setStatus('disconnected')
+        // Distinguish between timeout/abort and actual network errors
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          // Timeout - VPN might be slow or disconnected
+          setStatus('disconnected')
+        } else {
+          // Network error - VPN is disconnected
+          setStatus('disconnected')
+        }
       }
-
-      // Trigger the request with a cache-busting timestamp
-      img.src = `${vpnCheckUrl}/health?t=${Date.now()}`
     } catch (_error) {
       // Network error likely means VPN is not connected
       setStatus('disconnected')
