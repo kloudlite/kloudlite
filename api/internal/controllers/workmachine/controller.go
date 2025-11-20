@@ -795,7 +795,7 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine")
 	builder.Owns(&corev1.Namespace{})
-	builder.Owns(&corev1.Pod{})
+	builder.Owns(&appsv1.StatefulSet{})
 	builder.Owns(&appsv1.Deployment{})
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.ClusterRole{})
