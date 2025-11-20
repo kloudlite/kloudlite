@@ -85,7 +85,7 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 							Command: []string{
 								"sh",
 								"-c",
-								"rm -rf /nix-shared/* && cp -r /nix/* /nix-shared/",
+								"if [ -z \"$(ls -A /nix-shared)\" ]; then echo 'Nix store is empty, copying...'; cp -r /nix/* /nix-shared/; else echo 'Nix store already exists, skipping copy'; fi",
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: fn.Ptr(true),
