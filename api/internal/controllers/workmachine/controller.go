@@ -670,11 +670,18 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					NodeName:                      obj.Name,
 					HostNetwork:                   true,
 					RestartPolicy:                 corev1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
+					NodeSelector: map[string]string{
+						"kloudlite.io/workmachine": obj.Name,
+					},
 					Tolerations: []corev1.Toleration{
+						{
+							Key:      "kloudlite.io/workmachine",
+							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
 						{
 							Key:               "node.kubernetes.io/not-ready",
 							Operator:          corev1.TolerationOpExists,
