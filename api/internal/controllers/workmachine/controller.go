@@ -135,9 +135,9 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 		{
 			Name:  "when-running/ensure-tunnel-server",
 			Title: "Ensure tunnel server is running",
-			// ShouldRun: func(obj *v1.WorkMachine) bool {
-			// 	return obj.Spec.State == v1.MachineStateRunning
-			// },
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
 			OnCreate: r.ensureTunnelServer,
 			OnDelete: r.cleanupTunnelServer,
 		},
