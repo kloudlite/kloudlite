@@ -60,7 +60,7 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 					},
 					Tolerations: []corev1.Toleration{
 						{
-							Key:      "node.kloudlite.io/workmachine",
+							Key:      "kloudlite.io/workmachine",
 							Operator: corev1.TolerationOpExists,
 							Effect:   corev1.TaintEffectNoSchedule,
 						},
