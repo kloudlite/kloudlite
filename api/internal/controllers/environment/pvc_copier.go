@@ -159,9 +159,20 @@ python3 -m http.server 8080
 		},
 	}
 
-	// Set nodeName to force pod to run on the node where PVC is bound
+	// Use node selector to run pod on the node where PVC is bound
+	// Also add toleration for workmachine taint
 	if boundNodeName != "" {
-		podSpec.NodeName = boundNodeName
+		podSpec.NodeSelector = map[string]string{
+			"kubernetes.io/hostname": boundNodeName,
+		}
+		podSpec.Tolerations = []corev1.Toleration{
+			{
+				Key:      "kloudlite.io/workmachine",
+				Operator: corev1.TolerationOpEqual,
+				Value:    boundNodeName,
+				Effect:   corev1.TaintEffectNoSchedule,
+			},
+		}
 	}
 
 	return &batchv1.Job{

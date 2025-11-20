@@ -273,8 +273,20 @@ func (r *DomainRequestReconciler) createHAProxyPod(ctx context.Context, domainRe
 		},
 	}
 
-	// Add nodeSelector if NodeName is specified
-	podSpec.NodeName = domainRequest.Spec.NodeName
+	// Use node selector and tolerations if NodeName is specified
+	if domainRequest.Spec.NodeName != "" {
+		podSpec.NodeSelector = map[string]string{
+			"kubernetes.io/hostname": domainRequest.Spec.NodeName,
+		}
+		podSpec.Tolerations = []corev1.Toleration{
+			{
+				Key:      "kloudlite.io/workmachine",
+				Operator: corev1.TolerationOpEqual,
+				Value:    domainRequest.Spec.NodeName,
+				Effect:   corev1.TaintEffectNoSchedule,
+			},
+		}
+	}
 
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
