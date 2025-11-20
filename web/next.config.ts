@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;",
+            value: "script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* https://vpn-check.*.khost.dev;",
           },
           {
             key: 'Permissions-Policy',
