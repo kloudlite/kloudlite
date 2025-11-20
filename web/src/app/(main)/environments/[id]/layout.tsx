@@ -48,13 +48,11 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   try {
     const env = await environmentService.getEnvironment(id)
 
-    // Use the ownedBy field which contains the username (User's metadata.name)
-    const owner = env.spec.ownedBy || 'unknown'
-
     environment = {
       id,
       name: env.metadata.name,
-      owner,
+      displayName: `${env.spec.ownedBy}/${env.spec.name}`,
+      owner: env.spec.ownedBy,
       status: env.status?.state || 'unknown',
       created: formatTimeAgo(env.metadata.creationTimestamp),
     }
@@ -64,6 +62,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
     environment = {
       id,
       name: id,
+      displayName: id,
       owner: session.user?.email || 'unknown',
       status: 'unknown',
       created: 'Unknown',
@@ -72,7 +71,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
 
   const breadcrumbItems = [
     { label: 'Environments', href: '/environments' },
-    { label: environment.name },
+    { label: environment.displayName },
   ]
 
   return (
@@ -89,7 +88,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
           <div className="pb-4">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl font-semibold">{environment.name}</h1>
+                <h1 className="text-2xl font-semibold">{environment.displayName}</h1>
                 <div className="text-muted-foreground mt-1.5 flex items-center gap-4 text-sm">
                   <span>Owner: {environment.owner}</span>
                   <span>•</span>
