@@ -117,7 +117,7 @@ export async function GET(
         },
       }
     )
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Failed to fetch or parse checksums' },
       { status: 500 }
