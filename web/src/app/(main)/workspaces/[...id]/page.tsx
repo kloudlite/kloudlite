@@ -42,9 +42,11 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  const displayName = `${workspace.spec.ownedBy || 'unknown'}/${workspace.spec.displayName || workspace.metadata.name}`
+
   const breadcrumbItems = [
     { label: 'Workspaces', href: '/workspaces' },
-    { label: workspace.spec.displayName || workspace.metadata.name },
+    { label: displayName },
   ]
 
   // Use runtime phase for status display
@@ -81,19 +83,13 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
           <div className="pb-6">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl font-semibold">
-                  {workspace.spec.displayName || workspace.metadata.name}
-                </h1>
+                <h1 className="text-2xl font-semibold">{displayName}</h1>
                 {workspace.spec.description && (
                   <p className="text-muted-foreground mt-1.5 text-sm">
                     {workspace.spec.description}
                   </p>
                 )}
                 <div className="text-muted-foreground mt-3 flex items-center gap-4 text-sm">
-                  <span>Owner: {workspace.spec.ownedBy || 'unknown'}</span>
-                  <span>•</span>
-                  <span>Namespace: {workspace.metadata.namespace}</span>
-                  <span>•</span>
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}
                   >
