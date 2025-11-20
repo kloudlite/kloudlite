@@ -460,11 +460,21 @@ chmod 644 /tmp-writable/kloudlite-context.json
 		Nameservers: []string{"10.43.0.10"}, // Required but will be overridden by mounted resolv.conf
 	}
 
-	// Directly assign the pod to the WorkMachine node
-	// This bypasses the scheduler and taints, ensuring workspace runs on the correct node
+	// Use node selector and tolerations instead of nodeName
+	// This allows the scheduler to properly handle the pod, which is required for
+	// WaitForFirstConsumer volume binding to work correctly with PVCs
 	// This is critical for shared Nix store access via hostPath volumes
-	// Node name matches WorkMachine name
-	pod.Spec.NodeName = wm.Name
+	pod.Spec.NodeSelector = map[string]string{
+		"kubernetes.io/hostname": wm.Name,
+	}
+	pod.Spec.Tolerations = []corev1.Toleration{
+		{
+			Key:      "kloudlite.io/workmachine",
+			Operator: corev1.TolerationOpEqual,
+			Value:    wm.Name,
+			Effect:   corev1.TaintEffectNoSchedule,
+		},
+	}
 
 	// Set owner reference
 	if err := controllerutil.SetControllerReference(workspace, pod, r.Scheme); err != nil {

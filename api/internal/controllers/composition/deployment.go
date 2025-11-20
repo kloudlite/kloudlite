@@ -102,10 +102,14 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 					zap.String("workmachine", environment.Spec.WorkMachineName),
 					zap.Error(err))
 			} else {
-				// Directly assign to WorkMachine node (same pattern as workspace pods)
-				// This bypasses the scheduler and ensures composition pods run on the correct node
+				// Use node selector and tolerations instead of nodeName
+				// This allows the scheduler to properly handle the pod, which is required for
+				// WaitForFirstConsumer volume binding to work correctly with PVCs
 				// This is critical for shared resources like Nix store access via hostPath volumes
-				deployment.Spec.Template.Spec.NodeName = wm.Name
+				if deployment.Spec.Template.Spec.NodeSelector == nil {
+					deployment.Spec.Template.Spec.NodeSelector = make(map[string]string)
+				}
+				deployment.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] = wm.Name
 
 				// Add tolerations for the workmachine taint
 				// The workmachine node has a taint kloudlite.io/workmachine=<nodeName>:NoSchedule
@@ -119,7 +123,7 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 					},
 				}
 
-				logger.Info("Assigned deployment to WorkMachine node with tolerations",
+				logger.Info("Assigned deployment to WorkMachine node with node selector and tolerations",
 					zap.String("deployment", deployment.Name),
 					zap.String("nodeName", wm.Name))
 			}
