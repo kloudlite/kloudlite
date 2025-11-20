@@ -127,11 +127,6 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 							},
 							Ports: []corev1.ContainerPort{
 								{
-									Name:          "ssh",
-									ContainerPort: 2222,
-									Protocol:      corev1.ProtocolTCP,
-								},
-								{
 									Name:          "metrics",
 									ContainerPort: 8081,
 									Protocol:      corev1.ProtocolTCP,
@@ -251,12 +246,6 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 
 		svc.Spec.Selector = labels
 		svc.Spec.Ports = []corev1.ServicePort{
-			{
-				Name:       "ssh",
-				Protocol:   corev1.ProtocolTCP,
-				Port:       22,
-				TargetPort: intstr.FromInt32(2222),
-			},
 			{
 				Name:       "metrics",
 				Protocol:   corev1.ProtocolTCP,
