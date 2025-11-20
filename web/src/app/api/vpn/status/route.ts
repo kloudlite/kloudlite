@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getSession } from '@/lib/get-session'
 
 /**
  * VPN Status Check API Route
  * Tests VPN connectivity by attempting to reach the VPN health check endpoint
  * Returns connection status for the VPN indicator in the dashboard
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Check if user is authenticated
     const session = await auth()
@@ -19,19 +19,32 @@ export async function GET() {
       )
     }
 
-    // Get user session to extract subdomain
-    const userSession = await getSession()
-    const subdomain = userSession?.user?.subdomain
+    // Extract subdomain from current hostname
+    // Expected format: subdomain.khost.dev or *.subdomain.khost.dev
+    const hostname = request.headers.get('host') || ''
+    const baseDomain = process.env.CLOUDFLARE_DNS_DOMAIN || 'khost.dev'
+
+    // Parse subdomain from hostname
+    // Examples:
+    // - "test.khost.dev" -> "test"
+    // - "console.test.khost.dev" -> "test"
+    const hostParts = hostname.split('.')
+    const baseParts = baseDomain.split('.')
+
+    let subdomain: string | null = null
+
+    if (hostParts.length > baseParts.length) {
+      // Get the part before the base domain
+      // For "console.test.khost.dev" with base "khost.dev", we want "test"
+      subdomain = hostParts[hostParts.length - baseParts.length - 1]
+    }
 
     if (!subdomain) {
       return NextResponse.json(
-        { connected: false, message: 'No subdomain configured' },
+        { connected: false, message: 'Could not determine subdomain from hostname' },
         { status: 400 }
       )
     }
-
-    // Get base domain from environment
-    const baseDomain = process.env.CLOUDFLARE_DNS_DOMAIN || 'khost.dev'
 
     // Construct VPN check URL
     const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
