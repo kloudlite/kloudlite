@@ -99,9 +99,44 @@ echo ""
 
 # Download URL
 DOWNLOAD_URL="${downloadBaseUrl}/\${PLATFORM}-\${ARCH}"
+SHA_URL="${downloadBaseUrl}/\${PLATFORM}-\${ARCH}/sha"
+
+# Check if kltun is already installed and up-to-date
+NEEDS_UPDATE=true
+if [ "$PLATFORM" = "windows" ]; then
+    KLTUN_BIN="/c/Program Files/kltun/kltun.exe"
+else
+    KLTUN_BIN="/usr/local/bin/kltun"
+fi
+
+if [ -f "$KLTUN_BIN" ]; then
+    echo -e "\${BLUE}Checking installed kltun version...\${NC}"
+    # Get remote SHA
+    REMOTE_SHA_JSON=$(curl -fsSL "$SHA_URL" 2>/dev/null || echo "")
+    if [ -n "$REMOTE_SHA_JSON" ]; then
+        REMOTE_SHA=$(echo "$REMOTE_SHA_JSON" | grep -o '"sha256":"[^"]*"' | cut -d'"' -f4)
+        if [ -n "$REMOTE_SHA" ]; then
+            # Calculate local SHA
+            if command -v sha256sum >/dev/null 2>&1; then
+                LOCAL_SHA=$(sha256sum "$KLTUN_BIN" 2>/dev/null | awk '{print \$1}')
+            elif command -v shasum >/dev/null 2>&1; then
+                LOCAL_SHA=$(shasum -a 256 "$KLTUN_BIN" 2>/dev/null | awk '{print \$1}')
+            fi
+
+            if [ "$LOCAL_SHA" = "$REMOTE_SHA" ]; then
+                echo -e "\${GREEN}✓ kltun is already up-to-date (SHA: \${LOCAL_SHA:0:12}...)\${NC}"
+                NEEDS_UPDATE=false
+            else
+                echo -e "\${YELLOW}kltun update available\${NC}"
+                echo -e "\${BLUE}  Local:  \${LOCAL_SHA:0:12}...\${NC}"
+                echo -e "\${BLUE}  Remote: \${REMOTE_SHA:0:12}...\${NC}"
+            fi
+        fi
+    fi
+fi
 
 # Platform-specific installation
-if [ "$PLATFORM" = "windows" ]; then
+if [ "$NEEDS_UPDATE" = true ] && [ "$PLATFORM" = "windows" ]; then
     # Windows installation
     echo -e "\${BLUE}Installing on Windows...\${NC}"
 
@@ -128,7 +163,7 @@ if [ "$PLATFORM" = "windows" ]; then
 
     KLTUN_CMD="$INSTALL_DIR/kltun.exe"
 
-else
+elif [ "$NEEDS_UPDATE" = true ]; then
     # Unix-like systems (Linux, macOS)
     echo -e "\${BLUE}Installing on Unix-like system...\${NC}"
 
@@ -172,9 +207,19 @@ else
     fi
 
     KLTUN_CMD="kltun"
+else
+    # No update needed - set command path
+    if [ "$PLATFORM" = "windows" ]; then
+        KLTUN_CMD="/c/Program Files/kltun/kltun.exe"
+    else
+        KLTUN_CMD="kltun"
+    fi
 fi
 
-echo -e "\${GREEN}✓ kltun installed successfully!\${NC}"
+if [ "$NEEDS_UPDATE" = true ]; then
+    echo -e "\${GREEN}✓ kltun installed successfully!\${NC}"
+    echo ""
+fi
 echo ""
 
 # Start daemon if not running
