@@ -106,7 +106,20 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 				// This bypasses the scheduler and ensures composition pods run on the correct node
 				// This is critical for shared resources like Nix store access via hostPath volumes
 				deployment.Spec.Template.Spec.NodeName = wm.Name
-				logger.Info("Assigned deployment to WorkMachine node",
+
+				// Add tolerations for the workmachine taint
+				// The workmachine node has a taint kloudlite.io/workmachine=<nodeName>:NoSchedule
+				// We need to add a matching toleration so the pod can run on the tainted node
+				deployment.Spec.Template.Spec.Tolerations = []corev1.Toleration{
+					{
+						Key:      "kloudlite.io/workmachine",
+						Operator: corev1.TolerationOpEqual,
+						Value:    wm.Name,
+						Effect:   corev1.TaintEffectNoSchedule,
+					},
+				}
+
+				logger.Info("Assigned deployment to WorkMachine node with tolerations",
 					zap.String("deployment", deployment.Name),
 					zap.String("nodeName", wm.Name))
 			}
