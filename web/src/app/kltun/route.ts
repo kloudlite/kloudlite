@@ -26,6 +26,9 @@ YELLOW='\\033[1;33m'
 BLUE='\\033[0;34m'
 NC='\\033[0m' # No Color
 
+# Portable echo function
+echo_color() { printf "%b\n" "$1"; }
+
 # Default values
 TOKEN=""
 SERVER="${serverUrl}"
@@ -48,7 +51,7 @@ while [ $# -gt 0 ]; do
             shift 2
             ;;
         *)
-            echo -e "\${RED}Unknown option: $1\${NC}"
+            echo_color "\${RED}Unknown option: $1\${NC}"
             echo "Usage: curl -fsSL ${serverUrl}/kltun | sh -s -- --token <TOKEN>"
             exit 1
             ;;
@@ -57,7 +60,7 @@ done
 
 # Validate required parameters
 if [ -z "$TOKEN" ]; then
-    echo -e "\${RED}Error: --token is required\${NC}"
+    echo_color "\${RED}Error: --token is required\${NC}"
     echo "Usage: curl -fsSL ${serverUrl}/kltun | sh -s -- --token <TOKEN>"
     exit 1
 fi
@@ -69,7 +72,7 @@ if [ -z "$PLATFORM" ]; then
         Darwin*)    PLATFORM="darwin";;
         MINGW*|MSYS*|CYGWIN*) PLATFORM="windows";;
         *)
-            echo -e "\${RED}Error: Unsupported operating system: $(uname -s)\${NC}"
+            echo_color "\${RED}Error: Unsupported operating system: $(uname -s)\${NC}"
             echo "Supported: Linux, macOS, Windows (Git Bash/WSL/MSYS2)"
             exit 1
             ;;
@@ -82,19 +85,19 @@ if [ -z "$ARCH" ]; then
         x86_64|amd64)   ARCH="amd64";;
         arm64|aarch64)  ARCH="arm64";;
         *)
-            echo -e "\${RED}Error: Unsupported architecture: $(uname -m)\${NC}"
+            echo_color "\${RED}Error: Unsupported architecture: $(uname -m)\${NC}"
             echo "Supported: x86_64/amd64, arm64/aarch64"
             exit 1
             ;;
     esac
 fi
 
-echo -e "\${BLUE}================================\${NC}"
-echo -e "\${BLUE}  kltun Installation\${NC}"
-echo -e "\${BLUE}================================\${NC}"
+echo_color "\${BLUE}================================\${NC}"
+echo_color "\${BLUE}  kltun Installation\${NC}"
+echo_color "\${BLUE}================================\${NC}"
 echo ""
-echo -e "\${BLUE}Platform:\${NC} \${PLATFORM}-\${ARCH}"
-echo -e "\${BLUE}Server:\${NC} \${SERVER}"
+echo_color "\${BLUE}Platform:\${NC} \${PLATFORM}-\${ARCH}"
+echo_color "\${BLUE}Server:\${NC} \${SERVER}"
 echo ""
 
 # Download URL
@@ -110,7 +113,7 @@ else
 fi
 
 if [ -f "$KLTUN_BIN" ]; then
-    echo -e "\${BLUE}Checking installed kltun version...\${NC}"
+    echo_color "\${BLUE}Checking installed kltun version...\${NC}"
     # Get remote SHA
     REMOTE_SHA_JSON=$(curl -fsSL "$SHA_URL" 2>/dev/null || echo "")
     if [ -n "$REMOTE_SHA_JSON" ]; then
@@ -124,12 +127,12 @@ if [ -f "$KLTUN_BIN" ]; then
             fi
 
             if [ "$LOCAL_SHA" = "$REMOTE_SHA" ]; then
-                echo -e "\${GREEN}✓ kltun is already up-to-date (SHA: \${LOCAL_SHA:0:12}...)\${NC}"
+                echo_color "\${GREEN}✓ kltun is already up-to-date (SHA: \${LOCAL_SHA:0:12}...)\${NC}"
                 NEEDS_UPDATE=false
             else
-                echo -e "\${YELLOW}kltun update available\${NC}"
-                echo -e "\${BLUE}  Local:  \${LOCAL_SHA:0:12}...\${NC}"
-                echo -e "\${BLUE}  Remote: \${REMOTE_SHA:0:12}...\${NC}"
+                echo_color "\${YELLOW}kltun update available\${NC}"
+                echo_color "\${BLUE}  Local:  \${LOCAL_SHA:0:12}...\${NC}"
+                echo_color "\${BLUE}  Remote: \${REMOTE_SHA:0:12}...\${NC}"
             fi
         fi
     fi
@@ -138,14 +141,14 @@ fi
 # Platform-specific installation
 if [ "$NEEDS_UPDATE" = true ] && [ "$PLATFORM" = "windows" ]; then
     # Windows installation
-    echo -e "\${BLUE}Installing on Windows...\${NC}"
+    echo_color "\${BLUE}Installing on Windows...\${NC}"
 
     INSTALL_DIR="/c/Program Files/kltun"
     TEMP_FILE="/tmp/kltun.exe"
 
-    echo -e "\${BLUE}Downloading kltun...\${NC}"
+    echo_color "\${BLUE}Downloading kltun...\${NC}"
     if ! curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_FILE"; then
-        echo -e "\${RED}Error: Failed to download kltun\${NC}"
+        echo_color "\${RED}Error: Failed to download kltun\${NC}"
         exit 1
     fi
 
@@ -153,19 +156,19 @@ if [ "$NEEDS_UPDATE" = true ] && [ "$PLATFORM" = "windows" ]; then
     mkdir -p "$INSTALL_DIR"
 
     # Move to install directory
-    echo -e "\${BLUE}Installing to $INSTALL_DIR...\${NC}"
+    echo_color "\${BLUE}Installing to $INSTALL_DIR...\${NC}"
     mv -f "$TEMP_FILE" "$INSTALL_DIR/kltun.exe"
 
     # Add to PATH if not already present
     if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
-        echo -e "\${YELLOW}Note: Add $INSTALL_DIR to your PATH to use kltun from anywhere\${NC}"
+        echo_color "\${YELLOW}Note: Add $INSTALL_DIR to your PATH to use kltun from anywhere\${NC}"
     fi
 
     KLTUN_CMD="$INSTALL_DIR/kltun.exe"
 
 elif [ "$NEEDS_UPDATE" = true ]; then
     # Unix-like systems (Linux, macOS)
-    echo -e "\${BLUE}Installing on Unix-like system...\${NC}"
+    echo_color "\${BLUE}Installing on Unix-like system...\${NC}"
 
     # Detect if we need sudo
     SUDO=""
@@ -179,9 +182,9 @@ elif [ "$NEEDS_UPDATE" = true ]; then
 
     # Download kltun to temp location
     TEMP_FILE="/tmp/kltun-$$.tmp"
-    echo -e "\${BLUE}Downloading kltun...\${NC}"
+    echo_color "\${BLUE}Downloading kltun...\${NC}"
     if ! curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_FILE"; then
-        echo -e "\${RED}Error: Failed to download kltun\${NC}"
+        echo_color "\${RED}Error: Failed to download kltun\${NC}"
         exit 1
     fi
 
@@ -191,14 +194,14 @@ elif [ "$NEEDS_UPDATE" = true ]; then
     # Install to /usr/local/bin
     INSTALL_PATH="/usr/local/bin/kltun"
     if [ -f "$INSTALL_PATH" ]; then
-        echo -e "\${YELLOW}kltun already installed, updating...\${NC}"
+        echo_color "\${YELLOW}kltun already installed, updating...\${NC}"
         if [ -n "$SUDO" ]; then
             $SUDO mv -f "$TEMP_FILE" "$INSTALL_PATH"
         else
             mv -f "$TEMP_FILE" "$INSTALL_PATH"
         fi
     else
-        echo -e "\${BLUE}Installing to $INSTALL_PATH...\${NC}"
+        echo_color "\${BLUE}Installing to $INSTALL_PATH...\${NC}"
         if [ -n "$SUDO" ]; then
             $SUDO mv "$TEMP_FILE" "$INSTALL_PATH"
         else
@@ -217,10 +220,10 @@ else
 fi
 
 if [ "$NEEDS_UPDATE" = true ]; then
-    echo -e "\${GREEN}✓ kltun installed successfully!\${NC}"
+    echo_color "\${GREEN}✓ kltun installed successfully!\${NC}"
 
     # Stop daemon if running (to ensure new binary is used)
-    echo -e "\${BLUE}Restarting daemon with new binary...\${NC}"
+    echo_color "\${BLUE}Restarting daemon with new binary...\${NC}"
     if $KLTUN_CMD daemon status >/dev/null 2>&1; then
         # Try to kill the daemon process
         if [ "$PLATFORM" = "windows" ]; then
@@ -240,7 +243,7 @@ fi
 echo ""
 
 # Start daemon if not running
-echo -e "\${BLUE}Starting kltun daemon...\${NC}"
+echo_color "\${BLUE}Starting kltun daemon...\${NC}"
 if [ "$PLATFORM" = "windows" ]; then
     # Windows: start daemon in background
     if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
@@ -258,36 +261,36 @@ else
         for i in 1 2 3 4 5; do
             sleep 1
             if $KLTUN_CMD daemon status >/dev/null 2>&1; then
-                echo -e "\${GREEN}✓ Daemon started\${NC}"
+                echo_color "\${GREEN}✓ Daemon started\${NC}"
                 break
             fi
         done
 
         # Final check
         if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
-            echo -e "\${RED}Error: Failed to start daemon\${NC}"
-            echo -e "\${YELLOW}Try starting it manually:\${NC}"
+            echo_color "\${RED}Error: Failed to start daemon\${NC}"
+            echo_color "\${YELLOW}Try starting it manually:\${NC}"
             echo "  $KLTUN_CMD daemon run"
             exit 1
         fi
     else
-        echo -e "\${GREEN}✓ Daemon already running\${NC}"
+        echo_color "\${GREEN}✓ Daemon already running\${NC}"
     fi
 fi
 
-echo -e "\${BLUE}Connecting to VPN...\${NC}"
+echo_color "\${BLUE}Connecting to VPN...\${NC}"
 
 # Connect to VPN
 if ! $KLTUN_CMD connect --token "$TOKEN" --server "$SERVER"; then
-    echo -e "\${RED}Error: Failed to connect to VPN\${NC}"
-    echo -e "\${YELLOW}You can retry manually with:\${NC}"
+    echo_color "\${RED}Error: Failed to connect to VPN\${NC}"
+    echo_color "\${YELLOW}You can retry manually with:\${NC}"
     echo "  $KLTUN_CMD daemon run  # Start daemon first"
     echo "  $KLTUN_CMD connect --token $TOKEN --server $SERVER"
     exit 1
 fi
 
 # Verify connection is actually established (not just initiated)
-echo -e "\${BLUE}Verifying VPN connection...\${NC}"
+echo_color "\${BLUE}Verifying VPN connection...\${NC}"
 TIMEOUT=60
 ELAPSED=0
 CONNECTED=false
@@ -306,11 +309,11 @@ done
 echo ""
 
 if [ "$CONNECTED" = false ]; then
-    echo -e "\${RED}Error: VPN connection timeout after \${TIMEOUT} seconds\${NC}"
-    echo -e "\${YELLOW}Check the logs for details:\${NC}"
+    echo_color "\${RED}Error: VPN connection timeout after \${TIMEOUT} seconds\${NC}"
+    echo_color "\${YELLOW}Check the logs for details:\${NC}"
     echo "  tail -f /var/log/kltund.log"
     echo ""
-    echo -e "\${YELLOW}Common issues:\${NC}"
+    echo_color "\${YELLOW}Common issues:\${NC}"
     echo "  - VPN server may be down or unreachable"
     echo "  - Invalid token"
     echo "  - Network connectivity issues"
@@ -318,7 +321,7 @@ if [ "$CONNECTED" = false ]; then
 fi
 
 echo ""
-echo -e "\${GREEN}✓ Connected successfully!\${NC}"
+echo_color "\${GREEN}✓ Connected successfully!\${NC}"
 `
 
   return new NextResponse(script, {
