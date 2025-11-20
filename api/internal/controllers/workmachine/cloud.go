@@ -169,6 +169,15 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 			return check.UpdateMsg("waiting for node to be ready").RequeueAfter(5 * time.Second)
 		}
 
+		// Uncordon the node if it was previously cordoned (e.g., during shutdown)
+		if node.Spec.Unschedulable {
+			node.Spec.Unschedulable = false
+			if err := r.Update(check.Context(), node); err != nil {
+				return check.Failed(fmt.Errorf("failed to uncordon node: %w", err))
+			}
+			check.Logger().Info("uncordoned node", "node", obj.Name)
+		}
+
 		// Node is ready, mark as running
 		obj.Status.State = v1.MachineStateRunning
 		obj.Status.Message = "Node is ready"
