@@ -104,20 +104,12 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 							Image: r.env.HostManagerImage,
 							Env: []corev1.EnvVar{
 								{
-									Name:  "SSH_USERNAME",
-									Value: SSHUserName,
-								},
-								{
-									Name:  "TARGET_NAMESPACE",
+									Name:  "NAMESPACE",
 									Value: obj.Spec.TargetNamespace,
 								},
 								{
-									Name: "POD_IP",
-									ValueFrom: &corev1.EnvVarSource{
-										FieldRef: &corev1.ObjectFieldSelector{
-											FieldPath: "status.podIP",
-										},
-									},
+									Name:  "WORKMACHINE_NAME",
+									Value: obj.Name,
 								},
 							},
 							SecurityContext: &corev1.SecurityContext{
