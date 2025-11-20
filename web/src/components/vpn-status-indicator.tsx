@@ -14,11 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type VPNStatus = 'checking' | 'connected' | 'disconnected'
 
-interface VPNStatusResponse {
-  connected: boolean
-  message: string
-}
-
 export function VPNStatusIndicator() {
   const [status, setStatus] = useState<VPNStatus>('checking')
   const [token, setToken] = useState<string>('')
