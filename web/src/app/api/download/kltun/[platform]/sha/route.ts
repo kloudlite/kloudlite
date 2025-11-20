@@ -65,7 +65,7 @@ export async function GET(
       }
 
       tag = latestKltunRelease.tag_name
-      checksumUrl = `${GITHUB_RELEASES_BASE}/download/${tag}/checksums.txt`
+      checksumUrl = `${GITHUB_RELEASES_BASE}/download/${tag}/${binaryName}.sha256`
     } catch (_error) {
       return NextResponse.json(
         { error: 'Failed to determine latest kltun version' },
@@ -75,33 +75,24 @@ export async function GET(
   } else {
     // Ensure version starts with 'kltun-v'
     tag = version.startsWith('kltun-v') ? version : `kltun-v${version}`
-    checksumUrl = `${GITHUB_RELEASES_BASE}/download/${tag}/checksums.txt`
+    checksumUrl = `${GITHUB_RELEASES_BASE}/download/${tag}/${binaryName}.sha256`
   }
 
-  // Fetch checksums file
+  // Fetch checksum file for this specific binary
   try {
     const checksumResponse = await fetch(checksumUrl)
 
     if (!checksumResponse.ok) {
-      return NextResponse.json({ error: 'Checksums file not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Checksum file not found' }, { status: 404 })
     }
 
     const checksumContent = await checksumResponse.text()
 
-    // Parse checksums file to find the line for this binary
-    // Format: <sha256>  <filename>
-    const lines = checksumContent.split('\n')
-    const checksumLine = lines.find((line) => line.includes(binaryName))
-
-    if (!checksumLine) {
-      return NextResponse.json(
-        { error: `Checksum not found for ${binaryName}` },
-        { status: 404 }
-      )
-    }
-
-    // Extract SHA256 from the line
-    const sha256 = checksumLine.split(/\s+/)[0]
+    // The .sha256 file contains just the SHA256 hash, possibly followed by filename
+    // Format could be either:
+    // - Just the hash: "abc123..."
+    // - Hash with filename: "abc123...  filename"
+    const sha256 = checksumContent.trim().split(/\s+/)[0]
 
     return NextResponse.json(
       {
