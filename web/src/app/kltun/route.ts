@@ -269,6 +269,37 @@ if ! $KLTUN_CMD connect --token "$TOKEN" --server "$SERVER"; then
     exit 1
 fi
 
+# Verify connection is actually established (not just initiated)
+echo -e "\${BLUE}Verifying VPN connection...\${NC}"
+TIMEOUT=60
+ELAPSED=0
+CONNECTED=false
+
+while [ $ELAPSED -lt $TIMEOUT ]; do
+    # Check if connection is active and working
+    if $KLTUN_CMD daemon status 2>/dev/null | grep -q "Active Connections: [1-9]"; then
+        CONNECTED=true
+        break
+    fi
+
+    echo -ne "\${BLUE}.\${NC}"
+    sleep 2
+    ELAPSED=\$((ELAPSED + 2))
+done
+echo ""
+
+if [ "$CONNECTED" = false ]; then
+    echo -e "\${RED}Error: VPN connection timeout after \${TIMEOUT} seconds\${NC}"
+    echo -e "\${YELLOW}Check the logs for details:\${NC}"
+    echo "  tail -f /var/log/kltund.log"
+    echo ""
+    echo -e "\${YELLOW}Common issues:\${NC}"
+    echo "  - VPN server may be down or unreachable"
+    echo "  - Invalid token"
+    echo "  - Network connectivity issues"
+    exit 1
+fi
+
 echo ""
 echo -e "\${GREEN}✓ Connected successfully!\${NC}"
 `
