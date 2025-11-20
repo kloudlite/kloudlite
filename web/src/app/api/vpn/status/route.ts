@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/get-session'
 
 /**
  * VPN Status Check API Route
- * Tests VPN connectivity by attempting to reach a known cluster service
+ * Tests VPN connectivity by attempting to reach the VPN health check endpoint
  * Returns connection status for the VPN indicator in the dashboard
  */
 export async function GET() {
@@ -18,16 +19,29 @@ export async function GET() {
       )
     }
 
-    // Attempt to check VPN connectivity by calling the backend API
-    // This will fail if VPN is not connected since the browser can't reach cluster services directly
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+    // Get user session to extract subdomain
+    const userSession = await getSession()
+    const subdomain = userSession?.user?.subdomain
+
+    if (!subdomain) {
+      return NextResponse.json(
+        { connected: false, message: 'No subdomain configured' },
+        { status: 400 }
+      )
+    }
+
+    // Get base domain from environment
+    const baseDomain = process.env.CLOUDFLARE_DNS_DOMAIN || 'khost.dev'
+
+    // Construct VPN check URL
+    const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
 
     try {
-      // Try to reach a lightweight endpoint with a short timeout
+      // Try to reach the VPN check endpoint with a short timeout
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
 
-      const response = await fetch(`${backendUrl}/health`, {
+      const response = await fetch(vpnCheckUrl, {
         method: 'GET',
         signal: controller.signal,
         headers: {
@@ -46,7 +60,7 @@ export async function GET() {
 
       return NextResponse.json({
         connected: false,
-        message: 'Backend unreachable'
+        message: 'VPN check endpoint unreachable'
       })
     } catch (_error) {
       // Network error likely means VPN is not connected
