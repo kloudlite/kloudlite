@@ -277,6 +277,7 @@ export interface EnvironmentUIModel {
   lastDeployed: string
   cloningStatus?: CloningStatus
   sourceCloningStatus?: SourceCloningStatus
+  spec?: EnvironmentSpec
 }
 
 // Converter functions
@@ -336,5 +337,6 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
       : 'Never',
     cloningStatus: env.status?.cloningStatus,
     sourceCloningStatus: env.status?.sourceCloningStatus,
+    spec: env.spec,
   }
 }
