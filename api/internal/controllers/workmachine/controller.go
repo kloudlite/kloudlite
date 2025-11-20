@@ -361,7 +361,8 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName: serviceAccountName,
+					ServiceAccountName:            serviceAccountName,
+					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
 					NodeSelector: map[string]string{
 						"kloudlite.io/workmachine": obj.Name,
 					},
@@ -669,9 +670,10 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					NodeName:      obj.Name,
-					HostNetwork:   true,
-					RestartPolicy: corev1.RestartPolicyAlways,
+					NodeName:                      obj.Name,
+					HostNetwork:                   true,
+					RestartPolicy:                 corev1.RestartPolicyAlways,
+					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
 					Tolerations: []corev1.Toleration{
 						{
 							Key:               "node.kubernetes.io/not-ready",
