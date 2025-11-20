@@ -39,10 +39,53 @@ export function VPNStatusIndicator() {
 
   const checkVPNStatus = async () => {
     try {
-      const response = await fetch('/api/vpn/status')
-      const data: VPNStatusResponse = await response.json()
-      setStatus(data.connected ? 'connected' : 'disconnected')
+      // Extract subdomain from current hostname
+      // Expected format: subdomain.khost.dev or *.subdomain.khost.dev
+      const hostname = window.location.hostname
+      const baseDomain = 'khost.dev' // This should match CLOUDFLARE_DNS_DOMAIN
+
+      // Parse subdomain from hostname
+      // Examples:
+      // - "test.khost.dev" -> "test"
+      // - "console.test.khost.dev" -> "test"
+      const hostParts = hostname.split('.')
+      const baseParts = baseDomain.split('.')
+
+      let subdomain: string | null = null
+
+      if (hostParts.length > baseParts.length) {
+        // Get the part before the base domain
+        // For "console.test.khost.dev" with base "khost.dev", we want "test"
+        subdomain = hostParts[hostParts.length - baseParts.length - 1]
+      }
+
+      if (!subdomain) {
+        console.error('Could not determine subdomain from hostname:', hostname)
+        setStatus('disconnected')
+        return
+      }
+
+      // Construct VPN check URL and hit it directly from browser
+      const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
+
+      // Try to reach the VPN check endpoint with a short timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+
+      const response = await fetch(vpnCheckUrl, {
+        method: 'GET',
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (response.ok) {
+        setStatus('connected')
+      } else {
+        setStatus('disconnected')
+      }
     } catch (_error) {
+      // Network error likely means VPN is not connected
       setStatus('disconnected')
     }
   }
