@@ -352,6 +352,20 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 					ServiceAccountName: serviceAccountName,
 					NodeName:           obj.Name,
 					RestartPolicy:      corev1.RestartPolicyAlways,
+					Tolerations: []corev1.Toleration{
+						{
+							Key:               "node.kubernetes.io/not-ready",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
+						{
+							Key:               "node.kubernetes.io/unreachable",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:            "wm-ingress-controller",
@@ -574,6 +588,20 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 					NodeName:      obj.Name,
 					HostNetwork:   true,
 					RestartPolicy: corev1.RestartPolicyAlways,
+					Tolerations: []corev1.Toleration{
+						{
+							Key:               "node.kubernetes.io/not-ready",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
+						{
+							Key:               "node.kubernetes.io/unreachable",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:  "tunnel-server",
