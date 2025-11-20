@@ -19,8 +19,8 @@ import (
 
 // createSSHHostKeysSecret ensures the SSH host keys secret exists
 func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	namespace := hostManagerNamespace
-	secretName := fmt.Sprintf("ssh-host-keys-%s", obj.Name)
+	namespace := obj.Spec.TargetNamespace
+	secretName := "ssh-host-keys"
 
 	// Defer key generation until we know if we need it (performance optimization)
 	var rsaPrivateBytes, rsaPublicBytes []byte
@@ -116,7 +116,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 // ensureSSHDConfigMapStep ensures the sshd_config ConfigMap exists
 func (r *WorkMachineReconciler) ensureSSHDConfigMapStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	// Skip for cloud provider WorkMachines
-	namespace := hostManagerNamespace
+	namespace := obj.Spec.TargetNamespace
 	configMapName := "sshd-config"
 
 	// Define secure sshd_config content
