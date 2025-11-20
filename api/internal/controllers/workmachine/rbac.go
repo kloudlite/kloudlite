@@ -19,16 +19,20 @@ import (
 // - Nodes (cluster-wide) - to update GPU status
 // - Secrets (in hostmanager namespace) - to manage SSH keys
 func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	serviceAccountName := fmt.Sprintf("hm-%s", obj.Name)
+	serviceAccountName := "host-manager"
 
+	// Create ServiceAccount in target namespace
 	svcAccount := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceAccountName,
-			Namespace: hostManagerNamespace,
+			Namespace: obj.Spec.TargetNamespace,
 		},
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svcAccount, func() error {
+		if !fn.IsOwner(svcAccount, obj) {
+			svcAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -37,7 +41,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 	// Create ClusterRole for host manager
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: serviceAccountName,
+			Name: fmt.Sprintf("hm-%s", obj.Name),
 		},
 	}
 
@@ -104,7 +108,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
-				Namespace: hostManagerNamespace,
+				Namespace: obj.Spec.TargetNamespace,
 			},
 		}
 
@@ -116,11 +120,11 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		return check.Failed(err)
 	}
 
-	// Create Role in hostmanager namespace for Secrets access
+	// Create Role in target namespace for Secrets access
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("hm-%s", obj.Name),
-			Namespace: hostManagerNamespace,
+			Name:      "host-manager",
+			Namespace: obj.Spec.TargetNamespace,
 		},
 	}
 
@@ -129,6 +133,10 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
 		}))
+
+		if !fn.IsOwner(role, obj) {
+			role.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
 
 		role.Rules = []rbacv1.PolicyRule{
 			// Secrets - for SSH key management
@@ -143,11 +151,11 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		return check.Failed(err)
 	}
 
-	// Create RoleBinding in hostmanager namespace
+	// Create RoleBinding in target namespace
 	roleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("hm-%s", obj.Name),
-			Namespace: hostManagerNamespace,
+			Name:      "host-manager",
+			Namespace: obj.Spec.TargetNamespace,
 		},
 	}
 
@@ -156,6 +164,10 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
 		}))
+
+		if !fn.IsOwner(roleBinding, obj) {
+			roleBinding.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
 
 		roleBinding.RoleRef = rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
@@ -167,7 +179,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
-				Namespace: hostManagerNamespace,
+				Namespace: obj.Spec.TargetNamespace,
 			},
 		}
 		return nil
