@@ -106,19 +106,43 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	// 4. Start WireGuard device
 	fmt.Printf("[Session %s] Starting WireGuard device...\n", sessionID)
-	wg, err := wireguard.NewDevice(ctx, "utun", wgConfig.Config)
+	wgDeviceConfig := &wireguard.Config{
+		ListenPort: 51820,
+		MTU:        1420,
+	}
+
+	wgDevice, err := wireguard.NewDevice(ctx, wgDeviceConfig)
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to create WireGuard device: %v\n", sessionID, err)
 		resultChan <- fmt.Errorf("failed to create WireGuard device: %w", err)
 		return
 	}
-	defer wg.Close()
 
-	// Configure network interface
+	// Configure IP address and routes on the WireGuard interface
 	fmt.Printf("[Session %s] Configuring network interface...\n", sessionID)
-	if err := netconfig.ConfigureInterface(wg.Name(), wgConfig.AssignedIP); err != nil {
+	netCfg := &netconfig.InterfaceConfig{
+		InterfaceName: wgDevice.InterfaceName(),
+		IPAddress:     fmt.Sprintf("%s/32", wgConfig.AssignedIP),
+		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
+		Gateway:       "10.17.0.1",
+	}
+
+	if err := netconfig.ConfigureInterface(netCfg); err != nil {
 		fmt.Printf("[Session %s] Failed to configure network interface: %v\n", sessionID, err)
 		resultChan <- fmt.Errorf("failed to configure network interface: %w", err)
+		return
+	}
+
+	if err := wgDevice.Start(ctx); err != nil {
+		fmt.Printf("[Session %s] Failed to start WireGuard device: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to start WireGuard device: %w", err)
+		return
+	}
+	defer wgDevice.Close()
+	fmt.Printf("[WGConfig] %s", wgConfig.Config)
+	if err := wgDevice.SetConfig(wgConfig.Config); err != nil {
+		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to set WireGuard config: %w", err)
 		return
 	}
 
@@ -129,7 +153,8 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	// Continue with hosts polling in background
 	fmt.Printf("[Session %s] Starting hosts polling (every 10 seconds)...\n", sessionID)
-	s.pollHosts(ctx, sessionID, apiClient, deviceID)
+	hostsDone := make(chan struct{})
+	s.pollHosts(ctx, sessionID, apiClient, hostsDone)
 
 	fmt.Printf("[Session %s] VPN connection established successfully\n", sessionID)
 }
