@@ -56,7 +56,18 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 		s.connMutex.Lock()
 		delete(s.connections, existingSessionID)
 	}
+	s.connMutex.Unlock()
+
+	// Flush all state before starting new connection
+	fmt.Printf("Flushing all daemon state before establishing new connection\n")
+	if err := s.hostsManager.Clean(); err != nil {
+		fmt.Printf("Warning: Failed to clean hosts: %v\n", err)
+	} else {
+		fmt.Printf("Successfully flushed all hosts entries\n")
+	}
+
 	// Add the new connection
+	s.connMutex.Lock()
 	s.connections[sessionID] = conn
 	s.connMutex.Unlock()
 
