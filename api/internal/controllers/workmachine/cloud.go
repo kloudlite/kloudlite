@@ -52,23 +52,64 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 	// Stop machine if desired state is stopped but machine is running
 	if obj.Spec.State == v1.MachineStateStopped && currentState == v1.MachineStateRunning {
-		// First suspend all workspaces
+		// Step 1: Suspend all workspaces
 		if err := r.suspendAllWorkspaces(check.Context(), obj.Name); err != nil {
 			return check.Failed(fmt.Errorf("failed to suspend workspaces before stopping machine: %w", err))
 		}
 
-		// Then deactivate all environments
+		// Step 2: Deactivate all environments
 		if err := r.deactivateAllEnvironments(check.Context(), obj.Name); err != nil {
 			return check.Failed(fmt.Errorf("failed to deactivate environments before stopping machine: %w", err))
 		}
 
+		// Step 3: Cordon the node (prevent new pods from being scheduled)
+		node := &corev1.Node{}
+		if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(fmt.Errorf("failed to get node for cordoning: %w", err))
+			}
+			// Node doesn't exist, skip cordoning
+		} else {
+			if !node.Spec.Unschedulable {
+				node.Spec.Unschedulable = true
+				if err := r.Update(check.Context(), node); err != nil {
+					return check.Failed(fmt.Errorf("failed to cordon node: %w", err))
+				}
+				check.Logger().Info("cordoned node", "node", obj.Name)
+			}
+		}
+
+		// Step 4: Evict all pods on this node (drain)
+		podList := &corev1.PodList{}
+		if err := r.List(check.Context(), podList, client.MatchingFields{"spec.nodeName": obj.Name}); err != nil {
+			return check.Failed(fmt.Errorf("failed to list pods on node: %w", err))
+		}
+
+		if len(podList.Items) > 0 {
+			check.Logger().Info("draining node", "node", obj.Name, "podCount", len(podList.Items))
+			for i := range podList.Items {
+				pod := &podList.Items[i]
+				// Skip pods that are already terminating
+				if pod.DeletionTimestamp != nil {
+					continue
+				}
+				// Delete pod to trigger graceful termination
+				if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
+					check.Logger().Warn("failed to evict pod", "pod", pod.Name, "namespace", pod.Namespace, "error", err)
+				}
+			}
+			// Requeue to wait for pods to terminate gracefully
+			return check.UpdateMsg("Draining node (waiting for pods to terminate gracefully)").RequeueAfter(5 * time.Second)
+		}
+
+		// Step 5: All pods have terminated, now safe to stop the VM
 		if err := r.cloudProviderAPI.StopMachine(check.Context(), obj.Status.MachineID); err != nil {
 			return check.Failed(fmt.Errorf("failed to stop machine: %w", err))
 		}
 
 		obj.Status.State = v1.MachineStateStopping
 		obj.Status.StoppedAt = &metav1.Time{Time: time.Now()}
-		return check.UpdateMsg("Stopping Machine (workspaces suspended, environments deactivated)").RequeueAfter(10 * time.Second)
+		return check.UpdateMsg("Stopping Machine (all pods terminated gracefully)").RequeueAfter(10 * time.Second)
 	}
 
 	// Check if machine state matches desired state (but we'll verify node readiness below)
