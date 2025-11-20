@@ -16,14 +16,44 @@ export async function middleware(req: NextRequest) {
 
   // Mode-specific middleware logic
   const mode = getAppMode()
+  let response: NextResponse
   switch (mode) {
     case 'dashboard':
-      return handleDashboardMode(req, pathname)
+      response = await handleDashboardMode(req, pathname)
+      break
     case 'website':
-      return handleWebsiteMode(req, pathname)
+      response = await handleWebsiteMode(req, pathname)
+      break
     default:
-      return NextResponse.next()
+      response = NextResponse.next()
   }
+
+  // Add dynamic CSP headers based on request hostname
+  const hostname = req.headers.get('host') || ''
+  const baseDomain = process.env.CLOUDFLARE_DNS_DOMAIN || 'khost.dev'
+
+  // Extract subdomain from hostname
+  const hostParts = hostname.split('.')
+  const baseParts = baseDomain.split('.')
+  let subdomain: string | null = null
+
+  if (hostParts.length > baseParts.length) {
+    subdomain = hostParts[hostParts.length - baseParts.length - 1]
+  }
+
+  // Build VPN check URL if we have a subdomain
+  const vpnCheckUrl = subdomain ? `https://vpn-check.${subdomain}.${baseDomain}` : ''
+  const connectSrc = vpnCheckUrl
+    ? `'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* ${vpnCheckUrl}`
+    : `'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*`
+
+  response.headers.set(
+    'Content-Security-Policy',
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src ${connectSrc};`
+  )
+  response.headers.set('Permissions-Policy', 'interest-cohort=(), browsing-topics=()')
+
+  return response
 }
 
 /**
