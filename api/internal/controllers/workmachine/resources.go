@@ -54,7 +54,8 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName: "host-manager",
+					ServiceAccountName:            "host-manager",
+					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
 					NodeSelector: map[string]string{
 						"kloudlite.io/workmachine": obj.Name,
 					},
