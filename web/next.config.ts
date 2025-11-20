@@ -7,24 +7,8 @@ const nextConfig: NextConfig = {
   // Compress responses
   compress: true,
 
-  // Security headers to block third-party tracking scripts
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* https://vpn-check.*.khost.dev;",
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'interest-cohort=(), browsing-topics=()',
-          },
-        ],
-      },
-    ]
-  },
+  // Security headers are now set dynamically in middleware.ts
+  // to support per-request subdomain-based CSP policies
 
   // Enable experimental features
   experimental: {
