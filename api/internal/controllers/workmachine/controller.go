@@ -334,23 +334,25 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller cluster role binding: %w", err))
 	}
 
-	// Create Deployment
-	deployment := &appsv1.Deployment{
+	// Create StatefulSet
+	statefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentName,
 			Namespace: obj.Spec.TargetNamespace,
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, deployment, func() error {
-		if !fn.IsOwner(deployment, obj) {
-			deployment.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
+		if !fn.IsOwner(statefulSet, obj) {
+			statefulSet.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 
-		deployment.Labels = labels
+		statefulSet.Labels = labels
 
-		deployment.Spec = appsv1.DeploymentSpec{
-			Replicas: fn.Ptr(int32(1)),
+		statefulSet.Spec = appsv1.StatefulSetSpec{
+			Replicas:            fn.Ptr(int32(1)),
+			ServiceName:         deploymentName,
+			PodManagementPolicy: appsv1.ParallelPodManagement,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
@@ -360,9 +362,15 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: serviceAccountName,
-					NodeName:           obj.Name,
-					RestartPolicy:      corev1.RestartPolicyAlways,
+					NodeSelector: map[string]string{
+						"kloudlite.io/workmachine": obj.Name,
+					},
 					Tolerations: []corev1.Toleration{
+						{
+							Key:      "kloudlite.io/workmachine",
+							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
 						{
 							Key:               "node.kubernetes.io/not-ready",
 							Operator:          corev1.TolerationOpExists,
@@ -441,7 +449,7 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller deployment: %w", err))
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller statefulset: %w", err))
 	}
 
 	// Now ensure the service exists
@@ -491,15 +499,15 @@ func (r *WorkMachineReconciler) cleanupWorkmachineIngressController(check *recon
 	clusterRoleName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
 	clusterRoleBindingName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
 
-	// Delete Deployment
-	if err := r.Delete(check.Context(), &appsv1.Deployment{
+	// Delete StatefulSet
+	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentName,
 			Namespace: obj.Spec.TargetNamespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller deployment: %w", err))
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller statefulset: %w", err))
 		}
 	}
 
