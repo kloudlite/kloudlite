@@ -465,7 +465,7 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 // ensureTunnelServer creates and maintains the WireGuard tunnel server for the workmachine
 // This function is called when the WorkMachine is in running state
 func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	// Create ConfigMap for WireGuard configuration
+	// Create Secret for WireGuard configuration
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "tunnel-server",
@@ -473,7 +473,6 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	var configChanged bool
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, secret, func() error {
 		if !fn.IsOwner(secret, obj) {
 			secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
@@ -524,16 +523,11 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 			secret.Annotations = make(map[string]string)
 		}
 
-		// Check if config changed
-		oldHash := secret.Annotations["wireguard.kloudlite.io/config-hash"]
-		if oldHash != newHash {
-			configChanged = true
-			secret.Data["tunnel-server.conf"] = []byte(newConfig)
-			secret.Annotations["wireguard.kloudlite.io/config-hash"] = newHash
-		}
+		// Update config if changed
+		secret.Data["tunnel-server.conf"] = []byte(newConfig)
+		secret.Annotations["wireguard.kloudlite.io/config-hash"] = newHash
 
 		// Store server public key for WireGuardDevice controller to use
-		// This avoids repeated parsing of the config file
 		serverPrivKey, err := wgtypes.ParseKey(serverPrivateKey)
 		if err == nil {
 			serverPubKey := serverPrivKey.PublicKey()
@@ -545,151 +539,123 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		return check.Failed(fmt.Errorf("failed to create/update tunnel-server secret: %w", err))
 	}
 
-	// If config changed, delete the existing pod to force restart with new config
-	podName := "tunnel-server"
-	if configChanged {
-		existingPod := &corev1.Pod{}
-		if err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: obj.Spec.TargetNamespace}, existingPod); err == nil {
-			if err := r.Delete(check.Context(), existingPod); err != nil && !apiErrors.IsNotFound(err) {
-				return check.Failed(fmt.Errorf("failed to delete tunnel-server pod for config update: %w", err))
-			}
-			return check.UpdateMsg("tunnel-server config changed, recreating pod").RequeueAfter(2 * time.Second)
-		}
+	// Create StatefulSet for tunnel-server
+	labels := map[string]string{
+		"app":                      "tunnel-server",
+		"kloudlite.io/workmachine": obj.Name,
 	}
 
-	// Create Pod directly (not Deployment) since it's pinned to a specific node
-	// Pods are immutable, so we check if it exists first
-	existingPod := &corev1.Pod{}
-	err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: obj.Spec.TargetNamespace}, existingPod)
-
-	if err == nil {
-		// Pod exists, check if it's running and ready
-		if existingPod.Status.Phase == corev1.PodRunning {
-			// Check if all containers are ready
-			allReady := true
-			for _, condition := range existingPod.Status.Conditions {
-				if condition.Type == corev1.ContainersReady && condition.Status != corev1.ConditionTrue {
-					allReady = false
-					break
-				}
-			}
-			if allReady {
-				// Pod is running and ready
-				return check.Passed()
-			}
-			// Pod is running but containers not ready yet, keep waiting
-			return check.UpdateMsg("waiting for tunnel-server containers to be ready").RequeueAfter(2 * time.Second)
-		}
-		if existingPod.Status.Phase == corev1.PodPending {
-			// Pod is still starting up, wait
-			return check.UpdateMsg("tunnel-server pod is pending").RequeueAfter(2 * time.Second)
-		}
-		// Pod is in a bad state (Failed, Unknown, etc.), delete it and recreate
-		if err := r.Delete(check.Context(), existingPod); err != nil && !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete bad tunnel-server pod: %w", err))
-		}
-		return check.UpdateMsg("deleted bad tunnel-server pod, recreating").RequeueAfter(2 * time.Second)
-	}
-
-	if !apiErrors.IsNotFound(err) {
-		return check.Failed(fmt.Errorf("failed to get tunnel-server pod: %w", err))
-	}
-
-	// Pod doesn't exist, create it
-	pod := &corev1.Pod{
+	statefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
+			Name:      "tunnel-server",
 			Namespace: obj.Spec.TargetNamespace,
-			Labels: map[string]string{
-				"app":                      "tunnel-server",
-				"kloudlite.io/workmachine": obj.Name,
-			},
-			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		},
-		Spec: corev1.PodSpec{
-			NodeName:      obj.Name,
-			HostNetwork:   true,
-			RestartPolicy: corev1.RestartPolicyAlways,
-			Containers: []corev1.Container{
-				{
-					Name:  "tunnel-server",
-					Image: wireguardTunnelImage,
-					SecurityContext: &corev1.SecurityContext{
-						Privileged: fn.Ptr(true),
-						Capabilities: &corev1.Capabilities{
-							Add: []corev1.Capability{
-								corev1.Capability("NET_ADMIN"),
-								corev1.Capability("SYS_ADMIN"),
-							},
-						},
-					},
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          "wg-http-proxy",
-							ContainerPort: 443,
-							Protocol:      corev1.ProtocolTCP,
-						},
-					},
-					Command: []string{
-						"sh",
-						"-c",
-						strings.Join([]string{
-							"wg-quick down wg0 || echo starting wireguard",
-							"wg-quick up wg0 &",
-							"pid=$!",
-							"trap 'kill -9 $pid' SIGINT SIGTERM EXIT",
-							"wait $pid",
-						}, "\n"),
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "wireguard-secret",
-							MountPath: "/etc/wireguard/wg0.conf",
-							SubPath:   "tunnel-server.conf",
-							ReadOnly:  true,
-						},
-					},
-					ReadinessProbe: &corev1.Probe{
-						ProbeHandler: corev1.ProbeHandler{
-							Exec: &corev1.ExecAction{
-								Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
-							},
-						},
-						InitialDelaySeconds: 2,
-						PeriodSeconds:       5,
-						TimeoutSeconds:      2,
-						SuccessThreshold:    1,
-						FailureThreshold:    3,
-					},
-					LivenessProbe: &corev1.Probe{
-						ProbeHandler: corev1.ProbeHandler{
-							Exec: &corev1.ExecAction{
-								Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
-							},
-						},
-						InitialDelaySeconds: 10,
-						PeriodSeconds:       30,
-						TimeoutSeconds:      5,
-						SuccessThreshold:    1,
-						FailureThreshold:    3,
-					},
-				},
-			},
-			Volumes: []corev1.Volume{
-				{
-					Name: "wireguard-secret",
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: secret.Name,
-						},
-					},
-				},
-			},
 		},
 	}
 
-	if err := r.Create(check.Context(), pod); err != nil {
-		return check.Failed(fmt.Errorf("failed to create tunnel-server pod: %w", err))
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
+		if !fn.IsOwner(statefulSet, obj) {
+			statefulSet.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+
+		statefulSet.Labels = labels
+
+		statefulSet.Spec = appsv1.StatefulSetSpec{
+			Replicas:            fn.Ptr(int32(1)),
+			ServiceName:         "tunnel-server",
+			PodManagementPolicy: appsv1.ParallelPodManagement,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					NodeName:      obj.Name,
+					HostNetwork:   true,
+					RestartPolicy: corev1.RestartPolicyAlways,
+					Containers: []corev1.Container{
+						{
+							Name:  "tunnel-server",
+							Image: wireguardTunnelImage,
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: fn.Ptr(true),
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{
+										corev1.Capability("NET_ADMIN"),
+										corev1.Capability("SYS_ADMIN"),
+									},
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "wg-http-proxy",
+									ContainerPort: 443,
+									Protocol:      corev1.ProtocolTCP,
+								},
+							},
+							Command: []string{
+								"sh",
+								"-c",
+								strings.Join([]string{
+									"wg-quick down wg0 || echo starting wireguard",
+									"wg-quick up wg0 &",
+									"pid=$!",
+									"trap 'kill -9 $pid' SIGINT SIGTERM EXIT",
+									"wait $pid",
+								}, "\n"),
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "wireguard-secret",
+									MountPath: "/etc/wireguard/wg0.conf",
+									SubPath:   "tunnel-server.conf",
+									ReadOnly:  true,
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									Exec: &corev1.ExecAction{
+										Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
+									},
+								},
+								InitialDelaySeconds: 2,
+								PeriodSeconds:       5,
+								TimeoutSeconds:      2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									Exec: &corev1.ExecAction{
+										Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
+									},
+								},
+								InitialDelaySeconds: 10,
+								PeriodSeconds:       30,
+								TimeoutSeconds:      5,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "wireguard-secret",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: secret.Name,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update tunnel-server statefulset: %w", err))
 	}
 
 	return check.Passed()
@@ -709,7 +675,8 @@ func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.
 		return check.Failed(fmt.Errorf("target namespace cannot be empty"))
 	}
 
-	if err := r.Delete(check.Context(), &corev1.Secret{
+	// Delete StatefulSet (this will cascade delete pods)
+	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "tunnel-server",
 			Namespace: obj.Spec.TargetNamespace,
@@ -720,7 +687,8 @@ func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.
 		}
 	}
 
-	if err := r.Delete(check.Context(), &corev1.Pod{
+	// Delete Secret
+	if err := r.Delete(check.Context(), &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "tunnel-server",
 			Namespace: obj.Spec.TargetNamespace,
