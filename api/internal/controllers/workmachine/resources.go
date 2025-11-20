@@ -147,11 +147,6 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 									MountPath: "/var/lib/kloudlite",
 								},
 								{
-									Name:      "ssh-config",
-									MountPath: "/var/lib/kloudlite/ssh-config",
-									ReadOnly:  true,
-								},
-								{
 									Name:      "host-sys",
 									MountPath: "/host/sys",
 									ReadOnly:  true,
@@ -190,15 +185,6 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/var/lib/kloudlite",
 									Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
-								},
-							},
-						},
-						{
-							Name: "ssh-config",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName:  "ssh-host-keys",
-									DefaultMode: fn.Ptr(int32(0600)),
 								},
 							},
 						},
