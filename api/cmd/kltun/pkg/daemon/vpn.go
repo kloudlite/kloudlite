@@ -83,7 +83,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 			TCPSourcePort: 0,                                   // Let kernel choose source port
 			Fwmark:        -1,                                  // Firewall mark disabled
 			PeerIPS:       []string{},                          // Empty peer IPs
-			Peer:          "http://" + wgConfig.ServerEndpoint, // Server endpoint (e.g., "203.0.113.1:443")
+			Peer:          wgConfig.ServerEndpoint, // Server endpoint (e.g., "203.0.113.1:443")
 		}
 
 		// Setup the client (creates UDP listener)
@@ -224,7 +224,7 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 			TCPSourcePort: 0,                                   // Let kernel choose source port
 			Fwmark:        -1,                                  // Firewall mark disabled
 			PeerIPS:       []string{},                          // Empty peer IPs
-			Peer:          "http://" + wgConfig.ServerEndpoint, // Server endpoint (e.g., "203.0.113.1:443")
+			Peer:          wgConfig.ServerEndpoint, // Server endpoint (e.g., "203.0.113.1:443")
 		}
 
 		// Setup the client (creates UDP listener)
