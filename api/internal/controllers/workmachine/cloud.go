@@ -32,9 +32,52 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 		return check.UpdateMsg("created cloud machine").RequeueAfter(2 * time.Second)
 	}
 
-	machineInfo, err := r.cloudProviderAPI.GetMachineStatus(check.Context(), obj.Status.MachineID)
-	if err != nil {
-		return check.Failed(err)
+	// Check if Node exists and is Ready - if so, we can use Node IPs instead of AWS API
+	// This reduces AWS API calls and ensures IPs are fresh after Node becomes Ready
+	node := &corev1.Node{}
+	nodeExists := false
+	nodeReady := false
+	if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err == nil {
+		nodeExists = true
+		for _, condition := range node.Status.Conditions {
+			if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
+				nodeReady = true
+				break
+			}
+		}
+	}
+
+	// Prefer Node IPs over AWS API when Node is Ready and stable
+	var machineInfo *v1.MachineInfo
+	if nodeExists && nodeReady && obj.Status.State == v1.MachineStateRunning {
+		// Extract IPs from Node status
+		var nodeInternalIP, nodeExternalIP string
+		for _, addr := range node.Status.Addresses {
+			switch addr.Type {
+			case corev1.NodeInternalIP:
+				nodeInternalIP = addr.Address
+			case corev1.NodeExternalIP:
+				nodeExternalIP = addr.Address
+			}
+		}
+
+		// Use cached state and Node IPs (avoids AWS API call)
+		machineInfo = &v1.MachineInfo{
+			MachineID:        obj.Status.MachineID,
+			State:            v1.MachineStateRunning,
+			PrivateIP:        nodeInternalIP,
+			PublicIP:         nodeExternalIP,
+			AvailabilityZone: obj.Status.AvailabilityZone,
+			Message:          "Node is ready",
+			Region:           obj.Status.Region,
+		}
+	} else {
+		// Node not ready or doesn't exist - must fetch from AWS API
+		awsMachineInfo, err := r.cloudProviderAPI.GetMachineStatus(check.Context(), obj.Status.MachineID)
+		if err != nil {
+			return check.Failed(err)
+		}
+		machineInfo = awsMachineInfo
 	}
 
 	// Handle desired state transitions
@@ -143,23 +186,25 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 	// Check if node has joined the cluster before marking as running
 	if machineInfo.State == v1.MachineStateRunning {
-		node := &corev1.Node{}
-		if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
-			if apiErrors.IsNotFound(err) {
-				// Node hasn't joined yet, keep state as "starting"
-				obj.Status.State = v1.MachineStateStarting
-				obj.Status.Message = "Waiting for node to join cluster"
-				return check.UpdateMsg("waiting for node to join cluster").RequeueAfter(10 * time.Second)
+		// Reuse node if already fetched, otherwise fetch it
+		if !nodeExists {
+			if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err != nil {
+				if apiErrors.IsNotFound(err) {
+					// Node hasn't joined yet, keep state as "starting"
+					obj.Status.State = v1.MachineStateStarting
+					obj.Status.Message = "Waiting for node to join cluster"
+					return check.UpdateMsg("waiting for node to join cluster").RequeueAfter(10 * time.Second)
+				}
+				return check.Failed(fmt.Errorf("failed to get node: %w", err))
 			}
-			return check.Failed(fmt.Errorf("failed to get node: %w", err))
-		}
-
-		// Check if node is ready
-		nodeReady := false
-		for _, condition := range node.Status.Conditions {
-			if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
-				nodeReady = true
-				break
+			nodeExists = true
+			// Re-check if node is ready
+			nodeReady = false
+			for _, condition := range node.Status.Conditions {
+				if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionTrue {
+					nodeReady = true
+					break
+				}
 			}
 		}
 

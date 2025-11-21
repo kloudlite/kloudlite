@@ -944,6 +944,7 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	)
 
 	// Watch for Nodes to trigger reconciliation when node joins/updates
+	// The reconciler will fetch fresh IPs from AWS when Node Ready state changes
 	builder.Watches(
 		&corev1.Node{},
 		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
