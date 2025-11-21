@@ -349,7 +349,9 @@ func (r *WireGuardDeviceReconciler) updateTunnelServer(check *reconciler.Check[*
 		workMachine.Annotations["vpn.kloudlite.io/peers-config-hash"] = currentHash
 
 		if err := r.Update(ctx, workMachine); err != nil {
-			return check.Failed(fmt.Errorf("failed to update WorkMachine peers hash: %w", err))
+			// Use Errored instead of Failed to allow retries on transient errors
+			// (e.g., webhook endpoint unavailable, network issues, pod restarts)
+			return check.Errored(fmt.Errorf("failed to update WorkMachine peers hash: %w", err))
 		}
 	}
 
@@ -388,7 +390,9 @@ func (r *WireGuardDeviceReconciler) removePeerFromTunnelServer(check *reconciler
 		workMachine.Annotations["vpn.kloudlite.io/peers-config-hash"] = currentHash
 
 		if err := r.Update(ctx, workMachine); err != nil {
-			return check.Failed(fmt.Errorf("failed to update WorkMachine peers hash: %w", err))
+			// Use Errored instead of Failed to allow retries on transient errors
+			// (e.g., webhook endpoint unavailable, network issues, pod restarts)
+			return check.Errored(fmt.Errorf("failed to update WorkMachine peers hash: %w", err))
 		}
 	}
 
