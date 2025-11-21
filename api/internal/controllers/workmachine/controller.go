@@ -67,6 +67,10 @@ type WorkMachineReconciler struct {
 const (
 	WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
 	hostManagerNamespace     = "kloudlite-hostmanager"
+
+	// Node labels for caching IP addresses
+	NodeLabelPublicIP  = "kloudlite.io/public-ip"
+	NodeLabelPrivateIP = "kloudlite.io/private-ip"
 )
 
 // SSH Configuration Constants
