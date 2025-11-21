@@ -296,8 +296,8 @@ ELAPSED=0
 CONNECTED=false
 
 while [ $ELAPSED -lt $TIMEOUT ]; do
-    # Check if connection is active and working
-    if $KLTUN_CMD daemon status 2>/dev/null | grep -q "Active Connections: [1-9]"; then
+    # Check if connection is active by pinging the VPN gateway
+    if ping -c 1 -W 1 10.17.0.1 >/dev/null 2>&1; then
         CONNECTED=true
         break
     fi
@@ -317,6 +317,7 @@ if [ "$CONNECTED" = false ]; then
     echo "  - VPN server may be down or unreachable"
     echo "  - Invalid token"
     echo "  - Network connectivity issues"
+    echo "  - WireGuard tunnel not fully established"
     exit 1
 fi
 
