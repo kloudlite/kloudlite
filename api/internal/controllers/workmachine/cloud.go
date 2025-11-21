@@ -32,14 +32,7 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 		return check.UpdateMsg("created cloud machine").RequeueAfter(2 * time.Second)
 	}
 
-	// Get machine status from AWS API to ensure accurate IPs
-	// Kubernetes Nodes don't reliably have ExternalIP, so we must use AWS API
-	machineInfo, err := r.cloudProviderAPI.GetMachineStatus(check.Context(), obj.Status.MachineID)
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	// Keep node reference for later use
+	// Fetch node first to check for cached IP labels
 	node := &corev1.Node{}
 	nodeExists := false
 	nodeReady := false
@@ -51,6 +44,39 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 				break
 			}
 		}
+	}
+
+	// Try to use cached IPs from Node labels if node is ready
+	var machineInfo *v1.MachineInfo
+	useCache := nodeExists && nodeReady && node.Labels != nil &&
+		node.Labels[NodeLabelPublicIP] != "" &&
+		node.Labels[NodeLabelPrivateIP] != ""
+
+	if useCache {
+		// Use cached IPs from Node labels (skip AWS API call)
+		machineInfo = &v1.MachineInfo{
+			MachineID: obj.Status.MachineID,
+			State:     v1.MachineStateRunning,
+			PublicIP:  node.Labels[NodeLabelPublicIP],
+			PrivateIP: node.Labels[NodeLabelPrivateIP],
+			// Keep existing values for other fields
+			AvailabilityZone: obj.Status.AvailabilityZone,
+			Region:           obj.Status.Region,
+			Message:          "Node is ready (using cached IPs)",
+		}
+		check.Logger().Debug("using cached IPs from node labels",
+			"publicIP", machineInfo.PublicIP,
+			"privateIP", machineInfo.PrivateIP)
+	} else {
+		// Fetch fresh IPs from AWS API
+		var err error
+		machineInfo, err = r.cloudProviderAPI.GetMachineStatus(check.Context(), obj.Status.MachineID)
+		if err != nil {
+			return check.Failed(err)
+		}
+		check.Logger().Debug("fetched fresh IPs from AWS API",
+			"publicIP", machineInfo.PublicIP,
+			"privateIP", machineInfo.PrivateIP)
 	}
 
 	// Handle desired state transitions
@@ -157,6 +183,35 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 	obj.Status.RootVolumeSize = specVolume
 	obj.Status.Message = machineInfo.Message
 
+	// Update Node labels with IPs when node exists and IPs are available
+	if nodeExists && machineInfo.PublicIP != "" && machineInfo.PrivateIP != "" {
+		needsUpdate := false
+		if node.Labels == nil {
+			node.Labels = make(map[string]string)
+		}
+
+		// Update labels only if changed
+		if node.Labels[NodeLabelPublicIP] != machineInfo.PublicIP {
+			node.Labels[NodeLabelPublicIP] = machineInfo.PublicIP
+			needsUpdate = true
+		}
+		if node.Labels[NodeLabelPrivateIP] != machineInfo.PrivateIP {
+			node.Labels[NodeLabelPrivateIP] = machineInfo.PrivateIP
+			needsUpdate = true
+		}
+
+		if needsUpdate {
+			if err := r.Update(check.Context(), node); err != nil {
+				check.Logger().Warn("failed to update node IP labels", "error", err)
+				// Don't fail reconciliation for label updates
+			} else {
+				check.Logger().Info("updated node IP labels",
+					"publicIP", machineInfo.PublicIP,
+					"privateIP", machineInfo.PrivateIP)
+			}
+		}
+	}
+
 	// Check if node has joined the cluster before marking as running
 	if machineInfo.State == v1.MachineStateRunning {
 		// Reuse node if already fetched, otherwise fetch it
@@ -182,6 +237,16 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 		}
 
 		if !nodeReady {
+			// Remove IP labels when node is not ready to force fresh lookup on next reconciliation
+			if node.Labels != nil && (node.Labels[NodeLabelPublicIP] != "" || node.Labels[NodeLabelPrivateIP] != "") {
+				delete(node.Labels, NodeLabelPublicIP)
+				delete(node.Labels, NodeLabelPrivateIP)
+				if err := r.Update(check.Context(), node); err != nil {
+					check.Logger().Warn("failed to remove IP labels from not-ready node", "error", err)
+				} else {
+					check.Logger().Info("removed IP labels from not-ready node")
+				}
+			}
 			obj.Status.State = v1.MachineStateStarting
 			obj.Status.Message = "Node joined, waiting for node to be ready"
 			return check.UpdateMsg("waiting for node to be ready").RequeueAfter(5 * time.Second)
