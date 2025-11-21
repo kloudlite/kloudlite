@@ -32,8 +32,14 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 		return check.UpdateMsg("created cloud machine").RequeueAfter(2 * time.Second)
 	}
 
-	// Check if Node exists and is Ready - if so, we can use Node IPs instead of AWS API
-	// This reduces AWS API calls and ensures IPs are fresh after Node becomes Ready
+	// Get machine status from AWS API to ensure accurate IPs
+	// Kubernetes Nodes don't reliably have ExternalIP, so we must use AWS API
+	machineInfo, err := r.cloudProviderAPI.GetMachineStatus(check.Context(), obj.Status.MachineID)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	// Keep node reference for later use
 	node := &corev1.Node{}
 	nodeExists := false
 	nodeReady := false
@@ -45,39 +51,6 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 				break
 			}
 		}
-	}
-
-	// Prefer Node IPs over AWS API when Node is Ready and stable
-	var machineInfo *v1.MachineInfo
-	if nodeExists && nodeReady && obj.Status.State == v1.MachineStateRunning {
-		// Extract IPs from Node status
-		var nodeInternalIP, nodeExternalIP string
-		for _, addr := range node.Status.Addresses {
-			switch addr.Type {
-			case corev1.NodeInternalIP:
-				nodeInternalIP = addr.Address
-			case corev1.NodeExternalIP:
-				nodeExternalIP = addr.Address
-			}
-		}
-
-		// Use cached state and Node IPs (avoids AWS API call)
-		machineInfo = &v1.MachineInfo{
-			MachineID:        obj.Status.MachineID,
-			State:            v1.MachineStateRunning,
-			PrivateIP:        nodeInternalIP,
-			PublicIP:         nodeExternalIP,
-			AvailabilityZone: obj.Status.AvailabilityZone,
-			Message:          "Node is ready",
-			Region:           obj.Status.Region,
-		}
-	} else {
-		// Node not ready or doesn't exist - must fetch from AWS API
-		awsMachineInfo, err := r.cloudProviderAPI.GetMachineStatus(check.Context(), obj.Status.MachineID)
-		if err != nil {
-			return check.Failed(err)
-		}
-		machineInfo = awsMachineInfo
 	}
 
 	// Handle desired state transitions
