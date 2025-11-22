@@ -23,12 +23,47 @@ concurrency:
 env:
   NODE_VERSION: '20'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/web
 
 jobs:
-  build-and-push:
-    name: Build and Push
+  # Determine which apps need to be built based on changed files
+  changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      console: ${{ steps.filter.outputs.console }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+      website: ${{ steps.filter.outputs.website }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changed files
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            console:
+              - 'web/apps/console/**'
+              - 'web/packages/**'
+              - '.github/workflows/build-and-push-web.yml'
+            dashboard:
+              - 'web/apps/dashboard/**'
+              - 'web/packages/**'
+              - '.github/workflows/build-and-push-web.yml'
+            website:
+              - 'web/apps/website/**'
+              - 'web/packages/**'
+              - '.github/workflows/build-and-push-web.yml'
+
+  # Build Console App
+  build-console:
+    name: Build Console
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.console == 'true' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
@@ -58,6 +93,8 @@ jobs:
         with:
           path: |
             web/node_modules
+            web/apps/console/node_modules
+            web/packages/*/node_modules
             ~/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
           restore-keys: |
@@ -68,7 +105,133 @@ jobs:
 
       - name: Create environment file
         run: |
-          cat > .env.local << EOF
+          cat > apps/console/.env.local << EOF
+          # Base URL
+          NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://console.kloudlite.io' }}
+
+          # API URL
+          NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'https://api.kloudlite.io' }}
+
+          # NextAuth Configuration
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          NEXTAUTH_URL=${{ secrets.REGISTER_BASE_URL || 'https://console.kloudlite.io' }}
+          EOF
+
+      - name: Cache Next.js build (console)
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/apps/console/.next/cache
+          key: ${{ runner.os }}-nextjs-console-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/apps/console/**/*.js', 'web/apps/console/**/*.jsx', 'web/apps/console/**/*.ts', 'web/apps/console/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-console-${{ hashFiles('web/pnpm-lock.yaml') }}-
+
+      - name: Build Console app
+        run: pnpm --filter console build
+        env:
+          NODE_ENV: production
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/console
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+      - name: Build and push Console image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web/apps/console
+          file: ./web/apps/console/Dockerfile.runtime
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=console
+          cache-to: type=gha,mode=max,scope=console
+
+      - name: Build summary
+        run: |
+          echo "### Console Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App**: Console" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # Build Dashboard App
+  build-dashboard:
+    name: Build Dashboard
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.dashboard == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/node_modules
+            web/apps/dashboard/node_modules
+            web/packages/*/node_modules
+            ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create environment file
+        run: |
+          cat > apps/dashboard/.env.local << EOF
           # Base URL
           NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
 
@@ -105,17 +268,17 @@ jobs:
           CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}
           EOF
 
-      - name: Cache Next.js build
+      - name: Cache Next.js build (dashboard)
         uses: actions/cache@v4
         with:
           path: |
-            web/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/**/*.js', 'web/**/*.jsx', 'web/**/*.ts', 'web/**/*.tsx') }}
+            web/apps/dashboard/.next/cache
+          key: ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/apps/dashboard/**/*.js', 'web/apps/dashboard/**/*.jsx', 'web/apps/dashboard/**/*.ts', 'web/apps/dashboard/**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/pnpm-lock.yaml') }}-
 
-      - name: Build Next.js application
-        run: pnpm run build
+      - name: Build Dashboard app
+        run: pnpm --filter dashboard build
         env:
           NODE_ENV: production
 
@@ -134,7 +297,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/dashboard
           flavor: |
             latest=false
           tags: |
@@ -146,20 +309,23 @@ jobs:
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
-      - name: Build and push Docker image
+      - name: Build and push Dashboard image
         uses: docker/build-push-action@v5
         with:
-          context: ./web
-          file: ./web/Dockerfile.runtime
+          context: ./web/apps/dashboard
+          file: ./web/apps/dashboard/Dockerfile.runtime
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=dashboard
+          cache-to: type=gha,mode=max,scope=dashboard
 
       - name: Build summary
         run: |
-          echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Dashboard Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App**: Dashboard" >> $GITHUB_STEP_SUMMARY
           echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
@@ -168,13 +334,131 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployments:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Console mode → https://console.kloudlite.io (APP_MODE=console)" >> $GITHUB_STEP_SUMMARY
-          echo "- Website mode → https://kloudlite.io (APP_MODE=website)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note:** APP_MODE should be set as environment variable at deployment time (console, dashboard, or website)" >> $GITHUB_STEP_SUMMARY
 
+  # Build Website App
+  build-website:
+    name: Build Website
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.website == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/node_modules
+            web/apps/website/node_modules
+            web/packages/*/node_modules
+            ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create environment file
+        run: |
+          cat > apps/website/.env.local << EOF
+          # Base URL
+          NEXT_PUBLIC_BASE_URL=https://kloudlite.io
+
+          # NextAuth Configuration
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          NEXTAUTH_URL=https://kloudlite.io
+          EOF
+
+      - name: Cache Next.js build (website)
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/apps/website/.next/cache
+          key: ${{ runner.os }}-nextjs-website-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/apps/website/**/*.js', 'web/apps/website/**/*.jsx', 'web/apps/website/**/*.ts', 'web/apps/website/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-website-${{ hashFiles('web/pnpm-lock.yaml') }}-
+
+      - name: Build Website app
+        run: pnpm --filter website build
+        env:
+          NODE_ENV: production
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/website
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+      - name: Build and push Website image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web/apps/website
+          file: ./web/apps/website/Dockerfile.runtime
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=website
+          cache-to: type=gha,mode=max,scope=website
+
+      - name: Build summary
+        run: |
+          echo "### Website Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App**: Website" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # Lint Check
   lint:
     name: Lint Check
     runs-on: ubuntu-latest
@@ -213,17 +497,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
-        run: pnpm run lint
+        run: pnpm run lint:all
         continue-on-error: true
 
-      - name: Run Prettier check
-        run: pnpm run format:check
-        continue-on-error: true
-
-  deploy-azure:
-    name: Deploy to Azure (console)
+  # Deploy Console to Azure
+  deploy-console:
+    name: Deploy Console to Azure
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: build-console
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     permissions:
       contents: read
@@ -237,15 +518,14 @@ jobs:
       - name: Update Container App
         run: |
           IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
-          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web:${IMAGE_TAG}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/console:${IMAGE_TAG}"
 
-          echo "Deploying image: $IMAGE"
+          echo "Deploying Console image: $IMAGE"
 
           az containerapp update \
-            --name ca-kloudlite-registration \
+            --name ca-kloudlite-console \
             --resource-group rg-kloudlite-registration \
             --image $IMAGE \
-            --set-env-vars APP_MODE=console \
             --query "properties.provisioningState" -o tsv
 
       - name: Deployment Summary
@@ -255,15 +535,15 @@ jobs:
           echo "### Azure Deployment Summary (Console)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Container App**: ca-kloudlite-registration" >> $GITHUB_STEP_SUMMARY
-          echo "- **App Mode**: console" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container App**: ca-kloudlite-console" >> $GITHUB_STEP_SUMMARY
           echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
           echo "- **Public URL**: https://console.kloudlite.io" >> $GITHUB_STEP_SUMMARY
 
-  deploy-azure-website:
-    name: Deploy to Azure (website)
+  # Deploy Dashboard to Azure
+  deploy-dashboard:
+    name: Deploy Dashboard to Azure
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: build-dashboard
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     permissions:
       contents: read
@@ -277,18 +557,53 @@ jobs:
       - name: Update Container App
         run: |
           IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
-          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web:${IMAGE_TAG}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/dashboard:${IMAGE_TAG}"
 
-          echo "Deploying image: $IMAGE"
+          echo "Deploying Dashboard image: $IMAGE"
+
+          az containerapp update \
+            --name ca-kloudlite-registration \
+            --resource-group rg-kloudlite-registration \
+            --image $IMAGE \
+            --query "properties.provisioningState" -o tsv
+
+      - name: Deployment Summary
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+
+          echo "### Azure Deployment Summary (Dashboard)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container App**: ca-kloudlite-registration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Public URL**: https://register.kloudlite.io" >> $GITHUB_STEP_SUMMARY
+
+  # Deploy Website to Azure
+  deploy-website:
+    name: Deploy Website to Azure
+    runs-on: ubuntu-latest
+    needs: build-website
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update Container App
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/website:${IMAGE_TAG}"
+
+          echo "Deploying Website image: $IMAGE"
 
           az containerapp update \
             --name ca-kloudlite-website \
             --resource-group rg-kloudlite-registration \
             --image $IMAGE \
-            --set-env-vars \
-              APP_MODE=website \
-              NEXT_PUBLIC_BASE_URL=https://kloudlite.io \
-              NEXTAUTH_URL=https://kloudlite.io \
             --query "properties.provisioningState" -o tsv
 
       - name: Deployment Summary
@@ -299,6 +614,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
           echo "- **Container App**: ca-kloudlite-website" >> $GITHUB_STEP_SUMMARY
-          echo "- **App Mode**: website" >> $GITHUB_STEP_SUMMARY
           echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
           echo "- **Public URL**: https://kloudlite.io" >> $GITHUB_STEP_SUMMARY
