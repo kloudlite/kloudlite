@@ -79,10 +79,10 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		// Initialize the official proxyguard client
 		// Peer field expects just IP:PORT (not a URL)
 		pgClient = &proxyguard.Client{
-			ListenPort:    51821,                               // Local port for WireGuard to connect to
-			TCPSourcePort: 0,                                   // Let kernel choose source port
-			Fwmark:        -1,                                  // Firewall mark disabled
-			PeerIPS:       []string{},                          // Empty peer IPs
+			ListenPort:    51821,                                // Local port for WireGuard to connect to
+			TCPSourcePort: 0,                                    // Let kernel choose source port
+			Fwmark:        -1,                                   // Firewall mark disabled
+			PeerIPS:       []string{},                           // Empty peer IPs
 			Peer:          "https://" + wgConfig.ServerEndpoint, // Server endpoint (e.g., "https://203.0.113.1:443")
 		}
 
@@ -220,10 +220,10 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		// Initialize the official proxyguard client
 		// Peer field expects just IP:PORT (not a URL)
 		pgClient = &proxyguard.Client{
-			ListenPort:    51821,                               // Local port for WireGuard to connect to
-			TCPSourcePort: 0,                                   // Let kernel choose source port
-			Fwmark:        -1,                                  // Firewall mark disabled
-			PeerIPS:       []string{},                          // Empty peer IPs
+			ListenPort:    51821,                                // Local port for WireGuard to connect to
+			TCPSourcePort: 0,                                    // Let kernel choose source port
+			Fwmark:        -1,                                   // Firewall mark disabled
+			PeerIPS:       []string{},                           // Empty peer IPs
 			Peer:          "https://" + wgConfig.ServerEndpoint, // Server endpoint (e.g., "https://203.0.113.1:443")
 		}
 

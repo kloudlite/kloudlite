@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"

@@ -259,9 +259,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		vpn := v1.Group("/vpn")
 		{
 			vpn.GET("/connect", vpnHandlers.GetVPNConnect)
-		vpn.GET("/wireguard-config", vpnHandlers.GetWireGuardConfig)
-		vpn.GET("/ca-cert", vpnHandlers.GetCACert)
-		vpn.GET("/hosts", vpnHandlers.GetHosts)
+			vpn.GET("/wireguard-config", vpnHandlers.GetWireGuardConfig)
+			vpn.GET("/ca-cert", vpnHandlers.GetCACert)
+			vpn.GET("/hosts", vpnHandlers.GetHosts)
 		}
 	}
 
