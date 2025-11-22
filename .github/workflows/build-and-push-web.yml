@@ -25,45 +25,10 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # Determine which apps need to be built based on changed files
-  changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      console: ${{ steps.filter.outputs.console }}
-      dashboard: ${{ steps.filter.outputs.dashboard }}
-      website: ${{ steps.filter.outputs.website }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check for changed files
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            console:
-              - 'web/apps/console/**'
-              - 'web/packages/**'
-              - '.github/workflows/build-and-push-web.yml'
-            dashboard:
-              - 'web/apps/dashboard/**'
-              - 'web/packages/**'
-              - '.github/workflows/build-and-push-web.yml'
-            website:
-              - 'web/apps/website/**'
-              - 'web/packages/**'
-              - '.github/workflows/build-and-push-web.yml'
-
   # Build Console App
   build-console:
     name: Build Console
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.console == 'true' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
@@ -188,8 +153,6 @@ jobs:
   build-dashboard:
     name: Build Dashboard
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.dashboard == 'true' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
@@ -339,8 +302,6 @@ jobs:
   build-website:
     name: Build Website
     runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.website == 'true' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
