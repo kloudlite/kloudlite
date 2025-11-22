@@ -168,8 +168,17 @@ jobs:
           fi
 
   test:
-    name: Tests
+    name: Tests (${{ matrix.package }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - ./cmd/workmachine-node-manager/...
+          - ./internal/controllers/...
+          - ./internal/handlers/...
+          - ./internal/services/...
+          - ./pkg/...
 
     defaults:
       run:
@@ -190,5 +199,13 @@ jobs:
         run: go mod download
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./cmd/workmachine-node-manager/...
+        run: go test -v -race -coverprofile=coverage-${{ strategy.job-index }}.out ${{ matrix.package }}
+        continue-on-error: true
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: github.event_name == 'push'
+        with:
+          files: ./api/coverage-${{ strategy.job-index }}.out
+          flags: node-manager-${{ strategy.job-index }}
         continue-on-error: true

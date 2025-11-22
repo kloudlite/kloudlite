@@ -172,8 +172,21 @@ jobs:
           fi
 
   test:
-    name: Tests
+    name: Tests (${{ matrix.package }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - ./cmd/server/...
+          - ./cmd/kl/...
+          - ./internal/controllers/...
+          - ./internal/handlers/...
+          - ./internal/middleware/...
+          - ./internal/repository/...
+          - ./internal/services/...
+          - ./internal/webhooks/...
+          - ./pkg/...
 
     defaults:
       run:
@@ -194,13 +207,13 @@ jobs:
         run: go mod download
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
+        run: go test -v -race -coverprofile=coverage-${{ strategy.job-index }}.out ${{ matrix.package }}
         continue-on-error: true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: github.event_name == 'push'
         with:
-          files: ./api/coverage.out
-          flags: api-server
+          files: ./api/coverage-${{ strategy.job-index }}.out
+          flags: api-server-${{ strategy.job-index }}
         continue-on-error: true
