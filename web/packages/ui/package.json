@@ -3,6 +3,9 @@
     "version": "0.0.0",
     "main": "./src/index.ts",
     "types": "./src/index.ts",
+    "scripts": {
+        "lint": "echo 'No lint configured for @kloudlite/ui'"
+    },
     "dependencies": {
         "@kloudlite/lib": "workspace:*",
         "@radix-ui/react-alert-dialog": "^1.1.4",
