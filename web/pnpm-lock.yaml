@@ -119,6 +119,9 @@ importers:
       react-hook-form:
         specifier: ^7.66.1
         version: 7.66.1(react@19.1.0)
+      react-icons:
+        specifier: ^5.5.0
+        version: 5.5.0(react@19.1.0)
       sonner:
         specifier: ^1.7.3
         version: 1.7.4(react-dom@19.1.0)(react@19.1.0)
@@ -4283,6 +4286,14 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+    dependencies:
+      react: 19.1.0
+    dev: false
+
+  /react-icons@5.5.0(react@19.1.0):
+    resolution: {integrity: sha512-MEFcXdkP3dLo8uumGI5xN3lDFNsRtrjbOEKDLD7yv76v4wpnEq2Lt2qeHaQOr34I/wPN3s3+N08WkQ+CW37Xiw==}
+    peerDependencies:
+      react: '*'
     dependencies:
       react: 19.1.0
     dev: false
