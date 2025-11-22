@@ -113,7 +113,7 @@ jobs:
           NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'https://api.kloudlite.io' }}
 
           # NextAuth Configuration
-          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
           NEXTAUTH_URL=${{ secrets.REGISTER_BASE_URL || 'https://console.kloudlite.io' }}
           EOF
 
@@ -253,7 +253,7 @@ jobs:
           AUTH_MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
 
           # NextAuth Configuration
-          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
           NEXTAUTH_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
 
           # Supabase Configuration
@@ -387,7 +387,7 @@ jobs:
           NEXT_PUBLIC_BASE_URL=https://kloudlite.io
 
           # NextAuth Configuration
-          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
           NEXTAUTH_URL=https://kloudlite.io
           EOF
 
