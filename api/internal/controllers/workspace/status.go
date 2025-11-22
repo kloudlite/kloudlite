@@ -97,12 +97,12 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			wm, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
 			if err == nil && wm.Status.PublicIP != "" {
 				// Sanitize username for DNS compatibility (lowercase, replace invalid chars with hyphens)
-			sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
-			sanitizedUsername = regexp.MustCompile(`[^a-z0-9-]`).ReplaceAllString(sanitizedUsername, "-")
+				sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
+				sanitizedUsername = regexp.MustCompile(`[^a-z0-9-]`).ReplaceAllString(sanitizedUsername, "-")
 
-			// Use pattern: {prefix}-{workspaceName}-{username}.{subdomain}
-			// Example: claude-mine-karthik.eastman.khost.dev
-			baseDomain := fmt.Sprintf("%s-%s.%s", workspace.Name, sanitizedUsername, domainRequest.Status.Subdomain)
+				// Use pattern: {prefix}-{workspaceName}-{username}.{subdomain}
+				// Example: claude-mine-karthik.eastman.khost.dev
+				baseDomain := fmt.Sprintf("%s-%s.%s", workspace.Name, sanitizedUsername, domainRequest.Status.Subdomain)
 				// Use public HTTPS domain URLs
 				accessURLs["code-server"] = fmt.Sprintf("https://vscode-%s", baseDomain)
 				accessURLs["ttyd"] = fmt.Sprintf("https://tty-%s", baseDomain)
