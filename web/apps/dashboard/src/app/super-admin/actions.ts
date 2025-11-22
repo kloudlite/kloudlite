@@ -1,0 +1,32 @@
+'use server'
+
+import { getSession } from '@/lib/get-session'
+import { apiClient } from '@/lib/api-client'
+
+interface Provider {
+  type: string
+  enabled: boolean
+  clientId: string
+  clientSecret?: string
+}
+
+export async function updateProvider(type: string, provider: Provider) {
+  // Check authentication using NextAuth
+  const session = await getSession()
+
+  if (!session || !session.user?.roles?.includes('super-admin')) {
+    return { success: false, error: 'Not authenticated or insufficient permissions' }
+  }
+
+  try {
+    // Since we're using NextAuth, we need to make the request directly
+    // The backend should validate based on the user's session/JWT
+    await apiClient.put(`/api/v1/providers/${type}`, provider)
+
+    return { success: true }
+  } catch (err) {
+    console.error('Error updating provider:', err)
+    const error = err instanceof Error ? err : new Error('Failed to update provider')
+    return { success: false, error: error.message }
+  }
+}
