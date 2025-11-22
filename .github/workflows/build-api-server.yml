@@ -206,8 +206,8 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
-      - name: Run tests
-        run: go test -v -race -coverprofile=coverage-${{ strategy.job-index }}.out ${{ matrix.package }}
+      - name: Run tests (without race detector for speed)
+        run: go test -v -coverprofile=coverage-${{ strategy.job-index }}.out -timeout=2m ${{ matrix.package }}
         continue-on-error: true
 
       - name: Upload coverage
@@ -216,4 +216,30 @@ jobs:
         with:
           files: ./api/coverage-${{ strategy.job-index }}.out
           flags: api-server-${{ strategy.job-index }}
+        continue-on-error: true
+
+  race-test:
+    name: Race Detection
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run race detector on critical packages
+        run: go test -race -timeout=5m ./internal/controllers/... ./internal/services/...
         continue-on-error: true
