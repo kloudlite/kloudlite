@@ -111,7 +111,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/console
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/web-console
           flavor: |
             latest=false
           tags: |
@@ -260,7 +260,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/dashboard
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/web-dashboard
           flavor: |
             latest=false
           tags: |
@@ -381,7 +381,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/website
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/web-website
           flavor: |
             latest=false
           tags: |
