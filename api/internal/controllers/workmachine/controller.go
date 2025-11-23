@@ -78,7 +78,7 @@ const (
 	// SSHUserName is the username for the SSH server
 	SSHUserName = "kloudlite"
 
-	wireguardTunnelImage     = "ghcr.io/kloudlite/kloudlite/wireguard-server:latest"
+	wireguardTunnelImage     = "ghcr.io/kloudlite/kloudlite/wireguard-server:development"
 	wmIngressControllerImage = "ghcr.io/kloudlite/kloudlite/wm-ingress-controller:development"
 )
 
