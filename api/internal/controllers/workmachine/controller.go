@@ -727,8 +727,9 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 					},
 					Containers: []corev1.Container{
 						{
-							Name:  "tunnel-server",
-							Image: wireguardTunnelImage,
+							Name:            "tunnel-server",
+							Image:           wireguardTunnelImage,
+							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: fn.Ptr(true),
 								Capabilities: &corev1.Capabilities{
