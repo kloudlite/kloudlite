@@ -17,13 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// VPNConfig represents the VPN configuration returned to clients
-type VPNConfig struct {
-	CACert   string      `json:"ca_cert"`
-	WGConfig string      `json:"wg_config"`
-	Hosts    []HostEntry `json:"hosts"`
-}
-
 // HostEntry represents a single hosts file entry
 type HostEntry struct {
 	Hostname string
@@ -40,16 +33,13 @@ type WireGuardConfigResponse struct {
 
 // VPNService provides business logic for VPN operations
 type VPNService interface {
-	// GetVPNConfig retrieves VPN configuration for a user based on their username (combined endpoint)
-	GetVPNConfig(ctx context.Context, tokenID, username string) (*VPNConfig, error)
-
-	// GetWireGuardConfig retrieves only WireGuard configuration for a user
+	// GetWireGuardConfig retrieves WireGuard configuration for a user
 	GetWireGuardConfig(ctx context.Context, deviceID, username string) (*WireGuardConfigResponse, error)
 
-	// GetCACert retrieves only the CA certificate
+	// GetCACert retrieves the CA certificate
 	GetCACert(ctx context.Context, username string) (string, error)
 
-	// GetHosts retrieves only the hosts list for a user's environment
+	// GetHosts retrieves the hosts list for a user's environment
 	GetHosts(ctx context.Context, username string) ([]HostEntry, error)
 }
 
@@ -65,87 +55,6 @@ func NewVPNService(k8sClient client.Client, logger *zap.Logger) VPNService {
 		k8sClient: k8sClient,
 		logger:    logger,
 	}
-}
-
-// GetVPNConfig retrieves VPN configuration for a user by username
-// tokenID is no longer used (kept for backwards compatibility but can be removed)
-func (s *vpnService) GetVPNConfig(ctx context.Context, tokenID, username string) (*VPNConfig, error) {
-	// 1. Find the user's WorkMachine by username (matches WorkMachine.Spec.OwnedBy)
-	var workMachineList workmachinev1.WorkMachineList
-	if err := s.k8sClient.List(ctx, &workMachineList); err != nil {
-		return nil, fmt.Errorf("failed to list work machines: %w", err)
-	}
-
-	var userWorkMachine *workmachinev1.WorkMachine
-	for i := range workMachineList.Items {
-		if workMachineList.Items[i].Spec.OwnedBy == username {
-			userWorkMachine = &workMachineList.Items[i]
-			break
-		}
-	}
-
-	if userWorkMachine == nil {
-		return nil, fmt.Errorf("no work machine found for user")
-	}
-
-	targetNamespace := userWorkMachine.Spec.TargetNamespace
-	s.logger.Info("VPN config: Found WorkMachine",
-		zap.String("username", username),
-		zap.String("workMachine", userWorkMachine.Name),
-		zap.String("namespace", targetNamespace))
-
-	// 2. Fetch CA certificate from kloudlite-ingress/kloudlite-wildcard-cert-tls
-	caCert, err := s.fetchCACertificate(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch CA certificate: %w", err)
-	}
-
-	// 3. Fetch WireGuard configuration from tunnel-server secret
-	wgConfig, err := s.fetchWireGuardConfig(ctx, targetNamespace)
-	if err != nil {
-		return nil, err // Error already formatted
-	}
-
-	// 4. Build host entries from Services in the target namespace
-	hosts, err := s.buildHostEntries(ctx, targetNamespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build host entries: %w", err)
-	}
-
-	s.logger.Info("VPN config: Retrieved successfully",
-		zap.String("username", username),
-		zap.Int("hostCount", len(hosts)))
-
-	return &VPNConfig{
-		CACert:   caCert,
-		WGConfig: wgConfig,
-		Hosts:    hosts,
-	}, nil
-}
-
-// fetchCACertificate retrieves the CA certificate from the Kubernetes secret
-func (s *vpnService) fetchCACertificate(ctx context.Context) (string, error) {
-	caSecret := &corev1.Secret{}
-	if err := s.k8sClient.Get(ctx, client.ObjectKey{
-		Name:      "kloudlite-wildcard-cert-tls",
-		Namespace: "kloudlite-ingress",
-	}, caSecret); err != nil {
-		return "", err
-	}
-
-	caCert := string(caSecret.Data["ca.crt"])
-	if caCert == "" {
-		return "", fmt.Errorf("ca.crt not found in secret")
-	}
-
-	return caCert, nil
-}
-
-// fetchWireGuardConfig retrieves the WireGuard peer configuration from the tunnel-server secret
-// DEPRECATED: This function is for legacy compatibility only. New clients should use GetWireGuardConfig()
-// which uses per-device WireGuardDevice CRDs instead of shared peer1.ipc/peer1.conf
-func (s *vpnService) fetchWireGuardConfig(ctx context.Context, namespace string) (string, error) {
-	return "", fmt.Errorf("legacy peer1.ipc/peer1.conf configuration is no longer supported. Please use the /api/vpn/wireguard-config?device_id=<device_id> endpoint with a unique device ID")
 }
 
 // buildHostEntries creates host entries from Services in the namespace
@@ -254,10 +163,18 @@ func (s *vpnService) GetWireGuardConfig(ctx context.Context, deviceID, username 
 func (s *vpnService) GetCACert(ctx context.Context, username string) (string, error) {
 	s.logger.Info("VPN: GetCACert", zap.String("username", username))
 
-	// Fetch CA certificate
-	caCert, err := s.fetchCACertificate(ctx)
-	if err != nil {
+	// Fetch CA certificate from kloudlite-ingress secret
+	caSecret := &corev1.Secret{}
+	if err := s.k8sClient.Get(ctx, client.ObjectKey{
+		Name:      "kloudlite-wildcard-cert-tls",
+		Namespace: "kloudlite-ingress",
+	}, caSecret); err != nil {
 		return "", fmt.Errorf("failed to fetch CA certificate: %w", err)
+	}
+
+	caCert := string(caSecret.Data["ca.crt"])
+	if caCert == "" {
+		return "", fmt.Errorf("ca.crt not found in secret")
 	}
 
 	return caCert, nil

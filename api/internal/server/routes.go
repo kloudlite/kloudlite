@@ -255,10 +255,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			}
 		}
 
-		// VPN connection endpoint (public - used by kltun CLI)
+		// VPN connection endpoints (public - used by kltun CLI)
 		vpn := v1.Group("/vpn")
 		{
-			vpn.GET("/connect", vpnHandlers.GetVPNConnect)
 			vpn.GET("/wireguard-config", vpnHandlers.GetWireGuardConfig)
 			vpn.GET("/ca-cert", vpnHandlers.GetCACert)
 			vpn.GET("/hosts", vpnHandlers.GetHosts)
