@@ -781,8 +781,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							Name: "tls-certs",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: "tunnel-server-tls",
-									Optional:   fn.Ptr(true), // Make optional for now until cert-manager is set up
+									SecretName: "kloudlite-wildcard-cert-tls",
 								},
 							},
 						},
