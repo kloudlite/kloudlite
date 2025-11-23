@@ -640,6 +640,34 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		return check.Failed(fmt.Errorf("failed to create/update tunnel-server secret: %w", err))
 	}
 
+	// Copy TLS certificate secret from kloudlite-ingress namespace
+	sourceTLSSecret := &corev1.Secret{}
+	if err := r.Get(check.Context(), client.ObjectKey{
+		Name:      "kloudlite-wildcard-cert-tls",
+		Namespace: "kloudlite-ingress",
+	}, sourceTLSSecret); err != nil {
+		return check.Failed(fmt.Errorf("failed to get wildcard TLS certificate: %w", err))
+	}
+
+	// Create or update TLS secret in workmachine namespace
+	tlsSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kloudlite-wildcard-cert-tls",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, tlsSecret, func() error {
+		tlsSecret.Type = corev1.SecretTypeTLS
+		tlsSecret.Data = map[string][]byte{
+			"tls.crt": sourceTLSSecret.Data["tls.crt"],
+			"tls.key": sourceTLSSecret.Data["tls.key"],
+			"ca.crt":  sourceTLSSecret.Data["ca.crt"],
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to copy TLS certificate to workmachine namespace: %w", err))
+	}
+
 	// Create StatefulSet for tunnel-server
 	labels := map[string]string{
 		"app":                      "tunnel-server",
