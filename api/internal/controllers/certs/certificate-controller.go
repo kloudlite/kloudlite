@@ -150,7 +150,7 @@ func (r *CertificateReconciler) genTLSCert(ctx context.Context, obj *v1.Certific
 			CommonName:         "Kloudlite",
 		},
 		NotBefore:   time.Now(),
-		NotAfter:    time.Now().Add(time.Hour * 100 * 365 * 24),
+		NotAfter:    time.Now().Add(time.Hour * 24 * 365), // 1 year validity
 		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:    ca.Spec.SANs,
