@@ -168,9 +168,10 @@ func (p *TLSProxy) Start(ctx context.Context) error {
 }
 
 func (p *TLSProxy) handleWebSocketUpgrade(w http.ResponseWriter, r *http.Request) {
-	// Check if this is a WebSocket upgrade request
-	if r.Header.Get("Upgrade") != "websocket" {
-		http.Error(w, "Expected WebSocket upgrade", http.StatusBadRequest)
+	// Check if this is an upgrade request (either WebSocket or UoTLV/1 for ProxyGuard)
+	upgrade := r.Header.Get("Upgrade")
+	if upgrade == "" {
+		http.Error(w, "Expected upgrade header", http.StatusBadRequest)
 		return
 	}
 
