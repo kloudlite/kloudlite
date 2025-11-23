@@ -11,14 +11,14 @@ on:
       - master
       - development
     paths:
-      - 'api/IMAGES/wireguard/**'
-      - '.github/workflows/build-wireguard-proxy.yml'
+      - "api/IMAGES/wireguard/**"
+      - ".github/workflows/build-wireguard-proxy.yml"
   pull_request:
     branches:
       - master
       - development
     paths:
-      - 'api/IMAGES/wireguard/**'
+      - "api/IMAGES/wireguard/**"
   workflow_dispatch:
 
 concurrency:
@@ -36,7 +36,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
 
     steps:
       - name: Checkout code
@@ -122,7 +121,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
           cache: true
           cache-dependency-path: api/IMAGES/wireguard/go.sum
 
@@ -147,7 +146,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
           cache: true
           cache-dependency-path: api/IMAGES/wireguard/go.sum
 
@@ -174,7 +173,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
           cache: true
           cache-dependency-path: api/IMAGES/wireguard/go.sum
 
@@ -208,7 +207,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
           cache: true
           cache-dependency-path: api/IMAGES/wireguard/go.sum
 
