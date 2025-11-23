@@ -1,5 +1,10 @@
 name: Build and Push WireGuard Proxy
 
+# NOTE: First run will fail with "permission_denied: write_package"
+# because GITHUB_TOKEN cannot create new packages in ghcr.io.
+# Solution: Repository admin must manually push first image to create the package,
+# or configure a PAT with write:packages scope as GHCR_TOKEN secret.
+
 on:
   push:
     branches:
