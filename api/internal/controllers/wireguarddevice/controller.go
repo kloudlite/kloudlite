@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"sort"
-	"strings"
 
 	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -55,13 +54,8 @@ func (r *WireGuardDeviceReconciler) Reconcile(ctx context.Context, request ctrl.
 			OnCreate: r.allocateIP,
 		},
 		{
-			Name:     "generate-keys",
-			Title:    "Generate WireGuard keys",
-			OnCreate: r.generateKeys,
-		},
-		{
 			Name:     "create-device-secret",
-			Title:    "Create device configuration secret",
+			Title:    "Create device configuration secret and generate keys",
 			OnCreate: r.createDeviceSecret,
 		},
 		{
@@ -145,30 +139,7 @@ func (r *WireGuardDeviceReconciler) allocateIP(check *reconciler.Check[*wireguar
 	return check.Passed()
 }
 
-// generateKeys generates WireGuard key pair for the device
-func (r *WireGuardDeviceReconciler) generateKeys(check *reconciler.Check[*wireguarddevicev1.WireGuardDevice], obj *wireguarddevicev1.WireGuardDevice) reconciler.StepResult {
-	// If public key already exists, skip
-	if obj.Status.PublicKey != "" {
-		return check.Passed()
-	}
-
-	// Generate WireGuard key pair
-	privateKey, err := wgtypes.GeneratePrivateKey()
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	publicKey := privateKey.PublicKey()
-	obj.Status.PublicKey = publicKey.String()
-
-	// Note: Private key will be regenerated in createDeviceSecret step
-	// and stored in the device secret for security
-	// We don't store it in annotations or status to avoid exposing it
-
-	return check.Passed()
-}
-
-// createDeviceSecret creates a secret with device configuration
+// createDeviceSecret creates a secret with device configuration and generates WireGuard keys
 func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*wireguarddevicev1.WireGuardDevice], obj *wireguarddevicev1.WireGuardDevice) reconciler.StepResult {
 	ctx := check.Context()
 
@@ -192,69 +163,30 @@ func (r *WireGuardDeviceReconciler) createDeviceSecret(check *reconciler.Check[*
 			return fmt.Errorf("failed to get tunnel-server secret: %w", err)
 		}
 
-		// Extract server public key - try dedicated field first, fallback to deriving from config
+		// Extract server public key (hex format required for IPC protocol)
 		serverPublicKeyHex := string(serverSecret.Data["server-public-key"])
 		if serverPublicKeyHex == "" {
-			// Parse server private key from tunnel-server.conf and derive public key
-			serverConf := string(serverSecret.Data["tunnel-server.conf"])
-			if serverConf == "" {
-				return fmt.Errorf("tunnel-server.conf not found in secret")
-			}
-
-			// Extract PrivateKey from config using simple string parsing
-			lines := strings.Split(serverConf, "\n")
-			var serverPrivateKeyStr string
-			for _, line := range lines {
-				line = strings.TrimSpace(line)
-				if strings.HasPrefix(line, "PrivateKey") {
-					parts := strings.SplitN(line, "=", 2)
-					if len(parts) == 2 {
-						serverPrivateKeyStr = strings.TrimSpace(parts[1])
-						break
-					}
-				}
-			}
-
-			if serverPrivateKeyStr == "" {
-				return fmt.Errorf("server PrivateKey not found in tunnel-server.conf")
-			}
-
-			// Parse private key (base64) and derive public key in hex format
-			serverPrivKey, err := wgtypes.ParseKey(serverPrivateKeyStr)
-			if err != nil {
-				return fmt.Errorf("failed to parse server private key: %w", err)
-			}
-			serverPubKey := serverPrivKey.PublicKey()
-			// WireGuard IPC protocol requires lowercase hex encoding
-			serverPublicKeyHex = hex.EncodeToString(serverPubKey[:])
+			return fmt.Errorf("server-public-key not found in tunnel-server secret")
 		}
 
-		// Get or generate private key
-		// If secret already exists with a private key, preserve it
-		// Otherwise, generate a new one using the public key from status
-		var privateKeyHex string
-		if existingKey := string(secret.Data["private-key"]); existingKey != "" {
-			// Secret already has a private key, reuse it
-			privateKeyHex = existingKey
-		} else {
-			// Generate new private key from public key in status
-			// Note: We can't derive private key from public key, so we regenerate
-			// This is safe because this only happens on first secret creation
-			privKey, err := wgtypes.GeneratePrivateKey()
-			if err != nil {
-				return fmt.Errorf("failed to generate private key: %w", err)
-			}
-			// WireGuard IPC protocol requires lowercase hex encoding
-			privateKeyHex = hex.EncodeToString(privKey[:])
+		// Generate private key for IPC config
+		// Note: Private key is only used to build peer.ipc and is not stored
+		// for security reasons (private keys should only exist on client devices)
+		privKey, err := wgtypes.GeneratePrivateKey()
+		if err != nil {
+			return fmt.Errorf("failed to generate private key: %w", err)
+		}
+		// WireGuard IPC protocol requires lowercase hex encoding
+		privateKeyHex := hex.EncodeToString(privKey[:])
 
-			// Update public key in status if it changed
-			pubKey := privKey.PublicKey()
-			if obj.Status.PublicKey != pubKey.String() {
-				obj.Status.PublicKey = pubKey.String()
-			}
+		// Update public key in status if it changed
+		pubKey := privKey.PublicKey()
+		if obj.Status.PublicKey != pubKey.String() {
+			obj.Status.PublicKey = pubKey.String()
 		}
 
 		// Create IPC format config (uses hex-encoded keys)
+		// This is the only config format used by clients
 		ipcConfig := fmt.Sprintf(`private_key=%s
 listen_port=51820
 public_key=%s
@@ -263,27 +195,11 @@ allowed_ip=10.43.0.0/16
 endpoint=127.0.0.1:51821
 `, privateKeyHex, serverPublicKeyHex)
 
-		// Create INI format config (not currently used, but kept for reference)
-		// Note: INI format would use base64-encoded keys if needed
-		iniConfig := fmt.Sprintf(`[Interface]
-PrivateKey = (base64 encoded)
-Address = %s/24
-ListenPort = 51820
-
-[Peer]
-PublicKey = (base64 encoded)
-AllowedIPs = 10.17.0.0/24, 10.43.0.0/16
-Endpoint = 127.0.0.1:51821
-`, obj.Status.AssignedIP)
-
-		// Store keys directly in Data (not StringData) to avoid double base64 encoding
-		// Kubernetes automatically base64-encodes StringData, but we need raw hex
-		if secret.Data == nil {
-			secret.Data = make(map[string][]byte)
+		// Store only the IPC config that clients actually use
+		// Clear any existing data to remove legacy fields (peer.conf, private-key)
+		secret.Data = map[string][]byte{
+			"peer.ipc": []byte(ipcConfig),
 		}
-		secret.Data["private-key"] = []byte(privateKeyHex)
-		secret.Data["peer.ipc"] = []byte(ipcConfig)
-		secret.Data["peer.conf"] = []byte(iniConfig)
 
 		return nil
 	}); err != nil {
