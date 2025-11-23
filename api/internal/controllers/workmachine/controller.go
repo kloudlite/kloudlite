@@ -212,8 +212,6 @@ PrivateKey = %s
 Address = 10.17.0.1/24
 ListenPort = 51820
 
-PostUp = proxyguard --listen 0.0.0.0:443 --to 127.0.0.1:51820
-
 PostUp = iptables -A FORWARD -i %%i -j ACCEPT;
 PostUp = iptables -A FORWARD -o %%i -j ACCEPT;
 PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;
@@ -724,10 +722,11 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 								"-c",
 								strings.Join([]string{
 									"wg-quick down wg0 || echo starting wireguard",
-									"wg-quick up wg0 &",
-									"pid=$!",
-									"trap 'kill -9 $pid' SIGINT SIGTERM EXIT",
-									"wait $pid",
+									"wg-quick up wg0",
+									"wireguard-tls-proxy --tls-listen=:443 --tls-cert=/certs/tls.crt --tls-key=/certs/tls.key --wireguard-target=127.0.0.1:51820 &",
+									"proxy_pid=$!",
+									"trap 'wg-quick down wg0; kill $proxy_pid' SIGINT SIGTERM EXIT",
+									"wait $proxy_pid",
 								}, "\n"),
 							},
 							VolumeMounts: []corev1.VolumeMount{
@@ -735,6 +734,11 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 									Name:      "wireguard-secret",
 									MountPath: "/etc/wireguard/wg0.conf",
 									SubPath:   "tunnel-server.conf",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "tls-certs",
+									MountPath: "/certs",
 									ReadOnly:  true,
 								},
 							},
@@ -770,6 +774,15 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName: secret.Name,
+								},
+							},
+						},
+						{
+							Name: "tls-certs",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "tunnel-server-tls",
+									Optional:   fn.Ptr(true), // Make optional for now until cert-manager is set up
 								},
 							},
 						},
