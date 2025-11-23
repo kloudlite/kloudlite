@@ -1,11 +1,14 @@
-FROM alpine:latest AS builder
-RUN apk add --no-cache go git make
+FROM golang:1.24-alpine AS builder
 WORKDIR /app
-RUN <<EOF
-  git clone --depth=1 https://codeberg.org/eduVPN/proxyguard
-  cd proxyguard && CGO_ENABLED=0 make server
-EOF
+COPY go.mod go.sum* main.go ./
+RUN go mod download
+RUN CGO_ENABLED=0 go build -o wireguard-tls-proxy -ldflags="-s -w" .
 
 FROM alpine:latest
-RUN apk add --no-cache wireguard-tools-wg-quick iputils iptables procps libcap curl # procps for sysctl
-COPY --from=builder /app/proxyguard/proxyguard-server /usr/local/bin/proxyguard
+RUN apk add --no-cache wireguard-tools-wg-quick iputils iptables procps libcap curl
+
+# Copy binary
+COPY --from=builder /app/wireguard-tls-proxy /usr/local/bin/wireguard-tls-proxy
+
+# Set TLS proxy as the entrypoint
+ENTRYPOINT ["/usr/local/bin/wireguard-tls-proxy"]
