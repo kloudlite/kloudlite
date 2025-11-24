@@ -10,8 +10,9 @@ import (
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/netconfig"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wireguard"
-
-	"codeberg.org/eduVPN/proxyguard"
+	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
+	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/tunnel"
+	"go.uber.org/zap"
 )
 
 // runVPNConnectionWithResult runs a VPN connection and sends result on channel after initial setup
@@ -70,38 +71,51 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		}
 	}
 
-	// 3. Start proxyguard client if ServerEndpoint is provided
-	var pgClient *proxyguard.Client
+	// 3. Start UDP-over-WebSocket client if ServerEndpoint is provided
+	var udpClient *tunnel.UDPClient
 	if wgConfig.ServerEndpoint != "" {
-		fmt.Printf("[Session %s] Starting proxyguard client...\n", sessionID)
+		fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
 		fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, wgConfig.ServerEndpoint)
 
-		// Initialize the official proxyguard client
-		// Peer field expects just IP:PORT (not a URL)
-		pgClient = &proxyguard.Client{
-			ListenPort:    51821,                                // Local port for WireGuard to connect to
-			TCPSourcePort: 0,                                    // Let kernel choose source port
-			Fwmark:        -1,                                   // Firewall mark disabled
-			PeerIPS:       []string{},                           // Empty peer IPs
-			Peer:          "https://" + wgConfig.ServerEndpoint, // Server endpoint (e.g., "https://203.0.113.1:443")
-		}
-
-		// Setup the client (creates UDP listener)
-		if _, err := pgClient.Setup(ctx); err != nil {
-			fmt.Printf("[Session %s] Failed to setup proxyguard: %v\n", sessionID, err)
-			resultChan <- fmt.Errorf("failed to setup proxyguard: %w", err)
+		// Create logger for UDP tunnel
+		logger, err := zap.NewProduction()
+		if err != nil {
+			fmt.Printf("[Session %s] Failed to create logger: %v\n", sessionID, err)
+			resultChan <- fmt.Errorf("failed to create logger: %w", err)
 			return
 		}
-		defer pgClient.Close()
+		defer logger.Sync()
 
-		// Start the tunnel in background (connects to server and starts forwarding)
+		// Create WebSocket dialer with TLS
+		transportConfig := transport.DefaultConfig()
+		dialer := transport.NewWebSocketDialer(
+			transportConfig,
+			nil, // TLS config will use system defaults for HTTPS
+			nil, // No custom headers
+			logger,
+		)
+
+		// Create UDP tunnel client
+		// Local: 127.0.0.1:51821 (where WireGuard will connect)
+		// Server: wss://server-endpoint (WebSocket server)
+		// Remote: 127.0.0.1:51820 (WireGuard on server side)
+		serverURL := "wss://" + wgConfig.ServerEndpoint
+		udpClient = tunnel.NewUDPClient(
+			"127.0.0.1:51821",
+			serverURL,
+			"127.0.0.1:51820",
+			dialer,
+			logger,
+		)
+
+		// Start UDP tunnel client in background
 		go func() {
-			if err := pgClient.Tunnel(ctx, 51820); err != nil && ctx.Err() == nil {
-				fmt.Printf("[Session %s] Proxyguard tunnel error: %v\n", sessionID, err)
+			if err := udpClient.Start(ctx); err != nil && ctx.Err() == nil {
+				fmt.Printf("[Session %s] UDP tunnel error: %v\n", sessionID, err)
 			}
 		}()
 
-		fmt.Printf("[Session %s] ✓ Proxyguard client started\n", sessionID)
+		fmt.Printf("[Session %s] ✓ UDP-over-WebSocket client started\n", sessionID)
 	}
 
 	// 4. Start WireGuard device
@@ -211,37 +225,50 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		}
 	}
 
-	// 3. Start proxyguard client if ServerEndpoint is provided
-	var pgClient *proxyguard.Client
+	// 3. Start UDP-over-WebSocket client if ServerEndpoint is provided
+	var udpClient *tunnel.UDPClient
 	if wgConfig.ServerEndpoint != "" {
-		fmt.Printf("[Session %s] Starting proxyguard client...\n", sessionID)
+		fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
 		fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, wgConfig.ServerEndpoint)
 
-		// Initialize the official proxyguard client
-		// Peer field expects just IP:PORT (not a URL)
-		pgClient = &proxyguard.Client{
-			ListenPort:    51821,                                // Local port for WireGuard to connect to
-			TCPSourcePort: 0,                                    // Let kernel choose source port
-			Fwmark:        -1,                                   // Firewall mark disabled
-			PeerIPS:       []string{},                           // Empty peer IPs
-			Peer:          "https://" + wgConfig.ServerEndpoint, // Server endpoint (e.g., "https://203.0.113.1:443")
-		}
-
-		// Setup the client (creates UDP listener)
-		if _, err := pgClient.Setup(ctx); err != nil {
-			fmt.Printf("[Session %s] Failed to setup proxyguard: %v\n", sessionID, err)
+		// Create logger for UDP tunnel
+		logger, err := zap.NewProduction()
+		if err != nil {
+			fmt.Printf("[Session %s] Failed to create logger: %v\n", sessionID, err)
 			return
 		}
-		defer pgClient.Close()
+		defer logger.Sync()
 
-		// Start the tunnel in background (connects to server and starts forwarding)
+		// Create WebSocket dialer with TLS
+		transportConfig := transport.DefaultConfig()
+		dialer := transport.NewWebSocketDialer(
+			transportConfig,
+			nil, // TLS config will use system defaults for HTTPS
+			nil, // No custom headers
+			logger,
+		)
+
+		// Create UDP tunnel client
+		// Local: 127.0.0.1:51821 (where WireGuard will connect)
+		// Server: wss://server-endpoint (WebSocket server)
+		// Remote: 127.0.0.1:51820 (WireGuard on server side)
+		serverURL := "wss://" + wgConfig.ServerEndpoint
+		udpClient = tunnel.NewUDPClient(
+			"127.0.0.1:51821",
+			serverURL,
+			"127.0.0.1:51820",
+			dialer,
+			logger,
+		)
+
+		// Start UDP tunnel client in background
 		go func() {
-			if err := pgClient.Tunnel(ctx, 51820); err != nil && ctx.Err() == nil {
-				fmt.Printf("[Session %s] Proxyguard tunnel error: %v\n", sessionID, err)
+			if err := udpClient.Start(ctx); err != nil && ctx.Err() == nil {
+				fmt.Printf("[Session %s] UDP tunnel error: %v\n", sessionID, err)
 			}
 		}()
 
-		fmt.Printf("[Session %s] ✓ Proxyguard client started\n", sessionID)
+		fmt.Printf("[Session %s] ✓ UDP-over-WebSocket client started\n", sessionID)
 	}
 
 	// 4. Start WireGuard device
