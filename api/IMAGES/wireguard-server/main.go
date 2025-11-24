@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/tunnel"
 	"go.uber.org/zap"
@@ -20,6 +23,8 @@ type Config struct {
 	TLSCertFile     string
 	TLSKeyFile      string
 	WireguardTarget string
+	WatchConfig     bool
+	ConfigPath      string
 }
 
 func main() {
@@ -28,6 +33,8 @@ func main() {
 	flag.StringVar(&cfg.TLSCertFile, "tls-cert", "/certs/tls.crt", "Path to TLS certificate")
 	flag.StringVar(&cfg.TLSKeyFile, "tls-key", "/certs/tls.key", "Path to TLS private key")
 	flag.StringVar(&cfg.WireguardTarget, "wireguard-target", "127.0.0.1:51820", "WireGuard UDP target")
+	flag.BoolVar(&cfg.WatchConfig, "watch-config", false, "Watch WireGuard config and reload peers dynamically")
+	flag.StringVar(&cfg.ConfigPath, "config-path", "/etc/wireguard/wg0.conf", "Path to WireGuard config file to watch")
 	version := flag.Bool("version", false, "Show version information")
 	flag.Parse()
 
@@ -83,6 +90,16 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
+	// Start config watcher if enabled
+	if cfg.WatchConfig {
+		go func() {
+			logger.Info("starting WireGuard config watcher", zap.String("config", cfg.ConfigPath))
+			if err := runConfigWatcher(ctx, cfg.ConfigPath, logger); err != nil && err != context.Canceled {
+				logger.Error("config watcher error", zap.Error(err))
+			}
+		}()
+	}
+
 	// Start server in goroutine
 	serverErrChan := make(chan error, 1)
 	go func() {
@@ -110,4 +127,99 @@ func main() {
 	}
 
 	logger.Info("shutdown complete")
+}
+
+func runConfigWatcher(ctx context.Context, configPath string, logger *zap.Logger) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	defer watcher.Close()
+
+	// Watch the config file
+	if err := watcher.Add(configPath); err != nil {
+		return err
+	}
+
+	logger.Info("watching WireGuard config file", zap.String("path", configPath))
+
+	// Debounce timer to avoid too frequent reloads
+	var debounceTimer *time.Timer
+	debounceDuration := 2 * time.Second
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return nil
+			}
+
+			// Only reload on write/create events
+			if event.Op&(fsnotify.Write|fsnotify.Create) == 0 {
+				continue
+			}
+
+			logger.Info("config file changed", zap.String("operation", event.Op.String()))
+
+			// Debounce: cancel existing timer and start new one
+			if debounceTimer != nil {
+				debounceTimer.Stop()
+			}
+
+			debounceTimer = time.AfterFunc(debounceDuration, func() {
+				if err := syncWireGuardPeers(configPath, logger); err != nil {
+					logger.Error("failed to sync WireGuard peers", zap.Error(err))
+				} else {
+					logger.Info("successfully synced WireGuard peers")
+				}
+			})
+
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return nil
+			}
+			logger.Error("watcher error", zap.Error(err))
+		}
+	}
+}
+
+func syncWireGuardPeers(configPath string, logger *zap.Logger) error {
+	logger.Info("syncing WireGuard configuration")
+
+	// Run: wg-quick strip /etc/wireguard/wg0.conf
+	stripCmd := exec.Command("wg-quick", "strip", configPath)
+	strippedConfig, err := stripCmd.Output()
+	if err != nil {
+		logger.Error("failed to strip config", zap.Error(err))
+		return err
+	}
+
+	// Create pipe to pass stripped config to wg syncconf
+	r, w, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	syncCmd := exec.Command("wg", "syncconf", "wg0", "/dev/stdin")
+	syncCmd.Stdin = r
+
+	// Write stripped config to pipe in goroutine
+	go func() {
+		defer w.Close()
+		w.Write(strippedConfig)
+	}()
+
+	// Run sync command
+	output, err := syncCmd.CombinedOutput()
+	if err != nil {
+		logger.Error("wg syncconf failed", zap.String("output", string(output)), zap.Error(err))
+		return err
+	}
+
+	logger.Info("WireGuard peers synced successfully")
+	return nil
 }
