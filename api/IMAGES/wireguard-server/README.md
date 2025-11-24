@@ -24,6 +24,33 @@ Client (WireGuard) → UDP-over-WebSocket Client → TLS/WSS → UDP-over-WebSoc
    - Binary frames: `[2-byte length][UDP packet data]`
    - Bidirectional packet forwarding
 
+## Deployment Notes
+
+### Running with WireGuard Interface
+
+If you need to run WireGuard alongside the proxy server (for server-side deployments), you'll need:
+
+1. **Init Container or Startup Script** to run `wg-quick up wg0`
+2. **Proper Capabilities**: `NET_ADMIN`, `SYS_MODULE`
+3. **All Dependencies**: The Dockerfile includes iptables, wireguard-tools-wg-quick, etc.
+
+Example Kubernetes deployment pattern:
+```yaml
+initContainers:
+- name: wireguard-setup
+  command: ["/bin/sh", "-c"]
+  args:
+    - |
+      wg-quick up wg0
+      # Keep container running
+      tail -f /dev/null
+  securityContext:
+    capabilities:
+      add: ["NET_ADMIN", "SYS_MODULE"]
+```
+
+The main container then runs `wireguard-tls-proxy` which listens on port 443 and forwards to the WireGuard interface on port 51820.
+
 ## Usage
 
 ### Command Line Flags
