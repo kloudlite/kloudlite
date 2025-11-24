@@ -72,7 +72,7 @@ func DefaultConfig() *Config {
 		PingInterval:      30 * time.Second,
 		PongTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
-		ReadTimeout:       0, // No timeout
+		ReadTimeout:       0,        // No timeout
 		MaxMessageSize:    32 << 20, // 32 MB
 		EnableCompression: false,
 	}
