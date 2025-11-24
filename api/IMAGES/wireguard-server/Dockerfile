@@ -21,15 +21,28 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # Runtime stage
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates wireguard-tools
+RUN apk --no-cache add \
+    ca-certificates \
+    wireguard-tools-wg-quick \
+    iptables \
+    ip6tables \
+    iputils \
+    procps \
+    libcap \
+    curl \
+    bash
 
 WORKDIR /
 
 # Copy the binary from builder
-COPY --from=builder /wireguard-tls-proxy /wireguard-tls-proxy
+COPY --from=builder /wireguard-tls-proxy /usr/local/bin/wireguard-tls-proxy
 
-# Expose HTTPS port
+# Make it executable
+RUN chmod +x /usr/local/bin/wireguard-tls-proxy
+
+# Expose HTTPS port and WireGuard port
 EXPOSE 443
+EXPOSE 51820/udp
 
 # Run the server
-ENTRYPOINT ["/wireguard-tls-proxy"]
+ENTRYPOINT ["/usr/local/bin/wireguard-tls-proxy"]
