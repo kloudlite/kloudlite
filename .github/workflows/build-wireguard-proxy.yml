@@ -11,14 +11,14 @@ on:
       - master
       - development
     paths:
-      - "api/IMAGES/wireguard/**"
+      - "api/IMAGES/wireguard-server/**"
       - ".github/workflows/build-wireguard-proxy.yml"
   pull_request:
     branches:
       - master
       - development
     paths:
-      - "api/IMAGES/wireguard/**"
+      - "api/IMAGES/wireguard-server/**"
   workflow_dispatch:
 
 concurrency:
@@ -71,8 +71,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./api/IMAGES/wireguard
-          file: ./api/IMAGES/wireguard/Dockerfile
+          context: ./api
+          file: ./api/IMAGES/wireguard-server/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -94,7 +94,7 @@ jobs:
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Architecture**: Single Go binary with integrated ProxyGuard library" >> $GITHUB_STEP_SUMMARY
+          echo "**Architecture**: Custom UDP-over-WebSocket proxy (no ProxyGuard)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Features**:" >> $GITHUB_STEP_SUMMARY
           echo "- TLS 1.3 termination" >> $GITHUB_STEP_SUMMARY
@@ -112,7 +112,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: api/IMAGES/wireguard
+        working-directory: api
 
     steps:
       - name: Checkout code
@@ -123,13 +123,13 @@ jobs:
         with:
           go-version: "1.24"
           cache: true
-          cache-dependency-path: api/IMAGES/wireguard/go.sum
+          cache-dependency-path: api/go.sum
 
       - name: Install dependencies
         run: go mod download
 
       - name: Run go vet
-        run: go vet ./...
+        run: go vet ./IMAGES/wireguard-server/...
 
   go-fmt:
     name: Go Format Check
@@ -137,7 +137,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: api/IMAGES/wireguard
+        working-directory: api
 
     steps:
       - name: Checkout code
@@ -148,13 +148,13 @@ jobs:
         with:
           go-version: "1.24"
           cache: true
-          cache-dependency-path: api/IMAGES/wireguard/go.sum
+          cache-dependency-path: api/go.sum
 
       - name: Run go fmt check
         run: |
-          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          if [ "$(gofmt -s -l ./IMAGES/wireguard-server/ ./pkg/udptunnel/ | wc -l)" -gt 0 ]; then
             echo "The following files need formatting:"
-            gofmt -s -l .
+            gofmt -s -l ./IMAGES/wireguard-server/ ./pkg/udptunnel/
             exit 1
           fi
 
@@ -164,7 +164,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: api/IMAGES/wireguard
+        working-directory: api
 
     steps:
       - name: Checkout code
@@ -175,20 +175,20 @@ jobs:
         with:
           go-version: "1.24"
           cache: true
-          cache-dependency-path: api/IMAGES/wireguard/go.sum
+          cache-dependency-path: api/go.sum
 
       - name: Install dependencies
         run: go mod download
 
       - name: Run tests
-        run: go test -v -coverprofile=coverage.out -timeout=2m ./...
+        run: go test -v -coverprofile=coverage.out -timeout=2m ./IMAGES/wireguard-server/... ./pkg/udptunnel/...
         continue-on-error: true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: github.event_name == 'push'
         with:
-          files: ./api/IMAGES/wireguard/coverage.out
+          files: ./api/coverage.out
           flags: wireguard-proxy
         continue-on-error: true
 
@@ -198,7 +198,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: api/IMAGES/wireguard
+        working-directory: api
 
     steps:
       - name: Checkout code
@@ -209,13 +209,13 @@ jobs:
         with:
           go-version: "1.24"
           cache: true
-          cache-dependency-path: api/IMAGES/wireguard/go.sum
+          cache-dependency-path: api/go.sum
 
       - name: Install dependencies
         run: go mod download
 
       - name: Build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o wireguard-tls-proxy -ldflags="-s -w" .
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o wireguard-tls-proxy -ldflags="-s -w" ./IMAGES/wireguard-server
           ls -lh wireguard-tls-proxy
           ./wireguard-tls-proxy --version
