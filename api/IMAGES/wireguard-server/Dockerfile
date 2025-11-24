@@ -12,7 +12,7 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build the server binary
+# Build the server binary (includes integrated watcher)
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s" \
     -o /wireguard-tls-proxy \
@@ -34,7 +34,7 @@ RUN apk --no-cache add \
 
 WORKDIR /
 
-# Copy the binary from builder
+# Copy binary from builder
 COPY --from=builder /wireguard-tls-proxy /usr/local/bin/wireguard-tls-proxy
 
 # Make it executable

@@ -210,16 +210,21 @@ endpoint=127.0.0.1:51821
 }
 
 // computePeersHash computes a hash of all WireGuardDevice peers for a WorkMachine
-func (r *WireGuardDeviceReconciler) computePeersHash(ctx context.Context, workMachineRef string) (string, error) {
+func (r *WireGuardDeviceReconciler) computePeersHash(ctx context.Context, namespace string, workMachineRef string) (string, error) {
 	var deviceList wireguarddevicev1.WireGuardDeviceList
-	if err := r.List(ctx, &deviceList); err != nil {
+	if err := r.List(ctx, &deviceList, client.InNamespace(namespace)); err != nil {
 		return "", fmt.Errorf("failed to list WireGuardDevices: %w", err)
 	}
 
-	// Collect all devices for this WorkMachine
+	// Collect all Ready devices for this WorkMachine (matching buildTunnelServerConfig logic)
 	var peerConfigs []string
 	for _, device := range deviceList.Items {
-		if device.Spec.WorkMachineRef == workMachineRef && device.DeletionTimestamp == nil {
+		// Only include Ready devices with valid public keys (same as buildTunnelServerConfig)
+		if device.Spec.WorkMachineRef == workMachineRef &&
+			device.DeletionTimestamp == nil &&
+			device.Status.Phase == "Ready" &&
+			device.Status.PublicKey != "" &&
+			device.Status.AssignedIP != "" {
 			// Create a stable string representation of this peer
 			peerConfig := fmt.Sprintf("%s:%s:%s", device.Spec.DeviceID, device.Status.PublicKey, device.Status.AssignedIP)
 			peerConfigs = append(peerConfigs, peerConfig)
@@ -249,7 +254,7 @@ func (r *WireGuardDeviceReconciler) updateTunnelServer(check *reconciler.Check[*
 	}
 
 	// Compute current peers hash
-	currentHash, err := r.computePeersHash(ctx, obj.Spec.WorkMachineRef)
+	currentHash, err := r.computePeersHash(ctx, obj.Namespace, obj.Spec.WorkMachineRef)
 	if err != nil {
 		return check.Failed(fmt.Errorf("failed to compute peers hash: %w", err))
 	}
@@ -290,7 +295,7 @@ func (r *WireGuardDeviceReconciler) removePeerFromTunnelServer(check *reconciler
 	}
 
 	// Compute current peers hash (excluding this device since it's being deleted)
-	currentHash, err := r.computePeersHash(ctx, obj.Spec.WorkMachineRef)
+	currentHash, err := r.computePeersHash(ctx, obj.Namespace, obj.Spec.WorkMachineRef)
 	if err != nil {
 		return check.Failed(fmt.Errorf("failed to compute peers hash: %w", err))
 	}
