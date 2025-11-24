@@ -752,7 +752,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 								strings.Join([]string{
 									"wg-quick down wg0 || echo starting wireguard",
 									"wg-quick up wg0",
-									"wireguard-tls-proxy --tls-listen=:443 --tls-cert=/certs/tls.crt --tls-key=/certs/tls.key --wireguard-target=127.0.0.1:51820 &",
+									"wireguard-tls-proxy --listen=:443 --tls-cert=/certs/tls.crt --tls-key=/certs/tls.key --wireguard-target=127.0.0.1:51820 &",
 									"proxy_pid=$!",
 									"trap 'wg-quick down wg0; kill $proxy_pid' SIGINT SIGTERM EXIT",
 									"wait $proxy_pid",
