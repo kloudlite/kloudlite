@@ -195,7 +195,6 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 			return fmt.Errorf("failed to set owner reference on Ingress: %w", err)
 		}
 
-		ingress.Spec.IngressClassName = fn.Ptr("traefik")
 		ingress.Spec.TLS = []networkingv1.IngressTLS{
 			{
 				Hosts: tlsHosts,
