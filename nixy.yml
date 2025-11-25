@@ -1,17 +1,5 @@
 nixpkgs:
-  default: 554be6495561ff07b6c724047bdd7e0716aa7b46
-env:
-  # KUBECONFIG: "$PWD/devenv/k3s-config/k3s.yaml"
-  KUBECONFIG: "$PWD/.secrets/kubeconfig.yaml"
-# mounts:
-#   - source: /home/nxtcoder17/.config/simple.nvim
-#     dest: "/tmp/simple.nvim"
-#   - source: /tmp/.X11-unix
-#     dest: /tmp/.X11-unix
-#     readonly: true
-#   - source: /var/home/nxtcoder17/.Xauthority
-#     dest: /var/home/nxtcoder17/.Xauthority
-#     readonly: true
+  default: 050e09e091117c3d7328c7b2b7b577492c43c134
 packages:
   - go
   - nodejs
@@ -22,3 +10,13 @@ packages:
   - kubernetes-helm
   - k9s
   - upx
+  - installHook: |
+      ./aws/install --bin-dir $out/bin --install-dir $out/aws-cli --update
+    name: aws
+    sources:
+      linux/amd64:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        sha256: f3e62f065cc2b6941546cf9e49e0a65bf08f5c83cd15d13664b630b3dde9c317
+  - ssm-session-manager-plugin
+env:
+  KUBECONFIG: $PWD/.secrets/kubeconfig.yaml
