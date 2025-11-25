@@ -92,7 +92,6 @@ func (s *authService) GenerateToken(ctx context.Context, username string, userEm
 	return tokenString, nil
 }
 
-
 // ValidateToken parses and validates a JWT token
 func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
