@@ -20,9 +20,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get JWT secret
-    const jwtSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+    const jwtSecret = process.env.JWT_SECRET
     if (!jwtSecret) {
-      console.error('[VPN Exchange] AUTH_SECRET or NEXTAUTH_SECRET environment variable not set')
+      console.error('[VPN Exchange] JWT_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 

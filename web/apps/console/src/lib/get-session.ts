@@ -24,7 +24,7 @@ export async function getSession(): Promise<Session | null> {
 
   if (token) {
     try {
-      const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET)
       const { payload } = await jwtVerify(token, secret)
 
       // Check if this is a superadmin token
@@ -35,8 +35,8 @@ export async function getSession(): Promise<Session | null> {
             id: payload.sub as string,
             email: payload.email as string,
             name: payload.name as string,
+            username: payload.username as string,
             roles: payload.roles as string[],
-            backendToken: payload.backendToken as string,
             isActive: payload.isActive as boolean,
           },
           expires: new Date(payload.exp! * 1000).toISOString(),

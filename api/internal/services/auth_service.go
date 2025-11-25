@@ -13,17 +13,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// AuthService handles JWT token generation and validation
+// AuthService handles JWT token validation
 type AuthService interface {
-	GenerateToken(ctx context.Context, username string, userEmail string, roles []platformv1alpha1.RoleType) (string, error)
 	ValidateToken(ctx context.Context, tokenString string) (*UserClaims, error)
 	VerifyPassword(ctx context.Context, email, password string) (*platformv1alpha1.User, error)
+	// GenerateToken is only for special cases (superadmin, CLI tools, etc.)
+	// Regular user authentication should use NextAuth-generated JWTs
+	GenerateToken(ctx context.Context, username string, userEmail string, roles []platformv1alpha1.RoleType) (string, error)
 }
 
 // UserClaims represents the JWT claims for a user
 type UserClaims struct {
 	Username string                      `json:"username"` // User's metadata.name
 	Email    string                      `json:"email"`
+	Name     string                      `json:"name"` // User display name
 	Roles    []platformv1alpha1.RoleType `json:"roles"`
 	jwt.RegisteredClaims
 }
@@ -46,14 +49,22 @@ func NewAuthService(jwtSecret string, tokenExpiry time.Duration, userService Use
 	}
 }
 
-// GenerateToken creates a new JWT token for the user
+// GenerateToken creates a JWT token (special cases: superadmin, CLI tools)
+// Regular user authentication uses NextAuth-generated tokens
 func (s *authService) GenerateToken(ctx context.Context, username string, userEmail string, roles []platformv1alpha1.RoleType) (string, error) {
 	now := time.Now()
 	expirationTime := now.Add(s.tokenExpiry)
 
+	// Convert roles to strings for compatibility
+	roleStrings := make([]string, len(roles))
+	for i, role := range roles {
+		roleStrings[i] = string(role)
+	}
+
 	claims := &UserClaims{
 		Username: username,
 		Email:    userEmail,
+		Name:     username,
 		Roles:    roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
@@ -74,12 +85,13 @@ func (s *authService) GenerateToken(ctx context.Context, username string, userEm
 	s.logger.Debug("Generated JWT token",
 		zap.String("username", username),
 		zap.String("email", userEmail),
-		zap.Strings("roles", rolesToStrings(roles)),
+		zap.Strings("roles", roleStrings),
 		zap.Time("expires_at", expirationTime),
 	)
 
 	return tokenString, nil
 }
+
 
 // ValidateToken parses and validates a JWT token
 func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*UserClaims, error) {

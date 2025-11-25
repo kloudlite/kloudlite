@@ -107,7 +107,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/login", authHandlers.Login)
-			auth.POST("/token", authHandlers.GenerateToken)
+			auth.POST("/user-info", authHandlers.GenerateToken) // Returns user info for OAuth (renamed from /token)
 			auth.POST("/validate", authHandlers.ValidateToken)
 		}
 
@@ -258,7 +258,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		// VPN connection endpoints (public - used by kltun CLI)
 		vpn := v1.Group("/vpn")
 		{
-			vpn.GET("/wireguard-config", vpnHandlers.GetWireGuardConfig)
 			vpn.GET("/ca-cert", vpnHandlers.GetCACert)
 			vpn.GET("/hosts", vpnHandlers.GetHosts)
 		}
