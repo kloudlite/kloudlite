@@ -183,7 +183,7 @@ export const authConfig: NextAuthConfig = {
     strategy: 'jwt',
     maxAge: 24 * 60 * 60, // 24 hours (match backend token expiry)
   },
-  secret: process.env.AUTH_SECRET, // Use shared secret (same value as backend JWT_SECRET)
+  secret: process.env.AUTH_SECRET, // Shared secret for JWT signing/verification
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth(authConfig)
