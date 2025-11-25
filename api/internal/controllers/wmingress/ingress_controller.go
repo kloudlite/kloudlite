@@ -54,11 +54,15 @@ func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *IngressReconciler) shouldProcessIngress(ing *networkingv1.Ingress) bool {
+	return r.IngressClassName == "" || ing.Spec.IngressClassName == nil || *ing.Spec.IngressClassName == r.IngressClassName
+}
+
 // shouldProcessResource checks if the resource should be processed
 func (r *IngressReconciler) shouldProcessResource(obj client.Object) bool {
 	switch o := obj.(type) {
 	case *networkingv1.Ingress:
-		return r.IngressClassName == "" || o.Spec.IngressClassName != nil || *o.Spec.IngressClassName == r.IngressClassName
+		return r.shouldProcessIngress(o)
 	case *corev1.Secret:
 		// Process all TLS secrets (we'll check if they're used by Ingress later)
 		return o.Type == corev1.SecretTypeTLS
@@ -86,7 +90,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// Filter only ingresses with matching ingressClassName
 	var matchedIngresses []networkingv1.Ingress
 	for _, ing := range ingressList.Items {
-		if ing.Spec.IngressClassName != nil && *ing.Spec.IngressClassName == r.IngressClassName {
+		if r.shouldProcessIngress(&ing) {
 			matchedIngresses = append(matchedIngresses, ing)
 		}
 	}
@@ -176,6 +180,11 @@ func (r *IngressReconciler) buildRoutes(ctx context.Context, ingresses []network
 					)
 					continue
 				}
+
+				r.Logger.Error("Created Route",
+					zap.String("ingress", ingress.Name),
+					zap.String("host", rule.Host),
+				)
 
 				routes = append(routes, route)
 			}
@@ -335,7 +344,7 @@ func (h *secretEventHandler) enqueueAll(ctx context.Context, q workqueue.TypedRa
 	}
 
 	for _, ing := range ingressList.Items {
-		if ing.Spec.IngressClassName != nil && *ing.Spec.IngressClassName == h.reconciler.IngressClassName {
+		if h.reconciler.shouldProcessIngress(&ing) {
 			q.Add(ctrl.Request{
 				NamespacedName: client.ObjectKey{
 					Name:      ing.Name,
