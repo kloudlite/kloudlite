@@ -121,9 +121,6 @@ func TestLogin(t *testing.T) {
 					},
 				}, nil
 			},
-			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
-				return "test-jwt-token", nil
-			},
 		}
 		userService := &mockUserService{
 			updateUserLastLoginFunc: func(ctx context.Context, name string) error {
@@ -150,8 +147,10 @@ func TestLogin(t *testing.T) {
 		var response AuthResponse
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, "test-jwt-token", response.Token)
+		// No token in response anymore - NextAuth will generate it
+		assert.Equal(t, "test-user", response.User.Username)
 		assert.Equal(t, "test@example.com", response.User.Email)
+		assert.Equal(t, "Test User", response.User.Name)
 		assert.Equal(t, "Test User", response.User.DisplayName)
 		assert.True(t, response.User.IsActive)
 		assert.Equal(t, []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}, response.Roles)
@@ -302,12 +301,8 @@ func TestGenerateToken(t *testing.T) {
 	activeTrue := true
 	activeFalse := false
 
-	t.Run("should generate token for existing user", func(t *testing.T) {
-		authService := &mockAuthService{
-			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
-				return "oauth-jwt-token", nil
-			},
-		}
+	t.Run("should return user info for existing user (OAuth)", func(t *testing.T) {
+		authService := &mockAuthService{}
 		userService := &mockUserService{
 			getUserByEmailFunc: func(ctx context.Context, email string) (*platformv1alpha1.User, error) {
 				return &platformv1alpha1.User{
@@ -343,9 +338,12 @@ func TestGenerateToken(t *testing.T) {
 		var response AuthResponse
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, "oauth-jwt-token", response.Token)
+		// No token in response anymore - NextAuth will generate it
+		assert.Equal(t, "oauth-user", response.User.Username)
 		assert.Equal(t, "oauth@example.com", response.User.Email)
+		assert.Equal(t, "OAuth User", response.User.Name)
 		assert.True(t, response.User.IsActive)
+		assert.Equal(t, []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}, response.Roles)
 	})
 
 	t.Run("should reject token generation for non-existent user", func(t *testing.T) {
