@@ -8,21 +8,14 @@ import { authenticateUser } from '@/lib/actions/user-actions'
 import { unauthenticatedApiClient } from '@/lib/api-client'
 
 interface LoginResponse {
-  token: string
   user: {
     email: string
+    name?: string
+    username?: string
     displayName?: string
     isActive: boolean
   }
   roles: string[]
-}
-
-interface TokenResponse {
-  token: string
-  roles: string[]
-  user?: {
-    isActive: boolean
-  }
 }
 
 export const authConfig: NextAuthConfig = {
@@ -40,20 +33,20 @@ export const authConfig: NextAuthConfig = {
         }
 
         try {
-          // Call backend API to authenticate and get JWT token
+          // Call backend API to validate credentials and get user info
           const response = (await unauthenticatedApiClient.post('/api/v1/auth/login', {
             email: credentials.email,
             password: credentials.password,
           })) as LoginResponse
 
-          if (response.token && response.user) {
-            // Return user object with JWT token that will be stored in NextAuth JWT cookie
+          if (response.user) {
+            // Return user object - NextAuth will generate JWT with shared secret
             return {
               id: response.user.email,
               email: response.user.email,
-              name: response.user.displayName || response.user.email,
+              name: response.user.name || response.user.displayName || response.user.email,
+              username: response.user.username,
               roles: response.roles,
-              backendToken: response.token, // This will be stored in the NextAuth JWT cookie
               isActive: response.user.isActive,
             }
           }
@@ -85,11 +78,10 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        // Store backend JWT token for API calls
-        if ('backendToken' in user) {
-          token.backendToken = user.backendToken
+        // Store user info in token
+        if ('username' in user) {
+          token.username = user.username
         }
-        // For credentials provider, user will have roles
         if ('roles' in user) {
           token.roles = user.roles
         }
@@ -100,22 +92,6 @@ export const authConfig: NextAuthConfig = {
         if (account) {
           token.provider = account.provider
           token.providerId = account.providerAccountId
-
-          // Get JWT token from backend for OAuth providers
-          if (account.provider !== 'credentials' && user.email) {
-            try {
-              const response = (await unauthenticatedApiClient.post('/api/v1/auth/token', {
-                email: user.email,
-              })) as TokenResponse
-              if (response.token) {
-                token.backendToken = response.token
-                token.roles = response.roles
-                token.isActive = response.user?.isActive
-              }
-            } catch (error) {
-              console.error('Failed to get backend token for OAuth user:', error)
-            }
-          }
         }
       }
       return token
@@ -123,14 +99,14 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!
+        if (token.username) {
+          session.user.username = token.username as string
+        }
         if (token.provider) {
           session.user.provider = token.provider as string
         }
         if (token.roles) {
           session.user.roles = token.roles as string[]
-        }
-        if (token.backendToken) {
-          session.user.backendToken = token.backendToken as string
         }
         if (token.isActive !== undefined) {
           session.user.isActive = token.isActive as boolean
@@ -181,8 +157,9 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 hours (match backend token expiry)
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET, // Shared secret for JWT signing/verification
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth(authConfig)
