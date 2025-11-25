@@ -41,14 +41,15 @@ type TokenRequest struct {
 
 // AuthResponse represents the response for successful authentication
 type AuthResponse struct {
-	Token string                      `json:"token"`
 	User  UserInfo                    `json:"user"`
 	Roles []platformv1alpha1.RoleType `json:"roles"`
 }
 
 // UserInfo represents user information in auth response
 type UserInfo struct {
+	Username    string `json:"username"`
 	Email       string `json:"email"`
+	Name        string `json:"name"`
 	DisplayName string `json:"displayName,omitempty"`
 	IsActive    bool   `json:"isActive"`
 }
@@ -103,32 +104,25 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 		return
 	}
 
-	// Generate JWT token
-	token, err := h.authService.GenerateToken(c.Request.Context(), user.Name, user.Spec.Email, user.Spec.Roles)
-	if err != nil {
-		h.logger.Error("Failed to generate token", zap.String("email", req.Email), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate authentication token"})
-		return
-	}
-
 	// Update last login time
 	if err := h.userService.UpdateUserLastLogin(c.Request.Context(), user.Name); err != nil {
 		h.logger.Warn("Failed to update last login time", zap.String("email", req.Email), zap.Error(err))
 		// Don't fail the login if we can't update last login time
 	}
 
-	// Prepare response
+	// Prepare response - return user info only (NextAuth will generate JWT)
 	response := AuthResponse{
-		Token: token,
 		User: UserInfo{
+			Username:    user.Name,
 			Email:       user.Spec.Email,
+			Name:        user.Spec.DisplayName,
 			DisplayName: user.Spec.DisplayName,
 			IsActive:    user.Spec.Active != nil && *user.Spec.Active,
 		},
 		Roles: user.Spec.Roles,
 	}
 
-	h.logger.Info("Login successful", zap.String("email", req.Email))
+	h.logger.Info("Login successful - user info returned", zap.String("email", req.Email))
 	c.JSON(http.StatusOK, response)
 }
 
@@ -158,32 +152,25 @@ func (h *AuthHandlers) GenerateToken(c *gin.Context) {
 		return
 	}
 
-	// Generate JWT token
-	token, err := h.authService.GenerateToken(c.Request.Context(), user.Name, user.Spec.Email, user.Spec.Roles)
-	if err != nil {
-		h.logger.Error("Failed to generate token", zap.String("email", req.Email), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate authentication token"})
-		return
-	}
-
 	// Update last login time
 	if err := h.userService.UpdateUserLastLogin(c.Request.Context(), user.Name); err != nil {
 		h.logger.Warn("Failed to update last login time", zap.String("email", req.Email), zap.Error(err))
 		// Don't fail the login if we can't update last login time
 	}
 
-	// Prepare response
+	// Prepare response - return user info only (NextAuth will generate JWT)
 	response := AuthResponse{
-		Token: token,
 		User: UserInfo{
+			Username:    user.Name,
 			Email:       user.Spec.Email,
+			Name:        user.Spec.DisplayName,
 			DisplayName: user.Spec.DisplayName,
 			IsActive:    user.Spec.Active != nil && *user.Spec.Active,
 		},
 		Roles: user.Spec.Roles,
 	}
 
-	h.logger.Info("Token generation successful", zap.String("email", req.Email))
+	h.logger.Info("OAuth user info returned", zap.String("email", req.Email))
 	c.JSON(http.StatusOK, response)
 }
 

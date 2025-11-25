@@ -7,26 +7,26 @@ declare module 'next-auth' {
       id: string
       email: string
       name: string
+      username?: string
       provider?: string
       roles?: string[]
-      backendToken?: string
       isActive?: boolean
     } & DefaultSession['user']
   }
 
   interface User extends DefaultUser {
+    username?: string
     roles?: string[]
-    backendToken?: string
     isActive?: boolean
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
+    username?: string
     provider?: string
     providerId?: string
     roles?: string[]
-    backendToken?: string
     isActive?: boolean
   }
 }

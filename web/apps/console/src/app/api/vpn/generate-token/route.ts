@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { SignJWT } from 'jose'
+import { cookies } from 'next/headers'
 
 /**
  * VPN Temporary Token Generation API
@@ -16,28 +17,36 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - please sign in' }, { status: 401 })
     }
 
-    // Get JWT secret
-    const jwtSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+    // Get JWT secret (now JWT_SECRET instead of NEXTAUTH_SECRET)
+    const jwtSecret = process.env.JWT_SECRET
     if (!jwtSecret) {
-      console.error('AUTH_SECRET or NEXTAUTH_SECRET environment variable not set')
+      console.error('JWT_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
-    // Generate compact temporary JWT (3 minutes expiry)
-    // Using minimal claims to keep token size small
-    const secret = new TextEncoder().encode(jwtSecret)
+    // Get NextAuth JWT token from cookie (this IS the backend token now)
+    const cookieStore = await cookies()
+    const cookieName = process.env.NODE_ENV === 'production'
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token'
+    const backendToken = cookieStore.get(cookieName)?.value
 
-    // Get backend token from session
-    const backendToken = (session.user as { backendToken?: string }).backendToken
+    if (!backendToken) {
+      return NextResponse.json({ error: 'Unauthorized - no session token' }, { status: 401 })
+    }
 
     console.log('[VPN Generate] Creating token for email:', session.user.email)
     console.log('[VPN Generate] Current time:', Math.floor(Date.now() / 1000))
     console.log('[VPN Generate] JWT secret length:', jwtSecret.length)
     console.log('[VPN Generate] Backend token available:', !!backendToken)
 
+    // Generate compact temporary JWT (3 minutes expiry)
+    // Using minimal claims to keep token size small
+    const secret = new TextEncoder().encode(jwtSecret)
+
     const temporaryToken = await new SignJWT({
       e: session.user.email, // 'e' instead of 'email' to save bytes
-      b: backendToken, // 'b' instead of 'backendToken'
+      b: backendToken, // 'b' contains NextAuth JWT (which backend validates)
       t: 'temp', // 't' instead of 'type'
     })
       .setProtectedHeader({ alg: 'HS256' })

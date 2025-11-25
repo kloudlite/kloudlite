@@ -44,16 +44,11 @@ spec:
               value: "dashboard"
             - name: AUTH_TRUST_HOST
               value: "true"
-            - name: AUTH_SECRET
+            - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: frontend-secrets
-                  key: nextauth-secret
-            - name: NEXTAUTH_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: frontend-secrets
-                  key: nextauth-secret
+                  key: jwt-secret
           resources:
             requests:
               memory: "256Mi"

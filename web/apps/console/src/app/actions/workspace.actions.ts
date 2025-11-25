@@ -160,12 +160,26 @@ export async function archiveWorkspace(name: string, namespace: string = 'defaul
  */
 export async function getWorkspaceMetrics(name: string, namespace: string = 'default') {
   try {
-    // Import auth and env dynamically to ensure this only runs on server
-    // Removed unused auth import
+    // Import required modules dynamically to ensure this only runs on server
     const { env } = await import('@/lib/env')
+    const { cookies } = await import('next/headers')
 
     const session = await getSession()
-    if (!session?.user?.backendToken) {
+    if (!session?.user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    // Get NextAuth JWT token from cookie
+    const cookieStore = await cookies()
+    const cookieName = process.env.NODE_ENV === 'production'
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token'
+    const token = cookieStore.get(cookieName)?.value
+
+    if (!token) {
       return {
         success: false,
         error: 'Not authenticated',
@@ -175,7 +189,7 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
     const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${name}/metrics`
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${session.user.backendToken}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       cache: 'no-store',

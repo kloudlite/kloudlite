@@ -123,7 +123,7 @@ stringData:
 EOF
 
 echo "Creating Frontend Secret..."
-NEXTAUTH_SECRET=$(openssl rand -base64 32)
+# Use the same JWT_SECRET as backend for shared secret authentication
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
@@ -132,7 +132,7 @@ metadata:
   namespace: kloudlite
 type: Opaque
 stringData:
-  nextauth-secret: "$NEXTAUTH_SECRET"
+  jwt-secret: "%s"
 EOF
 
 # Save ConfigMap to manifests folder for auto-apply
@@ -326,7 +326,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, installationKey, vpcID, sgID, region, amiID, manifests.AWSMachineTypes, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, sgID, region, amiID, manifests.AWSMachineTypes, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))

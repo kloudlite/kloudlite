@@ -1,6 +1,7 @@
 import { getSession } from '@/lib/get-session'
 import { env } from '@/lib/env'
 import { NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -11,7 +12,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     // Get the user's session for authentication
     const session = await getSession()
-    if (!session?.user?.backendToken) {
+    if (!session?.user) {
+      return new Response('Unauthorized', { status: 401 })
+    }
+
+    // Get NextAuth JWT token from cookie
+    const cookieStore = await cookies()
+    const cookieName = process.env.NODE_ENV === 'production'
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token'
+    const token = cookieStore.get(cookieName)?.value
+
+    if (!token) {
       return new Response('Unauthorized', { status: 401 })
     }
 
@@ -20,7 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const backendResponse = await fetch(backendUrl, {
       headers: {
-        Authorization: `Bearer ${session.user.backendToken}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
