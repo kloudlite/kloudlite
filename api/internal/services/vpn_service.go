@@ -127,4 +127,3 @@ func (s *vpnService) findUserNamespace(ctx context.Context, username string) (st
 
 	return "", fmt.Errorf("no work machine found for user")
 }
-
