@@ -245,6 +245,17 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Debug - List standalone output
+        run: |
+          echo "=== Contents of apps/dashboard/.next/standalone ==="
+          ls -la apps/dashboard/.next/standalone/ || echo "Directory not found"
+          echo ""
+          echo "=== Looking for server.js ==="
+          find apps/dashboard/.next/standalone -name "server.js" 2>/dev/null || echo "server.js not found"
+          echo ""
+          echo "=== Full tree of standalone (first 50 lines) ==="
+          find apps/dashboard/.next/standalone -type f 2>/dev/null | head -50 || echo "Cannot list files"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
