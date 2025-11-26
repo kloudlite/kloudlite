@@ -52,7 +52,7 @@ export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
           {getIcon()}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="bg-white dark:bg-zinc-900 shadow-lg border border-gray-200 dark:border-zinc-700">
         <DropdownMenuItem onClick={() => applyTheme('light')}>
           <Sun className="mr-2 h-4 w-4" />
           <span>Light</span>
