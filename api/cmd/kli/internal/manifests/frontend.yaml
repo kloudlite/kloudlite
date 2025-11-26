@@ -44,7 +44,7 @@ spec:
               value: "dashboard"
             - name: AUTH_TRUST_HOST
               value: "true"
-            - name: AUTH_SECRET
+            - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: frontend-secrets
