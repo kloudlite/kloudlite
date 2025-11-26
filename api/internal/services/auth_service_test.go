@@ -66,155 +66,37 @@ func (m *mockUserServiceForAuth) HashPassword(password string) (string, error) {
 	return "", errors.New("not implemented")
 }
 
-func TestGenerateToken(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	jwtSecret := "test-secret-key"
-	tokenExpiry := 1 * time.Hour
-
-	userService := &mockUserServiceForAuth{}
-	authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
-
-	t.Run("should generate valid JWT token", func(t *testing.T) {
-		ctx := context.Background()
-		username := "test-user"
-		email := "test@example.com"
-		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
-
-		tokenString, err := authService.GenerateToken(ctx, username, email, roles)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, tokenString)
-	})
-
-	t.Run("generated token should be parseable and valid", func(t *testing.T) {
-		ctx := context.Background()
-		username := "test-user"
-		email := "test@example.com"
-		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
-
-		tokenString, err := authService.GenerateToken(ctx, username, email, roles)
-		assert.NoError(t, err)
-
-		// Parse the token
-		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
-		})
-
-		assert.NoError(t, err)
-		assert.True(t, token.Valid)
-	})
-
-	t.Run("generated token should contain correct claims", func(t *testing.T) {
-		ctx := context.Background()
-		username := "admin-user"
-		email := "admin@example.com"
-		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin, platformv1alpha1.RoleUser}
-
-		tokenString, err := authService.GenerateToken(ctx, username, email, roles)
-		assert.NoError(t, err)
-
-		// Parse and validate claims
-		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
-		})
-
-		assert.NoError(t, err)
-		claims, ok := token.Claims.(*UserClaims)
-		assert.True(t, ok)
-		assert.Equal(t, email, claims.Email)
-		assert.Equal(t, roles, claims.Roles)
-		assert.Equal(t, email, claims.Subject)
-		assert.Equal(t, "kloudlite-api", claims.Issuer)
-		assert.NotNil(t, claims.IssuedAt)
-		assert.NotNil(t, claims.ExpiresAt)
-		assert.NotNil(t, claims.NotBefore)
-	})
-
-	t.Run("generated token should expire at correct time", func(t *testing.T) {
-		ctx := context.Background()
-		email := "test@example.com"
-		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
-
-		beforeGeneration := time.Now()
-		tokenString, err := authService.GenerateToken(ctx, "test-user", email, roles)
-		afterGeneration := time.Now()
-		assert.NoError(t, err)
-
-		// Parse token
-		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
-		})
-
-		assert.NoError(t, err)
-		claims, ok := token.Claims.(*UserClaims)
-		assert.True(t, ok)
-
-		expectedExpiryMin := beforeGeneration.Add(tokenExpiry)
-		expectedExpiryMax := afterGeneration.Add(tokenExpiry)
-
-		// Allow small time drift (1 second tolerance)
-		assert.True(t, claims.ExpiresAt.Time.After(expectedExpiryMin.Add(-1*time.Second)))
-		assert.True(t, claims.ExpiresAt.Time.Before(expectedExpiryMax.Add(1*time.Second)))
-	})
-
-	t.Run("should generate token with multiple roles", func(t *testing.T) {
-		ctx := context.Background()
-		email := "superadmin@example.com"
-		roles := []platformv1alpha1.RoleType{
-			platformv1alpha1.RoleSuperAdmin,
-			platformv1alpha1.RoleAdmin,
-			platformv1alpha1.RoleUser,
-		}
-
-		tokenString, err := authService.GenerateToken(ctx, "superadmin", email, roles)
-		assert.NoError(t, err)
-
-		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
-		})
-
-		assert.NoError(t, err)
-		claims, ok := token.Claims.(*UserClaims)
-		assert.True(t, ok)
-		assert.Equal(t, 3, len(claims.Roles))
-		assert.Contains(t, claims.Roles, platformv1alpha1.RoleSuperAdmin)
-		assert.Contains(t, claims.Roles, platformv1alpha1.RoleAdmin)
-		assert.Contains(t, claims.Roles, platformv1alpha1.RoleUser)
-	})
-
-	t.Run("should generate token with empty roles", func(t *testing.T) {
-		ctx := context.Background()
-		email := "noroles@example.com"
-		roles := []platformv1alpha1.RoleType{}
-
-		tokenString, err := authService.GenerateToken(ctx, "noroles-user", email, roles)
-		assert.NoError(t, err)
-
-		token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
-		})
-
-		assert.NoError(t, err)
-		claims, ok := token.Claims.(*UserClaims)
-		assert.True(t, ok)
-		assert.Equal(t, 0, len(claims.Roles))
-	})
+// Helper function to generate a test JWT token for validation tests
+func generateTestToken(secret string, email string, roles []platformv1alpha1.RoleType, expiry time.Duration) (string, error) {
+	claims := &UserClaims{
+		Email: email,
+		Roles: roles,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   email,
+			Issuer:    "kloudlite-api",
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
 }
 
 func TestValidateToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	jwtSecret := "test-secret-key"
-	tokenExpiry := 1 * time.Hour
 
 	userService := &mockUserServiceForAuth{}
-	authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+	authService := NewAuthService(jwtSecret, userService, logger)
 
 	t.Run("should validate valid token", func(t *testing.T) {
 		ctx := context.Background()
 		email := "test@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
-		// Generate token
-		tokenString, err := authService.GenerateToken(ctx, "test-user", email, roles)
+		// Generate token using helper
+		tokenString, err := generateTestToken(jwtSecret, email, roles, 1*time.Hour)
 		assert.NoError(t, err)
 
 		// Validate token
@@ -230,13 +112,9 @@ func TestValidateToken(t *testing.T) {
 		email := "test@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
-		// Create auth service with very short expiry
-		shortExpiryAuthService := NewAuthService(jwtSecret, 1*time.Millisecond, userService, logger)
-		tokenString, err := shortExpiryAuthService.GenerateToken(ctx, "test-user", email, roles)
+		// Generate token with very short expiry (already expired)
+		tokenString, err := generateTestToken(jwtSecret, email, roles, -1*time.Hour)
 		assert.NoError(t, err)
-
-		// Wait for token to expire
-		time.Sleep(10 * time.Millisecond)
 
 		// Try to validate expired token
 		claims, err := authService.ValidateToken(ctx, tokenString)
@@ -250,9 +128,8 @@ func TestValidateToken(t *testing.T) {
 		email := "test@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
-		// Create auth service with different secret
-		wrongSecretAuthService := NewAuthService("wrong-secret", tokenExpiry, userService, logger)
-		tokenString, err := wrongSecretAuthService.GenerateToken(ctx, "test-user", email, roles)
+		// Generate token with different secret
+		tokenString, err := generateTestToken("wrong-secret", email, roles, 1*time.Hour)
 		assert.NoError(t, err)
 
 		// Try to validate with correct secret
@@ -290,7 +167,7 @@ func TestValidateToken(t *testing.T) {
 		email := "test@example.com"
 		roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleUser}
 
-		tokenString, err := authService.GenerateToken(ctx, "test-user", email, roles)
+		tokenString, err := generateTestToken(jwtSecret, email, roles, 1*time.Hour)
 		assert.NoError(t, err)
 
 		// Tamper with the token
@@ -305,7 +182,6 @@ func TestValidateToken(t *testing.T) {
 func TestVerifyPassword(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	jwtSecret := "test-secret-key"
-	tokenExpiry := 1 * time.Hour
 	activeTrue := true
 	activeFalse := false
 
@@ -329,7 +205,7 @@ func TestVerifyPassword(t *testing.T) {
 			},
 		}
 
-		authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+		authService := NewAuthService(jwtSecret, userService, logger)
 		user, err := authService.VerifyPassword(ctx, email, password)
 		assert.NoError(t, err)
 		assert.NotNil(t, user)
@@ -357,7 +233,7 @@ func TestVerifyPassword(t *testing.T) {
 			},
 		}
 
-		authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+		authService := NewAuthService(jwtSecret, userService, logger)
 		user, err := authService.VerifyPassword(ctx, email, wrongPassword)
 		assert.Error(t, err)
 		assert.Nil(t, user)
@@ -375,7 +251,7 @@ func TestVerifyPassword(t *testing.T) {
 			},
 		}
 
-		authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+		authService := NewAuthService(jwtSecret, userService, logger)
 		user, err := authService.VerifyPassword(ctx, email, password)
 		assert.Error(t, err)
 		assert.Nil(t, user)
@@ -401,7 +277,7 @@ func TestVerifyPassword(t *testing.T) {
 			},
 		}
 
-		authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+		authService := NewAuthService(jwtSecret, userService, logger)
 		user, err := authService.VerifyPassword(ctx, email, password)
 		assert.Error(t, err)
 		assert.Nil(t, user)
@@ -428,7 +304,7 @@ func TestVerifyPassword(t *testing.T) {
 			},
 		}
 
-		authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+		authService := NewAuthService(jwtSecret, userService, logger)
 		user, err := authService.VerifyPassword(ctx, email, password)
 		assert.Error(t, err)
 		assert.Nil(t, user)
@@ -455,7 +331,7 @@ func TestVerifyPassword(t *testing.T) {
 			},
 		}
 
-		authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+		authService := NewAuthService(jwtSecret, userService, logger)
 		user, err := authService.VerifyPassword(ctx, email, password)
 		assert.NoError(t, err)
 		assert.NotNil(t, user)
@@ -484,7 +360,7 @@ func TestVerifyPassword(t *testing.T) {
 			},
 		}
 
-		authService := NewAuthService(jwtSecret, tokenExpiry, userService, logger)
+		authService := NewAuthService(jwtSecret, userService, logger)
 		user, err := authService.VerifyPassword(ctx, email, password)
 		assert.NoError(t, err)
 		assert.NotNil(t, user)

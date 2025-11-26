@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/config"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
@@ -59,11 +58,9 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	// Create individual services
 	userService := NewUserService(opts.RepositoryManager.Users, opts.RepositoryManager.WorkMachines, opts.RepositoryManager.MachineTypes, opts.RepositoryManager.Environments)
 
-	// Create auth service
-	tokenExpiry := time.Duration(opts.Config.Auth.TokenExpiryHours) * time.Hour
+	// Create auth service (only for token verification - frontend generates tokens)
 	authService := NewAuthService(
 		opts.Config.Auth.JWTSecret,
-		tokenExpiry,
 		userService,
 		opts.Logger,
 	)
