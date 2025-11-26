@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
+import { jwtVerify, SignJWT } from 'jose'
 
 /**
  * CA Certificate API Route
@@ -21,25 +21,26 @@ export async function GET(request: NextRequest) {
     // Extract token from Bearer header
     const token = authHeader.replace('Bearer ', '')
 
-    // Get JWT secret
-    const jwtSecret = process.env.JWT_SECRET
-    if (!jwtSecret) {
-      console.error('JWT_SECRET environment variable not set')
+    // Get AUTH_SECRET (shared with backend)
+    const authSecret = process.env.AUTH_SECRET
+    if (!authSecret) {
+      console.error('AUTH_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
-    // Verify VPN token (both temporary and permanent tokens)
+    // Verify VPN token
     let claims: {
-      type?: string
-      backendToken?: string
-      t?: string
-      b?: string
-      e?: string
+      sub?: string
       email?: string
+      name?: string
+      username?: string
+      roles?: string[]
+      isActive?: boolean
+      type?: string
     }
 
     try {
-      const secret = new TextEncoder().encode(jwtSecret)
+      const secret = new TextEncoder().encode(authSecret)
       const { payload } = await jwtVerify(token, secret)
       claims = payload as typeof claims
     } catch (error) {
@@ -50,16 +51,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Extract backend token
-    const backendToken = claims.backendToken || claims.b
-    if (!backendToken) {
-      return NextResponse.json({ error: 'Invalid token - missing backend token' }, { status: 401 })
+    // Validate token type
+    if (claims.type !== 'vpn-temp' && claims.type !== 'vpn-permanent') {
+      return NextResponse.json({ error: 'Invalid token type' }, { status: 401 })
     }
+
+    // Generate a backend token from the VPN token claims
+    const secret = new TextEncoder().encode(authSecret)
+    const backendToken = await new SignJWT({
+      sub: claims.sub,
+      email: claims.email,
+      name: claims.name,
+      username: claims.username,
+      roles: claims.roles,
+      isActive: claims.isActive,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('5m')
+      .sign(secret)
 
     // Get the backend API URL from environment
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
-    // Forward the request to the backend Go API using the backend token
+    // Forward the request to the backend Go API
     const backendResponse = await fetch(`${backendUrl}/api/v1/vpn/ca-cert`, {
       method: 'GET',
       headers: {

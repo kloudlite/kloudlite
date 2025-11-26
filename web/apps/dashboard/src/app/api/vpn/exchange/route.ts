@@ -19,30 +19,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Temporary token required' }, { status: 400 })
     }
 
-    // Get JWT secret
-    const jwtSecret = process.env.JWT_SECRET
-    if (!jwtSecret) {
-      console.error('[VPN Exchange] JWT_SECRET environment variable not set')
+    // Get AUTH_SECRET (shared with backend)
+    const authSecret = process.env.AUTH_SECRET
+    if (!authSecret) {
+      console.error('[VPN Exchange] AUTH_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
-    console.log('[VPN Exchange] JWT secret length:', jwtSecret.length)
-
     // Verify temporary JWT token
-    const secret = new TextEncoder().encode(jwtSecret)
-    let tokenData: { e: string; b: string; t: string }
+    const secret = new TextEncoder().encode(authSecret)
+    let tokenData: { sub?: string; email: string; name?: string; username?: string; roles?: string[]; isActive?: boolean; type: string }
 
     try {
       // Add clock tolerance of 5 minutes to handle clock skew between servers
       const { payload } = await jwtVerify(temporaryToken, secret, {
         clockTolerance: 300, // 5 minutes in seconds
       })
-      console.log('[VPN Exchange] Token verified successfully:', JSON.stringify(payload, null, 2))
-      tokenData = payload as { e: string; b: string; t: string }
+      console.log('[VPN Exchange] Token verified successfully')
+      tokenData = payload as typeof tokenData
 
       // Validate token type
-      if (tokenData.t !== 'temp') {
-        console.error('[VPN Exchange] Invalid token type:', tokenData.t)
+      if (tokenData.type !== 'vpn-temp') {
+        console.error('[VPN Exchange] Invalid token type:', tokenData.type)
         return NextResponse.json(
           { error: 'Invalid token type' },
           { status: 401 }
@@ -50,20 +48,6 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       console.error('[VPN Exchange] JWT verification failed:', error)
-      console.error('[VPN Exchange] Error details:', JSON.stringify(error, null, 2))
-
-      // Log the token claims without verifying to see what's in it
-      try {
-        const parts = temporaryToken.split('.')
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString())
-          console.error('[VPN Exchange] Token payload (unverified):', JSON.stringify(payload, null, 2))
-          console.error('[VPN Exchange] Current time:', Math.floor(Date.now() / 1000))
-        }
-      } catch (decodeError) {
-        console.error('[VPN Exchange] Failed to decode token:', decodeError)
-      }
-
       return NextResponse.json(
         { error: 'Invalid or expired temporary token' },
         { status: 401 }
@@ -71,30 +55,48 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate permanent VPN token (1 year expiry)
+    // This token includes all user info needed for backend validation
     const permanentToken = await new SignJWT({
-      email: tokenData.e, // Use full 'email' key for permanent token
-      type: 'permanent',
-      backendToken: tokenData.b, // Use full 'backendToken' key for permanent token
+      sub: tokenData.sub,
+      email: tokenData.email,
+      name: tokenData.name,
+      username: tokenData.username,
+      roles: tokenData.roles,
+      isActive: tokenData.isActive,
+      type: 'vpn-permanent',
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('1y') // 1 year
       .setIssuer('kloudlite-vpn')
-      .setSubject(tokenData.e)
+      .setSubject(tokenData.email)
       .sign(secret)
 
-    // Fetch VPN configuration from backend using the backend token
+    // Fetch VPN configuration from backend
+    // Generate a backend token from the user info
+    const backendToken = await new SignJWT({
+      sub: tokenData.sub,
+      email: tokenData.email,
+      name: tokenData.name,
+      username: tokenData.username,
+      roles: tokenData.roles,
+      isActive: tokenData.isActive,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('5m')
+      .sign(secret)
+
     const backendUrl = env.apiUrl
     let vpnConfig: unknown
 
     console.log('[VPN Exchange] Fetching VPN config from backend:', backendUrl)
-    console.log('[VPN Exchange] Backend token length:', tokenData.b?.length || 'undefined')
 
     try {
       const vpnResponse = await fetch(`${backendUrl}/api/v1/vpn/connect`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${tokenData.b}`,
+          Authorization: `Bearer ${backendToken}`,
           'Content-Type': 'application/json',
         },
       })
