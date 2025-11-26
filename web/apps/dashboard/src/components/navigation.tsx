@@ -115,7 +115,7 @@ export function Navigation({
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-zinc-900 shadow-lg border border-gray-200 dark:border-zinc-700">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-semibold">{displayName || 'User'}</p>
