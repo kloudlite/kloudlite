@@ -1,5 +1,5 @@
 import { env } from '@/lib/env'
-import { getSession } from '@/lib/get-session'
+import { getAuthToken } from '@/lib/get-session'
 
 // API client configuration
 export class ApiClient {
@@ -12,15 +12,15 @@ export class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
 
-    // Get authentication session (only works in server components/actions)
+    // Get authentication token (only works in server components/actions)
     const authHeaders: Record<string, string> = {}
     try {
-      const session = await getSession()
-      if (session?.user?.backendToken) {
-        authHeaders.Authorization = `Bearer ${session.user.backendToken}`
+      const token = await getAuthToken()
+      if (token) {
+        authHeaders.Authorization = `Bearer ${token}`
       }
     } catch (error) {
-      console.error('[API Client] Error getting session for endpoint:', endpoint, error)
+      console.error('[API Client] Error getting auth token for endpoint:', endpoint, error)
     }
 
     // Explicitly construct headers to ensure they're passed correctly

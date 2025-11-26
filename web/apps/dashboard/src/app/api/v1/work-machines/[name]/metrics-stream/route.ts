@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/get-session'
+import { getAuthToken } from '@/lib/get-session'
 import { env } from '@kloudlite/lib'
 import { NextRequest } from 'next/server'
 
@@ -9,9 +9,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { name } = await params
 
   try {
-    // Get the user's session for authentication
-    const session = await getSession()
-    if (!session?.user?.backendToken) {
+    // Get authentication token
+    const token = await getAuthToken()
+    if (!token) {
       return new Response('Unauthorized', { status: 401 })
     }
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const backendResponse = await fetch(backendUrl, {
       headers: {
-        Authorization: `Bearer ${session.user.backendToken}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',

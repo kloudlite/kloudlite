@@ -59,15 +59,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!data.valid || !data.token) {
+    if (!data.valid || !data.user) {
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
       )
     }
 
-    // Create NextAuth-compatible JWT session
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+    // Create NextAuth-compatible JWT session using shared secret
+    const secret = new TextEncoder().encode(process.env.AUTH_SECRET)
 
     // Create a session token that mimics NextAuth's JWT structure
     const sessionToken = await new SignJWT({
@@ -75,7 +75,6 @@ export async function POST(request: NextRequest) {
       name: data.user.displayName || data.user.email,
       sub: data.user.email, // Subject (user ID)
       roles: data.roles,
-      backendToken: data.token, // The JWT from Go API
       isActive: true,
       provider: 'superadmin-login',
     })
