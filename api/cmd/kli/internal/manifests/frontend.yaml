@@ -49,6 +49,11 @@ spec:
                 secretKeyRef:
                   name: frontend-secrets
                   key: jwt-secret
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: frontend-secrets
+                  key: jwt-secret
           resources:
             requests:
               memory: "256Mi"
