@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Scan workspace packages for Tailwind classes */
+@source "../../../../packages/ui/src/**/*.tsx";
+@source "../../../../packages/lib/src/**/*.ts";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
