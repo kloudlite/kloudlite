@@ -1,5 +1,5 @@
 import { env } from '@/lib/env'
-import { cookies } from 'next/headers'
+import { getAuthToken } from '@/lib/get-session'
 
 // API client configuration
 export class ApiClient {
@@ -9,27 +9,18 @@ export class ApiClient {
     this.baseUrl = env.apiUrl
   }
 
-  private async getSessionToken(): Promise<string | null> {
-    const cookieStore = await cookies()
-    const cookieName = process.env.NODE_ENV === 'production'
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token'
-
-    return cookieStore.get(cookieName)?.value || null
-  }
-
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
 
-    // Get NextAuth JWT token from cookie (the JWT itself is sent to backend)
+    // Get authentication token (only works in server components/actions)
     const authHeaders: Record<string, string> = {}
     try {
-      const token = await this.getSessionToken()
+      const token = await getAuthToken()
       if (token) {
         authHeaders.Authorization = `Bearer ${token}`
       }
     } catch (error) {
-      console.error('[API Client] Error getting session token for endpoint:', endpoint, error)
+      console.error('[API Client] Error getting auth token for endpoint:', endpoint, error)
     }
 
     // Explicitly construct headers to ensure they're passed correctly

@@ -3,7 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
-import { Button, Input, Label, Alert, AlertDescription } from '@kloudlite/ui'
+import { Button } from '@kloudlite/ui'
+import { Input } from '@kloudlite/ui'
+import { Label } from '@kloudlite/ui'
+import { Alert, AlertDescription } from '@kloudlite/ui'
 
 interface Provider {
   type: string

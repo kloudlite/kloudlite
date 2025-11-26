@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { cn } from '@kloudlite/lib'
+import { cn } from '@/lib/utils'
 
 interface KloudliteLogoProps {
   className?: string

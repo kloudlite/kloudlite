@@ -270,6 +270,7 @@ func NewWebSocketListener(addr string, tlsConfig *tls.Config, certFile, keyFile 
 		closeCh:  make(chan struct{}),
 	}
 
+	// Create default mux with WebSocket handler
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", listener.handleWebSocket)
 
@@ -313,6 +314,75 @@ func NewWebSocketListener(addr string, tlsConfig *tls.Config, certFile, keyFile 
 	}()
 
 	return listener, nil
+}
+
+// NewWebSocketListenerWithHandler creates a new WebSocket listener with a custom HTTP handler
+// The handler should include the WebSocket upgrade handler at the appropriate path
+func NewWebSocketListenerWithHandler(addr string, tlsConfig *tls.Config, certFile, keyFile string, handler http.Handler, config *Config, logger *zap.Logger) (*WebSocketListener, error) {
+	if config == nil {
+		config = DefaultConfig()
+	}
+
+	listener := &WebSocketListener{
+		upgrader: &websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true // Accept all origins
+			},
+			EnableCompression: config.EnableCompression,
+		},
+		config:   config,
+		logger:   logger,
+		acceptCh: make(chan *websocket.Conn),
+		errCh:    make(chan error, 1),
+		closeCh:  make(chan struct{}),
+	}
+
+	listener.server = &http.Server{
+		Addr:      addr,
+		Handler:   handler,
+		TLSConfig: tlsConfig,
+		// Disable timeouts for long-lived WebSocket connections
+		ReadTimeout:       0,
+		WriteTimeout:      0,
+		IdleTimeout:       0,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	// Start listening
+	go func() {
+		var err error
+		if tlsConfig != nil || (certFile != "" && keyFile != "") {
+			if certFile != "" && keyFile != "" {
+				logger.Info("starting TLS WebSocket server with custom handler",
+					zap.String("addr", addr),
+					zap.String("cert", certFile),
+					zap.String("key", keyFile))
+				err = listener.server.ListenAndServeTLS(certFile, keyFile)
+			} else {
+				logger.Info("starting TLS WebSocket server with custom handler and configured certificates",
+					zap.String("addr", addr))
+				err = listener.server.ListenAndServeTLS("", "")
+			}
+		} else {
+			logger.Info("starting non-TLS WebSocket server with custom handler", zap.String("addr", addr))
+			err = listener.server.ListenAndServe()
+		}
+
+		if err != nil && err != http.ErrServerClosed {
+			select {
+			case listener.errCh <- err:
+			default:
+			}
+		}
+	}()
+
+	return listener, nil
+}
+
+// GetWebSocketUpgradeHandler returns the WebSocket upgrade handler function
+// This can be used to add the WebSocket handler to a custom mux
+func (wsl *WebSocketListener) GetWebSocketUpgradeHandler() http.HandlerFunc {
+	return wsl.handleWebSocket
 }
 
 func (wsl *WebSocketListener) handleWebSocket(w http.ResponseWriter, r *http.Request) {

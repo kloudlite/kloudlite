@@ -1,7 +1,8 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from '@kloudlite/ui'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kloudlite/ui'
+import { Button } from '@kloudlite/ui'
 import Link from 'next/link'
 
 export default function AuthErrorPage() {

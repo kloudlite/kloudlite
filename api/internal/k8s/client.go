@@ -12,7 +12,6 @@ import (
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
-	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -106,9 +105,6 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 	if err := certsv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add certs scheme: %w", err)
-	}
-	if err := wireguarddevicev1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add wireguarddevice scheme: %w", err)
 	}
 
 	// Create controller-runtime client with optimized settings

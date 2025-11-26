@@ -2,15 +2,10 @@ package workmachine
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/codingconcepts/env"
-	wireguarddevicev1 "github.com/kloudlite/kloudlite/api/internal/controllers/wireguarddevice/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -19,7 +14,6 @@ import (
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -78,7 +72,6 @@ const (
 	// SSHUserName is the username for the SSH server
 	SSHUserName = "kloudlite"
 
-	wireguardTunnelImage     = "ghcr.io/kloudlite/kloudlite/wireguard-server:development"
 	wmIngressControllerImage = "ghcr.io/kloudlite/kloudlite/wm-ingress-controller:development"
 )
 
@@ -137,26 +130,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:  "when-running/ensure-tunnel-server",
-			Title: "Ensure tunnel server is running",
-			ShouldRun: func(obj *v1.WorkMachine) bool {
-				return obj.Spec.State == v1.MachineStateRunning
-			},
-			OnCreate: r.ensureTunnelServer,
-			OnDelete: r.cleanupTunnelServer,
-		},
-		{
-			Name:  "when-stopped/cleanup-tunnel-server",
-			Title: "Cleanup tunnel server when machine is not running",
-			ShouldRun: func(obj *v1.WorkMachine) bool {
-				return obj.Spec.State == v1.MachineStateStopped ||
-					obj.Spec.State == v1.MachineStateStopping ||
-					obj.Spec.State == v1.MachineStateDisabled
-			},
-			OnCreate: r.cleanupTunnelServer,
-			OnDelete: nil,
-		},
-		{
 			Name:  "when-running/ensure-host-manager",
 			Title: "Ensure host manager pod is running",
 			ShouldRun: func(obj *v1.WorkMachine) bool {
@@ -195,58 +168,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: r.cleanupCloudMachine,
 		},
 	})
-}
-
-// buildTunnelServerConfig generates tunnel-server.conf with WireGuardDevice peers
-func (r *WorkMachineReconciler) buildTunnelServerConfig(ctx context.Context, namespace string, serverPrivateKey string) (string, error) {
-	// List all WireGuardDevices in the namespace
-	var deviceList wireguarddevicev1.WireGuardDeviceList
-	if err := r.List(ctx, &deviceList, client.InNamespace(namespace)); err != nil {
-		return "", fmt.Errorf("failed to list WireGuardDevices: %w", err)
-	}
-
-	// Build [Interface] section
-	config := fmt.Sprintf(`# WireGuard Server Configuration
-[Interface]
-PrivateKey = %s
-Address = 10.17.0.1/24
-ListenPort = 51820
-
-PostUp = iptables -A FORWARD -i %%i -j ACCEPT;
-PostUp = iptables -A FORWARD -o %%i -j ACCEPT;
-PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;
-
-PostDown = iptables -D FORWARD -i %%i -j ACCEPT;
-PostDown = iptables -D FORWARD -o %%i -j ACCEPT;
-PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE;
-
-`, serverPrivateKey)
-
-	// Add [Peer] section for each Ready WireGuardDevice
-	// Sort devices by name to ensure deterministic config generation
-	readyDevices := make([]wireguarddevicev1.WireGuardDevice, 0, len(deviceList.Items))
-	for _, device := range deviceList.Items {
-		// Only include Ready devices with valid public keys
-		if device.Status.Phase != "Ready" || device.Status.PublicKey == "" || device.Status.AssignedIP == "" {
-			continue
-		}
-		readyDevices = append(readyDevices, device)
-	}
-
-	// Sort by device name for deterministic ordering
-	sort.Slice(readyDevices, func(i, j int) bool {
-		return readyDevices[i].Name < readyDevices[j].Name
-	})
-
-	for _, device := range readyDevices {
-		config += fmt.Sprintf(`[Peer]
-PublicKey = %s
-AllowedIPs = %s/32
-
-`, device.Status.PublicKey, device.Status.AssignedIP)
-	}
-
-	return config, nil
 }
 
 func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
@@ -563,311 +484,6 @@ func (r *WorkMachineReconciler) cleanupWorkmachineIngressController(check *recon
 	return check.Passed()
 }
 
-// ensureTunnelServer creates and maintains the WireGuard tunnel server for the workmachine
-// This function is called when the WorkMachine is in running state
-func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	// Create Secret for WireGuard configuration
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tunnel-server",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, secret, func() error {
-		if !fn.IsOwner(secret, obj) {
-			secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-
-		// Get or generate server private key
-		var serverPrivateKey string
-		if secret.Data != nil {
-			if existingConf, exists := secret.Data["tunnel-server.conf"]; exists {
-				// Extract existing private key from config
-				lines := strings.SplitSeq(string(existingConf), "\n")
-				for line := range lines {
-					line = strings.TrimSpace(line)
-					if strings.HasPrefix(line, "PrivateKey") {
-						parts := strings.SplitN(line, "=", 2)
-						if len(parts) == 2 {
-							serverPrivateKey = strings.TrimSpace(parts[1])
-							break
-						}
-					}
-				}
-			}
-		}
-
-		// Generate new server key if we don't have one
-		if serverPrivateKey == "" {
-			serverPriv, _, err := generateWgKeys()
-			if err != nil {
-				return err
-			}
-			serverPrivateKey = serverPriv
-		}
-
-		// Build config with WireGuardDevice peers
-		newConfig, err := r.buildTunnelServerConfig(check.Context(), obj.Spec.TargetNamespace, serverPrivateKey)
-		if err != nil {
-			return fmt.Errorf("failed to build tunnel-server config: %w", err)
-		}
-
-		// Compute hash of new config
-		newHash := fmt.Sprintf("%x", sha256.Sum256([]byte(newConfig)))
-
-		// Initialize Data and Annotations if needed
-		if secret.Data == nil {
-			secret.Data = make(map[string][]byte)
-		}
-		if secret.Annotations == nil {
-			secret.Annotations = make(map[string]string)
-		}
-
-		// Update config if changed
-		secret.Data["tunnel-server.conf"] = []byte(newConfig)
-		secret.Annotations["wireguard.kloudlite.io/config-hash"] = newHash
-
-		// Store server public key for WireGuardDevice controller to use
-		serverPrivKey, err := wgtypes.ParseKey(serverPrivateKey)
-		if err == nil {
-			serverPubKey := serverPrivKey.PublicKey()
-			secret.Data["server-public-key"] = []byte(hex.EncodeToString(serverPubKey[:]))
-		}
-
-		return nil
-	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update tunnel-server secret: %w", err))
-	}
-
-	// Copy TLS certificate secret from kloudlite-ingress namespace
-	sourceTLSSecret := &corev1.Secret{}
-	if err := r.Get(check.Context(), client.ObjectKey{
-		Name:      "kloudlite-wildcard-cert-tls",
-		Namespace: "kloudlite-ingress",
-	}, sourceTLSSecret); err != nil {
-		return check.Failed(fmt.Errorf("failed to get wildcard TLS certificate: %w", err))
-	}
-
-	// Create or update TLS secret in workmachine namespace
-	tlsSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kloudlite-wildcard-cert-tls",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, tlsSecret, func() error {
-		tlsSecret.Type = corev1.SecretTypeTLS
-		tlsSecret.Data = map[string][]byte{
-			"tls.crt": sourceTLSSecret.Data["tls.crt"],
-			"tls.key": sourceTLSSecret.Data["tls.key"],
-			"ca.crt":  sourceTLSSecret.Data["ca.crt"],
-		}
-		return nil
-	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to copy TLS certificate to workmachine namespace: %w", err))
-	}
-
-	// Create StatefulSet for tunnel-server
-	labels := map[string]string{
-		"app":                      "tunnel-server",
-		"kloudlite.io/workmachine": obj.Name,
-	}
-
-	statefulSet := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tunnel-server",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
-		if !fn.IsOwner(statefulSet, obj) {
-			statefulSet.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-
-		statefulSet.Labels = labels
-
-		statefulSet.Spec = appsv1.StatefulSetSpec{
-			Replicas:            fn.Ptr(int32(1)),
-			ServiceName:         "tunnel-server",
-			PodManagementPolicy: appsv1.ParallelPodManagement,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
-				},
-				Spec: corev1.PodSpec{
-					HostNetwork:                   true,
-					RestartPolicy:                 corev1.RestartPolicyAlways,
-					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
-					NodeSelector: map[string]string{
-						"kloudlite.io/workmachine": obj.Name,
-					},
-					Tolerations: []corev1.Toleration{
-						{
-							Key:      "kloudlite.io/workmachine",
-							Operator: corev1.TolerationOpExists,
-							Effect:   corev1.TaintEffectNoSchedule,
-						},
-						{
-							Key:               "node.kubernetes.io/not-ready",
-							Operator:          corev1.TolerationOpExists,
-							Effect:            corev1.TaintEffectNoExecute,
-							TolerationSeconds: fn.Ptr(int64(0)),
-						},
-						{
-							Key:               "node.kubernetes.io/unreachable",
-							Operator:          corev1.TolerationOpExists,
-							Effect:            corev1.TaintEffectNoExecute,
-							TolerationSeconds: fn.Ptr(int64(0)),
-						},
-					},
-					Containers: []corev1.Container{
-						{
-							Name:            "tunnel-server",
-							Image:           wireguardTunnelImage,
-							ImagePullPolicy: corev1.PullAlways,
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: fn.Ptr(true),
-								Capabilities: &corev1.Capabilities{
-									Add: []corev1.Capability{
-										corev1.Capability("NET_ADMIN"),
-										corev1.Capability("SYS_ADMIN"),
-									},
-								},
-							},
-							Ports: []corev1.ContainerPort{
-								{
-									Name:          "wg-http-proxy",
-									ContainerPort: 443,
-									Protocol:      corev1.ProtocolTCP,
-								},
-							},
-							Command: []string{
-								"sh",
-								"-c",
-								strings.Join([]string{
-									"wg-quick down wg0 || echo starting wireguard",
-									"wg-quick up wg0",
-									"wireguard-tls-proxy --listen=:443 --tls-cert=/certs/tls.crt --tls-key=/certs/tls.key --wireguard-target=127.0.0.1:51820 --watch-config --config-path=/etc/wireguard/wg0.conf &",
-									"proxy_pid=$!",
-									"trap 'wg-quick down wg0; kill $proxy_pid' SIGINT SIGTERM EXIT",
-									"wait $proxy_pid",
-								}, "\n"),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "wireguard-secret",
-									MountPath: "/etc/wireguard/wg0.conf",
-									SubPath:   "tunnel-server.conf",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "tls-certs",
-									MountPath: "/certs",
-									ReadOnly:  true,
-								},
-							},
-							ReadinessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									Exec: &corev1.ExecAction{
-										Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
-									},
-								},
-								InitialDelaySeconds: 2,
-								PeriodSeconds:       5,
-								TimeoutSeconds:      2,
-								SuccessThreshold:    1,
-								FailureThreshold:    3,
-							},
-							LivenessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									Exec: &corev1.ExecAction{
-										Command: []string{"sh", "-c", "wg show wg0 | grep -q interface"},
-									},
-								},
-								InitialDelaySeconds: 10,
-								PeriodSeconds:       30,
-								TimeoutSeconds:      5,
-								SuccessThreshold:    1,
-								FailureThreshold:    3,
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "wireguard-secret",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: secret.Name,
-								},
-							},
-						},
-						{
-							Name: "tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: "kloudlite-wildcard-cert-tls",
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-
-		return nil
-	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update tunnel-server statefulset: %w", err))
-	}
-
-	return check.Passed()
-}
-
-func generateWgKeys() (privateKey, publicKey string, err error) {
-	key, err := wgtypes.GenerateKey()
-	if err != nil {
-		return "", "", errors.Wrap("failed to generate wireguard keys", err)
-	}
-
-	return key.String(), key.PublicKey().String(), nil
-}
-
-func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	if obj.Spec.TargetNamespace == "" {
-		return check.Failed(fmt.Errorf("target namespace cannot be empty"))
-	}
-
-	// Delete StatefulSet (this will cascade delete pods)
-	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tunnel-server",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Failed(err)
-		}
-	}
-
-	// Delete Secret
-	if err := r.Delete(check.Context(), &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tunnel-server",
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Failed(err)
-		}
-	}
-
-	return check.Passed()
-}
-
 // handleNodeRebootRequest checks if the node associated with this WorkMachine has requested a reboot
 // (typically for loading NVIDIA drivers after installation) and reboots the instance if needed
 func (r *WorkMachineReconciler) handleNodeRebootRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
@@ -1029,27 +645,6 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			// Trigger reconciliation to check and recreate pod if needed
 			return []reconcile.Request{
 				{NamespacedName: client.ObjectKey{Name: workmachineName}},
-			}
-		}),
-	)
-
-	// Watch for WireGuardDevices to update tunnel-server when devices change
-	builder.Watches(
-		&wireguarddevicev1.WireGuardDevice{},
-		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-			device, ok := obj.(*wireguarddevicev1.WireGuardDevice)
-			if !ok {
-				return nil
-			}
-
-			// Get the WorkMachine that references this namespace as TargetNamespace
-			// The WireGuardDevice.Spec.WorkMachineRef contains the WorkMachine name
-			if device.Spec.WorkMachineRef == "" {
-				return nil
-			}
-
-			return []reconcile.Request{
-				{NamespacedName: client.ObjectKey{Name: device.Spec.WorkMachineRef}},
 			}
 		}),
 	)

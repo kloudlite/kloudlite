@@ -5,9 +5,8 @@ import { jwtVerify } from 'jose'
 import type { Session } from 'next-auth'
 
 /**
- * Console middleware
- * Handles tenant workspace management authentication and role-based access
- * This is for users inside their Kloudlite installation managing workspaces/workmachines
+ * Dashboard middleware
+ * Handles Kloudlite installation and admin authentication
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl

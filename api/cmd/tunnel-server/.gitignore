@@ -1,0 +1,12 @@
+# Temporary files
+*.log
+.env
+
+# TLS certificates (don't commit!)
+certs/*.crt
+certs/*.key
+certs/*.pem
+
+# Keep helper files
+!certs/README.md
+!certs/generate-certs.sh
