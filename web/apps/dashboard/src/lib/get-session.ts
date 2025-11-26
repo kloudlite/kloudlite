@@ -24,7 +24,7 @@ export async function getSession(): Promise<Session | null> {
 
   if (token) {
     try {
-      const secret = new TextEncoder().encode(process.env.AUTH_SECRET)
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET)
       const { payload } = await jwtVerify(token, secret)
 
       // Check if this is a superadmin token
@@ -60,8 +60,8 @@ export async function getAuthToken(): Promise<string | null> {
     return null
   }
 
-  // Generate a JWT token using the shared secret
-  const secret = new TextEncoder().encode(process.env.AUTH_SECRET)
+  // Generate a JWT token using the shared secret (same as backend)
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET)
   const token = await new SignJWT({
     sub: session.user.id,
     email: session.user.email,

@@ -41,7 +41,7 @@ export async function middleware(req: NextRequest) {
 
     if (token) {
       try {
-        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET)
         const { payload } = await jwtVerify(token, secret)
 
         // Check if this is a superadmin token
