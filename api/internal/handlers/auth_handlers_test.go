@@ -23,7 +23,6 @@ import (
 // mockAuthService implements services.AuthService for testing
 type mockAuthService struct {
 	verifyPasswordFunc func(ctx context.Context, email, password string) (*platformv1alpha1.User, error)
-	generateTokenFunc  func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error)
 	validateTokenFunc  func(ctx context.Context, token string) (*services.UserClaims, error)
 }
 
@@ -32,13 +31,6 @@ func (m *mockAuthService) VerifyPassword(ctx context.Context, email, password st
 		return m.verifyPasswordFunc(ctx, email, password)
 	}
 	return nil, errors.New("not implemented")
-}
-
-func (m *mockAuthService) GenerateToken(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
-	if m.generateTokenFunc != nil {
-		return m.generateTokenFunc(ctx, username, email, roles)
-	}
-	return "", errors.New("not implemented")
 }
 
 func (m *mockAuthService) ValidateToken(ctx context.Context, token string) (*services.UserClaims, error) {
@@ -218,42 +210,6 @@ func TestLogin(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 
-	t.Run("should handle token generation error", func(t *testing.T) {
-		authService := &mockAuthService{
-			verifyPasswordFunc: func(ctx context.Context, email, password string) (*platformv1alpha1.User, error) {
-				return &platformv1alpha1.User{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
-					Spec: platformv1alpha1.UserSpec{
-						Email:  "test@example.com",
-						Active: &activeTrue,
-						Roles:  []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
-					},
-				}, nil
-			},
-			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
-				return "", errors.New("token generation failed")
-			},
-		}
-		userService := &mockUserService{}
-		handlers := NewAuthHandlers(authService, userService, logger)
-
-		router := gin.New()
-		router.POST("/login", handlers.Login)
-
-		loginReq := LoginRequest{
-			Email:    "test@example.com",
-			Password: "password123",
-		}
-		body, _ := json.Marshal(loginReq)
-		req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		assert.Contains(t, w.Body.String(), "Failed to generate authentication token")
-	})
-
 	t.Run("should succeed even if updating last login fails", func(t *testing.T) {
 		authService := &mockAuthService{
 			verifyPasswordFunc: func(ctx context.Context, email, password string) (*platformv1alpha1.User, error) {
@@ -265,9 +221,6 @@ func TestLogin(t *testing.T) {
 						Roles:  []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
 					},
 				}, nil
-			},
-			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
-				return "test-jwt-token", nil
 			},
 		}
 		userService := &mockUserService{
@@ -290,7 +243,7 @@ func TestLogin(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		// Should still succeed
+		// Should still succeed - frontend handles token generation
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
@@ -420,42 +373,6 @@ func TestGenerateToken(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Contains(t, w.Body.String(), "Invalid request payload")
-	})
-
-	t.Run("should handle token generation failure", func(t *testing.T) {
-		authService := &mockAuthService{
-			generateTokenFunc: func(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
-				return "", errors.New("token generation failed")
-			},
-		}
-		userService := &mockUserService{
-			getUserByEmailFunc: func(ctx context.Context, email string) (*platformv1alpha1.User, error) {
-				return &platformv1alpha1.User{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
-					Spec: platformv1alpha1.UserSpec{
-						Email:  "test@example.com",
-						Active: &activeTrue,
-						Roles:  []platformv1alpha1.RoleType{platformv1alpha1.RoleUser},
-					},
-				}, nil
-			},
-		}
-		handlers := NewAuthHandlers(authService, userService, logger)
-
-		router := gin.New()
-		router.POST("/token", handlers.GenerateToken)
-
-		tokenReq := TokenRequest{
-			Email: "test@example.com",
-		}
-		body, _ := json.Marshal(tokenReq)
-		req, _ := http.NewRequest("POST", "/token", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		assert.Contains(t, w.Body.String(), "Failed to generate authentication token")
 	})
 }
 

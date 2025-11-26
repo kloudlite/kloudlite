@@ -34,10 +34,6 @@ func (m *mockAuthService) ValidateToken(ctx context.Context, token string) (*ser
 	return nil, jwt.ErrSignatureInvalid
 }
 
-func (m *mockAuthService) GenerateToken(ctx context.Context, username string, email string, roles []platformv1alpha1.RoleType) (string, error) {
-	return "generated-token", nil
-}
-
 func (m *mockAuthService) VerifyPassword(ctx context.Context, email, password string) (*platformv1alpha1.User, error) {
 	return nil, nil
 }

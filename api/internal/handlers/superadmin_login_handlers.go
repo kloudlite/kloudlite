@@ -48,9 +48,9 @@ type ValidateSuperAdminLoginRequest struct {
 }
 
 // ValidateSuperAdminLoginResponse represents the response for valid superadmin login
+// Note: Token generation is handled by the frontend, backend only validates
 type ValidateSuperAdminLoginResponse struct {
 	Valid bool                        `json:"valid"`
-	Token string                      `json:"token"` // JWT token for API access
 	User  UserInfo                    `json:"user"`
 	Roles []platformv1alpha1.RoleType `json:"roles"`
 }
@@ -141,20 +141,10 @@ func (h *SuperAdminLoginHandlers) ValidateSuperAdminLogin(c *gin.Context) {
 		return
 	}
 
-	// Token is valid - generate JWT for super admin access
+	// Token is valid - return user info for frontend to generate JWT
 	// Use "root" as the username - this is a virtual user not stored in user repo
 	superAdminUsername := "root"
-	superAdminEmail := "root@kloudlite.io"
 	roles := []platformv1alpha1.RoleType{platformv1alpha1.RoleSuperAdmin}
-
-	jwtToken, err := h.authService.GenerateToken(c.Request.Context(), superAdminUsername, superAdminEmail, roles)
-	if err != nil {
-		h.logger.Error("Failed to generate JWT token for super admin", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
-			Error: "Failed to generate authentication token",
-		})
-		return
-	}
 
 	h.logger.Info("Super admin login successful",
 		zap.String("installation_id", payload.InstallationID),
@@ -162,7 +152,6 @@ func (h *SuperAdminLoginHandlers) ValidateSuperAdminLogin(c *gin.Context) {
 
 	c.JSON(http.StatusOK, ValidateSuperAdminLoginResponse{
 		Valid: true,
-		Token: jwtToken,
 		User: UserInfo{
 			Email:       superAdminUsername,
 			DisplayName: "root",
