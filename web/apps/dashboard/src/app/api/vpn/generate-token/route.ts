@@ -16,16 +16,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - please sign in' }, { status: 401 })
     }
 
-    // Use AUTH_SECRET (shared with backend for JWT validation)
-    const authSecret = process.env.AUTH_SECRET
-    if (!authSecret) {
-      console.error('AUTH_SECRET environment variable not set')
+    // Use JWT_SECRET (shared with backend Go API for JWT validation)
+    const jwtSecret = process.env.JWT_SECRET
+    if (!jwtSecret) {
+      console.error('JWT_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
     // Generate temporary JWT (3 minutes expiry) with user info
-    // This token will be validated by the backend using the same AUTH_SECRET
-    const secret = new TextEncoder().encode(authSecret)
+    // This token will be validated by the backend using the same JWT_SECRET
+    const secret = new TextEncoder().encode(jwtSecret)
 
     const temporaryToken = await new SignJWT({
       sub: session.user.id,

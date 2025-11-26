@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
     // Extract token from Bearer header
     const token = authHeader.replace('Bearer ', '')
 
-    // Get AUTH_SECRET (shared with backend)
-    const authSecret = process.env.AUTH_SECRET
-    if (!authSecret) {
-      console.error('AUTH_SECRET environment variable not set')
+    // Get JWT_SECRET (shared with backend Go API)
+    const jwtSecret = process.env.JWT_SECRET
+    if (!jwtSecret) {
+      console.error('JWT_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const secret = new TextEncoder().encode(authSecret)
+      const secret = new TextEncoder().encode(jwtSecret)
       const { payload } = await jwtVerify(token, secret)
       claims = payload as typeof claims
     } catch (error) {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate a backend token from the VPN token claims
-    const secret = new TextEncoder().encode(authSecret)
+    const secret = new TextEncoder().encode(jwtSecret)
     const backendToken = await new SignJWT({
       sub: claims.sub,
       email: claims.email,
