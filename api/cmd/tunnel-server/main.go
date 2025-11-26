@@ -90,7 +90,7 @@ func main() {
 	}
 
 	// Register handlers
-	mux.HandleFunc("/", listener.GetWebSocketUpgradeHandler())               // WebSocket endpoint
+	mux.HandleFunc("/", listener.GetWebSocketUpgradeHandler())            // WebSocket endpoint
 	mux.Handle("/health", handlers.NewHealthHandler(serverState, logger)) // Health check endpoint
 
 	logger.Info("registered HTTP endpoints",
