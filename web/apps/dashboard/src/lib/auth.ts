@@ -9,9 +9,20 @@ import { unauthenticatedApiClient } from '@/lib/api-client'
 
 interface LoginResponse {
   user: {
+    username: string
     email: string
-    name?: string
-    username?: string
+    name: string
+    displayName?: string
+    isActive: boolean
+  }
+  roles: string[]
+}
+
+interface UserInfoResponse {
+  user: {
+    username: string
+    email: string
+    name: string
     displayName?: string
     isActive: boolean
   }
@@ -78,7 +89,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        // Store user info in token
+        // Store user info in JWT (NextAuth will sign with JWT_SECRET)
         if ('username' in user) {
           token.username = user.username
         }
@@ -88,10 +99,25 @@ export const authConfig: NextAuthConfig = {
         if ('isActive' in user) {
           token.isActive = user.isActive
         }
-        // For OAuth providers
-        if (account) {
+
+        // For OAuth providers, fetch user info from backend
+        if (account && account.provider !== 'credentials' && user.email) {
           token.provider = account.provider
           token.providerId = account.providerAccountId
+
+          try {
+            const response = (await unauthenticatedApiClient.post('/api/v1/auth/user-info', {
+              email: user.email,
+            })) as UserInfoResponse
+
+            if (response.user) {
+              token.username = response.user.username
+              token.roles = response.roles
+              token.isActive = response.user.isActive
+            }
+          } catch (error) {
+            console.error('Failed to get user info for OAuth user:', error)
+          }
         }
       }
       return token
@@ -99,9 +125,7 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!
-        if (token.username) {
-          session.user.username = token.username as string
-        }
+        session.user.username = token.username as string
         if (token.provider) {
           session.user.provider = token.provider as string
         }

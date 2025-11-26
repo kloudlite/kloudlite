@@ -1,8 +1,12 @@
 import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployment
   output: 'standalone',
+
+  // Set the workspace root for file tracing
+  outputFileTracingRoot: path.join(__dirname, '../../'),
 
   // Compress responses
   compress: true,

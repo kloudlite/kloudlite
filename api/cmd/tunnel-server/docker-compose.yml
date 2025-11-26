@@ -1,0 +1,62 @@
+services:
+  tunnel-server:
+    build:
+      context: ../..
+      dockerfile: cmd/tunnel-server/Dockerfile
+    container_name: kloudlite-tunnel-server
+    restart: unless-stopped
+
+    # Run with privileged mode for WireGuard kernel module access
+    privileged: true
+
+    # Capabilities needed for WireGuard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+
+    ports:
+      - "443:443"     # HTTPS/WebSocket port (WireGuard traffic tunneled inside)
+
+    volumes:
+      # TLS certificates - mount from host
+      - ./certs:/certs:ro
+
+      # WireGuard config - persisted in named volume
+      - wireguard-config:/etc/wireguard
+
+    environment:
+      # Server configuration (adjust as needed)
+      LISTEN_ADDR: ":443"
+      TLS_CERT_FILE: "/certs/tls.crt"
+      TLS_KEY_FILE: "/certs/tls.key"
+      WIREGUARD_TARGET: "127.0.0.1:51820"
+      WATCH_CONFIG: "true"
+      CONFIG_PATH: "/etc/wireguard/wg0.conf"
+
+    # Command with flags (can be overridden)
+    command:
+      - --listen=:443
+      - --tls-cert=/certs/tls.crt
+      - --tls-key=/certs/tls.key
+      - --wireguard-target=127.0.0.1:51820
+      - --watch-config
+      - --config-path=/etc/wireguard/wg0.conf
+
+    # Health check using the new /health endpoint
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "https://localhost:443/health", "--no-check-certificate"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - tunnel-network
+
+networks:
+  tunnel-network:
+    driver: bridge
+
+volumes:
+  wireguard-config:
+    driver: local

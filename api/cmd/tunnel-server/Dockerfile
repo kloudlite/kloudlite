@@ -9,14 +9,14 @@ WORKDIR /workspace
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
+# Copy all source code
 COPY . .
 
-# Build the server binary (includes integrated watcher)
+# Build the tunnel server binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s" \
-    -o /wireguard-tls-proxy \
-    ./IMAGES/wireguard-server
+    -o /tunnel-server \
+    ./cmd/tunnel-server/main.go
 
 # Runtime stage
 FROM alpine:latest
@@ -35,14 +35,13 @@ RUN apk --no-cache add \
 WORKDIR /
 
 # Copy binary from builder
-COPY --from=builder /wireguard-tls-proxy /usr/local/bin/wireguard-tls-proxy
+COPY --from=builder /tunnel-server /usr/local/bin/tunnel-server
 
 # Make it executable
-RUN chmod +x /usr/local/bin/wireguard-tls-proxy
+RUN chmod +x /usr/local/bin/tunnel-server
 
-# Expose HTTPS port and WireGuard port
+# Expose HTTPS port (WireGuard traffic tunneled inside)
 EXPOSE 443
-EXPOSE 51820/udp
 
 # Run the server
-ENTRYPOINT ["/usr/local/bin/wireguard-tls-proxy"]
+ENTRYPOINT ["/usr/local/bin/tunnel-server"]

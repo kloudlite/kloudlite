@@ -6,13 +6,16 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/kloudlite/kloudlite/api/cmd/tunnel-server/handlers"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/tunnel"
 	"go.uber.org/zap"
@@ -66,18 +69,33 @@ func main() {
 		NextProtos:   []string{"http/1.1"},
 	}
 
-	// Create WebSocket listener
+	// Create server state for tracking connections and stats
+	serverState := handlers.NewServerState()
+
+	// Create HTTP mux with multiple endpoints
+	mux := http.NewServeMux()
+
+	// Create WebSocket listener with custom handler
 	transportConfig := transport.DefaultConfig()
-	listener, err := transport.NewWebSocketListener(
+	listener, err := transport.NewWebSocketListenerWithHandler(
 		cfg.ListenAddr,
 		tlsConfig,
 		"", "", // Use certificates from tlsConfig
+		mux,
 		transportConfig,
 		logger,
 	)
 	if err != nil {
 		logger.Fatal("failed to create WebSocket listener", zap.Error(err))
 	}
+
+	// Register handlers
+	mux.HandleFunc("/", listener.GetWebSocketUpgradeHandler())               // WebSocket endpoint
+	mux.Handle("/health", handlers.NewHealthHandler(serverState, logger)) // Health check endpoint
+
+	logger.Info("registered HTTP endpoints",
+		zap.String("websocket", "/"),
+		zap.String("health", "/health"))
 
 	// Create UDP tunnel server
 	server := tunnel.NewUDPServer(listener, logger)
@@ -130,6 +148,20 @@ func main() {
 }
 
 func runConfigWatcher(ctx context.Context, configPath string, logger *zap.Logger) error {
+	// Ensure config directory exists
+	configDir := filepath.Dir(configPath)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Create initial config if it doesn't exist
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		logger.Info("creating initial WireGuard config", zap.String("path", configPath))
+		if err := createInitialConfig(configPath); err != nil {
+			return fmt.Errorf("failed to create initial config: %w", err)
+		}
+	}
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -221,5 +253,43 @@ func syncWireGuardPeers(configPath string, logger *zap.Logger) error {
 	}
 
 	logger.Info("WireGuard peers synced successfully")
+	return nil
+}
+
+func createInitialConfig(configPath string) error {
+	// Generate WireGuard private key
+	genKeyCmd := exec.Command("wg", "genkey")
+	privateKey, err := genKeyCmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to generate private key: %w", err)
+	}
+
+	// Create initial config with proper PostUp/PostDown scripts
+	config := fmt.Sprintf(`# WireGuard Server Configuration
+[Interface]
+PrivateKey = %s
+Address = 10.17.0.1/24
+ListenPort = 51820
+
+# NAT and forwarding rules
+PostUp = iptables -A FORWARD -i %%i -j ACCEPT
+PostUp = iptables -A FORWARD -o %%i -j ACCEPT
+PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostUp = sysctl -w net.ipv4.ip_forward=1
+
+PostDown = iptables -D FORWARD -i %%i -j ACCEPT
+PostDown = iptables -D FORWARD -o %%i -j ACCEPT
+PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
+# Add peers below - they will be dynamically reloaded
+# [Peer]
+# PublicKey = client_public_key_here
+# AllowedIPs = 10.17.0.2/32
+`, string(privateKey))
+
+	if err := os.WriteFile(configPath, []byte(config), 0600); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+
 	return nil
 }

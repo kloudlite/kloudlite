@@ -28,39 +28,6 @@ func NewVPNHandlers(vpnService services.VPNService, logger *zap.Logger, jwtSecre
 	}
 }
 
-// GetWireGuardConfig handles GET /api/vpn/wireguard-config?device_id=UUID
-func (h *VPNHandlers) GetWireGuardConfig(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	// Extract device ID from query parameters
-	deviceID := c.Query("device_id")
-	if deviceID == "" {
-		h.logger.Warn("VPN WireGuard: Missing device_id parameter")
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "device_id query parameter required"})
-		return
-	}
-
-	// Validate and extract username from JWT
-	username, err := h.validateTokenAndGetUsername(c)
-	if err != nil {
-		return // Error response already sent by helper
-	}
-
-	h.logger.Info("VPN WireGuard config requested",
-		zap.String("username", username),
-		zap.String("deviceID", deviceID))
-
-	// Get WireGuard configuration
-	wgConfig, err := h.vpnService.GetWireGuardConfig(ctx, deviceID, username)
-	if err != nil {
-		h.logger.Error("VPN WireGuard: Failed to get config", zap.Error(err))
-		h.handleServiceError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, wgConfig)
-}
-
 // GetCACert handles GET /api/vpn/ca-cert
 func (h *VPNHandlers) GetCACert(c *gin.Context) {
 	ctx := c.Request.Context()

@@ -1,5 +1,5 @@
 // Environment variable validation and typing
-// Console app uses Supabase for managing tenant workspace installations
+// Dashboard app for Kloudlite installation and admin management
 function validateEnv() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
   const webUrl = process.env.NEXT_PUBLIC_WEB_URL
