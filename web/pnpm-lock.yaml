@@ -23,6 +23,91 @@ importers:
 
   apps/console:
     dependencies:
+      '@hookform/resolvers':
+        specifier: ^3.9.0
+        version: 3.10.0(react-hook-form@7.66.1)
+      '@kloudlite/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      '@kloudlite/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@kloudlite/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@supabase/supabase-js':
+        specifier: ^2.47.10
+        version: 2.84.0
+      '@tailwindcss/postcss':
+        specifier: ^4.0.0
+        version: 4.1.17
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.90.10(react@19.1.0)
+      clsx:
+        specifier: ^2.1.0
+        version: 2.1.1
+      jose:
+        specifier: ^5.0.0
+        version: 5.10.0
+      lucide-react:
+        specifier: ^0.544.0
+        version: 0.544.0(react@19.1.0)
+      motion:
+        specifier: ^12.23.24
+        version: 12.23.24(react-dom@19.1.0)(react@19.1.0)
+      next:
+        specifier: 15.5.4
+        version: 15.5.4(react-dom@19.1.0)(react@19.1.0)
+      next-auth:
+        specifier: 5.0.0-beta.29
+        version: 5.0.0-beta.29(next@15.5.4)(react@19.1.0)
+      react:
+        specifier: 19.1.0
+        version: 19.1.0
+      react-dom:
+        specifier: 19.1.0
+        version: 19.1.0(react@19.1.0)
+      react-hook-form:
+        specifier: ^7.66.1
+        version: 7.66.1(react@19.1.0)
+      react-icons:
+        specifier: ^5.5.0
+        version: 5.5.0(react@19.1.0)
+      sonner:
+        specifier: ^1.7.3
+        version: 1.7.4(react-dom@19.1.0)(react@19.1.0)
+      tailwind-merge:
+        specifier: ^2.6.0
+        version: 2.6.0
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.1.17
+      tw-animate-css:
+        specifier: ^1.0.0
+        version: 1.4.0
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.6
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.6)
+      eslint:
+        specifier: ^9.0.0
+        version: 9.39.1
+      eslint-config-next:
+        specifier: 15.5.4
+        version: 15.5.4(eslint@9.39.1)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  apps/dashboard:
+    dependencies:
       '@codemirror/lang-yaml':
         specifier: ^6.1.2
         version: 6.1.2
@@ -123,91 +208,6 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.16.3
-
-  apps/dashboard:
-    dependencies:
-      '@hookform/resolvers':
-        specifier: ^3.9.0
-        version: 3.10.0(react-hook-form@7.66.1)
-      '@kloudlite/lib':
-        specifier: workspace:*
-        version: link:../../packages/lib
-      '@kloudlite/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@kloudlite/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      '@supabase/supabase-js':
-        specifier: ^2.47.10
-        version: 2.84.0
-      '@tailwindcss/postcss':
-        specifier: ^4.0.0
-        version: 4.1.17
-      '@tanstack/react-query':
-        specifier: ^5.0.0
-        version: 5.90.10(react@19.1.0)
-      clsx:
-        specifier: ^2.1.0
-        version: 2.1.1
-      jose:
-        specifier: ^5.0.0
-        version: 5.10.0
-      lucide-react:
-        specifier: ^0.544.0
-        version: 0.544.0(react@19.1.0)
-      motion:
-        specifier: ^12.23.24
-        version: 12.23.24(react-dom@19.1.0)(react@19.1.0)
-      next:
-        specifier: 15.5.4
-        version: 15.5.4(react-dom@19.1.0)(react@19.1.0)
-      next-auth:
-        specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@15.5.4)(react@19.1.0)
-      react:
-        specifier: 19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: 19.1.0
-        version: 19.1.0(react@19.1.0)
-      react-hook-form:
-        specifier: ^7.66.1
-        version: 7.66.1(react@19.1.0)
-      react-icons:
-        specifier: ^5.5.0
-        version: 5.5.0(react@19.1.0)
-      sonner:
-        specifier: ^1.7.3
-        version: 1.7.4(react-dom@19.1.0)(react@19.1.0)
-      tailwind-merge:
-        specifier: ^2.6.0
-        version: 2.6.0
-      tailwindcss:
-        specifier: ^4.0.0
-        version: 4.1.17
-      tw-animate-css:
-        specifier: ^1.0.0
-        version: 1.4.0
-      zod:
-        specifier: ^3.23.0
-        version: 3.25.76
-    devDependencies:
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.6
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.3(@types/react@19.2.6)
-      eslint:
-        specifier: ^9.0.0
-        version: 9.39.1
-      eslint-config-next:
-        specifier: 15.5.4
-        version: 15.5.4(eslint@9.39.1)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
 
   apps/website:
     dependencies:
