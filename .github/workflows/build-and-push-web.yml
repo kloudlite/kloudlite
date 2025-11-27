@@ -500,41 +500,41 @@ jobs:
           echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
           echo "- **Public URL**: https://kloudlite.io" >> $GITHUB_STEP_SUMMARY
 
-  # Deploy Console to Azure (disabled - container app not yet created)
-  # deploy-console:
-  #   name: Deploy Console to Azure
-  #   runs-on: ubuntu-latest
-  #   needs: build-console
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/development'
-  #   permissions:
-  #     contents: read
-  #
-  #   steps:
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #
-  #     - name: Update Container App
-  #       run: |
-  #         IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
-  #         IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web-console:${IMAGE_TAG}"
-  #
-  #         echo "Deploying Console image: $IMAGE"
-  #
-  #         az containerapp update \
-  #           --name ca-kloudlite-console \
-  #           --resource-group rg-kloudlite-registration \
-  #           --image $IMAGE \
-  #           --query "properties.provisioningState" -o tsv
-  #
-  #     - name: Deployment Summary
-  #       run: |
-  #         IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
-  #
-  #         echo "### Azure Deployment Summary (Console)" >> $GITHUB_STEP_SUMMARY
-  #         echo "" >> $GITHUB_STEP_SUMMARY
-  #         echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
-  #         echo "- **Container App**: ca-kloudlite-console" >> $GITHUB_STEP_SUMMARY
-  #         echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
-  #         echo "- **Public URL**: https://console.kloudlite.io" >> $GITHUB_STEP_SUMMARY
+  # Deploy Console to Azure (registration app)
+  deploy-console:
+    name: Deploy Console to Azure
+    runs-on: ubuntu-latest
+    needs: build-console
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update Container App
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web-console:${IMAGE_TAG}"
+
+          echo "Deploying Console image: $IMAGE"
+
+          az containerapp update \
+            --name ca-kloudlite-registration \
+            --resource-group rg-kloudlite-registration \
+            --image $IMAGE \
+            --query "properties.provisioningState" -o tsv
+
+      - name: Deployment Summary
+        run: |
+          IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
+
+          echo "### Azure Deployment Summary (Console)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container App**: ca-kloudlite-registration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Public URL**: https://console.kloudlite.io" >> $GITHUB_STEP_SUMMARY
