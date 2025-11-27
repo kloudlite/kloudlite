@@ -1,7 +1,16 @@
 package workmachine
 
 import (
+	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
+	"math/big"
+	"time"
 
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -13,11 +22,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
 	tunnelServerName = "tunnel-server"
+
+	// CA secret location (created by kloudlite-ca CertificateAuthority)
+	kloudliteCASecretNamespace = "kloudlite-ingress"
+	kloudliteCASecretName      = "kloudlite-ca"
 )
 
 // ensureTunnelServer ensures the tunnel-server StatefulSet exists for WireGuard connectivity
@@ -110,6 +124,11 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		return nil
 	}); err != nil {
 		return check.Failed(fmt.Errorf("failed to create/update tunnel-server cluster role binding: %w", err))
+	}
+
+	// Create TLS secrets for tunnel-server (signed by kloudlite CA)
+	if err := r.ensureTunnelServerTLSSecrets(check, obj, namespace, labels); err != nil {
+		return check.Failed(fmt.Errorf("failed to create tunnel-server TLS secrets: %w", err))
 	}
 
 	// Create StatefulSet for tunnel-server
@@ -380,4 +399,167 @@ func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.
 	}
 
 	return check.Passed()
+}
+
+// ensureTunnelServerTLSSecrets creates the TLS and CA secrets for tunnel-server
+func (r *WorkMachineReconciler) ensureTunnelServerTLSSecrets(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine, namespace string, labels map[string]string) error {
+	ctx := check.Context()
+
+	// Fetch the kloudlite CA secret
+	caSecret := &corev1.Secret{}
+	if err := r.Get(ctx, client.ObjectKey{
+		Namespace: kloudliteCASecretNamespace,
+		Name:      kloudliteCASecretName,
+	}, caSecret); err != nil {
+		return fmt.Errorf("failed to get kloudlite CA secret: %w", err)
+	}
+
+	caCertPEM, ok := caSecret.Data["ca.crt"]
+	if !ok {
+		return fmt.Errorf("kloudlite CA secret missing ca.crt")
+	}
+
+	caKeyPEM, ok := caSecret.Data["ca.key"]
+	if !ok {
+		return fmt.Errorf("kloudlite CA secret missing ca.key")
+	}
+
+	// Create the CA secret for tunnel-server (so clients can verify)
+	tunnelCASecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tunnel-server-ca",
+			Namespace: namespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, tunnelCASecret, func() error {
+		tunnelCASecret.Labels = labels
+		if !fn.IsOwner(tunnelCASecret, obj) {
+			tunnelCASecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		tunnelCASecret.Data = map[string][]byte{
+			"ca.crt": caCertPEM,
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to create/update tunnel-server-ca secret: %w", err)
+	}
+
+	// Check if TLS secret already exists with valid data
+	tlsSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tunnel-server-tls",
+			Namespace: namespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, tlsSecret, func() error {
+		tlsSecret.Labels = labels
+		if !fn.IsOwner(tlsSecret, obj) {
+			tlsSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		tlsSecret.Type = corev1.SecretTypeTLS
+
+		// Only generate new certificate if it doesn't exist
+		if tlsSecret.Data == nil || len(tlsSecret.Data["tls.crt"]) == 0 {
+			tlsCert, tlsKey, err := generateTLSCertificate(caCertPEM, caKeyPEM, obj.Status.PublicIP)
+			if err != nil {
+				return fmt.Errorf("failed to generate TLS certificate: %w", err)
+			}
+			tlsSecret.Data = map[string][]byte{
+				"tls.crt": tlsCert,
+				"tls.key": tlsKey,
+				"ca.crt":  caCertPEM,
+			}
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to create/update tunnel-server-tls secret: %w", err)
+	}
+
+	return nil
+}
+
+// generateTLSCertificate generates a TLS certificate signed by the given CA
+func generateTLSCertificate(caCertPEM, caKeyPEM []byte, publicIP string) (certPEM, keyPEM []byte, err error) {
+	// Parse CA certificate
+	caCertBlock, _ := pem.Decode(caCertPEM)
+	if caCertBlock == nil {
+		return nil, nil, fmt.Errorf("failed to decode CA certificate PEM")
+	}
+
+	caCert, err := x509.ParseCertificate(caCertBlock.Bytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse CA certificate: %w", err)
+	}
+
+	// Parse CA private key
+	caKeyBlock, _ := pem.Decode(caKeyPEM)
+	if caKeyBlock == nil {
+		return nil, nil, fmt.Errorf("failed to decode CA private key PEM")
+	}
+
+	caPriv, err := x509.ParseECPrivateKey(caKeyBlock.Bytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse CA private key: %w", err)
+	}
+
+	// Generate server private key
+	serverPriv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate server private key: %w", err)
+	}
+
+	// Create server certificate template
+	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate serial number: %w", err)
+	}
+
+	// Build DNS names - include the public IP and common tunnel patterns
+	dnsNames := []string{
+		publicIP,
+		"tunnel-server",
+		"tunnel-server.kloudlite-ingress",
+		"tunnel-server.kloudlite-ingress.svc",
+		"tunnel-server.kloudlite-ingress.svc.cluster.local",
+	}
+
+	serverTemplate := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization:       []string{"Kloudlite"},
+			OrganizationalUnit: []string{"Tunnel Server"},
+			CommonName:         publicIP,
+		},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().Add(365 * 24 * time.Hour), // 1 year validity
+		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		DNSNames:    dnsNames,
+	}
+
+	// Create server certificate signed by CA
+	serverCertBytes, err := x509.CreateCertificate(rand.Reader, &serverTemplate, caCert, &serverPriv.PublicKey, caPriv)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create server certificate: %w", err)
+	}
+
+	// Encode certificate to PEM
+	certPEMBuf := new(bytes.Buffer)
+	if err := pem.Encode(certPEMBuf, &pem.Block{Type: "CERTIFICATE", Bytes: serverCertBytes}); err != nil {
+		return nil, nil, fmt.Errorf("failed to encode server certificate: %w", err)
+	}
+
+	// Encode private key to PEM
+	keyPEMBuf := new(bytes.Buffer)
+	serverPrivBytes, err := x509.MarshalECPrivateKey(serverPriv)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal server private key: %w", err)
+	}
+	if err := pem.Encode(keyPEMBuf, &pem.Block{Type: "EC PRIVATE KEY", Bytes: serverPrivBytes}); err != nil {
+		return nil, nil, fmt.Errorf("failed to encode server private key: %w", err)
+	}
+
+	return certPEMBuf.Bytes(), keyPEMBuf.Bytes(), nil
 }
