@@ -19,7 +19,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    redirect('/installations/login')
+    redirect('/login')
   }
 
   const installation = await getInstallationById(id)

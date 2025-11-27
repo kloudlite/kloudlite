@@ -10,7 +10,7 @@ export default async function ProfilePage() {
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    redirect('/installations/login')
+    redirect('/login')
   }
 
   const getInitials = (name: string) => {

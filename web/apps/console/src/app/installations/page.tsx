@@ -9,7 +9,7 @@ export default async function InstallationsPage() {
 
   // Require authentication
   if (!session?.user) {
-    redirect('/installations/login')
+    redirect('/login')
   }
 
   // Fetch user's installations from database

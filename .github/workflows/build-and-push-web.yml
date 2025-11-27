@@ -77,9 +77,36 @@ jobs:
           # API URL
           NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'https://api.kloudlite.io' }}
 
+          # OAuth Configuration (GitHub)
+          GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET=${{ secrets.GITHUB_CLIENT_SECRET }}
+
+          # OAuth Configuration (Google)
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+          # OAuth Configuration (Microsoft Entra)
+          MICROSOFT_ENTRA_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}
+          MICROSOFT_ENTRA_CLIENT_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}
+          MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
+
           # NextAuth Configuration
           AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
           NEXTAUTH_URL=${{ secrets.REGISTER_BASE_URL || 'https://console.kloudlite.io' }}
+
+          # Supabase Configuration
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+          # Cloudflare Configuration
+          CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
+          CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}
+
+          # Installation Domain
+          NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
           EOF
 
       - name: Cache Next.js build (console)

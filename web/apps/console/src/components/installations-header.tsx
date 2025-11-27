@@ -26,7 +26,7 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
   const handleLogout = async () => {
     // Clear the registration session cookie
     await fetch('/api/register/logout', { method: 'POST' })
-    window.location.href = '/installations/login'
+    window.location.href = '/login'
   }
 
   return (

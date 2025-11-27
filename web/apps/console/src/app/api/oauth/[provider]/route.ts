@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Registration mode OAuth configuration - uses REGISTRATION_ prefixed env vars
-// These are separate from dashboard OAuth to prevent conflicts
+// OAuth configuration for console app
 const OAUTH_CONFIGS = {
   github: {
     authUrl: 'https://github.com/login/oauth/authorize',
-    clientId: process.env.REGISTRATION_GITHUB_CLIENT_ID!,
+    clientId: process.env.GITHUB_CLIENT_ID!,
     scope: 'read:user user:email',
   },
   google: {
     authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-    clientId: process.env.REGISTRATION_GOOGLE_CLIENT_ID!,
+    clientId: process.env.GOOGLE_CLIENT_ID!,
     scope: 'openid email profile',
   },
   'microsoft-entra-id': {
-    authUrl: `https://login.microsoftonline.com/${process.env.REGISTRATION_MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/authorize`,
-    clientId: process.env.REGISTRATION_MICROSOFT_ENTRA_CLIENT_ID!,
+    authUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/authorize`,
+    clientId: process.env.MICROSOFT_ENTRA_CLIENT_ID!,
     scope: 'openid email profile User.Read',
   },
 }
@@ -32,7 +31,7 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
   }
 
-  const redirectUri = `${process.env.NEXTAUTH_URL}/api/installations/oauth/callback/${provider}`
+  const redirectUri = `${process.env.NEXTAUTH_URL}/api/oauth/callback/${provider}`
   const state = crypto.randomUUID()
 
   // Build OAuth URL

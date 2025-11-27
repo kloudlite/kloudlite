@@ -12,7 +12,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    return NextResponse.redirect(new URL('/installations/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // Fetch the installation

@@ -48,7 +48,7 @@ export default function CompletePage() {
             }
           }
         } else {
-          router.push('/installations/login')
+          router.push('/login')
         }
       } catch (error) {
         console.error('Error fetching installation data:', error)

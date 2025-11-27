@@ -70,11 +70,11 @@ export default function InstallPage() {
 
           setSession(data)
         } else {
-          router.push('/installations/login')
+          router.push('/login')
         }
       } catch (error) {
         console.error('Error checking session:', error)
-        router.push('/installations/login')
+        router.push('/login')
       } finally {
         setLoading(false)
       }
