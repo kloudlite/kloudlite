@@ -4,6 +4,232 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
+  name: certificateauthorities.certs.kloudlite.io
+spec:
+  group: certs.kloudlite.io
+  names:
+    categories:
+    - kloudlite
+    kind: CertificateAuthority
+    listKind: CertificateAuthorityList
+    plural: certificateauthorities
+    singular: certificateauthority
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: CertificateAuthority is the Schema for the certificate authority
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              san:
+                items:
+                  type: string
+                type: array
+            required:
+            - san
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    completedAt:
+                      format: date-time
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              secretRef:
+                properties:
+                  caBundleKey:
+                    type: string
+                  caPrivateKey:
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - caBundleKey
+                - caPrivateKey
+                - name
+                - namespace
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: certificates.certs.kloudlite.io
+spec:
+  group: certs.kloudlite.io
+  names:
+    categories:
+    - kloudlite
+    kind: Certificate
+    listKind: CertificateList
+    plural: certificates
+    singular: certificate
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Certificate is the Schema for the certificate API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              ca:
+                type: string
+            required:
+            - ca
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    completedAt:
+                      format: date-time
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              tlsSecretName:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -385,6 +611,113 @@ spec:
                 description: EnvVars are environment variables to inject into all
                   services
                 type: object
+              intercepts:
+                description: |-
+                  Intercepts defines service intercept configurations for this composition
+                  This allows workspace pods to intercept traffic destined for composition services
+                items:
+                  description: ServiceInterceptConfig defines intercept configuration
+                    for a composition service
+                  properties:
+                    enabled:
+                      default: false
+                      description: Enabled indicates whether this intercept is currently
+                        active
+                      type: boolean
+                    portMappings:
+                      description: PortMappings defines how service ports map to workspace
+                        ports
+                      items:
+                        description: PortMapping defines mapping between service and
+                          workspace ports for intercepts
+                        properties:
+                          protocol:
+                            default: TCP
+                            description: Protocol is the protocol used (TCP/UDP)
+                            enum:
+                            - TCP
+                            - UDP
+                            - SCTP
+                            type: string
+                          servicePort:
+                            description: ServicePort is the port exposed by the service
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          workspacePort:
+                            description: WorkspacePort is the port in the workspace
+                              pod
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                        required:
+                        - servicePort
+                        - workspacePort
+                        type: object
+                      minItems: 1
+                      type: array
+                    serviceName:
+                      description: ServiceName is the name of the service in the composition
+                        to intercept
+                      minLength: 1
+                      type: string
+                    workspaceRef:
+                      description: |-
+                        WorkspaceRef references the workspace that will receive intercepted traffic
+                        This is set when a workspace requests to intercept this service
+                      properties:
+                        apiVersion:
+                          description: API version of the referent.
+                          type: string
+                        fieldPath:
+                          description: |-
+                            If referring to a piece of an object instead of an entire object, this string
+                            should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                            For example, if the object reference is to a container within a pod, this would take on a value like:
+                            "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                            the event) or if no container name is specified "spec.containers[2]" (container with
+                            index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                            referencing a part of an object.
+                          type: string
+                        kind:
+                          description: |-
+                            Kind of the referent.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                          type: string
+                        name:
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          type: string
+                        namespace:
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                          type: string
+                        resourceVersion:
+                          description: |-
+                            Specific resourceVersion to which this reference is made, if any.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                          type: string
+                        uid:
+                          description: |-
+                            UID of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                          type: string
+                      type: object
+                      x-kubernetes-map-type: atomic
+                  required:
+                  - portMappings
+                  - serviceName
+                  type: object
+                type: array
+              nodeName:
+                description: |-
+                  NodeName specifies the node where all composition services should run
+                  Inherited from the Environment's NodeName
+                type: string
               resourceOverrides:
                 additionalProperties:
                   description: ServiceResourceOverride allows overriding resources
@@ -413,6 +746,52 @@ spec:
           status:
             description: CompositionStatus defines the observed state of Composition
             properties:
+              activeIntercepts:
+                description: ActiveIntercepts tracks the status of active service
+                  intercepts
+                items:
+                  description: InterceptStatus tracks the status of an active service
+                    intercept
+                  properties:
+                    interceptStartTime:
+                      description: InterceptStartTime when the intercept was activated
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message provides additional information about the
+                        intercept status
+                      type: string
+                    originalServiceSelector:
+                      additionalProperties:
+                        type: string
+                      description: OriginalServiceSelector stores the original service
+                        selector before interception
+                      type: object
+                    phase:
+                      description: Phase represents the current phase of the intercept
+                      enum:
+                      - creating
+                      - active
+                      - failed
+                      type: string
+                    serviceName:
+                      description: ServiceName is the service being intercepted
+                      type: string
+                    socatPodName:
+                      description: SOCATPodName is the name of the SOCAT forwarding
+                        pod
+                      type: string
+                    workspaceHeadlessServiceName:
+                      description: WorkspaceHeadlessServiceName is the name of the
+                        headless service for the workspace
+                      type: string
+                    workspaceName:
+                      description: WorkspaceName is the workspace intercepting traffic
+                      type: string
+                  required:
+                  - serviceName
+                  type: object
+                type: array
               conditions:
                 description: Conditions represent the latest available observations
                   of the composition's state
@@ -678,6 +1057,11 @@ spec:
                   type: string
                 description: Labels to apply to the namespace
                 type: object
+              name:
+                description: Name is the simple environment name (e.g., "dev-env")
+                  used for display as {userName}/{envName}
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
               networkPolicies:
                 description: NetworkPolicies defines network policies for the environment
                 properties:
@@ -745,10 +1129,11 @@ spec:
                 required:
                 - enabled
                 type: object
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
+              nodeName:
+                description: |-
+                  NodeName specifies the node where all environment resources should run
+                  This is set from the WorkMachine's node assignment
+                type: string
               ownedBy:
                 description: OwnedBy is the username of the user who owns this environment
                 type: string
@@ -782,44 +1167,6 @@ spec:
                 description: TargetNamespace is the namespace where all environment
                   resources will be deployed
                 type: string
-              tolerations:
-                items:
-                  description: |-
-                    The pod this Toleration is attached to tolerates any taint that matches
-                    the triple <key,value,effect> using the matching operator <operator>.
-                  properties:
-                    effect:
-                      description: |-
-                        Effect indicates the taint effect to match. Empty means match all taint effects.
-                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: |-
-                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
-                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
-                      type: string
-                    operator:
-                      description: |-
-                        Operator represents a key's relationship to the value.
-                        Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod can
-                        tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: |-
-                        TolerationSeconds represents the period of time the toleration (which must be
-                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
-                        it is not set, which means tolerate the taint forever (do not evict). Zero and
-                        negative values will be treated as 0 (evict immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: |-
-                        Value is the taint value the toleration matches to.
-                        If the operator is Exists, the value should be empty, otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
               workmachineName:
                 description: WorkMachineName references the WorkMachine this environment
                   belongs to
@@ -833,6 +1180,112 @@ spec:
           status:
             description: EnvironmentStatus defines the observed state of Environment
             properties:
+              cloningStatus:
+                description: CloningStatus tracks the progress of environment cloning
+                  including volumes
+                properties:
+                  bytesTransferred:
+                    description: BytesTransferred tracks total bytes transferred during
+                      copy
+                    format: int64
+                    type: integer
+                  clonedPVCs:
+                    description: ClonedPVCs is the number of PVCs successfully cloned
+                    format: int32
+                    type: integer
+                  completionTime:
+                    description: CompletionTime is when the cloning process completed
+                      (success or failure)
+                    format: date-time
+                    type: string
+                  copyJobsStatus:
+                    description: CopyJobsStatus tracks the status of individual PVC
+                      copy jobs
+                    items:
+                      description: PVCCopyJobStatus tracks individual PVC copy job
+                        status
+                      properties:
+                        bytesTransferred:
+                          description: BytesTransferred is the number of bytes transferred
+                            for this PVC
+                          format: int64
+                          type: integer
+                        completionTime:
+                          description: CompletionTime when copy job completed
+                          format: date-time
+                          type: string
+                        errorMessage:
+                          description: ErrorMessage if copy job failed
+                          type: string
+                        phase:
+                          description: Phase represents the current phase of this
+                            copy job
+                          enum:
+                          - Pending
+                          - Creating
+                          - Copying
+                          - Completed
+                          - Failed
+                          type: string
+                        pvcName:
+                          description: PVCName is the name of the PVC being copied
+                          type: string
+                        receiverJobName:
+                          description: ReceiverJobName is the name of the receiver
+                            job in target namespace
+                          type: string
+                        senderJobName:
+                          description: SenderJobName is the name of the sender job
+                            in source namespace
+                          type: string
+                        startTime:
+                          description: StartTime when copy job started
+                          format: date-time
+                          type: string
+                      required:
+                      - phase
+                      - pvcName
+                      type: object
+                    type: array
+                  currentPVC:
+                    description: CurrentPVC is the name of the PVC currently being
+                      cloned
+                    type: string
+                  failedPVCs:
+                    description: FailedPVCs lists PVCs that failed to clone
+                    items:
+                      type: string
+                    type: array
+                  message:
+                    description: Message provides detailed information about the current
+                      cloning phase
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning
+                    enum:
+                    - Pending
+                    - Suspending
+                    - CloningResources
+                    - CloningPVCs
+                    - CreatingCopyJobs
+                    - WaitingForCopyCompletion
+                    - VerifyingCopies
+                    - CloningCompositions
+                    - Resuming
+                    - Completed
+                    - Failed
+                    type: string
+                  startTime:
+                    description: StartTime is when the cloning process started
+                    format: date-time
+                    type: string
+                  totalPVCs:
+                    description: TotalPVCs is the total number of PVCs to clone
+                    format: int32
+                    type: integer
+                required:
+                - phase
+                type: object
               conditions:
                 description: Conditions represent the latest available observations
                   of the environment's state
@@ -878,10 +1331,6 @@ spec:
                 description: Message provides human-readable information about the
                   current state
                 type: string
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
               observedGeneration:
                 description: ObservedGeneration is the generation observed by the
                   controller
@@ -909,6 +1358,33 @@ spec:
                     format: int32
                     type: integer
                 type: object
+              sourceCloningStatus:
+                description: SourceCloningStatus tracks when this environment is being
+                  used as a cloning source
+                properties:
+                  message:
+                    description: Message provides detailed information
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning from
+                      this source
+                    enum:
+                    - Suspended
+                    - Copying
+                    - Resuming
+                    type: string
+                  startTime:
+                    description: StartTime when cloning from this source started
+                    format: date-time
+                    type: string
+                  targetEnvironmentName:
+                    description: TargetEnvironmentName is the environment being created
+                      from this source
+                    type: string
+                required:
+                - phase
+                - targetEnvironmentName
+                type: object
               state:
                 description: State represents the current state of the environment
                 enum:
@@ -918,335 +1394,6 @@ spec:
                 - deactivating
                 - deleting
                 - error
-                type: string
-              tolerations:
-                items:
-                  description: |-
-                    The pod this Toleration is attached to tolerates any taint that matches
-                    the triple <key,value,effect> using the matching operator <operator>.
-                  properties:
-                    effect:
-                      description: |-
-                        Effect indicates the taint effect to match. Empty means match all taint effects.
-                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: |-
-                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
-                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
-                      type: string
-                    operator:
-                      description: |-
-                        Operator represents a key's relationship to the value.
-                        Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod can
-                        tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: |-
-                        TolerationSeconds represents the period of time the toleration (which must be
-                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
-                        it is not set, which means tolerate the taint forever (do not evict). Zero and
-                        negative values will be treated as 0 (evict immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: |-
-                        Value is the taint value the toleration matches to.
-                        If the operator is Exists, the value should be empty, otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
-  name: serviceintercepts.intercepts.kloudlite.io
-spec:
-  group: intercepts.kloudlite.io
-  names:
-    categories:
-    - kloudlite
-    - intercepts
-    kind: ServiceIntercept
-    listKind: ServiceInterceptList
-    plural: serviceintercepts
-    singular: serviceintercept
-  scope: Cluster
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .spec.workspaceRef.name
-      name: Workspace
-      type: string
-    - jsonPath: .spec.serviceRef.name
-      name: Service
-      type: string
-    - jsonPath: .status.phase
-      name: Phase
-      type: string
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: ServiceIntercept is the Schema for the serviceintercepts API
-        properties:
-          apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-            type: string
-          kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: ServiceInterceptSpec defines the desired state of ServiceIntercept
-            properties:
-              portMappings:
-                description: PortMappings defines how service ports map to workspace
-                  ports
-                items:
-                  description: PortMapping defines mapping between service and workspace
-                    ports
-                  properties:
-                    protocol:
-                      default: TCP
-                      description: Protocol is the protocol used (TCP/UDP)
-                      enum:
-                      - TCP
-                      - UDP
-                      - SCTP
-                      type: string
-                    servicePort:
-                      description: ServicePort is the port exposed by the service
-                      format: int32
-                      maximum: 65535
-                      minimum: 1
-                      type: integer
-                    workspacePort:
-                      description: WorkspacePort is the port in the workspace pod
-                      format: int32
-                      maximum: 65535
-                      minimum: 1
-                      type: integer
-                  required:
-                  - servicePort
-                  - workspacePort
-                  type: object
-                minItems: 1
-                type: array
-              serviceRef:
-                description: |-
-                  ServiceRef references the service to intercept
-                  The intercept will run in the service's namespace
-                properties:
-                  apiVersion:
-                    description: API version of the referent.
-                    type: string
-                  fieldPath:
-                    description: |-
-                      If referring to a piece of an object instead of an entire object, this string
-                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within a pod, this would take on a value like:
-                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]" (container with
-                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
-                      referencing a part of an object.
-                    type: string
-                  kind:
-                    description: |-
-                      Kind of the referent.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-                    type: string
-                  name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    type: string
-                  namespace:
-                    description: |-
-                      Namespace of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
-                    type: string
-                  resourceVersion:
-                    description: |-
-                      Specific resourceVersion to which this reference is made, if any.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-                    type: string
-                  uid:
-                    description: |-
-                      UID of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
-                    type: string
-                type: object
-                x-kubernetes-map-type: atomic
-              workspaceRef:
-                description: WorkspaceRef references the workspace pod that will intercept
-                  traffic
-                properties:
-                  apiVersion:
-                    description: API version of the referent.
-                    type: string
-                  fieldPath:
-                    description: |-
-                      If referring to a piece of an object instead of an entire object, this string
-                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within a pod, this would take on a value like:
-                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]" (container with
-                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
-                      referencing a part of an object.
-                    type: string
-                  kind:
-                    description: |-
-                      Kind of the referent.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-                    type: string
-                  name:
-                    description: |-
-                      Name of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    type: string
-                  namespace:
-                    description: |-
-                      Namespace of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
-                    type: string
-                  resourceVersion:
-                    description: |-
-                      Specific resourceVersion to which this reference is made, if any.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-                    type: string
-                  uid:
-                    description: |-
-                      UID of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
-                    type: string
-                type: object
-                x-kubernetes-map-type: atomic
-            required:
-            - portMappings
-            - serviceRef
-            - workspaceRef
-            type: object
-          status:
-            description: ServiceInterceptStatus defines the observed state of ServiceIntercept
-            properties:
-              affectedPodNames:
-                description: AffectedPodNames lists pods that have been deleted/affected
-                  by the intercept
-                items:
-                  type: string
-                type: array
-              conditions:
-                description: Conditions represent the latest available observations
-                  of service intercept state
-                items:
-                  description: Condition contains details for one aspect of the current
-                    state of this API Resource.
-                  properties:
-                    lastTransitionTime:
-                      description: |-
-                        lastTransitionTime is the last time the condition transitioned from one status to another.
-                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
-                      format: date-time
-                      type: string
-                    message:
-                      description: |-
-                        message is a human readable message indicating details about the transition.
-                        This may be an empty string.
-                      maxLength: 32768
-                      type: string
-                    observedGeneration:
-                      description: |-
-                        observedGeneration represents the .metadata.generation that the condition was set based upon.
-                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
-                        with respect to the current state of the instance.
-                      format: int64
-                      minimum: 0
-                      type: integer
-                    reason:
-                      description: |-
-                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
-                        Producers of specific condition types may define expected values and meanings for this field,
-                        and whether the values are considered a guaranteed API.
-                        The value should be a CamelCase string.
-                        This field may not be empty.
-                      maxLength: 1024
-                      minLength: 1
-                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
-                      type: string
-                    status:
-                      description: status of the condition, one of True, False, Unknown.
-                      enum:
-                      - "True"
-                      - "False"
-                      - Unknown
-                      type: string
-                    type:
-                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
-                      maxLength: 316
-                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
-                      type: string
-                  required:
-                  - lastTransitionTime
-                  - message
-                  - reason
-                  - status
-                  - type
-                  type: object
-                type: array
-              interceptStartTime:
-                description: InterceptStartTime when the intercept was activated
-                format: date-time
-                type: string
-              message:
-                description: Message provides additional information about the current
-                  state
-                type: string
-              originalServiceSelector:
-                additionalProperties:
-                  type: string
-                description: OriginalServiceSelector stores the original service selector
-                  to identify pods to delete
-                type: object
-              phase:
-                description: Phase represents the current phase of the service intercept
-                enum:
-                - Creating
-                - Active
-                - Failed
-                type: string
-              socatPodName:
-                description: SOCATPodName is the name of the SOCAT forwarding pod
-                type: string
-              workspaceHeadlessServiceName:
-                description: WorkspaceHeadlessServiceName is the name of the headless
-                  service for the workspace
-                type: string
-              workspacePodIP:
-                description: WorkspacePodIP is the IP address of the workspace pod
-                type: string
-              workspacePodName:
-                description: WorkspacePodName is the name of the workspace pod
                 type: string
             type: object
         type: object
@@ -1500,7 +1647,7 @@ spec:
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled
+      name: Seen
       type: date
     - jsonPath: .spec.ownedBy
       name: Owner
@@ -1701,6 +1848,45 @@ spec:
                   CurrentMachineType is the actual instance type currently running
                   Used to detect when spec.machineType changes and trigger instance type change
                 type: string
+              gpu:
+                description: GPU contains detailed GPU information if hardware is
+                  present
+                properties:
+                  count:
+                    description: Count is the number of GPUs
+                    type: integer
+                  driverInstallationMessage:
+                    description: DriverInstallationMessage provides detailed status
+                      about driver installation
+                    type: string
+                  driverInstallationStatus:
+                    description: |-
+                      DriverInstallationStatus tracks the status of driver installation
+                      Values: "not-installed", "installing", "installed", "awaiting-reboot", "ready", "error"
+                    type: string
+                  driverVersion:
+                    description: DriverVersion is the NVIDIA driver version
+                    type: string
+                  hasGPU:
+                    description: HasGPU indicates whether GPU hardware is available
+                    type: boolean
+                  product:
+                    description: Product is the GPU product name (e.g., "tesla-t4")
+                    type: string
+                  runtimeConfigured:
+                    description: RuntimeConfigured indicates whether NVIDIA Container
+                      Runtime is configured
+                    type: boolean
+                type: object
+              gpuModel:
+                description: |-
+                  GPUModel is the GPU model name if available (e.g., "Tesla T4", "A100")
+                  This is static info stored in status, real-time metrics available via metrics endpoint
+                type: string
+              hasGPU:
+                description: HasGPU indicates if this machine has a GPU (stored in
+                  status for quick filtering)
+                type: boolean
               isAutoStopped:
                 description: IsAutoStopped when set means machine was auto-stopped
                   by kloudlite
@@ -2215,7 +2401,7 @@ spec:
     listKind: WorkspaceList
     plural: workspaces
     singular: workspace
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.displayName
@@ -2267,6 +2453,11 @@ spec:
           spec:
             description: WorkspaceSpec defines the desired state of Workspace
             properties:
+              copyFrom:
+                description: |-
+                  CopyFrom specifies the source workspace name to clone directory from
+                  This field is automatically cleared after successful cloning
+                type: string
               description:
                 description: Description provides additional information about the
                   workspace
@@ -2339,7 +2530,7 @@ spec:
                             to workspace ports
                           items:
                             description: PortMapping defines mapping between service
-                              and workspace ports
+                              and workspace ports for intercepts
                             properties:
                               protocol:
                                 default: TCP
@@ -2381,6 +2572,23 @@ spec:
                     type: array
                 required:
                 - environmentRef
+                type: object
+              gitRepository:
+                description: |-
+                  GitRepository defines a git repository to clone when workspace starts
+                  The repository will be cloned into the workspace folder using SSH keys from the WorkMachine
+                properties:
+                  branch:
+                    description: Branch to clone (optional, uses repository default
+                      if not specified)
+                    type: string
+                  url:
+                    description: URL of the git repository (supports https:// and
+                      git@ formats)
+                    minLength: 1
+                    type: string
+                required:
+                - url
                 type: object
               ownedBy:
                 description: OwnedBy is the username of the workspace owner
@@ -2487,16 +2695,6 @@ spec:
                 - suspended
                 - archived
                 type: string
-              storageClassName:
-                description: |-
-                  StorageClassName specifies the storage class to use for the workspace PVC
-                  If not specified, uses the cluster's default storage class
-                type: string
-              storageSize:
-                default: 10Gi
-                description: StorageSize is the size of the persistent volume for
-                  the workspace
-                type: string
               tags:
                 description: Tags for categorizing and filtering workspaces
                 items:
@@ -2512,11 +2710,6 @@ spec:
                   WorkmachineName references the WorkMachine this workspace belongs to
                   The workspace will run in the WorkMachine's targetNamespace
                 minLength: 1
-                type: string
-              workspacePath:
-                default: /workspace
-                description: WorkspacePath is the path inside the workspace container
-                  where storage will be mounted
                 type: string
             required:
             - displayName
@@ -2563,6 +2756,76 @@ spec:
                   - serviceName
                   type: object
                 type: array
+              cloningStatus:
+                description: CloningStatus tracks the progress of workspace directory
+                  cloning
+                properties:
+                  completionTime:
+                    description: CompletionTime when cloning completed (success or
+                      failure)
+                    format: date-time
+                    type: string
+                  copyJobStatus:
+                    description: CopyJobStatus tracks the directory copy job status
+                    properties:
+                      completed:
+                        description: Completed indicates if the copy completed successfully
+                        type: boolean
+                      completionTime:
+                        description: CompletionTime when the copy job completed
+                        format: date-time
+                        type: string
+                      failed:
+                        description: Failed indicates if the copy failed
+                        type: boolean
+                      message:
+                        description: Message provides additional information about
+                          the copy status
+                        type: string
+                      receiverJobName:
+                        description: ReceiverJobName is the name of the receiver job
+                        type: string
+                      senderJobName:
+                        description: SenderJobName is the name of the sender job
+                        type: string
+                      senderPodIP:
+                        description: SenderPodIP is the IP address of the sender pod
+                        type: string
+                      startTime:
+                        description: StartTime when the copy job started
+                        format: date-time
+                        type: string
+                      started:
+                        description: Started indicates if the copy job has started
+                        type: boolean
+                    type: object
+                  errorMessage:
+                    description: ErrorMessage if cloning failed
+                    type: string
+                  message:
+                    description: Message provides additional information about the
+                      current cloning state
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning
+                    type: string
+                  sourceFolderName:
+                    description: SourceFolderName is the folder name of the source
+                      workspace
+                    type: string
+                  sourceWorkmachineName:
+                    description: SourceWorkmachineName is the WorkMachine where the
+                      source workspace is located
+                    type: string
+                  sourceWorkspaceName:
+                    description: SourceWorkspaceName is the name of the workspace
+                      being cloned from
+                    type: string
+                  startTime:
+                    description: StartTime when cloning started
+                    format: date-time
+                    type: string
+                type: object
               conditions:
                 description: Conditions represent the latest available observations
                   of workspace state
@@ -2646,6 +2909,16 @@ spec:
                 items:
                   type: string
                 type: array
+              idleSince:
+                description: IdleSince tracks when the workspace became idle
+                format: date-time
+                type: string
+              idleState:
+                description: IdleState tracks whether the workspace is idle or active
+                enum:
+                - active
+                - idle
+                type: string
               installedPackages:
                 description: InstalledPackages list of successfully installed packages
                 items:
@@ -2719,6 +2992,35 @@ spec:
                     type: string
                   storage:
                     description: Storage usage
+                    type: string
+                type: object
+              sourceCloningStatus:
+                description: SourceCloningStatus tracks when this workspace is being
+                  used as a cloning source
+                properties:
+                  completionTime:
+                    description: CompletionTime when the cloning operation completed
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message provides additional information
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of source workspace
+                      during cloning
+                    type: string
+                  startTime:
+                    description: StartTime when this workspace started being used
+                      as a clone source
+                    format: date-time
+                    type: string
+                  targetWorkmachineName:
+                    description: TargetWorkmachineName is the WorkMachine where the
+                      target workspace will be created
+                    type: string
+                  targetWorkspaceName:
+                    description: TargetWorkspaceName is the name of the workspace
+                      being created from this source
                     type: string
                 type: object
               startTime:

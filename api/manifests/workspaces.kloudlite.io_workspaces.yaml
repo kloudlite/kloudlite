@@ -523,6 +523,16 @@ spec:
                 items:
                   type: string
                 type: array
+              idleSince:
+                description: IdleSince tracks when the workspace became idle
+                format: date-time
+                type: string
+              idleState:
+                description: IdleState tracks whether the workspace is idle or active
+                enum:
+                - active
+                - idle
+                type: string
               installedPackages:
                 description: InstalledPackages list of successfully installed packages
                 items:
