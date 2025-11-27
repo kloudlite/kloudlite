@@ -12,7 +12,7 @@ export default async function SettingsLayout({ children }: LayoutProps) {
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    redirect('/installations/login')
+    redirect('/login')
   }
 
   return (

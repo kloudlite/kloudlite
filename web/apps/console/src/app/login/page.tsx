@@ -22,9 +22,9 @@ export default async function LoginPage({
   // Check if user is already authenticated
   const session = await getRegistrationSession()
 
-  // If authenticated, redirect to installations list
+  // If authenticated, redirect to home
   if (session?.user) {
-    redirect('/installations')
+    redirect('/')
   }
 
   const { error } = await searchParams

@@ -9,25 +9,26 @@ import {
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'
-// Registration mode OAuth configuration - uses REGISTRATION_ prefixed env vars
+
+// OAuth configuration for console app
 const OAUTH_CONFIGS = {
   github: {
     tokenUrl: 'https://github.com/login/oauth/access_token',
     userUrl: 'https://api.github.com/user',
-    clientId: process.env.REGISTRATION_GITHUB_CLIENT_ID!,
-    clientSecret: process.env.REGISTRATION_GITHUB_CLIENT_SECRET!,
+    clientId: process.env.GITHUB_CLIENT_ID!,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET!,
   },
   google: {
     tokenUrl: 'https://oauth2.googleapis.com/token',
     userUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
-    clientId: process.env.REGISTRATION_GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.REGISTRATION_GOOGLE_CLIENT_SECRET!,
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
   },
   'microsoft-entra-id': {
-    tokenUrl: `https://login.microsoftonline.com/${process.env.REGISTRATION_MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/token`,
+    tokenUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/token`,
     userUrl: 'https://graph.microsoft.com/v1.0/me',
-    clientId: process.env.REGISTRATION_MICROSOFT_ENTRA_CLIENT_ID!,
-    clientSecret: process.env.REGISTRATION_MICROSOFT_ENTRA_CLIENT_SECRET!,
+    clientId: process.env.MICROSOFT_ENTRA_CLIENT_ID!,
+    clientSecret: process.env.MICROSOFT_ENTRA_CLIENT_SECRET!,
   },
 }
 
@@ -44,11 +45,11 @@ export async function GET(
   const error = searchParams.get('error')
 
   if (error) {
-    return NextResponse.redirect(new URL(`/installations/login?error=${error}`, baseUrl))
+    return NextResponse.redirect(new URL(`/login?error=${error}`, baseUrl))
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(new URL('/installations/login?error=missing_params', baseUrl))
+    return NextResponse.redirect(new URL('/login?error=missing_params', baseUrl))
   }
 
   // Verify state
@@ -56,7 +57,7 @@ export async function GET(
   const storedState = cookieStore.get('oauth_state')?.value
 
   if (!storedState || storedState !== state) {
-    return NextResponse.redirect(new URL('/installations/login?error=invalid_state', baseUrl))
+    return NextResponse.redirect(new URL('/login?error=invalid_state', baseUrl))
   }
 
   const { provider: providerParam } = await params
@@ -64,7 +65,7 @@ export async function GET(
   const config = OAUTH_CONFIGS[provider]
 
   if (!config) {
-    return NextResponse.redirect(new URL('/installations/login?error=invalid_provider', baseUrl))
+    return NextResponse.redirect(new URL('/login?error=invalid_provider', baseUrl))
   }
 
   // OAuth user data interfaces for different providers
@@ -104,7 +105,7 @@ export async function GET(
 
   try {
     // Exchange authorization code for access token
-    const redirectUri = `${process.env.NEXTAUTH_URL}/api/installations/oauth/callback/${provider}`
+    const redirectUri = `${process.env.NEXTAUTH_URL}/api/oauth/callback/${provider}`
     const tokenResponse = await fetch(config.tokenUrl, {
       method: 'POST',
       headers: {
@@ -183,7 +184,7 @@ export async function GET(
   } catch (err) {
     console.error('OAuth exchange error:', err)
     return NextResponse.redirect(
-      new URL('/installations/login?error=oauth_exchange_failed', baseUrl),
+      new URL('/login?error=oauth_exchange_failed', baseUrl),
     )
   }
 
@@ -249,7 +250,7 @@ export async function GET(
 
   if (!email) {
     console.error('No email found in OAuth response')
-    return NextResponse.redirect(new URL('/installations/login?error=no_email', baseUrl))
+    return NextResponse.redirect(new URL('/login?error=no_email', baseUrl))
   }
 
   // Check if user already exists by email
@@ -321,9 +322,9 @@ export async function GET(
     .setExpirationTime('30d')
     .sign(secret)
 
-  // Always redirect to installations list - users click "New Installation" to create
-  const redirectUrl = '/installations'
-  console.log('Redirecting to installations list')
+  // Redirect to home page (installations list)
+  const redirectUrl = '/'
+  console.log('Redirecting to home')
 
   // Set session cookie and redirect
   const response = NextResponse.redirect(new URL(redirectUrl, baseUrl))

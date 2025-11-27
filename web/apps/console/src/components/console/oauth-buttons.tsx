@@ -3,7 +3,6 @@
 import { Button } from '@kloudlite/ui'
 import { SiGithub, SiGoogle } from 'react-icons/si'
 import { Building2 } from 'lucide-react'
-import { signIn } from 'next-auth/react'
 
 const providers = [
   {
@@ -24,6 +23,10 @@ const providers = [
 ]
 
 export function OAuthButtons() {
+  const handleClick = (providerId: string) => {
+    window.location.href = `/api/oauth/${providerId}`
+  }
+
   return (
     <div className="space-y-3">
       {providers.map((provider) => {
@@ -31,7 +34,7 @@ export function OAuthButtons() {
         return (
           <Button
             key={provider.id}
-            onClick={() => signIn(provider.id, { callbackUrl: '/installations' })}
+            onClick={() => handleClick(provider.id)}
             variant="outline"
             className="w-full gap-3"
           >

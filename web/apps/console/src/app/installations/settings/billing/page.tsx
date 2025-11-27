@@ -6,7 +6,7 @@ export default async function BillingPage() {
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    redirect('/installations/login')
+    redirect('/login')
   }
 
   return <BillingContent />
