@@ -419,6 +419,10 @@ func (in *WorkspaceStatus) DeepCopyInto(out *WorkspaceStatus) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.IdleSince != nil {
+		in, out := &in.IdleSince, &out.IdleSince
+		*out = (*in).DeepCopy()
+	}
 	if in.ConnectedEnvironment != nil {
 		in, out := &in.ConnectedEnvironment, &out.ConnectedEnvironment
 		*out = new(ConnectedEnvironmentInfo)
