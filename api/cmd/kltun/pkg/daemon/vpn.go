@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"os"
 
@@ -86,11 +87,14 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		}
 		defer logger.Sync()
 
-		// Create WebSocket dialer with TLS
+		// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
 		transportConfig := transport.DefaultConfig()
+		tlsConfig := &tls.Config{
+			MinVersion: tls.VersionTLS13,
+		}
 		dialer := transport.NewWebSocketDialer(
 			transportConfig,
-			nil, // TLS config will use system defaults for HTTPS
+			tlsConfig,
 			nil, // No custom headers
 			logger,
 		)
@@ -239,11 +243,14 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		}
 		defer logger.Sync()
 
-		// Create WebSocket dialer with TLS
+		// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
 		transportConfig := transport.DefaultConfig()
+		tlsConfig := &tls.Config{
+			MinVersion: tls.VersionTLS13,
+		}
 		dialer := transport.NewWebSocketDialer(
 			transportConfig,
-			nil, // TLS config will use system defaults for HTTPS
+			tlsConfig,
 			nil, // No custom headers
 			logger,
 		)
