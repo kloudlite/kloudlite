@@ -57,6 +57,8 @@ spec:
                   fieldPath: spec.nodeName
             - name: HOST_MANAGER_IMAGE
               value: "ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development"
+            - name: TUNNEL_SERVER_IMAGE
+              value: "ghcr.io/kloudlite/kloudlite/tunnel-server:development"
           volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs

@@ -19,14 +19,14 @@ import (
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/tunnel"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Config struct {
 	ListenAddr      string
-	TLSCertFile     string
-	TLSKeyFile      string
+	TLSSecretName   string // Kubernetes secret name containing tls.crt and tls.key
 	WireguardTarget string
 	WatchConfig     bool
 	ConfigPath      string
@@ -38,7 +38,7 @@ type Config struct {
 	WgEndpoint      string
 
 	// CA certificate config
-	CACertPath string
+	CACertSecretName string // Kubernetes secret name containing ca.crt
 
 	// Hosts endpoint config
 	Namespace        string
@@ -48,8 +48,7 @@ type Config struct {
 func main() {
 	cfg := Config{}
 	flag.StringVar(&cfg.ListenAddr, "listen", ":443", "Listen address for TLS WebSocket server (e.g., :443)")
-	flag.StringVar(&cfg.TLSCertFile, "tls-cert", "/certs/tls.crt", "Path to TLS certificate")
-	flag.StringVar(&cfg.TLSKeyFile, "tls-key", "/certs/tls.key", "Path to TLS private key")
+	flag.StringVar(&cfg.TLSSecretName, "tls-secret", "tunnel-server-tls", "Kubernetes secret name containing tls.crt and tls.key")
 	flag.StringVar(&cfg.WireguardTarget, "wireguard-target", "127.0.0.1:51820", "WireGuard UDP target")
 	flag.BoolVar(&cfg.WatchConfig, "watch-config", false, "Watch WireGuard config and reload peers dynamically")
 	flag.StringVar(&cfg.ConfigPath, "config-path", "/etc/wireguard/wg0.conf", "Path to WireGuard config file to watch")
@@ -57,7 +56,7 @@ func main() {
 	flag.StringVar(&cfg.WgCIDR, "wg-cidr", "10.17.0.0/24", "WireGuard CIDR for peer IP allocation")
 	flag.StringVar(&cfg.WgServerAddress, "wg-server-address", "10.17.0.1", "WireGuard server address")
 	flag.StringVar(&cfg.WgEndpoint, "wg-endpoint", os.Getenv("PUBLIC_HOST"), "WireGuard server public endpoint (e.g., tunnel.example.com:443), can also be set via PUBLIC_HOST env var")
-	flag.StringVar(&cfg.CACertPath, "ca-cert-path", "/certs/ca.crt", "Path to CA certificate file")
+	flag.StringVar(&cfg.CACertSecretName, "ca-cert-secret", "tunnel-server-ca", "Kubernetes secret name containing ca.crt")
 	flag.StringVar(&cfg.Namespace, "namespace", os.Getenv("POD_NAMESPACE"), "Namespace to query for ingresses (defaults to POD_NAMESPACE env var)")
 	flag.StringVar(&cfg.RouterServiceRef, "router-service", "wm-ingress-controller", "Name of the router service for hosts resolution")
 	version := flag.Bool("version", false, "Show version information")
@@ -75,14 +74,23 @@ func main() {
 	}
 	defer logger.Sync()
 
-	// Load TLS certificate
-	cert, err := tls.LoadX509KeyPair(cfg.TLSCertFile, cfg.TLSKeyFile)
+	// Create Kubernetes client (required for loading secrets)
+	k8sClient, err := createK8sClient()
 	if err != nil {
-		logger.Fatal("failed to load TLS certificate",
-			zap.String("cert", cfg.TLSCertFile),
-			zap.String("key", cfg.TLSKeyFile),
+		logger.Fatal("failed to create Kubernetes client", zap.Error(err))
+	}
+
+	// Load TLS certificate from Kubernetes secret
+	cert, err := loadTLSFromSecret(context.Background(), k8sClient, cfg.Namespace, cfg.TLSSecretName)
+	if err != nil {
+		logger.Fatal("failed to load TLS certificate from secret",
+			zap.String("secret", cfg.TLSSecretName),
+			zap.String("namespace", cfg.Namespace),
 			zap.Error(err))
 	}
+	logger.Info("loaded TLS certificate from Kubernetes secret",
+		zap.String("secret", cfg.TLSSecretName),
+		zap.String("namespace", cfg.Namespace))
 
 	// Configure TLS with minimum version 1.3 for security
 	tlsConfig := &tls.Config{
@@ -125,24 +133,20 @@ func main() {
 	mux.HandleFunc("/wg/public-key", wgHandler.GetPublicKeyHandler()) // GET
 	mux.HandleFunc("/wg/peer", wgHandler.PeerHandler())               // POST (create), DELETE (delete)
 
-	// CA certificate handler
+	// CA certificate handler (loads from K8s secret)
 	caCertHandler := handlers.NewCACertHandler(logger, handlers.CACertHandlerConfig{
-		CertPath: cfg.CACertPath,
+		K8sClient:  k8sClient,
+		Namespace:  cfg.Namespace,
+		SecretName: cfg.CACertSecretName,
 	})
 	mux.Handle("/ca-cert", caCertHandler)
 
-	// Hosts handler (requires Kubernetes client)
-	k8sClient, err := createK8sClient()
-	if err != nil {
-		logger.Warn("failed to create Kubernetes client, /hosts endpoint will not be available",
-			zap.Error(err))
-	} else {
-		hostsHandler := handlers.NewHostsHandler(logger, k8sClient, handlers.HostsHandlerConfig{
-			Namespace:        cfg.Namespace,
-			RouterServiceRef: cfg.RouterServiceRef,
-		})
-		mux.Handle("/hosts", hostsHandler)
-	}
+	// Hosts handler
+	hostsHandler := handlers.NewHostsHandler(logger, k8sClient, handlers.HostsHandlerConfig{
+		Namespace:        cfg.Namespace,
+		RouterServiceRef: cfg.RouterServiceRef,
+	})
+	mux.Handle("/hosts", hostsHandler)
 
 	logger.Info("registered HTTP endpoints",
 		zap.String("websocket", "/ws"),
@@ -200,6 +204,26 @@ func main() {
 	}
 
 	logger.Info("shutdown complete")
+}
+
+// loadTLSFromSecret loads TLS certificate and key from a Kubernetes secret
+func loadTLSFromSecret(ctx context.Context, k8sClient client.Client, namespace, secretName string) (tls.Certificate, error) {
+	secret := &corev1.Secret{}
+	if err := k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: secretName}, secret); err != nil {
+		return tls.Certificate{}, fmt.Errorf("failed to get secret %s/%s: %w", namespace, secretName, err)
+	}
+
+	certPEM, ok := secret.Data["tls.crt"]
+	if !ok {
+		return tls.Certificate{}, fmt.Errorf("secret %s/%s missing tls.crt", namespace, secretName)
+	}
+
+	keyPEM, ok := secret.Data["tls.key"]
+	if !ok {
+		return tls.Certificate{}, fmt.Errorf("secret %s/%s missing tls.key", namespace, secretName)
+	}
+
+	return tls.X509KeyPair(certPEM, keyPEM)
 }
 
 func runConfigWatcher(ctx context.Context, configPath string, logger *zap.Logger) error {
