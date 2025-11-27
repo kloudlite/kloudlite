@@ -37,7 +37,8 @@ type Env struct {
 
 	CloudProvider v1.CloudProvider `env:"CLOUD_PROVIDER" required:"true"`
 
-	HostManagerImage string `env:"HOST_MANAGER_IMAGE" required:"true"`
+	HostManagerImage  string `env:"HOST_MANAGER_IMAGE" required:"true"`
+	TunnelServerImage string `env:"TUNNEL_SERVER_IMAGE" required:"true"`
 }
 
 type awsProviderEnv struct {
@@ -166,6 +167,26 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			Title:    "Setup Cloud Machine",
 			OnCreate: r.setupCloudMachine,
 			OnDelete: r.cleanupCloudMachine,
+		},
+		{
+			Name:  "when-running/ensure-tunnel-server",
+			Title: "Ensure tunnel server is running for WireGuard connectivity",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning && obj.Status.PublicIP != ""
+			},
+			OnCreate: r.ensureTunnelServer,
+			OnDelete: r.cleanupTunnelServer,
+		},
+		{
+			Name:  "when-stopped/cleanup-tunnel-server",
+			Title: "Cleanup tunnel server when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupTunnelServer,
+			OnDelete: nil,
 		},
 	})
 }

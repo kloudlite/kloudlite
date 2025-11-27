@@ -28,6 +28,12 @@ type Config struct {
 	WireguardTarget string
 	WatchConfig     bool
 	ConfigPath      string
+
+	// WireGuard peer management config
+	WgDevice        string
+	WgCIDR          string
+	WgServerAddress string
+	WgEndpoint      string
 }
 
 func main() {
@@ -38,6 +44,10 @@ func main() {
 	flag.StringVar(&cfg.WireguardTarget, "wireguard-target", "127.0.0.1:51820", "WireGuard UDP target")
 	flag.BoolVar(&cfg.WatchConfig, "watch-config", false, "Watch WireGuard config and reload peers dynamically")
 	flag.StringVar(&cfg.ConfigPath, "config-path", "/etc/wireguard/wg0.conf", "Path to WireGuard config file to watch")
+	flag.StringVar(&cfg.WgDevice, "wg-device", "wg0", "WireGuard device name")
+	flag.StringVar(&cfg.WgCIDR, "wg-cidr", "10.17.0.0/24", "WireGuard CIDR for peer IP allocation")
+	flag.StringVar(&cfg.WgServerAddress, "wg-server-address", "10.17.0.1", "WireGuard server address")
+	flag.StringVar(&cfg.WgEndpoint, "wg-endpoint", os.Getenv("PUBLIC_HOST"), "WireGuard server public endpoint (e.g., tunnel.example.com:443), can also be set via PUBLIC_HOST env var")
 	version := flag.Bool("version", false, "Show version information")
 	flag.Parse()
 
@@ -90,11 +100,16 @@ func main() {
 	}
 
 	// Register handlers
-	mux.HandleFunc("/", listener.GetWebSocketUpgradeHandler())            // WebSocket endpoint
+	mux.HandleFunc("/ws", listener.GetWebSocketUpgradeHandler())          // WebSocket endpoint
 	mux.Handle("/health", handlers.NewHealthHandler(serverState, logger)) // Health check endpoint
 
 	// WireGuard peer management handlers
-	wgHandler := handlers.NewWireGuardHandler(logger, "wg0")
+	wgHandler := handlers.NewWireGuardHandler(logger, handlers.WireGuardHandlerConfig{
+		Device:        cfg.WgDevice,
+		CIDR:          cfg.WgCIDR,
+		ServerAddress: cfg.WgServerAddress,
+		Endpoint:      cfg.WgEndpoint,
+	})
 	mux.HandleFunc("/wg/public-key", wgHandler.GetPublicKeyHandler()) // GET
 	mux.HandleFunc("/wg/peer", wgHandler.PeerHandler())               // POST (create), DELETE (delete)
 

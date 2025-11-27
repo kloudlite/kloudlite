@@ -386,6 +386,11 @@ func (wsl *WebSocketListener) GetWebSocketUpgradeHandler() http.HandlerFunc {
 }
 
 func (wsl *WebSocketListener) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	if !websocket.IsWebSocketUpgrade(r) {
+		http.Error(w, "WebSocket upgrade required", http.StatusUpgradeRequired)
+		return
+	}
+
 	conn, err := wsl.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		wsl.logger.Error("websocket upgrade failed", zap.Error(err))
