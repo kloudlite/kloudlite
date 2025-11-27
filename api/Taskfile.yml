@@ -7,6 +7,21 @@ tasks:
     cmds:
       - go build -ldflags='-s -w' -o bin/api-server ./cmd/server/
 
+  build:tunnel-server:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags='-s -w' -o bin/tunnel-server ./cmd/tunnel-server/
+
+  build:image-tunnel-server:
+    env:
+      IMAGE: "ghcr.io/kloudlite/kloudlite/tunnel-server:development"
+    cmds:
+      - task: build:tunnel-server
+      - docker build -t $IMAGE -f ./cmd/tunnel-server/Dockerfile .
+      - docker push $IMAGE
+
+
   manifests:
     cmds:
       # generate CRDs from type definitions

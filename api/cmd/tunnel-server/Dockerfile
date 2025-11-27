@@ -1,24 +1,3 @@
-# syntax=docker/dockerfile:1
-
-# Build stage
-FROM golang:1.24-alpine AS builder
-
-WORKDIR /workspace
-
-# Copy go mod files
-COPY go.mod go.sum ./
-RUN go mod download
-
-# Copy all source code
-COPY . .
-
-# Build the tunnel server binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -ldflags="-w -s" \
-    -o /tunnel-server \
-    ./cmd/tunnel-server/main.go
-
-# Runtime stage
 FROM alpine:latest
 
 RUN apk --no-cache add \
@@ -34,8 +13,7 @@ RUN apk --no-cache add \
 
 WORKDIR /
 
-# Copy binary from builder
-COPY --from=builder /tunnel-server /usr/local/bin/tunnel-server
+COPY ./bin/tunnel-server /usr/local/bin/tunnel-server
 
 # Make it executable
 RUN chmod +x /usr/local/bin/tunnel-server
@@ -45,3 +23,4 @@ EXPOSE 443
 
 # Run the server
 ENTRYPOINT ["/usr/local/bin/tunnel-server"]
+
