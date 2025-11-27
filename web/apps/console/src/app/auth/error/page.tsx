@@ -45,7 +45,7 @@ export default function AuthErrorPage() {
             </div>
           )}
           <Button asChild className="w-full">
-            <Link href="/auth/signin">Back to Sign In</Link>
+            <Link href="/login">Back to Sign In</Link>
           </Button>
         </CardContent>
       </Card>
