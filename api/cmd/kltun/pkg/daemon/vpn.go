@@ -17,12 +17,13 @@ import (
 )
 
 // runVPNConnectionWithResult runs a VPN connection and sends result on channel after initial setup
+// New architecture: Dashboard only provides tunnel endpoint, all other calls go directly to tunnel server
 func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, server, token string, done chan struct{}, resultChan chan<- error) {
 	defer close(done) // Signal completion when function returns
 	fmt.Printf("[Session %s] Starting VPN connection\n", sessionID)
 
-	// Create API client
-	apiClient := api.NewClient(server, token)
+	// Create Dashboard API client (only for getting tunnel endpoint)
+	dashboardClient := api.NewClient(server, token)
 
 	// Get or create device ID
 	deviceID, err := deviceid.GetOrCreateDeviceID()
@@ -33,24 +34,35 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	}
 	fmt.Printf("[Session %s] Using device ID: %s\n", sessionID, deviceID)
 
-	// 1. Get WireGuard configuration (one-time call)
-	fmt.Printf("[Session %s] Fetching WireGuard configuration...\n", sessionID)
-	wgConfig, err := apiClient.GetWireGuardConfig(deviceID)
+	// 1. Get tunnel endpoint from Dashboard (the only Dashboard call needed)
+	fmt.Printf("[Session %s] Getting tunnel endpoint from Dashboard...\n", sessionID)
+	tunnelEndpoint, err := dashboardClient.GetTunnelEndpoint()
 	if err != nil {
-		fmt.Printf("[Session %s] Failed to get WireGuard config: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to get WireGuard config: %w", err)
+		fmt.Printf("[Session %s] Failed to get tunnel endpoint: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to get tunnel endpoint: %w", err)
 		return
 	}
-	fmt.Printf("[Session %s] WireGuard config received - AssignedIP: %s\n", sessionID, wgConfig.AssignedIP)
-	fmt.Printf("[Session %s] WireGuard IPC config:\n%s\n", sessionID, wgConfig.Config)
+	fmt.Printf("[Session %s] Tunnel endpoint: %s\n", sessionID, tunnelEndpoint)
 
-	// 2. Get CA certificate (one-time call)
-	fmt.Printf("[Session %s] Fetching CA certificate...\n", sessionID)
-	caCert, err := apiClient.GetCACert()
+	// 2. Create tunnel server client for direct communication
+	tunnelClient := api.NewTunnelClient(tunnelEndpoint)
+
+	// 3. Create WireGuard peer on tunnel server
+	fmt.Printf("[Session %s] Creating WireGuard peer on tunnel server...\n", sessionID)
+	peerResp, err := tunnelClient.CreatePeer(deviceID)
 	if err != nil {
-		fmt.Printf("[Session %s] Failed to get CA cert: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to get CA cert: %w", err)
+		fmt.Printf("[Session %s] Failed to create WireGuard peer: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to create WireGuard peer: %w", err)
 		return
+	}
+	fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
+
+	// 4. Get CA certificate from tunnel server
+	fmt.Printf("[Session %s] Fetching CA certificate from tunnel server...\n", sessionID)
+	caCert, err := tunnelClient.GetCACert()
+	if err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to get CA cert: %v\n", sessionID, err)
+		// Don't fail - CA cert might not be available
 	}
 
 	// Install CA certificate
@@ -72,57 +84,55 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		}
 	}
 
-	// 3. Start UDP-over-WebSocket client if ServerEndpoint is provided
-	var udpClient *tunnel.UDPClient
-	if wgConfig.ServerEndpoint != "" {
-		fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
-		fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, wgConfig.ServerEndpoint)
+	// 5. Start UDP-over-WebSocket client
+	fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
+	fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, tunnelEndpoint)
 
-		// Create logger for UDP tunnel
-		logger, err := zap.NewProduction()
-		if err != nil {
-			fmt.Printf("[Session %s] Failed to create logger: %v\n", sessionID, err)
-			resultChan <- fmt.Errorf("failed to create logger: %w", err)
-			return
-		}
-		defer logger.Sync()
-
-		// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
-		transportConfig := transport.DefaultConfig()
-		tlsConfig := &tls.Config{
-			MinVersion: tls.VersionTLS13,
-		}
-		dialer := transport.NewWebSocketDialer(
-			transportConfig,
-			tlsConfig,
-			nil, // No custom headers
-			logger,
-		)
-
-		// Create UDP tunnel client
-		// Local: 127.0.0.1:51821 (where WireGuard will connect)
-		// Server: wss://server-endpoint (WebSocket server)
-		// Remote: 127.0.0.1:51820 (WireGuard on server side)
-		serverURL := "wss://" + wgConfig.ServerEndpoint
-		udpClient = tunnel.NewUDPClient(
-			"127.0.0.1:51821",
-			serverURL,
-			"127.0.0.1:51820",
-			dialer,
-			logger,
-		)
-
-		// Start UDP tunnel client in background
-		go func() {
-			if err := udpClient.Start(ctx); err != nil && ctx.Err() == nil {
-				fmt.Printf("[Session %s] UDP tunnel error: %v\n", sessionID, err)
-			}
-		}()
-
-		fmt.Printf("[Session %s] ✓ UDP-over-WebSocket client started\n", sessionID)
+	// Create logger for UDP tunnel
+	logger, err := zap.NewProduction()
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to create logger: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to create logger: %w", err)
+		return
 	}
+	defer logger.Sync()
 
-	// 4. Start WireGuard device
+	// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
+	transportConfig := transport.DefaultConfig()
+	tlsConfig := &tls.Config{
+		MinVersion:         tls.VersionTLS13,
+		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
+	}
+	dialer := transport.NewWebSocketDialer(
+		transportConfig,
+		tlsConfig,
+		nil, // No custom headers
+		logger,
+	)
+
+	// Create UDP tunnel client
+	// Local: 127.0.0.1:51821 (where WireGuard will connect)
+	// Server: wss://tunnel-endpoint (WebSocket server)
+	// Remote: 127.0.0.1:51820 (WireGuard on server side)
+	serverURL := "wss://" + tunnelEndpoint + "/ws"
+	udpClient := tunnel.NewUDPClient(
+		"127.0.0.1:51821",
+		serverURL,
+		"127.0.0.1:51820",
+		dialer,
+		logger,
+	)
+
+	// Start UDP tunnel client in background
+	go func() {
+		if err := udpClient.Start(ctx); err != nil && ctx.Err() == nil {
+			fmt.Printf("[Session %s] UDP tunnel error: %v\n", sessionID, err)
+		}
+	}()
+
+	fmt.Printf("[Session %s] ✓ UDP-over-WebSocket client started\n", sessionID)
+
+	// 6. Start WireGuard device
 	fmt.Printf("[Session %s] Starting WireGuard device...\n", sessionID)
 	wgDeviceConfig := &wireguard.Config{
 		ListenPort: 51820,
@@ -140,7 +150,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	fmt.Printf("[Session %s] Configuring network interface...\n", sessionID)
 	netCfg := &netconfig.InterfaceConfig{
 		InterfaceName: wgDevice.InterfaceName(),
-		IPAddress:     fmt.Sprintf("%s/32", wgConfig.AssignedIP),
+		IPAddress:     fmt.Sprintf("%s/32", peerResp.IP),
 		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
 		Gateway:       "10.17.0.1",
 	}
@@ -157,33 +167,34 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		return
 	}
 	defer wgDevice.Close()
-	fmt.Printf("[WGConfig] %s", wgConfig.Config)
-	if err := wgDevice.SetConfig(wgConfig.Config); err != nil {
+	fmt.Printf("[WGConfig] %s", peerResp.Config)
+	if err := wgDevice.SetConfig(peerResp.Config); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
 		resultChan <- fmt.Errorf("failed to set WireGuard config: %w", err)
 		return
 	}
 
-	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, wgConfig.AssignedIP)
+	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, peerResp.IP)
 
 	// Signal success - connection is established
 	resultChan <- nil
 
-	// Continue with hosts polling in background
+	// Continue with hosts polling in background (now using tunnel client)
 	fmt.Printf("[Session %s] Starting hosts polling (every 10 seconds)...\n", sessionID)
 	hostsDone := make(chan struct{})
-	s.pollHosts(ctx, sessionID, apiClient, hostsDone)
+	s.pollHostsFromTunnel(ctx, sessionID, tunnelClient, hostsDone)
 
 	fmt.Printf("[Session %s] VPN connection established successfully\n", sessionID)
 }
 
-// runVPNConnection runs a VPN connection with separate API calls
+// runVPNConnection runs a VPN connection with the new architecture
+// Dashboard only provides tunnel endpoint, all other calls go directly to tunnel server
 func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token string, done chan struct{}) {
 	defer close(done) // Signal completion when function returns
 	fmt.Printf("[Session %s] Starting VPN connection\n", sessionID)
 
-	// Create API client
-	apiClient := api.NewClient(server, token)
+	// Create Dashboard API client (only for getting tunnel endpoint)
+	dashboardClient := api.NewClient(server, token)
 
 	// Get or create device ID
 	deviceID, err := deviceid.GetOrCreateDeviceID()
@@ -193,22 +204,33 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	}
 	fmt.Printf("[Session %s] Using device ID: %s\n", sessionID, deviceID)
 
-	// 1. Get WireGuard configuration (one-time call)
-	fmt.Printf("[Session %s] Fetching WireGuard configuration...\n", sessionID)
-	wgConfig, err := apiClient.GetWireGuardConfig(deviceID)
+	// 1. Get tunnel endpoint from Dashboard (the only Dashboard call needed)
+	fmt.Printf("[Session %s] Getting tunnel endpoint from Dashboard...\n", sessionID)
+	tunnelEndpoint, err := dashboardClient.GetTunnelEndpoint()
 	if err != nil {
-		fmt.Printf("[Session %s] Failed to get WireGuard config: %v\n", sessionID, err)
+		fmt.Printf("[Session %s] Failed to get tunnel endpoint: %v\n", sessionID, err)
 		return
 	}
-	fmt.Printf("[Session %s] WireGuard config received - AssignedIP: %s\n", sessionID, wgConfig.AssignedIP)
-	fmt.Printf("[Session %s] WireGuard IPC config:\n%s\n", sessionID, wgConfig.Config)
+	fmt.Printf("[Session %s] Tunnel endpoint: %s\n", sessionID, tunnelEndpoint)
 
-	// 2. Get CA certificate (one-time call)
-	fmt.Printf("[Session %s] Fetching CA certificate...\n", sessionID)
-	caCert, err := apiClient.GetCACert()
+	// 2. Create tunnel server client for direct communication
+	tunnelClient := api.NewTunnelClient(tunnelEndpoint)
+
+	// 3. Create WireGuard peer on tunnel server
+	fmt.Printf("[Session %s] Creating WireGuard peer on tunnel server...\n", sessionID)
+	peerResp, err := tunnelClient.CreatePeer(deviceID)
 	if err != nil {
-		fmt.Printf("[Session %s] Failed to get CA cert: %v\n", sessionID, err)
+		fmt.Printf("[Session %s] Failed to create WireGuard peer: %v\n", sessionID, err)
 		return
+	}
+	fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
+
+	// 4. Get CA certificate from tunnel server
+	fmt.Printf("[Session %s] Fetching CA certificate from tunnel server...\n", sessionID)
+	caCert, err := tunnelClient.GetCACert()
+	if err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to get CA cert: %v\n", sessionID, err)
+		// Don't fail - CA cert might not be available
 	}
 
 	// Install CA certificate
@@ -229,56 +251,54 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		}
 	}
 
-	// 3. Start UDP-over-WebSocket client if ServerEndpoint is provided
-	var udpClient *tunnel.UDPClient
-	if wgConfig.ServerEndpoint != "" {
-		fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
-		fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, wgConfig.ServerEndpoint)
+	// 5. Start UDP-over-WebSocket client
+	fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
+	fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, tunnelEndpoint)
 
-		// Create logger for UDP tunnel
-		logger, err := zap.NewProduction()
-		if err != nil {
-			fmt.Printf("[Session %s] Failed to create logger: %v\n", sessionID, err)
-			return
-		}
-		defer logger.Sync()
-
-		// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
-		transportConfig := transport.DefaultConfig()
-		tlsConfig := &tls.Config{
-			MinVersion: tls.VersionTLS13,
-		}
-		dialer := transport.NewWebSocketDialer(
-			transportConfig,
-			tlsConfig,
-			nil, // No custom headers
-			logger,
-		)
-
-		// Create UDP tunnel client
-		// Local: 127.0.0.1:51821 (where WireGuard will connect)
-		// Server: wss://server-endpoint (WebSocket server)
-		// Remote: 127.0.0.1:51820 (WireGuard on server side)
-		serverURL := "wss://" + wgConfig.ServerEndpoint
-		udpClient = tunnel.NewUDPClient(
-			"127.0.0.1:51821",
-			serverURL,
-			"127.0.0.1:51820",
-			dialer,
-			logger,
-		)
-
-		// Start UDP tunnel client in background
-		go func() {
-			if err := udpClient.Start(ctx); err != nil && ctx.Err() == nil {
-				fmt.Printf("[Session %s] UDP tunnel error: %v\n", sessionID, err)
-			}
-		}()
-
-		fmt.Printf("[Session %s] ✓ UDP-over-WebSocket client started\n", sessionID)
+	// Create logger for UDP tunnel
+	logger, err := zap.NewProduction()
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to create logger: %v\n", sessionID, err)
+		return
 	}
+	defer logger.Sync()
 
-	// 4. Start WireGuard device
+	// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
+	transportConfig := transport.DefaultConfig()
+	tlsConfig := &tls.Config{
+		MinVersion:         tls.VersionTLS13,
+		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
+	}
+	dialer := transport.NewWebSocketDialer(
+		transportConfig,
+		tlsConfig,
+		nil, // No custom headers
+		logger,
+	)
+
+	// Create UDP tunnel client
+	// Local: 127.0.0.1:51821 (where WireGuard will connect)
+	// Server: wss://tunnel-endpoint (WebSocket server)
+	// Remote: 127.0.0.1:51820 (WireGuard on server side)
+	serverURL := "wss://" + tunnelEndpoint + "/ws"
+	udpClient := tunnel.NewUDPClient(
+		"127.0.0.1:51821",
+		serverURL,
+		"127.0.0.1:51820",
+		dialer,
+		logger,
+	)
+
+	// Start UDP tunnel client in background
+	go func() {
+		if err := udpClient.Start(ctx); err != nil && ctx.Err() == nil {
+			fmt.Printf("[Session %s] UDP tunnel error: %v\n", sessionID, err)
+		}
+	}()
+
+	fmt.Printf("[Session %s] ✓ UDP-over-WebSocket client started\n", sessionID)
+
+	// 6. Start WireGuard device
 	fmt.Printf("[Session %s] Starting WireGuard device...\n", sessionID)
 	wgDeviceConfig := &wireguard.Config{
 		ListenPort: 51820,
@@ -295,7 +315,7 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	fmt.Printf("[Session %s] Configuring network interface...\n", sessionID)
 	netCfg := &netconfig.InterfaceConfig{
 		InterfaceName: wgDevice.InterfaceName(),
-		IPAddress:     fmt.Sprintf("%s/32", wgConfig.AssignedIP),
+		IPAddress:     fmt.Sprintf("%s/32", peerResp.IP),
 		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
 		Gateway:       "10.17.0.1",
 	}
@@ -310,21 +330,21 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		return
 	}
 	defer wgDevice.Close()
-	fmt.Printf("[WGConfig] %s", wgConfig.Config)
-	if err := wgDevice.SetConfig(wgConfig.Config); err != nil {
+	fmt.Printf("[WGConfig] %s", peerResp.Config)
+	if err := wgDevice.SetConfig(peerResp.Config); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
 		return
 	}
 
-	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, wgConfig.AssignedIP)
+	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, peerResp.IP)
 
-	// 5. Start hosts polling goroutine (polls every 10 seconds)
+	// 7. Start hosts polling goroutine (polls from tunnel server every 10 seconds)
 	fmt.Printf("[Session %s] Starting hosts polling (every 10 seconds)...\n", sessionID)
 	hostsCtx, hostsCancel := context.WithCancel(ctx)
 	defer hostsCancel()
 
 	hostsDone := make(chan struct{})
-	go s.pollHosts(hostsCtx, sessionID, apiClient, hostsDone)
+	go s.pollHostsFromTunnel(hostsCtx, sessionID, tunnelClient, hostsDone)
 
 	fmt.Printf("[Session %s] VPN connection established successfully\n", sessionID)
 

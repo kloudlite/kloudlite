@@ -2,23 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify, SignJWT } from 'jose'
 
 /**
- * WireGuard Config API Route
- * Validates VPN tokens and proxies WireGuard configuration requests to backend API server
- * Used by kltun CLI for getting device-specific WireGuard configurations
+ * Tunnel Endpoint API Route
+ * Validates VPN tokens and returns the tunnel server endpoint (WorkMachine public IP:443)
+ * Used by kltun CLI to connect to the user's tunnel server
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get the device_id from query parameters
-    const { searchParams } = new URL(request.url)
-    const deviceId = searchParams.get('device_id')
-
-    if (!deviceId) {
-      return NextResponse.json(
-        { error: 'device_id query parameter required' },
-        { status: 400 }
-      )
-    }
-
     // Get the authorization header from the incoming request
     const authHeader = request.headers.get('authorization')
 
@@ -86,7 +75,7 @@ export async function GET(request: NextRequest) {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
     // Forward the request to the backend Go API
-    const backendResponse = await fetch(`${backendUrl}/api/v1/vpn/wireguard-config?device_id=${deviceId}`, {
+    const backendResponse = await fetch(`${backendUrl}/api/v1/vpn/tunnel-endpoint`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${backendToken}`,
@@ -94,15 +83,15 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Get the response data (now returns JSON with config, assigned_ip, public_key)
+    // Get the response data
     const data = await backendResponse.json()
 
     // Return the backend response with the same status code
     return NextResponse.json(data, { status: backendResponse.status })
   } catch (error) {
-    console.error('WireGuard config proxy error:', error)
+    console.error('Tunnel endpoint proxy error:', error)
     return NextResponse.json(
-      { error: 'Failed to get WireGuard configuration' },
+      { error: 'Failed to get tunnel endpoint' },
       { status: 500 }
     )
   }

@@ -74,6 +74,30 @@ func (h *VPNHandlers) GetHosts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"hosts": hosts})
 }
 
+// GetTunnelEndpoint handles GET /api/vpn/tunnel-endpoint
+// Returns the tunnel server endpoint (WorkMachine public IP with port 443)
+func (h *VPNHandlers) GetTunnelEndpoint(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Validate and extract username from JWT
+	username, err := h.validateTokenAndGetUsername(c)
+	if err != nil {
+		return // Error response already sent by helper
+	}
+
+	h.logger.Info("VPN tunnel endpoint requested", zap.String("username", username))
+
+	// Get tunnel endpoint
+	endpoint, err := h.vpnService.GetTunnelEndpoint(ctx, username)
+	if err != nil {
+		h.logger.Error("VPN tunnel endpoint: Failed to get endpoint", zap.Error(err))
+		h.handleServiceError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"tunnel_endpoint": endpoint})
+}
+
 // validateTokenAndGetUsername validates JWT and returns username
 // Returns empty string and error if validation fails (error already sent to client)
 func (h *VPNHandlers) validateTokenAndGetUsername(c *gin.Context) (string, error) {

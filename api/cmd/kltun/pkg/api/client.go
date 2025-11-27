@@ -175,3 +175,37 @@ func (c *Client) GetHosts() ([]HostEntry, error) {
 
 	return result.Hosts, nil
 }
+
+// GetTunnelEndpoint calls the VPN tunnel endpoint API
+// Returns the tunnel server endpoint (WorkMachine public IP:443)
+func (c *Client) GetTunnelEndpoint() (string, error) {
+	url := fmt.Sprintf("%s/api/vpn/tunnel-endpoint", c.BaseURL)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result struct {
+		TunnelEndpoint string `json:"tunnel_endpoint"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return result.TunnelEndpoint, nil
+}

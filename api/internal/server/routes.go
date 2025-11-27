@@ -260,6 +260,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		{
 			vpn.GET("/ca-cert", vpnHandlers.GetCACert)
 			vpn.GET("/hosts", vpnHandlers.GetHosts)
+			vpn.GET("/tunnel-endpoint", vpnHandlers.GetTunnelEndpoint)
 		}
 	}
 

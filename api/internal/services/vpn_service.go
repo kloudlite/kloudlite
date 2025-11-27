@@ -26,6 +26,9 @@ type VPNService interface {
 
 	// GetHosts retrieves the hosts list for a user's environment
 	GetHosts(ctx context.Context, username string) ([]HostEntry, error)
+
+	// GetTunnelEndpoint retrieves the tunnel server endpoint for a user's WorkMachine
+	GetTunnelEndpoint(ctx context.Context, username string) (string, error)
 }
 
 // vpnService implements VPNService
@@ -126,4 +129,36 @@ func (s *vpnService) findUserNamespace(ctx context.Context, username string) (st
 	}
 
 	return "", fmt.Errorf("no work machine found for user")
+}
+
+// findUserWorkMachine finds the WorkMachine for a user
+func (s *vpnService) findUserWorkMachine(ctx context.Context, username string) (*workmachinev1.WorkMachine, error) {
+	var workMachineList workmachinev1.WorkMachineList
+	if err := s.k8sClient.List(ctx, &workMachineList); err != nil {
+		return nil, fmt.Errorf("failed to list work machines: %w", err)
+	}
+
+	for i := range workMachineList.Items {
+		if workMachineList.Items[i].Spec.OwnedBy == username {
+			return &workMachineList.Items[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("no work machine found for user")
+}
+
+// GetTunnelEndpoint retrieves the tunnel server endpoint for a user's WorkMachine
+func (s *vpnService) GetTunnelEndpoint(ctx context.Context, username string) (string, error) {
+	wm, err := s.findUserWorkMachine(ctx, username)
+	if err != nil {
+		return "", err
+	}
+
+	publicIP := wm.Status.PublicIP
+	if publicIP == "" {
+		return "", fmt.Errorf("work machine has no public IP (may not be running)")
+	}
+
+	// Return the tunnel endpoint with port 443 (tunnel server listens on 443)
+	return fmt.Sprintf("%s:443", publicIP), nil
 }
