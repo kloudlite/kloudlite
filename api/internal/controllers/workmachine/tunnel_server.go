@@ -72,6 +72,11 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 				Resources: []string{"services"},
 				Verbs:     []string{"get", "list", "watch"},
 			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
 		}
 		return nil
 	}); err != nil {
@@ -165,8 +170,8 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							ImagePullPolicy: corev1.PullAlways,
 							Args: []string{
 								"--listen", ":443",
-								"--tls-cert", "/certs/tls.crt",
-								"--tls-key", "/certs/tls.key",
+								"--tls-secret", "tunnel-server-tls",
+								"--ca-cert-secret", "tunnel-server-ca",
 								"--wireguard-target", "127.0.0.1:51820",
 								"--watch-config",
 								"--config-path", "/etc/wireguard/wg0.conf",
@@ -247,11 +252,6 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      "tls-certs",
-									MountPath: "/certs",
-									ReadOnly:  true,
-								},
-								{
 									Name:      "wireguard-config",
 									MountPath: "/etc/wireguard",
 								},
@@ -259,14 +259,6 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 						},
 					},
 					Volumes: []corev1.Volume{
-						{
-							Name: "tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: fmt.Sprintf("%s-tls", tunnelServerName),
-								},
-							},
-						},
 						{
 							Name: "wireguard-config",
 							VolumeSource: corev1.VolumeSource{
