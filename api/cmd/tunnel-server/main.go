@@ -93,9 +93,16 @@ func main() {
 	mux.HandleFunc("/", listener.GetWebSocketUpgradeHandler())            // WebSocket endpoint
 	mux.Handle("/health", handlers.NewHealthHandler(serverState, logger)) // Health check endpoint
 
+	// WireGuard peer management handlers
+	wgHandler := handlers.NewWireGuardHandler(logger, "wg0")
+	mux.HandleFunc("/wg/public-key", wgHandler.GetPublicKeyHandler()) // GET
+	mux.HandleFunc("/wg/peer", wgHandler.PeerHandler())               // POST (create), DELETE (delete)
+
 	logger.Info("registered HTTP endpoints",
 		zap.String("websocket", "/"),
-		zap.String("health", "/health"))
+		zap.String("health", "/health"),
+		zap.String("wg-public-key", "GET /wg/public-key"),
+		zap.String("wg-peer", "POST|DELETE /wg/peer"))
 
 	// Create UDP tunnel server
 	server := tunnel.NewUDPServer(listener, logger)
