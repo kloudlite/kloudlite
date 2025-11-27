@@ -19,6 +19,8 @@ import (
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/tunnel"
 	"go.uber.org/zap"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Config struct {
@@ -34,6 +36,13 @@ type Config struct {
 	WgCIDR          string
 	WgServerAddress string
 	WgEndpoint      string
+
+	// CA certificate config
+	CACertPath string
+
+	// Hosts endpoint config
+	Namespace        string
+	RouterServiceRef string
 }
 
 func main() {
@@ -48,6 +57,9 @@ func main() {
 	flag.StringVar(&cfg.WgCIDR, "wg-cidr", "10.17.0.0/24", "WireGuard CIDR for peer IP allocation")
 	flag.StringVar(&cfg.WgServerAddress, "wg-server-address", "10.17.0.1", "WireGuard server address")
 	flag.StringVar(&cfg.WgEndpoint, "wg-endpoint", os.Getenv("PUBLIC_HOST"), "WireGuard server public endpoint (e.g., tunnel.example.com:443), can also be set via PUBLIC_HOST env var")
+	flag.StringVar(&cfg.CACertPath, "ca-cert-path", "/certs/ca.crt", "Path to CA certificate file")
+	flag.StringVar(&cfg.Namespace, "namespace", os.Getenv("POD_NAMESPACE"), "Namespace to query for ingresses (defaults to POD_NAMESPACE env var)")
+	flag.StringVar(&cfg.RouterServiceRef, "router-service", "wm-ingress-controller", "Name of the router service for hosts resolution")
 	version := flag.Bool("version", false, "Show version information")
 	flag.Parse()
 
@@ -113,11 +125,32 @@ func main() {
 	mux.HandleFunc("/wg/public-key", wgHandler.GetPublicKeyHandler()) // GET
 	mux.HandleFunc("/wg/peer", wgHandler.PeerHandler())               // POST (create), DELETE (delete)
 
+	// CA certificate handler
+	caCertHandler := handlers.NewCACertHandler(logger, handlers.CACertHandlerConfig{
+		CertPath: cfg.CACertPath,
+	})
+	mux.Handle("/ca-cert", caCertHandler)
+
+	// Hosts handler (requires Kubernetes client)
+	k8sClient, err := createK8sClient()
+	if err != nil {
+		logger.Warn("failed to create Kubernetes client, /hosts endpoint will not be available",
+			zap.Error(err))
+	} else {
+		hostsHandler := handlers.NewHostsHandler(logger, k8sClient, handlers.HostsHandlerConfig{
+			Namespace:        cfg.Namespace,
+			RouterServiceRef: cfg.RouterServiceRef,
+		})
+		mux.Handle("/hosts", hostsHandler)
+	}
+
 	logger.Info("registered HTTP endpoints",
-		zap.String("websocket", "/"),
+		zap.String("websocket", "/ws"),
 		zap.String("health", "/health"),
 		zap.String("wg-public-key", "GET /wg/public-key"),
-		zap.String("wg-peer", "POST|DELETE /wg/peer"))
+		zap.String("wg-peer", "POST|DELETE /wg/peer"),
+		zap.String("ca-cert", "GET /ca-cert"),
+		zap.String("hosts", "GET /hosts"))
 
 	// Create UDP tunnel server
 	server := tunnel.NewUDPServer(listener, logger)
@@ -314,4 +347,19 @@ PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 	}
 
 	return nil
+}
+
+// createK8sClient creates a Kubernetes client using in-cluster config
+func createK8sClient() (client.Client, error) {
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get in-cluster config: %w", err)
+	}
+
+	k8sClient, err := client.New(cfg, client.Options{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
+	}
+
+	return k8sClient, nil
 }

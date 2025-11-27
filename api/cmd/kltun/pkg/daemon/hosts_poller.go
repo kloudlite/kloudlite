@@ -75,3 +75,71 @@ func (s *Server) fetchAndUpdateHosts(ctx context.Context, sessionID string, apiC
 
 	fmt.Printf("[Session %s] ✓ Hosts updated (%d entries)\n", sessionID, len(currentHosts))
 }
+
+// pollHostsFromTunnel polls the hosts from tunnel server every 10 seconds and updates /etc/hosts
+func (s *Server) pollHostsFromTunnel(ctx context.Context, sessionID string, tunnelClient *api.TunnelClient, done chan<- struct{}) {
+	defer close(done)
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	// Track current hosts to detect changes
+	currentHosts := make(map[string]string) // hostname -> IP
+
+	// Initial fetch
+	s.fetchAndUpdateHostsFromTunnel(ctx, sessionID, tunnelClient, currentHosts)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.fetchAndUpdateHostsFromTunnel(ctx, sessionID, tunnelClient, currentHosts)
+		}
+	}
+}
+
+// fetchAndUpdateHostsFromTunnel fetches hosts from tunnel server and updates /etc/hosts
+func (s *Server) fetchAndUpdateHostsFromTunnel(ctx context.Context, sessionID string, tunnelClient *api.TunnelClient, currentHosts map[string]string) {
+	hosts, err := tunnelClient.GetHosts()
+	if err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to fetch hosts from tunnel server: %v\n", sessionID, err)
+		return
+	}
+
+	// Build map of new hosts
+	newHosts := make(map[string]string)
+	for _, host := range hosts {
+		newHosts[host.Hostname] = host.IP
+	}
+
+	// Remove hosts that no longer exist
+	for hostname := range currentHosts {
+		if _, exists := newHosts[hostname]; !exists {
+			fmt.Printf("[Session %s] Removing host: %s\n", sessionID, hostname)
+			if err := s.hostsManager.Remove(hostname); err != nil {
+				fmt.Printf("[Session %s] Warning: Failed to remove host %s: %v\n", sessionID, hostname, err)
+			}
+		}
+	}
+
+	// Add or update hosts
+	for hostname, ip := range newHosts {
+		if currentIP, exists := currentHosts[hostname]; !exists || currentIP != ip {
+			fmt.Printf("[Session %s] Adding/updating host: %s -> %s\n", sessionID, hostname, ip)
+			if err := s.hostsManager.Add(hostname, ip, fmt.Sprintf("# kltun session %s", sessionID)); err != nil {
+				fmt.Printf("[Session %s] Warning: Failed to add host %s: %v\n", sessionID, hostname, err)
+			}
+		}
+	}
+
+	// Update current hosts map
+	for k := range currentHosts {
+		delete(currentHosts, k)
+	}
+	for k, v := range newHosts {
+		currentHosts[k] = v
+	}
+
+	fmt.Printf("[Session %s] ✓ Hosts updated from tunnel server (%d entries)\n", sessionID, len(currentHosts))
+}
