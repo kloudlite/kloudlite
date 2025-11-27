@@ -11,7 +11,7 @@ import type { Session } from 'next-auth'
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Skip auth checks for auth pages, installation scripts, superadmin login, kltun install, and public assets
+  // Skip auth checks for auth pages, installation scripts, superadmin login, kltun install, login, installations, and public assets
   if (
     pathname.startsWith('/auth') ||
     pathname.startsWith('/api') ||
@@ -19,6 +19,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/uninstall') ||
     pathname.startsWith('/kltun') ||
     pathname.startsWith('/superadmin-login') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/installations') ||
     pathname.startsWith('/_next') ||
     pathname.includes('.')
   ) {
@@ -64,7 +66,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect to login if not authenticated
   if (!session) {
-    return NextResponse.redirect(new URL('/auth/signin', req.url))
+    return NextResponse.redirect(new URL('/login', req.url))
   }
 
   // Get user roles
@@ -85,7 +87,7 @@ export async function middleware(req: NextRequest) {
     }
     // Require user role for main section
     if (!hasUserRole && !hasAdminRole) {
-      return NextResponse.redirect(new URL('/auth/signin', req.url))
+      return NextResponse.redirect(new URL('/login', req.url))
     }
   }
 
