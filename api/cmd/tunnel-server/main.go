@@ -74,6 +74,11 @@ func main() {
 	}
 	defer logger.Sync()
 
+	// Setup WireGuard interface
+	if err := setupWireGuard(cfg.ConfigPath, cfg.WgDevice, logger); err != nil {
+		logger.Fatal("failed to setup WireGuard", zap.Error(err))
+	}
+
 	// Create Kubernetes client (required for loading secrets)
 	k8sClient, err := createK8sClient()
 	if err != nil {
@@ -386,4 +391,33 @@ func createK8sClient() (client.Client, error) {
 	}
 
 	return k8sClient, nil
+}
+
+// setupWireGuard initializes the WireGuard interface
+func setupWireGuard(configPath, device string, logger *zap.Logger) error {
+	// Check if interface already exists
+	checkCmd := exec.Command("ip", "link", "show", device)
+	if err := checkCmd.Run(); err == nil {
+		logger.Info("WireGuard interface already exists", zap.String("device", device))
+		return nil
+	}
+
+	// Create config file if it doesn't exist
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		logger.Info("creating initial WireGuard config", zap.String("path", configPath))
+		if err := createInitialConfig(configPath); err != nil {
+			return fmt.Errorf("failed to create initial config: %w", err)
+		}
+	}
+
+	// Bring up WireGuard interface using wg-quick
+	logger.Info("bringing up WireGuard interface", zap.String("device", device))
+	upCmd := exec.Command("wg-quick", "up", configPath)
+	output, err := upCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("wg-quick up failed: %s: %w", string(output), err)
+	}
+
+	logger.Info("WireGuard interface is up", zap.String("device", device))
+	return nil
 }
