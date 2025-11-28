@@ -10,10 +10,11 @@ import {
   DialogTitle,
 } from '@kloudlite/ui'
 import { Terminal, Copy, Check, Sparkles } from 'lucide-react'
-import { SiAnthropic } from 'react-icons/si'
+import { SiAnthropic, SiZedindustries } from 'react-icons/si'
 import { VscVscode } from 'react-icons/vsc'
 import { CursorIcon } from '@/components/icons/cursor-icon'
 import { OpenCodeIcon } from '@/components/icons/opencode-icon'
+import { AntigravityIcon } from '@/components/icons/antigravity-icon'
 import type { Workspace } from '@kloudlite/types'
 
 interface WorkspaceConnectOptionsProps {
@@ -62,12 +63,17 @@ export function WorkspaceConnectOptions({
   const codexTtydUrl = workspace.status?.accessUrls?.['codex-ttyd'] || generateAccessUrl('codex')
   const opencodeTtydUrl = workspace.status?.accessUrls?.['opencode-ttyd'] || generateAccessUrl('opencode')
 
-  // Generate SSH URL for VS Code: vscode://vscode-remote/ssh-remote+kl@{host}{path}
+  // Generate SSH host using pattern: {workspaceName}-{hash}.{subdomain}
+  // Example: platform-base-58890cd7.beanbag.khost.dev
   const workspaceDir = `/home/kl/workspaces/${workspaceName}`
-  const vscodeSshHost = wsHash && subdomain ? `vscode-${wsHash}.${subdomain}` : ''
-  const vscodeUrl = vscodeSshHost ? `vscode://vscode-remote/ssh-remote+kl@${vscodeSshHost}${workspaceDir}` : ''
-  const cursorUrl = vscodeSshHost ? `cursor://vscode-remote/ssh-remote+kl@${vscodeSshHost}${workspaceDir}` : ''
-  const sshCommand = vscodeSshHost ? `ssh kl@${vscodeSshHost}` : ''
+  const sshHost = wsHash && subdomain ? `${workspaceName}-${wsHash}.${subdomain}` : ''
+
+  // SSH URLs for IDEs: vscode://vscode-remote/ssh-remote+kl@{host}{path}
+  const vscodeUrl = sshHost ? `vscode://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
+  const cursorUrl = sshHost ? `cursor://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
+  const zedUrl = sshHost ? `zed://ssh/${sshHost}${workspaceDir}` : ''
+  const antigravityUrl = sshHost ? `antigravity://ssh-remote+kl@${sshHost}${workspaceDir}` : ''
+  const sshCommand = sshHost ? `ssh kl@${sshHost}` : ''
 
   const accessMethods: AccessMethod[] = [
     {
@@ -86,6 +92,24 @@ export function WorkspaceConnectOptions({
       icon: <CursorIcon className="h-4 w-4 flex-shrink-0" />,
       available: !!cursorUrl,
       url: cursorUrl,
+      category: 'Desktop IDEs',
+    },
+    {
+      id: 'zed',
+      name: 'Zed',
+      description: 'Fast collaborative editor',
+      icon: <SiZedindustries className="h-4 w-4 flex-shrink-0" />,
+      available: !!zedUrl,
+      url: zedUrl,
+      category: 'Desktop IDEs',
+    },
+    {
+      id: 'antigravity',
+      name: 'Antigravity',
+      description: 'AI-powered IDE',
+      icon: <AntigravityIcon className="h-4 w-4 flex-shrink-0" />,
+      available: !!antigravityUrl,
+      url: antigravityUrl,
       category: 'Desktop IDEs',
     },
     {
