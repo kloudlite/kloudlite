@@ -373,8 +373,9 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 				owner = "unknown"
 			}
 			envOwnerHash = generateHash(fmt.Sprintf("%s-%s", envName, owner))
-			hc.logger.Debug("Environment not found, using computed hash",
+			hc.logger.Info("Environment not found in cache, using computed hash",
 				zap.String("environment", envName),
+				zap.String("hash", envOwnerHash),
 				zap.Error(err))
 		} else if env.Status.Hash != "" {
 			// Use hash from status
