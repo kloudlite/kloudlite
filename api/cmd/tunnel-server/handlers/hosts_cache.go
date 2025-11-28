@@ -26,6 +26,7 @@ type HostsCache struct {
 	logger           *zap.Logger
 	namespace        string // Namespace where router service is located
 	routerServiceRef string
+	wgServerIP       string // WireGuard server IP for vpn-check host
 
 	// Kubernetes client for initial fetch and rebuilds
 	k8sClient client.Client
@@ -38,6 +39,7 @@ type HostsCache struct {
 type HostsCacheConfig struct {
 	Namespace        string
 	RouterServiceRef string
+	WgServerIP       string // WireGuard server IP (default: 10.17.0.1)
 	RestConfig       *rest.Config
 	Scheme           *runtime.Scheme
 }
@@ -49,6 +51,9 @@ func NewHostsCache(logger *zap.Logger, k8sClient client.Client, cfg HostsCacheCo
 	}
 	if cfg.RouterServiceRef == "" {
 		cfg.RouterServiceRef = "wm-ingress-controller"
+	}
+	if cfg.WgServerIP == "" {
+		cfg.WgServerIP = "10.17.0.1"
 	}
 
 	// Create controller-runtime cache
@@ -64,6 +69,7 @@ func NewHostsCache(logger *zap.Logger, k8sClient client.Client, cfg HostsCacheCo
 		logger:           logger,
 		namespace:        cfg.Namespace,
 		routerServiceRef: cfg.RouterServiceRef,
+		wgServerIP:       cfg.WgServerIP,
 		k8sClient:        k8sClient,
 		cache:            c,
 	}, nil
@@ -212,6 +218,14 @@ func (hc *HostsCache) rebuild(ctx context.Context) {
 		} else {
 			hosts = append(hosts, serviceHosts...)
 		}
+
+		// Add VPN check host entry (points to WireGuard server IP for connectivity check)
+		vpnCheckHost := fmt.Sprintf("vpn-check.%s.%s", subdomain, domain)
+		hosts = append(hosts, HostEntry{
+			Hostname: vpnCheckHost,
+			IP:       hc.wgServerIP,
+			Type:     "vpn-check",
+		})
 	}
 
 	// Update cache
