@@ -197,13 +197,18 @@ func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backen
 	defer clientConn.Close()
 
 	// Forward the original request to backend
-	// Update the request URL to point to backend
+	// Preserve original host for origin validation but route to backend
+	originalHost := req.Host
 	req.URL.Scheme = "http"
 	if backendURL.Scheme == "https" || backendURL.Scheme == "wss" {
 		req.URL.Scheme = "https"
 	}
 	req.URL.Host = backendURL.Host
-	req.Host = backendURL.Host
+	// Keep the original Host header for origin validation (code-server checks this)
+	req.Host = originalHost
+	// Add X-Forwarded headers
+	req.Header.Set("X-Forwarded-Host", originalHost)
+	req.Header.Set("X-Forwarded-Proto", "https")
 
 	// Write the request to backend
 	if err := req.Write(backendConn); err != nil {
