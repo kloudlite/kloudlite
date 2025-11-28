@@ -233,6 +233,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 								{
 									Name:          "https",
 									ContainerPort: 443,
+									HostPort:      443,
 									Protocol:      corev1.ProtocolTCP,
 								},
 								{
