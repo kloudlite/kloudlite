@@ -176,14 +176,21 @@ func (c *Client) GetHosts() ([]HostEntry, error) {
 	return result.Hosts, nil
 }
 
+// TunnelEndpointResponse contains tunnel endpoint info with hostname and IP
+type TunnelEndpointResponse struct {
+	TunnelEndpoint string `json:"tunnel_endpoint"` // hostname:443
+	Hostname       string `json:"hostname"`        // vpn-connect.{subdomain}.{domain}
+	IP             string `json:"ip"`              // Public IP for /etc/hosts
+}
+
 // GetTunnelEndpoint calls the VPN tunnel endpoint API
-// Returns the tunnel server endpoint (WorkMachine public IP:443)
-func (c *Client) GetTunnelEndpoint() (string, error) {
+// Returns hostname, IP for /etc/hosts configuration, and the full endpoint for connection
+func (c *Client) GetTunnelEndpoint() (*TunnelEndpointResponse, error) {
 	url := fmt.Sprintf("%s/api/vpn/tunnel-endpoint", c.BaseURL)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
@@ -191,21 +198,19 @@ func (c *Client) GetTunnelEndpoint() (string, error) {
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to make request: %w", err)
+		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
-	var result struct {
-		TunnelEndpoint string `json:"tunnel_endpoint"`
-	}
+	var result TunnelEndpointResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return result.TunnelEndpoint, nil
+	return &result, nil
 }

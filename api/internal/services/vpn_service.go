@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
@@ -19,6 +21,12 @@ type HostEntry struct {
 	IP       string
 }
 
+// TunnelEndpointInfo contains the tunnel endpoint hostname and IP
+type TunnelEndpointInfo struct {
+	Hostname string // vpn-connect.{subdomain}.{domain}
+	IP       string // Public IP of the WorkMachine
+}
+
 // VPNService provides business logic for VPN operations
 type VPNService interface {
 	// GetCACert retrieves the CA certificate
@@ -28,7 +36,8 @@ type VPNService interface {
 	GetHosts(ctx context.Context, username string) ([]HostEntry, error)
 
 	// GetTunnelEndpoint retrieves the tunnel server endpoint for a user's WorkMachine
-	GetTunnelEndpoint(ctx context.Context, username string) (string, error)
+	// Returns hostname (vpn-connect.{subdomain}.{domain}) and IP for /etc/hosts
+	GetTunnelEndpoint(ctx context.Context, username string) (*TunnelEndpointInfo, error)
 }
 
 // vpnService implements VPNService
@@ -148,17 +157,55 @@ func (s *vpnService) findUserWorkMachine(ctx context.Context, username string) (
 }
 
 // GetTunnelEndpoint retrieves the tunnel server endpoint for a user's WorkMachine
-func (s *vpnService) GetTunnelEndpoint(ctx context.Context, username string) (string, error) {
+func (s *vpnService) GetTunnelEndpoint(ctx context.Context, username string) (*TunnelEndpointInfo, error) {
 	wm, err := s.findUserWorkMachine(ctx, username)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	publicIP := wm.Status.PublicIP
 	if publicIP == "" {
-		return "", fmt.Errorf("work machine has no public IP (may not be running)")
+		return nil, fmt.Errorf("work machine has no public IP (may not be running)")
 	}
 
-	// Return the tunnel endpoint with port 443 (tunnel server listens on 443)
-	return fmt.Sprintf("%s:443", publicIP), nil
+	// Get subdomain and domain from DomainRequest
+	subdomain, domain, err := s.getDomainInfo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get domain info: %w", err)
+	}
+
+	// Build vpn-connect hostname: vpn-connect.{subdomain}.{domain}
+	hostname := fmt.Sprintf("vpn-connect.%s.%s", subdomain, domain)
+
+	return &TunnelEndpointInfo{
+		Hostname: hostname,
+		IP:       publicIP,
+	}, nil
+}
+
+// getDomainInfo retrieves subdomain and domain from DomainRequest CR
+func (s *vpnService) getDomainInfo(ctx context.Context) (subdomain, domain string, err error) {
+	var domainRequestList domainrequestv1.DomainRequestList
+	if err := s.k8sClient.List(ctx, &domainRequestList); err != nil {
+		return "", "", fmt.Errorf("failed to list DomainRequests: %w", err)
+	}
+
+	if len(domainRequestList.Items) == 0 {
+		return "", "", fmt.Errorf("no DomainRequest found")
+	}
+
+	// Use the first DomainRequest's spec.domainRoutes
+	dr := domainRequestList.Items[0]
+	if len(dr.Spec.DomainRoutes) == 0 {
+		return "", "", fmt.Errorf("DomainRequest has no domain routes")
+	}
+
+	// Parse the full domain (e.g., "beanbag.khost.dev") into subdomain and domain
+	fullDomain := dr.Spec.DomainRoutes[0].Domain
+	parts := strings.SplitN(fullDomain, ".", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid domain format: %s (expected subdomain.domain)", fullDomain)
+	}
+
+	return parts[0], parts[1], nil
 }

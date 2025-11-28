@@ -36,13 +36,22 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	// 1. Get tunnel endpoint from Dashboard (the only Dashboard call needed)
 	fmt.Printf("[Session %s] Getting tunnel endpoint from Dashboard...\n", sessionID)
-	tunnelEndpoint, err := dashboardClient.GetTunnelEndpoint()
+	tunnelInfo, err := dashboardClient.GetTunnelEndpoint()
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to get tunnel endpoint: %v\n", sessionID, err)
 		resultChan <- fmt.Errorf("failed to get tunnel endpoint: %w", err)
 		return
 	}
-	fmt.Printf("[Session %s] Tunnel endpoint: %s\n", sessionID, tunnelEndpoint)
+	fmt.Printf("[Session %s] Tunnel endpoint: %s (IP: %s)\n", sessionID, tunnelInfo.Hostname, tunnelInfo.IP)
+
+	// Add vpn-connect hostname to /etc/hosts BEFORE connecting
+	fmt.Printf("[Session %s] Adding vpn-connect host entry: %s -> %s\n", sessionID, tunnelInfo.Hostname, tunnelInfo.IP)
+	if err := s.hostsManager.Add(tunnelInfo.Hostname, tunnelInfo.IP, fmt.Sprintf("# kltun session %s vpn-connect", sessionID)); err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to add vpn-connect host: %v\n", sessionID, err)
+		// Don't fail - try to connect anyway (might work via DNS)
+	}
+
+	tunnelEndpoint := tunnelInfo.TunnelEndpoint
 
 	// 2. Create tunnel server client for direct communication
 	tunnelClient := api.NewTunnelClient(tunnelEndpoint)
@@ -206,12 +215,21 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 
 	// 1. Get tunnel endpoint from Dashboard (the only Dashboard call needed)
 	fmt.Printf("[Session %s] Getting tunnel endpoint from Dashboard...\n", sessionID)
-	tunnelEndpoint, err := dashboardClient.GetTunnelEndpoint()
+	tunnelInfo, err := dashboardClient.GetTunnelEndpoint()
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to get tunnel endpoint: %v\n", sessionID, err)
 		return
 	}
-	fmt.Printf("[Session %s] Tunnel endpoint: %s\n", sessionID, tunnelEndpoint)
+	fmt.Printf("[Session %s] Tunnel endpoint: %s (IP: %s)\n", sessionID, tunnelInfo.Hostname, tunnelInfo.IP)
+
+	// Add vpn-connect hostname to /etc/hosts BEFORE connecting
+	fmt.Printf("[Session %s] Adding vpn-connect host entry: %s -> %s\n", sessionID, tunnelInfo.Hostname, tunnelInfo.IP)
+	if err := s.hostsManager.Add(tunnelInfo.Hostname, tunnelInfo.IP, fmt.Sprintf("# kltun session %s vpn-connect", sessionID)); err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to add vpn-connect host: %v\n", sessionID, err)
+		// Don't fail - try to connect anyway (might work via DNS)
+	}
+
+	tunnelEndpoint := tunnelInfo.TunnelEndpoint
 
 	// 2. Create tunnel server client for direct communication
 	tunnelClient := api.NewTunnelClient(tunnelEndpoint)
@@ -381,9 +399,13 @@ func (s *Server) cleanupSessionHosts(sessionID string) {
 	}
 
 	// Remove hosts that belong to this session
-	sessionComment := fmt.Sprintf("# kltun session %s", sessionID)
+	// Match both regular hosts and vpn-connect host (different comment formats)
+	sessionPrefix := fmt.Sprintf("# kltun session %s", sessionID)
 	for _, entry := range entries {
-		if entry.Comment == sessionComment {
+		// Match comments that start with the session prefix
+		// This catches both "# kltun session X" and "# kltun session X vpn-connect"
+		if len(entry.Comment) >= len(sessionPrefix) && entry.Comment[:len(sessionPrefix)] == sessionPrefix {
+			fmt.Printf("[Session %s] Removing host: %s\n", sessionID, entry.Hostname)
 			if err := s.hostsManager.Remove(entry.Hostname); err != nil {
 				fmt.Printf("[Session %s] Warning: Failed to remove host %s: %v\n", sessionID, entry.Hostname, err)
 			}
