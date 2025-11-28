@@ -190,10 +190,31 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	// Continue with hosts polling in background (now using tunnel client)
 	fmt.Printf("[Session %s] Starting hosts polling (every 10 seconds)...\n", sessionID)
+	hostsCtx, hostsCancel := context.WithCancel(ctx)
 	hostsDone := make(chan struct{})
-	s.pollHostsFromTunnel(ctx, sessionID, tunnelClient, hostsDone)
+	go s.pollHostsFromTunnel(hostsCtx, sessionID, tunnelClient, hostsDone)
 
 	fmt.Printf("[Session %s] VPN connection established successfully\n", sessionID)
+
+	// Wait for context cancellation (VPN quit)
+	<-ctx.Done()
+
+	fmt.Printf("[Session %s] Stopping VPN connection...\n", sessionID)
+
+	// Wait for hosts polling to stop
+	hostsCancel()
+	<-hostsDone
+
+	// Clean up network configuration
+	fmt.Printf("[Session %s] Cleaning up network configuration...\n", sessionID)
+	if err := netconfig.RemoveInterface(netCfg); err != nil {
+		fmt.Printf("[Session %s] Warning: Failed to remove network configuration: %v\n", sessionID, err)
+	}
+
+	// Cleanup all hosts for this session
+	s.cleanupSessionHosts(sessionID)
+
+	fmt.Printf("[Session %s] VPN connection stopped\n", sessionID)
 }
 
 // runVPNConnection runs a VPN connection with the new architecture
