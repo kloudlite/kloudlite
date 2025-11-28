@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Wifi, WifiOff, Loader2, Copy, Check } from 'lucide-react'
+import { Shield, ShieldOff, Loader2, Copy, Check } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,9 +128,9 @@ export function VPNStatusIndicator() {
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
     }
     if (status === 'connected') {
-      return <Wifi className="h-4 w-4 text-green-500" />
+      return <Shield className="h-4 w-4 text-green-500" />
     }
-    return <WifiOff className="h-4 w-4 text-red-500" />
+    return <ShieldOff className="h-4 w-4 text-red-500" />
   }
 
   const getStatusMessage = () => {
