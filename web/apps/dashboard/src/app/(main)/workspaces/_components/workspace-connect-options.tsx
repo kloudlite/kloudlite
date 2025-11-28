@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@kloudlite/ui'
 import { Terminal, Copy, Check, Sparkles } from 'lucide-react'
-import { SiAnthropic, SiZedindustries } from 'react-icons/si'
+import { SiAnthropic, SiZedindustries, SiJetbrains } from 'react-icons/si'
 import { VscVscode } from 'react-icons/vsc'
 import { CursorIcon } from '@/components/icons/cursor-icon'
 import { OpenCodeIcon } from '@/components/icons/opencode-icon'
@@ -68,11 +68,12 @@ export function WorkspaceConnectOptions({
   const workspaceDir = `/home/kl/workspaces/${workspaceName}`
   const sshHost = wsHash && subdomain ? `${workspaceName}-${wsHash}.${subdomain}` : ''
 
-  // SSH URLs for IDEs: vscode://vscode-remote/ssh-remote+kl@{host}{path}
+  // SSH URLs for IDEs
   const vscodeUrl = sshHost ? `vscode://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
   const cursorUrl = sshHost ? `cursor://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
   const zedUrl = sshHost ? `zed://ssh/kl@${sshHost}${workspaceDir}` : ''
   const antigravityUrl = sshHost ? `antigravity://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
+  const jetbrainsUrl = sshHost ? `jetbrains://gateway/ssh/environment?h=${sshHost}&u=kl&p=22&launchIde=true&ideHint=IU&projectHint=${encodeURIComponent(workspaceDir)}` : ''
   const sshCommand = sshHost ? `ssh kl@${sshHost}` : ''
 
   const accessMethods: AccessMethod[] = [
@@ -110,6 +111,15 @@ export function WorkspaceConnectOptions({
       icon: <AntigravityIcon className="h-4 w-4 flex-shrink-0" />,
       available: !!antigravityUrl,
       url: antigravityUrl,
+      category: 'Desktop IDEs',
+    },
+    {
+      id: 'jetbrains',
+      name: 'JetBrains',
+      description: 'JetBrains Gateway SSH',
+      icon: <SiJetbrains className="h-4 w-4 flex-shrink-0" />,
+      available: !!jetbrainsUrl,
+      url: jetbrainsUrl,
       category: 'Desktop IDEs',
     },
     {
