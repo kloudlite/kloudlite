@@ -201,6 +201,15 @@ type EnvironmentStatus struct {
 	// SourceCloningStatus tracks when this environment is being used as a cloning source
 	// +optional
 	SourceCloningStatus *SourceCloningStatus `json:"sourceCloningStatus,omitempty"`
+
+	// Hash is an 8-character hash derived from environment name and owner for DNS-safe hostnames
+	// Format: hash(envName-owner)
+	// +optional
+	Hash string `json:"hash,omitempty"`
+
+	// Subdomain is the subdomain assigned to this environment's workmachine (e.g., "beanbag.khost.dev")
+	// +optional
+	Subdomain string `json:"subdomain,omitempty"`
 }
 
 // EnvironmentState represents the state of an environment

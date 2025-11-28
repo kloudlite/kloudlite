@@ -334,6 +334,15 @@ type WorkspaceStatus struct {
 	// SourceCloningStatus tracks when this workspace is being used as a cloning source
 	// +optional
 	SourceCloningStatus *WorkspaceSourceCloningStatus `json:"sourceCloningStatus,omitempty"`
+
+	// Hash is an 8-character hash derived from owner and workspace name for DNS-safe hostnames
+	// Format: hash(owner-workspaceName)
+	// +optional
+	Hash string `json:"hash,omitempty"`
+
+	// Subdomain is the subdomain assigned to this workspace's workmachine (e.g., "beanbag.khost.dev")
+	// +optional
+	Subdomain string `json:"subdomain,omitempty"`
 }
 
 // ResourceUsage tracks current resource consumption

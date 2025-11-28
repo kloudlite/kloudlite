@@ -10,6 +10,7 @@ import (
 	"time"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
+	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -359,10 +360,25 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 			continue
 		}
 
-		// Get owner from annotation
-		owner := ns.Annotations[kloudliteCreatedByAnnotation]
-		if owner == "" {
-			owner = "unknown"
+		// Try to get hash from Environment status first
+		var envOwnerHash string
+		var env environmentv1.Environment
+		if err := hc.cache.Get(ctx, client.ObjectKey{Name: envName}, &env); err != nil {
+			// Fall back to computing hash if Environment not found
+			owner := ns.Annotations[kloudliteCreatedByAnnotation]
+			if owner == "" {
+				owner = "unknown"
+			}
+			envOwnerHash = generateHash(fmt.Sprintf("%s-%s", envName, owner))
+			hc.logger.Debug("Environment not found, using computed hash",
+				zap.String("environment", envName),
+				zap.Error(err))
+		} else if env.Status.Hash != "" {
+			// Use hash from status
+			envOwnerHash = env.Status.Hash
+		} else {
+			// Status.Hash not set yet, compute it
+			envOwnerHash = generateHash(fmt.Sprintf("%s-%s", env.Spec.Name, env.Spec.OwnedBy))
 		}
 
 		// List services in this namespace
@@ -373,9 +389,6 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 				zap.Error(err))
 			continue
 		}
-
-		// Generate hash of envName-owner for DNS-friendly short hostnames
-		envOwnerHash := generateHash(fmt.Sprintf("%s-%s", envName, owner))
 
 		for j := range serviceList.Items {
 			svc := &serviceList.Items[j]
@@ -390,7 +403,7 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 				continue
 			}
 
-			// Build hostname: {service}-{hash(envName-owner)}.{subdomain}.{domain}
+			// Build hostname: {service}-{hash}.{subdomain}.{domain}
 			hostname := fmt.Sprintf("%s-%s.%s.%s", svc.Name, envOwnerHash, subdomain, domain)
 
 			hosts = append(hosts, HostEntry{
@@ -422,8 +435,14 @@ func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain s
 			continue
 		}
 
-		// Generate hash of owner-workspaceName for unique, DNS-friendly hostnames
-		wsHash := generateHash(fmt.Sprintf("%s-%s", owner, ws.Name))
+		// Use hash from status if available, otherwise compute it
+		var wsHash string
+		if ws.Status.Hash != "" {
+			wsHash = ws.Status.Hash
+		} else {
+			// Compute hash if not in status yet
+			wsHash = generateHash(fmt.Sprintf("%s-%s", owner, ws.Name))
+		}
 
 		// Get workspace service ClusterIP
 		// The service has the same name as the workspace
@@ -444,7 +463,7 @@ func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain s
 			continue
 		}
 
-		// Build hostname: {workspaceName}-{hash(owner-workspaceName)}.{subdomain}.{domain}
+		// Build hostname: {workspaceName}-{hash}.{subdomain}.{domain}
 		hostname := fmt.Sprintf("%s-%s.%s.%s", ws.Name, wsHash, subdomain, domain)
 
 		hosts = append(hosts, HostEntry{

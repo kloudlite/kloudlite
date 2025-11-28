@@ -340,6 +340,11 @@ spec:
                   - type
                   type: object
                 type: array
+              hash:
+                description: |-
+                  Hash is an 8-character hash derived from environment name and owner for DNS-safe hostnames
+                  Format: hash(envName-owner)
+                type: string
               lastActivatedTime:
                 description: LastActivatedTime is the last time the environment was
                   activated
@@ -417,6 +422,10 @@ spec:
                 - deactivating
                 - deleting
                 - error
+                type: string
+              subdomain:
+                description: Subdomain is the subdomain assigned to this environment's
+                  workmachine (e.g., "beanbag.khost.dev")
                 type: string
             type: object
         type: object

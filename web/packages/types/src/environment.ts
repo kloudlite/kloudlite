@@ -126,6 +126,9 @@ export interface EnvironmentStatus {
   }>
   cloningStatus?: CloningStatus
   sourceCloningStatus?: SourceCloningStatus
+  // Hash and subdomain for VPN-accessible URLs
+  hash?: string // 8-character hash derived from envName-owner
+  subdomain?: string // Subdomain from workmachine (e.g., "beanbag.khost.dev")
 }
 
 export interface Environment {

@@ -2,12 +2,53 @@ package environment
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// generateHash generates an 8-character hash from the input string
+func generateHash(input string) string {
+	h := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(h[:])[:8]
+}
+
+// updateHashAndSubdomain computes and sets the hash and subdomain in environment status
+func (r *EnvironmentReconciler) updateHashAndSubdomain(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	// Compute hash from envName-owner
+	hash := generateHash(fmt.Sprintf("%s-%s", environment.Spec.Name, environment.Spec.OwnedBy))
+
+	// Get subdomain from DomainRequest (keyed by WorkMachine name)
+	subdomain := ""
+	if environment.Spec.WorkMachineName != "" {
+		var domainRequest domainrequestv1.DomainRequest
+		if err := r.Get(ctx, client.ObjectKey{Name: environment.Spec.WorkMachineName}, &domainRequest); err != nil {
+			logger.Debug("DomainRequest not found, subdomain will be empty",
+				zap.String("workmachine", environment.Spec.WorkMachineName),
+				zap.Error(err))
+		} else if domainRequest.Status.Subdomain != "" {
+			subdomain = domainRequest.Status.Subdomain
+		}
+	}
+
+	// Only update if values changed
+	if environment.Status.Hash == hash && environment.Status.Subdomain == subdomain {
+		return nil
+	}
+
+	return statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		environment.Status.Hash = hash
+		environment.Status.Subdomain = subdomain
+		return nil
+	}, logger)
+}
 
 // updateEnvironmentStatus safely updates environment status with retry logic
 func (r *EnvironmentReconciler) updateEnvironmentStatus(ctx context.Context, environment *environmentsv1.Environment, state environmentsv1.EnvironmentState, message string, logger *zap.Logger) error {
