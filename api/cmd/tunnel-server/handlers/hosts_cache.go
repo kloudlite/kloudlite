@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -132,6 +135,12 @@ func (hc *HostsCache) setupInformers(ctx context.Context) error {
 		return fmt.Errorf("failed to get domainrequest informer: %w", err)
 	}
 
+	// Get informer for Workspaces
+	workspaceInformer, err := hc.cache.GetInformer(ctx, &workspacev1.Workspace{})
+	if err != nil {
+		return fmt.Errorf("failed to get workspace informer: %w", err)
+	}
+
 	// Create debounced rebuild function
 	var rebuildTimer *time.Timer
 	var rebuildMu sync.Mutex
@@ -176,6 +185,9 @@ func (hc *HostsCache) setupInformers(ctx context.Context) error {
 	if _, err := domainRequestInformer.AddEventHandler(handler); err != nil {
 		return fmt.Errorf("failed to add domainrequest event handler: %w", err)
 	}
+	if _, err := workspaceInformer.AddEventHandler(handler); err != nil {
+		return fmt.Errorf("failed to add workspace event handler: %w", err)
+	}
 
 	return nil
 }
@@ -218,6 +230,14 @@ func (hc *HostsCache) rebuild(ctx context.Context) {
 			hc.logger.Error("failed to get service hosts", zap.Error(err))
 		} else {
 			hosts = append(hosts, serviceHosts...)
+		}
+
+		// Get workspace services for VPN access (SSH, etc.)
+		workspaceHosts, err := hc.getWorkspaceHosts(ctx, subdomain, domain)
+		if err != nil {
+			hc.logger.Error("failed to get workspace hosts", zap.Error(err))
+		} else {
+			hosts = append(hosts, workspaceHosts...)
 		}
 
 		// Add VPN check host entry (points to WireGuard server IP for connectivity check)
@@ -354,6 +374,9 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 			continue
 		}
 
+		// Generate hash of envName-owner for DNS-friendly short hostnames
+		envOwnerHash := generateHash(fmt.Sprintf("%s-%s", envName, owner))
+
 		for j := range serviceList.Items {
 			svc := &serviceList.Items[j]
 
@@ -367,8 +390,8 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 				continue
 			}
 
-			// Build hostname: {service}-{envName}-{owner}.{subdomain}.{domain}
-			hostname := fmt.Sprintf("%s-%s-%s.%s.%s", svc.Name, envName, owner, subdomain, domain)
+			// Build hostname: {service}-{hash(envName-owner)}.{subdomain}.{domain}
+			hostname := fmt.Sprintf("%s-%s.%s.%s", svc.Name, envOwnerHash, subdomain, domain)
 
 			hosts = append(hosts, HostEntry{
 				Hostname: hostname,
@@ -379,4 +402,63 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 	}
 
 	return hosts, nil
+}
+
+// getWorkspaceHosts gets all workspace services and creates host entries for VPN access
+func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain string) ([]HostEntry, error) {
+	// List all workspaces
+	var workspaceList workspacev1.WorkspaceList
+	if err := hc.cache.List(ctx, &workspaceList); err != nil {
+		return nil, fmt.Errorf("failed to list workspaces: %w", err)
+	}
+
+	hosts := make([]HostEntry, 0)
+	for i := range workspaceList.Items {
+		ws := &workspaceList.Items[i]
+
+		// Get owner from workspace spec
+		owner := ws.Spec.OwnedBy
+		if owner == "" {
+			continue
+		}
+
+		// Generate hash of owner
+		ownerHash := generateHash(owner)
+
+		// Get workspace service ClusterIP
+		// The service has the same name as the workspace
+		svc := &corev1.Service{}
+		if err := hc.cache.Get(ctx, client.ObjectKey{
+			Namespace: ws.Namespace,
+			Name:      ws.Name,
+		}, svc); err != nil {
+			hc.logger.Debug("workspace service not found",
+				zap.String("workspace", ws.Name),
+				zap.String("namespace", ws.Namespace),
+				zap.Error(err))
+			continue
+		}
+
+		// Skip services without ClusterIP
+		if svc.Spec.ClusterIP == "" || svc.Spec.ClusterIP == "None" {
+			continue
+		}
+
+		// Build hostname: {workspaceName}-{hash(owner)}.{subdomain}.{domain}
+		hostname := fmt.Sprintf("%s-%s.%s.%s", ws.Name, ownerHash, subdomain, domain)
+
+		hosts = append(hosts, HostEntry{
+			Hostname: hostname,
+			IP:       svc.Spec.ClusterIP,
+			Type:     "workspace",
+		})
+	}
+
+	return hosts, nil
+}
+
+// generateHash generates an 8-character hash from the input string
+func generateHash(input string) string {
+	h := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(h[:])[:8]
 }

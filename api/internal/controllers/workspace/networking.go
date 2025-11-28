@@ -2,9 +2,9 @@ package workspace
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"regexp"
-	"strings"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -18,6 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
+
+// generateHash generates an 8-character hash from the input string
+func generateHash(input string) string {
+	h := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(h[:])[:8]
+}
 
 // ensureWorkspaceService ensures a Service is created for the workspace
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
@@ -134,33 +140,29 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	}
 
 	// Define HTTP services to expose via Ingress
-	// Map of service-prefix -> (service-port-name, service-port)
-	httpServices := map[string]struct {
-		portName string
-		port     int32
-	}{
-		"vscode":   {"code-server", 8080},
-		"tty":      {"ttyd", 7681},
-		"claude":   {"claude-ttyd", 7682},
-		"opencode": {"opencode-ttyd", 7683},
-		"codex":    {"codex-ttyd", 7684},
+	// Map of service-prefix -> port
+	httpServices := map[string]int32{
+		"vscode":   8080,
+		"tty":      7681,
+		"claude":   7682,
+		"opencode": 7683,
+		"codex":    7684,
 	}
 
 	// Service name that ingress will route to
 	serviceName := workspace.Name
 
-	// Sanitize username for DNS compatibility (lowercase, replace invalid chars with hyphens)
-	sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
-	sanitizedUsername = regexp.MustCompile(`[^a-z0-9-]`).ReplaceAllString(sanitizedUsername, "-")
+	// Generate hash of owner for DNS-friendly short hostnames
+	ownerHash := generateHash(workspace.Spec.OwnedBy)
 
 	// Build Ingress rules
 	var ingressRules []networkingv1.IngressRule
 	var tlsHosts []string
 
-	for prefix, svc := range httpServices {
-		// Use pattern: {prefix}-{workspaceName}-{username}.{subdomain}
-		// Example: claude-mine-karthik.eastman.khost.dev
-		host := fmt.Sprintf("%s-%s-%s.%s", prefix, workspace.Name, sanitizedUsername, domainRequest.Status.Subdomain)
+	for prefix, port := range httpServices {
+		// Use pattern: {prefix}-{workspaceName}-{hash(owner)}.{subdomain}
+		// Example: claude-mine-a1b2c3d4.eastman.khost.dev
+		host := fmt.Sprintf("%s-%s-%s.%s", prefix, workspace.Name, ownerHash, domainRequest.Status.Subdomain)
 		tlsHosts = append(tlsHosts, host)
 
 		pathType := networkingv1.PathTypePrefix
@@ -176,7 +178,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 								Service: &networkingv1.IngressServiceBackend{
 									Name: serviceName,
 									Port: networkingv1.ServiceBackendPort{
-										Number: svc.port,
+										Number: port,
 									},
 								},
 							},
