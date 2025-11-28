@@ -274,10 +274,15 @@ func (r *Router) StartHTTP(ctx context.Context, port int) error {
 
 // StartHTTPS starts the HTTPS server
 func (r *Router) StartHTTPS(ctx context.Context, port int, tlsManager *TLSManager) error {
+	tlsConfig := tlsManager.GetTLSConfig()
+	// Disable HTTP/2 to allow WebSocket connections
+	// WebSocket requires HTTP/1.1 for the upgrade handshake
+	tlsConfig.NextProtos = []string{"http/1.1"}
+
 	r.httpsServer = &http.Server{
 		Addr:      fmt.Sprintf(":%d", port),
 		Handler:   r,
-		TLSConfig: tlsManager.GetTLSConfig(),
+		TLSConfig: tlsConfig,
 	}
 
 	go func() {
