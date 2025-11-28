@@ -219,6 +219,11 @@ func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backen
 		return
 	}
 
+	r.logger.Info("Backend WebSocket response",
+		zap.Int("statusCode", resp.StatusCode),
+		zap.String("status", resp.Status),
+	)
+
 	// Write the response back to client
 	if err := resp.Write(clientConn); err != nil {
 		r.logger.Error("Failed to write response to client", zap.Error(err))
