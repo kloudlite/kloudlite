@@ -3,6 +3,8 @@ package wireguard
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -193,6 +195,16 @@ func convertINIToIPC(config string) string {
 			continue // Skip unsupported keys like Address
 		}
 
+		// Convert base64 keys to hex for IPC format
+		if isKeyField(key) {
+			hexValue, err := base64ToHex(value)
+			if err != nil {
+				// If conversion fails, use original value
+				hexValue = value
+			}
+			value = hexValue
+		}
+
 		result.WriteString(ipcKey)
 		result.WriteString("=")
 		result.WriteString(value)
@@ -200,6 +212,25 @@ func convertINIToIPC(config string) string {
 	}
 
 	return result.String()
+}
+
+// isKeyField returns true if the field contains a WireGuard key (base64 encoded)
+func isKeyField(key string) bool {
+	switch key {
+	case "PrivateKey", "PublicKey", "PresharedKey":
+		return true
+	default:
+		return false
+	}
+}
+
+// base64ToHex converts a base64-encoded WireGuard key to hex encoding
+func base64ToHex(b64 string) (string, error) {
+	decoded, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(decoded), nil
 }
 
 // mapINIKeyToIPC maps INI config keys to IPC format keys
