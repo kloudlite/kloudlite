@@ -64,16 +64,12 @@ func isWebSocketRequest(req *http.Request) bool {
 
 // ServeHTTP implements http.Handler
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Find matching route (hold lock only during route lookup)
 	r.routesMutex.RLock()
-	defer r.routesMutex.RUnlock()
-
-	// Find matching route
 	route := r.findMatchingRoute(req)
+	r.routesMutex.RUnlock()
+
 	if route == nil {
-		r.logger.Debug("No matching route found",
-			zap.String("host", req.Host),
-			zap.String("path", req.URL.Path),
-		)
 		http.Error(w, "No route found", http.StatusNotFound)
 		return
 	}
@@ -154,6 +150,12 @@ func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backen
 		}
 	}
 
+	r.logger.Info("Starting WebSocket proxy",
+		zap.String("backendHost", backendHost),
+		zap.String("backendURL", backendURL.String()),
+		zap.String("path", req.URL.Path),
+	)
+
 	// Connect to backend
 	var backendConn net.Conn
 	var err error
@@ -175,6 +177,8 @@ func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backen
 		return
 	}
 	defer backendConn.Close()
+
+	r.logger.Info("Connected to backend for WebSocket", zap.String("backend", backendHost))
 
 	// Hijack the client connection
 	hijacker, ok := w.(http.Hijacker)
