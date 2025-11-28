@@ -376,9 +376,17 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 		} else if env.Status.Hash != "" {
 			// Use hash from status
 			envOwnerHash = env.Status.Hash
+			hc.logger.Info("Using hash from environment status",
+				zap.String("environment", envName),
+				zap.String("hash", envOwnerHash))
 		} else {
 			// Status.Hash not set yet, compute it
 			envOwnerHash = generateHash(fmt.Sprintf("%s-%s", env.Spec.Name, env.Spec.OwnedBy))
+			hc.logger.Info("Environment status.hash empty, computed hash",
+				zap.String("environment", envName),
+				zap.String("specName", env.Spec.Name),
+				zap.String("specOwnedBy", env.Spec.OwnedBy),
+				zap.String("hash", envOwnerHash))
 		}
 
 		// List services in this namespace
