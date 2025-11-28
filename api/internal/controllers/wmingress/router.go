@@ -1,8 +1,11 @@
 package wmingress
 
 import (
+	"bufio"
 	"context"
+	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -53,6 +56,12 @@ func (r *Router) UpdateRoutes(routes []*Route) error {
 	return nil
 }
 
+// isWebSocketRequest checks if the request is a WebSocket upgrade request
+func isWebSocketRequest(req *http.Request) bool {
+	return strings.EqualFold(req.Header.Get("Upgrade"), "websocket") &&
+		strings.Contains(strings.ToLower(req.Header.Get("Connection")), "upgrade")
+}
+
 // ServeHTTP implements http.Handler
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.routesMutex.RLock()
@@ -73,6 +82,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		zap.String("host", req.Host),
 		zap.String("path", req.URL.Path),
 		zap.String("backend", route.BackendURL),
+		zap.Bool("websocket", isWebSocketRequest(req)),
 	)
 
 	// Create reverse proxy
@@ -83,6 +93,12 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			zap.Error(err),
 		)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Handle WebSocket connections specially
+	if isWebSocketRequest(req) {
+		r.proxyWebSocket(w, req, backendURL)
 		return
 	}
 
@@ -122,6 +138,125 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	proxy.ServeHTTP(w, req)
+}
+
+// proxyWebSocket handles WebSocket upgrade requests by hijacking the connection
+func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backendURL *url.URL) {
+	// Determine backend address
+	backendHost := backendURL.Host
+	if backendURL.Port() == "" {
+		if backendURL.Scheme == "https" || backendURL.Scheme == "wss" {
+			backendHost = backendHost + ":443"
+		} else {
+			backendHost = backendHost + ":80"
+		}
+	}
+
+	// Connect to backend
+	var backendConn net.Conn
+	var err error
+
+	if backendURL.Scheme == "https" || backendURL.Scheme == "wss" {
+		backendConn, err = tls.Dial("tcp", backendHost, &tls.Config{
+			InsecureSkipVerify: true, // Backend is internal, skip verification
+		})
+	} else {
+		backendConn, err = net.DialTimeout("tcp", backendHost, 30*time.Second)
+	}
+
+	if err != nil {
+		r.logger.Error("Failed to connect to WebSocket backend",
+			zap.String("backend", backendHost),
+			zap.Error(err),
+		)
+		http.Error(w, "Bad gateway", http.StatusBadGateway)
+		return
+	}
+	defer backendConn.Close()
+
+	// Hijack the client connection
+	hijacker, ok := w.(http.Hijacker)
+	if !ok {
+		r.logger.Error("ResponseWriter does not support hijacking")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	clientConn, clientBuf, err := hijacker.Hijack()
+	if err != nil {
+		r.logger.Error("Failed to hijack connection", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer clientConn.Close()
+
+	// Forward the original request to backend
+	// Update the request URL to point to backend
+	req.URL.Scheme = "http"
+	if backendURL.Scheme == "https" || backendURL.Scheme == "wss" {
+		req.URL.Scheme = "https"
+	}
+	req.URL.Host = backendURL.Host
+	req.Host = backendURL.Host
+
+	// Write the request to backend
+	if err := req.Write(backendConn); err != nil {
+		r.logger.Error("Failed to write request to backend", zap.Error(err))
+		return
+	}
+
+	// Read the response from backend
+	backendBuf := bufio.NewReader(backendConn)
+	resp, err := http.ReadResponse(backendBuf, req)
+	if err != nil {
+		r.logger.Error("Failed to read response from backend", zap.Error(err))
+		return
+	}
+
+	// Write the response back to client
+	if err := resp.Write(clientConn); err != nil {
+		r.logger.Error("Failed to write response to client", zap.Error(err))
+		return
+	}
+
+	// If upgrade was successful, start bidirectional copy
+	if resp.StatusCode == http.StatusSwitchingProtocols {
+		r.logger.Debug("WebSocket connection established",
+			zap.String("backend", backendHost),
+		)
+
+		// Copy data bidirectionally
+		errChan := make(chan error, 2)
+
+		go func() {
+			// Copy from client to backend
+			// First drain any buffered data from client reader
+			if clientBuf.Reader.Buffered() > 0 {
+				if _, err := io.CopyN(backendConn, clientBuf.Reader, int64(clientBuf.Reader.Buffered())); err != nil {
+					errChan <- err
+					return
+				}
+			}
+			_, err := io.Copy(backendConn, clientConn)
+			errChan <- err
+		}()
+
+		go func() {
+			// Copy from backend to client
+			// First drain any buffered data from backend
+			if backendBuf.Buffered() > 0 {
+				if _, err := io.CopyN(clientConn, backendBuf, int64(backendBuf.Buffered())); err != nil {
+					errChan <- err
+					return
+				}
+			}
+			_, err := io.Copy(clientConn, backendConn)
+			errChan <- err
+		}()
+
+		// Wait for either direction to finish
+		<-errChan
+	}
 }
 
 // findMatchingRoute finds a route matching the request
