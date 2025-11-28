@@ -160,7 +160,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=console
-          cache-to: type=gha,mode=max,scope=console
+          cache-to: type=gha,mode=max,scope=console,ignore-error=true
 
       - name: Build summary
         run: |
@@ -309,7 +309,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=dashboard
-          cache-to: type=gha,mode=max,scope=dashboard
+          cache-to: type=gha,mode=max,scope=dashboard,ignore-error=true
 
       - name: Build summary
         run: |
@@ -430,7 +430,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=website
-          cache-to: type=gha,mode=max,scope=website
+          cache-to: type=gha,mode=max,scope=website,ignore-error=true
 
       - name: Build summary
         run: |
