@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"regexp"
-	"strings"
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -91,24 +89,38 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			domainRequestExists = true
 		}
 
+		// Compute hash for DNS-safe hostnames: hash(owner-workspaceName)
+		wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
+
+		// Update hash in status if changed
+		if workspace.Status.Hash != wsHash {
+			workspace.Status.Hash = wsHash
+			needsUpdate = true
+		}
+
+		// Update subdomain in status if changed
+		subdomain := ""
+		if domainRequestExists && domainRequest.Status.Subdomain != "" {
+			subdomain = domainRequest.Status.Subdomain
+		}
+		if workspace.Status.Subdomain != subdomain {
+			workspace.Status.Subdomain = subdomain
+			needsUpdate = true
+		}
+
 		// Try to use public domain URLs if DomainRequest is available
 		if domainRequestExists && domainRequest.Status.Subdomain != "" {
 			// Get WorkMachine to construct domain URLs
 			wm, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
 			if err == nil && wm.Status.PublicIP != "" {
-				// Sanitize username for DNS compatibility (lowercase, replace invalid chars with hyphens)
-				sanitizedUsername := strings.ToLower(workspace.Spec.OwnedBy)
-				sanitizedUsername = regexp.MustCompile(`[^a-z0-9-]`).ReplaceAllString(sanitizedUsername, "-")
-
-				// Use pattern: {prefix}-{workspaceName}-{username}.{subdomain}
-				// Example: claude-mine-karthik.eastman.khost.dev
-				baseDomain := fmt.Sprintf("%s-%s.%s", workspace.Name, sanitizedUsername, domainRequest.Status.Subdomain)
+				// Use hash-based pattern: {prefix}-{hash}.{subdomain}
+				// Example: claude-a1b2c3d4.eastman.khost.dev
 				// Use public HTTPS domain URLs
-				accessURLs["code-server"] = fmt.Sprintf("https://vscode-%s", baseDomain)
-				accessURLs["ttyd"] = fmt.Sprintf("https://tty-%s", baseDomain)
-				accessURLs["claude-ttyd"] = fmt.Sprintf("https://claude-%s", baseDomain)
-				accessURLs["opencode-ttyd"] = fmt.Sprintf("https://opencode-%s", baseDomain)
-				accessURLs["codex-ttyd"] = fmt.Sprintf("https://codex-%s", baseDomain)
+				accessURLs["code-server"] = fmt.Sprintf("https://vscode-%s.%s", wsHash, subdomain)
+				accessURLs["ttyd"] = fmt.Sprintf("https://tty-%s.%s", wsHash, subdomain)
+				accessURLs["claude-ttyd"] = fmt.Sprintf("https://claude-%s.%s", wsHash, subdomain)
+				accessURLs["opencode-ttyd"] = fmt.Sprintf("https://opencode-%s.%s", wsHash, subdomain)
+				accessURLs["codex-ttyd"] = fmt.Sprintf("https://codex-%s.%s", wsHash, subdomain)
 				// SSH is still via pod IP (not routed through HAProxy)
 				accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
 			} else {

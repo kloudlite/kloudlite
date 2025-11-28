@@ -40,13 +40,27 @@ export function WorkspaceConnectOptions({
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
   const [sshDialogOpen, setSshDialogOpen] = useState(false)
 
-  // Extract access URLs from workspace status
-  const codeServerUrl = workspace.status?.accessUrls?.['code-server'] || workspace.status?.accessUrl
-  const ttydUrl = workspace.status?.accessUrls?.['ttyd']
-  const claudeTtydUrl = workspace.status?.accessUrls?.['claude-ttyd']
-  const codexTtydUrl = workspace.status?.accessUrls?.['codex-ttyd']
-  const opencodeTtydUrl = workspace.status?.accessUrls?.['opencode-ttyd']
   const workspaceName = workspace.metadata?.name || 'workspace'
+
+  // Get hash and subdomain from workspace status (computed by controller)
+  const wsHash = workspace.status?.hash || ''
+  const subdomain = workspace.status?.subdomain || ''
+
+  // Generate VPN-accessible URLs using hash pattern: {prefix}-{hash}.{subdomain}
+  // Example: vscode-a1b2c3d4.beanbag.khost.dev
+  const generateAccessUrl = (prefix: string): string => {
+    if (!wsHash || !subdomain) {
+      return ''
+    }
+    return `https://${prefix}-${wsHash}.${subdomain}`
+  }
+
+  // Use URLs from status (already computed by controller), or generate from hash if available
+  const codeServerUrl = workspace.status?.accessUrls?.['code-server'] || generateAccessUrl('vscode') || workspace.status?.accessUrl
+  const ttydUrl = workspace.status?.accessUrls?.['ttyd'] || generateAccessUrl('tty')
+  const claudeTtydUrl = workspace.status?.accessUrls?.['claude-ttyd'] || generateAccessUrl('claude')
+  const codexTtydUrl = workspace.status?.accessUrls?.['codex-ttyd'] || generateAccessUrl('codex')
+  const opencodeTtydUrl = workspace.status?.accessUrls?.['opencode-ttyd'] || generateAccessUrl('opencode')
 
   // SSH connection with jump host (port 2222 is the SSH gateway on localhost)
   const jumpHost = `kloudlite@localhost:2222`

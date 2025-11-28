@@ -523,6 +523,11 @@ spec:
                 items:
                   type: string
                 type: array
+              hash:
+                description: |-
+                  Hash is an 8-character hash derived from owner and workspace name for DNS-safe hostnames
+                  Format: hash(owner-workspaceName)
+                type: string
               idleSince:
                 description: IdleSince tracks when the workspace became idle
                 format: date-time
@@ -644,6 +649,10 @@ spec:
               stopTime:
                 description: StopTime when the workspace was stopped
                 format: date-time
+                type: string
+              subdomain:
+                description: Subdomain is the subdomain assigned to this workspace's
+                  workmachine (e.g., "beanbag.khost.dev")
                 type: string
               totalRuntime:
                 description: TotalRuntime in minutes

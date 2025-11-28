@@ -1,7 +1,7 @@
 'use client'
 
 import { Network, Copy, Check } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { K8sService } from '@kloudlite/types'
 import type { Composition } from '@kloudlite/types'
 import { Badge } from '@kloudlite/ui'
@@ -11,51 +11,26 @@ interface ServicesListProps {
   services: K8sService[]
   namespace: string
   composition: Composition | null
-  environmentName: string
-  owner: string
-  subdomain: string
-  domain: string
-}
-
-// Generate 8-character hash matching backend algorithm
-async function generateHash(input: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(input)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-  return hashHex.slice(0, 8)
+  envHash: string // Hash from environment.status.hash
+  subdomain: string // Subdomain from environment.status.subdomain
 }
 
 export function ServicesList({
   services,
   namespace,
   composition,
-  environmentName,
-  owner,
+  envHash,
   subdomain,
-  domain,
 }: ServicesListProps) {
   const [open, setOpen] = useState(false)
-  const [envHash, setEnvHash] = useState<string>('')
   const [copiedDns, setCopiedDns] = useState<string | null>(null)
 
-  // Generate hash on mount
-  useEffect(() => {
-    const computeHash = async () => {
-      if (environmentName && owner) {
-        const hash = await generateHash(`${environmentName}-${owner}`)
-        setEnvHash(hash)
-      }
-    }
-    computeHash()
-  }, [environmentName, owner])
-
+  // Generate VPN-accessible DNS hostname: {service}-{hash}.{subdomain}
   const getDnsHostname = (serviceName: string) => {
-    if (!envHash || !subdomain || !domain) {
+    if (!envHash || !subdomain) {
       return `${serviceName}.${namespace}.svc.cluster.local`
     }
-    return `${serviceName}-${envHash}.${subdomain}.${domain}`
+    return `${serviceName}-${envHash}.${subdomain}`
   }
 
   const copyDns = async (hostname: string) => {

@@ -143,6 +143,9 @@ export interface WorkspaceStatus {
   activeConnections?: number
   cloningStatus?: WorkspaceCloningStatus
   sourceCloningStatus?: WorkspaceSourceCloningStatus
+  // Hash and subdomain for VPN-accessible URLs
+  hash?: string // 8-character hash derived from owner-workspaceName
+  subdomain?: string // Subdomain from workmachine (e.g., "beanbag.khost.dev")
 }
 
 // Request/Response types

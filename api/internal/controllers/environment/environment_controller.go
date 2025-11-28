@@ -124,6 +124,12 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	// The webhook also validates that the namespace doesn't already exist.
 	// Controller's responsibility is to create the actual Kubernetes namespace resource.
 
+	// Update hash and subdomain in status (computed from envName-owner)
+	if err := r.updateHashAndSubdomain(ctx, environment, logger); err != nil {
+		logger.Warn("Failed to update hash/subdomain in status", zap.Error(err))
+		// Don't fail reconciliation, these are informational fields
+	}
+
 	// Check if namespace already exists and handle it
 	namespaceExists, err := r.ensureNamespaceExists(ctx, environment, logger)
 	if err != nil {
