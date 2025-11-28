@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@kloudlite/ui'
 import { Terminal, Copy, Check, Sparkles } from 'lucide-react'
-import { SiIntellijidea, SiAnthropic, SiZedindustries } from 'react-icons/si'
+import { SiAnthropic } from 'react-icons/si'
 import { VscVscode } from 'react-icons/vsc'
 import { CursorIcon } from '@/components/icons/cursor-icon'
 import { OpenCodeIcon } from '@/components/icons/opencode-icon'
@@ -62,18 +62,12 @@ export function WorkspaceConnectOptions({
   const codexTtydUrl = workspace.status?.accessUrls?.['codex-ttyd'] || generateAccessUrl('codex')
   const opencodeTtydUrl = workspace.status?.accessUrls?.['opencode-ttyd'] || generateAccessUrl('opencode')
 
-  // SSH connection with jump host (port 2222 is the SSH gateway on localhost)
-  const jumpHost = `kloudlite@localhost:2222`
-  const targetHost = `workspace-${workspaceName}`
+  // Generate SSH URL for VS Code: vscode://vscode-remote/ssh-remote+kl@{host}{path}
   const workspaceDir = `/home/kl/workspaces/${workspaceName}`
-  const sshCommand = `ssh -J ${jumpHost} kl@${targetHost} -t "cd ${workspaceDir} && exec \\$SHELL"`
-
-  // SSH commands for IDEs (include jump host in the command)
-  const sshJumpFlag = `-o "ProxyJump=${jumpHost}"`
-  const vscodeCommand = `code --folder-uri "vscode-remote://ssh-remote+kl@${targetHost}${workspaceDir}" --remote-ssh-command "ssh ${sshJumpFlag}"`
-  const cursorCommand = `cursor --folder-uri "vscode-remote://ssh-remote+kl@${targetHost}${workspaceDir}"`
-  const zedCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && zed ."`
-  const intellijCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && idea ."`
+  const vscodeSshHost = wsHash && subdomain ? `vscode-${wsHash}.${subdomain}` : ''
+  const vscodeUrl = vscodeSshHost ? `vscode://vscode-remote/ssh-remote+kl@${vscodeSshHost}${workspaceDir}` : ''
+  const cursorUrl = vscodeSshHost ? `cursor://vscode-remote/ssh-remote+kl@${vscodeSshHost}${workspaceDir}` : ''
+  const sshCommand = vscodeSshHost ? `ssh kl@${vscodeSshHost}` : ''
 
   const accessMethods: AccessMethod[] = [
     {
@@ -81,8 +75,8 @@ export function WorkspaceConnectOptions({
       name: 'VS Code',
       description: 'Remote development via SSH',
       icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
-      available: !!workspaceName,
-      command: vscodeCommand,
+      available: !!vscodeUrl,
+      url: vscodeUrl,
       category: 'Desktop IDEs',
     },
     {
@@ -90,26 +84,8 @@ export function WorkspaceConnectOptions({
       name: 'Cursor',
       description: 'AI-powered editor via SSH',
       icon: <CursorIcon className="h-4 w-4 flex-shrink-0" />,
-      available: !!workspaceName,
-      command: cursorCommand,
-      category: 'Desktop IDEs',
-    },
-    {
-      id: 'intellij',
-      name: 'IntelliJ IDEA',
-      description: 'JetBrains IDE via SSH',
-      icon: <SiIntellijidea className="h-4 w-4 flex-shrink-0" />,
-      available: !!workspaceName,
-      command: intellijCommand,
-      category: 'Desktop IDEs',
-    },
-    {
-      id: 'zed',
-      name: 'Zed',
-      description: 'Fast collaborative editor',
-      icon: <SiZedindustries className="h-4 w-4 flex-shrink-0" />,
-      available: !!workspaceName,
-      command: zedCommand,
+      available: !!cursorUrl,
+      url: cursorUrl,
       category: 'Desktop IDEs',
     },
     {
@@ -162,7 +138,7 @@ export function WorkspaceConnectOptions({
       name: 'SSH Terminal',
       description: 'Direct terminal access',
       icon: <Terminal className="h-4 w-4 flex-shrink-0" />,
-      available: !!workspaceName,
+      available: !!sshCommand,
       command: sshCommand,
       category: 'Direct Access',
     },
