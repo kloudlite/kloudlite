@@ -152,17 +152,17 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	// Service name that ingress will route to
 	serviceName := workspace.Name
 
-	// Generate hash of owner for DNS-friendly short hostnames
-	ownerHash := generateHash(workspace.Spec.OwnedBy)
+	// Generate hash of owner-workspaceName for unique, DNS-friendly hostnames
+	wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
 
 	// Build Ingress rules
 	var ingressRules []networkingv1.IngressRule
 	var tlsHosts []string
 
 	for prefix, port := range httpServices {
-		// Use pattern: {prefix}-{workspaceName}-{hash(owner)}.{subdomain}
+		// Use pattern: {prefix}-{workspaceName}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: claude-mine-a1b2c3d4.eastman.khost.dev
-		host := fmt.Sprintf("%s-%s-%s.%s", prefix, workspace.Name, ownerHash, domainRequest.Status.Subdomain)
+		host := fmt.Sprintf("%s-%s-%s.%s", prefix, workspace.Name, wsHash, domainRequest.Status.Subdomain)
 		tlsHosts = append(tlsHosts, host)
 
 		pathType := networkingv1.PathTypePrefix
