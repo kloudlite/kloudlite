@@ -385,6 +385,8 @@ func (h *WireGuardHandler) addPeer(device, publicKey, peerIP string) error {
 }
 
 // generateClientConfig generates a WireGuard config for the client
+// The endpoint is 127.0.0.1:51821 because the client runs a local UDP proxy
+// that tunnels traffic over WebSocket to the server
 func (h *WireGuardHandler) generateClientConfig(privateKey, peerIP, serverPublicKey string) string {
 	config := fmt.Sprintf(`[Interface]
 PrivateKey = %s
@@ -393,9 +395,9 @@ Address = %s/32
 [Peer]
 PublicKey = %s
 AllowedIPs = %s
-Endpoint = %s
+Endpoint = 127.0.0.1:51821
 PersistentKeepalive = 25
-`, privateKey, peerIP, serverPublicKey, h.cidr, h.endpoint)
+`, privateKey, peerIP, serverPublicKey, h.cidr)
 
 	return config
 }
