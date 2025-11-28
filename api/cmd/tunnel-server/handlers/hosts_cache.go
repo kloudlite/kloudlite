@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -251,6 +252,7 @@ func (hc *HostsCache) GetHosts() []HostEntry {
 }
 
 // getDomainInfo retrieves subdomain and domain from DomainRequest CR
+// It extracts them from spec.domainRoutes[0].domain (e.g., "beanbag.khost.dev" -> subdomain="beanbag", domain="khost.dev")
 func (hc *HostsCache) getDomainInfo(ctx context.Context) (subdomain, domain string, err error) {
 	var domainRequestList domainrequestv1.DomainRequestList
 	if err := hc.cache.List(ctx, &domainRequestList); err != nil {
@@ -261,9 +263,20 @@ func (hc *HostsCache) getDomainInfo(ctx context.Context) (subdomain, domain stri
 		return "", "", fmt.Errorf("no DomainRequest found")
 	}
 
-	// Use the first DomainRequest's status
+	// Use the first DomainRequest's spec.domainRoutes
 	dr := domainRequestList.Items[0]
-	return dr.Status.Subdomain, dr.Status.Domain, nil
+	if len(dr.Spec.DomainRoutes) == 0 {
+		return "", "", fmt.Errorf("DomainRequest has no domain routes")
+	}
+
+	// Parse the full domain (e.g., "beanbag.khost.dev") into subdomain and domain
+	fullDomain := dr.Spec.DomainRoutes[0].Domain
+	parts := strings.SplitN(fullDomain, ".", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid domain format: %s (expected subdomain.domain)", fullDomain)
+	}
+
+	return parts[0], parts[1], nil
 }
 
 // getRouterIP gets the ClusterIP of the ingress controller service
