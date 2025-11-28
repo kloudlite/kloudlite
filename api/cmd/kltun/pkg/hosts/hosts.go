@@ -194,9 +194,16 @@ func (bm *BaseManager) WriteKLHosts(entries []Entry) error {
 	return nil
 }
 
-// BackupSystemHosts creates a backup of the system hosts file
+// BackupSystemHosts creates a backup of the system hosts file if one doesn't exist
+// Only one backup is kept at /etc/hosts.klbackup
 func (bm *BaseManager) BackupSystemHosts() (string, error) {
-	backupPath := bm.systemHostsPath + ".klbackup." + time.Now().Format("20060102-150405")
+	backupPath := bm.systemHostsPath + ".klbackup"
+
+	// Check if backup already exists - don't overwrite
+	if _, err := os.Stat(backupPath); err == nil {
+		// Backup exists, skip creating a new one
+		return backupPath, nil
+	}
 
 	src, err := os.Open(bm.systemHostsPath)
 	if err != nil {
