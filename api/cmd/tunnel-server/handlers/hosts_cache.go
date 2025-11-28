@@ -363,6 +363,9 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 		// Try to get hash from Environment status first
 		var envOwnerHash string
 		var env environmentv1.Environment
+		hc.logger.Info("Processing environment namespace",
+			zap.String("namespace", ns.Name),
+			zap.String("envName", envName))
 		if err := hc.cache.Get(ctx, client.ObjectKey{Name: envName}, &env); err != nil {
 			// Fall back to computing hash if Environment not found
 			owner := ns.Annotations[kloudliteCreatedByAnnotation]
