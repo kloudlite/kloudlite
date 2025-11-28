@@ -72,7 +72,7 @@ export function WorkspaceConnectOptions({
   const vscodeUrl = sshHost ? `vscode://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
   const cursorUrl = sshHost ? `cursor://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
   const zedUrl = sshHost ? `zed://ssh/${sshHost}${workspaceDir}` : ''
-  const antigravityUrl = sshHost ? `antigravity://ssh-remote+kl@${sshHost}${workspaceDir}` : ''
+  const antigravityUrl = sshHost ? `antigravity://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
   const sshCommand = sshHost ? `ssh kl@${sshHost}` : ''
 
   const accessMethods: AccessMethod[] = [
