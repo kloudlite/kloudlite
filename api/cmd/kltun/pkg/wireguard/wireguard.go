@@ -1,11 +1,13 @@
 package wireguard
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
+	"strings"
 
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
@@ -134,18 +136,95 @@ func (d *Device) LoadConfig(configFile string) error {
 	return nil
 }
 
-// SetConfig sets WireGuard configuration from string
+// SetConfig sets WireGuard configuration from string (INI or IPC format)
 func (d *Device) SetConfig(config string) error {
 	if d.wgDevice == nil {
 		return fmt.Errorf("device not started")
 	}
 
-	if err := d.wgDevice.IpcSet(config); err != nil {
+	// Convert INI format to IPC format if needed
+	ipcConfig := convertINIToIPC(config)
+
+	if err := d.wgDevice.IpcSet(ipcConfig); err != nil {
 		return fmt.Errorf("failed to set configuration: %w", err)
 	}
 
 	d.logger.Verbosef("Configuration applied successfully")
 	return nil
+}
+
+// convertINIToIPC converts WireGuard INI config format to IPC format
+// INI format: [Interface]/[Peer] sections with Key = Value
+// IPC format: key=value\n pairs (peer sections start with public_key=)
+func convertINIToIPC(config string) string {
+	// If it doesn't look like INI format, return as-is
+	if !strings.Contains(config, "[Interface]") && !strings.Contains(config, "[Peer]") {
+		return config
+	}
+
+	var result strings.Builder
+	scanner := bufio.NewScanner(strings.NewReader(config))
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Skip section headers
+		if line == "[Interface]" || line == "[Peer]" {
+			continue
+		}
+
+		// Parse key = value
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		// Map INI keys to IPC keys
+		ipcKey := mapINIKeyToIPC(key)
+		if ipcKey == "" {
+			continue // Skip unsupported keys like Address
+		}
+
+		result.WriteString(ipcKey)
+		result.WriteString("=")
+		result.WriteString(value)
+		result.WriteString("\n")
+	}
+
+	return result.String()
+}
+
+// mapINIKeyToIPC maps INI config keys to IPC format keys
+func mapINIKeyToIPC(key string) string {
+	switch key {
+	case "PrivateKey":
+		return "private_key"
+	case "PublicKey":
+		return "public_key"
+	case "ListenPort":
+		return "listen_port"
+	case "AllowedIPs":
+		return "allowed_ip"
+	case "Endpoint":
+		return "endpoint"
+	case "PersistentKeepalive":
+		return "persistent_keepalive_interval"
+	case "PresharedKey":
+		return "preshared_key"
+	// These are not part of IPC format (handled by network stack)
+	case "Address", "DNS", "MTU", "Table", "PreUp", "PostUp", "PreDown", "PostDown":
+		return ""
+	default:
+		return ""
+	}
 }
 
 // GetConfig retrieves the current WireGuard configuration
