@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
 import { serviceService } from '@/lib/services/service.service'
@@ -13,6 +14,20 @@ interface PageProps {
   }>
 }
 
+// Parse subdomain and domain from hostname
+function parseDomainInfo(hostname: string): { subdomain: string; domain: string } {
+  const baseDomain = 'khost.dev'
+  const hostParts = hostname.split('.')
+  const baseParts = baseDomain.split('.')
+
+  let subdomain = ''
+  if (hostParts.length > baseParts.length) {
+    subdomain = hostParts[hostParts.length - baseParts.length - 1]
+  }
+
+  return { subdomain, domain: baseDomain }
+}
+
 export default async function ServicesPage({ params }: PageProps) {
   const session = await getSession()
 
@@ -23,11 +38,18 @@ export default async function ServicesPage({ params }: PageProps) {
   const { id } = await params
   const environmentName = id
 
-  // Fetch the environment to get its target namespace
+  // Get hostname from headers for domain parsing
+  const headersList = await headers()
+  const host = headersList.get('host') || ''
+  const { subdomain, domain } = parseDomainInfo(host)
+
+  // Fetch the environment to get its target namespace and owner
   let namespace = ''
+  let owner = ''
   try {
     const environment = await environmentService.getEnvironment(environmentName)
     namespace = environment.spec.targetNamespace || ''
+    owner = environment.spec.ownedBy || ''
   } catch (error) {
     console.error('Failed to fetch environment:', error)
     return (
@@ -36,6 +58,10 @@ export default async function ServicesPage({ params }: PageProps) {
           services={[]}
           namespace={environmentName}
           composition={null}
+          environmentName={environmentName}
+          owner=""
+          subdomain={subdomain}
+          domain={domain}
         />
       </div>
     )
@@ -65,6 +91,10 @@ export default async function ServicesPage({ params }: PageProps) {
       services={services}
       namespace={namespace}
       composition={composition}
+      environmentName={environmentName}
+      owner={owner}
+      subdomain={subdomain}
+      domain={domain}
     />
   )
 }
