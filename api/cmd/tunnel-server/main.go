@@ -16,10 +16,15 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/kloudlite/kloudlite/api/cmd/tunnel-server/handlers"
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/tunnel"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -385,7 +390,14 @@ func createK8sClient() (client.Client, error) {
 		return nil, fmt.Errorf("failed to get in-cluster config: %w", err)
 	}
 
-	k8sClient, err := client.New(cfg, client.Options{})
+	// Create a scheme with all required types
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
+	utilruntime.Must(networkingv1.AddToScheme(scheme))
+	utilruntime.Must(domainrequestv1.AddToScheme(scheme))
+
+	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
