@@ -285,6 +285,37 @@ func (sm *ServiceManager) EnsureRunning() error {
 	return nil
 }
 
+// Restart stops and starts the daemon to reload tokens
+func (sm *ServiceManager) Restart() error {
+	// Need admin to restart
+	if !isAdmin() {
+		return sm.escalateAndRestart()
+	}
+
+	// Stop first (ignore errors if not running)
+	sm.Stop()
+
+	// Start fresh
+	return sm.Start()
+}
+
+// escalateAndRestart escalates privileges and restarts the daemon
+func (sm *ServiceManager) escalateAndRestart() error {
+	fmt.Println("Restarting kltun daemon...")
+
+	// Use PowerShell to request elevation for restart
+	cmd := exec.Command("powershell", "-Command", "Start-Process", "-Verb", "RunAs", "-FilePath", sm.executablePath, "-ArgumentList", "daemon stop; Start-Sleep -Seconds 1; daemon start", "-Wait")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to restart daemon: %w", err)
+	}
+
+	return nil
+}
+
 // escalateAndInstall escalates privileges and installs the daemon
 func (sm *ServiceManager) escalateAndInstall() error {
 	fmt.Println("Daemon is not running. Requesting administrator privileges to start it...")

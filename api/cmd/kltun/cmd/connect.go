@@ -39,14 +39,22 @@ func init() {
 func runConnect() error {
 	fmt.Println("Connecting to Kloudlite VPN...")
 
-	// Ensure daemon is running
+	// Restart daemon to reload tokens (tokens are stored in memory)
 	sm, err := daemon.NewServiceManager()
 	if err != nil {
 		return fmt.Errorf("failed to create service manager: %w", err)
 	}
 
-	if err := sm.EnsureRunning(); err != nil {
-		return fmt.Errorf("failed to start daemon: %w", err)
+	// If daemon is not installed, install it first
+	if !sm.IsInstalled() {
+		if err := sm.EnsureRunning(); err != nil {
+			return fmt.Errorf("failed to install daemon: %w", err)
+		}
+	} else {
+		// Restart to reload tokens
+		if err := sm.Restart(); err != nil {
+			return fmt.Errorf("failed to restart daemon: %w", err)
+		}
 	}
 
 	// Connect to daemon
