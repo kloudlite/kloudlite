@@ -349,17 +349,17 @@ func createInitialConfig(configPath string) error {
 	}
 
 	// Create initial config with proper PostUp/PostDown scripts
+	// Note: ip_forward sysctl is set at pod level via securityContext
 	config := fmt.Sprintf(`# WireGuard Server Configuration
 [Interface]
 PrivateKey = %s
 Address = 10.17.0.1/24
 ListenPort = 51820
 
-# NAT and forwarding rules
+# NAT and forwarding rules (ip_forward set at pod level)
 PostUp = iptables -A FORWARD -i %%i -j ACCEPT
 PostUp = iptables -A FORWARD -o %%i -j ACCEPT
 PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-PostUp = sysctl -w net.ipv4.ip_forward=1
 
 PostDown = iptables -D FORWARD -i %%i -j ACCEPT
 PostDown = iptables -D FORWARD -o %%i -j ACCEPT
