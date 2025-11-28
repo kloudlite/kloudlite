@@ -205,6 +205,21 @@ func convertINIToIPC(config string) string {
 			value = hexValue
 		}
 
+		// Handle comma-separated AllowedIPs - each needs its own line in IPC format
+		if key == "AllowedIPs" {
+			ips := strings.Split(value, ",")
+			for _, ip := range ips {
+				ip = strings.TrimSpace(ip)
+				if ip != "" {
+					result.WriteString(ipcKey)
+					result.WriteString("=")
+					result.WriteString(ip)
+					result.WriteString("\n")
+				}
+			}
+			continue
+		}
+
 		result.WriteString(ipcKey)
 		result.WriteString("=")
 		result.WriteString(value)
