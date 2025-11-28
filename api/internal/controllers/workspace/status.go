@@ -78,12 +78,11 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		accessURLs := make(map[string]string)
 
 		// Try to fetch DomainRequest - it may not exist yet if WorkMachine is still setting up
-		// DomainRequest is cluster-scoped, so lookup by name only
+		// DomainRequest is cluster-scoped with name "installation-domain"
 		var domainRequest domainrequestv1.DomainRequest
 		domainRequestExists := false
-		if err := r.Get(ctx, fn.NN("", workspace.Spec.WorkmachineName), &domainRequest); err != nil {
-			logger.Warn("DomainRequest not found yet, using pod IP fallback URLs",
-				zap.String("workmachine", workspace.Spec.WorkmachineName),
+		if err := r.Get(ctx, fn.NN("", "installation-domain"), &domainRequest); err != nil {
+			logger.Warn("DomainRequest 'installation-domain' not found, using pod IP fallback URLs",
 				zap.Error(err))
 		} else {
 			domainRequestExists = true
