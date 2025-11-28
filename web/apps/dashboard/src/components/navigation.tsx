@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOutAction } from '@/app/actions/auth'
@@ -14,11 +13,10 @@ import {
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
 import { Badge } from '@kloudlite/ui'
-import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Package, Download } from 'lucide-react'
+import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Package } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
 import { ThemeSwitcher } from './theme-switcher'
 import { VPNStatusIndicator } from './vpn-status-indicator'
-import { KltunSetupDialog } from './kltun-setup-dialog'
 
 interface NavigationProps {
   email?: string
@@ -38,7 +36,6 @@ export function Navigation({
   hasWorkMachine = false,
 }: NavigationProps) {
   const pathname = usePathname()
-  const [kltunDialogOpen, setKltunDialogOpen] = useState(false)
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
@@ -123,11 +120,6 @@ export function Navigation({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setKltunDialogOpen(true)}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Setup kltun
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 {(isAdmin || isSuperAdmin) && (
                   <>
                     <DropdownMenuItem asChild>
@@ -153,9 +145,6 @@ export function Navigation({
           </div>
         </div>
       </div>
-
-      {/* kltun Setup Dialog */}
-      <KltunSetupDialog open={kltunDialogOpen} onOpenChange={setKltunDialogOpen} />
     </header>
   )
 }
