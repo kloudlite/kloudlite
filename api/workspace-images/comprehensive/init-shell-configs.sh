@@ -11,11 +11,13 @@ BASH_PROFILE="$KL_HOME/.bash_profile"
 ZSHRC="$KL_HOME/.zshrc"
 FISH_CONFIG="$KL_HOME/.config/fish/config.fish"
 STARSHIP_CONFIG="$KL_HOME/.config/starship.toml"
+SSH_CONFIG="$KL_HOME/.ssh/config"
 
 # Marker to identify our configuration
 BASHRC_MARKER="# Kloudlite shell initialization"
 BASH_PROFILE_MARKER="# Source .bashrc for login shells"
 TERM_FIX_MARKER="# Fix TERM for SSH login"
+SSH_CONFIG_MARKER="# Kloudlite SSH configuration"
 
 echo "Initializing shell configurations for kl user..."
 
@@ -98,6 +100,26 @@ if [ ! -L "$STARSHIP_CONFIG" ]; then
     ln -sf /etc/kloudlite/starship.toml "$STARSHIP_CONFIG"
     chown -R kl:kl "$KL_HOME/.config"
     echo "starship config linked"
+fi
+
+# Initialize SSH client configuration
+mkdir -p "$KL_HOME/.ssh"
+chmod 700 "$KL_HOME/.ssh"
+if ! has_marker "$SSH_CONFIG" "$SSH_CONFIG_MARKER"; then
+    echo "Setting up SSH client config..."
+    cat > "$SSH_CONFIG" << 'EOF'
+# Kloudlite SSH configuration
+# Use the workspace's SSH key for all connections
+Host *
+    IdentityFile /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+EOF
+    chmod 600 "$SSH_CONFIG"
+    chown -R kl:kl "$KL_HOME/.ssh"
+    echo "SSH client config configured"
+else
+    echo "SSH client config already configured"
 fi
 
 echo "Shell configurations initialized successfully"
