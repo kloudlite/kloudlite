@@ -1,0 +1,355 @@
+package handlers
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
+	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
+	toolscache "k8s.io/client-go/tools/cache"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// HostsCache maintains a cached list of hosts entries updated via watches
+type HostsCache struct {
+	mu    sync.RWMutex
+	hosts []HostEntry
+
+	// Configuration
+	logger           *zap.Logger
+	namespace        string // Namespace where router service is located
+	routerServiceRef string
+
+	// Kubernetes client for initial fetch and rebuilds
+	k8sClient client.Client
+
+	// Controller-runtime cache for watches
+	cache cache.Cache
+}
+
+// HostsCacheConfig holds configuration for the hosts cache
+type HostsCacheConfig struct {
+	Namespace        string
+	RouterServiceRef string
+	RestConfig       *rest.Config
+	Scheme           *runtime.Scheme
+}
+
+// NewHostsCache creates a new HostsCache
+func NewHostsCache(logger *zap.Logger, k8sClient client.Client, cfg HostsCacheConfig) (*HostsCache, error) {
+	if cfg.Namespace == "" {
+		cfg.Namespace = "default"
+	}
+	if cfg.RouterServiceRef == "" {
+		cfg.RouterServiceRef = "wm-ingress-controller"
+	}
+
+	// Create controller-runtime cache
+	c, err := cache.New(cfg.RestConfig, cache.Options{
+		Scheme: cfg.Scheme,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cache: %w", err)
+	}
+
+	return &HostsCache{
+		hosts:            make([]HostEntry, 0),
+		logger:           logger,
+		namespace:        cfg.Namespace,
+		routerServiceRef: cfg.RouterServiceRef,
+		k8sClient:        k8sClient,
+		cache:            c,
+	}, nil
+}
+
+// Start starts the cache and sets up watches
+func (hc *HostsCache) Start(ctx context.Context) error {
+	hc.logger.Info("starting hosts cache")
+
+	// Start the cache in background
+	go func() {
+		if err := hc.cache.Start(ctx); err != nil {
+			hc.logger.Error("cache stopped with error", zap.Error(err))
+		}
+	}()
+
+	// Wait for cache to sync
+	if !hc.cache.WaitForCacheSync(ctx) {
+		return fmt.Errorf("failed to sync cache")
+	}
+
+	hc.logger.Info("cache synced, setting up informers")
+
+	// Setup informers for each resource type
+	if err := hc.setupInformers(ctx); err != nil {
+		return fmt.Errorf("failed to setup informers: %w", err)
+	}
+
+	// Do initial rebuild
+	hc.rebuild(ctx)
+
+	hc.logger.Info("hosts cache started successfully")
+	return nil
+}
+
+// setupInformers sets up informers for all watched resources
+func (hc *HostsCache) setupInformers(ctx context.Context) error {
+	// Get informer for Ingresses
+	ingressInformer, err := hc.cache.GetInformer(ctx, &networkingv1.Ingress{})
+	if err != nil {
+		return fmt.Errorf("failed to get ingress informer: %w", err)
+	}
+
+	// Get informer for Services
+	serviceInformer, err := hc.cache.GetInformer(ctx, &corev1.Service{})
+	if err != nil {
+		return fmt.Errorf("failed to get service informer: %w", err)
+	}
+
+	// Get informer for Namespaces
+	namespaceInformer, err := hc.cache.GetInformer(ctx, &corev1.Namespace{})
+	if err != nil {
+		return fmt.Errorf("failed to get namespace informer: %w", err)
+	}
+
+	// Get informer for DomainRequests
+	domainRequestInformer, err := hc.cache.GetInformer(ctx, &domainrequestv1.DomainRequest{})
+	if err != nil {
+		return fmt.Errorf("failed to get domainrequest informer: %w", err)
+	}
+
+	// Create debounced rebuild function
+	var rebuildTimer *time.Timer
+	var rebuildMu sync.Mutex
+	debouncedRebuild := func() {
+		rebuildMu.Lock()
+		defer rebuildMu.Unlock()
+
+		if rebuildTimer != nil {
+			rebuildTimer.Stop()
+		}
+		rebuildTimer = time.AfterFunc(500*time.Millisecond, func() {
+			hc.rebuild(ctx)
+		})
+	}
+
+	// Event handler for all resources
+	handler := toolscache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			hc.logger.Debug("resource added, triggering rebuild")
+			debouncedRebuild()
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			hc.logger.Debug("resource updated, triggering rebuild")
+			debouncedRebuild()
+		},
+		DeleteFunc: func(obj interface{}) {
+			hc.logger.Debug("resource deleted, triggering rebuild")
+			debouncedRebuild()
+		},
+	}
+
+	// Add event handlers
+	if _, err := ingressInformer.AddEventHandler(handler); err != nil {
+		return fmt.Errorf("failed to add ingress event handler: %w", err)
+	}
+	if _, err := serviceInformer.AddEventHandler(handler); err != nil {
+		return fmt.Errorf("failed to add service event handler: %w", err)
+	}
+	if _, err := namespaceInformer.AddEventHandler(handler); err != nil {
+		return fmt.Errorf("failed to add namespace event handler: %w", err)
+	}
+	if _, err := domainRequestInformer.AddEventHandler(handler); err != nil {
+		return fmt.Errorf("failed to add domainrequest event handler: %w", err)
+	}
+
+	return nil
+}
+
+// rebuild rebuilds the entire hosts cache
+func (hc *HostsCache) rebuild(ctx context.Context) {
+	hc.logger.Debug("rebuilding hosts cache")
+
+	hosts := make([]HostEntry, 0)
+
+	// Get subdomain and domain from DomainRequest
+	subdomain, domain, err := hc.getDomainInfo(ctx)
+	if err != nil {
+		hc.logger.Warn("failed to get domain info from DomainRequest, service hosts will not be added",
+			zap.Error(err))
+	}
+
+	// Get the router service ClusterIP for ingresses
+	routerIP, err := hc.getRouterIP(ctx)
+	if err != nil {
+		hc.logger.Warn("failed to get router service IP, ingress hosts will not be added",
+			zap.String("service", hc.routerServiceRef),
+			zap.Error(err))
+	}
+
+	// Get all ingresses cluster-wide and add their hosts
+	if routerIP != "" {
+		ingressHosts, err := hc.getIngressHosts(ctx, routerIP)
+		if err != nil {
+			hc.logger.Error("failed to get ingress hosts", zap.Error(err))
+		} else {
+			hosts = append(hosts, ingressHosts...)
+		}
+	}
+
+	// Get services from kloudlite environment namespaces
+	if subdomain != "" && domain != "" {
+		serviceHosts, err := hc.getServiceHosts(ctx, subdomain, domain)
+		if err != nil {
+			hc.logger.Error("failed to get service hosts", zap.Error(err))
+		} else {
+			hosts = append(hosts, serviceHosts...)
+		}
+	}
+
+	// Update cache
+	hc.mu.Lock()
+	hc.hosts = hosts
+	hc.mu.Unlock()
+
+	hc.logger.Info("hosts cache rebuilt",
+		zap.Int("count", len(hosts)),
+		zap.String("subdomain", subdomain),
+		zap.String("domain", domain))
+}
+
+// GetHosts returns the cached hosts entries (thread-safe)
+func (hc *HostsCache) GetHosts() []HostEntry {
+	hc.mu.RLock()
+	defer hc.mu.RUnlock()
+
+	// Return a copy to prevent race conditions
+	result := make([]HostEntry, len(hc.hosts))
+	copy(result, hc.hosts)
+	return result
+}
+
+// getDomainInfo retrieves subdomain and domain from DomainRequest CR
+func (hc *HostsCache) getDomainInfo(ctx context.Context) (subdomain, domain string, err error) {
+	var domainRequestList domainrequestv1.DomainRequestList
+	if err := hc.cache.List(ctx, &domainRequestList); err != nil {
+		return "", "", fmt.Errorf("failed to list DomainRequests: %w", err)
+	}
+
+	if len(domainRequestList.Items) == 0 {
+		return "", "", fmt.Errorf("no DomainRequest found")
+	}
+
+	// Use the first DomainRequest's status
+	dr := domainRequestList.Items[0]
+	return dr.Status.Subdomain, dr.Status.Domain, nil
+}
+
+// getRouterIP gets the ClusterIP of the ingress controller service
+func (hc *HostsCache) getRouterIP(ctx context.Context) (string, error) {
+	routerSvc := &corev1.Service{}
+	if err := hc.cache.Get(ctx, client.ObjectKey{
+		Namespace: hc.namespace,
+		Name:      hc.routerServiceRef,
+	}, routerSvc); err != nil {
+		return "", fmt.Errorf("failed to get router service: %w", err)
+	}
+
+	clusterIP := routerSvc.Spec.ClusterIP
+	if clusterIP == "" || clusterIP == "None" {
+		return "", fmt.Errorf("router service has no ClusterIP")
+	}
+
+	return clusterIP, nil
+}
+
+// getIngressHosts gets all ingress hosts cluster-wide
+func (hc *HostsCache) getIngressHosts(ctx context.Context, routerIP string) ([]HostEntry, error) {
+	var ingressList networkingv1.IngressList
+	if err := hc.cache.List(ctx, &ingressList); err != nil {
+		return nil, fmt.Errorf("failed to list ingresses: %w", err)
+	}
+
+	hosts := make([]HostEntry, 0)
+	for i := range ingressList.Items {
+		for j := range ingressList.Items[i].Spec.Rules {
+			host := ingressList.Items[i].Spec.Rules[j].Host
+			if host != "" {
+				hosts = append(hosts, HostEntry{
+					Hostname: host,
+					IP:       routerIP,
+					Type:     "ingress",
+				})
+			}
+		}
+	}
+
+	return hosts, nil
+}
+
+// getServiceHosts gets all services from kloudlite environment namespaces
+func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain string) ([]HostEntry, error) {
+	// List namespaces with kloudlite environment label
+	var namespaceList corev1.NamespaceList
+	if err := hc.cache.List(ctx, &namespaceList, client.HasLabels{kloudliteEnvironmentLabel}); err != nil {
+		return nil, fmt.Errorf("failed to list namespaces: %w", err)
+	}
+
+	hosts := make([]HostEntry, 0)
+	for i := range namespaceList.Items {
+		ns := &namespaceList.Items[i]
+
+		// Get environment name from label
+		envName := ns.Labels[kloudliteEnvironmentLabel]
+		if envName == "" {
+			continue
+		}
+
+		// Get owner from annotation
+		owner := ns.Annotations[kloudliteCreatedByAnnotation]
+		if owner == "" {
+			owner = "unknown"
+		}
+
+		// List services in this namespace
+		var serviceList corev1.ServiceList
+		if err := hc.cache.List(ctx, &serviceList, client.InNamespace(ns.Name)); err != nil {
+			hc.logger.Warn("failed to list services in namespace",
+				zap.String("namespace", ns.Name),
+				zap.Error(err))
+			continue
+		}
+
+		for j := range serviceList.Items {
+			svc := &serviceList.Items[j]
+
+			// Skip services without ClusterIP (headless services)
+			if svc.Spec.ClusterIP == "" || svc.Spec.ClusterIP == "None" {
+				continue
+			}
+
+			// Skip kubernetes default service
+			if svc.Name == "kubernetes" && svc.Namespace == "default" {
+				continue
+			}
+
+			// Build hostname: {service}-{envName}-{owner}.{subdomain}.{domain}
+			hostname := fmt.Sprintf("%s-%s-%s.%s.%s", svc.Name, envName, owner, subdomain, domain)
+
+			hosts = append(hosts, HostEntry{
+				Hostname: hostname,
+				IP:       svc.Spec.ClusterIP,
+				Type:     "service",
+			})
+		}
+	}
+
+	return hosts, nil
+}

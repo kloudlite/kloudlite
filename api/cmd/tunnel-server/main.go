@@ -85,7 +85,7 @@ func main() {
 	}
 
 	// Create Kubernetes client (required for loading secrets)
-	k8sClient, err := createK8sClient()
+	k8sClient, restConfig, scheme, err := createK8sClient()
 	if err != nil {
 		logger.Fatal("failed to create Kubernetes client", zap.Error(err))
 	}
@@ -151,11 +151,19 @@ func main() {
 	})
 	mux.Handle("/ca-cert", caCertHandler)
 
-	// Hosts handler
-	hostsHandler := handlers.NewHostsHandler(logger, k8sClient, handlers.HostsHandlerConfig{
+	// Create hosts cache with watch-based updates
+	hostsCache, err := handlers.NewHostsCache(logger, k8sClient, handlers.HostsCacheConfig{
 		Namespace:        cfg.Namespace,
 		RouterServiceRef: cfg.RouterServiceRef,
+		RestConfig:       restConfig,
+		Scheme:           scheme,
 	})
+	if err != nil {
+		logger.Fatal("failed to create hosts cache", zap.Error(err))
+	}
+
+	// Hosts handler (reads from cache)
+	hostsHandler := handlers.NewHostsHandler(logger, hostsCache)
 	mux.Handle("/hosts", hostsHandler)
 
 	logger.Info("registered HTTP endpoints",
@@ -176,6 +184,13 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
+
+	// Start hosts cache (runs informers in background)
+	go func() {
+		if err := hostsCache.Start(ctx); err != nil {
+			logger.Error("hosts cache error", zap.Error(err))
+		}
+	}()
 
 	// Start config watcher if enabled
 	if cfg.WatchConfig {
@@ -384,10 +399,11 @@ PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 }
 
 // createK8sClient creates a Kubernetes client using in-cluster config
-func createK8sClient() (client.Client, error) {
+// Returns the client, rest config, and scheme for use by other components
+func createK8sClient() (client.Client, *rest.Config, *runtime.Scheme, error) {
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get in-cluster config: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to get in-cluster config: %w", err)
 	}
 
 	// Create a scheme with all required types
@@ -399,10 +415,10 @@ func createK8sClient() (client.Client, error) {
 
 	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
-	return k8sClient, nil
+	return k8sClient, cfg, scheme, nil
 }
 
 // setupWireGuard initializes the WireGuard interface
