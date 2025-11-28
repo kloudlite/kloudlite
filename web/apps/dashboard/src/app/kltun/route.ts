@@ -302,7 +302,7 @@ while [ $ELAPSED -lt $TIMEOUT ]; do
         break
     fi
 
-    echo -ne "\${BLUE}.\${NC}"
+    printf "\${BLUE}.\${NC}"
     sleep 2
     ELAPSED=\$((ELAPSED + 2))
 done
