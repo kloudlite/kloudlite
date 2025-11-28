@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -92,6 +93,23 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
 		req.Host = backendURL.Host
+	}
+
+	// Enable WebSocket support by flushing responses immediately
+	proxy.FlushInterval = -1
+
+	// Custom transport to handle WebSocket upgrades
+	proxy.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     false, // Disable HTTP/2 for WebSocket compatibility
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
 	}
 
 	// Error handler
