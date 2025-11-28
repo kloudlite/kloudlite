@@ -166,13 +166,18 @@ func main() {
 	hostsHandler := handlers.NewHostsHandler(logger, hostsCache)
 	mux.Handle("/hosts", hostsHandler)
 
+	// VPN status handler (for vpn-check connectivity verification)
+	vpnStatusHandler := handlers.NewVPNStatusHandler(logger)
+	mux.Handle("/", vpnStatusHandler)
+
 	logger.Info("registered HTTP endpoints",
 		zap.String("websocket", "/ws"),
 		zap.String("health", "/health"),
 		zap.String("wg-public-key", "GET /wg/public-key"),
 		zap.String("wg-peer", "POST|DELETE /wg/peer"),
 		zap.String("ca-cert", "GET /ca-cert"),
-		zap.String("hosts", "GET /hosts"))
+		zap.String("hosts", "GET /hosts"),
+		zap.String("vpn-status", "GET /"))
 
 	// Create UDP tunnel server
 	server := tunnel.NewUDPServer(listener, logger)
