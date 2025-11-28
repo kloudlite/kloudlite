@@ -262,7 +262,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 				{
 					Name:            "workspace",
 					Image:           "ghcr.io/kloudlite/kloudlite/workspace-comprehensive:dev",
-					ImagePullPolicy: corev1.PullIfNotPresent,
+					ImagePullPolicy: corev1.PullAlways,
 					Env:             envVars,
 					Ports: []corev1.ContainerPort{
 						{
