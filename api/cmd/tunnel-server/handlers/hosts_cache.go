@@ -422,8 +422,8 @@ func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain s
 			continue
 		}
 
-		// Generate hash of owner
-		ownerHash := generateHash(owner)
+		// Generate hash of owner-workspaceName for unique, DNS-friendly hostnames
+		wsHash := generateHash(fmt.Sprintf("%s-%s", owner, ws.Name))
 
 		// Get workspace service ClusterIP
 		// The service has the same name as the workspace
@@ -444,8 +444,8 @@ func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain s
 			continue
 		}
 
-		// Build hostname: {workspaceName}-{hash(owner)}.{subdomain}.{domain}
-		hostname := fmt.Sprintf("%s-%s.%s.%s", ws.Name, ownerHash, subdomain, domain)
+		// Build hostname: {workspaceName}-{hash(owner-workspaceName)}.{subdomain}.{domain}
+		hostname := fmt.Sprintf("%s-%s.%s.%s", ws.Name, wsHash, subdomain, domain)
 
 		hosts = append(hosts, HostEntry{
 			Hostname: hostname,
