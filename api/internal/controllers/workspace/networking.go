@@ -60,7 +60,7 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 						Name:       "ssh",
 						Protocol:   corev1.ProtocolTCP,
 						Port:       22,
-						TargetPort: intstr.FromInt(2222),
+						TargetPort: intstr.FromInt(22),
 					},
 					{
 						Name:       "code-server",
