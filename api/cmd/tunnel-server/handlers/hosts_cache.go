@@ -444,8 +444,8 @@ func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain s
 			continue
 		}
 
-		// Build hostname: {workspaceName}-{hash(owner-workspaceName)}.{subdomain}.{domain}
-		hostname := fmt.Sprintf("%s-%s.%s.%s", ws.Name, wsHash, subdomain, domain)
+		// Build hostname: {hash(owner-workspaceName)}.{subdomain}.{domain}
+		hostname := fmt.Sprintf("%s.%s.%s", wsHash, subdomain, domain)
 
 		hosts = append(hosts, HostEntry{
 			Hostname: hostname,
