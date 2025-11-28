@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/daemon"
 	"github.com/spf13/cobra"
@@ -59,6 +60,21 @@ func runConnect() error {
 
 	// Connect to daemon
 	client := daemon.NewClient(sm.GetSocketPath())
+
+	// Wait for daemon to be ready (max 10 seconds)
+	fmt.Print("Waiting for daemon to be ready")
+	for i := 0; i < 100; i++ {
+		if client.IsRunning() {
+			fmt.Println(" ✓")
+			break
+		}
+		if i == 99 {
+			fmt.Println(" failed")
+			return fmt.Errorf("daemon failed to start within 10 seconds")
+		}
+		fmt.Print(".")
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	// Start VPN connection via daemon
 	sessionID, err := client.VPNConnect(connectToken, connectServer)
