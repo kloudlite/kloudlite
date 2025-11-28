@@ -105,12 +105,32 @@ func (m *LinuxManager) List() ([]Entry, error) {
 
 // Sync synchronizes kl.hosts to /etc/hosts
 func (m *LinuxManager) Sync() error {
-	// Backup first
-	backupPath, err := m.BackupSystemHosts()
+	// Read system hosts first to validate
+	originalLines, err := m.ReadSystemHosts()
 	if err != nil {
+		return err
+	}
+
+	// Remove existing managed section to get original non-kloudlite entries
+	nonManagedLines := m.RemoveManagedSection(originalLines)
+
+	// Safety check: ensure we have at least some original entries
+	hasLocalhost := false
+	for _, line := range nonManagedLines {
+		if strings.Contains(line, "localhost") {
+			hasLocalhost = true
+			break
+		}
+	}
+
+	if !hasLocalhost && len(nonManagedLines) < 3 {
+		return fmt.Errorf("safety check failed: original hosts file appears corrupted or empty (missing localhost entries). Please restore from backup at /etc/hosts.klbackup")
+	}
+
+	// Ensure backup exists (only creates if not already present)
+	if _, err := m.BackupSystemHosts(); err != nil {
 		return fmt.Errorf("failed to backup hosts file: %w", err)
 	}
-	fmt.Printf("Created backup: %s\n", backupPath)
 
 	// Read kl.hosts entries
 	klEntries, err := m.ReadKLHosts()
@@ -118,14 +138,8 @@ func (m *LinuxManager) Sync() error {
 		return err
 	}
 
-	// Read system hosts
-	lines, err := m.ReadSystemHosts()
-	if err != nil {
-		return err
-	}
-
-	// Remove existing managed section
-	lines = m.RemoveManagedSection(lines)
+	// Start with non-managed lines
+	lines := nonManagedLines
 
 	// Trim trailing empty lines
 	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
@@ -161,12 +175,10 @@ func (m *LinuxManager) Sync() error {
 
 // Clean removes all kloudlite entries
 func (m *LinuxManager) Clean() error {
-	// Backup first
-	backupPath, err := m.BackupSystemHosts()
-	if err != nil {
+	// Ensure backup exists
+	if _, err := m.BackupSystemHosts(); err != nil {
 		return fmt.Errorf("failed to backup hosts file: %w", err)
 	}
-	fmt.Printf("Created backup: %s\n", backupPath)
 
 	// Read system hosts
 	lines, err := m.ReadSystemHosts()
