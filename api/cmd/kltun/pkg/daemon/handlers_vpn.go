@@ -125,6 +125,14 @@ func (s *Server) handleVPNQuit(req *Request) *Response {
 		conn.CancelFunc()
 	}
 
+	// Wait for cleanup to complete with timeout
+	select {
+	case <-conn.DoneChan:
+		fmt.Printf("Connection %s cleaned up successfully\n", sessionID)
+	case <-time.After(10 * time.Second):
+		fmt.Printf("Warning: Timeout waiting for connection %s cleanup\n", sessionID)
+	}
+
 	// Remove from connections map
 	s.connMutex.Lock()
 	delete(s.connections, sessionID)
