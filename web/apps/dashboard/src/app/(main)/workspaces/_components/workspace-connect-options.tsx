@@ -68,14 +68,6 @@ export function WorkspaceConnectOptions({
   const workspaceDir = `/home/kl/workspaces/${workspaceName}`
   const sshCommand = `ssh -J ${jumpHost} kl@${targetHost} -t "cd ${workspaceDir} && exec \\$SHELL"`
 
-  // SSH config for manual setup
-  const sshConfig = `Host ${workspaceName}
-  HostName workspace-${workspaceName}
-  User kl
-  ProxyJump kloudlite@localhost:2222
-  StrictHostKeyChecking no
-  UserKnownHostsFile /dev/null`
-
   // SSH commands for IDEs (include jump host in the command)
   const sshJumpFlag = `-o "ProxyJump=${jumpHost}"`
   const vscodeCommand = `code --folder-uri "vscode-remote://ssh-remote+kl@${targetHost}${workspaceDir}" --remote-ssh-command "ssh ${sshJumpFlag}"`
@@ -83,30 +75,7 @@ export function WorkspaceConnectOptions({
   const zedCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && zed ."`
   const intellijCommand = `ssh ${sshJumpFlag} kl@${targetHost} -t "cd ${workspaceDir} && idea ."`
 
-  // VS Code extension deep link
-  const vsCodeExtensionUrl = workspace.metadata.namespace
-    ? `vscode://kloudlite.kloudlite-workspace/connect?workspace=${workspaceName}&namespace=${workspace.metadata.namespace}`
-    : ''
-
   const accessMethods: AccessMethod[] = [
-    {
-      id: 'ssh-config',
-      name: 'SSH Config',
-      description: 'Copy to ~/.ssh/config (required for IDEs)',
-      icon: <Copy className="h-4 w-4 flex-shrink-0" />,
-      available: !!workspaceName,
-      command: sshConfig,
-      category: 'Setup',
-    },
-    {
-      id: 'vscode-extension',
-      name: 'VS Code Extension',
-      description: 'Open in VS Code app',
-      icon: <VscVscode className="h-4 w-4 flex-shrink-0" />,
-      available: !!vsCodeExtensionUrl,
-      url: vsCodeExtensionUrl,
-      category: 'Desktop IDEs',
-    },
     {
       id: 'vscode',
       name: 'VS Code',
