@@ -388,13 +388,16 @@ func (h *WireGuardHandler) addPeer(device, publicKey, peerIP string) error {
 // The endpoint is 127.0.0.1:51821 because the client runs a local UDP proxy
 // that tunnels traffic over WebSocket to the server
 func (h *WireGuardHandler) generateClientConfig(privateKey, peerIP, serverPublicKey string) string {
+	// AllowedIPs includes:
+	// - VPN CIDR (10.17.0.0/24) for VPN gateway communication
+	// - Service CIDR (10.43.0.0/16) for ClusterIP service access
 	config := fmt.Sprintf(`[Interface]
 PrivateKey = %s
 Address = %s/32
 
 [Peer]
 PublicKey = %s
-AllowedIPs = %s
+AllowedIPs = %s, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
 PersistentKeepalive = 25
 `, privateKey, peerIP, serverPublicKey, h.cidr)
