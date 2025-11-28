@@ -1,7 +1,7 @@
 'use client'
 
-import { Network } from 'lucide-react'
-import { useState } from 'react'
+import { Network, Copy, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import type { K8sService } from '@kloudlite/types'
 import type { Composition } from '@kloudlite/types'
 import { Badge } from '@kloudlite/ui'
@@ -11,14 +11,62 @@ interface ServicesListProps {
   services: K8sService[]
   namespace: string
   composition: Composition | null
+  environmentName: string
+  owner: string
+  subdomain: string
+  domain: string
+}
+
+// Generate 8-character hash matching backend algorithm
+async function generateHash(input: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(input)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return hashHex.slice(0, 8)
 }
 
 export function ServicesList({
   services,
   namespace,
   composition,
+  environmentName,
+  owner,
+  subdomain,
+  domain,
 }: ServicesListProps) {
   const [open, setOpen] = useState(false)
+  const [envHash, setEnvHash] = useState<string>('')
+  const [copiedDns, setCopiedDns] = useState<string | null>(null)
+
+  // Generate hash on mount
+  useEffect(() => {
+    const computeHash = async () => {
+      if (environmentName && owner) {
+        const hash = await generateHash(`${environmentName}-${owner}`)
+        setEnvHash(hash)
+      }
+    }
+    computeHash()
+  }, [environmentName, owner])
+
+  const getDnsHostname = (serviceName: string) => {
+    if (!envHash || !subdomain || !domain) {
+      return `${serviceName}.${namespace}.svc.cluster.local`
+    }
+    return `${serviceName}-${envHash}.${subdomain}.${domain}`
+  }
+
+  const copyDns = async (hostname: string) => {
+    try {
+      await navigator.clipboard.writeText(hostname)
+      setCopiedDns(hostname)
+      setTimeout(() => setCopiedDns(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy DNS:', err)
+    }
+  }
   if (services.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-8">
@@ -100,9 +148,22 @@ export function ServicesList({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-mono text-sm">
-                        {service.name}.{service.namespace}.svc.cluster.local
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm">
+                          {getDnsHostname(service.name)}
+                        </span>
+                        <button
+                          onClick={() => copyDns(getDnsHostname(service.name))}
+                          className="text-muted-foreground hover:text-foreground p-1 rounded transition-colors"
+                          title="Copy DNS hostname"
+                        >
+                          {copiedDns === getDnsHostname(service.name) ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-mono text-sm">
