@@ -255,6 +255,43 @@ func (sm *ServiceManager) EnsureRunning() error {
 	return nil
 }
 
+// Restart stops and starts the daemon to reload tokens
+func (sm *ServiceManager) Restart() error {
+	// Need root to restart
+	if os.Geteuid() != 0 {
+		return sm.escalateAndRestart()
+	}
+
+	// Stop first (ignore errors if not running)
+	sm.Stop()
+
+	// Remove stale socket file
+	os.Remove(sm.GetSocketPath())
+
+	// Start fresh
+	return sm.Start()
+}
+
+// escalateAndRestart escalates privileges and restarts the daemon
+func (sm *ServiceManager) escalateAndRestart() error {
+	fmt.Println("Restarting kltun daemon...")
+
+	// Stop, remove socket, and start to reload tokens
+	exec.Command("sudo", "systemctl", "stop", SystemdServiceName).Run()
+	os.Remove(sm.GetSocketPath())
+
+	cmd := exec.Command("sudo", "systemctl", "start", SystemdServiceName)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to restart daemon: %w", err)
+	}
+
+	return nil
+}
+
 // escalateAndInstall escalates privileges and installs the daemon
 func (sm *ServiceManager) escalateAndInstall() error {
 	fmt.Println("Daemon is not running. Requesting administrator privileges to start it...")
