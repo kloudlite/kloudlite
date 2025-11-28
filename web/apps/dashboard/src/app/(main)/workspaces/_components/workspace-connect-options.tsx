@@ -73,7 +73,7 @@ export function WorkspaceConnectOptions({
   const cursorUrl = sshHost ? `cursor://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
   const zedUrl = sshHost ? `zed://ssh/kl@${sshHost}${workspaceDir}` : ''
   const antigravityUrl = sshHost ? `antigravity://vscode-remote/ssh-remote+kl@${sshHost}${workspaceDir}` : ''
-  const jetbrainsUrl = sshHost ? `jetbrains://gateway/ssh/environment?h=${sshHost}&u=kl&p=22&launchIde=true&ideHint=IU&projectHint=${encodeURIComponent(workspaceDir)}` : ''
+  const jetbrainsGatewayUrl = sshHost ? `jetbrains://gateway/ssh/environment?h=${sshHost}&u=kl&p=22&launchIde=true&ideHint=IU&projectHint=${encodeURIComponent(workspaceDir)}` : ''
   const sshCommand = sshHost ? `ssh kl@${sshHost}` : ''
 
   const accessMethods: AccessMethod[] = [
@@ -114,12 +114,12 @@ export function WorkspaceConnectOptions({
       category: 'Desktop IDEs',
     },
     {
-      id: 'jetbrains',
-      name: 'JetBrains',
+      id: 'jetbrains-gateway',
+      name: 'JetBrains Gateway',
       description: 'JetBrains Gateway SSH',
       icon: <SiJetbrains className="h-4 w-4 flex-shrink-0" />,
-      available: !!jetbrainsUrl,
-      url: jetbrainsUrl,
+      available: !!jetbrainsGatewayUrl,
+      url: jetbrainsGatewayUrl,
       category: 'Desktop IDEs',
     },
     {
