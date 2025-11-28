@@ -132,6 +132,11 @@ func (m *WindowsManager) Sync() error {
 	// Remove existing managed section
 	lines = m.RemoveManagedSection(lines)
 
+	// Trim trailing empty lines
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+
 	// Add new managed section if there are entries
 	// Windows doesn't support includes, so we append inline
 	if len(klEntries) > 0 {
