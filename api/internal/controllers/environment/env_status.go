@@ -25,17 +25,14 @@ func (r *EnvironmentReconciler) updateHashAndSubdomain(ctx context.Context, envi
 	// Compute hash from envName-owner
 	hash := generateHash(fmt.Sprintf("%s-%s", environment.Spec.Name, environment.Spec.OwnedBy))
 
-	// Get subdomain from DomainRequest (keyed by WorkMachine name)
+	// Get subdomain from installation-domain DomainRequest (shared across all environments)
 	subdomain := ""
-	if environment.Spec.WorkMachineName != "" {
-		var domainRequest domainrequestv1.DomainRequest
-		if err := r.Get(ctx, client.ObjectKey{Name: environment.Spec.WorkMachineName}, &domainRequest); err != nil {
-			logger.Debug("DomainRequest not found, subdomain will be empty",
-				zap.String("workmachine", environment.Spec.WorkMachineName),
-				zap.Error(err))
-		} else if domainRequest.Status.Subdomain != "" {
-			subdomain = domainRequest.Status.Subdomain
-		}
+	var domainRequest domainrequestv1.DomainRequest
+	if err := r.Get(ctx, client.ObjectKey{Name: "installation-domain"}, &domainRequest); err != nil {
+		logger.Debug("DomainRequest 'installation-domain' not found, subdomain will be empty",
+			zap.Error(err))
+	} else if domainRequest.Status.Subdomain != "" {
+		subdomain = domainRequest.Status.Subdomain
 	}
 
 	// Only update if values changed

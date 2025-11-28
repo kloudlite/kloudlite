@@ -80,6 +80,11 @@ spec:
                   type: string
                 description: Labels to apply to the namespace
                 type: object
+              name:
+                description: Name is the simple environment name (e.g., "dev-env")
+                  used for display as {userName}/{envName}
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
               networkPolicies:
                 description: NetworkPolicies defines network policies for the environment
                 properties:
@@ -147,15 +152,11 @@ spec:
                 required:
                 - enabled
                 type: object
-              name:
-                description: Name is the simple environment name (e.g., "dev-env")
-                  used for display as {userName}/{envName}
-                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+              nodeName:
+                description: |-
+                  NodeName specifies the node where all environment resources should run
+                  This is set from the WorkMachine's node assignment
                 type: string
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
               ownedBy:
                 description: OwnedBy is the username of the user who owns this environment
                 type: string
@@ -189,44 +190,6 @@ spec:
                 description: TargetNamespace is the namespace where all environment
                   resources will be deployed
                 type: string
-              tolerations:
-                items:
-                  description: |-
-                    The pod this Toleration is attached to tolerates any taint that matches
-                    the triple <key,value,effect> using the matching operator <operator>.
-                  properties:
-                    effect:
-                      description: |-
-                        Effect indicates the taint effect to match. Empty means match all taint effects.
-                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: |-
-                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
-                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
-                      type: string
-                    operator:
-                      description: |-
-                        Operator represents a key's relationship to the value.
-                        Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod can
-                        tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: |-
-                        TolerationSeconds represents the period of time the toleration (which must be
-                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
-                        it is not set, which means tolerate the taint forever (do not evict). Zero and
-                        negative values will be treated as 0 (evict immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: |-
-                        Value is the taint value the toleration matches to.
-                        If the operator is Exists, the value should be empty, otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
               workmachineName:
                 description: WorkMachineName references the WorkMachine this environment
                   belongs to
@@ -240,6 +203,112 @@ spec:
           status:
             description: EnvironmentStatus defines the observed state of Environment
             properties:
+              cloningStatus:
+                description: CloningStatus tracks the progress of environment cloning
+                  including volumes
+                properties:
+                  bytesTransferred:
+                    description: BytesTransferred tracks total bytes transferred during
+                      copy
+                    format: int64
+                    type: integer
+                  clonedPVCs:
+                    description: ClonedPVCs is the number of PVCs successfully cloned
+                    format: int32
+                    type: integer
+                  completionTime:
+                    description: CompletionTime is when the cloning process completed
+                      (success or failure)
+                    format: date-time
+                    type: string
+                  copyJobsStatus:
+                    description: CopyJobsStatus tracks the status of individual PVC
+                      copy jobs
+                    items:
+                      description: PVCCopyJobStatus tracks individual PVC copy job
+                        status
+                      properties:
+                        bytesTransferred:
+                          description: BytesTransferred is the number of bytes transferred
+                            for this PVC
+                          format: int64
+                          type: integer
+                        completionTime:
+                          description: CompletionTime when copy job completed
+                          format: date-time
+                          type: string
+                        errorMessage:
+                          description: ErrorMessage if copy job failed
+                          type: string
+                        phase:
+                          description: Phase represents the current phase of this
+                            copy job
+                          enum:
+                          - Pending
+                          - Creating
+                          - Copying
+                          - Completed
+                          - Failed
+                          type: string
+                        pvcName:
+                          description: PVCName is the name of the PVC being copied
+                          type: string
+                        receiverJobName:
+                          description: ReceiverJobName is the name of the receiver
+                            job in target namespace
+                          type: string
+                        senderJobName:
+                          description: SenderJobName is the name of the sender job
+                            in source namespace
+                          type: string
+                        startTime:
+                          description: StartTime when copy job started
+                          format: date-time
+                          type: string
+                      required:
+                      - phase
+                      - pvcName
+                      type: object
+                    type: array
+                  currentPVC:
+                    description: CurrentPVC is the name of the PVC currently being
+                      cloned
+                    type: string
+                  failedPVCs:
+                    description: FailedPVCs lists PVCs that failed to clone
+                    items:
+                      type: string
+                    type: array
+                  message:
+                    description: Message provides detailed information about the current
+                      cloning phase
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning
+                    enum:
+                    - Pending
+                    - Suspending
+                    - CloningResources
+                    - CloningPVCs
+                    - CreatingCopyJobs
+                    - WaitingForCopyCompletion
+                    - VerifyingCopies
+                    - CloningCompositions
+                    - Resuming
+                    - Completed
+                    - Failed
+                    type: string
+                  startTime:
+                    description: StartTime is when the cloning process started
+                    format: date-time
+                    type: string
+                  totalPVCs:
+                    description: TotalPVCs is the total number of PVCs to clone
+                    format: int32
+                    type: integer
+                required:
+                - phase
+                type: object
               conditions:
                 description: Conditions represent the latest available observations
                   of the environment's state
@@ -271,6 +340,11 @@ spec:
                   - type
                   type: object
                 type: array
+              hash:
+                description: |-
+                  Hash is an 8-character hash derived from environment name and owner for DNS-safe hostnames
+                  Format: hash(envName-owner)
+                type: string
               lastActivatedTime:
                 description: LastActivatedTime is the last time the environment was
                   activated
@@ -285,10 +359,6 @@ spec:
                 description: Message provides human-readable information about the
                   current state
                 type: string
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
               observedGeneration:
                 description: ObservedGeneration is the generation observed by the
                   controller
@@ -316,6 +386,33 @@ spec:
                     format: int32
                     type: integer
                 type: object
+              sourceCloningStatus:
+                description: SourceCloningStatus tracks when this environment is being
+                  used as a cloning source
+                properties:
+                  message:
+                    description: Message provides detailed information
+                    type: string
+                  phase:
+                    description: Phase represents the current phase of cloning from
+                      this source
+                    enum:
+                    - Suspended
+                    - Copying
+                    - Resuming
+                    type: string
+                  startTime:
+                    description: StartTime when cloning from this source started
+                    format: date-time
+                    type: string
+                  targetEnvironmentName:
+                    description: TargetEnvironmentName is the environment being created
+                      from this source
+                    type: string
+                required:
+                - phase
+                - targetEnvironmentName
+                type: object
               state:
                 description: State represents the current state of the environment
                 enum:
@@ -326,44 +423,10 @@ spec:
                 - deleting
                 - error
                 type: string
-              tolerations:
-                items:
-                  description: |-
-                    The pod this Toleration is attached to tolerates any taint that matches
-                    the triple <key,value,effect> using the matching operator <operator>.
-                  properties:
-                    effect:
-                      description: |-
-                        Effect indicates the taint effect to match. Empty means match all taint effects.
-                        When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: |-
-                        Key is the taint key that the toleration applies to. Empty means match all taint keys.
-                        If the key is empty, operator must be Exists; this combination means to match all values and all keys.
-                      type: string
-                    operator:
-                      description: |-
-                        Operator represents a key's relationship to the value.
-                        Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod can
-                        tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: |-
-                        TolerationSeconds represents the period of time the toleration (which must be
-                        of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
-                        it is not set, which means tolerate the taint forever (do not evict). Zero and
-                        negative values will be treated as 0 (evict immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: |-
-                        Value is the taint value the toleration matches to.
-                        If the operator is Exists, the value should be empty, otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
+              subdomain:
+                description: Subdomain is the subdomain assigned to this environment's
+                  workmachine (e.g., "beanbag.khost.dev")
+                type: string
             type: object
         type: object
     served: true
