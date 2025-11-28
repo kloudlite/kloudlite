@@ -109,12 +109,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "ensure-workspace-sshd-config",
-			Title:    "Ensure workspace-sshd-config ConfigMap",
-			OnCreate: r.ensureWorkspaceSSHDConfigMapStep,
-			OnDelete: nil,
-		},
-		{
 			Name:     "when-running/ensure-wm-ingress-controller",
 			Title:    "Ensure Workmachine Ingress Controller",
 			OnCreate: r.ensureWorkmachineIngressController,

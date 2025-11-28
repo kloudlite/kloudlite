@@ -15,9 +15,12 @@ COPY ../../bin/kl-linux /usr/local/bin/kl
 RUN chmod +x /usr/local/bin/kl
 
 # Install system dependencies including shells first with apt cache mount
+# Add fish-shell PPA for fish 3.4+ (required for starship compatibility with set -f)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y \
+  apt-get update && apt-get install -y software-properties-common \
+  && apt-add-repository -y ppa:fish-shell/release-3 \
+  && apt-get update && apt-get install -y \
   openssh-server \
   python3 \
   supervisor \
