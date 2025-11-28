@@ -78,12 +78,14 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	r.logger.Debug("Routing request",
-		zap.String("host", req.Host),
-		zap.String("path", req.URL.Path),
-		zap.String("backend", route.BackendURL),
-		zap.Bool("websocket", isWebSocketRequest(req)),
-	)
+	isWS := isWebSocketRequest(req)
+	if isWS {
+		r.logger.Info("Routing WebSocket request",
+			zap.String("host", req.Host),
+			zap.String("path", req.URL.Path),
+			zap.String("backend", route.BackendURL),
+		)
+	}
 
 	// Create reverse proxy
 	backendURL, err := url.Parse(route.BackendURL)
@@ -97,7 +99,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Handle WebSocket connections specially
-	if isWebSocketRequest(req) {
+	if isWS {
 		r.proxyWebSocket(w, req, backendURL)
 		return
 	}
@@ -221,7 +223,7 @@ func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backen
 
 	// If upgrade was successful, start bidirectional copy
 	if resp.StatusCode == http.StatusSwitchingProtocols {
-		r.logger.Debug("WebSocket connection established",
+		r.logger.Info("WebSocket connection established",
 			zap.String("backend", backendHost),
 		)
 
