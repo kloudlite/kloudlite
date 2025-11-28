@@ -52,8 +52,8 @@ jobs:
         run: |
           cd api
           mkdir -p bin
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/wm-ingress-controller ./cmd/wm-ingress-controller
-          ls -lh ./bin/wm-ingress-controller
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/wm-ingress ./cmd/wm-ingress-controller
+          ls -lh ./bin/wm-ingress
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
