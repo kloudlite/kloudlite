@@ -554,8 +554,8 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 			})
 			// Ignore context cancelled errors (expected when installation completes)
 			if err != nil && err != context.Canceled {
-				// Log streaming error, but don't fail installation
-				// The installation might still succeed
+				// Print streaming error for debugging
+				fmt.Fprintf(os.Stderr, "\n[!] Log streaming error: %v\n", err)
 			}
 		}()
 	}
