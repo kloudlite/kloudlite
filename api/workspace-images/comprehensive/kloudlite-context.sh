@@ -4,7 +4,6 @@
 
 # Exit if not in a Kloudlite workspace
 [ -z "$WORKSPACE_NAME" ] && exit 0
-[ -z "$WORKSPACE_NAMESPACE" ] && exit 0
 
 # Path to cached context file (written by workspace controller)
 CONTEXT_FILE="/tmp/kloudlite-context.json"
