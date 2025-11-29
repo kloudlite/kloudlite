@@ -72,60 +72,11 @@ export async function POST(request: NextRequest) {
       .setSubject(tokenData.email)
       .sign(secret)
 
-    // Fetch VPN configuration from backend
-    // Generate a backend token from the user info
-    const backendToken = await new SignJWT({
-      sub: tokenData.sub,
-      email: tokenData.email,
-      name: tokenData.name,
-      username: tokenData.username,
-      roles: tokenData.roles,
-      isActive: tokenData.isActive,
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('5m')
-      .sign(secret)
+    console.log('[VPN Exchange] Generated permanent token for user:', tokenData.username)
 
-    const backendUrl = env.apiUrl
-    let vpnConfig: unknown
-
-    console.log('[VPN Exchange] Fetching VPN config from backend:', backendUrl)
-
-    try {
-      const vpnResponse = await fetch(`${backendUrl}/api/v1/vpn/connect`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${backendToken}`,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      console.log('[VPN Exchange] Backend response status:', vpnResponse.status)
-
-      if (!vpnResponse.ok) {
-        const errorText = await vpnResponse.text()
-        console.error('[VPN Exchange] Backend VPN connect failed:', errorText)
-        return NextResponse.json(
-          { error: 'Failed to retrieve VPN configuration' },
-          { status: vpnResponse.status }
-        )
-      }
-
-      vpnConfig = await vpnResponse.json()
-      console.log('[VPN Exchange] VPN config received successfully')
-    } catch (error) {
-      console.error('[VPN Exchange] Failed to fetch VPN config from backend:', error)
-      return NextResponse.json(
-        { error: 'Failed to connect to VPN service' },
-        { status: 500 }
-      )
-    }
-
-    // Return permanent token and VPN configuration
+    // Return permanent token - the kltun daemon will use this for all tunnel server API calls
     return NextResponse.json({
       connection_token: permanentToken,
-      vpn_config: vpnConfig,
     })
   } catch (error) {
     console.error('Token exchange error:', error)
