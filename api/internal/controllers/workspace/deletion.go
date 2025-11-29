@@ -9,6 +9,7 @@ import (
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -241,6 +242,32 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 	// Directory cleanup is now handled by workmachine-node-manager via the
 	// "workspaces.kloudlite.io/directory-cleanup" finalizer, so we don't need
 	// to create cleanup pods anymore
+
+	// Delete ClusterRole and ClusterRoleBinding for environments access
+	// These cannot have owner references so must be deleted manually
+	clusterRoleName := fmt.Sprintf("workspace-%s-%s", workspace.Namespace, workspace.Name)
+
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+		},
+	}
+	if err := r.Delete(ctx, clusterRole); err != nil && !apierrors.IsNotFound(err) {
+		logger.Warn("Failed to delete ClusterRole", zap.String("name", clusterRoleName), zap.Error(err))
+	} else {
+		logger.Info("Deleted ClusterRole", zap.String("name", clusterRoleName))
+	}
+
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+		},
+	}
+	if err := r.Delete(ctx, clusterRoleBinding); err != nil && !apierrors.IsNotFound(err) {
+		logger.Warn("Failed to delete ClusterRoleBinding", zap.String("name", clusterRoleName), zap.Error(err))
+	} else {
+		logger.Info("Deleted ClusterRoleBinding", zap.String("name", clusterRoleName))
+	}
 
 	// Remove finalizer
 	controllerutil.RemoveFinalizer(workspace, workspaceFinalizer)
