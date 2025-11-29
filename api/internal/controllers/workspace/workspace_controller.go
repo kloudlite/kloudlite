@@ -14,12 +14,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -346,7 +348,37 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&workspacev1.Workspace{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Pod{}).
-		Owns(&packagesv1.PackageRequest{}).
 		Owns(&networkingv1.Ingress{}). // Watch Ingress resources owned by Workspaces
+		// Watch PackageRequest status changes and trigger Workspace reconciliation
+		// This is needed because host-manager updates PackageRequest status when packages are installed
+		Watches(
+			&packagesv1.PackageRequest{},
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+				pkgReq, ok := obj.(*packagesv1.PackageRequest)
+				if !ok {
+					return nil
+				}
+				// Find the owning Workspace from the owner references
+				for _, ownerRef := range pkgReq.OwnerReferences {
+					if ownerRef.Kind == "Workspace" {
+						// PackageRequest is cluster-scoped but owned by a namespaced Workspace
+						// The namespace should be the same as the WorkMachine's target namespace
+						// We need to find the Workspace by name across all namespaces
+						var workspaces workspacev1.WorkspaceList
+						if err := mgr.GetClient().List(ctx, &workspaces); err != nil {
+							return nil
+						}
+						for _, ws := range workspaces.Items {
+							if ws.Name == ownerRef.Name && ws.UID == ownerRef.UID {
+								return []reconcile.Request{
+									{NamespacedName: types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}},
+								}
+							}
+						}
+					}
+				}
+				return nil
+			}),
+		).
 		Complete(r)
 }
