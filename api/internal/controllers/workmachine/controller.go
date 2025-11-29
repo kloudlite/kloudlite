@@ -39,6 +39,9 @@ type Env struct {
 
 	HostManagerImage  string `env:"HOST_MANAGER_IMAGE" required:"true"`
 	TunnelServerImage string `env:"TUNNEL_SERVER_IMAGE" required:"true"`
+
+	// JWT secret for tunnel server authentication (shared with API server and frontend)
+	JWTSecret string `env:"JWT_SECRET" required:"true"`
 }
 
 type awsProviderEnv struct {

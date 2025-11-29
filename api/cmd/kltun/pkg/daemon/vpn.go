@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
@@ -53,8 +54,8 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	tunnelEndpoint := tunnelInfo.TunnelEndpoint
 
-	// 2. Create tunnel server client for direct communication
-	tunnelClient := api.NewTunnelClient(tunnelEndpoint)
+	// 2. Create tunnel server client for direct communication (with auth token)
+	tunnelClient := api.NewTunnelClient(tunnelEndpoint, token)
 
 	// 3. Create WireGuard peer on tunnel server
 	fmt.Printf("[Session %s] Creating WireGuard peer on tunnel server...\n", sessionID)
@@ -112,10 +113,14 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		MinVersion:         tls.VersionTLS13,
 		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
 	}
+	// Add Authorization header for WebSocket connection
+	wsHeaders := http.Header{
+		"Authorization": []string{"Bearer " + token},
+	}
 	dialer := transport.NewWebSocketDialer(
 		transportConfig,
 		tlsConfig,
-		nil, // No custom headers
+		wsHeaders,
 		logger,
 	)
 
@@ -252,8 +257,8 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 
 	tunnelEndpoint := tunnelInfo.TunnelEndpoint
 
-	// 2. Create tunnel server client for direct communication
-	tunnelClient := api.NewTunnelClient(tunnelEndpoint)
+	// 2. Create tunnel server client for direct communication (with auth token)
+	tunnelClient := api.NewTunnelClient(tunnelEndpoint, token)
 
 	// 3. Create WireGuard peer on tunnel server
 	fmt.Printf("[Session %s] Creating WireGuard peer on tunnel server...\n", sessionID)
@@ -308,10 +313,14 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		MinVersion:         tls.VersionTLS13,
 		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
 	}
+	// Add Authorization header for WebSocket connection
+	wsHeaders := http.Header{
+		"Authorization": []string{"Bearer " + token},
+	}
 	dialer := transport.NewWebSocketDialer(
 		transportConfig,
 		tlsConfig,
-		nil, // No custom headers
+		wsHeaders,
 		logger,
 	)
 

@@ -16,6 +16,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/kloudlite/kloudlite/api/cmd/tunnel-server/handlers"
+	"github.com/kloudlite/kloudlite/api/cmd/tunnel-server/middleware"
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -50,6 +51,9 @@ type Config struct {
 	// Hosts endpoint config
 	Namespace        string
 	RouterServiceRef string
+
+	// JWT authentication config
+	JWTSecret string
 }
 
 func main() {
@@ -66,12 +70,18 @@ func main() {
 	flag.StringVar(&cfg.CACertSecretName, "ca-cert-secret", "tunnel-server-ca", "Kubernetes secret name containing ca.crt")
 	flag.StringVar(&cfg.Namespace, "namespace", os.Getenv("POD_NAMESPACE"), "Namespace to query for ingresses (defaults to POD_NAMESPACE env var)")
 	flag.StringVar(&cfg.RouterServiceRef, "router-service", "wm-ingress-controller", "Name of the router service for hosts resolution")
+	flag.StringVar(&cfg.JWTSecret, "jwt-secret", os.Getenv("JWT_SECRET"), "JWT secret for token validation (can also be set via JWT_SECRET env var)")
 	version := flag.Bool("version", false, "Show version information")
 	flag.Parse()
 
 	if *version {
 		fmt.Println("wireguard-tls-proxy v2.0.0 (UDP-over-WebSocket)")
 		os.Exit(0)
+	}
+
+	// Validate required JWT secret
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET is required for authentication")
 	}
 
 	// Setup logger
@@ -131,9 +141,12 @@ func main() {
 		logger.Fatal("failed to create WebSocket listener", zap.Error(err))
 	}
 
-	// Register handlers
-	mux.HandleFunc("/ws", listener.GetWebSocketUpgradeHandler())          // WebSocket endpoint
-	mux.Handle("/health", handlers.NewHealthHandler(serverState, logger)) // Health check endpoint
+	// Create JWT middleware for authentication
+	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret, logger)
+
+	// Register handlers (all protected by JWT middleware)
+	mux.Handle("/ws", jwtMiddleware(http.HandlerFunc(listener.GetWebSocketUpgradeHandler()))) // WebSocket endpoint
+	mux.Handle("/health", jwtMiddleware(handlers.NewHealthHandler(serverState, logger)))      // Health check endpoint
 
 	// WireGuard peer management handlers
 	wgHandler := handlers.NewWireGuardHandler(logger, handlers.WireGuardHandlerConfig{
@@ -142,8 +155,8 @@ func main() {
 		ServerAddress: cfg.WgServerAddress,
 		Endpoint:      cfg.WgEndpoint,
 	})
-	mux.HandleFunc("/wg/public-key", wgHandler.GetPublicKeyHandler()) // GET
-	mux.HandleFunc("/wg/peer", wgHandler.PeerHandler())               // POST (create), DELETE (delete)
+	mux.Handle("/wg/public-key", jwtMiddleware(http.HandlerFunc(wgHandler.GetPublicKeyHandler()))) // GET
+	mux.Handle("/wg/peer", jwtMiddleware(http.HandlerFunc(wgHandler.PeerHandler())))               // POST (create), DELETE (delete)
 
 	// CA certificate handler (loads from K8s secret)
 	caCertHandler := handlers.NewCACertHandler(logger, handlers.CACertHandlerConfig{
@@ -151,7 +164,7 @@ func main() {
 		Namespace:  cfg.Namespace,
 		SecretName: cfg.CACertSecretName,
 	})
-	mux.Handle("/ca-cert", caCertHandler)
+	mux.Handle("/ca-cert", jwtMiddleware(caCertHandler))
 
 	// Create hosts cache with watch-based updates
 	hostsCache, err := handlers.NewHostsCache(logger, k8sClient, handlers.HostsCacheConfig{
@@ -166,11 +179,11 @@ func main() {
 
 	// Hosts handler (reads from cache)
 	hostsHandler := handlers.NewHostsHandler(logger, hostsCache)
-	mux.Handle("/hosts", hostsHandler)
+	mux.Handle("/hosts", jwtMiddleware(hostsHandler))
 
 	// VPN status handler (for vpn-check connectivity verification)
 	vpnStatusHandler := handlers.NewVPNStatusHandler(logger)
-	mux.Handle("/", vpnStatusHandler)
+	mux.Handle("/", jwtMiddleware(vpnStatusHandler))
 
 	logger.Info("registered HTTP endpoints",
 		zap.String("websocket", "/ws"),

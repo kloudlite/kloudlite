@@ -13,14 +13,17 @@ import (
 // TunnelClient is a client for direct communication with the tunnel server
 type TunnelClient struct {
 	BaseURL    string
+	Token      string // JWT token for authentication
 	HTTPClient *http.Client
 }
 
 // NewTunnelClient creates a new tunnel server client
 // endpoint should be in format "ip:port" (e.g., "203.0.113.1:443")
-func NewTunnelClient(endpoint string) *TunnelClient {
+// token is the JWT token for authentication
+func NewTunnelClient(endpoint string, token string) *TunnelClient {
 	return &TunnelClient{
 		BaseURL: fmt.Sprintf("https://%s", endpoint),
+		Token:   token,
 		HTTPClient: &http.Client{
 			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
@@ -30,6 +33,13 @@ func NewTunnelClient(endpoint string) *TunnelClient {
 				},
 			},
 		},
+	}
+}
+
+// setAuthHeader adds the Authorization header to the request if token is set
+func (c *TunnelClient) setAuthHeader(req *http.Request) {
+	if c.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}
 }
 
@@ -61,6 +71,7 @@ func (c *TunnelClient) CreatePeer(deviceName string) (*CreatePeerResponse, error
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	c.setAuthHeader(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -101,6 +112,7 @@ func (c *TunnelClient) DeletePeer(publicKey string) error {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	c.setAuthHeader(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -130,6 +142,7 @@ func (c *TunnelClient) GetPublicKey() (*GetPublicKeyResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+	c.setAuthHeader(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -158,6 +171,7 @@ func (c *TunnelClient) GetCACert() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
+	c.setAuthHeader(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -188,6 +202,7 @@ func (c *TunnelClient) GetHosts() ([]HostEntry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+	c.setAuthHeader(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -218,6 +233,7 @@ func (c *TunnelClient) Health() error {
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
+	c.setAuthHeader(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
