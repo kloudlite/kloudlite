@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { getSession } from '@/lib/get-session'
 import { workspaceService } from '@/lib/services/workspace.service'
 import type {
   WorkspaceCreateRequest,
@@ -162,23 +161,9 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
   try {
     // Import required modules dynamically to ensure this only runs on server
     const { env } = await import('@/lib/env')
-    const { cookies } = await import('next/headers')
+    const { getAuthToken } = await import('@/lib/get-session')
 
-    const session = await getSession()
-    if (!session?.user) {
-      return {
-        success: false,
-        error: 'Not authenticated',
-      }
-    }
-
-    // Get NextAuth JWT token from cookie
-    const cookieStore = await cookies()
-    const cookieName = process.env.NODE_ENV === 'production'
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token'
-    const token = cookieStore.get(cookieName)?.value
-
+    const token = await getAuthToken()
     if (!token) {
       return {
         success: false,
