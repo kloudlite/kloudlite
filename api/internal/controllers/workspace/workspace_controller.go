@@ -292,6 +292,13 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Resources: []string{"packagerequests/status"},
 				Verbs:     []string{"get"},
 			},
+			{
+				// Allow reading pod logs (for streaming nix installation output from host-manager)
+				// Note: resourceNames doesn't work with subresources like pods/log
+				APIGroups: []string{""},
+				Resources: []string{"pods/log"},
+				Verbs:     []string{"get"},
+			},
 		}
 
 		return nil
