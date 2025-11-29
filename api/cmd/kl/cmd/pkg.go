@@ -275,10 +275,10 @@ func packageAddByNames(packageNames []string) error {
 		}
 
 		fmt.Printf("[✓] Package %s@%s added to workspace\n", selectedPkg.Name, selectedVersion)
-		fmt.Println("[...] Waiting for installation to complete...")
+		fmt.Println("[...] Installing (streaming nix output)...")
 
-		// Wait for package installation
-		if err := waitForPackageInstallation(ctx, attrPath); err != nil {
+		// Wait for package installation with log streaming
+		if err := waitForPackageInstallationWithLogs(ctx, attrPath, commitHash); err != nil {
 			fmt.Fprintf(os.Stderr, "  [!] Installation failed: %v\n", err)
 		}
 	}
@@ -350,10 +350,10 @@ func packageAddInteractive() error {
 	}
 
 	fmt.Printf("[✓] Package %s@%s added to workspace\n", selectedPkg.Name, selectedVersion)
-	fmt.Println("[...] Waiting for installation to complete...")
+	fmt.Println("[...] Installing (streaming nix output)...")
 
-	// Wait for package installation
-	return waitForPackageInstallation(ctx, attrPath)
+	// Wait for package installation with log streaming
+	return waitForPackageInstallationWithLogs(ctx, attrPath, commitHash)
 }
 
 func searchPackagesDynamic() (*devbox.PackageSearchResult, error) {
@@ -529,10 +529,39 @@ func selectVersionWithFzf(versions []devbox.PackageVersion, pkgName string) (str
 }
 
 func waitForPackageInstallation(ctx context.Context, packageName string) error {
+	return waitForPackageInstallationWithLogs(ctx, packageName, "")
+}
+
+func waitForPackageInstallationWithLogs(ctx context.Context, packageName string, nixpkgsCommit string) error {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	timeout := time.After(5 * time.Minute)
+
+	// Create a cancellable context for log streaming
+	logCtx, cancelLogs := context.WithCancel(ctx)
+	defer cancelLogs()
+
+	// Start streaming logs in background if we have a commit hash to filter by
+	if nixpkgsCommit != "" {
+		// Get host-manager namespace from environment
+		hostManagerNamespace := os.Getenv("HOST_MANAGER_NAMESPACE")
+		if hostManagerNamespace == "" {
+			hostManagerNamespace = "kloudlite-hostmanager"
+		}
+
+		go func() {
+			err := WsClient.StreamHostManagerLogs(logCtx, hostManagerNamespace, nixpkgsCommit, func(line string) {
+				// Print each line of nix installation output
+				fmt.Printf("  %s\n", line)
+			})
+			// Ignore context cancelled errors (expected when installation completes)
+			if err != nil && err != context.Canceled {
+				// Log streaming error, but don't fail installation
+				// The installation might still succeed
+			}
+		}()
+	}
 
 	for {
 		select {
@@ -570,8 +599,10 @@ func waitForPackageInstallation(ctx context.Context, packageName string) error {
 				}
 			}
 
-			// Still installing - show a dot to indicate progress
-			fmt.Print(".")
+			// Still installing - if not streaming logs, show a dot
+			if nixpkgsCommit == "" {
+				fmt.Print(".")
+			}
 		}
 	}
 }
@@ -630,10 +661,10 @@ func handlePackageInstall(packageName, version, channel, commit string) error {
 	}
 
 	fmt.Printf("[✓] Package %s added to workspace\n", packageName)
-	fmt.Println("[...] Waiting for installation to complete...")
+	fmt.Println("[...] Installing (streaming nix output)...")
 
-	// Wait for package installation
-	return waitForPackageInstallation(ctx, packageName)
+	// Wait for package installation with log streaming
+	return waitForPackageInstallationWithLogs(ctx, packageName, commit)
 }
 
 func handlePackageUninstall(packageName string) error {

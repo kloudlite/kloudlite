@@ -1,15 +1,19 @@
 package workspace
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -19,6 +23,7 @@ import (
 // Client wraps the Kubernetes client for workspace operations
 type Client struct {
 	K8sClient client.Client
+	Clientset *kubernetes.Clientset
 	Namespace string
 	Name      string
 }
@@ -66,8 +71,15 @@ func New() (*Client, error) {
 		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 
+	// Create kubernetes clientset for pod logs
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create kubernetes clientset: %w", err)
+	}
+
 	return &Client{
 		K8sClient: k8sClient,
+		Clientset: clientset,
 		Namespace: workspaceNamespace,
 		Name:      workspaceName,
 	}, nil
@@ -130,4 +142,57 @@ func getKubeConfig() (*rest.Config, error) {
 	}
 
 	return config, nil
+}
+
+// StreamHostManagerLogs streams logs from the host-manager pod, filtering for lines with the given tag.
+// The tag is typically the nixpkgs commit hash used during package installation.
+// onLine is called for each matching line with the tag stripped.
+// Returns when context is cancelled or an error occurs.
+func (c *Client) StreamHostManagerLogs(ctx context.Context, namespace string, tag string, onLine func(line string)) error {
+	podName := "host-manager-0"
+	containerName := "host-manager"
+
+	// Request pod logs with follow enabled
+	req := c.Clientset.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{
+		Container: containerName,
+		Follow:    true,
+		TailLines: func() *int64 { v := int64(0); return &v }(), // Start from current position
+	})
+
+	stream, err := req.Stream(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to open log stream: %w", err)
+	}
+	defer stream.Close()
+
+	// Tag prefix to filter for
+	tagPrefix := fmt.Sprintf("[pkg:%s]", tag)
+
+	// Read and filter lines
+	reader := bufio.NewReader(stream)
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return fmt.Errorf("error reading log stream: %w", err)
+		}
+
+		// Check if line contains our tag
+		if strings.Contains(line, tagPrefix) {
+			// Strip the tag prefix and call the callback
+			cleanLine := strings.TrimPrefix(line, tagPrefix)
+			cleanLine = strings.TrimSpace(cleanLine)
+			if cleanLine != "" {
+				onLine(cleanLine)
+			}
+		}
+	}
 }

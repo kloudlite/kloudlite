@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -59,6 +61,60 @@ func (r *RealCommandExecutor) Execute(script string) ([]byte, error) {
 	// Don't set NIX_STATE_DIR since we're mounting /nix/store and /nix/var directly
 	cmd.Env = os.Environ()
 	return cmd.CombinedOutput()
+}
+
+// ExecuteWithTaggedOutput runs a command and prints each line of output with a tag prefix.
+// This is used for streaming nix installation output so CLI can filter by tag.
+// Tag format: [pkg:<tag>] <line>
+func ExecuteWithTaggedOutput(script string, tag string) ([]byte, error) {
+	cmd := exec.Command("sh", "-c", script)
+	cmd.Env = os.Environ()
+
+	// Get pipes for stdout and stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stderr pipe: %w", err)
+	}
+
+	// Start the command
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start command: %w", err)
+	}
+
+	// Collect output while printing tagged lines
+	var output []byte
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	// Function to read and print tagged output
+	readAndPrint := func(reader io.Reader) {
+		defer wg.Done()
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			line := scanner.Text()
+			// Print tagged output for CLI to capture
+			fmt.Printf("[pkg:%s] %s\n", tag, line)
+			// Also collect the output
+			mu.Lock()
+			output = append(output, []byte(line+"\n")...)
+			mu.Unlock()
+		}
+	}
+
+	wg.Add(2)
+	go readAndPrint(stdout)
+	go readAndPrint(stderr)
+
+	// Wait for all output to be read
+	wg.Wait()
+
+	// Wait for command to finish
+	err = cmd.Wait()
+	return output, err
 }
 
 // HostCommandExecutor implements CommandExecutor using nsenter to run commands on the host
@@ -450,6 +506,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 
 	var installScript string
 	var pkgSource string
+	var streamTag string // Tag for streaming output (nixpkgs commit hash)
 
 	// Priority: NixpkgsCommit > Channel > latest unstable
 	if pkg.NixpkgsCommit != "" {
@@ -461,6 +518,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -f %s -iA %s`,
 			profilePath, nixpkgsTarball, pkgAttr,
 		)
+		streamTag = pkg.NixpkgsCommit // Use commit hash as tag for CLI filtering
 		r.Logger.Info("Installing package from nixpkgs commit",
 			zap2.String("package", pkg.Name),
 			zap2.String("commit", pkg.NixpkgsCommit))
@@ -482,7 +540,14 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 			zap2.String("package", pkg.Name))
 	}
 
-	output, err := r.CmdExec.Execute(installScript)
+	// Use streaming output with tag when nixpkgs commit is available (for CLI log filtering)
+	var output []byte
+	var err error
+	if streamTag != "" {
+		output, err = ExecuteWithTaggedOutput(installScript, streamTag)
+	} else {
+		output, err = r.CmdExec.Execute(installScript)
+	}
 	if err != nil {
 		return workspacev1.InstalledPackage{}, fmt.Errorf("nix-env failed: %w, output: %s", err, string(output))
 	}
