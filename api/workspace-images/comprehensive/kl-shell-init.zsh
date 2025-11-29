@@ -15,6 +15,10 @@ fi
 typeset -U path
 path=(/home/kl/.local/bin ${path[@]:#*/games})
 
+# Configure npm to install global packages in user directory
+# This allows npm install -g to work without sudo
+export NPM_CONFIG_PREFIX="$HOME/.local"
+
 # Initialize starship prompt
 export STARSHIP_CONFIG=~/.config/starship.toml
 eval "$(starship init zsh)"
