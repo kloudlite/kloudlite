@@ -544,11 +544,8 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 
 	// Start streaming logs in background if we have a commit hash to filter by
 	if nixpkgsCommit != "" {
-		// Get host-manager namespace from environment
-		hostManagerNamespace := os.Getenv("HOST_MANAGER_NAMESPACE")
-		if hostManagerNamespace == "" {
-			hostManagerNamespace = "kloudlite-hostmanager"
-		}
+		// Use workspace namespace for host-manager (host-manager runs in same namespace as workspace)
+		hostManagerNamespace := WsClient.Namespace
 
 		go func() {
 			err := WsClient.StreamHostManagerLogs(logCtx, hostManagerNamespace, nixpkgsCommit, func(line string) {
