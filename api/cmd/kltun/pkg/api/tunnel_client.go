@@ -46,21 +46,24 @@ func (c *TunnelClient) setAuthHeader(req *http.Request) {
 // CreatePeerRequest represents the request to create a WireGuard peer
 type CreatePeerRequest struct {
 	DeviceName string `json:"deviceName"`
+	PublicKey  string `json:"publicKey"` // Client's WireGuard public key
 }
 
 // CreatePeerResponse represents the response from creating a peer
 type CreatePeerResponse struct {
-	Success   bool   `json:"success"`
-	PublicKey string `json:"publicKey"`
-	IP        string `json:"ip"`
-	Config    string `json:"config"` // Full WireGuard config for the client
+	Success         bool   `json:"success"`
+	IP              string `json:"ip"`
+	ServerPublicKey string `json:"serverPublicKey"` // Server's WireGuard public key
+	CIDR            string `json:"cidr"`            // VPN CIDR (e.g., "10.17.0.0/24")
+	AlreadyExists   bool   `json:"alreadyExists"`   // True if peer already existed
 }
 
 // CreatePeer creates a new WireGuard peer on the tunnel server
-func (c *TunnelClient) CreatePeer(deviceName string) (*CreatePeerResponse, error) {
+// deviceName is used to identify the device, publicKey is the client's WireGuard public key
+func (c *TunnelClient) CreatePeer(deviceName, publicKey string) (*CreatePeerResponse, error) {
 	url := fmt.Sprintf("%s/wg/peer", c.BaseURL)
 
-	reqBody := CreatePeerRequest{DeviceName: deviceName}
+	reqBody := CreatePeerRequest{DeviceName: deviceName, PublicKey: publicKey}
 	jsonBody, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)

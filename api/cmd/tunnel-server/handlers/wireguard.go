@@ -65,14 +65,16 @@ type PublicKeyResponse struct {
 // CreatePeerRequest represents the request to create a peer
 type CreatePeerRequest struct {
 	DeviceName string `json:"deviceName"`
+	PublicKey  string `json:"publicKey"` // Client's WireGuard public key
 }
 
-// CreatePeerResponse represents the response with full WireGuard config
+// CreatePeerResponse represents the response for peer creation
 type CreatePeerResponse struct {
-	Success   bool   `json:"success"`
-	PublicKey string `json:"publicKey"`
-	IP        string `json:"ip"`
-	Config    string `json:"config"` // Full WireGuard config for the client
+	Success         bool   `json:"success"`
+	IP              string `json:"ip"`
+	ServerPublicKey string `json:"serverPublicKey"` // Server's WireGuard public key
+	CIDR            string `json:"cidr"`            // VPN CIDR (e.g., "10.17.0.0/24")
+	AlreadyExists   bool   `json:"alreadyExists"`   // True if peer already existed
 }
 
 // DeletePeerRequest represents the request to delete a peer
@@ -149,35 +151,53 @@ func (h *WireGuardHandler) handleCreatePeer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Generate key pair for the peer
-	privateKey, publicKey, err := h.generateKeyPair()
-	if err != nil {
-		h.logger.Error("failed to generate key pair", zap.Error(err))
-		http.Error(w, fmt.Sprintf("failed to generate key pair: %v", err), http.StatusInternalServerError)
+	if req.PublicKey == "" {
+		http.Error(w, "publicKey is required", http.StatusBadRequest)
 		return
 	}
 
-	// Allocate an IP for the peer
-	peerIP, err := h.allocateIP(publicKey)
-	if err != nil {
-		h.logger.Error("failed to allocate IP", zap.Error(err))
-		http.Error(w, fmt.Sprintf("failed to allocate IP: %v", err), http.StatusInternalServerError)
-		return
-	}
+	// Check if peer already exists
+	existingIP, alreadyExists := h.getPeerIP(req.PublicKey)
 
-	// Add peer to WireGuard
-	if err := h.addPeer(device, publicKey, peerIP); err != nil {
-		h.logger.Error("failed to add peer",
+	var peerIP string
+	if alreadyExists {
+		// Peer already exists, return existing IP
+		peerIP = existingIP
+		h.logger.Info("peer already exists, returning existing configuration",
 			zap.String("device", device),
-			zap.String("publicKey", publicKey),
-			zap.Error(err))
-		// Release the allocated IP on failure
-		h.releaseIP(publicKey)
-		http.Error(w, fmt.Sprintf("failed to add peer: %v", err), http.StatusInternalServerError)
-		return
+			zap.String("deviceName", req.DeviceName),
+			zap.String("publicKey", req.PublicKey),
+			zap.String("ip", peerIP))
+	} else {
+		// Allocate an IP for the new peer
+		var err error
+		peerIP, err = h.allocateIP(req.PublicKey)
+		if err != nil {
+			h.logger.Error("failed to allocate IP", zap.Error(err))
+			http.Error(w, fmt.Sprintf("failed to allocate IP: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Add peer to WireGuard
+		if err := h.addPeer(device, req.PublicKey, peerIP); err != nil {
+			h.logger.Error("failed to add peer",
+				zap.String("device", device),
+				zap.String("publicKey", req.PublicKey),
+				zap.Error(err))
+			// Release the allocated IP on failure
+			h.releaseIP(req.PublicKey)
+			http.Error(w, fmt.Sprintf("failed to add peer: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		h.logger.Info("peer created successfully",
+			zap.String("device", device),
+			zap.String("deviceName", req.DeviceName),
+			zap.String("publicKey", req.PublicKey),
+			zap.String("ip", peerIP))
 	}
 
-	// Get server's public key for the config
+	// Get server's public key
 	serverPublicKey, err := h.getPublicKey(device)
 	if err != nil {
 		h.logger.Error("failed to get server public key", zap.Error(err))
@@ -185,20 +205,12 @@ func (h *WireGuardHandler) handleCreatePeer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Generate client WireGuard config
-	clientConfig := h.generateClientConfig(privateKey, peerIP, serverPublicKey)
-
-	h.logger.Info("peer created successfully",
-		zap.String("device", device),
-		zap.String("deviceName", req.DeviceName),
-		zap.String("publicKey", publicKey),
-		zap.String("ip", peerIP))
-
 	response := CreatePeerResponse{
-		Success:   true,
-		PublicKey: publicKey,
-		IP:        peerIP,
-		Config:    clientConfig,
+		Success:         true,
+		IP:              peerIP,
+		ServerPublicKey: serverPublicKey,
+		CIDR:            h.cidr,
+		AlreadyExists:   alreadyExists,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -244,28 +256,6 @@ func (h *WireGuardHandler) handleDeletePeer(w http.ResponseWriter, r *http.Reque
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error("failed to encode response", zap.Error(err))
 	}
-}
-
-// generateKeyPair generates a WireGuard key pair
-func (h *WireGuardHandler) generateKeyPair() (privateKey, publicKey string, err error) {
-	// Generate private key
-	privCmd := exec.Command("wg", "genkey")
-	privOutput, err := privCmd.Output()
-	if err != nil {
-		return "", "", fmt.Errorf("failed to generate private key: %w", err)
-	}
-	privateKey = strings.TrimSpace(string(privOutput))
-
-	// Derive public key from private key
-	pubCmd := exec.Command("wg", "pubkey")
-	pubCmd.Stdin = strings.NewReader(privateKey)
-	pubOutput, err := pubCmd.Output()
-	if err != nil {
-		return "", "", fmt.Errorf("failed to derive public key: %w", err)
-	}
-	publicKey = strings.TrimSpace(string(pubOutput))
-
-	return privateKey, publicKey, nil
 }
 
 // allocateIP allocates an IP address from the CIDR range
@@ -357,6 +347,45 @@ func (h *WireGuardHandler) getExistingPeerIPs() ([]string, error) {
 	return ips, nil
 }
 
+// getPeerIP checks if a peer with the given public key already exists and returns its IP
+func (h *WireGuardHandler) getPeerIP(publicKey string) (string, bool) {
+	// First check our in-memory allocation map
+	h.mu.Lock()
+	if ip, exists := h.allocatedIPs[publicKey]; exists {
+		h.mu.Unlock()
+		return ip, true
+	}
+	h.mu.Unlock()
+
+	// Also check WireGuard directly in case the map is out of sync
+	cmd := exec.Command("wg", "show", h.device, "allowed-ips")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", false
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		parts := strings.Fields(line)
+		if len(parts) >= 2 && parts[0] == publicKey {
+			// Found the peer, extract IP
+			allowedIPs := strings.Split(parts[1], ",")
+			if len(allowedIPs) > 0 {
+				ip := strings.Split(allowedIPs[0], "/")[0]
+				if ip != "" {
+					// Update our map for future lookups
+					h.mu.Lock()
+					h.allocatedIPs[publicKey] = ip
+					h.mu.Unlock()
+					return ip, true
+				}
+			}
+		}
+	}
+
+	return "", false
+}
+
 // incrementIP increments an IP address by 1
 func incrementIP(ip net.IP) net.IP {
 	result := make(net.IP, len(ip))
@@ -382,27 +411,6 @@ func (h *WireGuardHandler) addPeer(device, publicKey, peerIP string) error {
 		return fmt.Errorf("wg set failed: %s: %w", string(output), err)
 	}
 	return nil
-}
-
-// generateClientConfig generates a WireGuard config for the client
-// The endpoint is 127.0.0.1:51821 because the client runs a local UDP proxy
-// that tunnels traffic over WebSocket to the server
-func (h *WireGuardHandler) generateClientConfig(privateKey, peerIP, serverPublicKey string) string {
-	// AllowedIPs includes:
-	// - VPN CIDR (10.17.0.0/24) for VPN gateway communication
-	// - Service CIDR (10.43.0.0/16) for ClusterIP service access
-	config := fmt.Sprintf(`[Interface]
-PrivateKey = %s
-Address = %s/32
-
-[Peer]
-PublicKey = %s
-AllowedIPs = %s, 10.43.0.0/16
-Endpoint = 127.0.0.1:51821
-PersistentKeepalive = 25
-`, privateKey, peerIP, serverPublicKey, h.cidr)
-
-	return config
 }
 
 // getPublicKey retrieves the public key for the specified WireGuard device

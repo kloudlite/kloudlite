@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/deviceid"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/netconfig"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wgkeys"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wireguard"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/tunnel"
@@ -35,6 +36,15 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	}
 	fmt.Printf("[Session %s] Using device ID: %s\n", sessionID, deviceID)
 
+	// Get or create WireGuard key pair
+	keyPair, err := wgkeys.GetOrCreateKeyPair()
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to get WireGuard keys: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to get WireGuard keys: %w", err)
+		return
+	}
+	fmt.Printf("[Session %s] Using WireGuard public key: %s...\n", sessionID, keyPair.PublicKey[:20])
+
 	// 1. Get tunnel endpoint from Dashboard (the only Dashboard call needed)
 	fmt.Printf("[Session %s] Getting tunnel endpoint from Dashboard...\n", sessionID)
 	tunnelInfo, err := dashboardClient.GetTunnelEndpoint()
@@ -57,15 +67,19 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	// 2. Create tunnel server client for direct communication (with auth token)
 	tunnelClient := api.NewTunnelClient(tunnelEndpoint, token)
 
-	// 3. Create WireGuard peer on tunnel server
-	fmt.Printf("[Session %s] Creating WireGuard peer on tunnel server...\n", sessionID)
-	peerResp, err := tunnelClient.CreatePeer(deviceID)
+	// 3. Create WireGuard peer on tunnel server (send our public key)
+	fmt.Printf("[Session %s] Registering WireGuard peer on tunnel server...\n", sessionID)
+	peerResp, err := tunnelClient.CreatePeer(deviceID, keyPair.PublicKey)
 	if err != nil {
-		fmt.Printf("[Session %s] Failed to create WireGuard peer: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to create WireGuard peer: %w", err)
+		fmt.Printf("[Session %s] Failed to register WireGuard peer: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to register WireGuard peer: %w", err)
 		return
 	}
-	fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
+	if peerResp.AlreadyExists {
+		fmt.Printf("[Session %s] WireGuard peer already exists - IP: %s\n", sessionID, peerResp.IP)
+	} else {
+		fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
+	}
 
 	// 4. Get CA certificate from tunnel server
 	fmt.Printf("[Session %s] Fetching CA certificate from tunnel server...\n", sessionID)
@@ -181,8 +195,11 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		return
 	}
 	defer wgDevice.Close()
-	fmt.Printf("[WGConfig] %s", peerResp.Config)
-	if err := wgDevice.SetConfig(peerResp.Config); err != nil {
+
+	// Build WireGuard config locally using our private key and server's response
+	wgConfig := buildWireGuardConfig(keyPair.PrivateKey, peerResp.IP, peerResp.ServerPublicKey, peerResp.CIDR)
+	fmt.Printf("[WGConfig] %s", wgConfig)
+	if err := wgDevice.SetConfig(wgConfig); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
 		resultChan <- fmt.Errorf("failed to set WireGuard config: %w", err)
 		return
@@ -239,6 +256,14 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	}
 	fmt.Printf("[Session %s] Using device ID: %s\n", sessionID, deviceID)
 
+	// Get or create WireGuard key pair
+	keyPair, err := wgkeys.GetOrCreateKeyPair()
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to get WireGuard keys: %v\n", sessionID, err)
+		return
+	}
+	fmt.Printf("[Session %s] Using WireGuard public key: %s...\n", sessionID, keyPair.PublicKey[:20])
+
 	// 1. Get tunnel endpoint from Dashboard (the only Dashboard call needed)
 	fmt.Printf("[Session %s] Getting tunnel endpoint from Dashboard...\n", sessionID)
 	tunnelInfo, err := dashboardClient.GetTunnelEndpoint()
@@ -260,14 +285,18 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	// 2. Create tunnel server client for direct communication (with auth token)
 	tunnelClient := api.NewTunnelClient(tunnelEndpoint, token)
 
-	// 3. Create WireGuard peer on tunnel server
-	fmt.Printf("[Session %s] Creating WireGuard peer on tunnel server...\n", sessionID)
-	peerResp, err := tunnelClient.CreatePeer(deviceID)
+	// 3. Create WireGuard peer on tunnel server (send our public key)
+	fmt.Printf("[Session %s] Registering WireGuard peer on tunnel server...\n", sessionID)
+	peerResp, err := tunnelClient.CreatePeer(deviceID, keyPair.PublicKey)
 	if err != nil {
-		fmt.Printf("[Session %s] Failed to create WireGuard peer: %v\n", sessionID, err)
+		fmt.Printf("[Session %s] Failed to register WireGuard peer: %v\n", sessionID, err)
 		return
 	}
-	fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
+	if peerResp.AlreadyExists {
+		fmt.Printf("[Session %s] WireGuard peer already exists - IP: %s\n", sessionID, peerResp.IP)
+	} else {
+		fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
+	}
 
 	// 4. Get CA certificate from tunnel server
 	fmt.Printf("[Session %s] Fetching CA certificate from tunnel server...\n", sessionID)
@@ -378,8 +407,11 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		return
 	}
 	defer wgDevice.Close()
-	fmt.Printf("[WGConfig] %s", peerResp.Config)
-	if err := wgDevice.SetConfig(peerResp.Config); err != nil {
+
+	// Build WireGuard config locally using our private key and server's response
+	wgConfig := buildWireGuardConfig(keyPair.PrivateKey, peerResp.IP, peerResp.ServerPublicKey, peerResp.CIDR)
+	fmt.Printf("[WGConfig] %s", wgConfig)
+	if err := wgDevice.SetConfig(wgConfig); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
 		return
 	}
@@ -441,4 +473,23 @@ func (s *Server) cleanupSessionHosts(sessionID string) {
 			}
 		}
 	}
+}
+
+// buildWireGuardConfig generates a WireGuard configuration string
+// The endpoint is 127.0.0.1:51821 because the client runs a local UDP proxy
+// that tunnels traffic over WebSocket to the server
+func buildWireGuardConfig(privateKey, peerIP, serverPublicKey, cidr string) string {
+	// AllowedIPs includes:
+	// - VPN CIDR (e.g., 10.17.0.0/24) for VPN gateway communication
+	// - Service CIDR (10.43.0.0/16) for ClusterIP service access
+	return fmt.Sprintf(`[Interface]
+PrivateKey = %s
+Address = %s/32
+
+[Peer]
+PublicKey = %s
+AllowedIPs = %s, 10.43.0.0/16
+Endpoint = 127.0.0.1:51821
+PersistentKeepalive = 25
+`, privateKey, peerIP, serverPublicKey, cidr)
 }
