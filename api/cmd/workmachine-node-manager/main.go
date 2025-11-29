@@ -723,6 +723,12 @@ func (r *SSHConfigReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 			logger.Error("Failed to rename ssh_host_rsa_key", zap2.Error(err))
 			return reconcile.Result{}, err
 		}
+
+		// Change ownership to kl user (uid 1001) so workspace can use it for SSH
+		if err := r.FS.Chown(targetPath, 1001, 1001); err != nil {
+			logger.Error("Failed to chown ssh_host_rsa_key", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
 	}
 
 	if rsaPubKeyBytes, ok := secret.Data["ssh_host_rsa_key.pub"]; ok {

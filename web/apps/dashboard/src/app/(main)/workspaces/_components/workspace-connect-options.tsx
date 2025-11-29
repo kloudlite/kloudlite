@@ -57,7 +57,10 @@ export function WorkspaceConnectOptions({
   }
 
   // Use URLs from status (already computed by controller), or generate from hash if available
-  const codeServerUrl = workspace.status?.accessUrls?.['code-server'] || generateAccessUrl('vscode') || workspace.status?.accessUrl
+  // Append folder query parameter to open workspace directory
+  const workspaceDir = `/home/kl/workspaces/${workspaceName}`
+  const codeServerBaseUrl = workspace.status?.accessUrls?.['code-server'] || generateAccessUrl('vscode') || workspace.status?.accessUrl
+  const codeServerUrl = codeServerBaseUrl ? `${codeServerBaseUrl}?folder=${encodeURIComponent(workspaceDir)}` : ''
   const ttydUrl = workspace.status?.accessUrls?.['ttyd'] || generateAccessUrl('tty')
   const claudeTtydUrl = workspace.status?.accessUrls?.['claude-ttyd'] || generateAccessUrl('claude')
   const codexTtydUrl = workspace.status?.accessUrls?.['codex-ttyd'] || generateAccessUrl('codex')
@@ -65,7 +68,6 @@ export function WorkspaceConnectOptions({
 
   // Generate SSH host using pattern: {workspaceName}-{hash}.{subdomain}
   // Example: platform-base-58890cd7.beanbag.khost.dev
-  const workspaceDir = `/home/kl/workspaces/${workspaceName}`
   const sshHost = wsHash && subdomain ? `${workspaceName}-${wsHash}.${subdomain}` : ''
 
   // SSH URLs for IDEs
