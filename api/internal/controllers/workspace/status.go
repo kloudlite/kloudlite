@@ -45,8 +45,30 @@ func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context
 
 // updateWorkspaceStatus updates the workspace status based on pod state
 func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pod *corev1.Pod, phase, message string, logger *zap.Logger) (reconcile.Result, error) {
+	// Fetch current workspace from API to compare package status
+	// (syncPackageStatus updates the in-memory object, we need to compare against what's persisted)
+	currentWorkspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name, Namespace: workspace.Namespace}, currentWorkspace); err != nil {
+		logger.Warn("Failed to fetch current workspace for status comparison", zap.Error(err))
+		// Continue with update anyway
+	}
+
 	// Track if any status field actually changed
 	needsUpdate := false
+
+	// Check if package-related fields changed (compare in-memory vs persisted)
+	if !reflect.DeepEqual(workspace.Status.InstalledPackages, currentWorkspace.Status.InstalledPackages) {
+		needsUpdate = true
+		logger.Info("Package installation status changed",
+			zap.Int("newCount", len(workspace.Status.InstalledPackages)),
+			zap.Int("oldCount", len(currentWorkspace.Status.InstalledPackages)))
+	}
+	if !reflect.DeepEqual(workspace.Status.FailedPackages, currentWorkspace.Status.FailedPackages) {
+		needsUpdate = true
+	}
+	if workspace.Status.PackageInstallationMessage != currentWorkspace.Status.PackageInstallationMessage {
+		needsUpdate = true
+	}
 
 	if workspace.Status.Phase != phase {
 		workspace.Status.Phase = phase
