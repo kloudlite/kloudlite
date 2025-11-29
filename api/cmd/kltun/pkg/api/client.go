@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -183,6 +184,11 @@ type TunnelEndpointResponse struct {
 	IP             string `json:"ip"`              // Public IP for /etc/hosts
 }
 
+// TokenExchangeResponse contains the permanent token from token exchange
+type TokenExchangeResponse struct {
+	ConnectionToken string `json:"connection_token"` // Long-lived (1 year) permanent token
+}
+
 // GetTunnelEndpoint calls the VPN tunnel endpoint API
 // Returns hostname, IP for /etc/hosts configuration, and the full endpoint for connection
 func (c *Client) GetTunnelEndpoint() (*TunnelEndpointResponse, error) {
@@ -208,6 +214,43 @@ func (c *Client) GetTunnelEndpoint() (*TunnelEndpointResponse, error) {
 	}
 
 	var result TunnelEndpointResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// ExchangeToken exchanges a short-lived temporary token for a long-lived permanent token
+// This calls the /api/vpn/exchange endpoint which returns a 1-year token for VPN connections
+func (c *Client) ExchangeToken(temporaryToken string) (*TokenExchangeResponse, error) {
+	url := fmt.Sprintf("%s/api/vpn/exchange", c.BaseURL)
+
+	reqBody := map[string]string{"token": temporaryToken}
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result TokenExchangeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

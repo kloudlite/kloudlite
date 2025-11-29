@@ -24,8 +24,20 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	defer close(done) // Signal completion when function returns
 	fmt.Printf("[Session %s] Starting VPN connection\n", sessionID)
 
-	// Create Dashboard API client (only for getting tunnel endpoint)
+	// Create Dashboard API client (only for getting tunnel endpoint and token exchange)
 	dashboardClient := api.NewClient(server, token)
+
+	// Exchange short-lived token for long-lived permanent token (1 year)
+	// This is critical for hosts polling which continues for the duration of the VPN connection
+	fmt.Printf("[Session %s] Exchanging temporary token for permanent token...\n", sessionID)
+	exchangeResp, err := dashboardClient.ExchangeToken(token)
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to exchange token: %v\n", sessionID, err)
+		resultChan <- fmt.Errorf("failed to exchange token: %w", err)
+		return
+	}
+	permanentToken := exchangeResp.ConnectionToken
+	fmt.Printf("[Session %s] ✓ Token exchanged successfully (valid for 1 year)\n", sessionID)
 
 	// Get or create device ID
 	deviceID, err := deviceid.GetOrCreateDeviceID()
@@ -64,8 +76,8 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	tunnelEndpoint := tunnelInfo.TunnelEndpoint
 
-	// 2. Create tunnel server client for direct communication (with auth token)
-	tunnelClient := api.NewTunnelClient(tunnelEndpoint, token)
+	// 2. Create tunnel server client for direct communication (with permanent token)
+	tunnelClient := api.NewTunnelClient(tunnelEndpoint, permanentToken)
 
 	// 3. Create WireGuard peer on tunnel server (send our public key)
 	fmt.Printf("[Session %s] Registering WireGuard peer on tunnel server...\n", sessionID)
@@ -127,9 +139,9 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		MinVersion:         tls.VersionTLS13,
 		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
 	}
-	// Add Authorization header for WebSocket connection
+	// Add Authorization header for WebSocket connection (using permanent token)
 	wsHeaders := http.Header{
-		"Authorization": []string{"Bearer " + token},
+		"Authorization": []string{"Bearer " + permanentToken},
 	}
 	dialer := transport.NewWebSocketDialer(
 		transportConfig,
@@ -245,8 +257,19 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	defer close(done) // Signal completion when function returns
 	fmt.Printf("[Session %s] Starting VPN connection\n", sessionID)
 
-	// Create Dashboard API client (only for getting tunnel endpoint)
+	// Create Dashboard API client (only for getting tunnel endpoint and token exchange)
 	dashboardClient := api.NewClient(server, token)
+
+	// Exchange short-lived token for long-lived permanent token (1 year)
+	// This is critical for hosts polling which continues for the duration of the VPN connection
+	fmt.Printf("[Session %s] Exchanging temporary token for permanent token...\n", sessionID)
+	exchangeResp, err := dashboardClient.ExchangeToken(token)
+	if err != nil {
+		fmt.Printf("[Session %s] Failed to exchange token: %v\n", sessionID, err)
+		return
+	}
+	permanentToken := exchangeResp.ConnectionToken
+	fmt.Printf("[Session %s] ✓ Token exchanged successfully (valid for 1 year)\n", sessionID)
 
 	// Get or create device ID
 	deviceID, err := deviceid.GetOrCreateDeviceID()
@@ -282,8 +305,8 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 
 	tunnelEndpoint := tunnelInfo.TunnelEndpoint
 
-	// 2. Create tunnel server client for direct communication (with auth token)
-	tunnelClient := api.NewTunnelClient(tunnelEndpoint, token)
+	// 2. Create tunnel server client for direct communication (with permanent token)
+	tunnelClient := api.NewTunnelClient(tunnelEndpoint, permanentToken)
 
 	// 3. Create WireGuard peer on tunnel server (send our public key)
 	fmt.Printf("[Session %s] Registering WireGuard peer on tunnel server...\n", sessionID)
@@ -342,9 +365,9 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		MinVersion:         tls.VersionTLS13,
 		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
 	}
-	// Add Authorization header for WebSocket connection
+	// Add Authorization header for WebSocket connection (using permanent token)
 	wsHeaders := http.Header{
-		"Authorization": []string{"Bearer " + token},
+		"Authorization": []string{"Bearer " + permanentToken},
 	}
 	dialer := transport.NewWebSocketDialer(
 		transportConfig,
