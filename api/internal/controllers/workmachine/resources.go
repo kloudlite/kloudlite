@@ -80,8 +80,9 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 					HostPID: true,
 					InitContainers: []corev1.Container{
 						{
-							Name:  "setup-nix",
-							Image: r.env.HostManagerImage,
+							Name:            "setup-nix",
+							Image:           r.env.HostManagerImage,
+							ImagePullPolicy: corev1.PullAlways,
 							Command: []string{
 								"sh",
 								"-c",
@@ -100,8 +101,9 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 					},
 					Containers: []corev1.Container{
 						{
-							Name:  "host-manager",
-							Image: r.env.HostManagerImage,
+							Name:            "host-manager",
+							Image:           r.env.HostManagerImage,
+							ImagePullPolicy: corev1.PullAlways,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "NAMESPACE",
