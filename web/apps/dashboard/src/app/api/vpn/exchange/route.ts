@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SignJWT, jwtVerify } from 'jose'
-import { env } from '@/lib/env'
 
 /**
  * VPN Token Exchange API
