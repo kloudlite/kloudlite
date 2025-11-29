@@ -185,7 +185,7 @@ cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 %s
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
-`, workspace.Name, workspace.Name, workspace.Namespace, searchDomains, contextJSON)
+`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, searchDomains, contextJSON)
 							}(),
 						},
 						VolumeMounts: []corev1.VolumeMount{
