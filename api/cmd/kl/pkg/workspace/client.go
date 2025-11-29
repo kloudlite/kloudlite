@@ -153,10 +153,11 @@ func (c *Client) StreamHostManagerLogs(ctx context.Context, namespace string, ta
 	containerName := "host-manager"
 
 	// Request pod logs with follow enabled
+	// Use SinceSeconds to get recent logs (last 60 seconds) to catch logs that started before streaming
 	req := c.Clientset.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{
-		Container: containerName,
-		Follow:    true,
-		TailLines: func() *int64 { v := int64(0); return &v }(), // Start from current position
+		Container:    containerName,
+		Follow:       true,
+		SinceSeconds: func() *int64 { v := int64(60); return &v }(), // Get logs from last 60 seconds
 	})
 
 	stream, err := req.Stream(ctx)
@@ -187,11 +188,16 @@ func (c *Client) StreamHostManagerLogs(ctx context.Context, namespace string, ta
 
 		// Check if line contains our tag
 		if strings.Contains(line, tagPrefix) {
-			// Strip the tag prefix and call the callback
-			cleanLine := strings.TrimPrefix(line, tagPrefix)
-			cleanLine = strings.TrimSpace(cleanLine)
-			if cleanLine != "" {
-				onLine(cleanLine)
+			// Extract the message after the tag prefix
+			// The log format is: [pkg:<commit>] <message>
+			// But there might be prefix before [pkg: like container name
+			idx := strings.Index(line, tagPrefix)
+			if idx >= 0 {
+				cleanLine := line[idx+len(tagPrefix):]
+				cleanLine = strings.TrimSpace(cleanLine)
+				if cleanLine != "" {
+					onLine(cleanLine)
+				}
 			}
 		}
 	}
