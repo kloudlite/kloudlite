@@ -160,6 +160,7 @@ chown -R 1001:1001 /home/kl/.local
 cat > /etc-writable/environment << 'EOF'
 PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKSPACE_NAME=%s
+WORKSPACE_NAMESPACE=%s
 EOF
 
 # Dump all environment variables to /etc/environment
@@ -184,7 +185,7 @@ cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 %s
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
-`, workspace.Name, workspace.Name, workspace.Name, searchDomains, contextJSON)
+`, workspace.Name, workspace.Name, workspace.Namespace, searchDomains, contextJSON)
 							}(),
 						},
 						VolumeMounts: []corev1.VolumeMount{
