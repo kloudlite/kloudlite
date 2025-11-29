@@ -41,6 +41,10 @@ RUN useradd -m -s /bin/bash -u 1001 kl && \
   chown -R kl:kl /workspace && \
   usermod -p '*' kl
 
+# Configure npm to install global packages in user directory
+# This allows npm install -g to work without sudo for all access methods (SSH, ttyd, VS Code)
+ENV NPM_CONFIG_PREFIX=/home/kl/.local
+
 # Install Node.js 20.x (LTS) with apt cache mount
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
