@@ -255,12 +255,6 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Verbs:         []string{"get"},
 			},
 			{
-				// Allow reading environments (needed for env connect command)
-				APIGroups: []string{"environments.kloudlite.io"},
-				Resources: []string{"environments"},
-				Verbs:     []string{"get", "list"},
-			},
-			{
 				// Allow reading services in any namespace (needed for intercept command)
 				// The kl CLI will only access services in connected environment namespaces
 				APIGroups: []string{""},
@@ -343,9 +337,72 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		return fmt.Errorf("failed to create/update RoleBinding: %w", err)
 	}
 
+	// Create ClusterRole for cluster-scoped resources (environments)
+	// Note: ClusterRoles cannot have owner references to namespaced resources
+	clusterRoleName := fmt.Sprintf("workspace-%s-%s", namespace, workspaceName)
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      workspaceName,
+				"kloudlite.io/workspace-namespace": namespace,
+			},
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
+		clusterRole.Rules = []rbacv1.PolicyRule{
+			{
+				// Allow reading environments (cluster-scoped resource)
+				// Needed for env connect command and VPN hosts listing
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"environments"},
+				Verbs:     []string{"get", "list"},
+			},
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to create/update ClusterRole: %w", err)
+	}
+
+	// Create ClusterRoleBinding to bind the ClusterRole to the workspace ServiceAccount
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      workspaceName,
+				"kloudlite.io/workspace-namespace": namespace,
+			},
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
+		clusterRoleBinding.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      workspaceName,
+				Namespace: namespace,
+			},
+		}
+
+		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     clusterRoleName,
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to create/update ClusterRoleBinding: %w", err)
+	}
+
 	logger.Info("Successfully created workspace-specific RBAC",
 		zap.String("role", role.Name),
-		zap.String("roleBinding", roleBinding.Name))
+		zap.String("roleBinding", roleBinding.Name),
+		zap.String("clusterRole", clusterRoleName),
+		zap.String("clusterRoleBinding", clusterRoleName))
 
 	return nil
 }
