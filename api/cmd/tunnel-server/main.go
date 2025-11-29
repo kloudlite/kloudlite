@@ -144,9 +144,9 @@ func main() {
 	// Create JWT middleware for authentication
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWTSecret, logger)
 
-	// Register handlers (all protected by JWT middleware)
-	mux.Handle("/ws", jwtMiddleware(http.HandlerFunc(listener.GetWebSocketUpgradeHandler()))) // WebSocket endpoint
-	mux.Handle("/health", jwtMiddleware(handlers.NewHealthHandler(serverState, logger)))      // Health check endpoint
+	// Register handlers
+	mux.Handle("/ws", jwtMiddleware(http.HandlerFunc(listener.GetWebSocketUpgradeHandler()))) // WebSocket endpoint (protected)
+	mux.Handle("/health", handlers.NewHealthHandler(serverState, logger))                     // Health check endpoint (unauthenticated for K8s probes)
 
 	// WireGuard peer management handlers
 	wgHandler := handlers.NewWireGuardHandler(logger, handlers.WireGuardHandlerConfig{
