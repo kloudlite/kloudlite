@@ -141,6 +141,6 @@ symbol = " "
 [custom.kloudlite]
 command = "/etc/kloudlite/kloudlite-context.sh"
 when = 'test -n "$WORKSPACE_NAME"'
-symbol = "kl "
+symbol = "| "
 style = "bold cyan"
 format = "[$symbol$output]($style) "
