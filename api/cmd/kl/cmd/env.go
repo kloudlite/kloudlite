@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	fzf "github.com/junegunn/fzf/src"
@@ -301,10 +303,18 @@ func waitForEnvironmentSync(environmentName, targetNamespace string) error {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
+	// Set up signal handling for Ctrl+C
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
+
 	fmt.Print("Waiting for environment connection to sync")
 
 	for {
 		select {
+		case <-sigChan:
+			fmt.Println(" interrupted!")
+			return fmt.Errorf("interrupted by user")
 		case <-timeout:
 			fmt.Println(" timeout!")
 			return fmt.Errorf("timeout waiting for environment sync after 30 seconds")
