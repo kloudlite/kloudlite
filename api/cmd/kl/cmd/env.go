@@ -359,7 +359,9 @@ func selectEnvironmentWithFzf(envs []environmentsv1.Environment) (*environmentsv
 		if env.Spec.Activated {
 			status = "active"
 		}
-		line := fmt.Sprintf("%s (%s) - %s", env.Name, status, env.Spec.TargetNamespace)
+		// Display format: {owner}/{envName} (status) - {targetNamespace}
+		displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
+		line := fmt.Sprintf("%s (%s) - %s", displayName, status, env.Spec.TargetNamespace)
 		items = append(items, line)
 		envMap[line] = env
 	}
