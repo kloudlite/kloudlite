@@ -80,6 +80,23 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 							TolerationSeconds: fn.Ptr(int64(0)),
 						},
 					},
+					// Init container to clean up stale lock files from previous runs
+					InitContainers: []corev1.Container{
+						{
+							Name:  "cleanup-lock",
+							Image: "busybox:latest",
+							Command: []string{
+								"sh", "-c",
+								"rm -f /var/lib/buildkit/buildkitd.lock",
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "buildkit-cache",
+									MountPath: "/var/lib/buildkit",
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:            buildkitName,
