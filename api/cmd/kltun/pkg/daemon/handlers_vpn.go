@@ -72,13 +72,14 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 	s.connMutex.Unlock()
 
 	// Channel to receive connection result
-	resultChan := make(chan error, 1)
+	resultChan := make(chan VPNConnectionSetupResult, 1)
 
 	// Start VPN connection in background with server and token
 	go s.runVPNConnectionWithResult(ctx, sessionID, server, token, conn.DoneChan, resultChan)
 
 	// Wait for initial connection setup (or failure)
-	if err := <-resultChan; err != nil {
+	setupResult := <-resultChan
+	if setupResult.Error != nil {
 		// Remove failed connection
 		s.connMutex.Lock()
 		delete(s.connections, sessionID)
@@ -86,16 +87,18 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 
 		result := VPNConnectResult{
 			Success: false,
-			Message: fmt.Sprintf("Failed to establish VPN connection: %v", err),
+			Message: fmt.Sprintf("Failed to establish VPN connection: %v", setupResult.Error),
 		}
 		resp, _ := NewSuccessResponse(req.ID, result)
 		return resp
 	}
 
 	result := VPNConnectResult{
-		Success:   true,
-		Message:   "VPN connection established successfully",
-		SessionID: sessionID,
+		Success:         true,
+		Message:         "VPN connection established successfully",
+		SessionID:       sessionID,
+		CACertInstalled: setupResult.CACertInstalled,
+		CACertError:     setupResult.CACertError,
 	}
 	resp, _ := NewSuccessResponse(req.ID, result)
 	return resp

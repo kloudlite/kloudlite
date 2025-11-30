@@ -77,14 +77,24 @@ func runConnect() error {
 	}
 
 	// Start VPN connection via daemon
-	sessionID, err := client.VPNConnect(connectToken, connectServer)
+	result, err := client.VPNConnect(connectToken, connectServer)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
 
 	fmt.Println()
 	fmt.Println("✓ Connected to Kloudlite VPN!")
-	fmt.Printf("  Session ID: %s\n", sessionID)
+	fmt.Printf("  Session ID: %s\n", result.SessionID)
+
+	// Display CA certificate status
+	if result.CACertInstalled {
+		fmt.Println("  CA Certificate: Installed")
+	} else if result.CACertError != "" {
+		fmt.Printf("  CA Certificate: Failed (%s)\n", result.CACertError)
+	} else {
+		fmt.Println("  CA Certificate: Not installed")
+	}
+
 	fmt.Println()
 	fmt.Println("Your VPN connection is now running in the background.")
 	fmt.Println("Use 'kltun quit' to disconnect.")

@@ -161,9 +161,18 @@ type VPNConnectParams struct {
 
 // VPNConnectResult contains result of VPN connection
 type VPNConnectResult struct {
-	Success   bool   `json:"success"`
-	Message   string `json:"message"`
-	SessionID string `json:"session_id,omitempty"`
+	Success         bool   `json:"success"`
+	Message         string `json:"message"`
+	SessionID       string `json:"session_id,omitempty"`
+	CACertInstalled bool   `json:"ca_cert_installed"`
+	CACertError     string `json:"ca_cert_error,omitempty"`
+}
+
+// VPNConnectionSetupResult is used internally to communicate VPN setup result
+type VPNConnectionSetupResult struct {
+	Error           error
+	CACertInstalled bool
+	CACertError     string
 }
 
 // VPNQuitParams - no parameters needed

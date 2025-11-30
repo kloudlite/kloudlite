@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/deviceid"
@@ -20,7 +22,7 @@ import (
 
 // runVPNConnectionWithResult runs a VPN connection and sends result on channel after initial setup
 // New architecture: Dashboard only provides tunnel endpoint, all other calls go directly to tunnel server
-func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, server, token string, done chan struct{}, resultChan chan<- error) {
+func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, server, token string, done chan struct{}, resultChan chan<- VPNConnectionSetupResult) {
 	defer close(done) // Signal completion when function returns
 	fmt.Printf("[Session %s] Starting VPN connection\n", sessionID)
 
@@ -33,7 +35,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	exchangeResp, err := dashboardClient.ExchangeToken(token)
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to exchange token: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to exchange token: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to exchange token: %w", err)}
 		return
 	}
 	permanentToken := exchangeResp.ConnectionToken
@@ -43,7 +45,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	deviceID, err := deviceid.GetOrCreateDeviceID()
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to get device ID: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to get device ID: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to get device ID: %w", err)}
 		return
 	}
 	fmt.Printf("[Session %s] Using device ID: %s\n", sessionID, deviceID)
@@ -52,7 +54,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	keyPair, err := wgkeys.GetOrCreateKeyPair()
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to get WireGuard keys: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to get WireGuard keys: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to get WireGuard keys: %w", err)}
 		return
 	}
 	fmt.Printf("[Session %s] Using WireGuard public key: %s...\n", sessionID, keyPair.PublicKey[:20])
@@ -62,7 +64,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	tunnelInfo, err := dashboardClient.GetTunnelEndpoint()
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to get tunnel endpoint: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to get tunnel endpoint: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to get tunnel endpoint: %w", err)}
 		return
 	}
 	fmt.Printf("[Session %s] Tunnel endpoint: %s (IP: %s)\n", sessionID, tunnelInfo.Hostname, tunnelInfo.IP)
@@ -84,7 +86,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	peerResp, err := tunnelClient.CreatePeer(deviceID, keyPair.PublicKey)
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to register WireGuard peer: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to register WireGuard peer: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to register WireGuard peer: %w", err)}
 		return
 	}
 	if peerResp.AlreadyExists {
@@ -93,30 +95,48 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
 	}
 
-	// 4. Get CA certificate from tunnel server
+	// 4. Get CA certificate from tunnel server with retry
 	fmt.Printf("[Session %s] Fetching CA certificate from tunnel server...\n", sessionID)
-	caCert, err := tunnelClient.GetCACert()
-	if err != nil {
-		fmt.Printf("[Session %s] Warning: Failed to get CA cert: %v\n", sessionID, err)
-		// Don't fail - CA cert might not be available
+	var caCert string
+	var caCertErr error
+	for attempt := 1; attempt <= 3; attempt++ {
+		caCert, caCertErr = tunnelClient.GetCACert()
+		if caCertErr == nil && caCert != "" {
+			break
+		}
+		if attempt < 3 {
+			fmt.Printf("[Session %s] CA cert fetch attempt %d failed, retrying in %ds...\n", sessionID, attempt, attempt)
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
 	}
 
-	// Install CA certificate
-	if caCert != "" {
-		fmt.Printf("[Session %s] Installing CA certificate...\n", sessionID)
-		certFile := fmt.Sprintf("/tmp/kltun-ca-%s.crt", sessionID)
-		if err := os.WriteFile(certFile, []byte(caCert), 0o600); err != nil {
-			fmt.Printf("[Session %s] Failed to write CA cert: %v\n", sessionID, err)
-			resultChan <- fmt.Errorf("failed to write CA cert: %w", err)
-			return
-		}
-		defer os.Remove(certFile)
+	// Track CA cert installation status
+	caCertInstalled := false
+	var caCertInstallErr string
 
-		stores := []string{"system", "nss", "java"}
-		if err := truststore.InstallAll(certFile, stores); err != nil {
-			fmt.Printf("[Session %s] Warning: Failed to install CA cert: %v\n", sessionID, err)
+	if caCertErr != nil {
+		caCertInstallErr = fmt.Sprintf("failed to fetch CA cert: %v", caCertErr)
+		fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
+	} else if caCert == "" {
+		caCertInstallErr = "CA certificate is empty"
+		fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
+	} else {
+		// Install CA certificate
+		fmt.Printf("[Session %s] Installing CA certificate to trust stores...\n", sessionID)
+		certFile := filepath.Join(os.TempDir(), fmt.Sprintf("kltun-ca-%s.crt", sessionID))
+		if err := os.WriteFile(certFile, []byte(caCert), 0o600); err != nil {
+			caCertInstallErr = fmt.Sprintf("failed to write CA cert: %v", err)
+			fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
 		} else {
-			fmt.Printf("[Session %s] ✓ CA certificate installed\n", sessionID)
+			defer os.Remove(certFile)
+			stores := []string{"system", "nss", "java"}
+			if err := truststore.InstallAll(certFile, stores); err != nil {
+				caCertInstallErr = fmt.Sprintf("failed to install CA cert: %v", err)
+				fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
+			} else {
+				caCertInstalled = true
+				fmt.Printf("[Session %s] ✓ CA certificate installed\n", sessionID)
+			}
 		}
 	}
 
@@ -128,7 +148,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	logger, err := zap.NewProduction()
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to create logger: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to create logger: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to create logger: %w", err)}
 		return
 	}
 	defer logger.Sync()
@@ -182,7 +202,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	wgDevice, err := wireguard.NewDevice(ctx, wgDeviceConfig)
 	if err != nil {
 		fmt.Printf("[Session %s] Failed to create WireGuard device: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to create WireGuard device: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to create WireGuard device: %w", err)}
 		return
 	}
 
@@ -197,13 +217,13 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	if err := netconfig.ConfigureInterface(netCfg); err != nil {
 		fmt.Printf("[Session %s] Failed to configure network interface: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to configure network interface: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to configure network interface: %w", err)}
 		return
 	}
 
 	if err := wgDevice.Start(ctx); err != nil {
 		fmt.Printf("[Session %s] Failed to start WireGuard device: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to start WireGuard device: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to start WireGuard device: %w", err)}
 		return
 	}
 	defer wgDevice.Close()
@@ -213,14 +233,18 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	fmt.Printf("[WGConfig] %s", wgConfig)
 	if err := wgDevice.SetConfig(wgConfig); err != nil {
 		fmt.Printf("[Session %s] Failed to set WireGuard config: %v\n", sessionID, err)
-		resultChan <- fmt.Errorf("failed to set WireGuard config: %w", err)
+		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to set WireGuard config: %w", err)}
 		return
 	}
 
 	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, peerResp.IP)
 
-	// Signal success - connection is established
-	resultChan <- nil
+	// Signal success - connection is established with CA cert status
+	resultChan <- VPNConnectionSetupResult{
+		Error:           nil,
+		CACertInstalled: caCertInstalled,
+		CACertError:     caCertInstallErr,
+	}
 
 	// Continue with hosts polling in background (now using tunnel client)
 	fmt.Printf("[Session %s] Starting hosts polling (every 10 seconds)...\n", sessionID)

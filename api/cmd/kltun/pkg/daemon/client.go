@@ -280,8 +280,8 @@ func (c *Client) HostsFlush() error {
 	return nil
 }
 
-// VPNConnect starts a VPN connection
-func (c *Client) VPNConnect(token, server string) (string, error) {
+// VPNConnect starts a VPN connection and returns the full result including CA cert status
+func (c *Client) VPNConnect(token, server string) (*VPNConnectResult, error) {
 	params := VPNConnectParams{
 		Token:  token,
 		Server: server,
@@ -289,14 +289,14 @@ func (c *Client) VPNConnect(token, server string) (string, error) {
 	var result VPNConnectResult
 
 	if err := c.call(MethodVPNConnect, params, &result); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if !result.Success {
-		return "", fmt.Errorf("%s", result.Message)
+		return nil, fmt.Errorf("%s", result.Message)
 	}
 
-	return result.SessionID, nil
+	return &result, nil
 }
 
 // VPNQuit stops the active VPN connection
