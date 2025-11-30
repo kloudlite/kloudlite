@@ -355,14 +355,18 @@ func selectEnvironmentWithFzf(envs []environmentsv1.Environment) (*environmentsv
 
 	for i := range envs {
 		env := &envs[i]
-		status := "inactive"
-		if env.Spec.Activated {
-			status = "active"
+		// Only show active environments (can't connect to inactive ones)
+		if !env.Spec.Activated {
+			continue
 		}
-		// Display format: {owner}/{envName} (status)
-		line := fmt.Sprintf("%s/%s (%s)", env.Spec.OwnedBy, env.Spec.Name, status)
+		// Display format: {owner}/{envName}
+		line := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
 		items = append(items, line)
 		envMap[line] = env
+	}
+
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no active environments found")
 	}
 
 	// Create temporary file for input
