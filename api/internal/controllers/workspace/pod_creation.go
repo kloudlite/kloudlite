@@ -33,6 +33,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 
 	// Check if workspace has an environment connection and get target namespace
 	var envTargetNamespace string
+	var envDisplayName string // Format: {username}/{envName} e.g., "karthik/main"
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(context.Background(), client.ObjectKey{
@@ -40,9 +41,11 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		}, env)
 		if err == nil && env.Spec.Activated {
 			envTargetNamespace = env.Spec.TargetNamespace
+			envDisplayName = fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
 			r.Logger.Info("Workspace has environment connection",
 				zap.String("workspace", workspace.Name),
 				zap.String("environment", env.Name),
+				zap.String("displayName", envDisplayName),
 				zap.String("targetNamespace", envTargetNamespace),
 			)
 		}
@@ -120,19 +123,15 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 							func() string {
 								// Build search domains based on whether workspace has an environment connection
 								searchDomains := "svc.cluster.local cluster.local"
-								envName := ""
 								if envTargetNamespace != "" {
 									// Include environment namespace first for priority
 									searchDomains = fmt.Sprintf("%s.svc.cluster.local svc.cluster.local cluster.local", envTargetNamespace)
-									// Get environment name from EnvironmentConnection
-									if workspace.Spec.EnvironmentConnection != nil {
-										envName = workspace.Spec.EnvironmentConnection.EnvironmentRef.Name
-									}
 								}
 
 								// Build initial Kloudlite context JSON
+								// envDisplayName is already formatted as {username}/{envName} (e.g., "karthik/main")
 								// Intercepts will be empty on pod creation (added later via controller updates)
-								contextJSON := fmt.Sprintf(`{"environment":"%s","intercepts":[]}`, envName)
+								contextJSON := fmt.Sprintf(`{"environment":"%s","intercepts":[]}`, envDisplayName)
 
 								return fmt.Sprintf(`
 # Create workspace directory
