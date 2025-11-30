@@ -17,7 +17,7 @@ import (
 
 const (
 	buildkitName  = "buildkitd"
-	buildkitImage = "moby/buildkit:rootless"
+	buildkitImage = "moby/buildkit:latest"
 	buildkitPort  = 1234
 )
 
@@ -106,16 +106,9 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 								"--root", "/var/lib/buildkit",
 								"--addr", fmt.Sprintf("tcp://0.0.0.0:%d", buildkitPort),
 								"--addr", "unix:///run/buildkit/buildkitd.sock",
-								"--oci-worker-no-process-sandbox",
 							},
 							SecurityContext: &corev1.SecurityContext{
-								// Rootless buildkit runs as non-root user
-								SeccompProfile: &corev1.SeccompProfile{
-									Type: corev1.SeccompProfileTypeUnconfined,
-								},
-								// Required for rootless buildkit to work with user namespaces
-								RunAsUser:  fn.Ptr(int64(1000)),
-								RunAsGroup: fn.Ptr(int64(1000)),
+								Privileged: fn.Ptr(true),
 							},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
@@ -170,10 +163,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 						{
 							Name: "buildkit-cache",
 							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: fmt.Sprintf("/var/lib/kloudlite/buildkit/%s", obj.Name),
-									Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
-								},
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
 						},
 					},
