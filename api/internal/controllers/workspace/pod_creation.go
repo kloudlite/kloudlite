@@ -161,11 +161,12 @@ chown -R 1001:1001 /home/kl/.local
 # /kloudlite/bin has highest priority for kl binary and system tools
 # Include user's local bin in PATH for user-installed npm packages like Claude Code
 
-# Start with PATH
+# Start with PATH and essential env vars
 cat > /etc-writable/environment << 'EOF'
 PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKSPACE_NAME=%s
 WORKSPACE_NAMESPACE=%s
+BUILDKIT_HOST=tcp://buildkitd:1234
 EOF
 
 # Dump all environment variables to /etc/environment
