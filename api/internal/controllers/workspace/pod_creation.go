@@ -67,9 +67,9 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		},
 		{
 			// BuildKit daemon address for container image builds
-			// Users can use: buildctl build ... or docker buildx build ...
+			// Workspace and buildkitd are in the same namespace, so simple service name works
 			Name:  "BUILDKIT_HOST",
-			Value: fmt.Sprintf("tcp://buildkitd.%s.svc.cluster.local:1234", wm.Spec.TargetNamespace),
+			Value: "tcp://buildkitd:1234",
 		},
 	}
 
