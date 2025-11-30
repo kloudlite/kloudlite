@@ -348,6 +348,12 @@ type WorkspaceStatus struct {
 	// Subdomain is the subdomain assigned to this workspace's workmachine (e.g., "beanbag.khost.dev")
 	// +optional
 	Subdomain string `json:"subdomain,omitempty"`
+
+	// ExposedRoutes contains the URLs for user-exposed HTTP ports
+	// Keys are port numbers as strings, values are the full URLs
+	// Example: {"3000": "https://p3000-a1b2c3d4.example.khost.dev"}
+	// +optional
+	ExposedRoutes map[string]string `json:"exposedRoutes,omitempty"`
 }
 
 // ResourceUsage tracks current resource consumption

@@ -2925,6 +2925,14 @@ spec:
                 - name
                 - targetNamespace
                 type: object
+              exposedRoutes:
+                additionalProperties:
+                  type: string
+                description: |-
+                  ExposedRoutes contains the URLs for user-exposed HTTP ports
+                  Keys are port numbers as strings, values are the full URLs
+                  Example: {"3000": "https://p3000-a1b2c3d4.example.khost.dev"}
+                type: object
               failedPackages:
                 description: FailedPackages list of packages that failed to install
                 items:
