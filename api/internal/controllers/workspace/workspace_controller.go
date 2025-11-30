@@ -360,6 +360,13 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Resources: []string{"environments"},
 				Verbs:     []string{"get", "list"},
 			},
+			{
+				// Allow reading services in any namespace
+				// Needed for kl svc list command to show services in connected environment
+				APIGroups: []string{""},
+				Resources: []string{"services"},
+				Verbs:     []string{"get", "list"},
+			},
 		}
 		return nil
 	}); err != nil {
