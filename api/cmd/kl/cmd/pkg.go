@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"text/tabwriter"
 	"time"
 
@@ -538,6 +540,11 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 
 	timeout := time.After(5 * time.Minute)
 
+	// Set up signal handling for Ctrl+C
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
+
 	// Create a cancellable context for log streaming
 	logCtx, cancelLogs := context.WithCancel(ctx)
 	defer cancelLogs()
@@ -562,6 +569,9 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 
 	for {
 		select {
+		case <-sigChan:
+			fmt.Println("\n[!] Interrupted by user")
+			return fmt.Errorf("interrupted by user")
 		case <-timeout:
 			return fmt.Errorf("timeout waiting for package installation")
 
