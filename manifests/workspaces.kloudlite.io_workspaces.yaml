@@ -187,6 +187,32 @@ spec:
                 required:
                 - environmentRef
                 type: object
+              expose:
+                description: |-
+                  Expose defines ports to expose from the workspace
+                  TCP/UDP ports are added to the workspace service
+                  HTTP ports also get an ingress route with hostname p{port}-{hash}.{subdomain}
+                items:
+                  description: ExposedPort defines a port to expose from the workspace
+                  properties:
+                    port:
+                      description: Port is the port number to expose
+                      format: int32
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
+                    protocol:
+                      description: Protocol is the protocol to use (tcp, udp, http)
+                      enum:
+                      - tcp
+                      - udp
+                      - http
+                      type: string
+                  required:
+                  - port
+                  - protocol
+                  type: object
+                type: array
               gitRepository:
                 description: |-
                   GitRepository defines a git repository to clone when workspace starts
@@ -518,11 +544,34 @@ spec:
                 - name
                 - targetNamespace
                 type: object
+              exposedRoutes:
+                additionalProperties:
+                  type: string
+                description: |-
+                  ExposedRoutes contains the URLs for user-exposed HTTP ports
+                  Keys are port numbers as strings, values are the full URLs
+                  Example: {"3000": "https://p3000-a1b2c3d4.example.khost.dev"}
+                type: object
               failedPackages:
                 description: FailedPackages list of packages that failed to install
                 items:
                   type: string
                 type: array
+              hash:
+                description: |-
+                  Hash is an 8-character hash derived from owner and workspace name for DNS-safe hostnames
+                  Format: hash(owner-workspaceName)
+                type: string
+              idleSince:
+                description: IdleSince tracks when the workspace became idle
+                format: date-time
+                type: string
+              idleState:
+                description: IdleState tracks whether the workspace is idle or active
+                enum:
+                - active
+                - idle
+                type: string
               installedPackages:
                 description: InstalledPackages list of successfully installed packages
                 items:
@@ -634,6 +683,10 @@ spec:
               stopTime:
                 description: StopTime when the workspace was stopped
                 format: date-time
+                type: string
+              subdomain:
+                description: Subdomain is the subdomain assigned to this workspace's
+                  workmachine (e.g., "beanbag.khost.dev")
                 type: string
               totalRuntime:
                 description: TotalRuntime in minutes

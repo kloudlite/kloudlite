@@ -121,6 +121,113 @@ spec:
                 description: EnvVars are environment variables to inject into all
                   services
                 type: object
+              intercepts:
+                description: |-
+                  Intercepts defines service intercept configurations for this composition
+                  This allows workspace pods to intercept traffic destined for composition services
+                items:
+                  description: ServiceInterceptConfig defines intercept configuration
+                    for a composition service
+                  properties:
+                    enabled:
+                      default: false
+                      description: Enabled indicates whether this intercept is currently
+                        active
+                      type: boolean
+                    portMappings:
+                      description: PortMappings defines how service ports map to workspace
+                        ports
+                      items:
+                        description: PortMapping defines mapping between service and
+                          workspace ports for intercepts
+                        properties:
+                          protocol:
+                            default: TCP
+                            description: Protocol is the protocol used (TCP/UDP)
+                            enum:
+                            - TCP
+                            - UDP
+                            - SCTP
+                            type: string
+                          servicePort:
+                            description: ServicePort is the port exposed by the service
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          workspacePort:
+                            description: WorkspacePort is the port in the workspace
+                              pod
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                        required:
+                        - servicePort
+                        - workspacePort
+                        type: object
+                      minItems: 1
+                      type: array
+                    serviceName:
+                      description: ServiceName is the name of the service in the composition
+                        to intercept
+                      minLength: 1
+                      type: string
+                    workspaceRef:
+                      description: |-
+                        WorkspaceRef references the workspace that will receive intercepted traffic
+                        This is set when a workspace requests to intercept this service
+                      properties:
+                        apiVersion:
+                          description: API version of the referent.
+                          type: string
+                        fieldPath:
+                          description: |-
+                            If referring to a piece of an object instead of an entire object, this string
+                            should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                            For example, if the object reference is to a container within a pod, this would take on a value like:
+                            "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                            the event) or if no container name is specified "spec.containers[2]" (container with
+                            index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                            referencing a part of an object.
+                          type: string
+                        kind:
+                          description: |-
+                            Kind of the referent.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                          type: string
+                        name:
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          type: string
+                        namespace:
+                          description: |-
+                            Namespace of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                          type: string
+                        resourceVersion:
+                          description: |-
+                            Specific resourceVersion to which this reference is made, if any.
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                          type: string
+                        uid:
+                          description: |-
+                            UID of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                          type: string
+                      type: object
+                      x-kubernetes-map-type: atomic
+                  required:
+                  - portMappings
+                  - serviceName
+                  type: object
+                type: array
+              nodeName:
+                description: |-
+                  NodeName specifies the node where all composition services should run
+                  Inherited from the Environment's NodeName
+                type: string
               resourceOverrides:
                 additionalProperties:
                   description: ServiceResourceOverride allows overriding resources
@@ -149,6 +256,56 @@ spec:
           status:
             description: CompositionStatus defines the observed state of Composition
             properties:
+              activeIntercepts:
+                description: ActiveIntercepts tracks the status of active service
+                  intercepts
+                items:
+                  description: InterceptStatus tracks the status of an active service
+                    intercept
+                  properties:
+                    interceptStartTime:
+                      description: InterceptStartTime when the intercept was activated
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message provides additional information about the
+                        intercept status
+                      type: string
+                    originalServiceSelector:
+                      additionalProperties:
+                        type: string
+                      description: OriginalServiceSelector stores the original service
+                        selector before interception
+                      type: object
+                    phase:
+                      description: Phase represents the current phase of the intercept
+                      enum:
+                      - creating
+                      - active
+                      - failed
+                      type: string
+                    serviceName:
+                      description: ServiceName is the service being intercepted
+                      type: string
+                    socatPodName:
+                      description: SOCATPodName is the name of the SOCAT forwarding
+                        pod
+                      type: string
+                    workspaceHeadlessServiceName:
+                      description: WorkspaceHeadlessServiceName is the name of the
+                        headless service for the workspace
+                      type: string
+                    workspaceName:
+                      description: WorkspaceName is the workspace intercepting traffic
+                      type: string
+                    workspaceNamespace:
+                      description: WorkspaceNamespace is the namespace of the workspace
+                        intercepting traffic
+                      type: string
+                  required:
+                  - serviceName
+                  type: object
+                type: array
               conditions:
                 description: Conditions represent the latest available observations
                   of the composition's state

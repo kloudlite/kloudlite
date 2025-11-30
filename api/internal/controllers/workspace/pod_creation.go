@@ -476,6 +476,17 @@ chmod 644 /tmp-writable/kloudlite-context.json
 		},
 	}
 
+	// Enable unprivileged user namespaces for Docker image building
+	// Note: Requires kubelet --allowed-unsafe-sysctls=kernel.unprivileged_userns_clone on the node
+	pod.Spec.SecurityContext = &corev1.PodSecurityContext{
+		Sysctls: []corev1.Sysctl{
+			{
+				Name:  "kernel.unprivileged_userns_clone",
+				Value: "1",
+			},
+		},
+	}
+
 	// Set owner reference
 	if err := controllerutil.SetControllerReference(workspace, pod, r.Scheme); err != nil {
 		return nil, fmt.Errorf("failed to set controller reference: %w", err)

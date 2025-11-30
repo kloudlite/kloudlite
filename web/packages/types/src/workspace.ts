@@ -30,7 +30,14 @@ export interface WorkspaceSpec {
   vscodeVersion?: string
   gitRepository?: GitRepository
   copyFrom?: string
-  httpExpose?: number[] // HTTP ports to expose via ingress
+  expose?: ExposedPort[] // Ports to expose from the workspace
+}
+
+export type ExposeProtocol = 'tcp' | 'udp' | 'http'
+
+export interface ExposedPort {
+  port: number
+  protocol: ExposeProtocol
 }
 
 export interface GitRepository {
