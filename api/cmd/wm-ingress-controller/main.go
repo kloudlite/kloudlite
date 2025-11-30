@@ -29,16 +29,22 @@ func init() {
 
 func main() {
 	var (
-		healthProbeAddr  string
-		httpPort         int
-		httpsPort        int
-		ingressClassName string
+		healthProbeAddr         string
+		httpPort                int
+		httpsPort               int
+		ingressClassName        string
+		wildcardDomain          string
+		wildcardSecretName      string
+		wildcardSecretNamespace string
 	)
 
 	flag.StringVar(&healthProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.IntVar(&httpPort, "http-port", 8000, "The HTTP port for the ingress server.")
 	flag.IntVar(&httpsPort, "https-port", 8443, "The HTTPS port for the ingress server.")
 	flag.StringVar(&ingressClassName, "ingress-class", "", "The ingress class name to watch for.")
+	flag.StringVar(&wildcardDomain, "wildcard-domain", "khost.dev", "Domain suffix for valid hosts (e.g., khost.dev)")
+	flag.StringVar(&wildcardSecretName, "wildcard-secret-name", "kloudlite-wildcard-cert-tls", "Name of wildcard TLS secret")
+	flag.StringVar(&wildcardSecretNamespace, "wildcard-secret-namespace", "kloudlite-ingress", "Namespace of wildcard TLS secret")
 	flag.Parse()
 
 	// Validate required flags
@@ -65,6 +71,8 @@ func main() {
 		zap.String("ingress-class", ingressClassName),
 		zap.Int("http-port", httpPort),
 		zap.Int("https-port", httpsPort),
+		zap.String("wildcard-domain", wildcardDomain),
+		zap.String("wildcard-secret", wildcardSecretNamespace+"/"+wildcardSecretName),
 	)
 
 	// Setup controller-runtime manager
@@ -83,12 +91,15 @@ func main() {
 
 	// Create and setup the Ingress Reconciler
 	reconciler := &wmingress.IngressReconciler{
-		Client:           mgr.GetClient(),
-		Scheme:           mgr.GetScheme(),
-		Logger:           logger,
-		IngressClassName: ingressClassName,
-		HTTPPort:         httpPort,
-		HTTPSPort:        httpsPort,
+		Client:                  mgr.GetClient(),
+		Scheme:                  mgr.GetScheme(),
+		Logger:                  logger,
+		IngressClassName:        ingressClassName,
+		HTTPPort:                httpPort,
+		HTTPSPort:               httpsPort,
+		WildcardDomain:          wildcardDomain,
+		WildcardSecretName:      wildcardSecretName,
+		WildcardSecretNamespace: wildcardSecretNamespace,
 	}
 
 	if err = reconciler.SetupWithManager(mgr); err != nil {

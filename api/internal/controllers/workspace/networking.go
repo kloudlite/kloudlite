@@ -157,13 +157,11 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 
 	// Build Ingress rules
 	var ingressRules []networkingv1.IngressRule
-	var tlsHosts []string
 
 	for prefix, port := range httpServices {
 		// Use pattern: {prefix}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: claude-a1b2c3d4.eastman.khost.dev
 		host := fmt.Sprintf("%s-%s.%s", prefix, wsHash, domainRequest.Status.Subdomain)
-		tlsHosts = append(tlsHosts, host)
 
 		pathType := networkingv1.PathTypePrefix
 		ingressRules = append(ingressRules, networkingv1.IngressRule{
@@ -197,13 +195,9 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 			return fmt.Errorf("failed to set owner reference on Ingress: %w", err)
 		}
 
-		ingress.Spec.TLS = []networkingv1.IngressTLS{
-			{
-				Hosts: tlsHosts,
-				// Use the global wildcard certificate created at server startup
-				SecretName: "kloudlite-wildcard-cert-tls",
-			},
-		}
+		// Note: TLS is handled by the wm-ingress-controller using a central wildcard cert
+		// from kloudlite-ingress namespace, so we don't need to specify TLS in the Ingress
+		ingress.Spec.TLS = nil
 		ingress.Spec.Rules = ingressRules
 		ingress.SetLabels(fn.MapMerge(ingress.GetLabels(), map[string]string{
 			"app":                               "workspace",
