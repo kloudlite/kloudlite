@@ -287,8 +287,8 @@ func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, works
 	// Collect intercept status from each composition's activeIntercepts
 	for _, composition := range compositionList.Items {
 		for _, interceptStatus := range composition.Status.ActiveIntercepts {
-			// Only include intercepts for this workspace
-			if interceptStatus.WorkspaceName == workspace.Name {
+			// Only include intercepts for this workspace (match both name and namespace)
+			if interceptStatus.WorkspaceName == workspace.Name && interceptStatus.WorkspaceNamespace == workspace.Namespace {
 				workspaceInterceptStatus := workspacev1.InterceptStatus{
 					ServiceName: interceptStatus.ServiceName,
 					Phase:       interceptStatus.Phase,

@@ -236,6 +236,10 @@ type InterceptStatus struct {
 	// +optional
 	WorkspaceName string `json:"workspaceName,omitempty"`
 
+	// WorkspaceNamespace is the namespace of the workspace intercepting traffic
+	// +optional
+	WorkspaceNamespace string `json:"workspaceNamespace,omitempty"`
+
 	// SOCATPodName is the name of the SOCAT forwarding pod
 	// +optional
 	SOCATPodName string `json:"socatPodName,omitempty"`
