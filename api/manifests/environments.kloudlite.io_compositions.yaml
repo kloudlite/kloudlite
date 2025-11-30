@@ -298,6 +298,10 @@ spec:
                     workspaceName:
                       description: WorkspaceName is the workspace intercepting traffic
                       type: string
+                    workspaceNamespace:
+                      description: WorkspaceNamespace is the namespace of the workspace
+                        intercepting traffic
+                      type: string
                   required:
                   - serviceName
                   type: object

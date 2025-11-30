@@ -204,6 +204,14 @@ spec:
                 required:
                 - url
                 type: object
+              httpExpose:
+                description: |-
+                  HttpExpose defines HTTP ports to expose from the workspace via ingress
+                  Each port will get an ingress route with hostname p{port}-{hash}.{subdomain}
+                items:
+                  format: int32
+                  type: integer
+                type: array
               ownedBy:
                 description: OwnedBy is the username of the workspace owner
                 minLength: 1

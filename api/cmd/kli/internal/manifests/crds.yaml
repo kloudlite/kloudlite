@@ -788,6 +788,10 @@ spec:
                     workspaceName:
                       description: WorkspaceName is the workspace intercepting traffic
                       type: string
+                    workspaceNamespace:
+                      description: WorkspaceNamespace is the namespace of the workspace
+                        intercepting traffic
+                      type: string
                   required:
                   - serviceName
                   type: object
@@ -2599,6 +2603,14 @@ spec:
                 required:
                 - url
                 type: object
+              httpExpose:
+                description: |-
+                  HttpExpose defines HTTP ports to expose from the workspace via ingress
+                  Each port will get an ingress route with hostname p{port}-{hash}.{subdomain}
+                items:
+                  format: int32
+                  type: integer
+                type: array
               ownedBy:
                 description: OwnedBy is the username of the workspace owner
                 minLength: 1
