@@ -129,6 +129,19 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			needsUpdate = true
 		}
 
+		// Update ExposedRoutes in status based on HttpExpose spec
+		exposedRoutes := make(map[string]string)
+		if subdomain != "" && wsHash != "" {
+			for _, port := range workspace.Spec.HttpExpose {
+				portStr := fmt.Sprintf("%d", port)
+				exposedRoutes[portStr] = fmt.Sprintf("https://p%d-%s.%s", port, wsHash, subdomain)
+			}
+		}
+		if !reflect.DeepEqual(workspace.Status.ExposedRoutes, exposedRoutes) {
+			workspace.Status.ExposedRoutes = exposedRoutes
+			needsUpdate = true
+		}
+
 		// Try to use public domain URLs if DomainRequest is available
 		if domainRequestExists && domainRequest.Status.Subdomain != "" {
 			// Get WorkMachine to construct domain URLs

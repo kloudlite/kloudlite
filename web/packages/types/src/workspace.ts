@@ -30,6 +30,7 @@ export interface WorkspaceSpec {
   vscodeVersion?: string
   gitRepository?: GitRepository
   copyFrom?: string
+  httpExpose?: number[] // HTTP ports to expose via ingress
 }
 
 export interface GitRepository {
@@ -146,6 +147,8 @@ export interface WorkspaceStatus {
   // Hash and subdomain for VPN-accessible URLs
   hash?: string // 8-character hash derived from owner-workspaceName
   subdomain?: string // Subdomain from workmachine (e.g., "beanbag.khost.dev")
+  // Exposed HTTP routes - keys are port numbers, values are full URLs
+  exposedRoutes?: Record<string, string> // e.g., {"3000": "https://p3000-a1b2c3d4.example.khost.dev"}
 }
 
 // Request/Response types
