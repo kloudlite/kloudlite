@@ -17,7 +17,7 @@ import (
 
 const (
 	buildkitName  = "buildkitd"
-	buildkitImage = "moby/buildkit:latest"
+	buildkitImage = "moby/buildkit:rootless"
 	buildkitPort  = 1234
 )
 
@@ -109,7 +109,13 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 								"--oci-worker-no-process-sandbox",
 							},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: fn.Ptr(true),
+								// Rootless buildkit runs as non-root user
+								SeccompProfile: &corev1.SeccompProfile{
+									Type: corev1.SeccompProfileTypeUnconfined,
+								},
+								// Required for rootless buildkit to work with user namespaces
+								RunAsUser:  fn.Ptr(int64(1000)),
+								RunAsGroup: fn.Ptr(int64(1000)),
 							},
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
