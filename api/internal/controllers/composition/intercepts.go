@@ -65,14 +65,14 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	if err != nil {
 		logger.Error("Failed to get workspace", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Workspace '%s' not found", intercept.WorkspaceRef.Name), "", nil, nil)
+			fmt.Sprintf("Workspace '%s' not found", intercept.WorkspaceRef.Name), "", intercept.WorkspaceRef.Name, intercept.WorkspaceRef.Namespace, nil, nil)
 		return err
 	}
 
 	if workspace.Status.Phase != "Running" {
 		logger.Warn("Workspace is not running", zap.String("phase", workspace.Status.Phase))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Workspace is not running (phase: %s)", workspace.Status.Phase), "", nil, nil)
+			fmt.Sprintf("Workspace is not running (phase: %s)", workspace.Status.Phase), "", workspace.Name, workspace.Namespace, nil, nil)
 		return fmt.Errorf("workspace is not running")
 	}
 
@@ -89,7 +89,7 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	if err != nil {
 		logger.Error("Failed to get service", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Service '%s' not found", serviceName), "", nil, nil)
+			fmt.Sprintf("Service '%s' not found", serviceName), "", workspace.Name, workspace.Namespace, nil, nil)
 		return err
 	}
 
@@ -112,7 +112,7 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	if err != nil {
 		logger.Error("Failed to get WorkMachine", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Failed to get WorkMachine: %v", err), "", nil, originalSelector)
+			fmt.Sprintf("Failed to get WorkMachine: %v", err), "", workspace.Name, workspace.Namespace, nil, originalSelector)
 		return err
 	}
 
@@ -127,7 +127,7 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	if err != nil {
 		logger.Error("Failed to get workspace headless service", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Workspace headless service not found: %v", err), "", nil, originalSelector)
+			fmt.Sprintf("Workspace headless service not found: %v", err), "", workspace.Name, workspace.Namespace, nil, originalSelector)
 		return err
 	}
 
@@ -223,7 +223,7 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 			if err := r.Create(ctx, socatPod); err != nil {
 				logger.Error("Failed to create SOCAT pod", zap.Error(err))
 				r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-					fmt.Sprintf("Failed to create SOCAT pod: %v", err), "", nil, originalSelector)
+					fmt.Sprintf("Failed to create SOCAT pod: %v", err), "", workspace.Name, workspace.Namespace, nil, originalSelector)
 				return err
 			}
 			logger.Info("Created SOCAT forwarding pod",
@@ -285,7 +285,7 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	r.updateInterceptStatus(composition, intercept.ServiceName, "active",
 		fmt.Sprintf("Service '%s' is being intercepted by workspace '%s' via SOCAT pod '%s'",
 			serviceName, workspace.Name, socatPodName),
-		socatPodName, &now, originalSelector)
+		socatPodName, workspace.Name, workspace.Namespace, &now, originalSelector)
 
 	return nil
 }
@@ -393,7 +393,7 @@ func (r *CompositionReconciler) cleanupAllIntercepts(ctx context.Context, compos
 }
 
 // updateInterceptStatus updates or adds an intercept status entry
-func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Composition, serviceName, phase, message, socatPodName string, startTime *metav1.Time, originalSelector map[string]string) {
+func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Composition, serviceName, phase, message, socatPodName, workspaceName, workspaceNamespace string, startTime *metav1.Time, originalSelector map[string]string) {
 	// Find existing status
 	for i := range composition.Status.ActiveIntercepts {
 		if composition.Status.ActiveIntercepts[i].ServiceName == serviceName {
@@ -401,6 +401,8 @@ func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Compositio
 			composition.Status.ActiveIntercepts[i].Phase = phase
 			composition.Status.ActiveIntercepts[i].Message = message
 			composition.Status.ActiveIntercepts[i].SOCATPodName = socatPodName
+			composition.Status.ActiveIntercepts[i].WorkspaceName = workspaceName
+			composition.Status.ActiveIntercepts[i].WorkspaceNamespace = workspaceNamespace
 			if startTime != nil {
 				composition.Status.ActiveIntercepts[i].InterceptStartTime = startTime
 			}
@@ -414,6 +416,8 @@ func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Compositio
 	// Add new status entry
 	status := v1.InterceptStatus{
 		ServiceName:             serviceName,
+		WorkspaceName:           workspaceName,
+		WorkspaceNamespace:      workspaceNamespace,
 		Phase:                   phase,
 		Message:                 message,
 		SOCATPodName:            socatPodName,
