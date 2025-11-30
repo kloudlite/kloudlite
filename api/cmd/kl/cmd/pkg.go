@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -560,7 +561,7 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 				fmt.Printf("  %s\n", line)
 			})
 			// Ignore context cancelled errors (expected when installation completes)
-			if err != nil && err != context.Canceled {
+			if err != nil && !errors.Is(err, context.Canceled) {
 				// Print streaming error for debugging
 				fmt.Fprintf(os.Stderr, "\n[!] Log streaming error: %v\n", err)
 			}
