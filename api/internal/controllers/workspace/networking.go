@@ -149,8 +149,9 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 		"codex":    7684,
 	}
 
-	// Service name that ingress will route to
+	// Service name that ingress will route to (headless service for exposed ports)
 	serviceName := workspace.Name
+	headlessServiceName := fmt.Sprintf("%s-headless", workspace.Name)
 
 	// Generate hash of owner-workspaceName for unique, DNS-friendly hostnames
 	wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
@@ -185,6 +186,40 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 				},
 			},
 		})
+	}
+
+	// Add ingress rules for user-exposed HTTP ports
+	// These use the headless service and pattern: p{port}-{hash}.{subdomain}
+	for _, port := range workspace.Spec.HttpExpose {
+		// Use pattern: p{port}-{hash(owner-workspaceName)}.{subdomain}
+		// Example: p3000-a1b2c3d4.eastman.khost.dev
+		host := fmt.Sprintf("p%d-%s.%s", port, wsHash, domainRequest.Status.Subdomain)
+
+		pathType := networkingv1.PathTypePrefix
+		ingressRules = append(ingressRules, networkingv1.IngressRule{
+			Host: host,
+			IngressRuleValue: networkingv1.IngressRuleValue{
+				HTTP: &networkingv1.HTTPIngressRuleValue{
+					Paths: []networkingv1.HTTPIngressPath{
+						{
+							Path:     "/",
+							PathType: &pathType,
+							Backend: networkingv1.IngressBackend{
+								Service: &networkingv1.IngressServiceBackend{
+									Name: headlessServiceName,
+									Port: networkingv1.ServiceBackendPort{
+										Number: port,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+		logger.Info("Adding ingress rule for exposed HTTP port",
+			zap.Int32("port", port),
+			zap.String("host", host))
 	}
 
 	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: workspace.Name, Namespace: targetNamespace}}

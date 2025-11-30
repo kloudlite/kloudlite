@@ -134,6 +134,11 @@ type WorkspaceSpec struct {
 	// This field is automatically cleared after successful cloning
 	// +optional
 	CopyFrom string `json:"copyFrom,omitempty"`
+
+	// HttpExpose defines HTTP ports to expose from the workspace via ingress
+	// Each port will get an ingress route with hostname p{port}-{hash}.{subdomain}
+	// +optional
+	HttpExpose []int32 `json:"httpExpose,omitempty"`
 }
 
 // WorkspaceSettings contains workspace-specific configuration
