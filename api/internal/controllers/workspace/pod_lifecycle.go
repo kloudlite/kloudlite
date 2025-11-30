@@ -115,10 +115,12 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 		}
 	}
 
-	// Get active service intercepts from workspace status
-	// The status is populated by the collectActiveIntercepts function during status updates
+	// Get active service intercepts directly from compositions
+	// We call collectActiveIntercepts directly instead of using workspace.Status.ActiveIntercepts
+	// because the status may not have been updated yet in this reconcile cycle
 	intercepts := []string{}
-	for _, interceptStatus := range workspace.Status.ActiveIntercepts {
+	activeIntercepts := r.collectActiveIntercepts(ctx, workspace, logger)
+	for _, interceptStatus := range activeIntercepts {
 		intercepts = append(intercepts, interceptStatus.ServiceName)
 	}
 
