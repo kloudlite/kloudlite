@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	fzf "github.com/junegunn/fzf/src"
@@ -617,6 +619,11 @@ func waitForInterceptSync(serviceName, targetNamespace, action string) error {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
+	// Set up signal handling for Ctrl+C
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
+
 	if action == "start" {
 		fmt.Print("Waiting for service intercept to become active")
 	} else {
@@ -625,6 +632,9 @@ func waitForInterceptSync(serviceName, targetNamespace, action string) error {
 
 	for {
 		select {
+		case <-sigChan:
+			fmt.Println(" interrupted!")
+			return fmt.Errorf("interrupted by user")
 		case <-timeout:
 			fmt.Println(" timeout!")
 			return fmt.Errorf("timeout waiting for intercept sync after 30 seconds")
