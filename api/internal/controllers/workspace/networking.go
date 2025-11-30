@@ -25,6 +25,84 @@ func generateHash(input string) string {
 	return hex.EncodeToString(h[:])[:8]
 }
 
+// buildServicePorts builds the list of service ports including exposed ports
+func (r *WorkspaceReconciler) buildServicePorts(workspace *workspacev1.Workspace) []corev1.ServicePort {
+	// Start with default ports
+	ports := []corev1.ServicePort{
+		{
+			Name:       "ssh",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       22,
+			TargetPort: intstr.FromInt(22),
+		},
+		{
+			Name:       "code-server",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       8080,
+			TargetPort: intstr.FromInt(8080),
+		},
+		{
+			Name:       "ttyd",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       7681,
+			TargetPort: intstr.FromInt(7681),
+		},
+		{
+			Name:       "claude-ttyd",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       7682,
+			TargetPort: intstr.FromInt(7682),
+		},
+		{
+			Name:       "opencode-ttyd",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       7683,
+			TargetPort: intstr.FromInt(7683),
+		},
+		{
+			Name:       "codex-ttyd",
+			Protocol:   corev1.ProtocolTCP,
+			Port:       7684,
+			TargetPort: intstr.FromInt(7684),
+		},
+	}
+
+	// Track which ports are already defined to avoid duplicates
+	definedPorts := make(map[string]bool)
+	for _, p := range ports {
+		key := fmt.Sprintf("%s-%d", p.Protocol, p.Port)
+		definedPorts[key] = true
+	}
+
+	// Add user-exposed ports
+	for _, exposed := range workspace.Spec.Expose {
+		var protocol corev1.Protocol
+		switch exposed.Protocol {
+		case workspacev1.ExposeProtocolTCP, workspacev1.ExposeProtocolHTTP:
+			protocol = corev1.ProtocolTCP
+		case workspacev1.ExposeProtocolUDP:
+			protocol = corev1.ProtocolUDP
+		default:
+			continue
+		}
+
+		key := fmt.Sprintf("%s-%d", protocol, exposed.Port)
+		if definedPorts[key] {
+			continue // Skip if already defined
+		}
+		definedPorts[key] = true
+
+		ports = append(ports, corev1.ServicePort{
+			Name:       fmt.Sprintf("exposed-%s-%d", exposed.Protocol, exposed.Port),
+			Protocol:   protocol,
+			Port:       exposed.Port,
+			TargetPort: intstr.FromInt32(exposed.Port),
+		})
+	}
+
+	return ports
+}
+
 // ensureWorkspaceService ensures a Service is created for the workspace
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	serviceName := workspace.Name
@@ -35,84 +113,33 @@ func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, worksp
 		return fmt.Errorf("failed to get target namespace: %w", err)
 	}
 
-	// Check if Service exists
-	svc := &corev1.Service{}
-	err = r.Get(ctx, client.ObjectKey{Name: serviceName, Namespace: targetNamespace}, svc)
+	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: serviceName, Namespace: targetNamespace}}
 
-	if apierrors.IsNotFound(err) {
-		// Create new Service
-		svc = &corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      serviceName,
-				Namespace: targetNamespace,
-				Labels: map[string]string{
-					"app":       "workspace",
-					"workspace": workspace.Name,
-				},
-			},
-			Spec: corev1.ServiceSpec{
-				Selector: map[string]string{
-					"app":       "workspace",
-					"workspace": workspace.Name,
-				},
-				Ports: []corev1.ServicePort{
-					{
-						Name:       "ssh",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       22,
-						TargetPort: intstr.FromInt(22),
-					},
-					{
-						Name:       "code-server",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       8080,
-						TargetPort: intstr.FromInt(8080),
-					},
-					{
-						Name:       "ttyd",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       7681,
-						TargetPort: intstr.FromInt(7681),
-					},
-					{
-						Name:       "claude-ttyd",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       7682,
-						TargetPort: intstr.FromInt(7682),
-					},
-					{
-						Name:       "opencode-ttyd",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       7683,
-						TargetPort: intstr.FromInt(7683),
-					},
-					{
-						Name:       "codex-ttyd",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       7684,
-						TargetPort: intstr.FromInt(7684),
-					},
-				},
-				Type: corev1.ServiceTypeClusterIP,
-			},
-		}
-
+	result, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
 		// Set owner reference
 		if err := controllerutil.SetControllerReference(workspace, svc, r.Scheme); err != nil {
 			return fmt.Errorf("failed to set owner reference: %w", err)
 		}
 
-		if err := r.Create(ctx, svc); err != nil {
-			return fmt.Errorf("failed to create Service: %w", err)
+		svc.Labels = map[string]string{
+			"app":       "workspace",
+			"workspace": workspace.Name,
 		}
-		logger.Info("Created Service", zap.String("name", serviceName))
+		svc.Spec.Selector = map[string]string{
+			"app":       "workspace",
+			"workspace": workspace.Name,
+		}
+		svc.Spec.Ports = r.buildServicePorts(workspace)
+		svc.Spec.Type = corev1.ServiceTypeClusterIP
+
 		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to get Service: %w", err)
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create/update Service: %w", err)
 	}
 
-	// Service exists, no need to update
-	logger.Info("Service already exists", zap.String("name", serviceName))
+	logger.Info("Service reconciled", zap.String("name", serviceName), zap.String("result", string(result)))
 	return nil
 }
 
@@ -149,9 +176,8 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 		"codex":    7684,
 	}
 
-	// Service name that ingress will route to (headless service for exposed ports)
+	// Service name that ingress will route to
 	serviceName := workspace.Name
-	headlessServiceName := fmt.Sprintf("%s-headless", workspace.Name)
 
 	// Generate hash of owner-workspaceName for unique, DNS-friendly hostnames
 	wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
@@ -189,11 +215,15 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	}
 
 	// Add ingress rules for user-exposed HTTP ports
-	// These use the headless service and pattern: p{port}-{hash}.{subdomain}
-	for _, port := range workspace.Spec.HttpExpose {
+	// These use the workspace service and pattern: p{port}-{hash}.{subdomain}
+	for _, exposed := range workspace.Spec.Expose {
+		if exposed.Protocol != workspacev1.ExposeProtocolHTTP {
+			continue
+		}
+
 		// Use pattern: p{port}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: p3000-a1b2c3d4.eastman.khost.dev
-		host := fmt.Sprintf("p%d-%s.%s", port, wsHash, domainRequest.Status.Subdomain)
+		host := fmt.Sprintf("p%d-%s.%s", exposed.Port, wsHash, domainRequest.Status.Subdomain)
 
 		pathType := networkingv1.PathTypePrefix
 		ingressRules = append(ingressRules, networkingv1.IngressRule{
@@ -206,9 +236,9 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 							PathType: &pathType,
 							Backend: networkingv1.IngressBackend{
 								Service: &networkingv1.IngressServiceBackend{
-									Name: headlessServiceName,
+									Name: serviceName,
 									Port: networkingv1.ServiceBackendPort{
-										Number: port,
+										Number: exposed.Port,
 									},
 								},
 							},
@@ -218,7 +248,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 			},
 		})
 		logger.Info("Adding ingress rule for exposed HTTP port",
-			zap.Int32("port", port),
+			zap.Int32("port", exposed.Port),
 			zap.String("host", host))
 	}
 

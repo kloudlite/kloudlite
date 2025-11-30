@@ -1414,24 +1414,6 @@ spec:
     storage: true
     subresources:
       status: {}
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: kloudlite-hostmanager
-  labels:
-    kloudlite.io/managed: "true"
-    kloudlite.io/component: hostmanager
-  annotations:
-    kloudlite.io/description: "Shared namespace for all WorkMachine host manager workloads"
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: kloudlite-ingress
-  labels:
-    kloudlite.io/managed: "true"
-    kloudlite.io/component: ingress
-  annotations:
-    kloudlite.io/description: "Shared namespace for all DomainRequest workloads (HAProxy pods)"
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -2586,6 +2568,32 @@ spec:
                 required:
                 - environmentRef
                 type: object
+              expose:
+                description: |-
+                  Expose defines ports to expose from the workspace
+                  TCP/UDP ports are added to the workspace service
+                  HTTP ports also get an ingress route with hostname p{port}-{hash}.{subdomain}
+                items:
+                  description: ExposedPort defines a port to expose from the workspace
+                  properties:
+                    port:
+                      description: Port is the port number to expose
+                      format: int32
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
+                    protocol:
+                      description: Protocol is the protocol to use (tcp, udp, http)
+                      enum:
+                      - tcp
+                      - udp
+                      - http
+                      type: string
+                  required:
+                  - port
+                  - protocol
+                  type: object
+                type: array
               gitRepository:
                 description: |-
                   GitRepository defines a git repository to clone when workspace starts
@@ -2603,14 +2611,6 @@ spec:
                 required:
                 - url
                 type: object
-              httpExpose:
-                description: |-
-                  HttpExpose defines HTTP ports to expose from the workspace via ingress
-                  Each port will get an ingress route with hostname p{port}-{hash}.{subdomain}
-                items:
-                  format: int32
-                  type: integer
-                type: array
               ownedBy:
                 description: OwnedBy is the username of the workspace owner
                 minLength: 1

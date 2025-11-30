@@ -32,14 +32,29 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   gnupg \
   unzip \
   fontconfig \
+  podman \
+  fuse-overlayfs \
+  slirp4netns \
+  uidmap \
   && rm -rf /var/lib/apt/lists/*
 
+# Configure Podman for rootless operation with fuse-overlayfs
+# This is required because workspace containers run on overlay filesystems
+RUN mkdir -p /etc/containers && \
+  echo '[storage]' > /etc/containers/storage.conf && \
+  echo 'driver = "overlay"' >> /etc/containers/storage.conf && \
+  echo '[storage.options.overlay]' >> /etc/containers/storage.conf && \
+  echo 'mount_program = "/usr/bin/fuse-overlayfs"' >> /etc/containers/storage.conf
+
 # Create kl user with home directory and bash as default shell
+# Configure subuid/subgid for rootless Podman
 RUN useradd -m -s /bin/bash -u 1001 kl && \
   echo "kl ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
   mkdir -p /workspace && \
   chown -R kl:kl /workspace && \
-  usermod -p '*' kl
+  usermod -p '*' kl && \
+  echo "kl:100000:65536" >> /etc/subuid && \
+  echo "kl:100000:65536" >> /etc/subgid
 
 # Configure npm to install global packages in user directory
 # This allows npm install -g to work without sudo for all access methods (SSH, ttyd, VS Code)

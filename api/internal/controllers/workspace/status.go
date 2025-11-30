@@ -129,12 +129,14 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			needsUpdate = true
 		}
 
-		// Update ExposedRoutes in status based on HttpExpose spec
+		// Update ExposedRoutes in status based on Expose spec (HTTP ports only)
 		exposedRoutes := make(map[string]string)
 		if subdomain != "" && wsHash != "" {
-			for _, port := range workspace.Spec.HttpExpose {
-				portStr := fmt.Sprintf("%d", port)
-				exposedRoutes[portStr] = fmt.Sprintf("https://p%d-%s.%s", port, wsHash, subdomain)
+			for _, exposed := range workspace.Spec.Expose {
+				if exposed.Protocol == workspacev1.ExposeProtocolHTTP {
+					portStr := fmt.Sprintf("%d", exposed.Port)
+					exposedRoutes[portStr] = fmt.Sprintf("https://p%d-%s.%s", exposed.Port, wsHash, subdomain)
+				}
 			}
 		}
 		if !reflect.DeepEqual(workspace.Status.ExposedRoutes, exposedRoutes) {
