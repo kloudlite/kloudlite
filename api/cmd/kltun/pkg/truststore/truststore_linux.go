@@ -107,7 +107,6 @@ func (s *linuxStore) Install(certPath string, cert *x509.Certificate) error {
 	// Write certificate to system trust store using sudo
 	// We use a pipe to avoid creating temp files
 	cmd := CommandWithSudo("tee", targetPath)
-	cmd.Stdin = os.NewFile(0, "/dev/stdin")
 
 	// Create a pipe for stdin
 	stdin, err := cmd.StdinPipe()
