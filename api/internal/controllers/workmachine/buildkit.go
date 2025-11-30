@@ -106,6 +106,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 								"--root", "/var/lib/buildkit",
 								"--addr", fmt.Sprintf("tcp://0.0.0.0:%d", buildkitPort),
 								"--addr", "unix:///run/buildkit/buildkitd.sock",
+								"--oci-worker-no-process-sandbox",
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: fn.Ptr(true),
