@@ -65,6 +65,12 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 			Name:  "WORKSPACE_OWNER",
 			Value: workspace.Spec.OwnedBy,
 		},
+		{
+			// BuildKit daemon address for container image builds
+			// Users can use: buildctl build ... or docker buildx build ...
+			Name:  "BUILDKIT_HOST",
+			Value: fmt.Sprintf("tcp://buildkitd.%s.svc.cluster.local:1234", wm.Spec.TargetNamespace),
+		},
 	}
 
 	// Set PATH for container environment (kubectl exec, running services, etc.)

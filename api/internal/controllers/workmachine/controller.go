@@ -148,6 +148,26 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
+			Name:  "when-running/ensure-buildkit",
+			Title: "Ensure BuildKit is running for container image builds",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureBuildKit,
+			OnDelete: r.cleanupBuildKit,
+		},
+		{
+			Name:  "when-stopped/cleanup-buildkit",
+			Title: "Cleanup BuildKit when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupBuildKit,
+			OnDelete: nil,
+		},
+		{
 			Name:     "handle-machine-type-change",
 			Title:    "Handle machine type changes",
 			OnCreate: r.handleMachineTypeChange,
