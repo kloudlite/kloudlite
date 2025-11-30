@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -140,11 +139,6 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		return check.Failed(fmt.Errorf("failed to create/update tunnel-server cluster role binding: %w", err))
 	}
 
-	// Create TLS secrets for tunnel-server (signed by kloudlite CA)
-	if err := r.ensureTunnelServerTLSSecrets(check, obj, namespace, labels); err != nil {
-		return check.Failed(fmt.Errorf("failed to create tunnel-server TLS secrets: %w", err))
-	}
-
 	// Create StatefulSet for tunnel-server
 	statefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -211,8 +205,8 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							ImagePullPolicy: corev1.PullAlways,
 							Args: []string{
 								"--listen", ":443",
-								"--tls-secret", "tunnel-server-tls",
-								"--ca-cert-secret", "tunnel-server-ca",
+								"--tls-secret", fmt.Sprintf("%s/%s", kloudliteCASecretNamespace, kloudliteWildcardCertName),
+								"--ca-cert-secret", fmt.Sprintf("%s/%s", kloudliteCASecretNamespace, kloudliteCASecretName),
 								"--wireguard-target", "127.0.0.1:51820",
 								"--watch-config",
 								"--config-path", "/etc/wireguard/wg0.conf",
@@ -426,89 +420,4 @@ func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.
 	}
 
 	return check.Passed()
-}
-
-// ensureTunnelServerTLSSecrets copies the wildcard TLS and CA secrets for tunnel-server
-func (r *WorkMachineReconciler) ensureTunnelServerTLSSecrets(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine, namespace string, labels map[string]string) error {
-	ctx := check.Context()
-
-	// Fetch the kloudlite CA secret
-	caSecret := &corev1.Secret{}
-	if err := r.Get(ctx, client.ObjectKey{
-		Namespace: kloudliteCASecretNamespace,
-		Name:      kloudliteCASecretName,
-	}, caSecret); err != nil {
-		return fmt.Errorf("failed to get kloudlite CA secret: %w", err)
-	}
-
-	caCertPEM, ok := caSecret.Data["ca.crt"]
-	if !ok {
-		return fmt.Errorf("kloudlite CA secret missing ca.crt")
-	}
-
-	// Create the CA secret for tunnel-server (so clients can verify)
-	tunnelCASecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tunnel-server-ca",
-			Namespace: namespace,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, tunnelCASecret, func() error {
-		tunnelCASecret.Labels = labels
-		if !fn.IsOwner(tunnelCASecret, obj) {
-			tunnelCASecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-		tunnelCASecret.Data = map[string][]byte{
-			"ca.crt": caCertPEM,
-		}
-		return nil
-	}); err != nil {
-		return fmt.Errorf("failed to create/update tunnel-server-ca secret: %w", err)
-	}
-
-	// Fetch the kloudlite wildcard TLS certificate (has *.domain SANs)
-	wildcardCertSecret := &corev1.Secret{}
-	if err := r.Get(ctx, client.ObjectKey{
-		Namespace: kloudliteCASecretNamespace,
-		Name:      kloudliteWildcardCertName,
-	}, wildcardCertSecret); err != nil {
-		return fmt.Errorf("failed to get kloudlite wildcard cert secret: %w", err)
-	}
-
-	tlsCert, ok := wildcardCertSecret.Data["tls.crt"]
-	if !ok {
-		return fmt.Errorf("kloudlite wildcard cert secret missing tls.crt")
-	}
-
-	tlsKey, ok := wildcardCertSecret.Data["tls.key"]
-	if !ok {
-		return fmt.Errorf("kloudlite wildcard cert secret missing tls.key")
-	}
-
-	// Copy the wildcard TLS certificate to tunnel-server namespace
-	tlsSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tunnel-server-tls",
-			Namespace: namespace,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, tlsSecret, func() error {
-		tlsSecret.Labels = labels
-		if !fn.IsOwner(tlsSecret, obj) {
-			tlsSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-		tlsSecret.Type = corev1.SecretTypeTLS
-		tlsSecret.Data = map[string][]byte{
-			"tls.crt": tlsCert,
-			"tls.key": tlsKey,
-			"ca.crt":  caCertPEM,
-		}
-		return nil
-	}); err != nil {
-		return fmt.Errorf("failed to create/update tunnel-server-tls secret: %w", err)
-	}
-
-	return nil
 }
