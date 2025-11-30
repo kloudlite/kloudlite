@@ -86,6 +86,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 							Image:           buildkitImage,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args: []string{
+								"--root", "/var/lib/buildkit",
 								"--addr", fmt.Sprintf("tcp://0.0.0.0:%d", buildkitPort),
 								"--addr", "unix:///run/buildkit/buildkitd.sock",
 							},
