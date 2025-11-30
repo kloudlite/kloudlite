@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -103,16 +104,18 @@ func main() {
 	}
 
 	// Load TLS certificate from Kubernetes secret
-	cert, err := loadTLSFromSecret(context.Background(), k8sClient, cfg.Namespace, cfg.TLSSecretName)
+	// Secret ref can be "namespace/secretName" or just "secretName" (uses cfg.Namespace)
+	tlsSecretNamespace, tlsSecretName := parseSecretRef(cfg.TLSSecretName, cfg.Namespace)
+	cert, err := loadTLSFromSecret(context.Background(), k8sClient, tlsSecretNamespace, tlsSecretName)
 	if err != nil {
 		logger.Fatal("failed to load TLS certificate from secret",
-			zap.String("secret", cfg.TLSSecretName),
-			zap.String("namespace", cfg.Namespace),
+			zap.String("secret", tlsSecretName),
+			zap.String("namespace", tlsSecretNamespace),
 			zap.Error(err))
 	}
 	logger.Info("loaded TLS certificate from Kubernetes secret",
-		zap.String("secret", cfg.TLSSecretName),
-		zap.String("namespace", cfg.Namespace))
+		zap.String("secret", tlsSecretName),
+		zap.String("namespace", tlsSecretNamespace))
 
 	// Configure TLS with minimum version 1.3 for security
 	tlsConfig := &tls.Config{
@@ -159,10 +162,12 @@ func main() {
 	mux.Handle("/wg/peer", jwtMiddleware(http.HandlerFunc(wgHandler.PeerHandler())))               // POST (create), DELETE (delete)
 
 	// CA certificate handler (loads from K8s secret)
+	// Secret ref can be "namespace/secretName" or just "secretName" (uses cfg.Namespace)
+	caSecretNamespace, caSecretName := parseSecretRef(cfg.CACertSecretName, cfg.Namespace)
 	caCertHandler := handlers.NewCACertHandler(logger, handlers.CACertHandlerConfig{
 		K8sClient:  k8sClient,
-		Namespace:  cfg.Namespace,
-		SecretName: cfg.CACertSecretName,
+		Namespace:  caSecretNamespace,
+		SecretName: caSecretName,
 	})
 	mux.Handle("/ca-cert", jwtMiddleware(caCertHandler))
 
@@ -249,6 +254,16 @@ func main() {
 	}
 
 	logger.Info("shutdown complete")
+}
+
+// parseSecretRef parses a secret reference that can be either "secretName" or "namespace/secretName"
+// If no namespace is specified, the defaultNamespace is used
+func parseSecretRef(secretRef, defaultNamespace string) (namespace, secretName string) {
+	if strings.Contains(secretRef, "/") {
+		parts := strings.SplitN(secretRef, "/", 2)
+		return parts[0], parts[1]
+	}
+	return defaultNamespace, secretRef
 }
 
 // loadTLSFromSecret loads TLS certificate and key from a Kubernetes secret
