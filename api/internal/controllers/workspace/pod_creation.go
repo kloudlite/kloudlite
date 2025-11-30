@@ -482,16 +482,9 @@ chmod 644 /tmp-writable/kloudlite-context.json
 		},
 	}
 
-	// Enable unprivileged user namespaces for Docker image building
-	// Note: Requires kubelet --allowed-unsafe-sysctls=kernel.unprivileged_userns_clone on the node
-	pod.Spec.SecurityContext = &corev1.PodSecurityContext{
-		Sysctls: []corev1.Sysctl{
-			{
-				Name:  "kernel.unprivileged_userns_clone",
-				Value: "1",
-			},
-		},
-	}
+	// Note: Container image building is handled by BuildKit daemon (in buildkitd StatefulSet)
+	// which runs privileged. Workspace pods connect to BuildKit via BUILDKIT_HOST env var.
+	// No special sysctls needed in workspace pods for container operations.
 
 	// Set owner reference
 	if err := controllerutil.SetControllerReference(workspace, pod, r.Scheme); err != nil {

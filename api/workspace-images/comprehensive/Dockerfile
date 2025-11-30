@@ -16,6 +16,8 @@ RUN chmod +x /usr/local/bin/kl
 
 # Install system dependencies including shells first with apt cache mount
 # Add fish-shell PPA for fish 3.4+ (required for starship compatibility with set -f)
+# Note: Container image building is handled by BuildKit daemon (buildkitd StatefulSet)
+# accessed via BUILDKIT_HOST env var. No container runtime needed in workspace.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y software-properties-common \
@@ -32,29 +34,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   gnupg \
   unzip \
   fontconfig \
-  podman \
-  fuse-overlayfs \
-  slirp4netns \
-  uidmap \
   && rm -rf /var/lib/apt/lists/*
 
-# Configure Podman for rootless operation with fuse-overlayfs
-# This is required because workspace containers run on overlay filesystems
-RUN mkdir -p /etc/containers && \
-  echo '[storage]' > /etc/containers/storage.conf && \
-  echo 'driver = "overlay"' >> /etc/containers/storage.conf && \
-  echo '[storage.options.overlay]' >> /etc/containers/storage.conf && \
-  echo 'mount_program = "/usr/bin/fuse-overlayfs"' >> /etc/containers/storage.conf
-
 # Create kl user with home directory and bash as default shell
-# Configure subuid/subgid for rootless Podman
 RUN useradd -m -s /bin/bash -u 1001 kl && \
   echo "kl ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
   mkdir -p /workspace && \
   chown -R kl:kl /workspace && \
-  usermod -p '*' kl && \
-  echo "kl:100000:65536" >> /etc/subuid && \
-  echo "kl:100000:65536" >> /etc/subgid
+  usermod -p '*' kl
 
 # Configure npm to install global packages in user directory
 # This allows npm install -g to work without sudo for all access methods (SSH, ttyd, VS Code)
