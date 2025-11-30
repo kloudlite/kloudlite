@@ -101,6 +101,7 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 	}
 
 	// Get environment name from spec
+	// Format as {username}/{envName} for display (e.g., "karthik/main")
 	envName := ""
 	if workspace.Spec.EnvironmentConnection != nil {
 		// Fetch environment to validate it exists and is activated
@@ -109,7 +110,8 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Spec.Activated {
-			envName = env.Name
+			// Use OwnedBy/Name format for display
+			envName = fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
 		}
 	}
 
