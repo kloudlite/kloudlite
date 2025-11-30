@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	"go.uber.org/zap"
@@ -26,6 +27,11 @@ type IngressReconciler struct {
 	IngressClassName string
 	HTTPPort         int
 	HTTPSPort        int
+
+	// Wildcard TLS configuration
+	WildcardDomain          string // e.g., "khost.dev"
+	WildcardSecretName      string // e.g., "kloudlite-wildcard-cert-tls"
+	WildcardSecretNamespace string // e.g., "kloudlite-ingress"
 
 	// HTTP server components
 	router      *Router
@@ -56,6 +62,23 @@ func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *IngressReconciler) shouldProcessIngress(ing *networkingv1.Ingress) bool {
 	return r.IngressClassName == "" || ing.Spec.IngressClassName == nil || *ing.Spec.IngressClassName == r.IngressClassName
+}
+
+// isValidHost checks if the host matches the pattern *.*.{WildcardDomain}
+// e.g., vscode-58890cd7.beanbag.khost.dev matches *.*.khost.dev
+func (r *IngressReconciler) isValidHost(host string) bool {
+	if r.WildcardDomain == "" {
+		return true // No filtering if WildcardDomain is not set
+	}
+	// Host should be like: prefix.subdomain.khost.dev
+	// Must end with .{WildcardDomain} and have at least 2 parts before it
+	suffix := "." + r.WildcardDomain
+	if !strings.HasSuffix(host, suffix) {
+		return false
+	}
+	// Ensure there's a subdomain before the wildcard domain
+	prefix := strings.TrimSuffix(host, suffix)
+	return strings.Contains(prefix, ".")
 }
 
 // shouldProcessResource checks if the resource should be processed
@@ -170,6 +193,15 @@ func (r *IngressReconciler) buildRoutes(ctx context.Context, ingresses []network
 				continue
 			}
 
+			// Skip hosts that don't match the wildcard domain pattern
+			if !r.isValidHost(rule.Host) {
+				r.Logger.Debug("Skipping host - does not match wildcard domain",
+					zap.String("host", rule.Host),
+					zap.String("wildcardDomain", r.WildcardDomain),
+				)
+				continue
+			}
+
 			for _, path := range rule.HTTP.Paths {
 				route, err := r.createRoute(ctx, &ingress, rule.Host, &path)
 				if err != nil {
@@ -181,7 +213,7 @@ func (r *IngressReconciler) buildRoutes(ctx context.Context, ingresses []network
 					continue
 				}
 
-				r.Logger.Error("Created Route",
+				r.Logger.Info("Created Route",
 					zap.String("ingress", ingress.Name),
 					zap.String("host", rule.Host),
 				)
@@ -255,53 +287,65 @@ func (r *IngressReconciler) createRoute(
 }
 
 // updateTLSCertificates updates TLS certificates in the TLS manager
+// Uses a central wildcard certificate from the configured namespace
 func (r *IngressReconciler) updateTLSCertificates(ctx context.Context, ingresses []networkingv1.Ingress) error {
 	certificates := make(map[string]*TLSCertificate)
 
+	// If wildcard secret is not configured, skip TLS setup
+	if r.WildcardSecretName == "" || r.WildcardSecretNamespace == "" {
+		r.Logger.Warn("Wildcard TLS secret not configured, skipping TLS setup")
+		return r.tlsManager.UpdateCertificates(certificates)
+	}
+
+	// Fetch the wildcard secret from central namespace
+	secret := &corev1.Secret{}
+	if err := r.Get(ctx, client.ObjectKey{
+		Name:      r.WildcardSecretName,
+		Namespace: r.WildcardSecretNamespace,
+	}, secret); err != nil {
+		r.Logger.Error("Failed to get wildcard TLS secret",
+			zap.String("secret", r.WildcardSecretName),
+			zap.String("namespace", r.WildcardSecretNamespace),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	// Extract certificate and key
+	certData, ok := secret.Data["tls.crt"]
+	if !ok {
+		r.Logger.Error("tls.crt not found in wildcard secret",
+			zap.String("secret", r.WildcardSecretName),
+		)
+		return fmt.Errorf("tls.crt not found in wildcard secret %s/%s", r.WildcardSecretNamespace, r.WildcardSecretName)
+	}
+
+	keyData, ok := secret.Data["tls.key"]
+	if !ok {
+		r.Logger.Error("tls.key not found in wildcard secret",
+			zap.String("secret", r.WildcardSecretName),
+		)
+		return fmt.Errorf("tls.key not found in wildcard secret %s/%s", r.WildcardSecretNamespace, r.WildcardSecretName)
+	}
+
+	// Collect all valid hosts from ingresses and assign the wildcard cert
 	for _, ingress := range ingresses {
-		for _, tls := range ingress.Spec.TLS {
-			if tls.SecretName == "" {
-				continue
-			}
-
-			// Fetch the Secret
-			secret := &corev1.Secret{}
-			if err := r.Get(ctx, client.ObjectKey{
-				Name:      tls.SecretName,
-				Namespace: ingress.Namespace,
-			}, secret); err != nil {
-				r.Logger.Error("Failed to get TLS secret",
-					zap.String("secret", tls.SecretName),
-					zap.Error(err),
-				)
-				continue
-			}
-
-			// Extract certificate and key
-			certData, ok := secret.Data["tls.crt"]
-			if !ok {
-				r.Logger.Error("tls.crt not found in secret", zap.String("secret", tls.SecretName))
-				continue
-			}
-
-			keyData, ok := secret.Data["tls.key"]
-			if !ok {
-				r.Logger.Error("tls.key not found in secret", zap.String("secret", tls.SecretName))
-				continue
-			}
-
-			cert := &TLSCertificate{
-				Hosts:    tls.Hosts,
-				CertPEM:  certData,
-				KeyPEM:   keyData,
-				SecretID: fmt.Sprintf("%s/%s", ingress.Namespace, tls.SecretName),
-			}
-
-			for _, host := range tls.Hosts {
-				certificates[host] = cert
+		for _, rule := range ingress.Spec.Rules {
+			if r.isValidHost(rule.Host) {
+				certificates[rule.Host] = &TLSCertificate{
+					Hosts:    []string{rule.Host},
+					CertPEM:  certData,
+					KeyPEM:   keyData,
+					SecretID: fmt.Sprintf("%s/%s", r.WildcardSecretNamespace, r.WildcardSecretName),
+				}
 			}
 		}
 	}
+
+	r.Logger.Info("Updated TLS certificates from wildcard secret",
+		zap.String("secret", fmt.Sprintf("%s/%s", r.WildcardSecretNamespace, r.WildcardSecretName)),
+		zap.Int("hostCount", len(certificates)),
+	)
 
 	return r.tlsManager.UpdateCertificates(certificates)
 }
