@@ -15,9 +15,6 @@ fi
 # Remove duplicates and unwanted /games directories
 export PATH="/home/kl/.local/bin:$(echo "$PATH" | tr ':' '\n' | grep -v '/games' | grep -v '^/home/kl/.local/bin$' | uniq | tr '\n' ':' | sed 's/:$//')"
 
-# Alias docker to kl docker for Kloudlite container builds
-alias docker='kl docker'
-
 # Initialize starship prompt
 export STARSHIP_CONFIG=~/.config/starship.toml
 eval "$(starship init bash)"
