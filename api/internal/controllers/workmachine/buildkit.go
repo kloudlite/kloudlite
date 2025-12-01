@@ -16,24 +16,24 @@ import (
 )
 
 const (
-	buildkitName  = "buildkitd"
-	buildkitImage = "moby/buildkit:latest"
-	buildkitPort  = 1234
+	dockerDindName  = "docker-dind"
+	dockerDindImage = "docker:dind"
+	dockerDindPort  = 2375
 )
 
-// ensureBuildKit ensures the BuildKit StatefulSet exists for container image builds
+// ensureBuildKit ensures the Docker dind StatefulSet exists for container image builds
 func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespace := obj.Spec.TargetNamespace
 
 	labels := map[string]string{
-		"app":                      buildkitName,
+		"app":                      dockerDindName,
 		"kloudlite.io/workmachine": obj.Name,
 	}
 
-	// Create StatefulSet for buildkitd
+	// Create StatefulSet for docker dind
 	statefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      buildkitName,
+			Name:      dockerDindName,
 			Namespace: namespace,
 		},
 	}
@@ -47,7 +47,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 
 		statefulSet.Spec = appsv1.StatefulSetSpec{
 			Replicas:            fn.Ptr(int32(1)),
-			ServiceName:         buildkitName,
+			ServiceName:         dockerDindName,
 			PodManagementPolicy: appsv1.ParallelPodManagement,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
@@ -80,32 +80,17 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 							TolerationSeconds: fn.Ptr(int64(0)),
 						},
 					},
-					// Init container to clean up stale lock files from previous runs
-					InitContainers: []corev1.Container{
-						{
-							Name:  "cleanup-lock",
-							Image: "busybox:latest",
-							Command: []string{
-								"sh", "-c",
-								"rm -f /var/lib/buildkit/buildkitd.lock",
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "buildkit-cache",
-									MountPath: "/var/lib/buildkit",
-								},
-							},
-						},
-					},
 					Containers: []corev1.Container{
 						{
-							Name:            buildkitName,
-							Image:           buildkitImage,
+							Name:            dockerDindName,
+							Image:           dockerDindImage,
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Args: []string{
-								"--root", "/var/lib/buildkit",
-								"--addr", fmt.Sprintf("tcp://0.0.0.0:%d", buildkitPort),
-								"--addr", "unix:///run/buildkit/buildkitd.sock",
+							Env: []corev1.EnvVar{
+								{
+									// Allow insecure connections (no TLS) for simplicity within cluster
+									Name:  "DOCKER_TLS_CERTDIR",
+									Value: "",
+								},
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: fn.Ptr(true),
@@ -122,15 +107,15 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 							},
 							Ports: []corev1.ContainerPort{
 								{
-									Name:          "buildkit",
-									ContainerPort: buildkitPort,
+									Name:          "docker",
+									ContainerPort: dockerDindPort,
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									Exec: &corev1.ExecAction{
-										Command: []string{"buildctl", "debug", "workers"},
+										Command: []string{"docker", "info"},
 									},
 								},
 								InitialDelaySeconds: 5,
@@ -142,7 +127,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 							LivenessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									Exec: &corev1.ExecAction{
-										Command: []string{"buildctl", "debug", "workers"},
+										Command: []string{"docker", "info"},
 									},
 								},
 								InitialDelaySeconds: 30,
@@ -153,15 +138,15 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      "buildkit-cache",
-									MountPath: "/var/lib/buildkit",
+									Name:      "docker-storage",
+									MountPath: "/var/lib/docker",
 								},
 							},
 						},
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "buildkit-cache",
+							Name: "docker-storage",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
@@ -173,13 +158,13 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update buildkitd statefulset: %w", err))
+		return check.Failed(fmt.Errorf("failed to create/update docker-dind statefulset: %w", err))
 	}
 
-	// Create Service for buildkitd
+	// Create Service for docker dind
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      buildkitName,
+			Name:      dockerDindName,
 			Namespace: namespace,
 		},
 	}
@@ -195,48 +180,75 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 		svc.Spec.Selector = labels
 		svc.Spec.Ports = []corev1.ServicePort{
 			{
-				Name:       "buildkit",
+				Name:       "docker",
 				Protocol:   corev1.ProtocolTCP,
-				Port:       buildkitPort,
-				TargetPort: intstr.FromInt32(buildkitPort),
+				Port:       dockerDindPort,
+				TargetPort: intstr.FromInt32(dockerDindPort),
 			},
 		}
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update buildkitd service: %w", err))
+		return check.Failed(fmt.Errorf("failed to create/update docker-dind service: %w", err))
 	}
+
+	// Cleanup old buildkitd resources if they exist
+	r.cleanupOldBuildKit(check, obj)
 
 	return check.Passed()
 }
 
-// cleanupBuildKit deletes the BuildKit StatefulSet and service
+// cleanupOldBuildKit cleans up old buildkitd resources from the previous implementation
+func (r *WorkMachineReconciler) cleanupOldBuildKit(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) {
+	namespace := obj.Spec.TargetNamespace
+
+	// Delete old buildkitd StatefulSet if it exists
+	_ = r.Delete(check.Context(), &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "buildkitd",
+			Namespace: namespace,
+		},
+	})
+
+	// Delete old buildkitd service if it exists
+	_ = r.Delete(check.Context(), &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "buildkitd",
+			Namespace: namespace,
+		},
+	})
+}
+
+// cleanupBuildKit deletes the Docker dind StatefulSet and service
 func (r *WorkMachineReconciler) cleanupBuildKit(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespace := obj.Spec.TargetNamespace
 
 	// Delete StatefulSet if it exists
 	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      buildkitName,
+			Name:      dockerDindName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete buildkitd statefulset: %w", err))
+			return check.Failed(fmt.Errorf("failed to delete docker-dind statefulset: %w", err))
 		}
 	}
 
 	// Delete service
 	if err := r.Delete(check.Context(), &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      buildkitName,
+			Name:      dockerDindName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete buildkitd service: %w", err))
+			return check.Failed(fmt.Errorf("failed to delete docker-dind service: %w", err))
 		}
 	}
+
+	// Also cleanup old buildkitd resources
+	r.cleanupOldBuildKit(check, obj)
 
 	return check.Passed()
 }

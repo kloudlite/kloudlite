@@ -66,10 +66,10 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 			Value: workspace.Spec.OwnedBy,
 		},
 		{
-			// BuildKit daemon address for container image builds
-			// Workspace and buildkitd are in the same namespace, so simple service name works
-			Name:  "BUILDKIT_HOST",
-			Value: "tcp://buildkitd:1234",
+			// Docker daemon address for container image builds
+			// Workspace and docker-dind are in the same namespace, so simple service name works
+			Name:  "DOCKER_HOST",
+			Value: "tcp://docker-dind:2375",
 		},
 	}
 
@@ -166,7 +166,7 @@ cat > /etc-writable/environment << 'EOF'
 PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKSPACE_NAME=%s
 WORKSPACE_NAMESPACE=%s
-BUILDKIT_HOST=tcp://buildkitd:1234
+DOCKER_HOST=tcp://docker-dind:2375
 EOF
 
 # Dump all environment variables to /etc/environment
@@ -483,8 +483,8 @@ chmod 644 /tmp-writable/kloudlite-context.json
 		},
 	}
 
-	// Note: Container image building is handled by BuildKit daemon (in buildkitd StatefulSet)
-	// which runs privileged. Workspace pods connect to BuildKit via BUILDKIT_HOST env var.
+	// Note: Container image building is handled by Docker-in-Docker (docker-dind StatefulSet)
+	// which runs privileged. Workspace pods connect to Docker via DOCKER_HOST env var.
 	// No special sysctls needed in workspace pods for container operations.
 
 	// Set owner reference
