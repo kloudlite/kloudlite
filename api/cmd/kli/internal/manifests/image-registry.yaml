@@ -36,13 +36,11 @@ data:
         threshold: 3
     auth:
       token:
-        # Token authentication for Docker Registry v3
-        # realm: URL to the token authentication endpoint (Kloudlite API server)
-        # service: Name of the service (registry hostname)
-        # issuer: Must match the issuer in the tokens (kloudlite-registry-auth)
-        # rootcertbundle: Path to the RSA public key certificate (required for RS256 tokens)
-        realm: ${AUTH_TOKEN_REALM}
-        service: ${AUTH_TOKEN_SERVICE}
+        # Token authentication for Docker Registry v3 (RS256)
+        # realm: Internal API server URL (pushes always happen in-cluster from workspaces)
+        # service: Registry hostname (substituted during installation)
+        realm: http://api-server.kloudlite.svc.cluster.local/api/v1/registry/token
+        service: ${REGISTRY_HOST}
         issuer: kloudlite-registry-auth
         rootcertbundle: /etc/registry-auth/registry-auth.crt
 ---
