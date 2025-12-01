@@ -145,6 +145,10 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 					{
 						Name:  "init-workspace-dir",
 						Image: "bitnami/kubectl:latest",
+						SecurityContext: &corev1.SecurityContext{
+							RunAsUser:  fn.Ptr(int64(0)),
+							RunAsGroup: fn.Ptr(int64(0)),
+						},
 						Command: []string{
 							"sh",
 							"-c",
