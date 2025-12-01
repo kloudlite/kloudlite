@@ -34,6 +34,16 @@ data:
         enabled: true
         interval: 10s
         threshold: 3
+    auth:
+      token:
+        # Token authentication for Docker Registry
+        # realm: URL to the token authentication endpoint (Kloudlite API server)
+        # service: Name of the service (registry hostname)
+        # issuer: Must match the issuer in the tokens (kloudlite-registry-auth)
+        # rootcertbundle: Not needed for HMAC tokens (only for RSA/ECDSA)
+        realm: ${AUTH_TOKEN_REALM}
+        service: ${AUTH_TOKEN_SERVICE}
+        issuer: kloudlite-registry-auth
 ---
 apiVersion: apps/v1
 kind: Deployment
