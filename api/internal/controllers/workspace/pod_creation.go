@@ -239,17 +239,6 @@ EOFH
 %s
 chmod 644 /etc-writable-hosts/hosts
 
-# Download Kloudlite CA certificate from kloudlite-ingress namespace
-# The workspace service account has permissions to read secrets in kloudlite-ingress namespace
-echo "Downloading Kloudlite CA certificate..."
-mkdir -p /ca-certs-writable
-if kubectl get secret kloudlite-ca -n kloudlite-ingress -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d > /ca-certs-writable/kloudlite-ca.crt; then
-  chmod 644 /ca-certs-writable/kloudlite-ca.crt
-  echo "Installed Kloudlite CA certificate"
-else
-  echo "Warning: Could not download Kloudlite CA certificate"
-fi
-
 # Create initial Kloudlite context file for Starship prompt
 # This will be updated by the controller when environment connection or intercepts change
 cat > /tmp-writable/kloudlite-context.json << 'EOFC'
@@ -279,10 +268,6 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							{
 								Name:      "tmp-context",
 								MountPath: "/tmp-writable",
-							},
-							{
-								Name:      "ca-certs",
-								MountPath: "/ca-certs-writable",
 							},
 						},
 					},
@@ -544,11 +529,18 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					},
 				},
 				{
-					// CA certificates are downloaded by init container via kubectl
-					// and stored in this EmptyDir for the main container to use
+					// CA certificate from kloudlite-wildcard-cert-tls secret for trust store
 					Name: "ca-certs",
 					VolumeSource: corev1.VolumeSource{
-						EmptyDir: &corev1.EmptyDirVolumeSource{},
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "kloudlite-wildcard-cert-tls",
+							Items: []corev1.KeyToPath{
+								{
+									Key:  "ca.crt",
+									Path: "kloudlite-ca.crt",
+								},
+							},
+						},
 					},
 				},
 			},

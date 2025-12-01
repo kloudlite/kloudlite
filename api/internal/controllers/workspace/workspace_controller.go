@@ -405,64 +405,8 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 		return fmt.Errorf("failed to create/update ClusterRoleBinding: %w", err)
 	}
 
-	// Create Role in kloudlite-ingress namespace to allow reading kloudlite-ca secret
-	// This is needed for workspace init containers to download the CA certificate
-	ingressCARole := &rbacv1.Role{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("workspace-%s-%s-ca-reader", namespace, workspaceName),
-			Namespace: "kloudlite-ingress",
-			Labels: map[string]string{
-				"kloudlite.io/workspace-rbac":      "true",
-				"kloudlite.io/workspace-name":      workspaceName,
-				"kloudlite.io/workspace-namespace": namespace,
-			},
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingressCARole, func() error {
-		ingressCARole.Rules = []rbacv1.PolicyRule{
-			{
-				APIGroups:     []string{""},
-				Resources:     []string{"secrets"},
-				ResourceNames: []string{"kloudlite-ca"},
-				Verbs:         []string{"get"},
-			},
-		}
-		return nil
-	}); err != nil {
-		return fmt.Errorf("failed to create/update kloudlite-ingress CA Role: %w", err)
-	}
-
-	// Create RoleBinding in kloudlite-ingress namespace
-	ingressCARoleBinding := &rbacv1.RoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("workspace-%s-%s-ca-reader", namespace, workspaceName),
-			Namespace: "kloudlite-ingress",
-			Labels: map[string]string{
-				"kloudlite.io/workspace-rbac":      "true",
-				"kloudlite.io/workspace-name":      workspaceName,
-				"kloudlite.io/workspace-namespace": namespace,
-			},
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingressCARoleBinding, func() error {
-		ingressCARoleBinding.Subjects = []rbacv1.Subject{
-			{
-				Kind:      "ServiceAccount",
-				Name:      workspaceName,
-				Namespace: namespace,
-			},
-		}
-		ingressCARoleBinding.RoleRef = rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "Role",
-			Name:     ingressCARole.Name,
-		}
-		return nil
-	}); err != nil {
-		return fmt.Errorf("failed to create/update kloudlite-ingress CA RoleBinding: %w", err)
-	}
+	// Note: CA certificate is now mounted from local namespace secret (kloudlite-wildcard-cert-tls)
+	// No cross-namespace RBAC needed for kloudlite-ingress namespace
 
 	logger.Info("Successfully created workspace-specific RBAC",
 		zap.String("role", role.Name),
