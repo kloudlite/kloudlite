@@ -356,9 +356,11 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 								"80",
 								"--https-port",
 								"443",
-
 								"--health-probe-bind-address",
 								":17777",
+								// Use local namespace secret instead of cross-namespace access
+								"--wildcard-secret-namespace",
+								obj.Spec.TargetNamespace,
 							},
 							Ports: []corev1.ContainerPort{
 								{

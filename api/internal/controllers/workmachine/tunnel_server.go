@@ -19,11 +19,8 @@ import (
 const (
 	tunnelServerName = "tunnel-server"
 
-	// CA secret location (created by kloudlite-ca CertificateAuthority)
-	kloudliteCASecretNamespace = "kloudlite-ingress"
-	kloudliteCASecretName      = "kloudlite-ca"
-
-	// Wildcard TLS certificate (signed by kloudlite CA, has *.domain SANs)
+	// Wildcard TLS certificate containing tls.crt, tls.key, and ca.crt
+	// This secret is synced to each workmachine namespace
 	kloudliteWildcardCertName = "kloudlite-wildcard-cert-tls"
 )
 
@@ -205,8 +202,10 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							ImagePullPolicy: corev1.PullAlways,
 							Args: []string{
 								"--listen", ":443",
-								"--tls-secret", fmt.Sprintf("%s/%s", kloudliteCASecretNamespace, kloudliteWildcardCertName),
-								"--ca-cert-secret", fmt.Sprintf("%s/%s", kloudliteCASecretNamespace, kloudliteCASecretName),
+								// Use local namespace secret (POD_NAMESPACE env var is set below)
+								// The secret contains tls.crt, tls.key, and ca.crt
+								"--tls-secret", kloudliteWildcardCertName,
+								"--ca-cert-secret", kloudliteWildcardCertName,
 								"--wireguard-target", "127.0.0.1:51820",
 								"--watch-config",
 								"--config-path", "/etc/wireguard/wg0.conf",
