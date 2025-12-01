@@ -3,6 +3,7 @@ package workmachine
 import (
 	"fmt"
 
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
@@ -28,6 +29,31 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 	labels := map[string]string{
 		"app":                      dockerDindName,
 		"kloudlite.io/workmachine": obj.Name,
+	}
+
+	// Fetch DomainRequest to get subdomain for image registry host
+	var imageRegistryHost string
+	domainRequest := &domainrequestv1.DomainRequest{}
+	if err := r.Get(check.Context(), fn.NN("", "installation-domain"), domainRequest); err == nil && domainRequest.Status.Subdomain != "" {
+		imageRegistryHost = fmt.Sprintf("cr.%s", domainRequest.Status.Subdomain)
+	}
+
+	// Get the wm-ingress-controller service ClusterIP for /etc/hosts entry
+	var ingressControllerIP string
+	ingressSvc := &corev1.Service{}
+	if err := r.Get(check.Context(), fn.NN(namespace, "wm-ingress-controller"), ingressSvc); err == nil {
+		ingressControllerIP = ingressSvc.Spec.ClusterIP
+	}
+
+	// Build HostAliases for docker-dind to resolve the image registry hostname
+	var hostAliases []corev1.HostAlias
+	if imageRegistryHost != "" && ingressControllerIP != "" {
+		hostAliases = []corev1.HostAlias{
+			{
+				IP:        ingressControllerIP,
+				Hostnames: []string{imageRegistryHost},
+			},
+		}
 	}
 
 	// Create StatefulSet for docker dind
@@ -58,6 +84,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 				},
 				Spec: corev1.PodSpec{
 					TerminationGracePeriodSeconds: fn.Ptr(int64(30)),
+					HostAliases:                   hostAliases,
 					NodeSelector: map[string]string{
 						"kloudlite.io/workmachine": obj.Name,
 					},
