@@ -118,9 +118,11 @@ data:
 		}
 
 		// Only write image-registry if we have the required config
-		if bucketName != "" && region != "" {
+		registryHost := os.Getenv("KLOUDLITE_REGISTRY_HOST")
+		if bucketName != "" && region != "" && registryHost != "" {
 			imageRegistryManifest = strings.ReplaceAll(imageRegistryManifest, "${REGION}", region)
 			imageRegistryManifest = strings.ReplaceAll(imageRegistryManifest, "${BUCKET_NAME}", bucketName)
+			imageRegistryManifest = strings.ReplaceAll(imageRegistryManifest, "${REGISTRY_HOST}", registryHost)
 
 			imageRegistryPath := filepath.Join(manifestsDir, "image-registry.yaml")
 			if err := os.WriteFile(imageRegistryPath, []byte(imageRegistryManifest), 0644); err != nil {
@@ -128,7 +130,7 @@ data:
 			}
 			fmt.Printf("✓ Written Image Registry to %s\n", imageRegistryPath)
 		} else {
-			fmt.Println("⚠ Skipping Image Registry (S3_BUCKET or AWS_REGION not set)")
+			fmt.Println("⚠ Skipping Image Registry (S3_BUCKET, AWS_REGION, or KLOUDLITE_REGISTRY_HOST not set)")
 		}
 
 		fmt.Println("\nKloudlite manifests installed successfully!")
