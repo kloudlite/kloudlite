@@ -179,11 +179,18 @@ func runDockerBuild(cmd *cobra.Command, args []string) error {
 
 // Push command
 var dockerPushCmd = &cobra.Command{
-	Use:     "push NAME[:TAG]",
-	Short:   "Push an image to a registry",
-	Example: `  kl docker push myapp:latest`,
-	Args:    cobra.ExactArgs(1),
-	RunE:    runDockerPush,
+	Use:   "push NAME[:TAG]",
+	Short: "Push an image to the Kloudlite registry",
+	Long: `Push an image to the Kloudlite registry.
+
+If the image name doesn't include a registry prefix (no dots or colons in the first path segment),
+it will automatically be prefixed with the Kloudlite registry and your username.
+
+For example: 'kl docker push myapp:v1' becomes 'cr.{subdomain}.khost.dev/{username}/myapp:v1'`,
+	Example: `  kl docker push myapp:latest
+  kl docker push myapp:v1.0`,
+	Args: cobra.ExactArgs(1),
+	RunE: runDockerPush,
 }
 
 func runDockerPush(cmd *cobra.Command, args []string) error {
@@ -195,7 +202,39 @@ func runDockerPush(cmd *cobra.Command, args []string) error {
 	}
 	defer cli.Close()
 
-	return pushImage(ctx, cli, args[0])
+	imageName := args[0]
+	targetImage := imageName
+
+	// Check if image name has a registry prefix
+	// A registry prefix contains a dot (.) or colon (:) in the first path segment
+	parts := strings.SplitN(imageName, "/", 2)
+	hasRegistryPrefix := len(parts) > 1 && (strings.Contains(parts[0], ".") || strings.Contains(parts[0], ":"))
+
+	if !hasRegistryPrefix {
+		// Get registry and owner from environment
+		registry := os.Getenv("KL_IMAGE_REGISTRY")
+		owner := os.Getenv("WORKSPACE_OWNER")
+
+		if registry == "" {
+			return fmt.Errorf("KL_IMAGE_REGISTRY environment variable not set. Are you running inside a Kloudlite workspace?")
+		}
+		if owner == "" {
+			return fmt.Errorf("WORKSPACE_OWNER environment variable not set. Are you running inside a Kloudlite workspace?")
+		}
+
+		// Build target image name: {registry}/{owner}/{image}
+		targetImage = fmt.Sprintf("%s/%s/%s", registry, owner, imageName)
+
+		fmt.Printf("Tagging %s as %s\n", imageName, targetImage)
+
+		// Tag the image with the registry prefix
+		if err := cli.ImageTag(ctx, imageName, targetImage); err != nil {
+			return fmt.Errorf("failed to tag image: %w", err)
+		}
+	}
+
+	fmt.Printf("Pushing %s\n", targetImage)
+	return pushImage(ctx, cli, targetImage)
 }
 
 func pushImage(ctx context.Context, cli *client.Client, imageName string) error {
