@@ -65,7 +65,7 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 	}
 
 	// Initialize controller manager
-	controllerManager, err := controllers.NewManager(k8sClient.Config, &cfg.Installation, logger)
+	controllerManager, err := controllers.NewManager(k8sClient.Config, &cfg.Installation, &cfg.Auth, logger)
 	if err != nil {
 		logger.Fatal("Failed to create controller manager", zap.Error(err))
 	}
