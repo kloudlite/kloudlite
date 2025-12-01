@@ -42,6 +42,57 @@ func (r *WorkMachineReconciler) createNamespace(check *reconciler.Check[*v1.Work
 	return check.Passed()
 }
 
+const (
+	wildcardCertSecretName      = "kloudlite-wildcard-cert-tls"
+	wildcardCertSourceNamespace = "kloudlite-ingress"
+)
+
+// syncWildcardCertSecret copies the wildcard TLS certificate secret from kloudlite-ingress
+// to the workmachine namespace for use by tunnel-server, wm-ingress-controller, and workspace pods
+func (r *WorkMachineReconciler) syncWildcardCertSecret(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	targetNamespace := obj.Spec.TargetNamespace
+
+	// Get the source secret from kloudlite-ingress namespace
+	sourceSecret := &corev1.Secret{}
+	if err := r.Get(check.Context(), client.ObjectKey{
+		Name:      wildcardCertSecretName,
+		Namespace: wildcardCertSourceNamespace,
+	}, sourceSecret); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("wildcard certificate secret %s not found in namespace %s", wildcardCertSecretName, wildcardCertSourceNamespace))
+		}
+		return check.Errored(err)
+	}
+
+	// Create or update the secret in the target namespace
+	targetSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      wildcardCertSecretName,
+			Namespace: targetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, targetSecret, func() error {
+		targetSecret.Type = sourceSecret.Type
+		targetSecret.Data = sourceSecret.Data
+
+		targetSecret.SetLabels(fn.MapMerge(targetSecret.GetLabels(), map[string]string{
+			"kloudlite.io/managed":       "true",
+			"kloudlite.io/synced-from":   wildcardCertSourceNamespace,
+			"kloudlite.io/source-secret": wildcardCertSecretName,
+		}))
+
+		if !fn.IsOwner(targetSecret, obj) {
+			targetSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to sync wildcard certificate secret: %w", err))
+	}
+
+	return check.Passed()
+}
+
 // deleteNamespace handles namespace deletion when WorkMachine is being deleted
 func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	namespaceName := obj.Spec.TargetNamespace

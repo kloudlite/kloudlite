@@ -94,6 +94,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: r.deleteNamespace,
 		},
 		{
+			Name:     "sync-wildcard-cert-secret",
+			Title:    "Sync wildcard TLS certificate secret to workmachine namespace",
+			OnCreate: r.syncWildcardCertSecret,
+			OnDelete: nil,
+		},
+		{
 			Name:     "setup-host-manager-RBAC",
 			Title:    "Setup RBAC resources for workmachine-node-manager (host manager)",
 			OnCreate: r.createHostManagerRBAC,
