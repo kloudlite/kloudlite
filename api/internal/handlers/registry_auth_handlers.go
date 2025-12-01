@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/kloudlite/kloudlite/api/internal/services"
 	"go.uber.org/zap"
 )
@@ -176,11 +177,14 @@ func (h *RegistryAuthHandlers) GetToken(c *gin.Context) {
 			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(expiresIn) * time.Second)),
 			NotBefore: jwt.NewNumericDate(now.Add(-10 * time.Second)), // Allow 10s clock skew
 			IssuedAt:  jwt.NewNumericDate(now),
+			ID:        uuid.New().String(), // jti claim - required by Docker Registry
 		},
 	}
 
 	// Use RS256 for Docker Registry v3 compatibility
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, dockerClaims)
+	// Set typ header to "JWT" as required by Docker Registry spec
+	token.Header["typ"] = "JWT"
 	tokenString, err := token.SignedString(h.rsaPrivateKey)
 	if err != nil {
 		h.logger.Error("Failed to sign Docker token", zap.Error(err))
