@@ -45,6 +45,16 @@ type WorkspaceReconciler struct {
 	JWTSecret string // JWT secret for generating Docker registry tokens (HS256)
 }
 
+// DockerRegistryClaims represents the JWT claims for Docker Registry authentication
+// Must match the structure expected by authService.ValidateToken
+type DockerRegistryClaims struct {
+	Username string   `json:"username"`
+	Email    string   `json:"email"`
+	Name     string   `json:"name"`
+	Roles    []string `json:"roles"`
+	jwt.RegisteredClaims
+}
+
 // generateDockerRegistryToken creates a JWT token for Docker Registry authentication
 // This token is used as the password in Docker config.json
 func (r *WorkspaceReconciler) generateDockerRegistryToken(username string, expiryHours int) (string, error) {
@@ -53,13 +63,18 @@ func (r *WorkspaceReconciler) generateDockerRegistryToken(username string, expir
 	}
 
 	now := time.Now()
-	claims := jwt.MapClaims{
-		"username": username,
-		"iat":      now.Unix(),
-		"exp":      now.Add(time.Duration(expiryHours) * time.Hour).Unix(),
-		"nbf":      now.Unix(),
-		"iss":      "kloudlite",
-		"sub":      username,
+	claims := DockerRegistryClaims{
+		Username: username,
+		Email:    "", // Not needed for Docker auth
+		Name:     username,
+		Roles:    []string{"user"}, // Default role for Docker access
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(expiryHours) * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+			Issuer:    "kloudlite",
+			Subject:   username,
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
