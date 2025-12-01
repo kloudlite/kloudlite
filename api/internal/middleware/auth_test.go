@@ -38,6 +38,10 @@ func (m *mockAuthService) VerifyPassword(ctx context.Context, email, password st
 	return nil, nil
 }
 
+func (m *mockAuthService) GenerateToken(username string, email string, roles []platformv1alpha1.RoleType, expiryHours int) (string, error) {
+	return "mock-token", nil
+}
+
 func TestJWTMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	logger, _ := zap.NewDevelopment()

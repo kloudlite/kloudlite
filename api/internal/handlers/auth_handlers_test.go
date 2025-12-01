@@ -40,6 +40,10 @@ func (m *mockAuthService) ValidateToken(ctx context.Context, token string) (*ser
 	return nil, errors.New("not implemented")
 }
 
+func (m *mockAuthService) GenerateToken(username string, email string, roles []platformv1alpha1.RoleType, expiryHours int) (string, error) {
+	return "mock-token", nil
+}
+
 // mockUserService implements services.UserService for testing
 type mockUserService struct {
 	getUserByEmailFunc      func(ctx context.Context, email string) (*platformv1alpha1.User, error)
