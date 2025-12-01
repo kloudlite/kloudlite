@@ -221,8 +221,9 @@ func (r *DomainRequestReconciler) ensureImageRegistryIngress(ctx context.Context
 		return nil
 	}
 
-	// Build the host: cr.{subdomain}.khost.dev
-	host := fmt.Sprintf("cr.%s.khost.dev", domainRequest.Status.Subdomain)
+	// Build the host: cr.{subdomain}
+	// subdomain is already full domain like "beanbag.khost.dev"
+	host := fmt.Sprintf("cr.%s", domainRequest.Status.Subdomain)
 
 	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
