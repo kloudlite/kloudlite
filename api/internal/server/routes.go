@@ -81,6 +81,11 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		logger,
 		cfg.Auth.JWTSecret,
 	)
+	registryAuthHandlers := handlers.NewRegistryAuthHandlers(
+		servicesManager.Auth,
+		cfg.Auth.JWTSecret,
+		logger,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
@@ -261,6 +266,14 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			vpn.GET("/ca-cert", vpnHandlers.GetCACert)
 			vpn.GET("/hosts", vpnHandlers.GetHosts)
 			vpn.GET("/tunnel-endpoint", vpnHandlers.GetTunnelEndpoint)
+		}
+
+		// Docker Registry token authentication endpoint (public - uses Basic Auth with Kloudlite JWT)
+		// This endpoint is called by Docker when the registry returns 401
+		// Docker sends Basic Auth with username and Kloudlite JWT token as password
+		registry := v1.Group("/registry")
+		{
+			registry.GET("/token", registryAuthHandlers.GetToken)
 		}
 	}
 
