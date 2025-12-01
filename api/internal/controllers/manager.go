@@ -37,7 +37,7 @@ type Manager struct {
 }
 
 // NewManager creates a new controller manager with all controllers
-func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, logger *zap.Logger) (*Manager, error) {
+func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
 	// Setup scheme
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -149,6 +149,7 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, lo
 		Logger:    logger.With(zap.String("controller", "workspace")),
 		Config:    cfg,
 		Clientset: clientset,
+		JWTSecret: authCfg.JWTSecret,
 	}
 
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {

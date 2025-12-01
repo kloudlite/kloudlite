@@ -420,6 +420,13 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							SubPath:   "kloudlite-ca.crt",
 							ReadOnly:  true,
 						},
+						{
+							// Docker config for image registry authentication
+							Name:      "docker-config",
+							MountPath: "/home/kl/.docker/config.json",
+							SubPath:   "config.json",
+							ReadOnly:  true,
+						},
 					},
 					LivenessProbe: &corev1.Probe{
 						ProbeHandler: corev1.ProbeHandler{
@@ -538,6 +545,22 @@ chmod 644 /tmp-writable/kloudlite-context.json
 								{
 									Key:  "ca.crt",
 									Path: "kloudlite-ca.crt",
+								},
+							},
+						},
+					},
+				},
+				{
+					// Docker config for image registry authentication
+					Name: "docker-config",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: getDockerConfigSecretName(workspace.Name),
+							Optional:   fn.Ptr(true), // Don't fail pod creation if secret doesn't exist
+							Items: []corev1.KeyToPath{
+								{
+									Key:  "config.json",
+									Path: "config.json",
 								},
 							},
 						},

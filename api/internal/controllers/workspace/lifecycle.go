@@ -207,6 +207,14 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 
 	// Pod doesn't exist, create it
 	logger.Info("Creating workspace pod", zap.String("pod", podName))
+
+	// Ensure Docker config Secret exists for image registry authentication
+	registryHost := r.getImageRegistryHost(ctx)
+	if err := r.ensureDockerConfigSecret(ctx, workspace, registryHost, targetNamespace, logger); err != nil {
+		logger.Warn("Failed to create Docker config Secret", zap.Error(err))
+		// Don't fail reconciliation - Docker config is optional for registry auth
+	}
+
 	pod, err = r.createWorkspacePod(workspace)
 	if err != nil {
 		logger.Error("Failed to build workspace pod", zap.Error(err))
