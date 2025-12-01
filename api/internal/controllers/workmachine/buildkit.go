@@ -71,6 +71,33 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 			statefulSet.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 
+		// Build init container command to setup registry CA cert
+		var initContainers []corev1.Container
+		if imageRegistryHost != "" {
+			initContainers = []corev1.Container{
+				{
+					Name:  "setup-registry-certs",
+					Image: "alpine:3.19",
+					Command: []string{"sh", "-c", fmt.Sprintf(`
+mkdir -p /docker-certs/%s
+cp /ca-cert/ca.crt /docker-certs/%s/ca.crt
+echo "CA certificate installed for %s"
+`, imageRegistryHost, imageRegistryHost, imageRegistryHost)},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "docker-certs",
+							MountPath: "/docker-certs",
+						},
+						{
+							Name:      "ca-cert",
+							MountPath: "/ca-cert",
+							ReadOnly:  true,
+						},
+					},
+				},
+			}
+		}
+
 		statefulSet.Spec = appsv1.StatefulSetSpec{
 			Replicas:            fn.Ptr(int32(1)),
 			ServiceName:         dockerDindName,
@@ -85,6 +112,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 				Spec: corev1.PodSpec{
 					TerminationGracePeriodSeconds: fn.Ptr(int64(30)),
 					HostAliases:                   hostAliases,
+					InitContainers:                initContainers,
 					NodeSelector: map[string]string{
 						"kloudlite.io/workmachine": obj.Name,
 					},
@@ -168,6 +196,10 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 									Name:      "docker-storage",
 									MountPath: "/var/lib/docker",
 								},
+								{
+									Name:      "docker-certs",
+									MountPath: "/etc/docker/certs.d",
+								},
 							},
 						},
 					},
@@ -176,6 +208,26 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 							Name: "docker-storage",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "docker-certs",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "ca-cert",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "kloudlite-wildcard-cert-tls",
+									Items: []corev1.KeyToPath{
+										{
+											Key:  "ca.crt",
+											Path: "ca.crt",
+										},
+									},
+								},
 							},
 						},
 					},
