@@ -195,7 +195,7 @@ func (h *RegistryAuthHandlers) authorizeScope(scope string, username string) ([]
 		}
 
 		scopeType := parts[0]
-		scopeName := parts[1]   // e.g., "username/image" or "library/image"
+		scopeName := parts[1]    // e.g., "username/image" or "library/image"
 		scopeActions := parts[2] // e.g., "push,pull" or "pull"
 
 		if scopeType != "repository" {
