@@ -104,6 +104,33 @@ data:
 		}
 		fmt.Printf("✓ Written Frontend to %s\n", frontendPath)
 
+		// Write Image Registry (substitute environment variables)
+		imageRegistryManifest := manifests.ImageRegistry
+		// Get region and bucket from environment or use defaults
+		region := os.Getenv("AWS_REGION")
+		if region == "" {
+			// Try to get from EC2 metadata
+			region = "us-east-1" // fallback
+		}
+		bucketName := os.Getenv("KLOUDLITE_S3_BUCKET")
+		if bucketName == "" {
+			bucketName = os.Getenv("S3_BUCKET")
+		}
+
+		// Only write image-registry if we have the required config
+		if bucketName != "" && region != "" {
+			imageRegistryManifest = strings.ReplaceAll(imageRegistryManifest, "${REGION}", region)
+			imageRegistryManifest = strings.ReplaceAll(imageRegistryManifest, "${BUCKET_NAME}", bucketName)
+
+			imageRegistryPath := filepath.Join(manifestsDir, "image-registry.yaml")
+			if err := os.WriteFile(imageRegistryPath, []byte(imageRegistryManifest), 0644); err != nil {
+				return fmt.Errorf("failed to write Image Registry: %w", err)
+			}
+			fmt.Printf("✓ Written Image Registry to %s\n", imageRegistryPath)
+		} else {
+			fmt.Println("⚠ Skipping Image Registry (S3_BUCKET or AWS_REGION not set)")
+		}
+
 		fmt.Println("\nKloudlite manifests installed successfully!")
 		fmt.Println("K3s will auto-apply these manifests on startup.")
 

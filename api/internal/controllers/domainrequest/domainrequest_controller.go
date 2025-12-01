@@ -9,8 +9,11 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -117,6 +120,12 @@ func (r *DomainRequestReconciler) Reconcile(ctx context.Context, req reconcile.R
 			}
 		}
 
+		// Ensure image-registry ingress exists when subdomain is assigned
+		if err := r.ensureImageRegistryIngress(ctx, domainRequest, logger); err != nil {
+			logger.Error("Failed to ensure image-registry ingress", zap.Error(err))
+			// Don't fail the reconciliation, just log the error
+		}
+
 		// Check if DomainRoutes have changed and need DNS reconciliation
 		// With GenerationChangedPredicate, this only runs when spec actually changes
 		currentRoutesHash, err := computeDomainRoutesHash(domainRequest.Spec.DomainRoutes)
@@ -202,4 +211,67 @@ func (r *DomainRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Pod{}).       // Watch HAProxy Pods owned by DomainRequest
 		Owns(&corev1.ConfigMap{}). // Watch HAProxy ConfigMaps owned by DomainRequest
 		Complete(r)
+}
+
+// ensureImageRegistryIngress creates or updates the Ingress for image-registry
+// This exposes the image-registry at cr.{subdomain} with TLS termination
+func (r *DomainRequestReconciler) ensureImageRegistryIngress(ctx context.Context, domainRequest *domainrequestsv1.DomainRequest, logger *zap.Logger) error {
+	if domainRequest.Status.Subdomain == "" {
+		logger.Debug("Subdomain not yet assigned, skipping image-registry ingress creation")
+		return nil
+	}
+
+	// Build the host: cr.{subdomain}.khost.dev
+	host := fmt.Sprintf("cr.%s.khost.dev", domainRequest.Status.Subdomain)
+
+	ingress := &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "image-registry",
+			Namespace: "kloudlite",
+		},
+	}
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingress, func() error {
+		ingress.Labels = map[string]string{
+			"app":                     "image-registry",
+			"kloudlite.io/managed-by": "domainrequest-controller",
+		}
+		ingress.Annotations = map[string]string{
+			// Large body size for container image layers (0 = unlimited)
+			"nginx.ingress.kubernetes.io/proxy-body-size": "0",
+		}
+		ingress.Spec = networkingv1.IngressSpec{
+			IngressClassName: ptr.To("kloudlite"),
+			TLS: []networkingv1.IngressTLS{{
+				Hosts:      []string{host},
+				SecretName: "kloudlite-wildcard-cert-tls",
+			}},
+			Rules: []networkingv1.IngressRule{{
+				Host: host,
+				IngressRuleValue: networkingv1.IngressRuleValue{
+					HTTP: &networkingv1.HTTPIngressRuleValue{
+						Paths: []networkingv1.HTTPIngressPath{{
+							Path:     "/",
+							PathType: ptr.To(networkingv1.PathTypePrefix),
+							Backend: networkingv1.IngressBackend{
+								Service: &networkingv1.IngressServiceBackend{
+									Name: "image-registry",
+									Port: networkingv1.ServiceBackendPort{Number: 5000},
+								},
+							},
+						}},
+					},
+				},
+			}},
+		}
+		return nil
+	})
+
+	if err != nil {
+		logger.Error("Failed to create/update image-registry ingress", zap.Error(err))
+		return err
+	}
+
+	logger.Info("Image registry ingress ensured", zap.String("host", host))
+	return nil
 }
