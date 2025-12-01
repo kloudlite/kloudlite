@@ -202,13 +202,15 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 
 		if err == nil && env.Status.State == environmentv1.EnvironmentStateActive {
 			// Update connected environment status - only if environment is active
+			// Use display name format: {owner}/{envName}
+			displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
 			workspace.Status.ConnectedEnvironment = &workspacev1.ConnectedEnvironmentInfo{
-				Name:            env.Name,
+				Name:            displayName,
 				TargetNamespace: env.Spec.TargetNamespace,
 			}
 			logger.Info("Updated ConnectedEnvironment status",
 				zap.String("workspace", workspace.Name),
-				zap.String("environment", env.Name),
+				zap.String("environment", displayName),
 				zap.String("targetNamespace", env.Spec.TargetNamespace),
 			)
 		} else if err != nil {

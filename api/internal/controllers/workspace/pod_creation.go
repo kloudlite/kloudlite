@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -51,6 +52,20 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		}
 	}
 
+	// Fetch DomainRequest to get subdomain for image registry URL
+	var imageRegistryURL string
+	var imageRegistryHost string // For /etc/hosts entry
+	domainRequest := &domainrequestv1.DomainRequest{}
+	if err := r.Get(context.Background(), fn.NN("", "installation-domain"), domainRequest); err == nil && domainRequest.Status.Subdomain != "" {
+		// Use HTTPS endpoint via ingress: cr.{subdomain}.khost.dev
+		imageRegistryHost = fmt.Sprintf("cr.%s.khost.dev", domainRequest.Status.Subdomain)
+		imageRegistryURL = imageRegistryHost
+	} else {
+		// Fallback to internal service if subdomain not available
+		imageRegistryURL = "image-registry.kloudlite.svc.cluster.local:5000"
+		imageRegistryHost = ""
+	}
+
 	// Build environment variables
 	envVars := []corev1.EnvVar{
 		{
@@ -70,6 +85,12 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 			// Use fully qualified service DNS name for Docker client compatibility
 			Name:  "DOCKER_HOST",
 			Value: fmt.Sprintf("tcp://docker-dind.%s.svc.cluster.local:2375", wm.Spec.TargetNamespace),
+		},
+		{
+			// Default image registry for kl docker commands
+			// Uses HTTPS endpoint with TLS termination when subdomain is available
+			Name:  "KL_IMAGE_REGISTRY",
+			Value: imageRegistryURL,
 		},
 	}
 
@@ -122,7 +143,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 				initContainers := []corev1.Container{
 					{
 						Name:  "init-workspace-dir",
-						Image: "alpine:latest",
+						Image: "bitnami/kubectl:latest",
 						Command: []string{
 							"sh",
 							"-c",
@@ -138,6 +159,24 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 								// envDisplayName is already formatted as {username}/{envName} (e.g., "karthik/main")
 								// Intercepts will be empty on pod creation (added later via controller updates)
 								contextJSON := fmt.Sprintf(`{"environment":"%s","intercepts":[]}`, envDisplayName)
+
+								// Build /etc/hosts entry for image registry
+								// Points to the wm-ingress-controller service in the target namespace
+								hostsEntry := ""
+								if imageRegistryHost != "" {
+									// Resolve the ingress controller service ClusterIP using DNS
+									// We use getent hosts since it works in Alpine
+									hostsEntry = fmt.Sprintf(`
+# Resolve wm-ingress-controller service IP for image registry
+INGRESS_IP=$(getent hosts wm-ingress-controller.%s.svc.cluster.local | awk '{ print $1 }')
+if [ -n "$INGRESS_IP" ]; then
+  echo "$INGRESS_IP %s" >> /etc-writable-hosts/hosts
+  echo "Added /etc/hosts entry: $INGRESS_IP %s"
+else
+  echo "Warning: Could not resolve wm-ingress-controller service"
+fi
+`, targetNamespace, imageRegistryHost, imageRegistryHost)
+								}
 
 								return fmt.Sprintf(`
 # Create workspace directory
@@ -185,13 +224,32 @@ EOFR
 chown 1001:1001 /etc-writable-resolv/resolv.conf
 chmod 666 /etc-writable-resolv/resolv.conf
 
+# Create /etc/hosts with base entries
+cat > /etc-writable-hosts/hosts << 'EOFH'
+127.0.0.1 localhost
+::1 localhost ip6-localhost ip6-loopback
+EOFH
+%s
+chmod 644 /etc-writable-hosts/hosts
+
+# Download Kloudlite CA certificate from kloudlite-ingress namespace
+# The workspace service account has permissions to read secrets in kloudlite-ingress namespace
+echo "Downloading Kloudlite CA certificate..."
+mkdir -p /ca-certs-writable
+if kubectl get secret kloudlite-ca -n kloudlite-ingress -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d > /ca-certs-writable/kloudlite-ca.crt; then
+  chmod 644 /ca-certs-writable/kloudlite-ca.crt
+  echo "Installed Kloudlite CA certificate"
+else
+  echo "Warning: Could not download Kloudlite CA certificate"
+fi
+
 # Create initial Kloudlite context file for Starship prompt
 # This will be updated by the controller when environment connection or intercepts change
 cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 %s
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
-`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, targetNamespace, searchDomains, contextJSON)
+`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, targetNamespace, searchDomains, hostsEntry, contextJSON)
 							}(),
 						},
 						VolumeMounts: []corev1.VolumeMount{
@@ -208,8 +266,16 @@ chmod 644 /tmp-writable/kloudlite-context.json
 								MountPath: "/etc-writable-resolv",
 							},
 							{
+								Name:      "etc-hosts",
+								MountPath: "/etc-writable-hosts",
+							},
+							{
 								Name:      "tmp-context",
 								MountPath: "/tmp-writable",
+							},
+							{
+								Name:      "ca-certs",
+								MountPath: "/ca-certs-writable",
 							},
 						},
 					},
@@ -350,6 +416,18 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							Name:      "tmp-context",
 							MountPath: "/tmp",
 						},
+						{
+							Name:      "etc-hosts",
+							MountPath: "/etc/hosts",
+							SubPath:   "hosts",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "ca-certs",
+							MountPath: "/usr/local/share/ca-certificates/kloudlite-ca.crt",
+							SubPath:   "kloudlite-ca.crt",
+							ReadOnly:  true,
+						},
 					},
 					LivenessProbe: &corev1.Probe{
 						ProbeHandler: corev1.ProbeHandler{
@@ -450,6 +528,20 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							Path: "/kloudlite/bin",
 							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
+					},
+				},
+				{
+					Name: "etc-hosts",
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+				{
+					// CA certificates are downloaded by init container via kubectl
+					// and stored in this EmptyDir for the main container to use
+					Name: "ca-certs",
+					VolumeSource: corev1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
 					},
 				},
 			},
