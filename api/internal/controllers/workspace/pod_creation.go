@@ -67,9 +67,9 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		},
 		{
 			// Docker daemon address for container image builds
-			// Workspace and docker-dind are in the same namespace, so simple service name works
+			// Use fully qualified service DNS name for Docker client compatibility
 			Name:  "DOCKER_HOST",
-			Value: "tcp://docker-dind:2375",
+			Value: fmt.Sprintf("tcp://docker-dind.%s.svc.cluster.local:2375", wm.Spec.TargetNamespace),
 		},
 	}
 
@@ -166,7 +166,7 @@ cat > /etc-writable/environment << 'EOF'
 PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKSPACE_NAME=%s
 WORKSPACE_NAMESPACE=%s
-DOCKER_HOST=tcp://docker-dind:2375
+DOCKER_HOST=tcp://docker-dind.%s.svc.cluster.local:2375
 EOF
 
 # Dump all environment variables to /etc/environment
@@ -191,7 +191,7 @@ cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 %s
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
-`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, searchDomains, contextJSON)
+`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, targetNamespace, searchDomains, contextJSON)
 							}(),
 						},
 						VolumeMounts: []corev1.VolumeMount{
