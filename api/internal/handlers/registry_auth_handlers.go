@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base32"
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
@@ -21,6 +23,7 @@ import (
 type RegistryAuthHandlers struct {
 	authService   services.AuthService
 	rsaPrivateKey *rsa.PrivateKey
+	keyID         string // libtrust-style key ID for JWT kid header
 	logger        *zap.Logger
 }
 
@@ -51,11 +54,49 @@ func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM 
 		}
 	}
 
+	// Generate libtrust-style key ID from public key
+	// This is required by Docker Registry to match the key in rootcertbundle
+	keyID := generateLibtrustKeyID(&privateKey.PublicKey)
+
+	logger.Info("Registry auth handlers initialized",
+		zap.String("keyID", keyID),
+	)
+
 	return &RegistryAuthHandlers{
 		authService:   authService,
 		rsaPrivateKey: privateKey,
+		keyID:         keyID,
 		logger:        logger,
 	}, nil
+}
+
+// generateLibtrustKeyID generates a libtrust-compatible key ID from an RSA public key
+// The format is: XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX
+// where each segment is 4 characters of base32-encoded SHA256 hash of the DER-encoded public key
+func generateLibtrustKeyID(publicKey *rsa.PublicKey) string {
+	// Marshal the public key to DER format
+	derBytes, err := x509.MarshalPKIXPublicKey(publicKey)
+	if err != nil {
+		return ""
+	}
+
+	// Calculate SHA256 hash
+	hash := sha256.Sum256(derBytes)
+
+	// Encode to base32 (no padding)
+	encoded := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(hash[:])
+
+	// Format as colon-separated 4-character groups (first 48 chars = 12 groups)
+	var parts []string
+	for i := 0; i < 48 && i < len(encoded); i += 4 {
+		end := i + 4
+		if end > len(encoded) {
+			end = len(encoded)
+		}
+		parts = append(parts, encoded[i:end])
+	}
+
+	return strings.Join(parts, ":")
 }
 
 // DockerTokenClaims represents the JWT claims for Docker Registry token
@@ -185,6 +226,8 @@ func (h *RegistryAuthHandlers) GetToken(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, dockerClaims)
 	// Set typ header to "JWT" as required by Docker Registry spec
 	token.Header["typ"] = "JWT"
+	// Set kid header to libtrust key ID - required for Docker Registry to verify the signature
+	token.Header["kid"] = h.keyID
 	tokenString, err := token.SignedString(h.rsaPrivateKey)
 	if err != nil {
 		h.logger.Error("Failed to sign Docker token", zap.Error(err))
