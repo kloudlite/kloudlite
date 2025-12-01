@@ -26,9 +26,6 @@ set -g fish_greeting
 # Fix terminal type warnings
 set -x TERM xterm-256color
 
-# Alias docker to kl docker for Kloudlite container builds
-alias docker='kl docker'
-
 # Set starship config and initialize
 set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source

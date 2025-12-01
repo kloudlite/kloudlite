@@ -15,9 +15,6 @@ fi
 typeset -U path
 path=(/home/kl/.local/bin ${path[@]:#*/games})
 
-# Alias docker to kl docker for Kloudlite container builds
-alias docker='kl docker'
-
 # Initialize starship prompt
 export STARSHIP_CONFIG=~/.config/starship.toml
 eval "$(starship init zsh)"
