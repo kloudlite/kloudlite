@@ -36,14 +36,15 @@ data:
         threshold: 3
     auth:
       token:
-        # Token authentication for Docker Registry
+        # Token authentication for Docker Registry v3
         # realm: URL to the token authentication endpoint (Kloudlite API server)
         # service: Name of the service (registry hostname)
         # issuer: Must match the issuer in the tokens (kloudlite-registry-auth)
-        # rootcertbundle: Not needed for HMAC tokens (only for RSA/ECDSA)
+        # rootcertbundle: Path to the RSA public key certificate (required for RS256 tokens)
         realm: ${AUTH_TOKEN_REALM}
         service: ${AUTH_TOKEN_SERVICE}
         issuer: kloudlite-registry-auth
+        rootcertbundle: /etc/registry-auth/registry-auth.crt
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -75,6 +76,9 @@ spec:
           mountPath: /etc/distribution/config.yml
           subPath: config.yml
           readOnly: true
+        - name: registry-auth-cert
+          mountPath: /etc/registry-auth
+          readOnly: true
         livenessProbe:
           httpGet:
             path: /
@@ -98,6 +102,12 @@ spec:
       - name: registry-config
         configMap:
           name: image-registry-config
+      - name: registry-auth-cert
+        secret:
+          secretName: registry-auth-cert
+          items:
+          - key: registry-auth.crt
+            path: registry-auth.crt
 ---
 apiVersion: v1
 kind: Service
