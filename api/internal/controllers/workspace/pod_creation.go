@@ -57,8 +57,9 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	var imageRegistryHost string // For /etc/hosts entry
 	domainRequest := &domainrequestv1.DomainRequest{}
 	if err := r.Get(context.Background(), fn.NN("", "installation-domain"), domainRequest); err == nil && domainRequest.Status.Subdomain != "" {
-		// Use HTTPS endpoint via ingress: cr.{subdomain}.khost.dev
-		imageRegistryHost = fmt.Sprintf("cr.%s.khost.dev", domainRequest.Status.Subdomain)
+		// Use HTTPS endpoint via ingress: cr.{subdomain}
+		// subdomain is already full domain like "beanbag.khost.dev"
+		imageRegistryHost = fmt.Sprintf("cr.%s", domainRequest.Status.Subdomain)
 		imageRegistryURL = imageRegistryHost
 	} else {
 		// Fallback to internal service if subdomain not available
