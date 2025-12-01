@@ -16,8 +16,8 @@ RUN chmod +x /usr/local/bin/kl
 
 # Install system dependencies including shells first with apt cache mount
 # Add fish-shell PPA for fish 3.4+ (required for starship compatibility with set -f)
-# Note: Container image building is handled by BuildKit daemon (buildkitd StatefulSet)
-# accessed via BUILDKIT_HOST env var. No container runtime needed in workspace.
+# Note: Container image building is handled by Docker-in-Docker daemon (docker-dind StatefulSet)
+# accessed via DOCKER_HOST env var. Docker commands are embedded in the kl binary.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y software-properties-common \
