@@ -30,6 +30,10 @@ type AuthConfig struct {
 	// Note: Backend only verifies tokens - frontend handles all token generation
 	JWTSecret string `envconfig:"JWT_SECRET" required:"true"`
 
+	// RSA private key for signing Docker Registry tokens (PEM format)
+	// This is used for Docker Registry v3 token authentication which requires RSA/ECDSA
+	RegistryRSAPrivateKey string `envconfig:"REGISTRY_RSA_PRIVATE_KEY"`
+
 	// Skip authentication for development/testing
 	SkipAuthentication bool `envconfig:"SKIP_AUTHENTICATION" default:"false"`
 }

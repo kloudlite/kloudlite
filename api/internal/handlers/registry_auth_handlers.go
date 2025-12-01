@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,18 +18,43 @@ import (
 
 // RegistryAuthHandlers handles Docker Registry v2 token authentication
 type RegistryAuthHandlers struct {
-	authService services.AuthService
-	jwtSecret   string
-	logger      *zap.Logger
+	authService   services.AuthService
+	rsaPrivateKey *rsa.PrivateKey
+	logger        *zap.Logger
 }
 
 // NewRegistryAuthHandlers creates a new RegistryAuthHandlers
-func NewRegistryAuthHandlers(authService services.AuthService, jwtSecret string, logger *zap.Logger) *RegistryAuthHandlers {
-	return &RegistryAuthHandlers{
-		authService: authService,
-		jwtSecret:   jwtSecret,
-		logger:      logger,
+// rsaPrivateKeyPEM should be a PEM-encoded RSA private key for signing Docker tokens
+func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM string, logger *zap.Logger) (*RegistryAuthHandlers, error) {
+	// Parse RSA private key
+	block, _ := pem.Decode([]byte(rsaPrivateKeyPEM))
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse PEM block containing the RSA private key")
 	}
+
+	var privateKey *rsa.PrivateKey
+	var err error
+
+	// Try parsing as PKCS1 first, then PKCS8
+	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		// Try PKCS8
+		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse RSA private key: %w", err)
+		}
+		var ok bool
+		privateKey, ok = key.(*rsa.PrivateKey)
+		if !ok {
+			return nil, fmt.Errorf("key is not an RSA private key")
+		}
+	}
+
+	return &RegistryAuthHandlers{
+		authService:   authService,
+		rsaPrivateKey: privateKey,
+		logger:        logger,
+	}, nil
 }
 
 // DockerTokenClaims represents the JWT claims for Docker Registry token
@@ -135,7 +163,7 @@ func (h *RegistryAuthHandlers) GetToken(c *gin.Context) {
 		return
 	}
 
-	// Generate Docker Registry token
+	// Generate Docker Registry token using RS256 (required by Docker Registry v3)
 	now := time.Now()
 	expiresIn := 3600 // 1 hour
 
@@ -151,8 +179,9 @@ func (h *RegistryAuthHandlers) GetToken(c *gin.Context) {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, dockerClaims)
-	tokenString, err := token.SignedString([]byte(h.jwtSecret))
+	// Use RS256 for Docker Registry v3 compatibility
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, dockerClaims)
+	tokenString, err := token.SignedString(h.rsaPrivateKey)
 	if err != nil {
 		h.logger.Error("Failed to sign Docker token", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
