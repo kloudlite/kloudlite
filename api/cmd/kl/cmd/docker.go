@@ -23,11 +23,11 @@ import (
 
 var dockerCmd = &cobra.Command{
 	Use:   "docker",
-	Short: "Docker commands for building and managing container images",
-	Long: `Docker commands for building and managing container images.
+	Short: "Docker commands for building and managing containers",
+	Long: `Docker commands for building and managing containers.
 
-This command provides Docker functionality for image management operations.
-Container runtime commands (run, exec, start, etc.) are not supported in workspaces.
+This command provides full Docker functionality including image management
+and container runtime operations.
 
 The DOCKER_HOST environment variable is automatically configured to connect
 to the Docker daemon running in your workspace namespace.`,
