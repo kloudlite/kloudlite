@@ -206,7 +206,9 @@ cat > /etc-writable/environment << 'EOF'
 PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKSPACE_NAME=%s
 WORKSPACE_NAMESPACE=%s
+WORKSPACE_OWNER=%s
 DOCKER_HOST=tcp://docker-dind.%s.svc.cluster.local:2375
+KL_IMAGE_REGISTRY=%s
 EOF
 
 # Dump all environment variables to /etc/environment
@@ -250,7 +252,7 @@ cat > /tmp-writable/kloudlite-context.json << 'EOFC'
 %s
 EOFC
 chmod 644 /tmp-writable/kloudlite-context.json
-`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, targetNamespace, searchDomains, hostsEntry, contextJSON)
+`, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, workspace.Spec.OwnedBy, targetNamespace, imageRegistryURL, searchDomains, hostsEntry, contextJSON)
 							}(),
 						},
 						VolumeMounts: []corev1.VolumeMount{
