@@ -14,11 +14,11 @@ import (
 
 // DeploymentHealthResult contains the health check result for a composition
 type DeploymentHealthResult struct {
-	State          compositionsv1.CompositionState
-	Message        string
-	Services       []compositionsv1.ServiceStatus
-	RunningCount   int32
-	ServicesCount  int32
+	State         compositionsv1.CompositionState
+	Message       string
+	Services      []compositionsv1.ServiceStatus
+	RunningCount  int32
+	ServicesCount int32
 }
 
 // checkDeploymentHealth checks the actual health of all deployments and pods for a composition
