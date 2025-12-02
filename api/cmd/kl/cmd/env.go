@@ -123,7 +123,7 @@ func handleEnvConnectInteractive() error {
 
 	ctx := context.Background()
 
-	// List all environments in the current namespace
+	// List all environments
 	fmt.Println("Loading environments...")
 	envList := &environmentsv1.EnvironmentList{}
 	listOpts := []client.ListOption{
@@ -194,16 +194,14 @@ func handleEnvConnect(environmentName string) error {
 	// Use display name format: {owner}/{envName} to match what controller sets in status
 	displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
 	if err := waitForEnvironmentSync(displayName, targetNamespace); err != nil {
-		return fmt.Errorf("environment connection update failed: %w", err)
+		return fmt.Errorf("failed to connect: %w", err)
 	}
 
 	fmt.Println()
-	fmt.Printf("[✓] Connected to environment '%s'\n", environmentName)
-	fmt.Printf("Target Namespace: %s\n", targetNamespace)
+	fmt.Printf("[✓] Connected to environment '%s'\n", displayName)
 	fmt.Println()
-	fmt.Println("DNS search domain added. You can now access services using short names:")
-	fmt.Printf("  Example: curl http://api-server:8080\n")
-	fmt.Printf("  Instead of: curl http://api-server.%s.svc.cluster.local:8080\n", targetNamespace)
+	fmt.Println("You can now access services in this environment using short names:")
+	fmt.Println("  Example: curl http://api-server:8080")
 
 	return nil
 }
@@ -236,7 +234,6 @@ func handleEnvDisconnect() error {
 
 	fmt.Println()
 	fmt.Println("[✓] Disconnected from environment")
-	fmt.Println("DNS configuration has been updated")
 
 	return nil
 }
@@ -263,14 +260,10 @@ func handleEnvStatus() error {
 		return nil
 	}
 
-	fmt.Println("[✓] Connected to environment")
-	fmt.Printf("Environment: %s\n", workspace.Status.ConnectedEnvironment.Name)
-	fmt.Printf("Target Namespace: %s\n", workspace.Status.ConnectedEnvironment.TargetNamespace)
+	fmt.Printf("[✓] Connected to environment '%s'\n", workspace.Status.ConnectedEnvironment.Name)
 	fmt.Println()
-	fmt.Printf("Services in '%s' can be accessed using short names\n", workspace.Status.ConnectedEnvironment.TargetNamespace)
-	fmt.Println()
-	fmt.Println("Example:")
-	fmt.Println("  curl http://api-server:8080")
+	fmt.Println("Services in this environment can be accessed using short names:")
+	fmt.Println("  Example: curl http://api-server:8080")
 
 	// Read intercepts from context file (maintained by controller)
 	fmt.Println()
@@ -310,7 +303,7 @@ func waitForEnvironmentSync(environmentName, targetNamespace string) error {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	fmt.Print("Waiting for environment connection to sync")
+	fmt.Print("Connecting")
 
 	for {
 		select {
@@ -319,14 +312,7 @@ func waitForEnvironmentSync(environmentName, targetNamespace string) error {
 			return fmt.Errorf("interrupted by user")
 		case <-timeout:
 			fmt.Println(" timeout!")
-			// Get final state for debugging
-			workspace, _ := WsClient.Get(ctx)
-			if workspace != nil && workspace.Status.ConnectedEnvironment != nil {
-				return fmt.Errorf("timeout waiting for environment sync after 30 seconds (got: name=%q, ns=%q)",
-					workspace.Status.ConnectedEnvironment.Name,
-					workspace.Status.ConnectedEnvironment.TargetNamespace)
-			}
-			return fmt.Errorf("timeout waiting for environment sync after 30 seconds (connectedEnvironment is nil)")
+			return fmt.Errorf("connection timed out after 30 seconds, please try again")
 		case <-ticker.C:
 			// Show progress
 			fmt.Print(".")
