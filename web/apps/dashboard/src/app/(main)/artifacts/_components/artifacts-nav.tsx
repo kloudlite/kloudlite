@@ -2,17 +2,27 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Container } from 'lucide-react'
+import { Container, Box } from 'lucide-react'
 
-const navItems = [
+interface NavItem {
+  href: string
+  label: string
+  icon: typeof Container
+  comingSoon?: boolean
+}
+
+const navItems: NavItem[] = [
   {
-    href: '/artifacts/container-images',
-    label: 'Container Images',
+    href: '/artifacts/container-repos',
+    label: 'Container Repos',
     icon: Container,
   },
-  // Future artifact types can be added here:
-  // { href: '/artifacts/helm-charts', label: 'Helm Charts', icon: Package, comingSoon: true },
-  // { href: '/artifacts/packages', label: 'Packages', icon: Archive, comingSoon: true },
+  {
+    href: '/artifacts/model-repos',
+    label: 'Model Repos',
+    icon: Box,
+    comingSoon: true,
+  },
 ]
 
 export function ArtifactsNav() {
@@ -24,6 +34,19 @@ export function ArtifactsNav() {
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
+
+          if (item.comingSoon) {
+            return (
+              <div
+                key={item.href}
+                className="flex items-center gap-2 border-b-2 border-transparent px-1 py-3 text-sm font-medium text-muted-foreground/60 cursor-not-allowed"
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">Coming Soon</span>
+              </div>
+            )
+          }
 
           return (
             <Link

@@ -27,7 +27,7 @@ export async function listTags(repository: string) {
 export async function deleteTag(repository: string, tag: string) {
   try {
     await registryService.deleteTag(repository, tag)
-    revalidatePath('/artifacts/container-images')
+    revalidatePath('/artifacts/container-repos')
     return { success: true }
   } catch (err) {
     console.error('Delete tag error:', err)
@@ -45,7 +45,7 @@ export async function deleteTag(repository: string, tag: string) {
 export async function deleteRepository(repository: string) {
   try {
     const result = await registryService.deleteRepository(repository)
-    revalidatePath('/artifacts/container-images')
+    revalidatePath('/artifacts/container-repos')
     return { success: true, data: result }
   } catch (err) {
     console.error('Delete repository error:', err)

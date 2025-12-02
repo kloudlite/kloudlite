@@ -2,7 +2,7 @@ import { AlertCircle } from 'lucide-react'
 import { registryService } from '@/lib/services/registry.service'
 import { RepositoryList } from '../_components/repository-list'
 
-export default async function ContainerImagesPage() {
+export default async function ContainerReposPage() {
   let repositories: { name: string }[] = []
   let error: string | null = null
 
