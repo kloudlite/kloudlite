@@ -34,15 +34,10 @@ export function CloneEnvironmentDialog({
 }: CloneEnvironmentDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Remove username prefix from source environment name if present
+  // Use the environment's spec.name which is the actual name without owner prefix
   const getDefaultName = () => {
-    const sourceName = sourceEnvironment.name
-    const username = currentUser.includes('@') ? currentUser.split('@')[0] : currentUser
-    const prefix = `${username}--`
-    const nameWithoutPrefix = sourceName.startsWith(prefix)
-      ? sourceName.substring(prefix.length)
-      : sourceName
-    return `${nameWithoutPrefix}-copy`
+    const baseName = sourceEnvironment.spec?.name || sourceEnvironment.name
+    return `${baseName}-copy`
   }
   const [name, setName] = useState(getDefaultName())
 
