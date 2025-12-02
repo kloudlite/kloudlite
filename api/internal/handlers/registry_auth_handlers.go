@@ -72,9 +72,14 @@ func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM 
 
 // generateLibtrustKeyID generates a libtrust-compatible key ID from an RSA public key
 // The format is: XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX
-// where each segment is 4 characters of base32-encoded SHA256 hash of the DER-encoded public key
+// This matches the docker/libtrust library's KeyID() function:
+// 1. Marshal public key to PKIX DER format
+// 2. SHA256 hash the DER bytes
+// 3. Truncate to first 30 bytes (240 bits) - IMPORTANT!
+// 4. Base32 encode (no padding)
+// 5. Format as colon-separated 4-character groups
 func generateLibtrustKeyID(publicKey *rsa.PublicKey) string {
-	// Marshal the public key to DER format
+	// Marshal the public key to DER format (PKIX)
 	derBytes, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
 		return ""
@@ -83,12 +88,15 @@ func generateLibtrustKeyID(publicKey *rsa.PublicKey) string {
 	// Calculate SHA256 hash
 	hash := sha256.Sum256(derBytes)
 
-	// Encode to base32 (no padding)
-	encoded := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(hash[:])
+	// Truncate to 30 bytes (240 bits) as per libtrust spec
+	truncatedHash := hash[:30]
 
-	// Format as colon-separated 4-character groups (first 48 chars = 12 groups)
+	// Encode to base32 (no padding)
+	encoded := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(truncatedHash)
+
+	// Format as colon-separated 4-character groups (48 chars = 12 groups)
 	var parts []string
-	for i := 0; i < 48 && i < len(encoded); i += 4 {
+	for i := 0; i < len(encoded); i += 4 {
 		end := i + 4
 		if end > len(encoded) {
 			end = len(encoded)
