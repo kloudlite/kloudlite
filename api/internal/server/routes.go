@@ -89,6 +89,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		registryAuthHandlers, err = handlers.NewRegistryAuthHandlers(
 			servicesManager.Auth,
 			cfg.Auth.RegistryRSAPrivateKey,
+			cfg.Registry.ServiceName,
 			logger,
 		)
 		if err != nil {

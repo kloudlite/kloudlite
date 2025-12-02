@@ -23,12 +23,14 @@ type RegistryAuthHandlers struct {
 	authService   services.AuthService
 	rsaPrivateKey *rsa.PrivateKey
 	keyID         string // libtrust-style key ID for JWT kid header
+	serviceName   string // Registry service name for token audience
 	logger        *zap.Logger
 }
 
 // NewRegistryAuthHandlers creates a new RegistryAuthHandlers
 // rsaPrivateKeyPEM should be a PEM-encoded RSA private key for signing Docker tokens
-func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM string, logger *zap.Logger) (*RegistryAuthHandlers, error) {
+// serviceName is the registry service name used for token audience (e.g., "cr.beanbag.khost.dev")
+func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM string, serviceName string, logger *zap.Logger) (*RegistryAuthHandlers, error) {
 	// Parse RSA private key
 	block, _ := pem.Decode([]byte(rsaPrivateKeyPEM))
 	if block == nil {
@@ -59,12 +61,14 @@ func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM 
 
 	logger.Info("Registry auth handlers initialized",
 		zap.String("keyID", keyID),
+		zap.String("serviceName", serviceName),
 	)
 
 	return &RegistryAuthHandlers{
 		authService:   authService,
 		rsaPrivateKey: privateKey,
 		keyID:         keyID,
+		serviceName:   serviceName,
 		logger:        logger,
 	}, nil
 }
@@ -283,7 +287,7 @@ func (h *RegistryAuthHandlers) generateCatalogToken(username string) (string, er
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "kloudlite-registry-auth",
 			Subject:   username,
-			Audience:  jwt.ClaimStrings{"kloudlite-registry"},
+			Audience:  jwt.ClaimStrings{h.serviceName},
 			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(expiresIn) * time.Second)),
 			NotBefore: jwt.NewNumericDate(now.Add(-10 * time.Second)),
 			IssuedAt:  jwt.NewNumericDate(now),
