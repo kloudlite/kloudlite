@@ -60,7 +60,8 @@ type TagListResponse struct {
 // getRegistryToken generates a token for accessing the registry catalog
 func (h *RegistryCatalogHandlers) getRegistryToken(c *gin.Context) (string, error) {
 	// Get the username from the authenticated request context
-	username, exists := c.Get("username")
+	// The JWT middleware sets "user_username" in the context
+	username, exists := c.Get("user_username")
 	if !exists {
 		return "", fmt.Errorf("username not found in context")
 	}
