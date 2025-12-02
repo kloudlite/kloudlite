@@ -27,6 +27,7 @@ data:
         blobdescriptor: inmemory
     http:
       addr: :5000
+      host: https://${REGISTRY_HOST}
       headers:
         X-Content-Type-Options: [nosniff]
     health:
