@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -125,13 +126,68 @@ func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
 		return
 	}
 
-	// Convert to our response format
-	repos := make([]RepositoryInfo, len(catalogResp.Repositories))
-	for i, name := range catalogResp.Repositories {
-		repos[i] = RepositoryInfo{Name: name}
+	// Filter out repositories with no tags (deleted repos remain in catalog until GC)
+	// Get username for generating repository-specific tokens
+	username, _ := c.Get("user_username")
+	usernameStr := ""
+	if username != nil {
+		usernameStr = username.(string)
+	}
+
+	var repos []RepositoryInfo
+	for _, name := range catalogResp.Repositories {
+		// Check if repository has any tags
+		hasTags, err := h.repositoryHasTags(c.Request.Context(), name, usernameStr)
+		if err != nil {
+			h.logger.Debug("Failed to check tags for repository", zap.String("repo", name), zap.Error(err))
+			// Include repo if we can't determine - better to show than hide
+			repos = append(repos, RepositoryInfo{Name: name})
+			continue
+		}
+		if hasTags {
+			repos = append(repos, RepositoryInfo{Name: name})
+		}
 	}
 
 	c.JSON(http.StatusOK, RepositoryListResponse{Repositories: repos})
+}
+
+// repositoryHasTags checks if a repository has any tags
+func (h *RegistryCatalogHandlers) repositoryHasTags(ctx context.Context, repo string, username string) (bool, error) {
+	// Generate a token with pull access for this repository
+	token, err := h.registryAuthHandler.GenerateRepositoryToken(username, repo, []string{"pull"})
+	if err != nil {
+		return false, err
+	}
+
+	url := fmt.Sprintf("%s/v2/%s/tags/list", h.registryURL, repo)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("registry returned status %d", resp.StatusCode)
+	}
+
+	var tagResp TagListResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tagResp); err != nil {
+		return false, err
+	}
+
+	return len(tagResp.Tags) > 0, nil
 }
 
 // ListTags lists all tags for a specific repository
@@ -227,6 +283,16 @@ func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
 		return
 	}
 
+	// Check if user owns this repository (repository format: namespace/image)
+	if !strings.HasPrefix(repo, username.(string)+"/") {
+		h.logger.Warn("Delete tag denied - not user's repository",
+			zap.String("username", username.(string)),
+			zap.String("repository", repo),
+		)
+		c.JSON(http.StatusForbidden, gin.H{"error": "you can only delete tags from your own repositories"})
+		return
+	}
+
 	// Generate a token with specific repository delete access
 	token, err := h.registryAuthHandler.GenerateRepositoryToken(username.(string), repo, []string{"pull", "delete"})
 	if err != nil {
@@ -318,6 +384,16 @@ func (h *RegistryCatalogHandlers) DeleteRepository(c *gin.Context) {
 	username, exists := c.Get("user_username")
 	if !exists {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
+		return
+	}
+
+	// Check if user owns this repository (repository format: namespace/image)
+	if !strings.HasPrefix(repo, username.(string)+"/") {
+		h.logger.Warn("Delete repository denied - not user's repository",
+			zap.String("username", username.(string)),
+			zap.String("repository", repo),
+		)
+		c.JSON(http.StatusForbidden, gin.H{"error": "you can only delete your own repositories"})
 		return
 	}
 
