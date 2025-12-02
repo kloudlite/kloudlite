@@ -129,6 +129,21 @@ data:
 				return fmt.Errorf("failed to write Image Registry: %w", err)
 			}
 			fmt.Printf("✓ Written Image Registry to %s\n", imageRegistryPath)
+
+			// Add REGISTRY_SERVICE_NAME to api-server-config for token authentication
+			apiServerConfigPatch := fmt.Sprintf(`apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-server-config
+  namespace: kloudlite
+data:
+  REGISTRY_SERVICE_NAME: "%s"
+`, registryHost)
+			apiServerConfigPatchPath := filepath.Join(manifestsDir, "api-server-config-registry.yaml")
+			if err := os.WriteFile(apiServerConfigPatchPath, []byte(apiServerConfigPatch), 0644); err != nil {
+				return fmt.Errorf("failed to write API Server Config patch: %w", err)
+			}
+			fmt.Printf("✓ Written API Server Config patch to %s\n", apiServerConfigPatchPath)
 		} else {
 			fmt.Println("⚠ Skipping Image Registry (S3_BUCKET, AWS_REGION, or KLOUDLITE_REGISTRY_HOST not set)")
 		}
