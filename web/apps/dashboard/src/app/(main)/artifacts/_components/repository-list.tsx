@@ -14,10 +14,11 @@ import {
   AlertDialogTitle,
 } from '@kloudlite/ui'
 import type { RepositoryInfo } from '@/lib/services/registry.service'
-import { listTags, deleteTag } from '@/app/actions/registry.actions'
+import { listTags, deleteTag, deleteRepository } from '@/app/actions/registry.actions'
 
 interface RepositoryListProps {
   repositories: RepositoryInfo[]
+  onRepositoryDeleted?: (repoName: string) => void
 }
 
 interface TagsState {
@@ -26,11 +27,13 @@ interface TagsState {
   error: string | null
 }
 
-export function RepositoryList({ repositories }: RepositoryListProps) {
+export function RepositoryList({ repositories, onRepositoryDeleted }: RepositoryListProps) {
   const [expandedRepo, setExpandedRepo] = useState<string | null>(null)
   const [tagsState, setTagsState] = useState<TagsState>({ loading: false, tags: [], error: null })
   const [deletingTag, setDeletingTag] = useState<string | null>(null)
   const [tagToDelete, setTagToDelete] = useState<{ repo: string; tag: string } | null>(null)
+  const [repoToDelete, setRepoToDelete] = useState<string | null>(null)
+  const [deletingRepo, setDeletingRepo] = useState<string | null>(null)
   const [copiedTag, setCopiedTag] = useState<string | null>(null)
 
   const handleRepoClick = async (repoName: string) => {
@@ -77,6 +80,23 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
     await navigator.clipboard.writeText(fullImageName)
     setCopiedTag(`${repoName}:${tag}`)
     setTimeout(() => setCopiedTag(null), 2000)
+  }
+
+  const handleDeleteRepository = async () => {
+    if (!repoToDelete) return
+
+    setDeletingRepo(repoToDelete)
+    const result = await deleteRepository(repoToDelete)
+    if (result.success) {
+      onRepositoryDeleted?.(repoToDelete)
+      if (expandedRepo === repoToDelete) {
+        setExpandedRepo(null)
+      }
+    } else {
+      console.error('Failed to delete repository:', result.error)
+    }
+    setDeletingRepo(null)
+    setRepoToDelete(null)
   }
 
   if (repositories.length === 0) {
@@ -129,6 +149,23 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">{repo.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setRepoToDelete(repo.name)
+                      }}
+                      disabled={deletingRepo === repo.name}
+                      title="Delete repository"
+                    >
+                      {deletingRepo === repo.name ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
+                    </Button>
                     {isExpanded ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -228,6 +265,27 @@ export function RepositoryList({ repositories }: RepositoryListProps) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!repoToDelete} onOpenChange={() => setRepoToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete repository?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete repository <code className="bg-muted px-1 rounded">{repoToDelete}</code>?
+              This will delete all tags and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteRepository}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Repository
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
