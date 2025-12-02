@@ -28,3 +28,8 @@ func (r *WorkspaceReconciler) getWorkspaceTargetNamespace(ctx context.Context, w
 
 	return workmachine.Spec.TargetNamespace, nil
 }
+
+// getWorkspacePodName returns the pod name for a workspace with ws- prefix
+func getWorkspacePodName(workspace *workspacev1.Workspace) string {
+	return "ws-" + workspace.Name
+}

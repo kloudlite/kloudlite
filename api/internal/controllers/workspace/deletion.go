@@ -224,7 +224,7 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		// The workspace directory cleanup can still proceed
 	} else {
 		// Delete the workspace pod if it exists
-		podName := workspace.Name
+		podName := getWorkspacePodName(workspace)
 		pod := &corev1.Pod{}
 		err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 

@@ -17,7 +17,7 @@ import (
 // updateDNSConfigInRunningPod updates /etc/resolv.conf in a running workspace pod
 // when the environment connection changes
 func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	podName := workspace.Name
+	podName := getWorkspacePodName(workspace)
 
 	// Get the target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
@@ -78,7 +78,7 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 // updateKloudliteContextFile writes the Kloudlite context state to a file in the running pod
 // This file is used by kloudlite-context.sh for fast prompt rendering without API calls
 func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	podName := workspace.Name
+	podName := getWorkspacePodName(workspace)
 
 	// Get the target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
