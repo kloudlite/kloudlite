@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/base32"
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
@@ -54,9 +53,9 @@ func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM 
 		}
 	}
 
-	// Generate libtrust-style key ID from public key
-	// This is required by Docker Registry to match the key in rootcertbundle
-	keyID := generateLibtrustKeyID(&privateKey.PublicKey)
+	// Generate JWK Thumbprint (RFC 7638) from public key
+	// This is required by Docker Registry v3 to verify token signatures
+	keyID := generateJWKThumbprint(&privateKey.PublicKey)
 
 	logger.Info("Registry auth handlers initialized",
 		zap.String("keyID", keyID),
@@ -70,41 +69,48 @@ func NewRegistryAuthHandlers(authService services.AuthService, rsaPrivateKeyPEM 
 	}, nil
 }
 
-// generateLibtrustKeyID generates a libtrust-compatible key ID from an RSA public key
-// The format is: XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX
-// This matches the docker/libtrust library's KeyID() function:
-// 1. Marshal public key to PKIX DER format
-// 2. SHA256 hash the DER bytes
-// 3. Truncate to first 30 bytes (240 bits) - IMPORTANT!
-// 4. Base32 encode (no padding)
-// 5. Format as colon-separated 4-character groups
-func generateLibtrustKeyID(publicKey *rsa.PublicKey) string {
-	// Marshal the public key to DER format (PKIX)
-	derBytes, err := x509.MarshalPKIXPublicKey(publicKey)
-	if err != nil {
-		return ""
+// generateJWKThumbprint generates a JWK Thumbprint (RFC 7638) from an RSA public key
+// This is what Docker Registry v3 uses to verify token signatures.
+// The algorithm:
+// 1. Extract exponent (e) and modulus (n) from RSA public key
+// 2. Base64url encode both values
+// 3. Create JSON with keys in lexicographic order: {"e":"...","kty":"RSA","n":"..."}
+// 4. SHA256 hash the JSON string
+// 5. Base64url encode the hash (no padding)
+func generateJWKThumbprint(publicKey *rsa.PublicKey) string {
+	// Get the exponent and modulus
+	e := publicKey.E
+	n := publicKey.N
+
+	// Convert exponent to bytes (big-endian, minimum bytes needed)
+	eBytes := make([]byte, 4)
+	eBytes[0] = byte(e >> 24)
+	eBytes[1] = byte(e >> 16)
+	eBytes[2] = byte(e >> 8)
+	eBytes[3] = byte(e)
+	// Trim leading zeros
+	for len(eBytes) > 1 && eBytes[0] == 0 {
+		eBytes = eBytes[1:]
 	}
 
-	// Calculate SHA256 hash
-	hash := sha256.Sum256(derBytes)
+	// Get modulus bytes (already big-endian from big.Int)
+	nBytes := n.Bytes()
 
-	// Truncate to 30 bytes (240 bits) as per libtrust spec
-	truncatedHash := hash[:30]
+	// Base64url encode (no padding)
+	eEncoded := base64.RawURLEncoding.EncodeToString(eBytes)
+	nEncoded := base64.RawURLEncoding.EncodeToString(nBytes)
 
-	// Encode to base32 (no padding)
-	encoded := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(truncatedHash)
+	// Create the JWK JSON with keys in lexicographic order (e, kty, n)
+	// This exact format is required by RFC 7638
+	jwkJSON := fmt.Sprintf(`{"e":"%s","kty":"RSA","n":"%s"}`, eEncoded, nEncoded)
 
-	// Format as colon-separated 4-character groups (48 chars = 12 groups)
-	var parts []string
-	for i := 0; i < len(encoded); i += 4 {
-		end := i + 4
-		if end > len(encoded) {
-			end = len(encoded)
-		}
-		parts = append(parts, encoded[i:end])
-	}
+	// SHA256 hash the JSON
+	hash := sha256.Sum256([]byte(jwkJSON))
 
-	return strings.Join(parts, ":")
+	// Base64url encode the hash (no padding)
+	thumbprint := base64.RawURLEncoding.EncodeToString(hash[:])
+
+	return thumbprint
 }
 
 // DockerTokenClaims represents the JWT claims for Docker Registry token
