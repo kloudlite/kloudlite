@@ -310,7 +310,7 @@ func waitForEnvironmentSync(environmentName, targetNamespace string) error {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	fmt.Printf("Waiting for environment connection to sync (expecting: name=%q, ns=%q)", environmentName, targetNamespace)
+	fmt.Print("Waiting for environment connection to sync")
 
 	for {
 		select {
