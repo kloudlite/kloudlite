@@ -195,3 +195,97 @@ func (h *RegistryCatalogHandlers) ListTags(c *gin.Context) {
 
 	c.JSON(http.StatusOK, tagResp)
 }
+
+// DeleteTag deletes a specific tag from a repository
+// Uses query params: ?repo=namespace/image&tag=v1.0
+func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
+	// Get repository name from query param
+	repo := c.Query("repo")
+	if repo == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "repository name is required (use ?repo=name)"})
+		return
+	}
+
+	// Get tag from query param
+	tag := c.Query("tag")
+	if tag == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "tag is required (use ?tag=name)"})
+		return
+	}
+
+	// Get registry token for authentication
+	token, err := h.getRegistryToken(c)
+	if err != nil {
+		h.logger.Error("Failed to get registry token", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
+		return
+	}
+
+	// First, get the manifest digest for the tag
+	manifestURL := fmt.Sprintf("%s/v2/%s/manifests/%s", h.registryURL, repo, tag)
+	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodHead, manifestURL, nil)
+	if err != nil {
+		h.logger.Error("Failed to create request", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
+		return
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
+
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		h.logger.Error("Failed to get manifest", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get manifest"})
+		return
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		c.JSON(http.StatusNotFound, gin.H{"error": "tag not found"})
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		h.logger.Error("Registry returned non-OK status", zap.Int("status", resp.StatusCode))
+		c.JSON(http.StatusBadGateway, gin.H{"error": fmt.Sprintf("registry returned status %d", resp.StatusCode)})
+		return
+	}
+
+	// Get the digest from Docker-Content-Digest header
+	digest := resp.Header.Get("Docker-Content-Digest")
+	if digest == "" {
+		h.logger.Error("No digest in response")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get manifest digest"})
+		return
+	}
+
+	// Now delete the manifest by digest
+	deleteURL := fmt.Sprintf("%s/v2/%s/manifests/%s", h.registryURL, repo, digest)
+	deleteReq, err := http.NewRequestWithContext(c.Request.Context(), http.MethodDelete, deleteURL, nil)
+	if err != nil {
+		h.logger.Error("Failed to create delete request", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create delete request"})
+		return
+	}
+
+	deleteReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	deleteResp, err := h.httpClient.Do(deleteReq)
+	if err != nil {
+		h.logger.Error("Failed to delete manifest", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete manifest"})
+		return
+	}
+	defer deleteResp.Body.Close()
+
+	if deleteResp.StatusCode != http.StatusAccepted && deleteResp.StatusCode != http.StatusOK {
+		h.logger.Error("Failed to delete tag", zap.Int("status", deleteResp.StatusCode))
+		c.JSON(http.StatusBadGateway, gin.H{"error": fmt.Sprintf("failed to delete tag: registry returned status %d", deleteResp.StatusCode)})
+		return
+	}
+
+	h.logger.Info("Tag deleted", zap.String("repo", repo), zap.String("tag", tag), zap.String("digest", digest))
+	c.JSON(http.StatusOK, gin.H{"message": "tag deleted successfully"})
+}
