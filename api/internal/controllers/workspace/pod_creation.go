@@ -18,7 +18,7 @@ import (
 
 // createWorkspacePod creates a pod with multiple containers for different access methods
 func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspace) (*corev1.Pod, error) {
-	podName := workspace.Name
+	podName := getWorkspacePodName(workspace)
 
 	// Get nodeSelector from the user's WorkMachine to ensure workspace runs on the same node
 	// This is important for shared Nix store access via hostPath volumes

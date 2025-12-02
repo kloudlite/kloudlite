@@ -28,7 +28,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 			logger.Warn("Failed to get target namespace for source workspace suspension", zap.Error(err))
 		} else {
 			// Check if pod exists and delete it to ensure data consistency during cloning
-			podName := workspace.Name
+			podName := getWorkspacePodName(workspace)
 			pod := &corev1.Pod{}
 			err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 			if err == nil {
@@ -108,7 +108,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	}
 
 	// Check if pod already exists
-	podName := workspace.Name
+	podName := getWorkspacePodName(workspace)
 	pod := &corev1.Pod{}
 	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
@@ -267,7 +267,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 	}
 
 	// Check if pod exists
-	podName := workspace.Name
+	podName := getWorkspacePodName(workspace)
 	pod := &corev1.Pod{}
 	err = r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, pod)
 
