@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-// Redirect to the default artifact type (container images)
+// Redirect to the default artifact type (container repos)
 export default function ArtifactsPage() {
-  redirect('/artifacts/container-images')
+  redirect('/artifacts/container-repos')
 }

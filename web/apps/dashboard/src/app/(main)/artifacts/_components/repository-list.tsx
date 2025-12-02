@@ -152,18 +152,10 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
     return (
       <div className="bg-card rounded-lg border py-12 text-center">
         <Package className="mx-auto h-12 w-12 text-muted-foreground/50" />
-        <h3 className="mt-4 text-lg font-medium">No container images</h3>
+        <h3 className="mt-4 text-lg font-medium">No container repos</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Push your first image to the registry to see it here.
+          Container images can only be pushed from your workspaces.
         </p>
-        <div className="mt-6 mx-auto max-w-md">
-          <div className="rounded-md bg-muted p-4 text-left">
-            <p className="text-xs text-muted-foreground mb-2">Example:</p>
-            <code className="text-xs font-mono">
-              docker push cr.beanbag.khost.dev/username/image:tag
-            </code>
-          </div>
-        </div>
       </div>
     )
   }

@@ -19,7 +19,7 @@ export default async function ArtifactsLayout({ children }: LayoutProps) {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Artifacts</h1>
         <p className="text-muted-foreground mt-1.5 text-sm">
-          Browse and manage your container images and other artifacts
+          Browse and manage container images pushed from your workspaces
         </p>
       </div>
 
