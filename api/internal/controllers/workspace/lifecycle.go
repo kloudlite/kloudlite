@@ -150,15 +150,23 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	if err == nil {
 		// Pod exists
 
-		// Check if environment connection changed
+		// Check if environment connection changed by comparing target namespaces
+		// Note: status.ConnectedEnvironment.Name is display format (owner/name) while
+		// spec.EnvironmentConnection.EnvironmentRef.Name is the actual env name, so compare using TargetNamespace
 		envChanged := false
 		if workspace.Spec.EnvironmentConnection != nil {
-			// Workspace has environment connection
-			if workspace.Status.ConnectedEnvironment == nil ||
-				workspace.Status.ConnectedEnvironment.Name != workspace.Spec.EnvironmentConnection.EnvironmentRef.Name {
-				envChanged = true
-				logger.Info("Environment connection changed - will update DNS",
-					zap.String("newEnvironment", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name))
+			// Workspace has environment connection - fetch env to get target namespace
+			envName := workspace.Spec.EnvironmentConnection.EnvironmentRef.Name
+			connEnv := &environmentv1.Environment{}
+			if err := r.Get(ctx, client.ObjectKey{Name: envName}, connEnv); err == nil {
+				expectedTargetNs := connEnv.Spec.TargetNamespace
+				if workspace.Status.ConnectedEnvironment == nil ||
+					workspace.Status.ConnectedEnvironment.TargetNamespace != expectedTargetNs {
+					envChanged = true
+					logger.Info("Environment connection changed - will update DNS",
+						zap.String("newEnvironment", envName),
+						zap.String("targetNamespace", expectedTargetNs))
+				}
 			}
 		} else {
 			// Workspace has no environment connection
