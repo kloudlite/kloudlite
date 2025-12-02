@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -63,25 +64,33 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 
 	// Check if connected environment is deactivated - if so, disconnect the workspace
 	if workspace.Spec.EnvironmentConnection != nil {
-		logger.Info("Checking environment connection status",
-			zap.String("environmentRef", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name))
-		env, err := r.validateEnvironmentConnection(ctx, workspace)
-		if err != nil {
-			logger.Warn("Failed to validate environment connection", zap.Error(err))
-		} else if env != nil {
-			logger.Info("Environment connection validated",
-				zap.String("environment", env.Name),
-				zap.Bool("activated", env.Spec.Activated))
+		envName := workspace.Spec.EnvironmentConnection.EnvironmentRef.Name
+		logger.Info("Checking environment connection status", zap.String("environmentRef", envName))
+
+		// Fetch environment directly (don't use validateEnvironmentConnection as it returns error for deactivated envs)
+		env := &environmentv1.Environment{}
+		if err := r.Get(ctx, client.ObjectKey{Name: envName}, env); err != nil {
+			if apierrors.IsNotFound(err) {
+				// Environment doesn't exist - disconnect workspace
+				logger.Info("Disconnecting workspace from deleted environment", zap.String("environment", envName))
+				workspace.Spec.EnvironmentConnection = nil
+				if err := r.Update(ctx, workspace); err != nil {
+					logger.Error("Failed to disconnect from deleted environment", zap.Error(err))
+					return reconcile.Result{}, fmt.Errorf("failed to disconnect from deleted environment: %w", err)
+				}
+				return reconcile.Result{Requeue: true}, nil
+			}
+			logger.Warn("Failed to fetch environment", zap.Error(err))
+		} else {
+			logger.Info("Environment fetched", zap.String("environment", env.Name), zap.Bool("activated", env.Spec.Activated))
 			if !env.Spec.Activated {
 				// Environment is deactivated - disconnect workspace
-				logger.Info("Disconnecting workspace from deactivated environment",
-					zap.String("environment", env.Name))
+				logger.Info("Disconnecting workspace from deactivated environment", zap.String("environment", env.Name))
 				workspace.Spec.EnvironmentConnection = nil
 				if err := r.Update(ctx, workspace); err != nil {
 					logger.Error("Failed to disconnect from deactivated environment", zap.Error(err))
 					return reconcile.Result{}, fmt.Errorf("failed to disconnect from deactivated environment: %w", err)
 				}
-				// Requeue to continue reconciliation with updated spec
 				return reconcile.Result{Requeue: true}, nil
 			}
 		}
