@@ -202,7 +202,7 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
                           <Container className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{imageName}</span>
+                          <span className="font-medium">{repo.name}</span>
                           {isExpanded ? (
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           ) : (
