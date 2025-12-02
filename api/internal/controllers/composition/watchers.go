@@ -47,6 +47,27 @@ func (r *CompositionReconciler) findCompositionsForEnvironment(ctx context.Conte
 	return r.listCompositionsInNamespace(ctx, targetNamespace)
 }
 
+// findCompositionsForPod triggers reconciliation when a pod's status changes
+// This enables faster feedback for ImagePullBackOff, CrashLoopBackOff, etc.
+func (r *CompositionReconciler) findCompositionsForPod(ctx context.Context, obj client.Object) []reconcile.Request {
+	pod := obj.(*corev1.Pod)
+
+	// Check if this pod belongs to a composition by looking at labels
+	compositionName, ok := pod.Labels[dockerCompositionLabel]
+	if !ok {
+		return []reconcile.Request{}
+	}
+
+	return []reconcile.Request{
+		{
+			NamespacedName: types.NamespacedName{
+				Name:      compositionName,
+				Namespace: pod.Namespace,
+			},
+		},
+	}
+}
+
 // listCompositionsInNamespace lists all compositions in a given namespace and returns reconcile requests
 func (r *CompositionReconciler) listCompositionsInNamespace(ctx context.Context, namespace string) []reconcile.Request {
 	compositionList := &compositionsv1.CompositionList{}
