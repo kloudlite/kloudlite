@@ -19,14 +19,17 @@ type PVCCopier struct {
 	client          client.Client
 	sourceNamespace string
 	targetNamespace string
+	targetNodeName  string
 }
 
 // NewPVCCopier creates a new PVC copier
-func NewPVCCopier(client client.Client, sourceNamespace, targetNamespace string) *PVCCopier {
+// targetNodeName is the node where receiver jobs should run (typically the environment's workmachine)
+func NewPVCCopier(client client.Client, sourceNamespace, targetNamespace, targetNodeName string) *PVCCopier {
 	return &PVCCopier{
 		client:          client,
 		sourceNamespace: sourceNamespace,
 		targetNamespace: targetNamespace,
+		targetNodeName:  targetNodeName,
 	}
 }
 
@@ -232,15 +235,23 @@ func (c *PVCCopier) createReceiverJob(sourcePVC, targetPVC, senderIP string, own
 						"kloudlite.io/target-pvc": targetPVC,
 					},
 				},
-				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyOnFailure,
-					Containers: []corev1.Container{
-						{
-							Name:    "receiver",
-							Image:   "alpine:latest",
-							Command: []string{"/bin/sh", "-c"},
-							Args: []string{
-								fmt.Sprintf(`
+				Spec: c.buildReceiverPodSpec(targetPVC, senderURL),
+			},
+		},
+	}
+}
+
+// buildReceiverPodSpec creates the pod spec for the receiver job with proper node scheduling
+func (c *PVCCopier) buildReceiverPodSpec(targetPVC, senderURL string) corev1.PodSpec {
+	spec := corev1.PodSpec{
+		RestartPolicy: corev1.RestartPolicyOnFailure,
+		Containers: []corev1.Container{
+			{
+				Name:    "receiver",
+				Image:   "alpine:latest",
+				Command: []string{"/bin/sh", "-c"},
+				Args: []string{
+					fmt.Sprintf(`
 # Install required tools
 apk add --no-cache curl tar gzip
 
@@ -282,39 +293,55 @@ echo "Extraction complete: $FILE_COUNT files, $DIR_SIZE total"
 
 echo "Copy completed successfully"
 `, senderURL, senderURL, senderURL),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "target-volume",
-									MountPath: "/target-data",
-								},
-							},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("100m"),
-									corev1.ResourceMemory: resource.MustParse("256Mi"),
-								},
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1000m"),
-									corev1.ResourceMemory: resource.MustParse("1Gi"),
-								},
-							},
-						},
+				},
+				VolumeMounts: []corev1.VolumeMount{
+					{
+						Name:      "target-volume",
+						MountPath: "/target-data",
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "target-volume",
-							VolumeSource: corev1.VolumeSource{
-								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: targetPVC,
-								},
-							},
-						},
+				},
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("100m"),
+						corev1.ResourceMemory: resource.MustParse("256Mi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("1000m"),
+						corev1.ResourceMemory: resource.MustParse("1Gi"),
+					},
+				},
+			},
+		},
+		Volumes: []corev1.Volume{
+			{
+				Name: "target-volume",
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: targetPVC,
 					},
 				},
 			},
 		},
 	}
+
+	// Add node selector and tolerations if target node is specified
+	// This ensures the receiver job runs on the same node as the environment's workmachine
+	// so that the PVC gets bound to the correct node for local-path storage
+	if c.targetNodeName != "" {
+		spec.NodeSelector = map[string]string{
+			"kubernetes.io/hostname": c.targetNodeName,
+		}
+		spec.Tolerations = []corev1.Toleration{
+			{
+				Key:      "kloudlite.io/workmachine",
+				Operator: corev1.TolerationOpEqual,
+				Value:    c.targetNodeName,
+				Effect:   corev1.TaintEffectNoSchedule,
+			},
+		}
+	}
+
+	return spec
 }
 
 // waitForSenderReady waits for the sender pod to be running and returns its IP

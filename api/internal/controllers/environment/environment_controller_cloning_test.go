@@ -408,7 +408,7 @@ func TestPVCCopier_CreateJobs(t *testing.T) {
 
 	k8sClient := testutil.NewFakeClient(scheme, env).Build()
 
-	copier := NewPVCCopier(k8sClient, "source-namespace", "target-namespace")
+	copier := NewPVCCopier(k8sClient, "source-namespace", "target-namespace", "test-node")
 
 	// Test sender job creation
 	senderJob := copier.createSenderJob("source-pvc", "target-pvc", "", env)
