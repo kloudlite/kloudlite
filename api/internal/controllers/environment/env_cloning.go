@@ -391,7 +391,9 @@ func (r *EnvironmentReconciler) handleCreatingCopyJobsPhase(ctx context.Context,
 
 	// Initialize copy jobs status tracking
 	copyJobsStatus := make([]environmentsv1.PVCCopyJobStatus, 0, len(pvcList.Items))
-	copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace)
+	// Pass the target node name (WorkMachineName) so receiver jobs run on the correct node
+	// This ensures PVCs get bound to the same node where composition pods will run
+	copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace, environment.Spec.WorkMachineName)
 	now := metav1.Now()
 
 	// Create sender and receiver jobs for ALL PVCs
@@ -448,7 +450,7 @@ func (r *EnvironmentReconciler) handleCreatingCopyJobsPhase(ctx context.Context,
 func (r *EnvironmentReconciler) handleWaitingForCopyCompletionPhase(ctx context.Context, environment *environmentsv1.Environment, sourceNamespace, targetNamespace string, logger *zap.Logger) (reconcile.Result, error) {
 	logger.Info("Checking status of all PVC copy jobs")
 
-	copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace)
+	copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace, environment.Spec.WorkMachineName)
 	allCompleted := true
 	anyFailed := false
 	completedCount := int32(0)
@@ -528,7 +530,7 @@ func (r *EnvironmentReconciler) handleVerifyingCopiesPhase(ctx context.Context, 
 	logger.Info("Verifying all PVC copies")
 
 	// Cleanup completed copy jobs
-	copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace)
+	copier := NewPVCCopier(r.Client, sourceNamespace, targetNamespace, environment.Spec.WorkMachineName)
 	for _, jobStatus := range environment.Status.CloningStatus.CopyJobsStatus {
 		if jobStatus.Phase == "Completed" {
 			if err := copier.CleanupCopyJobs(ctx, jobStatus.PVCName); err != nil {
@@ -566,9 +568,10 @@ func (r *EnvironmentReconciler) handleCloningCompositionsPhase(ctx context.Conte
 		// Deep copy the spec to avoid sharing map/slice references
 		newSpec := srcComp.Spec.DeepCopy()
 
-		// Override NodeName with target environment's NodeName
+		// Override NodeName with target environment's WorkMachineName
+		// The workmachine name IS the kubernetes node name
 		// This ensures composition pods run on the correct node where target PVCs are bound
-		newSpec.NodeName = environment.Spec.NodeName
+		newSpec.NodeName = environment.Spec.WorkMachineName
 
 		// Create new labels map
 		newLabels := make(map[string]string)
