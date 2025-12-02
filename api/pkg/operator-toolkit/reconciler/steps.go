@@ -37,11 +37,8 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 
 	checkList := make([]CheckDefinition, 0, len(steps))
 	if isBeingDeleted(req.Object) {
+		// Build checkList for ALL steps first (don't filter here - filter during execution)
 		for i := range steps {
-			// Skip step if ShouldRun condition is not met
-			if steps[i].ShouldRun != nil && !steps[i].ShouldRun(req.Object) {
-				continue
-			}
 			checkList = append(checkList, CheckDefinition{Name: "delete/" + steps[i].Name, Title: "[Delete] " + steps[i].Title})
 		}
 
@@ -50,6 +47,11 @@ func ReconcileSteps[T Resource](req *Request[T], steps []Step[T]) (ctrl.Result, 
 		}
 
 		for i := len(steps) - 1; i >= 0; i-- {
+			// Skip step if ShouldRun condition is not met
+			if steps[i].ShouldRun != nil && !steps[i].ShouldRun(req.Object) {
+				continue
+			}
+
 			checkName := checkList[i].Name
 
 			// Skip creating a new running check if it already passed with the same generation
