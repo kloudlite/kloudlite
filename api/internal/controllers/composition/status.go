@@ -91,9 +91,13 @@ func (r *CompositionReconciler) updateStatusWithRetry(ctx context.Context, compo
 		zap.String("state", string(state)),
 		zap.String("message", message))
 
-	// Requeue to continue monitoring for deploying state
-	if state == compositionsv1.CompositionStateDeploying {
+	// Requeue to continue monitoring for deploying/failed/degraded states
+	switch state {
+	case compositionsv1.CompositionStateDeploying:
 		return reconcile.Result{RequeueAfter: time.Duration(deployingRequeueInterval) * time.Nanosecond}, nil
+	case compositionsv1.CompositionStateFailed, compositionsv1.CompositionStateDegraded:
+		// Requeue to re-check health in case pods recover or status changes
+		return reconcile.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
 	return reconcile.Result{}, nil

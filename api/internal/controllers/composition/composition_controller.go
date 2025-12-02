@@ -93,9 +93,17 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		shouldReconcile = true
 	}
 
-	// Case 3: Status is not running (need to deploy/fix)
+	// Case 3: Status is not running (need to deploy/fix) or is in an error state (need to re-check)
 	if composition.Status.State != compositionsv1.CompositionStateRunning {
 		zapLogger.Info("Reconciling: status not running",
+			zap.String("currentState", string(composition.Status.State)))
+		shouldReconcile = true
+	}
+
+	// Case 3b: Status is failed/degraded - re-check health in case pods recovered
+	if composition.Status.State == compositionsv1.CompositionStateFailed ||
+		composition.Status.State == compositionsv1.CompositionStateDegraded {
+		zapLogger.Info("Reconciling: re-checking failed/degraded composition",
 			zap.String("currentState", string(composition.Status.State)))
 		shouldReconcile = true
 	}
@@ -127,8 +135,26 @@ func (r *CompositionReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateFailed, err.Error(), zapLogger)
 	}
 
-	// Update status to running
-	return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateRunning, "Composition deployed successfully", zapLogger)
+	// Check actual deployment/pod health status
+	healthResult, err := r.checkDeploymentHealth(ctx, composition, zapLogger)
+	if err != nil {
+		zapLogger.Error("Failed to check deployment health", zap.Error(err))
+		// Fall back to running state if health check fails
+		return r.updateStatus(ctx, composition, environment, compositionsv1.CompositionStateRunning, "Deployed (health check unavailable)", zapLogger)
+	}
+
+	// Update service status in composition
+	composition.Status.Services = healthResult.Services
+	composition.Status.RunningCount = healthResult.RunningCount
+
+	zapLogger.Info("Deployment health check result",
+		zap.String("state", string(healthResult.State)),
+		zap.Int32("runningCount", healthResult.RunningCount),
+		zap.Int32("servicesCount", healthResult.ServicesCount),
+		zap.String("message", healthResult.Message))
+
+	// Update status based on health check
+	return r.updateStatus(ctx, composition, environment, healthResult.State, healthResult.Message, zapLogger)
 }
 
 // checkResourceDrift checks if deployed resources still exist in the cluster
@@ -191,6 +217,10 @@ func (r *CompositionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(
 			&compositionsv1.Environment{},
 			handler.EnqueueRequestsFromMapFunc(r.findCompositionsForEnvironment),
+		).
+		Watches(
+			&corev1.Pod{},
+			handler.EnqueueRequestsFromMapFunc(r.findCompositionsForPod),
 		).
 		Complete(r)
 }
