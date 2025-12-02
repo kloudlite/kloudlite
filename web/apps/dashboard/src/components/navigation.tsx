@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
-import { Badge } from '@kloudlite/ui'
 import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Package } from 'lucide-react'
 import { KloudliteLogo } from './kloudlite-logo'
 import { ThemeSwitcher } from './theme-switcher'
@@ -41,7 +40,7 @@ export function Navigation({
     { href: '/', label: 'Home', icon: Home },
     { href: '/environments', label: 'Environments', icon: Cloud, requiresWorkMachine: true },
     { href: '/workspaces', label: 'Workspaces', icon: Monitor, requiresWorkMachine: true },
-    { href: '#', label: 'Artifacts', icon: Package, comingSoon: true },
+    { href: '/artifacts', label: 'Artifacts', icon: Package },
   ]
 
   return (
@@ -58,18 +57,12 @@ export function Navigation({
                 // Check if current path is the item's path or a sub-path
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 const Icon = item.icon
-                const isComingSoon = item.comingSoon || false
-                const isDisabled = (item.requiresWorkMachine && !hasWorkMachine) || isComingSoon
+                const isDisabled = item.requiresWorkMachine && !hasWorkMachine
 
                 const content = (
                   <>
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     <span className="whitespace-nowrap">{item.label}</span>
-                    {isComingSoon && (
-                      <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0.5 font-normal whitespace-nowrap">
-                        Coming Soon
-                      </Badge>
-                    )}
                   </>
                 )
 

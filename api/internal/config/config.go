@@ -23,6 +23,14 @@ type Config struct {
 
 	// Installation configuration
 	Installation InstallationConfig `envconfig:"INSTALLATION"`
+
+	// Registry configuration
+	Registry RegistryConfig `envconfig:"REGISTRY"`
+}
+
+type RegistryConfig struct {
+	// InternalURL is the internal URL for the registry service (for API server to call)
+	InternalURL string `envconfig:"INTERNAL_URL" default:"http://image-registry.kloudlite.svc.cluster.local:5000"`
 }
 
 type AuthConfig struct {

@@ -81,6 +81,11 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		logger,
 		cfg.Auth.JWTSecret,
 	)
+	// Registry catalog handlers for listing repositories and tags
+	registryCatalogHandlers := handlers.NewRegistryCatalogHandlers(
+		cfg.Registry.InternalURL,
+		logger,
+	)
 	// Registry auth handlers - only initialize if RSA key is configured
 	// Docker Registry v3 requires RSA/ECDSA signing for tokens (not HMAC)
 	var registryAuthHandlers *handlers.RegistryAuthHandlers
@@ -268,6 +273,13 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			{
 				oauthProviders.GET("", oauthHandlers.GetOAuthProviders)
 				oauthProviders.PUT("/:type", oauthHandlers.UpdateOAuthProvider)
+			}
+
+			// Registry catalog routes (list repositories and tags)
+			registryCatalog := protected.Group("/registry")
+			{
+				registryCatalog.GET("/repositories", registryCatalogHandlers.ListRepositories)
+				registryCatalog.GET("/repositories/*repo", registryCatalogHandlers.ListTags)
 			}
 		}
 
