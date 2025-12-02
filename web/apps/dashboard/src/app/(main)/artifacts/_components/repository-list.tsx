@@ -72,11 +72,20 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
     if (result.success) {
       setTagsState({ loading: false, tags: result.data.tags || [], error: null })
     } else {
-      setTagsState({
-        loading: false,
-        tags: [],
-        error: result.error || 'Failed to load tags',
-      })
+      // If repository not found, it may have been deleted - remove it from the list
+      if (result.error?.includes('not found') || result.error?.includes('404')) {
+        setRepositories((prev) => prev.filter((r) => r.name !== repoName))
+        setExpandedRepo(null)
+        toast.info('Repository no longer exists', {
+          description: 'This repository has been removed from the list',
+        })
+      } else {
+        setTagsState({
+          loading: false,
+          tags: [],
+          error: result.error || 'Failed to load tags',
+        })
+      }
     }
   }
 
@@ -170,7 +179,7 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
                 Repository
               </th>
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                Namespace
+                Owner
               </th>
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Tags
