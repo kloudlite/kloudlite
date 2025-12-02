@@ -563,25 +563,35 @@ func (r *EnvironmentReconciler) handleCloningCompositionsPhase(ctx context.Conte
 
 	clonedCompositions := 0
 	for _, srcComp := range compositionList.Items {
+		// Deep copy the spec to avoid sharing map/slice references
+		newSpec := srcComp.Spec.DeepCopy()
+
+		// Override NodeName with target environment's NodeName
+		// This ensures composition pods run on the correct node where target PVCs are bound
+		newSpec.NodeName = environment.Spec.NodeName
+
+		// Create new labels map
+		newLabels := make(map[string]string)
+		for k, v := range srcComp.Labels {
+			newLabels[k] = v
+		}
+		newLabels["kloudlite.io/environment"] = environment.Name
+
+		// Create new annotations map
+		newAnnotations := make(map[string]string)
+		for k, v := range srcComp.Annotations {
+			newAnnotations[k] = v
+		}
+
 		newComp := &environmentsv1.Composition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        srcComp.Name,
 				Namespace:   targetNamespace,
-				Labels:      srcComp.Labels,
-				Annotations: srcComp.Annotations,
+				Labels:      newLabels,
+				Annotations: newAnnotations,
 			},
-			Spec: srcComp.Spec,
+			Spec: *newSpec,
 		}
-
-		// Override NodeName with target environment's NodeName
-		// This ensures composition pods run on the correct node where target PVCs are bound
-		newComp.Spec.NodeName = environment.Spec.NodeName
-
-		// Update the environment label
-		if newComp.Labels == nil {
-			newComp.Labels = make(map[string]string)
-		}
-		newComp.Labels["kloudlite.io/environment"] = environment.Name
 
 		if err := r.Create(ctx, newComp); err != nil && !apierrors.IsAlreadyExists(err) {
 			logger.Error("Failed to clone composition",
