@@ -184,9 +184,16 @@ fi
 								}
 
 								return fmt.Sprintf(`
+# Ensure /home/kl is owned by kl user (hostPath may be created as root)
+chown 1001:1001 /home/kl
+
 # Create workspace directory
 mkdir -p /home/kl/workspaces/%s
 chown -R 1001:1001 /home/kl/workspaces
+
+# Create .docker directory for docker buildx
+mkdir -p /home/kl/.docker
+chown -R 1001:1001 /home/kl/.docker
 
 # Install Claude Code in user scope if not already installed
 # This allows users to update it themselves without rebuilding the container
