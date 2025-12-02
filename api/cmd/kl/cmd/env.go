@@ -193,7 +193,7 @@ func handleEnvConnect(environmentName string) error {
 	// Wait for the environment connection to sync
 	// Use display name format: {owner}/{envName} to match what controller sets in status
 	displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
-	if err := waitForEnvironmentSync(displayName, targetNamespace); err != nil {
+	if err := waitForEnvironmentSync(displayName, targetNamespace, false); err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
 
@@ -228,8 +228,8 @@ func handleEnvDisconnect() error {
 	}
 
 	// Wait for the disconnection to sync (pass empty strings for disconnect)
-	if err := waitForEnvironmentSync("", ""); err != nil {
-		return fmt.Errorf("environment disconnection failed: %w", err)
+	if err := waitForEnvironmentSync("", "", true); err != nil {
+		return fmt.Errorf("failed to disconnect: %w", err)
 	}
 
 	fmt.Println()
@@ -292,7 +292,7 @@ func handleEnvStatus() error {
 }
 
 // waitForEnvironmentSync waits for the workspace status to reflect the desired environment connection
-func waitForEnvironmentSync(environmentName, targetNamespace string) error {
+func waitForEnvironmentSync(environmentName, targetNamespace string, isDisconnect bool) error {
 	ctx := context.Background()
 	timeout := time.After(30 * time.Second)
 	ticker := time.NewTicker(1 * time.Second)
@@ -303,7 +303,11 @@ func waitForEnvironmentSync(environmentName, targetNamespace string) error {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	fmt.Print("Connecting")
+	if isDisconnect {
+		fmt.Print("Disconnecting")
+	} else {
+		fmt.Print("Connecting")
+	}
 
 	for {
 		select {
