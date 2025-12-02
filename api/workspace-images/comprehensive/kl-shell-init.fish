@@ -23,6 +23,12 @@ set -x PATH /home/kl/.local/bin (string split : $PATH | string match -v -r '/gam
 # Disable fish greeting
 set -g fish_greeting
 
+# Enable colored ls output
+alias ls='ls --color=auto'
+alias ll='ls -la --color=auto'
+alias la='ls -A --color=auto'
+alias grep='grep --color=auto'
+
 # Fix terminal type warnings
 set -x TERM xterm-256color
 
