@@ -38,3 +38,21 @@ export async function deleteTag(repository: string, tag: string) {
     }
   }
 }
+
+/**
+ * Server action to delete an entire repository (all tags)
+ */
+export async function deleteRepository(repository: string) {
+  try {
+    const result = await registryService.deleteRepository(repository)
+    revalidatePath('/artifacts/container-images')
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Delete repository error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}

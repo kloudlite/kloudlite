@@ -35,6 +35,12 @@ export class RegistryService {
     const params = new URLSearchParams({ repo: repository, tag })
     await apiClient.delete(`${this.baseUrl}/tags?${params.toString()}`)
   }
+
+  // Delete an entire repository (all tags)
+  async deleteRepository(repository: string): Promise<{ message: string; deleted: number }> {
+    const params = new URLSearchParams({ repo: repository })
+    return apiClient.delete(`${this.baseUrl}/repositories?${params.toString()}`)
+  }
 }
 
 // Export singleton instance
