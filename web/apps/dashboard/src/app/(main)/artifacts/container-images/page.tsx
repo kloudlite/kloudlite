@@ -1,3 +1,4 @@
+import { AlertCircle } from 'lucide-react'
 import { registryService } from '@/lib/services/registry.service'
 import { RepositoryList } from '../_components/repository-list'
 
@@ -15,9 +16,11 @@ export default async function ContainerImagesPage() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-        <p className="text-sm text-destructive">{error}</p>
-        <p className="mt-2 text-xs text-muted-foreground">
+      <div className="bg-card rounded-lg border border-destructive/50 p-8 text-center">
+        <AlertCircle className="mx-auto h-10 w-10 text-destructive/70" />
+        <h3 className="mt-4 text-lg font-medium text-destructive">Failed to load repositories</h3>
+        <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           Make sure the registry is accessible and try again.
         </p>
       </div>
@@ -25,12 +28,15 @@ export default async function ContainerImagesPage() {
   }
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-4">
+      {/* Header with count */}
+      <div className="flex items-center justify-between">
+        <span className="text-muted-foreground text-sm">
           {repositories.length} {repositories.length === 1 ? 'repository' : 'repositories'}
-        </p>
+        </span>
       </div>
+
+      {/* Repository List */}
       <RepositoryList repositories={repositories} />
     </div>
   )
