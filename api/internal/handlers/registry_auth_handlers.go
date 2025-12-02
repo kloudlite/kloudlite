@@ -267,18 +267,24 @@ func (h *RegistryAuthHandlers) GetToken(c *gin.Context) {
 	})
 }
 
-// generateCatalogToken generates a Docker Registry token for catalog access
-// This is used internally by the API to fetch repository lists from the registry
+// generateCatalogToken generates a Docker Registry token for catalog and repository read access
+// This is used internally by the API to fetch repository lists and tags from the registry
 func (h *RegistryAuthHandlers) generateCatalogToken(username string) (string, error) {
 	now := time.Now()
 	expiresIn := 300 // 5 minutes for internal use
 
 	// Create access entries for catalog and repository pull access
+	// We need both catalog access and wildcard repository pull access for listing tags
 	accessEntries := []DockerAccessEntry{
 		{
 			Type:    "registry",
 			Name:    "catalog",
 			Actions: []string{"*"},
+		},
+		{
+			Type:    "repository",
+			Name:    "*",
+			Actions: []string{"pull"},
 		},
 	}
 
