@@ -310,7 +310,7 @@ func waitForEnvironmentSync(environmentName, targetNamespace string) error {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	fmt.Print("Waiting for environment connection to sync")
+	fmt.Printf("Waiting for environment connection to sync (expecting: name=%q, ns=%q)", environmentName, targetNamespace)
 
 	for {
 		select {
@@ -319,7 +319,14 @@ func waitForEnvironmentSync(environmentName, targetNamespace string) error {
 			return fmt.Errorf("interrupted by user")
 		case <-timeout:
 			fmt.Println(" timeout!")
-			return fmt.Errorf("timeout waiting for environment sync after 30 seconds")
+			// Get final state for debugging
+			workspace, _ := WsClient.Get(ctx)
+			if workspace != nil && workspace.Status.ConnectedEnvironment != nil {
+				return fmt.Errorf("timeout waiting for environment sync after 30 seconds (got: name=%q, ns=%q)",
+					workspace.Status.ConnectedEnvironment.Name,
+					workspace.Status.ConnectedEnvironment.TargetNamespace)
+			}
+			return fmt.Errorf("timeout waiting for environment sync after 30 seconds (connectedEnvironment is nil)")
 		case <-ticker.C:
 			// Show progress
 			fmt.Print(".")
