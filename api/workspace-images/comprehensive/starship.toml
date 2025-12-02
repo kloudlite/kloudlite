@@ -15,6 +15,7 @@ symbol = " "
 
 [directory]
 read_only = " 󰌾"
+style = "bold blue"
 
 [container]
 disabled = true
@@ -140,7 +141,7 @@ symbol = " "
 
 [custom.kloudlite]
 command = "/etc/kloudlite/kloudlite-context.sh"
-when = 'test -n "$WORKSPACE_NAME"'
-symbol = "| "
+when = 'test -n "$WORKSPACE_NAME" && test -n "$(/etc/kloudlite/kloudlite-context.sh)"'
+symbol = ""
 style = "bold cyan"
-format = "[$symbol$output]($style) "
+format = "[| $output]($style) "
