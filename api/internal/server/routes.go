@@ -249,6 +249,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.POST("/:name/suspend", workspaceHandlers.SuspendWorkspace)
 				workspaces.POST("/:name/activate", workspaceHandlers.ActivateWorkspace)
 				workspaces.POST("/:name/archive", workspaceHandlers.ArchiveWorkspace)
+				workspaces.POST("/:name/clone", workspaceHandlers.CloneWorkspace)
 
 				// Workspace metrics
 				workspaces.GET("/:name/metrics", workspaceHandlers.GetMetrics)

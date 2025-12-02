@@ -377,6 +377,80 @@ func (h *WorkspaceHandlers) ArchiveWorkspace(c *gin.Context) {
 	})
 }
 
+// CloneWorkspace handles POST /api/v1/namespaces/:namespace/workspaces/:name/clone
+func (h *WorkspaceHandlers) CloneWorkspace(c *gin.Context) {
+	namespace := c.Param("namespace")
+	sourceWorkspaceName := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	var req struct {
+		Name string                     `json:"name" binding:"required"`
+		Spec workspacesv1.WorkspaceSpec `json:"spec" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Failed to parse clone workspace request", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Verify source workspace exists
+	sourceWorkspace, err := h.wsRepo.Get(c.Request.Context(), namespace, sourceWorkspaceName)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Source workspace not found"})
+			return
+		}
+		h.logger.Error("Failed to get source workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get source workspace", "details": err.Error()})
+		return
+	}
+
+	// Verify user owns the source workspace
+	if sourceWorkspace.Spec.OwnedBy != username {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only clone workspaces you own"})
+		return
+	}
+
+	h.logger.Info("Cloning workspace",
+		zap.String("source", sourceWorkspaceName),
+		zap.String("target", req.Name),
+		zap.String("namespace", namespace))
+
+	// Create new workspace with CopyFrom set
+	newWorkspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Name,
+			Namespace: namespace,
+		},
+		Spec: req.Spec,
+	}
+
+	newWorkspace.Spec.CopyFrom = sourceWorkspaceName
+	newWorkspace.Spec.OwnedBy = username
+	newWorkspace.Spec.WorkmachineName = sourceWorkspace.Spec.WorkmachineName
+
+	if err := h.wsRepo.Create(c.Request.Context(), newWorkspace); err != nil {
+		h.logger.Error("Failed to create cloned workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cloned workspace", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, newWorkspace)
+}
+
 // WorkspaceMetrics represents CPU and memory metrics for a workspace
 type WorkspaceMetrics struct {
 	CPU struct {
