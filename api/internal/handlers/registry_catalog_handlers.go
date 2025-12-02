@@ -146,10 +146,17 @@ func (h *RegistryCatalogHandlers) ListTags(c *gin.Context) {
 	// Remove leading slash if present (from wildcard capture)
 	repo = strings.TrimPrefix(repo, "/")
 
-	// Get registry token for authentication
-	token, err := h.getRegistryToken(c)
+	// Get the username from the authenticated request context
+	username, exists := c.Get("user_username")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
+		return
+	}
+
+	// Generate a token with specific repository pull access
+	token, err := h.registryAuthHandler.GenerateRepositoryToken(username.(string), repo, []string{"pull"})
 	if err != nil {
-		h.logger.Error("Failed to get registry token", zap.Error(err))
+		h.logger.Error("Failed to generate repository token", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
 		return
 	}
@@ -213,10 +220,17 @@ func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
 		return
 	}
 
-	// Get registry token for authentication
-	token, err := h.getRegistryToken(c)
+	// Get the username from the authenticated request context
+	username, exists := c.Get("user_username")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
+		return
+	}
+
+	// Generate a token with specific repository delete access
+	token, err := h.registryAuthHandler.GenerateRepositoryToken(username.(string), repo, []string{"pull", "delete"})
 	if err != nil {
-		h.logger.Error("Failed to get registry token", zap.Error(err))
+		h.logger.Error("Failed to generate repository token", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
 		return
 	}

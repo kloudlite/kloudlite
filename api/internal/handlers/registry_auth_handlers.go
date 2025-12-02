@@ -267,26 +267,36 @@ func (h *RegistryAuthHandlers) GetToken(c *gin.Context) {
 	})
 }
 
-// generateCatalogToken generates a Docker Registry token for catalog and repository read access
-// This is used internally by the API to fetch repository lists and tags from the registry
+// generateCatalogToken generates a Docker Registry token for catalog access
+// This is used internally by the API to fetch repository lists from the registry
 func (h *RegistryAuthHandlers) generateCatalogToken(username string) (string, error) {
-	now := time.Now()
-	expiresIn := 300 // 5 minutes for internal use
-
-	// Create access entries for catalog and repository pull access
-	// We need both catalog access and wildcard repository pull access for listing tags
 	accessEntries := []DockerAccessEntry{
 		{
 			Type:    "registry",
 			Name:    "catalog",
 			Actions: []string{"*"},
 		},
+	}
+	return h.generateInternalToken(username, accessEntries)
+}
+
+// GenerateRepositoryToken generates a Docker Registry token for a specific repository
+// This is used internally by the API to fetch tags from a specific repository
+func (h *RegistryAuthHandlers) GenerateRepositoryToken(username string, repository string, actions []string) (string, error) {
+	accessEntries := []DockerAccessEntry{
 		{
 			Type:    "repository",
-			Name:    "*",
-			Actions: []string{"pull"},
+			Name:    repository,
+			Actions: actions,
 		},
 	}
+	return h.generateInternalToken(username, accessEntries)
+}
+
+// generateInternalToken generates a Docker Registry token with the given access entries
+func (h *RegistryAuthHandlers) generateInternalToken(username string, accessEntries []DockerAccessEntry) (string, error) {
+	now := time.Now()
+	expiresIn := 300 // 5 minutes for internal use
 
 	dockerClaims := DockerTokenClaims{
 		Access: accessEntries,
