@@ -34,6 +34,38 @@ interface EnvironmentsListProps {
   currentUser: string
 }
 
+// Format cloning phase to user-friendly text
+function formatCloningPhase(phase: string | undefined): string {
+  if (!phase) return 'Preparing...'
+
+  const phaseMap: Record<string, string> = {
+    'Pending': 'Preparing...',
+    'Suspending': 'Pausing source environment...',
+    'CloningResources': 'Copying configurations...',
+    'CloningPVCs': 'Creating volumes...',
+    'CreatingCopyJobs': 'Starting data transfer...',
+    'WaitingForCopyCompletion': 'Copying data...',
+    'VerifyingCopies': 'Verifying data...',
+    'CloningCompositions': 'Cloning services...',
+    'Resuming': 'Resuming source...',
+    'Completed': 'Completed',
+    'Failed': 'Failed',
+  }
+
+  return phaseMap[phase] || phase
+}
+
+// Format environment name to show just the simple name (e.g., "karthik--sample-test2" -> "sample-test2")
+function formatEnvironmentName(fullName: string): string {
+  if (!fullName) return ''
+  // Environment names are formatted as "owner--name", extract just the name part
+  const parts = fullName.split('--')
+  if (parts.length >= 2) {
+    return parts.slice(1).join('--')
+  }
+  return fullName
+}
+
 export function EnvironmentsList({
   environments: initialEnvironments,
   currentUser,
@@ -305,17 +337,15 @@ export function EnvironmentsList({
                     {env.status === 'cloning' && env.cloningStatus && (
                       <div className="text-muted-foreground text-xs">
                         {env.sourceCloningStatus ? (
-                          <span>Source for: {env.sourceCloningStatus.targetEnvironmentName}</span>
+                          <span className="italic">
+                            Being cloned to: {formatEnvironmentName(env.sourceCloningStatus.targetEnvironmentName)}
+                          </span>
                         ) : (
                           <>
-                            <div>{env.cloningStatus.phase}</div>
+                            <div>{formatCloningPhase(env.cloningStatus.phase)}</div>
                             {env.cloningStatus.totalPVCs && env.cloningStatus.totalPVCs > 0 && (
-                              <div className="flex items-center gap-1">
-                                <span>
-                                  {env.cloningStatus.clonedPVCs || 0}/{env.cloningStatus.totalPVCs}{' '}
-                                  PVCs
-                                </span>
-                                <div className="bg-muted h-1 w-12 overflow-hidden rounded-full">
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="bg-muted h-1.5 w-16 overflow-hidden rounded-full">
                                   <div
                                     className="bg-primary h-full transition-all"
                                     style={{
@@ -323,6 +353,9 @@ export function EnvironmentsList({
                                     }}
                                   />
                                 </div>
+                                <span>
+                                  {env.cloningStatus.clonedPVCs || 0}/{env.cloningStatus.totalPVCs} volumes
+                                </span>
                               </div>
                             )}
                           </>
@@ -332,10 +365,10 @@ export function EnvironmentsList({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
-                  {env.status === 'deleting' ? (
-                    <span className="text-muted-foreground text-xs">Deleting...</span>
-                  ) : env.status === 'cloning' ? (
-                    <span className="text-muted-foreground text-xs">Cloning...</span>
+                  {env.status === 'deleting' || env.status === 'cloning' ? (
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
+                      <MoreHorizontal className="h-4 w-4 opacity-30" />
+                    </Button>
                   ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
