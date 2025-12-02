@@ -283,6 +283,8 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			{
 				registryCatalog.GET("/repositories", registryCatalogHandlers.ListRepositories)
 				registryCatalog.GET("/repositories/*repo", registryCatalogHandlers.ListTags)
+				// Delete uses query params: ?repo=namespace/image&tag=v1.0
+				registryCatalog.DELETE("/tags", registryCatalogHandlers.DeleteTag)
 			}
 		}
 

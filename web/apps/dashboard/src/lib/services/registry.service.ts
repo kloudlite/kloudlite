@@ -29,6 +29,12 @@ export class RegistryService {
     // Repository name may contain slashes (e.g., "karthik/myapp")
     return apiClient.get<TagListResponse>(`${this.baseUrl}/repositories/${repository}`)
   }
+
+  // Delete a specific tag from a repository
+  async deleteTag(repository: string, tag: string): Promise<void> {
+    const params = new URLSearchParams({ repo: repository, tag })
+    await apiClient.delete(`${this.baseUrl}/tags?${params.toString()}`)
+  }
 }
 
 // Export singleton instance
