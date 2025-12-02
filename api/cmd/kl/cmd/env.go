@@ -191,7 +191,9 @@ func handleEnvConnect(environmentName string) error {
 	}
 
 	// Wait for the environment connection to sync
-	if err := waitForEnvironmentSync(environmentName, targetNamespace); err != nil {
+	// Use display name format: {owner}/{envName} to match what controller sets in status
+	displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
+	if err := waitForEnvironmentSync(displayName, targetNamespace); err != nil {
 		return fmt.Errorf("environment connection update failed: %w", err)
 	}
 
