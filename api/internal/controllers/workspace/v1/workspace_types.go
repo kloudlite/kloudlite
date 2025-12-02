@@ -6,50 +6,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// PortMapping defines mapping between service and workspace ports for intercepts
-type PortMapping struct {
-	// ServicePort is the port exposed by the service
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
-	ServicePort int32 `json:"servicePort"`
-
-	// WorkspacePort is the port in the workspace pod
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
-	WorkspacePort int32 `json:"workspacePort"`
-
-	// Protocol is the protocol used (TCP/UDP)
-	// +kubebuilder:validation:Enum=TCP;UDP;SCTP
-	// +kubebuilder:default=TCP
-	// +optional
-	Protocol corev1.Protocol `json:"protocol,omitempty"`
-}
-
-// InterceptSpec defines a service to intercept when connected to an environment
-type InterceptSpec struct {
-	// ServiceName in the connected environment to intercept
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	ServiceName string `json:"serviceName"`
-
-	// PortMappings defines how service ports map to workspace ports
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinItems=1
-	PortMappings []PortMapping `json:"portMappings"`
-}
-
-// EnvironmentConnectionSpec defines the environment connection and associated intercepts
+// EnvironmentConnectionSpec defines the environment connection
 type EnvironmentConnectionSpec struct {
 	// EnvironmentRef references the environment to connect to
 	// +kubebuilder:validation:Required
 	EnvironmentRef corev1.ObjectReference `json:"environmentRef"`
-
-	// Intercepts defines services to intercept in this environment
-	// When environment is disconnected, all intercepts are automatically removed
-	// +optional
-	Intercepts []InterceptSpec `json:"intercepts,omitempty"`
 }
 
 // ExposeProtocol represents the protocol for exposed ports
@@ -254,20 +215,6 @@ type ConnectedEnvironmentInfo struct {
 	AvailableServices []string `json:"availableServices,omitempty"`
 }
 
-// InterceptStatus tracks the status of an active service intercept
-type InterceptStatus struct {
-	// ServiceName being intercepted
-	ServiceName string `json:"serviceName"`
-
-	// Phase of the intercept (Pending, Active, Failed, etc.)
-	// +optional
-	Phase string `json:"phase,omitempty"`
-
-	// Message provides additional information about the intercept status
-	// +optional
-	Message string `json:"message,omitempty"`
-}
-
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	// Phase represents the current phase of the workspace
@@ -351,10 +298,6 @@ type WorkspaceStatus struct {
 	// ConnectedEnvironment tracks the connected environment details
 	// +optional
 	ConnectedEnvironment *ConnectedEnvironmentInfo `json:"connectedEnvironment,omitempty"`
-
-	// ActiveIntercepts tracks the status of active service intercepts
-	// +optional
-	ActiveIntercepts []InterceptStatus `json:"activeIntercepts,omitempty"`
 
 	// CloningStatus tracks the progress of workspace directory cloning
 	// +optional

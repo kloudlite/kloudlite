@@ -20,24 +20,22 @@ import (
 
 // updateStatusPreservingPackages updates workspace status while preserving package-related fields
 func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	// Preserve package-related fields, ConnectedEnvironment, and ActiveIntercepts from the current workspace object
+	// Preserve package-related fields and ConnectedEnvironment from the current workspace object
 	// (these may have been updated by syncPackageStatus or updateWorkspaceStatus)
 	installedPackages := workspace.Status.InstalledPackages
 	failedPackages := workspace.Status.FailedPackages
 	packageMessage := workspace.Status.PackageInstallationMessage
 	connectedEnvironment := workspace.Status.ConnectedEnvironment
-	activeIntercepts := workspace.Status.ActiveIntercepts
 
 	return statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
 		// Copy all status fields
 		// Note: workspace is automatically refetched by UpdateStatusWithRetry
 
-		// Ensure package fields, ConnectedEnvironment, and ActiveIntercepts are preserved
+		// Ensure package fields and ConnectedEnvironment are preserved
 		workspace.Status.InstalledPackages = installedPackages
 		workspace.Status.FailedPackages = failedPackages
 		workspace.Status.PackageInstallationMessage = packageMessage
 		workspace.Status.ConnectedEnvironment = connectedEnvironment
-		workspace.Status.ActiveIntercepts = activeIntercepts
 
 		return nil
 	}, logger)
@@ -240,17 +238,6 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		needsUpdate = true
 	}
 
-	// Store old ActiveIntercepts for comparison
-	oldActiveIntercepts := workspace.Status.ActiveIntercepts
-
-	// Update ActiveIntercepts status
-	workspace.Status.ActiveIntercepts = r.collectActiveIntercepts(ctx, workspace, logger)
-
-	// Check if ActiveIntercepts changed
-	if !reflect.DeepEqual(oldActiveIntercepts, workspace.Status.ActiveIntercepts) {
-		needsUpdate = true
-	}
-
 	// Only update status if something actually changed
 	if !needsUpdate {
 		logger.Debug("Workspace status unchanged, skipping status update")
@@ -263,66 +250,6 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	}
 
 	return reconcile.Result{}, nil
-}
-
-// collectActiveIntercepts collects the status of all active service intercepts for this workspace from Composition resources
-func (r *WorkspaceReconciler) collectActiveIntercepts(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) []workspacev1.InterceptStatus {
-	var activeIntercepts []workspacev1.InterceptStatus
-
-	// Only collect intercepts if workspace has an environment connection
-	if workspace.Spec.EnvironmentConnection == nil {
-		return activeIntercepts
-	}
-
-	// Get environment to find target namespace
-	env := &environmentv1.Environment{}
-	err := r.Get(ctx, client.ObjectKey{
-		Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
-	}, env)
-
-	if err != nil {
-		logger.Warn("Failed to fetch environment for intercept status collection",
-			zap.String("workspace", workspace.Name),
-			zap.String("environment", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name),
-			zap.Error(err),
-		)
-		return activeIntercepts
-	}
-
-	// List all Compositions in the environment's target namespace
-	compositionList := &environmentv1.CompositionList{}
-	err = r.List(ctx, compositionList, client.InNamespace(env.Spec.TargetNamespace))
-
-	if err != nil {
-		logger.Error("Failed to list compositions for intercept status",
-			zap.String("workspace", workspace.Name),
-			zap.String("targetNamespace", env.Spec.TargetNamespace),
-			zap.Error(err),
-		)
-		return activeIntercepts
-	}
-
-	// Collect intercept status from each composition's activeIntercepts
-	for _, composition := range compositionList.Items {
-		for _, interceptStatus := range composition.Status.ActiveIntercepts {
-			// Only include intercepts for this workspace (match both name and namespace)
-			if interceptStatus.WorkspaceName == workspace.Name && interceptStatus.WorkspaceNamespace == workspace.Namespace {
-				workspaceInterceptStatus := workspacev1.InterceptStatus{
-					ServiceName: interceptStatus.ServiceName,
-					Phase:       interceptStatus.Phase,
-					Message:     interceptStatus.Message,
-				}
-				activeIntercepts = append(activeIntercepts, workspaceInterceptStatus)
-			}
-		}
-	}
-
-	logger.Info("Collected active intercept statuses from compositions",
-		zap.String("workspace", workspace.Name),
-		zap.Int("count", len(activeIntercepts)),
-	)
-
-	return activeIntercepts
 }
 
 // applyLabelsAndAnnotations applies standard labels and annotations to workspace resources
