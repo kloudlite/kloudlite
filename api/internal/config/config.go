@@ -31,6 +31,8 @@ type Config struct {
 type RegistryConfig struct {
 	// InternalURL is the internal URL for the registry service (for API server to call)
 	InternalURL string `envconfig:"INTERNAL_URL" default:"http://image-registry.kloudlite.svc.cluster.local:5000"`
+	// ServiceName is the registry service name used for token audience (e.g., "cr.beanbag.khost.dev")
+	ServiceName string `envconfig:"SERVICE_NAME" default:""`
 }
 
 type AuthConfig struct {
