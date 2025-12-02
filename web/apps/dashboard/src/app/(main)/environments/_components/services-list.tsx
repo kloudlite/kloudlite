@@ -1,10 +1,10 @@
 'use client'
 
-import { Network, Copy, Check } from 'lucide-react'
+import { Network, Copy, Check, AlertCircle, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
 import type { K8sService } from '@kloudlite/types'
 import type { Composition } from '@kloudlite/types'
-import { Badge } from '@kloudlite/ui'
+import { Alert, AlertDescription, AlertTitle, Badge } from '@kloudlite/ui'
 import { CompositionEditor } from './composition-editor'
 
 interface ServicesListProps {
@@ -59,6 +59,27 @@ export function ServicesList({
             onOpenChange={setOpen}
           />
         </div>
+
+        {composition?.status?.state === 'failed' && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Composition Failed</AlertTitle>
+            <AlertDescription>
+              {composition.status.message || 'The composition failed to deploy'}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {composition?.status?.state === 'degraded' && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Composition Degraded</AlertTitle>
+            <AlertDescription>
+              {composition.status.message || 'Some services are not running properly'}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="bg-muted/50 mt-8 rounded-lg border py-12 text-center">
           <Network className="text-muted-foreground mx-auto h-12 w-12" />
           <h3 className="mt-2 text-sm font-medium">No services found</h3>
@@ -86,6 +107,26 @@ export function ServicesList({
           onOpenChange={setOpen}
         />
       </div>
+
+      {composition?.status?.state === 'failed' && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Composition Failed</AlertTitle>
+          <AlertDescription>
+            {composition.status.message || 'The composition failed to deploy'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {composition?.status?.state === 'degraded' && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Composition Degraded</AlertTitle>
+          <AlertDescription>
+            {composition.status.message || 'Some services are not running properly'}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="bg-card rounded-lg border">
         <div className="overflow-x-auto">
