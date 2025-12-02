@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
@@ -492,5 +493,39 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return nil
 			}),
 		).
+		Watches(
+			&environmentv1.Environment{},
+			handler.EnqueueRequestsFromMapFunc(r.findWorkspacesForEnvironment),
+		).
 		Complete(r)
+}
+
+// findWorkspacesForEnvironment finds all workspaces connected to a deactivated environment
+func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, obj client.Object) []reconcile.Request {
+	env, ok := obj.(*environmentv1.Environment)
+	if !ok {
+		return nil
+	}
+
+	// Only trigger when environment is deactivated
+	if env.Spec.Activated {
+		return nil
+	}
+
+	// Find all workspaces connected to this environment
+	var workspaces workspacev1.WorkspaceList
+	if err := r.Client.List(ctx, &workspaces); err != nil {
+		return nil
+	}
+
+	var requests []reconcile.Request
+	for _, ws := range workspaces.Items {
+		if ws.Spec.EnvironmentConnection != nil &&
+			ws.Spec.EnvironmentConnection.EnvironmentRef.Name == env.Name {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace},
+			})
+		}
+	}
+	return requests
 }

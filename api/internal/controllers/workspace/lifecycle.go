@@ -61,6 +61,23 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		return reconcile.Result{}, err
 	}
 
+	// Check if connected environment is deactivated - if so, disconnect the workspace
+	if workspace.Spec.EnvironmentConnection != nil {
+		env, err := r.validateEnvironmentConnection(ctx, workspace)
+		if err == nil && env != nil && !env.Spec.Activated {
+			// Environment is deactivated - disconnect workspace
+			logger.Info("Disconnecting workspace from deactivated environment",
+				zap.String("environment", env.Name))
+			workspace.Spec.EnvironmentConnection = nil
+			if err := r.Update(ctx, workspace); err != nil {
+				logger.Error("Failed to disconnect from deactivated environment", zap.Error(err))
+				return reconcile.Result{}, fmt.Errorf("failed to disconnect from deactivated environment: %w", err)
+			}
+			// Requeue to continue reconciliation with updated spec
+			return reconcile.Result{Requeue: true}, nil
+		}
+	}
+
 	// Check and suspend idle workspace if auto-stop is enabled
 	if err := r.checkAndSuspendIdleWorkspace(ctx, workspace, logger); err != nil {
 		logger.Warn("Failed to check idle workspace", zap.Error(err))
