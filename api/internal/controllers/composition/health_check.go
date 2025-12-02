@@ -137,14 +137,9 @@ func (r *CompositionReconciler) checkSingleDeploymentHealth(ctx context.Context,
 		}
 	}
 
-	// Check if all replicas are ready
-	if deployment.Status.ReadyReplicas >= status.Replicas && status.Replicas > 0 {
-		status.State = "running"
-		status.Message = "All replicas ready"
-		return status
-	}
-
-	// If not all ready, check pods for detailed status
+	// ALWAYS check ALL pods for errors first, including during rolling updates
+	// During rolling updates, old pods may be running while new pods fail
+	// We need to detect this and report the error
 	podList := &corev1.PodList{}
 	matchLabels := deployment.Spec.Selector.MatchLabels
 	if err := r.List(ctx, podList,
@@ -154,12 +149,18 @@ func (r *CompositionReconciler) checkSingleDeploymentHealth(ctx context.Context,
 		logger.Error("Failed to list pods for deployment",
 			zap.String("deployment", deployment.Name),
 			zap.Error(err))
+		// If we can't list pods, fall back to basic ready check
+		if deployment.Status.ReadyReplicas >= status.Replicas && status.Replicas > 0 {
+			status.State = "running"
+			status.Message = "All replicas ready (pod status unavailable)"
+			return status
+		}
 		status.State = "starting"
 		status.Message = "Unable to check pod status"
 		return status
 	}
 
-	// Check each pod for errors
+	// Check each pod for errors - this catches ImagePullBackOff during rolling updates
 	for _, pod := range podList.Items {
 		// Check pod phase
 		switch pod.Status.Phase {
@@ -171,12 +172,12 @@ func (r *CompositionReconciler) checkSingleDeploymentHealth(ctx context.Context,
 			// Check container statuses for detailed error
 			errorMsg := r.getPodErrorMessage(&pod)
 			if errorMsg != "" {
-				status.State = "starting"
+				status.State = "failed"
 				status.Message = errorMsg
 				return status
 			}
 		case corev1.PodRunning:
-			// Check if containers are actually ready
+			// Check if containers are actually ready or have errors
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 				if containerStatus.State.Waiting != nil {
 					reason := containerStatus.State.Waiting.Reason
@@ -201,12 +202,16 @@ func (r *CompositionReconciler) checkSingleDeploymentHealth(ctx context.Context,
 		}
 	}
 
-	// Still starting up
-	if deployment.Status.ReadyReplicas < status.Replicas {
-		status.State = "starting"
-		status.Message = fmt.Sprintf("%d of %d replicas ready", deployment.Status.ReadyReplicas, status.Replicas)
+	// No errors found - check if all replicas are ready
+	if deployment.Status.ReadyReplicas >= status.Replicas && status.Replicas > 0 {
+		status.State = "running"
+		status.Message = "All replicas ready"
+		return status
 	}
 
+	// Still starting up
+	status.State = "starting"
+	status.Message = fmt.Sprintf("%d of %d replicas ready", deployment.Status.ReadyReplicas, status.Replicas)
 	return status
 }
 
