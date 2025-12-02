@@ -200,8 +200,9 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 
-		if err == nil && env.Status.State == environmentv1.EnvironmentStateActive {
-			// Update connected environment status - only if environment is active
+		if err == nil && env.Spec.Activated {
+			// Update connected environment status - only if environment spec.activated is true
+			// Check spec.activated instead of status.state to avoid timeout during activation
 			// Use display name format: {owner}/{envName}
 			displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
 			workspace.Status.ConnectedEnvironment = &workspacev1.ConnectedEnvironmentInfo{
@@ -222,7 +223,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 				zap.Error(err),
 			)
 		} else {
-			// Environment exists but not activated - set to nil
+			// Environment exists but not activated (spec.activated = false) - set to nil
 			workspace.Status.ConnectedEnvironment = nil
 			logger.Info("Environment exists but not activated",
 				zap.String("workspace", workspace.Name),
