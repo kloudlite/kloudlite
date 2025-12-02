@@ -185,7 +185,6 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
             {repositories.map((repo) => {
               const parts = repo.name.split('/')
               const namespace = parts.length > 1 ? parts[0] : 'library'
-              const imageName = parts.length > 1 ? parts.slice(1).join('/') : repo.name
               const isExpanded = expandedRepo === repo.name
               const isDeleting = deletingRepo === repo.name
 
