@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -355,13 +354,6 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		}
 	}
 
-	// Validate service intercepts - ensure no service is intercepted by multiple workspaces
-	if workspace.Spec.EnvironmentConnection != nil && len(workspace.Spec.EnvironmentConnection.Intercepts) > 0 {
-		if err := w.validateServiceIntercepts(ctx, workspace); err != nil {
-			return fmt.Errorf("invalid service intercepts: %w", err)
-		}
-	}
-
 	// Validate state transitions on UPDATE
 	if operation == admissionv1.Update {
 		// For updates, we would need the old object to validate transitions
@@ -478,72 +470,6 @@ func validateWorkspaceSettings(settings *workspacesv1.WorkspaceSettings) error {
 	if settings.GitConfig != nil {
 		if settings.GitConfig.UserEmail != "" && !strings.Contains(settings.GitConfig.UserEmail, "@") {
 			return fmt.Errorf("gitConfig.userEmail must be a valid email address")
-		}
-	}
-
-	return nil
-}
-
-// validateServiceIntercepts ensures no service is intercepted by more than one workspace
-func (w *WorkspaceWebhook) validateServiceIntercepts(ctx context.Context, workspace *workspacesv1.Workspace) error {
-	// Get the environment reference to determine the target namespace
-	if workspace.Spec.EnvironmentConnection == nil {
-		return nil // No environment connection, no intercepts to validate
-	}
-
-	envRef := workspace.Spec.EnvironmentConnection.EnvironmentRef
-
-	// Fetch the Environment to get its target namespace (cluster-scoped)
-	env := &environmentv1.Environment{}
-	if err := w.k8sClient.Get(ctx, client.ObjectKey{
-		Name: envRef.Name,
-	}, env); err != nil {
-		return fmt.Errorf("failed to get environment '%s': %w", envRef.Name, err)
-	}
-
-	targetNamespace := env.Spec.TargetNamespace
-
-	// List all Compositions in the target namespace (intercepts are now part of Composition)
-	compositionList := &environmentv1.CompositionList{}
-	if err := w.k8sClient.List(ctx, compositionList, client.InNamespace(targetNamespace)); err != nil {
-		return fmt.Errorf("failed to list compositions: %w", err)
-	}
-
-	// Build a map of service name -> workspace name for existing active intercepts
-	existingIntercepts := make(map[string]string)
-	for _, composition := range compositionList.Items {
-		// Skip compositions being deleted
-		if composition.DeletionTimestamp != nil {
-			continue
-		}
-
-		// Check all intercepts in the composition spec
-		for _, intercept := range composition.Spec.Intercepts {
-			// Skip intercepts that are not enabled
-			if !intercept.Enabled {
-				continue
-			}
-
-			// Skip intercepts owned by the current workspace (for updates)
-			if intercept.WorkspaceRef != nil && intercept.WorkspaceRef.Name == workspace.Name {
-				continue
-			}
-
-			// Track which workspace is intercepting this service
-			workspaceName := ""
-			if intercept.WorkspaceRef != nil {
-				workspaceName = intercept.WorkspaceRef.Name
-			}
-			existingIntercepts[intercept.ServiceName] = workspaceName
-		}
-	}
-
-	// Check each intercept in the workspace spec
-	for _, interceptSpec := range workspace.Spec.EnvironmentConnection.Intercepts {
-		// Check if this service is already intercepted by another workspace
-		if conflictingWorkspace, exists := existingIntercepts[interceptSpec.ServiceName]; exists {
-			return fmt.Errorf("service '%s' in namespace '%s' is already being intercepted by workspace '%s'. A service can only be intercepted by one workspace at a time",
-				interceptSpec.ServiceName, targetNamespace, conflictingWorkspace)
 		}
 	}
 

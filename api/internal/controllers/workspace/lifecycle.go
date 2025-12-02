@@ -195,26 +195,6 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 			}
 		}
 
-		// Reconcile service intercepts based on environment connection
-		if workspace.Spec.EnvironmentConnection != nil && workspace.Status.ConnectedEnvironment != nil {
-			// Environment is connected, reconcile intercepts
-			env, err := r.validateEnvironmentConnection(ctx, workspace)
-			if err == nil && env != nil {
-				if err := r.reconcileServiceIntercepts(ctx, workspace, env, logger); err != nil {
-					logger.Warn("Failed to reconcile service intercepts", zap.Error(err))
-					// Don't fail reconciliation, just log warning
-				}
-			} else if err != nil {
-				logger.Warn("Environment validation failed, skipping intercept reconciliation", zap.Error(err))
-			}
-		} else {
-			// Environment is disconnected, cleanup all intercepts
-			if err := r.cleanupServiceIntercepts(ctx, workspace, logger); err != nil {
-				logger.Warn("Failed to cleanup service intercepts", zap.Error(err))
-				// Don't fail reconciliation, just log warning
-			}
-		}
-
 		// Update workspace status based on pod phase
 		logger.Info("Workspace pod already exists", zap.String("pod", podName), zap.String("podPhase", string(pod.Status.Phase)))
 

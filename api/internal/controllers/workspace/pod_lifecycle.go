@@ -115,13 +115,23 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 		}
 	}
 
-	// Get active service intercepts directly from compositions
-	// We call collectActiveIntercepts directly instead of using workspace.Status.ActiveIntercepts
-	// because the status may not have been updated yet in this reconcile cycle
+	// Get active service intercepts from Compositions in the connected environment
 	intercepts := []string{}
-	activeIntercepts := r.collectActiveIntercepts(ctx, workspace, logger)
-	for _, interceptStatus := range activeIntercepts {
-		intercepts = append(intercepts, interceptStatus.ServiceName)
+	if workspace.Status.ConnectedEnvironment != nil && workspace.Status.ConnectedEnvironment.TargetNamespace != "" {
+		envTargetNs := workspace.Status.ConnectedEnvironment.TargetNamespace
+		compList := &environmentv1.CompositionList{}
+		if err := r.List(ctx, compList, client.InNamespace(envTargetNs)); err == nil {
+			for _, comp := range compList.Items {
+				for _, activeIntercept := range comp.Status.ActiveIntercepts {
+					// Only include intercepts for this workspace
+					if activeIntercept.WorkspaceName == workspace.Name {
+						intercepts = append(intercepts, fmt.Sprintf("%s/%s", comp.Name, activeIntercept.ServiceName))
+					}
+				}
+			}
+		} else {
+			logger.Warn("Failed to list compositions for intercept status", zap.Error(err))
+		}
 	}
 
 	// Build JSON content

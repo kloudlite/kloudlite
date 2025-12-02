@@ -1462,12 +1462,7 @@ func TestUpdateKloudliteContextFile(t *testing.T) {
 				},
 			},
 		},
-		Status: workspacev1.WorkspaceStatus{
-			ActiveIntercepts: []workspacev1.InterceptStatus{
-				{ServiceName: "web", Phase: "Active"},
-				{ServiceName: "api", Phase: "Active"},
-			},
-		},
+		Status: workspacev1.WorkspaceStatus{},
 	}
 
 	env := &environmentv1.Environment{
