@@ -307,9 +307,9 @@ export function EnvironmentsList({
                   {env.owner.includes('@') ? env.owner.split('@')[0] : env.owner}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium w-fit ${
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${
                         env.status === 'active'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                           : env.status === 'inactive'
@@ -333,34 +333,25 @@ export function EnvironmentsList({
                         env.status === 'cloning') && <Loader2 className="h-3 w-3 animate-spin" />}
                       {env.status}
                     </span>
-                    {/* Show cloning progress */}
+                    {/* Show cloning progress inline */}
                     {env.status === 'cloning' && env.cloningStatus && (
-                      <div className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-xs">
                         {env.sourceCloningStatus ? (
                           <span className="italic">
-                            Being cloned to: {formatEnvironmentName(env.sourceCloningStatus.targetEnvironmentName)}
+                            → {formatEnvironmentName(env.sourceCloningStatus.targetEnvironmentName)}
                           </span>
                         ) : (
-                          <>
-                            <div>{formatCloningPhase(env.cloningStatus.phase)}</div>
+                          <span className="flex items-center gap-2">
+                            <span>{formatCloningPhase(env.cloningStatus.phase)}</span>
                             {env.cloningStatus.totalPVCs && env.cloningStatus.totalPVCs > 0 && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <div className="bg-muted h-1.5 w-16 overflow-hidden rounded-full">
-                                  <div
-                                    className="bg-primary h-full transition-all"
-                                    style={{
-                                      width: `${((env.cloningStatus.clonedPVCs || 0) / env.cloningStatus.totalPVCs) * 100}%`,
-                                    }}
-                                  />
-                                </div>
-                                <span>
-                                  {env.cloningStatus.clonedPVCs || 0}/{env.cloningStatus.totalPVCs} volumes
-                                </span>
-                              </div>
+                              <>
+                                <span className="text-muted-foreground/50">•</span>
+                                <span>{env.cloningStatus.clonedPVCs || 0}/{env.cloningStatus.totalPVCs} volumes</span>
+                              </>
                             )}
-                          </>
+                          </span>
                         )}
-                      </div>
+                      </span>
                     )}
                   </div>
                 </td>
