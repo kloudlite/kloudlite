@@ -81,11 +81,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		logger,
 		cfg.Auth.JWTSecret,
 	)
-	// Registry catalog handlers for listing repositories and tags
-	registryCatalogHandlers := handlers.NewRegistryCatalogHandlers(
-		cfg.Registry.InternalURL,
-		logger,
-	)
 	// Registry auth handlers - only initialize if RSA key is configured
 	// Docker Registry v3 requires RSA/ECDSA signing for tokens (not HMAC)
 	var registryAuthHandlers *handlers.RegistryAuthHandlers
@@ -102,6 +97,13 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	} else {
 		logger.Warn("Registry RSA private key not configured, Docker Registry token auth will be unavailable")
 	}
+	// Registry catalog handlers for listing repositories and tags
+	registryCatalogHandlers := handlers.NewRegistryCatalogHandlers(
+		cfg.Registry.InternalURL,
+		registryAuthHandlers,
+		servicesManager.Auth,
+		logger,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)

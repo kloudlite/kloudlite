@@ -7,22 +7,32 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/api/internal/services"
 	"go.uber.org/zap"
 )
 
 // RegistryCatalogHandlers handles Docker Registry catalog operations
 type RegistryCatalogHandlers struct {
-	registryURL string
-	logger      *zap.Logger
-	httpClient  *http.Client
+	registryURL         string
+	registryAuthHandler *RegistryAuthHandlers
+	authService         services.AuthService
+	logger              *zap.Logger
+	httpClient          *http.Client
 }
 
 // NewRegistryCatalogHandlers creates a new RegistryCatalogHandlers
-func NewRegistryCatalogHandlers(registryURL string, logger *zap.Logger) *RegistryCatalogHandlers {
+func NewRegistryCatalogHandlers(
+	registryURL string,
+	registryAuthHandler *RegistryAuthHandlers,
+	authService services.AuthService,
+	logger *zap.Logger,
+) *RegistryCatalogHandlers {
 	return &RegistryCatalogHandlers{
-		registryURL: strings.TrimSuffix(registryURL, "/"),
-		logger:      logger,
-		httpClient:  &http.Client{},
+		registryURL:         strings.TrimSuffix(registryURL, "/"),
+		registryAuthHandler: registryAuthHandler,
+		authService:         authService,
+		logger:              logger,
+		httpClient:          &http.Client{},
 	}
 }
 
@@ -47,8 +57,39 @@ type TagListResponse struct {
 	Tags []string `json:"tags"`
 }
 
+// getRegistryToken generates a token for accessing the registry catalog
+func (h *RegistryCatalogHandlers) getRegistryToken(c *gin.Context) (string, error) {
+	// Get the username from the authenticated request context
+	username, exists := c.Get("username")
+	if !exists {
+		return "", fmt.Errorf("username not found in context")
+	}
+
+	// Generate a Docker Registry token with catalog access
+	// For catalog access, we use a special scope that allows reading all repos
+	if h.registryAuthHandler == nil {
+		return "", fmt.Errorf("registry auth handler not configured")
+	}
+
+	// Generate token using the registry auth handler's signing key
+	token, err := h.registryAuthHandler.generateCatalogToken(username.(string))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate registry token: %w", err)
+	}
+
+	return token, nil
+}
+
 // ListRepositories lists all repositories in the registry
 func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
+	// Get registry token for authentication
+	token, err := h.getRegistryToken(c)
+	if err != nil {
+		h.logger.Error("Failed to get registry token", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
+		return
+	}
+
 	// Call registry /_catalog endpoint
 	url := fmt.Sprintf("%s/v2/_catalog", h.registryURL)
 
@@ -58,6 +99,9 @@ func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
 		return
 	}
+
+	// Add authentication header
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := h.httpClient.Do(req)
 	if err != nil {
@@ -98,6 +142,17 @@ func (h *RegistryCatalogHandlers) ListTags(c *gin.Context) {
 		return
 	}
 
+	// Remove leading slash if present (from wildcard capture)
+	repo = strings.TrimPrefix(repo, "/")
+
+	// Get registry token for authentication
+	token, err := h.getRegistryToken(c)
+	if err != nil {
+		h.logger.Error("Failed to get registry token", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
+		return
+	}
+
 	// URL encode the repo name for the registry API
 	url := fmt.Sprintf("%s/v2/%s/tags/list", h.registryURL, repo)
 
@@ -107,6 +162,9 @@ func (h *RegistryCatalogHandlers) ListTags(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
 		return
 	}
+
+	// Add authentication header
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := h.httpClient.Do(req)
 	if err != nil {

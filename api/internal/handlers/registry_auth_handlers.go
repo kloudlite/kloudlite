@@ -263,6 +263,49 @@ func (h *RegistryAuthHandlers) GetToken(c *gin.Context) {
 	})
 }
 
+// generateCatalogToken generates a Docker Registry token for catalog access
+// This is used internally by the API to fetch repository lists from the registry
+func (h *RegistryAuthHandlers) generateCatalogToken(username string) (string, error) {
+	now := time.Now()
+	expiresIn := 300 // 5 minutes for internal use
+
+	// Create access entries for catalog and repository pull access
+	accessEntries := []DockerAccessEntry{
+		{
+			Type:    "registry",
+			Name:    "catalog",
+			Actions: []string{"*"},
+		},
+	}
+
+	dockerClaims := DockerTokenClaims{
+		Access: accessEntries,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "kloudlite-registry-auth",
+			Subject:   username,
+			Audience:  jwt.ClaimStrings{"kloudlite-registry"},
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(expiresIn) * time.Second)),
+			NotBefore: jwt.NewNumericDate(now.Add(-10 * time.Second)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ID:        uuid.New().String(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, dockerClaims)
+	token.Header["typ"] = "JWT"
+	token.Header["kid"] = h.keyID
+	tokenString, err := token.SignedString(h.rsaPrivateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign catalog token: %w", err)
+	}
+
+	h.logger.Debug("Catalog token generated",
+		zap.String("username", username),
+	)
+
+	return tokenString, nil
+}
+
 // authorizeScope parses the requested scope and returns authorized access entries
 // Scope format: "repository:namespace/image:actions" (e.g., "repository:karthik/myapp:push,pull")
 // Users can only push to their own namespace (username/*)
