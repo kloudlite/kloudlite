@@ -384,8 +384,8 @@ func (r *EnvironmentReconciler) handleCreatingCopyJobsPhase(ctx context.Context,
 	}
 
 	if len(pvcList.Items) == 0 {
-		logger.Info("No PVCs to clone, moving to resuming phase")
-		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseResuming, "No PVCs to clone", logger)
+		logger.Info("No PVCs to clone, moving to clone compositions phase")
+		r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCloningCompositions, "No PVCs to clone, cloning Compositions", logger)
 		return reconcile.Result{Requeue: true}, nil
 	}
 
