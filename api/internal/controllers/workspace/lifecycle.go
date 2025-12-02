@@ -63,18 +63,27 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 
 	// Check if connected environment is deactivated - if so, disconnect the workspace
 	if workspace.Spec.EnvironmentConnection != nil {
+		logger.Info("Checking environment connection status",
+			zap.String("environmentRef", workspace.Spec.EnvironmentConnection.EnvironmentRef.Name))
 		env, err := r.validateEnvironmentConnection(ctx, workspace)
-		if err == nil && env != nil && !env.Spec.Activated {
-			// Environment is deactivated - disconnect workspace
-			logger.Info("Disconnecting workspace from deactivated environment",
-				zap.String("environment", env.Name))
-			workspace.Spec.EnvironmentConnection = nil
-			if err := r.Update(ctx, workspace); err != nil {
-				logger.Error("Failed to disconnect from deactivated environment", zap.Error(err))
-				return reconcile.Result{}, fmt.Errorf("failed to disconnect from deactivated environment: %w", err)
+		if err != nil {
+			logger.Warn("Failed to validate environment connection", zap.Error(err))
+		} else if env != nil {
+			logger.Info("Environment connection validated",
+				zap.String("environment", env.Name),
+				zap.Bool("activated", env.Spec.Activated))
+			if !env.Spec.Activated {
+				// Environment is deactivated - disconnect workspace
+				logger.Info("Disconnecting workspace from deactivated environment",
+					zap.String("environment", env.Name))
+				workspace.Spec.EnvironmentConnection = nil
+				if err := r.Update(ctx, workspace); err != nil {
+					logger.Error("Failed to disconnect from deactivated environment", zap.Error(err))
+					return reconcile.Result{}, fmt.Errorf("failed to disconnect from deactivated environment: %w", err)
+				}
+				// Requeue to continue reconciliation with updated spec
+				return reconcile.Result{Requeue: true}, nil
 			}
-			// Requeue to continue reconciliation with updated spec
-			return reconcile.Result{Requeue: true}, nil
 		}
 	}
 

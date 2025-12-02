@@ -504,8 +504,13 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, obj client.Object) []reconcile.Request {
 	env, ok := obj.(*environmentv1.Environment)
 	if !ok {
+		r.Logger.Info("findWorkspacesForEnvironment: object is not an Environment")
 		return nil
 	}
+
+	r.Logger.Info("findWorkspacesForEnvironment called",
+		zap.String("environment", env.Name),
+		zap.Bool("activated", env.Spec.Activated))
 
 	// Only trigger when environment is deactivated
 	if env.Spec.Activated {
@@ -515,17 +520,25 @@ func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, 
 	// Find all workspaces connected to this environment
 	var workspaces workspacev1.WorkspaceList
 	if err := r.Client.List(ctx, &workspaces); err != nil {
+		r.Logger.Error("findWorkspacesForEnvironment: failed to list workspaces", zap.Error(err))
 		return nil
 	}
+
+	r.Logger.Info("findWorkspacesForEnvironment: found workspaces", zap.Int("count", len(workspaces.Items)))
 
 	var requests []reconcile.Request
 	for _, ws := range workspaces.Items {
 		if ws.Spec.EnvironmentConnection != nil &&
 			ws.Spec.EnvironmentConnection.EnvironmentRef.Name == env.Name {
+			r.Logger.Info("findWorkspacesForEnvironment: workspace connected to deactivated environment",
+				zap.String("workspace", ws.Name),
+				zap.String("namespace", ws.Namespace))
 			requests = append(requests, reconcile.Request{
 				NamespacedName: types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace},
 			})
 		}
 	}
+
+	r.Logger.Info("findWorkspacesForEnvironment: returning requests", zap.Int("count", len(requests)))
 	return requests
 }
