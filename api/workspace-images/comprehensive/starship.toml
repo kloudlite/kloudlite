@@ -15,8 +15,6 @@ symbol = " "
 
 [directory]
 read_only = " 󰌾"
-style = "bold bright-blue"
-format = "in [$path]($style)[$read_only]($read_only_style) "
 
 [container]
 disabled = true
