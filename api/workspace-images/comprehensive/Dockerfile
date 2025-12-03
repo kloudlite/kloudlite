@@ -27,6 +27,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   python3 \
   supervisor \
   bash \
+  bash-completion \
   zsh \
   fish \
   curl \
