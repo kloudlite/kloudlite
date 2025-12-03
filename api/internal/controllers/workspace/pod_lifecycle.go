@@ -116,7 +116,16 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 	}
 
 	// Get active service intercepts from Compositions in the connected environment
-	intercepts := []string{}
+	// Format: [{serviceName: "web", portMappings: [{servicePort: 80, workspacePort: 8080}]}, ...]
+	type portMappingInfo struct {
+		ServicePort   int32 `json:"servicePort"`
+		WorkspacePort int32 `json:"workspacePort"`
+	}
+	type interceptInfo struct {
+		ServiceName  string            `json:"serviceName"`
+		PortMappings []portMappingInfo `json:"portMappings"`
+	}
+	intercepts := []interceptInfo{}
 	if workspace.Status.ConnectedEnvironment != nil && workspace.Status.ConnectedEnvironment.TargetNamespace != "" {
 		envTargetNs := workspace.Status.ConnectedEnvironment.TargetNamespace
 		compList := &environmentv1.CompositionList{}
@@ -125,7 +134,23 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 				for _, activeIntercept := range comp.Status.ActiveIntercepts {
 					// Only include intercepts for this workspace
 					if activeIntercept.WorkspaceName == workspace.Name {
-						intercepts = append(intercepts, fmt.Sprintf("%s/%s", comp.Name, activeIntercept.ServiceName))
+						// Find port mappings from spec
+						var mappings []portMappingInfo
+						for _, specIntercept := range comp.Spec.Intercepts {
+							if specIntercept.ServiceName == activeIntercept.ServiceName {
+								for _, pm := range specIntercept.PortMappings {
+									mappings = append(mappings, portMappingInfo{
+										ServicePort:   pm.ServicePort,
+										WorkspacePort: pm.WorkspacePort,
+									})
+								}
+								break
+							}
+						}
+						intercepts = append(intercepts, interceptInfo{
+							ServiceName:  activeIntercept.ServiceName,
+							PortMappings: mappings,
+						})
 					}
 				}
 			}
@@ -155,7 +180,7 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 	logger.Info("Successfully updated Kloudlite context file in running pod",
 		zap.String("workspace", workspace.Name),
 		zap.String("environment", envName),
-		zap.Strings("intercepts", intercepts))
+		zap.Int("interceptCount", len(intercepts)))
 
 	return nil
 }
