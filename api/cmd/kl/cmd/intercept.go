@@ -331,13 +331,22 @@ func handleInterceptStartWithCompositionService(ctx context.Context, svc Composi
 	reader := bufio.NewReader(os.Stdin)
 
 	if len(svc.Ports) > 0 {
-		// Service has defined ports
-		fmt.Printf("\nService '%s' has %d port(s):\n", svc.ServiceName, len(svc.Ports))
-		portMappings = make([]environmentv1.PortMapping, 0, len(svc.Ports))
+		// Service has defined ports - let user select which to intercept
+		selectedPorts, err := selectPortsWithFzf(svc.ServiceName, svc.Ports)
+		if err != nil {
+			return err
+		}
 
-		for _, port := range svc.Ports {
-			fmt.Printf("\n  Service port: %d\n", port)
-			fmt.Printf("  Workspace port [%d]: ", port)
+		if len(selectedPorts) == 0 {
+			return fmt.Errorf("no ports selected for interception")
+		}
+
+		portMappings = make([]environmentv1.PortMapping, 0, len(selectedPorts))
+
+		// Ask for workspace port mapping for each selected port
+		fmt.Printf("\nMap selected ports to workspace ports:\n")
+		for _, port := range selectedPorts {
+			fmt.Printf("  Service port %d → Workspace port [%d]: ", port, port)
 			input, err := reader.ReadString('\n')
 			if err != nil {
 				return fmt.Errorf("failed to read input: %w", err)
@@ -1029,4 +1038,98 @@ func selectActiveInterceptWithFzf(intercepts []ActiveIntercept) (*ActiveIntercep
 	}
 
 	return intercept, nil
+}
+
+// selectPortsWithFzf allows user to select which ports to intercept using fzf multi-select
+func selectPortsWithFzf(serviceName string, ports []int32) ([]int32, error) {
+	// If only one port, auto-select it
+	if len(ports) == 1 {
+		fmt.Printf("\nService '%s' has 1 port: %d (auto-selected)\n", serviceName, ports[0])
+		return ports, nil
+	}
+
+	// Create input for fzf
+	portMap := make(map[string]int32)
+	var items []string
+
+	for _, port := range ports {
+		line := fmt.Sprintf("%d", port)
+		items = append(items, line)
+		portMap[line] = port
+	}
+
+	// Create temporary file for input
+	tmpfile, err := os.CreateTemp("", "fzf-ports-*.txt")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	// Write items to temp file
+	writer := bufio.NewWriter(tmpfile)
+	for _, item := range items {
+		fmt.Fprintln(writer, item)
+	}
+	writer.Flush()
+	tmpfile.Close()
+
+	// Open temp file for reading
+	inputFile, err := os.Open(tmpfile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to open temp file: %w", err)
+	}
+	defer inputFile.Close()
+
+	// Save original stdin and replace it temporarily
+	oldStdin := os.Stdin
+	os.Stdin = inputFile
+	defer func() {
+		os.Stdin = oldStdin
+		// Recover from any panics in fzf
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "Error in fzf: %v\n", r)
+		}
+	}()
+
+	fmt.Printf("\nService '%s' has %d ports. Select ports to intercept (TAB to select, ENTER to confirm):\n", serviceName, len(ports))
+
+	// Parse fzf options with multi-select enabled
+	opts, err := fzf.ParseOptions(true, []string{
+		"--height=40%",
+		"--layout=reverse",
+		"--border",
+		"--multi",
+		"--prompt=Select ports (TAB to toggle): ",
+		"--header=Press TAB to select/deselect, ENTER to confirm",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse fzf options: %w", err)
+	}
+
+	// Collect all selected items
+	var selectedItems []string
+	opts.Printer = func(s string) {
+		selectedItems = append(selectedItems, s)
+	}
+
+	// Run fzf
+	exitCode, err := fzf.Run(opts)
+
+	if exitCode != fzf.ExitOk || err != nil {
+		return nil, fmt.Errorf("port selection cancelled")
+	}
+
+	if len(selectedItems) == 0 {
+		return nil, fmt.Errorf("no ports selected")
+	}
+
+	// Convert selected items back to port numbers
+	var selectedPorts []int32
+	for _, item := range selectedItems {
+		if port, ok := portMap[item]; ok {
+			selectedPorts = append(selectedPorts, port)
+		}
+	}
+
+	return selectedPorts, nil
 }
