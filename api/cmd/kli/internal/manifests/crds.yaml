@@ -2512,66 +2512,13 @@ spec:
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
-                  intercepts:
-                    description: |-
-                      Intercepts defines services to intercept in this environment
-                      When environment is disconnected, all intercepts are automatically removed
-                    items:
-                      description: InterceptSpec defines a service to intercept when
-                        connected to an environment
-                      properties:
-                        portMappings:
-                          description: PortMappings defines how service ports map
-                            to workspace ports
-                          items:
-                            description: PortMapping defines mapping between service
-                              and workspace ports for intercepts
-                            properties:
-                              protocol:
-                                default: TCP
-                                description: Protocol is the protocol used (TCP/UDP)
-                                enum:
-                                - TCP
-                                - UDP
-                                - SCTP
-                                type: string
-                              servicePort:
-                                description: ServicePort is the port exposed by the
-                                  service
-                                format: int32
-                                maximum: 65535
-                                minimum: 1
-                                type: integer
-                              workspacePort:
-                                description: WorkspacePort is the port in the workspace
-                                  pod
-                                format: int32
-                                maximum: 65535
-                                minimum: 1
-                                type: integer
-                            required:
-                            - servicePort
-                            - workspacePort
-                            type: object
-                          minItems: 1
-                          type: array
-                        serviceName:
-                          description: ServiceName in the connected environment to
-                            intercept
-                          minLength: 1
-                          type: string
-                      required:
-                      - portMappings
-                      - serviceName
-                      type: object
-                    type: array
                 required:
                 - environmentRef
                 type: object
               expose:
                 description: |-
                   Expose defines ports to expose from the workspace
-                  All exposed ports get an HTTP ingress route with hostname p{port}-{hash}.{subdomain}
+                  Each port gets an HTTP ingress route with hostname p{port}-{hash}.{subdomain}
                 items:
                   description: |-
                     ExposedPort defines a port to expose from the workspace
@@ -2748,28 +2695,6 @@ spec:
                 description: ActiveConnections is the number of active network connections
                   in the workspace
                 type: integer
-              activeIntercepts:
-                description: ActiveIntercepts tracks the status of active service
-                  intercepts
-                items:
-                  description: InterceptStatus tracks the status of an active service
-                    intercept
-                  properties:
-                    message:
-                      description: Message provides additional information about the
-                        intercept status
-                      type: string
-                    phase:
-                      description: Phase of the intercept (Pending, Active, Failed,
-                        etc.)
-                      type: string
-                    serviceName:
-                      description: ServiceName being intercepted
-                      type: string
-                  required:
-                  - serviceName
-                  type: object
-                type: array
               cloningStatus:
                 description: CloningStatus tracks the progress of workspace directory
                   cloning
