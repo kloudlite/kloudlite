@@ -105,7 +105,7 @@ func (r *WorkspaceReconciler) buildServicePorts(workspace *workspacev1.Workspace
 
 // ensureWorkspaceService ensures a Service is created for the workspace
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	serviceName := workspace.Name
+	serviceName := fmt.Sprintf("ws-%s", workspace.Name)
 
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
@@ -177,7 +177,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	}
 
 	// Service name that ingress will route to
-	serviceName := workspace.Name
+	serviceName := fmt.Sprintf("ws-%s", workspace.Name)
 
 	// Generate hash of owner-workspaceName for unique, DNS-friendly hostnames
 	wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
@@ -281,7 +281,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 // ensureWorkspaceHeadlessService ensures a headless Service is created for the workspace
 // This headless service is used by service intercepts to route traffic to workspace pods
 func (r *WorkspaceReconciler) ensureWorkspaceHeadlessService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	headlessServiceName := fmt.Sprintf("%s-headless", workspace.Name)
+	headlessServiceName := fmt.Sprintf("ws-%s-headless", workspace.Name)
 
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
