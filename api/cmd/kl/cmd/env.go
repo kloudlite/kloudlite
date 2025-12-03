@@ -219,7 +219,23 @@ func handleEnvDisconnect() error {
 		return fmt.Errorf("failed to get workspace: %w", err)
 	}
 
-	// Clear the environment connection (this also removes all intercepts)
+	// Check if workspace is connected to an environment
+	if workspace.Status.ConnectedEnvironment == nil {
+		fmt.Println("Workspace is not connected to any environment")
+		return nil
+	}
+
+	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
+
+	// Remove all intercepts for this workspace from compositions
+	if targetNamespace != "" {
+		if err := removeWorkspaceIntercepts(ctx, targetNamespace, workspace.Name, workspace.Namespace); err != nil {
+			fmt.Printf("Warning: Failed to remove some intercepts: %v\n", err)
+			// Continue with disconnect even if intercept removal fails
+		}
+	}
+
+	// Clear the environment connection
 	workspace.Spec.EnvironmentConnection = nil
 
 	// Update the workspace spec
@@ -234,6 +250,48 @@ func handleEnvDisconnect() error {
 
 	fmt.Println()
 	fmt.Println("[✓] Disconnected from environment")
+
+	return nil
+}
+
+// removeWorkspaceIntercepts removes all intercepts for a workspace from all compositions
+func removeWorkspaceIntercepts(ctx context.Context, targetNamespace, workspaceName, workspaceNamespace string) error {
+	compList := &environmentsv1.CompositionList{}
+	if err := WsClient.K8sClient.List(ctx, compList, client.InNamespace(targetNamespace)); err != nil {
+		return fmt.Errorf("failed to list compositions: %w", err)
+	}
+
+	var removedCount int
+	for _, comp := range compList.Items {
+		// Find intercepts belonging to this workspace
+		var newIntercepts []environmentsv1.ServiceInterceptConfig
+		var removed []string
+		for _, intercept := range comp.Spec.Intercepts {
+			if intercept.WorkspaceRef != nil &&
+				intercept.WorkspaceRef.Name == workspaceName &&
+				intercept.WorkspaceRef.Namespace == workspaceNamespace {
+				removed = append(removed, intercept.ServiceName)
+				continue
+			}
+			newIntercepts = append(newIntercepts, intercept)
+		}
+
+		// Update composition if any intercepts were removed
+		if len(removed) > 0 {
+			comp.Spec.Intercepts = newIntercepts
+			if err := WsClient.K8sClient.Update(ctx, &comp); err != nil {
+				return fmt.Errorf("failed to update composition %s: %w", comp.Name, err)
+			}
+			for _, svc := range removed {
+				fmt.Printf("[✓] Removed intercept for service '%s'\n", svc)
+				removedCount++
+			}
+		}
+	}
+
+	if removedCount > 0 {
+		fmt.Printf("Removed %d intercept(s)\n", removedCount)
+	}
 
 	return nil
 }
