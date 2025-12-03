@@ -509,10 +509,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 				{
 					Name: "etc-environment",
 					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/kloudlite/etc-environment",
-							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
-						},
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
 					},
 				},
 				{
