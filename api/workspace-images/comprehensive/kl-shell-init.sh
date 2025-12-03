@@ -27,3 +27,8 @@ fi
 # Initialize starship prompt
 export STARSHIP_CONFIG=~/.config/starship.toml
 eval "$(starship init bash)"
+
+# Initialize kl shell completions
+if command -v kl &> /dev/null; then
+    source <(kl completion bash)
+fi
