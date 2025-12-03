@@ -34,7 +34,7 @@ tasks:
   consolidate-crds:
     desc: Consolidate all CRD manifests into single file for kli
     cmds:
-      - cat manifests/*.yaml > cmd/kli/internal/manifests/crds.yaml
+      - cat ../manifests/*.yaml > cmd/kli/internal/manifests/crds.yaml
       - echo "Consolidated CRDs into cmd/kli/internal/manifests/crds.yaml"
 
   build:image:
