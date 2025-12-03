@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -119,21 +120,7 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 
 	logger.Info("Found workspace headless service", zap.String("service", workspaceHeadlessSvcName))
 
-	// Step 3: Get the deployment for this service
-	deployment := &appsv1.Deployment{}
-	err = r.Get(ctx, client.ObjectKey{
-		Name:      serviceName,
-		Namespace: serviceNamespace,
-	}, deployment)
-
-	if err != nil {
-		logger.Error("Failed to get deployment", zap.Error(err))
-		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Deployment '%s' not found", serviceName), workspace.Name, workspace.Namespace, nil, nil)
-		return err
-	}
-
-	// Step 4: Build SOCAT command for port forwarding
+	// Step 3: Build SOCAT command for port forwarding
 	var socatCommands []string
 	for _, mapping := range intercept.PortMappings {
 		workspaceTarget := fmt.Sprintf("%s.%s.svc.cluster.local:%d",
@@ -146,72 +133,83 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	socatCommands = append(socatCommands, "wait")
 	socatCommand := strings.Join(socatCommands, "\n")
 
-	// Step 5: Replace deployment container with SOCAT forwarder
-	if deployment.Annotations == nil {
-		deployment.Annotations = make(map[string]string)
-	}
-
-	// Check if already intercepted
-	if deployment.Annotations[interceptAnnotation] == "true" {
-		// Already intercepted, check if it's the same workspace
-		if deployment.Annotations[interceptWorkspaceAnnotation] == workspace.Name {
-			logger.Info("Deployment already intercepted by this workspace")
-			// Update status and return
-			now := metav1.Now()
-			r.updateInterceptStatus(composition, intercept.ServiceName, "active",
-				fmt.Sprintf("Service '%s' is being intercepted by workspace '%s'", serviceName, workspace.Name),
-				workspace.Name, workspace.Namespace, &now, nil)
-			return nil
+	// Step 4: Replace deployment container with SOCAT forwarder (with retry on conflict)
+	var alreadyIntercepted bool
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Get the latest version of the deployment
+		deployment := &appsv1.Deployment{}
+		if err := r.Get(ctx, client.ObjectKey{
+			Name:      serviceName,
+			Namespace: serviceNamespace,
+		}, deployment); err != nil {
+			return err
 		}
-		// Different workspace - this shouldn't happen, log warning
-		logger.Warn("Deployment already intercepted by different workspace",
-			zap.String("currentWorkspace", deployment.Annotations[interceptWorkspaceAnnotation]))
-	}
 
-	// Store original container spec if not already stored
-	if _, exists := deployment.Annotations[originalContainerAnnotation]; !exists {
+		if deployment.Annotations == nil {
+			deployment.Annotations = make(map[string]string)
+		}
+
+		// Check if already intercepted
+		if deployment.Annotations[interceptAnnotation] == "true" {
+			// Already intercepted, check if it's the same workspace
+			if deployment.Annotations[interceptWorkspaceAnnotation] == workspace.Name {
+				alreadyIntercepted = true
+				return nil
+			}
+			// Different workspace - this shouldn't happen, log warning
+			logger.Warn("Deployment already intercepted by different workspace",
+				zap.String("currentWorkspace", deployment.Annotations[interceptWorkspaceAnnotation]))
+		}
+
+		// Store original container spec if not already stored
+		if _, exists := deployment.Annotations[originalContainerAnnotation]; !exists {
+			if len(deployment.Spec.Template.Spec.Containers) > 0 {
+				container := deployment.Spec.Template.Spec.Containers[0]
+				originalSpec := originalContainerSpec{
+					Image:   container.Image,
+					Command: container.Command,
+					Args:    container.Args,
+				}
+				originalJSON, err := json.Marshal(originalSpec)
+				if err != nil {
+					return err
+				}
+				deployment.Annotations[originalContainerAnnotation] = string(originalJSON)
+			}
+		}
+
+		// Mark as intercepted
+		deployment.Annotations[interceptAnnotation] = "true"
+		deployment.Annotations[interceptWorkspaceAnnotation] = workspace.Name
+
+		// Replace container with SOCAT forwarder
 		if len(deployment.Spec.Template.Spec.Containers) > 0 {
-			container := deployment.Spec.Template.Spec.Containers[0]
-			originalSpec := originalContainerSpec{
-				Image:   container.Image,
-				Command: container.Command,
-				Args:    container.Args,
-			}
-			originalJSON, err := json.Marshal(originalSpec)
-			if err != nil {
-				logger.Error("Failed to marshal original container spec", zap.Error(err))
-				return err
-			}
-			deployment.Annotations[originalContainerAnnotation] = string(originalJSON)
+			deployment.Spec.Template.Spec.Containers[0].Image = "alpine/socat:latest"
+			deployment.Spec.Template.Spec.Containers[0].Command = []string{"sh", "-c", socatCommand}
+			deployment.Spec.Template.Spec.Containers[0].Args = nil
+			// Clear probes that won't work with socat
+			deployment.Spec.Template.Spec.Containers[0].LivenessProbe = nil
+			deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = nil
+			deployment.Spec.Template.Spec.Containers[0].StartupProbe = nil
 		}
-	}
 
-	// Mark as intercepted
-	deployment.Annotations[interceptAnnotation] = "true"
-	deployment.Annotations[interceptWorkspaceAnnotation] = workspace.Name
+		return r.Update(ctx, deployment)
+	})
 
-	// Replace container with SOCAT forwarder
-	if len(deployment.Spec.Template.Spec.Containers) > 0 {
-		deployment.Spec.Template.Spec.Containers[0].Image = "alpine/socat:latest"
-		deployment.Spec.Template.Spec.Containers[0].Command = []string{"sh", "-c", socatCommand}
-		deployment.Spec.Template.Spec.Containers[0].Args = nil
-		// Clear probes that won't work with socat
-		deployment.Spec.Template.Spec.Containers[0].LivenessProbe = nil
-		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = nil
-		deployment.Spec.Template.Spec.Containers[0].StartupProbe = nil
-	}
-
-	// Update deployment
-	if err := r.Update(ctx, deployment); err != nil {
+	if err != nil {
 		logger.Error("Failed to update deployment for intercept", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
 			fmt.Sprintf("Failed to update deployment: %v", err), workspace.Name, workspace.Namespace, nil, nil)
 		return err
 	}
 
-	logger.Info("Successfully replaced deployment image with SOCAT forwarder",
-		zap.String("deployment", serviceName),
-		zap.String("workspace", workspace.Name))
+	if alreadyIntercepted {
+		logger.Info("Deployment already intercepted by this workspace")
+	} else {
+		logger.Info("Successfully replaced deployment image with SOCAT forwarder",
+			zap.String("deployment", serviceName),
+			zap.String("workspace", workspace.Name))
+	}
 
 	// Step 6: Update status to Active
 	now := metav1.Now()
@@ -229,35 +227,39 @@ func (r *CompositionReconciler) cleanupSingleIntercept(ctx context.Context, comp
 	serviceName := intercept.ServiceName
 	serviceNamespace := composition.Namespace
 
-	// Get the deployment
-	deployment := &appsv1.Deployment{}
-	err := r.Get(ctx, client.ObjectKey{
-		Name:      serviceName,
-		Namespace: serviceNamespace,
-	}, deployment)
+	var restoredImage string
+	var notIntercepted bool
 
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			// Deployment doesn't exist, nothing to cleanup
-			r.removeInterceptStatus(composition, intercept.ServiceName)
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Get the latest version of the deployment
+		deployment := &appsv1.Deployment{}
+		if err := r.Get(ctx, client.ObjectKey{
+			Name:      serviceName,
+			Namespace: serviceNamespace,
+		}, deployment); err != nil {
+			if apierrors.IsNotFound(err) {
+				// Deployment doesn't exist, nothing to cleanup
+				return nil
+			}
+			return err
+		}
+
+		// Check if deployment is intercepted
+		if deployment.Annotations == nil || deployment.Annotations[interceptAnnotation] != "true" {
+			// Not intercepted
+			notIntercepted = true
 			return nil
 		}
-		logger.Error("Failed to get deployment during cleanup", zap.Error(err))
-		return err
-	}
 
-	// Check if deployment is intercepted
-	if deployment.Annotations == nil || deployment.Annotations[interceptAnnotation] != "true" {
-		// Not intercepted, remove status if any
-		r.removeInterceptStatus(composition, intercept.ServiceName)
-		return nil
-	}
+		// Restore original container spec
+		originalJSON, exists := deployment.Annotations[originalContainerAnnotation]
+		if !exists {
+			notIntercepted = true
+			return nil
+		}
 
-	// Restore original container spec
-	if originalJSON, exists := deployment.Annotations[originalContainerAnnotation]; exists {
 		var originalSpec originalContainerSpec
 		if err := json.Unmarshal([]byte(originalJSON), &originalSpec); err != nil {
-			logger.Error("Failed to unmarshal original container spec", zap.Error(err))
 			return err
 		}
 
@@ -273,15 +275,19 @@ func (r *CompositionReconciler) cleanupSingleIntercept(ctx context.Context, comp
 		delete(deployment.Annotations, originalContainerAnnotation)
 		delete(deployment.Annotations, interceptWorkspaceAnnotation)
 
-		// Update deployment
-		if err := r.Update(ctx, deployment); err != nil {
-			logger.Error("Failed to restore deployment", zap.Error(err))
-			return err
-		}
+		restoredImage = originalSpec.Image
+		return r.Update(ctx, deployment)
+	})
 
+	if err != nil {
+		logger.Error("Failed to restore deployment", zap.Error(err))
+		return err
+	}
+
+	if !notIntercepted && restoredImage != "" {
 		logger.Info("Restored original deployment image",
 			zap.String("deployment", serviceName),
-			zap.String("image", originalSpec.Image))
+			zap.String("image", restoredImage))
 	}
 
 	// Remove intercept status
@@ -304,34 +310,32 @@ func (r *CompositionReconciler) cleanupAllIntercepts(ctx context.Context, compos
 		serviceName := status.ServiceName
 		serviceNamespace := composition.Namespace
 
-		deployment := &appsv1.Deployment{}
-		err := r.Get(ctx, client.ObjectKey{
-			Name:      serviceName,
-			Namespace: serviceNamespace,
-		}, deployment)
-
-		if err != nil {
-			if !apierrors.IsNotFound(err) {
-				logger.Error("Failed to get deployment during cleanup",
-					zap.String("deployment", serviceName),
-					zap.Error(err))
+		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			deployment := &appsv1.Deployment{}
+			if err := r.Get(ctx, client.ObjectKey{
+				Name:      serviceName,
+				Namespace: serviceNamespace,
+			}, deployment); err != nil {
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return err
 			}
-			continue
-		}
 
-		// Check if deployment is intercepted
-		if deployment.Annotations == nil || deployment.Annotations[interceptAnnotation] != "true" {
-			continue
-		}
+			// Check if deployment is intercepted
+			if deployment.Annotations == nil || deployment.Annotations[interceptAnnotation] != "true" {
+				return nil
+			}
 
-		// Restore original container spec
-		if originalJSON, exists := deployment.Annotations[originalContainerAnnotation]; exists {
+			// Restore original container spec
+			originalJSON, exists := deployment.Annotations[originalContainerAnnotation]
+			if !exists {
+				return nil
+			}
+
 			var originalSpec originalContainerSpec
 			if err := json.Unmarshal([]byte(originalJSON), &originalSpec); err != nil {
-				logger.Error("Failed to unmarshal original container spec",
-					zap.String("deployment", serviceName),
-					zap.Error(err))
-				continue
+				return err
 			}
 
 			// Restore container
@@ -346,18 +350,17 @@ func (r *CompositionReconciler) cleanupAllIntercepts(ctx context.Context, compos
 			delete(deployment.Annotations, originalContainerAnnotation)
 			delete(deployment.Annotations, interceptWorkspaceAnnotation)
 
-			// Update deployment
-			if err := r.Update(ctx, deployment); err != nil {
-				logger.Error("Failed to restore deployment during cleanup",
-					zap.String("deployment", serviceName),
-					zap.Error(err))
-				continue
-			}
+			return r.Update(ctx, deployment)
+		})
 
-			logger.Info("Restored deployment during cleanup",
+		if err != nil {
+			logger.Error("Failed to restore deployment during cleanup",
 				zap.String("deployment", serviceName),
-				zap.String("image", originalSpec.Image))
+				zap.Error(err))
+			continue
 		}
+
+		logger.Info("Restored deployment during cleanup", zap.String("deployment", serviceName))
 	}
 
 	// Clear all intercept statuses
