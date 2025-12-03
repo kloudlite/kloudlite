@@ -294,6 +294,10 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 									Name:      "wireguard-config",
 									MountPath: "/etc/wireguard",
 								},
+								{
+									Name:      "peer-storage",
+									MountPath: "/var/lib/tunnel-server",
+								},
 							},
 						},
 					},
@@ -302,6 +306,15 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 							Name: "wireguard-config",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "peer-storage",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/var/lib/tunnel-server",
+									Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
+								},
 							},
 						},
 					},
