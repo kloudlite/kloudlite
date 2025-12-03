@@ -64,6 +64,12 @@ var exposeRemoveCmd = &cobra.Command{
   kl expose remove 3000
   kl expose rm 8080`,
 	Args: cobra.ExactArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return getExposedPorts(), cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		port, err := parsePort(args[0])
 		if err != nil {
@@ -208,4 +214,23 @@ func handleExposeRemove(port int) error {
 	fmt.Printf("[✓] Removed port %d\n", port)
 
 	return nil
+}
+
+// getExposedPorts returns a list of exposed port numbers as strings for shell completion
+func getExposedPorts() []string {
+	if err := InitClient(); err != nil {
+		return nil
+	}
+	ctx := context.Background()
+
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return nil
+	}
+
+	var ports []string
+	for _, exposed := range workspace.Spec.Expose {
+		ports = append(ports, fmt.Sprintf("%d", exposed.Port))
+	}
+	return ports
 }
