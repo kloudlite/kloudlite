@@ -431,9 +431,9 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 
 // getWorkspaceHosts gets all workspace services and creates host entries for VPN access
 func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain string) ([]HostEntry, error) {
-	// List all workspaces
+	// List workspaces in the current namespace only
 	var workspaceList workspacev1.WorkspaceList
-	if err := hc.cache.List(ctx, &workspaceList); err != nil {
+	if err := hc.cache.List(ctx, &workspaceList, client.InNamespace(hc.namespace)); err != nil {
 		return nil, fmt.Errorf("failed to list workspaces: %w", err)
 	}
 
@@ -457,11 +457,12 @@ func (hc *HostsCache) getWorkspaceHosts(ctx context.Context, subdomain, domain s
 		}
 
 		// Get workspace service ClusterIP
-		// The service has the same name as the workspace
+		// The service is named ws-{workspaceName}
+		svcName := fmt.Sprintf("ws-%s", ws.Name)
 		svc := &corev1.Service{}
 		if err := hc.cache.Get(ctx, client.ObjectKey{
 			Namespace: ws.Namespace,
-			Name:      ws.Name,
+			Name:      svcName,
 		}, svc); err != nil {
 			hc.logger.Debug("workspace service not found",
 				zap.String("workspace", ws.Name),
