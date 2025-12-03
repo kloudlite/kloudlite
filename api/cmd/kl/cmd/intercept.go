@@ -233,7 +233,9 @@ func handleInterceptStartInteractive() error {
 	}
 
 	// Use embedded fzf to select service
-	selectedService, err := selectCompositionServiceWithFzf(services)
+	// Pass connected environment name for display
+	envName := workspace.Status.ConnectedEnvironment.Name
+	selectedService, err := selectCompositionServiceWithFzf(services, envName)
 	if err != nil {
 		return err
 	}
@@ -845,7 +847,7 @@ func waitForInterceptSync(compositionName, serviceName, targetNamespace, action 
 	}
 }
 
-func selectCompositionServiceWithFzf(services []CompositionService) (*CompositionService, error) {
+func selectCompositionServiceWithFzf(services []CompositionService, envName string) (*CompositionService, error) {
 	// Create input for fzf
 	svcMap := make(map[string]*CompositionService)
 	var items []string
@@ -858,9 +860,9 @@ func selectCompositionServiceWithFzf(services []CompositionService) (*Compositio
 			for j, port := range svc.Ports {
 				ports[j] = fmt.Sprintf("%d", port)
 			}
-			line = fmt.Sprintf("%s/%s (%s) - ports: %s", svc.CompositionName, svc.ServiceName, svc.State, strings.Join(ports, ", "))
+			line = fmt.Sprintf("%s/%s (%s) - ports: %s", envName, svc.ServiceName, svc.State, strings.Join(ports, ", "))
 		} else {
-			line = fmt.Sprintf("%s/%s (%s)", svc.CompositionName, svc.ServiceName, svc.State)
+			line = fmt.Sprintf("%s/%s (%s)", envName, svc.ServiceName, svc.State)
 		}
 		items = append(items, line)
 		svcMap[line] = svc
