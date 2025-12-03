@@ -28,7 +28,13 @@ fi
 export STARSHIP_CONFIG=~/.config/starship.toml
 eval "$(starship init bash)"
 
-# Initialize kl shell completions
+# Initialize bash-completion and kl shell completions
 if command -v kl &> /dev/null; then
+    # Source bash-completion if available (required for kl completions)
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+        source /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+        source /etc/bash_completion
+    fi
     source <(kl completion bash)
 fi
