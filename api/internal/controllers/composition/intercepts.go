@@ -3,6 +3,7 @@ package composition
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -248,45 +250,41 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 		logger.Info("SOCAT pod already exists", zap.String("pod", socatPodName))
 	}
 
-	// Step 6: Delete existing Running pods that match the original service selector
-	podList := &corev1.PodList{}
-	err = r.List(ctx, podList,
-		client.InNamespace(serviceNamespace),
-		client.MatchingLabels(originalSelector))
+	// Step 6: Scale down the deployment to 0 replicas so no original pods run
+	// The service will route traffic to the SOCAT pod instead
+	deployment := &appsv1.Deployment{}
+	err = r.Get(ctx, client.ObjectKey{
+		Name:      serviceName,
+		Namespace: serviceNamespace,
+	}, deployment)
 
 	if err == nil {
-		var runningPods []corev1.Pod
-		for _, pod := range podList.Items {
-			// Skip pods being deleted
-			if pod.DeletionTimestamp != nil {
-				continue
-			}
-
-			// Skip workspace pods
-			if _, isWorkspace := pod.Labels["workspaces.kloudlite.io/workspace-name"]; isWorkspace {
-				continue
-			}
-
-			// Skip SOCAT pods
-			if pod.Labels["environments.kloudlite.io/composition"] == composition.Name {
-				continue
-			}
-
-			// Only delete Running pods
-			if pod.Status.Phase == corev1.PodRunning {
-				runningPods = append(runningPods, pod)
-			}
+		// Store original replica count in annotation before scaling down
+		if deployment.Annotations == nil {
+			deployment.Annotations = make(map[string]string)
 		}
 
-		if len(runningPods) > 0 {
-			logger.Info("Deleting running pods that match intercepted service", zap.Int("count", len(runningPods)))
-			for _, pod := range runningPods {
-				logger.Info("Deleting intercepted pod", zap.String("pod", pod.Name))
-				if err := r.Delete(ctx, &pod); err != nil {
-					logger.Warn("Failed to delete pod", zap.String("pod", pod.Name), zap.Error(err))
-				}
+		// Only store original replicas if not already stored (to preserve original value across reconciliations)
+		if _, exists := deployment.Annotations["environments.kloudlite.io/original-replicas"]; !exists {
+			originalReplicas := int32(1)
+			if deployment.Spec.Replicas != nil {
+				originalReplicas = *deployment.Spec.Replicas
+			}
+			deployment.Annotations["environments.kloudlite.io/original-replicas"] = fmt.Sprintf("%d", originalReplicas)
+		}
+
+		// Scale to 0 if not already at 0
+		if deployment.Spec.Replicas == nil || *deployment.Spec.Replicas > 0 {
+			zero := int32(0)
+			deployment.Spec.Replicas = &zero
+			if err := r.Update(ctx, deployment); err != nil {
+				logger.Warn("Failed to scale down deployment", zap.String("deployment", serviceName), zap.Error(err))
+			} else {
+				logger.Info("Scaled down deployment for intercept", zap.String("deployment", serviceName))
 			}
 		}
+	} else if !apierrors.IsNotFound(err) {
+		logger.Warn("Failed to get deployment for scaling", zap.String("deployment", serviceName), zap.Error(err))
 	}
 
 	logger.Info("Successfully activated service intercept with SOCAT")
@@ -357,6 +355,37 @@ func (r *CompositionReconciler) cleanupSingleIntercept(ctx context.Context, comp
 	} else if !apierrors.IsNotFound(err) {
 		logger.Error("Failed to get SOCAT pod during cleanup", zap.Error(err))
 		return err
+	}
+
+	// Restore deployment replica count
+	serviceName := intercept.ServiceName
+	deployment := &appsv1.Deployment{}
+	err = r.Get(ctx, client.ObjectKey{
+		Name:      serviceName,
+		Namespace: serviceNamespace,
+	}, deployment)
+
+	if err == nil {
+		// Check if we have stored original replicas
+		if originalReplicasStr, exists := deployment.Annotations["environments.kloudlite.io/original-replicas"]; exists {
+			originalReplicas, parseErr := strconv.ParseInt(originalReplicasStr, 10, 32)
+			if parseErr == nil {
+				replicas := int32(originalReplicas)
+				// Only restore if currently at 0
+				if deployment.Spec.Replicas != nil && *deployment.Spec.Replicas == 0 {
+					deployment.Spec.Replicas = &replicas
+					// Remove the annotation
+					delete(deployment.Annotations, "environments.kloudlite.io/original-replicas")
+					if updateErr := r.Update(ctx, deployment); updateErr != nil {
+						logger.Warn("Failed to restore deployment replicas", zap.String("deployment", serviceName), zap.Error(updateErr))
+					} else {
+						logger.Info("Restored deployment replicas", zap.String("deployment", serviceName), zap.Int32("replicas", replicas))
+					}
+				}
+			}
+		}
+	} else if !apierrors.IsNotFound(err) {
+		logger.Warn("Failed to get deployment for replica restore", zap.String("deployment", serviceName), zap.Error(err))
 	}
 
 	// Remove intercept status
