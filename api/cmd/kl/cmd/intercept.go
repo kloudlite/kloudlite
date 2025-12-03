@@ -852,15 +852,16 @@ func selectCompositionServiceWithFzf(services []CompositionService) (*Compositio
 
 	for i := range services {
 		svc := &services[i]
-		portStr := ""
+		var line string
 		if len(svc.Ports) > 0 {
 			ports := make([]string, len(svc.Ports))
 			for j, port := range svc.Ports {
 				ports[j] = fmt.Sprintf("%d", port)
 			}
-			portStr = strings.Join(ports, ", ")
+			line = fmt.Sprintf("%s/%s (%s) - ports: %s", svc.CompositionName, svc.ServiceName, svc.State, strings.Join(ports, ", "))
+		} else {
+			line = fmt.Sprintf("%s/%s (%s)", svc.CompositionName, svc.ServiceName, svc.State)
 		}
-		line := fmt.Sprintf("%s/%s (%s) - ports: %s", svc.CompositionName, svc.ServiceName, svc.State, portStr)
 		items = append(items, line)
 		svcMap[line] = svc
 	}
