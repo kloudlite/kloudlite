@@ -24,6 +24,14 @@ if [[ -x /usr/bin/dircolors ]]; then
     alias grep='grep --color=auto'
 fi
 
+# Initialize zsh completions
+autoload -Uz compinit && compinit
+
 # Initialize starship prompt
 export STARSHIP_CONFIG=~/.config/starship.toml
 eval "$(starship init zsh)"
+
+# Initialize kl shell completions
+if (( $+commands[kl] )); then
+    source <(kl completion zsh)
+fi

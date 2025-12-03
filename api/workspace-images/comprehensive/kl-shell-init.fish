@@ -35,3 +35,8 @@ set -x TERM xterm-256color
 # Set starship config and initialize
 set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source
+
+# Initialize kl shell completions
+if type -q kl
+    kl completion fish | source
+end
