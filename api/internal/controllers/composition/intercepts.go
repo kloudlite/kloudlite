@@ -2,10 +2,9 @@ package composition
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
 
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -16,7 +15,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // reconcileIntercepts manages service intercepts defined in the composition spec
@@ -53,7 +51,20 @@ func (r *CompositionReconciler) reconcileIntercepts(ctx context.Context, composi
 	return nil
 }
 
-// reconcileSingleIntercept sets up a single service intercept with SOCAT pod
+// originalContainerSpec stores the original container configuration for restoration
+type originalContainerSpec struct {
+	Image   string   `json:"image"`
+	Command []string `json:"command,omitempty"`
+	Args    []string `json:"args,omitempty"`
+}
+
+const (
+	interceptAnnotation          = "environments.kloudlite.io/intercepted"
+	originalContainerAnnotation  = "environments.kloudlite.io/original-container"
+	interceptWorkspaceAnnotation = "environments.kloudlite.io/intercept-workspace"
+)
+
+// reconcileSingleIntercept sets up a single service intercept by replacing deployment image
 func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, composition *v1.Composition, intercept *v1.ServiceInterceptConfig, logger *zap.Logger) error {
 	logger = logger.With(zap.String("service", intercept.ServiceName))
 
@@ -67,54 +78,27 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	if err != nil {
 		logger.Error("Failed to get workspace", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Workspace '%s' not found", intercept.WorkspaceRef.Name), "", intercept.WorkspaceRef.Name, intercept.WorkspaceRef.Namespace, nil, nil)
+			fmt.Sprintf("Workspace '%s' not found", intercept.WorkspaceRef.Name), workspace.Name, workspace.Namespace, nil, nil)
 		return err
 	}
 
 	if workspace.Status.Phase != "Running" {
 		logger.Warn("Workspace is not running", zap.String("phase", workspace.Status.Phase))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Workspace is not running (phase: %s)", workspace.Status.Phase), "", workspace.Name, workspace.Namespace, nil, nil)
+			fmt.Sprintf("Workspace is not running (phase: %s)", workspace.Status.Phase), workspace.Name, workspace.Namespace, nil, nil)
 		return fmt.Errorf("workspace is not running")
 	}
 
-	// Step 2: Get the service in the composition's namespace
-	service := &corev1.Service{}
 	serviceName := intercept.ServiceName
 	serviceNamespace := composition.Namespace
 
-	err = r.Get(ctx, client.ObjectKey{
-		Name:      serviceName,
-		Namespace: serviceNamespace,
-	}, service)
-
-	if err != nil {
-		logger.Error("Failed to get service", zap.Error(err))
-		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Service '%s' not found", serviceName), "", workspace.Name, workspace.Namespace, nil, nil)
-		return err
-	}
-
-	// Step 3: Store original service selector if not already stored
-	var originalSelector map[string]string
-	existingStatus := r.findInterceptStatus(composition, intercept.ServiceName)
-	if existingStatus != nil && existingStatus.OriginalServiceSelector != nil {
-		originalSelector = existingStatus.OriginalServiceSelector
-	} else {
-		originalSelector = make(map[string]string)
-		for k, v := range service.Spec.Selector {
-			originalSelector[k] = v
-		}
-	}
-
-	// Step 4: Get workspace headless service
-	// The headless service runs in the WorkMachine's targetNamespace
+	// Step 2: Get workspace headless service for SOCAT target
 	workmachine := &workmachinevl.WorkMachine{}
 	err = r.Get(ctx, client.ObjectKey{Name: workspace.Spec.WorkmachineName}, workmachine)
 	if err != nil {
 		logger.Error("Failed to get WorkMachine", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Failed to get WorkMachine: %v", err), "", workspace.Name, workspace.Namespace, nil, originalSelector)
+			fmt.Sprintf("Failed to get WorkMachine: %v", err), workspace.Name, workspace.Namespace, nil, nil)
 		return err
 	}
 
@@ -129,19 +113,29 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	if err != nil {
 		logger.Error("Failed to get workspace headless service", zap.Error(err))
 		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-			fmt.Sprintf("Workspace headless service not found: %v", err), "", workspace.Name, workspace.Namespace, nil, originalSelector)
+			fmt.Sprintf("Workspace headless service not found: %v", err), workspace.Name, workspace.Namespace, nil, nil)
 		return err
 	}
 
 	logger.Info("Found workspace headless service", zap.String("service", workspaceHeadlessSvcName))
 
-	// Step 5: Create SOCAT forwarding pod
-	socatPodName := fmt.Sprintf("%s-intercept-%s", serviceName, workspace.Name)
+	// Step 3: Get the deployment for this service
+	deployment := &appsv1.Deployment{}
+	err = r.Get(ctx, client.ObjectKey{
+		Name:      serviceName,
+		Namespace: serviceNamespace,
+	}, deployment)
 
-	// Build SOCAT command for all port mappings
+	if err != nil {
+		logger.Error("Failed to get deployment", zap.Error(err))
+		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
+			fmt.Sprintf("Deployment '%s' not found", serviceName), workspace.Name, workspace.Namespace, nil, nil)
+		return err
+	}
+
+	// Step 4: Build SOCAT command for port forwarding
 	var socatCommands []string
 	for _, mapping := range intercept.PortMappings {
-		// SOCAT forwards from servicePort to workspace headless service + workspacePort
 		workspaceTarget := fmt.Sprintf("%s.%s.svc.cluster.local:%d",
 			workspaceHeadlessSvcName, workspaceTargetNamespace, mapping.WorkspacePort)
 
@@ -149,243 +143,145 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 			mapping.ServicePort, workspaceTarget)
 		socatCommands = append(socatCommands, socatCmd+" &")
 	}
-	socatCommands = append(socatCommands, "wait") // Keep container running
-
+	socatCommands = append(socatCommands, "wait")
 	socatCommand := strings.Join(socatCommands, "\n")
 
-	// Set short termination grace period for faster cleanup
-	terminationGracePeriod := int64(5)
-
-	// Build pod with original service selector labels (so service routes to this pod)
-	socatPod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      socatPodName,
-			Namespace: serviceNamespace,
-			Labels:    make(map[string]string),
-		},
-		Spec: corev1.PodSpec{
-			// Schedule SOCAT pod on the same WorkMachine node as the workspace
-			NodeSelector: map[string]string{
-				"kloudlite.io/workmachine": workmachine.Name,
-			},
-			Tolerations: []corev1.Toleration{
-				{
-					Key:      "kloudlite.io/workmachine",
-					Operator: corev1.TolerationOpExists,
-					Effect:   corev1.TaintEffectNoSchedule,
-				},
-			},
-			Containers: []corev1.Container{
-				{
-					Name:    "socat-forwarder",
-					Image:   "alpine/socat:latest",
-					Command: []string{"sh", "-c", socatCommand},
-					Ports:   []corev1.ContainerPort{},
-					Lifecycle: &corev1.Lifecycle{
-						PreStop: &corev1.LifecycleHandler{
-							Exec: &corev1.ExecAction{
-								Command: []string{"sh", "-c", "killall socat"},
-							},
-						},
-					},
-				},
-			},
-			RestartPolicy:                 corev1.RestartPolicyAlways,
-			TerminationGracePeriodSeconds: &terminationGracePeriod,
-		},
+	// Step 5: Replace deployment container with SOCAT forwarder
+	if deployment.Annotations == nil {
+		deployment.Annotations = make(map[string]string)
 	}
 
-	// Copy original service selector labels to SOCAT pod
-	for k, v := range originalSelector {
-		socatPod.Labels[k] = v
-	}
-
-	// Add intercept tracking labels
-	socatPod.Labels["environments.kloudlite.io/managed"] = "true"
-	socatPod.Labels["environments.kloudlite.io/composition"] = composition.Name
-	socatPod.Labels["environments.kloudlite.io/service"] = serviceName
-	socatPod.Labels["environments.kloudlite.io/workspace"] = workspace.Name
-
-	// Add container ports
-	for _, mapping := range intercept.PortMappings {
-		protocol := mapping.Protocol
-		if protocol == "" {
-			protocol = corev1.ProtocolTCP
+	// Check if already intercepted
+	if deployment.Annotations[interceptAnnotation] == "true" {
+		// Already intercepted, check if it's the same workspace
+		if deployment.Annotations[interceptWorkspaceAnnotation] == workspace.Name {
+			logger.Info("Deployment already intercepted by this workspace")
+			// Update status and return
+			now := metav1.Now()
+			r.updateInterceptStatus(composition, intercept.ServiceName, "active",
+				fmt.Sprintf("Service '%s' is being intercepted by workspace '%s'", serviceName, workspace.Name),
+				workspace.Name, workspace.Namespace, &now, nil)
+			return nil
 		}
-		socatPod.Spec.Containers[0].Ports = append(socatPod.Spec.Containers[0].Ports, corev1.ContainerPort{
-			ContainerPort: mapping.ServicePort,
-			Protocol:      protocol,
-		})
+		// Different workspace - this shouldn't happen, log warning
+		logger.Warn("Deployment already intercepted by different workspace",
+			zap.String("currentWorkspace", deployment.Annotations[interceptWorkspaceAnnotation]))
 	}
 
-	// Set owner reference for automatic cleanup
-	if err := controllerutil.SetControllerReference(composition, socatPod, r.Scheme); err != nil {
-		logger.Error("Failed to set owner reference on SOCAT pod", zap.Error(err))
+	// Store original container spec if not already stored
+	if _, exists := deployment.Annotations[originalContainerAnnotation]; !exists {
+		if len(deployment.Spec.Template.Spec.Containers) > 0 {
+			container := deployment.Spec.Template.Spec.Containers[0]
+			originalSpec := originalContainerSpec{
+				Image:   container.Image,
+				Command: container.Command,
+				Args:    container.Args,
+			}
+			originalJSON, err := json.Marshal(originalSpec)
+			if err != nil {
+				logger.Error("Failed to marshal original container spec", zap.Error(err))
+				return err
+			}
+			deployment.Annotations[originalContainerAnnotation] = string(originalJSON)
+		}
+	}
+
+	// Mark as intercepted
+	deployment.Annotations[interceptAnnotation] = "true"
+	deployment.Annotations[interceptWorkspaceAnnotation] = workspace.Name
+
+	// Replace container with SOCAT forwarder
+	if len(deployment.Spec.Template.Spec.Containers) > 0 {
+		deployment.Spec.Template.Spec.Containers[0].Image = "alpine/socat:latest"
+		deployment.Spec.Template.Spec.Containers[0].Command = []string{"sh", "-c", socatCommand}
+		deployment.Spec.Template.Spec.Containers[0].Args = nil
+		// Clear probes that won't work with socat
+		deployment.Spec.Template.Spec.Containers[0].LivenessProbe = nil
+		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = nil
+		deployment.Spec.Template.Spec.Containers[0].StartupProbe = nil
+	}
+
+	// Update deployment
+	if err := r.Update(ctx, deployment); err != nil {
+		logger.Error("Failed to update deployment for intercept", zap.Error(err))
+		r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
+			fmt.Sprintf("Failed to update deployment: %v", err), workspace.Name, workspace.Namespace, nil, nil)
 		return err
 	}
 
-	// Create or check SOCAT pod
-	existingSocatPod := &corev1.Pod{}
-	err = r.Get(ctx, client.ObjectKey{
-		Name:      socatPodName,
-		Namespace: serviceNamespace,
-	}, existingSocatPod)
+	logger.Info("Successfully replaced deployment image with SOCAT forwarder",
+		zap.String("deployment", serviceName),
+		zap.String("workspace", workspace.Name))
 
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			if err := r.Create(ctx, socatPod); err != nil {
-				logger.Error("Failed to create SOCAT pod", zap.Error(err))
-				r.updateInterceptStatus(composition, intercept.ServiceName, "failed",
-					fmt.Sprintf("Failed to create SOCAT pod: %v", err), "", workspace.Name, workspace.Namespace, nil, originalSelector)
-				return err
-			}
-			logger.Info("Created SOCAT forwarding pod",
-				zap.String("pod", socatPodName),
-				zap.String("workspace", workspace.Name))
-		} else {
-			logger.Error("Failed to get SOCAT pod", zap.Error(err))
-			return err
-		}
-	} else {
-		logger.Info("SOCAT pod already exists", zap.String("pod", socatPodName))
-	}
-
-	// Step 6: Scale down the deployment to 0 replicas so no original pods run
-	// The service will route traffic to the SOCAT pod instead
-	deployment := &appsv1.Deployment{}
-	err = r.Get(ctx, client.ObjectKey{
-		Name:      serviceName,
-		Namespace: serviceNamespace,
-	}, deployment)
-
-	if err == nil {
-		// Store original replica count in annotation before scaling down
-		if deployment.Annotations == nil {
-			deployment.Annotations = make(map[string]string)
-		}
-
-		// Only store original replicas if not already stored (to preserve original value across reconciliations)
-		if _, exists := deployment.Annotations["environments.kloudlite.io/original-replicas"]; !exists {
-			originalReplicas := int32(1)
-			if deployment.Spec.Replicas != nil {
-				originalReplicas = *deployment.Spec.Replicas
-			}
-			deployment.Annotations["environments.kloudlite.io/original-replicas"] = fmt.Sprintf("%d", originalReplicas)
-		}
-
-		// Scale to 0 if not already at 0
-		if deployment.Spec.Replicas == nil || *deployment.Spec.Replicas > 0 {
-			zero := int32(0)
-			deployment.Spec.Replicas = &zero
-			if err := r.Update(ctx, deployment); err != nil {
-				logger.Warn("Failed to scale down deployment", zap.String("deployment", serviceName), zap.Error(err))
-			} else {
-				logger.Info("Scaled down deployment for intercept", zap.String("deployment", serviceName))
-			}
-		}
-	} else if !apierrors.IsNotFound(err) {
-		logger.Warn("Failed to get deployment for scaling", zap.String("deployment", serviceName), zap.Error(err))
-	}
-
-	logger.Info("Successfully activated service intercept with SOCAT")
-
-	// Step 7: Update status to Active
+	// Step 6: Update status to Active
 	now := metav1.Now()
 	r.updateInterceptStatus(composition, intercept.ServiceName, "active",
-		fmt.Sprintf("Service '%s' is being intercepted by workspace '%s' via SOCAT pod '%s'",
-			serviceName, workspace.Name, socatPodName),
-		socatPodName, workspace.Name, workspace.Namespace, &now, originalSelector)
+		fmt.Sprintf("Service '%s' is being intercepted by workspace '%s'", serviceName, workspace.Name),
+		workspace.Name, workspace.Namespace, &now, nil)
 
 	return nil
 }
 
-// cleanupSingleIntercept removes the SOCAT pod for a specific intercept
+// cleanupSingleIntercept restores the original deployment image for a specific intercept
 func (r *CompositionReconciler) cleanupSingleIntercept(ctx context.Context, composition *v1.Composition, intercept *v1.ServiceInterceptConfig, logger *zap.Logger) error {
 	logger = logger.With(zap.String("service", intercept.ServiceName))
 
-	// Find the intercept status to get SOCAT pod name
-	status := r.findInterceptStatus(composition, intercept.ServiceName)
-	if status == nil || status.SOCATPodName == "" {
-		// No active intercept
-		return nil
-	}
-
-	serviceNamespace := composition.Namespace
-	socatPodName := status.SOCATPodName
-
-	// Delete SOCAT pod
-	socatPod := &corev1.Pod{}
-	err := r.Get(ctx, client.ObjectKey{
-		Name:      socatPodName,
-		Namespace: serviceNamespace,
-	}, socatPod)
-
-	if err == nil {
-		// Check if pod is already terminating
-		if socatPod.DeletionTimestamp != nil {
-			deletionTime := socatPod.DeletionTimestamp.Time
-			timeSinceDeletion := time.Since(deletionTime)
-
-			// If pod has been terminating for more than 30 seconds, force delete it
-			if timeSinceDeletion > 30*time.Second {
-				logger.Warn("SOCAT pod stuck in terminating state, force deleting",
-					zap.String("pod", socatPodName),
-					zap.Duration("terminating_for", timeSinceDeletion))
-
-				// Force delete by setting grace period to 0
-				gracePeriod := int64(0)
-				deleteOptions := client.DeleteOptions{
-					GracePeriodSeconds: &gracePeriod,
-				}
-				if err := r.Delete(ctx, socatPod, &deleteOptions); err != nil && !apierrors.IsNotFound(err) {
-					logger.Error("Failed to force delete SOCAT pod", zap.Error(err))
-					return err
-				}
-				logger.Info("Force deleted SOCAT pod")
-			}
-			return nil
-		}
-
-		// Pod exists and not terminating yet, initiate deletion
-		if err := r.Delete(ctx, socatPod); err != nil && !apierrors.IsNotFound(err) {
-			logger.Error("Failed to delete SOCAT pod", zap.Error(err))
-			return err
-		}
-		logger.Info("Initiated deletion of SOCAT pod", zap.String("pod", socatPodName))
-	} else if !apierrors.IsNotFound(err) {
-		logger.Error("Failed to get SOCAT pod during cleanup", zap.Error(err))
-		return err
-	}
-
-	// Restore deployment replica count
 	serviceName := intercept.ServiceName
+	serviceNamespace := composition.Namespace
+
+	// Get the deployment
 	deployment := &appsv1.Deployment{}
-	err = r.Get(ctx, client.ObjectKey{
+	err := r.Get(ctx, client.ObjectKey{
 		Name:      serviceName,
 		Namespace: serviceNamespace,
 	}, deployment)
 
-	if err == nil {
-		// Check if we have stored original replicas
-		if originalReplicasStr, exists := deployment.Annotations["environments.kloudlite.io/original-replicas"]; exists {
-			originalReplicas, parseErr := strconv.ParseInt(originalReplicasStr, 10, 32)
-			if parseErr == nil {
-				replicas := int32(originalReplicas)
-				// Only restore if currently at 0
-				if deployment.Spec.Replicas != nil && *deployment.Spec.Replicas == 0 {
-					deployment.Spec.Replicas = &replicas
-					// Remove the annotation
-					delete(deployment.Annotations, "environments.kloudlite.io/original-replicas")
-					if updateErr := r.Update(ctx, deployment); updateErr != nil {
-						logger.Warn("Failed to restore deployment replicas", zap.String("deployment", serviceName), zap.Error(updateErr))
-					} else {
-						logger.Info("Restored deployment replicas", zap.String("deployment", serviceName), zap.Int32("replicas", replicas))
-					}
-				}
-			}
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Deployment doesn't exist, nothing to cleanup
+			r.removeInterceptStatus(composition, intercept.ServiceName)
+			return nil
 		}
-	} else if !apierrors.IsNotFound(err) {
-		logger.Warn("Failed to get deployment for replica restore", zap.String("deployment", serviceName), zap.Error(err))
+		logger.Error("Failed to get deployment during cleanup", zap.Error(err))
+		return err
+	}
+
+	// Check if deployment is intercepted
+	if deployment.Annotations == nil || deployment.Annotations[interceptAnnotation] != "true" {
+		// Not intercepted, remove status if any
+		r.removeInterceptStatus(composition, intercept.ServiceName)
+		return nil
+	}
+
+	// Restore original container spec
+	if originalJSON, exists := deployment.Annotations[originalContainerAnnotation]; exists {
+		var originalSpec originalContainerSpec
+		if err := json.Unmarshal([]byte(originalJSON), &originalSpec); err != nil {
+			logger.Error("Failed to unmarshal original container spec", zap.Error(err))
+			return err
+		}
+
+		// Restore container
+		if len(deployment.Spec.Template.Spec.Containers) > 0 {
+			deployment.Spec.Template.Spec.Containers[0].Image = originalSpec.Image
+			deployment.Spec.Template.Spec.Containers[0].Command = originalSpec.Command
+			deployment.Spec.Template.Spec.Containers[0].Args = originalSpec.Args
+		}
+
+		// Remove intercept annotations
+		delete(deployment.Annotations, interceptAnnotation)
+		delete(deployment.Annotations, originalContainerAnnotation)
+		delete(deployment.Annotations, interceptWorkspaceAnnotation)
+
+		// Update deployment
+		if err := r.Update(ctx, deployment); err != nil {
+			logger.Error("Failed to restore deployment", zap.Error(err))
+			return err
+		}
+
+		logger.Info("Restored original deployment image",
+			zap.String("deployment", serviceName),
+			zap.String("image", originalSpec.Image))
 	}
 
 	// Remove intercept status
@@ -403,26 +299,64 @@ func (r *CompositionReconciler) cleanupAllIntercepts(ctx context.Context, compos
 
 	logger.Info("Cleaning up all active intercepts", zap.Int("count", len(composition.Status.ActiveIntercepts)))
 
-	// Delete all SOCAT pods
+	// Restore all intercepted deployments
 	for _, status := range composition.Status.ActiveIntercepts {
-		if status.SOCATPodName == "" {
+		serviceName := status.ServiceName
+		serviceNamespace := composition.Namespace
+
+		deployment := &appsv1.Deployment{}
+		err := r.Get(ctx, client.ObjectKey{
+			Name:      serviceName,
+			Namespace: serviceNamespace,
+		}, deployment)
+
+		if err != nil {
+			if !apierrors.IsNotFound(err) {
+				logger.Error("Failed to get deployment during cleanup",
+					zap.String("deployment", serviceName),
+					zap.Error(err))
+			}
 			continue
 		}
 
-		socatPod := &corev1.Pod{}
-		err := r.Get(ctx, client.ObjectKey{
-			Name:      status.SOCATPodName,
-			Namespace: composition.Namespace,
-		}, socatPod)
+		// Check if deployment is intercepted
+		if deployment.Annotations == nil || deployment.Annotations[interceptAnnotation] != "true" {
+			continue
+		}
 
-		if err == nil {
-			if err := r.Delete(ctx, socatPod); err != nil && !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete SOCAT pod during cleanup",
-					zap.String("pod", status.SOCATPodName),
+		// Restore original container spec
+		if originalJSON, exists := deployment.Annotations[originalContainerAnnotation]; exists {
+			var originalSpec originalContainerSpec
+			if err := json.Unmarshal([]byte(originalJSON), &originalSpec); err != nil {
+				logger.Error("Failed to unmarshal original container spec",
+					zap.String("deployment", serviceName),
 					zap.Error(err))
-			} else {
-				logger.Info("Deleted SOCAT pod", zap.String("pod", status.SOCATPodName))
+				continue
 			}
+
+			// Restore container
+			if len(deployment.Spec.Template.Spec.Containers) > 0 {
+				deployment.Spec.Template.Spec.Containers[0].Image = originalSpec.Image
+				deployment.Spec.Template.Spec.Containers[0].Command = originalSpec.Command
+				deployment.Spec.Template.Spec.Containers[0].Args = originalSpec.Args
+			}
+
+			// Remove intercept annotations
+			delete(deployment.Annotations, interceptAnnotation)
+			delete(deployment.Annotations, originalContainerAnnotation)
+			delete(deployment.Annotations, interceptWorkspaceAnnotation)
+
+			// Update deployment
+			if err := r.Update(ctx, deployment); err != nil {
+				logger.Error("Failed to restore deployment during cleanup",
+					zap.String("deployment", serviceName),
+					zap.Error(err))
+				continue
+			}
+
+			logger.Info("Restored deployment during cleanup",
+				zap.String("deployment", serviceName),
+				zap.String("image", originalSpec.Image))
 		}
 	}
 
@@ -433,14 +367,13 @@ func (r *CompositionReconciler) cleanupAllIntercepts(ctx context.Context, compos
 }
 
 // updateInterceptStatus updates or adds an intercept status entry
-func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Composition, serviceName, phase, message, socatPodName, workspaceName, workspaceNamespace string, startTime *metav1.Time, originalSelector map[string]string) {
+func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Composition, serviceName, phase, message, workspaceName, workspaceNamespace string, startTime *metav1.Time, originalSelector map[string]string) {
 	// Find existing status
 	for i := range composition.Status.ActiveIntercepts {
 		if composition.Status.ActiveIntercepts[i].ServiceName == serviceName {
 			// Update existing
 			composition.Status.ActiveIntercepts[i].Phase = phase
 			composition.Status.ActiveIntercepts[i].Message = message
-			composition.Status.ActiveIntercepts[i].SOCATPodName = socatPodName
 			composition.Status.ActiveIntercepts[i].WorkspaceName = workspaceName
 			composition.Status.ActiveIntercepts[i].WorkspaceNamespace = workspaceNamespace
 			if startTime != nil {
@@ -460,7 +393,6 @@ func (r *CompositionReconciler) updateInterceptStatus(composition *v1.Compositio
 		WorkspaceNamespace:      workspaceNamespace,
 		Phase:                   phase,
 		Message:                 message,
-		SOCATPodName:            socatPodName,
 		OriginalServiceSelector: originalSelector,
 		InterceptStartTime:      startTime,
 	}
