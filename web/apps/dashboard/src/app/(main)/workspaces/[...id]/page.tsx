@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
-import { Package, XCircle, Loader2, ArrowRight, Globe, ExternalLink } from 'lucide-react'
+import { Package, XCircle, Loader2, ArrowRight, Globe, ExternalLink, Activity } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { WorkspaceConnectOptions } from '../_components/workspace-connect-options'
 import { WorkspaceActions } from '../_components/workspace-actions'
@@ -250,6 +250,40 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Last Activity</span>
                     <span>{workspace.status.lastActivity}</span>
+                  </div>
+                )}
+                {workspace.status?.idleState && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Activity Status</span>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
+                        workspace.status.idleState === 'active'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      }`}
+                    >
+                      <Activity className="h-3 w-3" />
+                      {workspace.status.idleState === 'active' ? 'Active' : 'Idle'}
+                    </span>
+                  </div>
+                )}
+                {workspace.status?.activeConnections !== undefined && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Active Connections</span>
+                    <span>{workspace.status.activeConnections}</span>
+                  </div>
+                )}
+                {workspace.status?.idleState === 'idle' && workspace.status?.idleSince && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Idle Since</span>
+                    <span>
+                      {new Date(workspace.status.idleSince).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
