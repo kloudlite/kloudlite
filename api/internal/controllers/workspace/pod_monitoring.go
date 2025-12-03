@@ -17,7 +17,7 @@ import (
 // by examining active TCP connections in the pod
 // Returns: hasConnections bool, connectionCount int, error
 func (r *WorkspaceReconciler) hasActiveConnections(ctx context.Context, workspace *workspacev1.Workspace) (bool, int, error) {
-	podName := fmt.Sprintf("workspace-%s", workspace.Name)
+	podName := fmt.Sprintf("ws-%s", workspace.Name)
 
 	// Get the target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
