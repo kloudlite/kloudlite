@@ -117,7 +117,7 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 	}
 
 	workspaceTargetNamespace := workmachine.Spec.TargetNamespace
-	workspaceHeadlessSvcName := fmt.Sprintf("workspace-%s-headless", workspace.Name)
+	workspaceHeadlessSvcName := fmt.Sprintf("ws-%s-headless", workspace.Name)
 	headlessSvc := &corev1.Service{}
 	err = r.Get(ctx, client.ObjectKey{
 		Name:      workspaceHeadlessSvcName,
