@@ -30,17 +30,17 @@ to your workspace for local development and testing.`,
   kl intercept start
   kl i s
 
-  # Start intercepting a specific service (composition/service format)
-  kl intercept start myapp/api-server
-  kl i s myapp/api-server
+  # Start intercepting a specific service
+  kl intercept start api-server
+  kl i s api-server
 
   # List active intercepts
   kl intercept list
   kl i ls
 
   # Stop intercepting a service
-  kl intercept stop myapp/api-server
-  kl i sp myapp/api-server
+  kl intercept stop api-server
+  kl i sp api-server
 
   # Show intercept status
   kl intercept status
@@ -48,22 +48,20 @@ to your workspace for local development and testing.`,
 }
 
 var interceptStartCmd = &cobra.Command{
-	Use:     "start [composition/service-name]",
+	Use:     "start [service-name]",
 	Aliases: []string{"s", "begin"},
 	Short:   "Start intercepting a service",
 	Long: `Start intercepting a service to redirect its traffic to your workspace.
 
 If no service name is provided, an interactive list will be shown.
-You will be prompted to map each service port to a workspace port.
-
-Services are specified in the format: composition/service-name`,
+You will be prompted to map each service port to a workspace port.`,
 	Example: `  # Interactive service selection
   kl intercept start
   kl i s
 
   # Intercept specific service
-  kl intercept start myapp/api-server
-  kl i s myapp/api-server`,
+  kl intercept start api-server
+  kl i s api-server`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
@@ -76,21 +74,19 @@ Services are specified in the format: composition/service-name`,
 }
 
 var interceptStopCmd = &cobra.Command{
-	Use:     "stop [composition/service-name]",
+	Use:     "stop [service-name]",
 	Aliases: []string{"sp", "end"},
 	Short:   "Stop intercepting a service",
 	Long: `Stop intercepting a service and restore normal traffic routing.
 
-If no service name is provided, an interactive list of active intercepts will be shown.
-
-Services are specified in the format: composition/service-name`,
+If no service name is provided, an interactive list of active intercepts will be shown.`,
 	Example: `  # Interactive intercept selection
   kl intercept stop
   kl i sp
 
   # Stop specific service intercept
-  kl intercept stop myapp/api-server
-  kl i sp myapp/api-server`,
+  kl intercept stop api-server
+  kl i sp api-server`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
@@ -116,7 +112,7 @@ var interceptListCmd = &cobra.Command{
 }
 
 var interceptStatusCmd = &cobra.Command{
-	Use:     "status [composition/service-name]",
+	Use:     "status [service-name]",
 	Aliases: []string{"st"},
 	Short:   "Show intercept status",
 	Long:    `Show detailed status of service intercept(s).`,
@@ -125,8 +121,8 @@ var interceptStatusCmd = &cobra.Command{
   kl i st
 
   # Show specific service intercept status
-  kl intercept status myapp/api-server
-  kl i st myapp/api-server`,
+  kl intercept status api-server
+  kl i st api-server`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
@@ -189,13 +185,56 @@ func getComposition(ctx context.Context, compositionName, targetNamespace string
 	return comp, nil
 }
 
-// parseServiceRef parses "composition/service" format into composition and service names
-func parseServiceRef(serviceRef string) (compositionName, serviceName string, err error) {
-	parts := strings.SplitN(serviceRef, "/", 2)
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid service format. Use 'composition/service-name' format")
+// findServiceByName finds a service by name across all compositions in the target namespace
+func findServiceByName(ctx context.Context, serviceName, targetNamespace string) (*CompositionService, error) {
+	services, err := listCompositionServices(ctx, targetNamespace)
+	if err != nil {
+		return nil, err
 	}
-	return parts[0], parts[1], nil
+
+	var matches []CompositionService
+	for _, svc := range services {
+		if svc.ServiceName == serviceName {
+			matches = append(matches, svc)
+		}
+	}
+
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("service '%s' not found in any composition", serviceName)
+	}
+
+	if len(matches) > 1 {
+		// Multiple services with same name - show interactive selection
+		return selectCompositionServiceWithFzf(matches)
+	}
+
+	return &matches[0], nil
+}
+
+// findActiveInterceptByServiceName finds an active intercept by service name
+func findActiveInterceptByServiceName(ctx context.Context, serviceName, targetNamespace, workspaceName string) (*ActiveIntercept, error) {
+	intercepts, err := listActiveIntercepts(ctx, targetNamespace, workspaceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var matches []ActiveIntercept
+	for _, intercept := range intercepts {
+		if intercept.ServiceName == serviceName {
+			matches = append(matches, intercept)
+		}
+	}
+
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("no active intercept found for service '%s'", serviceName)
+	}
+
+	if len(matches) > 1 {
+		// Multiple intercepts with same service name - show interactive selection
+		return selectActiveInterceptWithFzf(matches)
+	}
+
+	return &matches[0], nil
 }
 
 func handleInterceptStartInteractive() error {
@@ -241,18 +280,12 @@ func handleInterceptStartInteractive() error {
 	return handleInterceptStartWithCompositionService(ctx, *selectedService, workspace.Name, workspace.Namespace, targetNamespace)
 }
 
-func handleInterceptStart(serviceRef string) error {
+func handleInterceptStart(serviceName string) error {
 	if err := InitClient(); err != nil {
 		return err
 	}
 
 	ctx := context.Background()
-
-	// Parse composition/service format
-	compositionName, serviceName, err := parseServiceRef(serviceRef)
-	if err != nil {
-		return err
-	}
 
 	// Get current workspace
 	workspace, err := WsClient.Get(ctx)
@@ -270,28 +303,10 @@ func handleInterceptStart(serviceRef string) error {
 		return fmt.Errorf("workspace has no connected environment namespace")
 	}
 
-	// Get the composition
-	comp, err := getComposition(ctx, compositionName, targetNamespace)
+	// Find service by name across all compositions
+	svc, err := findServiceByName(ctx, serviceName, targetNamespace)
 	if err != nil {
-		return fmt.Errorf("failed to get composition '%s': %w", compositionName, err)
-	}
-
-	// Find the service in composition status
-	var svc *CompositionService
-	for _, svcStatus := range comp.Status.Services {
-		if svcStatus.Name == serviceName {
-			svc = &CompositionService{
-				CompositionName: compositionName,
-				ServiceName:     svcStatus.Name,
-				Ports:           svcStatus.Ports,
-				State:           svcStatus.State,
-			}
-			break
-		}
-	}
-
-	if svc == nil {
-		return fmt.Errorf("service '%s' not found in composition '%s'", serviceName, compositionName)
+		return err
 	}
 
 	return handleInterceptStartWithCompositionService(ctx, *svc, workspace.Name, workspace.Namespace, targetNamespace)
@@ -307,7 +322,7 @@ func handleInterceptStartWithCompositionService(ctx context.Context, svc Composi
 	// Check if intercept already exists in composition spec
 	for _, intercept := range comp.Spec.Intercepts {
 		if intercept.ServiceName == svc.ServiceName && intercept.Enabled {
-			return fmt.Errorf("service '%s/%s' is already being intercepted", svc.CompositionName, svc.ServiceName)
+			return fmt.Errorf("service '%s' is already being intercepted", svc.ServiceName)
 		}
 	}
 
@@ -317,7 +332,7 @@ func handleInterceptStartWithCompositionService(ctx context.Context, svc Composi
 
 	if len(svc.Ports) > 0 {
 		// Service has defined ports
-		fmt.Printf("\nService '%s/%s' has %d port(s):\n", svc.CompositionName, svc.ServiceName, len(svc.Ports))
+		fmt.Printf("\nService '%s' has %d port(s):\n", svc.ServiceName, len(svc.Ports))
 		portMappings = make([]environmentv1.PortMapping, 0, len(svc.Ports))
 
 		for _, port := range svc.Ports {
@@ -346,7 +361,7 @@ func handleInterceptStartWithCompositionService(ctx context.Context, svc Composi
 		}
 	} else {
 		// No ports defined - ask user to manually configure
-		fmt.Printf("\nService '%s/%s' has no ports defined.\n", svc.CompositionName, svc.ServiceName)
+		fmt.Printf("\nService '%s' has no ports defined.\n", svc.ServiceName)
 		fmt.Println("You need to manually specify port mappings.")
 		fmt.Println("Enter port mappings (press Enter with empty service port to finish):")
 
@@ -439,7 +454,7 @@ func handleInterceptStartWithCompositionService(ctx context.Context, svc Composi
 
 	fmt.Println()
 	fmt.Printf("[✓] Service intercept is now active\n")
-	fmt.Printf("Service '%s/%s' is being intercepted\n\n", svc.CompositionName, svc.ServiceName)
+	fmt.Printf("Service '%s' is being intercepted\n\n", svc.ServiceName)
 	fmt.Println("Port mappings:")
 	for _, mapping := range portMappings {
 		fmt.Printf("  %d (service) → %d (workspace)\n", mapping.ServicePort, mapping.WorkspacePort)
@@ -525,18 +540,12 @@ func listActiveIntercepts(ctx context.Context, targetNamespace, workspaceName st
 	return intercepts, nil
 }
 
-func handleInterceptStop(serviceRef string) error {
+func handleInterceptStop(serviceName string) error {
 	if err := InitClient(); err != nil {
 		return err
 	}
 
 	ctx := context.Background()
-
-	// Parse composition/service format
-	compositionName, serviceName, err := parseServiceRef(serviceRef)
-	if err != nil {
-		return err
-	}
 
 	// Get current workspace
 	workspace, err := WsClient.Get(ctx)
@@ -551,7 +560,13 @@ func handleInterceptStop(serviceRef string) error {
 
 	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
 
-	return handleInterceptStopWithRef(ctx, compositionName, serviceName, targetNamespace)
+	// Find the active intercept by service name
+	intercept, err := findActiveInterceptByServiceName(ctx, serviceName, targetNamespace, workspace.Name)
+	if err != nil {
+		return err
+	}
+
+	return handleInterceptStopWithRef(ctx, intercept.CompositionName, intercept.ServiceName, targetNamespace)
 }
 
 func handleInterceptStopWithRef(ctx context.Context, compositionName, serviceName, targetNamespace string) error {
@@ -573,7 +588,7 @@ func handleInterceptStopWithRef(ctx context.Context, compositionName, serviceNam
 	}
 
 	if !found {
-		return fmt.Errorf("no active intercept found for service '%s/%s'", compositionName, serviceName)
+		return fmt.Errorf("no active intercept found for service '%s'", serviceName)
 	}
 
 	// Update composition spec
@@ -592,7 +607,7 @@ func handleInterceptStopWithRef(ctx context.Context, compositionName, serviceNam
 
 	fmt.Println()
 	fmt.Printf("[✓] Service intercept has been removed\n")
-	fmt.Printf("Service '%s/%s' is no longer being intercepted\n", compositionName, serviceName)
+	fmt.Printf("Service '%s' is no longer being intercepted\n", serviceName)
 	fmt.Println("Normal traffic routing has been restored")
 
 	return nil
@@ -634,7 +649,7 @@ func handleInterceptList() error {
 
 	fmt.Printf("Active service intercepts (%d):\n\n", len(intercepts))
 	for _, intercept := range intercepts {
-		fmt.Printf("  %s/%s\n", intercept.CompositionName, intercept.ServiceName)
+		fmt.Printf("  %s\n", intercept.ServiceName)
 		fmt.Printf("    Phase: %s\n", intercept.Phase)
 		if intercept.Message != "" {
 			fmt.Printf("    Message: %s\n", intercept.Message)
@@ -645,7 +660,7 @@ func handleInterceptList() error {
 	return nil
 }
 
-func handleInterceptStatus(serviceRef string) error {
+func handleInterceptStatus(serviceName string) error {
 	if err := InitClient(); err != nil {
 		return err
 	}
@@ -665,22 +680,22 @@ func handleInterceptStatus(serviceRef string) error {
 
 	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
 
-	if serviceRef != "" {
-		// Show status for specific service
-		compositionName, serviceName, err := parseServiceRef(serviceRef)
+	if serviceName != "" {
+		// Show status for specific service - find it across all compositions
+		intercept, err := findActiveInterceptByServiceName(ctx, serviceName, targetNamespace, "")
 		if err != nil {
 			return err
 		}
 
-		comp, err := getComposition(ctx, compositionName, targetNamespace)
+		comp, err := getComposition(ctx, intercept.CompositionName, targetNamespace)
 		if err != nil {
-			return fmt.Errorf("failed to get composition '%s': %w", compositionName, err)
+			return fmt.Errorf("failed to get composition '%s': %w", intercept.CompositionName, err)
 		}
 
 		// Find intercept in status
 		var status *environmentv1.InterceptStatus
-		for i, intercept := range comp.Status.ActiveIntercepts {
-			if intercept.ServiceName == serviceName {
+		for i, activeIntercept := range comp.Status.ActiveIntercepts {
+			if activeIntercept.ServiceName == serviceName {
 				status = &comp.Status.ActiveIntercepts[i]
 				break
 			}
@@ -688,18 +703,18 @@ func handleInterceptStatus(serviceRef string) error {
 
 		// Find intercept in spec for port mappings
 		var spec *environmentv1.ServiceInterceptConfig
-		for i, intercept := range comp.Spec.Intercepts {
-			if intercept.ServiceName == serviceName {
+		for i, specIntercept := range comp.Spec.Intercepts {
+			if specIntercept.ServiceName == serviceName {
 				spec = &comp.Spec.Intercepts[i]
 				break
 			}
 		}
 
 		if spec == nil && status == nil {
-			return fmt.Errorf("no intercept found for service '%s/%s'", compositionName, serviceName)
+			return fmt.Errorf("no intercept found for service '%s'", serviceName)
 		}
 
-		printInterceptStatus(compositionName, serviceName, spec, status)
+		printInterceptStatus(intercept.CompositionName, serviceName, spec, status)
 		return nil
 	}
 
@@ -738,7 +753,7 @@ func handleInterceptStatus(serviceRef string) error {
 }
 
 func printInterceptStatus(compositionName, serviceName string, spec *environmentv1.ServiceInterceptConfig, status *environmentv1.InterceptStatus) {
-	fmt.Printf("Service: %s/%s\n", compositionName, serviceName)
+	fmt.Printf("Service: %s\n", serviceName)
 
 	if status != nil {
 		fmt.Printf("Phase: %s\n", status.Phase)
@@ -942,7 +957,7 @@ func selectActiveInterceptWithFzf(intercepts []ActiveIntercept) (*ActiveIntercep
 
 	for i := range intercepts {
 		intercept := &intercepts[i]
-		line := fmt.Sprintf("%s/%s (%s)", intercept.CompositionName, intercept.ServiceName, intercept.Phase)
+		line := fmt.Sprintf("%s (%s)", intercept.ServiceName, intercept.Phase)
 		items = append(items, line)
 		interceptMap[line] = intercept
 	}
