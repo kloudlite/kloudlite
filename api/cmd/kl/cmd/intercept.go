@@ -334,6 +334,9 @@ func handleInterceptStartWithCompositionService(ctx context.Context, svc Composi
 	// Check if intercept already exists in composition spec
 	for _, intercept := range comp.Spec.Intercepts {
 		if intercept.ServiceName == svc.ServiceName && intercept.Enabled {
+			if intercept.WorkspaceRef != nil {
+				return fmt.Errorf("service '%s' is already being intercepted by workspace '%s'", svc.ServiceName, intercept.WorkspaceRef.Name)
+			}
 			return fmt.Errorf("service '%s' is already being intercepted", svc.ServiceName)
 		}
 	}
