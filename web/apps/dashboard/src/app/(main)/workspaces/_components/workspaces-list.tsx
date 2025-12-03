@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Activity } from 'lucide-react'
 import type { Workspace } from '@kloudlite/types'
 import { WorkspaceRowActions } from './workspace-row-actions'
 import { CreateWorkspaceSheet } from './create-workspace-sheet'
@@ -190,11 +190,22 @@ export function WorkspacesList({
                     {workspace.spec.ownedBy || 'unknown'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
-                    >
-                      {phase}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                      >
+                        {phase}
+                      </span>
+                      {phase === 'Running' && workspace.status?.idleState === 'idle' && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          title={workspace.status?.idleSince ? `Idle since ${new Date(workspace.status.idleSince).toLocaleString()}` : 'Idle'}
+                        >
+                          <Activity className="h-3 w-3" />
+                          Idle
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.status?.connectedEnvironment ? (

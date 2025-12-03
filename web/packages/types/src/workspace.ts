@@ -149,6 +149,10 @@ export interface WorkspaceStatus {
   totalRuntime?: number
   connectedEnvironment?: ConnectedEnvironmentInfo
   activeConnections?: number
+  // Idle detection fields
+  idleState?: 'active' | 'idle' | string
+  idleSince?: string // ISO timestamp of when idle started
+  lastActivityTime?: string // ISO timestamp of last activity
   cloningStatus?: WorkspaceCloningStatus
   sourceCloningStatus?: WorkspaceSourceCloningStatus
   // Hash and subdomain for VPN-accessible URLs
