@@ -400,6 +400,13 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Verbs:     []string{"get", "list"},
 			},
 			{
+				// Allow reading and updating compositions
+				// Needed for kl intercept commands to manage service intercepts
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"compositions"},
+				Verbs:     []string{"get", "list", "update", "patch"},
+			},
+			{
 				// Allow reading services in any namespace
 				// Needed for kl svc list command to show services in connected environment
 				APIGroups: []string{""},
