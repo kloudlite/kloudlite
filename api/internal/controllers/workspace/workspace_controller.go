@@ -556,20 +556,18 @@ func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, 
 	return requests
 }
 
-// findWorkspacesForComposition finds all workspaces targeted by intercepts in a composition
+// findWorkspacesForComposition finds all workspaces that need reconciliation when a composition changes
+// This includes workspaces targeted by active intercepts AND workspaces connected to the environment
+// (to handle when intercepts are removed)
 func (r *WorkspaceReconciler) findWorkspacesForComposition(ctx context.Context, obj client.Object) []reconcile.Request {
 	comp, ok := obj.(*environmentv1.Composition)
 	if !ok {
 		return nil
 	}
 
-	// Only trigger if there are active intercepts
-	if len(comp.Status.ActiveIntercepts) == 0 {
-		return nil
-	}
-
-	// Collect unique workspaces from active intercepts
 	workspaceSet := make(map[types.NamespacedName]struct{})
+
+	// Collect workspaces from active intercepts
 	for _, intercept := range comp.Status.ActiveIntercepts {
 		if intercept.WorkspaceName != "" && intercept.WorkspaceNamespace != "" {
 			workspaceSet[types.NamespacedName{
@@ -579,9 +577,37 @@ func (r *WorkspaceReconciler) findWorkspacesForComposition(ctx context.Context, 
 		}
 	}
 
+	// Also find workspaces connected to the environment that owns this composition
+	// This ensures we update workspace context when intercepts are removed
+	// Composition lives in the environment's TargetNamespace
+	envTargetNamespace := comp.Namespace
+
+	// Find environment with this target namespace
+	envList := &environmentv1.EnvironmentList{}
+	if err := r.List(ctx, envList); err == nil {
+		for _, env := range envList.Items {
+			if env.Spec.TargetNamespace == envTargetNamespace {
+				// Find workspaces connected to this environment
+				wsList := &workspacev1.WorkspaceList{}
+				if err := r.List(ctx, wsList); err == nil {
+					for _, ws := range wsList.Items {
+						if ws.Spec.EnvironmentConnection != nil &&
+							ws.Spec.EnvironmentConnection.EnvironmentRef.Name == env.Name {
+							workspaceSet[types.NamespacedName{
+								Name:      ws.Name,
+								Namespace: ws.Namespace,
+							}] = struct{}{}
+						}
+					}
+				}
+				break
+			}
+		}
+	}
+
 	var requests []reconcile.Request
 	for wsKey := range workspaceSet {
-		r.Logger.Info("findWorkspacesForComposition: triggering workspace reconciliation for intercept update",
+		r.Logger.Info("findWorkspacesForComposition: triggering workspace reconciliation",
 			zap.String("workspace", wsKey.Name),
 			zap.String("namespace", wsKey.Namespace),
 			zap.String("composition", comp.Name))
