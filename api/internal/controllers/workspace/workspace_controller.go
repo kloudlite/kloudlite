@@ -504,6 +504,12 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&environmentv1.Environment{},
 			handler.EnqueueRequestsFromMapFunc(r.findWorkspacesForEnvironment),
 		).
+		// Watch Composition status changes for intercept updates
+		// This triggers workspace reconciliation when intercepts targeting a workspace change
+		Watches(
+			&environmentv1.Composition{},
+			handler.EnqueueRequestsFromMapFunc(r.findWorkspacesForComposition),
+		).
 		Complete(r)
 }
 
@@ -547,5 +553,40 @@ func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, 
 	}
 
 	r.Logger.Info("findWorkspacesForEnvironment: returning requests", zap.Int("count", len(requests)))
+	return requests
+}
+
+// findWorkspacesForComposition finds all workspaces targeted by intercepts in a composition
+func (r *WorkspaceReconciler) findWorkspacesForComposition(ctx context.Context, obj client.Object) []reconcile.Request {
+	comp, ok := obj.(*environmentv1.Composition)
+	if !ok {
+		return nil
+	}
+
+	// Only trigger if there are active intercepts
+	if len(comp.Status.ActiveIntercepts) == 0 {
+		return nil
+	}
+
+	// Collect unique workspaces from active intercepts
+	workspaceSet := make(map[types.NamespacedName]struct{})
+	for _, intercept := range comp.Status.ActiveIntercepts {
+		if intercept.WorkspaceName != "" && intercept.WorkspaceNamespace != "" {
+			workspaceSet[types.NamespacedName{
+				Name:      intercept.WorkspaceName,
+				Namespace: intercept.WorkspaceNamespace,
+			}] = struct{}{}
+		}
+	}
+
+	var requests []reconcile.Request
+	for wsKey := range workspaceSet {
+		r.Logger.Info("findWorkspacesForComposition: triggering workspace reconciliation for intercept update",
+			zap.String("workspace", wsKey.Name),
+			zap.String("namespace", wsKey.Namespace),
+			zap.String("composition", comp.Name))
+		requests = append(requests, reconcile.Request{NamespacedName: wsKey})
+	}
+
 	return requests
 }
