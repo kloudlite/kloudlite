@@ -13,9 +13,11 @@ if [ ! -f "$CONTEXT_FILE" ]; then
     exit 0
 fi
 
-# Read and parse JSON (using awk/grep since jq may not be available)
-# Extract environment name
-ENV_NAME=$(grep -o '"environment":"[^"]*"' "$CONTEXT_FILE" 2>/dev/null | cut -d'"' -f4)
+# Read file content
+CONTENT=$(cat "$CONTEXT_FILE" 2>/dev/null)
+
+# Extract environment name using grep and sed
+ENV_NAME=$(echo "$CONTENT" | grep -o '"environment":"[^"]*"' | sed 's/"environment":"//;s/"$//')
 
 # Format output
 OUTPUT=""
@@ -24,53 +26,22 @@ if [ -n "$ENV_NAME" ]; then
     OUTPUT="env:$ENV_NAME"
 fi
 
-# Parse intercepts with port mappings
+# Parse intercepts with port mappings using simple grep/sed
 # JSON format: {"intercepts":[{"serviceName":"web","portMappings":[{"servicePort":80,"workspacePort":8080}]}]}
-# Output format: [web:80->:8080, svc2:3948->:8439]
+# Output format: [web:80->:8080]
 
-# Check if intercepts array is not empty
-if grep -q '"intercepts":\[\{' "$CONTEXT_FILE" 2>/dev/null; then
-    # Use awk to parse the intercepts and format them
-    INTERCEPTS=$(awk '
-    BEGIN { RS=""; FS="" }
-    {
-        # Extract intercepts array content
-        match($0, /"intercepts":\[([^\]]*)\]/, arr)
-        if (arr[1] != "") {
-            content = arr[1]
-            result = ""
+# Check if intercepts exist
+if echo "$CONTENT" | grep -qF 'serviceName'; then
+    # Extract service name
+    SVC_NAME=$(echo "$CONTENT" | grep -o '"serviceName":"[^"]*"' | head -1 | sed 's/"serviceName":"//;s/"$//')
 
-            # Split by serviceName to get each intercept
-            n = split(content, parts, "\"serviceName\":")
-            for (i = 2; i <= n; i++) {
-                # Extract service name
-                match(parts[i], /^"([^"]+)"/, svc)
-                if (svc[1] != "") {
-                    svcName = svc[1]
+    # Extract servicePort and workspacePort
+    SVC_PORT=$(echo "$CONTENT" | grep -o '"servicePort":[0-9]*' | head -1 | sed 's/"servicePort"://')
+    WS_PORT=$(echo "$CONTENT" | grep -o '"workspacePort":[0-9]*' | head -1 | sed 's/"workspacePort"://')
 
-                    # Extract port mappings for this service
-                    # Find portMappings array
-                    if (match(parts[i], /"portMappings":\[([^\]]*)\]/, pm)) {
-                        pmContent = pm[1]
-                        # Extract each port mapping
-                        numPorts = split(pmContent, portParts, "servicePort\":")
-                        for (j = 2; j <= numPorts; j++) {
-                            match(portParts[j], /^([0-9]+)/, sp)
-                            match(portParts[j], /workspacePort\":([0-9]+)/, wp)
-                            if (sp[1] != "" && wp[1] != "") {
-                                if (result != "") result = result ", "
-                                result = result svcName ":" sp[1] "->:" wp[1]
-                            }
-                        }
-                    }
-                }
-            }
+    if [ -n "$SVC_NAME" ] && [ -n "$SVC_PORT" ] && [ -n "$WS_PORT" ]; then
+        INTERCEPTS="[$SVC_NAME:$SVC_PORT->:$WS_PORT]"
 
-            if (result != "") print "[" result "]"
-        }
-    }' "$CONTEXT_FILE")
-
-    if [ -n "$INTERCEPTS" ]; then
         if [ -n "$OUTPUT" ]; then
             OUTPUT="$OUTPUT $INTERCEPTS"
         else
