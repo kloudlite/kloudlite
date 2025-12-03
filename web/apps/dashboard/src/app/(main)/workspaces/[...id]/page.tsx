@@ -290,18 +290,6 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                   <span className="text-muted-foreground">Owner</span>
                   <span>{workspace.spec.ownedBy || 'unknown'}</span>
                 </div>
-                {workspace.status?.podName && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pod</span>
-                    <span className="font-mono text-xs">{workspace.status.podName}</span>
-                  </div>
-                )}
-                {workspace.status?.podIP && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pod IP</span>
-                    <span className="font-mono text-xs">{workspace.status.podIP}</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
