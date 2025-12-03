@@ -52,8 +52,20 @@ func (r *CompositionReconciler) checkDeploymentHealth(ctx context.Context, compo
 			continue
 		}
 
+		// Get the corresponding Kubernetes Service to extract port information
+		var servicePorts []int32
+		svc := &corev1.Service{}
+		if err := r.Get(ctx, client.ObjectKey{
+			Namespace: composition.Namespace,
+			Name:      deploymentName,
+		}, svc); err == nil {
+			for _, port := range svc.Spec.Ports {
+				servicePorts = append(servicePorts, port.Port)
+			}
+		}
+
 		// Check deployment status
-		serviceStatus := r.checkSingleDeploymentHealth(ctx, deployment, logger)
+		serviceStatus := r.checkSingleDeploymentHealth(ctx, deployment, servicePorts, logger)
 		result.Services = append(result.Services, serviceStatus)
 
 		switch serviceStatus.State {
@@ -99,11 +111,12 @@ func (r *CompositionReconciler) checkDeploymentHealth(ctx context.Context, compo
 }
 
 // checkSingleDeploymentHealth checks the health of a single deployment and its pods
-func (r *CompositionReconciler) checkSingleDeploymentHealth(ctx context.Context, deployment *appsv1.Deployment, logger *zap.Logger) compositionsv1.ServiceStatus {
+func (r *CompositionReconciler) checkSingleDeploymentHealth(ctx context.Context, deployment *appsv1.Deployment, ports []int32, logger *zap.Logger) compositionsv1.ServiceStatus {
 	status := compositionsv1.ServiceStatus{
 		Name:     deployment.Name,
 		State:    "pending",
 		Replicas: 0,
+		Ports:    ports,
 	}
 
 	if deployment.Spec.Replicas != nil {
