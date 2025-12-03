@@ -13,27 +13,14 @@ type EnvironmentConnectionSpec struct {
 	EnvironmentRef corev1.ObjectReference `json:"environmentRef"`
 }
 
-// ExposeProtocol represents the protocol for exposed ports
-// +kubebuilder:validation:Enum=tcp;udp;http
-type ExposeProtocol string
-
-const (
-	ExposeProtocolTCP  ExposeProtocol = "tcp"
-	ExposeProtocolUDP  ExposeProtocol = "udp"
-	ExposeProtocolHTTP ExposeProtocol = "http"
-)
-
 // ExposedPort defines a port to expose from the workspace
+// All exposed ports get an HTTP ingress route with hostname p{port}-{hash}.{subdomain}
 type ExposedPort struct {
 	// Port is the port number to expose
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
-
-	// Protocol is the protocol to use (tcp, udp, http)
-	// +kubebuilder:validation:Required
-	Protocol ExposeProtocol `json:"protocol"`
 }
 
 // PackageSpec is an alias to packages.kloudlite.io/v1 PackageSpec
@@ -120,8 +107,7 @@ type WorkspaceSpec struct {
 	CopyFrom string `json:"copyFrom,omitempty"`
 
 	// Expose defines ports to expose from the workspace
-	// TCP/UDP ports are added to the workspace service
-	// HTTP ports also get an ingress route with hostname p{port}-{hash}.{subdomain}
+	// Each port gets an HTTP ingress route with hostname p{port}-{hash}.{subdomain}
 	// +optional
 	Expose []ExposedPort `json:"expose,omitempty"`
 }

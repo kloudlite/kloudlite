@@ -10,77 +10,34 @@ import (
 )
 
 var exposeCmd = &cobra.Command{
-	Use:   "expose",
-	Short: "Expose ports from the workspace",
-	Long: `Expose ports from the workspace using different protocols.
+	Use:   "expose <port>",
+	Short: "Expose a port from the workspace",
+	Long: `Expose a port from the workspace.
 
-TCP/UDP ports are added to the workspace service for direct access.
-HTTP ports also get an ingress route with hostname p{port}-{hash}.{subdomain}.`,
-	Example: `  # Expose a TCP port
-  kl expose tcp 3000
+The port will be added to the workspace service and an ingress route
+will be created with hostname p{port}-{hash}.{subdomain}.
+For example: p8080-a1b2c3d4.example.khost.dev`,
+	Example: `  # Expose port 8080
+  kl expose 8080
 
-  # Expose a UDP port
-  kl expose udp 5353
-
-  # Expose an HTTP port (creates ingress at p8080-{hash}.{subdomain})
-  kl expose http 8080
+  # Expose port 3000
+  kl expose 3000
 
   # List exposed ports
   kl expose list
 
   # Remove an exposed port
-  kl expose remove tcp 3000`,
-}
-
-var exposeTCPCmd = &cobra.Command{
-	Use:   "tcp <port>",
-	Short: "Expose a TCP port",
-	Long:  `Expose a TCP port from the workspace. The port will be added to the workspace service.`,
-	Example: `  # Expose TCP port 3000
-  kl expose tcp 3000`,
-	Args: cobra.ExactArgs(1),
+  kl expose remove 3000`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return cmd.Help()
+		}
 		port, err := parsePort(args[0])
 		if err != nil {
 			return err
 		}
-		return handleExpose(workspacesv1.ExposeProtocolTCP, port)
-	},
-}
-
-var exposeUDPCmd = &cobra.Command{
-	Use:   "udp <port>",
-	Short: "Expose a UDP port",
-	Long:  `Expose a UDP port from the workspace. The port will be added to the workspace service.`,
-	Example: `  # Expose UDP port 5353
-  kl expose udp 5353`,
-	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		port, err := parsePort(args[0])
-		if err != nil {
-			return err
-		}
-		return handleExpose(workspacesv1.ExposeProtocolUDP, port)
-	},
-}
-
-var exposeHTTPCmd = &cobra.Command{
-	Use:   "http <port>",
-	Short: "Expose an HTTP port",
-	Long: `Expose an HTTP port from the workspace.
-
-The port will be added to the workspace service and an ingress route
-will be created with hostname p{port}-{hash}.{subdomain}.
-For example: p8080-a1b2c3d4.example.khost.dev`,
-	Example: `  # Expose HTTP port 8080
-  kl expose http 8080`,
-	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		port, err := parsePort(args[0])
-		if err != nil {
-			return err
-		}
-		return handleExpose(workspacesv1.ExposeProtocolHTTP, port)
+		return handleExpose(port)
 	},
 }
 
@@ -99,40 +56,25 @@ var exposeListCmd = &cobra.Command{
 }
 
 var exposeRemoveCmd = &cobra.Command{
-	Use:     "remove <protocol> <port>",
+	Use:     "remove <port>",
 	Aliases: []string{"rm"},
 	Short:   "Remove an exposed port",
 	Long:    `Remove an exposed port from the workspace.`,
-	Example: `  # Remove exposed TCP port 3000
-  kl expose remove tcp 3000
-  kl expose rm http 8080`,
-	Args: cobra.ExactArgs(2),
+	Example: `  # Remove exposed port 3000
+  kl expose remove 3000
+  kl expose rm 8080`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		protocol := args[0]
-		port, err := parsePort(args[1])
+		port, err := parsePort(args[0])
 		if err != nil {
 			return err
 		}
-		var exposeProtocol workspacesv1.ExposeProtocol
-		switch protocol {
-		case "tcp":
-			exposeProtocol = workspacesv1.ExposeProtocolTCP
-		case "udp":
-			exposeProtocol = workspacesv1.ExposeProtocolUDP
-		case "http":
-			exposeProtocol = workspacesv1.ExposeProtocolHTTP
-		default:
-			return fmt.Errorf("invalid protocol: %s (must be tcp, udp, or http)", protocol)
-		}
-		return handleExposeRemove(exposeProtocol, port)
+		return handleExposeRemove(port)
 	},
 }
 
 func init() {
 	// Add subcommands to expose
-	exposeCmd.AddCommand(exposeTCPCmd)
-	exposeCmd.AddCommand(exposeUDPCmd)
-	exposeCmd.AddCommand(exposeHTTPCmd)
 	exposeCmd.AddCommand(exposeListCmd)
 	exposeCmd.AddCommand(exposeRemoveCmd)
 
@@ -151,7 +93,7 @@ func parsePort(portStr string) (int, error) {
 	return port, nil
 }
 
-func handleExpose(protocol workspacesv1.ExposeProtocol, port int) error {
+func handleExpose(port int) error {
 	if err := InitClient(); err != nil {
 		return err
 	}
@@ -164,11 +106,11 @@ func handleExpose(protocol workspacesv1.ExposeProtocol, port int) error {
 		return fmt.Errorf("failed to get workspace: %w", err)
 	}
 
-	// Check if port is already exposed with same protocol
+	// Check if port is already exposed
 	for _, exposed := range workspace.Spec.Expose {
-		if exposed.Port == int32(port) && exposed.Protocol == protocol {
-			fmt.Printf("Port %d/%s is already exposed\n", port, protocol)
-			if protocol == workspacesv1.ExposeProtocolHTTP && workspace.Status.Hash != "" && workspace.Status.Subdomain != "" {
+		if exposed.Port == int32(port) {
+			fmt.Printf("Port %d is already exposed\n", port)
+			if workspace.Status.Hash != "" && workspace.Status.Subdomain != "" {
 				fmt.Printf("URL: https://p%d-%s.%s\n", port, workspace.Status.Hash, workspace.Status.Subdomain)
 			}
 			return nil
@@ -177,8 +119,7 @@ func handleExpose(protocol workspacesv1.ExposeProtocol, port int) error {
 
 	// Add the new exposed port
 	workspace.Spec.Expose = append(workspace.Spec.Expose, workspacesv1.ExposedPort{
-		Port:     int32(port),
-		Protocol: protocol,
+		Port: int32(port),
 	})
 
 	// Update workspace
@@ -186,14 +127,12 @@ func handleExpose(protocol workspacesv1.ExposeProtocol, port int) error {
 		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
-	fmt.Printf("[✓] Exposing %s port %d\n", protocol, port)
+	fmt.Printf("[✓] Exposing port %d\n", port)
 
-	if protocol == workspacesv1.ExposeProtocolHTTP {
-		if workspace.Status.Hash != "" && workspace.Status.Subdomain != "" {
-			fmt.Printf("    URL: https://p%d-%s.%s\n", port, workspace.Status.Hash, workspace.Status.Subdomain)
-		} else {
-			fmt.Printf("    Ingress will be created at p%d-{hash}.{subdomain}\n", port)
-		}
+	if workspace.Status.Hash != "" && workspace.Status.Subdomain != "" {
+		fmt.Printf("    URL: https://p%d-%s.%s\n", port, workspace.Status.Hash, workspace.Status.Subdomain)
+	} else {
+		fmt.Printf("    Ingress will be created at p%d-{hash}.{subdomain}\n", port)
 	}
 
 	return nil
@@ -215,19 +154,15 @@ func handleExposeList() error {
 	if len(workspace.Spec.Expose) == 0 {
 		fmt.Println("No ports exposed")
 		fmt.Println("\nTo expose a port, run:")
-		fmt.Println("  kl expose tcp <port>")
-		fmt.Println("  kl expose udp <port>")
-		fmt.Println("  kl expose http <port>")
+		fmt.Println("  kl expose <port>")
 		return nil
 	}
 
 	fmt.Printf("Exposed ports (%d):\n\n", len(workspace.Spec.Expose))
 	for _, exposed := range workspace.Spec.Expose {
-		fmt.Printf("  %s/%d", exposed.Protocol, exposed.Port)
-		if exposed.Protocol == workspacesv1.ExposeProtocolHTTP {
-			if workspace.Status.Hash != "" && workspace.Status.Subdomain != "" {
-				fmt.Printf(" -> https://p%d-%s.%s", exposed.Port, workspace.Status.Hash, workspace.Status.Subdomain)
-			}
+		fmt.Printf("  %d", exposed.Port)
+		if workspace.Status.Hash != "" && workspace.Status.Subdomain != "" {
+			fmt.Printf(" -> https://p%d-%s.%s", exposed.Port, workspace.Status.Hash, workspace.Status.Subdomain)
 		}
 		fmt.Println()
 	}
@@ -235,7 +170,7 @@ func handleExposeList() error {
 	return nil
 }
 
-func handleExposeRemove(protocol workspacesv1.ExposeProtocol, port int) error {
+func handleExposeRemove(port int) error {
 	if err := InitClient(); err != nil {
 		return err
 	}
@@ -252,7 +187,7 @@ func handleExposeRemove(protocol workspacesv1.ExposeProtocol, port int) error {
 	found := false
 	newExpose := []workspacesv1.ExposedPort{}
 	for _, exposed := range workspace.Spec.Expose {
-		if exposed.Port == int32(port) && exposed.Protocol == protocol {
+		if exposed.Port == int32(port) {
 			found = true
 			continue
 		}
@@ -260,7 +195,7 @@ func handleExposeRemove(protocol workspacesv1.ExposeProtocol, port int) error {
 	}
 
 	if !found {
-		return fmt.Errorf("port %d/%s is not exposed", port, protocol)
+		return fmt.Errorf("port %d is not exposed", port)
 	}
 
 	workspace.Spec.Expose = newExpose
@@ -270,7 +205,7 @@ func handleExposeRemove(protocol workspacesv1.ExposeProtocol, port int) error {
 		return fmt.Errorf("failed to update workspace: %w", err)
 	}
 
-	fmt.Printf("[✓] Removed %s port %d\n", protocol, port)
+	fmt.Printf("[✓] Removed port %d\n", port)
 
 	return nil
 }
