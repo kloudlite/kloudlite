@@ -125,6 +125,12 @@ var pkgUninstallCmd = &cobra.Command{
   kl p rm vim
   kl p un nodejs`,
 	Args: cobra.ExactArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return getInstalledPackageNames(), cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return handlePackageUninstall(args[0])
 	},
@@ -710,6 +716,25 @@ func handlePackageUninstall(packageName string) error {
 	fmt.Printf("Package %s removed from workspace.\n", packageName)
 
 	return nil
+}
+
+// getInstalledPackageNames returns a list of installed package names for shell completion
+func getInstalledPackageNames() []string {
+	if err := InitClient(); err != nil {
+		return nil
+	}
+
+	ctx := context.Background()
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return nil
+	}
+
+	var names []string
+	for _, pkg := range workspace.Spec.Packages {
+		names = append(names, pkg.Name)
+	}
+	return names
 }
 
 func handlePackageList() error {

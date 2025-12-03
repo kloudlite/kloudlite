@@ -63,6 +63,12 @@ You will be prompted to map each service port to a workspace port.`,
   kl intercept start api-server
   kl i s api-server`,
 	Args: cobra.MaximumNArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return getAvailableServiceNames(), cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			// Interactive mode
@@ -88,6 +94,12 @@ If no service name is provided, an interactive list of active intercepts will be
   kl intercept stop api-server
   kl i sp api-server`,
 	Args: cobra.MaximumNArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return getActiveInterceptNames(), cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			// Interactive mode
@@ -1038,6 +1050,72 @@ func selectActiveInterceptWithFzf(intercepts []ActiveIntercept) (*ActiveIntercep
 	}
 
 	return intercept, nil
+}
+
+// getAvailableServiceNames returns a list of available service names for shell completion
+func getAvailableServiceNames() []string {
+	if err := InitClient(); err != nil {
+		return nil
+	}
+	ctx := context.Background()
+
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return nil
+	}
+
+	if workspace.Status.ConnectedEnvironment == nil {
+		return nil
+	}
+
+	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
+	if targetNamespace == "" {
+		return nil
+	}
+
+	services, err := listCompositionServices(ctx, targetNamespace)
+	if err != nil {
+		return nil
+	}
+
+	var names []string
+	for _, svc := range services {
+		names = append(names, svc.ServiceName)
+	}
+	return names
+}
+
+// getActiveInterceptNames returns a list of active intercept service names for shell completion
+func getActiveInterceptNames() []string {
+	if err := InitClient(); err != nil {
+		return nil
+	}
+	ctx := context.Background()
+
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return nil
+	}
+
+	if workspace.Status.ConnectedEnvironment == nil {
+		return nil
+	}
+
+	targetNamespace := workspace.Status.ConnectedEnvironment.TargetNamespace
+	if targetNamespace == "" {
+		return nil
+	}
+
+	intercepts, err := listActiveIntercepts(ctx, targetNamespace, workspace.Name)
+	if err != nil {
+		return nil
+	}
+
+	var names []string
+	for _, intercept := range intercepts {
+		names = append(names, intercept.ServiceName)
+	}
+	return names
 }
 
 // selectPortsWithFzf allows user to select which ports to intercept using fzf multi-select
