@@ -162,6 +162,17 @@ func (r *CompositionReconciler) reconcileSingleIntercept(ctx context.Context, co
 			Labels:    make(map[string]string),
 		},
 		Spec: corev1.PodSpec{
+			// Schedule SOCAT pod on the same WorkMachine node as the workspace
+			NodeSelector: map[string]string{
+				"kloudlite.io/workmachine": workmachine.Name,
+			},
+			Tolerations: []corev1.Toleration{
+				{
+					Key:      "kloudlite.io/workmachine",
+					Operator: corev1.TolerationOpExists,
+					Effect:   corev1.TaintEffectNoSchedule,
+				},
+			},
 			Containers: []corev1.Container{
 				{
 					Name:    "socat-forwarder",
