@@ -118,22 +118,12 @@ func (r *WorkspaceReconciler) isWorkspaceIdle(ctx context.Context, workspace *wo
 	return isIdle, connectionCount, nil
 }
 
-// checkAndSuspendIdleWorkspace checks if a workspace should be auto-suspended and suspends it if needed
+// checkAndSuspendIdleWorkspace checks workspace idle state and auto-suspends if enabled and idle timeout reached
+// This always tracks idle state for UI display, but only auto-suspends when auto-stop is enabled
 func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	// Skip if auto-stop is not enabled
-	if workspace.Spec.Settings == nil || !workspace.Spec.Settings.AutoStop {
-		return nil
-	}
-
 	// Skip if workspace is not active
 	if workspace.Spec.Status != "active" {
 		return nil
-	}
-
-	// Get idle timeout from workspace settings or use default
-	idleTimeout := defaultIdleTimeoutMinutes
-	if workspace.Spec.Settings.IdleTimeout > 0 {
-		idleTimeout = int(workspace.Spec.Settings.IdleTimeout)
 	}
 
 	// Check if workspace is idle
@@ -188,11 +178,26 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
 			logger.Warn("Failed to update idle state", zap.Error(err))
 		}
+	}
+
+	// Auto-suspend logic - only runs if auto-stop is enabled
+	if workspace.Spec.Settings == nil || !workspace.Spec.Settings.AutoStop {
+		return nil // Skip auto-suspend if not enabled, but idle tracking above still happens
+	}
+
+	// Need idleSince to be set to calculate duration
+	if workspace.Status.IdleSince == nil {
 		return nil
 	}
 
+	// Get idle timeout from workspace settings or use default
+	idleTimeout := defaultIdleTimeoutMinutes
+	if workspace.Spec.Settings.IdleTimeout > 0 {
+		idleTimeout = int(workspace.Spec.Settings.IdleTimeout)
+	}
+
 	// Calculate idle duration
-	idleDuration := time.Since(workspace.Status.LastActivityTime.Time)
+	idleDuration := time.Since(workspace.Status.IdleSince.Time)
 	idleTimeoutDuration := time.Duration(idleTimeout) * time.Minute
 
 	// Log idle duration for debugging
@@ -213,7 +218,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 
 		// Fetch the latest version to avoid conflict errors
 		latest := &workspacev1.Workspace{}
-		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name}, latest); err != nil {
+		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name, Namespace: workspace.Namespace}, latest); err != nil {
 			return fmt.Errorf("failed to fetch latest workspace: %w", err)
 		}
 
