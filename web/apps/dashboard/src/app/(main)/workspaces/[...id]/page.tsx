@@ -267,10 +267,10 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                     </span>
                   </div>
                 )}
-                {workspace.status?.activeConnections !== undefined && (
+                {phase === 'Running' && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Active Connections</span>
-                    <span>{workspace.status.activeConnections}</span>
+                    <span>{workspace.status?.activeConnections ?? 0}</span>
                   </div>
                 )}
                 {workspace.status?.idleState === 'idle' && workspace.status?.idleSince && (
