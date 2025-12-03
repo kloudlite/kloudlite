@@ -74,27 +74,17 @@ func (r *WorkspaceReconciler) buildServicePorts(workspace *workspacev1.Workspace
 		definedPorts[key] = true
 	}
 
-	// Add user-exposed ports
+	// Add user-exposed ports (always TCP for HTTP)
 	for _, exposed := range workspace.Spec.Expose {
-		var protocol corev1.Protocol
-		switch exposed.Protocol {
-		case workspacev1.ExposeProtocolTCP, workspacev1.ExposeProtocolHTTP:
-			protocol = corev1.ProtocolTCP
-		case workspacev1.ExposeProtocolUDP:
-			protocol = corev1.ProtocolUDP
-		default:
-			continue
-		}
-
-		key := fmt.Sprintf("%s-%d", protocol, exposed.Port)
+		key := fmt.Sprintf("TCP-%d", exposed.Port)
 		if definedPorts[key] {
 			continue // Skip if already defined
 		}
 		definedPorts[key] = true
 
 		ports = append(ports, corev1.ServicePort{
-			Name:       fmt.Sprintf("exposed-%s-%d", exposed.Protocol, exposed.Port),
-			Protocol:   protocol,
+			Name:       fmt.Sprintf("exposed-%d", exposed.Port),
+			Protocol:   corev1.ProtocolTCP,
 			Port:       exposed.Port,
 			TargetPort: intstr.FromInt32(exposed.Port),
 		})
@@ -214,13 +204,9 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 		})
 	}
 
-	// Add ingress rules for user-exposed HTTP ports
+	// Add ingress rules for user-exposed ports
 	// These use the workspace service and pattern: p{port}-{hash}.{subdomain}
 	for _, exposed := range workspace.Spec.Expose {
-		if exposed.Protocol != workspacev1.ExposeProtocolHTTP {
-			continue
-		}
-
 		// Use pattern: p{port}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: p3000-a1b2c3d4.eastman.khost.dev
 		host := fmt.Sprintf("p%d-%s.%s", exposed.Port, wsHash, domainRequest.Status.Subdomain)
@@ -247,7 +233,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 				},
 			},
 		})
-		logger.Info("Adding ingress rule for exposed HTTP port",
+		logger.Info("Adding ingress rule for exposed port",
 			zap.Int32("port", exposed.Port),
 			zap.String("host", host))
 	}
