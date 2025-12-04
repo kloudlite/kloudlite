@@ -385,6 +385,10 @@ func (in *WorkMachineStatus) DeepCopyInto(out *WorkMachineStatus) {
 		in, out := &in.LastWorkspaceActivity, &out.LastWorkspaceActivity
 		*out = (*in).DeepCopy()
 	}
+	if in.AllIdleSince != nil {
+		in, out := &in.AllIdleSince, &out.AllIdleSince
+		*out = (*in).DeepCopy()
+	}
 	if in.NodeLabels != nil {
 		in, out := &in.NodeLabels, &out.NodeLabels
 		*out = make(map[string]string, len(*in))

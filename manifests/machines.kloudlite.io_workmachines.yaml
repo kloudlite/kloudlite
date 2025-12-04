@@ -160,6 +160,12 @@ spec:
                   workspaces
                 format: int32
                 type: integer
+              allIdleSince:
+                description: |-
+                  AllIdleSince is when all workspaces became idle (nil if any workspace is active)
+                  Used for auto-shutdown timing
+                format: date-time
+                type: string
               allocatedResources:
                 description: Resources actually allocated to the machine
                 properties:
