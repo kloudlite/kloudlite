@@ -148,21 +148,21 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
           <div className="flex items-center gap-2">
             <div className="bg-muted h-9 w-9 rounded-lg"></div>
             <div>
-              <div className="bg-muted h-4 w-20 rounded mb-1"></div>
-              <div className="bg-muted h-3 w-24 rounded"></div>
+              <div className="bg-muted h-5 w-20 rounded mb-1"></div>
+              <div className="bg-muted h-4 w-24 rounded"></div>
             </div>
           </div>
           <div className="bg-muted h-8 w-12 rounded"></div>
         </div>
         <div className="space-y-2">
           <div className="bg-muted h-2 rounded-full"></div>
-          <div className="flex justify-between">
-            <div className="bg-muted h-3 w-6 rounded"></div>
-            <div className="bg-muted h-3 w-8 rounded"></div>
+          <div className="flex justify-between text-xs">
+            <div className="bg-muted h-4 w-5 rounded"></div>
+            <div className="bg-muted h-4 w-8 rounded"></div>
           </div>
         </div>
-        <div className="mt-3">
-          <div className="bg-muted h-3 w-28 rounded"></div>
+        <div className="mt-3 text-xs">
+          <div className="bg-muted h-4 w-32 rounded"></div>
         </div>
       </div>
     )

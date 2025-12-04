@@ -69,16 +69,16 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
           <div className="flex items-center justify-between animate-pulse">
             <div className="flex items-center gap-2">
               <div className="bg-muted h-4 w-4 rounded"></div>
-              <div className="bg-muted h-4 w-12 rounded"></div>
+              <div className="bg-muted h-5 w-8 rounded"></div>
             </div>
-            <div className="bg-muted h-4 w-20 rounded"></div>
+            <div className="bg-muted h-5 w-20 rounded"></div>
           </div>
           <div className="flex items-center justify-between animate-pulse">
             <div className="flex items-center gap-2">
               <div className="bg-muted h-4 w-4 rounded"></div>
-              <div className="bg-muted h-4 w-16 rounded"></div>
+              <div className="bg-muted h-5 w-14 rounded"></div>
             </div>
-            <div className="bg-muted h-4 w-16 rounded"></div>
+            <div className="bg-muted h-5 w-16 rounded"></div>
           </div>
         </div>
       </div>
