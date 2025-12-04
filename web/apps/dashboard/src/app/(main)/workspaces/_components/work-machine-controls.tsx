@@ -46,7 +46,6 @@ import {
 } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
-import { Switch } from '@kloudlite/ui'
 import { Alert, AlertDescription } from '@kloudlite/ui'
 
 interface MachineType {
@@ -112,7 +111,6 @@ export function WorkMachineControls({
   const [_isPending, startTransition] = useTransition()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedType, setSelectedType] = useState(currentType)
-  const [autoStop, setAutoStop] = useState(true)
   const [idleTimeout, setIdleTimeout] = useState('30')
   const [showTypeChangeWarning, setShowTypeChangeWarning] = useState(false)
   const [isChangingType, setIsChangingType] = useState(false)
@@ -422,41 +420,29 @@ export function WorkMachineControls({
             </SheetHeader>
 
             <div className="flex-1 space-y-8 overflow-y-auto p-4">
-              {/* Auto-stop Settings */}
+              {/* Idle Timeout Settings */}
               <div className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <Label htmlFor="auto-stop" className="text-base font-medium">
-                      Auto-stop when idle
-                    </Label>
-                    <p className="text-muted-foreground text-sm">
-                      Automatically stop the machine after a period of inactivity
-                    </p>
-                  </div>
-                  <Switch
-                    id="auto-stop"
-                    checked={autoStop}
-                    onCheckedChange={setAutoStop}
-                    className="mt-1"
-                  />
+                <div className="space-y-1">
+                  <Label className="text-base font-medium">Auto-stop</Label>
+                  <p className="text-muted-foreground text-sm">
+                    Workspaces automatically stop after a period of inactivity to save resources
+                  </p>
                 </div>
 
-                {autoStop && (
-                  <div className="ml-0 space-y-2">
-                    <Label htmlFor="idle-timeout" className="text-sm font-medium">
-                      Idle timeout (minutes)
-                    </Label>
-                    <Input
-                      id="idle-timeout"
-                      type="number"
-                      min="5"
-                      max="120"
-                      value={idleTimeout}
-                      onChange={(e) => setIdleTimeout(e.target.value)}
-                      className="w-32"
-                    />
-                  </div>
-                )}
+                <div className="ml-0 space-y-2">
+                  <Label htmlFor="idle-timeout" className="text-sm font-medium">
+                    Idle timeout (minutes)
+                  </Label>
+                  <Input
+                    id="idle-timeout"
+                    type="number"
+                    min="5"
+                    max="120"
+                    value={idleTimeout}
+                    onChange={(e) => setIdleTimeout(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
               </div>
 
               {/* SSH Keys */}
