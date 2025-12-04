@@ -114,6 +114,12 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 	}
 	idleThreshold := time.Duration(idleThresholdMinutes) * time.Minute
 
+	// Get check interval for requeuing
+	checkInterval := obj.Spec.AutoShutdown.CheckIntervalMinutes
+	if checkInterval <= 0 {
+		checkInterval = 5
+	}
+
 	// Start idle timer if not already started
 	if obj.Status.AllIdleSince == nil {
 		check.Logger().Info("all workspaces are idle, starting auto-shutdown timer",
@@ -126,8 +132,8 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 			return check.Errored(fmt.Errorf("failed to update AllIdleSince status: %w", err))
 		}
 
-		// Requeue after idle threshold
-		return check.UpdateMsg(fmt.Sprintf("All workspaces idle, auto-shutdown in %d minutes", idleThresholdMinutes)).RequeueAfter(idleThreshold)
+		// Return passed but requeue for monitoring
+		return check.Passed().RequeueAfter(time.Duration(checkInterval) * time.Minute)
 	}
 
 	// Calculate idle duration
@@ -140,7 +146,8 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 			"idleDuration", idleDuration.Round(time.Second),
 			"idleThreshold", idleThreshold,
 			"remaining", remaining.Round(time.Second))
-		return check.UpdateMsg(fmt.Sprintf("Auto-shutdown in %.0f minutes", remaining.Minutes())).RequeueAfter(remaining)
+		// Return passed but requeue for next check
+		return check.Passed().RequeueAfter(time.Duration(checkInterval) * time.Minute)
 	}
 
 	// Case 4: Idle threshold reached - trigger auto-stop
