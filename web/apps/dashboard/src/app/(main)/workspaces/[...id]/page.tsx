@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
+import { LocalTime } from '@/components/local-time'
 import { Package, XCircle, Loader2, ArrowRight, Globe, ExternalLink, Activity } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { WorkspaceConnectOptions } from '../_components/workspace-connect-options'
@@ -279,14 +280,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 {workspace.status?.idleState === 'idle' && workspace.status?.idleSince && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Idle Since</span>
-                    <span>
-                      {new Date(workspace.status.idleSince).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
+                    <LocalTime date={workspace.status.idleSince} />
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
