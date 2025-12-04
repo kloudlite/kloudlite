@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@kloudlite/ui'
-import { Terminal, Copy, Check, Sparkles } from 'lucide-react'
+import { Terminal, Copy, Check, Sparkles, AlertCircle } from 'lucide-react'
 import { SiAnthropic, SiZedindustries, SiJetbrains } from 'react-icons/si'
 import { VscVscode } from 'react-icons/vsc'
 import { CursorIcon } from '@/components/icons/cursor-icon'
@@ -208,9 +208,24 @@ export function WorkspaceConnectOptions({
     }
   }
 
+  const isRunning = workspace.status?.phase === 'Running'
+
   return (
     <>
-      <div className="bg-card rounded-lg border p-6">
+      <div className="bg-card relative rounded-lg border p-6">
+        {/* Blur overlay when workspace is not running */}
+        {!isRunning && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-2 text-center px-4">
+              <AlertCircle className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm font-medium">Workspace is not running</p>
+              <p className="text-xs text-muted-foreground">
+                Activate the workspace to connect
+              </p>
+            </div>
+          </div>
+        )}
+
         <h3 className="mb-4 text-sm font-medium">Connect to Workspace</h3>
 
         <div className="space-y-6">
@@ -222,9 +237,9 @@ export function WorkspaceConnectOptions({
                   <button
                     key={method.id}
                     onClick={() => handleConnect(method)}
-                    disabled={!method.available || method.comingSoon}
+                    disabled={!method.available || method.comingSoon || !isRunning}
                     className={`inline-flex h-8 items-center gap-2 rounded-full border px-3 transition-all ${
-                      !method.available || method.comingSoon
+                      !method.available || method.comingSoon || !isRunning
                         ? 'bg-muted/30 cursor-not-allowed opacity-50'
                         : 'hover:bg-muted/50 hover:border-primary/50'
                     }`}
