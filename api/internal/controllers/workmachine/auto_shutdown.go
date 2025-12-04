@@ -67,6 +67,21 @@ func (r *WorkMachineReconciler) aggregateWorkspaceStates(ctx context.Context, wo
 func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	ctx := check.Context()
 
+	// Skip auto-shutdown check if machine is not in running state
+	// This prevents immediate shutdown when machine is starting up
+	if obj.Status.State != v1.MachineStateRunning {
+		// Clear stale AllIdleSince if machine was just started (transitioning to running)
+		if obj.Spec.State == v1.MachineStateRunning && obj.Status.AllIdleSince != nil {
+			check.Logger().Info("machine starting, clearing stale AllIdleSince timestamp")
+			obj.Status.AllIdleSince = nil
+			obj.Status.IsAutoStopped = false
+			if err := r.Status().Update(ctx, obj); err != nil {
+				return check.Errored(fmt.Errorf("failed to clear stale auto-shutdown status: %w", err))
+			}
+		}
+		return check.Passed()
+	}
+
 	// Aggregate workspace states
 	summary, err := r.aggregateWorkspaceStates(ctx, obj.Name)
 	if err != nil {
