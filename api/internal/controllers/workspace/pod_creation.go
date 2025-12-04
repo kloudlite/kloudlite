@@ -104,6 +104,13 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
 	})
 
+	// Set NPM_CONFIG_PREFIX so npm install -g works without sudo
+	// This allows Claude Code and other npm tools to auto-update
+	envVars = append(envVars, corev1.EnvVar{
+		Name:  "NPM_CONFIG_PREFIX",
+		Value: "/home/kl/.local",
+	})
+
 	// Add startup script from settings if provided
 	if workspace.Spec.Settings != nil && workspace.Spec.Settings.StartupScript != "" {
 		envVars = append(envVars, corev1.EnvVar{
