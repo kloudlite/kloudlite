@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
-import { Pause, Play, Settings } from 'lucide-react'
+import { Pause, Play } from 'lucide-react'
 import { suspendWorkspace, activateWorkspace } from '@/app/actions/workspace.actions'
 import type { Workspace } from '@kloudlite/types'
 
@@ -61,10 +61,6 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
             {isLoading ? 'Activating...' : 'Activate'}
           </Button>
         )}
-        <Button variant="outline" size="sm">
-          <Settings className="mr-1 h-4 w-4" />
-          Settings
-        </Button>
       </div>
       {error && <div className="text-destructive text-xs">{error}</div>}
     </div>
