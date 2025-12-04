@@ -425,7 +425,8 @@ export function WorkMachineControls({
                 <div className="space-y-1">
                   <Label className="text-base font-medium">Auto-stop</Label>
                   <p className="text-muted-foreground text-sm">
-                    Workspaces automatically stop after a period of inactivity to save resources
+                    WorkMachine will automatically stop after {idleTimeout} minutes of idle time to save resources.
+                    It is considered idle when all workspaces in it have no active connections.
                   </p>
                 </div>
 
