@@ -147,8 +147,8 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 			return check.Errored(fmt.Errorf("failed to update AllIdleSince status: %w", err))
 		}
 
-		// Return passed but requeue for monitoring
-		return check.Passed().RequeueAfter(time.Duration(checkInterval) * time.Minute)
+		// Requeue for monitoring (use Requeue instead of Passed to ensure requeue is honored)
+		return check.Requeue(time.Duration(checkInterval) * time.Minute)
 	}
 
 	// Calculate idle duration
@@ -161,8 +161,8 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 			"idleDuration", idleDuration.Round(time.Second),
 			"idleThreshold", idleThreshold,
 			"remaining", remaining.Round(time.Second))
-		// Return passed but requeue for next check
-		return check.Passed().RequeueAfter(time.Duration(checkInterval) * time.Minute)
+		// Requeue for next check (use Requeue instead of Passed to ensure requeue is honored)
+		return check.Requeue(time.Duration(checkInterval) * time.Minute)
 	}
 
 	// Case 4: Idle threshold reached - trigger auto-stop
