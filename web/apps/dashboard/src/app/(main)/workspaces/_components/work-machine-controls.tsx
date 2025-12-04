@@ -47,6 +47,7 @@ import {
 import { Label } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
 import { Alert, AlertDescription } from '@kloudlite/ui'
+import { Switch } from '@kloudlite/ui'
 
 interface MachineType {
   id: string
@@ -56,6 +57,11 @@ interface MachineType {
   cpu: string
   memory: string
   gpu?: string
+}
+
+interface AutoShutdownConfig {
+  enabled: boolean
+  idleThresholdMinutes: number
 }
 
 interface WorkMachineControlsProps {
@@ -68,6 +74,7 @@ interface WorkMachineControlsProps {
   availableMachineTypes: MachineType[]
   sshPublicKey?: string
   sshAuthorizedKeys?: string[]
+  autoShutdown?: AutoShutdownConfig
   onStart?: () => void
   onStop?: () => void
   onTypeChange?: (typeId: string) => void
@@ -102,6 +109,7 @@ export function WorkMachineControls({
   availableMachineTypes,
   sshPublicKey,
   sshAuthorizedKeys = [],
+  autoShutdown,
   onStart,
   onStop,
   onTypeChange,
@@ -111,9 +119,11 @@ export function WorkMachineControls({
   const [_isPending, startTransition] = useTransition()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedType, setSelectedType] = useState(currentType)
-  const [idleTimeout, setIdleTimeout] = useState('30')
+  const [autoShutdownEnabled, setAutoShutdownEnabled] = useState(autoShutdown?.enabled ?? true)
+  const [idleTimeout, setIdleTimeout] = useState(String(autoShutdown?.idleThresholdMinutes ?? 30))
   const [showTypeChangeWarning, setShowTypeChangeWarning] = useState(false)
   const [isChangingType, setIsChangingType] = useState(false)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [copiedSSHKey, setCopiedSSHKey] = useState(false)
   const [newSSHKey, setNewSSHKey] = useState('')
   const [isAddingKey, setIsAddingKey] = useState(false)
@@ -162,9 +172,30 @@ export function WorkMachineControls({
     }, 2000)
   }
 
-  const saveSettings = () => {
-    // Save settings logic here
-    setSettingsOpen(false)
+  const saveSettings = async () => {
+    setIsSavingSettings(true)
+    try {
+      const result = await updateMyWorkMachine({
+        autoShutdown: {
+          enabled: autoShutdownEnabled,
+          idleThresholdMinutes: parseInt(idleTimeout, 10) || 30,
+        },
+      })
+
+      if (result.success) {
+        toast.success('Settings saved successfully')
+        setSettingsOpen(false)
+        startTransition(() => {
+          router.refresh()
+        })
+      } else {
+        toast.error(result.error || 'Failed to save settings')
+      }
+    } catch (_error) {
+      toast.error('An error occurred while saving settings')
+    } finally {
+      setIsSavingSettings(false)
+    }
   }
 
   const handleCopySSHKey = (key: string) => {
@@ -422,28 +453,42 @@ export function WorkMachineControls({
             <div className="flex-1 space-y-8 overflow-y-auto p-4">
               {/* Idle Timeout Settings */}
               <div className="space-y-4">
-                <div className="space-y-1">
-                  <Label className="text-base font-medium">Auto-stop</Label>
-                  <p className="text-muted-foreground text-sm">
-                    WorkMachine will automatically stop after {idleTimeout} minutes of idle time to save resources.
-                    It is considered idle when all workspaces in it have no active connections.
-                  </p>
-                </div>
-
-                <div className="ml-0 space-y-2">
-                  <Label htmlFor="idle-timeout" className="text-sm font-medium">
-                    Idle timeout (minutes)
-                  </Label>
-                  <Input
-                    id="idle-timeout"
-                    type="number"
-                    min="5"
-                    max="120"
-                    value={idleTimeout}
-                    onChange={(e) => setIdleTimeout(e.target.value)}
-                    className="w-32"
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="text-base font-medium">Auto-stop</Label>
+                    <p className="text-muted-foreground text-sm">
+                      Automatically stop the WorkMachine when all workspaces are idle.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={autoShutdownEnabled}
+                    onCheckedChange={setAutoShutdownEnabled}
                   />
                 </div>
+
+                {autoShutdownEnabled && (
+                  <div className="ml-0 space-y-2 rounded-md border p-4">
+                    <p className="text-muted-foreground text-sm">
+                      WorkMachine will automatically stop after {idleTimeout} minutes of idle time to save resources.
+                      It is considered idle when all workspaces in it have no active connections.
+                    </p>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Label htmlFor="idle-timeout" className="text-sm font-medium">
+                        Idle timeout
+                      </Label>
+                      <Input
+                        id="idle-timeout"
+                        type="number"
+                        min="5"
+                        max="1440"
+                        value={idleTimeout}
+                        onChange={(e) => setIdleTimeout(e.target.value)}
+                        className="w-24"
+                      />
+                      <span className="text-muted-foreground text-sm">minutes</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* SSH Keys */}
@@ -595,10 +640,19 @@ export function WorkMachineControls({
             </div>
 
             <SheetFooter className="p-4">
-              <Button variant="outline" onClick={() => setSettingsOpen(false)}>
+              <Button variant="outline" onClick={() => setSettingsOpen(false)} disabled={isSavingSettings}>
                 Cancel
               </Button>
-              <Button onClick={saveSettings}>Save Settings</Button>
+              <Button onClick={saveSettings} disabled={isSavingSettings}>
+                {isSavingSettings ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Settings'
+                )}
+              </Button>
             </SheetFooter>
           </div>
         </SheetContent>

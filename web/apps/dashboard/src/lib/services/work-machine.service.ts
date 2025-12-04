@@ -55,6 +55,10 @@ export class WorkMachineService {
   async updateMyWorkMachine(data: {
     machineType?: string
     sshPublicKeys?: string[]
+    autoShutdown?: {
+      enabled: boolean
+      idleThresholdMinutes: number
+    }
   }): Promise<WorkMachine> {
     return apiClient.put<WorkMachine>(`${this.baseUrl}/my`, data)
   }

@@ -35,10 +35,17 @@ type WorkMachineCreateRequest struct {
 	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
 }
 
+// AutoShutdownConfig represents auto-shutdown configuration in API requests
+type AutoShutdownConfig struct {
+	Enabled              bool  `json:"enabled"`
+	IdleThresholdMinutes int32 `json:"idleThresholdMinutes,omitempty"`
+}
+
 // WorkMachineUpdateRequest represents a request to update a WorkMachine
 type WorkMachineUpdateRequest struct {
-	MachineType   string   `json:"machineType,omitempty"`
-	SSHPublicKeys []string `json:"sshPublicKeys,omitempty"`
+	MachineType   string              `json:"machineType,omitempty"`
+	SSHPublicKeys []string            `json:"sshPublicKeys,omitempty"`
+	AutoShutdown  *AutoShutdownConfig `json:"autoShutdown,omitempty"`
 }
 
 // GetMyWorkMachine returns the current user's work machine
@@ -204,6 +211,12 @@ func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
 	}
 	if req.SSHPublicKeys != nil {
 		machine.Spec.SSHPublicKeys = req.SSHPublicKeys
+	}
+	if req.AutoShutdown != nil {
+		machine.Spec.AutoShutdown = &machinesv1.AutoShutdownConfig{
+			Enabled:              req.AutoShutdown.Enabled,
+			IdleThresholdMinutes: req.AutoShutdown.IdleThresholdMinutes,
+		}
 	}
 
 	// Update the resource

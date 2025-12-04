@@ -78,6 +78,10 @@ export async function createMyWorkMachine(machineType: string) {
 export async function updateMyWorkMachine(updateData: {
   machineType?: string
   sshPublicKeys?: string[]
+  autoShutdown?: {
+    enabled: boolean
+    idleThresholdMinutes: number
+  }
 }) {
   try {
     const data = await workMachineService.updateMyWorkMachine(updateData)
