@@ -213,9 +213,12 @@ func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
 		machine.Spec.SSHPublicKeys = req.SSHPublicKeys
 	}
 	if req.AutoShutdown != nil {
+		// Default checkIntervalMinutes to 5 if not specified
+		checkInterval := int32(5)
 		machine.Spec.AutoShutdown = &machinesv1.AutoShutdownConfig{
 			Enabled:              req.AutoShutdown.Enabled,
 			IdleThresholdMinutes: req.AutoShutdown.IdleThresholdMinutes,
+			CheckIntervalMinutes: checkInterval,
 		}
 	}
 
