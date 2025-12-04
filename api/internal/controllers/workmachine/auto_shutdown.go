@@ -68,18 +68,24 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 	ctx := check.Context()
 
 	// Skip auto-shutdown check if machine is not in running state
-	// This prevents immediate shutdown when machine is starting up
 	if obj.Status.State != v1.MachineStateRunning {
-		// Clear stale AllIdleSince if machine was just started (transitioning to running)
-		if obj.Spec.State == v1.MachineStateRunning && obj.Status.AllIdleSince != nil {
-			check.Logger().Info("machine starting, clearing stale AllIdleSince timestamp")
+		return check.Passed()
+	}
+
+	// Check for stale AllIdleSince from previous session
+	// If allIdleSince is from before the machine started, it's stale and should be cleared
+	if obj.Status.AllIdleSince != nil && obj.Status.StartedAt != nil {
+		if obj.Status.AllIdleSince.Before(obj.Status.StartedAt) {
+			check.Logger().Info("clearing stale AllIdleSince timestamp from previous session",
+				"allIdleSince", obj.Status.AllIdleSince,
+				"startedAt", obj.Status.StartedAt)
 			obj.Status.AllIdleSince = nil
 			obj.Status.IsAutoStopped = false
 			if err := r.Status().Update(ctx, obj); err != nil {
-				return check.Errored(fmt.Errorf("failed to clear stale auto-shutdown status: %w", err))
+				return check.Errored(fmt.Errorf("failed to clear stale AllIdleSince: %w", err))
 			}
+			// Continue with fresh idle tracking below
 		}
-		return check.Passed()
 	}
 
 	// Aggregate workspace states
