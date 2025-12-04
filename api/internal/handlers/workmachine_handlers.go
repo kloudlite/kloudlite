@@ -215,9 +215,9 @@ func (h *WorkMachineHandlers) UpdateMyWorkMachine(c *gin.Context) {
 	if req.AutoShutdown != nil {
 		// Default checkIntervalMinutes to 5
 		checkInterval := int32(5)
-		// Default idleThresholdMinutes to 30, minimum 15
+		// Default idleThresholdMinutes to 30, minimum 5
 		idleThreshold := req.AutoShutdown.IdleThresholdMinutes
-		if idleThreshold < 15 {
+		if idleThreshold < 5 {
 			idleThreshold = 30
 		}
 		machine.Spec.AutoShutdown = &machinesv1.AutoShutdownConfig{

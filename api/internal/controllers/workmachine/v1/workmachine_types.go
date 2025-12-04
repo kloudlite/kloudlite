@@ -125,7 +125,7 @@ type AutoShutdownConfig struct {
 	// IdleThresholdMinutes is how long to wait after all workspaces are suspended
 	// before shutting down the WorkMachine EC2 instance
 	// +kubebuilder:default=30
-	// +kubebuilder:validation:Minimum=15
+	// +kubebuilder:validation:Minimum=5
 	// +kubebuilder:validation:Maximum=1440
 	IdleThresholdMinutes int32 `json:"idleThresholdMinutes"`
 
