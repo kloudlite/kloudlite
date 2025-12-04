@@ -65,14 +65,20 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
     return (
       <div className="bg-card rounded-lg border p-6">
         <h3 className="mb-4 text-sm font-medium">Resource Usage</h3>
-        <div className="space-y-4">
-          <div className="animate-pulse">
-            <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
-            <div className="bg-muted h-2 rounded"></div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between animate-pulse">
+            <div className="flex items-center gap-2">
+              <div className="bg-muted h-4 w-4 rounded"></div>
+              <div className="bg-muted h-4 w-12 rounded"></div>
+            </div>
+            <div className="bg-muted h-4 w-20 rounded"></div>
           </div>
-          <div className="animate-pulse">
-            <div className="bg-muted mb-2 h-4 w-1/3 rounded"></div>
-            <div className="bg-muted h-2 rounded"></div>
+          <div className="flex items-center justify-between animate-pulse">
+            <div className="flex items-center gap-2">
+              <div className="bg-muted h-4 w-4 rounded"></div>
+              <div className="bg-muted h-4 w-16 rounded"></div>
+            </div>
+            <div className="bg-muted h-4 w-16 rounded"></div>
           </div>
         </div>
       </div>
