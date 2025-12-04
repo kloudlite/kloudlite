@@ -181,10 +181,8 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 		}
 	}
 
-	// Auto-suspend logic - only runs if auto-stop is enabled
-	if workspace.Spec.Settings == nil || !workspace.Spec.Settings.AutoStop {
-		return nil // Skip auto-suspend if not enabled, but idle tracking above still happens
-	}
+	// Auto-suspend logic - always enabled for all workspaces
+	// Users can only configure the idle timeout, not disable auto-stop
 
 	// Need idleSince to be set to calculate duration
 	if workspace.Status.IdleSince == nil {
@@ -193,7 +191,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 
 	// Get idle timeout from workspace settings or use default
 	idleTimeout := defaultIdleTimeoutMinutes
-	if workspace.Spec.Settings.IdleTimeout > 0 {
+	if workspace.Spec.Settings != nil && workspace.Spec.Settings.IdleTimeout > 0 {
 		idleTimeout = int(workspace.Spec.Settings.IdleTimeout)
 	}
 
