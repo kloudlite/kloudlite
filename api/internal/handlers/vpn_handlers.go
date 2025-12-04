@@ -176,6 +176,10 @@ func (h *VPNHandlers) handleServiceError(c *gin.Context, err error) {
 	} else if strings.Contains(errMsg, "not configured") {
 		statusCode = http.StatusNotFound
 		errorMessage = errMsg
+	} else if strings.Contains(errMsg, "no public IP") || strings.Contains(errMsg, "not be running") {
+		// WorkMachine is stopped - return service unavailable with descriptive message
+		statusCode = http.StatusServiceUnavailable
+		errorMessage = errMsg
 	}
 
 	c.JSON(statusCode, dto.ErrorResponse{Error: errorMessage})
