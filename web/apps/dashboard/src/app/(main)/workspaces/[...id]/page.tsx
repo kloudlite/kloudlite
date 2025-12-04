@@ -269,7 +269,10 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 )}
                 {phase === 'Running' && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Active Connections</span>
+                    <span className="text-muted-foreground">
+                      Active Connections
+                      <span className="ml-1 text-xs opacity-60">(checked ~1 min)</span>
+                    </span>
                     <span>{workspace.status?.activeConnections ?? 0}</span>
                   </div>
                 )}
