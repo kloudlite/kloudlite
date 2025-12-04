@@ -83,15 +83,26 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 
 	// Case 1: At least one workspace is active
 	if !summary.AllWorkspacesIdle {
+		needsUpdate := false
+
 		// Reset idle tracking
 		if obj.Status.AllIdleSince != nil {
 			check.Logger().Info("workspace became active, resetting auto-shutdown timer",
 				"activeWorkspaceCount", summary.ActiveWorkspaceCount)
 			obj.Status.AllIdleSince = nil
+			needsUpdate = true
 		}
 		// Clear IsAutoStopped flag if machine was restarted and is now active
 		if obj.Status.IsAutoStopped {
 			obj.Status.IsAutoStopped = false
+			needsUpdate = true
+		}
+
+		// Persist status changes if needed
+		if needsUpdate {
+			if err := r.Status().Update(ctx, obj); err != nil {
+				return check.Errored(fmt.Errorf("failed to reset auto-shutdown status: %w", err))
+			}
 		}
 		return check.Passed()
 	}
@@ -109,6 +120,11 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 			"totalWorkspaces", summary.TotalWorkspaces,
 			"idleThresholdMinutes", idleThresholdMinutes)
 		obj.Status.AllIdleSince = &now
+
+		// Persist the AllIdleSince timestamp
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return check.Errored(fmt.Errorf("failed to update AllIdleSince status: %w", err))
+		}
 
 		// Requeue after idle threshold
 		return check.UpdateMsg(fmt.Sprintf("All workspaces idle, auto-shutdown in %d minutes", idleThresholdMinutes)).RequeueAfter(idleThreshold)
