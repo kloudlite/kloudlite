@@ -52,6 +52,12 @@ function transformWorkMachine(wm: WorkMachine) {
     type: wm.spec.machineType,
     sshPublicKey: wm.status?.sshPublicKey,
     sshAuthorizedKeys: wm.spec.sshPublicKeys || [],
+    autoShutdown: wm.spec.autoShutdown
+      ? {
+          enabled: wm.spec.autoShutdown.enabled,
+          idleThresholdMinutes: wm.spec.autoShutdown.idleThresholdMinutes,
+        }
+      : undefined,
   }
 }
 

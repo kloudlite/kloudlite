@@ -28,6 +28,10 @@ interface WorkMachine {
   type: string
   sshPublicKey?: string
   sshAuthorizedKeys?: string[]
+  autoShutdown?: {
+    enabled: boolean
+    idleThresholdMinutes: number
+  }
 }
 
 // Helper to get state display info
@@ -217,6 +221,7 @@ export function WorkMachinesContent({
               availableMachineTypes={availableMachineTypes}
               sshPublicKey={selectedMachine.sshPublicKey}
               sshAuthorizedKeys={selectedMachine.sshAuthorizedKeys}
+              autoShutdown={selectedMachine.autoShutdown}
               onStart={handleStart}
               onStop={handleStop}
               onTypeChange={handleTypeChange}

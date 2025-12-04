@@ -11,12 +11,18 @@ export interface WorkMachine {
   status?: WorkMachineStatus
 }
 
+export interface AutoShutdownConfig {
+  enabled: boolean
+  idleThresholdMinutes: number
+}
+
 export interface WorkMachineSpec {
   ownedBy: string
   machineType: string
   targetNamespace: string
   state: MachineState
   sshPublicKeys?: string[]
+  autoShutdown?: AutoShutdownConfig
 }
 
 export type MachineState = 'starting' | 'running' | 'stopping' | 'stopped' | 'disabled' | 'errored'
@@ -41,6 +47,8 @@ export interface WorkMachineStatus {
   podName?: string
   podIP?: string
   sshPublicKey?: string
+  allIdleSince?: string
+  isAutoStopped?: boolean
 }
 
 // API Response types
