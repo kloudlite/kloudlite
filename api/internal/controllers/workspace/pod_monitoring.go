@@ -61,9 +61,10 @@ func (r *WorkspaceReconciler) hasActiveConnections(ctx context.Context, workspac
 	}
 
 	// Count ESTABLISHED connections by checking /proc/net/tcp
-	// Format: awk '$4 == "01"' /proc/net/tcp /proc/net/tcp6 2>/dev/null | wc -l
+	// We use cat to combine IPv4 and IPv6 TCP connections, then filter for ESTABLISHED state (01)
 	// This counts all ESTABLISHED TCP connections (excluding LISTEN sockets)
-	command := []string{"sh", "-c", "awk '$4 == \"01\"' /proc/net/tcp /proc/net/tcp6 2>/dev/null | wc -l"}
+	// Note: We avoid shell redirections like 2>/dev/null as they may be blocked by command validation
+	command := []string{"sh", "-c", "cat /proc/net/tcp /proc/net/tcp6 | awk '$4 == \"01\"' | wc -l"}
 
 	output, err := r.execInPod(ctx, pod, pod.Spec.Containers[0].Name, command)
 	if err != nil {
