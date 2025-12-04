@@ -215,6 +215,7 @@ chown -R 1001:1001 /home/kl/.local
 # Start with PATH and essential env vars
 cat > /etc-writable/environment << 'EOF'
 PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+NPM_CONFIG_PREFIX=/home/kl/.local
 WORKSPACE_NAME=%s
 WORKSPACE_NAMESPACE=%s
 WORKSPACE_OWNER=%s
