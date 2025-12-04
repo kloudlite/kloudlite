@@ -20,7 +20,7 @@ type WorkspaceActivitySummary struct {
 }
 
 // aggregateWorkspaceStates lists all workspaces for a WorkMachine and aggregates their activity states
-func (r *WorkMachineReconciler) aggregateWorkspaceStates(ctx context.Context, workMachineName string) (*WorkspaceActivitySummary, error) {
+func (r *WorkMachineReconciler) aggregateWorkspaceStates(ctx context.Context, targetNamespace string) (*WorkspaceActivitySummary, error) {
 	workspaceList := &workspacev1.WorkspaceList{}
 	if err := r.List(ctx, workspaceList); err != nil {
 		return nil, fmt.Errorf("failed to list workspaces: %w", err)
@@ -31,8 +31,8 @@ func (r *WorkMachineReconciler) aggregateWorkspaceStates(ctx context.Context, wo
 	}
 
 	for _, ws := range workspaceList.Items {
-		// Filter by WorkMachine name
-		if ws.Spec.WorkmachineName != workMachineName {
+		// Filter by namespace (workspaces live in the WorkMachine's targetNamespace)
+		if ws.Namespace != targetNamespace {
 			continue
 		}
 		summary.TotalWorkspaces++
@@ -83,7 +83,7 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 	}
 
 	// Aggregate workspace states
-	summary, err := r.aggregateWorkspaceStates(ctx, obj.Name)
+	summary, err := r.aggregateWorkspaceStates(ctx, obj.Spec.TargetNamespace)
 	if err != nil {
 		return check.Errored(fmt.Errorf("failed to aggregate workspace states: %w", err))
 	}
