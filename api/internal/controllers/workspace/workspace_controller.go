@@ -209,8 +209,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Requeue after 1 minute to check idle status periodically
-	if workspace.Spec.Status == "active" && workspace.Spec.Settings != nil && workspace.Spec.Settings.AutoStop {
+	// Requeue after 1 minute to check idle status periodically for all active workspaces
+	// This is needed for idle state tracking (displayed in UI) even when auto-stop is not enabled
+	if workspace.Spec.Status == "active" {
 		if result.RequeueAfter == 0 && !result.Requeue {
 			result.RequeueAfter = 1 * time.Minute
 		}
