@@ -242,6 +242,11 @@ type WorkMachineStatus struct {
 	// IsAutoStopped when set means machine was auto-stopped by kloudlite
 	IsAutoStopped bool `json:"isAutoStopped,omitempty"`
 
+	// AllIdleSince is when all workspaces became idle (nil if any workspace is active)
+	// Used for auto-shutdown timing
+	// +optional
+	AllIdleSince *metav1.Time `json:"allIdleSince,omitempty"`
+
 	NodeLabels     map[string]string   `json:"nodeLabels,omitempty"`
 	PodTolerations []corev1.Toleration `json:"podTolerations,omitempty"`
 

@@ -186,6 +186,21 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
+			Name:  "check-auto-shutdown",
+			Title: "Check if WorkMachine should auto-shutdown due to idle workspaces",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				// Only run when:
+				// 1. Machine is running (both spec and status)
+				// 2. AutoShutdown is configured and enabled
+				return obj.Spec.State == v1.MachineStateRunning &&
+					obj.Status.State == v1.MachineStateRunning &&
+					obj.Spec.AutoShutdown != nil &&
+					obj.Spec.AutoShutdown.Enabled
+			},
+			OnCreate: r.checkAutoShutdown,
+			OnDelete: nil,
+		},
+		{
 			Name:     "setup cloud machine",
 			Title:    "Setup Cloud Machine",
 			OnCreate: r.setupCloudMachine,
