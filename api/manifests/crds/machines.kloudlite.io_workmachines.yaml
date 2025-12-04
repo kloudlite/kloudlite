@@ -85,7 +85,7 @@ spec:
                       before shutting down the WorkMachine EC2 instance
                     format: int32
                     maximum: 1440
-                    minimum: 5
+                    minimum: 15
                     type: integer
                 required:
                 - checkIntervalMinutes
