@@ -14,7 +14,9 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/hosts"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/netconfig"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wgkeys"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wireguard"
 )
 
 // Server represents the daemon RPC server
@@ -55,6 +57,11 @@ type VPNConnection struct {
 	TunnelInfo      *api.TunnelEndpointResponse
 	DeviceID        string
 	KeyPair         *wgkeys.KeyPair
+
+	// WireGuard device and network config (for cleanup during reconnection)
+	WireGuardDevice *wireguard.Device
+	NetConfig       *netconfig.InterfaceConfig
+	WGMutex         sync.Mutex // Protects WireGuardDevice and NetConfig
 
 	// Reconnection control
 	ReconnectChan chan struct{} // Signal to trigger reconnection attempt
