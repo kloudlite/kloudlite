@@ -227,7 +227,9 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		resultChan <- VPNConnectionSetupResult{Error: fmt.Errorf("failed to start WireGuard device: %w", err)}
 		return
 	}
-	defer wgDevice.Close()
+	// Note: wgDevice.Close() is NOT deferred here because we store the device in conn.WireGuardDevice
+	// and need to close the current device (which may have been replaced during reconnection)
+	// at the end of this function via the connection object
 
 	// Build WireGuard config locally using our private key and server's response
 	wgConfig := buildWireGuardConfig(keyPair.PrivateKey, peerResp.IP, peerResp.ServerPublicKey, peerResp.CIDR)
@@ -240,7 +242,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, peerResp.IP)
 
-	// Store credentials in connection for reconnection
+	// Store credentials and device in connection for reconnection
 	s.connMutex.Lock()
 	if conn, exists := s.connections[sessionID]; exists {
 		conn.DashboardServer = server // Store dashboard URL for reconnection
@@ -251,6 +253,12 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		conn.KeyPair = keyPair
 		conn.State = StateConnected
 		conn.ReconnectChan = make(chan struct{}, 1)
+
+		// Store WireGuard device and network config for reconnection cleanup
+		conn.WGMutex.Lock()
+		conn.WireGuardDevice = wgDevice
+		conn.NetConfig = netCfg
+		conn.WGMutex.Unlock()
 
 		// Start reconnection loop goroutine
 		go s.reconnectionLoop(ctx, conn, s.hostsManager)
@@ -281,10 +289,27 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	hostsCancel()
 	<-hostsDone
 
-	// Clean up network configuration
-	fmt.Printf("[Session %s] Cleaning up network configuration...\n", sessionID)
-	if err := netconfig.RemoveInterface(netCfg); err != nil {
-		fmt.Printf("[Session %s] Warning: Failed to remove network configuration: %v\n", sessionID, err)
+	// Clean up WireGuard device and network configuration via connection
+	// (may have been replaced during reconnection)
+	s.connMutex.RLock()
+	conn, exists := s.connections[sessionID]
+	s.connMutex.RUnlock()
+
+	if exists {
+		conn.WGMutex.Lock()
+		if conn.WireGuardDevice != nil {
+			fmt.Printf("[Session %s] Closing WireGuard device...\n", sessionID)
+			conn.WireGuardDevice.Close()
+			conn.WireGuardDevice = nil
+		}
+		if conn.NetConfig != nil {
+			fmt.Printf("[Session %s] Cleaning up network configuration...\n", sessionID)
+			if err := netconfig.RemoveInterface(conn.NetConfig); err != nil {
+				fmt.Printf("[Session %s] Warning: Failed to remove network configuration: %v\n", sessionID, err)
+			}
+			conn.NetConfig = nil
+		}
+		conn.WGMutex.Unlock()
 	}
 
 	// Cleanup all hosts for this session
@@ -633,6 +658,23 @@ func (s *Server) fetchNewTunnelEndpoint(dashboardServer, token string) (*api.Tun
 func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error {
 	sessionID := conn.SessionID
 
+	// First, clean up old WireGuard device and network config before creating new ones
+	// This prevents duplicate utun interfaces from accumulating
+	conn.WGMutex.Lock()
+	if conn.WireGuardDevice != nil {
+		fmt.Printf("[Session %s] Closing old WireGuard device before reconnection...\n", sessionID)
+		conn.WireGuardDevice.Close()
+		conn.WireGuardDevice = nil
+	}
+	if conn.NetConfig != nil {
+		fmt.Printf("[Session %s] Removing old network config before reconnection...\n", sessionID)
+		if err := netconfig.RemoveInterface(conn.NetConfig); err != nil {
+			fmt.Printf("[Session %s] Warning: Failed to remove old network config: %v\n", sessionID, err)
+		}
+		conn.NetConfig = nil
+	}
+	conn.WGMutex.Unlock()
+
 	// Create tunnel client
 	tunnelClient := api.NewTunnelClient(conn.TunnelEndpoint, conn.PermanentToken)
 
@@ -726,6 +768,12 @@ func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error 
 	if err := wgDevice.SetConfig(wgConfig); err != nil {
 		return fmt.Errorf("failed to set WireGuard config: %w", err)
 	}
+
+	// Store new WireGuard device and netconfig in connection for future cleanup
+	conn.WGMutex.Lock()
+	conn.WireGuardDevice = wgDevice
+	conn.NetConfig = netCfg
+	conn.WGMutex.Unlock()
 
 	fmt.Printf("[Session %s] ✓ WireGuard re-configured (IP: %s)\n", sessionID, peerResp.IP)
 
