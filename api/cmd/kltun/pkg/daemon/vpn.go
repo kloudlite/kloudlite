@@ -605,10 +605,19 @@ func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection, host
 					continue // Keep polling - never exit on errors
 				}
 
-				// Success - stop polling and wait for next disconnect
-				fmt.Printf("[Session %s] Successfully reconnected!\n", conn.SessionID)
+				// VPN re-established, verify connectivity by pinging 10.17.0.1
+				fmt.Printf("[Session %s] VPN re-established, verifying connectivity...\n", conn.SessionID)
+				time.Sleep(2 * time.Second) // Give VPN a moment to stabilize
+
+				if !checkVPNConnectivity() {
+					fmt.Printf("[Session %s] Connectivity check failed (10.17.0.1 unreachable), will retry in %v...\n", conn.SessionID, reconnectPollInterval)
+					continue // Keep polling
+				}
+
+				// Success - VPN connected and verified
+				fmt.Printf("[Session %s] Successfully reconnected! VPN connectivity verified.\n", conn.SessionID)
 				conn.SetState(StateConnected)
-				break // Exit inner loop, wait for next reconnect signal
+				break // Exit inner loop, wait for next disconnect signal
 			}
 		}
 	}
