@@ -225,8 +225,8 @@ if [ "$NEEDS_UPDATE" = true ]; then
     # Stop daemon if running (to ensure new binary is used)
     echo_color "\${BLUE}Restarting daemon with new binary...\${NC}"
     if [ "$PLATFORM" = "darwin" ]; then
-        # macOS: use launchctl to restart the launchd-managed daemon
-        if launchctl list | grep -q "io.kloudlite.kltund"; then
+        # macOS: use launchctl to restart the launchd-managed daemon (system daemons require sudo)
+        if sudo launchctl list 2>/dev/null | grep -q "io.kloudlite.kltund"; then
             echo_color "\${BLUE}Restarting launchd daemon...\${NC}"
             sudo launchctl kickstart -k system/io.kloudlite.kltund 2>/dev/null || true
             sleep 2
@@ -254,15 +254,15 @@ echo ""
 # Start daemon if not running
 echo_color "\${BLUE}Starting kltun daemon...\${NC}"
 if [ "$PLATFORM" = "darwin" ]; then
-    # macOS: check if launchd daemon is running
-    if launchctl list | grep -q "io.kloudlite.kltund"; then
+    # macOS: check if launchd daemon is running (system daemons require sudo)
+    if sudo launchctl list 2>/dev/null | grep -q "io.kloudlite.kltund"; then
         echo_color "\${GREEN}✓ Daemon running (launchd)\${NC}"
     else
         # Launchd plist not installed, install it first
         echo_color "\${BLUE}Installing launchd daemon...\${NC}"
         sudo $KLTUN_CMD daemon install 2>/dev/null || true
         sleep 2
-        if launchctl list | grep -q "io.kloudlite.kltund"; then
+        if sudo launchctl list 2>/dev/null | grep -q "io.kloudlite.kltund"; then
             echo_color "\${GREEN}✓ Daemon installed and running\${NC}"
         else
             echo_color "\${RED}Error: Failed to install daemon\${NC}"
