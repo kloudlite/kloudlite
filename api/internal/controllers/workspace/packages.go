@@ -109,6 +109,10 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	// Only sync if packages are defined
 	if len(workspace.Spec.Packages) == 0 {
+		// Clear package status if no packages are defined
+		workspace.Status.InstalledPackages = nil
+		workspace.Status.FailedPackages = nil
+		workspace.Status.PackageInstallationMessage = ""
 		return nil
 	}
 
@@ -125,9 +129,27 @@ func (r *WorkspaceReconciler) syncPackageStatus(ctx context.Context, workspace *
 	}
 
 	// Copy package status from PackageRequest to Workspace
-	workspace.Status.InstalledPackages = pkgReq.Status.InstalledPackages
-	workspace.Status.FailedPackages = pkgReq.Status.FailedPackages
+	// Use nil instead of empty slice for consistency (Kubernetes JSON serialization
+	// can convert empty slices to null, causing inconsistent comparisons)
+	if len(pkgReq.Status.InstalledPackages) > 0 {
+		workspace.Status.InstalledPackages = pkgReq.Status.InstalledPackages
+	} else {
+		workspace.Status.InstalledPackages = nil
+	}
+
+	if len(pkgReq.Status.FailedPackages) > 0 {
+		workspace.Status.FailedPackages = pkgReq.Status.FailedPackages
+	} else {
+		workspace.Status.FailedPackages = nil
+	}
+
 	workspace.Status.PackageInstallationMessage = pkgReq.Status.Message
+
+	logger.Debug("Synced package status from PackageRequest",
+		zap.String("workspace", workspace.Name),
+		zap.Int("installed", len(workspace.Status.InstalledPackages)),
+		zap.Int("failed", len(workspace.Status.FailedPackages)),
+		zap.String("message", workspace.Status.PackageInstallationMessage))
 
 	return nil
 }
