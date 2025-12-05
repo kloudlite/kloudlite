@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -168,6 +169,97 @@ func (r *WorkspaceReconciler) deleteHostDirectory(ctx context.Context, hostPath 
 	return nil
 }
 
+// cleanupWorkspaceIntercepts removes all service intercepts referencing the workspace being deleted.
+// This iterates through namespaces where the workspace has environment connections and removes
+// any intercepts from Compositions that reference this workspace.
+// Errors are logged but do not block workspace deletion.
+func (r *WorkspaceReconciler) cleanupWorkspaceIntercepts(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) {
+	logger.Info("Cleaning up service intercepts for workspace")
+
+	// Collect namespaces to check based on environment connections
+	namespacesToCheck := make(map[string]bool)
+
+	// Check current connected environment
+	if workspace.Status.ConnectedEnvironment != nil && workspace.Status.ConnectedEnvironment.TargetNamespace != "" {
+		namespacesToCheck[workspace.Status.ConnectedEnvironment.TargetNamespace] = true
+	}
+
+	// Also check the environment connection spec in case status hasn't been updated
+	if workspace.Spec.EnvironmentConnection != nil {
+		env := &environmentv1.Environment{}
+		if err := r.Get(ctx, client.ObjectKey{
+			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+		}, env); err == nil {
+			if env.Spec.TargetNamespace != "" {
+				namespacesToCheck[env.Spec.TargetNamespace] = true
+			}
+		}
+	}
+
+	if len(namespacesToCheck) == 0 {
+		logger.Info("No environment namespaces found to check for intercepts")
+		return
+	}
+
+	interceptsCleaned := 0
+	for namespace := range namespacesToCheck {
+		compList := &environmentv1.CompositionList{}
+		if err := r.List(ctx, compList, client.InNamespace(namespace)); err != nil {
+			logger.Warn("Failed to list Compositions in namespace",
+				zap.String("namespace", namespace),
+				zap.Error(err))
+			continue
+		}
+
+		for i := range compList.Items {
+			comp := &compList.Items[i]
+			if len(comp.Spec.Intercepts) == 0 {
+				continue
+			}
+
+			// Check if any intercepts reference this workspace
+			interceptsToKeep := make([]environmentv1.ServiceInterceptConfig, 0, len(comp.Spec.Intercepts))
+			foundMatch := false
+
+			for _, intercept := range comp.Spec.Intercepts {
+				if intercept.WorkspaceRef != nil &&
+					intercept.WorkspaceRef.Name == workspace.Name &&
+					intercept.WorkspaceRef.Namespace == workspace.Namespace {
+					// This intercept references the workspace being deleted, skip it
+					foundMatch = true
+					logger.Info("Removing intercept from Composition",
+						zap.String("composition", comp.Name),
+						zap.String("namespace", comp.Namespace),
+						zap.String("serviceName", intercept.ServiceName))
+				} else {
+					// Keep this intercept
+					interceptsToKeep = append(interceptsToKeep, intercept)
+				}
+			}
+
+			if foundMatch {
+				// Update the Composition to remove the intercepts
+				comp.Spec.Intercepts = interceptsToKeep
+				if err := r.Update(ctx, comp); err != nil {
+					logger.Warn("Failed to update Composition to remove intercepts",
+						zap.String("composition", comp.Name),
+						zap.String("namespace", comp.Namespace),
+						zap.Error(err))
+				} else {
+					interceptsCleaned++
+					logger.Info("Successfully removed intercepts from Composition",
+						zap.String("composition", comp.Name),
+						zap.String("namespace", comp.Namespace))
+				}
+			}
+		}
+	}
+
+	logger.Info("Completed intercept cleanup",
+		zap.Int("interceptsCleaned", interceptsCleaned),
+		zap.Int("namespacesChecked", len(namespacesToCheck)))
+}
+
 // handleDeletion cleans up workspace resources when being deleted
 func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
 	if !controllerutil.ContainsFinalizer(workspace, workspaceFinalizer) {
@@ -183,6 +275,11 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 			// Continue with deletion even if status update fails
 		}
 	}
+
+	// Clean up service intercepts referencing this workspace
+	// This is done early in the deletion flow so the Composition controller
+	// can restore original deployments while the workspace pod is still available
+	r.cleanupWorkspaceIntercepts(ctx, workspace, logger)
 
 	// Check if WorkMachine owner is being deleted
 	workMachineBeingDeleted := false
