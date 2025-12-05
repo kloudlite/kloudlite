@@ -102,11 +102,16 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	proxy := httputil.NewSingleHostReverseProxy(backendURL)
 
-	// Customize director to preserve original host and path
+	// Customize director to preserve original host and add forwarding headers
 	originalDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		originalDirector(req)
-		req.Host = backendURL.Host
+	proxy.Director = func(proxyReq *http.Request) {
+		originalHost := proxyReq.Host
+		originalDirector(proxyReq)
+		// Set X-Forwarded headers so the backend app knows the original request details
+		proxyReq.Header.Set("X-Forwarded-Host", originalHost)
+		proxyReq.Header.Set("X-Forwarded-Proto", "https")
+		// Keep the original host header so apps can construct correct URLs
+		proxyReq.Host = originalHost
 	}
 
 	// Enable WebSocket support by flushing responses immediately
