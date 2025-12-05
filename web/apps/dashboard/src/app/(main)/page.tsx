@@ -9,11 +9,14 @@ import type { WorkMachine } from '@kloudlite/types'
 function transformWorkMachine(wm: WorkMachine) {
   // Use status.state as the source of truth for machine state
   let state = wm.status?.state || wm.spec.state
+  const desiredState = wm.spec.state
 
-  // If machine is not ready yet, show as "starting" even if state is "running"
+  // Handle transitional states when machine is not ready
   const isReady = wm.status?.isReady ?? false
   if (!isReady && state === 'running') {
-    state = 'starting'
+    // If desired state is 'stopped', show as 'stopping' (user clicked stop)
+    // Otherwise show as 'starting' (machine still initializing)
+    state = desiredState === 'stopped' ? 'stopping' : 'starting'
   }
 
   // Calculate uptime from startedAt timestamp
