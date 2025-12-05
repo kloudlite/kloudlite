@@ -5,8 +5,8 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install OpenSSL for certificate generation
-RUN apk add --no-cache openssl
+# Install OpenSSL for certificate generation (--no-scripts avoids QEMU trigger issues)
+RUN apk add --no-cache --no-scripts openssl
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs && \
