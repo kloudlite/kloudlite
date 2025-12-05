@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Shield, ShieldOff, Loader2, Copy, Check } from 'lucide-react'
+import { Shield, ShieldOff, Loader2, Copy, Check, AlertTriangle } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kloudlite/ui'
 
 type VPNStatus = 'checking' | 'connected' | 'disconnected'
 
-export function VPNStatusIndicator() {
+interface VPNStatusIndicatorProps {
+  isWorkMachineRunning?: boolean
+}
+
+export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIndicatorProps) {
   const [status, setStatus] = useState<VPNStatus>('checking')
   const [token, setToken] = useState<string>('')
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
@@ -127,6 +131,9 @@ export function VPNStatusIndicator() {
     if (!mounted || status === 'checking') {
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
     }
+    if (!isWorkMachineRunning) {
+      return <ShieldOff className="h-4 w-4 text-muted-foreground opacity-50" />
+    }
     if (status === 'connected') {
       return <Shield className="h-4 w-4 text-green-500" />
     }
@@ -134,6 +141,7 @@ export function VPNStatusIndicator() {
   }
 
   const getStatusMessage = () => {
+    if (!isWorkMachineRunning) return 'VPN Unavailable'
     if (status === 'checking') return 'Checking VPN status...'
     if (status === 'connected') return 'VPN Connected'
     return 'VPN Not Connected'
@@ -176,7 +184,23 @@ export function VPNStatusIndicator() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {status === 'disconnected' && (
+        {!isWorkMachineRunning && (
+          <div className="px-2 py-2">
+            <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                  WorkMachine is not running
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  Start your WorkMachine to connect to VPN and access your development environment.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isWorkMachineRunning && status === 'disconnected' && (
           <>
             <div className="px-2 py-2">
               <p className="text-sm text-muted-foreground mb-3">
@@ -236,7 +260,7 @@ export function VPNStatusIndicator() {
           </>
         )}
 
-        {status === 'connected' && (
+        {isWorkMachineRunning && status === 'connected' && (
           <div className="px-2 py-2">
             <p className="text-sm text-green-600 dark:text-green-400">
               Your VPN connection is active. You can access your workspaces and cluster services.
