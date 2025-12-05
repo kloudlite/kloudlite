@@ -293,6 +293,17 @@ chmod 644 /tmp-writable/kloudlite-context.json
 `, workspace.Name, workspace.Name, workspace.Name, workspace.Namespace, workspace.Spec.OwnedBy, targetNamespace, imageRegistryURL, searchDomains, hostsEntry, contextJSON)
 							}(),
 						},
+						Env: func() []corev1.EnvVar {
+							initEnv := []corev1.EnvVar{}
+							// Pass tunnel DNS server to init container for resolv.conf setup
+							if tunnelDNSServer != "" {
+								initEnv = append(initEnv, corev1.EnvVar{
+									Name:  "TUNNEL_DNS_SERVER",
+									Value: tunnelDNSServer,
+								})
+							}
+							return initEnv
+						}(),
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "kl-home",
