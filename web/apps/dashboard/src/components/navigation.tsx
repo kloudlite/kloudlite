@@ -24,6 +24,7 @@ interface NavigationProps {
   isAdmin?: boolean
   userRoles?: string[]
   hasWorkMachine?: boolean
+  isWorkMachineRunning?: boolean
 }
 
 export function Navigation({
@@ -33,6 +34,7 @@ export function Navigation({
   isAdmin,
   userRoles: _userRoles = [],
   hasWorkMachine = false,
+  isWorkMachineRunning = false,
 }: NavigationProps) {
   const pathname = usePathname()
 
@@ -96,7 +98,7 @@ export function Navigation({
 
           {/* VPN Status, User Dropdown & Theme Switcher */}
           <div className="flex items-center gap-2">
-            <VPNStatusIndicator />
+            <VPNStatusIndicator isWorkMachineRunning={isWorkMachineRunning} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1">
