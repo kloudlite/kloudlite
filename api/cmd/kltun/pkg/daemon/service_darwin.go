@@ -117,10 +117,13 @@ func (sm *ServiceManager) Install() error {
 		return fmt.Errorf("failed to set plist permissions: %w", err)
 	}
 
-	// Load the service
-	cmd := exec.Command("launchctl", "load", LaunchdPlistPath)
+	// Bootstrap the service (modern replacement for deprecated 'launchctl load')
+	// First try to bootout any existing service to avoid conflicts
+	exec.Command("launchctl", "bootout", "system/"+LaunchdLabel).Run()
+
+	cmd := exec.Command("launchctl", "bootstrap", "system", LaunchdPlistPath)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to load service: %w\nOutput: %s", err, output)
+		return fmt.Errorf("failed to bootstrap service: %w\nOutput: %s", err, output)
 	}
 
 	fmt.Println("Daemon service installed successfully")
@@ -134,11 +137,11 @@ func (sm *ServiceManager) Uninstall() error {
 		return fmt.Errorf("must run as root to uninstall daemon service")
 	}
 
-	// Unload the service
-	cmd := exec.Command("launchctl", "unload", LaunchdPlistPath)
+	// Bootout the service (modern replacement for deprecated 'launchctl unload')
+	cmd := exec.Command("launchctl", "bootout", "system/"+LaunchdLabel)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		// Continue even if unload fails (service might not be loaded)
-		fmt.Printf("Warning: failed to unload service: %v\nOutput: %s\n", err, output)
+		// Continue even if bootout fails (service might not be loaded)
+		fmt.Printf("Warning: failed to bootout service: %v\nOutput: %s\n", err, output)
 	}
 
 	// Remove plist file
@@ -266,32 +269,35 @@ func (sm *ServiceManager) EnsureRunning() error {
 	return nil
 }
 
-// Restart stops and starts the daemon to reload tokens
+// Restart stops and starts the daemon using launchctl kickstart
 func (sm *ServiceManager) Restart() error {
 	// Need root to restart
 	if os.Geteuid() != 0 {
 		return sm.escalateAndRestart()
 	}
 
-	// Stop first (ignore errors if not running)
-	sm.Stop()
-
 	// Remove stale socket file
 	os.Remove(sm.GetSocketPath())
 
-	// Start fresh
-	return sm.Start()
+	// Use kickstart -k to kill and restart the service atomically
+	cmd := exec.Command("launchctl", "kickstart", "-k", "system/"+LaunchdLabel)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to restart service: %w\nOutput: %s", err, output)
+	}
+
+	fmt.Println("Daemon service restarted successfully")
+	return nil
 }
 
 // escalateAndRestart escalates privileges and restarts the daemon
 func (sm *ServiceManager) escalateAndRestart() error {
 	fmt.Println("Restarting kltun daemon...")
 
-	// Stop, remove socket, and start to reload tokens
-	exec.Command("sudo", "launchctl", "stop", LaunchdLabel).Run()
+	// Remove stale socket file
 	os.Remove(sm.GetSocketPath())
 
-	cmd := exec.Command("sudo", "launchctl", "start", LaunchdLabel)
+	// Use kickstart -k to kill and restart the service atomically
+	cmd := exec.Command("sudo", "launchctl", "kickstart", "-k", "system/"+LaunchdLabel)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
