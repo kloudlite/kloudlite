@@ -1072,12 +1072,12 @@ func TestPackageManagerReconciler_Reconcile_FinalStatusUpdateFails(t *testing.T)
 
 func TestPackageManagerReconciler_InstallPackage_ChannelScriptGeneration(t *testing.T) {
 	// Test that the correct install script is generated for channel-based packages
-	// Channel packages now use nix-build + nix-env -i to avoid meta.outputsToInstall errors
+	// Channel packages now use nix-build -E with explicit .out output to avoid meta.outputsToInstall errors
 	var installScriptCaptured string
 	mockExec := &MockCommandExecutor{
 		ExecuteFunc: func(script string) ([]byte, error) {
-			// Capture install script (nix-build + nix-env -i)
-			if strings.Contains(script, "nix-build") && strings.Contains(script, "refs/heads/nixos-24.05") {
+			// Capture install script (nix-build -E with explicit .out output)
+			if strings.Contains(script, "nix-build -E") && strings.Contains(script, "refs/heads/nixos-24.05") {
 				installScriptCaptured = script
 				return []byte("/nix/store/abc123-nodejs-22.19.0"), nil
 			}
@@ -1099,11 +1099,11 @@ func TestPackageManagerReconciler_InstallPackage_ChannelScriptGeneration(t *test
 	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
 	assert.NoError(t, err)
 	assert.Equal(t, "nodejs_22", installedPkg.Name)
-	// Verify the install script uses nix-build + xargs nix-env -i
+	// Verify the install script uses nix-build -E with explicit .out output
 	assert.Contains(t, installScriptCaptured, ". /root/.nix-profile/etc/profile.d/nix.sh")
-	assert.Contains(t, installScriptCaptured, "nix-build")
+	assert.Contains(t, installScriptCaptured, "nix-build -E")
 	assert.Contains(t, installScriptCaptured, "https://github.com/nixos/nixpkgs/archive/refs/heads/nixos-24.05.tar.gz")
-	assert.Contains(t, installScriptCaptured, "-A nodejs_22")
+	assert.Contains(t, installScriptCaptured, "pkgs.nodejs_22.out or pkgs.nodejs_22")
 	assert.Contains(t, installScriptCaptured, "xargs nix-env")
 }
 
@@ -1141,12 +1141,12 @@ func TestPackageManagerReconciler_InstallPackage_CommitScriptGeneration(t *testi
 }
 
 func TestPackageManagerReconciler_InstallPackage_NoVersionUsesNixBuild(t *testing.T) {
-	// Test that nix-build + nix-env -i is used for packages without version
+	// Test that nix-build -E with explicit .out is used for packages without version
 	var installScriptCaptured string
 	mockExec := &MockCommandExecutor{
 		ExecuteFunc: func(script string) ([]byte, error) {
-			// Capture install script (nix-build + nix-env -i)
-			if strings.Contains(script, "nix-build") && strings.Contains(script, "<nixpkgs>") {
+			// Capture install script (nix-build -E with explicit .out output)
+			if strings.Contains(script, "nix-build -E") && strings.Contains(script, "<nixpkgs>") {
 				installScriptCaptured = script
 				return []byte("/nix/store/xyz789-git-2.40.0"), nil
 			}
@@ -1168,9 +1168,9 @@ func TestPackageManagerReconciler_InstallPackage_NoVersionUsesNixBuild(t *testin
 	installedPkg, err := reconciler.installPackage(pkg, "test-profile")
 	assert.NoError(t, err)
 	assert.Equal(t, "git", installedPkg.Name)
-	// Verify the install script uses nix-build + xargs nix-env -i
-	assert.Contains(t, installScriptCaptured, "nix-build")
-	assert.Contains(t, installScriptCaptured, "-A git")
+	// Verify the install script uses nix-build -E with explicit .out output
+	assert.Contains(t, installScriptCaptured, "nix-build -E")
+	assert.Contains(t, installScriptCaptured, "pkgs.git.out or pkgs.git")
 	assert.Contains(t, installScriptCaptured, "xargs nix-env")
 	assert.NotContains(t, installScriptCaptured, "nix profile install")
 }
@@ -1179,7 +1179,7 @@ func TestPackageManagerReconciler_InstallPackage_VersionExtractionWithChannel(t 
 	// Test version extraction from nix-env query output with channel
 	mockExec := &MockCommandExecutor{
 		ExecuteFunc: func(script string) ([]byte, error) {
-			if strings.Contains(script, "nix-build") && strings.Contains(script, "refs/heads/nixos-24.05") {
+			if strings.Contains(script, "nix-build -E") && strings.Contains(script, "refs/heads/nixos-24.05") {
 				// Simulate successful build (returns store path)
 				return []byte("/nix/store/hash123-vim-9.1.1623"), nil
 			}
