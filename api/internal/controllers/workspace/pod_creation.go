@@ -95,12 +95,30 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		},
 	}
 
-	// Add tunnel DNS server env var if configured
+	// Look up tunnel-server Service ClusterIP for DNS resolution
+	// The tunnel-server runs in the workmachine namespace and provides DNS for workspace hostnames
+	tunnelServerSvc := &corev1.Service{}
+	tunnelDNSServer := ""
+	if err := r.Get(context.Background(), client.ObjectKey{
+		Name:      "tunnel-server",
+		Namespace: wm.Spec.TargetNamespace,
+	}, tunnelServerSvc); err == nil && tunnelServerSvc.Spec.ClusterIP != "" {
+		tunnelDNSServer = tunnelServerSvc.Spec.ClusterIP
+		r.Logger.Info("Found tunnel-server DNS",
+			zap.String("workspace", workspace.Name),
+			zap.String("clusterIP", tunnelDNSServer))
+	} else {
+		r.Logger.Warn("Could not find tunnel-server service, using CoreDNS fallback",
+			zap.String("workspace", workspace.Name),
+			zap.Error(err))
+	}
+
+	// Add tunnel DNS server env var if found
 	// This is used by init script and runtime DNS updates to point to tunnel server DNS
-	if r.TunnelDNSServer != "" {
+	if tunnelDNSServer != "" {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "TUNNEL_DNS_SERVER",
-			Value: r.TunnelDNSServer,
+			Value: tunnelDNSServer,
 		})
 	}
 
