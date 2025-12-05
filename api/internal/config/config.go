@@ -83,6 +83,10 @@ type InstallationConfig struct {
 
 	// PollingIntervalSeconds is the interval to poll for subdomain configuration
 	PollingIntervalSeconds int `envconfig:"POLLING_INTERVAL_SECONDS" default:"30"`
+
+	// TunnelDNSServer is the cluster IP of the tunnel server DNS (e.g., "10.43.x.x")
+	// This is used to configure workspace pods to resolve hostnames via the tunnel server
+	TunnelDNSServer string `envconfig:"TUNNEL_DNS_SERVER"`
 }
 
 type TLSConfig struct {
