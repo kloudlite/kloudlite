@@ -55,6 +55,10 @@ type Config struct {
 
 	// JWT authentication config
 	JWTSecret string
+
+	// DNS server config
+	DNSListenAddr string // DNS server listen address (e.g., ":53")
+	UpstreamDNS   string // Upstream DNS server (e.g., "10.43.0.10:53")
 }
 
 func main() {
@@ -72,6 +76,8 @@ func main() {
 	flag.StringVar(&cfg.Namespace, "namespace", os.Getenv("POD_NAMESPACE"), "Namespace to query for ingresses (defaults to POD_NAMESPACE env var)")
 	flag.StringVar(&cfg.RouterServiceRef, "router-service", "wm-ingress-controller", "Name of the router service for hosts resolution")
 	flag.StringVar(&cfg.JWTSecret, "jwt-secret", os.Getenv("JWT_SECRET"), "JWT secret for token validation (can also be set via JWT_SECRET env var)")
+	flag.StringVar(&cfg.DNSListenAddr, "dns-listen", ":53", "DNS server listen address")
+	flag.StringVar(&cfg.UpstreamDNS, "upstream-dns", "10.43.0.10:53", "Upstream DNS server for non-cached queries")
 	version := flag.Bool("version", false, "Show version information")
 	flag.Parse()
 
@@ -197,7 +203,8 @@ func main() {
 		zap.String("wg-peer", "POST|DELETE /wg/peer"),
 		zap.String("ca-cert", "GET /ca-cert"),
 		zap.String("hosts", "GET /hosts"),
-		zap.String("vpn-status", "GET /"))
+		zap.String("vpn-status", "GET /"),
+		zap.String("dns-server", cfg.DNSListenAddr))
 
 	// Create UDP tunnel server
 	server := tunnel.NewUDPServer(listener, logger)
@@ -214,6 +221,20 @@ func main() {
 	go func() {
 		if err := hostsCache.Start(ctx); err != nil {
 			logger.Error("hosts cache error", zap.Error(err))
+		}
+	}()
+
+	// Create and start DNS server
+	dnsServer := handlers.NewDNSServer(logger, hostsCache, handlers.DNSServerConfig{
+		ListenAddr:  cfg.DNSListenAddr,
+		UpstreamDNS: cfg.UpstreamDNS,
+	})
+	go func() {
+		logger.Info("starting DNS server",
+			zap.String("listen", cfg.DNSListenAddr),
+			zap.String("upstream", cfg.UpstreamDNS))
+		if err := dnsServer.Start(ctx); err != nil && err != context.Canceled {
+			logger.Error("DNS server error", zap.Error(err))
 		}
 	}()
 

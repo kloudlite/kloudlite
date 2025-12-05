@@ -59,8 +59,14 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 
 	domains = append(domains, "svc.cluster.local", "cluster.local")
 
+	// Use tunnel DNS server if configured, otherwise fallback to CoreDNS
+	nameserver := "10.43.0.10"
+	if r.TunnelDNSServer != "" {
+		nameserver = r.TunnelDNSServer
+	}
+
 	// Build new resolv.conf content with validated domains
-	resolvConf := fmt.Sprintf("nameserver 10.43.0.10\nsearch %s\noptions ndots:5\n", strings.Join(domains, " "))
+	resolvConf := fmt.Sprintf("nameserver %s\nsearch %s\noptions ndots:5\n", nameserver, strings.Join(domains, " "))
 
 	// Exec into pod and update /etc/resolv.conf
 	// Note: /etc/resolv.conf is mounted from EmptyDir with ReadOnly: false, so it's writable
