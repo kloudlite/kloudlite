@@ -395,12 +395,43 @@ func syncWireGuardPeers(configPath string, logger *zap.Logger) error {
 	return nil
 }
 
-func createInitialConfig(configPath string) error {
-	// Generate WireGuard private key
+// wgPrivateKeyPath is the persistent storage path for the server's WireGuard private key
+const wgPrivateKeyPath = "/var/lib/tunnel-server/wg-private-key"
+
+// getOrCreatePrivateKey loads an existing private key from persistent storage,
+// or generates a new one and saves it for future use
+func getOrCreatePrivateKey() (string, error) {
+	// Try to load existing key
+	if data, err := os.ReadFile(wgPrivateKeyPath); err == nil {
+		return strings.TrimSpace(string(data)), nil
+	}
+
+	// Generate new key
 	genKeyCmd := exec.Command("wg", "genkey")
 	privateKey, err := genKeyCmd.Output()
 	if err != nil {
-		return fmt.Errorf("failed to generate private key: %w", err)
+		return "", fmt.Errorf("failed to generate private key: %w", err)
+	}
+	key := strings.TrimSpace(string(privateKey))
+
+	// Ensure storage directory exists
+	if err := os.MkdirAll(filepath.Dir(wgPrivateKeyPath), 0755); err != nil {
+		return "", fmt.Errorf("failed to create storage directory: %w", err)
+	}
+
+	// Save for future use (mode 0600 for security)
+	if err := os.WriteFile(wgPrivateKeyPath, []byte(key+"\n"), 0600); err != nil {
+		return "", fmt.Errorf("failed to save private key: %w", err)
+	}
+
+	return key, nil
+}
+
+func createInitialConfig(configPath string) error {
+	// Get or create WireGuard private key (persisted across restarts)
+	privateKey, err := getOrCreatePrivateKey()
+	if err != nil {
+		return err
 	}
 
 	// Create initial config with proper PostUp/PostDown scripts
@@ -424,7 +455,7 @@ PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 # [Peer]
 # PublicKey = client_public_key_here
 # AllowedIPs = 10.17.0.2/32
-`, string(privateKey))
+`, privateKey)
 
 	if err := os.WriteFile(configPath, []byte(config), 0600); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
