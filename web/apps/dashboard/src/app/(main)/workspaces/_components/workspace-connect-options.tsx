@@ -9,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@kloudlite/ui'
-import { Terminal, Copy, Check, Sparkles, AlertCircle } from 'lucide-react'
+import { Terminal, Copy, Check, Sparkles, AlertCircle, ShieldOff } from 'lucide-react'
+import { useVPNStatus } from '@/lib/hooks/use-vpn-status'
 import { SiAnthropic, SiZedindustries, SiJetbrains } from 'react-icons/si'
 import { VscVscode } from 'react-icons/vsc'
 import { CursorIcon } from '@/components/icons/cursor-icon'
@@ -40,6 +41,7 @@ export function WorkspaceConnectOptions({
 }: WorkspaceConnectOptionsProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
   const [sshDialogOpen, setSshDialogOpen] = useState(false)
+  const { isConnected: isVPNConnected, isChecking: isVPNChecking } = useVPNStatus()
 
   const workspaceName = workspace.metadata?.name || 'workspace'
 
@@ -209,6 +211,7 @@ export function WorkspaceConnectOptions({
   }
 
   const isRunning = workspace.status?.phase === 'Running'
+  const showVPNAlert = isRunning && !isVPNChecking && !isVPNConnected
 
   return (
     <>
@@ -226,6 +229,19 @@ export function WorkspaceConnectOptions({
           </div>
         )}
 
+        {/* Blur overlay when VPN is not connected */}
+        {showVPNAlert && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-2 text-center px-4">
+              <ShieldOff className="h-8 w-8 text-amber-500" />
+              <p className="text-sm font-medium">VPN is not connected</p>
+              <p className="text-xs text-muted-foreground">
+                Connect to VPN to access your workspace
+              </p>
+            </div>
+          </div>
+        )}
+
         <h3 className="mb-4 text-sm font-medium">Connect to Workspace</h3>
 
         <div className="space-y-6">
@@ -233,13 +249,15 @@ export function WorkspaceConnectOptions({
             <div key={category}>
               <h4 className="text-muted-foreground mb-3 text-xs font-medium">{category}</h4>
               <div className="flex flex-wrap gap-2">
-                {methods.map((method) => (
+                {methods.map((method) => {
+                  const isDisabled = !method.available || method.comingSoon || !isRunning || showVPNAlert
+                  return (
                   <button
                     key={method.id}
                     onClick={() => handleConnect(method)}
-                    disabled={!method.available || method.comingSoon || !isRunning}
+                    disabled={isDisabled}
                     className={`inline-flex h-8 items-center gap-2 rounded-full border px-3 transition-all ${
-                      !method.available || method.comingSoon || !isRunning
+                      isDisabled
                         ? 'bg-muted/30 cursor-not-allowed opacity-50'
                         : 'hover:bg-muted/50 hover:border-primary/50'
                     }`}
@@ -252,7 +270,8 @@ export function WorkspaceConnectOptions({
                       <span className="text-muted-foreground text-[10px] leading-none">Soon</span>
                     )}
                   </button>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))}
