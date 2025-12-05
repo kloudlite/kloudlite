@@ -510,11 +510,12 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 	// Priority: NixpkgsCommit > Channel > latest unstable
 	if pkg.NixpkgsCommit != "" {
 		// Install from specific nixpkgs commit
-		// Use nix-build + nix-env -i to bypass meta.outputsToInstall validation
+		// Use nix-build -E with explicit .out output to bypass meta.outputsToInstall validation
+		// The expression tries .out first, then falls back to the package itself for packages without .out
 		nixpkgsTarball := fmt.Sprintf("https://github.com/nixos/nixpkgs/archive/%s.tar.gz", pkg.NixpkgsCommit)
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build %s -A %s --no-out-link | xargs nix-env -p %s -i`,
-			nixpkgsTarball, pkg.Name, profilePath,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build -E 'let pkgs = import (fetchTarball "%s") {}; in pkgs.%s.out or pkgs.%s' --no-out-link | xargs nix-env -p %s -i`,
+			nixpkgsTarball, pkg.Name, pkg.Name, profilePath,
 		)
 		streamTag = pkg.NixpkgsCommit // Use commit hash as tag for CLI filtering
 		r.Logger.Info("Installing package from nixpkgs commit",
@@ -522,7 +523,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 			zap2.String("commit", pkg.NixpkgsCommit))
 	} else if pkg.Channel != "" {
 		// Install from specific channel/release (e.g., nixos-24.05, nixos-23.11, unstable)
-		// Use nix-build + nix-env -i to bypass meta.outputsToInstall validation
+		// Use nix-build -E with explicit .out output to bypass meta.outputsToInstall validation
 		// Channel can be "24.05", "23.11", "unstable" or "nixos-24.05", "nixos-unstable"
 		channelBranch := pkg.Channel
 		if !strings.HasPrefix(pkg.Channel, "nixos-") && pkg.Channel != "unstable" {
@@ -531,21 +532,21 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 			channelBranch = "nixos-unstable"
 		}
 		channelURL := fmt.Sprintf("https://github.com/nixos/nixpkgs/archive/refs/heads/%s.tar.gz", channelBranch)
-		// Two-step approach: build first, then install from store path
+		// Two-step approach: build first with explicit .out, then install from store path
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build %s -A %s --no-out-link | xargs nix-env -p %s -i`,
-			channelURL, pkg.Name, profilePath,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build -E 'let pkgs = import (fetchTarball "%s") {}; in pkgs.%s.out or pkgs.%s' --no-out-link | xargs nix-env -p %s -i`,
+			channelURL, pkg.Name, pkg.Name, profilePath,
 		)
 		r.Logger.Info("Installing package from channel",
 			zap2.String("package", pkg.Name),
 			zap2.String("channel", pkg.Channel))
 	} else {
 		// Install latest version from nixpkgs unstable
-		// Use nix-build + nix-env -i to bypass meta.outputsToInstall validation
+		// Use nix-build -E with explicit .out output to bypass meta.outputsToInstall validation
 		// This two-step approach builds the package first, then installs from store path
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build '<nixpkgs>' -A %s --no-out-link | xargs nix-env -p %s -i`,
-			pkg.Name, profilePath,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build -E 'let pkgs = import <nixpkgs> {}; in pkgs.%s.out or pkgs.%s' --no-out-link | xargs nix-env -p %s -i`,
+			pkg.Name, pkg.Name, profilePath,
 		)
 		r.Logger.Info("Installing package from nixpkgs unstable",
 			zap2.String("package", pkg.Name))
