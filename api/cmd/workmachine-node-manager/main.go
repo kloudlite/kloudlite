@@ -505,18 +505,16 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
 
 	var installScript string
-	var pkgSource string
 	var streamTag string // Tag for streaming output (nixpkgs commit hash)
 
 	// Priority: NixpkgsCommit > Channel > latest unstable
 	if pkg.NixpkgsCommit != "" {
-		// Install from specific nixpkgs commit using nix-env with tarball
-		// We use nix-env instead of nix profile because not all commits have flake.nix
+		// Install from specific nixpkgs commit
+		// Use nix-build + nix-env -i to bypass meta.outputsToInstall validation
 		nixpkgsTarball := fmt.Sprintf("https://github.com/nixos/nixpkgs/archive/%s.tar.gz", pkg.NixpkgsCommit)
-		pkgAttr := pkg.Name
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -f %s -iA %s`,
-			profilePath, nixpkgsTarball, pkgAttr,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build %s -A %s --no-out-link | xargs nix-env -p %s -i`,
+			nixpkgsTarball, pkg.Name, profilePath,
 		)
 		streamTag = pkg.NixpkgsCommit // Use commit hash as tag for CLI filtering
 		r.Logger.Info("Installing package from nixpkgs commit",
@@ -524,42 +522,68 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 			zap2.String("commit", pkg.NixpkgsCommit))
 	} else if pkg.Channel != "" {
 		// Install from specific channel/release (e.g., nixos-24.05, nixos-23.11, unstable)
-		pkgSource = fmt.Sprintf("nixpkgs/%s#%s", pkg.Channel, pkg.Name)
+		// Use nix-build + nix-env -i to bypass meta.outputsToInstall validation
+		// Channel can be "24.05", "23.11", "unstable" or "nixos-24.05", "nixos-unstable"
+		channelBranch := pkg.Channel
+		if !strings.HasPrefix(pkg.Channel, "nixos-") && pkg.Channel != "unstable" {
+			channelBranch = "nixos-" + pkg.Channel
+		} else if pkg.Channel == "unstable" {
+			channelBranch = "nixos-unstable"
+		}
+		channelURL := fmt.Sprintf("https://github.com/nixos/nixpkgs/archive/refs/heads/%s.tar.gz", channelBranch)
+		// Two-step approach: build first, then install from store path
 		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix --extra-experimental-features "nix-command flakes" profile install --profile %s '%s'`,
-			profilePath, pkgSource,
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build %s -A %s --no-out-link | xargs nix-env -p %s -i`,
+			channelURL, pkg.Name, profilePath,
 		)
 		r.Logger.Info("Installing package from channel",
 			zap2.String("package", pkg.Name),
 			zap2.String("channel", pkg.Channel))
 	} else {
-		// Install latest version from nixpkgs unstable using nix-env (legacy, more compatible)
-		pkgAttr := "nixpkgs." + pkg.Name
-		installScript = fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -iA %s", profilePath, pkgAttr)
+		// Install latest version from nixpkgs unstable
+		// Use nix-build + nix-env -i to bypass meta.outputsToInstall validation
+		// This two-step approach builds the package first, then installs from store path
+		installScript = fmt.Sprintf(
+			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build '<nixpkgs>' -A %s --no-out-link | xargs nix-env -p %s -i`,
+			pkg.Name, profilePath,
+		)
 		r.Logger.Info("Installing package from nixpkgs unstable",
 			zap2.String("package", pkg.Name))
 	}
 
 	// Use streaming output with tag when nixpkgs commit is available (for CLI log filtering)
 	var output []byte
-	var err error
+	var installErr error
 	if streamTag != "" {
-		output, err = ExecuteWithTaggedOutput(installScript, streamTag)
+		output, installErr = ExecuteWithTaggedOutput(installScript, streamTag)
 	} else {
-		output, err = r.CmdExec.Execute(installScript)
-	}
-	if err != nil {
-		return workspacev1.InstalledPackage{}, fmt.Errorf("nix-env failed: %w, output: %s", err, string(output))
+		output, installErr = r.CmdExec.Execute(installScript)
 	}
 
 	// Query package info to get store path and actual installed version from the named profile
+	// We do this even if install "failed" because some packages have broken meta.outputsToInstall
+	// that causes nix-env to return non-zero, but the package is still installed successfully
 	queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q --out-path %s", profilePath, pkg.Name)
 
-	queryOutput, err := r.CmdExec.Execute(queryScript)
-	if err != nil {
+	queryOutput, queryErr := r.CmdExec.Execute(queryScript)
+
+	// If install failed AND we can't find the package in the profile, it's a real failure
+	// But if install "failed" with outputsToInstall error yet package exists, treat as success
+	if installErr != nil {
+		if queryErr != nil || len(queryOutput) == 0 {
+			// Package really wasn't installed
+			return workspacev1.InstalledPackage{}, fmt.Errorf("nix-env failed: %w, output: %s", installErr, string(output))
+		}
+		// Package was installed despite the error (likely meta.outputsToInstall warning)
+		r.Logger.Warn("Package installed despite nix-env error (likely meta.outputsToInstall issue)",
+			zap2.String("package", pkg.Name),
+			zap2.String("error", installErr.Error()))
+	}
+
+	if queryErr != nil {
 		r.Logger.Warn("Failed to query package path, using default",
 			zap2.String("package", pkg.Name),
-			zap2.Error(err))
+			zap2.Error(queryErr))
 	}
 
 	// Parse store path and version from output
