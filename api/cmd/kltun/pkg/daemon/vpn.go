@@ -561,30 +561,26 @@ PersistentKeepalive = 25
 
 // reconnectionLoop monitors for reconnection signals and attempts to reconnect
 func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection, hostsManager hosts.Manager) {
-	backoff := reconnectPollInterval
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-conn.ReconnectChan:
 			// Received signal to start reconnection attempts
-			fmt.Printf("[Session %s] Starting reconnection attempts...\n", conn.SessionID)
-			backoff = reconnectPollInterval
+			fmt.Printf("[Session %s] Starting reconnection attempts (polling every %v)...\n", conn.SessionID, reconnectPollInterval)
 		}
 
-		// Reconnection loop with exponential backoff
+		// Reconnection loop with linear polling (every 5 seconds)
 		for conn.GetState() == StateReconnecting {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(backoff):
+			case <-time.After(reconnectPollInterval):
 				// Poll Dashboard API for new tunnel endpoint (WorkMachine may have new IP)
 				fmt.Printf("[Session %s] Polling dashboard for tunnel endpoint...\n", conn.SessionID)
 				newEndpoint, err := s.fetchNewTunnelEndpoint(conn.DashboardServer, conn.PermanentToken)
 				if err != nil {
-					fmt.Printf("[Session %s] Dashboard not ready: %v, retrying in %v...\n", conn.SessionID, err, backoff)
-					backoff = minDuration(backoff*2, maxReconnectPollInterval)
+					fmt.Printf("[Session %s] Dashboard not ready: %v, retrying in %v...\n", conn.SessionID, err, reconnectPollInterval)
 					continue
 				}
 
@@ -605,12 +601,10 @@ func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection, host
 				fmt.Printf("[Session %s] Tunnel server ready at %s, attempting reconnect...\n",
 					conn.SessionID, newEndpoint.TunnelEndpoint)
 				if err := s.reestablishVPN(ctx, conn); err != nil {
-					fmt.Printf("[Session %s] Reconnect failed: %v, will retry...\n", conn.SessionID, err)
-					backoff = minDuration(backoff*2, maxReconnectPollInterval)
+					fmt.Printf("[Session %s] Reconnect failed: %v, will retry in %v...\n", conn.SessionID, err, reconnectPollInterval)
 				} else {
 					fmt.Printf("[Session %s] Successfully reconnected!\n", conn.SessionID)
 					conn.SetState(StateConnected)
-					backoff = reconnectPollInterval
 					break // Exit inner loop, wait for next reconnect signal
 				}
 			}
@@ -727,10 +721,3 @@ func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error 
 	return nil
 }
 
-// minDuration returns the minimum of two durations
-func minDuration(a, b time.Duration) time.Duration {
-	if a < b {
-		return a
-	}
-	return b
-}

@@ -11,10 +11,9 @@ import (
 
 // Auto-reconnect constants
 const (
-	maxConsecutiveFailures   = 3
-	reconnectPollInterval    = 5 * time.Second
-	maxReconnectPollInterval = 60 * time.Second
-	hostsPollInterval        = 10 * time.Second
+	maxConsecutiveFailures = 3
+	reconnectPollInterval  = 5 * time.Second // Linear polling interval for reconnection
+	hostsPollInterval      = 10 * time.Second
 )
 
 // ConnectionHealthMonitor tracks connection health and triggers reconnection
