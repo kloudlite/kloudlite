@@ -602,11 +602,13 @@ func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection, host
 					conn.SessionID, newEndpoint.TunnelEndpoint)
 				if err := s.reestablishVPN(ctx, conn); err != nil {
 					fmt.Printf("[Session %s] Reconnect failed: %v, will retry in %v...\n", conn.SessionID, err, reconnectPollInterval)
-				} else {
-					fmt.Printf("[Session %s] Successfully reconnected!\n", conn.SessionID)
-					conn.SetState(StateConnected)
-					break // Exit inner loop, wait for next reconnect signal
+					continue // Keep polling - never exit on errors
 				}
+
+				// Success - stop polling and wait for next disconnect
+				fmt.Printf("[Session %s] Successfully reconnected!\n", conn.SessionID)
+				conn.SetState(StateConnected)
+				break // Exit inner loop, wait for next reconnect signal
 			}
 		}
 	}
@@ -720,4 +722,3 @@ func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error 
 
 	return nil
 }
-
