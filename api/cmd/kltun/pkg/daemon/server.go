@@ -49,11 +49,12 @@ type VPNConnection struct {
 	StateLock sync.RWMutex
 
 	// Credentials for reconnection (stored after initial connect)
-	PermanentToken string
-	TunnelEndpoint string
-	TunnelInfo     *api.TunnelEndpointResponse
-	DeviceID       string
-	KeyPair        *wgkeys.KeyPair
+	DashboardServer string // Dashboard server URL (e.g., https://beanbag.khost.dev)
+	PermanentToken  string
+	TunnelEndpoint  string
+	TunnelInfo      *api.TunnelEndpointResponse
+	DeviceID        string
+	KeyPair         *wgkeys.KeyPair
 
 	// Reconnection control
 	ReconnectChan chan struct{} // Signal to trigger reconnection attempt

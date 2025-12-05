@@ -11,6 +11,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/deviceid"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/hosts"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/netconfig"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wgkeys"
@@ -242,6 +243,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	// Store credentials in connection for reconnection
 	s.connMutex.Lock()
 	if conn, exists := s.connections[sessionID]; exists {
+		conn.DashboardServer = server // Store dashboard URL for reconnection
 		conn.PermanentToken = permanentToken
 		conn.TunnelEndpoint = tunnelEndpoint
 		conn.TunnelInfo = tunnelInfo
@@ -251,7 +253,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		conn.ReconnectChan = make(chan struct{}, 1)
 
 		// Start reconnection loop goroutine
-		go s.reconnectionLoop(ctx, conn)
+		go s.reconnectionLoop(ctx, conn, s.hostsManager)
 	}
 	s.connMutex.Unlock()
 
@@ -558,7 +560,7 @@ PersistentKeepalive = 25
 }
 
 // reconnectionLoop monitors for reconnection signals and attempts to reconnect
-func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection) {
+func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection, hostsManager hosts.Manager) {
 	backoff := reconnectPollInterval
 
 	for {
@@ -577,32 +579,49 @@ func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection) {
 			case <-ctx.Done():
 				return
 			case <-time.After(backoff):
-				// Try to reach tunnel server
-				if s.canReachTunnelServer(conn.TunnelEndpoint, conn.PermanentToken) {
-					fmt.Printf("[Session %s] Tunnel server reachable, attempting reconnect...\n", conn.SessionID)
-					if err := s.reestablishVPN(ctx, conn); err != nil {
-						fmt.Printf("[Session %s] Reconnect failed: %v, will retry...\n", conn.SessionID, err)
-						backoff = minDuration(backoff*2, maxReconnectPollInterval)
-					} else {
-						fmt.Printf("[Session %s] Successfully reconnected!\n", conn.SessionID)
-						conn.SetState(StateConnected)
-						backoff = reconnectPollInterval
-						break // Exit inner loop, wait for next reconnect signal
-					}
-				} else {
-					fmt.Printf("[Session %s] Tunnel server unreachable, retrying in %v...\n", conn.SessionID, backoff)
+				// Poll Dashboard API for new tunnel endpoint (WorkMachine may have new IP)
+				fmt.Printf("[Session %s] Polling dashboard for tunnel endpoint...\n", conn.SessionID)
+				newEndpoint, err := s.fetchNewTunnelEndpoint(conn.DashboardServer, conn.PermanentToken)
+				if err != nil {
+					fmt.Printf("[Session %s] Dashboard not ready: %v, retrying in %v...\n", conn.SessionID, err, backoff)
 					backoff = minDuration(backoff*2, maxReconnectPollInterval)
+					continue
+				}
+
+				// Update /etc/hosts with new IP if changed
+				if newEndpoint.IP != conn.TunnelInfo.IP {
+					fmt.Printf("[Session %s] IP changed: %s -> %s, updating /etc/hosts...\n",
+						conn.SessionID, conn.TunnelInfo.IP, newEndpoint.IP)
+					if err := hostsManager.Add(newEndpoint.Hostname, newEndpoint.IP,
+						fmt.Sprintf("# kltun session %s", conn.SessionID)); err != nil {
+						fmt.Printf("[Session %s] Warning: Failed to update /etc/hosts: %v\n", conn.SessionID, err)
+					}
+				}
+
+				// Update connection with new endpoint info
+				conn.TunnelEndpoint = newEndpoint.TunnelEndpoint
+				conn.TunnelInfo = newEndpoint
+
+				fmt.Printf("[Session %s] Tunnel server ready at %s, attempting reconnect...\n",
+					conn.SessionID, newEndpoint.TunnelEndpoint)
+				if err := s.reestablishVPN(ctx, conn); err != nil {
+					fmt.Printf("[Session %s] Reconnect failed: %v, will retry...\n", conn.SessionID, err)
+					backoff = minDuration(backoff*2, maxReconnectPollInterval)
+				} else {
+					fmt.Printf("[Session %s] Successfully reconnected!\n", conn.SessionID)
+					conn.SetState(StateConnected)
+					backoff = reconnectPollInterval
+					break // Exit inner loop, wait for next reconnect signal
 				}
 			}
 		}
 	}
 }
 
-// canReachTunnelServer checks if the tunnel server is reachable
-func (s *Server) canReachTunnelServer(endpoint, token string) bool {
-	client := api.NewTunnelClient(endpoint, token)
-	err := client.Health()
-	return err == nil
+// fetchNewTunnelEndpoint fetches the current tunnel endpoint from Dashboard API
+func (s *Server) fetchNewTunnelEndpoint(dashboardServer, token string) (*api.TunnelEndpointResponse, error) {
+	client := api.NewClient(dashboardServer, token)
+	return client.GetTunnelEndpoint()
 }
 
 // reestablishVPN re-establishes the VPN connection after disconnection
