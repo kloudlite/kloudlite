@@ -40,7 +40,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install OpenSSL for certificate generation
-RUN apk add --no-cache openssl
+RUN apk add --no-cache --no-scripts openssl
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs && \
