@@ -39,12 +39,11 @@ const (
 // WorkspaceReconciler reconciles Workspace objects and manages VS Code server pods
 type WorkspaceReconciler struct {
 	client.Client
-	Scheme          *runtime.Scheme
-	Logger          *zap.Logger
-	Config          *rest.Config
-	Clientset       *kubernetes.Clientset
-	JWTSecret       string // JWT secret for generating Docker registry tokens (HS256)
-	TunnelDNSServer string // Tunnel server DNS IP for workspace DNS resolution (e.g., "10.43.x.x")
+	Scheme    *runtime.Scheme
+	Logger    *zap.Logger
+	Config    *rest.Config
+	Clientset *kubernetes.Clientset
+	JWTSecret string // JWT secret for generating Docker registry tokens (HS256)
 }
 
 // DockerRegistryClaims represents the JWT claims for Docker Registry authentication

@@ -59,10 +59,20 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 
 	domains = append(domains, "svc.cluster.local", "cluster.local")
 
-	// Use tunnel DNS server if configured, otherwise fallback to CoreDNS
-	nameserver := "10.43.0.10"
-	if r.TunnelDNSServer != "" {
-		nameserver = r.TunnelDNSServer
+	// Look up tunnel-server Service ClusterIP for DNS resolution
+	// The tunnel-server runs in the same workmachine namespace and provides DNS for workspace hostnames
+	nameserver := "10.43.0.10" // Default to CoreDNS
+	tunnelServerSvc := &corev1.Service{}
+	if err := r.Get(ctx, client.ObjectKey{
+		Name:      "tunnel-server",
+		Namespace: targetNamespace,
+	}, tunnelServerSvc); err == nil && tunnelServerSvc.Spec.ClusterIP != "" {
+		nameserver = tunnelServerSvc.Spec.ClusterIP
+		logger.Info("Using tunnel-server DNS for runtime update",
+			zap.String("clusterIP", nameserver))
+	} else {
+		logger.Warn("Could not find tunnel-server service, using CoreDNS fallback",
+			zap.Error(err))
 	}
 
 	// Build new resolv.conf content with validated domains

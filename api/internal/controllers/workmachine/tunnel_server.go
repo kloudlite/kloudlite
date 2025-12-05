@@ -260,6 +260,16 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 									ContainerPort: 51820,
 									Protocol:      corev1.ProtocolUDP,
 								},
+								{
+									Name:          "dns-udp",
+									ContainerPort: 53,
+									Protocol:      corev1.ProtocolUDP,
+								},
+								{
+									Name:          "dns-tcp",
+									ContainerPort: 53,
+									Protocol:      corev1.ProtocolTCP,
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
@@ -356,6 +366,18 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 				Protocol:   corev1.ProtocolUDP,
 				Port:       51820,
 				TargetPort: intstr.FromInt32(51820),
+			},
+			{
+				Name:       "dns-udp",
+				Protocol:   corev1.ProtocolUDP,
+				Port:       53,
+				TargetPort: intstr.FromInt32(53),
+			},
+			{
+				Name:       "dns-tcp",
+				Protocol:   corev1.ProtocolTCP,
+				Port:       53,
+				TargetPort: intstr.FromInt32(53),
 			},
 		}
 

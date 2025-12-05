@@ -144,13 +144,12 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 	}
 
 	workspaceReconciler := &workspace.WorkspaceReconciler{
-		Client:          mgr.GetClient(),
-		Scheme:          mgr.GetScheme(),
-		Logger:          logger.With(zap.String("controller", "workspace")),
-		Config:          cfg,
-		Clientset:       clientset,
-		JWTSecret:       authCfg.JWTSecret,
-		TunnelDNSServer: installationCfg.TunnelDNSServer,
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		Logger:    logger.With(zap.String("controller", "workspace")),
+		Config:    cfg,
+		Clientset: clientset,
+		JWTSecret: authCfg.JWTSecret,
 	}
 
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
