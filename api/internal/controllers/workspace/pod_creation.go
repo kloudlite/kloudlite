@@ -95,6 +95,15 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		},
 	}
 
+	// Add tunnel DNS server env var if configured
+	// This is used by init script and runtime DNS updates to point to tunnel server DNS
+	if r.TunnelDNSServer != "" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "TUNNEL_DNS_SERVER",
+			Value: r.TunnelDNSServer,
+		})
+	}
+
 	// Set PATH for container environment (kubectl exec, running services, etc.)
 	// This is also set in /etc/environment for SSH sessions via PAM
 	// /kloudlite/bin has highest priority for kl binary and system tools
@@ -237,12 +246,15 @@ env | grep -E '^KUBERNETES_' >> /etc-writable/environment || true
 chmod 644 /etc-writable/environment
 
 # Create /etc/resolv.conf with DNS configuration
+# Use TUNNEL_DNS_SERVER if set (points to tunnel server DNS), fallback to CoreDNS
 # If workspace is connected to an environment, include that namespace in search domains
-cat > /etc-writable-resolv/resolv.conf << 'EOFR'
-nameserver 10.43.0.10
+NAMESERVER=${TUNNEL_DNS_SERVER:-10.43.0.10}
+cat > /etc-writable-resolv/resolv.conf << EOFR
+nameserver $NAMESERVER
 search %s
 options ndots:5
 EOFR
+echo "DNS configured with nameserver: $NAMESERVER"
 chown 1001:1001 /etc-writable-resolv/resolv.conf
 chmod 666 /etc-writable-resolv/resolv.conf
 
