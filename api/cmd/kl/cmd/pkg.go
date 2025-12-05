@@ -552,6 +552,15 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
+	// Record initial workspace status to detect stale failures
+	// We need to wait for the status message to change before trusting FailedPackages
+	// because the workspace status might still have old data from a previous attempt
+	initialWorkspace, err := WsClient.Get(ctx)
+	initialStatusMessage := ""
+	if err == nil {
+		initialStatusMessage = initialWorkspace.Status.PackageInstallationMessage
+	}
+
 	// Create a cancellable context for log streaming
 	logCtx, cancelLogs := context.WithCancel(ctx)
 	defer cancelLogs()
@@ -603,8 +612,11 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 			}
 
 			// Check if package failed
+			// Only consider it a failure if the status message has changed from the initial state
+			// This prevents false failures from stale FailedPackages data from previous attempts
+			statusMessageChanged := workspace.Status.PackageInstallationMessage != initialStatusMessage
 			for _, failedPkg := range workspace.Status.FailedPackages {
-				if failedPkg == packageName {
+				if failedPkg == packageName && statusMessageChanged {
 					errMsg := workspace.Status.PackageInstallationMessage
 					if errMsg != "" {
 						return fmt.Errorf("package installation failed: %s", errMsg)
