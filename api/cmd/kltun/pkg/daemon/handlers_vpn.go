@@ -151,11 +151,28 @@ func (s *Server) handleStatus(req *Request) *Response {
 	s.connMutex.RLock()
 	var connStatuses []ConnectionStatus
 	for _, conn := range s.connections {
+		state := conn.GetState()
+		isConnected := state == StateConnected
+
+		var message string
+		switch state {
+		case StateReconnecting:
+			message = "Connection lost, attempting to reconnect..."
+		case StateDisconnected:
+			message = "Disconnected"
+		case StateConnected:
+			message = "Connected"
+		default:
+			message = "Unknown state"
+		}
+
 		connStatuses = append(connStatuses, ConnectionStatus{
 			SessionID: conn.SessionID,
 			Server:    conn.Server,
-			Connected: true,
+			Connected: isConnected,
+			State:     string(state),
 			Uptime:    int64(time.Since(conn.StartTime).Seconds()),
+			Message:   message,
 		})
 	}
 	s.connMutex.RUnlock()

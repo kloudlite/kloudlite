@@ -168,6 +168,15 @@ func (s *vpnService) GetTunnelEndpoint(ctx context.Context, username string) (*T
 		return nil, fmt.Errorf("work machine has no public IP (may not be running)")
 	}
 
+	// Check if tunnel server is ready before returning endpoint
+	ready, err := s.isTunnelServerReady(ctx, wm.Spec.TargetNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check tunnel server status: %w", err)
+	}
+	if !ready {
+		return nil, fmt.Errorf("tunnel server is not ready yet (WorkMachine may still be starting)")
+	}
+
 	// Get subdomain and domain from DomainRequest
 	subdomain, domain, err := s.getDomainInfo(ctx)
 	if err != nil {
@@ -208,4 +217,28 @@ func (s *vpnService) getDomainInfo(ctx context.Context) (subdomain, domain strin
 	}
 
 	return parts[0], parts[1], nil
+}
+
+// isTunnelServerReady checks if the tunnel-server pod is ready in the given namespace
+func (s *vpnService) isTunnelServerReady(ctx context.Context, namespace string) (bool, error) {
+	// Get tunnel-server pod (StatefulSet creates pod with name: tunnel-server-0)
+	var pod corev1.Pod
+	if err := s.k8sClient.Get(ctx, client.ObjectKey{
+		Name:      "tunnel-server-0",
+		Namespace: namespace,
+	}, &pod); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil // Pod doesn't exist yet
+		}
+		return false, fmt.Errorf("failed to get tunnel-server pod: %w", err)
+	}
+
+	// Check if pod is ready
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == corev1.PodReady && condition.Status == corev1.ConditionTrue {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

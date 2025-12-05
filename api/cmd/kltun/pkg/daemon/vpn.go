@@ -239,6 +239,22 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 	fmt.Printf("[Session %s] ✓ WireGuard device started (IP: %s)\n", sessionID, peerResp.IP)
 
+	// Store credentials in connection for reconnection
+	s.connMutex.Lock()
+	if conn, exists := s.connections[sessionID]; exists {
+		conn.PermanentToken = permanentToken
+		conn.TunnelEndpoint = tunnelEndpoint
+		conn.TunnelInfo = tunnelInfo
+		conn.DeviceID = deviceID
+		conn.KeyPair = keyPair
+		conn.State = StateConnected
+		conn.ReconnectChan = make(chan struct{}, 1)
+
+		// Start reconnection loop goroutine
+		go s.reconnectionLoop(ctx, conn)
+	}
+	s.connMutex.Unlock()
+
 	// Signal success - connection is established with CA cert status
 	resultChan <- VPNConnectionSetupResult{
 		Error:           nil,
@@ -539,4 +555,163 @@ AllowedIPs = %s, 10.43.0.0/16
 Endpoint = 127.0.0.1:51821
 PersistentKeepalive = 25
 `, privateKey, peerIP, serverPublicKey, cidr)
+}
+
+// reconnectionLoop monitors for reconnection signals and attempts to reconnect
+func (s *Server) reconnectionLoop(ctx context.Context, conn *VPNConnection) {
+	backoff := reconnectPollInterval
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-conn.ReconnectChan:
+			// Received signal to start reconnection attempts
+			fmt.Printf("[Session %s] Starting reconnection attempts...\n", conn.SessionID)
+			backoff = reconnectPollInterval
+		}
+
+		// Reconnection loop with exponential backoff
+		for conn.GetState() == StateReconnecting {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(backoff):
+				// Try to reach tunnel server
+				if s.canReachTunnelServer(conn.TunnelEndpoint, conn.PermanentToken) {
+					fmt.Printf("[Session %s] Tunnel server reachable, attempting reconnect...\n", conn.SessionID)
+					if err := s.reestablishVPN(ctx, conn); err != nil {
+						fmt.Printf("[Session %s] Reconnect failed: %v, will retry...\n", conn.SessionID, err)
+						backoff = minDuration(backoff*2, maxReconnectPollInterval)
+					} else {
+						fmt.Printf("[Session %s] Successfully reconnected!\n", conn.SessionID)
+						conn.SetState(StateConnected)
+						backoff = reconnectPollInterval
+						break // Exit inner loop, wait for next reconnect signal
+					}
+				} else {
+					fmt.Printf("[Session %s] Tunnel server unreachable, retrying in %v...\n", conn.SessionID, backoff)
+					backoff = minDuration(backoff*2, maxReconnectPollInterval)
+				}
+			}
+		}
+	}
+}
+
+// canReachTunnelServer checks if the tunnel server is reachable
+func (s *Server) canReachTunnelServer(endpoint, token string) bool {
+	client := api.NewTunnelClient(endpoint, token)
+	err := client.Health()
+	return err == nil
+}
+
+// reestablishVPN re-establishes the VPN connection after disconnection
+func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error {
+	sessionID := conn.SessionID
+
+	// Create tunnel client
+	tunnelClient := api.NewTunnelClient(conn.TunnelEndpoint, conn.PermanentToken)
+
+	// 1. Re-register WireGuard peer (may already exist)
+	fmt.Printf("[Session %s] Re-registering WireGuard peer...\n", sessionID)
+	peerResp, err := tunnelClient.CreatePeer(conn.DeviceID, conn.KeyPair.PublicKey)
+	if err != nil {
+		return fmt.Errorf("failed to register WireGuard peer: %w", err)
+	}
+	if peerResp.AlreadyExists {
+		fmt.Printf("[Session %s] WireGuard peer already exists - IP: %s\n", sessionID, peerResp.IP)
+	} else {
+		fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
+	}
+
+	// 2. Re-establish UDP-over-WebSocket tunnel
+	fmt.Printf("[Session %s] Re-establishing UDP-over-WebSocket tunnel...\n", sessionID)
+
+	// Create logger for UDP tunnel
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return fmt.Errorf("failed to create logger: %w", err)
+	}
+	defer logger.Sync()
+
+	// Create WebSocket dialer with TLS 1.3
+	transportConfig := transport.DefaultConfig()
+	tlsConfig := &tls.Config{
+		MinVersion:         tls.VersionTLS13,
+		InsecureSkipVerify: true,
+	}
+	wsHeaders := http.Header{
+		"Authorization": []string{"Bearer " + conn.PermanentToken},
+	}
+	dialer := transport.NewWebSocketDialer(
+		transportConfig,
+		tlsConfig,
+		wsHeaders,
+		logger,
+	)
+
+	// Create UDP tunnel client
+	serverURL := "wss://" + conn.TunnelEndpoint + "/ws"
+	udpClient := tunnel.NewUDPClient(
+		"127.0.0.1:51821",
+		serverURL,
+		"127.0.0.1:51820",
+		dialer,
+		logger,
+	)
+
+	// Start UDP tunnel client in background
+	go func() {
+		if err := udpClient.Start(ctx); err != nil && ctx.Err() == nil {
+			fmt.Printf("[Session %s] UDP tunnel error: %v\n", sessionID, err)
+		}
+	}()
+
+	fmt.Printf("[Session %s] ✓ UDP-over-WebSocket tunnel re-established\n", sessionID)
+
+	// 3. Re-configure WireGuard device
+	fmt.Printf("[Session %s] Re-configuring WireGuard...\n", sessionID)
+	wgDeviceConfig := &wireguard.Config{
+		ListenPort: 51820,
+		MTU:        1420,
+	}
+
+	wgDevice, err := wireguard.NewDevice(ctx, wgDeviceConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create WireGuard device: %w", err)
+	}
+
+	// Configure IP address and routes
+	netCfg := &netconfig.InterfaceConfig{
+		InterfaceName: wgDevice.InterfaceName(),
+		IPAddress:     fmt.Sprintf("%s/32", peerResp.IP),
+		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
+		Gateway:       "10.17.0.1",
+	}
+
+	if err := netconfig.ConfigureInterface(netCfg); err != nil {
+		return fmt.Errorf("failed to configure network interface: %w", err)
+	}
+
+	if err := wgDevice.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start WireGuard device: %w", err)
+	}
+
+	// Build WireGuard config
+	wgConfig := buildWireGuardConfig(conn.KeyPair.PrivateKey, peerResp.IP, peerResp.ServerPublicKey, peerResp.CIDR)
+	if err := wgDevice.SetConfig(wgConfig); err != nil {
+		return fmt.Errorf("failed to set WireGuard config: %w", err)
+	}
+
+	fmt.Printf("[Session %s] ✓ WireGuard re-configured (IP: %s)\n", sessionID, peerResp.IP)
+
+	return nil
+}
+
+// minDuration returns the minimum of two durations
+func minDuration(a, b time.Duration) time.Duration {
+	if a < b {
+		return a
+	}
+	return b
 }

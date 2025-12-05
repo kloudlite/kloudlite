@@ -12,7 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/hosts"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wgkeys"
 )
 
 // Server represents the daemon RPC server
@@ -25,6 +27,15 @@ type Server struct {
 	wg           sync.WaitGroup
 }
 
+// ConnectionState represents the state of a VPN connection
+type ConnectionState string
+
+const (
+	StateConnected    ConnectionState = "connected"
+	StateDisconnected ConnectionState = "disconnected"
+	StateReconnecting ConnectionState = "reconnecting"
+)
+
 // VPNConnection represents an active VPN connection
 type VPNConnection struct {
 	SessionID  string
@@ -32,6 +43,34 @@ type VPNConnection struct {
 	StartTime  time.Time
 	CancelFunc context.CancelFunc
 	DoneChan   chan struct{} // Signals when cleanup is complete
+
+	// Connection state for auto-reconnect
+	State     ConnectionState
+	StateLock sync.RWMutex
+
+	// Credentials for reconnection (stored after initial connect)
+	PermanentToken string
+	TunnelEndpoint string
+	TunnelInfo     *api.TunnelEndpointResponse
+	DeviceID       string
+	KeyPair        *wgkeys.KeyPair
+
+	// Reconnection control
+	ReconnectChan chan struct{} // Signal to trigger reconnection attempt
+}
+
+// GetState returns the current connection state
+func (c *VPNConnection) GetState() ConnectionState {
+	c.StateLock.RLock()
+	defer c.StateLock.RUnlock()
+	return c.State
+}
+
+// SetState sets the connection state
+func (c *VPNConnection) SetState(state ConnectionState) {
+	c.StateLock.Lock()
+	defer c.StateLock.Unlock()
+	c.State = state
 }
 
 // NewServer creates a new daemon server

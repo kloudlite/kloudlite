@@ -192,7 +192,9 @@ type ConnectionStatus struct {
 	SessionID string `json:"session_id"`
 	Server    string `json:"server"`
 	Connected bool   `json:"connected"`
+	State     string `json:"state"` // "connected", "reconnecting", "disconnected"
 	Uptime    int64  `json:"uptime"`
+	Message   string `json:"message,omitempty"` // Human-readable state description
 }
 
 // StatusResult contains daemon status
