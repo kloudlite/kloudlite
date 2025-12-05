@@ -6,14 +6,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-ping/ping"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 )
 
 // Auto-reconnect constants
 const (
 	maxConsecutiveFailures = 3
-	reconnectPollInterval  = 5 * time.Second // Linear polling interval for reconnection
-	hostsPollInterval      = 10 * time.Second
+	reconnectPollInterval  = 5 * time.Second  // Linear polling interval for reconnection
+	hostsPollInterval      = 10 * time.Second // Hosts polling interval
+	vpnCheckInterval       = 5 * time.Second  // VPN health check interval
+	vpnCheckTimeout        = 3 * time.Second  // Timeout for VPN connectivity check
+	vpnGatewayIP           = "10.17.0.1"      // VPN gateway IP to check connectivity
 )
 
 // ConnectionHealthMonitor tracks connection health and triggers reconnection
@@ -66,6 +70,26 @@ func (m *ConnectionHealthMonitor) MarkDisconnected() {
 	if !wasAlreadyDisconnected && m.onDisconnected != nil {
 		m.onDisconnected()
 	}
+}
+
+// checkVPNConnectivity checks if we can reach the VPN gateway (10.17.0.1) via ICMP ping
+// Returns true if VPN is connected, false otherwise
+func checkVPNConnectivity() bool {
+	pinger, err := ping.NewPinger(vpnGatewayIP)
+	if err != nil {
+		return false
+	}
+	pinger.SetPrivileged(true) // Use privileged mode (raw socket)
+	pinger.Count = 1
+	pinger.Timeout = vpnCheckTimeout
+
+	err = pinger.Run()
+	if err != nil {
+		return false
+	}
+
+	stats := pinger.Statistics()
+	return stats.PacketsRecv > 0
 }
 
 // pollHosts polls the hosts API every 10 seconds and updates /etc/hosts
@@ -136,13 +160,15 @@ func (s *Server) fetchAndUpdateHosts(ctx context.Context, sessionID string, apiC
 	fmt.Printf("[Session %s] ✓ Hosts updated (%d entries)\n", sessionID, len(currentHosts))
 }
 
-// pollHostsFromTunnel polls the hosts from tunnel server every 10 seconds and updates /etc/hosts
-// It now includes health monitoring to trigger reconnection when the tunnel becomes unreachable
+// pollHostsFromTunnel polls the hosts from tunnel server and monitors VPN connectivity
+// When VPN goes down (10.17.0.1 unreachable), triggers reconnection via Dashboard API
 func (s *Server) pollHostsFromTunnel(ctx context.Context, sessionID string, tunnelClient *api.TunnelClient, done chan<- struct{}) {
 	defer close(done)
 
-	ticker := time.NewTicker(hostsPollInterval)
-	defer ticker.Stop()
+	hostsTicker := time.NewTicker(hostsPollInterval)
+	vpnCheckTicker := time.NewTicker(vpnCheckInterval)
+	defer hostsTicker.Stop()
+	defer vpnCheckTicker.Stop()
 
 	// Track current hosts to detect changes
 	currentHosts := make(map[string]string) // hostname -> IP
@@ -152,10 +178,10 @@ func (s *Server) pollHostsFromTunnel(ctx context.Context, sessionID string, tunn
 	conn := s.connections[sessionID]
 	s.connMutex.RUnlock()
 
-	// Create health monitor with disconnection callback
+	// Create health monitor for VPN connectivity (ping 10.17.0.1)
 	healthMonitor := NewConnectionHealthMonitor(func() {
-		fmt.Printf("[Session %s] Connection lost - WorkMachine may be stopped\n", sessionID)
-		fmt.Printf("[Session %s] Entering reconnection mode, will auto-reconnect when available...\n", sessionID)
+		fmt.Printf("[Session %s] VPN disconnected - 10.17.0.1 unreachable\n", sessionID)
+		fmt.Printf("[Session %s] Entering reconnection mode, polling Dashboard API...\n", sessionID)
 
 		if conn != nil {
 			conn.SetState(StateReconnecting)
@@ -168,19 +194,36 @@ func (s *Server) pollHostsFromTunnel(ctx context.Context, sessionID string, tunn
 		}
 	})
 
-	// Initial fetch
-	s.fetchAndUpdateHostsFromTunnelWithMonitor(ctx, sessionID, tunnelClient, currentHosts, healthMonitor)
+	// Initial fetch of hosts
+	s.fetchAndUpdateHostsFromTunnel(ctx, sessionID, tunnelClient, currentHosts)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-			// Skip polling if we're in reconnecting state (reconnection loop handles it)
+		case <-vpnCheckTicker.C:
+			// Skip VPN check if we're in reconnecting state
 			if conn != nil && conn.GetState() == StateReconnecting {
 				continue
 			}
-			s.fetchAndUpdateHostsFromTunnelWithMonitor(ctx, sessionID, tunnelClient, currentHosts, healthMonitor)
+
+			// Check VPN connectivity by pinging 10.17.0.1
+			if checkVPNConnectivity() {
+				healthMonitor.RecordSuccess()
+			} else {
+				failureCount := healthMonitor.GetFailureCount() + 1
+				fmt.Printf("[Session %s] VPN check failed (%d/%d): 10.17.0.1 unreachable\n",
+					sessionID, failureCount, maxConsecutiveFailures)
+				if healthMonitor.RecordFailure() {
+					healthMonitor.MarkDisconnected()
+				}
+			}
+		case <-hostsTicker.C:
+			// Skip hosts polling if we're in reconnecting state
+			if conn != nil && conn.GetState() == StateReconnecting {
+				continue
+			}
+			s.fetchAndUpdateHostsFromTunnel(ctx, sessionID, tunnelClient, currentHosts)
 		}
 	}
 }
