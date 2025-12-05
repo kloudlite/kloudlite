@@ -224,19 +224,28 @@ if [ "$NEEDS_UPDATE" = true ]; then
 
     # Stop daemon if running (to ensure new binary is used)
     echo_color "\${BLUE}Restarting daemon with new binary...\${NC}"
-    if $KLTUN_CMD daemon status >/dev/null 2>&1; then
-        # Try to kill the daemon process
-        if [ "$PLATFORM" = "windows" ]; then
+    if [ "$PLATFORM" = "darwin" ]; then
+        # macOS: use launchctl to restart the launchd-managed daemon
+        if launchctl list | grep -q "io.kloudlite.kltund"; then
+            echo_color "\${BLUE}Restarting launchd daemon...\${NC}"
+            sudo launchctl kickstart -k system/io.kloudlite.kltund 2>/dev/null || true
+            sleep 2
+        fi
+    elif [ "$PLATFORM" = "windows" ]; then
+        if $KLTUN_CMD daemon status >/dev/null 2>&1; then
             taskkill //F //IM kltun.exe 2>/dev/null || true
-        else
-            # Unix-like systems
+            sleep 1
+        fi
+    else
+        # Linux: use pkill
+        if $KLTUN_CMD daemon status >/dev/null 2>&1; then
             if [ "$(id -u)" != "0" ] && [ ! -w "/usr/local/bin" ]; then
                 sudo pkill -9 kltun 2>/dev/null || true
             else
                 pkill -9 kltun 2>/dev/null || true
             fi
+            sleep 1
         fi
-        sleep 1
     fi
     echo ""
 fi
@@ -244,17 +253,33 @@ echo ""
 
 # Start daemon if not running
 echo_color "\${BLUE}Starting kltun daemon...\${NC}"
-if [ "$PLATFORM" = "windows" ]; then
+if [ "$PLATFORM" = "darwin" ]; then
+    # macOS: check if launchd daemon is running
+    if launchctl list | grep -q "io.kloudlite.kltund"; then
+        echo_color "\${GREEN}✓ Daemon running (launchd)\${NC}"
+    else
+        # Launchd plist not installed, install it first
+        echo_color "\${BLUE}Installing launchd daemon...\${NC}"
+        sudo $KLTUN_CMD daemon install 2>/dev/null || true
+        sleep 2
+        if launchctl list | grep -q "io.kloudlite.kltund"; then
+            echo_color "\${GREEN}✓ Daemon installed and running\${NC}"
+        else
+            echo_color "\${RED}Error: Failed to install daemon\${NC}"
+            echo_color "\${YELLOW}Try installing it manually:\${NC}"
+            echo "  sudo $KLTUN_CMD daemon install"
+            exit 1
+        fi
+    fi
+elif [ "$PLATFORM" = "windows" ]; then
     # Windows: start daemon in background
     if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
         start /B $KLTUN_CMD daemon run
         sleep 3
     fi
 else
-    # Unix: start daemon in background (binary handles privilege escalation)
+    # Linux: start daemon in background
     if ! $KLTUN_CMD daemon status >/dev/null 2>&1; then
-        # Start daemon detached from terminal
-        # The binary will request sudo if needed for creating /var/run/kltund.sock
         nohup $KLTUN_CMD daemon run >/dev/null 2>&1 &
 
         # Wait for daemon to start (max 5 seconds)
