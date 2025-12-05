@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Shield, ShieldOff, Loader2, Copy, Check, AlertTriangle } from 'lucide-react'
 import {
   DropdownMenu,
@@ -11,92 +11,16 @@ import {
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kloudlite/ui'
-
-type VPNStatus = 'checking' | 'connected' | 'disconnected'
+import { useVPNStatus } from '@/lib/hooks/use-vpn-status'
 
 interface VPNStatusIndicatorProps {
   isWorkMachineRunning?: boolean
 }
 
 export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIndicatorProps) {
-  const [status, setStatus] = useState<VPNStatus>('checking')
+  const { status, isChecking, checkVPNStatus } = useVPNStatus({ enabled: isWorkMachineRunning })
   const [token, setToken] = useState<string>('')
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    checkVPNStatus()
-
-    // Poll for status every 30 seconds
-    const interval = setInterval(() => {
-      checkVPNStatus()
-    }, 30000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const checkVPNStatus = async () => {
-    try {
-      // Extract subdomain from current hostname
-      // Expected format: subdomain.khost.dev or *.subdomain.khost.dev
-      const hostname = window.location.hostname
-      const baseDomain = 'khost.dev' // This should match CLOUDFLARE_DNS_DOMAIN
-
-      // Parse subdomain from hostname
-      // Examples:
-      // - "test.khost.dev" -> "test"
-      // - "console.test.khost.dev" -> "test"
-      const hostParts = hostname.split('.')
-      const baseParts = baseDomain.split('.')
-
-      let subdomain: string | null = null
-
-      if (hostParts.length > baseParts.length) {
-        // Get the part before the base domain
-        // For "console.test.khost.dev" with base "khost.dev", we want "test"
-        subdomain = hostParts[hostParts.length - baseParts.length - 1]
-      }
-
-      if (!subdomain) {
-        setStatus('disconnected')
-        return
-      }
-
-      // Construct VPN check URL and hit it directly from browser
-      const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
-
-      // Use fetch with mode: 'no-cors' to test connectivity without console errors
-      // no-cors mode won't let us check response status, but we can detect if the request completes
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000)
-
-      try {
-        await fetch(vpnCheckUrl, {
-          method: 'HEAD',
-          mode: 'no-cors',
-          signal: controller.signal,
-          cache: 'no-cache',
-        })
-        clearTimeout(timeoutId)
-        // If fetch completes without error, VPN is connected
-        setStatus('connected')
-      } catch (fetchError) {
-        clearTimeout(timeoutId)
-        // Distinguish between timeout/abort and actual network errors
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          // Timeout - VPN might be slow or disconnected
-          setStatus('disconnected')
-        } else {
-          // Network error - VPN is disconnected
-          setStatus('disconnected')
-        }
-      }
-    } catch (_error) {
-      // Network error likely means VPN is not connected
-      setStatus('disconnected')
-    }
-  }
 
   const generateToken = async () => {
     try {
@@ -128,7 +52,7 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
   }
 
   const getIcon = () => {
-    if (!mounted || status === 'checking') {
+    if (isChecking) {
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
     }
     if (!isWorkMachineRunning) {
@@ -142,7 +66,7 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
 
   const getStatusMessage = () => {
     if (!isWorkMachineRunning) return 'VPN Unavailable'
-    if (status === 'checking') return 'Checking VPN status...'
+    if (isChecking) return 'Checking VPN status...'
     if (status === 'connected') return 'VPN Connected'
     return 'VPN Not Connected'
   }
