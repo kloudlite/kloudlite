@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import { Pause, Play, Loader2 } from 'lucide-react'
@@ -16,6 +16,7 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const wasPollingRef = useRef(false)
 
   const { phase, isPolling, startPolling } = useWorkspaceStatus(
     workspace.metadata.name,
@@ -23,9 +24,17 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
     { stopOnPhase: ['Running', 'Failed', 'Stopped'] }
   )
 
-  // Refresh the page when polling stops (workspace reached terminal state)
+  // Track when polling starts
   useEffect(() => {
-    if (!isPolling && phase && (phase === 'Running' || phase === 'Failed')) {
+    if (isPolling) {
+      wasPollingRef.current = true
+    }
+  }, [isPolling])
+
+  // Refresh the page when polling stops after having started (workspace reached terminal state)
+  useEffect(() => {
+    if (wasPollingRef.current && !isPolling && phase && (phase === 'Running' || phase === 'Failed')) {
+      wasPollingRef.current = false
       router.refresh()
     }
   }, [isPolling, phase, router])
