@@ -329,6 +329,40 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		}
 	}
 
+	// Filesystem-based cleanup: remove packages in profile but not in spec
+	// This catches packages not tracked in status (race conditions, failed status updates)
+	logger.Info("Scanning profile for orphaned packages", zap2.String("profile", pkgReq.Spec.ProfileName))
+	listScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q 2>/dev/null", profilePath)
+	if listOutput, err := r.CmdExec.Execute(listScript); err == nil && len(listOutput) > 0 {
+		installedPkgList := strings.Split(strings.TrimSpace(string(listOutput)), "\n")
+		for _, installedPkg := range installedPkgList {
+			if installedPkg == "" {
+				continue
+			}
+			// Extract package name (format: "name-version" e.g. "neovim-0.9.5")
+			pkgName := installedPkg
+			if idx := strings.LastIndex(installedPkg, "-"); idx > 0 {
+				suffix := installedPkg[idx+1:]
+				if len(suffix) > 0 && suffix[0] >= '0' && suffix[0] <= '9' {
+					pkgName = installedPkg[:idx]
+				}
+			}
+
+			if !desiredPackages[pkgName] {
+				logger.Info("Found orphaned package, removing",
+					zap2.String("package", pkgName),
+					zap2.String("fullName", installedPkg),
+					zap2.String("profile", pkgReq.Spec.ProfileName))
+
+				if err := r.uninstallPackage(pkgName, pkgReq.Spec.ProfileName); err != nil {
+					logger.Warn("Failed to remove orphaned package",
+						zap2.String("package", pkgName),
+						zap2.Error(err))
+				}
+			}
+		}
+	}
+
 	// Set phase to Installing and clear old failed packages before starting installation
 	// This ensures old failures are cleared when we retry
 	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
