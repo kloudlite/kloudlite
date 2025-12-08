@@ -14,7 +14,6 @@ import (
 	fzf "github.com/junegunn/fzf/src"
 	"github.com/kloudlite/kloudlite/api/cmd/kl/pkg/devbox"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
-	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -251,18 +250,18 @@ func packageAddByNames(packageNames []string) error {
 
 		fmt.Printf("[✓] Resolved to commit %s\n", commitHash[:8])
 
-		// Add to workspace
-		workspace, err := WsClient.Get(ctx)
+		// Get or create PackageRequest
+		pkgReq, err := WsClient.GetOrCreatePackageRequest(ctx)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "  [!] Failed to get workspace: %v\n", err)
+			fmt.Fprintf(os.Stderr, "  [!] Failed to get package request: %v\n", err)
 			continue
 		}
 
 		// Check if package already exists
 		alreadyExists := false
-		for _, pkg := range workspace.Spec.Packages {
+		for _, pkg := range pkgReq.Spec.Packages {
 			if pkg.Name == attrPath {
-				fmt.Printf("  [!] Package %s is already in the workspace spec\n", attrPath)
+				fmt.Printf("  [!] Package %s is already in the package request\n", attrPath)
 				alreadyExists = true
 				break
 			}
@@ -272,19 +271,19 @@ func packageAddByNames(packageNames []string) error {
 			continue
 		}
 
-		newPackage := workspacesv1.PackageSpec{
+		newPackage := packagesv1.PackageSpec{
 			Name:          attrPath,
 			NixpkgsCommit: commitHash,
 		}
 
-		workspace.Spec.Packages = append(workspace.Spec.Packages, newPackage)
+		pkgReq.Spec.Packages = append(pkgReq.Spec.Packages, newPackage)
 
-		if err := WsClient.Update(ctx, workspace); err != nil {
-			fmt.Fprintf(os.Stderr, "  [!] Failed to update workspace: %v\n", err)
+		if err := WsClient.UpdatePackageRequest(ctx, pkgReq); err != nil {
+			fmt.Fprintf(os.Stderr, "  [!] Failed to update package request: %v\n", err)
 			continue
 		}
 
-		fmt.Printf("[✓] Package %s@%s added to workspace\n", selectedPkg.Name, selectedVersion)
+		fmt.Printf("[✓] Package %s@%s added to package request\n", selectedPkg.Name, selectedVersion)
 		fmt.Println("[...] Installing (streaming nix output)...")
 
 		// Wait for package installation with log streaming
@@ -334,32 +333,32 @@ func packageAddInteractive() error {
 
 	fmt.Printf("[✓] Resolved to commit %s\n", commitHash[:8])
 
-	// Add to workspace
+	// Get or create PackageRequest
 	ctx := context.Background()
-	workspace, err := WsClient.Get(ctx)
+	pkgReq, err := WsClient.GetOrCreatePackageRequest(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Check if package already exists
-	for _, pkg := range workspace.Spec.Packages {
+	for _, pkg := range pkgReq.Spec.Packages {
 		if pkg.Name == attrPath {
-			return fmt.Errorf("package %s is already in the workspace spec", attrPath)
+			return fmt.Errorf("package %s is already in the package request", attrPath)
 		}
 	}
 
-	newPackage := workspacesv1.PackageSpec{
+	newPackage := packagesv1.PackageSpec{
 		Name:          attrPath,
 		NixpkgsCommit: commitHash,
 	}
 
-	workspace.Spec.Packages = append(workspace.Spec.Packages, newPackage)
+	pkgReq.Spec.Packages = append(pkgReq.Spec.Packages, newPackage)
 
-	if err := WsClient.Update(ctx, workspace); err != nil {
-		return fmt.Errorf("failed to update workspace: %w", err)
+	if err := WsClient.UpdatePackageRequest(ctx, pkgReq); err != nil {
+		return fmt.Errorf("failed to update package request: %w", err)
 	}
 
-	fmt.Printf("[✓] Package %s@%s added to workspace\n", selectedPkg.Name, selectedVersion)
+	fmt.Printf("[✓] Package %s@%s added to package request\n", selectedPkg.Name, selectedVersion)
 	fmt.Println("[...] Installing (streaming nix output)...")
 
 	// Wait for package installation with log streaming
@@ -671,32 +670,32 @@ func handlePackageInstall(packageName, version, channel, commit string) error {
 	}
 
 	ctx := context.Background()
-	workspace, err := WsClient.Get(ctx)
+	pkgReq, err := WsClient.GetOrCreatePackageRequest(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Check if package is already installed
-	for _, pkg := range workspace.Spec.Packages {
+	for _, pkg := range pkgReq.Spec.Packages {
 		if pkg.Name == packageName {
-			return fmt.Errorf("package %s is already in the workspace spec", packageName)
+			return fmt.Errorf("package %s is already in the package request", packageName)
 		}
 	}
 
-	// Add package to the workspace spec
-	newPackage := workspacesv1.PackageSpec{
+	// Add package to the package request spec
+	newPackage := packagesv1.PackageSpec{
 		Name:          packageName,
 		Channel:       channel,
 		NixpkgsCommit: commit,
 	}
 
-	workspace.Spec.Packages = append(workspace.Spec.Packages, newPackage)
+	pkgReq.Spec.Packages = append(pkgReq.Spec.Packages, newPackage)
 
-	if err := WsClient.Update(ctx, workspace); err != nil {
-		return fmt.Errorf("failed to update workspace: %w", err)
+	if err := WsClient.UpdatePackageRequest(ctx, pkgReq); err != nil {
+		return fmt.Errorf("failed to update package request: %w", err)
 	}
 
-	fmt.Printf("[✓] Package %s added to workspace\n", packageName)
+	fmt.Printf("[✓] Package %s added to package request\n", packageName)
 	fmt.Println("[...] Installing (streaming nix output)...")
 
 	// Wait for package installation with log streaming
@@ -709,15 +708,19 @@ func handlePackageUninstall(packageName string) error {
 	}
 
 	ctx := context.Background()
-	workspace, err := WsClient.Get(ctx)
+	pkgReq, err := WsClient.GetPackageRequest(ctx)
 	if err != nil {
 		return err
 	}
 
+	if pkgReq == nil {
+		return fmt.Errorf("no package request found for this workspace")
+	}
+
 	// Find and remove the package
 	found := false
-	newPackages := []workspacesv1.PackageSpec{}
-	for _, pkg := range workspace.Spec.Packages {
+	newPackages := []packagesv1.PackageSpec{}
+	for _, pkg := range pkgReq.Spec.Packages {
 		if pkg.Name != packageName {
 			newPackages = append(newPackages, pkg)
 		} else {
@@ -726,16 +729,16 @@ func handlePackageUninstall(packageName string) error {
 	}
 
 	if !found {
-		return fmt.Errorf("package %s not found in workspace spec", packageName)
+		return fmt.Errorf("package %s not found in package request", packageName)
 	}
 
-	workspace.Spec.Packages = newPackages
+	pkgReq.Spec.Packages = newPackages
 
-	if err := WsClient.Update(ctx, workspace); err != nil {
-		return fmt.Errorf("failed to update workspace: %w", err)
+	if err := WsClient.UpdatePackageRequest(ctx, pkgReq); err != nil {
+		return fmt.Errorf("failed to update package request: %w", err)
 	}
 
-	fmt.Printf("Package %s removed from workspace.\n", packageName)
+	fmt.Printf("Package %s removed from package request.\n", packageName)
 
 	return nil
 }
@@ -747,13 +750,13 @@ func getInstalledPackageNames() []string {
 	}
 
 	ctx := context.Background()
-	workspace, err := WsClient.Get(ctx)
-	if err != nil {
+	pkgReq, err := WsClient.GetPackageRequest(ctx)
+	if err != nil || pkgReq == nil {
 		return nil
 	}
 
 	var names []string
-	for _, pkg := range workspace.Spec.Packages {
+	for _, pkg := range pkgReq.Spec.Packages {
 		names = append(names, pkg.Name)
 	}
 	return names
@@ -765,38 +768,33 @@ func handlePackageList() error {
 	}
 
 	ctx := context.Background()
-	workspace, err := WsClient.Get(ctx)
+	// Get package status from PackageRequest (source of truth)
+	pkgReq, err := WsClient.GetPackageRequest(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not fetch package request: %w", err)
 	}
 
-	fmt.Println("Packages in workspace spec:")
-	if len(workspace.Spec.Packages) == 0 {
+	if pkgReq == nil {
+		fmt.Println("No package request found for this workspace.")
+		fmt.Println("Use 'kl pkg add <package>' to add packages.")
+		return nil
+	}
+
+	fmt.Println("Packages in package request spec:")
+	if len(pkgReq.Spec.Packages) == 0 {
 		fmt.Println("  No packages specified")
 	} else {
 		tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(tw, "NAME\tCHANNEL\tCOMMIT")
-		for _, pkg := range workspace.Spec.Packages {
+		for _, pkg := range pkgReq.Spec.Packages {
 			fmt.Fprintf(tw, "%s\t%s\t%s\n", pkg.Name, pkg.Channel, pkg.NixpkgsCommit)
 		}
 		tw.Flush()
 	}
 
-	// Get package status from PackageRequest (source of truth)
-	pkgReq, err := WsClient.GetPackageRequest(ctx)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "\nWarning: Could not fetch package status: %v\n", err)
-		return nil
-	}
-
-	var installedPackages []packagesv1.InstalledPackage
-	var failedPackages []string
-	var statusMessage string
-	if pkgReq != nil {
-		installedPackages = pkgReq.Status.InstalledPackages
-		failedPackages = pkgReq.Status.FailedPackages
-		statusMessage = pkgReq.Status.Message
-	}
+	installedPackages := pkgReq.Status.InstalledPackages
+	failedPackages := pkgReq.Status.FailedPackages
+	statusMessage := pkgReq.Status.Message
 
 	fmt.Println("\nInstalled packages:")
 	if len(installedPackages) == 0 {

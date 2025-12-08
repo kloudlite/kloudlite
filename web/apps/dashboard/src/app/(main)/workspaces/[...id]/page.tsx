@@ -65,8 +65,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
               ? 'bg-secondary text-secondary-foreground'
               : 'bg-secondary text-secondary-foreground'
 
-  const packageCount = workspace.spec.packages?.length || 0
-  // Package installation status is now fetched from PackageRequest (see PackagesSheet component)
+  // Package info is now stored in PackageRequest (fetched on demand in PackagesSheet component)
 
   return (
     <>
@@ -132,21 +131,21 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                     <div>
                       <h3 className="text-sm font-semibold">Packages</h3>
                       <p className="text-muted-foreground text-xs">
-                        {packageCount} {packageCount === 1 ? 'package' : 'packages'} configured
+                        Nix package management
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="space-y-3 p-4">
-                {/* Manage Packages Button - status is shown in PackagesSheet */}
+                {/* Manage Packages Button - status is fetched from PackageRequest in PackagesSheet */}
                 <PackagesSheet
                   workspace={workspace}
                   trigger={
                     <Button variant="outline" className="w-full justify-between">
                       <span className="flex items-center gap-2">
                         <Package className="h-4 w-4" />
-                        {packageCount > 0 ? 'Manage Packages' : 'Add Packages'}
+                        Manage Packages
                       </span>
                       <ArrowRight className="h-4 w-4" />
                     </Button>

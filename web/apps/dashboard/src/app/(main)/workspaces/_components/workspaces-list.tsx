@@ -164,8 +164,7 @@ export function WorkspacesList({
                           ? 'bg-secondary text-secondary-foreground'
                           : 'bg-secondary text-secondary-foreground'
 
-              const packageCount = workspace.spec.packages?.length || 0
-              // Package installation status is now fetched from PackageRequest directly
+              // Package info is now stored in PackageRequest (fetched on demand in packages sheet)
 
               return (
                 <tr
@@ -217,15 +216,7 @@ export function WorkspacesList({
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm whitespace-nowrap">
-                    {packageCount > 0 ? (
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">
-                          {packageCount} package{packageCount > 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
+                    <span className="text-muted-foreground text-xs">View details</span>
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.metadata.creationTimestamp

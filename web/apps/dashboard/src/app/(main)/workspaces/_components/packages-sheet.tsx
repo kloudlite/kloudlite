@@ -41,7 +41,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@kloudlite/ui'
 import { ScrollArea } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
 import type { Workspace, PackageSpec, PackageRequest } from '@kloudlite/types'
-import { updateWorkspace, getPackageRequest } from '@/app/actions/workspace.actions'
+import { updatePackageRequest, getPackageRequest } from '@/app/actions/workspace.actions'
 import { searchPackages, resolvePackageVersion } from '@/app/actions/package.actions'
 import { toast } from 'sonner'
 
@@ -80,17 +80,18 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
   useEffect(() => {
     if (open) {
       const loadPackageStatus = async () => {
-        // Fetch package status from PackageRequest (source of truth)
+        // Fetch package request - this is now the source of truth for packages
         const pkgReqResult = await getPackageRequest(workspace.metadata.name, workspace.metadata.namespace)
         const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
 
-        // Create maps for status tracking from PackageRequest
+        // Create maps for status tracking from PackageRequest.status
         const installedPackagesMap = new Map(
           pkgReq?.status?.installedPackages?.map((pkg) => [pkg.name, pkg]) || [],
         )
         const failedPackagesSet = new Set(pkgReq?.status?.failedPackages || [])
 
-        const existingPackages: PackageWithVersion[] = (workspace.spec.packages || []).map((pkg) => {
+        // Load packages from PackageRequest.spec.packages (source of truth)
+        const existingPackages: PackageWithVersion[] = (pkgReq?.spec?.packages || []).map((pkg) => {
           const isInstalled = installedPackagesMap.has(pkg.name)
           const isFailed = failedPackagesSet.has(pkg.name)
           const status = isInstalled ? 'installed' : isFailed ? 'failed' : 'pending'
@@ -109,7 +110,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
 
       loadPackageStatus()
     }
-  }, [open, workspace.metadata.name, workspace.metadata.namespace, workspace.spec.packages])
+  }, [open, workspace.metadata.name, workspace.metadata.namespace])
 
   // Search for packages as user types in combobox
   useEffect(() => {
@@ -215,8 +216,8 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
   const handleSave = async () => {
     setIsLoading(true)
 
-    // Convert PackageWithVersion to PackageSpec
-    const packageSpecs: PackageSpec[] = packages.map(
+    // Convert PackageWithVersion to PackageSpec for the API
+    const packageSpecs = packages.map(
       ({
         displayVersion: _displayVersion,
         status: _status,
@@ -225,12 +226,12 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
       }) => pkg,
     )
 
-    const result = await updateWorkspace(workspace.metadata.name, workspace.metadata.namespace, {
-      spec: {
-        ...workspace.spec,
-        packages: packageSpecs,
-      },
-    })
+    // Update PackageRequest directly (creates it if it doesn't exist)
+    const result = await updatePackageRequest(
+      workspace.metadata.name,
+      packageSpecs,
+      workspace.metadata.namespace,
+    )
 
     if (result.success) {
       toast.success('Packages updated successfully')

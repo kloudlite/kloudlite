@@ -99,7 +99,9 @@ spec:
             description: PackageRequestStatus defines the observed state of PackageRequest
             properties:
               failedPackages:
-                description: FailedPackages list of packages that failed to install
+                description: |-
+                  FailedPackages list of packages that failed to install
+                  NOTE: No omitempty - empty slice must be serialized to clear old failures
                 items:
                   type: string
                 type: array

@@ -314,11 +314,6 @@ func (in *WorkspaceSpec) DeepCopyInto(out *WorkspaceSpec) {
 		*out = new(ResourceQuota)
 		**out = **in
 	}
-	if in.Packages != nil {
-		in, out := &in.Packages, &out.Packages
-		*out = make([]PackageSpec, len(*in))
-		copy(*out, *in)
-	}
 	if in.Expose != nil {
 		in, out := &in.Expose, &out.Expose
 		*out = make([]ExposedPort, len(*in))
