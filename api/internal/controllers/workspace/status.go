@@ -7,6 +7,7 @@ import (
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -18,25 +19,30 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// updateStatusPreservingPackages updates workspace status while preserving package-related fields
+// updateStatusPreservingPackages updates workspace status with latest package data from PackageRequest
+// Following Kubernetes best practice: "re-fetch before update" to avoid stale data on conflict retry
 func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	// Preserve package-related fields and ConnectedEnvironment from the current workspace object
-	// (these may have been updated by syncPackageStatus or updateWorkspaceStatus)
-	installedPackages := workspace.Status.InstalledPackages
-	failedPackages := workspace.Status.FailedPackages
-	packageMessage := workspace.Status.PackageInstallationMessage
+	// ConnectedEnvironment is set during THIS reconciliation, preserve it
 	connectedEnvironment := workspace.Status.ConnectedEnvironment
 
 	return statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
-		// Copy all status fields
-		// Note: workspace is automatically refetched by UpdateStatusWithRetry
-
-		// Ensure package fields and ConnectedEnvironment are preserved
-		workspace.Status.InstalledPackages = installedPackages
-		workspace.Status.FailedPackages = failedPackages
-		workspace.Status.PackageInstallationMessage = packageMessage
+		// BEST PRACTICE: Re-fetch source of truth (PackageRequest) INSIDE retry callback
+		// This ensures we always use latest data after any conflict-triggered refetch
+		pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
+		pkgReq := &packagesv1.PackageRequest{}
+		if err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq); err == nil {
+			// Copy latest status from PackageRequest (the source of truth)
+			workspace.Status.InstalledPackages = pkgReq.Status.InstalledPackages
+			workspace.Status.FailedPackages = pkgReq.Status.FailedPackages
+			workspace.Status.PackageInstallationMessage = pkgReq.Status.Message
+		} else if len(workspace.Spec.Packages) == 0 {
+			// No packages defined, clear status
+			workspace.Status.InstalledPackages = nil
+			workspace.Status.FailedPackages = nil
+			workspace.Status.PackageInstallationMessage = ""
+		}
+		// Restore ConnectedEnvironment (set during this reconciliation, not from PackageRequest)
 		workspace.Status.ConnectedEnvironment = connectedEnvironment
-
 		return nil
 	}, logger)
 }
