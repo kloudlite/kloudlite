@@ -171,6 +171,16 @@ type PackageManagerReconciler struct {
 	Logger    *zap2.Logger
 	Namespace string
 	CmdExec   CommandExecutor
+
+	// profileLocks prevents concurrent package installations on the same profile
+	// Using sync.Map for thread-safe access without explicit locking
+	profileLocks sync.Map // map[string]*sync.Mutex
+}
+
+// getProfileLock returns a mutex for the given profile, creating one if it doesn't exist
+func (r *PackageManagerReconciler) getProfileLock(profileName string) *sync.Mutex {
+	lock, _ := r.profileLocks.LoadOrStore(profileName, &sync.Mutex{})
+	return lock.(*sync.Mutex)
 }
 
 func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -238,6 +248,31 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		}
 		// Requeue to continue reconciliation with finalizer in place
 		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Acquire lock for this profile to prevent concurrent installations
+	profileLock := r.getProfileLock(pkgReq.Spec.ProfileName)
+	if !profileLock.TryLock() {
+		// Another installation is in progress for this profile, requeue
+		logger.Info("Installation already in progress for profile, requeuing",
+			zap2.String("profile", pkgReq.Spec.ProfileName))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+	defer profileLock.Unlock()
+
+	// Debounce: wait briefly to batch multiple rapid package changes together
+	logger.Info("Debouncing package changes", zap2.Duration("wait", 2*time.Second))
+	time.Sleep(2 * time.Second)
+
+	// Re-fetch PackageRequest to get the latest spec after debounce
+	// This ensures we process all changes that came in during the debounce period
+	if err := r.Get(ctx, req.NamespacedName, pkgReq); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("PackageRequest deleted during debounce, skipping")
+			return reconcile.Result{}, nil
+		}
+		logger.Error("Failed to re-fetch PackageRequest after debounce", zap2.Error(err))
+		return reconcile.Result{}, err
 	}
 
 	logger.Info("Using profile", zap2.String("profile", pkgReq.Spec.ProfileName))
