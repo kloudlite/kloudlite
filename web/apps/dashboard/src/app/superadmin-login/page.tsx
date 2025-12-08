@@ -37,9 +37,9 @@ export default function SuperAdminLoginPage() {
       // Session cookie is already set by the API route
       setStatus('success')
 
-      // Redirect to dashboard after short delay
+      // Redirect to admin dashboard after short delay
       setTimeout(() => {
-        router.push('/')
+        router.push('/admin')
       }, 1500)
     } catch (error) {
       console.error('Token validation error:', error)
@@ -95,7 +95,7 @@ export default function SuperAdminLoginPage() {
               <div className="text-center">
                 <p className="text-success font-medium">Login Successful!</p>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Redirecting you to the dashboard...
+                  Redirecting you to the admin dashboard...
                 </p>
               </div>
             </div>
