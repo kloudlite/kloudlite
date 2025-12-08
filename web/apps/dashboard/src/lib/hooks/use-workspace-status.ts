@@ -45,13 +45,16 @@ export function useWorkspaceStatus(
       if (result.success && result.data) {
         setWorkspace(result.data)
         const currentPhase = result.data.status?.phase || 'Pending'
+        console.log('[useWorkspaceStatus] Fetched workspace, phase:', currentPhase)
         setPhase(currentPhase)
         setError(null)
 
         // Stop polling if we've reached a terminal phase
         if (stopOnPhase.includes(currentPhase)) {
+          console.log('[useWorkspaceStatus] Terminal phase reached:', currentPhase)
           // Call onReady callback when workspace reaches ready state
           if (currentPhase === 'Running' && onReadyRef.current) {
+            console.log('[useWorkspaceStatus] Calling onReady callback')
             onReadyRef.current(result.data)
           }
           return true // Signal to stop polling
@@ -67,6 +70,7 @@ export function useWorkspaceStatus(
   }, [workspaceName, namespace, stopOnPhase])
 
   const startPolling = useCallback(() => {
+    console.log('[useWorkspaceStatus] Starting polling for workspace:', workspaceName)
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
@@ -76,14 +80,17 @@ export function useWorkspaceStatus(
     // Immediate first fetch
     fetchStatus().then((shouldStop) => {
       if (shouldStop) {
+        console.log('[useWorkspaceStatus] First fetch returned terminal state, stopping')
         setIsPolling(false)
         return
       }
 
+      console.log('[useWorkspaceStatus] Setting up polling interval')
       // Start interval
       intervalRef.current = setInterval(async () => {
         const shouldStop = await fetchStatus()
         if (shouldStop) {
+          console.log('[useWorkspaceStatus] Polling complete, stopping interval')
           if (intervalRef.current) {
             clearInterval(intervalRef.current)
             intervalRef.current = null
@@ -92,7 +99,7 @@ export function useWorkspaceStatus(
         }
       }, pollInterval)
     })
-  }, [fetchStatus, pollInterval])
+  }, [fetchStatus, pollInterval, workspaceName])
 
   const stopPolling = useCallback(() => {
     if (intervalRef.current) {
