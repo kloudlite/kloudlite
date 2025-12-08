@@ -60,7 +60,6 @@ func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
 		Spec: workspacev1.WorkspaceSpec{
 			DisplayName: "Test Workspace",
 			OwnedBy:     "test@example.com",
-			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
 
@@ -122,10 +121,6 @@ func TestWorkspaceReconciler_Reconcile_CreatePackageRequest(t *testing.T) {
 			DisplayName: "Test Workspace",
 			OwnedBy:     "test@example.com",
 			Status:      "active",
-			Packages: []workspacev1.PackageSpec{
-				{Name: "git"},
-				{Name: "curl"},
-			},
 		},
 	}
 

@@ -268,54 +268,8 @@ func TestClient_MultipleWorkspaces(t *testing.T) {
 	}
 }
 
-func TestClient_UpdatePackages(t *testing.T) {
-	workspace := &workspacesv1.Workspace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-workspace",
-			Namespace: "test-namespace",
-		},
-		Spec: workspacesv1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			Packages:    []workspacesv1.PackageSpec{},
-		},
-	}
-
-	client := setupTestClient(t, workspace)
-
-	// Get workspace
-	ws, err := client.Get(context.Background())
-	if err != nil {
-		t.Fatalf("Get failed: %v", err)
-	}
-
-	// Add packages
-	ws.Spec.Packages = append(ws.Spec.Packages, workspacesv1.PackageSpec{
-		Name:          "nodejs_20",
-		NixpkgsCommit: "abc123",
-	})
-	ws.Spec.Packages = append(ws.Spec.Packages, workspacesv1.PackageSpec{
-		Name:          "python312",
-		NixpkgsCommit: "def456",
-	})
-
-	// Update
-	err = client.Update(context.Background(), ws)
-	if err != nil {
-		t.Fatalf("Update failed: %v", err)
-	}
-
-	// Verify packages
-	updated, err := client.Get(context.Background())
-	if err != nil {
-		t.Fatalf("Get after update failed: %v", err)
-	}
-	if len(updated.Spec.Packages) != 2 {
-		t.Errorf("Expected 2 packages, got %d", len(updated.Spec.Packages))
-	}
-	if updated.Spec.Packages[0].Name != "nodejs_20" {
-		t.Errorf("Expected first package 'nodejs_20', got %s", updated.Spec.Packages[0].Name)
-	}
-}
+// Note: TestClient_UpdatePackages was removed because packages are now managed
+// via PackageRequest resource, not workspace.spec.packages
 
 func TestClient_GetNamespaceName(t *testing.T) {
 	client := &Client{

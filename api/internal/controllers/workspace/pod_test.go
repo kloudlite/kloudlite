@@ -385,7 +385,6 @@ func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 			DisplayName: "Test Workspace",
 			OwnedBy:     "test@example.com",
 			Status:      "active",
-			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
 
@@ -461,7 +460,6 @@ func TestWorkspaceReconciler_CreateWorkspacePod_KloudliteBinMount(t *testing.T) 
 			DisplayName: "Test Workspace",
 			OwnedBy:     "test@example.com",
 			Status:      "active",
-			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
 
@@ -559,7 +557,6 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 			DisplayName: "Test Workspace",
 			OwnedBy:     "test@example.com",
 			Status:      "active",
-			Packages:    []workspacev1.PackageSpec{},
 		},
 	}
 
