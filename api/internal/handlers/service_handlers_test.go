@@ -31,7 +31,8 @@ func setupServiceHandlerTest() (*ServiceHandlers, *gin.Engine) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 	logger, _ := zap.NewDevelopment()
 
-	handlers := NewServiceHandlers(k8sClient, logger)
+	// Pass nil for clientset since we can't easily fake it and GetServiceLogs won't be tested here
+	handlers := NewServiceHandlers(k8sClient, nil, logger)
 	router := gin.New()
 
 	return handlers, router

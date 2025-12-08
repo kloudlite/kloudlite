@@ -69,6 +69,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	)
 	serviceHandlers := handlers.NewServiceHandlers(
 		servicesManager.RepositoryManager.K8sClient,
+		servicesManager.RepositoryManager.Clientset,
 		logger,
 	)
 	superAdminLoginHandlers := handlers.NewSuperAdminLoginHandlers(
@@ -270,6 +271,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			services := protected.Group("/namespaces/:namespace/services")
 			{
 				services.GET("", serviceHandlers.ListServices)
+				services.GET("/:name/logs", serviceHandlers.GetServiceLogs)
 			}
 
 			// OAuth Provider routes (protected - for admin management)

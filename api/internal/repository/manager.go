@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kloudlite/kloudlite/api/internal/k8s"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -11,6 +12,9 @@ import (
 type Manager struct {
 	// K8s client (exposed for webhook usage)
 	K8sClient client.Client
+
+	// Clientset for operations requiring typed client (e.g., pod logs)
+	Clientset *kubernetes.Clientset
 
 	// Individual repositories
 	Users        UserRepository
@@ -26,6 +30,9 @@ type ManagerOptions struct {
 	// K8s client (if nil, will create a new one)
 	K8sClient client.Client
 
+	// Clientset for operations requiring typed client (e.g., pod logs)
+	Clientset *kubernetes.Clientset
+
 	// K8s client options (only used if K8sClient is nil)
 	K8sClientOptions *k8s.ClientOptions
 }
@@ -37,10 +44,12 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	}
 
 	var k8sClient client.Client
+	var clientset *kubernetes.Clientset
 
 	// Create or use existing k8s client
 	if opts.K8sClient != nil {
 		k8sClient = opts.K8sClient
+		clientset = opts.Clientset
 	} else {
 		// Create new k8s client
 		client, err := k8s.NewClient(ctx, opts.K8sClientOptions)
@@ -48,6 +57,9 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 			return nil, err
 		}
 		k8sClient = client.RuntimeClient
+		if cs, ok := client.Clientset.(*kubernetes.Clientset); ok {
+			clientset = cs
+		}
 	}
 
 	// Create individual repositories
@@ -60,6 +72,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 
 	return &Manager{
 		K8sClient:    k8sClient,
+		Clientset:    clientset,
 		Users:        users,
 		Environments: environments,
 		MachineTypes: machineTypes,
