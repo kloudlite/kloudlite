@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@kloudlite/ui'
-import { createWorkspace } from '@/app/actions/workspace.actions'
+import { createWorkspace, updatePackageRequest } from '@/app/actions/workspace.actions'
 import { searchPackages, resolvePackageVersion } from '@/app/actions/package.actions'
 import { toast } from 'sonner'
 import type { PackageSpec } from '@kloudlite/types'
@@ -184,21 +184,29 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
           }
         : undefined
 
+      const workspaceName = name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+
       const result = await createWorkspace(namespace, {
-        name: name
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9-]/g, '-'),
+        name: workspaceName,
         spec: {
           displayName: name.trim(),
           ownedBy: user,
-          packages: packageSpecs.length > 0 ? packageSpecs : undefined,
           gitRepository,
           status: 'active',
         },
       })
 
       if (result.success) {
+        // If packages were specified, create PackageRequest after workspace is created
+        if (packageSpecs.length > 0) {
+          const pkgResult = await updatePackageRequest(workspaceName, packageSpecs, namespace)
+          if (!pkgResult.success) {
+            toast.warning('Workspace created but failed to add packages. You can add them later.')
+          }
+        }
         toast.success('Workspace created successfully')
         setOpen(false)
         setName('')
