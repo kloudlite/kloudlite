@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, startTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import { Pause, Play, Loader2 } from 'lucide-react'
@@ -19,7 +19,10 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
 
   // Callback when workspace becomes ready
   const handleWorkspaceReady = useCallback(() => {
-    router.refresh()
+    console.log('[WorkspaceActions] Workspace is ready, refreshing page...')
+    startTransition(() => {
+      router.refresh()
+    })
   }, [router])
 
   const { phase, isPolling, startPolling } = useWorkspaceStatus(
