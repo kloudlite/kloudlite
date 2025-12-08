@@ -9,6 +9,7 @@ import { WorkspaceActions } from '../_components/workspace-actions'
 import { PackagesSheet } from '../_components/packages-sheet'
 import { WorkspaceMetrics } from '../_components/workspace-metrics'
 import { workspaceService } from '@/lib/services/workspace.service'
+import { getPackageRequest } from '@/app/actions/workspace.actions'
 
 interface PageProps {
   params: Promise<{
@@ -41,6 +42,22 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
   if (!workspace) {
     notFound()
+  }
+
+  // Fetch package request status
+  let packageStatus: {
+    phase?: string
+    message?: string
+    installedPackages?: Array<{ name: string }>
+    failedPackages?: string[]
+  } | null = null
+  try {
+    const pkgResult = await getPackageRequest(name, namespace)
+    if (pkgResult.success && pkgResult.data) {
+      packageStatus = pkgResult.data.status
+    }
+  } catch (err) {
+    console.error('Failed to fetch package status:', err)
   }
 
   const displayName = `${workspace.spec.ownedBy || 'unknown'}/${workspace.spec.displayName || workspace.metadata.name}`
@@ -131,14 +148,45 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                     <div>
                       <h3 className="text-sm font-semibold">Packages</h3>
                       <p className="text-muted-foreground text-xs">
-                        Nix package management
+                        {packageStatus?.installedPackages?.length || 0} packages installed
                       </p>
                     </div>
                   </div>
+                  {packageStatus?.phase && (
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        packageStatus.phase === 'Ready'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : packageStatus.phase === 'Installing'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            : packageStatus.phase === 'Failed'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : 'bg-secondary text-secondary-foreground'
+                      }`}
+                    >
+                      {packageStatus.phase}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="space-y-3 p-4">
-                {/* Manage Packages Button - status is fetched from PackageRequest in PackagesSheet */}
+                {/* Show failed packages warning */}
+                {packageStatus?.failedPackages && packageStatus.failedPackages.length > 0 && (
+                  <div className="rounded-md bg-red-50 p-3 dark:bg-red-900/20">
+                    <p className="text-xs font-medium text-red-700 dark:text-red-400">
+                      Failed to install: {packageStatus.failedPackages.join(', ')}
+                    </p>
+                  </div>
+                )}
+                {/* Show installing message */}
+                {packageStatus?.phase === 'Installing' && packageStatus?.message && (
+                  <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+                    <p className="text-xs text-blue-700 dark:text-blue-400">
+                      {packageStatus.message}
+                    </p>
+                  </div>
+                )}
+                {/* Manage Packages Button */}
                 <PackagesSheet
                   workspace={workspace}
                   trigger={
