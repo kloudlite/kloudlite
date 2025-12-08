@@ -97,9 +97,20 @@ data:
 		}
 		fmt.Printf("✓ Written Webhooks to %s\n", webhooksPath)
 
-		// Write Frontend
+		// Write Frontend (substitute environment variables)
+		frontendManifest := manifests.Frontend
+		// AUTH_COOKIE_DOMAIN is the subdomain.baseDomain (e.g., beanbag.khost.dev)
+		// CLOUDFLARE_DNS_DOMAIN is the base domain (e.g., khost.dev)
+		authCookieDomain := os.Getenv("AUTH_COOKIE_DOMAIN")
+		cloudflareDNSDomain := os.Getenv("CLOUDFLARE_DNS_DOMAIN")
+		if cloudflareDNSDomain == "" {
+			cloudflareDNSDomain = "khost.dev"
+		}
+		frontendManifest = strings.ReplaceAll(frontendManifest, "${AUTH_COOKIE_DOMAIN}", authCookieDomain)
+		frontendManifest = strings.ReplaceAll(frontendManifest, "${CLOUDFLARE_DNS_DOMAIN}", cloudflareDNSDomain)
+
 		frontendPath := filepath.Join(manifestsDir, "frontend.yaml")
-		if err := os.WriteFile(frontendPath, []byte(manifests.Frontend), 0644); err != nil {
+		if err := os.WriteFile(frontendPath, []byte(frontendManifest), 0644); err != nil {
 			return fmt.Errorf("failed to write Frontend: %w", err)
 		}
 		fmt.Printf("✓ Written Frontend to %s\n", frontendPath)
