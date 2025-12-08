@@ -254,6 +254,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 
 				// Workspace metrics
 				workspaces.GET("/:name/metrics", workspaceHandlers.GetMetrics)
+
+				// Package request status (source of truth for package installation)
+				workspaces.GET("/:name/packages", workspaceHandlers.GetPackageRequest)
 			}
 
 			// Composition routes (namespaced)

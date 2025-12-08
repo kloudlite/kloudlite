@@ -81,7 +81,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
     if (open) {
       const loadPackageStatus = async () => {
         // Fetch package status from PackageRequest (source of truth)
-        const pkgReqResult = await getPackageRequest(workspace.metadata.name)
+        const pkgReqResult = await getPackageRequest(workspace.metadata.name, workspace.metadata.namespace)
         const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
 
         // Create maps for status tracking from PackageRequest
