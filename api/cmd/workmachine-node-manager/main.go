@@ -298,7 +298,7 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	// This ensures old failures are cleared when we retry
 	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
 		latest.Status.Phase = "Installing"
-		latest.Status.FailedPackages = []string{} // Clear old failed packages
+		latest.Status.FailedPackages = nil // Clear old failed packages (use nil for consistent JSON)
 		latest.Status.Message = "Installing packages..."
 		latest.Status.LastUpdated = metav1.Now()
 	}, logger); err != nil {
@@ -375,15 +375,17 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	// Update status to reflect actual state
 	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
 		latest.Status.InstalledPackages = installedPackages
-		latest.Status.FailedPackages = failedPackages
-		latest.Status.LastUpdated = metav1.Now()
+		// Use nil instead of empty slice when no failures for consistent JSON serialization
 		if len(failedPackages) > 0 {
+			latest.Status.FailedPackages = failedPackages
 			latest.Status.Phase = "Failed"
 			latest.Status.Message = fmt.Sprintf("Failed to install %d packages", len(failedPackages))
 		} else {
+			latest.Status.FailedPackages = nil
 			latest.Status.Phase = "Ready"
 			latest.Status.Message = fmt.Sprintf("Successfully reconciled %d packages", len(installedPackages))
 		}
+		latest.Status.LastUpdated = metav1.Now()
 	}, logger); err != nil {
 		logger.Error("Failed to update status after retries", zap2.Error(err))
 		return reconcile.Result{}, err
