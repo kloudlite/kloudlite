@@ -20,12 +20,14 @@ interface UseWorkspaceStatusResult {
   stopPolling: () => void
 }
 
+const DEFAULT_STOP_PHASES = ['Running', 'Failed', 'Stopped']
+
 export function useWorkspaceStatus(
   workspaceName: string,
   namespace: string,
   options: UseWorkspaceStatusOptions = {}
 ): UseWorkspaceStatusResult {
-  const { pollInterval = 2000, enabled = false, stopOnPhase = ['Running', 'Failed', 'Stopped'], onReady } = options
+  const { pollInterval = 2000, enabled = false, stopOnPhase = DEFAULT_STOP_PHASES, onReady } = options
 
   const [workspace, setWorkspace] = useState<Workspace | null>(null)
   const [phase, setPhase] = useState<string | null>(null)
@@ -33,11 +35,16 @@ export function useWorkspaceStatus(
   const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const onReadyRef = useRef(onReady)
+  const stopOnPhaseRef = useRef(stopOnPhase)
 
-  // Keep onReady ref updated
+  // Keep refs updated
   useEffect(() => {
     onReadyRef.current = onReady
   }, [onReady])
+
+  useEffect(() => {
+    stopOnPhaseRef.current = stopOnPhase
+  }, [stopOnPhase])
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -50,7 +57,7 @@ export function useWorkspaceStatus(
         setError(null)
 
         // Stop polling if we've reached a terminal phase
-        if (stopOnPhase.includes(currentPhase)) {
+        if (stopOnPhaseRef.current.includes(currentPhase)) {
           console.log('[useWorkspaceStatus] Terminal phase reached:', currentPhase)
           // Call onReady callback when workspace reaches ready state
           if (currentPhase === 'Running' && onReadyRef.current) {
@@ -67,7 +74,7 @@ export function useWorkspaceStatus(
       setError('Failed to fetch workspace status')
     }
     return false
-  }, [workspaceName, namespace, stopOnPhase])
+  }, [workspaceName, namespace])
 
   const startPolling = useCallback(() => {
     console.log('[useWorkspaceStatus] Starting polling for workspace:', workspaceName)
