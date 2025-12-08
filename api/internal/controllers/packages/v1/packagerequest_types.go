@@ -76,8 +76,9 @@ type PackageRequestStatus struct {
 	InstalledPackages []InstalledPackage `json:"installedPackages,omitempty"`
 
 	// FailedPackages list of packages that failed to install
+	// NOTE: No omitempty - empty slice must be serialized to clear old failures
 	// +optional
-	FailedPackages []string `json:"failedPackages,omitempty"`
+	FailedPackages []string `json:"failedPackages"`
 
 	// LastUpdated timestamp of last status update
 	// +optional
