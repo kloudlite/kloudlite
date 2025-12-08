@@ -306,14 +306,34 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		// Continue with installation even if status update fails
 	}
 
+	// Build map of previously installed packages for quick lookup
+	// This avoids re-querying aliased packages (e.g., dig→bind) that would fail
+	// the nix-env -q check but are actually installed
+	previouslyInstalled := make(map[string]workspacev1.InstalledPackage)
+	for _, pkg := range pkgReq.Status.InstalledPackages {
+		previouslyInstalled[pkg.Name] = pkg
+	}
+
 	// Install missing packages and record installed ones
 	installedPackages := []workspacev1.InstalledPackage{}
 	failedPackages := []string{}
 
 	for _, pkg := range pkgReq.Spec.Packages {
+		// First check: is this package already in our installed status?
+		// Trust the previous status to avoid aliasing issues with nix-env -q
+		// (e.g., "dig" is stored as "bind", so nix-env -q dig fails)
+		if prevPkg, ok := previouslyInstalled[pkg.Name]; ok {
+			logger.Info("Package already in installed status, preserving",
+				zap2.String("package", pkg.Name),
+				zap2.String("profile", pkgReq.Spec.ProfileName))
+			installedPackages = append(installedPackages, prevPkg)
+			continue
+		}
+
 		// Check actual state: is package really installed on the filesystem?
+		// This runs for NEW packages not in previous status
 		if r.isPackageInstalled(pkg.Name, pkgReq.Spec.ProfileName, logger) {
-			logger.Info("Package already installed, querying info",
+			logger.Info("Package found installed on filesystem, querying info",
 				zap2.String("package", pkg.Name),
 				zap2.String("profile", pkgReq.Spec.ProfileName))
 
