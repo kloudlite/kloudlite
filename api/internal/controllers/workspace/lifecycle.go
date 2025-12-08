@@ -102,15 +102,6 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		// Don't fail reconciliation, just log the warning
 	}
 
-	// Ensure PackageRequest is created if packages are defined
-	if err := r.ensurePackageRequest(ctx, workspace, logger); err != nil {
-		logger.Error("Failed to ensure PackageRequest", zap.Error(err))
-		workspace.Status.Phase = "Failed"
-		workspace.Status.Message = fmt.Sprintf("Failed to create PackageRequest: %v", err)
-		r.updateStatus(ctx, workspace, logger)
-		return reconcile.Result{}, err
-	}
-
 	// Ensure Service is created for workspace SSHD
 	if err := r.ensureWorkspaceService(ctx, workspace, logger); err != nil {
 		logger.Error("Failed to ensure Service", zap.Error(err))

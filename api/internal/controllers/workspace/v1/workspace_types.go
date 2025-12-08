@@ -1,7 +1,6 @@
 package v1
 
 import (
-	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -22,12 +21,6 @@ type ExposedPort struct {
 	// +kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
 }
-
-// PackageSpec is an alias to packages.kloudlite.io/v1 PackageSpec
-type PackageSpec = packagesv1.PackageSpec
-
-// InstalledPackage is an alias to packages.kloudlite.io/v1 InstalledPackage
-type InstalledPackage = packagesv1.InstalledPackage
 
 // GitRepository defines a git repository to clone when workspace starts
 type GitRepository struct {
@@ -91,10 +84,6 @@ type WorkspaceSpec struct {
 	// +kubebuilder:default=latest
 	// +optional
 	VSCodeVersion string `json:"vscodeVersion,omitempty"`
-
-	// Packages list of Nix packages to install in the workspace
-	// +optional
-	Packages []PackageSpec `json:"packages,omitempty"`
 
 	// Status indicates whether the workspace is active or suspended
 	// +kubebuilder:validation:Enum=active;suspended;archived

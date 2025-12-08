@@ -22,7 +22,7 @@ export interface WorkspaceSpec {
   environmentRef?: ObjectReference
   machineTypeRef?: ObjectReference
   folderName?: string
-  packages?: PackageSpec[]
+  // packages are now managed via PackageRequest resource (owned by workspace)
   resourceQuota?: ResourceQuota
   settings?: WorkspaceSettings
   status?: 'active' | 'suspended' | 'archived'

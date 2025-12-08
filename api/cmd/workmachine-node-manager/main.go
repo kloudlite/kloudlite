@@ -344,13 +344,13 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 	// Build map of previously installed packages for quick lookup
 	// This avoids re-querying aliased packages (e.g., dig→bind) that would fail
 	// the nix-env -q check but are actually installed
-	previouslyInstalled := make(map[string]workspacev1.InstalledPackage)
+	previouslyInstalled := make(map[string]packagesv1.InstalledPackage)
 	for _, pkg := range pkgReq.Status.InstalledPackages {
 		previouslyInstalled[pkg.Name] = pkg
 	}
 
 	// Install missing packages and record installed ones
-	installedPackages := []workspacev1.InstalledPackage{}
+	installedPackages := []packagesv1.InstalledPackage{}
 	failedPackages := []string{}
 
 	for _, pkg := range pkgReq.Spec.Packages {
@@ -395,7 +395,7 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 			}
 
 			workspaceBinPath := fmt.Sprintf("/nix/profiles/per-user/root/%s/bin", pkgReq.Spec.ProfileName)
-			installedPackages = append(installedPackages, workspacev1.InstalledPackage{
+			installedPackages = append(installedPackages, packagesv1.InstalledPackage{
 				Name:        pkg.Name,
 				Version:     installedVersion,
 				BinPath:     workspaceBinPath,
@@ -556,7 +556,7 @@ func (r *PackageManagerReconciler) updateStatusWithRetry(
 	return fmt.Errorf("failed to update status after %d retries", maxRetries)
 }
 
-func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, profileName string) (workspacev1.InstalledPackage, error) {
+func (r *PackageManagerReconciler) installPackage(pkg packagesv1.PackageSpec, profileName string) (packagesv1.InstalledPackage, error) {
 	// Determine package source and install command
 	// Store profiles in nix-store so they're accessible via hostPath mount in workspace pods
 	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
@@ -630,7 +630,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 	if installErr != nil {
 		if queryErr != nil || len(queryOutput) == 0 {
 			// Package really wasn't installed
-			return workspacev1.InstalledPackage{}, fmt.Errorf("nix-env failed: %w, output: %s", installErr, string(output))
+			return packagesv1.InstalledPackage{}, fmt.Errorf("nix-env failed: %w, output: %s", installErr, string(output))
 		}
 		// Package was installed despite the error (likely meta.outputsToInstall warning)
 		r.Logger.Warn("Package installed despite nix-env error (likely meta.outputsToInstall issue)",
@@ -685,7 +685,7 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 	// This ensures packages installed by workmachine-host-manager are accessible in workspaces
 	workspaceBinPath := fmt.Sprintf("/nix/profiles/per-user/root/%s/bin", profileName)
 
-	return workspacev1.InstalledPackage{
+	return packagesv1.InstalledPackage{
 		Name:        pkg.Name,
 		Version:     installedVersion,
 		BinPath:     workspaceBinPath,

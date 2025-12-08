@@ -22,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@kloudlite/ui'
-import type { Workspace, PackageSpec } from '@kloudlite/types'
-import { updateWorkspace } from '@/app/actions/workspace.actions'
+import type { Workspace, PackageSpec, PackageRequest } from '@kloudlite/types'
+import { updatePackageRequest, getPackageRequest } from '@/app/actions/workspace.actions'
 import { searchPackages, resolvePackageVersion } from '@/app/actions/package.actions'
 import { toast } from 'sonner'
 
@@ -49,18 +49,24 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
   const [searchResults, setSearchResults] = useState<string[]>([])
   const [loadingSearch, setLoadingSearch] = useState(false)
 
-  // Initialize packages when dialog opens
+  // Initialize packages when dialog opens - fetch from PackageRequest
   useEffect(() => {
     if (open) {
-      const existingPackages: PackageWithVersion[] = (workspace.spec.packages || []).map((pkg) => ({
-        ...pkg,
-        displayVersion:
-          pkg.channel ||
-          (pkg.nixpkgsCommit ? `commit:${pkg.nixpkgsCommit.substring(0, 8)}` : undefined),
-      }))
-      setPackages(existingPackages)
+      const loadPackages = async () => {
+        const pkgReqResult = await getPackageRequest(workspace.metadata.name, workspace.metadata.namespace)
+        const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
+
+        const existingPackages: PackageWithVersion[] = (pkgReq?.spec?.packages || []).map((pkg) => ({
+          ...pkg,
+          displayVersion:
+            pkg.channel ||
+            (pkg.nixpkgsCommit ? `commit:${pkg.nixpkgsCommit.substring(0, 8)}` : undefined),
+        }))
+        setPackages(existingPackages)
+      }
+      loadPackages()
     }
-  }, [open, workspace.spec.packages])
+  }, [open, workspace.metadata.name, workspace.metadata.namespace])
 
   // Search for packages as user types
   useEffect(() => {
@@ -157,17 +163,17 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
   const handleSave = async () => {
     setIsLoading(true)
 
-    // Convert PackageWithVersion to PackageSpec
-    const packageSpecs: PackageSpec[] = packages.map(
+    // Convert PackageWithVersion to PackageSpec for the API
+    const packageSpecs = packages.map(
       ({ displayVersion: _displayVersion, ...pkg }) => pkg,
     )
 
-    const result = await updateWorkspace(workspace.metadata.name, workspace.metadata.namespace, {
-      spec: {
-        ...workspace.spec,
-        packages: packageSpecs,
-      },
-    })
+    // Update PackageRequest directly (creates it if it doesn't exist)
+    const result = await updatePackageRequest(
+      workspace.metadata.name,
+      packageSpecs,
+      workspace.metadata.namespace,
+    )
 
     if (result.success) {
       toast.success('Packages updated successfully')

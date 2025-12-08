@@ -621,3 +621,117 @@ func (h *WorkspaceHandlers) GetPackageRequest(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &pkgReq)
 }
+
+// UpdatePackageRequest handles PUT /api/v1/namespaces/:namespace/workspaces/:name/packages
+// Creates or updates the PackageRequest for a workspace
+func (h *WorkspaceHandlers) UpdatePackageRequest(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	// Parse request body
+	var req struct {
+		Packages []packagesv1.PackageSpec `json:"packages" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Failed to parse update package request", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Verify the workspace exists and get its details
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Workspace not found",
+			})
+			return
+		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// PackageRequest is cluster-scoped with naming convention: {workspace-name}-packages
+	packageRequestName := fmt.Sprintf("%s-packages", name)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	// Try to get existing PackageRequest
+	var pkgReq packagesv1.PackageRequest
+	err = h.k8sClient.Get(ctx, types.NamespacedName{
+		Name: packageRequestName,
+	}, &pkgReq)
+
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Create new PackageRequest
+			h.logger.Info("Creating new PackageRequest", zap.String("name", packageRequestName))
+
+			pkgReq = packagesv1.PackageRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: packageRequestName,
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "workspaces.kloudlite.io/v1",
+							Kind:       "Workspace",
+							Name:       workspace.Name,
+							UID:        workspace.UID,
+						},
+					},
+				},
+				Spec: packagesv1.PackageRequestSpec{
+					WorkspaceRef: name,
+					Packages:     req.Packages,
+					ProfileName:  packageRequestName,
+				},
+			}
+
+			if err := h.k8sClient.Create(ctx, &pkgReq); err != nil {
+				h.logger.Error("Failed to create package request", zap.Error(err))
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error":   "Failed to create package request",
+					"details": err.Error(),
+				})
+				return
+			}
+
+			c.JSON(http.StatusCreated, &pkgReq)
+			return
+		}
+
+		h.logger.Error("Failed to get package request", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get package request",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Update existing PackageRequest
+	h.logger.Info("Updating PackageRequest", zap.String("name", packageRequestName))
+	pkgReq.Spec.Packages = req.Packages
+
+	if err := h.k8sClient.Update(ctx, &pkgReq); err != nil {
+		h.logger.Error("Failed to update package request", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to update package request",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &pkgReq)
+}

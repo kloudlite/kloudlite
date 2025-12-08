@@ -14,6 +14,7 @@ import (
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -137,6 +138,64 @@ func (c *Client) GetPackageRequest(ctx context.Context) (*packagesv1.PackageRequ
 		return nil, fmt.Errorf("failed to get package request: %w", err)
 	}
 	return pkgReq, nil
+}
+
+// UpdatePackageRequest updates an existing PackageRequest
+func (c *Client) UpdatePackageRequest(ctx context.Context, pkgReq *packagesv1.PackageRequest) error {
+	if err := c.K8sClient.Update(ctx, pkgReq); err != nil {
+		return fmt.Errorf("failed to update package request: %w", err)
+	}
+	return nil
+}
+
+// CreatePackageRequest creates a new PackageRequest for this workspace
+func (c *Client) CreatePackageRequest(ctx context.Context, packages []packagesv1.PackageSpec) (*packagesv1.PackageRequest, error) {
+	// Get workspace to determine owner reference
+	workspace, err := c.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get workspace: %w", err)
+	}
+
+	packageRequestName := fmt.Sprintf("%s-packages", c.Name)
+	profileName := packageRequestName
+
+	pkgReq := &packagesv1.PackageRequest{}
+	pkgReq.Name = packageRequestName
+	pkgReq.Spec = packagesv1.PackageRequestSpec{
+		WorkspaceRef: c.Name,
+		Packages:     packages,
+		ProfileName:  profileName,
+	}
+
+	// Set owner reference so PackageRequest is garbage collected when workspace is deleted
+	pkgReq.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion: "workspaces.kloudlite.io/v1",
+			Kind:       "Workspace",
+			Name:       workspace.Name,
+			UID:        workspace.UID,
+		},
+	}
+
+	if err := c.K8sClient.Create(ctx, pkgReq); err != nil {
+		return nil, fmt.Errorf("failed to create package request: %w", err)
+	}
+
+	return pkgReq, nil
+}
+
+// GetOrCreatePackageRequest gets the existing PackageRequest or creates a new one
+func (c *Client) GetOrCreatePackageRequest(ctx context.Context) (*packagesv1.PackageRequest, error) {
+	pkgReq, err := c.GetPackageRequest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if pkgReq != nil {
+		return pkgReq, nil
+	}
+
+	// Create new PackageRequest with empty packages
+	return c.CreatePackageRequest(ctx, []packagesv1.PackageSpec{})
 }
 
 // getKubeConfig returns the Kubernetes config

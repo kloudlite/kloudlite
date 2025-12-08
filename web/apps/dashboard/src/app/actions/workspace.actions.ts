@@ -223,6 +223,58 @@ export async function cloneWorkspace(
 }
 
 /**
+ * Server action to update packages in a workspace's PackageRequest
+ * Creates the PackageRequest if it doesn't exist
+ */
+export async function updatePackageRequest(
+  workspaceName: string,
+  packages: Array<{ name: string; nixpkgsCommit?: string }>,
+  namespace: string = 'default',
+) {
+  try {
+    const { env } = await import('@/lib/env')
+    const { getAuthToken } = await import('@/lib/get-session')
+
+    const token = await getAuthToken()
+    if (!token) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/packages`
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ packages }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      return {
+        success: false,
+        error: errorText || 'Failed to update packages',
+      }
+    }
+
+    const data = await response.json()
+    revalidatePath('/workspaces')
+    return { success: true, data }
+  } catch (err) {
+    console.error('Update package request error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
  * Server action to get package request status for a workspace
  * Uses the workspace packages endpoint which returns the PackageRequest (source of truth)
  */

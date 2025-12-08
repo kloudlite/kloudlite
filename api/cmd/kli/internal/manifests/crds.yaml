@@ -1711,7 +1711,7 @@ spec:
                       before shutting down the WorkMachine EC2 instance
                     format: int32
                     maximum: 1440
-                    minimum: 5
+                    minimum: 15
                     type: integer
                 required:
                 - checkIntervalMinutes
@@ -1786,6 +1786,12 @@ spec:
                   workspaces
                 format: int32
                 type: integer
+              allIdleSince:
+                description: |-
+                  AllIdleSince is when all workspaces became idle (nil if any workspace is active)
+                  Used for auto-shutdown timing
+                format: date-time
+                type: string
               allocatedResources:
                 description: Resources actually allocated to the machine
                 properties:
@@ -2103,7 +2109,9 @@ spec:
             description: PackageRequestStatus defines the observed state of PackageRequest
             properties:
               failedPackages:
-                description: FailedPackages list of packages that failed to install
+                description: |-
+                  FailedPackages list of packages that failed to install
+                  NOTE: No omitempty - empty slice must be serialized to clear old failures
                 items:
                   type: string
                 type: array
@@ -2380,7 +2388,6 @@ spec:
     subresources:
       status: {}
 ---
----
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -2556,30 +2563,6 @@ spec:
                 description: OwnedBy is the username of the workspace owner
                 minLength: 1
                 type: string
-              packages:
-                description: Packages list of Nix packages to install in the workspace
-                items:
-                  description: PackageSpec defines a Nix package to install
-                  properties:
-                    channel:
-                      description: |-
-                        Channel specifies the nixpkgs channel/release to use (e.g., "nixos-24.05", "nixos-23.11", "unstable")
-                        Use this for stable, well-known package versions from official releases
-                      type: string
-                    name:
-                      description: Name of the package (e.g., nodejs_22, vim, git)
-                      minLength: 1
-                      type: string
-                    nixpkgsCommit:
-                      description: |-
-                        NixpkgsCommit specifies an exact nixpkgs commit hash for precise version control
-                        Use this when you need a specific historical package version
-                        Takes precedence over Channel if both are specified
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
               resourceQuota:
                 description: ResourceQuota defines resource limits for the workspace
                 properties:

@@ -146,9 +146,6 @@ export function CloneWorkspaceSheet({
                 {workspace.spec.workmachineName && (
                   <div>WorkMachine: {workspace.spec.workmachineName}</div>
                 )}
-                {workspace.spec.packages && workspace.spec.packages.length > 0 && (
-                  <div>Packages: {workspace.spec.packages.length} package(s)</div>
-                )}
               </div>
               <div className="bg-background mt-2 rounded border p-2 text-xs">
                 <div className="font-medium">What will be cloned:</div>
