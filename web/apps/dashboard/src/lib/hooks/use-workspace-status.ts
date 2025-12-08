@@ -36,6 +36,7 @@ export function useWorkspaceStatus(
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const onReadyRef = useRef(onReady)
   const stopOnPhaseRef = useRef(stopOnPhase)
+  const onReadyCalledRef = useRef(false)
 
   // Keep refs updated
   useEffect(() => {
@@ -59,9 +60,10 @@ export function useWorkspaceStatus(
         // Stop polling if we've reached a terminal phase
         if (stopOnPhaseRef.current.includes(currentPhase)) {
           console.log('[useWorkspaceStatus] Terminal phase reached:', currentPhase)
-          // Call onReady callback when workspace reaches ready state
-          if (currentPhase === 'Running' && onReadyRef.current) {
-            console.log('[useWorkspaceStatus] Calling onReady callback')
+          // Call onReady callback when workspace reaches ready state (only once)
+          if (currentPhase === 'Running' && onReadyRef.current && !onReadyCalledRef.current) {
+            console.log('[useWorkspaceStatus] Calling onReady callback (first time)')
+            onReadyCalledRef.current = true
             onReadyRef.current(result.data)
           }
           return true // Signal to stop polling
@@ -82,6 +84,8 @@ export function useWorkspaceStatus(
       clearInterval(intervalRef.current)
     }
 
+    // Reset the onReady called flag for new polling session
+    onReadyCalledRef.current = false
     setIsPolling(true)
 
     // Immediate first fetch
