@@ -68,7 +68,7 @@ export function useWorkspaceStatus(
       } else {
         setError(result.error || 'Failed to fetch workspace status')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to fetch workspace status')
     }
     return false

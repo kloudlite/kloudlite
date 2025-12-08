@@ -30,26 +30,37 @@ const (
 func NewJWTMiddleware(jwtSecret string, logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Extract Authorization header
+			var tokenString string
+
+			// Try Authorization header first
 			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				logger.Debug("missing Authorization header",
+			if authHeader != "" {
+				const bearerPrefix = "Bearer "
+				if strings.HasPrefix(authHeader, bearerPrefix) {
+					tokenString = strings.TrimPrefix(authHeader, bearerPrefix)
+				}
+			}
+
+			// If no Authorization header, try session cookie (for browser requests)
+			// NextAuth uses different cookie names based on environment
+			if tokenString == "" {
+				// Try secure cookie first (production), then non-secure (development)
+				cookieNames := []string{"__Secure-next-auth.session-token", "next-auth.session-token"}
+				for _, cookieName := range cookieNames {
+					if cookie, err := r.Cookie(cookieName); err == nil && cookie.Value != "" {
+						tokenString = cookie.Value
+						break
+					}
+				}
+			}
+
+			if tokenString == "" {
+				logger.Debug("no valid authentication found",
 					zap.String("path", r.URL.Path),
 					zap.String("remote_addr", r.RemoteAddr))
-				http.Error(w, `{"error": "missing Authorization header"}`, http.StatusUnauthorized)
+				http.Error(w, `{"error": "missing authentication"}`, http.StatusUnauthorized)
 				return
 			}
-
-			// Check Bearer prefix
-			const bearerPrefix = "Bearer "
-			if !strings.HasPrefix(authHeader, bearerPrefix) {
-				logger.Debug("invalid Authorization header format",
-					zap.String("path", r.URL.Path))
-				http.Error(w, `{"error": "invalid Authorization header format"}`, http.StatusUnauthorized)
-				return
-			}
-
-			tokenString := strings.TrimPrefix(authHeader, bearerPrefix)
 
 			// Parse and validate JWT token
 			claims := &UserClaims{}
