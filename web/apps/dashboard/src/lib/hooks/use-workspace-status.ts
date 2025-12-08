@@ -85,17 +85,23 @@ export function useWorkspaceStatus(
         return
       }
 
-      console.log('[useWorkspaceStatus] Setting up polling interval')
+      console.log('[useWorkspaceStatus] Setting up polling interval, pollInterval:', pollInterval)
       // Start interval
       intervalRef.current = setInterval(async () => {
-        const shouldStop = await fetchStatus()
-        if (shouldStop) {
-          console.log('[useWorkspaceStatus] Polling complete, stopping interval')
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current)
-            intervalRef.current = null
+        console.log('[useWorkspaceStatus] Interval tick - fetching status...')
+        try {
+          const shouldStop = await fetchStatus()
+          console.log('[useWorkspaceStatus] Interval fetch complete, shouldStop:', shouldStop)
+          if (shouldStop) {
+            console.log('[useWorkspaceStatus] Polling complete, stopping interval')
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current)
+              intervalRef.current = null
+            }
+            setIsPolling(false)
           }
-          setIsPolling(false)
+        } catch (err) {
+          console.error('[useWorkspaceStatus] Interval fetch error:', err)
         }
       }, pollInterval)
     })
@@ -117,6 +123,7 @@ export function useWorkspaceStatus(
 
     return () => {
       if (intervalRef.current) {
+        console.log('[useWorkspaceStatus] Cleanup: clearing interval')
         clearInterval(intervalRef.current)
       }
     }
