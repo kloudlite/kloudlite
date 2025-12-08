@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@kloudlite/ui'
-import { Terminal, Copy, Check, Sparkles, AlertCircle, ShieldOff } from 'lucide-react'
+import { Terminal, Copy, Check, Sparkles, AlertCircle, ShieldOff, Info } from 'lucide-react'
 import { useVPNStatus } from '@/lib/hooks/use-vpn-status'
 import { SiAnthropic, SiZedindustries, SiJetbrains } from 'react-icons/si'
 import { VscVscode } from 'react-icons/vsc'
@@ -248,16 +248,16 @@ export function WorkspaceConnectOptions({
           {Object.entries(groupedMethods).map(([category, methods]) => (
             <div key={category}>
               <h4 className="text-muted-foreground mb-3 text-xs font-medium">{category}</h4>
-              {category === 'Desktop IDEs' && (
-                <div className="mb-3 rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
-                  <p className="text-xs text-blue-700 dark:text-blue-400">
-                    <strong>SSH Key Required:</strong> Add your local public key to your{' '}
-                    <a href="/settings/workmachine" className="underline hover:no-underline">
-                      WorkMachine SSH settings
-                    </a>{' '}
-                    to connect via SSH-based IDEs.
-                  </p>
-                </div>
+              {(category === 'Desktop IDEs' || category === 'Direct Access') && (
+                <p className="text-muted-foreground mb-3 flex items-center gap-1.5 text-xs">
+                  <Info className="h-3 w-3" />
+                  <span>
+                    Requires{' '}
+                    <a href="/settings/workmachine" className="text-primary hover:underline">
+                      SSH key setup
+                    </a>
+                  </span>
+                </p>
               )}
               <div className="flex flex-wrap gap-2">
                 {methods.map((method) => {
