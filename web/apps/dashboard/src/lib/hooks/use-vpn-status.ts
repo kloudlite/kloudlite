@@ -42,36 +42,31 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
       }
 
       // Construct VPN check URL and hit it directly from browser
+      // The session cookie will be sent automatically with credentials: 'include'
       const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
 
-      // Use fetch with mode: 'no-cors' to test connectivity without console errors
-      // no-cors mode won't let us check response status, but we can detect if the request completes
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000)
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
 
       try {
-        await fetch(vpnCheckUrl, {
-          method: 'HEAD',
-          mode: 'no-cors',
+        const response = await fetch(vpnCheckUrl, {
+          method: 'GET',
+          credentials: 'include', // Send cookies cross-origin
           signal: controller.signal,
           cache: 'no-cache',
         })
         clearTimeout(timeoutId)
-        // If fetch completes without error, VPN is connected
-        setStatus('connected')
-      } catch (fetchError) {
-        clearTimeout(timeoutId)
-        // Distinguish between timeout/abort and actual network errors
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          // Timeout - VPN might be slow or disconnected
-          setStatus('disconnected')
+
+        if (response.ok) {
+          setStatus('connected')
         } else {
-          // Network error - VPN is disconnected
           setStatus('disconnected')
         }
+      } catch (_fetchError) {
+        clearTimeout(timeoutId)
+        setStatus('disconnected')
       }
-    } catch (_error) {
-      // Network error likely means VPN is not connected
+    } catch {
       setStatus('disconnected')
     }
   }, [])
