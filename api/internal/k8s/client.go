@@ -11,6 +11,7 @@ import (
 	certsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/certs/v1"
 	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -96,6 +97,9 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 	if err := workspacesv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add workspaces scheme: %w", err)
+	}
+	if err := packagesv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add packages scheme: %w", err)
 	}
 	if err := domainrequestsv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add domainrequests scheme: %w", err)
