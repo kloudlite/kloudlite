@@ -19,7 +19,6 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
 
   // Callback when workspace becomes ready
   const handleWorkspaceReady = useCallback(() => {
-    console.log('[WorkspaceActions] Workspace is ready, refreshing page...')
     startTransition(() => {
       router.refresh()
     })
