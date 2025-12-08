@@ -104,4 +104,3 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 
 	return nil
 }
-
