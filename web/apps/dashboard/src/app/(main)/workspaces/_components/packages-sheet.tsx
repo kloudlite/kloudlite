@@ -109,7 +109,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
 
       loadPackageStatus()
     }
-  }, [open, workspace.metadata.name, workspace.spec.packages])
+  }, [open, workspace.metadata.name, workspace.metadata.namespace, workspace.spec.packages])
 
   // Search for packages as user types in combobox
   useEffect(() => {
