@@ -2,18 +2,22 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -562,4 +566,58 @@ func (h *WorkspaceHandlers) GetMetrics(c *gin.Context) {
 	metrics.Memory.Usage = totalMemory.Value()
 
 	c.JSON(http.StatusOK, metrics)
+}
+
+// GetPackageRequest handles GET /api/v1/namespaces/:namespace/workspaces/:name/packages
+// Returns the PackageRequest status for a workspace (source of truth for package installation)
+func (h *WorkspaceHandlers) GetPackageRequest(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	// Verify the workspace exists first
+	_, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Workspace not found",
+			})
+			return
+		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// PackageRequest is cluster-scoped with naming convention: {workspace-name}-packages
+	packageRequestName := fmt.Sprintf("%s-packages", name)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	var pkgReq packagesv1.PackageRequest
+	err = h.k8sClient.Get(ctx, types.NamespacedName{
+		Name: packageRequestName,
+	}, &pkgReq)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// PackageRequest doesn't exist yet (workspace has no packages configured)
+			c.JSON(http.StatusOK, nil)
+			return
+		}
+		h.logger.Error("Failed to get package request", zap.Error(err), zap.String("name", packageRequestName))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get package request",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &pkgReq)
 }

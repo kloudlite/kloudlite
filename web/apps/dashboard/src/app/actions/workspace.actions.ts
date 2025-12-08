@@ -224,9 +224,9 @@ export async function cloneWorkspace(
 
 /**
  * Server action to get package request status for a workspace
- * PackageRequest is cluster-scoped with name format: {workspace-name}-packages
+ * Uses the workspace packages endpoint which returns the PackageRequest (source of truth)
  */
-export async function getPackageRequest(workspaceName: string) {
+export async function getPackageRequest(workspaceName: string, namespace: string = 'default') {
   try {
     // Import required modules dynamically to ensure this only runs on server
     const { env } = await import('@/lib/env')
@@ -240,9 +240,8 @@ export async function getPackageRequest(workspaceName: string) {
       }
     }
 
-    // PackageRequest is cluster-scoped with naming convention: {workspace-name}-packages
-    const packageRequestName = `${workspaceName}-packages`
-    const url = `${env.apiUrl}/apis/workspaces.kloudlite.io/v1/packagerequests/${packageRequestName}`
+    // Use the workspace packages endpoint
+    const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/packages`
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
