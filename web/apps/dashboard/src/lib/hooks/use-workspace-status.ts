@@ -8,6 +8,7 @@ interface UseWorkspaceStatusOptions {
   pollInterval?: number
   enabled?: boolean
   stopOnPhase?: string[]
+  onReady?: (workspace: Workspace) => void
 }
 
 interface UseWorkspaceStatusResult {
@@ -24,13 +25,19 @@ export function useWorkspaceStatus(
   namespace: string,
   options: UseWorkspaceStatusOptions = {}
 ): UseWorkspaceStatusResult {
-  const { pollInterval = 2000, enabled = false, stopOnPhase = ['Running', 'Failed', 'Stopped'] } = options
+  const { pollInterval = 2000, enabled = false, stopOnPhase = ['Running', 'Failed', 'Stopped'], onReady } = options
 
   const [workspace, setWorkspace] = useState<Workspace | null>(null)
   const [phase, setPhase] = useState<string | null>(null)
   const [isPolling, setIsPolling] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const onReadyRef = useRef(onReady)
+
+  // Keep onReady ref updated
+  useEffect(() => {
+    onReadyRef.current = onReady
+  }, [onReady])
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -43,6 +50,10 @@ export function useWorkspaceStatus(
 
         // Stop polling if we've reached a terminal phase
         if (stopOnPhase.includes(currentPhase)) {
+          // Call onReady callback when workspace reaches ready state
+          if (currentPhase === 'Running' && onReadyRef.current) {
+            onReadyRef.current(result.data)
+          }
           return true // Signal to stop polling
         }
       } else {
