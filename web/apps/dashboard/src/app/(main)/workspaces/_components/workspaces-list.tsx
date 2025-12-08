@@ -165,7 +165,7 @@ export function WorkspacesList({
                           : 'bg-secondary text-secondary-foreground'
 
               const packageCount = workspace.spec.packages?.length || 0
-              const installedCount = workspace.status?.installedPackages?.length || 0
+              // Package installation status is now fetched from PackageRequest directly
 
               return (
                 <tr
@@ -220,7 +220,7 @@ export function WorkspacesList({
                     {packageCount > 0 ? (
                       <div className="text-xs">
                         <span className="text-muted-foreground">
-                          {installedCount}/{packageCount} installed
+                          {packageCount} package{packageCount > 1 ? 's' : ''}
                         </span>
                       </div>
                     ) : (

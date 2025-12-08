@@ -270,7 +270,7 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 	if workspace.Status.Phase != "Terminating" {
 		workspace.Status.Phase = "Terminating"
 		workspace.Status.Message = "Workspace is being deleted"
-		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+		if err := r.updateStatus(ctx, workspace, logger); err != nil {
 			logger.Warn("Failed to update status to Terminating", zap.Error(err))
 			// Continue with deletion even if status update fails
 		}

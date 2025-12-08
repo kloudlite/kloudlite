@@ -2380,6 +2380,7 @@ spec:
     subresources:
       status: {}
 ---
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -2851,11 +2852,6 @@ spec:
                   Keys are port numbers as strings, values are the full URLs
                   Example: {"3000": "https://p3000-a1b2c3d4.example.khost.dev"}
                 type: object
-              failedPackages:
-                description: FailedPackages list of packages that failed to install
-                items:
-                  type: string
-                type: array
               hash:
                 description: |-
                   Hash is an 8-character hash derived from owner and workspace name for DNS-safe hostnames
@@ -2871,32 +2867,6 @@ spec:
                 - active
                 - idle
                 type: string
-              installedPackages:
-                description: InstalledPackages list of successfully installed packages
-                items:
-                  description: InstalledPackage represents a successfully installed
-                    package
-                  properties:
-                    binPath:
-                      description: BinPath where binaries are located
-                      type: string
-                    installedAt:
-                      description: InstalledAt timestamp
-                      format: date-time
-                      type: string
-                    name:
-                      description: Name of the package
-                      type: string
-                    storePath:
-                      description: StorePath in the Nix store
-                      type: string
-                    version:
-                      description: Version of the installed package
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
               lastActivityTime:
                 description: LastActivityTime tracks when the workspace was last active
                 format: date-time
@@ -2907,10 +2877,6 @@ spec:
                 type: string
               nodeName:
                 description: NodeName where the pod is running
-                type: string
-              packageInstallationMessage:
-                description: PackageInstallationMessage provides information about
-                  package installation
                 type: string
               phase:
                 description: Phase represents the current phase of the workspace

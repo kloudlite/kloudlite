@@ -40,8 +40,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@kloudlite/ui'
 import { ScrollArea } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
-import type { Workspace, PackageSpec } from '@kloudlite/types'
-import { updateWorkspace } from '@/app/actions/workspace.actions'
+import type { Workspace, PackageSpec, PackageRequest } from '@kloudlite/types'
+import { updateWorkspace, getPackageRequest } from '@/app/actions/workspace.actions'
 import { searchPackages, resolvePackageVersion } from '@/app/actions/package.actions'
 import { toast } from 'sonner'
 
@@ -76,37 +76,40 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
   const [loadingSearch, setLoadingSearch] = useState(false)
   const [comboboxOpen, setComboboxOpen] = useState(false)
 
-  // Initialize packages when sheet opens
+  // Initialize packages when sheet opens - fetch status from PackageRequest
   useEffect(() => {
     if (open) {
-      // Create maps for status tracking
-      const installedPackagesMap = new Map(
-        workspace.status?.installedPackages?.map((pkg) => [pkg.name, pkg]) || [],
-      )
-      const failedPackagesSet = new Set(workspace.status?.failedPackages || [])
+      const loadPackageStatus = async () => {
+        // Fetch package status from PackageRequest (source of truth)
+        const pkgReqResult = await getPackageRequest(workspace.metadata.name)
+        const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
 
-      const existingPackages: PackageWithVersion[] = (workspace.spec.packages || []).map((pkg) => {
-        const isInstalled = installedPackagesMap.has(pkg.name)
-        const isFailed = failedPackagesSet.has(pkg.name)
-        const status = isInstalled ? 'installed' : isFailed ? 'failed' : 'pending'
+        // Create maps for status tracking from PackageRequest
+        const installedPackagesMap = new Map(
+          pkgReq?.status?.installedPackages?.map((pkg) => [pkg.name, pkg]) || [],
+        )
+        const failedPackagesSet = new Set(pkgReq?.status?.failedPackages || [])
 
-        return {
-          ...pkg,
-          displayVersion:
-            pkg.channel ||
-            (pkg.nixpkgsCommit ? `commit:${pkg.nixpkgsCommit.substring(0, 8)}` : undefined),
-          status,
-          installedInfo: installedPackagesMap.get(pkg.name),
-        }
-      })
-      setPackages(existingPackages)
+        const existingPackages: PackageWithVersion[] = (workspace.spec.packages || []).map((pkg) => {
+          const isInstalled = installedPackagesMap.has(pkg.name)
+          const isFailed = failedPackagesSet.has(pkg.name)
+          const status = isInstalled ? 'installed' : isFailed ? 'failed' : 'pending'
+
+          return {
+            ...pkg,
+            displayVersion:
+              pkg.channel ||
+              (pkg.nixpkgsCommit ? `commit:${pkg.nixpkgsCommit.substring(0, 8)}` : undefined),
+            status,
+            installedInfo: installedPackagesMap.get(pkg.name),
+          }
+        })
+        setPackages(existingPackages)
+      }
+
+      loadPackageStatus()
     }
-  }, [
-    open,
-    workspace.spec.packages,
-    workspace.status?.installedPackages,
-    workspace.status?.failedPackages,
-  ])
+  }, [open, workspace.metadata.name, workspace.spec.packages])
 
   // Search for packages as user types in combobox
   useEffect(() => {

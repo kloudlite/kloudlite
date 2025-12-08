@@ -10,8 +10,10 @@ import (
 	"strings"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -38,6 +40,11 @@ func New() (*Client, error) {
 	// Register the environment API types with the scheme
 	if err := environmentsv1.AddToScheme(scheme.Scheme); err != nil {
 		return nil, fmt.Errorf("failed to add environment types to scheme: %w", err)
+	}
+
+	// Register the packages API types with the scheme
+	if err := packagesv1.AddToScheme(scheme.Scheme); err != nil {
+		return nil, fmt.Errorf("failed to add packages types to scheme: %w", err)
 	}
 
 	// Get workspace name and namespace from environment variables
@@ -113,6 +120,23 @@ func (c *Client) Patch(ctx context.Context, workspace *workspacesv1.Workspace, p
 		return fmt.Errorf("failed to patch workspace: %w", err)
 	}
 	return nil
+}
+
+// GetPackageRequest retrieves the PackageRequest for this workspace
+// PackageRequest is cluster-scoped with name format: {workspace-name}-packages
+func (c *Client) GetPackageRequest(ctx context.Context) (*packagesv1.PackageRequest, error) {
+	packageRequestName := fmt.Sprintf("%s-packages", c.Name)
+	pkgReq := &packagesv1.PackageRequest{}
+	err := c.K8sClient.Get(ctx, types.NamespacedName{
+		Name: packageRequestName,
+	}, pkgReq)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, nil // No PackageRequest exists yet
+		}
+		return nil, fmt.Errorf("failed to get package request: %w", err)
+	}
+	return pkgReq, nil
 }
 
 // getKubeConfig returns the Kubernetes config

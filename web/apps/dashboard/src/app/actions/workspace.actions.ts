@@ -221,3 +221,56 @@ export async function cloneWorkspace(
     }
   }
 }
+
+/**
+ * Server action to get package request status for a workspace
+ * PackageRequest is cluster-scoped with name format: {workspace-name}-packages
+ */
+export async function getPackageRequest(workspaceName: string) {
+  try {
+    // Import required modules dynamically to ensure this only runs on server
+    const { env } = await import('@/lib/env')
+    const { getAuthToken } = await import('@/lib/get-session')
+
+    const token = await getAuthToken()
+    if (!token) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    // PackageRequest is cluster-scoped with naming convention: {workspace-name}-packages
+    const packageRequestName = `${workspaceName}-packages`
+    const url = `${env.apiUrl}/apis/workspaces.kloudlite.io/v1/packagerequests/${packageRequestName}`
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        // PackageRequest doesn't exist yet (workspace has no packages configured)
+        return { success: true, data: null }
+      }
+      const errorText = await response.text()
+      return {
+        success: false,
+        error: errorText || 'Failed to get package request',
+      }
+    }
+
+    const data = await response.json()
+    return { success: true, data }
+  } catch (err) {
+    console.error('Get package request error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}

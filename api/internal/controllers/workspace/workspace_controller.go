@@ -7,7 +7,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -470,37 +469,6 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&workspacev1.Workspace{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Pod{}).
 		Owns(&networkingv1.Ingress{}). // Watch Ingress resources owned by Workspaces
-		// Watch PackageRequest status changes and trigger Workspace reconciliation
-		// This is needed because host-manager updates PackageRequest status when packages are installed
-		Watches(
-			&packagesv1.PackageRequest{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-				pkgReq, ok := obj.(*packagesv1.PackageRequest)
-				if !ok {
-					return nil
-				}
-				// Find the owning Workspace from the owner references
-				for _, ownerRef := range pkgReq.OwnerReferences {
-					if ownerRef.Kind == "Workspace" {
-						// PackageRequest is cluster-scoped but owned by a namespaced Workspace
-						// The namespace should be the same as the WorkMachine's target namespace
-						// We need to find the Workspace by name across all namespaces
-						var workspaces workspacev1.WorkspaceList
-						if err := mgr.GetClient().List(ctx, &workspaces); err != nil {
-							return nil
-						}
-						for _, ws := range workspaces.Items {
-							if ws.Name == ownerRef.Name && ws.UID == ownerRef.UID {
-								return []reconcile.Request{
-									{NamespacedName: types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}},
-								}
-							}
-						}
-					}
-				}
-				return nil
-			}),
-		).
 		Watches(
 			&environmentv1.Environment{},
 			handler.EnqueueRequestsFromMapFunc(r.findWorkspacesForEnvironment),
