@@ -583,12 +583,6 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 			zap2.String("error", installErr.Error()))
 	}
 
-	if queryErr != nil {
-		r.Logger.Warn("Failed to query package path, using default",
-			zap2.String("package", pkg.Name),
-			zap2.Error(queryErr))
-	}
-
 	// Parse store path and version from output
 	storePath := nixStorePath + "/store"
 	installedVersion := ""
@@ -600,7 +594,14 @@ func (r *PackageManagerReconciler) installPackage(pkg workspacev1.PackageSpec, p
 		installedVersion = "channel:" + pkg.Channel
 	}
 
-	if len(queryOutput) > 0 {
+	// Only parse query output if query succeeded
+	// If query failed, the output contains error messages (e.g., "error: selector 'dig' matches no derivations")
+	// which would be incorrectly parsed as package info
+	if queryErr != nil {
+		r.Logger.Warn("Failed to query package path, using default",
+			zap2.String("package", pkg.Name),
+			zap2.Error(queryErr))
+	} else if len(queryOutput) > 0 {
 		// Output format is typically: "package-version  /nix/store/hash-package-version"
 		parts := strings.Fields(string(queryOutput))
 		if len(parts) >= 1 {
