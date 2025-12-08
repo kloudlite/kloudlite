@@ -66,9 +66,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
               : 'bg-secondary text-secondary-foreground'
 
   const packageCount = workspace.spec.packages?.length || 0
-  const installedCount = workspace.status?.installedPackages?.length || 0
-  const failedCount = workspace.status?.failedPackages?.length || 0
-  const pendingCount = packageCount - installedCount - failedCount
+  // Package installation status is now fetched from PackageRequest (see PackagesSheet component)
 
   return (
     <>
@@ -141,26 +139,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 </div>
               </div>
               <div className="space-y-3 p-4">
-                {/* Installing Packages Status */}
-                {pendingCount > 0 && (
-                  <div className="flex items-center gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 dark:border-yellow-900/50 dark:bg-yellow-950/20">
-                    <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-yellow-600 dark:text-yellow-500" />
-                    <span className="text-sm text-yellow-700 dark:text-yellow-400">
-                      Installing {pendingCount} package{pendingCount > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                )}
-
-                {failedCount > 0 && (
-                  <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-950/20">
-                    <XCircle className="h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-500" />
-                    <span className="text-sm text-red-700 dark:text-red-400">
-                      {failedCount} package{failedCount > 1 ? 's' : ''} failed
-                    </span>
-                  </div>
-                )}
-
-                {/* Manage Packages Button */}
+                {/* Manage Packages Button - status is shown in PackagesSheet */}
                 <PackagesSheet
                   workspace={workspace}
                   trigger={

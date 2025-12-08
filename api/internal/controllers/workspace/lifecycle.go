@@ -44,7 +44,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		// Ensure workspace pod is suspended while being cloned
 		workspace.Status.Phase = "Suspended"
 		workspace.Status.Message = fmt.Sprintf("Workspace suspended for cloning to %s", workspace.Status.SourceCloningStatus.TargetWorkspaceName)
-		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+		if err := r.updateStatus(ctx, workspace, logger); err != nil {
 			logger.Warn("Failed to update status for source cloning", zap.Error(err))
 		}
 
@@ -58,7 +58,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		logger.Error("Failed to get target namespace", zap.Error(err))
 		workspace.Status.Phase = "Failed"
 		workspace.Status.Message = fmt.Sprintf("Failed to get target namespace: %v", err)
-		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		r.updateStatus(ctx, workspace, logger)
 		return reconcile.Result{}, err
 	}
 
@@ -107,7 +107,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		logger.Error("Failed to ensure PackageRequest", zap.Error(err))
 		workspace.Status.Phase = "Failed"
 		workspace.Status.Message = fmt.Sprintf("Failed to create PackageRequest: %v", err)
-		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		r.updateStatus(ctx, workspace, logger)
 		return reconcile.Result{}, err
 	}
 
@@ -116,7 +116,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		logger.Error("Failed to ensure Service", zap.Error(err))
 		workspace.Status.Phase = "Failed"
 		workspace.Status.Message = fmt.Sprintf("Failed to create Service: %v", err)
-		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		r.updateStatus(ctx, workspace, logger)
 		return reconcile.Result{}, err
 	}
 
@@ -132,14 +132,8 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		logger.Error("Failed to ensure headless Service", zap.Error(err))
 		workspace.Status.Phase = "Failed"
 		workspace.Status.Message = fmt.Sprintf("Failed to create headless Service: %v", err)
-		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		r.updateStatus(ctx, workspace, logger)
 		return reconcile.Result{}, err
-	}
-
-	// Sync package installation status from PackageRequest
-	if err := r.syncPackageStatus(ctx, workspace, logger); err != nil {
-		logger.Warn("Failed to sync package status", zap.Error(err))
-		// Don't fail the reconciliation, just log the warning
 	}
 
 	// Check if pod already exists
@@ -243,7 +237,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		logger.Error("Failed to build workspace pod", zap.Error(err))
 		workspace.Status.Phase = "Failed"
 		workspace.Status.Message = fmt.Sprintf("Failed to build pod: %v", err)
-		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		r.updateStatus(ctx, workspace, logger)
 		return reconcile.Result{}, err
 	}
 
@@ -251,7 +245,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 		logger.Error("Failed to create workspace pod", zap.Error(err))
 		workspace.Status.Phase = "Failed"
 		workspace.Status.Message = fmt.Sprintf("Failed to create pod: %v", err)
-		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		r.updateStatus(ctx, workspace, logger)
 		return reconcile.Result{}, err
 	}
 
@@ -263,7 +257,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	workspace.Status.StartTime = &now
 	workspace.Status.LastActivityTime = &now
 
-	if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+	if err := r.updateStatus(ctx, workspace, logger); err != nil {
 		logger.Warn("Failed to update workspace status", zap.Error(err))
 	}
 
@@ -285,7 +279,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 		workspace.Status.NodeName = ""
 		now := metav1.Now()
 		workspace.Status.StopTime = &now
-		r.updateStatusPreservingPackages(ctx, workspace, logger)
+		r.updateStatus(ctx, workspace, logger)
 		return reconcile.Result{}, err
 	}
 
@@ -304,7 +298,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 		now := metav1.Now()
 		workspace.Status.StopTime = &now
 
-		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+		if err := r.updateStatus(ctx, workspace, logger); err != nil {
 			logger.Warn("Failed to update workspace status", zap.Error(err))
 		}
 		return reconcile.Result{}, nil
@@ -330,7 +324,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 		workspace.Status.NodeName = ""
 		now := metav1.Now()
 		workspace.Status.StopTime = &now
-		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+		if err := r.updateStatus(ctx, workspace, logger); err != nil {
 			logger.Warn("Failed to update workspace status", zap.Error(err))
 		}
 		return reconcile.Result{}, nil
@@ -338,7 +332,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 
 	workspace.Status.Phase = "Stopping"
 	workspace.Status.Message = "Workspace is being stopped"
-	if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+	if err := r.updateStatus(ctx, workspace, logger); err != nil {
 		logger.Warn("Failed to update workspace status", zap.Error(err))
 	}
 

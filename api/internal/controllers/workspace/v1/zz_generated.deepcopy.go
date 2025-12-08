@@ -370,18 +370,6 @@ func (in *WorkspaceStatus) DeepCopyInto(out *WorkspaceStatus) {
 		*out = new(ResourceUsage)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.InstalledPackages != nil {
-		in, out := &in.InstalledPackages, &out.InstalledPackages
-		*out = make([]InstalledPackage, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
-	}
-	if in.FailedPackages != nil {
-		in, out := &in.FailedPackages, &out.FailedPackages
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	if in.IdleSince != nil {
 		in, out := &in.IdleSince, &out.IdleSince
 		*out = (*in).DeepCopy()

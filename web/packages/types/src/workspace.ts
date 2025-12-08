@@ -136,9 +136,8 @@ export interface WorkspaceStatus {
     storage?: string
   }
   lastActivity?: string
-  installedPackages?: InstalledPackage[]
-  failedPackages?: string[]
-  packageInstallationMessage?: string
+  // Package status is now read from PackageRequest resource directly
+  // (not synced to Workspace.status anymore)
   accessUrl?: string
   accessUrls?: Record<string, string> // Multiple access URLs for different services
   podName?: string
@@ -205,4 +204,27 @@ export interface WorkspaceMetrics {
     limit?: string
   }
   timestamp: string
+}
+
+// PackageRequest is the source of truth for package installation status
+// It's a cluster-scoped resource owned by the Workspace
+export interface PackageRequest {
+  metadata: {
+    name: string
+    creationTimestamp?: string
+    resourceVersion?: string
+    uid?: string
+  }
+  spec: {
+    workspaceRef: string
+    packages: PackageSpec[]
+    profileName: string
+  }
+  status?: {
+    phase?: 'Pending' | 'Installing' | 'Ready' | 'Failed'
+    message?: string
+    installedPackages?: InstalledPackage[]
+    failedPackages?: string[]
+    lastUpdated?: string
+  }
 }

@@ -157,7 +157,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 
 		// Only update status if something changed
 		if needsStatusUpdate {
-			if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+			if err := r.updateStatus(ctx, workspace, logger); err != nil {
 				logger.Warn("Failed to update workspace activity state", zap.Error(err))
 			}
 		}
@@ -176,7 +176,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 
 	// Only update status if something changed
 	if needsStatusUpdate {
-		if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+		if err := r.updateStatus(ctx, workspace, logger); err != nil {
 			logger.Warn("Failed to update idle state", zap.Error(err))
 		}
 	}

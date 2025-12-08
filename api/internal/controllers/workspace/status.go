@@ -7,7 +7,6 @@ import (
 
 	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -19,29 +18,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// updateStatusPreservingPackages updates workspace status with latest package data from PackageRequest
+// updateStatus updates workspace status with retry logic
 // Following Kubernetes best practice: "re-fetch before update" to avoid stale data on conflict retry
-func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
+func (r *WorkspaceReconciler) updateStatus(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
 	// ConnectedEnvironment is set during THIS reconciliation, preserve it
 	connectedEnvironment := workspace.Status.ConnectedEnvironment
 
 	return statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
-		// BEST PRACTICE: Re-fetch source of truth (PackageRequest) INSIDE retry callback
-		// This ensures we always use latest data after any conflict-triggered refetch
-		pkgReqName := fmt.Sprintf("%s-packages", workspace.Name)
-		pkgReq := &packagesv1.PackageRequest{}
-		if err := r.Get(ctx, client.ObjectKey{Name: pkgReqName}, pkgReq); err == nil {
-			// Copy latest status from PackageRequest (the source of truth)
-			workspace.Status.InstalledPackages = pkgReq.Status.InstalledPackages
-			workspace.Status.FailedPackages = pkgReq.Status.FailedPackages
-			workspace.Status.PackageInstallationMessage = pkgReq.Status.Message
-		} else if len(workspace.Spec.Packages) == 0 {
-			// No packages defined, clear status
-			workspace.Status.InstalledPackages = nil
-			workspace.Status.FailedPackages = nil
-			workspace.Status.PackageInstallationMessage = ""
-		}
-		// Restore ConnectedEnvironment (set during this reconciliation, not from PackageRequest)
+		// Restore ConnectedEnvironment (set during this reconciliation)
 		workspace.Status.ConnectedEnvironment = connectedEnvironment
 		return nil
 	}, logger)
@@ -49,30 +33,8 @@ func (r *WorkspaceReconciler) updateStatusPreservingPackages(ctx context.Context
 
 // updateWorkspaceStatus updates the workspace status based on pod state
 func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pod *corev1.Pod, phase, message string, logger *zap.Logger) (reconcile.Result, error) {
-	// Fetch current workspace from API to compare package status
-	// (syncPackageStatus updates the in-memory object, we need to compare against what's persisted)
-	currentWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Name, Namespace: workspace.Namespace}, currentWorkspace); err != nil {
-		logger.Warn("Failed to fetch current workspace for status comparison", zap.Error(err))
-		// Continue with update anyway
-	}
-
 	// Track if any status field actually changed
 	needsUpdate := false
-
-	// Check if package-related fields changed (compare in-memory vs persisted)
-	if !reflect.DeepEqual(workspace.Status.InstalledPackages, currentWorkspace.Status.InstalledPackages) {
-		needsUpdate = true
-		logger.Info("Package installation status changed",
-			zap.Int("newCount", len(workspace.Status.InstalledPackages)),
-			zap.Int("oldCount", len(currentWorkspace.Status.InstalledPackages)))
-	}
-	if !reflect.DeepEqual(workspace.Status.FailedPackages, currentWorkspace.Status.FailedPackages) {
-		needsUpdate = true
-	}
-	if workspace.Status.PackageInstallationMessage != currentWorkspace.Status.PackageInstallationMessage {
-		needsUpdate = true
-	}
 
 	if workspace.Status.Phase != phase {
 		workspace.Status.Phase = phase
@@ -248,7 +210,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		return reconcile.Result{}, nil
 	}
 
-	if err := r.updateStatusPreservingPackages(ctx, workspace, logger); err != nil {
+	if err := r.updateStatus(ctx, workspace, logger); err != nil {
 		logger.Error("Failed to update workspace status after retries", zap.Error(err))
 		return reconcile.Result{}, err
 	}

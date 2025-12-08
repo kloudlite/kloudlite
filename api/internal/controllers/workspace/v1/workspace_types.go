@@ -256,19 +256,6 @@ type WorkspaceStatus struct {
 	// +optional
 	NodeName string `json:"nodeName,omitempty"`
 
-	// InstalledPackages list of successfully installed packages
-	// +optional
-	InstalledPackages []InstalledPackage `json:"installedPackages,omitempty"`
-
-	// FailedPackages list of packages that failed to install
-	// NOTE: No omitempty - empty slice must be serialized to clear old failures
-	// +optional
-	FailedPackages []string `json:"failedPackages"`
-
-	// PackageInstallationMessage provides information about package installation
-	// +optional
-	PackageInstallationMessage string `json:"packageInstallationMessage,omitempty"`
-
 	// ActiveConnections is the number of active network connections in the workspace
 	// +optional
 	ActiveConnections int `json:"activeConnections,omitempty"`

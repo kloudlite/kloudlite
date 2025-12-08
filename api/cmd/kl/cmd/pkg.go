@@ -13,6 +13,7 @@ import (
 
 	fzf "github.com/junegunn/fzf/src"
 	"github.com/kloudlite/kloudlite/api/cmd/kl/pkg/devbox"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/spf13/cobra"
 )
@@ -552,13 +553,13 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	// Record initial workspace status to detect stale failures
+	// Record initial PackageRequest status to detect stale failures
 	// We need to wait for the status message to change before trusting FailedPackages
-	// because the workspace status might still have old data from a previous attempt
-	initialWorkspace, err := WsClient.Get(ctx)
+	// because the status might still have old data from a previous attempt
+	initialPkgReq, _ := WsClient.GetPackageRequest(ctx)
 	initialStatusMessage := ""
-	if err == nil {
-		initialStatusMessage = initialWorkspace.Status.PackageInstallationMessage
+	if initialPkgReq != nil {
+		initialStatusMessage = initialPkgReq.Status.Message
 	}
 
 	// Create a cancellable context for log streaming
@@ -592,13 +593,22 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 			return fmt.Errorf("timeout waiting for package installation")
 
 		case <-ticker.C:
-			workspace, err := WsClient.Get(ctx)
+			// Get package status from PackageRequest (source of truth)
+			pkgReq, err := WsClient.GetPackageRequest(ctx)
 			if err != nil {
-				return fmt.Errorf("failed to get workspace status: %w", err)
+				return fmt.Errorf("failed to get package request status: %w", err)
+			}
+
+			// If PackageRequest doesn't exist yet or status is empty, keep waiting
+			if pkgReq == nil || pkgReq.Status.Phase == "" {
+				if nixpkgsCommit == "" {
+					fmt.Print(".")
+				}
+				continue
 			}
 
 			// Check if package is installed
-			for _, pkg := range workspace.Status.InstalledPackages {
+			for _, pkg := range pkgReq.Status.InstalledPackages {
 				if pkg.Name == packageName {
 					fmt.Printf("\n[✓] Package installed successfully: %s\n", packageName)
 					if pkg.Version != "" {
@@ -614,10 +624,10 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 			// Check if package failed
 			// Only consider it a failure if the status message has changed from the initial state
 			// This prevents false failures from stale FailedPackages data from previous attempts
-			statusMessageChanged := workspace.Status.PackageInstallationMessage != initialStatusMessage
-			for _, failedPkg := range workspace.Status.FailedPackages {
+			statusMessageChanged := pkgReq.Status.Message != initialStatusMessage
+			for _, failedPkg := range pkgReq.Status.FailedPackages {
 				if failedPkg == packageName && statusMessageChanged {
-					errMsg := workspace.Status.PackageInstallationMessage
+					errMsg := pkgReq.Status.Message
 					if errMsg != "" {
 						return fmt.Errorf("package installation failed: %s", errMsg)
 					}
@@ -772,13 +782,29 @@ func handlePackageList() error {
 		tw.Flush()
 	}
 
+	// Get package status from PackageRequest (source of truth)
+	pkgReq, err := WsClient.GetPackageRequest(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "\nWarning: Could not fetch package status: %v\n", err)
+		return nil
+	}
+
+	var installedPackages []packagesv1.InstalledPackage
+	var failedPackages []string
+	var statusMessage string
+	if pkgReq != nil {
+		installedPackages = pkgReq.Status.InstalledPackages
+		failedPackages = pkgReq.Status.FailedPackages
+		statusMessage = pkgReq.Status.Message
+	}
+
 	fmt.Println("\nInstalled packages:")
-	if len(workspace.Status.InstalledPackages) == 0 {
+	if len(installedPackages) == 0 {
 		fmt.Println("  No packages installed yet")
 	} else {
 		tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(tw, "NAME\tVERSION\tBIN PATH\tINSTALLED AT")
-		for _, pkg := range workspace.Status.InstalledPackages {
+		for _, pkg := range installedPackages {
 			installedAt := ""
 			if !pkg.InstalledAt.IsZero() {
 				installedAt = pkg.InstalledAt.Format("2006-01-02 15:04:05")
@@ -788,13 +814,13 @@ func handlePackageList() error {
 		tw.Flush()
 	}
 
-	if len(workspace.Status.FailedPackages) > 0 {
+	if len(failedPackages) > 0 {
 		fmt.Println("\nFailed packages:")
-		for _, pkg := range workspace.Status.FailedPackages {
+		for _, pkg := range failedPackages {
 			fmt.Printf("  - %s\n", pkg)
 		}
-		if workspace.Status.PackageInstallationMessage != "" {
-			fmt.Printf("\nError: %s\n", workspace.Status.PackageInstallationMessage)
+		if statusMessage != "" {
+			fmt.Printf("\nError: %s\n", statusMessage)
 		}
 	}
 
