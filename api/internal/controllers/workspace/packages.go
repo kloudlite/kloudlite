@@ -92,9 +92,12 @@ func (r *WorkspaceReconciler) ensurePackageRequest(ctx context.Context, workspac
 	}
 
 	if packagesChanged {
+		// Use Patch instead of Update to avoid overwriting status
+		// Update() would overwrite the status with stale data from our Get()
+		patch := client.MergeFrom(pkgReq.DeepCopy())
 		pkgReq.Spec.Packages = workspace.Spec.Packages
-		if err := r.Update(ctx, pkgReq); err != nil {
-			return fmt.Errorf("failed to update PackageRequest: %w", err)
+		if err := r.Patch(ctx, pkgReq, patch); err != nil {
+			return fmt.Errorf("failed to patch PackageRequest: %w", err)
 		}
 
 		// PackageManagerReconciler will be triggered by the spec change
