@@ -54,6 +54,10 @@ spec:
                 secretKeyRef:
                   name: frontend-secrets
                   key: jwt-secret
+            - name: NEXT_PUBLIC_AUTH_COOKIE_DOMAIN
+              value: "${AUTH_COOKIE_DOMAIN}"
+            - name: CLOUDFLARE_DNS_DOMAIN
+              value: "${CLOUDFLARE_DNS_DOMAIN}"
           resources:
             requests:
               memory: "256Mi"
