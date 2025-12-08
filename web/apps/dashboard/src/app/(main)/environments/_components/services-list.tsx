@@ -1,11 +1,12 @@
 'use client'
 
-import { Network, Copy, Check, AlertCircle, AlertTriangle } from 'lucide-react'
+import { Network, Copy, Check, AlertCircle, AlertTriangle, Terminal } from 'lucide-react'
 import { useState } from 'react'
 import type { K8sService } from '@kloudlite/types'
 import type { Composition } from '@kloudlite/types'
-import { Alert, AlertDescription, AlertTitle, Badge } from '@kloudlite/ui'
+import { Alert, AlertDescription, AlertTitle, Badge, Button } from '@kloudlite/ui'
 import { CompositionEditor } from './composition-editor'
+import { ServiceLogsViewer } from './service-logs-viewer'
 
 interface ServicesListProps {
   services: K8sService[]
@@ -24,6 +25,7 @@ export function ServicesList({
 }: ServicesListProps) {
   const [open, setOpen] = useState(false)
   const [copiedDns, setCopiedDns] = useState<string | null>(null)
+  const [logsService, setLogsService] = useState<string | null>(null)
 
   // Generate VPN-accessible DNS hostname: {service}-{hash}.{subdomain}
   const getDnsHostname = (serviceName: string) => {
@@ -145,6 +147,9 @@ export function ServicesList({
                 <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Ports
                 </th>
+                <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -209,6 +214,17 @@ export function ServicesList({
                         </span>
                       )}
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLogsService(service.name)}
+                        className="gap-1.5"
+                      >
+                        <Terminal className="h-4 w-4" />
+                        Logs
+                      </Button>
+                    </td>
                   </tr>
                 )
               })}
@@ -216,6 +232,14 @@ export function ServicesList({
           </table>
         </div>
       </div>
+
+      {/* Service Logs Viewer */}
+      <ServiceLogsViewer
+        serviceName={logsService || ''}
+        namespace={namespace}
+        isOpen={!!logsService}
+        onClose={() => setLogsService(null)}
+      />
     </div>
   )
 }

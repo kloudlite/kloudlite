@@ -13,6 +13,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"github.com/kloudlite/kloudlite/api/internal/services"
 	"go.uber.org/zap"
+	"k8s.io/client-go/kubernetes"
 )
 
 type Server struct {
@@ -47,8 +48,10 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 	}
 
 	// Initialize repository manager
+	clientset, _ := k8sClient.Clientset.(*kubernetes.Clientset)
 	repoManager, err := repository.NewManager(ctx, &repository.ManagerOptions{
 		K8sClient: k8sClient.RuntimeClient,
+		Clientset: clientset,
 	})
 	if err != nil {
 		logger.Fatal("Failed to create repository manager", zap.Error(err))
