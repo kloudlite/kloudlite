@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { env } from '@kloudlite/lib'
 import { cookies } from 'next/headers'
-import { SignJWT } from 'jose'
+import { encode } from 'next-auth/jwt'
 
 /**
  * Server-side validation of superadmin login token
@@ -66,28 +66,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create NextAuth-compatible JWT session using shared secret
-    const secret = new TextEncoder().encode(process.env.AUTH_SECRET)
-
-    // Create a session token that mimics NextAuth's JWT structure
-    const sessionToken = await new SignJWT({
-      email: data.user.email,
-      name: data.user.displayName || data.user.email,
-      sub: data.user.email, // Subject (user ID)
-      roles: data.roles,
-      isActive: true,
-      provider: 'superadmin-login',
+    // Create NextAuth-compatible JWT session using NextAuth's encode function
+    // This ensures the token format and cookie name match NextAuth's expectations
+    const sessionToken = await encode({
+      token: {
+        email: data.user.email,
+        name: data.user.displayName || data.user.email,
+        sub: data.user.email,
+        roles: data.roles,
+        isActive: true,
+        provider: 'superadmin-login',
+      },
+      secret: process.env.AUTH_SECRET!,
+      maxAge: 8 * 60 * 60, // 8 hours
     })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('8h') // Same as typical NextAuth session
-      .sign(secret)
 
-    // Set the NextAuth session cookie
+    // Set the NextAuth session cookie using NextAuth's default cookie name
+    // NextAuth v5 uses 'authjs' prefix by default
     const cookieStore = await cookies()
     const cookieName = process.env.NODE_ENV === 'production'
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token'
+      ? '__Secure-authjs.session-token'
+      : 'authjs.session-token'
 
     cookieStore.set(cookieName, sessionToken, {
       httpOnly: true,

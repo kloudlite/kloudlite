@@ -42,10 +42,10 @@ func NewJWTMiddleware(jwtSecret string, logger *zap.Logger) func(http.Handler) h
 			}
 
 			// If no Authorization header, try session cookie (for browser requests)
-			// NextAuth uses different cookie names based on environment
+			// NextAuth v5 uses 'authjs' prefix by default
 			if tokenString == "" {
 				// Try secure cookie first (production), then non-secure (development)
-				cookieNames := []string{"__Secure-next-auth.session-token", "next-auth.session-token"}
+				cookieNames := []string{"__Secure-authjs.session-token", "authjs.session-token"}
 				for _, cookieName := range cookieNames {
 					if cookie, err := r.Cookie(cookieName); err == nil && cookie.Value != "" {
 						tokenString = cookie.Value
