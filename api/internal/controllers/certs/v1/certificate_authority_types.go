@@ -7,6 +7,10 @@ import (
 
 type CertificateAuthoritySpec struct {
 	SANs []string `json:"san"`
+	// OCSPServerURL is the URL of the OCSP responder for certificate revocation checking
+	// If not specified, OCSPServer will not be set on issued certificates
+	// Example: "http://ocsp.example.com/api/ocsp"
+	OCSPServerURL string `json:"ocspServerURL,omitempty"`
 }
 
 type SecretKeyRef struct {
