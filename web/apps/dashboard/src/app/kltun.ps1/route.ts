@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const downloadBaseUrl = `${serverUrl}/api/download/kltun`
 
   const script = `# kltun Installation and Connection Script for Windows PowerShell
+# Installs kltun and connects to your WorkMachine
 # Run: iwr "${serverUrl}/kltun.ps1?token=YOUR_TOKEN" -UseBasicParsing | iex
 
 $ErrorActionPreference = "Stop"
