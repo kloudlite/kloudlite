@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { env } from '@kloudlite/lib'
-import { cookies } from 'next/headers'
-import { encode } from 'next-auth/jwt'
 
 /**
  * Server-side validation of superadmin login token
  *
- * This proxies the validation request to the Go API server
- * and creates a NextAuth-compatible session cookie
+ * This proxies the validation request to the Go API server.
+ * Note: Cookie/session management is now handled by NextAuth through the
+ * credentials provider - this endpoint just validates and returns user info.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -66,62 +65,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Determine cookie name based on environment
-    // NextAuth v5 uses 'authjs' prefix by default
-    const cookieName = process.env.NODE_ENV === 'production'
-      ? '__Secure-authjs.session-token'
-      : 'authjs.session-token'
-
-    // Create NextAuth-compatible JWT session using NextAuth's encode function
-    // This ensures the token format and cookie name match NextAuth's expectations
-    // The salt must be the cookie name for Auth.js v5
-    // IMPORTANT: Use JWT_SECRET to match NextAuth's config in auth.ts
-    const sessionToken = await encode({
-      token: {
-        email: data.user.email,
-        name: data.user.displayName || data.user.email,
-        sub: data.user.email,
-        roles: data.roles,
-        isActive: true,
-        provider: 'superadmin-login',
-      },
-      secret: process.env.JWT_SECRET!,
-      salt: cookieName,
-      maxAge: 8 * 60 * 60, // 8 hours
-    })
-
-    // Clear existing session before setting new one
-    // This ensures the super-admin session completely replaces any existing user session
-    const cookieStore = await cookies()
-
-    // Delete existing session cookie first to ensure clean state
-    cookieStore.delete(cookieName)
-
-    // Also clear other NextAuth cookies that might interfere
-    const csrfCookieName = process.env.NODE_ENV === 'production'
-      ? '__Host-authjs.csrf-token'
-      : 'authjs.csrf-token'
-    const callbackCookieName = process.env.NODE_ENV === 'production'
-      ? '__Secure-authjs.callback-url'
-      : 'authjs.callback-url'
-
-    try {
-      cookieStore.delete(csrfCookieName)
-      cookieStore.delete(callbackCookieName)
-    } catch {
-      // Ignore errors if cookies don't exist
-    }
-
-    // Set the new NextAuth session cookie with super-admin session
-    cookieStore.set(cookieName, sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 8 * 60 * 60, // 8 hours
-      path: '/',
-    })
-
-    // Return success
+    // Return validation result - session management handled by NextAuth
     return NextResponse.json({
       success: true,
       user: data.user,
