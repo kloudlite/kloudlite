@@ -3,7 +3,6 @@ package daemon
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -83,8 +82,8 @@ func (c *Client) startDaemon() error {
 
 // call makes an RPC call
 func (c *Client) call(method string, params interface{}, result interface{}) error {
-	// Connect to daemon
-	conn, err := net.DialTimeout("unix", c.socketPath, c.timeout)
+	// Connect to daemon using platform-specific method (Unix socket or named pipe)
+	conn, err := DialDaemon(c.socketPath, c.timeout)
 	if err != nil {
 		// Check if daemon is not running and try to start it
 		if _, statErr := os.Stat(c.socketPath); os.IsNotExist(statErr) {
@@ -93,7 +92,7 @@ func (c *Client) call(method string, params interface{}, result interface{}) err
 				return fmt.Errorf("failed to connect to daemon: %w (auto-start failed: %v)", err, startErr)
 			}
 			// Retry connection after starting daemon
-			conn, err = net.DialTimeout("unix", c.socketPath, c.timeout)
+			conn, err = DialDaemon(c.socketPath, c.timeout)
 			if err != nil {
 				return fmt.Errorf("failed to connect to daemon after auto-start: %w", err)
 			}
