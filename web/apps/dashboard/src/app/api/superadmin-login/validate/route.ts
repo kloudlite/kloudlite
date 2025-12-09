@@ -90,9 +90,29 @@ export async function POST(request: NextRequest) {
       maxAge: 8 * 60 * 60, // 8 hours
     })
 
-    // Set the NextAuth session cookie
+    // Clear existing session before setting new one
+    // This ensures the super-admin session completely replaces any existing user session
     const cookieStore = await cookies()
 
+    // Delete existing session cookie first to ensure clean state
+    cookieStore.delete(cookieName)
+
+    // Also clear other NextAuth cookies that might interfere
+    const csrfCookieName = process.env.NODE_ENV === 'production'
+      ? '__Host-authjs.csrf-token'
+      : 'authjs.csrf-token'
+    const callbackCookieName = process.env.NODE_ENV === 'production'
+      ? '__Secure-authjs.callback-url'
+      : 'authjs.callback-url'
+
+    try {
+      cookieStore.delete(csrfCookieName)
+      cookieStore.delete(callbackCookieName)
+    } catch {
+      // Ignore errors if cookies don't exist
+    }
+
+    // Set the new NextAuth session cookie with super-admin session
     cookieStore.set(cookieName, sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
