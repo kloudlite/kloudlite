@@ -75,7 +75,7 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
 
   const curlCommand = `curl -fsSL "${serverUrl}/kltun" | sh -s -- --token ${token || 'GENERATING...'}`
   const wgetCommand = `wget -qO- "${serverUrl}/kltun" | sh -s -- --token ${token || 'GENERATING...'}`
-  const powershellCommand = `Invoke-WebRequest -Uri "${serverUrl}/kltun" -UseBasicParsing | Invoke-Expression; kltun connect --token ${token || 'GENERATING...'} --server ${serverUrl}`
+  const powershellCommand = `iwr "${serverUrl}/kltun.ps1?token=${encodeURIComponent(token || 'GENERATING...')}" -UseBasicParsing | iex`
 
   const CopyButton = ({ text, commandType }: { text: string; commandType: string }) => (
     <button
