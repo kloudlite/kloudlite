@@ -214,6 +214,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		IPAddress:     fmt.Sprintf("%s/32", peerResp.IP),
 		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
 		Gateway:       "10.17.0.1",
+		MTU:           1420, // WireGuard standard MTU
 	}
 
 	if err := netconfig.ConfigureInterface(netCfg); err != nil {
@@ -485,6 +486,7 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		IPAddress:     fmt.Sprintf("%s/32", peerResp.IP),
 		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
 		Gateway:       "10.17.0.1",
+		MTU:           1420, // WireGuard standard MTU
 	}
 
 	if err := netconfig.ConfigureInterface(netCfg); err != nil {
@@ -755,6 +757,7 @@ func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error 
 		IPAddress:     fmt.Sprintf("%s/32", peerResp.IP),
 		Routes:        []string{"10.17.0.0/24", "10.43.0.0/16"},
 		Gateway:       "10.17.0.1",
+		MTU:           1420, // WireGuard standard MTU
 	}
 
 	if err := netconfig.ConfigureInterface(netCfg); err != nil {

@@ -18,6 +18,9 @@ type InterfaceConfig struct {
 
 	// Gateway is the default gateway IP (optional)
 	Gateway string
+
+	// MTU is the maximum transmission unit (default: 1420 for WireGuard)
+	MTU int
 }
 
 // ConfigureInterface configures IP address and routes on a network interface

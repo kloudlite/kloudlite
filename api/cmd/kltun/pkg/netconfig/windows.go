@@ -32,6 +32,17 @@ func configureWindows(config *InterfaceConfig) error {
 		return fmt.Errorf("failed to get interface index: %w", err)
 	}
 
+	// Set MTU if specified (important for WireGuard tunnels)
+	if config.MTU > 0 {
+		// Use PowerShell to set MTU for both IPv4 and IPv6
+		cmd = exec.Command("powershell", "-Command",
+			fmt.Sprintf("Set-NetIPInterface -InterfaceAlias '%s' -NlMtuBytes %d -ErrorAction SilentlyContinue", config.InterfaceName, config.MTU))
+		if output, err := cmd.CombinedOutput(); err != nil {
+			// Log warning but don't fail - MTU setting might require admin privileges
+			fmt.Printf("Warning: failed to set MTU: %v\nOutput: %s\n", err, string(output))
+		}
+	}
+
 	// Add routes for each specified network
 	for _, routeNet := range config.Routes {
 		// Parse route network and prefix
