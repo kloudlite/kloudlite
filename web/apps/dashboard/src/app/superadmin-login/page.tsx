@@ -1,45 +1,45 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { signIn, signOut } from 'next-auth/react'
 import { Loader2, Shield, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Alert, AlertDescription } from '@kloudlite/ui'
 
 export default function SuperAdminLoginPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const [status, setStatus] = useState<'validating' | 'success' | 'error'>('validating')
+  const [status, setStatus] = useState<'validating' | 'signing-out' | 'signing-in' | 'success' | 'error'>('validating')
   const [errorMessage, setErrorMessage] = useState('')
 
   const validateToken = useCallback(async (token: string) => {
     try {
-      // Call our Next.js API route which will validate with the Go API server
-      // and create a NextAuth session cookie
-      const response = await fetch('/api/superadmin-login/validate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
+      // Step 1: Sign out any existing session first
+      setStatus('signing-out')
+      await signOut({ redirect: false })
+
+      // Step 2: Sign in with the super-admin token via NextAuth credentials provider
+      setStatus('signing-in')
+      const result = await signIn('credentials', {
+        superadminToken: token,
+        redirect: false,
       })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Token validation failed')
+      if (result?.error) {
+        throw new Error(result.error === 'CredentialsSignin'
+          ? 'Invalid or expired super-admin token'
+          : result.error)
       }
 
-      const data = await response.json()
-
-      if (!data.success) {
-        throw new Error('Invalid token')
+      if (!result?.ok) {
+        throw new Error('Failed to sign in')
       }
 
-      // Session cookie is already set by the API route
+      // Success - NextAuth has set the session cookie
       setStatus('success')
 
-      // Redirect to admin dashboard after short delay
+      // Redirect to admin dashboard after short delay using full page navigation
       setTimeout(() => {
-        router.push('/admin')
+        window.location.href = '/admin'
       }, 1500)
     } catch (error) {
       console.error('Token validation error:', error)
@@ -48,7 +48,7 @@ export default function SuperAdminLoginPage() {
         error instanceof Error ? error.message : 'Failed to validate authentication token'
       )
     }
-  }, [router])
+  }, [])
 
   useEffect(() => {
     const token = searchParams.get('token')
@@ -72,17 +72,21 @@ export default function SuperAdminLoginPage() {
           </div>
           <CardTitle className="text-2xl">Super Admin Login</CardTitle>
           <CardDescription>
-            {status === 'validating' && 'Validating your authentication token...'}
+            {status === 'validating' && 'Preparing authentication...'}
+            {status === 'signing-out' && 'Signing out existing session...'}
+            {status === 'signing-in' && 'Signing in as super admin...'}
             {status === 'success' && 'Authentication successful!'}
             {status === 'error' && 'Authentication failed'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {status === 'validating' && (
+          {(status === 'validating' || status === 'signing-out' || status === 'signing-in') && (
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="text-primary h-12 w-12 animate-spin" />
               <p className="text-muted-foreground text-sm">
-                Please wait while we verify your credentials...
+                {status === 'validating' && 'Please wait while we verify your credentials...'}
+                {status === 'signing-out' && 'Clearing existing session...'}
+                {status === 'signing-in' && 'Establishing super admin session...'}
               </p>
             </div>
           )}

@@ -6,6 +6,7 @@ import Credentials from 'next-auth/providers/credentials'
 import type { NextAuthConfig } from 'next-auth'
 import { authenticateUser } from '@/lib/actions/user-actions'
 import { unauthenticatedApiClient } from '@/lib/api-client'
+import { env } from '@kloudlite/lib'
 
 interface LoginResponse {
   user: {
@@ -29,6 +30,16 @@ interface UserInfoResponse {
   roles: string[]
 }
 
+interface SuperAdminValidateResponse {
+  valid: boolean
+  user: {
+    email: string
+    displayName?: string
+    name?: string
+  }
+  roles: string[]
+}
+
 export const authConfig: NextAuthConfig = {
   trustHost: true,
   providers: [
@@ -37,8 +48,46 @@ export const authConfig: NextAuthConfig = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        superadminToken: { label: 'Super Admin Token', type: 'text' },
       },
       async authorize(credentials) {
+        // Handle super-admin token login
+        if (credentials?.superadminToken) {
+          try {
+            const response = await fetch(`${env.apiUrl}/api/v1/superadmin-login/validate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: credentials.superadminToken }),
+            })
+
+            if (!response.ok) {
+              console.error('Super-admin token validation failed:', response.status)
+              return null
+            }
+
+            const data = (await response.json()) as SuperAdminValidateResponse
+
+            if (!data.valid || !data.user) {
+              return null
+            }
+
+            // Return user object with super-admin provider marker
+            return {
+              id: data.user.email,
+              email: data.user.email,
+              name: data.user.displayName || data.user.name || data.user.email,
+              username: data.user.email, // Use email as username for super-admin
+              roles: data.roles,
+              isActive: true,
+              provider: 'superadmin-login',
+            }
+          } catch (error) {
+            console.error('Super-admin login error:', error)
+            return null
+          }
+        }
+
+        // Handle normal email/password login
         if (!credentials?.email || !credentials?.password) {
           return null
         }
@@ -98,6 +147,10 @@ export const authConfig: NextAuthConfig = {
         }
         if ('isActive' in user) {
           token.isActive = user.isActive
+        }
+        // Handle super-admin provider from credentials
+        if ('provider' in user && user.provider === 'superadmin-login') {
+          token.provider = 'superadmin-login'
         }
 
         // For OAuth providers, fetch user info from backend
