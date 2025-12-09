@@ -156,6 +156,11 @@ func (r *CertificateReconciler) genTLSCert(ctx context.Context, obj *v1.Certific
 		DNSNames:    ca.Spec.SANs,
 	}
 
+	// Add OCSP server URL if configured
+	if ca.Spec.OCSPServerURL != "" {
+		serverTemplate.OCSPServer = []string{ca.Spec.OCSPServerURL}
+	}
+
 	// Create the server certificate signed by the CA
 	serverCertBytes, err := x509.CreateCertificate(rand.Reader, &serverTemplate, caCert, &serverPriv.PublicKey, caPriv)
 	if err != nil {
