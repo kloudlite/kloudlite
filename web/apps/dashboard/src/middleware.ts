@@ -73,10 +73,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/auth/signin', req.url))
   }
 
-  // Get user roles
+  // Get user roles and provider
   userRoles = session?.user?.roles || []
+  const sessionProvider = (session?.user as { provider?: string })?.provider
   const hasUserRole = userRoles.includes('user')
   const hasAdminRole = userRoles.includes('admin') || userRoles.includes('super-admin')
+  const isSuperAdminLogin = sessionProvider === 'superadmin-login' || userRoles.includes('super-admin')
 
   // Role-based routing logic
   if (pathname.startsWith('/admin')) {
@@ -85,6 +87,10 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/', req.url))
     }
   } else if (pathname === '/' || pathname.startsWith('/(main)')) {
+    // Super-admin logins should always go to admin section
+    if (isSuperAdminLogin && hasAdminRole) {
+      return NextResponse.redirect(new URL('/admin', req.url))
+    }
     // Main dashboard section - redirect admin-only users to admin
     if (!hasUserRole && hasAdminRole) {
       return NextResponse.redirect(new URL('/admin', req.url))
