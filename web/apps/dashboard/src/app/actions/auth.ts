@@ -13,13 +13,34 @@ export async function signOutAction() {
     'registration_session',              // Registration flow
   ]
 
-  // Delete each cookie
+  // Get the cookie domain from environment
+  const cookieDomain = process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN
+    ? `.${process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN}`
+    : undefined
+
+  // Delete each cookie - both with and without domain to ensure cleanup
   cookiesToDelete.forEach((cookieName) => {
-    if (cookieStore.get(cookieName)) {
+    // Delete cookie without domain (old cookies)
+    try {
       cookieStore.delete({
         name: cookieName,
         path: '/',
       })
+    } catch {
+      // Ignore errors
+    }
+
+    // Delete cookie with domain (new cookies with cross-subdomain support)
+    if (cookieDomain) {
+      try {
+        cookieStore.delete({
+          name: cookieName,
+          path: '/',
+          domain: cookieDomain,
+        })
+      } catch {
+        // Ignore errors
+      }
     }
   })
 
