@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wintun"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
@@ -57,6 +58,11 @@ func NewDevice(ctx context.Context, config *Config) (*Device, error) {
 			device.LogLevelVerbose,
 			fmt.Sprintf("[WireGuard:%s] ", config.InterfaceName),
 		)
+	}
+
+	// Ensure wintun.dll is available on Windows (no-op on other platforms)
+	if err := wintun.EnsureAvailable(); err != nil {
+		return nil, fmt.Errorf("failed to initialize wintun: %w", err)
 	}
 
 	// Create TUN device
