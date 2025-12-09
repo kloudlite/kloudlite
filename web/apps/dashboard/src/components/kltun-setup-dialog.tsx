@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@kloudlite/ui'
 import { Button } from '@kloudlite/ui'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kloudlite/ui'
 import { Copy, Check, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -18,12 +19,15 @@ interface TokenResponse {
   server_url: string
 }
 
+type Platform = 'unix' | 'windows'
+
 export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) {
   const [tokenData, setTokenData] = useState<TokenResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<number>(0)
+  const [platform, setPlatform] = useState<Platform>('unix')
 
   // Generate token when dialog opens
   useEffect(() => {
@@ -94,9 +98,14 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
   const serverUrl = tokenData?.server_url || ''
   const token = tokenData?.temporary_token || ''
 
-  const getOneLineInstallScript = () => {
+  const getUnixInstallScript = () => {
     const scriptUrl = `${serverUrl}/kltun`
     return `curl -fsSL "${scriptUrl}" | sh -s -- --token "${token}"`
+  }
+
+  const getWindowsInstallScript = () => {
+    const scriptUrl = `${serverUrl}/kltun.ps1?token=${encodeURIComponent(token)}`
+    return `iwr "${scriptUrl}" -UseBasicParsing | iex`
   }
 
   const CodeBlock = ({ command, label }: { command: string; label: string }) => {
@@ -120,7 +129,8 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
   }
 
   const InstallInstructions = () => {
-    const installScript = getOneLineInstallScript()
+    const unixScript = getUnixInstallScript()
+    const windowsScript = getWindowsInstallScript()
 
     return (
       <div className="space-y-4">
@@ -134,7 +144,26 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
               </div>
             )}
           </div>
-          <CodeBlock command={installScript} label="install-kltun" />
+
+          <Tabs value={platform} onValueChange={(v) => setPlatform(v as Platform)} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="unix">Linux / macOS</TabsTrigger>
+              <TabsTrigger value="windows">Windows (PowerShell)</TabsTrigger>
+            </TabsList>
+            <TabsContent value="unix" className="mt-3">
+              <CodeBlock command={unixScript} label="install-kltun-unix" />
+              <p className="text-sm text-muted-foreground mt-2">
+                Run this in Terminal (macOS) or any shell (Linux). Requires curl.
+              </p>
+            </TabsContent>
+            <TabsContent value="windows" className="mt-3">
+              <CodeBlock command={windowsScript} label="install-kltun-windows" />
+              <p className="text-sm text-muted-foreground mt-2">
+                Run this in PowerShell (as Administrator for best results).
+              </p>
+            </TabsContent>
+          </Tabs>
+
           {timeRemaining === 0 && token && (
             <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
               <AlertCircle className="h-4 w-4" />
@@ -142,7 +171,7 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
             </div>
           )}
           <p className="text-sm text-muted-foreground">
-            This script will automatically detect your OS (Linux, macOS, Windows), download kltun, install it to your system, and connect to your workspace.
+            This script will download kltun, install it to your system, and connect to your workspace.
           </p>
         </div>
       </div>
