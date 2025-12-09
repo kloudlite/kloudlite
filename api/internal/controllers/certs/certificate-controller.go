@@ -70,7 +70,24 @@ func (r *CertificateReconciler) createCert(check *reconciler.Check[*v1.Certifica
 		// Use TLS secret type for Ingress compatibility
 		caSecret.Type = corev1.SecretTypeTLS
 
-		if caSecret.Data == nil {
+		// Check if we need to regenerate the certificate
+		// This happens when:
+		// 1. Secret data is nil (new secret)
+		// 2. OCSP URL has changed (need to regenerate with new OCSP info)
+		needsRegeneration := caSecret.Data == nil
+
+		if !needsRegeneration && caSecret.Data != nil {
+			// Check if existing cert has OCSP info by looking at annotation
+			currentOCSP := caSecret.Annotations["kloudlite.io/ocsp-url"]
+			ca := &v1.CertificateAuthority{}
+			if err := r.Get(check.Context(), fn.NN("", obj.Spec.CA), ca); err == nil {
+				if currentOCSP != ca.Spec.OCSPServerURL {
+					needsRegeneration = true
+				}
+			}
+		}
+
+		if needsRegeneration {
 			caBundle, tlsCert, tlsKey, err := r.genTLSCert(check.Context(), obj)
 			if err != nil {
 				return err
@@ -82,6 +99,15 @@ func (r *CertificateReconciler) createCert(check *reconciler.Check[*v1.Certifica
 			caSecret.Data["tls.key"] = tlsKey
 			// Also include CA bundle for client trust
 			caSecret.Data["ca.crt"] = caBundle
+
+			// Store OCSP URL in annotation for tracking changes
+			if caSecret.Annotations == nil {
+				caSecret.Annotations = make(map[string]string)
+			}
+			ca := &v1.CertificateAuthority{}
+			if err := r.Get(check.Context(), fn.NN("", obj.Spec.CA), ca); err == nil {
+				caSecret.Annotations["kloudlite.io/ocsp-url"] = ca.Spec.OCSPServerURL
+			}
 		}
 
 		return nil
