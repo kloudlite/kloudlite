@@ -572,9 +572,11 @@ func buildWireGuardConfig(privateKey, peerIP, serverPublicKey, cidr string) stri
 	// AllowedIPs includes:
 	// - VPN CIDR (e.g., 10.17.0.0/24) for VPN gateway communication
 	// - Service CIDR (10.43.0.0/16) for ClusterIP service access
+	// ListenPort 51820 is used by WireGuard for sending/receiving UDP
 	return fmt.Sprintf(`[Interface]
 PrivateKey = %s
 Address = %s/32
+ListenPort = 51820
 
 [Peer]
 PublicKey = %s

@@ -157,6 +157,11 @@ func (d *Device) SetConfig(config string) error {
 		return fmt.Errorf("failed to set configuration: %w", err)
 	}
 
+	// Bring the device up to start sending/receiving packets
+	if err := d.wgDevice.Up(); err != nil {
+		return fmt.Errorf("failed to bring device up: %w", err)
+	}
+
 	d.logger.Verbosef("Configuration applied successfully")
 	return nil
 }
