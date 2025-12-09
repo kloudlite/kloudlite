@@ -31,11 +31,12 @@ export async function middleware(req: NextRequest) {
   let userRoles: string[] = []
 
   // If no NextAuth session, check for superadmin JWT token
+  // NextAuth v5 uses 'authjs' prefix by default
   if (!session) {
     const cookieName =
       process.env.NODE_ENV === 'production'
-        ? '__Secure-next-auth.session-token'
-        : 'next-auth.session-token'
+        ? '__Secure-authjs.session-token'
+        : 'authjs.session-token'
 
     const token = req.cookies.get(cookieName)?.value
 

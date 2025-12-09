@@ -183,21 +183,8 @@ export const authConfig: NextAuthConfig = {
     strategy: 'jwt',
     maxAge: 24 * 60 * 60, // 24 hours (match backend token expiry)
   },
-  cookies: {
-    sessionToken: {
-      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        // Set domain to {subdomain}.{baseDomain} for cross-subdomain cookie sharing
-        // e.g., .beanbag.khost.dev allows cookie to be sent to vpn-check.beanbag.khost.dev
-        // This is computed from NEXT_PUBLIC_AUTH_COOKIE_DOMAIN which should be set to {subdomain}.{baseDomain}
-        domain: process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN ? `.${process.env.NEXT_PUBLIC_AUTH_COOKIE_DOMAIN}` : undefined,
-      },
-    },
-  },
+  // Let NextAuth manage cookies with its defaults (authjs.* prefix)
+  // Only set domain for cross-subdomain cookie sharing when needed
   secret: process.env.JWT_SECRET, // Shared secret for JWT signing/verification (same as backend)
 }
 
