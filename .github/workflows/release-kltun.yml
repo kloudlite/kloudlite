@@ -72,6 +72,17 @@ jobs:
           go-version-file: 'api/go.mod'
           cache-dependency-path: 'api/go.sum'
 
+      - name: Download wintun for Windows builds
+        if: matrix.goos == 'windows'
+        run: |
+          # Download wintun DLLs for embedding
+          curl -LO https://www.wintun.net/builds/wintun-0.14.1.zip
+          unzip wintun-0.14.1.zip
+          mkdir -p api/cmd/kltun/pkg/wintun/dll
+          cp wintun/bin/amd64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_amd64.dll
+          cp wintun/bin/arm64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_arm64.dll
+          ls -la api/cmd/kltun/pkg/wintun/dll/
+
       - name: Get version from tag
         id: version
         run: |
