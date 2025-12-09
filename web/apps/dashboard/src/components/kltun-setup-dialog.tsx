@@ -171,7 +171,7 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
             </div>
           )}
           <p className="text-sm text-muted-foreground">
-            This script will download kltun, install it to your system, and connect to your workspace.
+            This script will download kltun, install it to your system, and connect to your WorkMachine.
           </p>
         </div>
       </div>
@@ -184,7 +184,7 @@ export function KltunSetupDialog({ open, onOpenChange }: KltunSetupDialogProps) 
         <DialogHeader>
           <DialogTitle>Setup kltun</DialogTitle>
           <DialogDescription>
-            Install kltun and connect to your Kloudlite workspace
+            Install kltun and connect to your WorkMachine
           </DialogDescription>
         </DialogHeader>
 

@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
 
   const script = `#!/bin/sh
 # kltun Installation and Connection Script
+# Installs kltun and connects to your WorkMachine
 # Supports: Linux, macOS, Windows (Git Bash/WSL/MSYS2)
 
 set -e
