@@ -66,6 +66,36 @@ function formatEnvironmentName(fullName: string): string {
   return fullName
 }
 
+// Format backend error messages into user-friendly text
+function formatErrorMessage(error: string): string {
+  if (!error) return 'An error occurred'
+
+  // Handle WorkMachine stopped state error
+  const workMachineStoppedMatch = error.match(/WorkMachine '([^']+)' is in '([^']+)' state/)
+  if (workMachineStoppedMatch) {
+    const state = workMachineStoppedMatch[2]
+    if (state === 'stopped') {
+      return 'Your workspace is stopped. Please start your workspace first before activating environments.'
+    }
+    return `Your workspace is in '${state}' state. Please wait for it to be ready.`
+  }
+
+  // Handle admission webhook errors - extract the meaningful part
+  if (error.includes('admission webhook')) {
+    const reasonMatch = error.match(/denied the request: (.+)/)
+    if (reasonMatch) {
+      return formatErrorMessage(reasonMatch[1])
+    }
+  }
+
+  // Handle "cannot activate environment" prefix
+  if (error.startsWith('cannot activate environment:')) {
+    return formatErrorMessage(error.replace('cannot activate environment:', '').trim())
+  }
+
+  return error
+}
+
 export function EnvironmentsList({
   environments: initialEnvironments,
   currentUser,
@@ -134,12 +164,12 @@ export function EnvironmentsList({
         })
       } else {
         toast.error('Failed to activate environment', {
-          description: result.error || 'An error occurred',
+          description: formatErrorMessage(result.error || 'An error occurred'),
         })
       }
     } catch (error: unknown) {
       toast.error('Failed to activate environment', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: formatErrorMessage(error instanceof Error ? error.message : 'An error occurred'),
       })
     }
   }
@@ -156,12 +186,12 @@ export function EnvironmentsList({
         })
       } else {
         toast.error('Failed to deactivate environment', {
-          description: result.error || 'An error occurred',
+          description: formatErrorMessage(result.error || 'An error occurred'),
         })
       }
     } catch (error: unknown) {
       toast.error('Failed to deactivate environment', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: formatErrorMessage(error instanceof Error ? error.message : 'An error occurred'),
       })
     }
   }
