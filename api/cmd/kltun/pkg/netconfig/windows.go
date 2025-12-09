@@ -26,6 +26,12 @@ func configureWindows(config *InterfaceConfig) error {
 		return fmt.Errorf("failed to configure IP address: %w\nOutput: %s", err, string(output))
 	}
 
+	// Get interface index for routing
+	ifIndex, err := getInterfaceIndex(config.InterfaceName)
+	if err != nil {
+		return fmt.Errorf("failed to get interface index: %w", err)
+	}
+
 	// Add routes for each specified network
 	for _, routeNet := range config.Routes {
 		// Parse route network and prefix
@@ -36,9 +42,9 @@ func configureWindows(config *InterfaceConfig) error {
 		routeIP := routeParts[0]
 		routeMask := cidrToSubnetMask(routeParts[1])
 
-		// route add <network> mask <mask> <gateway> if <interface_index>
-		// For simplicity, use the IP address as next hop
-		cmd := exec.Command("route", "add", routeIP, "mask", routeMask, ipAddr)
+		// route add <network> mask <mask> <gateway> IF <interface_index>
+		// Use 0.0.0.0 as gateway (on-link route) and specify the interface explicitly
+		cmd := exec.Command("route", "add", routeIP, "mask", routeMask, "0.0.0.0", "IF", ifIndex)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			// Log warning but don't fail - route might already exist
 			fmt.Printf("Warning: failed to add route %s: %v\nOutput: %s\n", routeNet, err, string(output))
@@ -70,6 +76,18 @@ func removeWindows(config *InterfaceConfig) error {
 	}
 
 	return nil
+}
+
+// getInterfaceIndex retrieves the interface index by name using PowerShell
+func getInterfaceIndex(interfaceName string) (string, error) {
+	// Use PowerShell to get interface index
+	cmd := exec.Command("powershell", "-Command",
+		fmt.Sprintf("(Get-NetAdapter -Name '%s').InterfaceIndex", interfaceName))
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get interface index: %w", err)
+	}
+	return strings.TrimSpace(string(output)), nil
 }
 
 // cidrToSubnetMask converts CIDR prefix length to subnet mask
