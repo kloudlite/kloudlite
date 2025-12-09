@@ -18,6 +18,8 @@
     "@peculiar/asn1-ocsp": "^2.6.0",
     "@peculiar/asn1-schema": "^2.6.0",
     "@peculiar/asn1-x509": "^2.6.0",
+    "@peculiar/webcrypto": "^1.5.0",
+    "@peculiar/x509": "^1.14.2",
     "@supabase/supabase-js": "^2.47.10",
     "@tailwindcss/postcss": "^4.0.0",
     "@tanstack/react-query": "^5.90.10",
