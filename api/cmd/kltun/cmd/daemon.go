@@ -130,25 +130,8 @@ var daemonRunCmd = &cobra.Command{
 	Long:   `Run the daemon server. This command is used internally by the service manager.`,
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Create and start server
-		sm, err := daemon.NewServiceManager()
-		if err != nil {
-			return fmt.Errorf("failed to create service manager: %w", err)
-		}
-
-		server, err := daemon.NewServer()
-		if err != nil {
-			return fmt.Errorf("failed to create server: %w", err)
-		}
-
-		socketPath := sm.GetSocketPath()
-		fmt.Printf("Starting daemon server on %s...\n", socketPath)
-
-		if err := server.Start(socketPath); err != nil {
-			return fmt.Errorf("server error: %w", err)
-		}
-
-		return nil
+		// Use platform-specific RunDaemon which handles Windows service detection
+		return daemon.RunDaemon()
 	},
 }
 
