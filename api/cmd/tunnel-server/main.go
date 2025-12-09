@@ -193,9 +193,9 @@ func main() {
 	mux.Handle("/hosts", jwtMiddleware(hostsHandler))
 
 	// VPN status handler (for vpn-check connectivity verification)
-	// CORS wrapper handles OPTIONS preflight before JWT middleware
+	// No JWT auth needed - if you can reach this endpoint, you're connected to the VPN
 	vpnStatusHandler := handlers.NewVPNStatusHandler(logger)
-	mux.Handle("/", handlers.WithCORS(jwtMiddleware(vpnStatusHandler)))
+	mux.Handle("/", handlers.WithCORS(vpnStatusHandler))
 
 	logger.Info("registered HTTP endpoints",
 		zap.String("websocket", "/ws"),
