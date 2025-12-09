@@ -18,6 +18,8 @@ const (
 
 	// Certificate store flags
 	CERT_STORE_ADD_REPLACE_EXISTING = 3
+	CERT_STORE_PROV_SYSTEM          = 10
+	CERT_SYSTEM_STORE_LOCAL_MACHINE = 0x00020000
 
 	// Special error codes
 	CRYPT_E_NOT_FOUND = 0x80092004
@@ -27,6 +29,7 @@ var (
 	// crypt32.dll functions
 	crypt32                              = syscall.NewLazyDLL("crypt32.dll")
 	procCertOpenSystemStoreW             = crypt32.NewProc("CertOpenSystemStoreW")
+	procCertOpenStore                    = crypt32.NewProc("CertOpenStore")
 	procCertAddEncodedCertificateToStore = crypt32.NewProc("CertAddEncodedCertificateToStore")
 	procCertCloseStore                   = crypt32.NewProc("CertCloseStore")
 	procCertEnumCertificatesInStore      = crypt32.NewProc("CertEnumCertificatesInStore")
@@ -58,7 +61,11 @@ func (s *windowsStore) IsInstalled(cert *x509.Certificate) bool {
 
 	found := false
 	store.enumerate(func(storeCert *x509.Certificate) bool {
-		if storeCert.SerialNumber.Cmp(cert.SerialNumber) == 0 {
+		// Compare full certificate (Subject + Issuer + SerialNumber + Raw bytes)
+		// Serial numbers alone can collide between different CAs
+		if storeCert.SerialNumber.Cmp(cert.SerialNumber) == 0 &&
+			storeCert.Subject.String() == cert.Subject.String() &&
+			storeCert.Issuer.String() == cert.Issuer.String() {
 			found = true
 			return false // stop enumeration
 		}
@@ -144,16 +151,25 @@ func (s *windowsStore) Uninstall(cert *x509.Certificate) error {
 	return store2.deleteCert(cert)
 }
 
-// openRootStore opens the Windows ROOT certificate store
+// openRootStore opens the Windows ROOT certificate store (Local Machine)
 func openRootStore() (windowsRootStore, error) {
 	storeName, err := syscall.UTF16PtrFromString("ROOT")
 	if err != nil {
 		return 0, err
 	}
 
-	r1, _, err := procCertOpenSystemStoreW.Call(0, uintptr(unsafe.Pointer(storeName)))
+	// Use CertOpenStore with CERT_SYSTEM_STORE_LOCAL_MACHINE to open the
+	// machine-wide certificate store, which browsers and most applications use.
+	// This requires admin privileges to write to.
+	r1, _, err := procCertOpenStore.Call(
+		uintptr(CERT_STORE_PROV_SYSTEM),
+		uintptr(0),
+		uintptr(0),
+		uintptr(CERT_SYSTEM_STORE_LOCAL_MACHINE),
+		uintptr(unsafe.Pointer(storeName)),
+	)
 	if r1 == 0 {
-		return 0, fmt.Errorf("failed to open ROOT store: %w", err)
+		return 0, fmt.Errorf("failed to open ROOT store (Local Machine): %w", err)
 	}
 
 	return windowsRootStore(r1), nil
