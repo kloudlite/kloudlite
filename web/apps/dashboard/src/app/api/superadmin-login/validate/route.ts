@@ -66,8 +66,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Determine cookie name based on environment
+    // NextAuth v5 uses 'authjs' prefix by default
+    const cookieName = process.env.NODE_ENV === 'production'
+      ? '__Secure-authjs.session-token'
+      : 'authjs.session-token'
+
     // Create NextAuth-compatible JWT session using NextAuth's encode function
     // This ensures the token format and cookie name match NextAuth's expectations
+    // The salt must be the cookie name for Auth.js v5
     const sessionToken = await encode({
       token: {
         email: data.user.email,
@@ -78,15 +85,12 @@ export async function POST(request: NextRequest) {
         provider: 'superadmin-login',
       },
       secret: process.env.AUTH_SECRET!,
+      salt: cookieName,
       maxAge: 8 * 60 * 60, // 8 hours
     })
 
-    // Set the NextAuth session cookie using NextAuth's default cookie name
-    // NextAuth v5 uses 'authjs' prefix by default
+    // Set the NextAuth session cookie
     const cookieStore = await cookies()
-    const cookieName = process.env.NODE_ENV === 'production'
-      ? '__Secure-authjs.session-token'
-      : 'authjs.session-token'
 
     cookieStore.set(cookieName, sessionToken, {
       httpOnly: true,
