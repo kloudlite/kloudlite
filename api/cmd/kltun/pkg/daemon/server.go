@@ -94,22 +94,10 @@ func NewServer() (*Server, error) {
 
 // Start starts the RPC server
 func (s *Server) Start(socketPath string) error {
-	// Remove existing socket if it exists
-	if err := os.RemoveAll(socketPath); err != nil {
-		return fmt.Errorf("failed to remove existing socket: %w", err)
-	}
-
-	// Create listener
-	listener, err := net.Listen("unix", socketPath)
+	// Create platform-specific listener (Unix socket on Unix, named pipe on Windows)
+	listener, err := CreateListener(socketPath)
 	if err != nil {
 		return fmt.Errorf("failed to create listener: %w", err)
-	}
-
-	// Set socket permissions (allow all users to connect)
-	// 0666 allows all users to read/write to the socket
-	if err := os.Chmod(socketPath, 0o666); err != nil {
-		listener.Close()
-		return fmt.Errorf("failed to set socket permissions: %w", err)
 	}
 
 	s.listener = listener
