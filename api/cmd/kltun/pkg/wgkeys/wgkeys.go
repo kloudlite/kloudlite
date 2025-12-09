@@ -1,6 +1,7 @@
 package wgkeys
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -108,13 +109,9 @@ func generateAndSaveKeyPair(privateKeyPath, publicKeyPath string) (*KeyPair, err
 }
 
 // randomBytes fills the given byte slice with random data
+// Uses crypto/rand which works cross-platform (Windows, Linux, macOS)
 func randomBytes(b []byte) (int, error) {
-	f, err := os.Open("/dev/urandom")
-	if err != nil {
-		return 0, err
-	}
-	defer f.Close()
-	return f.Read(b)
+	return rand.Read(b)
 }
 
 // getKeyPaths returns the paths to the private and public key files
