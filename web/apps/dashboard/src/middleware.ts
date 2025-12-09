@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { jwtVerify } from 'jose'
+import { decode } from 'next-auth/jwt'
 import type { Session } from 'next-auth'
 
 /**
@@ -42,11 +42,15 @@ export async function middleware(req: NextRequest) {
 
     if (token) {
       try {
-        const secret = new TextEncoder().encode(process.env.AUTH_SECRET)
-        const { payload } = await jwtVerify(token, secret)
+        // Use NextAuth's decode function to match how the token was encoded
+        const payload = await decode({
+          token,
+          secret: process.env.JWT_SECRET!,
+          salt: cookieName,
+        })
 
         // Check if this is a superadmin token
-        if (payload.provider === 'superadmin-login' && payload.roles) {
+        if (payload?.provider === 'superadmin-login' && payload?.roles) {
           // Create a mock session for superadmin
           userRoles = payload.roles as string[]
           session = {
@@ -55,7 +59,7 @@ export async function middleware(req: NextRequest) {
               name: payload.name as string,
               roles: userRoles,
             },
-            expires: new Date(payload.exp! * 1000).toISOString(),
+            expires: new Date((payload.exp as number) * 1000).toISOString(),
           } as Session
         }
       } catch (error) {

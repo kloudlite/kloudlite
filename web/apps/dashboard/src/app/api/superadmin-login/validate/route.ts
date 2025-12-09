@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     // Create NextAuth-compatible JWT session using NextAuth's encode function
     // This ensures the token format and cookie name match NextAuth's expectations
     // The salt must be the cookie name for Auth.js v5
+    // IMPORTANT: Use JWT_SECRET to match NextAuth's config in auth.ts
     const sessionToken = await encode({
       token: {
         email: data.user.email,
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
         isActive: true,
         provider: 'superadmin-login',
       },
-      secret: process.env.AUTH_SECRET!,
+      secret: process.env.JWT_SECRET!,
       salt: cookieName,
       maxAge: 8 * 60 * 60, // 8 hours
     })
