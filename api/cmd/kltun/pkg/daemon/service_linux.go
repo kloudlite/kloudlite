@@ -307,3 +307,19 @@ func (sm *ServiceManager) escalateAndInstall() error {
 
 	return nil
 }
+
+// RunDaemon runs the daemon server (Linux doesn't need special service detection)
+func RunDaemon() error {
+	server, err := NewServer()
+	if err != nil {
+		return fmt.Errorf("failed to create server: %w", err)
+	}
+
+	fmt.Printf("Starting daemon server on %s...\n", SocketPath)
+
+	if err := server.Start(SocketPath); err != nil {
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	return nil
+}

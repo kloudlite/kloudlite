@@ -390,3 +390,31 @@ func RunAsService() error {
 
 	return nil
 }
+
+// RunDaemon runs the daemon, detecting whether to run as a Windows service or console app
+func RunDaemon() error {
+	// Check if we're running as a Windows service
+	isService, err := svc.IsWindowsService()
+	if err != nil {
+		return fmt.Errorf("failed to determine if running as service: %w", err)
+	}
+
+	if isService {
+		// Running as Windows service - use SCM integration
+		return RunAsService()
+	}
+
+	// Running as console app (e.g., for debugging)
+	server, err := NewServer()
+	if err != nil {
+		return fmt.Errorf("failed to create server: %w", err)
+	}
+
+	fmt.Printf("Starting daemon server on %s...\n", SocketPath)
+
+	if err := server.Start(SocketPath); err != nil {
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	return nil
+}
