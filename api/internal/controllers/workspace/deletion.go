@@ -366,6 +366,9 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		logger.Info("Deleted ClusterRoleBinding", zap.String("name", clusterRoleName))
 	}
 
+	// NOTE: PackageRequest deletion is handled automatically by Kubernetes garbage collection
+	// via owner references since PackageRequest is now namespace-scoped like Workspace
+
 	// Remove finalizer
 	controllerutil.RemoveFinalizer(workspace, workspaceFinalizer)
 	if err := r.Update(ctx, workspace); err != nil {

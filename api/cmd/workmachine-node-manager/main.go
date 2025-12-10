@@ -203,26 +203,23 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		// Object is being deleted
 		if containsString(pkgReq.Finalizers, packageRequestFinalizer) {
 			// Our finalizer is present, perform cleanup
-			logger.Info("PackageRequest is being deleted, cleaning up packages", zap2.String("profile", pkgReq.Spec.ProfileName))
+			logger.Info("PackageRequest is being deleted, cleaning up profile directory", zap2.String("profile", pkgReq.Spec.ProfileName))
 
-			// Get all installed packages from the profile and remove them
-			installedPkgs := r.getInstalledPackagesFromProfile(pkgReq.Spec.ProfileName, logger)
-			for _, pkgName := range installedPkgs {
-				logger.Info("Removing package from profile",
-					zap2.String("package", pkgName),
-					zap2.String("profile", pkgReq.Spec.ProfileName))
-
-				if err := r.uninstallPackage(pkgName, pkgReq.Spec.ProfileName); err != nil {
-					logger.Error("Failed to remove package during cleanup",
-						zap2.String("package", pkgName),
-						zap2.String("profile", pkgReq.Spec.ProfileName),
-						zap2.Error(err))
-					// Continue with other packages even if one fails
-				} else {
-					logger.Info("Successfully removed package",
-						zap2.String("package", pkgName),
-						zap2.String("profile", pkgReq.Spec.ProfileName))
-				}
+			// Simply delete the profile directory instead of uninstalling packages individually
+			// This is more efficient and avoids issues with aliased packages
+			profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, pkgReq.Spec.ProfileName)
+			removeScript := fmt.Sprintf("rm -rf %s*", profilePath) // Remove profile and all generations
+			if output, err := r.CmdExec.Execute(removeScript); err != nil {
+				logger.Error("Failed to remove profile directory",
+					zap2.String("profile", pkgReq.Spec.ProfileName),
+					zap2.String("profilePath", profilePath),
+					zap2.Error(err),
+					zap2.String("output", string(output)))
+				// Continue anyway - the profile may not exist
+			} else {
+				logger.Info("Successfully removed profile directory",
+					zap2.String("profile", pkgReq.Spec.ProfileName),
+					zap2.String("profilePath", profilePath))
 			}
 
 			// Remove our finalizer

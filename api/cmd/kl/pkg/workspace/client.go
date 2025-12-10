@@ -124,12 +124,13 @@ func (c *Client) Patch(ctx context.Context, workspace *workspacesv1.Workspace, p
 }
 
 // GetPackageRequest retrieves the PackageRequest for this workspace
-// PackageRequest is cluster-scoped with name format: {workspace-name}-packages
+// PackageRequest is namespace-scoped with name format: {workspace-name}-packages
 func (c *Client) GetPackageRequest(ctx context.Context) (*packagesv1.PackageRequest, error) {
 	packageRequestName := fmt.Sprintf("%s-packages", c.Name)
 	pkgReq := &packagesv1.PackageRequest{}
 	err := c.K8sClient.Get(ctx, types.NamespacedName{
-		Name: packageRequestName,
+		Name:      packageRequestName,
+		Namespace: c.Namespace,
 	}, pkgReq)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -161,6 +162,7 @@ func (c *Client) CreatePackageRequest(ctx context.Context, packages []packagesv1
 
 	pkgReq := &packagesv1.PackageRequest{}
 	pkgReq.Name = packageRequestName
+	pkgReq.Namespace = c.Namespace // PackageRequest is now namespace-scoped
 	pkgReq.Spec = packagesv1.PackageRequestSpec{
 		WorkspaceRef: c.Name,
 		Packages:     packages,
