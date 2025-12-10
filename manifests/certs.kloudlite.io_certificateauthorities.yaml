@@ -51,6 +51,12 @@ spec:
             type: object
           spec:
             properties:
+              ocspServerURL:
+                description: |-
+                  OCSPServerURL is the URL of the OCSP responder for certificate revocation checking
+                  If not specified, OCSPServer will not be set on issued certificates
+                  Example: "http://ocsp.example.com/api/ocsp"
+                type: string
               san:
                 items:
                   type: string

@@ -51,6 +51,12 @@ spec:
             type: object
           spec:
             properties:
+              ocspServerURL:
+                description: |-
+                  OCSPServerURL is the URL of the OCSP responder for certificate revocation checking
+                  If not specified, OCSPServer will not be set on issued certificates
+                  Example: "http://ocsp.example.com/api/ocsp"
+                type: string
               san:
                 items:
                   type: string
@@ -2149,6 +2155,12 @@ spec:
                 description: Message provides additional information about the current
                   state
                 type: string
+              observedGeneration:
+                description: |-
+                  ObservedGeneration reflects the generation of the most recently observed PackageRequest
+                  This allows clients to determine if the status reflects the current spec
+                format: int64
+                type: integer
               phase:
                 description: Phase represents the current phase (Pending, Installing,
                   Ready, Failed)
