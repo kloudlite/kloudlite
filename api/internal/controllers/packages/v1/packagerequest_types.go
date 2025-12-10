@@ -52,9 +52,9 @@ type PackageRequestSpec struct {
 	WorkspaceRef string `json:"workspaceRef"`
 
 	// Packages list of packages to install
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinItems=1
-	Packages []PackageSpec `json:"packages"`
+	// Empty list is valid (no packages installed yet)
+	// +optional
+	Packages []PackageSpec `json:"packages,omitempty"`
 
 	// ProfileName is the Nix profile name to use
 	// +kubebuilder:validation:Required
