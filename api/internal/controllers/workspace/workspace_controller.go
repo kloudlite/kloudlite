@@ -312,19 +312,7 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Resources: []string{"compositions/status"},
 				Verbs:     []string{"get"},
 			},
-			{
-				// Allow managing PackageRequests (cluster-scoped, cannot use ResourceNames)
-				// Will be filtered by workspace ownership in application logic
-				APIGroups: []string{"workspaces.kloudlite.io"},
-				Resources: []string{"packagerequests"},
-				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
-			},
-			{
-				// Allow reading PackageRequest status
-				APIGroups: []string{"workspaces.kloudlite.io"},
-				Resources: []string{"packagerequests/status"},
-				Verbs:     []string{"get"},
-			},
+			// Note: PackageRequests are cluster-scoped, so they are granted in the ClusterRole below
 			{
 				// Allow reading pod logs (for streaming nix installation output from host-manager)
 				// Note: resourceNames doesn't work with subresources like pods/log
@@ -412,6 +400,19 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				APIGroups: []string{""},
 				Resources: []string{"services"},
 				Verbs:     []string{"get", "list"},
+			},
+			{
+				// Allow managing PackageRequests (cluster-scoped resource)
+				// Will be filtered by workspace ownership in application logic
+				APIGroups: []string{"packages.kloudlite.io"},
+				Resources: []string{"packagerequests"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+			},
+			{
+				// Allow reading PackageRequest status
+				APIGroups: []string{"packages.kloudlite.io"},
+				Resources: []string{"packagerequests/status"},
+				Verbs:     []string{"get"},
 			},
 		}
 		return nil
