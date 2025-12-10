@@ -2075,7 +2075,9 @@ spec:
             description: PackageRequestSpec defines the desired packages to install
             properties:
               packages:
-                description: Packages list of packages to install
+                description: |-
+                  Packages list of packages to install
+                  Empty list is valid (no packages installed yet)
                 items:
                   description: PackageSpec defines a Nix package to install
                   properties:
@@ -2097,7 +2099,6 @@ spec:
                   required:
                   - name
                   type: object
-                minItems: 1
                 type: array
               profileName:
                 description: ProfileName is the Nix profile name to use
@@ -2107,7 +2108,6 @@ spec:
                   belongs to
                 type: string
             required:
-            - packages
             - profileName
             - workspaceRef
             type: object
