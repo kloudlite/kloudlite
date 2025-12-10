@@ -13,11 +13,11 @@ import (
 )
 
 // createHostManagerRBAC creates RBAC resources for the workmachine-node-manager (host manager pod)
-// This service account runs in the kloudlite-hostmanager namespace and needs access to:
-// - PackageRequests (cluster-wide) - to install Nix packages
-// - Workspaces (cluster-wide) - to manage SSH configuration
+// This service account runs in the workmachine namespace and needs access to:
+// - PackageRequests (namespace-scoped, but needs cluster-wide access) - to install Nix packages
+// - Workspaces (namespace-scoped, but needs cluster-wide access) - to manage SSH configuration
 // - Nodes (cluster-wide) - to update GPU status
-// - Secrets (in hostmanager namespace) - to manage SSH keys
+// - Secrets (in workmachine namespace) - to manage SSH keys
 func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	serviceAccountName := "host-manager"
 
@@ -52,7 +52,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		}))
 
 		clusterRole.Rules = []rbacv1.PolicyRule{
-			// PackageRequests - for Nix package management
+			// PackageRequests (namespace-scoped) - for Nix package management across all namespaces
 			{
 				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests"},

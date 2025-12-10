@@ -29,7 +29,7 @@ rules:
   - apiGroups: ["kloudlite.io"]
     resources: ["workmachines/status"]
     verbs: ["get", "patch", "update"]
-  # Allow managing PackageRequests
+  # Allow managing PackageRequests (namespace-scoped, needs cluster-wide access)
   - apiGroups: ["packages.kloudlite.io"]
     resources: ["packagerequests"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
