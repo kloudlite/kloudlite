@@ -63,6 +63,11 @@ type PackageRequestSpec struct {
 
 // PackageRequestStatus defines the observed state of PackageRequest
 type PackageRequestStatus struct {
+	// ObservedGeneration reflects the generation of the most recently observed PackageRequest
+	// This allows clients to determine if the status reflects the current spec
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
 	// Phase represents the current phase (Pending, Installing, Ready, Failed)
 	// +kubebuilder:validation:Enum=Pending;Installing;Ready;Failed
 	Phase string `json:"phase,omitempty"`
