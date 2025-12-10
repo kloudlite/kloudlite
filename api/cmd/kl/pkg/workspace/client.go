@@ -141,12 +141,39 @@ func (c *Client) GetPackageRequest(ctx context.Context) (*packagesv1.PackageRequ
 	return pkgReq, nil
 }
 
-// UpdatePackageRequest updates an existing PackageRequest
-func (c *Client) UpdatePackageRequest(ctx context.Context, pkgReq *packagesv1.PackageRequest) error {
-	if err := c.K8sClient.Update(ctx, pkgReq); err != nil {
-		return fmt.Errorf("failed to update package request: %w", err)
+// UpdatePackageRequestSpec updates the spec of a PackageRequest using a merge patch
+// This avoids conflicts with controller status updates by only patching the spec field
+func (c *Client) UpdatePackageRequestSpec(ctx context.Context, packages []packagesv1.PackageSpec) error {
+	packageRequestName := fmt.Sprintf("%s-packages", c.Name)
+
+	// Get the current PackageRequest to use as base for patch
+	current := &packagesv1.PackageRequest{}
+	if err := c.K8sClient.Get(ctx, types.NamespacedName{
+		Name:      packageRequestName,
+		Namespace: c.Namespace,
+	}, current); err != nil {
+		return fmt.Errorf("failed to get package request: %w", err)
+	}
+
+	// Create a copy for the patch base
+	original := current.DeepCopy()
+
+	// Update the spec.packages field
+	current.Spec.Packages = packages
+
+	// Create merge patch from original to modified
+	patch := client.MergeFrom(original)
+	if err := c.K8sClient.Patch(ctx, current, patch); err != nil {
+		return fmt.Errorf("failed to patch package request: %w", err)
 	}
 	return nil
+}
+
+// UpdatePackageRequest updates an existing PackageRequest
+// Deprecated: Use UpdatePackageRequestSpec instead to avoid conflicts
+func (c *Client) UpdatePackageRequest(ctx context.Context, pkgReq *packagesv1.PackageRequest) error {
+	// Use the new spec-only patch method
+	return c.UpdatePackageRequestSpec(ctx, pkgReq.Spec.Packages)
 }
 
 // CreatePackageRequest creates a new PackageRequest for this workspace
