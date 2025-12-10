@@ -365,7 +365,9 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 
 	// Set phase to Installing and clear old failed packages before starting installation
 	// This ensures old failures are cleared when we retry
+	// Also set ObservedGeneration so CLI knows we've started processing this generation
 	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
+		latest.Status.ObservedGeneration = latest.Generation
 		latest.Status.Phase = "Installing"
 		latest.Status.FailedPackages = nil // Clear old failed packages (use nil for consistent JSON)
 		latest.Status.Message = "Installing packages..."

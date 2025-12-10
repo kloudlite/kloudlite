@@ -552,13 +552,13 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
-	// Record initial PackageRequest status to detect stale failures
-	// We need to wait for the status message to change before trusting FailedPackages
-	// because the status might still have old data from a previous attempt
+	// Record the target generation we're waiting for
+	// The controller sets ObservedGeneration when it starts processing,
+	// so we wait until ObservedGeneration >= targetGeneration before trusting status
 	initialPkgReq, _ := WsClient.GetPackageRequest(ctx)
-	initialStatusMessage := ""
+	var targetGeneration int64 = 0
 	if initialPkgReq != nil {
-		initialStatusMessage = initialPkgReq.Status.Message
+		targetGeneration = initialPkgReq.Generation
 	}
 
 	// Create a cancellable context for log streaming
@@ -606,7 +606,16 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 				continue
 			}
 
-			// Check if package is installed
+			// Wait for controller to process our generation
+			// ObservedGeneration indicates the controller has started processing this spec version
+			if pkgReq.Status.ObservedGeneration < targetGeneration {
+				if nixpkgsCommit == "" {
+					fmt.Print(".")
+				}
+				continue
+			}
+
+			// Check if package is installed (only trust when phase is Ready or Failed)
 			for _, pkg := range pkgReq.Status.InstalledPackages {
 				if pkg.Name == packageName {
 					fmt.Printf("\n[✓] Package installed successfully: %s\n", packageName)
@@ -621,16 +630,17 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 			}
 
 			// Check if package failed
-			// Only consider it a failure if the status message has changed from the initial state
-			// This prevents false failures from stale FailedPackages data from previous attempts
-			statusMessageChanged := pkgReq.Status.Message != initialStatusMessage
-			for _, failedPkg := range pkgReq.Status.FailedPackages {
-				if failedPkg == packageName && statusMessageChanged {
-					errMsg := pkgReq.Status.Message
-					if errMsg != "" {
-						return fmt.Errorf("package installation failed: %s", errMsg)
+			// We only check FailedPackages when phase is Failed AND ObservedGeneration matches
+			// This ensures we're reading status from the current reconciliation, not stale data
+			if pkgReq.Status.Phase == "Failed" {
+				for _, failedPkg := range pkgReq.Status.FailedPackages {
+					if failedPkg == packageName {
+						errMsg := pkgReq.Status.Message
+						if errMsg != "" {
+							return fmt.Errorf("package installation failed: %s", errMsg)
+						}
+						return fmt.Errorf("package installation failed")
 					}
-					return fmt.Errorf("package installation failed")
 				}
 			}
 
