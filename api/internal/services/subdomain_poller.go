@@ -11,15 +11,8 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/config"
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	domainRequestName = "installation-domain"
 )
 
 // VerifyKeyResponse represents the response from the console verify-key API
@@ -131,11 +124,18 @@ func (sp *SubdomainPoller) WaitUntilReady(ctx context.Context) error {
 }
 
 func (sp *SubdomainPoller) handleSubdomainDetected(ctx context.Context, subdomain string) error {
-	if err := sp.createOrUpdateDomainRequest(ctx, subdomain); err != nil {
-		return fmt.Errorf("failed to create/update domain request: %w", err)
+	fqdn := fmt.Sprintf("%s.khost.dev", subdomain)
+
+	// Initialize CA and wildcard certificate
+	if err := sp.caInitializer.ensureCA(ctx, fqdn); err != nil {
+		return fmt.Errorf("failed to ensure CA: %w", err)
 	}
 
-	os.Setenv("HOSTED_SUBDOMAIN", subdomain+".khost.dev")
+	if err := sp.caInitializer.ensureWildcardCertificate(ctx); err != nil {
+		return fmt.Errorf("failed to ensure wildcard certificate: %w", err)
+	}
+
+	os.Setenv("HOSTED_SUBDOMAIN", fqdn)
 	sp.markReady()
 	return nil
 }
@@ -212,60 +212,3 @@ func (sp *SubdomainPoller) verifyInstallationKey(ctx context.Context) (*VerifyKe
 	return &verifyResp, nil
 }
 
-// createOrUpdateDomainRequest creates or updates the DomainRequest resource
-func (sp *SubdomainPoller) createOrUpdateDomainRequest(ctx context.Context, subdomain string) error {
-	fqdn := fmt.Sprintf("%s.khost.dev", subdomain)
-
-	if err := sp.caInitializer.ensureCA(ctx, fqdn); err != nil {
-		return err
-	}
-
-	if err := sp.caInitializer.ensureWildcardCertificate(ctx); err != nil {
-		return err
-	}
-
-	existingDR := &domainrequestv1.DomainRequest{}
-	err := sp.k8sClient.Get(ctx, client.ObjectKey{Name: domainRequestName}, existingDR)
-	if err == nil {
-		existingDR.Spec.IPAddress = sp.config.PublicIP
-		if err := sp.k8sClient.Update(ctx, existingDR); err != nil {
-			return fmt.Errorf("failed to update domain request: %w", err)
-		}
-		return nil
-	}
-
-	if !errors.IsNotFound(err) {
-		return fmt.Errorf("failed to check if domain request exists: %w", err)
-	}
-
-	domainRequest := &domainrequestv1.DomainRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: domainRequestName,
-		},
-		Spec: domainrequestv1.DomainRequestSpec{
-			NodeName:          os.Getenv("NODE_NAME"),
-			WorkloadNamespace: "kloudlite-ingress",
-			IPAddress:         sp.config.PublicIP,
-			CertificateScope:  "installation",
-			// Covers both {subdomain}.khost.dev and *.{subdomain}.khost.dev
-			OriginCertificateHostnames: []string{
-				fqdn,
-				"*." + fqdn,
-			},
-			DomainRoutes: []domainrequestv1.DomainRoute{
-				{
-					Domain:           fqdn,
-					ServiceName:      "frontend",
-					ServiceNamespace: "kloudlite",
-					ServicePort:      80,
-				},
-			},
-		},
-	}
-
-	if err := sp.k8sClient.Create(ctx, domainRequest); err != nil {
-		return fmt.Errorf("failed to create domain request: %w", err)
-	}
-
-	return nil
-}

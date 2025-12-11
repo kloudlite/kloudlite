@@ -3,8 +3,8 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"os"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -52,14 +52,14 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 		}
 	}
 
-	// Fetch DomainRequest to get subdomain for image registry URL
+	// Get subdomain from HOSTED_SUBDOMAIN env var for image registry URL
 	var imageRegistryURL string
 	var imageRegistryHost string // For /etc/hosts entry
-	domainRequest := &domainrequestv1.DomainRequest{}
-	if err := r.Get(context.Background(), fn.NN("", "installation-domain"), domainRequest); err == nil && domainRequest.Status.Subdomain != "" {
+	hostedSubdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if hostedSubdomain != "" {
 		// Use HTTPS endpoint via ingress: cr.{subdomain}
 		// subdomain is already full domain like "beanbag.khost.dev"
-		imageRegistryHost = fmt.Sprintf("cr.%s", domainRequest.Status.Subdomain)
+		imageRegistryHost = fmt.Sprintf("cr.%s", hostedSubdomain)
 		imageRegistryURL = imageRegistryHost
 	} else {
 		// Fallback to internal service if subdomain not available

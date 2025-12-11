@@ -2,8 +2,9 @@ package workmachine
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
@@ -31,11 +32,18 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 		"kloudlite.io/workmachine": obj.Name,
 	}
 
-	// Fetch DomainRequest to get subdomain for image registry host
+	// Get subdomain from HOSTED_SUBDOMAIN env var for image registry host
 	var imageRegistryHost string
-	domainRequest := &domainrequestv1.DomainRequest{}
-	if err := r.Get(check.Context(), fn.NN("", "installation-domain"), domainRequest); err == nil && domainRequest.Status.Subdomain != "" {
-		imageRegistryHost = fmt.Sprintf("cr.%s", domainRequest.Status.Subdomain)
+	hostedSubdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if hostedSubdomain != "" {
+		// hostedSubdomain is full domain like "beanbag.khost.dev", extract just the subdomain part
+		imageRegistryHost = fmt.Sprintf("cr.%s", hostedSubdomain)
+	} else {
+		// Fallback: try to get it from the subdomain_poller's parsed format
+		subdomain := os.Getenv("INSTALLATION_SUBDOMAIN")
+		if subdomain != "" && !strings.Contains(subdomain, ".") {
+			imageRegistryHost = fmt.Sprintf("cr.%s.khost.dev", subdomain)
+		}
 	}
 
 	// Get the wm-ingress-controller service ClusterIP for /etc/hosts entry
