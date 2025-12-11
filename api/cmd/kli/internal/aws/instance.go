@@ -32,7 +32,7 @@ func GenerateJWTSecret() (string, error) {
 	return base64.StdEncoding.EncodeToString(bytes), nil
 }
 
-func LaunchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey, bucketName, k3sToken string, installationKey string, enableProtection bool) (string, error) {
+func LaunchInstance(ctx context.Context, cfg aws.Config, amiID, subnetID, sgID, vpcID, secretKey, bucketName, k3sToken string, installationKey string, enableProtection bool, fullDomain string) (string, error) {
 	ec2Client := ec2.NewFromConfig(cfg)
 	instanceName := fmt.Sprintf("kl-%s-instance", installationKey)
 	profileName := fmt.Sprintf("kl-%s-role", installationKey)
@@ -161,6 +161,8 @@ EOF
 echo "Installing Kloudlite manifests..."
 export AWS_REGION="%s"
 export S3_BUCKET="%s"
+export AUTH_COOKIE_DOMAIN="%s"
+export CLOUDFLARE_DNS_DOMAIN="khost.dev"
 if ! kli install-manifests; then
   echo "ERROR: Failed to install Kloudlite manifests"
   exit 1
@@ -328,7 +330,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, sgID, region, amiID, region, bucketName, manifests.AWSMachineTypes, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, sgID, region, amiID, region, bucketName, fullDomain, manifests.AWSMachineTypes, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
