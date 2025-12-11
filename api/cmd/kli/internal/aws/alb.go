@@ -16,10 +16,18 @@ type ALBInfo struct {
 	DNSName string
 }
 
+// shortKey returns the first 8 characters of an installation key for resource naming
+func shortKey(installationKey string) string {
+	if len(installationKey) > 8 {
+		return installationKey[:8]
+	}
+	return installationKey
+}
+
 // CreateALB creates an Application Load Balancer
 func CreateALB(ctx context.Context, cfg aws.Config, installationKey, vpcID string, subnetIDs []string, sgID string) (*ALBInfo, error) {
 	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)
-	albName := fmt.Sprintf("kl-%s-alb", installationKey)
+	albName := fmt.Sprintf("kl-%s-alb", shortKey(installationKey))
 
 	// Ensure we have at least 2 subnets from different AZs
 	if len(subnetIDs) < 2 {
@@ -59,7 +67,7 @@ func CreateALB(ctx context.Context, cfg aws.Config, installationKey, vpcID strin
 // CreateTargetGroup creates a target group for the ALB
 func CreateTargetGroup(ctx context.Context, cfg aws.Config, installationKey, vpcID string) (string, error) {
 	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)
-	tgName := fmt.Sprintf("kl-%s-tg", installationKey)
+	tgName := fmt.Sprintf("kl-%s-tg", shortKey(installationKey))
 
 	result, err := elbClient.CreateTargetGroup(ctx, &elasticloadbalancingv2.CreateTargetGroupInput{
 		Name:                       aws.String(tgName),
