@@ -656,6 +656,7 @@ export async function isSubdomainAvailable(subdomain: string): Promise<boolean> 
   }
 
   // Reservation exists - check if it's expired
+  // @ts-expect-error - Supabase client with placeholder values has type issues during build
   const reservation = reservationResult.data
   const reservedAt = new Date(reservation.reserved_at).getTime()
   const now = Date.now()
