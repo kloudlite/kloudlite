@@ -229,6 +229,10 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 									Name:  "JWT_SECRET",
 									Value: r.env.JWTSecret,
 								},
+								{
+									Name:  "HOSTED_SUBDOMAIN",
+									Value: r.env.HostedSubdomain,
+								},
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Capabilities: &corev1.Capabilities{
