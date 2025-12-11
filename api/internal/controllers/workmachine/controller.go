@@ -42,6 +42,9 @@ type Env struct {
 
 	// JWT secret for tunnel server authentication (shared with API server and frontend)
 	JWTSecret string `env:"JWT_SECRET" required:"true"`
+
+	// HostedSubdomain is the full subdomain (e.g., "subdomain.khost.dev") used for DNS resolution
+	HostedSubdomain string `env:"HOSTED_SUBDOMAIN" required:"true"`
 }
 
 type awsProviderEnv struct {
