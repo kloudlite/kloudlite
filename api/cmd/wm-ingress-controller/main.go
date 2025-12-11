@@ -44,7 +44,7 @@ func main() {
 	flag.StringVar(&ingressClassName, "ingress-class", "", "The ingress class name to watch for.")
 	flag.StringVar(&wildcardDomain, "wildcard-domain", "khost.dev", "Domain suffix for valid hosts (e.g., khost.dev)")
 	flag.StringVar(&wildcardSecretName, "wildcard-secret-name", "kloudlite-wildcard-cert-tls", "Name of wildcard TLS secret")
-	flag.StringVar(&wildcardSecretNamespace, "wildcard-secret-namespace", "kloudlite-ingress", "Namespace of wildcard TLS secret")
+	flag.StringVar(&wildcardSecretNamespace, "wildcard-secret-namespace", "kloudlite", "Namespace of wildcard TLS secret")
 	flag.Parse()
 
 	// Validate required flags

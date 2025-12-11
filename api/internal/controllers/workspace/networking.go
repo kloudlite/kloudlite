@@ -238,7 +238,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 		}
 
 		// Note: TLS is handled by the wm-ingress-controller using a central wildcard cert
-		// from kloudlite-ingress namespace, so we don't need to specify TLS in the Ingress
+		// from kloudlite namespace, so we don't need to specify TLS in the Ingress
 		ingress.Spec.TLS = nil
 		ingress.Spec.Rules = ingressRules
 		ingress.SetLabels(fn.MapMerge(ingress.GetLabels(), map[string]string{

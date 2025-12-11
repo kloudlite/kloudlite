@@ -120,3 +120,106 @@ func GenerateWebhookCertificates(serviceName, namespace string) (*WebhookCertifi
 		CABundle:   caBundle,
 	}, nil
 }
+
+// WildcardCertificates holds the generated certificates for wildcard TLS
+type WildcardCertificates struct {
+	CACert []byte // PEM encoded CA certificate
+	Cert   []byte // PEM encoded certificate
+	Key    []byte // PEM encoded private key
+}
+
+// GenerateWildcardCertificates generates a self-signed wildcard certificate for a domain
+// The domain parameter should be the base domain (e.g., "khost.dev")
+// This will create a certificate valid for *.domain and domain itself
+func GenerateWildcardCertificates(domain string) (*WildcardCertificates, error) {
+	// Generate CA private key
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate CA key: %w", err)
+	}
+
+	// Create CA certificate template
+	caTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName:   "Kloudlite CA",
+			Organization: []string{"Kloudlite"},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0), // Valid for 10 years
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	// Self-sign the CA certificate
+	caCertBytes, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, &caKey.PublicKey, caKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create CA certificate: %w", err)
+	}
+
+	// PEM encode CA certificate
+	caCertPEM := new(bytes.Buffer)
+	if err := pem.Encode(caCertPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: caCertBytes,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to encode CA certificate: %w", err)
+	}
+
+	// Generate wildcard certificate private key
+	certKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate certificate key: %w", err)
+	}
+
+	// DNS names for wildcard certificate
+	dnsNames := []string{
+		domain,
+		"*." + domain,
+	}
+
+	// Create wildcard certificate template
+	certTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		Subject: pkix.Name{
+			CommonName:   "*." + domain,
+			Organization: []string{"Kloudlite"},
+		},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().AddDate(10, 0, 0), // Valid for 10 years
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		DNSNames:    dnsNames,
+	}
+
+	// Sign certificate with CA
+	certBytes, err := x509.CreateCertificate(rand.Reader, certTemplate, caTemplate, &certKey.PublicKey, caKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create certificate: %w", err)
+	}
+
+	// PEM encode certificate
+	certPEM := new(bytes.Buffer)
+	if err := pem.Encode(certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to encode certificate: %w", err)
+	}
+
+	// PEM encode private key
+	keyPEM := new(bytes.Buffer)
+	if err := pem.Encode(keyPEM, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(certKey),
+	}); err != nil {
+		return nil, fmt.Errorf("failed to encode certificate key: %w", err)
+	}
+
+	return &WildcardCertificates{
+		CACert: caCertPEM.Bytes(),
+		Cert:   certPEM.Bytes(),
+		Key:    keyPEM.Bytes(),
+	}, nil
+}

@@ -44,15 +44,15 @@ func (r *WorkMachineReconciler) createNamespace(check *reconciler.Check[*v1.Work
 
 const (
 	wildcardCertSecretName      = "kloudlite-wildcard-cert-tls"
-	wildcardCertSourceNamespace = "kloudlite-ingress"
+	wildcardCertSourceNamespace = "kloudlite"
 )
 
-// syncWildcardCertSecret copies the wildcard TLS certificate secret from kloudlite-ingress
+// syncWildcardCertSecret copies the wildcard TLS certificate secret from kloudlite
 // to the workmachine namespace for use by tunnel-server, wm-ingress-controller, and workspace pods
 func (r *WorkMachineReconciler) syncWildcardCertSecret(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	targetNamespace := obj.Spec.TargetNamespace
 
-	// Get the source secret from kloudlite-ingress namespace
+	// Get the source secret from kloudlite namespace
 	sourceSecret := &corev1.Secret{}
 	if err := r.Get(check.Context(), client.ObjectKey{
 		Name:      wildcardCertSecretName,

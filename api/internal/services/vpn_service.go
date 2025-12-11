@@ -86,11 +86,11 @@ func (s *vpnService) buildHostEntries(ctx context.Context, namespace string) ([]
 func (s *vpnService) GetCACert(ctx context.Context, username string) (string, error) {
 	s.logger.Info("VPN: GetCACert", zap.String("username", username))
 
-	// Fetch CA certificate from kloudlite-ingress secret
+	// Fetch CA certificate from kloudlite namespace
 	caSecret := &corev1.Secret{}
 	if err := s.k8sClient.Get(ctx, client.ObjectKey{
 		Name:      "kloudlite-wildcard-cert-tls",
-		Namespace: "kloudlite-ingress",
+		Namespace: "kloudlite",
 	}, caSecret); err != nil {
 		return "", fmt.Errorf("failed to fetch CA certificate: %w", err)
 	}

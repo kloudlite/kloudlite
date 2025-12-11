@@ -416,7 +416,7 @@ spec:
                 - servicePort
                 type: object
               workloadNamespace:
-                default: kloudlite-ingress
+                default: kloudlite
                 description: |-
                   WorkloadNamespace is the namespace where DomainRequest workloads (HAProxy pod, configmap, secret) run
                   All DomainRequests share a common workload namespace for centralized ingress management
