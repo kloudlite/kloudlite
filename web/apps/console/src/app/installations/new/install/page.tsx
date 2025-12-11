@@ -13,17 +13,13 @@ interface SessionData {
     name: string
   }
   installationKey: string
-  subdomain?: string
 }
 
-const getCloudProviderCommands = (installationKey: string, subdomain?: string) => {
-  // Build the command with optional subdomain
-  const subdomainFlag = subdomain ? ` --subdomain ${subdomain}` : ''
-
+const getCloudProviderCommands = (installationKey: string) => {
   return {
     aws: {
       name: 'AWS',
-      commands: [`curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key ${installationKey}${subdomainFlag}`],
+      commands: [`curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key ${installationKey}`],
       requirements: [
         'AWS CLI configured',
         'IAM user with EC2 full access and iam:PassRole permissions',
@@ -32,7 +28,7 @@ const getCloudProviderCommands = (installationKey: string, subdomain?: string) =
     },
     gcp: {
       name: 'Google Cloud',
-      commands: [`curl -fsSL https://get.khost.dev/install/gcp | bash -s -- --key ${installationKey}${subdomainFlag}`],
+      commands: [`curl -fsSL https://get.khost.dev/install/gcp | bash -s -- --key ${installationKey}`],
       requirements: [
         'gcloud CLI configured',
         'Service account with Compute Admin and Service Account User roles',
@@ -41,7 +37,7 @@ const getCloudProviderCommands = (installationKey: string, subdomain?: string) =
     },
     azure: {
       name: 'Azure',
-      commands: [`curl -fsSL https://get.khost.dev/install/azure | bash -s -- --key ${installationKey}${subdomainFlag}`],
+      commands: [`curl -fsSL https://get.khost.dev/install/azure | bash -s -- --key ${installationKey}`],
       requirements: [
         'Azure CLI configured',
         'Service principal with Virtual Machine Contributor and User Access Administrator roles',
@@ -148,7 +144,7 @@ export default function InstallPage() {
     return null
   }
 
-  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey, session.subdomain)
+  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey)
 
   return (
     <>

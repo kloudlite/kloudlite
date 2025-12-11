@@ -16,7 +16,6 @@ DOWNLOAD_BASE_URL="https://get.khost.dev/api/download/kli"
 # Parse installation key from arguments
 INSTALLATION_KEY=""
 AWS_REGION=""
-SUBDOMAIN=""
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -28,10 +27,6 @@ while [ $# -gt 0 ]; do
             AWS_REGION="$2"
             shift 2
             ;;
-        --subdomain)
-            SUBDOMAIN="$2"
-            shift 2
-            ;;
         *)
             echo -e "\${RED}Unknown option: $1\${NC}"
             exit 1
@@ -41,7 +36,7 @@ done
 
 if [ -z "\$INSTALLATION_KEY" ]; then
     echo -e "\${RED}Error: --key parameter is required\${NC}"
-    echo "Usage: curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key YOUR_KEY [--region REGION] [--subdomain SUBDOMAIN]"
+    echo "Usage: curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key YOUR_KEY [--region REGION]"
     exit 1
 fi
 
@@ -194,10 +189,6 @@ run_install() {
         install_cmd="\$install_cmd --region \$AWS_REGION"
     fi
 
-    if [ -n "\$SUBDOMAIN" ]; then
-        install_cmd="\$install_cmd --subdomain \$SUBDOMAIN"
-    fi
-
     if eval "\$install_cmd"; then
         echo ""
         echo -e "\${GREEN}🎉 Installation complete!\${NC}"
@@ -205,9 +196,6 @@ run_install() {
         echo -e "\${BLUE}Installation key: \${INSTALLATION_KEY}\${NC}"
         if [ -n "\$AWS_REGION" ]; then
             echo -e "\${BLUE}Region: \${AWS_REGION}\${NC}"
-        fi
-        if [ -n "\$SUBDOMAIN" ]; then
-            echo -e "\${BLUE}Domain: \${SUBDOMAIN}.khost.dev\${NC}"
         fi
     else
         echo ""
