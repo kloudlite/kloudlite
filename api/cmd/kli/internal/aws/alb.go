@@ -24,10 +24,22 @@ func shortKey(installationKey string) string {
 	return installationKey
 }
 
-// CreateALB creates an Application Load Balancer
+// CreateALB creates an Application Load Balancer (idempotent - returns existing if found)
 func CreateALB(ctx context.Context, cfg aws.Config, installationKey, vpcID string, subnetIDs []string, sgID string) (*ALBInfo, error) {
 	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)
 	albName := fmt.Sprintf("kl-%s-alb", shortKey(installationKey))
+
+	// Check if ALB already exists by name
+	existing, err := elbClient.DescribeLoadBalancers(ctx, &elasticloadbalancingv2.DescribeLoadBalancersInput{
+		Names: []string{albName},
+	})
+	if err == nil && len(existing.LoadBalancers) > 0 {
+		alb := existing.LoadBalancers[0]
+		return &ALBInfo{
+			ARN:     *alb.LoadBalancerArn,
+			DNSName: *alb.DNSName,
+		}, nil
+	}
 
 	// Ensure we have at least 2 subnets from different AZs
 	if len(subnetIDs) < 2 {
@@ -64,10 +76,18 @@ func CreateALB(ctx context.Context, cfg aws.Config, installationKey, vpcID strin
 	}, nil
 }
 
-// CreateTargetGroup creates a target group for the ALB
+// CreateTargetGroup creates a target group for the ALB (idempotent - returns existing if found)
 func CreateTargetGroup(ctx context.Context, cfg aws.Config, installationKey, vpcID string) (string, error) {
 	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)
 	tgName := fmt.Sprintf("kl-%s-tg", shortKey(installationKey))
+
+	// Check if target group already exists by name
+	existing, err := elbClient.DescribeTargetGroups(ctx, &elasticloadbalancingv2.DescribeTargetGroupsInput{
+		Names: []string{tgName},
+	})
+	if err == nil && len(existing.TargetGroups) > 0 {
+		return *existing.TargetGroups[0].TargetGroupArn, nil
+	}
 
 	result, err := elbClient.CreateTargetGroup(ctx, &elasticloadbalancingv2.CreateTargetGroupInput{
 		Name:                       aws.String(tgName),
@@ -125,9 +145,21 @@ func RegisterTargets(ctx context.Context, cfg aws.Config, tgARN string, instance
 	return nil
 }
 
-// CreateHTTPSListener creates an HTTPS listener with TLS termination
+// CreateHTTPSListener creates an HTTPS listener with TLS termination (idempotent - returns existing if found)
 func CreateHTTPSListener(ctx context.Context, cfg aws.Config, albARN, tgARN, certARN string) (string, error) {
 	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)
+
+	// Check if HTTPS listener already exists on port 443
+	existing, err := elbClient.DescribeListeners(ctx, &elasticloadbalancingv2.DescribeListenersInput{
+		LoadBalancerArn: aws.String(albARN),
+	})
+	if err == nil {
+		for _, listener := range existing.Listeners {
+			if listener.Port != nil && *listener.Port == 443 {
+				return *listener.ListenerArn, nil
+			}
+		}
+	}
 
 	result, err := elbClient.CreateListener(ctx, &elasticloadbalancingv2.CreateListenerInput{
 		LoadBalancerArn: aws.String(albARN),
@@ -155,9 +187,21 @@ func CreateHTTPSListener(ctx context.Context, cfg aws.Config, albARN, tgARN, cer
 	return *result.Listeners[0].ListenerArn, nil
 }
 
-// CreateHTTPRedirectListener creates an HTTP listener that redirects to HTTPS
+// CreateHTTPRedirectListener creates an HTTP listener that redirects to HTTPS (idempotent - returns existing if found)
 func CreateHTTPRedirectListener(ctx context.Context, cfg aws.Config, albARN string) (string, error) {
 	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)
+
+	// Check if HTTP listener already exists on port 80
+	existing, err := elbClient.DescribeListeners(ctx, &elasticloadbalancingv2.DescribeListenersInput{
+		LoadBalancerArn: aws.String(albARN),
+	})
+	if err == nil {
+		for _, listener := range existing.Listeners {
+			if listener.Port != nil && *listener.Port == 80 {
+				return *listener.ListenerArn, nil
+			}
+		}
+	}
 
 	result, err := elbClient.CreateListener(ctx, &elasticloadbalancingv2.CreateListenerInput{
 		LoadBalancerArn: aws.String(albARN),

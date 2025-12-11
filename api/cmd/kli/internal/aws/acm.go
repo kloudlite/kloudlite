@@ -17,9 +17,15 @@ type ValidationRecord struct {
 	Type  string
 }
 
-// RequestCertificate requests a new ACM certificate for the given domain
+// RequestCertificate requests a new ACM certificate for the given domain (idempotent - returns existing if found)
 // Returns the certificate ARN
 func RequestCertificate(ctx context.Context, cfg aws.Config, domain string, installationKey string) (string, error) {
+	// Check if certificate already exists for this installation
+	existingARN, err := FindCertificateByInstallationKey(ctx, cfg, installationKey)
+	if err == nil && existingARN != "" {
+		return existingARN, nil
+	}
+
 	acmClient := acm.NewFromConfig(cfg)
 
 	// Request certificate for domain and wildcard
