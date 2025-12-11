@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kloudlite/ui'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById } from '@/lib/console/supabase-storage-service'
+import { getInstallationById, checkInstallationDomainStatus } from '@/lib/console/supabase-storage-service'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { InstallationsHeader } from '@/components/installations-header'
@@ -30,6 +30,16 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
 
   if (installation.userId !== session.user.id) {
     redirect('/installations')
+  }
+
+  // Check if domain has expired and been claimed by another user
+  // Only check if installation has a subdomain but is not yet deployed
+  if (installation.subdomain && !installation.deploymentReady) {
+    const domainStatus = await checkInstallationDomainStatus(id, installation.subdomain)
+    if (domainStatus.isExpired && domainStatus.isClaimedByOther) {
+      // Redirect to domain re-selection page
+      redirect(`/installations/${id}/domain`)
+    }
   }
 
   // Determine installation status

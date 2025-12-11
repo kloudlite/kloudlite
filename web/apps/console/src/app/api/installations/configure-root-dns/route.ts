@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   getInstallationByKey,
   updateInstallationRootDns,
+  markDeploymentReady,
 } from '@/lib/console/supabase-storage-service'
 import {
   CLOUDFLARE_DNS_DOMAIN,
@@ -93,6 +94,9 @@ export async function POST(request: NextRequest) {
 
     // Store DNS info in installation record
     await updateInstallationRootDns(installation.id, target, type, recordId)
+
+    // Mark deployment as ready - this changes status from "Configuring" to "Active"
+    await markDeploymentReady(installation.id, true)
 
     const response = NextResponse.json({
       success: true,

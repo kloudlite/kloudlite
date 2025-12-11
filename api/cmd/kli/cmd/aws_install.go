@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -13,7 +12,6 @@ import (
 	awsinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/aws"
 	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/console"
 	k8sinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/k8s"
-	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/prompt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -37,12 +35,16 @@ This command will:
   - Setup automated K3s SQLite backup to S3 every 30 minutes
   - Create Application Load Balancer with TLS termination
   - Request ACM certificate with DNS validation via Cloudflare
-  - Configure custom domain (subdomain.khost.dev)`,
+  - Configure custom domain using the subdomain reserved in console
+
+NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
+before running this command. The installation will fail if no subdomain
+has been configured for the installation key.`,
 	Example: `  # Install using default AWS region from config
   kli aws install --installation-key prod
 
-  # Install in a specific region with custom subdomain
-  kli aws install --installation-key staging --region us-west-2 --subdomain mycompany
+  # Install in a specific region
+  kli aws install --installation-key staging --region us-west-2
 
   # Install without ALB (direct EC2 access only)
   kli aws install --installation-key dev --skip-alb`,
@@ -53,7 +55,6 @@ var (
 	region                      string
 	installationKey             string
 	enableTerminationProtection bool
-	subdomain                   string
 	skipALB                     bool
 )
 
@@ -61,7 +62,6 @@ func init() {
 	awsInstallCmd.Flags().StringVar(&region, "region", "", "AWS region (uses default from AWS config if not specified)")
 	awsInstallCmd.Flags().StringVar(&installationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	awsInstallCmd.Flags().BoolVar(&enableTerminationProtection, "enable-termination-protection", true, "Enable EC2 termination protection (default: true)")
-	awsInstallCmd.Flags().StringVar(&subdomain, "subdomain", "", "Subdomain for your installation (e.g., mycompany -> mycompany.khost.dev)")
 	awsInstallCmd.Flags().BoolVar(&skipALB, "skip-alb", false, "Skip ALB and TLS setup (direct EC2 access only)")
 	awsInstallCmd.MarkFlagRequired("installation-key")
 }
@@ -88,17 +88,16 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	var createdResources struct {
 		sync.Mutex
-		instanceID  string
-		sgID        string
-		masterSgID  string
-		albSgID     string
-		iamCreated  bool
-		bucketName  string
-		albARN      string
-		tgARN       string
-		certARN     string
-		vpcID       string
-		subdomainOK bool
+		instanceID string
+		sgID       string
+		masterSgID string
+		albSgID    string
+		iamCreated bool
+		bucketName string
+		albARN     string
+		tgARN      string
+		certARN    string
+		vpcID      string
 	}
 
 	go func() {
@@ -188,115 +187,37 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	// Console API client
 	consoleClient := console.NewClient()
 
-	// Domain Configuration (unless skipping ALB)
-	var reservedSubdomain string
+	// Verify Installation and get subdomain
+	bold.Println("Verifying Installation")
+	bold.Println("----------------------")
+
+	fmt.Printf("  o Verifying installation key with registration API...")
+	verifyResult, err := k8sinternal.VerifyInstallation(ctx, installationKey)
+	if err != nil {
+		red.Printf(" x\n")
+		yellow.Printf("    Error: %v\n\n", err)
+		os.Exit(1)
+	}
+	green.Printf(" +\n")
+	fmt.Printf("    Secret key obtained successfully\n")
+
+	secretKey := verifyResult.SecretKey
 	var fullDomain string
 
+	// Check if subdomain was configured in console (required for ALB)
 	if !skipALB {
-		bold.Println("Domain Configuration")
-		bold.Println("--------------------")
-
-		// If subdomain provided via flag, use it; otherwise prompt
-		if subdomain == "" {
-			fmt.Println("  Enter a subdomain for your installation.")
-			fmt.Println("  Your URL will be: <subdomain>.khost.dev")
-			fmt.Println()
-
-			for {
-				input, err := prompt.ReadLine("  Subdomain: ")
-				if err != nil {
-					red.Printf("  Error reading input: %v\n", err)
-					os.Exit(1)
-				}
-				subdomain = strings.TrimSpace(strings.ToLower(input))
-
-				// Client-side validation
-				valid, reason := prompt.ValidateSubdomain(subdomain)
-				if !valid {
-					yellow.Printf("  %s\n", reason)
-					continue
-				}
-
-				// Check availability
-				fmt.Printf("  Checking availability...")
-				checkResp, err := consoleClient.CheckSubdomainAvailability(ctx, subdomain)
-				if err != nil {
-					red.Printf(" x\n")
-					yellow.Printf("    Error: %v\n", err)
-					continue
-				}
-
-				if !checkResp.Available {
-					red.Printf(" x\n")
-					reason := "not available"
-					if checkResp.Reason != "" {
-						reason = checkResp.Reason
-					}
-					yellow.Printf("    Subdomain '%s' is %s. Please try another.\n", subdomain, reason)
-					subdomain = ""
-					continue
-				}
-
-				green.Printf(" + Available!\n")
-				break
-			}
-		} else {
-			// Validate provided subdomain
-			valid, reason := prompt.ValidateSubdomain(subdomain)
-			if !valid {
-				red.Printf("  Invalid subdomain: %s\n", reason)
-				os.Exit(1)
-			}
-
-			fmt.Printf("  Checking availability of '%s'...", subdomain)
-			checkResp, err := consoleClient.CheckSubdomainAvailability(ctx, subdomain)
-			if err != nil {
-				red.Printf(" x\n")
-				yellow.Printf("    Error: %v\n", err)
-				os.Exit(1)
-			}
-
-			if !checkResp.Available {
-				red.Printf(" x\n")
-				reason := "not available"
-				if checkResp.Reason != "" {
-					reason = checkResp.Reason
-				}
-				yellow.Printf("    Subdomain '%s' is %s.\n", subdomain, reason)
-				os.Exit(1)
-			}
-			green.Printf(" + Available!\n")
-		}
-
-		// Reserve the subdomain
-		fmt.Printf("  Reserving subdomain...")
-		reserveResp, err := consoleClient.ReserveSubdomain(ctx, installationKey, subdomain)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n", err)
+		if verifyResult.Subdomain == "" {
+			red.Printf("\n  Error: No subdomain configured for this installation.\n")
+			yellow.Printf("  Please configure a subdomain in the console (console.kloudlite.io)\n")
+			yellow.Printf("  before running this installation command.\n\n")
 			os.Exit(1)
 		}
 
-		if !reserveResp.Success {
-			red.Printf(" x\n")
-			errMsg := reserveResp.Error
-			if errMsg == "" {
-				errMsg = "unknown error"
-			}
-			yellow.Printf("    Failed to reserve: %s\n", errMsg)
-			os.Exit(1)
-		}
-
-		createdResources.Lock()
-		createdResources.subdomainOK = true
-		createdResources.Unlock()
-
-		reservedSubdomain = reserveResp.Subdomain
-		fullDomain = console.GetFullDomain(reservedSubdomain)
-		green.Printf(" +\n")
+		fullDomain = console.GetFullDomain(verifyResult.Subdomain)
+		fmt.Printf("    Subdomain: %s\n", verifyResult.Subdomain)
 		cyan.Printf("    Your URL: https://%s\n", fullDomain)
-		fmt.Println()
 	}
+	fmt.Println()
 
 	// Infrastructure Setup
 	bold.Println("Infrastructure Setup")
@@ -506,20 +427,6 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
-
-	// Verify Installation
-	bold.Println("\nVerifying Installation")
-	bold.Println("----------------------")
-
-	fmt.Printf("  o Verifying installation key with registration API...")
-	secretKey, err := k8sinternal.VerifyInstallation(ctx, installationKey)
-	if err != nil {
-		red.Printf(" x\n")
-		yellow.Printf("    Error: %v\n\n", err)
-		os.Exit(1)
-	}
-	green.Printf(" +\n")
-	fmt.Printf("    Secret key obtained successfully\n")
 
 	// Instance Launch
 	bold.Println("\nInstance Deployment")
