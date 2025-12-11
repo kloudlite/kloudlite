@@ -304,6 +304,7 @@ export async function createInstallation(
   name: string,
   description: string | undefined,
   installationKey: string,
+  subdomain?: string,
 ): Promise<Installation> {
   type InstallationInsert = Database['public']['Tables']['installations']['Insert']
 
@@ -313,6 +314,7 @@ export async function createInstallation(
     description: description,
     installation_key: installationKey,
     has_completed_installation: false,
+    subdomain: subdomain || null,
   }
 
   const result = await supabase
