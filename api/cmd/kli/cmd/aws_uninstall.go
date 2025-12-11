@@ -166,9 +166,10 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	// Phase 2: Parallel cleanup of remaining resources
 	var wg sync.WaitGroup
 	var instanceCount int
-	var sgErr, albSgErr, keyErr, iamErr, s3Err error
+	var sgErr, albSgErr, masterSgErr, keyErr, iamErr, s3Err error
 	sgName := fmt.Sprintf("kl-%s-sg", uninstallKey)
 	albSgName := fmt.Sprintf("kl-%s-alb-sg", uninstallKey)
+	masterSgName := fmt.Sprintf("kl-%s-master-sg", uninstallKey)
 	keyName := fmt.Sprintf("kl-%s-key", uninstallKey)
 	roleName := fmt.Sprintf("kl-%s-role", uninstallKey)
 	bucketName := fmt.Sprintf("kl-%s-backups", uninstallKey)
@@ -188,7 +189,21 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 			fmt.Printf("    [%s] No instances found\n", time.Now().Format("15:04:05"))
 		}
 
-		// Delete ALB SG with retry logic
+		// Delete Master SG with retry logic (must be deleted before ALB SG due to reference)
+		fmt.Printf("    [%s] Starting: Master Security Group deletion (with retries)\n", time.Now().Format("15:04:05"))
+		masterSgErr = deleteSecurityGroupByName(ctx, cfg, uninstallKey, masterSgName)
+		if masterSgErr != nil {
+			if !strings.Contains(masterSgErr.Error(), "not found") {
+				fmt.Printf("    [%s] Failed: Master Security Group - %v\n", time.Now().Format("15:04:05"), masterSgErr)
+			} else {
+				fmt.Printf("    [%s] Master Security Group not found (skipping)\n", time.Now().Format("15:04:05"))
+				masterSgErr = nil
+			}
+		} else {
+			fmt.Printf("    [%s] Completed: Master Security Group\n", time.Now().Format("15:04:05"))
+		}
+
+		// Delete ALB SG with retry logic (after master SG since master SG references ALB SG)
 		fmt.Printf("    [%s] Starting: ALB Security Group deletion (with retries)\n", time.Now().Format("15:04:05"))
 		albSgErr = deleteSecurityGroupByName(ctx, cfg, uninstallKey, albSgName)
 		if albSgErr != nil {
@@ -266,7 +281,7 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    Operations completed in %.1fs\n", elapsed.Seconds())
 
 	// Report results
-	hasErrors := sgErr != nil || albSgErr != nil || keyErr != nil || iamErr != nil || s3Err != nil || albErr != nil || tgErr != nil || certErr != nil
+	hasErrors := sgErr != nil || albSgErr != nil || masterSgErr != nil || keyErr != nil || iamErr != nil || s3Err != nil || albErr != nil || tgErr != nil || certErr != nil
 	if hasErrors {
 		red.Printf(" x\n")
 		if albErr != nil {
@@ -280,6 +295,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 		}
 		if sgErr != nil {
 			yellow.Printf("    EC2 Security Group: %v\n", sgErr)
+		}
+		if masterSgErr != nil {
+			yellow.Printf("    Master Security Group: %v\n", masterSgErr)
 		}
 		if albSgErr != nil {
 			yellow.Printf("    ALB Security Group: %v\n", albSgErr)
@@ -315,6 +333,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	}
 	if sgErr == nil {
 		fmt.Printf("    EC2 Security Group: %s\n", sgName)
+	}
+	if masterSgErr == nil {
+		fmt.Printf("    Master Security Group: %s\n", masterSgName)
 	}
 	if albSgErr == nil {
 		fmt.Printf("    ALB Security Group: %s\n", albSgName)

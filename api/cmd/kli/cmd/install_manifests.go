@@ -159,6 +159,13 @@ data:
 			fmt.Println("⚠ Skipping Image Registry (S3_BUCKET, AWS_REGION, or KLOUDLITE_REGISTRY_HOST not set)")
 		}
 
+		// Write Ingress Proxy (nginx with hostNetwork for exposing frontend)
+		ingressProxyPath := filepath.Join(manifestsDir, "ingress-proxy.yaml")
+		if err := os.WriteFile(ingressProxyPath, []byte(manifests.IngressProxy), 0644); err != nil {
+			return fmt.Errorf("failed to write Ingress Proxy: %w", err)
+		}
+		fmt.Printf("✓ Written Ingress Proxy to %s\n", ingressProxyPath)
+
 		fmt.Println("\nKloudlite manifests installed successfully!")
 		fmt.Println("K3s will auto-apply these manifests on startup.")
 

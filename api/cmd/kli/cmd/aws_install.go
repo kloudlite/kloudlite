@@ -90,6 +90,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		sync.Mutex
 		instanceID  string
 		sgID        string
+		masterSgID  string
 		albSgID     string
 		iamCreated  bool
 		bucketName  string
@@ -143,6 +144,10 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 			_, _ = ec2Client.TerminateInstances(context.Background(), &ec2.TerminateInstancesInput{
 				InstanceIds: []string{createdResources.instanceID},
 			})
+		}
+		if createdResources.masterSgID != "" && createdResources.vpcID != "" {
+			fmt.Printf("  Deleting master security group...\n")
+			awsinternal.DeleteSecurityGroupByName(context.Background(), cfg, createdResources.vpcID, fmt.Sprintf("kl-%s-master-sg", installationKey))
 		}
 		if createdResources.albSgID != "" && createdResources.vpcID != "" {
 			fmt.Printf("  Deleting ALB security group...\n")
@@ -470,6 +475,23 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	// Pace API calls to prevent rate limiting (longer delay after parallel operations)
 	time.Sleep(2 * time.Second)
 
+	// Create master security group (depends on ALB SG, so must be sequential)
+	var masterSgID string
+	if !skipALB {
+		fmt.Printf("  o Creating master security group...")
+		masterSgID, err = awsinternal.EnsureMasterSecurityGroup(ctx, cfg, vpcID, vpcCIDR, albSgID, installationKey)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		createdResources.Lock()
+		createdResources.masterSgID = masterSgID
+		createdResources.Unlock()
+		green.Printf(" +\n")
+		fmt.Printf("    Master Security Group: kl-%s-master-sg\n", installationKey)
+	}
+
 	// Instance Profile (depends on IAM role)
 	bold.Println("\nFinalizing IAM Setup")
 	bold.Println("--------------------")
@@ -511,8 +533,14 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	// Use master security group for EC2 when ALB is enabled
+	instanceSgID := sgID
+	if !skipALB && masterSgID != "" {
+		instanceSgID = masterSgID
+	}
+
 	fmt.Printf("  o Launching EC2 instance (t3.medium)...")
-	instanceID, err := awsinternal.LaunchInstance(ctx, cfg, amiID, subnetID, sgID, vpcID, secretKey, bucketName, k3sToken, installationKey, enableTerminationProtection)
+	instanceID, err := awsinternal.LaunchInstance(ctx, cfg, amiID, subnetID, instanceSgID, vpcID, secretKey, bucketName, k3sToken, installationKey, enableTerminationProtection)
 	if err != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
