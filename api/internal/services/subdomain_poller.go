@@ -211,4 +211,3 @@ func (sp *SubdomainPoller) verifyInstallationKey(ctx context.Context) (*VerifyKe
 
 	return &verifyResp, nil
 }
-

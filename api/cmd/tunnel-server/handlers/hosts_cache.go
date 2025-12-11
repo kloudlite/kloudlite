@@ -5,11 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
@@ -130,12 +130,6 @@ func (hc *HostsCache) setupInformers(ctx context.Context) error {
 		return fmt.Errorf("failed to get namespace informer: %w", err)
 	}
 
-	// Get informer for DomainRequests
-	domainRequestInformer, err := hc.cache.GetInformer(ctx, &domainrequestv1.DomainRequest{})
-	if err != nil {
-		return fmt.Errorf("failed to get domainrequest informer: %w", err)
-	}
-
 	// Get informer for Workspaces
 	workspaceInformer, err := hc.cache.GetInformer(ctx, &workspacev1.Workspace{})
 	if err != nil {
@@ -182,9 +176,6 @@ func (hc *HostsCache) setupInformers(ctx context.Context) error {
 	}
 	if _, err := namespaceInformer.AddEventHandler(handler); err != nil {
 		return fmt.Errorf("failed to add namespace event handler: %w", err)
-	}
-	if _, err := domainRequestInformer.AddEventHandler(handler); err != nil {
-		return fmt.Errorf("failed to add domainrequest event handler: %w", err)
 	}
 	if _, err := workspaceInformer.AddEventHandler(handler); err != nil {
 		return fmt.Errorf("failed to add workspace event handler: %w", err)
@@ -272,29 +263,19 @@ func (hc *HostsCache) GetHosts() []HostEntry {
 	return result
 }
 
-// getDomainInfo retrieves subdomain and domain from DomainRequest CR
-// It extracts them from spec.domainRoutes[0].domain (e.g., "beanbag.khost.dev" -> subdomain="beanbag", domain="khost.dev")
+// getDomainInfo retrieves subdomain and domain from HOSTED_SUBDOMAIN env var
+// It extracts them from the env var value (e.g., "beanbag.khost.dev" -> subdomain="beanbag", domain="khost.dev")
 func (hc *HostsCache) getDomainInfo(ctx context.Context) (subdomain, domain string, err error) {
-	var domainRequestList domainrequestv1.DomainRequestList
-	if err := hc.cache.List(ctx, &domainRequestList); err != nil {
-		return "", "", fmt.Errorf("failed to list DomainRequests: %w", err)
-	}
-
-	if len(domainRequestList.Items) == 0 {
-		return "", "", fmt.Errorf("no DomainRequest found")
-	}
-
-	// Use the first DomainRequest's spec.domainRoutes
-	dr := domainRequestList.Items[0]
-	if len(dr.Spec.DomainRoutes) == 0 {
-		return "", "", fmt.Errorf("DomainRequest has no domain routes")
+	// Get hosted subdomain from environment variable
+	hostedSubdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if hostedSubdomain == "" {
+		return "", "", fmt.Errorf("HOSTED_SUBDOMAIN env var not set")
 	}
 
 	// Parse the full domain (e.g., "beanbag.khost.dev") into subdomain and domain
-	fullDomain := dr.Spec.DomainRoutes[0].Domain
-	parts := strings.SplitN(fullDomain, ".", 2)
+	parts := strings.SplitN(hostedSubdomain, ".", 2)
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid domain format: %s (expected subdomain.domain)", fullDomain)
+		return "", "", fmt.Errorf("invalid HOSTED_SUBDOMAIN format: %s (expected subdomain.domain)", hostedSubdomain)
 	}
 
 	return parts[0], parts[1], nil
