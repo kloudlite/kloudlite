@@ -100,10 +100,27 @@ kubectl create namespace kloudlite || true
 # Create K3s manifests directory
 mkdir -p /var/lib/rancher/k3s/server/manifests
 
-# Download and install Kloudlite CLI
+# Download and install Kloudlite CLI with MD5 verification
 echo "Downloading Kloudlite CLI binary..."
 curl -fsSL "https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64" -o /usr/local/bin/kli
 chmod +x /usr/local/bin/kli
+
+# Download expected MD5 checksum
+echo "Verifying kli binary checksum..."
+EXPECTED_MD5=$(curl -fsSL "https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64.md5" 2>/dev/null | awk '{print $1}')
+if [ -n "$EXPECTED_MD5" ]; then
+  ACTUAL_MD5=$(md5sum /usr/local/bin/kli | awk '{print $1}')
+  if [ "$EXPECTED_MD5" != "$ACTUAL_MD5" ]; then
+    echo "ERROR: kli binary checksum mismatch!"
+    echo "  Expected: $EXPECTED_MD5"
+    echo "  Actual:   $ACTUAL_MD5"
+    echo "Please update your local kli binary and re-run installation."
+    exit 1
+  fi
+  echo "Checksum verified: $ACTUAL_MD5"
+else
+  echo "WARNING: Could not fetch MD5 checksum, skipping verification"
+fi
 
 K3S_AGENT_TOKEN=$(cat /var/lib/rancher/k3s/server/agent-token)
 
