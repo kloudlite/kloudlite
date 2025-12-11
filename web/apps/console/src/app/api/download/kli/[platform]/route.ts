@@ -85,8 +85,12 @@ export async function GET(
 ) {
   const { platform } = await params;
 
+  // Check if this is a request for MD5 checksum
+  const isMd5Request = platform.endsWith('.md5');
+  const actualPlatform = isMd5Request ? platform.replace('.md5', '') : platform;
+
   // Validate platform
-  if (!VALID_PLATFORMS.includes(platform)) {
+  if (!VALID_PLATFORMS.includes(actualPlatform)) {
     return NextResponse.json(
       {
         error: 'Invalid platform',
@@ -114,15 +118,23 @@ export async function GET(
 
   // Find the asset for the requested platform
   // Asset naming convention: kli-{os}-{arch} or kli-{os}-{arch}.exe for windows
-  const isWindows = platform.startsWith('windows');
-  const assetName = isWindows ? `kli-${platform}.exe` : `kli-${platform}`;
+  const isWindows = actualPlatform.startsWith('windows');
+  const baseName = isWindows ? `kli-${actualPlatform}.exe` : `kli-${actualPlatform}`;
+  const assetName = isMd5Request ? `${baseName}.md5` : baseName;
 
   const asset = release.assets.find((a) => a.name === assetName);
 
   if (!asset) {
+    // If MD5 file not found, return 404 without error details
+    if (isMd5Request) {
+      return NextResponse.json(
+        { error: `MD5 checksum not found for platform: ${actualPlatform}` },
+        { status: 404 }
+      );
+    }
     return NextResponse.json(
       {
-        error: `Binary not found for platform: ${platform}`,
+        error: `Binary not found for platform: ${actualPlatform}`,
         available_assets: release.assets.map((a) => a.name),
         release_tag: release.tag_name,
       },
