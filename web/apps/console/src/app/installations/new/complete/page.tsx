@@ -88,7 +88,7 @@ export default function CompletePage() {
         <p className="text-muted-foreground">Your Kloudlite installation is ready to use</p>
       </div>
 
-      <InstallationProgress currentStep={4} />
+      <InstallationProgress currentStep={3} />
 
       <div className="space-y-4">
         <Card>

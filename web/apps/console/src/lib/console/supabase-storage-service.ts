@@ -539,39 +539,68 @@ export async function deleteIpRecords(installationId: string): Promise<string[]>
  */
 
 /**
+ * Reserved subdomains that cannot be used
+ */
+const RESERVED_KEYWORDS = [
+  'www',
+  'api',
+  'admin',
+  'mail',
+  'smtp',
+  'ftp',
+  'ssh',
+  'vpn',
+  'dev',
+  'staging',
+  'prod',
+  'production',
+  'test',
+  'demo',
+  'app',
+  'portal',
+  'dashboard',
+  'console',
+  'docs',
+  'blog',
+  'status',
+  'support',
+  'help',
+  'cdn',
+  'static',
+  'assets',
+]
+
+/**
+ * Validate subdomain format
+ * Returns { valid: true } or { valid: false, reason: string }
+ */
+export function validateSubdomain(subdomain: string): { valid: boolean; reason?: 'reserved' | 'invalid' } {
+  // Check length: 3-63 characters
+  if (subdomain.length < 3 || subdomain.length > 63) {
+    return { valid: false, reason: 'invalid' }
+  }
+
+  // Check format: alphanumeric + hyphens, can't start/end with hyphen
+  const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i
+  if (!subdomainRegex.test(subdomain)) {
+    return { valid: false, reason: 'invalid' }
+  }
+
+  // Check reserved keywords
+  if (RESERVED_KEYWORDS.includes(subdomain.toLowerCase())) {
+    return { valid: false, reason: 'reserved' }
+  }
+
+  return { valid: true }
+}
+
+/**
  * Check if subdomain is available
  */
 export async function isSubdomainAvailable(subdomain: string): Promise<boolean> {
-  const RESERVED_KEYWORDS = [
-    'www',
-    'api',
-    'admin',
-    'mail',
-    'smtp',
-    'ftp',
-    'ssh',
-    'vpn',
-    'dev',
-    'staging',
-    'prod',
-    'production',
-    'test',
-    'demo',
-    'app',
-    'portal',
-    'dashboard',
-    'console',
-    'docs',
-    'blog',
-    'status',
-    'support',
-    'help',
-    'cdn',
-    'static',
-    'assets',
-  ]
-
-  if (RESERVED_KEYWORDS.includes(subdomain.toLowerCase())) {
+  // First validate the subdomain format
+  const validation = validateSubdomain(subdomain)
+  if (!validation.valid) {
     return false
   }
 

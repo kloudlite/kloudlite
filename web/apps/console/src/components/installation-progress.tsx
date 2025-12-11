@@ -11,7 +11,7 @@ const steps: Step[] = [
   {
     number: 1,
     title: 'Create',
-    description: 'Name your installation',
+    description: 'Name and configure domain',
   },
   {
     number: 2,
@@ -20,11 +20,6 @@ const steps: Step[] = [
   },
   {
     number: 3,
-    title: 'Configure Domain',
-    description: 'Set your installation domain',
-  },
-  {
-    number: 4,
     title: 'Complete',
     description: 'Access your installation',
   },

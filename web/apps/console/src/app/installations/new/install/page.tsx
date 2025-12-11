@@ -13,37 +13,43 @@ interface SessionData {
     name: string
   }
   installationKey: string
+  subdomain?: string
 }
 
-const getCloudProviderCommands = (installationKey: string) => ({
-  aws: {
-    name: 'AWS',
-    commands: [`curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key ${installationKey}`],
-    requirements: [
-      'AWS CLI configured',
-      'IAM user with EC2 full access and iam:PassRole permissions',
-      'Valid AWS access keys configured',
-    ],
-  },
-  gcp: {
-    name: 'Google Cloud',
-    commands: [`curl -fsSL https://get.khost.dev/install/gcp | bash -s -- --key ${installationKey}`],
-    requirements: [
-      'gcloud CLI configured',
-      'Service account with Compute Admin and Service Account User roles',
-      'Valid GCP credentials configured',
-    ],
-  },
-  azure: {
-    name: 'Azure',
-    commands: [`curl -fsSL https://get.khost.dev/install/azure | bash -s -- --key ${installationKey}`],
-    requirements: [
-      'Azure CLI configured',
-      'Service principal with Virtual Machine Contributor and User Access Administrator roles',
-      'Valid Azure credentials configured',
-    ],
-  },
-})
+const getCloudProviderCommands = (installationKey: string, subdomain?: string) => {
+  // Build the command with optional subdomain
+  const subdomainFlag = subdomain ? ` --subdomain ${subdomain}` : ''
+
+  return {
+    aws: {
+      name: 'AWS',
+      commands: [`curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key ${installationKey}${subdomainFlag}`],
+      requirements: [
+        'AWS CLI configured',
+        'IAM user with EC2 full access and iam:PassRole permissions',
+        'Valid AWS access keys configured',
+      ],
+    },
+    gcp: {
+      name: 'Google Cloud',
+      commands: [`curl -fsSL https://get.khost.dev/install/gcp | bash -s -- --key ${installationKey}${subdomainFlag}`],
+      requirements: [
+        'gcloud CLI configured',
+        'Service account with Compute Admin and Service Account User roles',
+        'Valid GCP credentials configured',
+      ],
+    },
+    azure: {
+      name: 'Azure',
+      commands: [`curl -fsSL https://get.khost.dev/install/azure | bash -s -- --key ${installationKey}${subdomainFlag}`],
+      requirements: [
+        'Azure CLI configured',
+        'Service principal with Virtual Machine Contributor and User Access Administrator roles',
+        'Valid Azure credentials configured',
+      ],
+    },
+  }
+}
 
 export default function InstallPage() {
   const router = useRouter()
@@ -99,9 +105,9 @@ export default function InstallPage() {
         // Wait for verified status
         if (data.verified) {
           setVerificationStatus('verified')
-          // Auto-redirect to domain page after 2 seconds
+          // Auto-redirect to complete page after 2 seconds (domain is already configured)
           setTimeout(() => {
-            router.push('/installations/new/domain')
+            router.push('/installations/new/complete')
           }, 2000)
         }
       } catch (error) {
@@ -142,7 +148,7 @@ export default function InstallPage() {
     return null
   }
 
-  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey)
+  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey, session.subdomain)
 
   return (
     <>
@@ -184,7 +190,7 @@ export default function InstallPage() {
                   <div>
                     <p className="text-base font-semibold text-green-600">Installation verified!</p>
                     <p className="text-muted-foreground mt-0.5 text-sm">
-                      Redirecting to domain configuration...
+                      Redirecting to completion page...
                     </p>
                   </div>
                 </>
