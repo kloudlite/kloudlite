@@ -19,24 +19,35 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description } = body
+    const { name, description, subdomain } = body
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Installation name is required' }, { status: 400 })
     }
 
+    if (!subdomain || typeof subdomain !== 'string' || subdomain.trim().length === 0) {
+      return NextResponse.json({ error: 'Subdomain is required' }, { status: 400 })
+    }
+
+    // Validate subdomain format
+    const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
+    if (!subdomainRegex.test(subdomain.trim())) {
+      return NextResponse.json({ error: 'Invalid subdomain format' }, { status: 400 })
+    }
+
     // Generate a new installation key
     const installationKey = crypto.randomUUID()
 
-    // Create the installation
+    // Create the installation with subdomain
     const installation = await createInstallation(
       session.user.id,
       name.trim(),
       description?.trim() || undefined,
       installationKey,
+      subdomain.trim(),
     )
 
-    // Update the session cookie with the installation key
+    // Update the session cookie with the installation key and subdomain
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
     const token = await new SignJWT({
       provider: session.provider,
@@ -44,6 +55,7 @@ export async function POST(request: Request) {
       name: session.user.name,
       image: session.user.image,
       installationKey: installation.installationKey,
+      subdomain: subdomain.trim(),
       userId: session.user.id,
     })
       .setProtectedHeader({ alg: 'HS256' })

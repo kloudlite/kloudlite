@@ -22,6 +22,7 @@ export async function GET() {
       },
       provider: payload.provider,
       installationKey: payload.installationKey as string,
+      subdomain: payload.subdomain as string | undefined,
     })
 
     // Disable all caching
