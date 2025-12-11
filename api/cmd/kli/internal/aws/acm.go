@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -149,18 +150,38 @@ func GetCertificateStatus(ctx context.Context, cfg aws.Config, certARN string) (
 	return string(result.Certificate.Status), nil
 }
 
-// DeleteCertificate deletes an ACM certificate
+// DeleteCertificate deletes an ACM certificate with retry for in-use errors
 func DeleteCertificate(ctx context.Context, cfg aws.Config, certARN string) error {
 	acmClient := acm.NewFromConfig(cfg)
 
-	_, err := acmClient.DeleteCertificate(ctx, &acm.DeleteCertificateInput{
-		CertificateArn: aws.String(certARN),
-	})
-	if err != nil {
+	// Retry with backoff for ResourceInUseException
+	// This handles the case where the ALB listener is still being deleted
+	maxRetries := 12
+	for i := 0; i < maxRetries; i++ {
+		if i > 0 {
+			waitTime := time.Duration(10+min(i*5, 30)) * time.Second
+			fmt.Printf("    [%s] Certificate still in use, retry %d/%d, waiting %ds...\n",
+				time.Now().Format("15:04:05"), i, maxRetries-1, int(waitTime.Seconds()))
+			time.Sleep(waitTime)
+		}
+
+		_, err := acmClient.DeleteCertificate(ctx, &acm.DeleteCertificateInput{
+			CertificateArn: aws.String(certARN),
+		})
+		if err == nil {
+			return nil
+		}
+
+		// Check if it's a ResourceInUseException (certificate still attached to a listener)
+		errMsg := err.Error()
+		if i < maxRetries-1 && (strings.Contains(errMsg, "ResourceInUseException") || strings.Contains(errMsg, "in use")) {
+			continue
+		}
+
 		return fmt.Errorf("failed to delete certificate: %w", err)
 	}
 
-	return nil
+	return fmt.Errorf("failed to delete certificate after %d retries: still in use", maxRetries)
 }
 
 // FindCertificateByInstallationKey finds an ACM certificate by installation key tag
