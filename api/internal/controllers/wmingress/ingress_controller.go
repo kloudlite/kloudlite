@@ -31,7 +31,7 @@ type IngressReconciler struct {
 	// Wildcard TLS configuration
 	WildcardDomain          string // e.g., "khost.dev"
 	WildcardSecretName      string // e.g., "kloudlite-wildcard-cert-tls"
-	WildcardSecretNamespace string // e.g., "kloudlite-ingress"
+	WildcardSecretNamespace string // e.g., "kloudlite"
 
 	// HTTP server components
 	router      *Router

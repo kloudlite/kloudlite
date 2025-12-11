@@ -31,13 +31,6 @@ var installManifestsCmd = &cobra.Command{
 		}
 		fmt.Printf("✓ Written CRDs to %s\n", crdsPath)
 
-		// Write kloudlite-ingress namespace
-		ingressNsPath := filepath.Join(manifestsDir, "kloudlite-ingress-namespace.yaml")
-		if err := os.WriteFile(ingressNsPath, []byte(manifests.KloudliteIngressNamespace), 0644); err != nil {
-			return fmt.Errorf("failed to write kloudlite-ingress namespace: %w", err)
-		}
-		fmt.Printf("✓ Written kloudlite-ingress namespace to %s\n", ingressNsPath)
-
 		// Write kloudlite-hostmanager namespace
 		hostmanagerNsPath := filepath.Join(manifestsDir, "kloudlite-hostmanager-namespace.yaml")
 		if err := os.WriteFile(hostmanagerNsPath, []byte(manifests.KloudliteHostmanagerNamespace), 0644); err != nil {
@@ -89,6 +82,41 @@ data:
 		}
 		fmt.Printf("✓ Written webhook TLS secret to %s\n", webhookSecretPath)
 
+		// Generate wildcard TLS certificate for ingress proxy
+		authCookieDomain := os.Getenv("AUTH_COOKIE_DOMAIN")
+		if authCookieDomain != "" {
+			fmt.Println("Generating wildcard TLS certificate...")
+			wildcardCerts, err := certs.GenerateWildcardCertificates(authCookieDomain)
+			if err != nil {
+				return fmt.Errorf("failed to generate wildcard certificates: %w", err)
+			}
+			fmt.Println("✓ Generated wildcard TLS certificate")
+
+			// Create wildcard TLS secret manifest
+			wildcardSecretManifest := fmt.Sprintf(`apiVersion: v1
+kind: Secret
+metadata:
+  name: kloudlite-wildcard-cert-tls
+  namespace: kloudlite
+type: kubernetes.io/tls
+data:
+  tls.crt: %s
+  tls.key: %s
+  ca.crt: %s
+`,
+				base64.StdEncoding.EncodeToString(wildcardCerts.Cert),
+				base64.StdEncoding.EncodeToString(wildcardCerts.Key),
+				base64.StdEncoding.EncodeToString(wildcardCerts.CACert))
+
+			wildcardSecretPath := filepath.Join(manifestsDir, "wildcard-tls-secret.yaml")
+			if err := os.WriteFile(wildcardSecretPath, []byte(wildcardSecretManifest), 0644); err != nil {
+				return fmt.Errorf("failed to write wildcard TLS secret: %w", err)
+			}
+			fmt.Printf("✓ Written wildcard TLS secret to %s\n", wildcardSecretPath)
+		} else {
+			fmt.Println("⚠ Skipping wildcard TLS certificate (AUTH_COOKIE_DOMAIN not set)")
+		}
+
 		// Update webhooks manifest with CA bundle
 		webhooksManifest := strings.ReplaceAll(manifests.Webhooks, `caBundle: ""`, fmt.Sprintf(`caBundle: %s`, webhookCerts.CABundle))
 		webhooksPath := filepath.Join(manifestsDir, "webhooks.yaml")
@@ -101,7 +129,6 @@ data:
 		frontendManifest := manifests.Frontend
 		// AUTH_COOKIE_DOMAIN is the subdomain.baseDomain (e.g., beanbag.khost.dev)
 		// CLOUDFLARE_DNS_DOMAIN is the base domain (e.g., khost.dev)
-		authCookieDomain := os.Getenv("AUTH_COOKIE_DOMAIN")
 		cloudflareDNSDomain := os.Getenv("CLOUDFLARE_DNS_DOMAIN")
 		if cloudflareDNSDomain == "" {
 			cloudflareDNSDomain = "khost.dev"

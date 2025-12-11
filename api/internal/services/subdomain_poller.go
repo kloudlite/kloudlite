@@ -126,13 +126,9 @@ func (sp *SubdomainPoller) WaitUntilReady(ctx context.Context) error {
 func (sp *SubdomainPoller) handleSubdomainDetected(ctx context.Context, subdomain string) error {
 	fqdn := fmt.Sprintf("%s.khost.dev", subdomain)
 
-	// Initialize CA and wildcard certificate
+	// Initialize CA (wildcard certificate secret is now created during installation)
 	if err := sp.caInitializer.ensureCA(ctx, fqdn); err != nil {
 		return fmt.Errorf("failed to ensure CA: %w", err)
-	}
-
-	if err := sp.caInitializer.ensureWildcardCertificate(ctx); err != nil {
-		return fmt.Errorf("failed to ensure wildcard certificate: %w", err)
 	}
 
 	os.Setenv("HOSTED_SUBDOMAIN", fqdn)

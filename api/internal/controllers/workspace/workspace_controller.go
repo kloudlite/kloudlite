@@ -453,7 +453,7 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 	}
 
 	// Note: CA certificate is now mounted from local namespace secret (kloudlite-wildcard-cert-tls)
-	// No cross-namespace RBAC needed for kloudlite-ingress namespace
+	// No cross-namespace RBAC needed for kloudlite namespace
 
 	logger.Info("Successfully created workspace-specific RBAC",
 		zap.String("role", role.Name),

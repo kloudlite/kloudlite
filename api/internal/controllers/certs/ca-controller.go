@@ -49,7 +49,7 @@ func (r *CAReconciler) createCAandCert(check *reconciler.Check[*v1.CertificateAu
 	caCertSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      obj.Name,
-			Namespace: "kloudlite-ingress",
+			Namespace: "kloudlite",
 		},
 	}
 

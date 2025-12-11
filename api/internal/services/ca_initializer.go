@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	kloudliteCAName          = "kloudlite-ca"
-	kloudliteCertificateName = "kloudlite-wildcard-cert"
+	kloudliteCAName = "kloudlite-ca"
 )
 
 // CAInitializer handles initialization of the Kloudlite CA and wildcard certificate
@@ -51,38 +50,5 @@ func (c *CAInitializer) ensureCA(ctx context.Context, subdomain string) error {
 	}
 
 	c.logger.Info("Ensured CertificateAuthority", zap.String("name", kloudliteCAName), zap.Strings("sans", ca.Spec.SANs))
-	return nil
-}
-
-// ensureWildcardCertificate creates or updates the wildcard Certificate
-func (c *CAInitializer) ensureWildcardCertificate(ctx context.Context) error {
-	certificate := &cav1.Certificate{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      kloudliteCertificateName,
-			Namespace: "kloudlite-ingress",
-		},
-	}
-
-	if err := c.k8sClient.Get(ctx, client.ObjectKeyFromObject(certificate), certificate); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			c.logger.Error("[ensureWildcardCertificate] failed", zap.Error(err))
-			return err
-		}
-
-		certificate.Spec.CA = kloudliteCAName
-		if err := c.k8sClient.Create(ctx, certificate); err != nil {
-			return errors.Wrap("failed to create Certificate", err)
-		}
-		c.logger.Info("Created wildcard Certificate",
-			zap.String("name", kloudliteCertificateName),
-			zap.String("namespace", "kloudlite-ingress"),
-		)
-	}
-
-	c.logger.Info("Ensured wildcard Certificate",
-		zap.String("name", kloudliteCertificateName),
-		zap.String("namespace", "kloudlite-ingress"),
-	)
-
 	return nil
 }
