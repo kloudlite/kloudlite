@@ -56,24 +56,16 @@ func EnsureSecurityGroup(ctx context.Context, cfg aws.Config, vpcID, vpcCIDR str
 	sgID := *createResult.GroupId
 
 	// Add ingress rules
-	// Port 80 and 443 from anywhere for web access
+	// Port 443 from anywhere for worker node services/tunnels (port 80 not needed for workers)
 	_, err = ec2Client.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
 		GroupId: aws.String(sgID),
 		IpPermissions: []types.IpPermission{
 			{
 				IpProtocol: aws.String("tcp"),
-				FromPort:   aws.Int32(80),
-				ToPort:     aws.Int32(80),
-				IpRanges: []types.IpRange{
-					{CidrIp: aws.String("0.0.0.0/0")},
-				},
-			},
-			{
-				IpProtocol: aws.String("tcp"),
 				FromPort:   aws.Int32(443),
 				ToPort:     aws.Int32(443),
 				IpRanges: []types.IpRange{
-					{CidrIp: aws.String("0.0.0.0/0")},
+					{CidrIp: aws.String("0.0.0.0/0"), Description: aws.String("HTTPS for worker services")},
 				},
 			},
 			// Internal ports from VPC CIDR
@@ -190,6 +182,119 @@ func CreateALBSecurityGroup(ctx context.Context, cfg aws.Config, vpcID, installa
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to authorize ALB security group ingress: %w", err)
+	}
+
+	return sgID, nil
+}
+
+// EnsureMasterSecurityGroup creates a dedicated security group for the master node.
+// This SG has ports 80/443 open ONLY to the ALB security group (not public internet),
+// plus all the K3s internal ports from VPC CIDR.
+// The master node uses this SG exclusively when ALB is enabled.
+func EnsureMasterSecurityGroup(ctx context.Context, cfg aws.Config, vpcID, vpcCIDR, albSgID, installationKey string) (string, error) {
+	ec2Client := ec2.NewFromConfig(cfg)
+	sgName := fmt.Sprintf("kl-%s-master-sg", installationKey)
+
+	// Check if security group exists
+	descResult, err := ec2Client.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
+		Filters: []types.Filter{
+			{
+				Name:   aws.String("group-name"),
+				Values: []string{sgName},
+			},
+			{
+				Name:   aws.String("vpc-id"),
+				Values: []string{vpcID},
+			},
+		},
+	})
+	if err == nil && len(descResult.SecurityGroups) > 0 {
+		// Security group exists
+		return *descResult.SecurityGroups[0].GroupId, nil
+	}
+
+	// Create security group
+	createResult, err := ec2Client.CreateSecurityGroup(ctx, &ec2.CreateSecurityGroupInput{
+		GroupName:   aws.String(sgName),
+		Description: aws.String("Kloudlite master node - ALB-only HTTP/HTTPS access"),
+		VpcId:       aws.String(vpcID),
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeSecurityGroup,
+				Tags: []types.Tag{
+					{Key: aws.String("Name"), Value: aws.String(sgName)},
+					{Key: aws.String("ManagedBy"), Value: aws.String("kloudlite")},
+					{Key: aws.String("Project"), Value: aws.String("kloudlite")},
+					{Key: aws.String("Purpose"), Value: aws.String("kloudlite-installation-master")},
+					{Key: aws.String("kloudlite.io/installation-id"), Value: aws.String(installationKey)},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create master security group: %w", err)
+	}
+
+	sgID := *createResult.GroupId
+
+	// Add ingress rules
+	// Ports 80/443 ONLY from ALB security group (not public)
+	_, err = ec2Client.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupId: aws.String(sgID),
+		IpPermissions: []types.IpPermission{
+			{
+				IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int32(80),
+				ToPort:     aws.Int32(80),
+				UserIdGroupPairs: []types.UserIdGroupPair{
+					{GroupId: aws.String(albSgID), Description: aws.String("HTTP from ALB only")},
+				},
+			},
+			{
+				IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int32(443),
+				ToPort:     aws.Int32(443),
+				UserIdGroupPairs: []types.UserIdGroupPair{
+					{GroupId: aws.String(albSgID), Description: aws.String("HTTPS from ALB only")},
+				},
+			},
+			// Internal K3s ports from VPC CIDR
+			{
+				IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int32(6443),
+				ToPort:     aws.Int32(6443),
+				IpRanges: []types.IpRange{
+					{CidrIp: aws.String(vpcCIDR), Description: aws.String("K3s API from VPC")},
+				},
+			},
+			{
+				IpProtocol: aws.String("udp"),
+				FromPort:   aws.Int32(8472),
+				ToPort:     aws.Int32(8472),
+				IpRanges: []types.IpRange{
+					{CidrIp: aws.String(vpcCIDR), Description: aws.String("Flannel VXLAN from VPC")},
+				},
+			},
+			{
+				IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int32(10250),
+				ToPort:     aws.Int32(10250),
+				IpRanges: []types.IpRange{
+					{CidrIp: aws.String(vpcCIDR), Description: aws.String("Kubelet API from VPC")},
+				},
+			},
+			{
+				IpProtocol: aws.String("tcp"),
+				FromPort:   aws.Int32(5001),
+				ToPort:     aws.Int32(5001),
+				IpRanges: []types.IpRange{
+					{CidrIp: aws.String(vpcCIDR), Description: aws.String("Internal service from VPC")},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to authorize master security group ingress: %w", err)
 	}
 
 	return sgID, nil
