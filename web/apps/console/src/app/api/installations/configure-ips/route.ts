@@ -184,8 +184,9 @@ export async function POST(request: NextRequest) {
       // Create or update SSH record (A record for IP, CNAME for ALB)
       if (useAlb) {
         // ALB mode: Create CNAME record pointing to ALB DNS
-        console.log(`Creating SSH CNAME record: ${sshDomain} → ${albDnsName}`)
-        sshRecordId = await createCnameRecord(sshDomain, albDnsName, true)
+        // Use proxied=false (DNS-only) since ALB terminates TLS with ACM certificate
+        console.log(`Creating SSH CNAME record: ${sshDomain} → ${albDnsName} (DNS-only, ALB handles TLS)`)
+        sshRecordId = await createCnameRecord(sshDomain, albDnsName, false)
         albCnameCreated = sshRecordId !== null
       } else if (existingRecord) {
         if (existingRecord.ip !== ip && existingRecord.sshRecordId) {

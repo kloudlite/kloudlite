@@ -440,6 +440,34 @@ export async function markDeploymentReady(installationId: string, ready: boolean
 }
 
 /**
+ * Update root DNS info for an installation
+ * Supports both CNAME (for load balancers) and A records (for direct IPs)
+ */
+export async function updateInstallationRootDns(
+  installationId: string,
+  target: string,
+  type: 'cname' | 'a',
+  recordId: string,
+): Promise<void> {
+  const updateData = {
+    root_dns_target: target,
+    root_dns_type: type,
+    root_dns_record_id: recordId,
+    updated_at: new Date().toISOString(),
+  }
+
+  const { error } = await supabase
+    .from('installations')
+    // @ts-expect-error - These columns exist in DB but not in generated types
+    .update(updateData)
+    .eq('id', installationId)
+
+  if (error) {
+    throw new Error(`Failed to update root DNS: ${error.message}`)
+  }
+}
+
+/**
  * IP Record Management
  */
 

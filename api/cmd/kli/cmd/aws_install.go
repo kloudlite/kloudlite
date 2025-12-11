@@ -667,7 +667,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		bold.Println("\nDNS Configuration")
 		bold.Println("-----------------")
 		fmt.Printf("  o Configuring DNS for %s...", fullDomain)
-		_, err = consoleClient.ConfigureALBDNS(ctx, installationKey, secretKey, albDNSName, "main")
+		_, err = consoleClient.ConfigureRootDNS(ctx, installationKey, secretKey, albDNSName, "cname")
 		if err != nil {
 			red.Printf(" x\n")
 			yellow.Printf("    Error: %v\n\n", err)
