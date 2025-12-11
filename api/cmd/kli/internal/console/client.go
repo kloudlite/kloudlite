@@ -206,41 +206,34 @@ func (c *Client) CreateACMValidationRecords(ctx context.Context, installationKey
 	return &result, nil
 }
 
-// ConfigureIPsRequest is the request to configure-ips
-type ConfigureIPsRequest struct {
-	InstallationKey   string   `json:"installationKey"`
-	IP                string   `json:"ip,omitempty"`
-	ALBDNSName        string   `json:"albDnsName,omitempty"`
-	DomainRequestName string   `json:"domainRequestName"`
-	Domains           []string `json:"domains,omitempty"`
-	Deleted           bool     `json:"deleted,omitempty"`
+// ConfigureRootDNSRequest is the request to configure-root-dns
+type ConfigureRootDNSRequest struct {
+	InstallationKey string `json:"installationKey"`
+	Target          string `json:"target"` // DNS name for CNAME or IP for A record
+	Type            string `json:"type"`   // "cname" or "a"
 }
 
-// ConfigureIPsResponse is the response from configure-ips
-type ConfigureIPsResponse struct {
-	Success             bool   `json:"success"`
-	DomainRequestName   string `json:"domainRequestName"`
-	IP                  string `json:"ip,omitempty"`
-	ALBDNSName          string `json:"albDnsName,omitempty"`
-	SSHDomain           string `json:"sshDomain"`
-	Subdomain           string `json:"subdomain"`
-	SSHRecordCreated    bool   `json:"sshRecordCreated"`
-	RouteRecordsCreated int    `json:"routeRecordsCreated"`
-	TotalRecords        int    `json:"totalRecords"`
-	DNSSuccess          bool   `json:"dnsSuccess"`
-	ALBCnameCreated     bool   `json:"albCnameCreated,omitempty"`
-	Error               string `json:"error,omitempty"`
+// ConfigureRootDNSResponse is the response from configure-root-dns
+type ConfigureRootDNSResponse struct {
+	Success  bool   `json:"success"`
+	Domain   string `json:"domain"`
+	Target   string `json:"target"`
+	Type     string `json:"type"`
+	RecordID string `json:"recordId"`
+	Proxied  bool   `json:"proxied"`
+	Error    string `json:"error,omitempty"`
 }
 
-// ConfigureALBDNS registers the ALB DNS name with the console for CNAME creation
-func (c *Client) ConfigureALBDNS(ctx context.Context, installationKey, secretKey, albDNSName, domainRequestName string) (*ConfigureIPsResponse, error) {
-	reqURL := fmt.Sprintf("%s/api/installations/configure-ips", c.baseURL)
+// ConfigureRootDNS registers the root DNS record for an installation
+// For load balancers (ALB): creates CNAME record pointing to load balancer DNS
+// For direct IPs: creates A record pointing to IP address
+func (c *Client) ConfigureRootDNS(ctx context.Context, installationKey, secretKey, target, recordType string) (*ConfigureRootDNSResponse, error) {
+	reqURL := fmt.Sprintf("%s/api/installations/configure-root-dns", c.baseURL)
 
-	reqBody := ConfigureIPsRequest{
-		InstallationKey:   installationKey,
-		ALBDNSName:        albDNSName,
-		DomainRequestName: domainRequestName,
-		Domains:           []string{}, // No additional domains for initial setup
+	reqBody := ConfigureRootDNSRequest{
+		InstallationKey: installationKey,
+		Target:          target,
+		Type:            recordType, // "cname" for load balancers, "a" for IPs
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
@@ -265,7 +258,7 @@ func (c *Client) ConfigureALBDNS(ctx context.Context, installationKey, secretKey
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
-	var result ConfigureIPsResponse
+	var result ConfigureRootDNSResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
