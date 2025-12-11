@@ -18,7 +18,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/kloudlite/kloudlite/api/cmd/tunnel-server/handlers"
 	"github.com/kloudlite/kloudlite/api/cmd/tunnel-server/middleware"
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
@@ -499,7 +498,6 @@ func createK8sClient() (client.Client, *rest.Config, *runtime.Scheme, error) {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(networkingv1.AddToScheme(scheme))
-	utilruntime.Must(domainrequestv1.AddToScheme(scheme))
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(environmentv1.AddToScheme(scheme))
 
