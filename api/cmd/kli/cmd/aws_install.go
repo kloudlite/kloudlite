@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	awsinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/aws"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/console"
 	k8sinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/k8s"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/prompt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -26,18 +29,23 @@ var awsInstallCmd = &cobra.Command{
 
 This command will:
   - Find Ubuntu 24.04 LTS AMD64 AMI in the region
-  - Create IAM role 'kl-{installation-key}-role' with required permissions (including S3)
+  - Create IAM role 'kl-{installation-key}-role' with required permissions (including S3, ELB, ACM)
   - Create S3 bucket 'kl-{installation-key}-backups' for K3s database backups
-  - Create security group 'kl-{installation-key}-sg' with required ports
-  - Create SSH key pair 'kl-{installation-key}-key' and save to ~/.kl/kl-{installation-key}-key.pem
+  - Create security groups for EC2 and ALB
   - Launch t3.medium EC2 instance with 100GB storage
   - Configure instance in default VPC with public IP
-  - Setup automated K3s SQLite backup to S3 every 30 minutes`,
+  - Setup automated K3s SQLite backup to S3 every 30 minutes
+  - Create Application Load Balancer with TLS termination
+  - Request ACM certificate with DNS validation via Cloudflare
+  - Configure custom domain (subdomain.khost.dev)`,
 	Example: `  # Install using default AWS region from config
   kli aws install --installation-key prod
 
-  # Install in a specific region
-  kli aws install --installation-key staging --region us-west-2`,
+  # Install in a specific region with custom subdomain
+  kli aws install --installation-key staging --region us-west-2 --subdomain mycompany
+
+  # Install without ALB (direct EC2 access only)
+  kli aws install --installation-key dev --skip-alb`,
 	Run: runAWSInstall,
 }
 
@@ -45,12 +53,16 @@ var (
 	region                      string
 	installationKey             string
 	enableTerminationProtection bool
+	subdomain                   string
+	skipALB                     bool
 )
 
 func init() {
 	awsInstallCmd.Flags().StringVar(&region, "region", "", "AWS region (uses default from AWS config if not specified)")
 	awsInstallCmd.Flags().StringVar(&installationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	awsInstallCmd.Flags().BoolVar(&enableTerminationProtection, "enable-termination-protection", true, "Enable EC2 termination protection (default: true)")
+	awsInstallCmd.Flags().StringVar(&subdomain, "subdomain", "", "Subdomain for your installation (e.g., mycompany -> mycompany.khost.dev)")
+	awsInstallCmd.Flags().BoolVar(&skipALB, "skip-alb", false, "Skip ALB and TLS setup (direct EC2 access only)")
 	awsInstallCmd.MarkFlagRequired("installation-key")
 }
 
@@ -63,9 +75,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	// Header
 	fmt.Println()
-	cyan.Println("╭─────────────────────────────────────────╮")
-	cyan.Println("│   Kloudlite AWS Installation            │")
-	cyan.Println("╰─────────────────────────────────────────╯")
+	cyan.Println("+-----------------------------------------+")
+	cyan.Println("|   Kloudlite AWS Installation            |")
+	cyan.Println("+-----------------------------------------+")
 	fmt.Println()
 
 	ctx := context.Background()
@@ -76,16 +88,22 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	var createdResources struct {
 		sync.Mutex
-		instanceID string
-		sgID       string
-		iamCreated bool
-		bucketName string
+		instanceID  string
+		sgID        string
+		albSgID     string
+		iamCreated  bool
+		bucketName  string
+		albARN      string
+		tgARN       string
+		certARN     string
+		vpcID       string
+		subdomainOK bool
 	}
 
 	go func() {
 		<-sigChan
 		fmt.Println()
-		yellow.Println("\n⚠ Installation interrupted! Cleaning up resources...")
+		yellow.Println("\nInstallation interrupted! Cleaning up resources...")
 
 		// Load config for cleanup
 		cfg, err := awsinternal.LoadAWSConfig(context.Background(), region)
@@ -100,6 +118,18 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		ec2Client := ec2.NewFromConfig(cfg)
 
 		// Cleanup in reverse order
+		if createdResources.albARN != "" {
+			fmt.Printf("  Deleting ALB...\n")
+			awsinternal.DeleteALB(context.Background(), cfg, installationKey)
+		}
+		if createdResources.tgARN != "" {
+			fmt.Printf("  Deleting Target Group...\n")
+			awsinternal.DeleteTargetGroup(context.Background(), cfg, installationKey)
+		}
+		if createdResources.certARN != "" {
+			fmt.Printf("  Deleting ACM Certificate...\n")
+			awsinternal.DeleteCertificate(context.Background(), cfg, createdResources.certARN)
+		}
 		if createdResources.instanceID != "" {
 			fmt.Printf("  Terminating instance %s...\n", createdResources.instanceID)
 			// Disable termination protection first
@@ -113,6 +143,10 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 			_, _ = ec2Client.TerminateInstances(context.Background(), &ec2.TerminateInstancesInput{
 				InstanceIds: []string{createdResources.instanceID},
 			})
+		}
+		if createdResources.albSgID != "" && createdResources.vpcID != "" {
+			fmt.Printf("  Deleting ALB security group...\n")
+			awsinternal.DeleteSecurityGroupByName(context.Background(), cfg, createdResources.vpcID, fmt.Sprintf("kl-%s-alb-sg", installationKey))
 		}
 		if createdResources.sgID != "" {
 			fmt.Printf("  Deleting security group...\n")
@@ -134,63 +168,199 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	// Configuration
 	bold.Println("Configuration")
-	bold.Println("─────────────")
+	bold.Println("-------------")
 	fmt.Printf("  Installation Key: %s\n", installationKey)
 	fmt.Printf("  Region:          ")
 	cfg, err := awsinternal.LoadAWSConfig(ctx, region)
 	if err != nil {
-		red.Printf("✗\n")
+		red.Printf("x\n")
 		yellow.Printf("  Error: %v\n\n", err)
 		os.Exit(1)
 	}
-	green.Printf("✓ %s\n", cfg.Region)
+	green.Printf("+ %s\n", cfg.Region)
 	fmt.Println()
+
+	// Console API client
+	consoleClient := console.NewClient()
+
+	// Domain Configuration (unless skipping ALB)
+	var reservedSubdomain string
+	var fullDomain string
+
+	if !skipALB {
+		bold.Println("Domain Configuration")
+		bold.Println("--------------------")
+
+		// If subdomain provided via flag, use it; otherwise prompt
+		if subdomain == "" {
+			fmt.Println("  Enter a subdomain for your installation.")
+			fmt.Println("  Your URL will be: <subdomain>.khost.dev")
+			fmt.Println()
+
+			for {
+				input, err := prompt.ReadLine("  Subdomain: ")
+				if err != nil {
+					red.Printf("  Error reading input: %v\n", err)
+					os.Exit(1)
+				}
+				subdomain = strings.TrimSpace(strings.ToLower(input))
+
+				// Client-side validation
+				valid, reason := prompt.ValidateSubdomain(subdomain)
+				if !valid {
+					yellow.Printf("  %s\n", reason)
+					continue
+				}
+
+				// Check availability
+				fmt.Printf("  Checking availability...")
+				checkResp, err := consoleClient.CheckSubdomainAvailability(ctx, subdomain)
+				if err != nil {
+					red.Printf(" x\n")
+					yellow.Printf("    Error: %v\n", err)
+					continue
+				}
+
+				if !checkResp.Available {
+					red.Printf(" x\n")
+					reason := "not available"
+					if checkResp.Reason != "" {
+						reason = checkResp.Reason
+					}
+					yellow.Printf("    Subdomain '%s' is %s. Please try another.\n", subdomain, reason)
+					subdomain = ""
+					continue
+				}
+
+				green.Printf(" + Available!\n")
+				break
+			}
+		} else {
+			// Validate provided subdomain
+			valid, reason := prompt.ValidateSubdomain(subdomain)
+			if !valid {
+				red.Printf("  Invalid subdomain: %s\n", reason)
+				os.Exit(1)
+			}
+
+			fmt.Printf("  Checking availability of '%s'...", subdomain)
+			checkResp, err := consoleClient.CheckSubdomainAvailability(ctx, subdomain)
+			if err != nil {
+				red.Printf(" x\n")
+				yellow.Printf("    Error: %v\n", err)
+				os.Exit(1)
+			}
+
+			if !checkResp.Available {
+				red.Printf(" x\n")
+				reason := "not available"
+				if checkResp.Reason != "" {
+					reason = checkResp.Reason
+				}
+				yellow.Printf("    Subdomain '%s' is %s.\n", subdomain, reason)
+				os.Exit(1)
+			}
+			green.Printf(" + Available!\n")
+		}
+
+		// Reserve the subdomain
+		fmt.Printf("  Reserving subdomain...")
+		reserveResp, err := consoleClient.ReserveSubdomain(ctx, installationKey, subdomain)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		if !reserveResp.Success {
+			red.Printf(" x\n")
+			errMsg := reserveResp.Error
+			if errMsg == "" {
+				errMsg = "unknown error"
+			}
+			yellow.Printf("    Failed to reserve: %s\n", errMsg)
+			os.Exit(1)
+		}
+
+		createdResources.Lock()
+		createdResources.subdomainOK = true
+		createdResources.Unlock()
+
+		reservedSubdomain = reserveResp.Subdomain
+		fullDomain = console.GetFullDomain(reservedSubdomain)
+		green.Printf(" +\n")
+		cyan.Printf("    Your URL: https://%s\n", fullDomain)
+		fmt.Println()
+	}
 
 	// Infrastructure Setup
 	bold.Println("Infrastructure Setup")
-	bold.Println("────────────────────")
+	bold.Println("--------------------")
 
 	// Find Ubuntu AMI
-	fmt.Printf("  ○ Finding Ubuntu AMI...")
+	fmt.Printf("  o Finding Ubuntu AMI...")
 	amiID, err := awsinternal.FindUbuntuAMI(ctx, cfg)
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
 		os.Exit(1)
 	}
-	green.Printf(" ✓\n")
+	green.Printf(" +\n")
 	fmt.Printf("    %s\n", amiID)
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
 
 	// Network Resources
-	fmt.Printf("  ○ Setting up network...")
+	fmt.Printf("  o Setting up network...")
 	vpcID, vpcCIDR, err := awsinternal.GetDefaultVPC(ctx, cfg)
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
 		os.Exit(1)
 	}
+
+	createdResources.Lock()
+	createdResources.vpcID = vpcID
+	createdResources.Unlock()
+
 	subnetID, subnetAZ, err := awsinternal.GetDefaultSubnet(ctx, cfg, vpcID)
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
 		os.Exit(1)
 	}
-	green.Printf(" ✓\n")
+
+	// Get all subnets for ALB (requires 2+ AZs)
+	var allSubnets []string
+	if !skipALB {
+		subnets, err := awsinternal.GetAllDefaultSubnets(ctx, cfg, vpcID)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error getting subnets for ALB: %v\n\n", err)
+			os.Exit(1)
+		}
+		for _, s := range subnets {
+			allSubnets = append(allSubnets, s.ID)
+		}
+	}
+
+	green.Printf(" +\n")
 	fmt.Printf("    VPC: %s (%s)\n", vpcID, vpcCIDR)
 	fmt.Printf("    Subnet: %s (AZ: %s)\n", subnetID, subnetAZ)
+	if !skipALB {
+		fmt.Printf("    ALB Subnets: %d across multiple AZs\n", len(allSubnets))
+	}
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
 
 	// Parallel Resource Creation
-	fmt.Printf("  ○ Creating resources in parallel...\n")
+	fmt.Printf("  o Creating resources in parallel...\n")
 
 	var wg sync.WaitGroup
-	var sgID, bucketName string
-	var sgErr, iamErr, s3Err error
+	var sgID, albSgID, bucketName string
+	var sgErr, albSgErr, iamErr, s3Err error
 	sgName := fmt.Sprintf("kl-%s-sg", installationKey)
 	roleName := fmt.Sprintf("kl-%s-role", installationKey)
 	bucketName = fmt.Sprintf("kl-%s-backups", installationKey)
@@ -212,6 +382,24 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 			fmt.Printf("    [%s] Completed: Security Group\n", time.Now().Format("15:04:05"))
 		}
 	}()
+
+	// ALB Security Group (parallel, only if not skipping ALB)
+	if !skipALB {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Printf("    [%s] Starting: ALB Security Group creation\n", time.Now().Format("15:04:05"))
+			albSgID, albSgErr = awsinternal.CreateALBSecurityGroup(ctx, cfg, vpcID, installationKey)
+			if albSgErr != nil {
+				fmt.Printf("    [%s] Failed: ALB Security Group - %v\n", time.Now().Format("15:04:05"), albSgErr)
+			} else {
+				createdResources.Lock()
+				createdResources.albSgID = albSgID
+				createdResources.Unlock()
+				fmt.Printf("    [%s] Completed: ALB Security Group\n", time.Now().Format("15:04:05"))
+			}
+		}()
+	}
 
 	// IAM Role (parallel)
 	wg.Add(1)
@@ -251,23 +439,31 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	// Check for errors
 	if sgErr != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Security Group Error: %v\n\n", sgErr)
 		os.Exit(1)
 	}
+	if !skipALB && albSgErr != nil {
+		red.Printf(" x\n")
+		yellow.Printf("    ALB Security Group Error: %v\n\n", albSgErr)
+		os.Exit(1)
+	}
 	if iamErr != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    IAM Role Error: %v\n\n", iamErr)
 		os.Exit(1)
 	}
 	if s3Err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    S3 Bucket Error: %v\n\n", s3Err)
 		os.Exit(1)
 	}
 
-	green.Printf(" ✓\n")
+	green.Printf(" +\n")
 	fmt.Printf("    Security Group: %s\n", sgName)
+	if !skipALB {
+		fmt.Printf("    ALB Security Group: kl-%s-alb-sg\n", installationKey)
+	}
 	fmt.Printf("    IAM Role:       %s\n", roleName)
 	fmt.Printf("    S3 Bucket:      %s\n", bucketName)
 
@@ -276,86 +472,246 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 
 	// Instance Profile (depends on IAM role)
 	bold.Println("\nFinalizing IAM Setup")
-	bold.Println("────────────────────")
-	fmt.Printf("  ○ Creating instance profile...")
+	bold.Println("--------------------")
+	fmt.Printf("  o Creating instance profile...")
 	err = awsinternal.EnsureInstanceProfile(ctx, cfg, installationKey)
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
 		os.Exit(1)
 	}
-	green.Printf(" ✓\n")
+	green.Printf(" +\n")
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
 
 	// Verify Installation
 	bold.Println("\nVerifying Installation")
-	bold.Println("──────────────────────")
+	bold.Println("----------------------")
 
-	fmt.Printf("  ○ Verifying installation key with registration API...")
+	fmt.Printf("  o Verifying installation key with registration API...")
 	secretKey, err := k8sinternal.VerifyInstallation(ctx, installationKey)
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
 		os.Exit(1)
 	}
-	green.Printf(" ✓\n")
+	green.Printf(" +\n")
 	fmt.Printf("    Secret key obtained successfully\n")
 
 	// Instance Launch
 	bold.Println("\nInstance Deployment")
-	bold.Println("───────────────────")
+	bold.Println("-------------------")
 
 	// Generate K3s agent token
 	k3sToken, err := awsinternal.GenerateK3sToken()
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error generating K3s token: %v\n\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("  ○ Launching EC2 instance (t3.medium)...")
+	fmt.Printf("  o Launching EC2 instance (t3.medium)...")
 	instanceID, err := awsinternal.LaunchInstance(ctx, cfg, amiID, subnetID, sgID, vpcID, secretKey, bucketName, k3sToken, installationKey, enableTerminationProtection)
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
 		os.Exit(1)
 	}
 	createdResources.Lock()
 	createdResources.instanceID = instanceID
 	createdResources.Unlock()
-	green.Printf(" ✓\n")
+	green.Printf(" +\n")
 	fmt.Printf("    %s\n", instanceID)
 
-	fmt.Printf("  ○ Waiting for instance to be ready...")
+	fmt.Printf("  o Waiting for instance to be ready...")
 	publicIP, privateIP, err := awsinternal.WaitForInstance(ctx, cfg, instanceID)
 	if err != nil {
-		red.Printf(" ✗\n")
+		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
 		os.Exit(1)
 	}
-	green.Printf(" ✓\n")
+	green.Printf(" +\n")
+	fmt.Printf("    Public IP: %s\n", publicIP)
+	fmt.Printf("    Private IP: %s\n", privateIP)
+
+	// ALB and TLS Setup (unless skipping)
+	var albDNSName string
+	if !skipALB {
+		bold.Println("\nLoad Balancer Setup")
+		bold.Println("-------------------")
+
+		// Create Target Group
+		fmt.Printf("  o Creating target group...")
+		tgARN, err := awsinternal.CreateTargetGroup(ctx, cfg, installationKey, vpcID)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		createdResources.Lock()
+		createdResources.tgARN = tgARN
+		createdResources.Unlock()
+		green.Printf(" +\n")
+
+		// Register EC2 instance with target group
+		fmt.Printf("  o Registering instance with target group...")
+		err = awsinternal.RegisterTargets(ctx, cfg, tgARN, instanceID)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+
+		// Create ALB
+		fmt.Printf("  o Creating Application Load Balancer...")
+		albInfo, err := awsinternal.CreateALB(ctx, cfg, installationKey, vpcID, allSubnets, albSgID)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		createdResources.Lock()
+		createdResources.albARN = albInfo.ARN
+		createdResources.Unlock()
+		albDNSName = albInfo.DNSName
+		green.Printf(" +\n")
+		fmt.Printf("    ALB DNS: %s\n", albDNSName)
+
+		// Wait for ALB to become active
+		fmt.Printf("  o Waiting for ALB to become active...")
+		err = awsinternal.WaitForALBActive(ctx, cfg, albInfo.ARN)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+
+		bold.Println("\nTLS Certificate Setup")
+		bold.Println("---------------------")
+
+		// Request ACM certificate
+		fmt.Printf("  o Requesting ACM certificate for %s...", fullDomain)
+		certARN, err := awsinternal.RequestCertificate(ctx, cfg, fullDomain, installationKey)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		createdResources.Lock()
+		createdResources.certARN = certARN
+		createdResources.Unlock()
+		green.Printf(" +\n")
+
+		// Get validation records
+		fmt.Printf("  o Getting DNS validation records...")
+		validationRecords, err := awsinternal.GetValidationRecords(ctx, cfg, certARN)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+		fmt.Printf("    %d validation record(s) to create\n", len(validationRecords))
+
+		// Send validation records to console for Cloudflare DNS creation
+		fmt.Printf("  o Creating DNS validation records in Cloudflare...")
+		var consoleRecords []console.ACMValidationRecord
+		for _, r := range validationRecords {
+			consoleRecords = append(consoleRecords, console.ACMValidationRecord{
+				Name:  r.Name,
+				Value: r.Value,
+			})
+		}
+		_, err = consoleClient.CreateACMValidationRecords(ctx, installationKey, secretKey, consoleRecords)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+
+		// Wait for certificate validation
+		fmt.Printf("  o Waiting for certificate validation (this may take 2-5 minutes)...")
+		err = awsinternal.WaitForValidation(ctx, cfg, certARN, 10*time.Minute)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+
+		// Create HTTPS listener
+		fmt.Printf("  o Creating HTTPS listener...")
+		_, err = awsinternal.CreateHTTPSListener(ctx, cfg, albInfo.ARN, tgARN, certARN)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+
+		// Create HTTP redirect listener
+		fmt.Printf("  o Creating HTTP to HTTPS redirect...")
+		_, err = awsinternal.CreateHTTPRedirectListener(ctx, cfg, albInfo.ARN)
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+
+		// Register ALB DNS with console for CNAME creation
+		bold.Println("\nDNS Configuration")
+		bold.Println("-----------------")
+		fmt.Printf("  o Configuring DNS for %s...", fullDomain)
+		_, err = consoleClient.ConfigureALBDNS(ctx, installationKey, secretKey, albDNSName, "main")
+		if err != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error: %v\n\n", err)
+			os.Exit(1)
+		}
+		green.Printf(" +\n")
+	}
 
 	// Success Summary
 	fmt.Println()
-	green.Println("╭─────────────────────────────────────────╮")
-	green.Println("│   ✓ Installation Complete!             │")
-	green.Println("╰─────────────────────────────────────────╯")
+	green.Println("+-----------------------------------------+")
+	green.Println("|   + Installation Complete!              |")
+	green.Println("+-----------------------------------------+")
 	fmt.Println()
 
 	bold.Println("Instance Details")
-	bold.Println("────────────────")
+	bold.Println("----------------")
 	fmt.Printf("  Instance ID:    %s\n", instanceID)
 	fmt.Printf("  Public IP:      %s\n", publicIP)
 	fmt.Printf("  Private IP:     %s\n", privateIP)
 	fmt.Printf("  Region:         %s\n", cfg.Region)
 	fmt.Printf("  AZ:             %s\n", subnetAZ)
 
+	if !skipALB {
+		fmt.Println()
+		bold.Println("Load Balancer Details")
+		bold.Println("---------------------")
+		fmt.Printf("  ALB DNS:        %s\n", albDNSName)
+		fmt.Printf("  Custom Domain:  https://%s\n", fullDomain)
+		fmt.Printf("  Wildcard:       https://*.%s\n", fullDomain)
+	}
+
 	fmt.Println()
 	bold.Println("Instance Access")
-	bold.Println("───────────────")
+	bold.Println("---------------")
 	fmt.Println("  Via AWS Systems Manager:")
 	cyan.Printf("    aws ssm start-session --target %s --region %s\n", instanceID, cfg.Region)
+
+	if !skipALB {
+		fmt.Println()
+		bold.Println("Web Access")
+		bold.Println("----------")
+		cyan.Printf("    https://%s\n", fullDomain)
+	}
+
 	fmt.Println()
 }

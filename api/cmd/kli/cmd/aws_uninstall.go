@@ -29,8 +29,12 @@ var awsUninstallCmd = &cobra.Command{
 	Long: `Uninstall Kloudlite from AWS by removing all resources created during installation.
 
 This command will:
+  - Delete ALB 'kl-{installation-key}-alb' (if exists)
+  - Delete Target Group 'kl-{installation-key}-tg' (if exists)
+  - Delete ACM Certificate (if exists)
   - Terminate EC2 instance 'kl-{installation-key}-instance'
-  - Delete security group 'kl-{installation-key}-sg'
+  - Delete ALB security group 'kl-{installation-key}-alb-sg'
+  - Delete EC2 security group 'kl-{installation-key}-sg'
   - Delete SSH key pair 'kl-{installation-key}-key' and local key file
   - Delete IAM instance profile 'kl-{installation-key}-role'
   - Delete IAM role 'kl-{installation-key}-role'
@@ -63,9 +67,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 
 	// Header
 	fmt.Println()
-	cyan.Println("╭─────────────────────────────────────────╮")
-	cyan.Println("│   Kloudlite AWS Uninstallation          │")
-	cyan.Println("╰─────────────────────────────────────────╯")
+	cyan.Println("+-----------------------------------------+")
+	cyan.Println("|   Kloudlite AWS Uninstallation          |")
+	cyan.Println("+-----------------------------------------+")
 	fmt.Println()
 
 	ctx := context.Background()
@@ -77,42 +81,99 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	go func() {
 		<-sigChan
 		fmt.Println()
-		yellow.Println("\n⚠ Interrupt received. Uninstallation will continue to completion...")
+		yellow.Println("\nInterrupt received. Uninstallation will continue to completion...")
 		yellow.Println("   (Aborting now may leave orphaned resources)")
 		// Don't exit - let uninstallation complete
 	}()
 
 	// Configuration
 	bold.Println("Configuration")
-	bold.Println("─────────────")
+	bold.Println("-------------")
 	fmt.Printf("  Installation Key: %s\n", uninstallKey)
 	fmt.Printf("  Region:          ")
 	cfg, err := awsinternal.LoadAWSConfig(ctx, uninstallRegion)
 	if err != nil {
-		red.Printf("✗\n")
+		red.Printf("x\n")
 		yellow.Printf("  Error: %v\n\n", err)
 		os.Exit(1)
 	}
-	green.Printf("✓ %s\n", cfg.Region)
+	green.Printf("+ %s\n", cfg.Region)
 	fmt.Println()
 
 	// Resource Cleanup
 	bold.Println("Removing Resources")
-	bold.Println("──────────────────")
+	bold.Println("------------------")
 
-	fmt.Printf("  ○ Cleaning up resources in parallel...\n")
+	fmt.Printf("  o Cleaning up resources...\n")
 
+	startTime := time.Now()
+
+	// Phase 1: Delete ALB and related resources (must be done first)
+	// ALB deletion order: ALB -> wait for deletion -> Target Group -> ACM Certificate
+	var albErr, tgErr, certErr error
+	var albDeleted, tgDeleted, certDeleted bool
+
+	fmt.Printf("    [%s] Starting: ALB cleanup\n", time.Now().Format("15:04:05"))
+	albErr = awsinternal.DeleteALB(ctx, cfg, uninstallKey)
+	if albErr != nil {
+		if !strings.Contains(albErr.Error(), "not found") && !strings.Contains(albErr.Error(), "does not exist") {
+			fmt.Printf("    [%s] Failed: ALB - %v\n", time.Now().Format("15:04:05"), albErr)
+		} else {
+			fmt.Printf("    [%s] ALB not found (skipping)\n", time.Now().Format("15:04:05"))
+			albErr = nil
+		}
+	} else {
+		albDeleted = true
+		fmt.Printf("    [%s] Completed: ALB deleted\n", time.Now().Format("15:04:05"))
+	}
+
+	// Wait a moment for ALB deletion to propagate before deleting target group
+	if albDeleted {
+		time.Sleep(5 * time.Second)
+	}
+
+	fmt.Printf("    [%s] Starting: Target Group cleanup\n", time.Now().Format("15:04:05"))
+	tgErr = awsinternal.DeleteTargetGroup(ctx, cfg, uninstallKey)
+	if tgErr != nil {
+		if !strings.Contains(tgErr.Error(), "not found") && !strings.Contains(tgErr.Error(), "does not exist") {
+			fmt.Printf("    [%s] Failed: Target Group - %v\n", time.Now().Format("15:04:05"), tgErr)
+		} else {
+			fmt.Printf("    [%s] Target Group not found (skipping)\n", time.Now().Format("15:04:05"))
+			tgErr = nil
+		}
+	} else {
+		tgDeleted = true
+		fmt.Printf("    [%s] Completed: Target Group deleted\n", time.Now().Format("15:04:05"))
+	}
+
+	// Delete ACM certificate
+	fmt.Printf("    [%s] Starting: ACM Certificate cleanup\n", time.Now().Format("15:04:05"))
+	certARN, findErr := awsinternal.FindCertificateByInstallationKey(ctx, cfg, uninstallKey)
+	if findErr != nil {
+		fmt.Printf("    [%s] Warning: Could not find ACM certificate - %v\n", time.Now().Format("15:04:05"), findErr)
+	} else if certARN != "" {
+		certErr = awsinternal.DeleteCertificate(ctx, cfg, certARN)
+		if certErr != nil {
+			fmt.Printf("    [%s] Failed: ACM Certificate - %v\n", time.Now().Format("15:04:05"), certErr)
+		} else {
+			certDeleted = true
+			fmt.Printf("    [%s] Completed: ACM Certificate deleted\n", time.Now().Format("15:04:05"))
+		}
+	} else {
+		fmt.Printf("    [%s] ACM Certificate not found (skipping)\n", time.Now().Format("15:04:05"))
+	}
+
+	// Phase 2: Parallel cleanup of remaining resources
 	var wg sync.WaitGroup
 	var instanceCount int
-	var sgErr, keyErr, iamErr, s3Err error
+	var sgErr, albSgErr, keyErr, iamErr, s3Err error
 	sgName := fmt.Sprintf("kl-%s-sg", uninstallKey)
+	albSgName := fmt.Sprintf("kl-%s-alb-sg", uninstallKey)
 	keyName := fmt.Sprintf("kl-%s-key", uninstallKey)
 	roleName := fmt.Sprintf("kl-%s-role", uninstallKey)
 	bucketName := fmt.Sprintf("kl-%s-backups", uninstallKey)
 
-	startTime := time.Now()
-
-	// Terminate instances and delete security group (parallel, SG has retry logic)
+	// Terminate instances and delete security groups (parallel, SGs have retry logic)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -126,13 +187,33 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 		} else {
 			fmt.Printf("    [%s] No instances found\n", time.Now().Format("15:04:05"))
 		}
-		// Delete SG with retry logic to wait for instances
-		fmt.Printf("    [%s] Starting: Security Group deletion (with retries)\n", time.Now().Format("15:04:05"))
+
+		// Delete ALB SG with retry logic
+		fmt.Printf("    [%s] Starting: ALB Security Group deletion (with retries)\n", time.Now().Format("15:04:05"))
+		albSgErr = deleteSecurityGroupByName(ctx, cfg, uninstallKey, albSgName)
+		if albSgErr != nil {
+			if !strings.Contains(albSgErr.Error(), "not found") {
+				fmt.Printf("    [%s] Failed: ALB Security Group - %v\n", time.Now().Format("15:04:05"), albSgErr)
+			} else {
+				fmt.Printf("    [%s] ALB Security Group not found (skipping)\n", time.Now().Format("15:04:05"))
+				albSgErr = nil
+			}
+		} else {
+			fmt.Printf("    [%s] Completed: ALB Security Group\n", time.Now().Format("15:04:05"))
+		}
+
+		// Delete EC2 SG with retry logic to wait for instances
+		fmt.Printf("    [%s] Starting: EC2 Security Group deletion (with retries)\n", time.Now().Format("15:04:05"))
 		sgErr = deleteSecurityGroup(ctx, cfg, uninstallKey)
 		if sgErr != nil {
-			fmt.Printf("    [%s] Failed: Security Group - %v\n", time.Now().Format("15:04:05"), sgErr)
+			if !strings.Contains(sgErr.Error(), "not found") {
+				fmt.Printf("    [%s] Failed: EC2 Security Group - %v\n", time.Now().Format("15:04:05"), sgErr)
+			} else {
+				fmt.Printf("    [%s] EC2 Security Group not found (skipping)\n", time.Now().Format("15:04:05"))
+				sgErr = nil
+			}
 		} else {
-			fmt.Printf("    [%s] Completed: Security Group\n", time.Now().Format("15:04:05"))
+			fmt.Printf("    [%s] Completed: EC2 Security Group\n", time.Now().Format("15:04:05"))
 		}
 	}()
 
@@ -182,13 +263,26 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 
 	wg.Wait()
 	elapsed := time.Since(startTime)
-	fmt.Printf("    Parallel operations completed in %.1fs\n", elapsed.Seconds())
+	fmt.Printf("    Operations completed in %.1fs\n", elapsed.Seconds())
 
 	// Report results
-	if sgErr != nil || keyErr != nil || iamErr != nil || s3Err != nil {
-		red.Printf(" ✗\n")
+	hasErrors := sgErr != nil || albSgErr != nil || keyErr != nil || iamErr != nil || s3Err != nil || albErr != nil || tgErr != nil || certErr != nil
+	if hasErrors {
+		red.Printf(" x\n")
+		if albErr != nil {
+			yellow.Printf("    ALB: %v\n", albErr)
+		}
+		if tgErr != nil {
+			yellow.Printf("    Target Group: %v\n", tgErr)
+		}
+		if certErr != nil {
+			yellow.Printf("    ACM Certificate: %v\n", certErr)
+		}
 		if sgErr != nil {
-			yellow.Printf("    Security Group: %v\n", sgErr)
+			yellow.Printf("    EC2 Security Group: %v\n", sgErr)
+		}
+		if albSgErr != nil {
+			yellow.Printf("    ALB Security Group: %v\n", albSgErr)
 		}
 		if keyErr != nil {
 			yellow.Printf("    SSH Key: %v\n", keyErr)
@@ -200,31 +294,46 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 			yellow.Printf("    S3 Bucket: %v\n", s3Err)
 		}
 	} else {
-		green.Printf(" ✓\n")
+		green.Printf(" +\n")
 	}
 
 	// Summary of what was deleted
+	fmt.Println()
+	bold.Println("Deleted Resources")
+	bold.Println("-----------------")
+	if albDeleted {
+		fmt.Printf("    ALB:              kl-%s-alb\n", uninstallKey)
+	}
+	if tgDeleted {
+		fmt.Printf("    Target Group:     kl-%s-tg\n", uninstallKey)
+	}
+	if certDeleted {
+		fmt.Printf("    ACM Certificate:  (deleted)\n")
+	}
 	if instanceCount > 0 {
-		fmt.Printf("    Instances:      %d terminated\n", instanceCount)
+		fmt.Printf("    Instances:        %d terminated\n", instanceCount)
 	}
 	if sgErr == nil {
-		fmt.Printf("    Security Group: %s\n", sgName)
+		fmt.Printf("    EC2 Security Group: %s\n", sgName)
+	}
+	if albSgErr == nil {
+		fmt.Printf("    ALB Security Group: %s\n", albSgName)
 	}
 	if keyErr == nil {
-		fmt.Printf("    SSH Key:        %s\n", keyName)
+		fmt.Printf("    SSH Key:          %s\n", keyName)
 	}
 	if iamErr == nil {
-		fmt.Printf("    IAM Role:       %s\n", roleName)
+		fmt.Printf("    IAM Role:         %s\n", roleName)
 	}
 	if s3Err == nil {
-		fmt.Printf("    S3 Bucket:      %s\n", bucketName)
+		fmt.Printf("    S3 Bucket:        %s\n", bucketName)
 	}
 
 	// Success Summary
 	fmt.Println()
-	green.Println("╭─────────────────────────────────────────╮")
-	green.Println("│   ✓ Uninstallation Complete!           │")
-	green.Println("╰─────────────────────────────────────────╯")
+	green.Println("+-----------------------------------------+")
+	green.Println("|   + Uninstallation Complete!            |")
+	green.Println("+-----------------------------------------+")
 	fmt.Println()
 	fmt.Printf("All resources for installation key '%s' have been removed.\n", uninstallKey)
 	fmt.Println()
@@ -375,6 +484,61 @@ func deleteSecurityGroup(ctx context.Context, cfg aws.Config, installationKey st
 
 		// Other error or final retry - return error
 		fmt.Printf("    [%s] Security Group deletion failed: %v\n", time.Now().Format("15:04:05"), err)
+		return fmt.Errorf("failed to delete security group: %w", err)
+	}
+
+	return nil
+}
+
+func deleteSecurityGroupByName(ctx context.Context, cfg aws.Config, installationKey, sgName string) error {
+	ec2Client := ec2.NewFromConfig(cfg)
+
+	// Find security group by name and installation ID tag
+	descResult, err := ec2Client.DescribeSecurityGroups(ctx, &ec2.DescribeSecurityGroupsInput{
+		Filters: []types.Filter{
+			{
+				Name:   aws.String("group-name"),
+				Values: []string{sgName},
+			},
+			{
+				Name:   aws.String("tag:kloudlite.io/installation-id"),
+				Values: []string{installationKey},
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to describe security groups: %w", err)
+	}
+
+	if len(descResult.SecurityGroups) == 0 {
+		return fmt.Errorf("security group not found")
+	}
+
+	sgID := *descResult.SecurityGroups[0].GroupId
+
+	// Retry deletion with exponential backoff for dependency violations
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		if i > 0 {
+			waitTime := time.Duration(5+min(i*5, 20)) * time.Second
+			fmt.Printf("    [%s] %s retry %d/%d, waiting %ds...\n",
+				time.Now().Format("15:04:05"), sgName, i, maxRetries-1, int(waitTime.Seconds()))
+			time.Sleep(waitTime)
+		}
+
+		_, err = ec2Client.DeleteSecurityGroup(ctx, &ec2.DeleteSecurityGroupInput{
+			GroupId: aws.String(sgID),
+		})
+		if err == nil {
+			return nil
+		}
+
+		// Check if it's a dependency violation
+		errMsg := err.Error()
+		if i < maxRetries-1 && strings.Contains(errMsg, "DependencyViolation") {
+			continue
+		}
+
 		return fmt.Errorf("failed to delete security group: %w", err)
 	}
 

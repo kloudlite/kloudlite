@@ -112,6 +112,45 @@ func EnsureIAMRole(ctx context.Context, cfg aws.Config, installationKey, bucketN
 				},
 				"Resource": bucketObjectArn,
 			},
+			// Elastic Load Balancing (ALB) permissions
+			{
+				"Effect": "Allow",
+				"Action": []string{
+					"elasticloadbalancing:CreateLoadBalancer",
+					"elasticloadbalancing:DeleteLoadBalancer",
+					"elasticloadbalancing:DescribeLoadBalancers",
+					"elasticloadbalancing:DescribeLoadBalancerAttributes",
+					"elasticloadbalancing:ModifyLoadBalancerAttributes",
+					"elasticloadbalancing:CreateTargetGroup",
+					"elasticloadbalancing:DeleteTargetGroup",
+					"elasticloadbalancing:DescribeTargetGroups",
+					"elasticloadbalancing:ModifyTargetGroup",
+					"elasticloadbalancing:RegisterTargets",
+					"elasticloadbalancing:DeregisterTargets",
+					"elasticloadbalancing:DescribeTargetHealth",
+					"elasticloadbalancing:CreateListener",
+					"elasticloadbalancing:DeleteListener",
+					"elasticloadbalancing:DescribeListeners",
+					"elasticloadbalancing:ModifyListener",
+					"elasticloadbalancing:AddTags",
+					"elasticloadbalancing:RemoveTags",
+					"elasticloadbalancing:DescribeTags",
+				},
+				"Resource": "*",
+			},
+			// ACM (Certificate Manager) permissions
+			{
+				"Effect": "Allow",
+				"Action": []string{
+					"acm:RequestCertificate",
+					"acm:DescribeCertificate",
+					"acm:DeleteCertificate",
+					"acm:ListCertificates",
+					"acm:AddTagsToCertificate",
+					"acm:ListTagsForCertificate",
+				},
+				"Resource": "*",
+			},
 		},
 	}
 	policyJSON, err := json.Marshal(policy)

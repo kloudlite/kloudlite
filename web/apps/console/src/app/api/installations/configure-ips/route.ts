@@ -29,11 +29,14 @@ export const runtime = 'nodejs'
  * Request format:
  * {
  *   "installationKey": "abc-123",
- *   "ip": "1.2.3.4",
+ *   "ip": "1.2.3.4",              // For direct EC2 (A record)
+ *   "albDnsName": "xxx.elb.amazonaws.com",  // For ALB (CNAME record) - NEW
  *   "domainRequestName": "my-domain-request",
  *   "domains": ["api.example.com", "app.example.com"],
  *   "deleted": false  // Set to true to delete all records
  * }
+ *
+ * Note: Either ip or albDnsName must be provided (not both)
  */
 
 // Calculate difference between old and new domain lists
@@ -120,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     const secretKey = authHeader.substring(7)
     const body = await request.json()
-    const { installationKey, ip, domainRequestName, domains, deleted } = body
+    const { installationKey, ip, albDnsName, domainRequestName, domains, deleted } = body
 
     // Validate required fields
     if (!installationKey) {
@@ -130,6 +133,9 @@ export async function POST(request: NextRequest) {
     if (!domainRequestName) {
       return NextResponse.json({ error: 'domainRequestName is required' }, { status: 400 })
     }
+
+    // For ALB setup (root domain only), allow both ip and albDnsName to be absent
+    // This is used when setting up the subdomain CNAME to ALB
 
     // Get installation
     const installation = await getInstallationByKey(installationKey)
@@ -147,9 +153,9 @@ export async function POST(request: NextRequest) {
       return await handleDeletion(installation, domainRequestName)
     }
 
-    // For creation/update, require IP and subdomain
-    if (!ip) {
-      return NextResponse.json({ error: 'IP address is required' }, { status: 400 })
+    // For creation/update, require either IP or ALB DNS name
+    if (!ip && !albDnsName) {
+      return NextResponse.json({ error: 'Either ip or albDnsName is required' }, { status: 400 })
     }
 
     if (!installation.subdomain) {
@@ -159,6 +165,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Determine if we're using ALB mode or direct IP mode
+    const useAlb = !!albDnsName
     const domainList: string[] = domains || []
     const sshDomain = `ssh.${domainRequestName}.${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
 
@@ -170,10 +178,16 @@ export async function POST(request: NextRequest) {
     let sshRecordId: string | null = null
     const routeRecordMap: Record<string, string> = {}
     let dnsSuccess = false
+    let albCnameCreated = false
 
     try {
-      // Create or update SSH A record
-      if (existingRecord) {
+      // Create or update SSH record (A record for IP, CNAME for ALB)
+      if (useAlb) {
+        // ALB mode: Create CNAME record pointing to ALB DNS
+        console.log(`Creating SSH CNAME record: ${sshDomain} → ${albDnsName}`)
+        sshRecordId = await createCnameRecord(sshDomain, albDnsName, true)
+        albCnameCreated = sshRecordId !== null
+      } else if (existingRecord) {
         if (existingRecord.ip !== ip && existingRecord.sshRecordId) {
           // Update existing A record with new IP
           console.log(`Updating SSH A record ${existingRecord.sshRecordId}: ${sshDomain} → ${ip}`)
@@ -267,9 +281,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Store updated state
+    // For ALB mode, we store the ALB DNS name as the "ip" field for backward compatibility
     const newRecord: IPRecord = {
       domainRequestName,
-      ip,
+      ip: useAlb ? albDnsName : ip,
       configuredAt: new Date().toISOString(),
       sshRecordId,
       routeRecordIds: Object.values(routeRecordMap),
@@ -283,13 +298,15 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       success: true,
       domainRequestName,
-      ip,
+      ip: useAlb ? undefined : ip,
+      albDnsName: useAlb ? albDnsName : undefined,
       sshDomain,
       subdomain: `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`,
       sshRecordCreated: sshRecordId !== null,
       routeRecordsCreated: Object.keys(routeRecordMap).length,
       totalRecords,
       dnsSuccess,
+      albCnameCreated: useAlb ? albCnameCreated : undefined,
     })
 
     // Disable caching
