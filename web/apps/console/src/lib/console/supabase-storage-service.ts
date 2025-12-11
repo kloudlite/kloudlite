@@ -624,8 +624,15 @@ export function validateSubdomain(subdomain: string): { valid: boolean; reason?:
   return { valid: true }
 }
 
+// 15 minutes in milliseconds
+export const DOMAIN_RESERVATION_EXPIRY_MS = 15 * 60 * 1000
+
 /**
  * Check if subdomain is available
+ * A subdomain is considered available if:
+ * 1. It doesn't exist in domain_reservations, OR
+ * 2. It exists but the associated installation hasn't completed (deployment_ready=false)
+ *    AND the reservation is older than 15 minutes
  */
 export async function isSubdomainAvailable(subdomain: string): Promise<boolean> {
   // First validate the subdomain format
@@ -634,13 +641,46 @@ export async function isSubdomainAvailable(subdomain: string): Promise<boolean> 
     return false
   }
 
-  const result = await supabase
+  const subdomainLower = subdomain.toLowerCase()
+
+  // Check if subdomain exists in domain_reservations
+  const reservationResult = await supabase
     .from('domain_reservations')
-    .select('subdomain')
-    .eq('subdomain', subdomain.toLowerCase())
+    .select('subdomain, installation_id, reserved_at')
+    .eq('subdomain', subdomainLower)
     .single()
 
-  return !result.data
+  // If no reservation exists, subdomain is available
+  if (!reservationResult.data) {
+    return true
+  }
+
+  // Reservation exists - check if it's expired
+  const reservation = reservationResult.data
+  const reservedAt = new Date(reservation.reserved_at).getTime()
+  const now = Date.now()
+  const isExpired = (now - reservedAt) > DOMAIN_RESERVATION_EXPIRY_MS
+
+  if (!isExpired) {
+    // Reservation is still fresh, subdomain is not available
+    return false
+  }
+
+  // Reservation is expired - check if installation has completed
+  const installationResult = await supabase
+    .from('installations')
+    .select('deployment_ready')
+    .eq('id', reservation.installation_id)
+    .single()
+
+  // If installation doesn't exist or hasn't completed deployment, subdomain is available
+  // (the expired reservation will be cleaned up when someone reserves it)
+  if (!installationResult.data || !installationResult.data.deployment_ready) {
+    return true
+  }
+
+  // Installation is complete, subdomain is not available
+  return false
 }
 
 /**
@@ -722,6 +762,145 @@ export async function getDomainReservation(subdomain: string): Promise<DomainRes
 
   const data = result.data as DomainReservationRow | null
   if (!data) return null
+
+  return {
+    subdomain: data.subdomain,
+    installationId: data.installation_id,
+    userId: data.user_id,
+    reservedAt: data.reserved_at,
+    status: data.status,
+    userEmail: data.user_email,
+    userName: data.user_name,
+  }
+}
+
+/**
+ * Check if an installation's domain reservation has expired and been claimed by someone else
+ * Returns information about the domain status
+ */
+export async function checkInstallationDomainStatus(
+  installationId: string,
+  subdomain: string,
+): Promise<{
+  isExpired: boolean
+  isClaimedByOther: boolean
+  claimedByEmail?: string
+  claimedByName?: string
+}> {
+  const subdomainLower = subdomain.toLowerCase()
+
+  // Get the current reservation for this subdomain
+  const reservationResult = await supabase
+    .from('domain_reservations')
+    .select('subdomain, installation_id, user_id, user_email, user_name, reserved_at')
+    .eq('subdomain', subdomainLower)
+    .single()
+
+  // If no reservation exists, domain was never reserved or got cleaned up
+  if (!reservationResult.data) {
+    return { isExpired: true, isClaimedByOther: false }
+  }
+
+  const reservation = reservationResult.data
+
+  // If the reservation belongs to this installation, it's not claimed by another
+  if (reservation.installation_id === installationId) {
+    // Check if it's expired (>15 min since reservation)
+    const reservedAt = new Date(reservation.reserved_at).getTime()
+    const now = Date.now()
+    const isExpired = now - reservedAt > DOMAIN_RESERVATION_EXPIRY_MS
+
+    return { isExpired, isClaimedByOther: false }
+  }
+
+  // Domain is reserved by a different installation
+  // Check if that installation has completed deployment
+  const installationResult = await supabase
+    .from('installations')
+    .select('deployment_ready')
+    .eq('id', reservation.installation_id)
+    .single()
+
+  // If the other installation has completed deployment, the domain is permanently claimed
+  if (installationResult.data?.deployment_ready) {
+    return {
+      isExpired: true,
+      isClaimedByOther: true,
+      claimedByEmail: reservation.user_email,
+      claimedByName: reservation.user_name,
+    }
+  }
+
+  // The other reservation might be expired too, check its age
+  const reservedAt = new Date(reservation.reserved_at).getTime()
+  const now = Date.now()
+  const otherIsExpired = now - reservedAt > DOMAIN_RESERVATION_EXPIRY_MS
+
+  if (otherIsExpired) {
+    // The other reservation is expired and not deployed, domain is available
+    return { isExpired: true, isClaimedByOther: false }
+  }
+
+  // The other reservation is still active (within 15 min window)
+  return {
+    isExpired: true,
+    isClaimedByOther: true,
+    claimedByEmail: reservation.user_email,
+    claimedByName: reservation.user_name,
+  }
+}
+
+/**
+ * Re-reserve a new subdomain for an existing installation
+ * This is used when the original domain has expired and been claimed by someone else
+ */
+export async function reReserveSubdomain(
+  installationId: string,
+  newSubdomain: string,
+  userId: string,
+  userEmail: string,
+  userName: string,
+): Promise<DomainReservation> {
+  const subdomainLower = newSubdomain.toLowerCase()
+  const reservedAt = new Date().toISOString()
+
+  // First delete the old domain reservation for this installation (if any)
+  await supabase.from('domain_reservations').delete().eq('installation_id', installationId)
+
+  // Insert new domain reservation
+  const result = await supabase
+    .from('domain_reservations')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .insert({
+      subdomain: subdomainLower,
+      installation_id: installationId,
+      user_id: userId,
+      user_email: userEmail.toLowerCase(),
+      user_name: userName,
+      reserved_at: reservedAt,
+      status: 'reserved',
+    })
+    .select()
+    .single()
+
+  if (result.error) {
+    if (result.error.code === '23505') {
+      throw new Error('Subdomain is already reserved')
+    }
+    throw new Error(`Failed to reserve subdomain: ${result.error.message}`)
+  }
+
+  const data = result.data as DomainReservationRow
+
+  // Update installation with new subdomain
+  await supabase
+    .from('installations')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update({
+      subdomain: subdomainLower,
+      reserved_at: reservedAt,
+    })
+    .eq('id', installationId)
 
   return {
     subdomain: data.subdomain,
