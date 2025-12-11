@@ -3,13 +3,12 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
-	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -65,16 +64,8 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	if pod.Status.PodIP != "" && phase == "Running" {
 		accessURLs := make(map[string]string)
 
-		// Try to fetch DomainRequest - it may not exist yet if WorkMachine is still setting up
-		// DomainRequest is cluster-scoped with name "installation-domain"
-		var domainRequest domainrequestv1.DomainRequest
-		domainRequestExists := false
-		if err := r.Get(ctx, fn.NN("", "installation-domain"), &domainRequest); err != nil {
-			logger.Warn("DomainRequest 'installation-domain' not found, using pod IP fallback URLs",
-				zap.Error(err))
-		} else {
-			domainRequestExists = true
-		}
+		// Get subdomain from HOSTED_SUBDOMAIN env var (e.g., "beanbag.khost.dev")
+		subdomain := os.Getenv("HOSTED_SUBDOMAIN")
 
 		// Compute hash for DNS-safe hostnames: hash(owner-workspaceName)
 		wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
@@ -86,10 +77,6 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 
 		// Update subdomain in status if changed
-		subdomain := ""
-		if domainRequestExists && domainRequest.Status.Subdomain != "" {
-			subdomain = domainRequest.Status.Subdomain
-		}
 		if workspace.Status.Subdomain != subdomain {
 			workspace.Status.Subdomain = subdomain
 			needsUpdate = true
@@ -108,8 +95,8 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			needsUpdate = true
 		}
 
-		// Try to use public domain URLs if DomainRequest is available
-		if domainRequestExists && domainRequest.Status.Subdomain != "" {
+		// Try to use public domain URLs if subdomain is available
+		if subdomain != "" {
 			// Get WorkMachine to construct domain URLs
 			wm, err := r.getWorkMachine(ctx, workspace.Spec.WorkmachineName)
 			if err == nil && wm.Status.PublicIP != "" {
@@ -134,7 +121,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 				accessURLs["vscode-tunnel"] = fmt.Sprintf("http://%s:8000", pod.Status.PodIP)
 			}
 		} else {
-			// Fallback to internal pod IPs (DomainRequest not available or no subdomain)
+			// Fallback to internal pod IPs (subdomain not available)
 			accessURLs["ssh"] = fmt.Sprintf("ssh://%s:22", pod.Status.PodIP)
 			accessURLs["code-server"] = fmt.Sprintf("http://%s:8080", pod.Status.PodIP)
 			accessURLs["ttyd"] = fmt.Sprintf("http://%s:7681", pod.Status.PodIP)

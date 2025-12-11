@@ -5,8 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"os"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
@@ -140,19 +140,10 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 		return fmt.Errorf("failed to get target namespace: %w", err)
 	}
 
-	// Fetch the DomainRequest to get subdomain
-	domainRequest := &domainrequestv1.DomainRequest{}
-	if err := r.Get(ctx, fn.NN("", "installation-domain"), domainRequest); err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("DomainRequest not found yet, skipping Ingress creation")
-			return nil
-		}
-		return fmt.Errorf("failed to get DomainRequest: %w", err)
-	}
-
-	// Check if subdomain is available
-	if domainRequest.Status.Subdomain == "" {
-		logger.Info("Subdomain not available yet, skipping Ingress creation")
+	// Get subdomain from HOSTED_SUBDOMAIN env var (e.g., "beanbag.khost.dev")
+	subdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if subdomain == "" {
+		logger.Info("HOSTED_SUBDOMAIN not set yet, skipping Ingress creation")
 		return nil
 	}
 
@@ -178,7 +169,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	for prefix, port := range httpServices {
 		// Use pattern: {prefix}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: claude-a1b2c3d4.eastman.khost.dev
-		host := fmt.Sprintf("%s-%s.%s", prefix, wsHash, domainRequest.Status.Subdomain)
+		host := fmt.Sprintf("%s-%s.%s", prefix, wsHash, subdomain)
 
 		pathType := networkingv1.PathTypePrefix
 		ingressRules = append(ingressRules, networkingv1.IngressRule{
@@ -209,7 +200,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	for _, exposed := range workspace.Spec.Expose {
 		// Use pattern: p{port}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: p3000-a1b2c3d4.eastman.khost.dev
-		host := fmt.Sprintf("p%d-%s.%s", exposed.Port, wsHash, domainRequest.Status.Subdomain)
+		host := fmt.Sprintf("p%d-%s.%s", exposed.Port, wsHash, subdomain)
 
 		pathType := networkingv1.PathTypePrefix
 		ingressRules = append(ingressRules, networkingv1.IngressRule{

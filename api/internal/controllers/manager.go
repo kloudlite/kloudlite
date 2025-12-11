@@ -8,8 +8,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/config"
 	ca "github.com/kloudlite/kloudlite/api/internal/controllers/certs"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest"
-	domainrequestsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
@@ -46,7 +44,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(packagesv1.AddToScheme(scheme))
-	utilruntime.Must(domainrequestsv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
 	// Set controller-runtime logger to use our zap logger
@@ -154,19 +151,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 
 	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
-	}
-
-	// Setup DomainRequest controller
-	domainRequestReconciler := &domainrequest.DomainRequestReconciler{
-		Client:             mgr.GetClient(),
-		Scheme:             mgr.GetScheme(),
-		Logger:             logger.With(zap.String("controller", "domainrequest")),
-		InstallationKey:    installationCfg.InstallationKey,
-		InstallationSecret: installationCfg.InstallationSecret,
-	}
-
-	if err = domainRequestReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create DomainRequest controller: %w", err)
 	}
 
 	logger.Info("Controllers initialized successfully")

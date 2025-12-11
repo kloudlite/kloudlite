@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
@@ -192,25 +192,15 @@ func (s *vpnService) GetTunnelEndpoint(ctx context.Context, username string) (*T
 	}, nil
 }
 
-// getDomainInfo retrieves subdomain and domain from DomainRequest CR
+// getDomainInfo retrieves subdomain and domain from HOSTED_SUBDOMAIN env var
 func (s *vpnService) getDomainInfo(ctx context.Context) (subdomain, domain string, err error) {
-	var domainRequestList domainrequestv1.DomainRequestList
-	if err := s.k8sClient.List(ctx, &domainRequestList); err != nil {
-		return "", "", fmt.Errorf("failed to list DomainRequests: %w", err)
-	}
-
-	if len(domainRequestList.Items) == 0 {
-		return "", "", fmt.Errorf("no DomainRequest found")
-	}
-
-	// Use the first DomainRequest's spec.domainRoutes
-	dr := domainRequestList.Items[0]
-	if len(dr.Spec.DomainRoutes) == 0 {
-		return "", "", fmt.Errorf("DomainRequest has no domain routes")
+	// Get domain from HOSTED_SUBDOMAIN env var (e.g., "beanbag.khost.dev")
+	fullDomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if fullDomain == "" {
+		return "", "", fmt.Errorf("HOSTED_SUBDOMAIN environment variable not set")
 	}
 
 	// Parse the full domain (e.g., "beanbag.khost.dev") into subdomain and domain
-	fullDomain := dr.Spec.DomainRoutes[0].Domain
 	parts := strings.SplitN(fullDomain, ".", 2)
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("invalid domain format: %s (expected subdomain.domain)", fullDomain)

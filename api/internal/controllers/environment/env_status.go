@@ -5,13 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"os"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // generateHash generates an 8-character hash from the input string
@@ -25,14 +24,10 @@ func (r *EnvironmentReconciler) updateHashAndSubdomain(ctx context.Context, envi
 	// Compute hash from envName-owner
 	hash := generateHash(fmt.Sprintf("%s-%s", environment.Spec.Name, environment.Spec.OwnedBy))
 
-	// Get subdomain from installation-domain DomainRequest (shared across all environments)
-	subdomain := ""
-	var domainRequest domainrequestv1.DomainRequest
-	if err := r.Get(ctx, client.ObjectKey{Name: "installation-domain"}, &domainRequest); err != nil {
-		logger.Debug("DomainRequest 'installation-domain' not found, subdomain will be empty",
-			zap.Error(err))
-	} else if domainRequest.Status.Subdomain != "" {
-		subdomain = domainRequest.Status.Subdomain
+	// Get subdomain from HOSTED_SUBDOMAIN env var (shared across all environments)
+	subdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if subdomain == "" {
+		logger.Debug("HOSTED_SUBDOMAIN env var not set, subdomain will be empty")
 	}
 
 	// Only update if values changed

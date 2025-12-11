@@ -5,10 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 
-	domainrequestv1 "github.com/kloudlite/kloudlite/api/internal/controllers/domainrequest/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
-	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -104,14 +103,15 @@ func getDockerConfigSecretName(workspaceName string) string {
 	return fmt.Sprintf("%s-docker-config", workspaceName)
 }
 
-// getImageRegistryHost returns the image registry host from DomainRequest
+// getImageRegistryHost returns the image registry host from HOSTED_SUBDOMAIN env var
 // Returns empty string if registry is not available
 func (r *WorkspaceReconciler) getImageRegistryHost(ctx context.Context) string {
-	domainRequest := &domainrequestv1.DomainRequest{}
-	if err := r.Get(ctx, fn.NN("", "installation-domain"), domainRequest); err == nil && domainRequest.Status.Subdomain != "" {
+	// Get subdomain from HOSTED_SUBDOMAIN env var (e.g., "beanbag.khost.dev")
+	hostedSubdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if hostedSubdomain != "" {
 		// Use HTTPS endpoint via ingress: cr.{subdomain}
 		// subdomain is already full domain like "beanbag.khost.dev"
-		return fmt.Sprintf("cr.%s", domainRequest.Status.Subdomain)
+		return fmt.Sprintf("cr.%s", hostedSubdomain)
 	}
 	// Fallback to internal service if subdomain not available
 	return "image-registry.kloudlite.svc.cluster.local:5000"
