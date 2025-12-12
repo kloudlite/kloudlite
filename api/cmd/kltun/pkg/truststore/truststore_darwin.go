@@ -73,14 +73,17 @@ func (s *macOSStore) IsInstalled(cert *x509.Certificate) bool {
 	return s.isTrusted(cert)
 }
 
-// findKloudliteCAs finds all Kloudlite CA certificates in the system keychain
+// findKloudliteCAsForSubdomain finds Kloudlite CA certificates for a specific subdomain
 // Returns a map of SHA-1 fingerprints to common names
-func (s *macOSStore) findKloudliteCAs() map[string]string {
+// The subdomain parameter should be like "*.bbdude.khost.dev"
+func (s *macOSStore) findKloudliteCAsForSubdomain(subdomain string) map[string]string {
 	result := make(map[string]string)
 
-	// Search for certificates with "Kloudlite CA for" in the common name
-	// This matches the subdomain-based naming: "Kloudlite CA for *.subdomain.khost.dev"
-	cmd := exec.Command("security", "find-certificate", "-c", "Kloudlite CA for",
+	// Build the exact common name to search for
+	// e.g., "Kloudlite CA for *.bbdude.khost.dev"
+	searchName := fmt.Sprintf("Kloudlite CA for %s", subdomain)
+
+	cmd := exec.Command("security", "find-certificate", "-c", searchName,
 		"-a", "-Z", "/Library/Keychains/System.keychain")
 
 	out, err := ExecCommand(cmd)
@@ -88,33 +91,40 @@ func (s *macOSStore) findKloudliteCAs() map[string]string {
 		return result
 	}
 
-	// Parse the output to extract SHA-1 fingerprints and common names
+	// Parse the output to extract SHA-1 fingerprints
 	// Output format includes lines like:
 	// "SHA-1 hash: 8D368D3AF15ED5C07764D229367B4DDE8C56F48E"
-	// "    "labl"<blob>="Kloudlite CA for *.bbdude.khost.dev""
 	lines := strings.Split(string(out), "\n")
-	var currentFingerprint string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "SHA-1 hash:") {
-			currentFingerprint = strings.TrimSpace(strings.TrimPrefix(line, "SHA-1 hash:"))
-			currentFingerprint = strings.ToUpper(currentFingerprint)
-			// Default to generic name, will be updated if we find the label
-			result[currentFingerprint] = "Kloudlite CA for"
+			fingerprint := strings.TrimSpace(strings.TrimPrefix(line, "SHA-1 hash:"))
+			fingerprint = strings.ToUpper(fingerprint)
+			result[fingerprint] = searchName
 		}
 	}
 
 	return result
 }
 
-// removeStaleKloudliteCAs removes any Kloudlite CA certificates that don't match the new certificate
+// removeStaleKloudliteCAs removes any Kloudlite CA certificates for the same subdomain
+// that don't match the new certificate (handles CA rotation)
 func (s *macOSStore) removeStaleKloudliteCAs(newCert *x509.Certificate) error {
+	// Extract subdomain from the certificate's CommonName
+	// Expected format: "Kloudlite CA for *.bbdude.khost.dev"
+	const prefix = "Kloudlite CA for "
+	if !strings.HasPrefix(newCert.Subject.CommonName, prefix) {
+		// Not a Kloudlite CA certificate, nothing to clean up
+		return nil
+	}
+	subdomain := strings.TrimPrefix(newCert.Subject.CommonName, prefix)
+
 	// Calculate SHA-1 hash of the new certificate
 	newHash := sha1.Sum(newCert.Raw)
 	newCertHash := strings.ToUpper(hex.EncodeToString(newHash[:]))
 
-	// Find all existing Kloudlite CAs
-	existingCAs := s.findKloudliteCAs()
+	// Find existing Kloudlite CAs for the same subdomain only
+	existingCAs := s.findKloudliteCAsForSubdomain(subdomain)
 
 	for fingerprint, commonName := range existingCAs {
 		if fingerprint == newCertHash {
