@@ -63,12 +63,81 @@ detect_platform() {
     echo "\${os}-\${arch}"
 }
 
+# Check if kli binary is up to date using MD5 checksum
+check_kli_version() {
+    local platform=\$1
+    local md5_url="\${DOWNLOAD_BASE_URL}/\${platform}.md5"
+    local expected_md5=""
+
+    # Download expected MD5 checksum
+    if command -v curl &> /dev/null; then
+        expected_md5=\$(curl -fsSL "\${md5_url}" 2>/dev/null | awk '{print \$1}')
+    elif command -v wget &> /dev/null; then
+        expected_md5=\$(wget -qO- "\${md5_url}" 2>/dev/null | awk '{print \$1}')
+    fi
+
+    if [ -z "\$expected_md5" ]; then
+        echo "unknown"
+        return
+    fi
+
+    # Check if kli exists in current directory or PATH
+    local kli_path=""
+    if [ -f "./kli" ]; then
+        kli_path="./kli"
+    elif command -v kli &> /dev/null; then
+        kli_path=\$(command -v kli)
+    fi
+
+    if [ -z "\$kli_path" ]; then
+        echo "not_found"
+        return
+    fi
+
+    # Calculate actual MD5
+    local actual_md5=""
+    if command -v md5sum &> /dev/null; then
+        actual_md5=\$(md5sum "\$kli_path" | awk '{print \$1}')
+    elif command -v md5 &> /dev/null; then
+        actual_md5=\$(md5 -q "\$kli_path")
+    else
+        echo "unknown"
+        return
+    fi
+
+    if [ "\$expected_md5" = "\$actual_md5" ]; then
+        echo "up_to_date:\$kli_path"
+    else
+        echo "outdated:\$kli_path"
+    fi
+}
+
 # Download kli binary
 download_kli() {
-    local platform=$1
+    local platform=\$1
     local download_url="\${DOWNLOAD_BASE_URL}/\${platform}"
 
-    echo -e "\${BLUE}Downloading kli for \${platform}...\${NC}"
+    # Check if we already have an up-to-date version
+    local version_status=\$(check_kli_version "\$platform")
+    local status=\$(echo "\$version_status" | cut -d: -f1)
+    local kli_path=\$(echo "\$version_status" | cut -d: -f2)
+
+    case "\$status" in
+        "up_to_date")
+            echo -e "\${GREEN}✓ kli is already up to date at \${kli_path}\${NC}"
+            if [ "\$kli_path" != "./kli" ]; then
+                cp "\$kli_path" ./kli
+                chmod +x ./kli
+            fi
+            return
+            ;;
+        "outdated")
+            echo -e "\${YELLOW}Existing kli at \${kli_path} is outdated, downloading latest...\${NC}"
+            ;;
+        *)
+            echo -e "\${BLUE}Downloading kli for \${platform}...\${NC}"
+            ;;
+    esac
 
     if command -v curl &> /dev/null; then
         curl -fsSL "\${download_url}" -o kli
