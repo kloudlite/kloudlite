@@ -78,27 +78,29 @@ func (s *macOSStore) IsInstalled(cert *x509.Certificate) bool {
 func (s *macOSStore) findKloudliteCAs() map[string]string {
 	result := make(map[string]string)
 
-	// Search for certificates with "Kloudlite" in the common name
-	// This covers both "Kloudlite Root CA" and "Kloudlite CA"
-	for _, searchTerm := range []string{"Kloudlite Root CA", "Kloudlite CA"} {
-		cmd := exec.Command("security", "find-certificate", "-c", searchTerm,
-			"-a", "-Z", "/Library/Keychains/System.keychain")
+	// Search for certificates with "Kloudlite CA for" in the common name
+	// This matches the subdomain-based naming: "Kloudlite CA for *.subdomain.khost.dev"
+	cmd := exec.Command("security", "find-certificate", "-c", "Kloudlite CA for",
+		"-a", "-Z", "/Library/Keychains/System.keychain")
 
-		out, err := ExecCommand(cmd)
-		if err != nil {
-			continue
-		}
+	out, err := ExecCommand(cmd)
+	if err != nil {
+		return result
+	}
 
-		// Parse the output to extract SHA-1 fingerprints
-		// Output format includes lines like: "SHA-1 hash: 8D368D3AF15ED5C07764D229367B4DDE8C56F48E"
-		lines := strings.Split(string(out), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if strings.HasPrefix(line, "SHA-1 hash:") {
-				fingerprint := strings.TrimSpace(strings.TrimPrefix(line, "SHA-1 hash:"))
-				fingerprint = strings.ToUpper(fingerprint)
-				result[fingerprint] = searchTerm
-			}
+	// Parse the output to extract SHA-1 fingerprints and common names
+	// Output format includes lines like:
+	// "SHA-1 hash: 8D368D3AF15ED5C07764D229367B4DDE8C56F48E"
+	// "    "labl"<blob>="Kloudlite CA for *.bbdude.khost.dev""
+	lines := strings.Split(string(out), "\n")
+	var currentFingerprint string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "SHA-1 hash:") {
+			currentFingerprint = strings.TrimSpace(strings.TrimPrefix(line, "SHA-1 hash:"))
+			currentFingerprint = strings.ToUpper(currentFingerprint)
+			// Default to generic name, will be updated if we find the label
+			result[currentFingerprint] = "Kloudlite CA for"
 		}
 	}
 
