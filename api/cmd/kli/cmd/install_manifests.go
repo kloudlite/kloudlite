@@ -46,15 +46,28 @@ var installManifestsCmd = &cobra.Command{
 		fmt.Printf("✓ Written API Server to %s\n", apiServerPath)
 
 		// Generate webhook certificates
-		fmt.Println("Generating webhook TLS certificates...")
-		webhookCerts, err := certs.GenerateWebhookCertificates("api-server", "kloudlite")
-		if err != nil {
-			return fmt.Errorf("failed to generate webhook certificates: %w", err)
-		}
-		fmt.Println("✓ Generated webhook TLS certificates")
+		webhookSecretPath := filepath.Join(manifestsDir, "webhook-tls-secret.yaml")
+		webhooksPath := filepath.Join(manifestsDir, "webhooks.yaml")
 
-		// Create webhook TLS secret manifest (base64 encode the PEM data)
-		webhookSecretManifest := fmt.Sprintf(`apiVersion: v1
+		var webhookCerts *certs.WebhookCertificates
+		// Check if webhook TLS secret already exists - don't regenerate
+		if _, err := os.Stat(webhookSecretPath); err == nil {
+			fmt.Printf("✓ Webhook TLS secret already exists at %s (skipping regeneration)\n", webhookSecretPath)
+			// We still need the CA bundle for webhooks.yaml, but we can skip regeneration
+			// The webhooks.yaml should also exist if the secret exists
+			if _, err := os.Stat(webhooksPath); err == nil {
+				fmt.Printf("✓ Webhooks manifest already exists at %s (skipping regeneration)\n", webhooksPath)
+			}
+		} else {
+			fmt.Println("Generating webhook TLS certificates...")
+			webhookCerts, err = certs.GenerateWebhookCertificates("api-server", "kloudlite")
+			if err != nil {
+				return fmt.Errorf("failed to generate webhook certificates: %w", err)
+			}
+			fmt.Println("✓ Generated webhook TLS certificates")
+
+			// Create webhook TLS secret manifest (base64 encode the PEM data)
+			webhookSecretManifest := fmt.Sprintf(`apiVersion: v1
 kind: Secret
 metadata:
   name: webhook-server-cert
@@ -65,28 +78,34 @@ data:
   tls.key: %s
   ca.crt: %s
 `,
-			base64.StdEncoding.EncodeToString(webhookCerts.ServerCert),
-			base64.StdEncoding.EncodeToString(webhookCerts.ServerKey),
-			base64.StdEncoding.EncodeToString(webhookCerts.CACert))
+				base64.StdEncoding.EncodeToString(webhookCerts.ServerCert),
+				base64.StdEncoding.EncodeToString(webhookCerts.ServerKey),
+				base64.StdEncoding.EncodeToString(webhookCerts.CACert))
 
-		webhookSecretPath := filepath.Join(manifestsDir, "webhook-tls-secret.yaml")
-		if err := os.WriteFile(webhookSecretPath, []byte(webhookSecretManifest), 0644); err != nil {
-			return fmt.Errorf("failed to write webhook TLS secret: %w", err)
+			if err := os.WriteFile(webhookSecretPath, []byte(webhookSecretManifest), 0644); err != nil {
+				return fmt.Errorf("failed to write webhook TLS secret: %w", err)
+			}
+			fmt.Printf("✓ Written webhook TLS secret to %s\n", webhookSecretPath)
 		}
-		fmt.Printf("✓ Written webhook TLS secret to %s\n", webhookSecretPath)
 
 		// Generate wildcard TLS certificate for ingress proxy
 		authCookieDomain := os.Getenv("AUTH_COOKIE_DOMAIN")
 		if authCookieDomain != "" {
-			fmt.Println("Generating wildcard TLS certificate...")
-			wildcardCerts, err := certs.GenerateWildcardCertificates(authCookieDomain)
-			if err != nil {
-				return fmt.Errorf("failed to generate wildcard certificates: %w", err)
-			}
-			fmt.Println("✓ Generated wildcard TLS certificate")
+			wildcardSecretPath := filepath.Join(manifestsDir, "wildcard-tls-secret.yaml")
 
-			// Create wildcard TLS secret manifest
-			wildcardSecretManifest := fmt.Sprintf(`apiVersion: v1
+			// Check if wildcard TLS secret already exists - don't regenerate to avoid CA mismatch
+			if _, err := os.Stat(wildcardSecretPath); err == nil {
+				fmt.Printf("✓ Wildcard TLS secret already exists at %s (skipping regeneration)\n", wildcardSecretPath)
+			} else {
+				fmt.Println("Generating wildcard TLS certificate...")
+				wildcardCerts, err := certs.GenerateWildcardCertificates(authCookieDomain)
+				if err != nil {
+					return fmt.Errorf("failed to generate wildcard certificates: %w", err)
+				}
+				fmt.Println("✓ Generated wildcard TLS certificate")
+
+				// Create wildcard TLS secret manifest
+				wildcardSecretManifest := fmt.Sprintf(`apiVersion: v1
 kind: Secret
 metadata:
   name: kloudlite-wildcard-cert-tls
@@ -97,26 +116,27 @@ data:
   tls.key: %s
   ca.crt: %s
 `,
-				base64.StdEncoding.EncodeToString(wildcardCerts.Cert),
-				base64.StdEncoding.EncodeToString(wildcardCerts.Key),
-				base64.StdEncoding.EncodeToString(wildcardCerts.CACert))
+					base64.StdEncoding.EncodeToString(wildcardCerts.Cert),
+					base64.StdEncoding.EncodeToString(wildcardCerts.Key),
+					base64.StdEncoding.EncodeToString(wildcardCerts.CACert))
 
-			wildcardSecretPath := filepath.Join(manifestsDir, "wildcard-tls-secret.yaml")
-			if err := os.WriteFile(wildcardSecretPath, []byte(wildcardSecretManifest), 0644); err != nil {
-				return fmt.Errorf("failed to write wildcard TLS secret: %w", err)
+				if err := os.WriteFile(wildcardSecretPath, []byte(wildcardSecretManifest), 0644); err != nil {
+					return fmt.Errorf("failed to write wildcard TLS secret: %w", err)
+				}
+				fmt.Printf("✓ Written wildcard TLS secret to %s\n", wildcardSecretPath)
 			}
-			fmt.Printf("✓ Written wildcard TLS secret to %s\n", wildcardSecretPath)
 		} else {
 			fmt.Println("⚠ Skipping wildcard TLS certificate (AUTH_COOKIE_DOMAIN not set)")
 		}
 
-		// Update webhooks manifest with CA bundle
-		webhooksManifest := strings.ReplaceAll(manifests.Webhooks, `caBundle: ""`, fmt.Sprintf(`caBundle: %s`, webhookCerts.CABundle))
-		webhooksPath := filepath.Join(manifestsDir, "webhooks.yaml")
-		if err := os.WriteFile(webhooksPath, []byte(webhooksManifest), 0644); err != nil {
-			return fmt.Errorf("failed to write Webhooks: %w", err)
+		// Update webhooks manifest with CA bundle (only if we generated new certs)
+		if webhookCerts != nil {
+			webhooksManifest := strings.ReplaceAll(manifests.Webhooks, `caBundle: ""`, fmt.Sprintf(`caBundle: %s`, webhookCerts.CABundle))
+			if err := os.WriteFile(webhooksPath, []byte(webhooksManifest), 0644); err != nil {
+				return fmt.Errorf("failed to write Webhooks: %w", err)
+			}
+			fmt.Printf("✓ Written Webhooks to %s\n", webhooksPath)
 		}
-		fmt.Printf("✓ Written Webhooks to %s\n", webhooksPath)
 
 		// Write Frontend (substitute environment variables)
 		frontendManifest := manifests.Frontend

@@ -139,10 +139,12 @@ func GenerateWildcardCertificates(domain string) (*WildcardCertificates, error) 
 	}
 
 	// Create CA certificate template
+	// CommonName includes the domain so kltun can identify and remove stale CAs
+	// when the server regenerates certificates (e.g., "Kloudlite CA for *.maska.khost.dev")
 	caTemplate := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			CommonName:   "Kloudlite CA",
+			CommonName:   fmt.Sprintf("Kloudlite CA for *.%s", domain),
 			Organization: []string{"Kloudlite"},
 		},
 		NotBefore:             time.Now(),
