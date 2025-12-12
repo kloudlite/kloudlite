@@ -447,7 +447,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Printf("  o Launching EC2 instance (t3.medium)...")
-	instanceID, err := awsinternal.LaunchInstance(ctx, cfg, amiID, subnetID, instanceSgID, vpcID, secretKey, bucketName, k3sToken, installationKey, enableTerminationProtection, fullDomain)
+	instanceID, err := awsinternal.LaunchInstance(ctx, cfg, amiID, subnetID, instanceSgID, sgID, vpcID, secretKey, bucketName, k3sToken, installationKey, enableTerminationProtection, fullDomain)
 	if err != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
