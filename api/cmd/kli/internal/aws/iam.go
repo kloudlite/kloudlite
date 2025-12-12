@@ -185,11 +185,31 @@ func EnsureInstanceProfile(ctx context.Context, cfg aws.Config, installationKey 
 	roleName := fmt.Sprintf("kl-%s-role", installationKey)
 
 	// Check if instance profile exists
-	_, err := iamClient.GetInstanceProfile(ctx, &iam.GetInstanceProfileInput{
+	getResult, err := iamClient.GetInstanceProfile(ctx, &iam.GetInstanceProfileInput{
 		InstanceProfileName: aws.String(profileName),
 	})
 	if err == nil {
-		// Instance profile exists
+		// Instance profile exists, check if role is attached
+		hasRole := false
+		for _, role := range getResult.InstanceProfile.Roles {
+			if aws.ToString(role.RoleName) == roleName {
+				hasRole = true
+				break
+			}
+		}
+		if hasRole {
+			return nil
+		}
+		// Role not attached, add it
+		_, err = iamClient.AddRoleToInstanceProfile(ctx, &iam.AddRoleToInstanceProfileInput{
+			InstanceProfileName: aws.String(profileName),
+			RoleName:            aws.String(roleName),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to add role to existing instance profile: %w", err)
+		}
+		// Wait for IAM to propagate
+		time.Sleep(15 * time.Second)
 		return nil
 	}
 
@@ -217,8 +237,8 @@ func EnsureInstanceProfile(ctx context.Context, cfg aws.Config, installationKey 
 		return fmt.Errorf("failed to add role to instance profile: %w", err)
 	}
 
-	// Wait a bit for IAM to propagate
-	time.Sleep(10 * time.Second)
+	// Wait for IAM to propagate (AWS recommends waiting for newly created IAM resources)
+	time.Sleep(15 * time.Second)
 
 	return nil
 }
