@@ -31,13 +31,6 @@ var installManifestsCmd = &cobra.Command{
 		}
 		fmt.Printf("✓ Written CRDs to %s\n", crdsPath)
 
-		// Write kloudlite-hostmanager namespace
-		hostmanagerNsPath := filepath.Join(manifestsDir, "kloudlite-hostmanager-namespace.yaml")
-		if err := os.WriteFile(hostmanagerNsPath, []byte(manifests.KloudliteHostmanagerNamespace), 0644); err != nil {
-			return fmt.Errorf("failed to write kloudlite-hostmanager namespace: %w", err)
-		}
-		fmt.Printf("✓ Written kloudlite-hostmanager namespace to %s\n", hostmanagerNsPath)
-
 		// Write RBAC
 		rbacPath := filepath.Join(manifestsDir, "api-server-rbac.yaml")
 		if err := os.WriteFile(rbacPath, []byte(manifests.APIServerRBAC), 0644); err != nil {

@@ -67,7 +67,6 @@ type WorkMachineReconciler struct {
 
 const (
 	WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
-	hostManagerNamespace     = "kloudlite-hostmanager"
 
 	// Node labels for caching IP addresses
 	NodeLabelPublicIP  = "kloudlite.io/public-ip"
@@ -695,12 +694,7 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return nil
 			}
 
-			// Only watch pods in the host-manager namespace
-			if pod.Namespace != hostManagerNamespace {
-				return nil
-			}
-
-			// Get WorkMachine name from pod label
+			// Get WorkMachine name from pod label (host-manager pods are labeled with workmachine name)
 			workmachineName, exists := pod.Labels["kloudlite.io/workmachine"]
 			if !exists {
 				return nil

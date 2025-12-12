@@ -569,7 +569,7 @@ func (h *WorkMachineHandlers) GetWorkMachineMetricsStream(c *gin.Context) {
 		reqCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
 
-		metricsURL := "http://hm-" + workMachineName + ".kloudlite-hostmanager:8081/metrics/gpu"
+		metricsURL := "http://host-manager." + wm.Spec.TargetNamespace + ":8081/metrics/gpu"
 		req, err := http.NewRequestWithContext(reqCtx, "GET", metricsURL, nil)
 		if err != nil {
 			return nil

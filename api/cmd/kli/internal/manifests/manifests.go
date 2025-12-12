@@ -20,9 +20,6 @@ var Frontend string
 //go:embed aws-machine-types.yaml
 var AWSMachineTypes string
 
-//go:embed kloudlite-hostmanager-namespace.yaml
-var KloudliteHostmanagerNamespace string
-
 //go:embed image-registry.yaml
 var ImageRegistry string
 
