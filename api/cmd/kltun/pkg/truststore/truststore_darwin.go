@@ -117,8 +117,12 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 			"-k", "/Library/Keychains/System.keychain",
 			certPath)
 		if out, err := ExecCommand(cmd); err != nil {
-			// Ignore "already exists" errors
-			if !strings.Contains(string(out), "already exists") && !strings.Contains(err.Error(), "already exists") {
+			// Ignore "already exists" / "already in" errors
+			outStr := string(out)
+			if !strings.Contains(outStr, "already exists") &&
+				!strings.Contains(outStr, "already in") &&
+				!strings.Contains(err.Error(), "already exists") &&
+				!strings.Contains(err.Error(), "already in") {
 				return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
 			}
 		}
@@ -137,7 +141,11 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 		"-k", "/Library/Keychains/System.keychain",
 		certPath)
 	if out, err := ExecCommand(cmd); err != nil {
-		if !strings.Contains(string(out), "already exists") && !strings.Contains(err.Error(), "already exists") {
+		outStr := string(out)
+		if !strings.Contains(outStr, "already exists") &&
+			!strings.Contains(outStr, "already in") &&
+			!strings.Contains(err.Error(), "already exists") &&
+			!strings.Contains(err.Error(), "already in") {
 			return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
 		}
 	}
