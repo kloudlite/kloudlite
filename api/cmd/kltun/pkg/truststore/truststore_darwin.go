@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"strings"
 
 	"howett.net/plist"
@@ -41,15 +42,40 @@ func (s *macOSStore) IsInstalled(cert *x509.Certificate) bool {
 }
 
 func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
-	// Step 1: Add certificate to system keychain
-	cmd := CommandWithSudo("security", "add-trusted-cert", "-d",
-		"-k", "/Library/Keychains/System.keychain", certPath)
+	// The daemon runs as root, so we can add the certificate as a trusted root.
+	// Use -r trustRoot to set it as a trusted root certificate.
+	// Avoid -d (admin trust settings domain) which requires GUI authorization.
 
-	if out, err := ExecCommand(cmd); err != nil {
-		return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
+	// Check if already running as root (daemon case)
+	if u, err := user.Current(); err == nil && u.Uid == "0" {
+		// Running as root - use add-trusted-cert with -r trustRoot
+		// This adds the cert and sets trust settings in one command
+		cmd := exec.Command("security", "add-trusted-cert",
+			"-r", "trustRoot",
+			"-k", "/Library/Keychains/System.keychain",
+			certPath)
+		if out, err := ExecCommand(cmd); err != nil {
+			return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
+		}
+		return nil
 	}
 
-	// Step 2: Export trust settings
+	// Not running as root - this shouldn't happen if called from daemon
+	// Fall back to using sudo
+	cmd := CommandWithSudo("security", "add-trusted-cert",
+		"-r", "trustRoot",
+		"-k", "/Library/Keychains/System.keychain",
+		certPath)
+	if out, err := ExecCommand(cmd); err != nil {
+		return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
+	}
+
+	return nil
+}
+
+// setTrustSettingsAsRoot sets trust settings when running as root
+// This uses the plist method which works without GUI interaction
+func (s *macOSStore) setTrustSettingsAsRoot(certPath string, cert *x509.Certificate) error {
 	tmpPlist, err := os.CreateTemp("", "kloudlite-trust-*.plist")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
@@ -58,18 +84,67 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 	tmpPlist.Close()
 	defer os.Remove(tmpPath)
 
-	cmd = CommandWithSudo("security", "trust-settings-export", "-d", tmpPath)
+	// Export current trust settings
+	cmd := exec.Command("security", "trust-settings-export", tmpPath)
 	if out, err := ExecCommand(cmd); err != nil {
-		return fmt.Errorf("failed to export trust settings: %w\nOutput: %s", err, out)
+		// If no trust settings exist yet, create empty plist
+		log.Printf("No existing trust settings, will create new: %v", err)
+		emptyPlist := map[string]interface{}{
+			"trustVersion": uint64(1),
+			"trustList":    make(map[string]interface{}),
+		}
+		data, _ := plist.MarshalIndent(emptyPlist, plist.XMLFormat, "\t")
+		if err := os.WriteFile(tmpPath, data, 0600); err != nil {
+			return fmt.Errorf("failed to create empty trust settings: %w", err)
+		}
+	} else {
+		_ = out
 	}
 
-	// Step 3: Modify trust settings
+	// Modify trust settings to trust our CA
 	if err := s.modifyTrustSettings(tmpPath, cert); err != nil {
 		return fmt.Errorf("failed to modify trust settings: %w", err)
 	}
 
-	// Step 4: Import modified trust settings
-	cmd = CommandWithSudo("security", "trust-settings-import", "-d", tmpPath)
+	// Import modified trust settings
+	cmd = exec.Command("security", "trust-settings-import", tmpPath)
+	if out, err := ExecCommand(cmd); err != nil {
+		return fmt.Errorf("failed to import trust settings: %w\nOutput: %s", err, out)
+	}
+
+	return nil
+}
+
+// setTrustSettingsWithSudo sets trust settings using sudo
+func (s *macOSStore) setTrustSettingsWithSudo(certPath string, cert *x509.Certificate) error {
+	tmpPlist, err := os.CreateTemp("", "kloudlite-trust-*.plist")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmpPlist.Name()
+	tmpPlist.Close()
+	defer os.Remove(tmpPath)
+
+	cmd := CommandWithSudo("security", "trust-settings-export", tmpPath)
+	if out, err := ExecCommand(cmd); err != nil {
+		log.Printf("No existing trust settings, will create new: %v", err)
+		emptyPlist := map[string]interface{}{
+			"trustVersion": uint64(1),
+			"trustList":    make(map[string]interface{}),
+		}
+		data, _ := plist.MarshalIndent(emptyPlist, plist.XMLFormat, "\t")
+		if err := os.WriteFile(tmpPath, data, 0600); err != nil {
+			return fmt.Errorf("failed to create empty trust settings: %w", err)
+		}
+	} else {
+		_ = out
+	}
+
+	if err := s.modifyTrustSettings(tmpPath, cert); err != nil {
+		return fmt.Errorf("failed to modify trust settings: %w", err)
+	}
+
+	cmd = CommandWithSudo("security", "trust-settings-import", tmpPath)
 	if out, err := ExecCommand(cmd); err != nil {
 		return fmt.Errorf("failed to import trust settings: %w\nOutput: %s", err, out)
 	}
@@ -79,27 +154,22 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 
 func (s *macOSStore) Uninstall(cert *x509.Certificate) error {
 	// Remove the certificate from system keychain
-	// We need to find the certificate file first
-	cmd := exec.Command("security", "find-certificate", "-c", cert.Subject.CommonName,
-		"-p", "/Library/Keychains/System.keychain")
+	// We need to find and delete the certificate by its common name
 
-	out, err := ExecCommand(cmd)
-	if err != nil {
-		return fmt.Errorf("failed to find certificate: %w", err)
+	// Check if already running as root (daemon case)
+	if u, err := user.Current(); err == nil && u.Uid == "0" {
+		// Delete directly from system keychain - no -d flag needed when root
+		cmd := exec.Command("security", "delete-certificate", "-c", cert.Subject.CommonName,
+			"-t", "/Library/Keychains/System.keychain")
+		if out, err := ExecCommand(cmd); err != nil {
+			return fmt.Errorf("failed to remove certificate: %w\nOutput: %s", err, out)
+		}
+		return nil
 	}
 
-	// Create a temporary file with the certificate
-	tmpCert, err := os.CreateTemp("", "kloudlite-cert-*.pem")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %w", err)
-	}
-	tmpPath := tmpCert.Name()
-	tmpCert.Write(out)
-	tmpCert.Close()
-	defer os.Remove(tmpPath)
-
-	// Remove the certificate
-	cmd = CommandWithSudo("security", "remove-trusted-cert", "-d", tmpPath)
+	// Not running as root - use sudo
+	cmd := CommandWithSudo("security", "delete-certificate", "-c", cert.Subject.CommonName,
+		"-t", "/Library/Keychains/System.keychain")
 	if out, err := ExecCommand(cmd); err != nil {
 		return fmt.Errorf("failed to remove certificate: %w\nOutput: %s", err, out)
 	}
