@@ -73,6 +73,112 @@ func (s *macOSStore) IsInstalled(cert *x509.Certificate) bool {
 	return s.isTrusted(cert)
 }
 
+// findKloudliteCAs finds all Kloudlite CA certificates in the system keychain
+// Returns a map of SHA-1 fingerprints to common names
+func (s *macOSStore) findKloudliteCAs() map[string]string {
+	result := make(map[string]string)
+
+	// Search for certificates with "Kloudlite" in the common name
+	// This covers both "Kloudlite Root CA" and "Kloudlite CA"
+	for _, searchTerm := range []string{"Kloudlite Root CA", "Kloudlite CA"} {
+		cmd := exec.Command("security", "find-certificate", "-c", searchTerm,
+			"-a", "-Z", "/Library/Keychains/System.keychain")
+
+		out, err := ExecCommand(cmd)
+		if err != nil {
+			continue
+		}
+
+		// Parse the output to extract SHA-1 fingerprints
+		// Output format includes lines like: "SHA-1 hash: 8D368D3AF15ED5C07764D229367B4DDE8C56F48E"
+		lines := strings.Split(string(out), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "SHA-1 hash:") {
+				fingerprint := strings.TrimSpace(strings.TrimPrefix(line, "SHA-1 hash:"))
+				fingerprint = strings.ToUpper(fingerprint)
+				result[fingerprint] = searchTerm
+			}
+		}
+	}
+
+	return result
+}
+
+// removeStaleKloudliteCAs removes any Kloudlite CA certificates that don't match the new certificate
+func (s *macOSStore) removeStaleKloudliteCAs(newCert *x509.Certificate) error {
+	// Calculate SHA-1 hash of the new certificate
+	newHash := sha1.Sum(newCert.Raw)
+	newCertHash := strings.ToUpper(hex.EncodeToString(newHash[:]))
+
+	// Find all existing Kloudlite CAs
+	existingCAs := s.findKloudliteCAs()
+
+	for fingerprint, commonName := range existingCAs {
+		if fingerprint == newCertHash {
+			// This is the same certificate, don't remove it
+			continue
+		}
+
+		fmt.Printf("Removing stale CA certificate: %s (fingerprint: %s)\n", commonName, fingerprint)
+
+		// Remove from keychain
+		if u, err := user.Current(); err == nil && u.Uid == "0" {
+			cmd := exec.Command("security", "delete-certificate", "-c", commonName,
+				"-t", "/Library/Keychains/System.keychain")
+			if out, err := ExecCommand(cmd); err != nil {
+				fmt.Printf("Warning: failed to remove certificate from keychain: %v\nOutput: %s\n", err, out)
+			}
+		} else {
+			cmd := CommandWithSudo("security", "delete-certificate", "-c", commonName,
+				"-t", "/Library/Keychains/System.keychain")
+			if out, err := ExecCommand(cmd); err != nil {
+				fmt.Printf("Warning: failed to remove certificate from keychain: %v\nOutput: %s\n", err, out)
+			}
+		}
+
+		// Remove from trust settings plist
+		s.removeTrustSettings(fingerprint)
+	}
+
+	return nil
+}
+
+// removeTrustSettings removes a certificate from the Admin.plist trust settings
+func (s *macOSStore) removeTrustSettings(certHash string) {
+	data, err := os.ReadFile(adminTrustSettingsPath)
+	if err != nil {
+		return
+	}
+
+	var settings TrustSettings
+	if _, err := plist.Unmarshal(data, &settings); err != nil {
+		return
+	}
+
+	if settings.TrustList == nil {
+		return
+	}
+
+	// Remove the certificate hash from trust list
+	delete(settings.TrustList, certHash)
+
+	// Write back the updated trust settings
+	plistData, err := plist.MarshalIndent(settings, plist.XMLFormat, "\t")
+	if err != nil {
+		return
+	}
+
+	tmpFile := filepath.Join(trustSettingsDir, ".Admin.plist.tmp")
+	if err := os.WriteFile(tmpFile, plistData, 0644); err != nil {
+		return
+	}
+
+	if err := os.Rename(tmpFile, adminTrustSettingsPath); err != nil {
+		os.Remove(tmpFile)
+	}
+}
+
 // isTrusted checks if the certificate has trust settings in Admin.plist
 func (s *macOSStore) isTrusted(cert *x509.Certificate) bool {
 	data, err := os.ReadFile(adminTrustSettingsPath)
@@ -109,6 +215,13 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 	// security feature - root != authorization for trust settings.
 	// By directly writing to /var/db/TrustSettings/Admin.plist, we bypass this
 	// restriction since we have root filesystem access.
+
+	// Step 0: Remove any stale Kloudlite CAs that don't match the new certificate
+	// This handles CA rotation when the server regenerates the CA
+	if err := s.removeStaleKloudliteCAs(cert); err != nil {
+		fmt.Printf("Warning: failed to remove stale CA certificates: %v\n", err)
+		// Continue with installation anyway
+	}
 
 	// Check if already running as root (daemon case)
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
