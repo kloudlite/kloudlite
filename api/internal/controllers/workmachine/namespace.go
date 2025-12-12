@@ -189,35 +189,8 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 		}
 	}
 
-	// Delete host-manager pod and service in finalizer
-	// Cluster-scoped WorkMachine cannot own namespaced resources via owner references
-	hostManagerName := fmt.Sprintf("hm-%s", obj.Name)
-
-	// Delete pod
-	pod := &corev1.Pod{}
-	if err := r.Get(check.Context(), client.ObjectKey{
-		Name:      hostManagerName,
-		Namespace: hostManagerNamespace,
-	}, pod); err == nil {
-		if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete host manager pod: %w", err))
-		}
-	} else if !apiErrors.IsNotFound(err) {
-		return check.Errored(err)
-	}
-
-	// Delete service
-	service := &corev1.Service{}
-	if err := r.Get(check.Context(), client.ObjectKey{
-		Name:      hostManagerName,
-		Namespace: hostManagerNamespace,
-	}, service); err == nil {
-		if err := r.Delete(check.Context(), service); err != nil && !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete host manager service: %w", err))
-		}
-	} else if !apiErrors.IsNotFound(err) {
-		return check.Errored(err)
-	}
+	// Host-manager StatefulSet and Service are created in the workmachine namespace (namespaceName)
+	// They will be automatically cleaned up when the namespace is deleted
 
 	// Proceed with namespace deletion
 	namespace := &corev1.Namespace{}

@@ -1842,7 +1842,7 @@ func main() {
 		},
 		Cache: cache.Options{
 			DefaultNamespaces: map[string]cache.Config{
-				namespace: {}, // Watch PackageRequests and Secrets in kloudlite-hostmanager
+				namespace: {}, // Watch PackageRequests and Secrets in workmachine namespace
 			},
 			ByObject: map[client.Object]cache.ByObject{
 				// Watch Workspaces in workmachine namespace (e.g., wm-karthik)

@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: kloudlite-hostmanager
-  labels:
-    kloudlite.io/managed: "true"
-    kloudlite.io/component: hostmanager
-  annotations:
-    kloudlite.io/description: "Shared namespace for all WorkMachine host manager workloads"
