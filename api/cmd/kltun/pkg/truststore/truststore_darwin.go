@@ -54,7 +54,7 @@ func (s *macOSStore) Name() string {
 }
 
 func (s *macOSStore) IsInstalled(cert *x509.Certificate) bool {
-	// Try to find the certificate in the system keychain
+	// Check if certificate is in the system keychain
 	cmd := exec.Command("security", "find-certificate", "-c", cert.Subject.CommonName,
 		"-a", "-Z", "/Library/Keychains/System.keychain")
 
@@ -63,8 +63,40 @@ func (s *macOSStore) IsInstalled(cert *x509.Certificate) bool {
 		return false
 	}
 
-	// Check if our certificate is in the output
-	return strings.Contains(string(out), cert.Subject.CommonName)
+	// Check if certificate exists in keychain
+	if !strings.Contains(string(out), cert.Subject.CommonName) {
+		return false
+	}
+
+	// Also check if trust settings exist in Admin.plist
+	// This is important because the cert may be in keychain but not trusted
+	return s.isTrusted(cert)
+}
+
+// isTrusted checks if the certificate has trust settings in Admin.plist
+func (s *macOSStore) isTrusted(cert *x509.Certificate) bool {
+	data, err := os.ReadFile(adminTrustSettingsPath)
+	if err != nil {
+		// No trust settings file means not trusted
+		return false
+	}
+
+	var settings TrustSettings
+	if _, err := plist.Unmarshal(data, &settings); err != nil {
+		return false
+	}
+
+	if settings.TrustList == nil {
+		return false
+	}
+
+	// Calculate SHA-1 hash of the certificate
+	hash := sha1.Sum(cert.Raw)
+	certHash := strings.ToUpper(hex.EncodeToString(hash[:]))
+
+	// Check if this cert hash exists in trust list
+	_, exists := settings.TrustList[certHash]
+	return exists
 }
 
 func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
