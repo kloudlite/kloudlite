@@ -102,7 +102,15 @@ mkdir -p /var/lib/rancher/k3s/server/manifests
 
 # Download and install Kloudlite CLI
 echo "Downloading Kloudlite CLI binary..."
-curl -fsSL "https://github.com/kloudlite/kloudlite/releases/latest/download/kli-linux-amd64" -o /usr/local/bin/kli
+# Find latest kli release using GitHub API (releases are prefixed with tool name like kli-v0.1.0, kltun-v0.1.0)
+KLI_RELEASE_TAG=$(curl -fsSL "https://api.github.com/repos/kloudlite/kloudlite/releases" | \
+  grep -o '"tag_name": "kli-[^"]*"' | head -1 | cut -d'"' -f4)
+if [ -z "$KLI_RELEASE_TAG" ]; then
+  echo "ERROR: Could not find kli release"
+  exit 1
+fi
+echo "Found kli release: $KLI_RELEASE_TAG"
+curl -fsSL "https://github.com/kloudlite/kloudlite/releases/download/${KLI_RELEASE_TAG}/kli-linux-amd64" -o /usr/local/bin/kli
 chmod +x /usr/local/bin/kli
 
 K3S_AGENT_TOKEN=$(cat /var/lib/rancher/k3s/server/agent-token)
