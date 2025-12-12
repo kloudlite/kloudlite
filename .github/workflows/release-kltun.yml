@@ -2,6 +2,13 @@ name: Release kltun
 
 on:
   push:
+    branches:
+      - development
+    paths:
+      - 'api/cmd/kltun/**'
+      - 'api/go.mod'
+      - 'api/go.sum'
+      - '.github/workflows/release-kltun.yml'
     tags:
       - 'kltun-v*'
   workflow_dispatch:
@@ -97,10 +104,15 @@ jobs:
               TAG="${{ inputs.tag }}"
               VERSION="${TAG#kltun-v}"
             fi
-          else
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             # Tag push event
             TAG="${GITHUB_REF#refs/tags/}"
             VERSION="${TAG#kltun-v}"
+          else
+            # Push to development branch - create nightly
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            VERSION="0.1.0-nightly-${TIMESTAMP}"
+            TAG="kltun-v${VERSION}"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
@@ -154,10 +166,15 @@ jobs:
               TAG="${{ inputs.tag }}"
               VERSION="${TAG#kltun-v}"
             fi
-          else
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             # Tag push event
             TAG="${GITHUB_REF#refs/tags/}"
             VERSION="${TAG#kltun-v}"
+          else
+            # Push to development branch - create nightly
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            VERSION="0.1.0-nightly-${TIMESTAMP}"
+            TAG="kltun-v${VERSION}"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
