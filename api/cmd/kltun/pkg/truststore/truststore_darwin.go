@@ -3,12 +3,43 @@
 package truststore
 
 import (
+	"crypto/sha1"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"strings"
+
+	"howett.net/plist"
 )
+
+const (
+	// adminTrustSettingsPath is where macOS stores admin trust settings
+	adminTrustSettingsPath = "/var/db/TrustSettings/Admin.plist"
+	trustSettingsDir       = "/var/db/TrustSettings"
+
+	// Trust settings constants
+	kSecTrustSettingsResultTrustRoot = 1 // Trust as root certificate
+
+	// SSL policy OID (base64 of the OID for SSL)
+	sslPolicyOID = "KoZIhvdjZAED" // kSecPolicyAppleSSL
+)
+
+// TrustSettings represents the structure of macOS trust settings plist
+type TrustSettings struct {
+	TrustList    map[string][]TrustSettingsEntry `plist:"trustList"`
+	TrustVersion int                             `plist:"trustVersion"`
+}
+
+// TrustSettingsEntry represents a single trust setting entry
+type TrustSettingsEntry struct {
+	KSecTrustSettingsPolicy []byte `plist:"kSecTrustSettingsPolicy,omitempty"`
+	KSecTrustSettingsResult int    `plist:"kSecTrustSettingsResult"`
+}
 
 // macOSStore implements TrustStore for macOS Keychain
 type macOSStore struct{}
@@ -37,30 +68,51 @@ func (s *macOSStore) IsInstalled(cert *x509.Certificate) bool {
 }
 
 func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
-	// The daemon runs as root, so we can add the certificate as a trusted root.
-	// Use -d (admin trust settings domain) with -r trustRoot and -p ssl to set trust for SSL.
-	// The -d flag works when running as root via sudo.
+	// The daemon runs as root, so we can add the certificate to the keychain
+	// and directly modify the trust settings plist file.
+	//
+	// Why direct plist manipulation instead of `security add-trusted-cert -d`?
+	// The -d flag (admin trust settings) calls SecTrustSettingsSetTrustSettings,
+	// which requires GUI authorization even when running as root. This is a macOS
+	// security feature - root != authorization for trust settings.
+	// By directly writing to /var/db/TrustSettings/Admin.plist, we bypass this
+	// restriction since we have root filesystem access.
 
 	// Check if already running as root (daemon case)
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
-		// Running as root - use add-trusted-cert with admin domain (-d)
-		// -r trustRoot: set as trusted root certificate
-		// -p ssl: trust for SSL policy (needed for browsers)
-		cmd := exec.Command("security", "add-trusted-cert",
-			"-d",
-			"-r", "trustRoot",
-			"-p", "ssl",
+		// Step 1: Add certificate to system keychain (this works without authorization)
+		cmd := exec.Command("security", "add-certificates",
 			"-k", "/Library/Keychains/System.keychain",
 			certPath)
 		if out, err := ExecCommand(cmd); err != nil {
-			return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
+			// Ignore "already exists" errors
+			if !strings.Contains(string(out), "already exists") && !strings.Contains(err.Error(), "already exists") {
+				return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
+			}
 		}
+
+		// Step 2: Directly update the admin trust settings plist
+		if err := s.updateAdminTrustSettings(cert); err != nil {
+			return fmt.Errorf("failed to update trust settings: %w", err)
+		}
+
 		return nil
 	}
 
 	// Not running as root - this shouldn't happen if called from daemon
-	// Fall back to using sudo
-	cmd := CommandWithSudo("security", "add-trusted-cert",
+	// Fall back to using sudo for both operations
+	cmd := CommandWithSudo("security", "add-certificates",
+		"-k", "/Library/Keychains/System.keychain",
+		certPath)
+	if out, err := ExecCommand(cmd); err != nil {
+		if !strings.Contains(string(out), "already exists") && !strings.Contains(err.Error(), "already exists") {
+			return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
+		}
+	}
+
+	// For non-root, we still need to use the security command with sudo
+	// This will prompt for GUI authorization
+	cmd = CommandWithSudo("security", "add-trusted-cert",
 		"-d",
 		"-r", "trustRoot",
 		"-p", "ssl",
@@ -71,6 +123,72 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 	}
 
 	return nil
+}
+
+// updateAdminTrustSettings directly modifies the Admin.plist trust settings file
+func (s *macOSStore) updateAdminTrustSettings(cert *x509.Certificate) error {
+	// Calculate SHA-1 hash of the certificate (used as key in trust settings)
+	hash := sha1.Sum(cert.Raw)
+	certHash := strings.ToUpper(hex.EncodeToString(hash[:]))
+
+	// Ensure the trust settings directory exists
+	if err := os.MkdirAll(trustSettingsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create trust settings directory: %w", err)
+	}
+
+	// Load existing trust settings or create new
+	var settings TrustSettings
+	data, err := os.ReadFile(adminTrustSettingsPath)
+	if err == nil {
+		// Parse existing plist
+		if _, err := plist.Unmarshal(data, &settings); err != nil {
+			return fmt.Errorf("failed to parse existing trust settings: %w", err)
+		}
+	}
+
+	// Initialize trust list if nil
+	if settings.TrustList == nil {
+		settings.TrustList = make(map[string][]TrustSettingsEntry)
+	}
+	settings.TrustVersion = 1
+
+	// Decode the SSL policy OID
+	sslPolicy, err := decodeBase64(sslPolicyOID)
+	if err != nil {
+		return fmt.Errorf("failed to decode SSL policy OID: %w", err)
+	}
+
+	// Add trust entry for SSL (kSecPolicyAppleSSL)
+	settings.TrustList[certHash] = []TrustSettingsEntry{
+		{
+			KSecTrustSettingsPolicy: sslPolicy,
+			KSecTrustSettingsResult: kSecTrustSettingsResultTrustRoot,
+		},
+	}
+
+	// Marshal to plist
+	plistData, err := plist.MarshalIndent(settings, plist.XMLFormat, "\t")
+	if err != nil {
+		return fmt.Errorf("failed to marshal trust settings: %w", err)
+	}
+
+	// Write atomically using temp file
+	tmpFile := filepath.Join(trustSettingsDir, ".Admin.plist.tmp")
+	if err := os.WriteFile(tmpFile, plistData, 0644); err != nil {
+		return fmt.Errorf("failed to write temp trust settings file: %w", err)
+	}
+
+	if err := os.Rename(tmpFile, adminTrustSettingsPath); err != nil {
+		os.Remove(tmpFile)
+		return fmt.Errorf("failed to rename trust settings file: %w", err)
+	}
+
+	return nil
+}
+
+// decodeBase64 decodes a base64 string
+func decodeBase64(s string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(s)
 }
 
 func (s *macOSStore) Uninstall(cert *x509.Certificate) error {
