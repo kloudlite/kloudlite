@@ -107,13 +107,20 @@ func (r *CAReconciler) generateCABundle(ctx context.Context, obj *v1.Certificate
 		return nil, nil, err
 	}
 
+	// Use the first SAN entry as the CA CommonName
+	// e.g., if SANs includes "*.bbdude.khost.dev", CN will be "Kloudlite CA for *.bbdude.khost.dev"
+	if len(obj.Spec.SANs) == 0 {
+		return nil, nil, fmt.Errorf("CertificateAuthority must have at least one SAN specified")
+	}
+	commonName := fmt.Sprintf("Kloudlite CA for %s", obj.Spec.SANs[0])
+
 	// Create a template for the CA certificate
 	caTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
 			Organization:       []string{"Kloudlite"},
 			OrganizationalUnit: []string{"Security"},
-			CommonName:         "Kloudlite Root CA",
+			CommonName:         commonName,
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().Add(100 * 365 * 24 * time.Hour),
