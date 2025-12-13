@@ -136,20 +136,20 @@ func (s *macOSStore) removeStaleKloudliteCAs(newCert *x509.Certificate) error {
 			continue
 		}
 
-		fmt.Printf("Removing stale CA certificate: %s (fingerprint: %s)\n", commonName, fingerprint)
+		logf("Removing stale CA certificate: %s (fingerprint: %s)", commonName, fingerprint)
 
 		// Remove from keychain
 		if u, err := user.Current(); err == nil && u.Uid == "0" {
 			cmd := exec.Command("security", "delete-certificate", "-c", commonName,
 				"-t", "/Library/Keychains/System.keychain")
 			if out, err := ExecCommand(cmd); err != nil {
-				fmt.Printf("Warning: failed to remove certificate from keychain: %v\nOutput: %s\n", err, out)
+				logf("Warning: failed to remove certificate from keychain: %v\nOutput: %s", err, out)
 			}
 		} else {
 			cmd := CommandWithSudo("security", "delete-certificate", "-c", commonName,
 				"-t", "/Library/Keychains/System.keychain")
 			if out, err := ExecCommand(cmd); err != nil {
-				fmt.Printf("Warning: failed to remove certificate from keychain: %v\nOutput: %s\n", err, out)
+				logf("Warning: failed to remove certificate from keychain: %v\nOutput: %s", err, out)
 			}
 		}
 
@@ -238,7 +238,7 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 	// Step 0: Remove any stale Kloudlite CAs that don't match the new certificate
 	// This handles CA rotation when the server regenerates the CA
 	if err := s.removeStaleKloudliteCAs(cert); err != nil {
-		fmt.Printf("Warning: failed to remove stale CA certificates: %v\n", err)
+		logf("Warning: failed to remove stale CA certificates: %v", err)
 		// Continue with installation anyway
 	}
 
@@ -270,7 +270,7 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 
 		// Step 4: Add to OpenSSL cert bundle for curl and other OpenSSL-based tools
 		if err := s.installToOpenSSLBundle(certPath, cert); err != nil {
-			fmt.Printf("Warning: failed to add certificate to OpenSSL bundle: %v\n", err)
+			logf("Warning: failed to add certificate to OpenSSL bundle: %v", err)
 			// Don't fail the whole operation - keychain install succeeded
 		}
 
@@ -300,7 +300,7 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 
 	// Also add to OpenSSL cert bundle for curl and other OpenSSL-based tools
 	if err := s.installToOpenSSLBundle(certPath, cert); err != nil {
-		fmt.Printf("Warning: failed to add certificate to OpenSSL bundle: %v\n", err)
+		logf("Warning: failed to add certificate to OpenSSL bundle: %v", err)
 		// Don't fail the whole operation - keychain install succeeded
 	}
 
@@ -539,7 +539,7 @@ func (s *macOSStore) Uninstall(cert *x509.Certificate) error {
 
 		// Also remove from OpenSSL cert bundle
 		if err := s.uninstallFromOpenSSLBundle(cert); err != nil {
-			fmt.Printf("Warning: failed to remove certificate from OpenSSL bundle: %v\n", err)
+			logf("Warning: failed to remove certificate from OpenSSL bundle: %v", err)
 		}
 
 		return nil
@@ -554,7 +554,7 @@ func (s *macOSStore) Uninstall(cert *x509.Certificate) error {
 
 	// Also remove from OpenSSL cert bundle
 	if err := s.uninstallFromOpenSSLBundle(cert); err != nil {
-		fmt.Printf("Warning: failed to remove certificate from OpenSSL bundle: %v\n", err)
+		logf("Warning: failed to remove certificate from OpenSSL bundle: %v", err)
 	}
 
 	return nil

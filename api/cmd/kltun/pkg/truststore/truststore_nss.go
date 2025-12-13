@@ -3,7 +3,6 @@ package truststore
 import (
 	"crypto/x509"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,15 +21,15 @@ func NewNSSStore() TrustStore {
 	// Find certutil
 	certutilPath := findCertutil()
 	if certutilPath == "" {
-		log.Println("Warning: certutil not found. NSS/Firefox trust store will be skipped.")
-		log.Println(getNSSInstallGuide())
+		logf("Warning: certutil not found. NSS/Firefox trust store will be skipped.")
+		logf("%s", getNSSInstallGuide())
 		return nil
 	}
 
 	// Find NSS profiles
 	profiles := findNSSProfiles()
 	if len(profiles) == 0 {
-		log.Println("Warning: no NSS certificate databases found.")
+		logf("Warning: no NSS certificate databases found.")
 		return nil
 	}
 
@@ -76,7 +75,7 @@ func (s *nssStore) Install(certPath string, cert *x509.Certificate) error {
 		if err := s.execCertutil(cmd); err != nil {
 			errors = append(errors, fmt.Sprintf("%s: %v", profile, err))
 		} else {
-			log.Printf("    ✓ Installed to %s", profile)
+			logf("    ✓ Installed to %s", profile)
 		}
 	}
 
@@ -103,7 +102,7 @@ func (s *nssStore) Uninstall(cert *x509.Certificate) error {
 				errors = append(errors, fmt.Sprintf("%s: %v", profile, err))
 			}
 		} else {
-			log.Printf("    ✓ Uninstalled from %s", profile)
+			logf("    ✓ Uninstalled from %s", profile)
 		}
 	}
 
