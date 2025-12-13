@@ -8,6 +8,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/daemon"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/spinner"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/spf13/cobra"
 )
@@ -42,52 +43,59 @@ func init() {
 }
 
 func runConnect() error {
-	fmt.Println("Connecting to Kloudlite VPN...")
+	fmt.Println()
+
+	// Step 1: Start daemon
+	sp := spinner.New("Starting daemon...")
+	sp.Start()
 
 	sm, err := daemon.NewServiceManager()
 	if err != nil {
+		sp.Stop(false)
 		return fmt.Errorf("failed to create service manager: %w", err)
 	}
 
-	// Ensure daemon is installed and running (don't restart if already running)
 	if err := sm.EnsureRunning(); err != nil {
+		sp.Stop(false)
 		return fmt.Errorf("failed to start daemon: %w", err)
 	}
 
-	// Connect to daemon
 	client := daemon.NewClient(sm.GetSocketPath())
 
 	// Wait for daemon to be ready (max 10 seconds)
-	fmt.Print("Waiting for daemon to be ready")
+	daemonReady := false
 	for i := 0; i < 100; i++ {
 		if client.IsRunning() {
-			fmt.Println(" ✓")
+			daemonReady = true
 			break
 		}
-		if i == 99 {
-			fmt.Println(" failed")
-			return fmt.Errorf("daemon failed to start within 10 seconds")
-		}
-		fmt.Print(".")
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	// Start VPN connection via daemon
+	if !daemonReady {
+		sp.Stop(false)
+		return fmt.Errorf("daemon failed to start within 10 seconds")
+	}
+	sp.Stop(true)
+
+	// Step 2: Establish VPN connection
+	sp = spinner.New("Establishing VPN connection...")
+	sp.Start()
+
 	result, err := client.VPNConnect(connectToken, connectServer)
 	if err != nil {
+		sp.Stop(false)
 		return fmt.Errorf("failed to connect: %w", err)
 	}
+	sp.StopWithMessage(true, fmt.Sprintf("Connected (Session: %s)", result.SessionID))
 
-	fmt.Println()
-	fmt.Println("✓ Connected to Kloudlite VPN!")
-	fmt.Printf("  Session ID: %s\n", result.SessionID)
-
-	// Fetch and install CA certificate (done in CLI for GUI authorization)
-	caCertInstalled := false
-	var caCertError string
-
+	// Step 3: Install CA certificate
 	if result.TunnelEndpoint != "" && result.PermanentToken != "" {
-		fmt.Print("  Installing CA certificate...")
+		sp = spinner.New("Installing CA certificate...")
+		sp.Start()
+
+		caCertInstalled := false
+		var caCertError string
 
 		// Create tunnel client to fetch CA cert
 		tunnelClient := api.NewTunnelClient(result.TunnelEndpoint, result.PermanentToken)
@@ -116,7 +124,6 @@ func runConnect() error {
 				caCertError = fmt.Sprintf("failed to write: %v", err)
 			} else {
 				defer os.Remove(certFile)
-				// Install to trust stores (will prompt for GUI auth on macOS)
 				stores := []string{"system", "nss", "java"}
 				if err := truststore.InstallAll(certFile, stores); err != nil {
 					caCertError = fmt.Sprintf("failed to install: %v", err)
@@ -127,16 +134,14 @@ func runConnect() error {
 		}
 
 		if caCertInstalled {
-			fmt.Println(" ✓")
+			sp.Stop(true)
 		} else {
-			fmt.Printf(" ✗ (%s)\n", caCertError)
+			sp.StopWithMessage(false, fmt.Sprintf("CA certificate (%s)", caCertError))
 		}
-	} else {
-		fmt.Println("  CA Certificate: Skipped (no tunnel info)")
 	}
 
 	fmt.Println()
-	fmt.Println("Your VPN connection is now running in the background.")
+	fmt.Println("VPN connection is running in the background.")
 	fmt.Println("Use 'kltun quit' to disconnect.")
 	fmt.Println()
 
