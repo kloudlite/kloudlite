@@ -9,6 +9,7 @@ import { WorkspaceActions } from '../_components/workspace-actions'
 import { PackagesSheet } from '../_components/packages-sheet'
 import { WorkspaceMetrics } from '../_components/workspace-metrics'
 import { workspaceService } from '@/lib/services/workspace.service'
+import { workMachineService } from '@/lib/services/work-machine.service'
 import { getPackageRequest } from '@/app/actions/workspace.actions'
 
 interface PageProps {
@@ -42,6 +43,15 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
   if (!workspace) {
     notFound()
+  }
+
+  // Check if WorkMachine is running
+  let workMachineRunning = false
+  try {
+    const workMachine = await workMachineService.getMyWorkMachine()
+    workMachineRunning = workMachine?.status?.state === 'running'
+  } catch (err) {
+    console.error('Failed to fetch work machine:', err)
   }
 
   // Fetch package request status
@@ -118,7 +128,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                   )}
                 </div>
               </div>
-              <WorkspaceActions workspace={workspace} />
+              <WorkspaceActions workspace={workspace} workMachineRunning={workMachineRunning} />
             </div>
           </div>
         </div>

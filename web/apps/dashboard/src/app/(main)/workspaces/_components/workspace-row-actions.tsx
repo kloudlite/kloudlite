@@ -104,10 +104,14 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false }: W
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
-              setShowCloneSheet(true)
+              if (workMachineRunning) {
+                setShowCloneSheet(true)
+              }
             }}
+            className={!workMachineRunning ? "text-muted-foreground cursor-not-allowed" : ""}
+            disabled={!workMachineRunning}
           >
-            Clone
+            {workMachineRunning ? 'Clone' : 'Clone (VM stopped)'}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {workspace.spec.status !== 'suspended' && (

@@ -432,9 +432,13 @@ export function EnvironmentsList({
                             {workMachineRunning ? 'Activate' : 'Activate (VM stopped)'}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => handleCloneClick(env)}>
+                        <DropdownMenuItem
+                          onClick={() => workMachineRunning && handleCloneClick(env)}
+                          className={!workMachineRunning ? "text-muted-foreground cursor-not-allowed" : ""}
+                          disabled={!workMachineRunning}
+                        >
                           <Copy className="mr-2 h-4 w-4" />
-                          Clone Environment
+                          {workMachineRunning ? 'Clone Environment' : 'Clone (VM stopped)'}
                         </DropdownMenuItem>
                         <DropdownMenuItem>Export Config</DropdownMenuItem>
                         <DropdownMenuSeparator />

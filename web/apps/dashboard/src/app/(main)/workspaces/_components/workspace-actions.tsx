@@ -10,9 +10,10 @@ import type { Workspace } from '@kloudlite/types'
 
 interface WorkspaceActionsProps {
   workspace: Workspace
+  workMachineRunning?: boolean
 }
 
-export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
+export function WorkspaceActions({ workspace, workMachineRunning = false }: WorkspaceActionsProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -84,9 +85,15 @@ export function WorkspaceActions({ workspace }: WorkspaceActionsProps) {
           </Button>
         )}
         {workspace.spec.status === 'suspended' && (
-          <Button variant="outline" size="sm" onClick={handleActivate} disabled={isLoading}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleActivate}
+            disabled={isLoading || !workMachineRunning}
+            title={!workMachineRunning ? 'WorkMachine is stopped' : undefined}
+          >
             <Play className="mr-1 h-4 w-4" />
-            {isLoading ? 'Activating...' : 'Activate'}
+            {isLoading ? 'Activating...' : !workMachineRunning ? 'Activate (VM stopped)' : 'Activate'}
           </Button>
         )}
       </div>
