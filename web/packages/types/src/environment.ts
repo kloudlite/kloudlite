@@ -1,5 +1,7 @@
 // Environment types matching the backend API structure
 
+import type { Visibility } from './workspace'
+
 export interface EnvironmentMetadata {
   name: string
   uid?: string
@@ -41,8 +43,6 @@ export interface NetworkPolicies {
   allowedNamespaces?: string[]
   ingressRules?: IngressRule[]
 }
-
-export type Visibility = 'private' | 'shared' | 'open'
 
 export interface EnvironmentSpec {
   targetNamespace?: string
