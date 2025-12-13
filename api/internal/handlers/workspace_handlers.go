@@ -636,7 +636,7 @@ func (h *WorkspaceHandlers) GetPackageRequest(c *gin.Context) {
 		return
 	}
 
-	// PackageRequest is cluster-scoped with naming convention: {workspace-name}-packages
+	// PackageRequest is namespace-scoped with naming convention: {workspace-name}-packages
 	packageRequestName := fmt.Sprintf("%s-packages", name)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
@@ -644,7 +644,8 @@ func (h *WorkspaceHandlers) GetPackageRequest(c *gin.Context) {
 
 	var pkgReq packagesv1.PackageRequest
 	err = h.k8sClient.Get(ctx, types.NamespacedName{
-		Name: packageRequestName,
+		Namespace: namespace,
+		Name:      packageRequestName,
 	}, &pkgReq)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -704,7 +705,7 @@ func (h *WorkspaceHandlers) UpdatePackageRequest(c *gin.Context) {
 		return
 	}
 
-	// PackageRequest is cluster-scoped with naming convention: {workspace-name}-packages
+	// PackageRequest is namespace-scoped with naming convention: {workspace-name}-packages
 	packageRequestName := fmt.Sprintf("%s-packages", name)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
@@ -713,7 +714,8 @@ func (h *WorkspaceHandlers) UpdatePackageRequest(c *gin.Context) {
 	// Try to get existing PackageRequest
 	var pkgReq packagesv1.PackageRequest
 	err = h.k8sClient.Get(ctx, types.NamespacedName{
-		Name: packageRequestName,
+		Namespace: namespace,
+		Name:      packageRequestName,
 	}, &pkgReq)
 
 	if err != nil {
@@ -723,7 +725,8 @@ func (h *WorkspaceHandlers) UpdatePackageRequest(c *gin.Context) {
 
 			pkgReq = packagesv1.PackageRequest{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: packageRequestName,
+					Namespace: namespace,
+					Name:      packageRequestName,
 					OwnerReferences: []metav1.OwnerReference{
 						{
 							APIVersion: "workspaces.kloudlite.io/v1",
