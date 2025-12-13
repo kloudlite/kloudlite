@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,21 +24,21 @@ type javaStore struct {
 func NewJavaStore() TrustStore {
 	javaHome := os.Getenv("JAVA_HOME")
 	if javaHome == "" {
-		log.Println("Warning: JAVA_HOME not set. Java keystore will be skipped.")
+		logf("Warning: JAVA_HOME not set. Java keystore will be skipped.")
 		return nil
 	}
 
 	// Find keytool
 	keytoolPath := findKeytool(javaHome)
 	if keytoolPath == "" {
-		log.Printf("Warning: keytool not found in JAVA_HOME (%s). Java keystore will be skipped.", javaHome)
+		logf("Warning: keytool not found in JAVA_HOME (%s). Java keystore will be skipped.", javaHome)
 		return nil
 	}
 
 	// Find cacerts
 	cacertsPath := findCacerts(javaHome)
 	if cacertsPath == "" {
-		log.Printf("Warning: cacerts not found in JAVA_HOME (%s). Java keystore will be skipped.", javaHome)
+		logf("Warning: cacerts not found in JAVA_HOME (%s). Java keystore will be skipped.", javaHome)
 		return nil
 	}
 

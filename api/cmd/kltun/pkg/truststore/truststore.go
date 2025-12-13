@@ -22,6 +22,8 @@ const (
 var (
 	// sudoWarningOnce ensures we only show sudo warning once
 	sudoWarningOnce sync.Once
+	// Quiet suppresses log output when true
+	Quiet bool
 )
 
 // TrustStore represents a platform-specific trust store
@@ -39,6 +41,13 @@ type TrustStore interface {
 	Name() string
 }
 
+// logf prints log message if not in quiet mode
+func logf(format string, args ...interface{}) {
+	if !Quiet {
+		log.Printf(format, args...)
+	}
+}
+
 // InstallAll installs the CA certificate to all available trust stores
 func InstallAll(certPath string, trustStores []string) error {
 	cert, err := LoadCertificate(certPath)
@@ -50,19 +59,19 @@ func InstallAll(certPath string, trustStores []string) error {
 
 	var errors []string
 	for _, store := range stores {
-		log.Printf("Installing CA certificate to %s trust store...", store.Name())
+		logf("Installing CA certificate to %s trust store...", store.Name())
 
 		if store.IsInstalled(cert) {
-			log.Printf("  ✓ Already installed in %s", store.Name())
+			logf("  ✓ Already installed in %s", store.Name())
 			continue
 		}
 
 		if err := store.Install(certPath, cert); err != nil {
 			errMsg := fmt.Sprintf("failed to install to %s: %v", store.Name(), err)
-			log.Printf("  ✗ %s", errMsg)
+			logf("  ✗ %s", errMsg)
 			errors = append(errors, errMsg)
 		} else {
-			log.Printf("  ✓ Successfully installed to %s", store.Name())
+			logf("  ✓ Successfully installed to %s", store.Name())
 		}
 	}
 
@@ -84,19 +93,19 @@ func UninstallAll(certPath string, trustStores []string) error {
 
 	var errors []string
 	for _, store := range stores {
-		log.Printf("Uninstalling CA certificate from %s trust store...", store.Name())
+		logf("Uninstalling CA certificate from %s trust store...", store.Name())
 
 		if !store.IsInstalled(cert) {
-			log.Printf("  ✓ Not installed in %s", store.Name())
+			logf("  ✓ Not installed in %s", store.Name())
 			continue
 		}
 
 		if err := store.Uninstall(cert); err != nil {
 			errMsg := fmt.Sprintf("failed to uninstall from %s: %v", store.Name(), err)
-			log.Printf("  ✗ %s", errMsg)
+			logf("  ✗ %s", errMsg)
 			errors = append(errors, errMsg)
 		} else {
-			log.Printf("  ✓ Successfully uninstalled from %s", store.Name())
+			logf("  ✓ Successfully uninstalled from %s", store.Name())
 		}
 	}
 

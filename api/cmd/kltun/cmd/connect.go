@@ -124,12 +124,15 @@ func runConnect() error {
 				caCertError = fmt.Sprintf("failed to write: %v", err)
 			} else {
 				defer os.Remove(certFile)
+				// Enable quiet mode to suppress log output during spinner
+				truststore.Quiet = true
 				stores := []string{"system", "nss", "java"}
 				if err := truststore.InstallAll(certFile, stores); err != nil {
 					caCertError = fmt.Sprintf("failed to install: %v", err)
 				} else {
 					caCertInstalled = true
 				}
+				truststore.Quiet = false
 			}
 		}
 
