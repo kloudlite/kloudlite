@@ -5,15 +5,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/deviceid"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/hosts"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/netconfig"
-	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wgkeys"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/wireguard"
 	"github.com/kloudlite/kloudlite/api/pkg/udptunnel/transport"
@@ -96,52 +93,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
 	}
 
-	// 4. Get CA certificate from tunnel server with retry
-	fmt.Printf("[Session %s] Fetching CA certificate from tunnel server...\n", sessionID)
-	var caCert string
-	var caCertErr error
-	for attempt := 1; attempt <= 3; attempt++ {
-		caCert, caCertErr = tunnelClient.GetCACert()
-		if caCertErr == nil && caCert != "" {
-			break
-		}
-		if attempt < 3 {
-			fmt.Printf("[Session %s] CA cert fetch attempt %d failed, retrying in %ds...\n", sessionID, attempt, attempt)
-			time.Sleep(time.Duration(attempt) * time.Second)
-		}
-	}
-
-	// Track CA cert installation status
-	caCertInstalled := false
-	var caCertInstallErr string
-
-	if caCertErr != nil {
-		caCertInstallErr = fmt.Sprintf("failed to fetch CA cert: %v", caCertErr)
-		fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
-	} else if caCert == "" {
-		caCertInstallErr = "CA certificate is empty"
-		fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
-	} else {
-		// Install CA certificate
-		fmt.Printf("[Session %s] Installing CA certificate to trust stores...\n", sessionID)
-		certFile := filepath.Join(os.TempDir(), fmt.Sprintf("kltun-ca-%s.crt", sessionID))
-		if err := os.WriteFile(certFile, []byte(caCert), 0o600); err != nil {
-			caCertInstallErr = fmt.Sprintf("failed to write CA cert: %v", err)
-			fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
-		} else {
-			defer os.Remove(certFile)
-			stores := []string{"system", "nss", "java"}
-			if err := truststore.InstallAll(certFile, stores); err != nil {
-				caCertInstallErr = fmt.Sprintf("failed to install CA cert: %v", err)
-				fmt.Printf("[Session %s] ✗ %s\n", sessionID, caCertInstallErr)
-			} else {
-				caCertInstalled = true
-				fmt.Printf("[Session %s] ✓ CA certificate installed\n", sessionID)
-			}
-		}
-	}
-
-	// 5. Start UDP-over-WebSocket client
+	// 4. Start UDP-over-WebSocket client
 	fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
 	fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, tunnelEndpoint)
 
@@ -266,11 +218,11 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	}
 	s.connMutex.Unlock()
 
-	// Signal success - connection is established with CA cert status
+	// Signal success - connection is established, pass tunnel info for CLI to handle CA
 	resultChan <- VPNConnectionSetupResult{
-		Error:           nil,
-		CACertInstalled: caCertInstalled,
-		CACertError:     caCertInstallErr,
+		Error:          nil,
+		TunnelEndpoint: tunnelEndpoint,
+		PermanentToken: permanentToken,
 	}
 
 	// Continue with hosts polling in background (now using tunnel client)
@@ -389,33 +341,7 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 		fmt.Printf("[Session %s] WireGuard peer created - IP: %s\n", sessionID, peerResp.IP)
 	}
 
-	// 4. Get CA certificate from tunnel server
-	fmt.Printf("[Session %s] Fetching CA certificate from tunnel server...\n", sessionID)
-	caCert, err := tunnelClient.GetCACert()
-	if err != nil {
-		fmt.Printf("[Session %s] Warning: Failed to get CA cert: %v\n", sessionID, err)
-		// Don't fail - CA cert might not be available
-	}
-
-	// Install CA certificate
-	if caCert != "" {
-		fmt.Printf("[Session %s] Installing CA certificate...\n", sessionID)
-		certFile := fmt.Sprintf("/tmp/kltun-ca-%s.crt", sessionID)
-		if err := os.WriteFile(certFile, []byte(caCert), 0o600); err != nil {
-			fmt.Printf("[Session %s] Failed to write CA cert: %v\n", sessionID, err)
-			return
-		}
-		defer os.Remove(certFile)
-
-		stores := []string{"system", "nss", "java"}
-		if err := truststore.InstallAll(certFile, stores); err != nil {
-			fmt.Printf("[Session %s] Warning: Failed to install CA cert: %v\n", sessionID, err)
-		} else {
-			fmt.Printf("[Session %s] ✓ CA certificate installed\n", sessionID)
-		}
-	}
-
-	// 5. Start UDP-over-WebSocket client
+	// 4. Start UDP-over-WebSocket client
 	fmt.Printf("[Session %s] Starting UDP-over-WebSocket client...\n", sessionID)
 	fmt.Printf("[Session %s] Local: 127.0.0.1:51821 -> Remote: %s\n", sessionID, tunnelEndpoint)
 

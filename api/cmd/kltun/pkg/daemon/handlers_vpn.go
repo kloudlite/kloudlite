@@ -94,11 +94,11 @@ func (s *Server) handleVPNConnect(req *Request) *Response {
 	}
 
 	result := VPNConnectResult{
-		Success:         true,
-		Message:         "VPN connection established successfully",
-		SessionID:       sessionID,
-		CACertInstalled: setupResult.CACertInstalled,
-		CACertError:     setupResult.CACertError,
+		Success:        true,
+		Message:        "VPN connection established successfully",
+		SessionID:      sessionID,
+		TunnelEndpoint: setupResult.TunnelEndpoint,
+		PermanentToken: setupResult.PermanentToken,
 	}
 	resp, _ := NewSuccessResponse(req.ID, result)
 	return resp
