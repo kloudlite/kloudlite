@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	certsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/certs/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
@@ -99,9 +98,6 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	}
 	if err := packagesv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add packages scheme: %w", err)
-	}
-	if err := certsv1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add certs scheme: %w", err)
 	}
 
 	// Create controller-runtime client with optimized settings
