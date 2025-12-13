@@ -244,25 +244,31 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 
 	// Check if already running as root (daemon case)
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
-		// Step 1: Add certificate to system keychain and mark as trusted
-		// Use security add-trusted-cert which properly adds to keychain AND sets trust
-		cmd := exec.Command("security", "add-trusted-cert",
-			"-d",                                  // admin cert store
-			"-r", "trustRoot",                     // trust as root CA
+		// Step 1: Add certificate to system keychain (this works without authorization)
+		cmd := exec.Command("security", "add-certificates",
 			"-k", "/Library/Keychains/System.keychain",
 			certPath)
 		if out, err := ExecCommand(cmd); err != nil {
-			// Ignore "already exists" errors
+			// Ignore "already exists" / "already in" errors
 			outStr := string(out)
 			if !strings.Contains(outStr, "already exists") &&
 				!strings.Contains(outStr, "already in") &&
 				!strings.Contains(err.Error(), "already exists") &&
 				!strings.Contains(err.Error(), "already in") {
-				return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
+				return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
 			}
 		}
 
-		// Step 2: Add to OpenSSL cert bundle for curl and other OpenSSL-based tools
+		// Step 2: Directly update the admin trust settings plist
+		if err := s.updateAdminTrustSettings(cert); err != nil {
+			return fmt.Errorf("failed to update trust settings: %w", err)
+		}
+
+		// Step 3: Restart trustd to pick up the new trust settings
+		// trustd caches Admin.plist and doesn't automatically reload
+		exec.Command("pkill", "-HUP", "trustd").Run()
+
+		// Step 4: Add to OpenSSL cert bundle for curl and other OpenSSL-based tools
 		if err := s.installToOpenSSLBundle(certPath, cert); err != nil {
 			fmt.Printf("Warning: failed to add certificate to OpenSSL bundle: %v\n", err)
 			// Don't fail the whole operation - keychain install succeeded

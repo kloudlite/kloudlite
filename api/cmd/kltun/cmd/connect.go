@@ -2,9 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/daemon"
+	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/truststore"
 	"github.com/spf13/cobra"
 )
 
@@ -78,13 +82,57 @@ func runConnect() error {
 	fmt.Println("✓ Connected to Kloudlite VPN!")
 	fmt.Printf("  Session ID: %s\n", result.SessionID)
 
-	// Display CA certificate status
-	if result.CACertInstalled {
-		fmt.Println("  CA Certificate: Installed")
-	} else if result.CACertError != "" {
-		fmt.Printf("  CA Certificate: Failed (%s)\n", result.CACertError)
+	// Fetch and install CA certificate (done in CLI for GUI authorization)
+	caCertInstalled := false
+	var caCertError string
+
+	if result.TunnelEndpoint != "" && result.PermanentToken != "" {
+		fmt.Print("  Installing CA certificate...")
+
+		// Create tunnel client to fetch CA cert
+		tunnelClient := api.NewTunnelClient(result.TunnelEndpoint, result.PermanentToken)
+
+		// Fetch CA cert with retry
+		var caCert string
+		var fetchErr error
+		for attempt := 1; attempt <= 3; attempt++ {
+			caCert, fetchErr = tunnelClient.GetCACert()
+			if fetchErr == nil && caCert != "" {
+				break
+			}
+			if attempt < 3 {
+				time.Sleep(time.Duration(attempt) * time.Second)
+			}
+		}
+
+		if fetchErr != nil {
+			caCertError = fmt.Sprintf("failed to fetch: %v", fetchErr)
+		} else if caCert == "" {
+			caCertError = "CA certificate is empty"
+		} else {
+			// Write CA cert to temp file
+			certFile := filepath.Join(os.TempDir(), fmt.Sprintf("kltun-ca-%s.crt", result.SessionID))
+			if err := os.WriteFile(certFile, []byte(caCert), 0o600); err != nil {
+				caCertError = fmt.Sprintf("failed to write: %v", err)
+			} else {
+				defer os.Remove(certFile)
+				// Install to trust stores (will prompt for GUI auth on macOS)
+				stores := []string{"system", "nss", "java"}
+				if err := truststore.InstallAll(certFile, stores); err != nil {
+					caCertError = fmt.Sprintf("failed to install: %v", err)
+				} else {
+					caCertInstalled = true
+				}
+			}
+		}
+
+		if caCertInstalled {
+			fmt.Println(" ✓")
+		} else {
+			fmt.Printf(" ✗ (%s)\n", caCertError)
+		}
 	} else {
-		fmt.Println("  CA Certificate: Not installed")
+		fmt.Println("  CA Certificate: Skipped (no tunnel info)")
 	}
 
 	fmt.Println()
