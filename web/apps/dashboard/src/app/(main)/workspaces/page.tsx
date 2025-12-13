@@ -17,12 +17,15 @@ export default async function WorkspacesPage() {
 
   // Get user's work machine to determine target namespace (for creating workspaces)
   let namespace = 'default'
+  let workMachineRunning = false
 
   try {
     const workMachine = await workMachineService.getMyWorkMachine()
     if (workMachine?.spec?.targetNamespace) {
       namespace = workMachine.spec.targetNamespace
     }
+    // Check if WorkMachine is running
+    workMachineRunning = workMachine?.status?.state === 'running'
   } catch (err) {
     console.error('Failed to fetch work machine:', err)
     // Use default namespace if work machine is not found
@@ -57,6 +60,7 @@ export default async function WorkspacesPage() {
           workspaces={workspaces}
           currentUser={currentUser}
           namespace={namespace}
+          workMachineRunning={workMachineRunning}
         />
       </div>
     </main>

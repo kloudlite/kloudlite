@@ -33,6 +33,7 @@ import type { EnvironmentUIModel } from '@kloudlite/types'
 interface EnvironmentsListProps {
   environments: EnvironmentUIModel[]
   currentUser: string
+  workMachineRunning?: boolean
 }
 
 // Format cloning phase to user-friendly text
@@ -100,6 +101,7 @@ function formatErrorMessage(error: string): string {
 export function EnvironmentsList({
   environments: initialEnvironments,
   currentUser,
+  workMachineRunning = false,
 }: EnvironmentsListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
@@ -423,10 +425,11 @@ export function EnvironmentsList({
                         ) : (
                           <DropdownMenuItem
                             onClick={() => handleActivate(env.name)}
-                            className="text-green-600"
+                            className={workMachineRunning ? "text-green-600" : "text-muted-foreground cursor-not-allowed"}
+                            disabled={!workMachineRunning}
                           >
                             <Power className="mr-2 h-4 w-4" />
-                            Activate
+                            {workMachineRunning ? 'Activate' : 'Activate (VM stopped)'}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => handleCloneClick(env)}>
