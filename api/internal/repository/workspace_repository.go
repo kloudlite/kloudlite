@@ -14,6 +14,7 @@ type WorkspaceRepository interface {
 	// Domain-specific methods
 	GetByOwner(ctx context.Context, owner string, namespace string) (*workspacesv1.WorkspaceList, error)
 	GetByWorkMachine(ctx context.Context, workMachineName string, namespace string) (*workspacesv1.WorkspaceList, error)
+	ListAll(ctx context.Context, opts ...ListOption) (*workspacesv1.WorkspaceList, error)
 	ListActive(ctx context.Context, namespace string) (*workspacesv1.WorkspaceList, error)
 	ListSuspended(ctx context.Context, namespace string) (*workspacesv1.WorkspaceList, error)
 	ListArchived(ctx context.Context, namespace string) (*workspacesv1.WorkspaceList, error)
@@ -56,6 +57,12 @@ func (r *workspaceRepository) GetByWorkMachine(ctx context.Context, workMachineN
 	// Since there's a 1:1 relationship between namespace and WorkMachine,
 	// all workspaces in the namespace belong to the same WorkMachine
 	return r.List(ctx, namespace)
+}
+
+// ListAll retrieves all workspaces across all namespaces
+func (r *workspaceRepository) ListAll(ctx context.Context, opts ...ListOption) (*workspacesv1.WorkspaceList, error) {
+	// Pass empty namespace to list across all namespaces
+	return r.List(ctx, "", opts...)
 }
 
 // ListActive retrieves all active workspaces

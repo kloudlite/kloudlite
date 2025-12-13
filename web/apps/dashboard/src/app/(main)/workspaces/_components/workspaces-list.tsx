@@ -11,14 +11,12 @@ import { formatWorkspaceName } from '@kloudlite/lib'
 interface WorkspacesListProps {
   workspaces: Workspace[]
   currentUser: string
-  isAdmin?: boolean
   namespace?: string
 }
 
 export function WorkspacesList({
   workspaces,
   currentUser,
-  isAdmin = false,
   namespace = 'default',
 }: WorkspacesListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
@@ -26,8 +24,8 @@ export function WorkspacesList({
 
   let filteredWorkspaces = workspaces
 
-  // Apply scope filter (only for admins)
-  if (isAdmin && scopeFilter === 'mine') {
+  // Apply scope filter (available to all users)
+  if (scopeFilter === 'mine') {
     filteredWorkspaces = filteredWorkspaces.filter((ws) => ws.spec.ownedBy === currentUser)
   }
 
@@ -41,31 +39,29 @@ export function WorkspacesList({
       {/* Filter and Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* Scope Filter - Only for Admins */}
-          {isAdmin && (
-            <div className="bg-muted flex items-center gap-1 rounded-md p-1">
-              <button
-                onClick={() => setScope('all')}
-                className={`rounded px-3 py-1 text-sm transition-colors ${
-                  scopeFilter === 'all'
-                    ? 'bg-background shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setScope('mine')}
-                className={`rounded px-3 py-1 text-sm transition-colors ${
-                  scopeFilter === 'mine'
-                    ? 'bg-background shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Mine
-              </button>
-            </div>
-          )}
+          {/* Scope Filter - Available to all users */}
+          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
+            <button
+              onClick={() => setScope('all')}
+              className={`rounded px-3 py-1 text-sm transition-colors ${
+                scopeFilter === 'all'
+                  ? 'bg-background shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setScope('mine')}
+              className={`rounded px-3 py-1 text-sm transition-colors ${
+                scopeFilter === 'mine'
+                  ? 'bg-background shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Mine
+            </button>
+          </div>
 
           {/* Status Filter */}
           <div className="bg-muted flex items-center gap-1 rounded-md p-1">
@@ -240,13 +236,15 @@ export function WorkspacesList({
       {filteredWorkspaces.length === 0 && (
         <div className="bg-card rounded-lg border py-12 text-center">
           <p className="text-muted-foreground text-sm">
-            {isAdmin && scopeFilter === 'all' && statusFilter === 'active'
+            {scopeFilter === 'all' && statusFilter === 'active'
               ? 'No active workspaces found'
-              : isAdmin && scopeFilter === 'all'
-                ? 'No workspaces found'
-                : statusFilter === 'active'
-                  ? "You don't have any active workspaces"
-                  : "You don't have any workspaces yet"}
+              : scopeFilter === 'all' && statusFilter !== 'all'
+                ? `No ${statusFilter} workspaces found`
+                : scopeFilter === 'all'
+                  ? 'No workspaces found'
+                  : scopeFilter === 'mine' && statusFilter !== 'all'
+                    ? `You don't have any ${statusFilter} workspaces`
+                    : "You don't have any workspaces yet"}
           </p>
         </div>
       )}

@@ -14,10 +14,7 @@ export default async function WorkspacesPage() {
 
   const currentUser = session.user?.email || 'user@example.com'
 
-  // For demo, assume admin if email ends with @kloudlite.io
-  const isAdmin = currentUser.endsWith('@kloudlite.io')
-
-  // Get user's work machine to determine target namespace
+  // Get user's work machine to determine target namespace (for creating workspaces)
   let namespace = 'default'
 
   try {
@@ -31,11 +28,11 @@ export default async function WorkspacesPage() {
     // This is expected for users who haven't set up a work machine yet
   }
 
-  // Fetch real workspace data from API using the work machine's target namespace
+  // Fetch all workspaces across all namespaces so users can see other users' workspaces
   let workspaces: Workspace[] = []
 
   try {
-    const response = await workspaceService.list(namespace)
+    const response = await workspaceService.listAll()
     workspaces = response.items || []
   } catch (err) {
     console.error('Failed to fetch workspaces:', err)
@@ -58,7 +55,6 @@ export default async function WorkspacesPage() {
         <WorkspacesList
           workspaces={workspaces}
           currentUser={currentUser}
-          isAdmin={isAdmin}
           namespace={namespace}
         />
       </div>

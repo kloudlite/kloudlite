@@ -237,6 +237,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			}
 
 			// Workspace routes (namespaced)
+			// Global workspace routes (cross-namespace)
+			protected.GET("/workspaces", workspaceHandlers.ListAllWorkspaces)
+
 			workspaces := protected.Group("/namespaces/:namespace/workspaces")
 			{
 				workspaces.POST("", workspaceHandlers.CreateWorkspace)

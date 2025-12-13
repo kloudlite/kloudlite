@@ -12,6 +12,19 @@ import type {
 export class WorkspaceService {
   private baseUrl = '/api/v1'
 
+  // List all workspaces across all namespaces
+  async listAll(params?: WorkspaceListParams): Promise<WorkspaceListResponse> {
+    const queryParams = new URLSearchParams()
+    if (params?.owner) queryParams.append('owner', params.owner)
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.continue) queryParams.append('continue', params.continue)
+
+    const query = queryParams.toString()
+    const url = `${this.baseUrl}/workspaces${query ? `?${query}` : ''}`
+    return apiClient.get<WorkspaceListResponse>(url)
+  }
+
   // List workspaces in a namespace
   async list(
     namespace: string = 'default',
