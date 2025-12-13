@@ -42,10 +42,14 @@ export interface NetworkPolicies {
   ingressRules?: IngressRule[]
 }
 
+export type Visibility = 'private' | 'shared' | 'open'
+
 export interface EnvironmentSpec {
   targetNamespace?: string
   name?: string
   ownedBy: string
+  visibility?: Visibility // 'private' (only owner), 'shared' (specific users), 'open' (all team)
+  sharedWith?: string[] // List of usernames when visibility is 'shared'
   activated: boolean
   labels?: Record<string, string>
   annotations?: Record<string, string>

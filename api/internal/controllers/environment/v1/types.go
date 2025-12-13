@@ -41,6 +41,20 @@ type EnvironmentSpec struct {
 	// +kubebuilder:validation:Required
 	OwnedBy string `json:"ownedBy"`
 
+	// Visibility controls who can see this environment
+	// - private: only the owner can see
+	// - shared: shared with specific users listed in SharedWith
+	// - open: visible to all team members
+	// +kubebuilder:validation:Enum=private;shared;open
+	// +kubebuilder:default=private
+	// +optional
+	Visibility string `json:"visibility,omitempty"`
+
+	// SharedWith is the list of usernames this environment is shared with
+	// Only used when Visibility is "shared"
+	// +optional
+	SharedWith []string `json:"sharedWith,omitempty"`
+
 	// WorkMachineName references the WorkMachine this environment belongs to
 	// +kubebuilder:validation:Required
 	WorkMachineName string `json:"workmachineName"`

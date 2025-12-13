@@ -186,9 +186,28 @@ spec:
                     description: Maximum number of NodePort services
                     type: string
                 type: object
+              sharedWith:
+                description: |-
+                  SharedWith is the list of usernames this environment is shared with
+                  Only used when Visibility is "shared"
+                items:
+                  type: string
+                type: array
               targetNamespace:
                 description: TargetNamespace is the namespace where all environment
                   resources will be deployed
+                type: string
+              visibility:
+                default: private
+                description: |-
+                  Visibility controls who can see this environment
+                  - private: only the owner can see
+                  - shared: shared with specific users listed in SharedWith
+                  - open: visible to all team members
+                enum:
+                - private
+                - shared
+                - open
                 type: string
               workmachineName:
                 description: WorkMachineName references the WorkMachine this environment

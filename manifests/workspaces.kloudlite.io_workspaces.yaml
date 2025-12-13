@@ -243,6 +243,13 @@ spec:
                       type: string
                     type: array
                 type: object
+              sharedWith:
+                description: |-
+                  SharedWith is the list of usernames this workspace is shared with
+                  Only used when Visibility is "shared"
+                items:
+                  type: string
+                type: array
               status:
                 default: active
                 description: Status indicates whether the workspace is active or suspended
@@ -256,6 +263,18 @@ spec:
                 items:
                   type: string
                 type: array
+              visibility:
+                default: private
+                description: |-
+                  Visibility controls who can see this workspace
+                  - private: only the owner can see
+                  - shared: shared with specific users listed in SharedWith
+                  - open: visible to all team members
+                enum:
+                - private
+                - shared
+                - open
+                type: string
               vscodeVersion:
                 default: latest
                 description: VSCodeVersion specifies the version of VS Code server

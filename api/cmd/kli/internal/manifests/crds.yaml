@@ -1,3 +1,111 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: certificates.certs.kloudlite.io
+spec:
+  group: certs.kloudlite.io
+  names:
+    categories:
+    - kloudlite
+    kind: Certificate
+    listKind: CertificateList
+    plural: certificates
+    singular: certificate
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/operator\.resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Certificate is the Schema for the certificate API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              ca:
+                type: string
+            required:
+            - ca
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    completedAt:
+                      format: date-time
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              tlsSecretName:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -178,7 +286,7 @@ spec:
                 - servicePort
                 type: object
               workloadNamespace:
-                default: kloudlite
+                default: kloudlite-ingress
                 description: |-
                   WorkloadNamespace is the namespace where DomainRequest workloads (HAProxy pod, configmap, secret) run
                   All DomainRequests share a common workload namespace for centralized ingress management
@@ -935,9 +1043,28 @@ spec:
                     description: Maximum number of NodePort services
                     type: string
                 type: object
+              sharedWith:
+                description: |-
+                  SharedWith is the list of usernames this environment is shared with
+                  Only used when Visibility is "shared"
+                items:
+                  type: string
+                type: array
               targetNamespace:
                 description: TargetNamespace is the namespace where all environment
                   resources will be deployed
+                type: string
+              visibility:
+                default: private
+                description: |-
+                  Visibility controls who can see this environment
+                  - private: only the owner can see
+                  - shared: shared with specific users listed in SharedWith
+                  - open: visible to all team members
+                enum:
+                - private
+                - shared
+                - open
                 type: string
               workmachineName:
                 description: WorkMachineName references the WorkMachine this environment
@@ -2406,6 +2533,13 @@ spec:
                       type: string
                     type: array
                 type: object
+              sharedWith:
+                description: |-
+                  SharedWith is the list of usernames this workspace is shared with
+                  Only used when Visibility is "shared"
+                items:
+                  type: string
+                type: array
               status:
                 default: active
                 description: Status indicates whether the workspace is active or suspended
@@ -2419,6 +2553,18 @@ spec:
                 items:
                   type: string
                 type: array
+              visibility:
+                default: private
+                description: |-
+                  Visibility controls who can see this workspace
+                  - private: only the owner can see
+                  - shared: shared with specific users listed in SharedWith
+                  - open: visible to all team members
+                enum:
+                - private
+                - shared
+                - open
+                type: string
               vscodeVersion:
                 default: latest
                 description: VSCodeVersion specifies the version of VS Code server
