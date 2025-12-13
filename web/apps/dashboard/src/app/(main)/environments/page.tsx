@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { EnvironmentsList } from './_components/environments-list'
 import { environmentService } from '@/lib/services/environment.service'
+import { workMachineService } from '@/lib/services/work-machine.service'
 import { environmentToUIModel, type EnvironmentUIModel } from '@kloudlite/types'
 
 export default async function EnvironmentsPage() {
@@ -13,6 +14,15 @@ export default async function EnvironmentsPage() {
 
   // Use username for filtering (matches ownedBy field in backend)
   const currentUser = session.user?.username || session.user?.email || 'test-user'
+
+  // Check if WorkMachine is running
+  let workMachineRunning = false
+  try {
+    const workMachine = await workMachineService.getMyWorkMachine()
+    workMachineRunning = workMachine?.status?.state === 'running'
+  } catch (err) {
+    console.error('Failed to fetch work machine:', err)
+  }
 
   // Fetch real environments from API
   let allEnvironments: EnvironmentUIModel[] = []
@@ -288,7 +298,11 @@ export default async function EnvironmentsPage() {
         </div>
 
         {/* Environments List with Filter */}
-        <EnvironmentsList environments={allEnvironments} currentUser={currentUser} />
+        <EnvironmentsList
+          environments={allEnvironments}
+          currentUser={currentUser}
+          workMachineRunning={workMachineRunning}
+        />
       </div>
     </main>
   )

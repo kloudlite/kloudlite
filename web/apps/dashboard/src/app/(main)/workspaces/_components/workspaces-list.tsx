@@ -13,12 +13,14 @@ interface WorkspacesListProps {
   workspaces: Workspace[]
   currentUser: string
   namespace?: string
+  workMachineRunning?: boolean
 }
 
 export function WorkspacesList({
   workspaces,
   currentUser,
   namespace = 'default',
+  workMachineRunning = false,
 }: WorkspacesListProps) {
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active' | 'suspended' | 'archived'>('all')
@@ -231,7 +233,7 @@ export function WorkspacesList({
                       : '-'}
                   </td>
                   <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
-                    <WorkspaceRowActions workspace={workspace} />
+                    <WorkspaceRowActions workspace={workspace} workMachineRunning={workMachineRunning} />
                   </td>
                 </tr>
               )

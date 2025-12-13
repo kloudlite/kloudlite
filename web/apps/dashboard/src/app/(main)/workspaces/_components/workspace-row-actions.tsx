@@ -33,9 +33,10 @@ import { CloneWorkspaceSheet } from './clone-workspace-sheet'
 
 interface WorkspaceRowActionsProps {
   workspace: Workspace
+  workMachineRunning?: boolean
 }
 
-export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
+export function WorkspaceRowActions({ workspace, workMachineRunning = false }: WorkspaceRowActionsProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -115,8 +116,12 @@ export function WorkspaceRowActions({ workspace }: WorkspaceRowActionsProps) {
             </DropdownMenuItem>
           )}
           {workspace.spec.status === 'suspended' && (
-            <DropdownMenuItem onClick={() => handleWorkspaceAction('activate')}>
-              Activate
+            <DropdownMenuItem
+              onClick={() => workMachineRunning && handleWorkspaceAction('activate')}
+              className={!workMachineRunning ? "text-muted-foreground cursor-not-allowed" : ""}
+              disabled={!workMachineRunning}
+            >
+              {workMachineRunning ? 'Activate' : 'Activate (VM stopped)'}
             </DropdownMenuItem>
           )}
           {workspace.spec.status !== 'archived' && (
