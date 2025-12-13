@@ -11,7 +11,8 @@ export default async function EnvironmentsPage() {
     redirect('/auth/signin')
   }
 
-  const currentUser = session.user?.email || 'test-user'
+  // Use username for filtering (matches ownedBy field in backend)
+  const currentUser = session.user?.username || session.user?.email || 'test-user'
 
   // Fetch real environments from API
   let allEnvironments: EnvironmentUIModel[] = []
