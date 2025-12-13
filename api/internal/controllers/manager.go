@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-logr/zapr"
 	"github.com/kloudlite/kloudlite/api/internal/config"
-	ca "github.com/kloudlite/kloudlite/api/internal/controllers/certs"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -116,10 +115,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 	}
 
 	if err := workmachine.Register(mgr); err != nil {
-		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
-	}
-
-	if err := ca.Register(mgr); err != nil {
 		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
 	}
 

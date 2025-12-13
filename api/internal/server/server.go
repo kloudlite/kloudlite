@@ -25,11 +25,8 @@ type Server struct {
 	repositoryManager   *repository.Manager
 	servicesManager     *services.Manager
 	controllerManager   *controllers.Manager
-	subdomainPoller     *services.SubdomainPoller
 	controllerCtx       context.Context
 	controllerCtxCancel context.CancelFunc
-	pollerCtx           context.Context
-	pollerCtxCancel     context.CancelFunc
 }
 
 func New(cfg *config.Config, logger *zap.Logger) *Server {
@@ -73,19 +70,11 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		logger.Fatal("Failed to create controller manager", zap.Error(err))
 	}
 
-	caInitializer := services.NewCAInitializer(k8sClient.RuntimeClient, logger)
-
-	// Initialize subdomain poller
-	subdomainPoller := services.NewSubdomainPoller(&cfg.Installation, k8sClient.RuntimeClient, caInitializer, logger)
-
 	// Setup router with dependencies
 	router := setupRouter(cfg, logger, servicesManager)
 
 	// Create cancellable context for controller manager
 	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
-
-	// Create cancellable context for subdomain poller
-	pollerCtx, pollerCtxCancel := context.WithCancel(context.Background())
 
 	return &Server{
 		httpServer: &http.Server{
@@ -102,11 +91,8 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		repositoryManager:   repoManager,
 		servicesManager:     servicesManager,
 		controllerManager:   controllerManager,
-		subdomainPoller:     subdomainPoller,
 		controllerCtx:       controllerCtx,
 		controllerCtxCancel: controllerCtxCancel,
-		pollerCtx:           pollerCtx,
-		pollerCtxCancel:     pollerCtxCancel,
 	}
 }
 
@@ -163,31 +149,6 @@ func (s *Server) Start() error {
 		}
 	}()
 
-	// Give controller manager a moment to register webhook handlers
-	time.Sleep(2 * time.Second)
-
-	// Start subdomain poller after controller manager is ready
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				s.logger.Error("Subdomain poller panicked",
-					zap.Any("panic", r),
-					zap.Stack("stack"))
-			}
-		}()
-
-		s.subdomainPoller.Start(s.pollerCtx)
-	}()
-
-	// Wait for subdomain to be ready
-	waitCtx, waitCancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer waitCancel()
-
-	s.logger.Info("Waiting for subdomain...")
-	if err := s.subdomainPoller.WaitUntilReady(waitCtx); err != nil {
-		s.logger.Warn("Subdomain not ready, continuing anyway", zap.Error(err))
-	}
-
 	// Keep the main goroutine alive
 	select {}
 }
@@ -196,8 +157,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down server...")
 
 	s.controllerCtxCancel()
-	s.pollerCtxCancel()
-	s.subdomainPoller.Stop()
 
 	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
