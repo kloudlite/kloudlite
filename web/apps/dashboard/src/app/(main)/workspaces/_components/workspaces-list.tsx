@@ -7,6 +7,7 @@ import type { Workspace } from '@kloudlite/types'
 import { WorkspaceRowActions } from './workspace-row-actions'
 import { CreateWorkspaceSheet } from './create-workspace-sheet'
 import { formatWorkspaceName } from '@kloudlite/lib'
+import { VisibilityBadge } from '@/components/visibility-selector'
 
 interface WorkspacesListProps {
   workspaces: Workspace[]
@@ -126,6 +127,9 @@ export function WorkspacesList({
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Owner
               </th>
+              <th className="text-muted-foreground px-6 py-3 text-center text-xs font-medium tracking-wider uppercase">
+                Visibility
+              </th>
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Status
               </th>
@@ -183,6 +187,9 @@ export function WorkspacesList({
                   </td>
                   <td className="px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.spec.ownedBy || 'unknown'}
+                  </td>
+                  <td className="px-6 py-4 text-center whitespace-nowrap">
+                    <VisibilityBadge visibility={workspace.spec.visibility} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">

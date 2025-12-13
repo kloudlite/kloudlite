@@ -14,6 +14,7 @@ import {
   Loader2,
   Copy,
 } from 'lucide-react'
+import { VisibilityBadge } from '@/components/visibility-selector'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -313,6 +314,9 @@ export function EnvironmentsList({
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Owner
               </th>
+              <th className="text-muted-foreground px-6 py-3 text-center text-xs font-medium tracking-wider uppercase">
+                Visibility
+              </th>
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Status
               </th>
@@ -335,6 +339,9 @@ export function EnvironmentsList({
                 </td>
                 <td className="px-6 py-4 text-sm whitespace-nowrap">
                   {env.owner.includes('@') ? env.owner.split('@')[0] : env.owner}
+                </td>
+                <td className="px-6 py-4 text-center whitespace-nowrap">
+                  <VisibilityBadge visibility={env.spec?.visibility} />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
