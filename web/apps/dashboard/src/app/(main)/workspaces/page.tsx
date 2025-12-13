@@ -12,7 +12,8 @@ export default async function WorkspacesPage() {
     redirect('/auth/signin')
   }
 
-  const currentUser = session.user?.email || 'user@example.com'
+  // Use username for filtering (matches ownedBy field in backend)
+  const currentUser = session.user?.username || session.user?.email || 'user@example.com'
 
   // Get user's work machine to determine target namespace (for creating workspaces)
   let namespace = 'default'
