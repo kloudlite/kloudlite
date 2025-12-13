@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"os/exec"
@@ -27,6 +28,9 @@ const (
 
 	// SSL policy OID (base64 of the OID for SSL)
 	sslPolicyOID = "KoZIhvdjZAED" // kSecPolicyAppleSSL
+
+	// OpenSSL cert bundle path - used by curl and other OpenSSL-based tools
+	opensslCertBundlePath = "/etc/ssl/cert.pem"
 )
 
 // TrustSettings represents the structure of macOS trust settings plist
@@ -151,6 +155,9 @@ func (s *macOSStore) removeStaleKloudliteCAs(newCert *x509.Certificate) error {
 
 		// Remove from trust settings plist
 		s.removeTrustSettings(fingerprint)
+
+		// Remove from OpenSSL cert bundle by common name
+		s.removeFromOpenSSLBundleByName(commonName)
 	}
 
 	return nil
@@ -257,6 +264,12 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 			return fmt.Errorf("failed to update trust settings: %w", err)
 		}
 
+		// Step 3: Add to OpenSSL cert bundle for curl and other OpenSSL-based tools
+		if err := s.installToOpenSSLBundle(certPath, cert); err != nil {
+			fmt.Printf("Warning: failed to add certificate to OpenSSL bundle: %v\n", err)
+			// Don't fail the whole operation - keychain install succeeded
+		}
+
 		return nil
 	}
 
@@ -285,6 +298,12 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 		certPath)
 	if out, err := ExecCommand(cmd); err != nil {
 		return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
+	}
+
+	// Also add to OpenSSL cert bundle for curl and other OpenSSL-based tools
+	if err := s.installToOpenSSLBundle(certPath, cert); err != nil {
+		fmt.Printf("Warning: failed to add certificate to OpenSSL bundle: %v\n", err)
+		// Don't fail the whole operation - keychain install succeeded
 	}
 
 	return nil
@@ -356,6 +375,157 @@ func decodeBase64(s string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(s)
 }
 
+// isInOpenSSLBundle checks if the certificate is in the OpenSSL cert bundle
+func (s *macOSStore) isInOpenSSLBundle(cert *x509.Certificate) bool {
+	data, err := os.ReadFile(opensslCertBundlePath)
+	if err != nil {
+		return false
+	}
+
+	// Encode cert to PEM for comparison
+	certPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: cert.Raw,
+	})
+	if certPEM == nil {
+		return false
+	}
+
+	return strings.Contains(string(data), string(certPEM))
+}
+
+// installToOpenSSLBundle appends the certificate to the OpenSSL cert bundle
+func (s *macOSStore) installToOpenSSLBundle(certPath string, cert *x509.Certificate) error {
+	// Read existing bundle
+	bundleData, err := os.ReadFile(opensslCertBundlePath)
+	if err != nil {
+		return fmt.Errorf("failed to read OpenSSL cert bundle: %w", err)
+	}
+
+	// Encode cert to PEM
+	certPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: cert.Raw,
+	})
+	if certPEM == nil {
+		return fmt.Errorf("failed to encode certificate to PEM")
+	}
+
+	// Check if already in bundle
+	if strings.Contains(string(bundleData), string(certPEM)) {
+		return nil // Already installed
+	}
+
+	// Create a marker comment to identify Kloudlite certificates
+	marker := fmt.Sprintf("\n# Kloudlite CA: %s\n", cert.Subject.CommonName)
+
+	// Append to bundle
+	newBundle := append(bundleData, []byte(marker)...)
+	newBundle = append(newBundle, certPEM...)
+
+	// Write atomically using temp file
+	tmpFile := opensslCertBundlePath + ".tmp"
+	if err := os.WriteFile(tmpFile, newBundle, 0644); err != nil {
+		return fmt.Errorf("failed to write temp cert bundle: %w", err)
+	}
+
+	if err := os.Rename(tmpFile, opensslCertBundlePath); err != nil {
+		os.Remove(tmpFile)
+		return fmt.Errorf("failed to rename cert bundle: %w", err)
+	}
+
+	return nil
+}
+
+// removeFromOpenSSLBundleByName removes a Kloudlite CA from the OpenSSL bundle by its common name
+// This is used during stale CA cleanup when we don't have the full certificate
+func (s *macOSStore) removeFromOpenSSLBundleByName(commonName string) {
+	bundleData, err := os.ReadFile(opensslCertBundlePath)
+	if err != nil {
+		return
+	}
+
+	bundleStr := string(bundleData)
+	marker := fmt.Sprintf("\n# Kloudlite CA: %s\n", commonName)
+
+	// Find and remove the marker and following certificate
+	markerIdx := strings.Index(bundleStr, marker)
+	if markerIdx == -1 {
+		return // Not found
+	}
+
+	// Find the end of the certificate (-----END CERTIFICATE-----)
+	afterMarker := bundleStr[markerIdx+len(marker):]
+	endCertMarker := "-----END CERTIFICATE-----"
+	endIdx := strings.Index(afterMarker, endCertMarker)
+	if endIdx == -1 {
+		return // Malformed, leave as is
+	}
+
+	// Calculate the full range to remove
+	removeEnd := markerIdx + len(marker) + endIdx + len(endCertMarker) + 1 // +1 for trailing newline
+
+	// Remove the section
+	newBundle := bundleStr[:markerIdx] + bundleStr[removeEnd:]
+
+	// Write atomically
+	tmpFile := opensslCertBundlePath + ".tmp"
+	if err := os.WriteFile(tmpFile, []byte(newBundle), 0644); err != nil {
+		return
+	}
+
+	if err := os.Rename(tmpFile, opensslCertBundlePath); err != nil {
+		os.Remove(tmpFile)
+	}
+}
+
+// uninstallFromOpenSSLBundle removes the certificate from the OpenSSL cert bundle
+func (s *macOSStore) uninstallFromOpenSSLBundle(cert *x509.Certificate) error {
+	bundleData, err := os.ReadFile(opensslCertBundlePath)
+	if err != nil {
+		return fmt.Errorf("failed to read OpenSSL cert bundle: %w", err)
+	}
+
+	// Encode cert to PEM for matching
+	certPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: cert.Raw,
+	})
+	if certPEM == nil {
+		return fmt.Errorf("failed to encode certificate to PEM")
+	}
+
+	bundleStr := string(bundleData)
+
+	// Remove the marker comment and certificate
+	marker := fmt.Sprintf("\n# Kloudlite CA: %s\n", cert.Subject.CommonName)
+	certStr := string(certPEM)
+
+	// Try to remove with marker first
+	if strings.Contains(bundleStr, marker+certStr) {
+		bundleStr = strings.Replace(bundleStr, marker+certStr, "", 1)
+	} else if strings.Contains(bundleStr, certStr) {
+		// Fall back to just removing the cert
+		bundleStr = strings.Replace(bundleStr, certStr, "", 1)
+	} else {
+		// Certificate not in bundle
+		return nil
+	}
+
+	// Write atomically
+	tmpFile := opensslCertBundlePath + ".tmp"
+	if err := os.WriteFile(tmpFile, []byte(bundleStr), 0644); err != nil {
+		return fmt.Errorf("failed to write temp cert bundle: %w", err)
+	}
+
+	if err := os.Rename(tmpFile, opensslCertBundlePath); err != nil {
+		os.Remove(tmpFile)
+		return fmt.Errorf("failed to rename cert bundle: %w", err)
+	}
+
+	return nil
+}
+
 func (s *macOSStore) Uninstall(cert *x509.Certificate) error {
 	// Remove the certificate from system keychain
 	// We need to find and delete the certificate by its common name
@@ -368,6 +538,12 @@ func (s *macOSStore) Uninstall(cert *x509.Certificate) error {
 		if out, err := ExecCommand(cmd); err != nil {
 			return fmt.Errorf("failed to remove certificate: %w\nOutput: %s", err, out)
 		}
+
+		// Also remove from OpenSSL cert bundle
+		if err := s.uninstallFromOpenSSLBundle(cert); err != nil {
+			fmt.Printf("Warning: failed to remove certificate from OpenSSL bundle: %v\n", err)
+		}
+
 		return nil
 	}
 
@@ -376,6 +552,11 @@ func (s *macOSStore) Uninstall(cert *x509.Certificate) error {
 		"-t", "/Library/Keychains/System.keychain")
 	if out, err := ExecCommand(cmd); err != nil {
 		return fmt.Errorf("failed to remove certificate: %w\nOutput: %s", err, out)
+	}
+
+	// Also remove from OpenSSL cert bundle
+	if err := s.uninstallFromOpenSSLBundle(cert); err != nil {
+		fmt.Printf("Warning: failed to remove certificate from OpenSSL bundle: %v\n", err)
 	}
 
 	return nil
