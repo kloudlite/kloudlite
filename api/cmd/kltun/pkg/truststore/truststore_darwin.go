@@ -277,24 +277,25 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 		return nil
 	}
 
-	// Not running as root - use sudo with security add-trusted-cert -d
-	// This requires an interactive terminal, which the CLI has.
-	// The command stores trust settings directly in the keychain (not Admin.plist).
+	// Not running as root - use user trust domain (no -d flag, no GUI prompt)
+	// This adds trust settings to user's login keychain, not system-wide admin domain.
+	// Trust is only for the current user, but avoids GUI authorization dialog.
 
-	cmd := exec.Command("sudo", "security", "add-trusted-cert",
-		"-d",
+	// Get user's home directory for login keychain path
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+	loginKeychain := filepath.Join(homeDir, "Library/Keychains/login.keychain-db")
+
+	cmd := exec.Command("security", "add-trusted-cert",
 		"-r", "trustRoot",
 		"-p", "ssl",
-		"-k", "/Library/Keychains/System.keychain",
+		"-k", loginKeychain,
 		certPath)
 
-	// Attach to current terminal for interactive sudo
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to add trusted certificate: %w", err)
+	if out, err := ExecCommand(cmd); err != nil {
+		return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
 	}
 
 	// Also add to OpenSSL cert bundle for curl and other OpenSSL-based tools
