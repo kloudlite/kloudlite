@@ -286,6 +286,11 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 		TargetNamespace: targetNamespace,
 		State:           machinesv1.MachineStateRunning,
 		MachineType:     mt.Name,
+		AutoShutdown: &machinesv1.AutoShutdownConfig{
+			Enabled:              true,
+			IdleThresholdMinutes: 30,
+			CheckIntervalMinutes: 5,
+		},
 	}
 
 	// Create the WorkMachine
