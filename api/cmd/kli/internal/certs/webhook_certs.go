@@ -210,6 +210,12 @@ func GenerateWildcardCertificates(domain string) (*WildcardCertificates, error) 
 		return nil, fmt.Errorf("failed to encode certificate: %w", err)
 	}
 
+	// Create full chain: server cert + CA cert
+	// This is required for browsers to verify the certificate chain
+	fullChainPEM := new(bytes.Buffer)
+	fullChainPEM.Write(certPEM.Bytes())
+	fullChainPEM.Write(caCertPEM.Bytes())
+
 	// PEM encode private key
 	keyPEM := new(bytes.Buffer)
 	if err := pem.Encode(keyPEM, &pem.Block{
@@ -221,7 +227,7 @@ func GenerateWildcardCertificates(domain string) (*WildcardCertificates, error) 
 
 	return &WildcardCertificates{
 		CACert: caCertPEM.Bytes(),
-		Cert:   certPEM.Bytes(),
+		Cert:   fullChainPEM.Bytes(), // Full chain for tls.crt
 		Key:    keyPEM.Bytes(),
 	}, nil
 }
