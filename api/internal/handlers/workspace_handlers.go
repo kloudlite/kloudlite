@@ -206,6 +206,47 @@ func (h *WorkspaceHandlers) ListWorkspaces(c *gin.Context) {
 	c.JSON(http.StatusOK, workspaces)
 }
 
+// ListAllWorkspaces handles GET /api/v1/workspaces
+// Returns all workspaces across all namespaces
+func (h *WorkspaceHandlers) ListAllWorkspaces(c *gin.Context) {
+	// Check for query parameters
+	owner := c.Query("owner")
+	status := c.Query("status")
+
+	var workspaces *workspacesv1.WorkspaceList
+	var err error
+
+	// Filter based on query parameters
+	if owner != "" {
+		// For owner filter, we use ListAll with label selector
+		workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithLabelSelector("kloudlite.io/owned-by="+owner))
+	} else if status != "" {
+		// For status filter, use field selector
+		switch status {
+		case "active", "suspended", "archived":
+			workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithFieldSelector("spec.status="+status))
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid status filter. Must be one of: active, suspended, archived",
+			})
+			return
+		}
+	} else {
+		workspaces, err = h.wsRepo.ListAll(c.Request.Context())
+	}
+
+	if err != nil {
+		h.logger.Error("Failed to list all workspaces", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to list workspaces",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, workspaces)
+}
+
 // UpdateWorkspace handles PUT /api/v1/namespaces/:namespace/workspaces/:name
 func (h *WorkspaceHandlers) UpdateWorkspace(c *gin.Context) {
 	namespace := c.Param("namespace")
