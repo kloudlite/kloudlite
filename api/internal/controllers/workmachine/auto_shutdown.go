@@ -129,16 +129,16 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 	}
 
 	// Case 2: All workspaces are idle (or no workspaces exist)
-	idleThresholdMinutes := obj.Spec.AutoShutdown.IdleThresholdMinutes
-	if idleThresholdMinutes <= 0 {
-		idleThresholdMinutes = 30 // Default to 30 minutes
+	var idleThresholdMinutes int32 = 30 // Default to 30 minutes
+	if obj.Spec.AutoShutdown != nil && obj.Spec.AutoShutdown.IdleThresholdMinutes > 0 {
+		idleThresholdMinutes = obj.Spec.AutoShutdown.IdleThresholdMinutes
 	}
 	idleThreshold := time.Duration(idleThresholdMinutes) * time.Minute
 
 	// Get check interval for requeuing
-	checkInterval := obj.Spec.AutoShutdown.CheckIntervalMinutes
-	if checkInterval <= 0 {
-		checkInterval = 5
+	var checkInterval int32 = 5 // Default to 5 minutes
+	if obj.Spec.AutoShutdown != nil && obj.Spec.AutoShutdown.CheckIntervalMinutes > 0 {
+		checkInterval = obj.Spec.AutoShutdown.CheckIntervalMinutes
 	}
 
 	// Start idle timer if not already started
