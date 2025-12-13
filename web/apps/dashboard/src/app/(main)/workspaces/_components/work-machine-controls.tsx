@@ -119,7 +119,7 @@ export function WorkMachineControls({
   const [_isPending, startTransition] = useTransition()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedType, setSelectedType] = useState(currentType)
-  const [autoShutdownEnabled, setAutoShutdownEnabled] = useState(autoShutdown?.enabled ?? true)
+  const [autoShutdownEnabled, setAutoShutdownEnabled] = useState(autoShutdown?.enabled ?? false)
   const [idleTimeout, setIdleTimeout] = useState(String(autoShutdown?.idleThresholdMinutes ?? 30))
   const [showTypeChangeWarning, setShowTypeChangeWarning] = useState(false)
   const [isChangingType, setIsChangingType] = useState(false)
