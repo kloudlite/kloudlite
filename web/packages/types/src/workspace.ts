@@ -13,10 +13,14 @@ export interface Workspace {
   status?: WorkspaceStatus
 }
 
+export type Visibility = 'private' | 'shared' | 'open'
+
 export interface WorkspaceSpec {
   displayName: string
   description?: string
   ownedBy: string
+  visibility?: Visibility // 'private' (only owner), 'shared' (specific users), 'open' (all team)
+  sharedWith?: string[] // List of usernames when visibility is 'shared'
   workMachineRef?: ObjectReference
   workmachineName?: string
   environmentRef?: ObjectReference
