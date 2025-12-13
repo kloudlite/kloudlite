@@ -25,7 +25,8 @@ import {
 import { createWorkspace, updatePackageRequest } from '@/app/actions/workspace.actions'
 import { searchPackages, resolvePackageVersion } from '@/app/actions/package.actions'
 import { toast } from 'sonner'
-import type { PackageSpec } from '@kloudlite/types'
+import type { PackageSpec, Visibility } from '@kloudlite/types'
+import { VisibilitySelector } from '@/components/visibility-selector'
 
 interface PackageWithVersion extends PackageSpec {
   displayVersion?: string // Semantic version for display (e.g., "20.10.0")
@@ -43,6 +44,10 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
 
   // Basic fields
   const [name, setName] = useState('')
+
+  // Visibility
+  const [visibility, setVisibility] = useState<Visibility>('private')
+  const [sharedWith, setSharedWith] = useState<string[]>([])
 
   // Git repository
   const [gitRepoUrl, setGitRepoUrl] = useState('')
@@ -194,6 +199,8 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         spec: {
           displayName: name.trim(),
           ownedBy: user,
+          visibility,
+          sharedWith: visibility === 'shared' ? sharedWith : undefined,
           gitRepository,
           status: 'active',
         },
@@ -210,6 +217,8 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
         toast.success('Workspace created successfully')
         setOpen(false)
         setName('')
+        setVisibility('private')
+        setSharedWith([])
         setPackages([])
         setGitRepoUrl('')
         setGitBranch('')
@@ -272,6 +281,15 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
                   Lowercase letters, numbers, and hyphens only
                 </p>
               </div>
+
+              {/* Visibility */}
+              <VisibilitySelector
+                visibility={visibility}
+                sharedWith={sharedWith}
+                onVisibilityChange={setVisibility}
+                onSharedWithChange={setSharedWith}
+                disabled={isPending}
+              />
             </div>
 
             {/* Packages Section */}
