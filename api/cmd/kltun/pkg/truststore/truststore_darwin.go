@@ -277,32 +277,25 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 		return nil
 	}
 
-	// Not running as root - use sudo to add cert and modify trust settings directly
-	// We can't use `security add-trusted-cert -d` because it requires GUI authorization
-	// even with sudo. Instead, we directly modify Admin.plist like we do when running as root.
+	// Not running as root - use sudo with security add-trusted-cert -d
+	// This requires an interactive terminal, which the CLI has.
+	// The command stores trust settings directly in the keychain (not Admin.plist).
 
-	// Step 1: Add certificate to system keychain with sudo
-	cmd := CommandWithSudo("security", "add-certificates",
+	cmd := exec.Command("sudo", "security", "add-trusted-cert",
+		"-d",
+		"-r", "trustRoot",
+		"-p", "ssl",
 		"-k", "/Library/Keychains/System.keychain",
 		certPath)
-	if out, err := ExecCommand(cmd); err != nil {
-		outStr := string(out)
-		if !strings.Contains(outStr, "already exists") &&
-			!strings.Contains(outStr, "already in") &&
-			!strings.Contains(err.Error(), "already exists") &&
-			!strings.Contains(err.Error(), "already in") {
-			return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
-		}
-	}
 
-	// Step 2: Update trust settings by writing plist file with sudo
-	// We create the plist content and use sudo tee to write it
-	if err := s.updateAdminTrustSettingsWithSudo(cert); err != nil {
-		return fmt.Errorf("failed to update trust settings: %w", err)
-	}
+	// Attach to current terminal for interactive sudo
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	// Step 3: Restart trustd to pick up the new trust settings
-	CommandWithSudo("pkill", "-HUP", "trustd").Run()
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to add trusted certificate: %w", err)
+	}
 
 	// Also add to OpenSSL cert bundle for curl and other OpenSSL-based tools
 	if err := s.installToOpenSSLBundle(certPath, cert); err != nil {
@@ -370,75 +363,6 @@ func (s *macOSStore) updateAdminTrustSettings(cert *x509.Certificate) error {
 		os.Remove(tmpFile)
 		return fmt.Errorf("failed to rename trust settings file: %w", err)
 	}
-
-	return nil
-}
-
-// updateAdminTrustSettingsWithSudo updates trust settings using sudo (for non-root CLI)
-func (s *macOSStore) updateAdminTrustSettingsWithSudo(cert *x509.Certificate) error {
-	// Calculate SHA-1 hash of the certificate (used as key in trust settings)
-	hash := sha1.Sum(cert.Raw)
-	certHash := strings.ToUpper(hex.EncodeToString(hash[:]))
-
-	// Load existing trust settings or create new
-	var settings TrustSettings
-	data, err := os.ReadFile(adminTrustSettingsPath)
-	if err == nil {
-		// Parse existing plist
-		if _, err := plist.Unmarshal(data, &settings); err != nil {
-			return fmt.Errorf("failed to parse existing trust settings: %w", err)
-		}
-	}
-
-	// Initialize trust list if nil
-	if settings.TrustList == nil {
-		settings.TrustList = make(map[string][]TrustSettingsEntry)
-	}
-	settings.TrustVersion = 1
-
-	// Decode the SSL policy OID
-	sslPolicy, err := decodeBase64(sslPolicyOID)
-	if err != nil {
-		return fmt.Errorf("failed to decode SSL policy OID: %w", err)
-	}
-
-	// Add trust entry for SSL (kSecPolicyAppleSSL)
-	settings.TrustList[certHash] = []TrustSettingsEntry{
-		{
-			KSecTrustSettingsPolicy: sslPolicy,
-			KSecTrustSettingsResult: kSecTrustSettingsResultTrustRoot,
-		},
-	}
-
-	// Marshal to plist
-	plistData, err := plist.MarshalIndent(settings, plist.XMLFormat, "\t")
-	if err != nil {
-		return fmt.Errorf("failed to marshal trust settings: %w", err)
-	}
-
-	// Write to temp file first, then use sudo to move it
-	tmpFile, err := os.CreateTemp("", "kltun-trust-*.plist")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %w", err)
-	}
-	tmpPath := tmpFile.Name()
-	defer os.Remove(tmpPath)
-
-	if _, err := tmpFile.Write(plistData); err != nil {
-		tmpFile.Close()
-		return fmt.Errorf("failed to write temp trust settings: %w", err)
-	}
-	tmpFile.Close()
-
-	// Use sudo to copy the file to the trust settings directory
-	cmd := CommandWithSudo("cp", tmpPath, adminTrustSettingsPath)
-	if out, err := ExecCommand(cmd); err != nil {
-		return fmt.Errorf("failed to copy trust settings: %w\nOutput: %s", err, out)
-	}
-
-	// Set proper permissions
-	cmd = CommandWithSudo("chmod", "644", adminTrustSettingsPath)
-	ExecCommand(cmd) // Ignore errors on chmod
 
 	return nil
 }
