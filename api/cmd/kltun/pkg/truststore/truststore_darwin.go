@@ -277,31 +277,32 @@ func (s *macOSStore) Install(certPath string, cert *x509.Certificate) error {
 		return nil
 	}
 
-	// Not running as root - this shouldn't happen if called from daemon
-	// Fall back to using sudo for both operations
-	cmd := CommandWithSudo("security", "add-certificates",
-		"-k", "/Library/Keychains/System.keychain",
-		certPath)
+	// Not running as root - use osascript to trigger proper macOS GUI authorization dialog
+	// This is necessary because `sudo security add-trusted-cert -d` from a subprocess
+	// doesn't properly trigger the GUI authorization that macOS requires.
+
+	// Build the shell command to run with administrator privileges
+	// osascript will show a proper macOS authorization dialog
+	shellCmd := fmt.Sprintf(
+		`security add-certificates -k /Library/Keychains/System.keychain %q && security add-trusted-cert -d -r trustRoot -p ssl -k /Library/Keychains/System.keychain %q`,
+		certPath, certPath)
+
+	cmd := exec.Command("osascript", "-e",
+		fmt.Sprintf(`do shell script %q with administrator privileges`, shellCmd))
+
 	if out, err := ExecCommand(cmd); err != nil {
+		// Check for user cancellation
 		outStr := string(out)
+		if strings.Contains(outStr, "User canceled") || strings.Contains(err.Error(), "User canceled") {
+			return fmt.Errorf("authorization cancelled by user")
+		}
+		// Ignore "already exists" errors
 		if !strings.Contains(outStr, "already exists") &&
 			!strings.Contains(outStr, "already in") &&
 			!strings.Contains(err.Error(), "already exists") &&
 			!strings.Contains(err.Error(), "already in") {
-			return fmt.Errorf("failed to add certificate to keychain: %w\nOutput: %s", err, out)
+			return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
 		}
-	}
-
-	// For non-root, we still need to use the security command with sudo
-	// This will prompt for GUI authorization
-	cmd = CommandWithSudo("security", "add-trusted-cert",
-		"-d",
-		"-r", "trustRoot",
-		"-p", "ssl",
-		"-k", "/Library/Keychains/System.keychain",
-		certPath)
-	if out, err := ExecCommand(cmd); err != nil {
-		return fmt.Errorf("failed to add trusted certificate: %w\nOutput: %s", err, out)
 	}
 
 	// Also add to OpenSSL cert bundle for curl and other OpenSSL-based tools
