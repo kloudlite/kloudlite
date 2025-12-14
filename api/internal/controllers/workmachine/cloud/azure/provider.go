@@ -20,15 +20,15 @@ import (
 )
 
 type provider struct {
-	credential       *azidentity.DefaultAzureCredential
-	vmClient         *armcompute.VirtualMachinesClient
-	diskClient       *armcompute.DisksClient
-	nicClient        *armnetwork.InterfacesClient
-	publicIPClient   *armnetwork.PublicIPAddressesClient
-	subscriptionID   string
-	resourceGroup    string
-	location         string
-	subnetID         string
+	credential             *azidentity.DefaultAzureCredential
+	vmClient               *armcompute.VirtualMachinesClient
+	diskClient             *armcompute.DisksClient
+	nicClient              *armnetwork.InterfacesClient
+	publicIPClient         *armnetwork.PublicIPAddressesClient
+	subscriptionID         string
+	resourceGroup          string
+	location               string
+	subnetID               string
 	networkSecurityGroupID string
 	ProviderArgs
 }
@@ -46,40 +46,40 @@ type Tag struct {
 var deepLearningImages = map[string]ImageReference{
 	// Using Canonical Ubuntu Server 24.04 LTS with NVIDIA GPU drivers
 	// These can be used with Azure NV/NC series VMs
-	"eastus":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"eastus2":        {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"westus":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"westus2":        {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"westus3":        {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"centralus":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"northeurope":    {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"westeurope":     {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"southeastasia":  {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"eastasia":       {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"japaneast":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"japanwest":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"australiaeast":  {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"eastus":             {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"eastus2":            {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"westus":             {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"westus2":            {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"westus3":            {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"centralus":          {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"northeurope":        {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"westeurope":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"southeastasia":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"eastasia":           {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"japaneast":          {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"japanwest":          {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"australiaeast":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
 	"australiasoutheast": {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"southcentralus": {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"northcentralus": {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"uksouth":        {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"ukwest":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"canadacentral":  {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"canadaeast":     {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"southcentralus":     {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"northcentralus":     {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"uksouth":            {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"ukwest":             {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"canadacentral":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"canadaeast":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
 	"germanywestcentral": {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"francecentral":  {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"koreacentral":   {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"koreasouth":     {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"brazilsouth":    {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"southafricanorth": {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"uaenorth":       {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"switzerlandnorth": {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"norwayeast":     {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"swedencentral":  {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"qatarcentral":   {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"polandcentral":  {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"italynorth":     {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
-	"israelcentral":  {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"francecentral":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"koreacentral":       {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"koreasouth":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"brazilsouth":        {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"southafricanorth":   {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"uaenorth":           {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"switzerlandnorth":   {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"norwayeast":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"swedencentral":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"qatarcentral":       {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"polandcentral":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"italynorth":         {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
+	"israelcentral":      {Publisher: "Canonical", Offer: "ubuntu-24_04-lts", SKU: "server", Version: "latest"},
 }
 
 type ImageReference struct {
@@ -277,10 +277,10 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	publicIPName := vmName + "-pip"
 
 	tags := map[string]*string{
-		"Name":                       to.Ptr(vmName),
-		"kloudlite.io/workmachine":   to.Ptr(wm.Name),
-		"kloudlite.io/owner":         to.Ptr(wm.Spec.OwnedBy),
-		"kloudlite.io/managed-by":    to.Ptr("kloudlite-controller"),
+		"Name":                   to.Ptr(vmName),
+		"kloudlite-workmachine":  to.Ptr(wm.Name),
+		"kloudlite-owner":        to.Ptr(wm.Spec.OwnedBy),
+		"kloudlite-managed-by":   to.Ptr("kloudlite-controller"),
 	}
 
 	for _, tag := range p.ResourceTags {
@@ -411,8 +411,8 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 					ManagedDisk: &armcompute.ManagedDiskParameters{
 						StorageAccountType: to.Ptr(osDiskType),
 					},
-					DiskSizeGB:         to.Ptr(volumeSize),
-					DeleteOption:       to.Ptr(armcompute.DiskDeleteOptionTypesDelete),
+					DiskSizeGB:   to.Ptr(volumeSize),
+					DeleteOption: to.Ptr(armcompute.DiskDeleteOptionTypesDelete),
 				},
 			},
 			OSProfile: &armcompute.OSProfile{
