@@ -187,6 +187,45 @@ func CreateHTTPSListener(ctx context.Context, cfg aws.Config, albARN, tgARN, cer
 	return *result.Listeners[0].ListenerArn, nil
 }
 
+// CreateHTTPForwardListener creates an HTTP listener that forwards to target group (idempotent - returns existing if found)
+// Use this when TLS termination is handled by Cloudflare
+func CreateHTTPForwardListener(ctx context.Context, cfg aws.Config, albARN, tgARN string) (string, error) {
+	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)
+
+	// Check if HTTP listener already exists on port 80
+	existing, err := elbClient.DescribeListeners(ctx, &elasticloadbalancingv2.DescribeListenersInput{
+		LoadBalancerArn: aws.String(albARN),
+	})
+	if err == nil {
+		for _, listener := range existing.Listeners {
+			if listener.Port != nil && *listener.Port == 80 {
+				return *listener.ListenerArn, nil
+			}
+		}
+	}
+
+	result, err := elbClient.CreateListener(ctx, &elasticloadbalancingv2.CreateListenerInput{
+		LoadBalancerArn: aws.String(albARN),
+		Protocol:        elbTypes.ProtocolEnumHttp,
+		Port:            aws.Int32(80),
+		DefaultActions: []elbTypes.Action{
+			{
+				Type:           elbTypes.ActionTypeEnumForward,
+				TargetGroupArn: aws.String(tgARN),
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create HTTP forward listener: %w", err)
+	}
+
+	if len(result.Listeners) == 0 {
+		return "", fmt.Errorf("no listener returned after creation")
+	}
+
+	return *result.Listeners[0].ListenerArn, nil
+}
+
 // CreateHTTPRedirectListener creates an HTTP listener that redirects to HTTPS (idempotent - returns existing if found)
 func CreateHTTPRedirectListener(ctx context.Context, cfg aws.Config, albARN string) (string, error) {
 	elbClient := elasticloadbalancingv2.NewFromConfig(cfg)

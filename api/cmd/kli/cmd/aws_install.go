@@ -27,15 +27,14 @@ var awsInstallCmd = &cobra.Command{
 
 This command will:
   - Find Ubuntu 24.04 LTS AMD64 AMI in the region
-  - Create IAM role 'kl-{installation-key}-role' with required permissions (including S3, ELB, ACM)
+  - Create IAM role 'kl-{installation-key}-role' with required permissions (including S3, ELB)
   - Create S3 bucket 'kl-{installation-key}-backups' for K3s database backups
   - Create security groups for EC2 and ALB
   - Launch t3.medium EC2 instance with 100GB storage
   - Configure instance in default VPC with public IP
   - Setup automated K3s SQLite backup to S3 every 30 minutes
-  - Create Application Load Balancer with TLS termination
-  - Request ACM certificate with DNS validation via Cloudflare
-  - Configure custom domain using the subdomain reserved in console
+  - Create Application Load Balancer (HTTP listener)
+  - Configure DNS with Cloudflare proxy mode (TLS termination at Cloudflare edge)
 
 NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
 before running this command. The installation will fail if no subdomain
@@ -96,7 +95,6 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		bucketName string
 		albARN     string
 		tgARN      string
-		certARN    string
 		vpcID      string
 	}
 
@@ -125,10 +123,6 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		if createdResources.tgARN != "" {
 			fmt.Printf("  Deleting Target Group...\n")
 			awsinternal.DeleteTargetGroup(context.Background(), cfg, installationKey)
-		}
-		if createdResources.certARN != "" {
-			fmt.Printf("  Deleting ACM Certificate...\n")
-			awsinternal.DeleteCertificate(context.Background(), cfg, createdResources.certARN)
 		}
 		if createdResources.instanceID != "" {
 			fmt.Printf("  Terminating instance %s...\n", createdResources.instanceID)
@@ -524,43 +518,9 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		}
 		green.Printf(" +\n")
 
-		bold.Println("\nTLS Certificate Setup")
-		bold.Println("---------------------")
-
-		// Request ACM certificate
-		fmt.Printf("  o Requesting ACM certificate for %s...", fullDomain)
-		certARN, err := awsinternal.RequestCertificate(ctx, cfg, fullDomain, installationKey)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		createdResources.Lock()
-		createdResources.certARN = certARN
-		createdResources.Unlock()
-		green.Printf(" +\n")
-
-		// Get validation records
-		fmt.Printf("  o Getting DNS validation records...")
-		validationRecords, err := awsinternal.GetValidationRecords(ctx, cfg, certARN)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		green.Printf(" +\n")
-		fmt.Printf("    %d validation record(s) to create\n", len(validationRecords))
-
-		// Send validation records to console for Cloudflare DNS creation
-		fmt.Printf("  o Creating DNS validation records in Cloudflare...")
-		var consoleRecords []console.ACMValidationRecord
-		for _, r := range validationRecords {
-			consoleRecords = append(consoleRecords, console.ACMValidationRecord{
-				Name:  r.Name,
-				Value: r.Value,
-			})
-		}
-		_, err = consoleClient.CreateACMValidationRecords(ctx, installationKey, secretKey, consoleRecords)
+		// Create HTTP listener (TLS termination is handled by Cloudflare)
+		fmt.Printf("  o Creating HTTP listener (TLS via Cloudflare)...")
+		_, err = awsinternal.CreateHTTPForwardListener(ctx, cfg, albInfo.ARN, tgARN)
 		if err != nil {
 			red.Printf(" x\n")
 			yellow.Printf("    Error: %v\n\n", err)
@@ -568,41 +528,11 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		}
 		green.Printf(" +\n")
 
-		// Wait for certificate validation
-		fmt.Printf("  o Waiting for certificate validation (this may take 2-5 minutes)...")
-		err = awsinternal.WaitForValidation(ctx, cfg, certARN, 10*time.Minute)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		green.Printf(" +\n")
-
-		// Create HTTPS listener
-		fmt.Printf("  o Creating HTTPS listener...")
-		_, err = awsinternal.CreateHTTPSListener(ctx, cfg, albInfo.ARN, tgARN, certARN)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		green.Printf(" +\n")
-
-		// Create HTTP redirect listener
-		fmt.Printf("  o Creating HTTP to HTTPS redirect...")
-		_, err = awsinternal.CreateHTTPRedirectListener(ctx, cfg, albInfo.ARN)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		green.Printf(" +\n")
-
-		// Register ALB DNS with console for CNAME creation
+		// Register ALB DNS with console for CNAME creation (proxied for Cloudflare TLS)
 		bold.Println("\nDNS Configuration")
 		bold.Println("-----------------")
-		fmt.Printf("  o Configuring DNS for %s...", fullDomain)
-		_, err = consoleClient.ConfigureRootDNS(ctx, installationKey, secretKey, albDNSName, "cname")
+		fmt.Printf("  o Configuring DNS for %s (Cloudflare proxied)...", fullDomain)
+		_, err = consoleClient.ConfigureRootDNS(ctx, installationKey, secretKey, albDNSName, "cname", true)
 		if err != nil {
 			red.Printf(" x\n")
 			yellow.Printf("    Error: %v\n\n", err)
