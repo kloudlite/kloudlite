@@ -5,12 +5,24 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
 // MetadataProvider provides methods to fetch cloud provider metadata
 type MetadataProvider interface {
 	GetPublicIP(ctx context.Context) (string, error)
+}
+
+// NewMetadataProvider creates a metadata provider based on CLOUD_PROVIDER env var
+func NewMetadataProvider() MetadataProvider {
+	cloudProvider := os.Getenv("CLOUD_PROVIDER")
+	switch cloudProvider {
+	case "azure":
+		return NewAzureMetadataProvider()
+	default:
+		return NewAWSMetadataProvider()
+	}
 }
 
 // AWSMetadataProvider fetches metadata from AWS EC2
@@ -25,6 +37,64 @@ func NewAWSMetadataProvider() *AWSMetadataProvider {
 			Timeout: 5 * time.Second,
 		},
 	}
+}
+
+// AzureMetadataProvider fetches metadata from Azure IMDS
+type AzureMetadataProvider struct {
+	client *http.Client
+}
+
+// NewAzureMetadataProvider creates a new Azure metadata provider
+func NewAzureMetadataProvider() *AzureMetadataProvider {
+	return &AzureMetadataProvider{
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
+	}
+}
+
+// GetPublicIP fetches the public IP from Azure Instance Metadata Service
+func (p *AzureMetadataProvider) GetPublicIP(ctx context.Context) (string, error) {
+	// Azure IMDS endpoint for public IP
+	// Note: Azure IMDS doesn't directly provide public IP in the same way as AWS
+	// We need to get the network interface info
+	ipURL := "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2021-02-01&format=text"
+
+	req, err := http.NewRequestWithContext(ctx, "GET", ipURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Metadata", "true")
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch public IP from Azure IMDS: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// Try alternative: check environment variable set by cloud-init
+		if publicIP := os.Getenv("AZURE_PUBLIC_IP"); publicIP != "" {
+			return publicIP, nil
+		}
+		return "", fmt.Errorf("Azure IMDS returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	publicIP := string(body)
+	if publicIP == "" {
+		// Fallback to environment variable
+		if envIP := os.Getenv("AZURE_PUBLIC_IP"); envIP != "" {
+			return envIP, nil
+		}
+		return "", fmt.Errorf("Azure IMDS returned empty IP")
+	}
+
+	return publicIP, nil
 }
 
 // GetPublicIP fetches the public IP from AWS EC2 metadata service using IMDSv2

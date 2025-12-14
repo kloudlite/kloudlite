@@ -18,5 +18,8 @@ packages:
         url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
         sha256: f3e62f065cc2b6941546cf9e49e0a65bf08f5c83cd15d13664b630b3dde9c317
   - ssm-session-manager-plugin
+  - azure-cli
+  - python313
+  - python313Packages.pip
 env:
   KUBECONFIG: $PWD/.secrets/kubeconfig.yaml
