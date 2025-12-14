@@ -5,12 +5,13 @@ FROM oven/bun:alpine AS deps
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json bun.lock ./
+# Copy package files (lockfile optional for standalone builds)
+COPY package.json ./
+COPY bun.lock* ./
 
-# Install dependencies with cache mount for bun store
+# Install dependencies
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile
+    bun install --frozen-lockfile 2>/dev/null || bun install
 
 # Builder stage
 FROM oven/bun:alpine AS builder

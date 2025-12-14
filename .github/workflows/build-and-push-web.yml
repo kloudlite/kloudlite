@@ -21,7 +21,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
   REGISTRY: ghcr.io
 
 jobs:
@@ -41,32 +40,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: web/pnpm-lock.yaml
+          bun-version: latest
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
             web/node_modules
-            web/apps/console/node_modules
+            web/apps/*/node_modules
             web/packages/*/node_modules
-            ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Create environment file
         run: |
@@ -114,12 +106,12 @@ jobs:
         with:
           path: |
             web/apps/console/.next/cache
-          key: ${{ runner.os }}-nextjs-console-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/apps/console/**/*.js', 'web/apps/console/**/*.jsx', 'web/apps/console/**/*.ts', 'web/apps/console/**/*.tsx') }}
+          key: ${{ runner.os }}-nextjs-console-${{ hashFiles('web/bun.lock') }}-${{ hashFiles('web/apps/console/**/*.js', 'web/apps/console/**/*.jsx', 'web/apps/console/**/*.ts', 'web/apps/console/**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-console-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-console-${{ hashFiles('web/bun.lock') }}-
 
       - name: Build Console app
-        run: pnpm --filter console build
+        run: bun run --filter console build
         env:
           NODE_ENV: production
 
@@ -167,7 +159,7 @@ jobs:
           echo "### Console Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **App**: Console" >> $GITHUB_STEP_SUMMARY
-          echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runtime**: Bun" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -192,32 +184,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: web/pnpm-lock.yaml
+          bun-version: latest
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
             web/node_modules
-            web/apps/dashboard/node_modules
+            web/apps/*/node_modules
             web/packages/*/node_modules
-            ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Create environment file
         run: |
@@ -263,12 +248,12 @@ jobs:
         with:
           path: |
             web/apps/dashboard/.next/cache
-          key: ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/apps/dashboard/**/*.js', 'web/apps/dashboard/**/*.jsx', 'web/apps/dashboard/**/*.ts', 'web/apps/dashboard/**/*.tsx') }}
+          key: ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/bun.lock') }}-${{ hashFiles('web/apps/dashboard/**/*.js', 'web/apps/dashboard/**/*.jsx', 'web/apps/dashboard/**/*.ts', 'web/apps/dashboard/**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/bun.lock') }}-
 
       - name: Build Dashboard app
-        run: pnpm --filter dashboard build
+        run: bun run --filter dashboard build
         env:
           NODE_ENV: production
 
@@ -316,7 +301,7 @@ jobs:
           echo "### Dashboard Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **App**: Dashboard" >> $GITHUB_STEP_SUMMARY
-          echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runtime**: Bun" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -341,32 +326,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: web/pnpm-lock.yaml
+          bun-version: latest
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
             web/node_modules
-            web/apps/website/node_modules
+            web/apps/*/node_modules
             web/packages/*/node_modules
-            ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Create environment file
         run: |
@@ -384,12 +362,12 @@ jobs:
         with:
           path: |
             web/apps/website/.next/cache
-          key: ${{ runner.os }}-nextjs-website-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/apps/website/**/*.js', 'web/apps/website/**/*.jsx', 'web/apps/website/**/*.ts', 'web/apps/website/**/*.tsx') }}
+          key: ${{ runner.os }}-nextjs-website-${{ hashFiles('web/bun.lock') }}-${{ hashFiles('web/apps/website/**/*.js', 'web/apps/website/**/*.jsx', 'web/apps/website/**/*.ts', 'web/apps/website/**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-website-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-website-${{ hashFiles('web/bun.lock') }}-
 
       - name: Build Website app
-        run: pnpm --filter website build
+        run: bun run --filter website build
         env:
           NODE_ENV: production
 
@@ -437,7 +415,7 @@ jobs:
           echo "### Website Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **App**: Website" >> $GITHUB_STEP_SUMMARY
-          echo "- **Node Version**: ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runtime**: Bun" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -459,33 +437,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: web/pnpm-lock.yaml
+          bun-version: latest
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
             web/node_modules
-            ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('web/pnpm-lock.yaml') }}
+            web/apps/*/node_modules
+            web/packages/*/node_modules
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Run ESLint
-        run: pnpm run lint:all
+        run: bun run lint:all
         continue-on-error: true
 
   # Deploy Website to Azure
