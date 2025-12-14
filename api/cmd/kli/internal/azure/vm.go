@@ -87,10 +87,10 @@ func CreatePublicIP(ctx context.Context, cfg *AzureConfig, installationKey strin
 	}
 
 	tags := map[string]*string{
-		"Name":                         &pipName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &pipName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
@@ -133,10 +133,10 @@ func CreateNetworkInterface(ctx context.Context, cfg *AzureConfig, subnetID, nsg
 	}
 
 	tags := map[string]*string{
-		"Name":                         &nicName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &nicName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
@@ -179,7 +179,8 @@ func CreateNetworkInterface(ctx context.Context, cfg *AzureConfig, subnetID, nsg
 
 // LaunchVM creates an Azure VM with cloud-init for K3s installation
 func LaunchVM(ctx context.Context, cfg *AzureConfig, imageRef *UbuntuImageReference, nicID, managedIdentityID,
-	secretKey, storageAccountName, k3sToken, installationKey, vmSize, sshPublicKey string, enableProtection bool, fullDomain string) (string, error) {
+	secretKey, storageAccountName, k3sToken, installationKey, vmSize, sshPublicKey string, enableProtection bool, fullDomain string,
+	subnetID, nsgID string) (string, error) {
 
 	client, err := armcompute.NewVirtualMachinesClient(cfg.SubscriptionID, cfg.Credential, nil)
 	if err != nil {
@@ -206,14 +207,14 @@ func LaunchVM(ctx context.Context, cfg *AzureConfig, imageRef *UbuntuImageRefere
 	}
 
 	// Create cloud-init script
-	userData := generateCloudInitScript(cfg, secretKey, jwtSecret, storageAccountName, k3sToken, installationKey, fullDomain)
+	userData := generateCloudInitScript(cfg, secretKey, jwtSecret, storageAccountName, k3sToken, installationKey, fullDomain, subnetID, nsgID)
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
 
 	tags := map[string]*string{
-		"Name":                         &vmName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &vmName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
@@ -292,7 +293,7 @@ func LaunchVM(ctx context.Context, cfg *AzureConfig, imageRef *UbuntuImageRefere
 }
 
 // generateCloudInitScript creates the cloud-init script for K3s installation
-func generateCloudInitScript(cfg *AzureConfig, secretKey, jwtSecret, storageAccountName, k3sToken, installationKey, fullDomain string) string {
+func generateCloudInitScript(cfg *AzureConfig, secretKey, jwtSecret, storageAccountName, k3sToken, installationKey, fullDomain, subnetID, nsgID string) string {
 	return fmt.Sprintf(`#!/bin/bash
 set -euo pipefail
 
@@ -406,6 +407,8 @@ data:
   AZURE_SUBSCRIPTION_ID: "%s"
   AZURE_RESOURCE_GROUP: "%s"
   AZURE_LOCATION: "%s"
+  AZURE_SUBNET_ID: "%s"
+  AZURE_NSG_ID: "%s"
   AZURE_PRIVATE_IP: "$PRIVATE_IP"
   AZURE_PUBLIC_IP: "$PUBLIC_IP"
   AZURE_STORAGE_ACCOUNT: "%s"
@@ -585,7 +588,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, storageAccountName, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
+`, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, subnetID, nsgID, storageAccountName, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
 }
 
 // WaitForVM waits for the VM to be in running state and returns its IPs

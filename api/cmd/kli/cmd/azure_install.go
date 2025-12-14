@@ -414,6 +414,16 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	}
 	green.Printf(" +\n")
 
+	// Assign VM and Network roles for WorkMachine controller
+	fmt.Printf("  o Assigning VM & Network roles...")
+	err = azureinternal.AssignVMAndNetworkRoles(ctx, cfg, principalID)
+	if err != nil {
+		red.Printf(" x\n")
+		yellow.Printf("    Error: %v\n\n", err)
+		os.Exit(1)
+	}
+	green.Printf(" +\n")
+
 	// Create blob container
 	fmt.Printf("  o Creating blob container...")
 	_, err = azureinternal.EnsureBlobContainer(ctx, cfg, storageAccountName)
@@ -507,7 +517,8 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	// Launch VM
 	fmt.Printf("  o Launching Azure VM (%s)...", azureVMSize)
 	vmID, err := azureinternal.LaunchVM(ctx, cfg, imageRef, nicID, identityID,
-		secretKey, storageAccountName, k3sToken, azureInstallationKey, azureVMSize, sshKeyPair.PublicKey, azureEnableTerminationProtection, fullDomain)
+		secretKey, storageAccountName, k3sToken, azureInstallationKey, azureVMSize, sshKeyPair.PublicKey, azureEnableTerminationProtection, fullDomain,
+		subnetID, nsgID)
 	if err != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
