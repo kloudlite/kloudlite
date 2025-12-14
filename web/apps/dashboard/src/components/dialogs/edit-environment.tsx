@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -11,12 +11,10 @@ import {
   DialogTitle,
 } from '@kloudlite/ui'
 import { Button } from '@kloudlite/ui'
-import { Label } from '@kloudlite/ui'
-import { Input } from '@kloudlite/ui'
-import { Switch } from '@kloudlite/ui'
 import { updateEnvironment } from '@/app/actions/environment.actions'
 import { toast } from 'sonner'
-import type { EnvironmentUIModel } from '@kloudlite/types'
+import type { EnvironmentUIModel, Visibility } from '@kloudlite/types'
+import { VisibilitySelector } from '@/components/visibility-selector'
 
 interface EditEnvironmentDialogProps {
   open: boolean
@@ -31,7 +29,7 @@ export function EditEnvironmentDialog({
   onOpenChange,
   environment,
   onSuccess,
-  currentUser: _currentUser,
+  currentUser,
 }: EditEnvironmentDialogProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,16 +37,14 @@ export function EditEnvironmentDialog({
   // Prevent editing if environment is in a transitional state
   const isTransitional = ['deleting', 'activating', 'deactivating'].includes(environment.status)
 
-  const [formData, setFormData] = useState({
-    cpuRequests: '',
-    memoryRequests: '',
-    cpuLimits: '',
-    memoryLimits: '',
-    storageRequests: '',
-    allowIngress: false,
-    allowEgress: false,
-    isolateNamespace: false,
-  })
+  const [visibility, setVisibility] = useState<Visibility>(environment.spec?.visibility || 'private')
+  const [sharedWith, setSharedWith] = useState<string[]>(environment.spec?.sharedWith || [])
+
+  // Reset form when environment changes
+  useEffect(() => {
+    setVisibility(environment.spec?.visibility || 'private')
+    setSharedWith(environment.spec?.sharedWith || [])
+  }, [environment])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,7 +55,9 @@ export function EditEnvironmentDialog({
         spec: {
           targetNamespace: environment.targetNamespace,
           activated: environment.status === 'active',
-          ownedBy: _currentUser,
+          ownedBy: currentUser,
+          visibility,
+          sharedWith: visibility === 'shared' ? sharedWith : undefined,
         },
       }
 
@@ -90,127 +88,23 @@ export function EditEnvironmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Environment</DialogTitle>
             <DialogDescription>
-              Update resource quotas and network policies for {environment.name}
+              Update sharing settings for {environment.name}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6 py-4">
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Resource Quotas</h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cpu-requests">CPU Requests</Label>
-                  <Input
-                    id="cpu-requests"
-                    placeholder="e.g., 500m, 2"
-                    value={formData.cpuRequests}
-                    onChange={(e) => setFormData({ ...formData, cpuRequests: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cpu-limits">CPU Limits</Label>
-                  <Input
-                    id="cpu-limits"
-                    placeholder="e.g., 1000m, 4"
-                    value={formData.cpuLimits}
-                    onChange={(e) => setFormData({ ...formData, cpuLimits: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="memory-requests">Memory Requests</Label>
-                  <Input
-                    id="memory-requests"
-                    placeholder="e.g., 256Mi, 1Gi"
-                    value={formData.memoryRequests}
-                    onChange={(e) => setFormData({ ...formData, memoryRequests: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="memory-limits">Memory Limits</Label>
-                  <Input
-                    id="memory-limits"
-                    placeholder="e.g., 512Mi, 2Gi"
-                    value={formData.memoryLimits}
-                    onChange={(e) => setFormData({ ...formData, memoryLimits: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="storage-requests">Storage Requests</Label>
-                <Input
-                  id="storage-requests"
-                  placeholder="e.g., 10Gi, 100Gi"
-                  value={formData.storageRequests}
-                  onChange={(e) => setFormData({ ...formData, storageRequests: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Network Policies</h3>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="allow-ingress">Allow Ingress</Label>
-                    <p className="text-muted-foreground text-xs">
-                      Allow incoming traffic to this namespace
-                    </p>
-                  </div>
-                  <Switch
-                    id="allow-ingress"
-                    checked={formData.allowIngress}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, allowIngress: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="allow-egress">Allow Egress</Label>
-                    <p className="text-muted-foreground text-xs">
-                      Allow outgoing traffic from this namespace
-                    </p>
-                  </div>
-                  <Switch
-                    id="allow-egress"
-                    checked={formData.allowEgress}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, allowEgress: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="isolate-namespace">Isolate Namespace</Label>
-                    <p className="text-muted-foreground text-xs">
-                      Prevent cross-namespace communication
-                    </p>
-                  </div>
-                  <Switch
-                    id="isolate-namespace"
-                    checked={formData.isolateNamespace}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, isolateNamespace: checked })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+          <div className="py-4">
+            <VisibilitySelector
+              visibility={visibility}
+              sharedWith={sharedWith}
+              onVisibilityChange={setVisibility}
+              onSharedWithChange={setSharedWith}
+              disabled={isSubmitting}
+            />
           </div>
 
           <DialogFooter>
