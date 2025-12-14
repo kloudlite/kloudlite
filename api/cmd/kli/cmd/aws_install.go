@@ -39,11 +39,11 @@ This command will:
 NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
 before running this command. The installation will fail if no subdomain
 has been configured for the installation key.`,
-	Example: `  # Install using default AWS region from config
+	Example: `  # Install using default AWS profile and region
   kli aws install --installation-key prod
 
-  # Install in a specific region
-  kli aws install --installation-key staging --region us-west-2
+  # Install with specific AWS profile and region
+  kli aws install --installation-key staging --profile myprofile --region us-west-2
 
   # Install without ALB (direct EC2 access only)
   kli aws install --installation-key dev --skip-alb`,
@@ -52,6 +52,7 @@ has been configured for the installation key.`,
 
 var (
 	region                      string
+	profile                     string
 	installationKey             string
 	enableTerminationProtection bool
 	skipALB                     bool
@@ -59,6 +60,7 @@ var (
 
 func init() {
 	awsInstallCmd.Flags().StringVar(&region, "region", "", "AWS region (uses default from AWS config if not specified)")
+	awsInstallCmd.Flags().StringVar(&profile, "profile", "", "AWS profile to use (uses default profile if not specified)")
 	awsInstallCmd.Flags().StringVar(&installationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	awsInstallCmd.Flags().BoolVar(&enableTerminationProtection, "enable-termination-protection", true, "Enable EC2 termination protection (default: true)")
 	awsInstallCmd.Flags().BoolVar(&skipALB, "skip-alb", false, "Skip ALB and TLS setup (direct EC2 access only)")
@@ -104,7 +106,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		yellow.Println("\nInstallation interrupted! Cleaning up resources...")
 
 		// Load config for cleanup
-		cfg, err := awsinternal.LoadAWSConfig(context.Background(), region)
+		cfg, err := awsinternal.LoadAWSConfig(context.Background(), region, profile)
 		if err != nil {
 			red.Printf("Failed to load AWS config for cleanup: %v\n", err)
 			os.Exit(1)
@@ -168,8 +170,11 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	bold.Println("Configuration")
 	bold.Println("-------------")
 	fmt.Printf("  Installation Key: %s\n", installationKey)
+	if profile != "" {
+		fmt.Printf("  Profile:         %s\n", profile)
+	}
 	fmt.Printf("  Region:          ")
-	cfg, err := awsinternal.LoadAWSConfig(ctx, region)
+	cfg, err := awsinternal.LoadAWSConfig(ctx, region, profile)
 	if err != nil {
 		red.Printf("x\n")
 		yellow.Printf("  Error: %v\n\n", err)

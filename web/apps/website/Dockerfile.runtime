@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Runtime stage - copy pre-built application
-FROM node:20-alpine AS runner
+FROM oven/bun:alpine AS runner
 
 WORKDIR /app
 
@@ -9,10 +9,10 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built artifacts (will be copied from GitHub Actions build)
+# Copy built artifacts (will be copied from GitHub Actions build - monorepo structure)
 COPY --chown=nextjs:nodejs .next/standalone ./
-COPY --chown=nextjs:nodejs .next/static ./.next/static
-COPY --chown=nextjs:nodejs public ./public
+COPY --chown=nextjs:nodejs .next/static ./apps/website/.next/static
+COPY --chown=nextjs:nodejs public ./apps/website/public
 
 USER nextjs
 
@@ -24,6 +24,6 @@ ENV PORT=3000 \
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD bun -e "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["node", "server.js"]
+CMD ["bun", "apps/website/server.js"]

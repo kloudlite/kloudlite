@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from '@kloudlite/ui'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
 import { Loader2, Cloud, Copy, CheckCircle2, Clock } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
@@ -15,11 +15,32 @@ interface SessionData {
   installationKey: string
 }
 
-const getCloudProviderCommands = (installationKey: string) => {
+const AWS_REGIONS = [
+  { value: '', label: 'Use AWS CLI default region' },
+  { value: 'us-east-1', label: 'US East (N. Virginia)' },
+  { value: 'us-east-2', label: 'US East (Ohio)' },
+  { value: 'us-west-1', label: 'US West (N. California)' },
+  { value: 'us-west-2', label: 'US West (Oregon)' },
+  { value: 'eu-west-1', label: 'EU (Ireland)' },
+  { value: 'eu-west-2', label: 'EU (London)' },
+  { value: 'eu-west-3', label: 'EU (Paris)' },
+  { value: 'eu-central-1', label: 'EU (Frankfurt)' },
+  { value: 'eu-north-1', label: 'EU (Stockholm)' },
+  { value: 'ap-south-1', label: 'Asia Pacific (Mumbai)' },
+  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
+  { value: 'ap-southeast-2', label: 'Asia Pacific (Sydney)' },
+  { value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo)' },
+  { value: 'ap-northeast-2', label: 'Asia Pacific (Seoul)' },
+  { value: 'sa-east-1', label: 'South America (São Paulo)' },
+  { value: 'ca-central-1', label: 'Canada (Central)' },
+]
+
+const getCloudProviderCommands = (installationKey: string, awsRegion: string) => {
+  const awsRegionFlag = awsRegion ? ` --region ${awsRegion}` : ''
   return {
     aws: {
       name: 'AWS',
-      commands: [`curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key ${installationKey}`],
+      commands: [`curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key ${installationKey}${awsRegionFlag}`],
       requirements: [
         'AWS CLI configured',
         'IAM user with EC2 full access and iam:PassRole permissions',
@@ -50,6 +71,7 @@ const getCloudProviderCommands = (installationKey: string) => {
 export default function InstallPage() {
   const router = useRouter()
   const [selectedProvider, setSelectedProvider] = useState('aws')
+  const [awsRegion, setAwsRegion] = useState('')
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [verificationStatus, setVerificationStatus] = useState<'waiting' | 'verified' | 'error'>(
@@ -144,7 +166,7 @@ export default function InstallPage() {
     return null
   }
 
-  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey)
+  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey, awsRegion)
 
   return (
     <>
@@ -230,6 +252,28 @@ export default function InstallPage() {
                 </div>
 
                 <div className="space-y-5">
+                  {/* AWS Region Selector */}
+                  {key === 'aws' && (
+                    <div>
+                      <p className="text-foreground mb-3 text-sm font-semibold">Select AWS Region:</p>
+                      <Select
+                        value={awsRegion || 'default'}
+                        onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
+                      >
+                        <SelectTrigger className="w-full md:w-80">
+                          <SelectValue placeholder="Select a region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AWS_REGIONS.map((region) => (
+                            <SelectItem key={region.value || 'default'} value={region.value || 'default'}>
+                              {region.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-foreground mb-3 text-sm font-semibold">Prerequisites:</p>
                     <ul className="text-muted-foreground space-y-2 text-sm leading-relaxed">

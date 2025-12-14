@@ -41,19 +41,21 @@ This command will:
   - Delete S3 bucket 'kl-{installation-key}-backups' and all backups
 
 All resources are identified by the InstallationKey tag.`,
-	Example: `  # Uninstall using default AWS region from config
+	Example: `  # Uninstall using default AWS profile and region
   kli aws uninstall --installation-key prod
 
-  # Uninstall from a specific region
-  kli aws uninstall --installation-key staging --region us-west-2`,
+  # Uninstall with specific AWS profile and region
+  kli aws uninstall --installation-key staging --profile myprofile --region us-west-2`,
 	Run: runAWSUninstall,
 }
 
 var uninstallRegion string
+var uninstallProfile string
 var uninstallKey string
 
 func init() {
 	awsUninstallCmd.Flags().StringVar(&uninstallRegion, "region", "", "AWS region (uses default from AWS config if not specified)")
+	awsUninstallCmd.Flags().StringVar(&uninstallProfile, "profile", "", "AWS profile to use (uses default profile if not specified)")
 	awsUninstallCmd.Flags().StringVar(&uninstallKey, "installation-key", "", "Installation key to identify this installation (required)")
 	awsUninstallCmd.MarkFlagRequired("installation-key")
 }
@@ -90,8 +92,11 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	bold.Println("Configuration")
 	bold.Println("-------------")
 	fmt.Printf("  Installation Key: %s\n", uninstallKey)
+	if uninstallProfile != "" {
+		fmt.Printf("  Profile:         %s\n", uninstallProfile)
+	}
 	fmt.Printf("  Region:          ")
-	cfg, err := awsinternal.LoadAWSConfig(ctx, uninstallRegion)
+	cfg, err := awsinternal.LoadAWSConfig(ctx, uninstallRegion, uninstallProfile)
 	if err != nil {
 		red.Printf("x\n")
 		yellow.Printf("  Error: %v\n\n", err)
