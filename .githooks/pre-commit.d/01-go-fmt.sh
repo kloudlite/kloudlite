@@ -1,6 +1,8 @@
 #!/bin/bash
 # Check Go files are formatted
 
+pushd ./api
+
 STAGED_GO_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$')
 
 if [ -z "$STAGED_GO_FILES" ]; then
@@ -16,5 +18,7 @@ if [ -n "$UNFORMATTED" ]; then
     echo "Run: gofmt -w <file>"
     exit 1
 fi
+
+popd
 
 exit 0
