@@ -85,4 +85,4 @@ export async function GET(
   return NextResponse.redirect(downloadUrl, 302);
 }
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
