@@ -8,6 +8,7 @@ import (
 	"github.com/codingconcepts/env"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/azure"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/errors"
@@ -51,6 +52,14 @@ type awsProviderEnv struct {
 	AWS_VPC_ID            string `env:"AWS_VPC_ID" required:"true"`
 	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
 	AWS_REGION            string `env:"AWS_REGION" required:"true"`
+}
+
+type azureProviderEnv struct {
+	AZURE_SUBSCRIPTION_ID string `env:"AZURE_SUBSCRIPTION_ID" required:"true"`
+	AZURE_RESOURCE_GROUP  string `env:"AZURE_RESOURCE_GROUP" required:"true"`
+	AZURE_LOCATION        string `env:"AZURE_LOCATION" required:"true"`
+	AZURE_SUBNET_ID       string `env:"AZURE_SUBNET_ID" required:"true"`
+	AZURE_NSG_ID          string `env:"AZURE_NSG_ID"`
 }
 
 // WorkMachineReconciler reconciles a WorkMachine object
@@ -624,6 +633,42 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			})
 			if err != nil {
 				return errors.Wrap("failed to create aws provider client", err)
+			}
+
+			if err := p.ValidatePermissions(ctx); err != nil {
+				return err
+			}
+
+			r.cloudProviderAPI = p
+		}
+	case v1.Azure:
+		{
+			var azureEnv azureProviderEnv
+			if err := env.Set(&azureEnv); err != nil {
+				return errors.Wrap("failed to load Azure env vars", err)
+			}
+
+			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cf()
+			p, err := azure.NewProvider(ctx, azure.ProviderArgs{
+				SubscriptionID:         azureEnv.AZURE_SUBSCRIPTION_ID,
+				ResourceGroup:          azureEnv.AZURE_RESOURCE_GROUP,
+				Location:               azureEnv.AZURE_LOCATION,
+				SubnetID:               azureEnv.AZURE_SUBNET_ID,
+				NetworkSecurityGroupID: azureEnv.AZURE_NSG_ID,
+				ResourceTags: []azure.Tag{
+					{
+						Key:   "kloudlite-installation-id",
+						Value: r.env.KloudliteInstallationID,
+					},
+				},
+
+				K3sVersion: r.env.K3sVersion,
+				K3sURL:     r.env.K3sServerURL,
+				K3sToken:   r.env.K3sAgentToken,
+			})
+			if err != nil {
+				return errors.Wrap("failed to create Azure provider client", err)
 			}
 
 			if err := p.ValidatePermissions(ctx); err != nil {
