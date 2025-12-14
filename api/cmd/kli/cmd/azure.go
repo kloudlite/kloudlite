@@ -25,4 +25,6 @@ Kloudlite on Azure.`,
 func init() {
 	// Add Azure subcommands
 	azureCmd.AddCommand(azureDoctorCmd)
+	azureCmd.AddCommand(azureInstallCmd)
+	azureCmd.AddCommand(azureUninstallCmd)
 }

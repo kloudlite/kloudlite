@@ -20,6 +20,9 @@ var Frontend string
 //go:embed aws-machine-types.yaml
 var AWSMachineTypes string
 
+//go:embed azure-machine-types.yaml
+var AzureMachineTypes string
+
 //go:embed image-registry.yaml
 var ImageRegistry string
 
