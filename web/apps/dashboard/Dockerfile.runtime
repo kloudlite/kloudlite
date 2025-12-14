@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Runtime stage - copy pre-built application
-FROM node:20-alpine AS runner
+FROM oven/bun:alpine AS runner
 
 WORKDIR /app
 
@@ -9,8 +9,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built artifacts (will be copied from GitHub Actions build)
-# For pnpm monorepos, standalone output has nested structure: apps/dashboard/server.js
+# Copy built artifacts (monorepo structure)
 COPY --chown=nextjs:nodejs .next/standalone ./
 COPY --chown=nextjs:nodejs .next/static ./apps/dashboard/.next/static
 COPY --chown=nextjs:nodejs public ./apps/dashboard/public
@@ -25,6 +24,6 @@ ENV PORT=3000 \
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD bun -e "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["node", "apps/dashboard/server.js"]
+CMD ["bun", "apps/dashboard/server.js"]
