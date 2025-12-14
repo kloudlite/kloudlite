@@ -17,15 +17,20 @@ export const runtime = 'nodejs'
  *
  * Supports two modes:
  * 1. CNAME mode: Creates a CNAME record pointing to load balancer DNS
- *    - {subdomain}.khost.dev -> ALB DNS (DNS-only, load balancer handles TLS)
+ *    - {subdomain}.khost.dev -> ALB DNS
  * 2. A record mode: Creates an A record pointing directly to IP
  *    - {subdomain}.khost.dev -> IP address
+ *
+ * Proxy mode:
+ * - proxied=true: Cloudflare handles TLS termination (Flexible SSL mode)
+ * - proxied=false: DNS-only, origin handles TLS
  *
  * Request format:
  * {
  *   "installationKey": "abc-123",
  *   "target": "kl-xxx-alb-123456789.us-east-1.elb.amazonaws.com",  // or "1.2.3.4"
- *   "type": "cname" | "a"  // "cname" for load balancers, "a" for direct IPs
+ *   "type": "cname" | "a",  // "cname" for load balancers, "a" for direct IPs
+ *   "proxied": true | false  // optional, defaults to false
  * }
  */
 export async function POST(request: NextRequest) {
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const secretKey = authHeader.substring(7)
     const body = await request.json()
-    const { installationKey, target, type } = body
+    const { installationKey, target, type, proxied = false } = body
 
     if (!installationKey) {
       return NextResponse.json({ error: 'installationKey is required' }, { status: 400 })
@@ -75,14 +80,12 @@ export async function POST(request: NextRequest) {
 
     if (type === 'cname') {
       // CNAME mode: for load balancers (AWS ALB, etc.)
-      // Use proxied=false (DNS-only) since load balancer handles TLS termination
-      console.log(`Creating root CNAME: ${fullDomain} -> ${target} (DNS-only)`)
-      recordId = await createCnameRecord(fullDomain, target, false)
+      console.log(`Creating root CNAME: ${fullDomain} -> ${target} (proxied=${proxied})`)
+      recordId = await createCnameRecord(fullDomain, target, proxied)
     } else {
       // A record mode: for direct IP addresses
-      // Use proxied=false for direct access
-      console.log(`Creating root A record: ${fullDomain} -> ${target} (DNS-only)`)
-      recordId = await createDnsRecord(fullDomain, target, false)
+      console.log(`Creating root A record: ${fullDomain} -> ${target} (proxied=${proxied})`)
+      recordId = await createDnsRecord(fullDomain, target, proxied)
     }
 
     if (!recordId) {
@@ -104,7 +107,7 @@ export async function POST(request: NextRequest) {
       target,
       type,
       recordId,
-      proxied: false,
+      proxied,
     })
 
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
