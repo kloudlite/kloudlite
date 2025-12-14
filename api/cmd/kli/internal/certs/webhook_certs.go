@@ -231,3 +231,68 @@ func GenerateWildcardCertificates(domain string) (*WildcardCertificates, error) 
 		Key:    keyPEM.Bytes(),
 	}, nil
 }
+
+// RegistryAuthCertificates holds the RSA key pair for registry token authentication
+type RegistryAuthCertificates struct {
+	PrivateKey  []byte // PEM encoded RSA private key (for API server to sign tokens)
+	Certificate []byte // PEM encoded certificate (for registry to verify tokens)
+}
+
+// GenerateRegistryAuthCertificates generates an RSA key pair for Docker Registry token authentication.
+// The private key is used by the API server to sign JWT tokens.
+// The certificate is used by the registry to verify the tokens.
+func GenerateRegistryAuthCertificates() (*RegistryAuthCertificates, error) {
+	// Generate RSA private key
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate RSA key: %w", err)
+	}
+
+	// Create self-signed certificate template
+	certTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName:   "kloudlite-registry-auth",
+			Organization: []string{"Kloudlite"},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0), // Valid for 10 years
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		BasicConstraintsValid: true,
+	}
+
+	// Self-sign the certificate
+	certBytes, err := x509.CreateCertificate(rand.Reader, certTemplate, certTemplate, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create certificate: %w", err)
+	}
+
+	// PEM encode certificate
+	certPEM := new(bytes.Buffer)
+	if err := pem.Encode(certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to encode certificate: %w", err)
+	}
+
+	// PEM encode private key (PKCS8 format for compatibility)
+	pkcs8Key, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal private key: %w", err)
+	}
+
+	keyPEM := new(bytes.Buffer)
+	if err := pem.Encode(keyPEM, &pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: pkcs8Key,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to encode private key: %w", err)
+	}
+
+	return &RegistryAuthCertificates{
+		PrivateKey:  keyPEM.Bytes(),
+		Certificate: certPEM.Bytes(),
+	}, nil
+}
