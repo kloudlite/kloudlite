@@ -53,9 +53,9 @@ jobs:
             web/apps/*/node_modules
             web/packages/*/node_modules
             ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
+          key: ${{ runner.os }}-bun-v2-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            ${{ runner.os }}-bun-v2-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -197,9 +197,9 @@ jobs:
             web/apps/*/node_modules
             web/packages/*/node_modules
             ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
+          key: ${{ runner.os }}-bun-v2-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            ${{ runner.os }}-bun-v2-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -339,9 +339,9 @@ jobs:
             web/apps/*/node_modules
             web/packages/*/node_modules
             ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
+          key: ${{ runner.os }}-bun-v2-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            ${{ runner.os }}-bun-v2-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -450,9 +450,9 @@ jobs:
             web/apps/*/node_modules
             web/packages/*/node_modules
             ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
+          key: ${{ runner.os }}-bun-v2-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            ${{ runner.os }}-bun-v2-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
