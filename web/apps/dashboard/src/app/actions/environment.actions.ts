@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { environmentService } from '@/lib/services/environment.service'
+import { compositionService } from '@/lib/services/composition.service'
 import type { EnvironmentCreateRequest, EnvironmentUpdateRequest } from '@kloudlite/types'
 
 /**
@@ -138,6 +139,58 @@ export async function cloneEnvironment(
     return { success: true, data: result }
   } catch (err) {
     console.error('Clone environment error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to export environment config
+ * Returns all compositions, configs, secrets, and files as a YAML-compatible object
+ */
+export async function exportEnvironmentConfig(envName: string, targetNamespace: string) {
+  try {
+    // Fetch all data in parallel
+    const [envVarsResult, filesResult, compositionsResult] = await Promise.all([
+      environmentService.getEnvVars(envName).catch(() => ({ envVars: [], count: 0 })),
+      environmentService.listFiles(envName).catch(() => ({ files: [], count: 0 })),
+      compositionService.listCompositions(targetNamespace).catch(() => ({ compositions: [], count: 0 })),
+    ])
+
+    // Separate configs and secrets from envVars
+    const configs: Record<string, string> = {}
+    const secrets: Record<string, string> = {}
+    for (const envVar of envVarsResult.envVars || []) {
+      if (envVar.type === 'config') {
+        configs[envVar.key] = envVar.value
+      } else if (envVar.type === 'secret') {
+        secrets[envVar.key] = envVar.value
+      }
+    }
+
+    // Build export object
+    const exportData = {
+      apiVersion: 'kloudlite.io/v1',
+      kind: 'EnvironmentExport',
+      metadata: {
+        name: envName,
+        exportedAt: new Date().toISOString(),
+      },
+      configs,
+      secrets,
+      files: filesResult.files || [],
+      compositions: (compositionsResult.compositions || []).map((comp) => ({
+        name: comp.metadata?.name,
+        spec: comp.spec,
+      })),
+    }
+
+    return { success: true, data: exportData }
+  } catch (err) {
+    console.error('Export environment config error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
