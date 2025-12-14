@@ -172,6 +172,7 @@ export AWS_REGION="%s"
 export S3_BUCKET="%s"
 export AUTH_COOKIE_DOMAIN="%s"
 export CLOUDFLARE_DNS_DOMAIN="khost.dev"
+export KLOUDLITE_REGISTRY_HOST="cr.%s"
 if ! kli install-manifests; then
   echo "ERROR: Failed to install Kloudlite manifests"
   exit 1
@@ -339,7 +340,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, workerSgID, region, amiID, fullDomain, region, bucketName, fullDomain, manifests.AWSMachineTypes, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, workerSgID, region, amiID, fullDomain, region, bucketName, fullDomain, fullDomain, manifests.AWSMachineTypes, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
