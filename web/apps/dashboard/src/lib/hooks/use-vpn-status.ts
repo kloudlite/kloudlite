@@ -42,9 +42,7 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
       }
 
       // Construct VPN check URL and hit it directly from browser
-      // Use HTTP since this goes over the VPN tunnel (already encrypted by WireGuard)
-      // and avoids certificate validation issues with self-signed certs
-      const vpnCheckUrl = `http://vpn-check.${subdomain}.${baseDomain}`
+      const vpnCheckUrl = `https://vpn-check.${subdomain}.${baseDomain}`
 
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000)
