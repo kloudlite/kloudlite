@@ -26,7 +26,8 @@ import { CreateEnvironmentDialog } from '@/components/dialogs/create-environment
 import { EditEnvironmentDialog } from '@/components/dialogs/edit-environment'
 import { DeleteEnvironmentConfirm } from '@/components/dialogs/delete-environment-confirm'
 import { CloneEnvironmentDialog } from '@/components/dialogs/clone-environment'
-import { activateEnvironment, deactivateEnvironment } from '@/app/actions/environment.actions'
+import { activateEnvironment, deactivateEnvironment, exportEnvironmentConfig } from '@/app/actions/environment.actions'
+import { Download } from 'lucide-react'
 import { toast } from 'sonner'
 import type { EnvironmentUIModel } from '@kloudlite/types'
 
@@ -230,6 +231,31 @@ export function EnvironmentsList({
     startTransition(() => {
       router.refresh()
     })
+  }
+
+  const handleExportConfig = async (env: EnvironmentUIModel) => {
+    toast.loading('Exporting environment config...')
+    const result = await exportEnvironmentConfig(env.name, env.targetNamespace || '')
+    toast.dismiss()
+
+    if (result.success && result.data) {
+      // Convert to YAML-like format (JSON for now, can be converted to YAML with a library)
+      const jsonString = JSON.stringify(result.data, null, 2)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${env.name}-config.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success('Environment config exported')
+    } else {
+      toast.error('Failed to export config', {
+        description: result.error || 'An error occurred',
+      })
+    }
   }
 
   const handleDeleteSuccess = () => {
@@ -440,7 +466,10 @@ export function EnvironmentsList({
                           <Copy className="mr-2 h-4 w-4" />
                           {workMachineRunning ? 'Clone Environment' : 'Clone (VM stopped)'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Export Config</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportConfig(env)}>
+                          <Download className="mr-2 h-4 w-4" />
+                          Export Config
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600"
