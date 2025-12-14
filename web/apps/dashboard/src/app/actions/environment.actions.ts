@@ -198,3 +198,103 @@ export async function exportEnvironmentConfig(envName: string, targetNamespace: 
     }
   }
 }
+
+/**
+ * Server action to import environment config
+ * Creates a new environment and imports all configs, secrets, files, and compositions
+ */
+export async function importEnvironmentConfig(
+  newEnvName: string,
+  targetNamespace: string,
+  currentUser: string,
+  exportData: {
+    configs?: Record<string, string>
+    secrets?: Record<string, string>
+    files?: Array<{ name: string; content: string }>
+    compositions?: Array<{ name: string; spec: unknown }>
+  },
+) {
+  const errors: string[] = []
+
+  try {
+    // Step 1: Create the environment
+    const createResult = await environmentService.createEnvironment({
+      name: newEnvName,
+      spec: {
+        targetNamespace,
+        ownedBy: currentUser,
+        activated: false,
+      },
+    })
+
+    if (!createResult) {
+      return { success: false, error: 'Failed to create environment' }
+    }
+
+    // Step 2: Import configs
+    if (exportData.configs) {
+      for (const [key, value] of Object.entries(exportData.configs)) {
+        try {
+          await environmentService.createEnvVar(newEnvName, key, value, 'config')
+        } catch (err) {
+          errors.push(`Failed to import config "${key}": ${err instanceof Error ? err.message : 'Unknown error'}`)
+        }
+      }
+    }
+
+    // Step 3: Import secrets
+    if (exportData.secrets) {
+      for (const [key, value] of Object.entries(exportData.secrets)) {
+        try {
+          await environmentService.createEnvVar(newEnvName, key, value, 'secret')
+        } catch (err) {
+          errors.push(`Failed to import secret "${key}": ${err instanceof Error ? err.message : 'Unknown error'}`)
+        }
+      }
+    }
+
+    // Step 4: Import files
+    if (exportData.files) {
+      for (const file of exportData.files) {
+        try {
+          await environmentService.setFile(newEnvName, file.name, file.content)
+        } catch (err) {
+          errors.push(`Failed to import file "${file.name}": ${err instanceof Error ? err.message : 'Unknown error'}`)
+        }
+      }
+    }
+
+    // Step 5: Import compositions
+    if (exportData.compositions) {
+      for (const comp of exportData.compositions) {
+        try {
+          await compositionService.createComposition(targetNamespace, {
+            name: comp.name,
+            spec: comp.spec as Parameters<typeof compositionService.createComposition>[1]['spec'],
+          })
+        } catch (err) {
+          errors.push(`Failed to import composition "${comp.name}": ${err instanceof Error ? err.message : 'Unknown error'}`)
+        }
+      }
+    }
+
+    revalidatePath('/environments')
+
+    if (errors.length > 0) {
+      return {
+        success: true,
+        data: { name: newEnvName },
+        warnings: errors,
+      }
+    }
+
+    return { success: true, data: { name: newEnvName } }
+  } catch (err) {
+    console.error('Import environment config error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}

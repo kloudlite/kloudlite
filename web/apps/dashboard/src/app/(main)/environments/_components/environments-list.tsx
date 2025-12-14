@@ -26,8 +26,9 @@ import { CreateEnvironmentDialog } from '@/components/dialogs/create-environment
 import { EditEnvironmentDialog } from '@/components/dialogs/edit-environment'
 import { DeleteEnvironmentConfirm } from '@/components/dialogs/delete-environment-confirm'
 import { CloneEnvironmentDialog } from '@/components/dialogs/clone-environment'
+import { ImportEnvironmentDialog } from '@/components/dialogs/import-environment'
 import { activateEnvironment, deactivateEnvironment, exportEnvironmentConfig } from '@/app/actions/environment.actions'
-import { Download } from 'lucide-react'
+import { Download, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import type { EnvironmentUIModel } from '@kloudlite/types'
 
@@ -110,6 +111,7 @@ export function EnvironmentsList({
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
   const [cloneSourceEnvironment, setCloneSourceEnvironment] = useState<EnvironmentUIModel | null>(
     null,
@@ -325,10 +327,16 @@ export function EnvironmentsList({
             {filteredEnvironments.length === 1 ? 'environment' : 'environments'}
           </span>
         </div>
-        <Button size="sm" className="gap-2" onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4" />
-          New Environment
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-2" onClick={() => setImportDialogOpen(true)}>
+            <Upload className="h-4 w-4" />
+            Import
+          </Button>
+          <Button size="sm" className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            New Environment
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -538,6 +546,13 @@ export function EnvironmentsList({
           currentUser={currentUser}
         />
       )}
+
+      <ImportEnvironmentDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={handleCreateSuccess}
+        currentUser={currentUser}
+      />
     </div>
   )
 }
