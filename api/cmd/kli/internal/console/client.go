@@ -209,8 +209,9 @@ func (c *Client) CreateACMValidationRecords(ctx context.Context, installationKey
 // ConfigureRootDNSRequest is the request to configure-root-dns
 type ConfigureRootDNSRequest struct {
 	InstallationKey string `json:"installationKey"`
-	Target          string `json:"target"` // DNS name for CNAME or IP for A record
-	Type            string `json:"type"`   // "cname" or "a"
+	Target          string `json:"target"`  // DNS name for CNAME or IP for A record
+	Type            string `json:"type"`    // "cname" or "a"
+	Proxied         bool   `json:"proxied"` // Enable Cloudflare proxy mode for TLS termination
 }
 
 // ConfigureRootDNSResponse is the response from configure-root-dns
@@ -227,13 +228,15 @@ type ConfigureRootDNSResponse struct {
 // ConfigureRootDNS registers the root DNS record for an installation
 // For load balancers (ALB): creates CNAME record pointing to load balancer DNS
 // For direct IPs: creates A record pointing to IP address
-func (c *Client) ConfigureRootDNS(ctx context.Context, installationKey, secretKey, target, recordType string) (*ConfigureRootDNSResponse, error) {
+// When proxied=true, Cloudflare will proxy the traffic and handle TLS termination
+func (c *Client) ConfigureRootDNS(ctx context.Context, installationKey, secretKey, target, recordType string, proxied bool) (*ConfigureRootDNSResponse, error) {
 	reqURL := fmt.Sprintf("%s/api/installations/configure-root-dns", c.baseURL)
 
 	reqBody := ConfigureRootDNSRequest{
 		InstallationKey: installationKey,
 		Target:          target,
 		Type:            recordType, // "cname" for load balancers, "a" for IPs
+		Proxied:         proxied,
 	}
 	reqBytes, err := json.Marshal(reqBody)
 	if err != nil {
