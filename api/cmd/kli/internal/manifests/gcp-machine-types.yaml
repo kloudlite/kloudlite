@@ -1,0 +1,73 @@
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: e2-medium
+  labels:
+    kloudlite.io/machinetype.default: "true"
+spec:
+  displayName: Starter (e2-medium)
+  description: For testing and small experiments - minimal resources for quick trials
+  category: development
+  active: true
+  isDefault: true
+  priority: 5
+  resources:
+    cpu: "2"
+    memory: 4Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: n2-standard-2
+spec:
+  displayName: Light (n2-standard-2)
+  description: For simple projects and learning - runs lightweight IDEs and basic services
+  category: development
+  active: true
+  priority: 10
+  resources:
+    cpu: "2"
+    memory: 8Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: n2-standard-4
+spec:
+  displayName: Standard (n2-standard-4)
+  description: For typical full-stack development - runs IDEs and multiple backend services
+  category: general
+  active: true
+  priority: 20
+  resources:
+    cpu: "4"
+    memory: 16Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: c2-standard-4
+spec:
+  displayName: Heavy (c2-standard-4)
+  description: For microservices and complex projects - runs multiple IDEs and heavy processes
+  category: compute-optimized
+  active: true
+  priority: 30
+  resources:
+    cpu: "4"
+    memory: 16Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: n2-highmem-4
+spec:
+  displayName: Intensive (n2-highmem-4)
+  description: For large-scale projects with many services - maximum development capacity
+  category: memory-optimized
+  active: true
+  priority: 40
+  resources:
+    cpu: "4"
+    memory: 32Gi

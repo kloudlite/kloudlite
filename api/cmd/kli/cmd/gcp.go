@@ -22,4 +22,6 @@ Kloudlite on GCP.`,
 func init() {
 	// Add GCP subcommands
 	gcpCmd.AddCommand(gcpDoctorCmd)
+	gcpCmd.AddCommand(gcpInstallCmd)
+	gcpCmd.AddCommand(gcpUninstallCmd)
 }
