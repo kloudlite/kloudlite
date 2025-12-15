@@ -227,9 +227,19 @@ func readINIValue(filePath, section, key string) string {
 
 // SelectZoneFromRegion selects an available zone in the region
 func SelectZoneFromRegion(ctx context.Context, project, region string) (string, error) {
+	// First try to get zone from gcloud config
+	if zone := readGCloudConfig("compute", "zone"); zone != "" {
+		// Verify zone is in the requested region
+		if strings.HasPrefix(zone, region+"-") {
+			return zone, nil
+		}
+	}
+
+	// Try to use GCP API to find an available zone
 	zonesClient, err := compute.NewZonesRESTClient(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to create zones client: %w", err)
+		// Fall back to default zone pattern if API is unavailable
+		return region + "-a", nil
 	}
 	defer zonesClient.Close()
 
@@ -244,7 +254,8 @@ func SelectZoneFromRegion(ctx context.Context, project, region string) (string, 
 			break
 		}
 		if err != nil {
-			return "", fmt.Errorf("failed to list zones: %w", err)
+			// Fall back to default zone pattern if API call fails
+			return region + "-a", nil
 		}
 
 		// Check if zone is in the requested region and is up
@@ -255,7 +266,8 @@ func SelectZoneFromRegion(ctx context.Context, project, region string) (string, 
 		}
 	}
 
-	return "", fmt.Errorf("no available zones found in region %s", region)
+	// Fall back to default zone pattern if no zones found
+	return region + "-a", nil
 }
 
 // getResourceName extracts the resource name from a full resource URL
