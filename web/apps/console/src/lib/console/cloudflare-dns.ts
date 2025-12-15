@@ -378,7 +378,7 @@ export async function createInstallationDnsRecords(
 ): Promise<string[]> {
   const recordIds: string[] = []
 
-  // Create: {subdomain}.{domain} → IP (proxied through CloudFlare for Origin CA certificates)
+  // Create: {subdomain}.{domain} → IP (proxied through CloudFlare for TLS termination)
   const fullDomain = `${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
   const recordId = await createDnsRecord(fullDomain, ip, true)
 
