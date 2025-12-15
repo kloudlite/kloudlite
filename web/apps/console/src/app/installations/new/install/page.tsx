@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
-import { Loader2, Cloud, Copy, CheckCircle2 } from 'lucide-react'
+import { Loader2, Copy, CheckCircle2 } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { WorldMap } from '@/components/world-map'
 import { toast } from 'sonner'
@@ -266,11 +266,6 @@ export default function InstallPage() {
 
             {Object.entries(CLOUD_PROVIDERS).map(([key, config]) => (
               <TabsContent key={key} value={key} className="mt-6 space-y-6">
-                <div className="flex items-center gap-2 text-base font-semibold">
-                  <Cloud className="size-5" />
-                  Installing on {config.name}
-                </div>
-
                 <div className="space-y-5">
                   {/* AWS Region Selector */}
                   {key === 'aws' && (
