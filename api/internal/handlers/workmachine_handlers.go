@@ -134,7 +134,7 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 	username = strings.ToLower(username)
 	workMachineName := "wm-" + username
 
-	// Create new machine
+	// Create new machine with default auto-shutdown enabled
 	machine := &machinesv1.WorkMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: workMachineName,
@@ -144,6 +144,11 @@ func (h *WorkMachineHandlers) CreateMyWorkMachine(c *gin.Context) {
 			MachineType:   machineType,
 			State:         machinesv1.MachineStateRunning, // Start as running for initial setup
 			SSHPublicKeys: req.SSHPublicKeys,
+			AutoShutdown: &machinesv1.AutoShutdownConfig{
+				Enabled:              true,
+				IdleThresholdMinutes: 30,
+				CheckIntervalMinutes: 5,
+			},
 		},
 	}
 
