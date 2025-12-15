@@ -3,11 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/apiv1/computepb"
 	"github.com/fatih/color"
+	gcpinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/gcp"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/oauth2/v2"
@@ -129,15 +129,7 @@ func checkGCPCredentials(ctx context.Context) (string, string, error) {
 }
 
 func getDefaultProject(ctx context.Context) (string, error) {
-	// Try environment variables (in order of precedence)
-	envVars := []string{"GOOGLE_CLOUD_PROJECT", "GCLOUD_PROJECT", "GCP_PROJECT"}
-	for _, envVar := range envVars {
-		if project := os.Getenv(envVar); project != "" {
-			return project, nil
-		}
-	}
-
-	return "", fmt.Errorf("please set GOOGLE_CLOUD_PROJECT environment variable with your project ID")
+	return gcpinternal.GetDefaultProject(ctx)
 }
 
 type GCPPermissionCheck struct {
