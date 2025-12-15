@@ -23,6 +23,9 @@ var AWSMachineTypes string
 //go:embed azure-machine-types.yaml
 var AzureMachineTypes string
 
+//go:embed gcp-machine-types.yaml
+var GCPMachineTypes string
+
 //go:embed image-registry.yaml
 var ImageRegistry string
 

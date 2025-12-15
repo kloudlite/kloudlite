@@ -35,8 +35,65 @@ const AWS_REGIONS = [
   { value: 'ca-central-1', label: 'Canada (Central)' },
 ]
 
-const getCloudProviderCommands = (installationKey: string, awsRegion: string) => {
+const GCP_REGIONS = [
+  { value: 'us-central1', label: 'US Central (Iowa)' },
+  { value: 'us-east1', label: 'US East (South Carolina)' },
+  { value: 'us-east4', label: 'US East (N. Virginia)' },
+  { value: 'us-west1', label: 'US West (Oregon)' },
+  { value: 'us-west2', label: 'US West (Los Angeles)' },
+  { value: 'us-west3', label: 'US West (Salt Lake City)' },
+  { value: 'us-west4', label: 'US West (Las Vegas)' },
+  { value: 'europe-west1', label: 'Europe West (Belgium)' },
+  { value: 'europe-west2', label: 'Europe West (London)' },
+  { value: 'europe-west3', label: 'Europe West (Frankfurt)' },
+  { value: 'europe-west4', label: 'Europe West (Netherlands)' },
+  { value: 'europe-north1', label: 'Europe North (Finland)' },
+  { value: 'asia-east1', label: 'Asia East (Taiwan)' },
+  { value: 'asia-east2', label: 'Asia East (Hong Kong)' },
+  { value: 'asia-southeast1', label: 'Asia Southeast (Singapore)' },
+  { value: 'asia-southeast2', label: 'Asia Southeast (Jakarta)' },
+  { value: 'asia-south1', label: 'Asia South (Mumbai)' },
+  { value: 'asia-northeast1', label: 'Asia Northeast (Tokyo)' },
+  { value: 'asia-northeast2', label: 'Asia Northeast (Osaka)' },
+  { value: 'asia-northeast3', label: 'Asia Northeast (Seoul)' },
+  { value: 'australia-southeast1', label: 'Australia (Sydney)' },
+  { value: 'southamerica-east1', label: 'South America (São Paulo)' },
+]
+
+const AZURE_LOCATIONS = [
+  { value: 'eastus', label: 'East US (Virginia)' },
+  { value: 'eastus2', label: 'East US 2 (Virginia)' },
+  { value: 'westus', label: 'West US (California)' },
+  { value: 'westus2', label: 'West US 2 (Washington)' },
+  { value: 'westus3', label: 'West US 3 (Arizona)' },
+  { value: 'centralus', label: 'Central US (Iowa)' },
+  { value: 'northcentralus', label: 'North Central US (Illinois)' },
+  { value: 'southcentralus', label: 'South Central US (Texas)' },
+  { value: 'westeurope', label: 'West Europe (Netherlands)' },
+  { value: 'northeurope', label: 'North Europe (Ireland)' },
+  { value: 'uksouth', label: 'UK South (London)' },
+  { value: 'ukwest', label: 'UK West (Cardiff)' },
+  { value: 'francecentral', label: 'France Central (Paris)' },
+  { value: 'germanywestcentral', label: 'Germany West Central (Frankfurt)' },
+  { value: 'swedencentral', label: 'Sweden Central (Gävle)' },
+  { value: 'southeastasia', label: 'Southeast Asia (Singapore)' },
+  { value: 'eastasia', label: 'East Asia (Hong Kong)' },
+  { value: 'japaneast', label: 'Japan East (Tokyo)' },
+  { value: 'japanwest', label: 'Japan West (Osaka)' },
+  { value: 'koreacentral', label: 'Korea Central (Seoul)' },
+  { value: 'australiaeast', label: 'Australia East (Sydney)' },
+  { value: 'australiasoutheast', label: 'Australia Southeast (Melbourne)' },
+  { value: 'centralindia', label: 'Central India (Pune)' },
+  { value: 'southindia', label: 'South India (Chennai)' },
+  { value: 'brazilsouth', label: 'Brazil South (São Paulo)' },
+  { value: 'canadacentral', label: 'Canada Central (Toronto)' },
+  { value: 'canadaeast', label: 'Canada East (Quebec)' },
+]
+
+const getCloudProviderCommands = (installationKey: string, awsRegion: string, gcpRegion: string, azureLocation: string) => {
   const awsRegionFlag = awsRegion ? ` --region ${awsRegion}` : ''
+  const gcpRegionFlag = gcpRegion ? ` --region ${gcpRegion}` : ''
+  const azureLocationFlag = azureLocation ? ` --location ${azureLocation}` : ''
   return {
     aws: {
       name: 'AWS',
@@ -49,20 +106,20 @@ const getCloudProviderCommands = (installationKey: string, awsRegion: string) =>
     },
     gcp: {
       name: 'Google Cloud',
-      commands: [`curl -fsSL https://get.khost.dev/install/gcp | bash -s -- --key ${installationKey}`],
+      commands: [`curl -fsSL https://get.khost.dev/install/gcp | bash -s -- --key ${installationKey}${gcpRegionFlag}`],
       requirements: [
-        'gcloud CLI configured',
-        'Service account with Compute Admin and Service Account User roles',
-        'Valid GCP credentials configured',
+        'gcloud CLI configured with Application Default Credentials',
+        'IAM permissions: Compute Admin, Service Account Admin, Storage Admin',
+        'Billing enabled on the GCP project',
       ],
     },
     azure: {
       name: 'Azure',
-      commands: [`curl -fsSL https://get.khost.dev/install/azure | bash -s -- --key ${installationKey}`],
+      commands: [`curl -fsSL https://get.khost.dev/install/azure | bash -s -- --key ${installationKey}${azureLocationFlag}`],
       requirements: [
-        'Azure CLI configured',
-        'Service principal with Virtual Machine Contributor and User Access Administrator roles',
-        'Valid Azure credentials configured',
+        'Azure CLI configured and logged in (az login)',
+        'Subscription with VM, Network, and Storage permissions',
+        'Billing enabled on the Azure subscription',
       ],
     },
   }
@@ -72,6 +129,8 @@ export default function InstallPage() {
   const router = useRouter()
   const [selectedProvider, setSelectedProvider] = useState('aws')
   const [awsRegion, setAwsRegion] = useState('')
+  const [gcpRegion, setGcpRegion] = useState('us-central1')
+  const [azureLocation, setAzureLocation] = useState('eastus')
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [verificationStatus, setVerificationStatus] = useState<'waiting' | 'verified' | 'error'>(
@@ -166,7 +225,7 @@ export default function InstallPage() {
     return null
   }
 
-  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey, awsRegion)
+  const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey, awsRegion, gcpRegion, azureLocation)
 
   return (
     <>
@@ -267,6 +326,50 @@ export default function InstallPage() {
                           {AWS_REGIONS.map((region) => (
                             <SelectItem key={region.value || 'default'} value={region.value || 'default'}>
                               {region.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* GCP Region Selector */}
+                  {key === 'gcp' && (
+                    <div>
+                      <p className="text-foreground mb-3 text-sm font-semibold">Select GCP Region:</p>
+                      <Select
+                        value={gcpRegion}
+                        onValueChange={setGcpRegion}
+                      >
+                        <SelectTrigger className="w-full md:w-80">
+                          <SelectValue placeholder="Select a region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {GCP_REGIONS.map((region) => (
+                            <SelectItem key={region.value} value={region.value}>
+                              {region.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Azure Location Selector */}
+                  {key === 'azure' && (
+                    <div>
+                      <p className="text-foreground mb-3 text-sm font-semibold">Select Azure Location:</p>
+                      <Select
+                        value={azureLocation}
+                        onValueChange={setAzureLocation}
+                      >
+                        <SelectTrigger className="w-full md:w-80">
+                          <SelectValue placeholder="Select a location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AZURE_LOCATIONS.map((location) => (
+                            <SelectItem key={location.value} value={location.value}>
+                              {location.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
