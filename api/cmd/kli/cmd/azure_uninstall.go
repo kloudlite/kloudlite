@@ -31,7 +31,7 @@ This command will delete:
   - Resource Group (if it was auto-created)
 
 WARNING: This operation cannot be undone. All data will be permanently lost.`,
-	Example: `  # Uninstall using default location
+	Example: `  # Uninstall using defaults from ~/.azure/config
   kli azure uninstall --installation-key prod
 
   # Uninstall from a specific location
@@ -53,7 +53,7 @@ var (
 )
 
 func init() {
-	azureUninstallCmd.Flags().StringVar(&azureUninstallLocation, "location", "eastus", "Azure location (default: eastus)")
+	azureUninstallCmd.Flags().StringVar(&azureUninstallLocation, "location", "", "Azure location (reads from AZURE_LOCATION or ~/.azure/config)")
 	azureUninstallCmd.Flags().StringVar(&azureUninstallResourceGroup, "resource-group", "", "Azure resource group (required if different from default)")
 	azureUninstallCmd.Flags().StringVar(&azureUninstallInstallationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	azureUninstallCmd.Flags().BoolVar(&azureDeleteResourceGroup, "delete-resource-group", false, "Also delete the resource group (default: false)")

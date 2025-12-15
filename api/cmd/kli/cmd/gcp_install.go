@@ -36,14 +36,17 @@ This command will:
 NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
 before running this command. The installation will fail if no subdomain
 has been configured for the installation key.`,
-	Example: `  # Install using default GCP project
+	Example: `  # Install using gcloud defaults (project and region from ~/.config/gcloud)
+  kli gcp install --installation-key prod
+
+  # Install with specific region
   kli gcp install --installation-key prod --region us-central1
 
   # Install with specific project and zone
   kli gcp install --installation-key staging --project my-project --region us-central1 --zone us-central1-a
 
   # Install without Load Balancer (direct VM access only)
-  kli gcp install --installation-key dev --region us-central1 --skip-lb`,
+  kli gcp install --installation-key dev --skip-lb`,
 	Run: runGCPInstall,
 }
 
@@ -57,14 +60,13 @@ var (
 )
 
 func init() {
-	gcpInstallCmd.Flags().StringVar(&gcpProject, "project", "", "GCP project ID (uses GOOGLE_CLOUD_PROJECT if not specified)")
-	gcpInstallCmd.Flags().StringVar(&gcpRegion, "region", "", "GCP region (required)")
+	gcpInstallCmd.Flags().StringVar(&gcpProject, "project", "", "GCP project ID (reads from GOOGLE_CLOUD_PROJECT or ~/.config/gcloud)")
+	gcpInstallCmd.Flags().StringVar(&gcpRegion, "region", "", "GCP region (reads from CLOUDSDK_COMPUTE_REGION or ~/.config/gcloud)")
 	gcpInstallCmd.Flags().StringVar(&gcpZone, "zone", "", "GCP zone (auto-selected from region if not specified)")
 	gcpInstallCmd.Flags().StringVar(&gcpInstallationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	gcpInstallCmd.Flags().BoolVar(&gcpEnableDeletionProtection, "enable-deletion-protection", true, "Enable VM deletion protection (default: true)")
 	gcpInstallCmd.Flags().BoolVar(&gcpSkipLB, "skip-lb", false, "Skip Load Balancer setup (direct VM access only)")
 	gcpInstallCmd.MarkFlagRequired("installation-key")
-	gcpInstallCmd.MarkFlagRequired("region")
 }
 
 func runGCPInstall(cmd *cobra.Command, args []string) {

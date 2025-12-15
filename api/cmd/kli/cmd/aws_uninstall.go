@@ -41,7 +41,7 @@ This command will:
   - Delete S3 bucket 'kl-{installation-key}-backups' and all backups
 
 All resources are identified by the InstallationKey tag.`,
-	Example: `  # Uninstall using default AWS profile and region
+	Example: `  # Uninstall using defaults from ~/.aws/config (or EC2 instance metadata)
   kli aws uninstall --installation-key prod
 
   # Uninstall with specific AWS profile and region
@@ -54,7 +54,7 @@ var uninstallProfile string
 var uninstallKey string
 
 func init() {
-	awsUninstallCmd.Flags().StringVar(&uninstallRegion, "region", "", "AWS region (uses default from AWS config if not specified)")
+	awsUninstallCmd.Flags().StringVar(&uninstallRegion, "region", "", "AWS region (reads from AWS_REGION, ~/.aws/config, or EC2 IMDS)")
 	awsUninstallCmd.Flags().StringVar(&uninstallProfile, "profile", "", "AWS profile to use (uses default profile if not specified)")
 	awsUninstallCmd.Flags().StringVar(&uninstallKey, "installation-key", "", "Installation key to identify this installation (required)")
 	awsUninstallCmd.MarkFlagRequired("installation-key")

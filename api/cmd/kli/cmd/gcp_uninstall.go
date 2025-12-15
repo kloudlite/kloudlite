@@ -28,7 +28,10 @@ This command will:
   - Delete Cloud Storage bucket 'kl-{installation-key}-backups' and all backups
 
 All resources are identified by the installation key.`,
-	Example: `  # Uninstall using default GCP project
+	Example: `  # Uninstall using gcloud defaults (project and region from ~/.config/gcloud)
+  kli gcp uninstall --installation-key prod
+
+  # Uninstall with specific region
   kli gcp uninstall --installation-key prod --region us-central1
 
   # Uninstall with specific project
@@ -44,12 +47,11 @@ var (
 )
 
 func init() {
-	gcpUninstallCmd.Flags().StringVar(&gcpUninstallProject, "project", "", "GCP project ID (uses GOOGLE_CLOUD_PROJECT if not specified)")
-	gcpUninstallCmd.Flags().StringVar(&gcpUninstallRegion, "region", "", "GCP region (required)")
+	gcpUninstallCmd.Flags().StringVar(&gcpUninstallProject, "project", "", "GCP project ID (reads from GOOGLE_CLOUD_PROJECT or ~/.config/gcloud)")
+	gcpUninstallCmd.Flags().StringVar(&gcpUninstallRegion, "region", "", "GCP region (reads from CLOUDSDK_COMPUTE_REGION or ~/.config/gcloud)")
 	gcpUninstallCmd.Flags().StringVar(&gcpUninstallZone, "zone", "", "GCP zone (auto-selected from region if not specified)")
 	gcpUninstallCmd.Flags().StringVar(&gcpUninstallInstallationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	gcpUninstallCmd.MarkFlagRequired("installation-key")
-	gcpUninstallCmd.MarkFlagRequired("region")
 }
 
 func runGCPUninstall(cmd *cobra.Command, args []string) {
