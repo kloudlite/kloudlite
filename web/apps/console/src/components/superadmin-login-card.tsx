@@ -14,8 +14,6 @@ interface SuperAdminLoginCardProps {
 export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLoginCardProps) {
   const [loading, setLoading] = useState(false)
   const [loginUrl, setLoginUrl] = useState<string | null>(null)
-  const [_expiresAt, setExpiresAt] = useState<string | null>(null)
-  const [_validForSeconds, setValidForSeconds] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
@@ -37,8 +35,6 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
 
       const data = await response.json()
       setLoginUrl(data.loginUrl)
-      setExpiresAt(data.expiresAt)
-      setValidForSeconds(data.validForSeconds)
       setTimeRemaining(data.validForSeconds)
 
       // Start countdown timer
@@ -55,8 +51,6 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
       // Clear URL after expiry
       setTimeout(() => {
         setLoginUrl(null)
-        setExpiresAt(null)
-        setValidForSeconds(null)
         setTimeRemaining(null)
       }, data.validForSeconds * 1000)
     } catch (err) {
