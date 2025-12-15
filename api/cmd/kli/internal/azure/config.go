@@ -1,8 +1,16 @@
 package azure
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
@@ -25,15 +33,19 @@ func LoadAzureConfig(ctx context.Context, location, resourceGroup string) (*Azur
 		return nil, fmt.Errorf("failed to obtain Azure credentials: %w", err)
 	}
 
-	// Get first enabled subscription
-	subscriptionID, err := getDefaultSubscription(ctx, cred)
-	if err != nil {
-		return nil, err
+	// Get subscription from env var or API
+	subscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
+	if subscriptionID == "" {
+		var err error
+		subscriptionID, err = getDefaultSubscription(ctx, cred)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Use default location if not specified
+	// Get location from env var or flag
 	if location == "" {
-		location = "eastus"
+		location = GetDefaultLocation()
 	}
 
 	return &AzureConfig{
@@ -42,6 +54,115 @@ func LoadAzureConfig(ctx context.Context, location, resourceGroup string) (*Azur
 		Location:       location,
 		ResourceGroup:  resourceGroup,
 	}, nil
+}
+
+// GetDefaultLocation returns location from environment variables, Azure config, or Azure IMDS
+func GetDefaultLocation() string {
+	// Try environment variables first
+	envVars := []string{"AZURE_LOCATION", "AZURE_REGION", "AZURE_DEFAULTS_LOCATION"}
+	for _, envVar := range envVars {
+		if location := os.Getenv(envVar); location != "" {
+			return location
+		}
+	}
+
+	// Try reading from Azure CLI config file (~/.azure/config)
+	location := readAzureConfig("defaults", "location")
+	if location != "" {
+		return location
+	}
+
+	// Try Azure Instance Metadata Service (IMDS)
+	if location := getAzureIMDSLocation(); location != "" {
+		return location
+	}
+
+	return ""
+}
+
+// getAzureIMDSLocation gets the location from Azure Instance Metadata Service
+func getAzureIMDSLocation() string {
+	client := &http.Client{Timeout: 1 * time.Second}
+
+	req, err := http.NewRequest("GET", "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01", nil)
+	if err != nil {
+		return ""
+	}
+	req.Header.Set("Metadata", "true")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ""
+	}
+
+	// Parse JSON response to get location
+	var metadata struct {
+		Location string `json:"location"`
+	}
+	if err := json.Unmarshal(body, &metadata); err != nil {
+		return ""
+	}
+
+	return metadata.Location
+}
+
+// readAzureConfig reads a value from Azure CLI config file
+func readAzureConfig(section, key string) string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	configPath := filepath.Join(homeDir, ".azure", "config")
+	return readAzureINIValue(configPath, section, key)
+}
+
+// readAzureINIValue reads a value from an INI-style config file
+func readAzureINIValue(filePath, section, key string) string {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	inTargetSection := false
+	targetSection := "[" + section + "]"
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// Skip comments and empty lines
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";") {
+			continue
+		}
+
+		// Check for section headers
+		if strings.HasPrefix(line, "[") {
+			inTargetSection = strings.EqualFold(line, targetSection)
+			continue
+		}
+
+		// Look for key=value in target section
+		if inTargetSection && strings.Contains(line, "=") {
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 && strings.TrimSpace(parts[0]) == key {
+				return strings.TrimSpace(parts[1])
+			}
+		}
+	}
+
+	return ""
 }
 
 // getDefaultSubscription retrieves the first enabled subscription

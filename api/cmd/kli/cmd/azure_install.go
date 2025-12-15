@@ -37,10 +37,10 @@ This command will:
 NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
 before running this command. The installation will fail if no subdomain
 has been configured for the installation key.`,
-	Example: `  # Install using default location (eastus)
+	Example: `  # Install using defaults from ~/.azure/config
   kli azure install --installation-key prod
 
-  # Install in a specific region
+  # Install in a specific location
   kli azure install --installation-key staging --location westus2
 
   # Install in an existing resource group
@@ -64,7 +64,7 @@ var (
 )
 
 func init() {
-	azureInstallCmd.Flags().StringVar(&azureLocation, "location", "eastus", "Azure location (default: eastus)")
+	azureInstallCmd.Flags().StringVar(&azureLocation, "location", "", "Azure location (reads from AZURE_LOCATION or ~/.azure/config)")
 	azureInstallCmd.Flags().StringVar(&azureResourceGroup, "resource-group", "", "Azure resource group (auto-created if not specified)")
 	azureInstallCmd.Flags().StringVar(&azureInstallationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	azureInstallCmd.Flags().StringVar(&azureVMSize, "vm-size", "Standard_B2ms", "Azure VM size (default: Standard_B2ms)")

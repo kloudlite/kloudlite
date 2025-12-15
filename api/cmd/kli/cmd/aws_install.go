@@ -39,7 +39,7 @@ This command will:
 NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
 before running this command. The installation will fail if no subdomain
 has been configured for the installation key.`,
-	Example: `  # Install using default AWS profile and region
+	Example: `  # Install using defaults from ~/.aws/config (or EC2 instance metadata)
   kli aws install --installation-key prod
 
   # Install with specific AWS profile and region
@@ -59,7 +59,7 @@ var (
 )
 
 func init() {
-	awsInstallCmd.Flags().StringVar(&region, "region", "", "AWS region (uses default from AWS config if not specified)")
+	awsInstallCmd.Flags().StringVar(&region, "region", "", "AWS region (reads from AWS_REGION, ~/.aws/config, or EC2 IMDS)")
 	awsInstallCmd.Flags().StringVar(&profile, "profile", "", "AWS profile to use (uses default profile if not specified)")
 	awsInstallCmd.Flags().StringVar(&installationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	awsInstallCmd.Flags().BoolVar(&enableTerminationProtection, "enable-termination-protection", true, "Enable EC2 termination protection (default: true)")
