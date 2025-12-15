@@ -42,7 +42,6 @@ export type Database = {
           reserved_at: string | null
           deployment_ready: boolean | null
           last_health_check: string | null
-          edge_certificate_pack_id: string | null
           created_at: string
           updated_at: string
         }
@@ -58,7 +57,6 @@ export type Database = {
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
-          edge_certificate_pack_id?: string | null
         }
         Update: {
           user_id?: string
@@ -71,7 +69,6 @@ export type Database = {
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
-          edge_certificate_pack_id?: string | null
         }
       }
       ip_records: {
@@ -138,79 +135,6 @@ export type Database = {
           user_name?: string
           reserved_at?: string
           status?: 'reserved' | 'active' | 'cancelled'
-        }
-      }
-      tls_certificates: {
-        Row: {
-          id: number
-          installation_id: string
-          cloudflare_cert_id: string | null
-          certificate: string
-          private_key: string
-          hostnames: string[]
-          scope: 'installation' | 'workmachine' | 'workspace'
-          scope_identifier: string | null
-          parent_scope_identifier: string | null
-          valid_from: string
-          valid_until: string
-          generated_at: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          installation_id: string
-          cloudflare_cert_id?: string | null
-          certificate: string
-          private_key: string
-          hostnames: string[]
-          scope: 'installation' | 'workmachine' | 'workspace'
-          scope_identifier?: string | null
-          parent_scope_identifier?: string | null
-          valid_from: string
-          valid_until: string
-          generated_at?: string
-        }
-        Update: {
-          installation_id?: string
-          cloudflare_cert_id?: string | null
-          certificate?: string
-          private_key?: string
-          hostnames?: string[]
-          scope?: 'installation' | 'workmachine' | 'workspace'
-          scope_identifier?: string | null
-          parent_scope_identifier?: string | null
-          valid_from?: string
-          valid_until?: string
-          generated_at?: string
-        }
-      }
-      edge_certificates: {
-        Row: {
-          id: number
-          installation_id: string
-          cloudflare_cert_pack_id: string
-          hostnames: string[]
-          domain_request_name: string
-          ordered_at: string
-          status: 'pending' | 'active' | 'failed'
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          installation_id: string
-          cloudflare_cert_pack_id: string
-          hostnames: string[]
-          domain_request_name: string
-          ordered_at?: string
-          status?: 'pending' | 'active' | 'failed'
-        }
-        Update: {
-          installation_id?: string
-          cloudflare_cert_pack_id?: string
-          hostnames?: string[]
-          domain_request_name?: string
-          ordered_at?: string
-          status?: 'pending' | 'active' | 'failed'
         }
       }
     }

@@ -1,12 +1,10 @@
 -- ============================================================================
 -- Kloudlite Registration Database Schema
 -- Multi-Installation Support
--- Updated: 2025-11-05 (reflects all migrations)
+-- Updated: 2025-12-15 (removed certificate tables - TLS termination at Cloudflare)
 -- ============================================================================
 
 -- Drop existing tables (CASCADE will drop dependent objects)
-DROP TABLE IF EXISTS edge_certificates CASCADE;
-DROP TABLE IF EXISTS tls_certificates CASCADE;
 DROP TABLE IF EXISTS ip_records CASCADE;
 DROP TABLE IF EXISTS domain_reservations CASCADE;
 DROP TABLE IF EXISTS installations CASCADE;
@@ -47,7 +45,6 @@ CREATE TABLE installations (
   reserved_at TIMESTAMPTZ,
   deployment_ready BOOLEAN DEFAULT FALSE,
   last_health_check TIMESTAMPTZ,
-  edge_certificate_pack_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -56,10 +53,6 @@ CREATE TABLE installations (
 CREATE INDEX idx_installations_user_id ON installations(user_id);
 CREATE INDEX idx_installations_subdomain ON installations(subdomain);
 CREATE INDEX idx_installations_installation_key ON installations(installation_key);
-
--- Comments
-COMMENT ON COLUMN installations.edge_certificate_pack_id IS
-'CloudFlare Edge Certificate Pack ID for wildcard subdomain (*.subdomain.khost.dev) support';
 
 -- ============================================================================
 -- 3. IP RECORDS TABLE
@@ -111,56 +104,7 @@ CREATE INDEX idx_domain_reservations_installation_id ON domain_reservations(inst
 CREATE INDEX idx_domain_reservations_user_id ON domain_reservations(user_id);
 
 -- ============================================================================
--- 5. TLS CERTIFICATES TABLE
--- Stores origin TLS certificates for installations
--- ============================================================================
-
-CREATE TABLE tls_certificates (
-  id SERIAL PRIMARY KEY,
-  installation_id UUID NOT NULL REFERENCES installations(id) ON DELETE CASCADE,
-  cloudflare_cert_id TEXT,
-  certificate TEXT NOT NULL,
-  private_key TEXT NOT NULL,
-  hostnames TEXT[] NOT NULL,
-  scope TEXT NOT NULL CHECK (scope IN ('installation', 'workmachine', 'workspace')),
-  scope_identifier TEXT,
-  parent_scope_identifier TEXT,
-  valid_from TIMESTAMPTZ NOT NULL,
-  valid_until TIMESTAMPTZ NOT NULL,
-  generated_at TIMESTAMPTZ DEFAULT NOW(),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Indexes for tls_certificates
-CREATE INDEX idx_tls_certificates_installation_id ON tls_certificates(installation_id);
-CREATE INDEX idx_tls_certificates_scope ON tls_certificates(scope);
-
--- ============================================================================
--- 6. EDGE CERTIFICATES TABLE
--- Stores CloudFlare edge certificates for domain requests
--- ============================================================================
-
-CREATE TABLE edge_certificates (
-  id SERIAL PRIMARY KEY,
-  installation_id UUID NOT NULL REFERENCES installations(id) ON DELETE CASCADE,
-  cloudflare_cert_pack_id TEXT NOT NULL,
-  hostnames TEXT[] NOT NULL,
-  domain_request_name TEXT NOT NULL,
-  ordered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'failed')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(installation_id, domain_request_name)
-);
-
--- Indexes for edge_certificates
-CREATE INDEX idx_edge_certificates_installation_id ON edge_certificates(installation_id);
-CREATE INDEX idx_edge_certificates_domain_request_name ON edge_certificates(domain_request_name);
-CREATE INDEX idx_edge_certificates_status ON edge_certificates(status);
-
--- ============================================================================
--- 7. TRIGGERS FOR UPDATED_AT TIMESTAMPS
+-- 5. TRIGGERS FOR UPDATED_AT TIMESTAMPS
 -- ============================================================================
 
 -- Create function to update updated_at timestamp
@@ -193,16 +137,6 @@ CREATE TRIGGER update_domain_reservations_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_tls_certificates_updated_at
-    BEFORE UPDATE ON tls_certificates
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_edge_certificates_updated_at
-    BEFORE UPDATE ON edge_certificates
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
 -- ============================================================================
 -- SCHEMA SETUP COMPLETE
 -- ============================================================================
@@ -218,8 +152,6 @@ WHERE table_schema = 'public'
     'user_registrations',
     'installations',
     'ip_records',
-    'domain_reservations',
-    'tls_certificates',
-    'edge_certificates'
+    'domain_reservations'
   )
 ORDER BY table_name;
