@@ -1,9 +1,11 @@
 -- ============================================================================
 -- Kloudlite Registration Database Schema
 -- Multi-Installation Support
+-- Updated: 2025-11-05 (reflects all migrations)
 -- ============================================================================
 
 -- Drop existing tables (CASCADE will drop dependent objects)
+DROP TABLE IF EXISTS edge_certificates CASCADE;
 DROP TABLE IF EXISTS tls_certificates CASCADE;
 DROP TABLE IF EXISTS ip_records CASCADE;
 DROP TABLE IF EXISTS domain_reservations CASCADE;
@@ -45,6 +47,7 @@ CREATE TABLE installations (
   reserved_at TIMESTAMPTZ,
   deployment_ready BOOLEAN DEFAULT FALSE,
   last_health_check TIMESTAMPTZ,
+  edge_certificate_pack_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -54,26 +57,37 @@ CREATE INDEX idx_installations_user_id ON installations(user_id);
 CREATE INDEX idx_installations_subdomain ON installations(subdomain);
 CREATE INDEX idx_installations_installation_key ON installations(installation_key);
 
+-- Comments
+COMMENT ON COLUMN installations.edge_certificate_pack_id IS
+'CloudFlare Edge Certificate Pack ID for wildcard subdomain (*.subdomain.khost.dev) support';
+
 -- ============================================================================
 -- 3. IP RECORDS TABLE
--- Stores IP addresses for installations and workmachines
+-- Stores IP addresses and DNS records for domain requests
 -- ============================================================================
 
 CREATE TABLE ip_records (
   id SERIAL PRIMARY KEY,
   installation_id UUID NOT NULL REFERENCES installations(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('installation', 'workmachine')),
+  domain_request_name TEXT NOT NULL,
   ip TEXT NOT NULL,
-  work_machine_name TEXT,
-  configured_at TIMESTAMPTZ DEFAULT NOW(),
-  dns_record_ids TEXT[] DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE (installation_id, type, work_machine_name)
+  configured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ssh_record_id TEXT,
+  route_record_ids TEXT[] DEFAULT '{}',
+  route_record_map JSONB DEFAULT '{}'::jsonb,
+  domain_routes JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(installation_id, domain_request_name)
 );
 
 -- Indexes for ip_records
 CREATE INDEX idx_ip_records_installation_id ON ip_records(installation_id);
+CREATE INDEX idx_ip_records_domain_request_name ON ip_records(domain_request_name);
+
+-- Comments
+COMMENT ON COLUMN ip_records.route_record_map IS
+'Mapping of domain names to Cloudflare DNS record IDs for efficient differential updates';
 
 -- ============================================================================
 -- 4. DOMAIN RESERVATIONS TABLE
@@ -98,7 +112,7 @@ CREATE INDEX idx_domain_reservations_user_id ON domain_reservations(user_id);
 
 -- ============================================================================
 -- 5. TLS CERTIFICATES TABLE
--- Stores TLS certificates for installations
+-- Stores origin TLS certificates for installations
 -- ============================================================================
 
 CREATE TABLE tls_certificates (
@@ -123,7 +137,30 @@ CREATE INDEX idx_tls_certificates_installation_id ON tls_certificates(installati
 CREATE INDEX idx_tls_certificates_scope ON tls_certificates(scope);
 
 -- ============================================================================
--- 6. TRIGGERS FOR UPDATED_AT TIMESTAMPS
+-- 6. EDGE CERTIFICATES TABLE
+-- Stores CloudFlare edge certificates for domain requests
+-- ============================================================================
+
+CREATE TABLE edge_certificates (
+  id SERIAL PRIMARY KEY,
+  installation_id UUID NOT NULL REFERENCES installations(id) ON DELETE CASCADE,
+  cloudflare_cert_pack_id TEXT NOT NULL,
+  hostnames TEXT[] NOT NULL,
+  domain_request_name TEXT NOT NULL,
+  ordered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'failed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(installation_id, domain_request_name)
+);
+
+-- Indexes for edge_certificates
+CREATE INDEX idx_edge_certificates_installation_id ON edge_certificates(installation_id);
+CREATE INDEX idx_edge_certificates_domain_request_name ON edge_certificates(domain_request_name);
+CREATE INDEX idx_edge_certificates_status ON edge_certificates(status);
+
+-- ============================================================================
+-- 7. TRIGGERS FOR UPDATED_AT TIMESTAMPS
 -- ============================================================================
 
 -- Create function to update updated_at timestamp
@@ -161,26 +198,10 @@ CREATE TRIGGER update_tls_certificates_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- ============================================================================
--- 7. OPTIONAL: ROW LEVEL SECURITY (RLS)
--- Uncomment if you want to enable RLS
--- ============================================================================
-
--- Enable RLS on tables
--- ALTER TABLE user_registrations ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE installations ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE ip_records ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE domain_reservations ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE tls_certificates ENABLE ROW LEVEL SECURITY;
-
--- Example RLS policies
--- CREATE POLICY "Users can view their own data" ON user_registrations
---   FOR SELECT
---   USING (user_id = current_setting('app.current_user_id')::TEXT);
-
--- CREATE POLICY "Users can view their own installations" ON installations
---   FOR SELECT
---   USING (user_id = current_setting('app.current_user_id')::TEXT);
+CREATE TRIGGER update_edge_certificates_updated_at
+    BEFORE UPDATE ON edge_certificates
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
 -- SCHEMA SETUP COMPLETE
@@ -198,6 +219,7 @@ WHERE table_schema = 'public'
     'installations',
     'ip_records',
     'domain_reservations',
-    'tls_certificates'
+    'tls_certificates',
+    'edge_certificates'
   )
 ORDER BY table_name;
