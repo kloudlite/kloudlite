@@ -200,6 +200,15 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 	bold.Println("Infrastructure Setup")
 	bold.Println("--------------------")
 
+	// Enable required GCP APIs
+	fmt.Printf("  o Enabling required GCP APIs...")
+	if err := gcpinternal.EnableRequiredAPIs(ctx, cfg.Project); err != nil {
+		red.Printf(" x\n")
+		yellow.Printf("    Error: %v\n\n", err)
+		os.Exit(1)
+	}
+	green.Printf(" +\n")
+
 	// Find Ubuntu image
 	fmt.Printf("  o Finding Ubuntu 24.04 LTS image...")
 	imageURL, err := gcpinternal.GetUbuntu2404Image(ctx)
