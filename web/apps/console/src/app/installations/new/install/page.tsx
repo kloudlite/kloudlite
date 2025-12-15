@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
-import { Loader2, Cloud, Copy, CheckCircle2, Clock } from 'lucide-react'
+import { Loader2, Cloud, Copy, CheckCircle2 } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { WorldMap } from '@/components/world-map'
 import { toast } from 'sonner'
@@ -242,46 +242,6 @@ export default function InstallPage() {
 
       <InstallationProgress currentStep={2} />
 
-      {/* Verification Status Card */}
-      <Card className="mb-8">
-        <CardContent className="py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {verificationStatus === 'waiting' && (
-                <>
-                  <div className="flex size-12 items-center justify-center rounded-full bg-blue-50">
-                    <Loader2 className="size-6 animate-spin text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold">Waiting for deployment...</p>
-                    <p className="text-muted-foreground mt-0.5 text-sm">
-                      Run the command below to start installation
-                    </p>
-                  </div>
-                </>
-              )}
-              {verificationStatus === 'verified' && (
-                <>
-                  <div className="flex size-12 items-center justify-center rounded-full bg-green-50">
-                    <CheckCircle2 className="size-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold text-green-600">Installation verified!</p>
-                    <p className="text-muted-foreground mt-0.5 text-sm">
-                      Redirecting to completion page...
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Clock className="size-4" />
-              <span className="font-medium">Checking status...</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Installation Commands Card */}
       <Card>
         <CardHeader className="pb-6">
@@ -433,6 +393,21 @@ export default function InstallPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Compact Verification Status */}
+      <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+        {verificationStatus === 'waiting' ? (
+          <>
+            <Loader2 className="size-4 animate-spin text-blue-600" />
+            <span className="text-muted-foreground">Waiting for deployment...</span>
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="size-4 text-green-600" />
+            <span className="text-green-600 font-medium">Installation verified! Redirecting...</span>
+          </>
+        )}
+      </div>
     </>
   )
 }
