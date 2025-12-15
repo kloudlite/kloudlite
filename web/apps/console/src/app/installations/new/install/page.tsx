@@ -380,13 +380,6 @@ export default function InstallPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <p className="text-sm leading-relaxed text-blue-900">
-                      <span className="font-semibold">Note:</span> After running the command, this
-                      page will automatically detect when your K3s cluster is up and ready, then
-                      proceed to domain configuration.
-                    </p>
-                  </div>
                 </div>
               </TabsContent>
             ))}
