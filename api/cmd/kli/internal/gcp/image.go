@@ -10,12 +10,18 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+// Ubuntu2404ImageFamily is the image family URL for Ubuntu 24.04 LTS
+// Using the family URL allows GCP to automatically select the latest image
+const Ubuntu2404ImageFamily = "projects/ubuntu-os-cloud/global/images/family/ubuntu-2404-lts-amd64"
+
 // FindUbuntuImage finds the latest Ubuntu 24.04 LTS image
 // Returns the full image URL for use in instance creation
 func FindUbuntuImage(ctx context.Context, cfg *GCPConfig) (string, error) {
+	// Try to get specific image via API for better logging
 	imagesClient, err := compute.NewImagesRESTClient(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to create images client: %w", err)
+		// Fall back to image family URL (GCP will resolve to latest)
+		return Ubuntu2404ImageFamily, nil
 	}
 	defer imagesClient.Close()
 
@@ -34,7 +40,8 @@ func FindUbuntuImage(ctx context.Context, cfg *GCPConfig) (string, error) {
 			break
 		}
 		if err != nil {
-			return "", fmt.Errorf("failed to list images: %w", err)
+			// Fall back to image family URL
+			return Ubuntu2404ImageFamily, nil
 		}
 
 		// Skip deprecated images
@@ -50,7 +57,8 @@ func FindUbuntuImage(ctx context.Context, cfg *GCPConfig) (string, error) {
 	}
 
 	if latestImage == nil {
-		return "", fmt.Errorf("no Ubuntu 24.04 LTS image found")
+		// Fall back to image family URL
+		return Ubuntu2404ImageFamily, nil
 	}
 
 	// Return the full image URL
