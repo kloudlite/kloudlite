@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
 import { Loader2, Cloud, Copy, CheckCircle2, Clock } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
+import { WorldMap } from '@/components/world-map'
 import { toast } from 'sonner'
 
 interface SessionData {
@@ -376,6 +377,12 @@ export default function InstallPage() {
                       </Select>
                     </div>
                   )}
+
+                  {/* World Map showing selected region */}
+                  <WorldMap
+                    selectedRegion={key === 'aws' ? awsRegion : key === 'gcp' ? gcpRegion : azureLocation}
+                    provider={key as 'aws' | 'gcp' | 'azure'}
+                  />
 
                   <div>
                     <p className="text-foreground mb-3 text-sm font-semibold">Prerequisites:</p>
