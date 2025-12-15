@@ -2,10 +2,17 @@ package gcp
 
 import (
 	"context"
-	"fmt"
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/apiv1/computepb"
+)
+
+// Default values for GCP networking
+const (
+	DefaultNetworkName = "default"
+	DefaultSubnetName  = "default"
+	// GCP auto-mode VPC uses 10.128.0.0/9 range for all regions
+	DefaultVPCCIDR = "10.128.0.0/9"
 )
 
 // GetDefaultVPC returns the default VPC network name and CIDR
@@ -13,7 +20,8 @@ import (
 func GetDefaultVPC(ctx context.Context, cfg *GCPConfig) (string, string, error) {
 	networksClient, err := compute.NewNetworksRESTClient(ctx)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create networks client: %w", err)
+		// Fall back to default network name
+		return DefaultNetworkName, "", nil
 	}
 	defer networksClient.Close()
 
@@ -24,7 +32,8 @@ func GetDefaultVPC(ctx context.Context, cfg *GCPConfig) (string, string, error) 
 
 	network, err := networksClient.Get(ctx, req)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get default network: %w (you may need to create a default VPC)", err)
+		// Fall back to default network name
+		return DefaultNetworkName, "", nil
 	}
 
 	// GCP default network uses auto subnets, so CIDR is per-region
@@ -36,7 +45,8 @@ func GetDefaultVPC(ctx context.Context, cfg *GCPConfig) (string, string, error) 
 func GetDefaultSubnet(ctx context.Context, cfg *GCPConfig, networkName string) (string, string, error) {
 	subnetworksClient, err := compute.NewSubnetworksRESTClient(ctx)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create subnetworks client: %w", err)
+		// Fall back to defaults
+		return DefaultSubnetName, DefaultVPCCIDR, nil
 	}
 	defer subnetworksClient.Close()
 
@@ -49,10 +59,11 @@ func GetDefaultSubnet(ctx context.Context, cfg *GCPConfig, networkName string) (
 
 	subnet, err := subnetworksClient.Get(ctx, req)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get default subnet in region %s: %w", cfg.Region, err)
+		// Fall back to defaults
+		return DefaultSubnetName, DefaultVPCCIDR, nil
 	}
 
-	cidr := ""
+	cidr := DefaultVPCCIDR
 	if subnet.IpCidrRange != nil {
 		cidr = *subnet.IpCidrRange
 	}
@@ -64,7 +75,7 @@ func GetDefaultSubnet(ctx context.Context, cfg *GCPConfig, networkName string) (
 func GetVPCCIDR(ctx context.Context, cfg *GCPConfig) (string, error) {
 	_, cidr, err := GetDefaultSubnet(ctx, cfg, "default")
 	if err != nil {
-		return "", err
+		return DefaultVPCCIDR, nil
 	}
 	return cidr, nil
 }
