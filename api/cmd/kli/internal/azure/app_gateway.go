@@ -30,10 +30,10 @@ func CreateAppGatewayPublicIP(ctx context.Context, cfg *AzureConfig, installatio
 	}
 
 	tags := map[string]*string{
-		"Name":                         &pipName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation-appgw"),
+		"Name":                      &pipName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation-appgw"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
@@ -93,10 +93,10 @@ func CreateApplicationGateway(ctx context.Context, cfg *AzureConfig, installatio
 	}
 
 	tags := map[string]*string{
-		"Name":                         &appGwName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &appGwName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 

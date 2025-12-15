@@ -70,10 +70,10 @@ func EnsureVNet(ctx context.Context, cfg *AzureConfig, installationKey string) (
 
 	// Create VNet
 	tags := map[string]*string{
-		"Name":                         &vnetName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &vnetName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 

@@ -277,10 +277,10 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	publicIPName := vmName + "-pip"
 
 	tags := map[string]*string{
-		"Name":                   to.Ptr(vmName),
-		"kloudlite-workmachine":  to.Ptr(wm.Name),
-		"kloudlite-owner":        to.Ptr(wm.Spec.OwnedBy),
-		"kloudlite-managed-by":   to.Ptr("kloudlite-controller"),
+		"Name":                  to.Ptr(vmName),
+		"kloudlite-workmachine": to.Ptr(wm.Name),
+		"kloudlite-owner":       to.Ptr(wm.Spec.OwnedBy),
+		"kloudlite-managed-by":  to.Ptr("kloudlite-controller"),
 	}
 
 	for _, tag := range p.ResourceTags {

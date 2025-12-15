@@ -24,10 +24,10 @@ func EnsureNetworkSecurityGroup(ctx context.Context, cfg *AzureConfig, vpcCIDR, 
 
 	// Create NSG with security rules
 	tags := map[string]*string{
-		"Name":                         &nsgName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &nsgName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
@@ -161,10 +161,10 @@ func CreateAppGatewayNSG(ctx context.Context, cfg *AzureConfig, installationKey 
 
 	// Create NSG with security rules for Application Gateway
 	tags := map[string]*string{
-		"Name":                         &nsgName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation-appgw"),
+		"Name":                      &nsgName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation-appgw"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
@@ -268,10 +268,10 @@ func EnsureMasterNSG(ctx context.Context, cfg *AzureConfig, vpcCIDR, appGwSubnet
 
 	// Create NSG with security rules
 	tags := map[string]*string{
-		"Name":                         &nsgName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation-master"),
+		"Name":                      &nsgName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation-master"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
