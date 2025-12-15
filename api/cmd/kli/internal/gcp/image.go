@@ -87,11 +87,12 @@ func GetImageFamily(ctx context.Context, project, family string) (string, error)
 	return *image.SelfLink, nil
 }
 
-// GetUbuntu2404Image returns the latest Ubuntu 24.04 LTS image using the family method
-// This is the preferred method as it always returns the latest patched image
+// GetUbuntu2404Image returns the latest Ubuntu 24.04 LTS image
+// Uses the image family URL which GCP will resolve to the latest image
 func GetUbuntu2404Image(ctx context.Context) (string, error) {
-	// ubuntu-2404-lts is the family name for Ubuntu 24.04 Noble Numbat
-	return GetImageFamily(ctx, "ubuntu-os-cloud", "ubuntu-2404-lts-amd64")
+	// Return the image family URL - GCP will automatically resolve to latest
+	// This works without requiring API credentials
+	return Ubuntu2404ImageFamily, nil
 }
 
 // GetImageName extracts the image name from the full URL
