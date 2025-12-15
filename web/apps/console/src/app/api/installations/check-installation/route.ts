@@ -27,12 +27,20 @@ export async function POST(request: NextRequest) {
     // Check if installation has been verified (has secret key)
     const verified = !!installation.secretKey
 
+    // Check if DNS is configured (has IP records with DNS record IDs)
+    const dnsConfigured = installation.ipRecords?.some(
+      (record) => record.sshRecordId || (record.routeRecordIds && record.routeRecordIds.length > 0)
+    ) ?? false
+
     const response = NextResponse.json({
       verified,
+      dnsConfigured,
       hasCompletedInstallation: installation.hasCompletedInstallation,
-      message: verified
-        ? 'Installation verified'
-        : 'Installation not verified. Please ensure the deployment has contacted the server.',
+      message: !verified
+        ? 'Waiting for deployment to contact the server...'
+        : !dnsConfigured
+          ? 'Waiting for DNS configuration...'
+          : 'Installation complete',
     })
 
     // Disable all caching

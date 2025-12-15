@@ -134,7 +134,7 @@ export default function InstallPage() {
   const [azureLocation, setAzureLocation] = useState('eastus')
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [verificationStatus, setVerificationStatus] = useState<'waiting' | 'verified' | 'error'>(
+  const [verificationStatus, setVerificationStatus] = useState<'waiting' | 'verified' | 'dns_pending' | 'complete' | 'error'>(
     'waiting',
   )
 
@@ -180,13 +180,15 @@ export default function InstallPage() {
 
         const data = await response.json()
 
-        // Wait for verified status
-        if (data.verified) {
-          setVerificationStatus('verified')
-          // Auto-redirect to complete page after 2 seconds (domain is already configured)
+        // Check verification and DNS status
+        if (data.verified && data.dnsConfigured) {
+          setVerificationStatus('complete')
+          // Auto-redirect to complete page after 2 seconds
           setTimeout(() => {
             router.push('/installations/new/complete')
           }, 2000)
+        } else if (data.verified) {
+          setVerificationStatus('dns_pending')
         }
       } catch (error) {
         console.error('Error checking verification:', error)
@@ -384,15 +386,22 @@ export default function InstallPage() {
 
       {/* Compact Verification Status */}
       <div className="mt-6 flex items-center justify-center gap-3 text-sm">
-        {verificationStatus === 'waiting' ? (
+        {verificationStatus === 'waiting' && (
           <>
             <Loader2 className="size-4 animate-spin text-blue-600" />
             <span className="text-muted-foreground">Waiting for deployment...</span>
           </>
-        ) : (
+        )}
+        {verificationStatus === 'dns_pending' && (
+          <>
+            <Loader2 className="size-4 animate-spin text-yellow-600" />
+            <span className="text-yellow-600">Deployment verified. Configuring DNS...</span>
+          </>
+        )}
+        {verificationStatus === 'complete' && (
           <>
             <CheckCircle2 className="size-4 text-green-600" />
-            <span className="text-green-600 font-medium">Installation verified! Redirecting...</span>
+            <span className="text-green-600 font-medium">Installation complete! Redirecting...</span>
           </>
         )}
       </div>
