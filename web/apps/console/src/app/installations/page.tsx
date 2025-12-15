@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getUserInstallations, type Installation } from '@/lib/console/supabase-storage-service'
+import { getValidUserInstallations, type Installation } from '@/lib/console/supabase-storage-service'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
@@ -12,10 +12,10 @@ export default async function InstallationsPage() {
     redirect('/login')
   }
 
-  // Fetch user's installations from database
+  // Fetch user's valid (non-expired) installations from database
   let installations: Installation[] = []
   try {
-    installations = await getUserInstallations(session.user.id)
+    installations = await getValidUserInstallations(session.user.id)
   } catch (error) {
     console.error('Error fetching installations:', error)
     installations = []

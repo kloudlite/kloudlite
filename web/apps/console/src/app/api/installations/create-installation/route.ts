@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { createInstallation } from '@/lib/console/supabase-storage-service'
+import { createInstallation, cleanupExpiredInstallations } from '@/lib/console/supabase-storage-service'
 import { SignJWT } from 'jose'
 import crypto from 'crypto'
 
@@ -16,6 +16,12 @@ export async function POST(request: Request) {
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    // Cleanup any expired installations for this user before creating a new one
+    const cleanedUp = await cleanupExpiredInstallations(session.user.id)
+    if (cleanedUp > 0) {
+      console.log(`Cleaned up ${cleanedUp} expired installation(s) for user ${session.user.id}`)
     }
 
     const body = await request.json()

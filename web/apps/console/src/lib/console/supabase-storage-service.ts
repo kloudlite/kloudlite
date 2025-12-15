@@ -297,6 +297,71 @@ export async function getUserInstallations(userId: string): Promise<Installation
 }
 
 /**
+ * Get only valid (non-expired) installations for a user
+ */
+export async function getValidUserInstallations(userId: string): Promise<Installation[]> {
+  const allInstallations = await getUserInstallations(userId)
+  return allInstallations.filter(isInstallationValid)
+}
+
+/**
+ * Cleanup expired installations for a user
+ * Deletes installations that:
+ * 1. Are not deployment ready (domain not registered)
+ * 2. Were created more than 15 minutes ago
+ *
+ * Also cleans up related records (domain_reservations, ip_records, tls_certificates)
+ * Returns the number of installations deleted
+ */
+export async function cleanupExpiredInstallations(userId: string): Promise<number> {
+  const allInstallations = await getUserInstallations(userId)
+  const expiredInstallations = allInstallations.filter(inst => !isInstallationValid(inst))
+
+  let deletedCount = 0
+
+  for (const installation of expiredInstallations) {
+    try {
+      // Delete domain reservation
+      await supabase
+        .from('domain_reservations')
+        .delete()
+        .eq('installation_id', installation.id)
+
+      // Delete IP records
+      await supabase
+        .from('ip_records')
+        .delete()
+        .eq('installation_id', installation.id)
+
+      // Delete TLS certificates
+      await supabase
+        .from('tls_certificates')
+        .delete()
+        .eq('installation_id', installation.id)
+
+      // Delete edge certificates
+      await supabase
+        .from('edge_certificates')
+        .delete()
+        .eq('installation_id', installation.id)
+
+      // Delete the installation itself
+      await supabase
+        .from('installations')
+        .delete()
+        .eq('id', installation.id)
+
+      deletedCount++
+      console.log(`Cleaned up expired installation: ${installation.id} (${installation.name})`)
+    } catch (error) {
+      console.error(`Failed to cleanup installation ${installation.id}:`, error)
+    }
+  }
+
+  return deletedCount
+}
+
+/**
  * Create a new installation
  */
 export async function createInstallation(
@@ -626,6 +691,40 @@ export function validateSubdomain(subdomain: string): { valid: boolean; reason?:
 
 // 15 minutes in milliseconds
 export const DOMAIN_RESERVATION_EXPIRY_MS = 15 * 60 * 1000
+
+// Installation validity window (15 minutes) - after this, incomplete installations expire
+export const INSTALLATION_VALIDITY_MS = 15 * 60 * 1000
+
+/**
+ * Check if an installation is still valid
+ * An installation is valid if:
+ * 1. It has completed deployment (deploymentReady === true), OR
+ * 2. It was created within the last 15 minutes
+ */
+export function isInstallationValid(installation: Installation): boolean {
+  // If domain is registered and deployment is ready, it's always valid
+  if (installation.deploymentReady) {
+    return true
+  }
+  // Otherwise, check if within 15-minute validity window
+  const createdAt = new Date(installation.createdAt).getTime()
+  const now = Date.now()
+  return (now - createdAt) < INSTALLATION_VALIDITY_MS
+}
+
+/**
+ * Get remaining validity time in milliseconds
+ * Returns 0 if expired, or remaining time if still valid
+ */
+export function getInstallationRemainingTime(installation: Installation): number {
+  if (installation.deploymentReady) {
+    return Infinity // Always valid
+  }
+  const createdAt = new Date(installation.createdAt).getTime()
+  const expiresAt = createdAt + INSTALLATION_VALIDITY_MS
+  const remaining = expiresAt - Date.now()
+  return remaining > 0 ? remaining : 0
+}
 
 /**
  * Check if subdomain is available

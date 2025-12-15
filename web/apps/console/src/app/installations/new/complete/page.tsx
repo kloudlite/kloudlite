@@ -1,21 +1,48 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from '@kloudlite/ui'
-import { ExternalLink, Loader2, Copy, PartyPopper } from 'lucide-react'
+import { ExternalLink, Loader2, Copy, PartyPopper, Clock, AlertCircle } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
 
 interface InstallationData {
   subdomain: string
   url: string
+  installationId: string
 }
+
+type ActiveStatus = 'checking' | 'active' | 'waiting' | 'error'
 
 export default function CompletePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [installationData, setInstallationData] = useState<InstallationData | null>(null)
+  const [activeStatus, setActiveStatus] = useState<ActiveStatus>('checking')
+  const [checkCount, setCheckCount] = useState(0)
+
+  // Function to check if installation is active
+  const checkActiveStatus = useCallback(async (installationId: string) => {
+    try {
+      const response = await fetch(`/api/installations/${installationId}/ping`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.active) {
+          setActiveStatus('active')
+          return true
+        } else {
+          setActiveStatus('waiting')
+          return false
+        }
+      }
+      setActiveStatus('waiting')
+      return false
+    } catch {
+      setActiveStatus('waiting')
+      return false
+    }
+  }, [])
 
   useEffect(() => {
     const fetchInstallationData = async () => {
@@ -43,7 +70,13 @@ export default function CompletePage() {
                 setInstallationData({
                   subdomain: verifyData.subdomain,
                   url: `https://${verifyData.subdomain}.${domain}`,
+                  installationId: verifyData.installationId,
                 })
+
+                // Start checking active status
+                if (verifyData.installationId) {
+                  checkActiveStatus(verifyData.installationId)
+                }
               }
             }
           }
@@ -57,7 +90,24 @@ export default function CompletePage() {
       }
     }
     fetchInstallationData()
-  }, [router])
+  }, [router, checkActiveStatus])
+
+  // Poll for active status every 5 seconds until active
+  useEffect(() => {
+    if (!installationData?.installationId || activeStatus === 'active') {
+      return
+    }
+
+    const intervalId = setInterval(async () => {
+      setCheckCount(c => c + 1)
+      const isActive = await checkActiveStatus(installationData.installationId)
+      if (isActive) {
+        clearInterval(intervalId)
+      }
+    }, 5000)
+
+    return () => clearInterval(intervalId)
+  }, [installationData?.installationId, activeStatus, checkActiveStatus])
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -76,7 +126,84 @@ export default function CompletePage() {
     return null
   }
 
-  return (
+  // Render waiting state while installation is not yet active
+  const renderWaitingState = () => (
+    <div className="w-full">
+      <div className="mb-8 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-blue-100">
+            <Clock className="size-8 text-blue-600 animate-pulse" />
+          </div>
+        </div>
+        <h1 className="text-foreground mb-2 text-3xl font-semibold">Setting Up Your Installation</h1>
+        <p className="text-muted-foreground">Please wait while your installation becomes active</p>
+      </div>
+
+      <InstallationProgress currentStep={3} />
+
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Loader2 className="size-5 animate-spin" />
+              Waiting for Installation to Become Active
+            </CardTitle>
+            <CardDescription>
+              Your installation is being set up. This usually takes 1-3 minutes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted rounded-lg p-4">
+              <p className="mb-2 text-sm font-medium">Installation Dashboard URL:</p>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground font-mono text-lg">
+                  {installationData?.subdomain}.
+                  {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => installationData && copyToClipboard(installationData.url, 'URL')}
+                >
+                  <Copy className="mr-2 size-3" />
+                  Copy
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="size-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
+                    Installation in Progress
+                  </p>
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
+                    We&apos;re checking if your installation is ready. Checked {checkCount} time{checkCount !== 1 ? 's' : ''}.
+                    The page will automatically update when your installation is active.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="flex-1"
+                onClick={() => router.push('/installations')}
+              >
+                View All Installations
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  // Render active/ready state
+  const renderActiveState = () => (
     <div className="w-full">
       <div className="mb-8 text-center">
         <div className="mb-4 flex justify-center">
@@ -99,7 +226,7 @@ export default function CompletePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {installationData.subdomain ? (
+            {installationData?.subdomain ? (
               <div className="bg-muted rounded-lg p-4">
                 <p className="mb-2 text-sm font-medium">Installation Dashboard URL:</p>
                 <div className="flex items-center justify-between gap-3">
@@ -135,7 +262,7 @@ export default function CompletePage() {
             )}
 
             <div className="flex gap-3">
-              {installationData.subdomain ? (
+              {installationData?.subdomain ? (
                 <Button
                   className="flex-1"
                   size="lg"
@@ -146,7 +273,7 @@ export default function CompletePage() {
                 </Button>
               ) : null}
               <Button
-                variant={installationData.subdomain ? 'outline' : 'default'}
+                variant={installationData?.subdomain ? 'outline' : 'default'}
                 size="lg"
                 className="flex-1"
                 onClick={() => router.push('/installations')}
@@ -193,4 +320,11 @@ export default function CompletePage() {
       </div>
     </div>
   )
+
+  // Conditionally render based on active status
+  if (activeStatus === 'active') {
+    return renderActiveState()
+  }
+
+  return renderWaitingState()
 }
