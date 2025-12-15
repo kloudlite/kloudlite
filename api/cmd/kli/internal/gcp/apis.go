@@ -14,6 +14,7 @@ var RequiredAPIs = []string{
 	"iam.googleapis.com",
 	"storage.googleapis.com",
 	"iamcredentials.googleapis.com",
+	"cloudresourcemanager.googleapis.com",
 }
 
 // EnableRequiredAPIs enables all required GCP APIs for the project
