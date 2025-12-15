@@ -112,7 +112,7 @@ func CreateHealthCheck(ctx context.Context, cfg *GCPConfig, installationKey stri
 		Type:               ptrString("HTTP"),
 		HttpHealthCheck: &computepb.HTTPHealthCheck{
 			Port:        ptrInt32(80),
-			RequestPath: ptrString("/"),
+			RequestPath: ptrString("/health"),
 		},
 	}
 
