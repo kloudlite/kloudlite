@@ -91,10 +91,10 @@ func EnsureResourceGroup(ctx context.Context, cfg *AzureConfig, installationKey 
 
 	// Create resource group
 	tags := map[string]*string{
-		"Name":                         &rgName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &rgName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 

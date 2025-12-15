@@ -27,10 +27,10 @@ func EnsureStorageAccount(ctx context.Context, cfg *AzureConfig, installationKey
 
 	// Create storage account
 	tags := map[string]*string{
-		"Name":                         &accountName,
-		"ManagedBy":                    strPtr("kloudlite"),
-		"Project":                      strPtr("kloudlite"),
-		"Purpose":                      strPtr("kloudlite-installation"),
+		"Name":                      &accountName,
+		"ManagedBy":                 strPtr("kloudlite"),
+		"Project":                   strPtr("kloudlite"),
+		"Purpose":                   strPtr("kloudlite-installation"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
