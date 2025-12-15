@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
     // Return only operational information needed by deployment
     const response = NextResponse.json({
       success: true,
+      installationId: updatedInstallation.id,
       secretKey: updatedInstallation.secretKey,
       subdomain: updatedInstallation.subdomain,
       deploymentReady: updatedInstallation.deploymentReady || false,
