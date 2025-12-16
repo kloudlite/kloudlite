@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
           },
           "parameters": {
             "principalId": { "value": "[reference('identityDeployment').outputs.principalId.value]" },
-            "roleGuid": { "value": "[guid(variables('resourceGroupName'), variables('identityName'), 'Contributor')]" }
+            "roleGuid": { "value": "[guid(subscription().subscriptionId, variables('resourceGroupName'), variables('identityName'), 'Contributor')]" }
           }
         }
       },
