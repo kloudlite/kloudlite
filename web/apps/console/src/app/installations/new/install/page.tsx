@@ -386,7 +386,7 @@ export default function InstallPage() {
                           >
                             {azureLocation ? (
                               <a
-                                href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent('https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json')}/deploymentParameters/${encodeURIComponent(JSON.stringify({ installationKey: { value: session.installationKey } }))}`}
+                                href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent('https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json')}/deploymentParameters/${encodeURIComponent(JSON.stringify({ kloudliteKey: { value: session.installationKey } }))}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
