@@ -11,16 +11,10 @@
       "metadata": {
         "description": "Your Kloudlite installation key"
       }
-    },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Azure region for installation"
-      }
     }
   },
   "variables": {
-    "resourceGroupName": "[concat('kloudlite-', uniqueString(subscription().subscriptionId, parameters('location')))]",
+    "resourceGroupName": "[concat('kloudlite-installer-', uniqueString(subscription().subscriptionId, deployment().location))]",
     "vmName": "[concat('kl-installer-', uniqueString(subscription().subscriptionId))]"
   },
   "resources": [
@@ -28,7 +22,7 @@
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2022-09-01",
       "name": "[variables('resourceGroupName')]",
-      "location": "[parameters('location')]",
+      "location": "[deployment().location]",
       "tags": {
         "kloudlite.io/managed-by": "arm-template",
         "kloudlite.io/purpose": "installer"
@@ -164,7 +158,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Cleaning up installer...\"\nsleep 60\naz group delete --name ', variables('resourceGroupName'), ' --yes --no-wait'))]"
+                  "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', deployment().location, '\"\necho \"Installation complete. Cleaning up installer...\"\nsleep 60\naz group delete --name ', variables('resourceGroupName'), ' --yes --no-wait'))]"
                 }
               }
             }
@@ -181,7 +175,7 @@
     },
     "location": {
       "type": "string",
-      "value": "[parameters('location')]"
+      "value": "[deployment().location]"
     }
   }
 }
