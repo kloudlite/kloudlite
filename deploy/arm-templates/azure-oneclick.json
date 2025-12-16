@@ -139,7 +139,7 @@
           "outputs": {
             "vmPrincipalId": {
               "type": "string",
-              "value": "[reference(variables('vmName'), '2023-07-01', 'Full').identity.principalId]"
+              "value": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '2023-07-01', 'Full').identity.principalId]"
             },
             "vmName": {
               "type": "string",
