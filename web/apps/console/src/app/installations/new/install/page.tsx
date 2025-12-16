@@ -376,7 +376,7 @@ export default function InstallPage() {
                           <div>
                             <p className="text-foreground text-sm font-semibold">One-Click Install</p>
                             <p className="text-muted-foreground text-sm">
-                              Deploy directly in Azure Portal (only subscription selection required)
+                              Select your subscription in Azure Portal. Resources deploy to <span className="font-medium text-foreground">{azureLocation}</span>.
                             </p>
                           </div>
                           <Button
@@ -389,7 +389,7 @@ export default function InstallPage() {
                               rel="noopener noreferrer"
                             >
                               <ExternalLink className="mr-2 size-4" />
-                              Deploy to Azure ({azureLocation})
+                              Deploy to Azure
                             </a>
                           </Button>
                         </div>
