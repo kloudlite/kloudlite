@@ -386,13 +386,9 @@ export default function InstallPage() {
                           >
                             {azureLocation ? (
                               <a
-                                href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent('https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json')}`}
+                                href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent('https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json')}/deploymentParameters/${encodeURIComponent(JSON.stringify({ installationKey: { value: session.installationKey }, location: { value: azureLocation } }))}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(session.installationKey)
-                                  toast.success('Installation key copied! Paste it in Azure Portal.')
-                                }}
                               >
                                 <ExternalLink className="mr-2 size-4" />
                                 Deploy to Azure
