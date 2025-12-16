@@ -1,4 +1,4 @@
-name: Upload CloudFormation to S3
+name: Upload Cloud Templates to S3
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'deploy/cloudformation/**'
+      - 'deploy/arm-templates/**'
       - '.github/workflows/upload-cloudformation.yml'
   workflow_dispatch:
 
@@ -48,21 +49,27 @@ jobs:
             }'
           fi
 
-      - name: Upload CloudFormation templates
+      - name: Upload cloud templates
         run: |
-          aws s3 sync deploy/cloudformation/ s3://kloudlite-cloudformation-templates/ \
-            --delete \
+          # Upload AWS CloudFormation templates
+          aws s3 sync deploy/cloudformation/ s3://kloudlite-cloudformation-templates/aws/ \
             --content-type "application/x-yaml"
 
-          echo "Uploaded files:"
-          aws s3 ls s3://kloudlite-cloudformation-templates/
+          # Upload Azure ARM templates
+          aws s3 sync deploy/arm-templates/ s3://kloudlite-cloudformation-templates/azure/ \
+            --content-type "application/json"
 
-      - name: Output CloudFormation URLs
+          echo "Uploaded files:"
+          aws s3 ls s3://kloudlite-cloudformation-templates/ --recursive
+
+      - name: Output template URLs
         run: |
-          echo "## CloudFormation Template URLs" >> $GITHUB_STEP_SUMMARY
+          echo "## Cloud Template URLs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### AWS One-Click Install" >> $GITHUB_STEP_SUMMARY
-          echo "https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml" >> $GITHUB_STEP_SUMMARY
+          echo "### AWS CloudFormation" >> $GITHUB_STEP_SUMMARY
+          echo "- Template: https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws/aws-oneclick.yaml" >> $GITHUB_STEP_SUMMARY
+          echo "- Launch: https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws/aws-oneclick.yaml&stackName=kloudlite" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Quick Launch Link" >> $GITHUB_STEP_SUMMARY
-          echo "https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml&stackName=kloudlite" >> $GITHUB_STEP_SUMMARY
+          echo "### Azure ARM Template" >> $GITHUB_STEP_SUMMARY
+          echo "- Template: https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json" >> $GITHUB_STEP_SUMMARY
+          echo "- Deploy: https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fkloudlite-cloudformation-templates.s3.amazonaws.com%2Fazure%2Fazure-oneclick.json" >> $GITHUB_STEP_SUMMARY
