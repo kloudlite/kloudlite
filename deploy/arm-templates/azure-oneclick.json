@@ -230,7 +230,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Cleaning up installer...\"\nsleep 60\naz group delete --name ', parameters('resourceGroupName'), ' --yes --no-wait'))]"
+                  "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Cleaning up installer in 60 seconds...\"\nsleep 60\necho \"Installing Azure CLI for cleanup...\"\ncurl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash\necho \"Logging in with managed identity...\"\naz login --identity --allow-no-subscriptions\necho \"Deleting installer resource group...\"\naz group delete --name ', parameters('resourceGroupName'), ' --yes --no-wait\necho \"Cleanup initiated.\"'))]"
                 }
               }
             }
