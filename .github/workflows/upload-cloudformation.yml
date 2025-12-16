@@ -49,6 +49,18 @@ jobs:
             }'
           fi
 
+          # Configure CORS for Azure Portal access
+          echo "Configuring CORS..."
+          aws s3api put-bucket-cors --bucket "$BUCKET_NAME" --cors-configuration '{
+            "CORSRules": [{
+              "AllowedHeaders": ["*"],
+              "AllowedMethods": ["GET", "HEAD"],
+              "AllowedOrigins": ["https://portal.azure.com", "https://*.portal.azure.com", "https://console.aws.amazon.com", "https://*.console.aws.amazon.com"],
+              "ExposeHeaders": ["ETag"],
+              "MaxAgeSeconds": 3600
+            }]
+          }'
+
       - name: Upload cloud templates
         run: |
           # Upload AWS CloudFormation templates
