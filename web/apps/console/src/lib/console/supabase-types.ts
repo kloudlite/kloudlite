@@ -42,6 +42,8 @@ export type Database = {
           reserved_at: string | null
           deployment_ready: boolean | null
           last_health_check: string | null
+          cloud_provider: 'aws' | 'gcp' | 'azure' | null
+          cloud_location: string | null
           created_at: string
           updated_at: string
         }
@@ -57,6 +59,8 @@ export type Database = {
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
+          cloud_provider?: 'aws' | 'gcp' | 'azure' | null
+          cloud_location?: string | null
         }
         Update: {
           user_id?: string
@@ -69,6 +73,8 @@ export type Database = {
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
+          cloud_provider?: 'aws' | 'gcp' | 'azure' | null
+          cloud_location?: string | null
         }
       }
       ip_records: {
