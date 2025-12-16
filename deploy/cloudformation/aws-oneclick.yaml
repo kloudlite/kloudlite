@@ -130,5 +130,5 @@ Outputs:
   UninstallCommand:
     Description: 'Command to uninstall Kloudlite (run manually when needed)'
     Value: !Sub
-      - 'curl -fsSL https://get.khost.dev/uninstall/aws | bash -s -- --key "YOUR_KEY" --region "${InstallRegion}"'
+      - 'curl -fsSL https://get.khost.dev/uninstall/aws | bash -s -- --key "${InstallationKey}" --region "${InstallRegion}"'
       - InstallRegion: !If [UseDefaultRegion, !Ref 'AWS::Region', !Ref Region]
