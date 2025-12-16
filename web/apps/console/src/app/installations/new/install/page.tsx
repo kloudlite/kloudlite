@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
-import { Loader2, Copy, CheckCircle2 } from 'lucide-react'
+import { Loader2, Copy, CheckCircle2, ExternalLink } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { WorldMap } from '@/components/world-map'
 import { toast } from 'sonner'
@@ -271,24 +271,49 @@ export default function InstallPage() {
                 <div className="space-y-5">
                   {/* AWS Region Selector */}
                   {key === 'aws' && (
-                    <div>
-                      <p className="text-foreground mb-3 text-sm font-semibold">Select AWS Region:</p>
-                      <Select
-                        value={awsRegion || 'default'}
-                        onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
-                      >
-                        <SelectTrigger className="w-full md:w-80">
-                          <SelectValue placeholder="Select a region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AWS_REGIONS.map((region) => (
-                            <SelectItem key={region.value || 'default'} value={region.value || 'default'}>
-                              {region.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <>
+                      <div>
+                        <p className="text-foreground mb-3 text-sm font-semibold">Select AWS Region:</p>
+                        <Select
+                          value={awsRegion || 'default'}
+                          onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
+                        >
+                          <SelectTrigger className="w-full md:w-80">
+                            <SelectValue placeholder="Select a region" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AWS_REGIONS.map((region) => (
+                              <SelectItem key={region.value || 'default'} value={region.value || 'default'}>
+                                {region.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* One-Click CloudFormation */}
+                      <div className="bg-muted/50 rounded-lg border p-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-foreground text-sm font-semibold">One-Click Install</p>
+                            <p className="text-muted-foreground text-sm">Launch directly in AWS CloudFormation</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            asChild
+                          >
+                            <a
+                              href={`https://console.aws.amazon.com/cloudformation/home${awsRegion ? `?region=${awsRegion}` : ''}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}${awsRegion ? `&param_Region=${awsRegion}` : ''}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="mr-2 size-4" />
+                              Launch Stack
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* GCP Region Selector */}
