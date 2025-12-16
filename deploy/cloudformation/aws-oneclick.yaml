@@ -15,11 +15,6 @@ Parameters:
     AllowedPattern: '^(|[a-z]{2}-[a-z]+-\d+)$'
     ConstraintDescription: 'Must be a valid AWS region (e.g., us-east-1) or empty for default'
 
-  KliImage:
-    Type: String
-    Description: 'KLI container image'
-    Default: 'ghcr.io/kloudlite/kloudlite/kli:development'
-
 Conditions:
   UseDefaultRegion: !Equals [!Ref Region, '']
 
@@ -88,14 +83,6 @@ Resources:
           exec > >(tee /var/log/kloudlite-install.log) 2>&1
 
           echo "Starting Kloudlite installation..."
-          echo "Stack: ${AWS::StackName}"
-          echo "Region: ${AWS::Region}"
-
-          # Install Docker
-          yum update -y
-          yum install -y docker
-          systemctl start docker
-          systemctl enable docker
 
           # Determine region
           INSTALL_REGION="${Region}"
@@ -103,15 +90,8 @@ Resources:
             INSTALL_REGION="${AWS::Region}"
           fi
 
-          echo "Installing in region: $INSTALL_REGION"
-
-          # Run kli installer
-          docker run --rm \
-            -e AWS_DEFAULT_REGION=$INSTALL_REGION \
-            ${KliImage} \
-            aws install \
-            --key "${InstallationKey}" \
-            --region "$INSTALL_REGION"
+          # Run install script
+          curl -fsSL https://get.khost.dev/install/aws | bash -s -- --key "${InstallationKey}" --region "$INSTALL_REGION"
 
           INSTALL_STATUS=$?
 
@@ -150,5 +130,5 @@ Outputs:
   UninstallCommand:
     Description: 'Command to uninstall Kloudlite (run manually when needed)'
     Value: !Sub
-      - 'docker run --rm -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY ${KliImage} aws uninstall --key "YOUR_KEY" --region "${InstallRegion}" --force'
+      - 'curl -fsSL https://get.khost.dev/uninstall/aws | bash -s -- --key "YOUR_KEY" --region "${InstallRegion}"'
       - InstallRegion: !If [UseDefaultRegion, !Ref 'AWS::Region', !Ref Region]
