@@ -43,35 +43,42 @@
       ],
       "properties": {
         "mode": "Incremental",
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "parameters": {
-            "identityName": { "type": "string" },
-            "location": { "type": "string" }
+            "identityNameParam": { "type": "string" },
+            "locationParam": { "type": "string" }
+          },
+          "variables": {
+            "identityName": "[parameters('identityNameParam')]",
+            "location": "[parameters('locationParam')]"
           },
           "resources": [
             {
               "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
               "apiVersion": "2023-01-31",
-              "name": "[parameters('identityName')]",
-              "location": "[parameters('location')]"
+              "name": "[variables('identityName')]",
+              "location": "[variables('location')]"
             }
           ],
           "outputs": {
             "principalId": {
               "type": "string",
-              "value": "[reference(parameters('identityName'), '2023-01-31').principalId]"
+              "value": "[reference(variables('identityName'), '2023-01-31').principalId]"
             },
             "identityId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
             }
           }
         },
         "parameters": {
-          "identityName": { "value": "[variables('identityName')]" },
-          "location": { "value": "[deployment().location]" }
+          "identityNameParam": { "value": "[variables('identityName')]" },
+          "locationParam": { "value": "[deployment().location]" }
         }
       }
     },
