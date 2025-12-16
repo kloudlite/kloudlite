@@ -11,6 +11,41 @@
       "metadata": {
         "description": "Your Kloudlite installation key from console.kloudlite.io"
       }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure region for Kloudlite installation (e.g., eastus, westeurope, centralindia)"
+      },
+      "allowedValues": [
+        "eastus",
+        "eastus2",
+        "westus",
+        "westus2",
+        "westus3",
+        "centralus",
+        "northcentralus",
+        "southcentralus",
+        "westeurope",
+        "northeurope",
+        "uksouth",
+        "ukwest",
+        "francecentral",
+        "germanywestcentral",
+        "swedencentral",
+        "southeastasia",
+        "eastasia",
+        "japaneast",
+        "japanwest",
+        "koreacentral",
+        "australiaeast",
+        "australiasoutheast",
+        "centralindia",
+        "southindia",
+        "brazilsouth",
+        "canadacentral",
+        "canadaeast"
+      ]
     }
   },
   "variables": {
@@ -26,7 +61,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2023-05-01",
       "name": "[variables('nsgName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": []
       },
@@ -39,7 +74,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2023-05-01",
       "name": "[variables('publicIpName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Basic"
       },
@@ -55,7 +90,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2023-05-01",
       "name": "[variables('vnetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ],
@@ -84,7 +119,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2023-05-01",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
@@ -114,7 +149,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-07-01",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
@@ -177,7 +212,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2023-07-01",
       "name": "[concat(variables('vmName'), '/InstallKloudlite')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('vmName'), 'Contributor'))]"
       ],
@@ -187,7 +222,7 @@
         "typeHandlerVersion": "2.1",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', resourceGroup().location, '\"\necho \"Installation complete. Self-terminating in 5 minutes...\"\nsleep 300\naz vm delete --name ', variables('vmName'), ' --resource-group ', resourceGroup().name, ' --yes --no-wait'))]"
+          "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Self-terminating in 5 minutes...\"\nsleep 300\naz vm delete --name ', variables('vmName'), ' --resource-group ', resourceGroup().name, ' --yes --no-wait'))]"
         }
       }
     }
@@ -199,7 +234,7 @@
     },
     "location": {
       "type": "string",
-      "value": "[resourceGroup().location]"
+      "value": "[parameters('location')]"
     }
   }
 }
