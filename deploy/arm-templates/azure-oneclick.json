@@ -15,7 +15,8 @@
   },
   "variables": {
     "resourceGroupName": "[concat('kloudlite-installer-', uniqueString(subscription().subscriptionId, deployment().location))]",
-    "vmName": "[concat('kl-installer-', uniqueString(subscription().subscriptionId))]"
+    "vmName": "[concat('kl-installer-', uniqueString(subscription().subscriptionId))]",
+    "identityName": "[concat('kl-installer-identity-', uniqueString(subscription().subscriptionId))]"
   },
   "resources": [
     {
@@ -31,7 +32,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "vmDeployment",
+      "name": "installerDeployment",
       "resourceGroup": "[variables('resourceGroupName')]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
@@ -42,23 +43,43 @@
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "parameters": {
-            "inputVmName": { "type": "string" },
-            "inputLocation": { "type": "string" }
+            "vmName": { "type": "string" },
+            "identityName": { "type": "string" },
+            "location": { "type": "string" },
+            "resourceGroupName": { "type": "string" },
+            "installationKey": { "type": "securestring" }
           },
           "variables": {
-            "vmName": "[parameters('inputVmName')]",
-            "location": "[parameters('inputLocation')]",
-            "nicName": "[concat(variables('vmName'), '-nic')]",
-            "nsgName": "[concat(variables('vmName'), '-nsg')]",
-            "vnetName": "[concat(variables('vmName'), '-vnet')]",
-            "pipName": "[concat(variables('vmName'), '-pip')]"
+            "nicName": "[concat(parameters('vmName'), '-nic')]",
+            "nsgName": "[concat(parameters('vmName'), '-nsg')]",
+            "vnetName": "[concat(parameters('vmName'), '-vnet')]",
+            "pipName": "[concat(parameters('vmName'), '-pip')]"
           },
           "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[parameters('identityName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceGroup().id, parameters('identityName'), 'Contributor')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
+              ],
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName')), '2023-01-31').principalId]",
+                "principalType": "ServicePrincipal"
+              }
+            },
             {
               "type": "Microsoft.Network/networkSecurityGroups",
               "apiVersion": "2023-05-01",
               "name": "[variables('nsgName')]",
-              "location": "[variables('location')]",
+              "location": "[parameters('location')]",
               "properties": {
                 "securityRules": []
               }
@@ -67,7 +88,7 @@
               "type": "Microsoft.Network/publicIPAddresses",
               "apiVersion": "2023-05-01",
               "name": "[variables('pipName')]",
-              "location": "[variables('location')]",
+              "location": "[parameters('location')]",
               "sku": { "name": "Basic" },
               "properties": { "publicIPAllocationMethod": "Dynamic" }
             },
@@ -75,7 +96,7 @@
               "type": "Microsoft.Network/virtualNetworks",
               "apiVersion": "2023-05-01",
               "name": "[variables('vnetName')]",
-              "location": "[variables('location')]",
+              "location": "[parameters('location')]",
               "dependsOn": ["[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"],
               "properties": {
                 "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
@@ -92,7 +113,7 @@
               "type": "Microsoft.Network/networkInterfaces",
               "apiVersion": "2023-05-01",
               "name": "[variables('nicName')]",
-              "location": "[variables('location')]",
+              "location": "[parameters('location')]",
               "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
                 "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
@@ -111,14 +132,22 @@
             {
               "type": "Microsoft.Compute/virtualMachines",
               "apiVersion": "2023-07-01",
-              "name": "[variables('vmName')]",
-              "location": "[variables('location')]",
-              "dependsOn": ["[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"],
-              "identity": { "type": "SystemAssigned" },
+              "name": "[parameters('vmName')]",
+              "location": "[parameters('location')]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+                "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('identityName'), 'Contributor'))]"
+              ],
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
+                }
+              },
               "properties": {
                 "hardwareProfile": { "vmSize": "Standard_B1s" },
                 "osProfile": {
-                  "computerName": "[variables('vmName')]",
+                  "computerName": "[parameters('vmName')]",
                   "adminUsername": "azureuser",
                   "adminPassword": "[concat('P@ss', uniqueString(resourceGroup().id), '!')]",
                   "linuxConfiguration": { "disablePasswordAuthentication": false }
@@ -139,51 +168,6 @@
                   "networkInterfaces": [{ "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]" }]
                 }
               }
-            }
-          ],
-          "outputs": {
-            "vmPrincipalId": {
-              "type": "string",
-              "value": "[reference(variables('vmName'), '2023-07-01', 'Full').identity.principalId]"
-            }
-          }
-        },
-        "parameters": {
-          "inputVmName": { "value": "[variables('vmName')]" },
-          "inputLocation": { "value": "[deployment().location]" }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
-      "name": "roleAndExtensionDeployment",
-      "resourceGroup": "[variables('resourceGroupName')]",
-      "dependsOn": [
-        "vmDeployment"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "parameters": {
-            "vmName": { "type": "string" },
-            "vmPrincipalId": { "type": "string" },
-            "location": { "type": "string" },
-            "resourceGroupName": { "type": "string" },
-            "installationKey": { "type": "securestring" }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "name": "[guid(parameters('resourceGroupName'), 'Contributor')]",
-              "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                "principalId": "[parameters('vmPrincipalId')]",
-                "principalType": "ServicePrincipal"
-              }
             },
             {
               "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -191,7 +175,7 @@
               "name": "[concat(parameters('vmName'), '/InstallKloudlite')]",
               "location": "[parameters('location')]",
               "dependsOn": [
-                "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('resourceGroupName'), 'Contributor'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
               ],
               "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -207,7 +191,7 @@
         },
         "parameters": {
           "vmName": { "value": "[variables('vmName')]" },
-          "vmPrincipalId": { "value": "[reference('vmDeployment').outputs.vmPrincipalId.value]" },
+          "identityName": { "value": "[variables('identityName')]" },
           "location": { "value": "[deployment().location]" },
           "resourceGroupName": { "value": "[variables('resourceGroupName')]" },
           "installationKey": { "value": "[parameters('installationKey')]" }
