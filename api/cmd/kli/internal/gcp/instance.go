@@ -379,6 +379,8 @@ data:
   GCP_PROJECT: "%s"
   GCP_REGION: "%s"
   GCP_ZONE: "%s"
+  GCP_NETWORK: "default"
+  GCP_SUBNETWORK: "default"
   GCP_PRIVATE_IP: "$PRIVATE_IP"
   GCP_PUBLIC_IP: "$PUBLIC_IP"
   K3S_VERSION: "$K3S_VERSION"
