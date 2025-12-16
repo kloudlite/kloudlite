@@ -42,21 +42,23 @@
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "parameters": {
-            "vmName": { "type": "string" },
-            "location": { "type": "string" }
+            "inputVmName": { "type": "string" },
+            "inputLocation": { "type": "string" }
           },
           "variables": {
-            "nicName": "[concat(parameters('vmName'), '-nic')]",
-            "nsgName": "[concat(parameters('vmName'), '-nsg')]",
-            "vnetName": "[concat(parameters('vmName'), '-vnet')]",
-            "pipName": "[concat(parameters('vmName'), '-pip')]"
+            "vmName": "[parameters('inputVmName')]",
+            "location": "[parameters('inputLocation')]",
+            "nicName": "[concat(variables('vmName'), '-nic')]",
+            "nsgName": "[concat(variables('vmName'), '-nsg')]",
+            "vnetName": "[concat(variables('vmName'), '-vnet')]",
+            "pipName": "[concat(variables('vmName'), '-pip')]"
           },
           "resources": [
             {
               "type": "Microsoft.Network/networkSecurityGroups",
               "apiVersion": "2023-05-01",
               "name": "[variables('nsgName')]",
-              "location": "[parameters('location')]",
+              "location": "[variables('location')]",
               "properties": {
                 "securityRules": []
               }
@@ -65,7 +67,7 @@
               "type": "Microsoft.Network/publicIPAddresses",
               "apiVersion": "2023-05-01",
               "name": "[variables('pipName')]",
-              "location": "[parameters('location')]",
+              "location": "[variables('location')]",
               "sku": { "name": "Basic" },
               "properties": { "publicIPAllocationMethod": "Dynamic" }
             },
@@ -73,7 +75,7 @@
               "type": "Microsoft.Network/virtualNetworks",
               "apiVersion": "2023-05-01",
               "name": "[variables('vnetName')]",
-              "location": "[parameters('location')]",
+              "location": "[variables('location')]",
               "dependsOn": ["[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"],
               "properties": {
                 "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
@@ -90,7 +92,7 @@
               "type": "Microsoft.Network/networkInterfaces",
               "apiVersion": "2023-05-01",
               "name": "[variables('nicName')]",
-              "location": "[parameters('location')]",
+              "location": "[variables('location')]",
               "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
                 "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
@@ -109,14 +111,14 @@
             {
               "type": "Microsoft.Compute/virtualMachines",
               "apiVersion": "2023-07-01",
-              "name": "[parameters('vmName')]",
-              "location": "[parameters('location')]",
+              "name": "[variables('vmName')]",
+              "location": "[variables('location')]",
               "dependsOn": ["[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"],
               "identity": { "type": "SystemAssigned" },
               "properties": {
                 "hardwareProfile": { "vmSize": "Standard_B1s" },
                 "osProfile": {
-                  "computerName": "[parameters('vmName')]",
+                  "computerName": "[variables('vmName')]",
                   "adminUsername": "azureuser",
                   "adminPassword": "[concat('P@ss', uniqueString(resourceGroup().id), '!')]",
                   "linuxConfiguration": { "disablePasswordAuthentication": false }
@@ -142,13 +144,13 @@
           "outputs": {
             "vmPrincipalId": {
               "type": "string",
-              "value": "[reference(parameters('vmName'), '2023-07-01', 'Full').identity.principalId]"
+              "value": "[reference(variables('vmName'), '2023-07-01', 'Full').identity.principalId]"
             }
           }
         },
         "parameters": {
-          "vmName": { "value": "[variables('vmName')]" },
-          "location": { "value": "[deployment().location]" }
+          "inputVmName": { "value": "[variables('vmName')]" },
+          "inputLocation": { "value": "[deployment().location]" }
         }
       }
     },
