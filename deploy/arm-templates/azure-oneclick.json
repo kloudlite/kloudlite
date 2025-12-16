@@ -7,7 +7,7 @@
   },
   "parameters": {
     "kloudliteKey": {
-      "type": "securestring",
+      "type": "string",
       "metadata": {
         "description": "Your Kloudlite installation key (from console.kloudlite.io)"
       }
@@ -105,7 +105,7 @@
             "location": { "type": "string" },
             "resourceGroupName": { "type": "string" },
             "roleAssignmentGuid": { "type": "string" },
-            "kloudliteKey": { "type": "securestring" },
+            "kloudliteKey": { "type": "string" },
             "nicName": { "type": "string" },
             "nsgName": { "type": "string" },
             "vnetName": { "type": "string" },
