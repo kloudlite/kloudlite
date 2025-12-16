@@ -1,0 +1,68 @@
+name: Upload CloudFormation to S3
+
+on:
+  push:
+    branches:
+      - development
+      - main
+    paths:
+      - 'deploy/cloudformation/**'
+      - '.github/workflows/upload-cloudformation.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upload:
+    name: Upload to S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Create S3 bucket if not exists
+        run: |
+          BUCKET_NAME="kloudlite-cloudformation-templates"
+          if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+            echo "Creating bucket $BUCKET_NAME..."
+            aws s3api create-bucket --bucket "$BUCKET_NAME" --region us-east-1
+            aws s3api put-public-access-block --bucket "$BUCKET_NAME" --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+            aws s3api put-bucket-policy --bucket "$BUCKET_NAME" --policy '{
+              "Version": "2012-10-17",
+              "Statement": [{
+                "Sid": "PublicReadGetObject",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::'"$BUCKET_NAME"'/*"
+              }]
+            }'
+          fi
+
+      - name: Upload CloudFormation templates
+        run: |
+          aws s3 sync deploy/cloudformation/ s3://kloudlite-cloudformation-templates/ \
+            --delete \
+            --content-type "application/x-yaml"
+
+          echo "Uploaded files:"
+          aws s3 ls s3://kloudlite-cloudformation-templates/
+
+      - name: Output CloudFormation URLs
+        run: |
+          echo "## CloudFormation Template URLs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### AWS One-Click Install" >> $GITHUB_STEP_SUMMARY
+          echo "https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Launch Link" >> $GITHUB_STEP_SUMMARY
+          echo "https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml&stackName=kloudlite" >> $GITHUB_STEP_SUMMARY
