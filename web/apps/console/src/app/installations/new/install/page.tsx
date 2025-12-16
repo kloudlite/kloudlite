@@ -371,34 +371,38 @@ export default function InstallPage() {
                       </div>
 
                       {/* One-Click Azure Deploy */}
-                      <div className="bg-muted/50 rounded-lg border p-4">
+                      <div className="bg-muted/50 rounded-lg border p-4 space-y-3">
                         <div className="flex items-center justify-between gap-4">
                           <div>
                             <p className="text-foreground text-sm font-semibold">One-Click Install</p>
                             <p className="text-muted-foreground text-sm">
-                              {azureLocation ? 'Deploy directly in Azure Portal' : 'Select a location to enable one-click install'}
+                              Deploy directly in Azure Portal
                             </p>
                           </div>
                           <Button
                             variant="outline"
-                            disabled={!azureLocation}
-                            asChild={!!azureLocation}
+                            asChild
                           >
-                            {azureLocation ? (
-                              <a
-                                href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent('https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json')}/deploymentParameters/${encodeURIComponent(JSON.stringify({ kloudliteKey: { value: session.installationKey } }))}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <ExternalLink className="mr-2 size-4" />
-                                Deploy to Azure ({azureLocation})
-                              </a>
-                            ) : (
-                              <>
-                                <ExternalLink className="mr-2 size-4" />
-                                Deploy to Azure
-                              </>
-                            )}
+                            <a
+                              href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent('https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="mr-2 size-4" />
+                              Deploy to Azure
+                            </a>
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t">
+                          <span className="text-muted-foreground text-xs">Installation Key:</span>
+                          <code className="bg-muted px-2 py-1 rounded text-xs font-mono flex-1">{session.installationKey}</code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={() => copyCommand(session.installationKey)}
+                          >
+                            <Copy className="size-3" />
                           </Button>
                         </div>
                       </div>
