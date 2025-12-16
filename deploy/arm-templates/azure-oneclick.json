@@ -101,21 +101,18 @@
             "principalId": { "type": "string" },
             "location": { "type": "string" },
             "resourceGroupName": { "type": "string" },
-            "resourceGroupId": { "type": "string" },
+            "roleAssignmentGuid": { "type": "string" },
             "installationKey": { "type": "securestring" },
             "nicName": { "type": "string" },
             "nsgName": { "type": "string" },
             "vnetName": { "type": "string" },
             "pipName": { "type": "string" }
           },
-          "variables": {
-            "roleAssignmentGuid": "[guid(parameters('resourceGroupId'), parameters('principalId'), 'Contributor')]"
-          },
           "resources": [
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "name": "[variables('roleAssignmentGuid')]",
+              "name": "[parameters('roleAssignmentGuid')]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
                 "principalId": "[parameters('principalId')]",
@@ -183,7 +180,7 @@
               "location": "[parameters('location')]",
               "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]",
-                "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentGuid'))]"
+                "[resourceId('Microsoft.Authorization/roleAssignments', parameters('roleAssignmentGuid'))]"
               ],
               "identity": {
                 "type": "UserAssigned",
@@ -242,7 +239,7 @@
           "principalId": { "value": "[reference('identityDeployment').outputs.principalId.value]" },
           "location": { "value": "[deployment().location]" },
           "resourceGroupName": { "value": "[variables('resourceGroupName')]" },
-          "resourceGroupId": { "value": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]" },
+          "roleAssignmentGuid": { "value": "[guid(variables('resourceGroupName'), reference('identityDeployment').outputs.principalId.value, 'Contributor')]" },
           "installationKey": { "value": "[parameters('installationKey')]" },
           "nicName": { "value": "[variables('nicName')]" },
           "nsgName": { "value": "[variables('nsgName')]" },
