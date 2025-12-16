@@ -216,6 +216,25 @@ export default function InstallPage() {
     toast.success('Command copied to clipboard')
   }
 
+  const handleDeployClick = async (provider: 'aws' | 'gcp' | 'azure', location: string, deployUrl: string) => {
+    try {
+      // Save provider and location before opening deploy link
+      await fetch('/api/installations/set-provider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          installationKey: session?.installationKey,
+          cloudProvider: provider,
+          cloudLocation: location,
+        }),
+      })
+    } catch (error) {
+      console.error('Error saving provider:', error)
+    }
+    // Open deploy link regardless of API result
+    window.open(deployUrl, '_blank')
+  }
+
   if (loading) {
     return (
       <div className="bg-background flex min-h-screen items-center justify-center">
@@ -303,23 +322,14 @@ export default function InstallPage() {
                           <Button
                             variant="outline"
                             disabled={!awsRegion}
-                            asChild={!!awsRegion}
-                          >
-                            {awsRegion ? (
-                              <a
-                                href={`https://console.aws.amazon.com/cloudformation/home?region=${awsRegion}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}&param_Region=${awsRegion}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <ExternalLink className="mr-2 size-4" />
-                                Launch Stack
-                              </a>
-                            ) : (
-                              <>
-                                <ExternalLink className="mr-2 size-4" />
-                                Launch Stack
-                              </>
+                            onClick={() => awsRegion && handleDeployClick(
+                              'aws',
+                              awsRegion,
+                              `https://console.aws.amazon.com/cloudformation/home?region=${awsRegion}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}&param_Region=${awsRegion}`
                             )}
+                          >
+                            <ExternalLink className="mr-2 size-4" />
+                            Launch Stack
                           </Button>
                         </div>
                       </div>
@@ -381,16 +391,14 @@ export default function InstallPage() {
                           </div>
                           <Button
                             variant="outline"
-                            asChild
+                            onClick={() => handleDeployClick(
+                              'azure',
+                              azureLocation,
+                              `https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent(`${window.location.origin}/api/installations/azure-template?key=${session.installationKey}&location=${azureLocation}`)}`
+                            )}
                           >
-                            <a
-                              href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent(`${window.location.origin}/api/installations/azure-template?key=${session.installationKey}&location=${azureLocation}`)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <ExternalLink className="mr-2 size-4" />
-                              Deploy to Azure
-                            </a>
+                            <ExternalLink className="mr-2 size-4" />
+                            Deploy to Azure
                           </Button>
                         </div>
                       </div>

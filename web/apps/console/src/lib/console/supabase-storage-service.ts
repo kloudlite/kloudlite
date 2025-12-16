@@ -38,6 +38,8 @@ export interface Installation {
   ipRecords?: IPRecord[]
   deploymentReady?: boolean
   lastHealthCheck?: string
+  cloudProvider?: 'aws' | 'gcp' | 'azure'
+  cloudLocation?: string
   createdAt: string
   updatedAt: string
 }
@@ -205,6 +207,8 @@ export async function getInstallationById(installationId: string): Promise<Insta
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,
+    cloudProvider: data.cloud_provider || undefined,
+    cloudLocation: data.cloud_location || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords:
@@ -276,6 +280,8 @@ export async function getUserInstallations(userId: string): Promise<Installation
         reservedAt: inst.reserved_at || undefined,
         deploymentReady: inst.deployment_ready || undefined,
         lastHealthCheck: inst.last_health_check || undefined,
+        cloudProvider: inst.cloud_provider || undefined,
+        cloudLocation: inst.cloud_location || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
         ipRecords:
@@ -421,6 +427,10 @@ export async function updateInstallation(
     updateData.deployment_ready = updates.deploymentReady || null
   if (updates.lastHealthCheck !== undefined)
     updateData.last_health_check = updates.lastHealthCheck || null
+  if (updates.cloudProvider !== undefined)
+    updateData.cloud_provider = updates.cloudProvider || null
+  if (updates.cloudLocation !== undefined)
+    updateData.cloud_location = updates.cloudLocation || null
 
   const { error } = await supabase
     .from('installations')
