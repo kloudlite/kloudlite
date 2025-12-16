@@ -26,7 +26,7 @@ func EnableRequiredAPIs(ctx context.Context, project string) error {
 
 	for _, api := range RequiredAPIs {
 		serviceName := fmt.Sprintf("projects/%s/services/%s", project, api)
-		
+
 		// Check if already enabled
 		svc, err := service.Services.Get(serviceName).Context(ctx).Do()
 		if err == nil && svc.State == "ENABLED" {
