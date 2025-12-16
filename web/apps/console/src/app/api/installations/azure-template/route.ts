@@ -93,12 +93,26 @@ export async function GET(request: NextRequest) {
         }
       },
       {
+        "type": "Microsoft.Authorization/roleAssignments",
+        "apiVersion": "2022-04-01",
+        "name": "[guid(variables('resourceGroupName'), reference('identityDeployment').outputs.principalId.value, 'Contributor')]",
+        "dependsOn": [
+          "identityDeployment"
+        ],
+        "properties": {
+          "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+          "principalId": "[reference('identityDeployment').outputs.principalId.value]",
+          "principalType": "ServicePrincipal"
+        }
+      },
+      {
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2022-09-01",
         "name": "vmDeployment",
         "resourceGroup": "[variables('resourceGroupName')]",
         "dependsOn": [
-          "identityDeployment"
+          "identityDeployment",
+          "[subscriptionResourceId('Microsoft.Authorization/roleAssignments', guid(variables('resourceGroupName'), reference('identityDeployment').outputs.principalId.value, 'Contributor'))]"
         ],
         "properties": {
           "mode": "Incremental",
@@ -111,10 +125,8 @@ export async function GET(request: NextRequest) {
             "parameters": {
               "vmName": { "type": "string" },
               "identityId": { "type": "string" },
-              "principalId": { "type": "string" },
               "location": { "type": "string" },
               "resourceGroupName": { "type": "string" },
-              "roleAssignmentGuid": { "type": "string" },
               "kloudliteKey": { "type": "string" },
               "nicName": { "type": "string" },
               "nsgName": { "type": "string" },
@@ -122,16 +134,6 @@ export async function GET(request: NextRequest) {
               "pipName": { "type": "string" }
             },
             "resources": [
-              {
-                "type": "Microsoft.Authorization/roleAssignments",
-                "apiVersion": "2022-04-01",
-                "name": "[parameters('roleAssignmentGuid')]",
-                "properties": {
-                  "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                  "principalId": "[parameters('principalId')]",
-                  "principalType": "ServicePrincipal"
-                }
-              },
               {
                 "type": "Microsoft.Network/networkSecurityGroups",
                 "apiVersion": "2023-05-01",
@@ -192,8 +194,7 @@ export async function GET(request: NextRequest) {
                 "name": "[parameters('vmName')]",
                 "location": "[parameters('location')]",
                 "dependsOn": [
-                  "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]",
-                  "[resourceId('Microsoft.Authorization/roleAssignments', parameters('roleAssignmentGuid'))]"
+                  "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
                 ],
                 "identity": {
                   "type": "UserAssigned",
@@ -249,10 +250,8 @@ export async function GET(request: NextRequest) {
           "parameters": {
             "vmName": { "value": "[variables('vmName')]" },
             "identityId": { "value": "[reference('identityDeployment').outputs.identityId.value]" },
-            "principalId": { "value": "[reference('identityDeployment').outputs.principalId.value]" },
             "location": { "value": "[variables('location')]" },
             "resourceGroupName": { "value": "[variables('resourceGroupName')]" },
-            "roleAssignmentGuid": { "value": "[guid(variables('resourceGroupName'), reference('identityDeployment').outputs.principalId.value, 'Contributor')]" },
             "kloudliteKey": { "value": "[variables('kloudliteKey')]" },
             "nicName": { "value": "[variables('nicName')]" },
             "nsgName": { "value": "[variables('nsgName')]" },
