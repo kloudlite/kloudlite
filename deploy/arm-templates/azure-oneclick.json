@@ -31,7 +31,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "installerDeployment",
+      "name": "vmDeployment",
       "resourceGroup": "[variables('resourceGroupName')]",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
@@ -134,24 +134,57 @@
                   "networkInterfaces": [{ "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]" }]
                 }
               }
+            }
+          ],
+          "outputs": {
+            "vmPrincipalId": {
+              "type": "string",
+              "value": "[reference(variables('vmName'), '2023-07-01', 'Full').identity.principalId]"
             },
+            "vmName": {
+              "type": "string",
+              "value": "[variables('vmName')]"
+            }
+          }
+        },
+        "parameters": {}
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "roleAndExtensionDeployment",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "dependsOn": [
+        "vmDeployment"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "expressionEvaluationOptions": {
+          "scope": "outer"
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "name": "[guid(resourceGroup().id, 'Contributor')]",
-              "dependsOn": ["[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"],
+              "name": "[guid(variables('resourceGroupName'), 'Contributor')]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '2023-07-01', 'Full').identity.principalId]",
+                "principalId": "[reference('vmDeployment').outputs.vmPrincipalId.value]",
                 "principalType": "ServicePrincipal"
               }
             },
             {
               "type": "Microsoft.Compute/virtualMachines/extensions",
               "apiVersion": "2023-07-01",
-              "name": "[concat(variables('vmName'), '/InstallKloudlite')]",
-              "location": "[resourceGroup().location]",
-              "dependsOn": ["[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, 'Contributor'))]"],
+              "name": "[concat(reference('vmDeployment').outputs.vmName.value, '/InstallKloudlite')]",
+              "location": "[deployment().location]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleAssignments', guid(variables('resourceGroupName'), 'Contributor'))]"
+              ],
               "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
