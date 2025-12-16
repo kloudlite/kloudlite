@@ -27,8 +27,10 @@ export async function POST(request: NextRequest) {
     // Check if installation has been verified (has secret key)
     const verified = !!installation.secretKey
 
-    // Check if DNS is configured (has IP records with DNS record IDs)
-    const dnsConfigured = installation.ipRecords?.some(
+    // Check if DNS is configured:
+    // 1. deploymentReady flag is set, OR
+    // 2. has IP records with DNS record IDs
+    const dnsConfigured = installation.deploymentReady || installation.ipRecords?.some(
       (record) => record.sshRecordId || (record.routeRecordIds && record.routeRecordIds.length > 0)
     ) ?? false
 
