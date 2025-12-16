@@ -49,13 +49,13 @@ jobs:
             }'
           fi
 
-          # Configure CORS for Azure Portal access
+          # Configure CORS for Azure Portal and AWS Console access
           echo "Configuring CORS..."
           aws s3api put-bucket-cors --bucket "$BUCKET_NAME" --cors-configuration '{
             "CORSRules": [{
               "AllowedHeaders": ["*"],
               "AllowedMethods": ["GET", "HEAD"],
-              "AllowedOrigins": ["https://portal.azure.com", "https://*.portal.azure.com", "https://console.aws.amazon.com", "https://*.console.aws.amazon.com"],
+              "AllowedOrigins": ["*"],
               "ExposeHeaders": ["ETag"],
               "MaxAgeSeconds": 3600
             }]
