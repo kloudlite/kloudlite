@@ -6,10 +6,10 @@
     "description": "Deploy Kloudlite development workspace platform to your Azure subscription"
   },
   "parameters": {
-    "installationKey": {
+    "kloudliteKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Your Kloudlite installation key"
+        "description": "Your Kloudlite installation key (from console.kloudlite.io)"
       }
     }
   },
@@ -105,7 +105,7 @@
             "location": { "type": "string" },
             "resourceGroupName": { "type": "string" },
             "roleAssignmentGuid": { "type": "string" },
-            "installationKey": { "type": "securestring" },
+            "kloudliteKey": { "type": "securestring" },
             "nicName": { "type": "string" },
             "nsgName": { "type": "string" },
             "vnetName": { "type": "string" },
@@ -230,7 +230,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Cleaning up installer in 60 seconds...\"\nsleep 60\necho \"Installing Azure CLI for cleanup...\"\ncurl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash\necho \"Logging in with managed identity...\"\naz login --identity --allow-no-subscriptions\necho \"Deleting installer resource group...\"\naz group delete --name ', parameters('resourceGroupName'), ' --yes --no-wait\necho \"Cleanup initiated.\"'))]"
+                  "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('kloudliteKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Cleaning up installer in 60 seconds...\"\nsleep 60\necho \"Installing Azure CLI for cleanup...\"\ncurl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash\necho \"Logging in with managed identity...\"\naz login --identity --allow-no-subscriptions\necho \"Deleting installer resource group...\"\naz group delete --name ', parameters('resourceGroupName'), ' --yes --no-wait\necho \"Cleanup initiated.\"'))]"
                 }
               }
             }
@@ -243,7 +243,7 @@
           "location": { "value": "[deployment().location]" },
           "resourceGroupName": { "value": "[variables('resourceGroupName')]" },
           "roleAssignmentGuid": { "value": "[guid(variables('resourceGroupName'), reference('identityDeployment').outputs.principalId.value, 'Contributor')]" },
-          "installationKey": { "value": "[parameters('installationKey')]" },
+          "kloudliteKey": { "value": "[parameters('kloudliteKey')]" },
           "nicName": { "value": "[variables('nicName')]" },
           "nsgName": { "value": "[variables('nsgName')]" },
           "vnetName": { "value": "[variables('vnetName')]" },
