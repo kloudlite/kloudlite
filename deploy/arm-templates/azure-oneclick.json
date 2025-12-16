@@ -50,10 +50,15 @@
             "installationKey": { "type": "securestring" }
           },
           "variables": {
+            "vmNameVar": "[parameters('vmName')]",
+            "identityNameVar": "[parameters('identityName')]",
+            "locationVar": "[parameters('location')]",
+            "resourceGroupNameVar": "[parameters('resourceGroupName')]",
             "nicName": "[concat(parameters('vmName'), '-nic')]",
             "nsgName": "[concat(parameters('vmName'), '-nsg')]",
             "vnetName": "[concat(parameters('vmName'), '-vnet')]",
-            "pipName": "[concat(parameters('vmName'), '-pip')]"
+            "pipName": "[concat(parameters('vmName'), '-pip')]",
+            "roleAssignmentName": "[guid(resourceGroup().id, parameters('identityName'), 'Contributor')]"
           },
           "resources": [
             {
@@ -65,13 +70,13 @@
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "name": "[guid(resourceGroup().id, parameters('identityName'), 'Contributor')]",
+              "name": "[variables('roleAssignmentName')]",
               "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]"
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityNameVar'))]"
               ],
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName')), '2023-01-31').principalId]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityNameVar')), '2023-01-31').principalId]",
                 "principalType": "ServicePrincipal"
               }
             },
@@ -136,12 +141,12 @@
               "location": "[parameters('location')]",
               "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
-                "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('identityName'), 'Contributor'))]"
+                "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
               ],
               "identity": {
                 "type": "UserAssigned",
                 "userAssignedIdentities": {
-                  "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('identityName'))]": {}
+                  "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityNameVar'))]": {}
                 }
               },
               "properties": {
