@@ -93,16 +93,42 @@ export async function GET(request: NextRequest) {
         }
       },
       {
-        "type": "Microsoft.Authorization/roleAssignments",
-        "apiVersion": "2022-04-01",
-        "name": "[guid(variables('resourceGroupName'), reference('identityDeployment').outputs.principalId.value, 'Contributor')]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2022-09-01",
+        "name": "roleAssignmentDeployment",
+        "location": "[variables('location')]",
         "dependsOn": [
           "identityDeployment"
         ],
         "properties": {
-          "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-          "principalId": "[reference('identityDeployment').outputs.principalId.value]",
-          "principalType": "ServicePrincipal"
+          "mode": "Incremental",
+          "expressionEvaluationOptions": {
+            "scope": "inner"
+          },
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+              "principalId": { "type": "string" },
+              "roleGuid": { "type": "string" }
+            },
+            "resources": [
+              {
+                "type": "Microsoft.Authorization/roleAssignments",
+                "apiVersion": "2022-04-01",
+                "name": "[parameters('roleGuid')]",
+                "properties": {
+                  "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                  "principalId": "[parameters('principalId')]",
+                  "principalType": "ServicePrincipal"
+                }
+              }
+            ]
+          },
+          "parameters": {
+            "principalId": { "value": "[reference('identityDeployment').outputs.principalId.value]" },
+            "roleGuid": { "value": "[guid(variables('resourceGroupName'), variables('identityName'), 'Contributor')]" }
+          }
         }
       },
       {
@@ -112,7 +138,7 @@ export async function GET(request: NextRequest) {
         "resourceGroup": "[variables('resourceGroupName')]",
         "dependsOn": [
           "identityDeployment",
-          "[subscriptionResourceId('Microsoft.Authorization/roleAssignments', guid(variables('resourceGroupName'), reference('identityDeployment').outputs.principalId.value, 'Contributor'))]"
+          "roleAssignmentDeployment"
         ],
         "properties": {
           "mode": "Incremental",
