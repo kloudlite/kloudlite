@@ -1,0 +1,208 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "installationKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Your Kloudlite installation key from console.kloudlite.io"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for installation"
+      }
+    }
+  },
+  "variables": {
+    "vmName": "[concat('kloudlite-installer-', uniqueString(resourceGroup().id))]",
+    "nicName": "[concat(variables('vmName'), '-nic')]",
+    "vnetName": "[concat(variables('vmName'), '-vnet')]",
+    "subnetName": "default",
+    "nsgName": "[concat(variables('vmName'), '-nsg')]",
+    "publicIpName": "[concat(variables('vmName'), '-pip')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": []
+      },
+      "tags": {
+        "kloudlite.io/managed-by": "arm-template",
+        "kloudlite.io/purpose": "installer"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('publicIpName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      },
+      "tags": {
+        "kloudlite.io/managed-by": "arm-template",
+        "kloudlite.io/purpose": "installer"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "kloudlite.io/managed-by": "arm-template",
+        "kloudlite.io/purpose": "installer"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "kloudlite.io/managed-by": "arm-template",
+        "kloudlite.io/purpose": "installer"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_B1s"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "azureuser",
+          "adminPassword": "[concat('P@ss', uniqueString(resourceGroup().id), '!')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-server-jammy",
+            "sku": "22_04-lts-gen2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "tags": {
+        "kloudlite.io/managed-by": "arm-template",
+        "kloudlite.io/purpose": "installer"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('vmName'), 'Contributor')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName')), '2023-07-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-07-01",
+      "name": "[concat(variables('vmName'), '/InstallKloudlite')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('vmName'), 'Contributor'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Self-terminating in 5 minutes...\"\nsleep 300\naz vm delete --name ', variables('vmName'), ' --resource-group ', resourceGroup().name, ' --yes --no-wait'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vmName": {
+      "type": "string",
+      "value": "[variables('vmName')]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    }
+  }
+}

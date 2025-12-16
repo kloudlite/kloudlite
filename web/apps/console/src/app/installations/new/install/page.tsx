@@ -307,7 +307,7 @@ export default function InstallPage() {
                           >
                             {awsRegion ? (
                               <a
-                                href={`https://console.aws.amazon.com/cloudformation/home?region=${awsRegion}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}&param_Region=${awsRegion}`}
+                                href={`https://console.aws.amazon.com/cloudformation/home?region=${awsRegion}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}&param_Region=${awsRegion}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
@@ -350,24 +350,59 @@ export default function InstallPage() {
 
                   {/* Azure Location Selector */}
                   {key === 'azure' && (
-                    <div>
-                      <p className="text-foreground mb-3 text-sm font-semibold">Select Azure Location:</p>
-                      <Select
-                        value={azureLocation}
-                        onValueChange={setAzureLocation}
-                      >
-                        <SelectTrigger className="w-full md:w-80">
-                          <SelectValue placeholder="Select a location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AZURE_LOCATIONS.map((location) => (
-                            <SelectItem key={location.value} value={location.value}>
-                              {location.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <>
+                      <div>
+                        <p className="text-foreground mb-3 text-sm font-semibold">Select Azure Location:</p>
+                        <Select
+                          value={azureLocation}
+                          onValueChange={setAzureLocation}
+                        >
+                          <SelectTrigger className="w-full md:w-80">
+                            <SelectValue placeholder="Select a location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AZURE_LOCATIONS.map((location) => (
+                              <SelectItem key={location.value} value={location.value}>
+                                {location.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* One-Click Azure Deploy */}
+                      <div className="bg-muted/50 rounded-lg border p-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-foreground text-sm font-semibold">One-Click Install</p>
+                            <p className="text-muted-foreground text-sm">
+                              {azureLocation ? 'Deploy directly in Azure Portal' : 'Select a location to enable one-click install'}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            disabled={!azureLocation}
+                            asChild={!!azureLocation}
+                          >
+                            {azureLocation ? (
+                              <a
+                                href={`https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent('https://kloudlite-cloudformation-templates.s3.amazonaws.com/azure/azure-oneclick.json')}/createUIDefinitionUri/${encodeURIComponent(`data:application/json,${JSON.stringify({ parameters: { installationKey: { value: session.installationKey }, location: { value: azureLocation } } })}`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <ExternalLink className="mr-2 size-4" />
+                                Deploy to Azure
+                              </a>
+                            ) : (
+                              <>
+                                <ExternalLink className="mr-2 size-4" />
+                                Deploy to Azure
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* World Map showing selected region */}
