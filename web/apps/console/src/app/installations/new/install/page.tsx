@@ -296,20 +296,30 @@ export default function InstallPage() {
                         <div className="flex items-center justify-between gap-4">
                           <div>
                             <p className="text-foreground text-sm font-semibold">One-Click Install</p>
-                            <p className="text-muted-foreground text-sm">Launch directly in AWS CloudFormation</p>
+                            <p className="text-muted-foreground text-sm">
+                              {awsRegion ? 'Launch directly in AWS CloudFormation' : 'Select a region to enable one-click install'}
+                            </p>
                           </div>
                           <Button
                             variant="outline"
-                            asChild
+                            disabled={!awsRegion}
+                            asChild={!!awsRegion}
                           >
-                            <a
-                              href={`https://console.aws.amazon.com/cloudformation/home${awsRegion ? `?region=${awsRegion}` : ''}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}${awsRegion ? `&param_Region=${awsRegion}` : ''}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <ExternalLink className="mr-2 size-4" />
-                              Launch Stack
-                            </a>
+                            {awsRegion ? (
+                              <a
+                                href={`https://console.aws.amazon.com/cloudformation/home?region=${awsRegion}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}&param_Region=${awsRegion}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <ExternalLink className="mr-2 size-4" />
+                                Launch Stack
+                              </a>
+                            ) : (
+                              <>
+                                <ExternalLink className="mr-2 size-4" />
+                                Launch Stack
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>
