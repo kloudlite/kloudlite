@@ -11,13 +11,6 @@
       "metadata": {
         "description": "Your Kloudlite installation key from console.kloudlite.io"
       }
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Azure region for installation"
-      }
     }
   },
   "variables": {
@@ -33,7 +26,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2023-05-01",
       "name": "[variables('nsgName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": []
       },
@@ -46,7 +39,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2023-05-01",
       "name": "[variables('publicIpName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "sku": {
         "name": "Basic"
       },
@@ -62,7 +55,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2023-05-01",
       "name": "[variables('vnetName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ],
@@ -91,7 +84,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2023-05-01",
       "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
@@ -121,7 +114,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-07-01",
       "name": "[variables('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
@@ -184,7 +177,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2023-07-01",
       "name": "[concat(variables('vmName'), '/InstallKloudlite')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('vmName'), 'Contributor'))]"
       ],
@@ -194,7 +187,7 @@
         "typeHandlerVersion": "2.1",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', parameters('location'), '\"\necho \"Installation complete. Self-terminating in 5 minutes...\"\nsleep 300\naz vm delete --name ', variables('vmName'), ' --resource-group ', resourceGroup().name, ' --yes --no-wait'))]"
+          "script": "[base64(concat('#!/bin/bash\nset -euo pipefail\nexec > >(tee /var/log/kloudlite-install.log) 2>&1\necho \"Starting Kloudlite installation...\"\ncurl -fsSL https://get.khost.dev/install/azure | bash -s -- --key \"', parameters('installationKey'), '\" --location \"', resourceGroup().location, '\"\necho \"Installation complete. Self-terminating in 5 minutes...\"\nsleep 300\naz vm delete --name ', variables('vmName'), ' --resource-group ', resourceGroup().name, ' --yes --no-wait'))]"
         }
       }
     }
@@ -206,7 +199,7 @@
     },
     "location": {
       "type": "string",
-      "value": "[parameters('location')]"
+      "value": "[resourceGroup().location]"
     }
   }
 }
