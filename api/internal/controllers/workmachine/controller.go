@@ -18,6 +18,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -112,6 +113,12 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			Title:    "Setup a kubernetes namespace for workmachine resources",
 			OnCreate: r.createNamespace,
 			OnDelete: r.deleteNamespace,
+		},
+		{
+			Name:     "ensure-network-policy",
+			Title:    "Ensure network policy for namespace isolation",
+			OnCreate: r.ensureNetworkPolicy,
+			OnDelete: r.cleanupNetworkPolicy,
 		},
 		{
 			Name:     "sync-wildcard-cert-secret",
@@ -735,6 +742,7 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.ClusterRole{})
 	builder.Owns(&rbacv1.ClusterRoleBinding{})
+	builder.Owns(&networkingv1.NetworkPolicy{})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor("workmachine")))
 
 	// Watch for workspaces and trigger reconciliation of their owning WorkMachine

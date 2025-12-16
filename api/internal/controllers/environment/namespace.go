@@ -26,6 +26,11 @@ func (r *EnvironmentReconciler) applyLabelsAndAnnotations(namespace *corev1.Name
 	// Add standard environment label
 	namespace.Labels["kloudlite.io/environment"] = environment.Name
 
+	// Add workmachine label for network policy targeting
+	if environment.Spec.WorkMachineName != "" {
+		namespace.Labels["kloudlite.io/workmachine-name"] = environment.Spec.WorkMachineName
+	}
+
 	// Add created-by annotation (emails contain invalid label characters)
 	namespace.Annotations["kloudlite.io/created-by"] = environment.Spec.OwnedBy
 

@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -137,6 +138,12 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	}
 
 	if namespaceExists {
+		// Ensure NetworkPolicy is correctly configured based on visibility
+		if err := r.ensureNetworkPolicy(ctx, environment, logger); err != nil {
+			logger.Error("Failed to ensure network policy", zap.Error(err))
+			// Don't fail reconciliation for network policy errors
+		}
+
 		// Update environment status based on activation state
 		// The actual scaling is handled by the composition controller
 		desiredState := environmentsv1.EnvironmentStateInactive
@@ -234,7 +241,8 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&environmentsv1.Environment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Owns(&corev1.Namespace{}). // Watch Namespaces owned by Environments
+		Owns(&corev1.Namespace{}).           // Watch Namespaces owned by Environments
+		Owns(&networkingv1.NetworkPolicy{}). // Watch NetworkPolicies owned by Environments
 		Complete(r)
 	// Note: We don't watch WorkMachine here because Environment references WorkMachine by name
 	// The Environment controller will handle WorkMachine ownership during reconciliation
