@@ -229,11 +229,11 @@ export async function GET(request: NextRequest) {
                   }
                 },
                 "properties": {
-                  "hardwareProfile": { "vmSize": "Standard_B1s" },
+                  "hardwareProfile": { "vmSize": "Standard_B2s" },
                   "osProfile": {
                     "computerName": "[parameters('vmName')]",
                     "adminUsername": "azureuser",
-                    "adminPassword": "[concat('P@ss', uniqueString(parameters('resourceGroupName')), '!')]",
+                    "adminPassword": "[concat('Kl0ud!', uniqueString(parameters('resourceGroupName')), 'X#9')]",
                     "linuxConfiguration": { "disablePasswordAuthentication": false }
                   },
                   "storageProfile": {
