@@ -95,50 +95,10 @@ export async function GET(request: NextRequest) {
       {
         "type": "Microsoft.Resources/deployments",
         "apiVersion": "2022-09-01",
-        "name": "roleAssignmentDeployment",
-        "location": "[variables('location')]",
-        "dependsOn": [
-          "identityDeployment"
-        ],
-        "properties": {
-          "mode": "Incremental",
-          "expressionEvaluationOptions": {
-            "scope": "inner"
-          },
-          "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-            "contentVersion": "1.0.0.0",
-            "parameters": {
-              "principalId": { "type": "string" },
-              "roleGuid": { "type": "string" }
-            },
-            "resources": [
-              {
-                "type": "Microsoft.Authorization/roleAssignments",
-                "apiVersion": "2022-04-01",
-                "name": "[parameters('roleGuid')]",
-                "properties": {
-                  "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-                  "principalId": "[parameters('principalId')]",
-                  "principalType": "ServicePrincipal"
-                }
-              }
-            ]
-          },
-          "parameters": {
-            "principalId": { "value": "[reference('identityDeployment').outputs.principalId.value]" },
-            "roleGuid": { "value": "[guid(subscription().subscriptionId, variables('resourceGroupName'), variables('identityName'), 'Contributor')]" }
-          }
-        }
-      },
-      {
-        "type": "Microsoft.Resources/deployments",
-        "apiVersion": "2022-09-01",
         "name": "vmDeployment",
         "resourceGroup": "[variables('resourceGroupName')]",
         "dependsOn": [
-          "identityDeployment",
-          "roleAssignmentDeployment"
+          "identityDeployment"
         ],
         "properties": {
           "mode": "Incremental",
@@ -267,7 +227,7 @@ export async function GET(request: NextRequest) {
                   "typeHandlerVersion": "2.1",
                   "autoUpgradeMinorVersion": true,
                   "settings": {
-                    "script": "[base64(concat('#!/bin/bash\necho \"Starting Kloudlite installation...\" > /var/log/kloudlite-install.log 2>&1\necho \"Key: ', parameters('kloudliteKey'), '\" >> /var/log/kloudlite-install.log 2>&1\necho \"Location: ', parameters('location'), '\" >> /var/log/kloudlite-install.log 2>&1\necho \"Resource Group: ', parameters('resourceGroupName'), '\" >> /var/log/kloudlite-install.log 2>&1\ncurl -fsSL https://get.khost.dev/install/azure -o /tmp/install.sh >> /var/log/kloudlite-install.log 2>&1\nchmod +x /tmp/install.sh >> /var/log/kloudlite-install.log 2>&1\n/tmp/install.sh --key \"', parameters('kloudliteKey'), '\" --location \"', parameters('location'), '\" >> /var/log/kloudlite-install.log 2>&1 || echo \"Install script exited with code $?\" >> /var/log/kloudlite-install.log 2>&1\necho \"Install script finished, starting cleanup...\" >> /var/log/kloudlite-install.log 2>&1\nsleep 30\napt-get update >> /var/log/kloudlite-install.log 2>&1 || true\napt-get install -y azure-cli >> /var/log/kloudlite-install.log 2>&1 || true\naz login --identity >> /var/log/kloudlite-install.log 2>&1 || true\naz group delete --name ', parameters('resourceGroupName'), ' --yes --no-wait >> /var/log/kloudlite-install.log 2>&1 || true\necho \"Done\" >> /var/log/kloudlite-install.log 2>&1\nexit 0'))]"
+                    "script": "[base64(concat('#!/bin/bash\necho \"Starting Kloudlite installation...\" > /var/log/kloudlite-install.log 2>&1\necho \"Key: ', parameters('kloudliteKey'), '\" >> /var/log/kloudlite-install.log 2>&1\necho \"Location: ', parameters('location'), '\" >> /var/log/kloudlite-install.log 2>&1\ncurl -fsSL https://get.khost.dev/install/azure -o /tmp/install.sh >> /var/log/kloudlite-install.log 2>&1\nchmod +x /tmp/install.sh >> /var/log/kloudlite-install.log 2>&1\n/tmp/install.sh --key \"', parameters('kloudliteKey'), '\" --location \"', parameters('location'), '\" >> /var/log/kloudlite-install.log 2>&1 || echo \"Install script exited with code $?\" >> /var/log/kloudlite-install.log 2>&1\necho \"Installation complete. Delete installer resource group manually: ', parameters('resourceGroupName'), '\" >> /var/log/kloudlite-install.log 2>&1\nexit 0'))]"
                   }
                 }
               }
