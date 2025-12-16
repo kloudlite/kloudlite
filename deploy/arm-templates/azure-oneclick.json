@@ -24,8 +24,8 @@
       "name": "[variables('resourceGroupName')]",
       "location": "[deployment().location]",
       "tags": {
-        "kloudlite.io/managed-by": "arm-template",
-        "kloudlite.io/purpose": "installer"
+        "kloudlite-managed-by": "arm-template",
+        "kloudlite-purpose": "installer"
       }
     },
     {
