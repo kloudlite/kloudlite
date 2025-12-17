@@ -39,6 +39,18 @@ export K3S_TOKEN="{{.K3sAgentToken}}"
 export MACHINE_NAME="{{.MachineName}}"
 export MACHINE_OWNER="{{.MachineOwner}}"
 
+# Configure K3s registry mirror for Kloudlite image registry
+# This allows pods to pull images from cr.{subdomain} via local NodePort
+log "Configuring K3s registry mirror for cr.{{.HostedSubdomain}}..."
+mkdir -p /etc/rancher/k3s
+cat > /etc/rancher/k3s/registries.yaml <<'REGISTRIES_EOF'
+mirrors:
+  "cr.{{.HostedSubdomain}}":
+    endpoint:
+      - "http://localhost:30500"
+REGISTRIES_EOF
+log "Registry mirror configured"
+
 export INSTALL_K3S_EXEC="agent \
   --node-name=${MACHINE_NAME} \
   --node-label=kloudlite.io/workmachine=${MACHINE_NAME} \

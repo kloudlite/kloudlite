@@ -31,11 +31,12 @@ const (
 )
 
 type K3sAgentSetupArgs struct {
-	K3sVersion    string
-	K3sURL        string
-	K3sAgentToken string
-	MachineName   string
-	MachineOwner  string
+	K3sVersion      string
+	K3sURL          string
+	K3sAgentToken   string
+	MachineName     string
+	MachineOwner    string
+	HostedSubdomain string // e.g., "mega.khost.dev" - used for registry mirror config
 }
 
 type WorkspaceHostManagerValues struct {
