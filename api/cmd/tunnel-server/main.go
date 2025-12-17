@@ -466,11 +466,11 @@ ListenPort = 51820
 # NAT and forwarding rules (ip_forward set at pod level)
 PostUp = iptables -A FORWARD -i %%i -j ACCEPT
 PostUp = iptables -A FORWARD -o %%i -j ACCEPT
-PostUp = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostUp = iptables -t nat -A POSTROUTING -s 10.17.0.0/24 -j MASQUERADE
 
 PostDown = iptables -D FORWARD -i %%i -j ACCEPT
 PostDown = iptables -D FORWARD -o %%i -j ACCEPT
-PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -s 10.17.0.0/24 -j MASQUERADE
 
 # Add peers below - they will be dynamically reloaded
 # [Peer]
