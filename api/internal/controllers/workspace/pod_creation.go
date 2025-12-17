@@ -126,9 +126,10 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	// This is also set in /etc/environment for SSH sessions via PAM
 	// /kloudlite/bin has highest priority for kl binary and system tools
 	// Include /home/kl/.local/bin for user-installed npm packages like Claude Code
+	// Nix packages are in /nix/profiles/kloudlite/<workspace>/packages/bin
 	envVars = append(envVars, corev1.EnvVar{
 		Name:  "PATH",
-		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
+		Value: fmt.Sprintf("/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/kloudlite/%s/packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", workspace.Name),
 	})
 
 	// Set NPM_CONFIG_PREFIX so npm install -g works without sudo
@@ -247,8 +248,9 @@ chown -R 1001:1001 /home/kl/.local
 # Include user's local bin in PATH for user-installed npm packages like Claude Code
 
 # Start with PATH and essential env vars
+# Nix packages are in /nix/profiles/kloudlite/<workspace>/packages/bin
 cat > /etc-writable/environment << 'EOF'
-PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/per-user/root/%s-packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/kloudlite/bin:/home/kl/.local/bin:/nix/profiles/kloudlite/%s/packages/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 NPM_CONFIG_PREFIX=/home/kl/.local
 WORKSPACE_NAME=%s
 WORKSPACE_NAMESPACE=%s

@@ -23,28 +23,6 @@ type PackageSpec struct {
 	NixpkgsCommit string `json:"nixpkgsCommit,omitempty"`
 }
 
-// InstalledPackage represents a successfully installed package
-type InstalledPackage struct {
-	// Name of the package
-	Name string `json:"name"`
-
-	// Version of the installed package
-	// +optional
-	Version string `json:"version,omitempty"`
-
-	// BinPath where binaries are located
-	// +optional
-	BinPath string `json:"binPath,omitempty"`
-
-	// StorePath in the Nix store
-	// +optional
-	StorePath string `json:"storePath,omitempty"`
-
-	// InstalledAt timestamp
-	// +optional
-	InstalledAt metav1.Time `json:"installedAt,omitempty"`
-}
-
 // PackageRequestSpec defines the desired packages to install
 type PackageRequestSpec struct {
 	// WorkspaceRef references the workspace this package request belongs to
@@ -76,14 +54,29 @@ type PackageRequestStatus struct {
 	// +optional
 	Message string `json:"message,omitempty"`
 
-	// InstalledPackages list of successfully installed packages
+	// ProfileStorePath is the Nix store path of the built environment
 	// +optional
-	InstalledPackages []InstalledPackage `json:"installedPackages,omitempty"`
+	ProfileStorePath string `json:"profileStorePath,omitempty"`
 
-	// FailedPackages list of packages that failed to install
-	// NOTE: No omitempty - empty slice must be serialized to clear old failures
+	// PackagesPath is the path to the packages symlink (e.g., /nix/profiles/kloudlite/<workspace>/packages)
 	// +optional
-	FailedPackages []string `json:"failedPackages"`
+	PackagesPath string `json:"packagesPath,omitempty"`
+
+	// SpecHash is a hash of the package specifications for change detection
+	// +optional
+	SpecHash string `json:"specHash,omitempty"`
+
+	// PackageCount is the number of packages in the environment
+	// +optional
+	PackageCount int `json:"packageCount,omitempty"`
+
+	// Packages is the list of package names (for display purposes)
+	// +optional
+	Packages []string `json:"packages,omitempty"`
+
+	// FailedPackage is the name of the package that caused the build to fail (if any)
+	// +optional
+	FailedPackage string `json:"failedPackage,omitempty"`
 
 	// LastUpdated timestamp of last status update
 	// +optional
@@ -95,8 +88,7 @@ type PackageRequestStatus struct {
 // +kubebuilder:resource:scope=Namespaced,categories={kloudlite,packages}
 // +kubebuilder:printcolumn:name="Workspace",type=string,JSONPath=`.spec.workspaceRef`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
-// +kubebuilder:printcolumn:name="Installed",type=integer,JSONPath=`.status.installedPackages[*].name`
-// +kubebuilder:printcolumn:name="Failed",type=integer,JSONPath=`.status.failedPackages[*]`
+// +kubebuilder:printcolumn:name="Packages",type=integer,JSONPath=`.status.packageCount`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // PackageRequest is the Schema for the packagerequests API

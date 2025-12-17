@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -63,60 +61,6 @@ func (r *RealCommandExecutor) Execute(script string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-// ExecuteWithTaggedOutput runs a command and prints each line of output with a tag prefix.
-// This is used for streaming nix installation output so CLI can filter by tag.
-// Tag format: [pkg:<tag>] <line>
-func ExecuteWithTaggedOutput(script string, tag string) ([]byte, error) {
-	cmd := exec.Command("sh", "-c", script)
-	cmd.Env = os.Environ()
-
-	// Get pipes for stdout and stderr
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get stderr pipe: %w", err)
-	}
-
-	// Start the command
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("failed to start command: %w", err)
-	}
-
-	// Collect output while printing tagged lines
-	var output []byte
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-
-	// Function to read and print tagged output
-	readAndPrint := func(reader io.Reader) {
-		defer wg.Done()
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			line := scanner.Text()
-			// Print tagged output for CLI to capture
-			fmt.Printf("[pkg:%s] %s\n", tag, line)
-			// Also collect the output
-			mu.Lock()
-			output = append(output, []byte(line+"\n")...)
-			mu.Unlock()
-		}
-	}
-
-	wg.Add(2)
-	go readAndPrint(stdout)
-	go readAndPrint(stderr)
-
-	// Wait for all output to be read
-	wg.Wait()
-
-	// Wait for command to finish
-	err = cmd.Wait()
-	return output, err
-}
-
 // HostCommandExecutor implements CommandExecutor using nsenter to run commands on the host
 // This is necessary for GPU detection and driver installation which must happen on the host system
 type HostCommandExecutor struct{}
@@ -167,19 +111,19 @@ func (r *RealFileSystem) Rename(oldpath, newpath string) error {
 
 type PackageManagerReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Logger    *zap2.Logger
-	Namespace string
-	CmdExec   CommandExecutor
+	Scheme         *runtime.Scheme
+	Logger         *zap2.Logger
+	Namespace      string
+	CmdExec        CommandExecutor
+	ProfileManager *NixProfileManager
 
-	// profileLocks prevents concurrent package installations on the same profile
-	// Using sync.Map for thread-safe access without explicit locking
-	profileLocks sync.Map // map[string]*sync.Mutex
+	// workspaceLocks prevents concurrent package installations on the same workspace
+	workspaceLocks sync.Map // map[string]*sync.Mutex
 }
 
-// getProfileLock returns a mutex for the given profile, creating one if it doesn't exist
-func (r *PackageManagerReconciler) getProfileLock(profileName string) *sync.Mutex {
-	lock, _ := r.profileLocks.LoadOrStore(profileName, &sync.Mutex{})
+// getWorkspaceLock returns a mutex for the given workspace, creating one if it doesn't exist
+func (r *PackageManagerReconciler) getWorkspaceLock(workspace string) *sync.Mutex {
+	lock, _ := r.workspaceLocks.LoadOrStore(workspace, &sync.Mutex{})
 	return lock.(*sync.Mutex)
 }
 
@@ -198,31 +142,21 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
+	workspace := pkgReq.Spec.WorkspaceRef
+
 	// Check if the PackageRequest is being deleted
 	if pkgReq.DeletionTimestamp != nil {
-		// Object is being deleted
 		if containsString(pkgReq.Finalizers, packageRequestFinalizer) {
-			// Our finalizer is present, perform cleanup
-			logger.Info("PackageRequest is being deleted, cleaning up profile directory", zap2.String("profile", pkgReq.Spec.ProfileName))
+			logger.Info("PackageRequest is being deleted, cleaning up profile",
+				zap2.String("workspace", workspace))
 
-			// Simply delete the profile directory instead of uninstalling packages individually
-			// This is more efficient and avoids issues with aliased packages
-			profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, pkgReq.Spec.ProfileName)
-			removeScript := fmt.Sprintf("rm -rf %s*", profilePath) // Remove profile and all generations
-			if output, err := r.CmdExec.Execute(removeScript); err != nil {
-				logger.Error("Failed to remove profile directory",
-					zap2.String("profile", pkgReq.Spec.ProfileName),
-					zap2.String("profilePath", profilePath),
-					zap2.Error(err),
-					zap2.String("output", string(output)))
-				// Continue anyway - the profile may not exist
-			} else {
-				logger.Info("Successfully removed profile directory",
-					zap2.String("profile", pkgReq.Spec.ProfileName),
-					zap2.String("profilePath", profilePath))
+			// Clean up the profile directory
+			if err := r.ProfileManager.CleanupProfile(workspace); err != nil {
+				logger.Error("Failed to cleanup profile", zap2.Error(err))
+				// Continue anyway - profile may not exist
 			}
 
-			// Remove our finalizer
+			// Remove finalizer
 			pkgReq.Finalizers = removeString(pkgReq.Finalizers, packageRequestFinalizer)
 			if err := r.Update(ctx, pkgReq); err != nil {
 				logger.Error("Failed to remove finalizer", zap2.Error(err))
@@ -231,7 +165,6 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 
 			logger.Info("Cleanup complete, finalizer removed")
 		}
-		// Stop reconciliation as the object is being deleted
 		return reconcile.Result{}, nil
 	}
 
@@ -243,26 +176,23 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 			logger.Error("Failed to add finalizer", zap2.Error(err))
 			return reconcile.Result{}, err
 		}
-		// Requeue to continue reconciliation with finalizer in place
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Acquire lock for this profile to prevent concurrent installations
-	profileLock := r.getProfileLock(pkgReq.Spec.ProfileName)
-	if !profileLock.TryLock() {
-		// Another installation is in progress for this profile, requeue
-		logger.Info("Installation already in progress for profile, requeuing",
-			zap2.String("profile", pkgReq.Spec.ProfileName))
+	// Acquire lock for this workspace to prevent concurrent builds
+	workspaceLock := r.getWorkspaceLock(workspace)
+	if !workspaceLock.TryLock() {
+		logger.Info("Build already in progress for workspace, requeuing",
+			zap2.String("workspace", workspace))
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
-	defer profileLock.Unlock()
+	defer workspaceLock.Unlock()
 
-	// Debounce: wait briefly to batch multiple rapid package changes together
+	// Debounce: wait briefly to batch multiple rapid package changes
 	logger.Info("Debouncing package changes", zap2.Duration("wait", 2*time.Second))
 	time.Sleep(2 * time.Second)
 
 	// Re-fetch PackageRequest to get the latest spec after debounce
-	// This ensures we process all changes that came in during the debounce period
 	if err := r.Get(ctx, req.NamespacedName, pkgReq); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("PackageRequest deleted during debounce, skipping")
@@ -272,284 +202,139 @@ func (r *PackageManagerReconciler) Reconcile(ctx context.Context, req reconcile.
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("Using profile", zap2.String("profile", pkgReq.Spec.ProfileName))
+	// Compute hash of current spec for change detection
+	specHash := r.ProfileManager.ComputeSpecHash(pkgReq.Spec.Packages)
 
-	// IMPORTANT: Reconcile based on ACTUAL state, not status
-	// 1. Ensure profile directory exists (idempotent)
-	// 2. Check what packages are ACTUALLY installed (check filesystem)
-	// 3. Install missing packages, remove unwanted packages
-	// 4. Update status to reflect actual state
-
-	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, pkgReq.Spec.ProfileName)
-	profileDir := fmt.Sprintf("%s/profiles/per-user/root", nixStorePath)
-
-	// Ensure profile directory exists (idempotent)
-	logger.Info("Ensuring profile directory exists", zap2.String("profileDir", profileDir))
-	mkdirScript := fmt.Sprintf("mkdir -p %s", profileDir)
-	if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
-		logger.Error("Failed to create profile directory",
-			zap2.String("profileDir", profileDir),
-			zap2.Error(err),
-			zap2.String("output", string(output)))
-		// Don't fail reconciliation, continue and let package installation fail if needed
+	// Check if already up to date
+	if pkgReq.Status.SpecHash == specHash && pkgReq.Status.Phase == "Ready" {
+		logger.Info("Packages already up to date, skipping build",
+			zap2.String("workspace", workspace),
+			zap2.String("specHash", specHash))
+		return reconcile.Result{}, nil
 	}
 
-	// Build map of desired packages
-	desiredPackages := make(map[string]bool)
-	for _, pkg := range pkgReq.Spec.Packages {
-		desiredPackages[pkg.Name] = true
+	// Extract package names for status
+	packageNames := make([]string, len(pkgReq.Spec.Packages))
+	for i, pkg := range pkgReq.Spec.Packages {
+		packageNames[i] = pkg.Name
 	}
 
-	// Remove packages that were previously installed but are no longer in spec
-	// We use status.InstalledPackages as a hint for what might need removal
-	// but we verify actual state before removing
-	for _, prevInstalled := range pkgReq.Status.InstalledPackages {
-		if !desiredPackages[prevInstalled.Name] {
-			// Package was in previous spec but not in current spec
-			// Check if it's actually installed before trying to remove
-			if r.isPackageInstalled(prevInstalled.Name, pkgReq.Spec.ProfileName, logger) {
-				logger.Info("Removing unwanted package",
-					zap2.String("package", prevInstalled.Name),
-					zap2.String("profile", pkgReq.Spec.ProfileName))
+	// Handle empty package list
+	if len(pkgReq.Spec.Packages) == 0 {
+		logger.Info("No packages specified, cleaning up profile",
+			zap2.String("workspace", workspace))
 
-				if err := r.uninstallPackage(prevInstalled.Name, pkgReq.Spec.ProfileName); err != nil {
-					logger.Error("Failed to remove package",
-						zap2.String("package", prevInstalled.Name),
-						zap2.String("profile", pkgReq.Spec.ProfileName),
-						zap2.Error(err))
-				} else {
-					logger.Info("Successfully removed package",
-						zap2.String("package", prevInstalled.Name),
-						zap2.String("profile", pkgReq.Spec.ProfileName))
-				}
-			}
+		// Clean up existing profile if any
+		_ = r.ProfileManager.CleanupProfile(workspace)
+
+		// Update status
+		if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
+			latest.Status.ObservedGeneration = latest.Generation
+			latest.Status.Phase = "Ready"
+			latest.Status.Message = "No packages to install"
+			latest.Status.SpecHash = specHash
+			latest.Status.PackageCount = 0
+			latest.Status.Packages = nil
+			latest.Status.ProfileStorePath = ""
+			latest.Status.PackagesPath = ""
+			latest.Status.FailedPackage = ""
+			latest.Status.LastUpdated = metav1.Now()
+		}, logger); err != nil {
+			logger.Error("Failed to update status", zap2.Error(err))
+			return reconcile.Result{}, err
 		}
+		return reconcile.Result{}, nil
 	}
 
-	// Filesystem-based cleanup: remove packages in profile but not in spec
-	// This catches packages not tracked in status (race conditions, failed status updates)
-	logger.Info("Scanning profile for orphaned packages", zap2.String("profile", pkgReq.Spec.ProfileName))
-	listScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q 2>/dev/null", profilePath)
-	if listOutput, err := r.CmdExec.Execute(listScript); err == nil && len(listOutput) > 0 {
-		installedPkgList := strings.Split(strings.TrimSpace(string(listOutput)), "\n")
-		for _, installedPkg := range installedPkgList {
-			if installedPkg == "" {
-				continue
-			}
-			// Extract package name (format: "name-version" e.g. "neovim-0.9.5")
-			pkgName := installedPkg
-			if idx := strings.LastIndex(installedPkg, "-"); idx > 0 {
-				suffix := installedPkg[idx+1:]
-				if len(suffix) > 0 && suffix[0] >= '0' && suffix[0] <= '9' {
-					pkgName = installedPkg[:idx]
-				}
-			}
-
-			if !desiredPackages[pkgName] {
-				logger.Info("Found orphaned package, removing",
-					zap2.String("package", pkgName),
-					zap2.String("fullName", installedPkg),
-					zap2.String("profile", pkgReq.Spec.ProfileName))
-
-				if err := r.uninstallPackage(pkgName, pkgReq.Spec.ProfileName); err != nil {
-					logger.Warn("Failed to remove orphaned package",
-						zap2.String("package", pkgName),
-						zap2.Error(err))
-				}
-			}
-		}
-	}
-
-	// Set phase to Installing and clear old failed packages before starting installation
-	// This ensures old failures are cleared when we retry
-	// Also set ObservedGeneration so CLI knows we've started processing this generation
+	// Set phase to Installing
 	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
 		latest.Status.ObservedGeneration = latest.Generation
 		latest.Status.Phase = "Installing"
-		latest.Status.FailedPackages = nil // Clear old failed packages (use nil for consistent JSON)
-		latest.Status.Message = "Installing packages..."
+		latest.Status.Message = fmt.Sprintf("Building %d packages...", len(pkgReq.Spec.Packages))
+		latest.Status.FailedPackage = ""
 		latest.Status.LastUpdated = metav1.Now()
 	}, logger); err != nil {
 		logger.Warn("Failed to update status to Installing phase", zap2.Error(err))
-		// Continue with installation even if status update fails
 	}
 
-	// Build map of previously installed packages for quick lookup
-	// This avoids re-querying aliased packages (e.g., dig→bind) that would fail
-	// the nix-env -q check but are actually installed
-	previouslyInstalled := make(map[string]packagesv1.InstalledPackage)
-	for _, pkg := range pkgReq.Status.InstalledPackages {
-		previouslyInstalled[pkg.Name] = pkg
-	}
-
-	// Install missing packages and record installed ones
-	installedPackages := []packagesv1.InstalledPackage{}
-	failedPackages := []string{}
-
-	for _, pkg := range pkgReq.Spec.Packages {
-		// First check: is this package already in our installed status?
-		// Trust the previous status to avoid aliasing issues with nix-env -q
-		// (e.g., "dig" is stored as "bind", so nix-env -q dig fails)
-		if prevPkg, ok := previouslyInstalled[pkg.Name]; ok {
-			logger.Info("Package already in installed status, preserving",
-				zap2.String("package", pkg.Name),
-				zap2.String("profile", pkgReq.Spec.ProfileName))
-			installedPackages = append(installedPackages, prevPkg)
-			continue
-		}
-
-		// Check actual state: is package really installed on the filesystem?
-		// This runs for NEW packages not in previous status
-		if r.isPackageInstalled(pkg.Name, pkgReq.Spec.ProfileName, logger) {
-			logger.Info("Package found installed on filesystem, querying info",
-				zap2.String("package", pkg.Name),
-				zap2.String("profile", pkgReq.Spec.ProfileName))
-
-			// Query existing package info
-			queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q --out-path %s", profilePath, pkg.Name)
-			queryOutput, err := r.CmdExec.Execute(queryScript)
-
-			storePath := nixStorePath + "/store"
-			installedVersion := ""
-
-			if err == nil && len(queryOutput) > 0 {
-				parts := strings.Fields(string(queryOutput))
-				if len(parts) >= 1 {
-					pkgWithVersion := parts[0]
-					if strings.HasPrefix(pkgWithVersion, pkg.Name+"-") {
-						installedVersion = strings.TrimPrefix(pkgWithVersion, pkg.Name+"-")
-					} else {
-						installedVersion = pkgWithVersion
-					}
-				}
-				if len(parts) >= 2 {
-					storePath = parts[1]
-				}
-			}
-
-			workspaceBinPath := fmt.Sprintf("/nix/profiles/per-user/root/%s/bin", pkgReq.Spec.ProfileName)
-			installedPackages = append(installedPackages, packagesv1.InstalledPackage{
-				Name:        pkg.Name,
-				Version:     installedVersion,
-				BinPath:     workspaceBinPath,
-				StorePath:   storePath,
-				InstalledAt: metav1.Now(),
-			})
-			continue
-		}
-
-		// Package not installed in actual filesystem, install it
-		logger.Info("Installing missing package",
-			zap2.String("package", pkg.Name),
-			zap2.String("profile", pkgReq.Spec.ProfileName))
-
-		installedPkg, err := r.installPackage(pkg, pkgReq.Spec.ProfileName)
-		if err != nil {
-			logger.Error("Failed to install package",
-				zap2.String("package", pkg.Name),
-				zap2.String("profile", pkgReq.Spec.ProfileName),
-				zap2.Error(err))
-			failedPackages = append(failedPackages, pkg.Name)
-			continue
-		}
-
-		installedPackages = append(installedPackages, installedPkg)
-		logger.Info("Successfully installed package",
-			zap2.String("package", pkg.Name),
-			zap2.String("profile", pkgReq.Spec.ProfileName),
-			zap2.String("storePath", installedPkg.StorePath))
-	}
-
-	// Update status to reflect actual state
-	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
-		latest.Status.InstalledPackages = installedPackages
-		// Use nil instead of empty slice when no failures for consistent JSON serialization
-		if len(failedPackages) > 0 {
-			latest.Status.FailedPackages = failedPackages
+	// Generate profile.nix
+	nixPath, err := r.ProfileManager.GenerateProfileNix(workspace, pkgReq.Spec.Packages)
+	if err != nil {
+		logger.Error("Failed to generate profile.nix", zap2.Error(err))
+		r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
 			latest.Status.Phase = "Failed"
-			latest.Status.Message = fmt.Sprintf("Failed to install %d packages", len(failedPackages))
-		} else {
-			latest.Status.FailedPackages = nil
-			latest.Status.Phase = "Ready"
-			latest.Status.Message = fmt.Sprintf("Successfully reconciled %d packages", len(installedPackages))
-		}
+			latest.Status.Message = fmt.Sprintf("Failed to generate profile: %v", err)
+			latest.Status.LastUpdated = metav1.Now()
+		}, logger)
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Generated profile.nix",
+		zap2.String("workspace", workspace),
+		zap2.String("path", nixPath))
+
+	// Build and activate the profile
+	result, err := r.ProfileManager.BuildAndActivate(ctx, workspace)
+	if err != nil {
+		logger.Error("Build system error", zap2.Error(err))
+		r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
+			latest.Status.Phase = "Failed"
+			latest.Status.Message = fmt.Sprintf("Build error: %v", err)
+			latest.Status.LastUpdated = metav1.Now()
+		}, logger)
+		return reconcile.Result{}, err
+	}
+
+	if !result.Success {
+		logger.Error("Nix build failed",
+			zap2.String("workspace", workspace),
+			zap2.String("failedPackage", result.FailedPackage),
+			zap2.String("error", result.Error))
+
+		r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
+			latest.Status.Phase = "Failed"
+			latest.Status.FailedPackage = result.FailedPackage
+			if result.FailedPackage != "" {
+				latest.Status.Message = fmt.Sprintf("Package '%s' failed to build", result.FailedPackage)
+			} else {
+				latest.Status.Message = "Build failed: " + truncateError(result.Error, 200)
+			}
+			latest.Status.LastUpdated = metav1.Now()
+		}, logger)
+		return reconcile.Result{}, nil
+	}
+
+	// Update status with success
+	if err := r.updateStatusWithRetry(ctx, req.NamespacedName, func(latest *packagesv1.PackageRequest) {
+		latest.Status.ObservedGeneration = latest.Generation
+		latest.Status.Phase = "Ready"
+		latest.Status.Message = fmt.Sprintf("Successfully installed %d packages", len(pkgReq.Spec.Packages))
+		latest.Status.SpecHash = specHash
+		latest.Status.PackageCount = len(pkgReq.Spec.Packages)
+		latest.Status.Packages = packageNames
+		latest.Status.ProfileStorePath = result.StorePath
+		latest.Status.PackagesPath = result.PackagesPath
+		latest.Status.FailedPackage = ""
 		latest.Status.LastUpdated = metav1.Now()
 	}, logger); err != nil {
-		logger.Error("Failed to update status after retries", zap2.Error(err))
+		logger.Error("Failed to update status", zap2.Error(err))
 		return reconcile.Result{}, err
 	}
 
 	logger.Info("PackageRequest reconciliation complete",
-		zap2.Int("installed", len(installedPackages)),
-		zap2.Int("failed", len(failedPackages)))
+		zap2.String("workspace", workspace),
+		zap2.Int("packages", len(pkgReq.Spec.Packages)),
+		zap2.String("storePath", result.StorePath))
 
 	return reconcile.Result{}, nil
 }
 
-// isPackageInstalled checks if a specific package is installed in the profile
-// Returns true if installed, false otherwise
-func (r *PackageManagerReconciler) isPackageInstalled(packageName string, profileName string, logger *zap2.Logger) bool {
-	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
-
-	// Check if profile exists
-	checkScript := fmt.Sprintf("test -d %s", profilePath)
-	if _, err := r.CmdExec.Execute(checkScript); err != nil {
-		return false
+// truncateError truncates an error message to maxLen characters
+func truncateError(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
 	}
-
-	// Query specific package in the profile
-	// nix-env -q returns exit code 0 and outputs the package if installed, or exits with 0 but empty output if not
-	queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q %s", profilePath, packageName)
-	output, err := r.CmdExec.Execute(queryScript)
-
-	// If query succeeds and returns non-empty output, package is installed
-	if err == nil && len(strings.TrimSpace(string(output))) > 0 {
-		logger.Debug("Package is installed",
-			zap2.String("package", packageName),
-			zap2.String("profile", profileName),
-			zap2.String("output", string(output)))
-		return true
-	}
-
-	return false
-}
-
-// getInstalledPackagesFromProfile lists all packages installed in the profile
-// Used to detect packages that need to be removed
-func (r *PackageManagerReconciler) getInstalledPackagesFromProfile(profileName string, logger *zap2.Logger) []string {
-	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
-
-	// Check if profile exists
-	checkScript := fmt.Sprintf("test -d %s", profilePath)
-	if _, err := r.CmdExec.Execute(checkScript); err != nil {
-		logger.Info("Profile does not exist yet", zap2.String("profile", profileName))
-		return []string{}
-	}
-
-	// Query all installed packages in the profile
-	// nix-env -q lists all packages with their full names (package-version)
-	queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q", profilePath)
-	output, err := r.CmdExec.Execute(queryScript)
-	if err != nil {
-		logger.Warn("Failed to query installed packages from profile",
-			zap2.String("profile", profileName),
-			zap2.Error(err),
-			zap2.String("output", string(output)))
-		return []string{}
-	}
-
-	// Parse output - each line is "package-version" (e.g., "nodejs-24.5.0")
-	// We return the full package name as-is for use with nix-env -e
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	packages := []string{}
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			packages = append(packages, line)
-		}
-	}
-
-	return packages
+	return s[:maxLen] + "..."
 }
 
 // updateStatusWithRetry retries status updates with optimistic concurrency control
@@ -587,158 +372,6 @@ func (r *PackageManagerReconciler) updateStatusWithRetry(
 	}
 
 	return fmt.Errorf("failed to update status after %d retries", maxRetries)
-}
-
-func (r *PackageManagerReconciler) installPackage(pkg packagesv1.PackageSpec, profileName string) (packagesv1.InstalledPackage, error) {
-	// Determine package source and install command
-	// Store profiles in nix-store so they're accessible via hostPath mount in workspace pods
-	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
-
-	var installScript string
-	var streamTag string // Tag for streaming output (nixpkgs commit hash)
-
-	// Priority: NixpkgsCommit > Channel > latest unstable
-	if pkg.NixpkgsCommit != "" {
-		// Install from specific nixpkgs commit
-		// Use nix-build -E with explicit .out output to bypass meta.outputsToInstall validation
-		// The expression tries .out first, then falls back to the package itself for packages without .out
-		nixpkgsTarball := fmt.Sprintf("https://github.com/nixos/nixpkgs/archive/%s.tar.gz", pkg.NixpkgsCommit)
-		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build -E 'let pkgs = import (fetchTarball "%s") {}; in pkgs.%s.out or pkgs.%s' --no-out-link | xargs nix-env -p %s -i`,
-			nixpkgsTarball, pkg.Name, pkg.Name, profilePath,
-		)
-		streamTag = pkg.NixpkgsCommit // Use commit hash as tag for CLI filtering
-		r.Logger.Info("Installing package from nixpkgs commit",
-			zap2.String("package", pkg.Name),
-			zap2.String("commit", pkg.NixpkgsCommit))
-	} else if pkg.Channel != "" {
-		// Install from specific channel/release (e.g., nixos-24.05, nixos-23.11, unstable)
-		// Use nix-build -E with explicit .out output to bypass meta.outputsToInstall validation
-		// Channel can be "24.05", "23.11", "unstable" or "nixos-24.05", "nixos-unstable"
-		channelBranch := pkg.Channel
-		if !strings.HasPrefix(pkg.Channel, "nixos-") && pkg.Channel != "unstable" {
-			channelBranch = "nixos-" + pkg.Channel
-		} else if pkg.Channel == "unstable" {
-			channelBranch = "nixos-unstable"
-		}
-		channelURL := fmt.Sprintf("https://github.com/nixos/nixpkgs/archive/refs/heads/%s.tar.gz", channelBranch)
-		// Two-step approach: build first with explicit .out, then install from store path
-		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build -E 'let pkgs = import (fetchTarball "%s") {}; in pkgs.%s.out or pkgs.%s' --no-out-link | xargs nix-env -p %s -i`,
-			channelURL, pkg.Name, pkg.Name, profilePath,
-		)
-		r.Logger.Info("Installing package from channel",
-			zap2.String("package", pkg.Name),
-			zap2.String("channel", pkg.Channel))
-	} else {
-		// Install latest version from nixpkgs unstable
-		// Use nix-build -E with explicit .out output to bypass meta.outputsToInstall validation
-		// This two-step approach builds the package first, then installs from store path
-		installScript = fmt.Sprintf(
-			`. /root/.nix-profile/etc/profile.d/nix.sh && nix-build -E 'let pkgs = import <nixpkgs> {}; in pkgs.%s.out or pkgs.%s' --no-out-link | xargs nix-env -p %s -i`,
-			pkg.Name, pkg.Name, profilePath,
-		)
-		r.Logger.Info("Installing package from nixpkgs unstable",
-			zap2.String("package", pkg.Name))
-	}
-
-	// Use streaming output with tag when nixpkgs commit is available (for CLI log filtering)
-	var output []byte
-	var installErr error
-	if streamTag != "" {
-		output, installErr = ExecuteWithTaggedOutput(installScript, streamTag)
-	} else {
-		output, installErr = r.CmdExec.Execute(installScript)
-	}
-
-	// Query package info to get store path and actual installed version from the named profile
-	// We do this even if install "failed" because some packages have broken meta.outputsToInstall
-	// that causes nix-env to return non-zero, but the package is still installed successfully
-	queryScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -q --out-path %s", profilePath, pkg.Name)
-
-	queryOutput, queryErr := r.CmdExec.Execute(queryScript)
-
-	// If install failed AND we can't find the package in the profile, it's a real failure
-	// But if install "failed" with outputsToInstall error yet package exists, treat as success
-	if installErr != nil {
-		if queryErr != nil || len(queryOutput) == 0 {
-			// Package really wasn't installed
-			return packagesv1.InstalledPackage{}, fmt.Errorf("nix-env failed: %w, output: %s", installErr, string(output))
-		}
-		// Package was installed despite the error (likely meta.outputsToInstall warning)
-		r.Logger.Warn("Package installed despite nix-env error (likely meta.outputsToInstall issue)",
-			zap2.String("package", pkg.Name),
-			zap2.String("error", installErr.Error()))
-	}
-
-	// Parse store path and version from output
-	storePath := nixStorePath + "/store"
-	installedVersion := ""
-
-	// Determine version source for status
-	if pkg.NixpkgsCommit != "" {
-		installedVersion = "commit:" + pkg.NixpkgsCommit[:8] // Short commit hash
-	} else if pkg.Channel != "" {
-		installedVersion = "channel:" + pkg.Channel
-	}
-
-	// Only parse query output if query succeeded
-	// If query failed, the output contains error messages (e.g., "error: selector 'dig' matches no derivations")
-	// which would be incorrectly parsed as package info
-	if queryErr != nil {
-		r.Logger.Warn("Failed to query package path, using default",
-			zap2.String("package", pkg.Name),
-			zap2.Error(queryErr))
-	} else if len(queryOutput) > 0 {
-		// Output format is typically: "package-version  /nix/store/hash-package-version"
-		parts := strings.Fields(string(queryOutput))
-		if len(parts) >= 1 {
-			// First part is "package-version", extract version
-			pkgWithVersion := parts[0]
-			// Remove package name prefix to get version
-			if strings.HasPrefix(pkgWithVersion, pkg.Name+"-") {
-				actualVersion := strings.TrimPrefix(pkgWithVersion, pkg.Name+"-")
-				// Append actual version to source info
-				if installedVersion != "" {
-					installedVersion = actualVersion + " (" + installedVersion + ")"
-				} else {
-					installedVersion = actualVersion
-				}
-			} else if installedVersion == "" {
-				installedVersion = pkgWithVersion
-			}
-		}
-		if len(parts) >= 2 {
-			storePath = parts[1]
-		}
-	}
-
-	// BinPath should use the shared mount path at /nix
-	// Both workmachine-host-manager and workspace pods mount the hostPath at /nix
-	// This ensures packages installed by workmachine-host-manager are accessible in workspaces
-	workspaceBinPath := fmt.Sprintf("/nix/profiles/per-user/root/%s/bin", profileName)
-
-	return packagesv1.InstalledPackage{
-		Name:        pkg.Name,
-		Version:     installedVersion,
-		BinPath:     workspaceBinPath,
-		StorePath:   storePath,
-		InstalledAt: metav1.Now(),
-	}, nil
-}
-
-func (r *PackageManagerReconciler) uninstallPackage(pkgName string, profileName string) error {
-	// Remove package from the profile (doesn't delete from Nix store)
-	// Using nix-env -e only removes the package from the user environment
-	profilePath := fmt.Sprintf("%s/profiles/per-user/root/%s", nixStorePath, profileName)
-	uninstallScript := fmt.Sprintf(". /root/.nix-profile/etc/profile.d/nix.sh && nix-env -p %s -e %s", profilePath, pkgName)
-
-	output, err := r.CmdExec.Execute(uninstallScript)
-	if err != nil {
-		return fmt.Errorf("nix-env uninstall failed: %w, output: %s", err, string(output))
-	}
-
-	return nil
 }
 
 // containsString checks if a string is present in a slice
@@ -1859,13 +1492,20 @@ func main() {
 		zapLogger.Fatal("Failed to create manager", zap2.Error(err))
 	}
 
+	// Setup command executor for Nix operations
+	cmdExec := &RealCommandExecutor{}
+
+	// Setup Nix profile manager
+	profileManager := NewNixProfileManager(zapLogger, cmdExec)
+
 	// Setup package reconciler
 	packageReconciler := &PackageManagerReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		Logger:    zapLogger,
-		Namespace: namespace,
-		CmdExec:   &RealCommandExecutor{},
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		Logger:         zapLogger,
+		Namespace:      namespace,
+		CmdExec:        cmdExec,
+		ProfileManager: profileManager,
 	}
 
 	if err := packageReconciler.SetupWithManager(mgr); err != nil {

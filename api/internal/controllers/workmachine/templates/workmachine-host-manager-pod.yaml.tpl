@@ -41,7 +41,7 @@ spec:
             echo "Nix already exists on shared volume, skipping copy"
             # Always ensure profile directory exists (idempotent - safe to run multiple times)
             echo "Ensuring profile directory exists..."
-            mkdir -p /nix-shared/profiles/per-user/root
+            mkdir -p /nix-shared/profiles/kloudlite
             echo "Profile directory ready"
             exit 0
           fi
@@ -64,7 +64,7 @@ spec:
 
           # Ensure profile directory exists
           echo "Ensuring profile directory exists..."
-          mkdir -p /nix-shared/profiles/per-user/root
+          mkdir -p /nix-shared/profiles/kloudlite
           echo "Profile directory ready"
       volumeMounts:
         - name: nix-store

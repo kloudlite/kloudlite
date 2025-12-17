@@ -615,32 +615,29 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 				continue
 			}
 
-			// Check if package is installed (only trust when phase is Ready or Failed)
-			for _, pkg := range pkgReq.Status.InstalledPackages {
-				if pkg.Name == packageName {
-					fmt.Printf("\n[✓] Package installed successfully: %s\n", packageName)
-					if pkg.Version != "" {
-						fmt.Printf("  Version: %s\n", pkg.Version)
+			// Check if package is installed (only trust when phase is Ready)
+			if pkgReq.Status.Phase == "Ready" {
+				for _, pkg := range pkgReq.Status.Packages {
+					if pkg == packageName {
+						fmt.Printf("\n[✓] Package installed successfully: %s\n", packageName)
+						if pkgReq.Status.PackagesPath != "" {
+							fmt.Printf("  Binary path: %s/bin\n", pkgReq.Status.PackagesPath)
+						}
+						return nil
 					}
-					if pkg.BinPath != "" {
-						fmt.Printf("  Binary path: %s\n", pkg.BinPath)
-					}
-					return nil
 				}
 			}
 
 			// Check if package failed
-			// We only check FailedPackages when phase is Failed AND ObservedGeneration matches
+			// We only check FailedPackage when phase is Failed AND ObservedGeneration matches
 			// This ensures we're reading status from the current reconciliation, not stale data
 			if pkgReq.Status.Phase == "Failed" {
-				for _, failedPkg := range pkgReq.Status.FailedPackages {
-					if failedPkg == packageName {
-						errMsg := pkgReq.Status.Message
-						if errMsg != "" {
-							return fmt.Errorf("package installation failed: %s", errMsg)
-						}
-						return fmt.Errorf("package installation failed")
+				if pkgReq.Status.FailedPackage == packageName || pkgReq.Status.FailedPackage == "" {
+					errMsg := pkgReq.Status.Message
+					if errMsg != "" {
+						return fmt.Errorf("package installation failed: %s", errMsg)
 					}
+					return fmt.Errorf("package installation failed")
 				}
 			}
 
@@ -802,31 +799,30 @@ func handlePackageList() error {
 		tw.Flush()
 	}
 
-	installedPackages := pkgReq.Status.InstalledPackages
-	failedPackages := pkgReq.Status.FailedPackages
+	installedPackages := pkgReq.Status.Packages
+	failedPackage := pkgReq.Status.FailedPackage
 	statusMessage := pkgReq.Status.Message
+	packagesPath := pkgReq.Status.PackagesPath
 
 	fmt.Println("\nInstalled packages:")
 	if len(installedPackages) == 0 {
 		fmt.Println("  No packages installed yet")
 	} else {
 		tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "NAME\tVERSION\tBIN PATH\tINSTALLED AT")
-		for _, pkg := range installedPackages {
-			installedAt := ""
-			if !pkg.InstalledAt.IsZero() {
-				installedAt = pkg.InstalledAt.Format("2006-01-02 15:04:05")
-			}
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", pkg.Name, pkg.Version, pkg.BinPath, installedAt)
+		fmt.Fprintln(tw, "NAME\tBIN PATH")
+		binPath := ""
+		if packagesPath != "" {
+			binPath = packagesPath + "/bin"
+		}
+		for _, pkgName := range installedPackages {
+			fmt.Fprintf(tw, "%s\t%s\n", pkgName, binPath)
 		}
 		tw.Flush()
 	}
 
-	if len(failedPackages) > 0 {
-		fmt.Println("\nFailed packages:")
-		for _, pkg := range failedPackages {
-			fmt.Printf("  - %s\n", pkg)
-		}
+	if failedPackage != "" {
+		fmt.Println("\nFailed package:")
+		fmt.Printf("  - %s\n", failedPackage)
 		if statusMessage != "" {
 			fmt.Printf("\nError: %s\n", statusMessage)
 		}
