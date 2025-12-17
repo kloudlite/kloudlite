@@ -406,7 +406,7 @@ func convertVolumeToPVC(
 	}
 }
 
-// transformImageForInternalRegistry replaces external registry domain with internal cluster service
+// transformImageForInternalRegistry replaces external registry domain with internal registry via NodePort
 // This allows Kubernetes to pull images directly from the internal registry without HTTPS
 func transformImageForInternalRegistry(image string) string {
 	hostedSubdomain := os.Getenv("HOSTED_SUBDOMAIN")
@@ -415,7 +415,8 @@ func transformImageForInternalRegistry(image string) string {
 	}
 
 	externalRegistry := fmt.Sprintf("cr.%s", hostedSubdomain)
-	internalRegistry := "image-registry.kloudlite.svc.cluster.local:5000"
+	// Use localhost with NodePort (30500) - accessible from the node where pod runs
+	internalRegistry := "localhost:30500"
 
 	if strings.HasPrefix(image, externalRegistry+"/") {
 		return strings.Replace(image, externalRegistry, internalRegistry, 1)
