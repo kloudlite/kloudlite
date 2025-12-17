@@ -36,6 +36,7 @@ func main() {
 		wildcardDomain          string
 		wildcardSecretName      string
 		wildcardSecretNamespace string
+		ownNamespace            string
 	)
 
 	flag.StringVar(&healthProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -45,6 +46,7 @@ func main() {
 	flag.StringVar(&wildcardDomain, "wildcard-domain", "khost.dev", "Domain suffix for valid hosts (e.g., khost.dev)")
 	flag.StringVar(&wildcardSecretName, "wildcard-secret-name", "kloudlite-wildcard-cert-tls", "Name of wildcard TLS secret")
 	flag.StringVar(&wildcardSecretNamespace, "wildcard-secret-namespace", "kloudlite", "Namespace of wildcard TLS secret")
+	flag.StringVar(&ownNamespace, "own-namespace", "", "The namespace where this controller is running")
 	flag.Parse()
 
 	// Validate required flags
@@ -100,6 +102,7 @@ func main() {
 		WildcardDomain:          wildcardDomain,
 		WildcardSecretName:      wildcardSecretName,
 		WildcardSecretNamespace: wildcardSecretNamespace,
+		OwnNamespace:            ownNamespace,
 	}
 
 	if err = reconciler.SetupWithManager(mgr); err != nil {
