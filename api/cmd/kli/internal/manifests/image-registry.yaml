@@ -35,15 +35,8 @@ data:
         enabled: true
         interval: 10s
         threshold: 3
-    auth:
-      token:
-        # Token authentication for Docker Registry v3 (RS256)
-        # realm: Internal API server URL (pushes always happen in-cluster from workspaces)
-        # service: Registry hostname (substituted during installation)
-        realm: http://api-server.kloudlite.svc.cluster.local/api/v1/registry/token
-        service: ${REGISTRY_HOST}
-        issuer: kloudlite-registry-auth
-        rootcertbundle: /etc/registry-auth/registry-auth.crt
+    # Authentication is handled by wm-ingress-controller at the ingress layer
+    # Registry runs without auth - only accessible via ingress which validates requests
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -75,9 +68,6 @@ spec:
           mountPath: /etc/distribution/config.yml
           subPath: config.yml
           readOnly: true
-        - name: registry-auth-cert
-          mountPath: /etc/registry-auth
-          readOnly: true
         livenessProbe:
           httpGet:
             path: /
@@ -101,12 +91,6 @@ spec:
       - name: registry-config
         configMap:
           name: image-registry-config
-      - name: registry-auth-cert
-        secret:
-          secretName: registry-auth-cert
-          items:
-          - key: registry-auth.crt
-            path: registry-auth.crt
 ---
 apiVersion: v1
 kind: Service
@@ -124,3 +108,26 @@ spec:
     name: http
   selector:
     app: image-registry
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: image-registry
+  namespace: kloudlite
+  labels:
+    app: image-registry
+  annotations:
+    # Allow large image uploads (10GB)
+    nginx.ingress.kubernetes.io/proxy-body-size: "10240m"
+spec:
+  rules:
+  - host: ${REGISTRY_HOST}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: image-registry
+            port:
+              number: 5000
