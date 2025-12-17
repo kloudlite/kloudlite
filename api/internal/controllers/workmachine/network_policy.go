@@ -112,6 +112,19 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 	}
 	ingressRules = append(ingressRules, ingressControllerRule)
 
+	// Rule 5: Allow from VPN clients (WireGuard network)
+	// VPN clients connect via tunnel-server and need access to services in the workmachine namespace
+	vpnRule := networkingv1.NetworkPolicyIngressRule{
+		From: []networkingv1.NetworkPolicyPeer{
+			{
+				IPBlock: &networkingv1.IPBlock{
+					CIDR: "10.17.0.0/24",
+				},
+			},
+		},
+	}
+	ingressRules = append(ingressRules, vpnRule)
+
 	return networkingv1.NetworkPolicySpec{
 		// Apply to all pods EXCEPT tunnel-server (which needs external access via hostPort)
 		PodSelector: metav1.LabelSelector{
