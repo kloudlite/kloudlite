@@ -43,9 +43,10 @@ type ProviderArgs struct {
 
 	ResourceTags []Tag
 
-	K3sVersion string
-	K3sURL     string
-	K3sToken   string
+	K3sVersion      string
+	K3sURL          string
+	K3sToken        string
+	HostedSubdomain string // e.g., "mega.khost.dev" - used for registry mirror config
 }
 
 func NewProvider(ctx context.Context, args ProviderArgs) (cloud.Provider, error) {
@@ -104,11 +105,12 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 
 	// Render user data script
 	userData, err := templates.K3sAgentSetup.Render(templates.K3sAgentSetupArgs{
-		K3sVersion:    p.K3sVersion,
-		K3sURL:        p.K3sURL,
-		K3sAgentToken: p.K3sToken,
-		MachineName:   wm.Name,
-		MachineOwner:  fn.LabelValueEncoder(wm.Spec.OwnedBy),
+		K3sVersion:      p.K3sVersion,
+		K3sURL:          p.K3sURL,
+		K3sAgentToken:   p.K3sToken,
+		MachineName:     wm.Name,
+		MachineOwner:    fn.LabelValueEncoder(wm.Spec.OwnedBy),
+		HostedSubdomain: p.HostedSubdomain,
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)

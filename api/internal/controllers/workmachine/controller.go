@@ -652,9 +652,10 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					},
 				},
 
-				K3sVersion: r.env.K3sVersion,
-				K3sURL:     r.env.K3sServerURL,
-				K3sToken:   r.env.K3sAgentToken,
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
 			})
 			if err != nil {
 				return errors.Wrap("failed to create aws provider client", err)
@@ -688,9 +689,10 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					},
 				},
 
-				K3sVersion: r.env.K3sVersion,
-				K3sURL:     r.env.K3sServerURL,
-				K3sToken:   r.env.K3sAgentToken,
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
 			})
 			if err != nil {
 				return errors.Wrap("failed to create Azure provider client", err)
@@ -724,9 +726,10 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					},
 				},
 
-				K3sVersion: r.env.K3sVersion,
-				K3sURL:     r.env.K3sServerURL,
-				K3sToken:   r.env.K3sAgentToken,
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
 			})
 			if err != nil {
 				return errors.Wrap("failed to create GCP provider client", err)
