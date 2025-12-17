@@ -100,25 +100,38 @@ RUN --mount=type=cache,target=/tmp/fonts-cache \
 RUN --mount=type=cache,target=/tmp/starship-cache \
   curl -sS https://starship.rs/install.sh | sh -s -- -y
 
-# Install Docker CLI (for kl build command)
+# Install Docker CLI and Buildx plugin (for kl image push command)
 # Uses Docker-in-Docker daemon via DOCKER_HOST env var
 ARG DOCKER_VERSION=27.4.1
+ARG BUILDX_VERSION=0.19.3
 RUN --mount=type=cache,target=/tmp/docker-cache \
   if [ "$TARGETARCH" = "amd64" ]; then \
     DOCKER_ARCH="x86_64"; \
+    BUILDX_ARCH="linux-amd64"; \
   elif [ "$TARGETARCH" = "arm64" ]; then \
     DOCKER_ARCH="aarch64"; \
+    BUILDX_ARCH="linux-arm64"; \
   else \
     echo "ERROR: Unsupported architecture: $TARGETARCH" && exit 1; \
   fi && \
   cd /tmp/docker-cache && \
+  # Download and install Docker CLI
   if [ ! -f "docker-${DOCKER_VERSION}-${DOCKER_ARCH}.tgz" ]; then \
     curl -fsSL "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION}.tgz" \
       -o "docker-${DOCKER_VERSION}-${DOCKER_ARCH}.tgz"; \
   fi && \
   tar -xzf "docker-${DOCKER_VERSION}-${DOCKER_ARCH}.tgz" --strip-components=1 -C /usr/local/bin docker/docker && \
   chmod +x /usr/local/bin/docker && \
-  docker --version
+  # Download and install Buildx plugin
+  mkdir -p /usr/local/lib/docker/cli-plugins && \
+  if [ ! -f "buildx-v${BUILDX_VERSION}.${BUILDX_ARCH}" ]; then \
+    curl -fsSL "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/buildx-v${BUILDX_VERSION}.${BUILDX_ARCH}" \
+      -o "buildx-v${BUILDX_VERSION}.${BUILDX_ARCH}"; \
+  fi && \
+  cp "buildx-v${BUILDX_VERSION}.${BUILDX_ARCH}" /usr/local/lib/docker/cli-plugins/docker-buildx && \
+  chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx && \
+  docker --version && \
+  docker buildx version
 
 USER root
 
