@@ -2,7 +2,6 @@ package composition
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -132,7 +131,7 @@ func convertServiceToDeployment(
 	// Build container
 	container := corev1.Container{
 		Name:  serviceName,
-		Image: transformImageForInternalRegistry(service.Image),
+		Image: service.Image,
 	}
 
 	// Add command and args if specified
@@ -404,24 +403,6 @@ func convertVolumeToPVC(
 			},
 		},
 	}
-}
-
-// transformImageForInternalRegistry replaces external registry domain with internal registry via NodePort
-// This allows Kubernetes to pull images directly from the internal registry without HTTPS
-func transformImageForInternalRegistry(image string) string {
-	hostedSubdomain := os.Getenv("HOSTED_SUBDOMAIN")
-	if hostedSubdomain == "" {
-		return image
-	}
-
-	externalRegistry := fmt.Sprintf("cr.%s", hostedSubdomain)
-	// Use localhost with NodePort (30500) - accessible from the node where pod runs
-	internalRegistry := "localhost:30500"
-
-	if strings.HasPrefix(image, externalRegistry+"/") {
-		return strings.Replace(image, externalRegistry, internalRegistry, 1)
-	}
-	return image
 }
 
 // convertCPU converts docker-compose CPU format to Kubernetes format

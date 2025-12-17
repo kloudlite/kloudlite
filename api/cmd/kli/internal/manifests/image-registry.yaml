@@ -2,6 +2,46 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: image-registry-readonly-proxy
+  namespace: kloudlite
+data:
+  nginx.conf: |
+    worker_processes 1;
+    events { worker_connections 1024; }
+    http {
+      upstream registry {
+        server localhost:5000;
+      }
+      server {
+        listen 5001;
+
+        # Only allow read operations (GET, HEAD)
+        location / {
+          limit_except GET HEAD {
+            deny all;
+          }
+          proxy_pass http://registry;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+
+          # Large layer support
+          client_max_body_size 0;
+          proxy_read_timeout 900;
+        }
+
+        # Health check
+        location /health {
+          return 200 'OK';
+          add_header Content-Type text/plain;
+        }
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: image-registry-config
   namespace: kloudlite
 data:
@@ -87,10 +127,32 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+      # Nginx sidecar for read-only access via NodePort (for Kubernetes pulls)
+      - name: readonly-proxy
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 5001
+          name: readonly
+          protocol: TCP
+        volumeMounts:
+        - name: readonly-proxy-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "50m"
+          limits:
+            memory: "64Mi"
+            cpu: "100m"
       volumes:
       - name: registry-config
         configMap:
           name: image-registry-config
+      - name: readonly-proxy-config
+        configMap:
+          name: image-registry-readonly-proxy
 ---
 apiVersion: v1
 kind: Service
@@ -106,6 +168,26 @@ spec:
     targetPort: 5000
     protocol: TCP
     name: http
+  selector:
+    app: image-registry
+---
+# NodePort service for read-only access from K3s nodes (for Kubernetes image pulls)
+# K3s registries.yaml should mirror cr.{subdomain} to localhost:30500
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-registry-readonly
+  namespace: kloudlite
+  labels:
+    app: image-registry
+spec:
+  type: NodePort
+  ports:
+  - port: 5001
+    targetPort: 5001
+    nodePort: 30500
+    protocol: TCP
+    name: readonly
   selector:
     app: image-registry
 ---
