@@ -21,9 +21,10 @@ const (
 )
 
 // ensureNetworkPolicy creates or updates the NetworkPolicy based on environment settings
+// Network policies are enabled by default; only skip if explicitly disabled
 func (r *EnvironmentReconciler) ensureNetworkPolicy(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
-	// Skip if network policies are not enabled
-	if environment.Spec.NetworkPolicies == nil || !environment.Spec.NetworkPolicies.Enabled {
+	// Skip only if network policies are explicitly disabled
+	if environment.Spec.NetworkPolicies != nil && !environment.Spec.NetworkPolicies.Enabled {
 		// Clean up existing policy if it exists
 		return r.deleteNetworkPolicy(ctx, environment, logger)
 	}
@@ -331,9 +332,10 @@ func (r *EnvironmentReconciler) deleteNetworkPolicy(ctx context.Context, environ
 }
 
 // ensureNetworkPolicyWithOwner creates or updates the NetworkPolicy with owner reference
+// Network policies are enabled by default; only skip if explicitly disabled
 func (r *EnvironmentReconciler) ensureNetworkPolicyWithOwner(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
-	// Skip if network policies are not enabled
-	if environment.Spec.NetworkPolicies == nil || !environment.Spec.NetworkPolicies.Enabled {
+	// Skip only if network policies are explicitly disabled
+	if environment.Spec.NetworkPolicies != nil && !environment.Spec.NetworkPolicies.Enabled {
 		return r.deleteNetworkPolicy(ctx, environment, logger)
 	}
 
