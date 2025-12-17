@@ -58,8 +58,9 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
   let packageStatus: {
     phase?: string
     message?: string
-    installedPackages?: Array<{ name: string }>
-    failedPackages?: string[]
+    packages?: string[]
+    packageCount?: number
+    failedPackage?: string
   } | null = null
   try {
     const pkgResult = await getPackageRequest(name, namespace)
@@ -158,7 +159,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                     <div>
                       <h3 className="text-sm font-semibold">Packages</h3>
                       <p className="text-muted-foreground text-xs">
-                        {packageStatus?.installedPackages?.length || 0} packages installed
+                        {packageStatus?.packageCount || packageStatus?.packages?.length || 0} packages installed
                       </p>
                     </div>
                   </div>

@@ -48,10 +48,6 @@ import { toast } from 'sonner'
 interface PackageWithVersion extends PackageSpec {
   displayVersion?: string
   status?: 'installed' | 'pending' | 'failed'
-  installedInfo?: {
-    name: string
-    version?: string
-  }
 }
 
 interface PackagesSheetProps {
@@ -84,17 +80,23 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
         const pkgReqResult = await getPackageRequest(workspace.metadata.name, workspace.metadata.namespace)
         const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
 
-        // Create maps for status tracking from PackageRequest.status
-        const installedPackagesMap = new Map(
-          pkgReq?.status?.installedPackages?.map((pkg) => [pkg.name, pkg]) || [],
-        )
-        const failedPackagesSet = new Set(pkgReq?.status?.failedPackages || [])
+        // Create sets for status tracking from PackageRequest.status (new simplified structure)
+        const installedPackagesSet = new Set(pkgReq?.status?.packages || [])
+        const failedPackage = pkgReq?.status?.failedPackage || ''
+        const statusPhase = pkgReq?.status?.phase || 'Pending'
 
         // Load packages from PackageRequest.spec.packages (source of truth)
         const existingPackages: PackageWithVersion[] = (pkgReq?.spec?.packages || []).map((pkg) => {
-          const isInstalled = installedPackagesMap.has(pkg.name)
-          const isFailed = failedPackagesSet.has(pkg.name)
-          const status = isInstalled ? 'installed' : isFailed ? 'failed' : 'pending'
+          const isInstalled = installedPackagesSet.has(pkg.name)
+          const isFailed = failedPackage === pkg.name
+          // If phase is Ready and package is in installed list, it's installed
+          // If phase is Failed and this is the failed package, it's failed
+          // Otherwise it's pending
+          const status = statusPhase === 'Ready' && isInstalled
+            ? 'installed'
+            : isFailed
+              ? 'failed'
+              : 'pending'
 
           return {
             ...pkg,
@@ -102,7 +104,6 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
               pkg.channel ||
               (pkg.nixpkgsCommit ? `commit:${pkg.nixpkgsCommit.substring(0, 8)}` : undefined),
             status,
-            installedInfo: installedPackagesMap.get(pkg.name),
           }
         })
         setPackages(existingPackages)
@@ -221,7 +222,6 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
       ({
         displayVersion: _displayVersion,
         status: _status,
-        installedInfo: _installedInfo,
         ...pkg
       }) => pkg,
     )
@@ -438,9 +438,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
                           </div>
                         </div>
                         <div className="text-muted-foreground mt-1 text-xs">
-                          {pkg.installedInfo?.version ? (
-                            <span>Version: {pkg.installedInfo.version}</span>
-                          ) : pkg.displayVersion ? (
+                          {pkg.displayVersion ? (
                             <span>Version: {pkg.displayVersion}</span>
                           ) : pkg.channel ? (
                             <span>Channel: {pkg.channel}</span>
