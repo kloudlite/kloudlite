@@ -36,6 +36,10 @@ type IngressReconciler struct {
 	// The namespace where this ingress controller is running
 	OwnNamespace string
 
+	// Registry access control - username for path restriction
+	// When set, write operations to cr.* domains are restricted to /v2/{username}/*
+	RegistryUsername string
+
 	// HTTP server components
 	router      *Router
 	tlsManager  *TLSManager
@@ -194,8 +198,8 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 // StartServers starts the HTTP and HTTPS servers
 func (r *IngressReconciler) StartServers(ctx context.Context) error {
-	// Initialize router
-	r.router = NewRouter(r.Logger)
+	// Initialize router with registry access control
+	r.router = NewRouter(r.Logger, r.RegistryUsername)
 
 	// Initialize TLS manager
 	r.tlsManager = NewTLSManager(r.Logger)
