@@ -37,6 +37,7 @@ func main() {
 		wildcardSecretName      string
 		wildcardSecretNamespace string
 		ownNamespace            string
+		registryUsername        string
 	)
 
 	flag.StringVar(&healthProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -47,7 +48,13 @@ func main() {
 	flag.StringVar(&wildcardSecretName, "wildcard-secret-name", "kloudlite-wildcard-cert-tls", "Name of wildcard TLS secret")
 	flag.StringVar(&wildcardSecretNamespace, "wildcard-secret-namespace", "kloudlite", "Namespace of wildcard TLS secret")
 	flag.StringVar(&ownNamespace, "own-namespace", "", "The namespace where this controller is running")
+	flag.StringVar(&registryUsername, "registry-username", "", "Username for registry path access control (restricts writes to /v2/{username}/*)")
 	flag.Parse()
+
+	// Allow registry-username to be set via environment variable
+	if registryUsername == "" {
+		registryUsername = os.Getenv("REGISTRY_USERNAME")
+	}
 
 	// Validate required flags
 	// if ingressClassName == "" {
@@ -75,6 +82,7 @@ func main() {
 		zap.Int("https-port", httpsPort),
 		zap.String("wildcard-domain", wildcardDomain),
 		zap.String("wildcard-secret", wildcardSecretNamespace+"/"+wildcardSecretName),
+		zap.String("registry-username", registryUsername),
 	)
 
 	// Setup controller-runtime manager
@@ -103,6 +111,7 @@ func main() {
 		WildcardSecretName:      wildcardSecretName,
 		WildcardSecretNamespace: wildcardSecretNamespace,
 		OwnNamespace:            ownNamespace,
+		RegistryUsername:        registryUsername,
 	}
 
 	if err = reconciler.SetupWithManager(mgr); err != nil {

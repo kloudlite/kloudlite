@@ -412,6 +412,13 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 								"--own-namespace",
 								obj.Spec.TargetNamespace,
 							},
+							Env: []corev1.EnvVar{
+								{
+									// REGISTRY_USERNAME restricts registry write access to /v2/{username}/*
+									Name:  "REGISTRY_USERNAME",
+									Value: obj.Spec.OwnedBy,
+								},
+							},
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",

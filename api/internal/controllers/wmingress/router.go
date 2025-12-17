@@ -30,18 +30,20 @@ type Route struct {
 
 // Router handles HTTP request routing
 type Router struct {
-	logger      *zap.Logger
-	routes      []*Route
-	routesMutex sync.RWMutex
-	httpServer  *http.Server
-	httpsServer *http.Server
+	logger           *zap.Logger
+	routes           []*Route
+	routesMutex      sync.RWMutex
+	httpServer       *http.Server
+	httpsServer      *http.Server
+	registryUsername string // Username for registry path access control
 }
 
 // NewRouter creates a new Router
-func NewRouter(logger *zap.Logger) *Router {
+func NewRouter(logger *zap.Logger, registryUsername string) *Router {
 	return &Router{
-		logger: logger,
-		routes: []*Route{},
+		logger:           logger,
+		routes:           []*Route{},
+		registryUsername: registryUsername,
 	}
 }
 
@@ -64,6 +66,18 @@ func isWebSocketRequest(req *http.Request) bool {
 
 // ServeHTTP implements http.Handler
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Check registry access control before routing
+	if err := r.checkRegistryAccess(req); err != nil {
+		r.logger.Warn("Registry access denied",
+			zap.String("host", req.Host),
+			zap.String("path", req.URL.Path),
+			zap.String("method", req.Method),
+			zap.String("error", err.Error()),
+		)
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
 	// Find matching route (hold lock only during route lookup)
 	r.routesMutex.RLock()
 	route := r.findMatchingRoute(req)
@@ -278,6 +292,63 @@ func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backen
 		// Wait for either direction to finish
 		<-errChan
 	}
+}
+
+// isRegistryRequest checks if the request is for a container registry domain (cr.*)
+func (r *Router) isRegistryRequest(host string) bool {
+	// Strip port if present
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	return strings.HasPrefix(host, "cr.")
+}
+
+// isWriteMethod checks if the HTTP method is a write operation
+func isWriteMethod(method string) bool {
+	switch method {
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		return true
+	default:
+		return false
+	}
+}
+
+// checkRegistryAccess validates registry access control
+// For registry requests (cr.* domains), write operations are restricted to /v2/{username}/*
+func (r *Router) checkRegistryAccess(req *http.Request) error {
+	// Skip if no registry username configured
+	if r.registryUsername == "" {
+		return nil
+	}
+
+	// Only check registry requests
+	if !r.isRegistryRequest(req.Host) {
+		return nil
+	}
+
+	// Allow all read operations (GET, HEAD, OPTIONS)
+	if !isWriteMethod(req.Method) {
+		return nil
+	}
+
+	// For write operations, validate the path matches /v2/{username}/*
+	path := req.URL.Path
+
+	// Allow registry API discovery endpoints
+	if path == "/v2/" || path == "/v2" {
+		return nil
+	}
+
+	// Path should be /v2/{username}/... for write operations
+	// Examples:
+	//   /v2/karthik/myapp/blobs/... - allowed for user karthik
+	//   /v2/otheruser/myapp/blobs/... - denied for user karthik
+	expectedPrefix := fmt.Sprintf("/v2/%s/", r.registryUsername)
+	if !strings.HasPrefix(path, expectedPrefix) {
+		return fmt.Errorf("access denied: write operations only allowed under /v2/%s/", r.registryUsername)
+	}
+
+	return nil
 }
 
 // findMatchingRoute finds a route matching the request
