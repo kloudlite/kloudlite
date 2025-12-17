@@ -2,7 +2,6 @@ package workspace
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -25,33 +24,11 @@ type DockerAuth struct {
 }
 
 // ensureDockerConfigSecret creates or updates a Secret containing Docker config.json
-// for the workspace's image registry authentication
+// Registry runs without authentication - this just creates an empty config
 func (r *WorkspaceReconciler) ensureDockerConfigSecret(ctx context.Context, workspace *workspacev1.Workspace, registryHost, targetNamespace string, logger *zap.Logger) error {
-	if r.JWTSecret == "" {
-		logger.Warn("JWTSecret not configured, skipping Docker config creation")
-		return nil
-	}
-
-	// Generate a long-lived JWT token for the workspace owner
-	// Token expires in 8760 hours (1 year) for long-lived workspace credentials
-	token, err := r.generateDockerRegistryToken(workspace.Spec.OwnedBy, 8760)
-	if err != nil {
-		return fmt.Errorf("failed to generate Docker registry token: %w", err)
-	}
-
-	// Create Docker auth string: base64(username:password)
-	// Username is the workspace owner, password is the JWT token
-	authString := base64.StdEncoding.EncodeToString(
-		[]byte(fmt.Sprintf("%s:%s", workspace.Spec.OwnedBy, token)),
-	)
-
-	// Build Docker config.json
+	// Build empty Docker config.json - registry runs without auth
 	dockerConfig := DockerConfig{
-		Auths: map[string]DockerAuth{
-			registryHost: {
-				Auth: authString,
-			},
-		},
+		Auths: map[string]DockerAuth{},
 	}
 
 	configJSON, err := json.Marshal(dockerConfig)
