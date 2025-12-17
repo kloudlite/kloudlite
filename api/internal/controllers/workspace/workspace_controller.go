@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
@@ -42,43 +41,7 @@ type WorkspaceReconciler struct {
 	Logger    *zap.Logger
 	Config    *rest.Config
 	Clientset *kubernetes.Clientset
-	JWTSecret string // JWT secret for generating Docker registry tokens (HS256)
-}
-
-// DockerRegistryClaims represents the JWT claims for Docker Registry authentication
-// Must match the structure expected by authService.ValidateToken
-type DockerRegistryClaims struct {
-	Username string   `json:"username"`
-	Email    string   `json:"email"`
-	Name     string   `json:"name"`
-	Roles    []string `json:"roles"`
-	jwt.RegisteredClaims
-}
-
-// generateDockerRegistryToken creates a JWT token for Docker Registry authentication
-// This token is used as the password in Docker config.json
-func (r *WorkspaceReconciler) generateDockerRegistryToken(username string, expiryHours int) (string, error) {
-	if r.JWTSecret == "" {
-		return "", fmt.Errorf("JWTSecret not configured")
-	}
-
-	now := time.Now()
-	claims := DockerRegistryClaims{
-		Username: username,
-		Email:    "", // Not needed for Docker auth
-		Name:     username,
-		Roles:    []string{"user"}, // Default role for Docker access
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(expiryHours) * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "kloudlite",
-			Subject:   username,
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(r.JWTSecret))
+	JWTSecret string // JWT secret (kept for compatibility, no longer used for registry)
 }
 
 // Reconcile handles Workspace events and ensures the workspace pod exists
