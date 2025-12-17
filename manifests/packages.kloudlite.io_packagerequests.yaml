@@ -24,11 +24,8 @@ spec:
     - jsonPath: .status.phase
       name: Phase
       type: string
-    - jsonPath: .status.installedPackages[*].name
-      name: Installed
-      type: integer
-    - jsonPath: .status.failedPackages[*]
-      name: Failed
+    - jsonPath: .status.packageCount
+      name: Packages
       type: integer
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -98,39 +95,10 @@ spec:
           status:
             description: PackageRequestStatus defines the observed state of PackageRequest
             properties:
-              failedPackages:
-                description: |-
-                  FailedPackages list of packages that failed to install
-                  NOTE: No omitempty - empty slice must be serialized to clear old failures
-                items:
-                  type: string
-                type: array
-              installedPackages:
-                description: InstalledPackages list of successfully installed packages
-                items:
-                  description: InstalledPackage represents a successfully installed
-                    package
-                  properties:
-                    binPath:
-                      description: BinPath where binaries are located
-                      type: string
-                    installedAt:
-                      description: InstalledAt timestamp
-                      format: date-time
-                      type: string
-                    name:
-                      description: Name of the package
-                      type: string
-                    storePath:
-                      description: StorePath in the Nix store
-                      type: string
-                    version:
-                      description: Version of the installed package
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
+              failedPackage:
+                description: FailedPackage is the name of the package that caused
+                  the build to fail (if any)
+                type: string
               lastUpdated:
                 description: LastUpdated timestamp of last status update
                 format: date-time
@@ -145,6 +113,18 @@ spec:
                   This allows clients to determine if the status reflects the current spec
                 format: int64
                 type: integer
+              packageCount:
+                description: PackageCount is the number of packages in the environment
+                type: integer
+              packages:
+                description: Packages is the list of package names (for display purposes)
+                items:
+                  type: string
+                type: array
+              packagesPath:
+                description: PackagesPath is the path to the packages symlink (e.g.,
+                  /nix/profiles/kloudlite/<workspace>/packages)
+                type: string
               phase:
                 description: Phase represents the current phase (Pending, Installing,
                   Ready, Failed)
@@ -153,6 +133,13 @@ spec:
                 - Installing
                 - Ready
                 - Failed
+                type: string
+              profileStorePath:
+                description: ProfileStorePath is the Nix store path of the built environment
+                type: string
+              specHash:
+                description: SpecHash is a hash of the package specifications for
+                  change detection
                 type: string
             type: object
         type: object
