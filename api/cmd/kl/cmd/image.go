@@ -78,8 +78,9 @@ func handleImagePush(args []string) error {
 	// Construct the full image tag
 	fullImageTag := fmt.Sprintf("%s/%s/%s", registry, username, imageName)
 
-	// Build docker build command args
-	buildArgs := []string{"build"}
+	// Build docker buildx command args (modern BuildKit-based builder)
+	// Using buildx with --push to build and push in one step
+	buildArgs := []string{"buildx", "build", "--push"}
 	buildArgs = append(buildArgs, dockerArgs...)
 	buildArgs = append(buildArgs, "-t", fullImageTag)
 
@@ -112,27 +113,17 @@ func handleImagePush(args []string) error {
 		buildArgs = append(buildArgs, ".")
 	}
 
-	fmt.Printf("[+] Building image: %s\n", fullImageTag)
+	fmt.Printf("[+] Building and pushing image: %s\n", fullImageTag)
 	fmt.Printf("[+] Running: docker %s\n\n", strings.Join(buildArgs, " "))
 
-	// Execute docker build
+	// Execute docker buildx build --push
 	buildCmd := exec.Command("docker", buildArgs...)
 	buildCmd.Stdout = os.Stdout
 	buildCmd.Stderr = os.Stderr
 	buildCmd.Stdin = os.Stdin
 
 	if err := buildCmd.Run(); err != nil {
-		return fmt.Errorf("docker build failed: %w", err)
-	}
-
-	// Push the image
-	fmt.Printf("\n[+] Pushing image: %s\n", fullImageTag)
-	pushCmd := exec.Command("docker", "push", fullImageTag)
-	pushCmd.Stdout = os.Stdout
-	pushCmd.Stderr = os.Stderr
-
-	if err := pushCmd.Run(); err != nil {
-		return fmt.Errorf("docker push failed: %w", err)
+		return fmt.Errorf("docker buildx build failed: %w", err)
 	}
 
 	fmt.Printf("\n[✓] Image built and pushed successfully: %s\n", fullImageTag)
