@@ -594,7 +594,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 
 	assert.Contains(t, commandStr, "/etc/environment", "init container should create /etc/environment")
 	assert.Contains(t, commandStr, "PATH=/kloudlite/bin", "init container should set PATH in /etc/environment with /kloudlite/bin")
-	assert.Contains(t, commandStr, "/nix/profiles/per-user/root/workspace-", "PATH should include nix profiles path")
+	assert.Contains(t, commandStr, "/nix/profiles/kloudlite/", "PATH should include nix profiles path")
 }
 
 func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T) {
