@@ -89,7 +89,8 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		return
 	}
 
-	wm, err := h.workmachineRepo.GetByOwner(c, userEmail)
+	// Use username (not email) to find workmachine since the label uses username
+	wm, err := h.workmachineRepo.GetByOwner(c, username)
 	if err != nil {
 		c.Error(err)
 		return
