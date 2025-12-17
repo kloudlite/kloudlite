@@ -9,9 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var buildCmd = &cobra.Command{
-	Use:   "build [docker-build-args...] <image-name>",
-	Short: "Build and push a Docker image to the Kloudlite registry",
+var imageCmd = &cobra.Command{
+	Use:   "image",
+	Short: "Manage container images",
+	Long:  `Commands for building and managing container images with the Kloudlite registry.`,
+}
+
+var imagePushCmd = &cobra.Command{
+	Use:   "push [docker-build-args...] <image-name>",
+	Short: "Build and push an image to the Kloudlite registry",
 	Long: `Build a Docker image and push it to the Kloudlite image registry.
 
 This command wraps 'docker build' and automatically tags the image with the
@@ -22,31 +28,32 @@ The image will be tagged as: $KL_IMAGE_REGISTRY/{username}/{image-name}
 All docker build arguments are supported and passed through to docker build.
 The build context defaults to the current directory if not specified.`,
 	Example: `  # Build and push an image from current directory
-  kl build myapp
+  kl image push myapp
 
   # Build with a specific Dockerfile
-  kl build -f Dockerfile.prod myapp
+  kl image push -f Dockerfile.prod myapp
 
   # Build with build args
-  kl build --build-arg VERSION=1.0 myapp
+  kl image push --build-arg VERSION=1.0 myapp
 
   # Build from a specific context
-  kl build -f ./docker/Dockerfile . myapp
+  kl image push -f ./docker/Dockerfile . myapp
 
   # Build with a tag that includes version
-  kl build myapp:v1.0.0`,
+  kl image push myapp:v1.0.0`,
 	Args:               cobra.MinimumNArgs(1),
 	DisableFlagParsing: true, // Pass all args to docker build
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return handleBuild(args)
+		return handleImagePush(args)
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(buildCmd)
+	imageCmd.AddCommand(imagePushCmd)
+	RootCmd.AddCommand(imageCmd)
 }
 
-func handleBuild(args []string) error {
+func handleImagePush(args []string) error {
 	// Get the image registry from environment
 	registry := os.Getenv("KL_IMAGE_REGISTRY")
 	if registry == "" {
@@ -65,7 +72,7 @@ func handleBuild(args []string) error {
 
 	// If the image name starts with '-', it's probably a flag
 	if strings.HasPrefix(imageName, "-") {
-		return fmt.Errorf("image name is required as the last argument\nUsage: kl build [docker-build-args...] <image-name>")
+		return fmt.Errorf("image name is required as the last argument\nUsage: kl image push [docker-build-args...] <image-name>")
 	}
 
 	// Construct the full image tag
