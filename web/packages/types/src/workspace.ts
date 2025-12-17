@@ -218,6 +218,7 @@ export interface PackageRequest {
     creationTimestamp?: string
     resourceVersion?: string
     uid?: string
+    generation?: number
   }
   spec: {
     workspaceRef: string
@@ -225,10 +226,16 @@ export interface PackageRequest {
     profileName: string
   }
   status?: {
+    observedGeneration?: number
     phase?: 'Pending' | 'Installing' | 'Ready' | 'Failed'
     message?: string
-    installedPackages?: InstalledPackage[]
-    failedPackages?: string[]
+    // New simplified status fields
+    packages?: string[] // Just package names for display
+    packageCount?: number
+    failedPackage?: string // Single package that caused failure
+    packagesPath?: string // e.g., /nix/profiles/kloudlite/<workspace>/packages
+    profileStorePath?: string // Nix store path of the built environment
+    specHash?: string // For change detection
     lastUpdated?: string
   }
 }
