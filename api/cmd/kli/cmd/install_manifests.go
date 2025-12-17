@@ -181,61 +181,7 @@ data:
 				return fmt.Errorf("failed to write Image Registry: %w", err)
 			}
 			fmt.Printf("✓ Written Image Registry to %s\n", imageRegistryPath)
-
-			// Generate registry auth certificates for JWT token signing/verification
-			registryAuthSecretPath := filepath.Join(manifestsDir, "registry-auth-cert.yaml")
-			if _, err := os.Stat(registryAuthSecretPath); err == nil {
-				fmt.Printf("✓ Registry auth cert already exists at %s (skipping regeneration)\n", registryAuthSecretPath)
-			} else {
-				fmt.Println("Generating registry auth certificates...")
-				registryAuthCerts, err := certs.GenerateRegistryAuthCertificates()
-				if err != nil {
-					return fmt.Errorf("failed to generate registry auth certificates: %w", err)
-				}
-				fmt.Println("✓ Generated registry auth certificates")
-
-				// Create registry-auth-cert secret for registry to verify JWT tokens
-				registryAuthSecretManifest := fmt.Sprintf(`apiVersion: v1
-kind: Secret
-metadata:
-  name: registry-auth-cert
-  namespace: kloudlite
-type: Opaque
-data:
-  registry-auth.crt: %s
-`,
-					base64.StdEncoding.EncodeToString(registryAuthCerts.Certificate))
-
-				if err := os.WriteFile(registryAuthSecretPath, []byte(registryAuthSecretManifest), 0644); err != nil {
-					return fmt.Errorf("failed to write registry auth cert secret: %w", err)
-				}
-				fmt.Printf("✓ Written registry auth cert secret to %s\n", registryAuthSecretPath)
-
-				// Patch api-server-secret to add REGISTRY_RSA_PRIVATE_KEY for JWT token signing
-				fmt.Println("Patching api-server-secret with registry auth private key...")
-				patchData := fmt.Sprintf(`{"data":{"REGISTRY_RSA_PRIVATE_KEY":"%s"}}`,
-					base64.StdEncoding.EncodeToString(registryAuthCerts.PrivateKey))
-				patchCmd := fmt.Sprintf("kubectl patch secret api-server-secret -n kloudlite --type=merge -p '%s'", patchData)
-				if err := runCommand(patchCmd); err != nil {
-					return fmt.Errorf("failed to patch api-server-secret: %w", err)
-				}
-				fmt.Println("✓ Patched api-server-secret with REGISTRY_RSA_PRIVATE_KEY")
-			}
-
-			// Add REGISTRY_SERVICE_NAME to api-server-config for token authentication
-			apiServerConfigPatch := fmt.Sprintf(`apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: api-server-config
-  namespace: kloudlite
-data:
-  REGISTRY_SERVICE_NAME: "%s"
-`, registryHost)
-			apiServerConfigPatchPath := filepath.Join(manifestsDir, "api-server-config-registry.yaml")
-			if err := os.WriteFile(apiServerConfigPatchPath, []byte(apiServerConfigPatch), 0644); err != nil {
-				return fmt.Errorf("failed to write API Server Config patch: %w", err)
-			}
-			fmt.Printf("✓ Written API Server Config patch to %s\n", apiServerConfigPatchPath)
+			// Note: Registry runs without authentication - access control is handled at ingress layer
 		} else {
 			fmt.Println("⚠ Skipping Image Registry (S3_BUCKET, AWS_REGION, or KLOUDLITE_REGISTRY_HOST not set)")
 		}
