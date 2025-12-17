@@ -213,6 +213,26 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
+			Name:  "when-running/ensure-tunnel-server",
+			Title: "Ensure tunnel server is running for WireGuard connectivity",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning && obj.Status.PublicIP != ""
+			},
+			OnCreate: r.ensureTunnelServer,
+			OnDelete: r.cleanupTunnelServer,
+		},
+		{
+			Name:  "when-stopped/cleanup-tunnel-server",
+			Title: "Cleanup tunnel server when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupTunnelServer,
+			OnDelete: nil,
+		},
+		{
 			Name:  "check-auto-shutdown",
 			Title: "Check if WorkMachine should auto-shutdown due to idle workspaces",
 			ShouldRun: func(obj *v1.WorkMachine) bool {
@@ -232,26 +252,6 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			Title:    "Setup Cloud Machine",
 			OnCreate: r.setupCloudMachine,
 			OnDelete: r.cleanupCloudMachine,
-		},
-		{
-			Name:  "when-running/ensure-tunnel-server",
-			Title: "Ensure tunnel server is running for WireGuard connectivity",
-			ShouldRun: func(obj *v1.WorkMachine) bool {
-				return obj.Spec.State == v1.MachineStateRunning && obj.Status.PublicIP != ""
-			},
-			OnCreate: r.ensureTunnelServer,
-			OnDelete: r.cleanupTunnelServer,
-		},
-		{
-			Name:  "when-stopped/cleanup-tunnel-server",
-			Title: "Cleanup tunnel server when machine is not running",
-			ShouldRun: func(obj *v1.WorkMachine) bool {
-				return obj.Spec.State == v1.MachineStateStopped ||
-					obj.Spec.State == v1.MachineStateStopping ||
-					obj.Spec.State == v1.MachineStateDisabled
-			},
-			OnCreate: r.cleanupTunnelServer,
-			OnDelete: nil,
 		},
 	})
 }
