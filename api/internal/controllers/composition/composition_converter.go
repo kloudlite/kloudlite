@@ -2,6 +2,7 @@ package composition
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -131,7 +132,7 @@ func convertServiceToDeployment(
 	// Build container
 	container := corev1.Container{
 		Name:  serviceName,
-		Image: service.Image,
+		Image: transformImageForInternalRegistry(service.Image),
 	}
 
 	// Add command and args if specified
@@ -403,6 +404,23 @@ func convertVolumeToPVC(
 			},
 		},
 	}
+}
+
+// transformImageForInternalRegistry replaces external registry domain with internal cluster service
+// This allows Kubernetes to pull images directly from the internal registry without HTTPS
+func transformImageForInternalRegistry(image string) string {
+	hostedSubdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if hostedSubdomain == "" {
+		return image
+	}
+
+	externalRegistry := fmt.Sprintf("cr.%s", hostedSubdomain)
+	internalRegistry := "image-registry.kloudlite.svc.cluster.local:5000"
+
+	if strings.HasPrefix(image, externalRegistry+"/") {
+		return strings.Replace(image, externalRegistry, internalRegistry, 1)
+	}
+	return image
 }
 
 // convertCPU converts docker-compose CPU format to Kubernetes format
