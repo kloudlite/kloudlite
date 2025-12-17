@@ -164,6 +164,7 @@ data:
   K3S_VERSION: "$K3S_VERSION"
   K3S_SERVER_URL: "$K3S_SERVER_URL"
   HOSTED_SUBDOMAIN: "%s"
+  REGISTRY_SERVICE_NAME: "cr.%s"
 EOF
 
 # Install manifests using embedded CRDs
@@ -340,7 +341,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, workerSgID, region, amiID, fullDomain, region, bucketName, fullDomain, fullDomain, manifests.AWSMachineTypes, bucketName, region)
+`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, workerSgID, region, amiID, fullDomain, fullDomain, region, bucketName, fullDomain, fullDomain, manifests.AWSMachineTypes, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))

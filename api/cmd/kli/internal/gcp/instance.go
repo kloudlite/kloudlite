@@ -386,6 +386,7 @@ data:
   K3S_VERSION: "$K3S_VERSION"
   K3S_SERVER_URL: "$K3S_SERVER_URL"
   HOSTED_SUBDOMAIN: "%s"
+  REGISTRY_SERVICE_NAME: "cr.%s"
 EOF
 
 # Install manifests using embedded CRDs
@@ -557,7 +558,7 @@ echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
 `, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret,
-		installationKey, cfg.Project, cfg.Region, cfg.Zone, fullDomain,
+		installationKey, cfg.Project, cfg.Region, cfg.Zone, fullDomain, fullDomain,
 		cfg.Project, cfg.Region, bucketName, fullDomain, fullDomain,
 		manifests.GCPMachineTypes,
 		bucketName, cfg.Project)

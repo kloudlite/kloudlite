@@ -415,6 +415,7 @@ data:
   K3S_VERSION: "$K3S_VERSION"
   K3S_SERVER_URL: "$K3S_SERVER_URL"
   HOSTED_SUBDOMAIN: "%s"
+  REGISTRY_SERVICE_NAME: "cr.%s"
 EOF
 
 # Install manifests using embedded CRDs
@@ -588,7 +589,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, subnetID, nsgID, storageAccountName, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
+`, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, subnetID, nsgID, storageAccountName, fullDomain, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
 }
 
 // WaitForVM waits for the VM to be in running state and returns its IPs
