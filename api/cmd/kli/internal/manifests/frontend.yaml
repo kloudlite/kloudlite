@@ -30,6 +30,7 @@ spec:
       containers:
         - name: frontend
           image: ghcr.io/kloudlite/kloudlite/web-dashboard:development
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
               name: http
@@ -65,17 +66,25 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "1000m"
-          livenessProbe:
-            httpGet:
-              path: /api/health
-              port: 3000
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 3
-          readinessProbe:
+          startupProbe:
             httpGet:
               path: /api/health
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
+            failureThreshold: 30  # 5 + (30 * 5) = 155 seconds max startup time
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
