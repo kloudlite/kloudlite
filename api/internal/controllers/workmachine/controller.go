@@ -409,6 +409,8 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 								// Use local namespace secret instead of cross-namespace access
 								"--wildcard-secret-namespace",
 								obj.Spec.TargetNamespace,
+								"--own-namespace",
+								obj.Spec.TargetNamespace,
 							},
 							Ports: []corev1.ContainerPort{
 								{

@@ -33,6 +33,9 @@ type IngressReconciler struct {
 	WildcardSecretName      string // e.g., "kloudlite-wildcard-cert-tls"
 	WildcardSecretNamespace string // e.g., "kloudlite"
 
+	// The namespace where this ingress controller is running
+	OwnNamespace string
+
 	// HTTP server components
 	router      *Router
 	tlsManager  *TLSManager
@@ -234,10 +237,11 @@ func (r *IngressReconciler) buildRoutes(ctx context.Context, ingresses []network
 				continue
 			}
 
-			// For workmachine namespace ingresses, only allow exposed port hosts (p{port}-*)
+			// Only filter workspace services from OTHER WM namespaces, not our own
 			// This prevents proxying workspace services (vscode, ttyd, etc.) to other users
-			if isWorkmachineNamespace(ingress.Namespace) && !isExposedPortHost(rule.Host) {
-				r.Logger.Debug("Skipping non-exposed-port host in workmachine namespace",
+			// while still allowing the owner to access their own workspace services
+			if isWorkmachineNamespace(ingress.Namespace) && ingress.Namespace != r.OwnNamespace && !isExposedPortHost(rule.Host) {
+				r.Logger.Debug("Skipping non-exposed-port host from other workmachine namespace",
 					zap.String("host", rule.Host),
 					zap.String("namespace", ingress.Namespace),
 				)
