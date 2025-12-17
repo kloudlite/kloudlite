@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
-import { Loader2, Copy, CheckCircle2, ExternalLink } from 'lucide-react'
+import { Loader2, Copy, CheckCircle2 } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { WorldMap } from '@/components/world-map'
 import { toast } from 'sonner'
@@ -216,25 +216,6 @@ export default function InstallPage() {
     toast.success('Command copied to clipboard')
   }
 
-  const handleDeployClick = async (provider: 'aws' | 'gcp' | 'azure', location: string, deployUrl: string) => {
-    try {
-      // Save provider and location before opening deploy link
-      await fetch('/api/installations/set-provider', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          installationKey: session?.installationKey,
-          cloudProvider: provider,
-          cloudLocation: location,
-        }),
-      })
-    } catch (error) {
-      console.error('Error saving provider:', error)
-    }
-    // Open deploy link regardless of API result
-    window.open(deployUrl, '_blank')
-  }
-
   if (loading) {
     return (
       <div className="bg-background flex min-h-screen items-center justify-center">
@@ -290,50 +271,24 @@ export default function InstallPage() {
                 <div className="space-y-5">
                   {/* AWS Region Selector */}
                   {key === 'aws' && (
-                    <>
-                      <div>
-                        <p className="text-foreground mb-3 text-sm font-semibold">Select AWS Region:</p>
-                        <Select
-                          value={awsRegion || 'default'}
-                          onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
-                        >
-                          <SelectTrigger className="w-full md:w-80">
-                            <SelectValue placeholder="Select a region" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {AWS_REGIONS.map((region) => (
-                              <SelectItem key={region.value || 'default'} value={region.value || 'default'}>
-                                {region.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* One-Click CloudFormation */}
-                      <div className="bg-muted/50 rounded-lg border p-4">
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <p className="text-foreground text-sm font-semibold">One-Click Install</p>
-                            <p className="text-muted-foreground text-sm">
-                              {awsRegion ? 'Launch directly in AWS CloudFormation' : 'Select a region to enable one-click install'}
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            disabled={!awsRegion}
-                            onClick={() => awsRegion && handleDeployClick(
-                              'aws',
-                              awsRegion,
-                              `https://console.aws.amazon.com/cloudformation/home?region=${awsRegion}#/stacks/create/review?templateURL=https://kloudlite-cloudformation-templates.s3.amazonaws.com/aws/aws-oneclick.yaml&stackName=kloudlite&param_InstallationKey=${session.installationKey}&param_Region=${awsRegion}`
-                            )}
-                          >
-                            <ExternalLink className="mr-2 size-4" />
-                            Launch Stack
-                          </Button>
-                        </div>
-                      </div>
-                    </>
+                    <div>
+                      <p className="text-foreground mb-3 text-sm font-semibold">Select AWS Region:</p>
+                      <Select
+                        value={awsRegion || 'default'}
+                        onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
+                      >
+                        <SelectTrigger className="w-full md:w-80">
+                          <SelectValue placeholder="Select a region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AWS_REGIONS.map((region) => (
+                            <SelectItem key={region.value || 'default'} value={region.value || 'default'}>
+                              {region.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
 
                   {/* GCP Region Selector */}
@@ -360,49 +315,24 @@ export default function InstallPage() {
 
                   {/* Azure Location Selector */}
                   {key === 'azure' && (
-                    <>
-                      <div>
-                        <p className="text-foreground mb-3 text-sm font-semibold">Select Azure Location:</p>
-                        <Select
-                          value={azureLocation}
-                          onValueChange={setAzureLocation}
-                        >
-                          <SelectTrigger className="w-full md:w-80">
-                            <SelectValue placeholder="Select a location" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {AZURE_LOCATIONS.map((location) => (
-                              <SelectItem key={location.value} value={location.value}>
-                                {location.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* One-Click Azure Deploy */}
-                      <div className="bg-muted/50 rounded-lg border p-4">
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <p className="text-foreground text-sm font-semibold">One-Click Install</p>
-                            <p className="text-muted-foreground text-sm">
-                              Select your subscription in Azure Portal. Resources deploy to <span className="font-medium text-foreground">{azureLocation}</span>.
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleDeployClick(
-                              'azure',
-                              azureLocation,
-                              `https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent(`${window.location.origin}/api/installations/azure-template?key=${session.installationKey}&location=${azureLocation}`)}`
-                            )}
-                          >
-                            <ExternalLink className="mr-2 size-4" />
-                            Deploy to Azure
-                          </Button>
-                        </div>
-                      </div>
-                    </>
+                    <div>
+                      <p className="text-foreground mb-3 text-sm font-semibold">Select Azure Location:</p>
+                      <Select
+                        value={azureLocation}
+                        onValueChange={setAzureLocation}
+                      >
+                        <SelectTrigger className="w-full md:w-80">
+                          <SelectValue placeholder="Select a location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AZURE_LOCATIONS.map((location) => (
+                            <SelectItem key={location.value} value={location.value}>
+                              {location.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
 
                   {/* World Map showing selected region */}

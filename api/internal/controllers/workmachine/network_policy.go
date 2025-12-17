@@ -113,8 +113,16 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 	ingressRules = append(ingressRules, ingressControllerRule)
 
 	return networkingv1.NetworkPolicySpec{
-		// Apply to all pods in namespace
-		PodSelector: metav1.LabelSelector{},
+		// Apply to all pods EXCEPT tunnel-server (which needs external access via hostPort)
+		PodSelector: metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Key:      "app",
+					Operator: metav1.LabelSelectorOpNotIn,
+					Values:   []string{"tunnel-server"},
+				},
+			},
+		},
 		PolicyTypes: []networkingv1.PolicyType{
 			networkingv1.PolicyTypeIngress,
 		},
