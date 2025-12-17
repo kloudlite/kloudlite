@@ -64,6 +64,38 @@ func (r *IngressReconciler) shouldProcessIngress(ing *networkingv1.Ingress) bool
 	return r.IngressClassName == "" || ing.Spec.IngressClassName == nil || *ing.Spec.IngressClassName == r.IngressClassName
 }
 
+// isWorkmachineNamespace checks if the namespace is a workmachine namespace
+func isWorkmachineNamespace(namespace string) bool {
+	return strings.HasPrefix(namespace, "wm-")
+}
+
+// isExposedPortHost checks if the host is for an exposed port (p{port}-hash.subdomain)
+// e.g., p3000-a1b2c3d4.beanbag.khost.dev
+func isExposedPortHost(host string) bool {
+	parts := strings.Split(host, ".")
+	if len(parts) < 1 {
+		return false
+	}
+	prefix := parts[0]
+	// Check if prefix starts with 'p' followed by digits and a dash
+	if !strings.HasPrefix(prefix, "p") {
+		return false
+	}
+	// Find the dash after the port number
+	dashIdx := strings.Index(prefix[1:], "-")
+	if dashIdx == -1 {
+		return false
+	}
+	portStr := prefix[1 : 1+dashIdx]
+	// Verify it's a valid port number (all digits)
+	for _, c := range portStr {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 // isValidHost checks if the host matches the pattern *.*.{WildcardDomain}
 // e.g., vscode-58890cd7.beanbag.khost.dev matches *.*.khost.dev
 func (r *IngressReconciler) isValidHost(host string) bool {
@@ -198,6 +230,16 @@ func (r *IngressReconciler) buildRoutes(ctx context.Context, ingresses []network
 				r.Logger.Debug("Skipping host - does not match wildcard domain",
 					zap.String("host", rule.Host),
 					zap.String("wildcardDomain", r.WildcardDomain),
+				)
+				continue
+			}
+
+			// For workmachine namespace ingresses, only allow exposed port hosts (p{port}-*)
+			// This prevents proxying workspace services (vscode, ttyd, etc.) to other users
+			if isWorkmachineNamespace(ingress.Namespace) && !isExposedPortHost(rule.Host) {
+				r.Logger.Debug("Skipping non-exposed-port host in workmachine namespace",
+					zap.String("host", rule.Host),
+					zap.String("namespace", ingress.Namespace),
 				)
 				continue
 			}

@@ -92,6 +92,26 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 	}
 	ingressRules = append(ingressRules, intraNsRule)
 
+	// Rule 4: Allow from wm-ingress-controller pods in any workmachine namespace
+	// This enables exposed ports to be accessible via other users' ingress controllers
+	ingressControllerRule := networkingv1.NetworkPolicyIngressRule{
+		From: []networkingv1.NetworkPolicyPeer{
+			{
+				NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"kloudlite.io/workmachine": "true",
+					},
+				},
+				PodSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"app": "wm-ingress-controller",
+					},
+				},
+			},
+		},
+	}
+	ingressRules = append(ingressRules, ingressControllerRule)
+
 	return networkingv1.NetworkPolicySpec{
 		// Apply to all pods in namespace
 		PodSelector: metav1.LabelSelector{},
