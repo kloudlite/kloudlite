@@ -181,11 +181,11 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 </div>
               </div>
               <div className="space-y-3 p-4">
-                {/* Show failed packages warning */}
-                {packageStatus?.failedPackages && packageStatus.failedPackages.length > 0 && (
+                {/* Show failed package warning */}
+                {packageStatus?.failedPackage && (
                   <div className="rounded-md bg-red-50 p-3 dark:bg-red-900/20">
                     <p className="text-xs font-medium text-red-700 dark:text-red-400">
-                      Failed to install: {packageStatus.failedPackages.join(', ')}
+                      Failed to install: {packageStatus.failedPackage}
                     </p>
                   </div>
                 )}
