@@ -14,26 +14,23 @@ import (
 
 // RegistryCatalogHandlers handles Docker Registry catalog operations
 type RegistryCatalogHandlers struct {
-	registryURL         string
-	registryAuthHandler *RegistryAuthHandlers
-	authService         services.AuthService
-	logger              *zap.Logger
-	httpClient          *http.Client
+	registryURL string
+	authService services.AuthService
+	logger      *zap.Logger
+	httpClient  *http.Client
 }
 
 // NewRegistryCatalogHandlers creates a new RegistryCatalogHandlers
 func NewRegistryCatalogHandlers(
 	registryURL string,
-	registryAuthHandler *RegistryAuthHandlers,
 	authService services.AuthService,
 	logger *zap.Logger,
 ) *RegistryCatalogHandlers {
 	return &RegistryCatalogHandlers{
-		registryURL:         strings.TrimSuffix(registryURL, "/"),
-		registryAuthHandler: registryAuthHandler,
-		authService:         authService,
-		logger:              logger,
-		httpClient:          &http.Client{},
+		registryURL: strings.TrimSuffix(registryURL, "/"),
+		authService: authService,
+		logger:      logger,
+		httpClient:  &http.Client{},
 	}
 }
 
@@ -58,41 +55,9 @@ type TagListResponse struct {
 	Tags []string `json:"tags"`
 }
 
-// getRegistryToken generates a token for accessing the registry catalog
-func (h *RegistryCatalogHandlers) getRegistryToken(c *gin.Context) (string, error) {
-	// Get the username from the authenticated request context
-	// The JWT middleware sets "user_username" in the context
-	username, exists := c.Get("user_username")
-	if !exists {
-		return "", fmt.Errorf("username not found in context")
-	}
-
-	// Generate a Docker Registry token with catalog access
-	// For catalog access, we use a special scope that allows reading all repos
-	if h.registryAuthHandler == nil {
-		return "", fmt.Errorf("registry auth handler not configured")
-	}
-
-	// Generate token using the registry auth handler's signing key
-	token, err := h.registryAuthHandler.generateCatalogToken(username.(string))
-	if err != nil {
-		return "", fmt.Errorf("failed to generate registry token: %w", err)
-	}
-
-	return token, nil
-}
-
 // ListRepositories lists all repositories in the registry
 func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
-	// Get registry token for authentication
-	token, err := h.getRegistryToken(c)
-	if err != nil {
-		h.logger.Error("Failed to get registry token", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
-		return
-	}
-
-	// Call registry /_catalog endpoint
+	// Call registry /_catalog endpoint (no auth needed - registry runs without auth)
 	url := fmt.Sprintf("%s/v2/_catalog", h.registryURL)
 
 	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, url, nil)
@@ -101,9 +66,6 @@ func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
 		return
 	}
-
-	// Add authentication header
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := h.httpClient.Do(req)
 	if err != nil {
@@ -127,17 +89,10 @@ func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
 	}
 
 	// Filter out repositories with no tags (deleted repos remain in catalog until GC)
-	// Get username for generating repository-specific tokens
-	username, _ := c.Get("user_username")
-	usernameStr := ""
-	if username != nil {
-		usernameStr = username.(string)
-	}
-
 	var repos []RepositoryInfo
 	for _, name := range catalogResp.Repositories {
 		// Check if repository has any tags
-		hasTags, err := h.repositoryHasTags(c.Request.Context(), name, usernameStr)
+		hasTags, err := h.repositoryHasTags(c.Request.Context(), name)
 		if err != nil {
 			h.logger.Debug("Failed to check tags for repository", zap.String("repo", name), zap.Error(err))
 			// Include repo if we can't determine - better to show than hide
@@ -153,20 +108,12 @@ func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
 }
 
 // repositoryHasTags checks if a repository has any tags
-func (h *RegistryCatalogHandlers) repositoryHasTags(ctx context.Context, repo string, username string) (bool, error) {
-	// Generate a token with pull access for this repository
-	token, err := h.registryAuthHandler.GenerateRepositoryToken(username, repo, []string{"pull"})
-	if err != nil {
-		return false, err
-	}
-
+func (h *RegistryCatalogHandlers) repositoryHasTags(ctx context.Context, repo string) (bool, error) {
 	url := fmt.Sprintf("%s/v2/%s/tags/list", h.registryURL, repo)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return false, err
 	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := h.httpClient.Do(req)
 	if err != nil {
@@ -202,22 +149,7 @@ func (h *RegistryCatalogHandlers) ListTags(c *gin.Context) {
 	// Remove leading slash if present (from wildcard capture)
 	repo = strings.TrimPrefix(repo, "/")
 
-	// Get the username from the authenticated request context
-	username, exists := c.Get("user_username")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
-		return
-	}
-
-	// Generate a token with specific repository pull access
-	token, err := h.registryAuthHandler.GenerateRepositoryToken(username.(string), repo, []string{"pull"})
-	if err != nil {
-		h.logger.Error("Failed to generate repository token", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
-		return
-	}
-
-	// URL encode the repo name for the registry API
+	// Call registry tags/list endpoint (no auth needed)
 	url := fmt.Sprintf("%s/v2/%s/tags/list", h.registryURL, repo)
 
 	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, url, nil)
@@ -226,9 +158,6 @@ func (h *RegistryCatalogHandlers) ListTags(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
 		return
 	}
-
-	// Add authentication header
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := h.httpClient.Do(req)
 	if err != nil {
@@ -293,15 +222,7 @@ func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
 		return
 	}
 
-	// Generate a token with specific repository delete access
-	token, err := h.registryAuthHandler.GenerateRepositoryToken(username.(string), repo, []string{"pull", "delete"})
-	if err != nil {
-		h.logger.Error("Failed to generate repository token", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
-		return
-	}
-
-	// First, get the manifest digest for the tag
+	// First, get the manifest digest for the tag (no auth needed)
 	manifestURL := fmt.Sprintf("%s/v2/%s/manifests/%s", h.registryURL, repo, tag)
 	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodHead, manifestURL, nil)
 	if err != nil {
@@ -310,7 +231,6 @@ func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
 		return
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
 
@@ -341,7 +261,7 @@ func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
 		return
 	}
 
-	// Now delete the manifest by digest
+	// Now delete the manifest by digest (no auth needed)
 	deleteURL := fmt.Sprintf("%s/v2/%s/manifests/%s", h.registryURL, repo, digest)
 	deleteReq, err := http.NewRequestWithContext(c.Request.Context(), http.MethodDelete, deleteURL, nil)
 	if err != nil {
@@ -349,8 +269,6 @@ func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create delete request"})
 		return
 	}
-
-	deleteReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	deleteResp, err := h.httpClient.Do(deleteReq)
 	if err != nil {
@@ -397,15 +315,7 @@ func (h *RegistryCatalogHandlers) DeleteRepository(c *gin.Context) {
 		return
 	}
 
-	// Generate a token with repository pull and delete access
-	token, err := h.registryAuthHandler.GenerateRepositoryToken(username.(string), repo, []string{"pull", "delete"})
-	if err != nil {
-		h.logger.Error("Failed to generate repository token", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate with registry"})
-		return
-	}
-
-	// First, list all tags for the repository
+	// First, list all tags for the repository (no auth needed)
 	tagsURL := fmt.Sprintf("%s/v2/%s/tags/list", h.registryURL, repo)
 	tagsReq, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, tagsURL, nil)
 	if err != nil {
@@ -413,7 +323,6 @@ func (h *RegistryCatalogHandlers) DeleteRepository(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
 		return
 	}
-	tagsReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	tagsResp, err := h.httpClient.Do(tagsReq)
 	if err != nil {
@@ -451,14 +360,13 @@ func (h *RegistryCatalogHandlers) DeleteRepository(c *gin.Context) {
 	failedTags := []string{}
 
 	for _, tag := range tagList.Tags {
-		// Get manifest digest
+		// Get manifest digest (no auth needed)
 		manifestURL := fmt.Sprintf("%s/v2/%s/manifests/%s", h.registryURL, repo, tag)
 		manifestReq, err := http.NewRequestWithContext(c.Request.Context(), http.MethodHead, manifestURL, nil)
 		if err != nil {
 			failedTags = append(failedTags, tag)
 			continue
 		}
-		manifestReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		manifestReq.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 		manifestReq.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
 
@@ -480,14 +388,13 @@ func (h *RegistryCatalogHandlers) DeleteRepository(c *gin.Context) {
 			continue
 		}
 
-		// Delete manifest by digest
+		// Delete manifest by digest (no auth needed)
 		deleteURL := fmt.Sprintf("%s/v2/%s/manifests/%s", h.registryURL, repo, digest)
 		deleteReq, err := http.NewRequestWithContext(c.Request.Context(), http.MethodDelete, deleteURL, nil)
 		if err != nil {
 			failedTags = append(failedTags, tag)
 			continue
 		}
-		deleteReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 		deleteResp, err := h.httpClient.Do(deleteReq)
 		if err != nil {

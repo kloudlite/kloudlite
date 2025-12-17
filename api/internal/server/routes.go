@@ -82,27 +82,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		logger,
 		cfg.Auth.JWTSecret,
 	)
-	// Registry auth handlers - only initialize if RSA key is configured
-	// Docker Registry v3 requires RSA/ECDSA signing for tokens (not HMAC)
-	var registryAuthHandlers *handlers.RegistryAuthHandlers
-	if cfg.Auth.RegistryRSAPrivateKey != "" {
-		var err error
-		registryAuthHandlers, err = handlers.NewRegistryAuthHandlers(
-			servicesManager.Auth,
-			cfg.Auth.RegistryRSAPrivateKey,
-			cfg.Registry.ServiceName,
-			logger,
-		)
-		if err != nil {
-			logger.Error("Failed to initialize registry auth handlers", zap.Error(err))
-		}
-	} else {
-		logger.Warn("Registry RSA private key not configured, Docker Registry token auth will be unavailable")
-	}
 	// Registry catalog handlers for listing repositories and tags
+	// Note: Registry runs without auth - authentication is handled at ingress layer
 	registryCatalogHandlers := handlers.NewRegistryCatalogHandlers(
 		cfg.Registry.InternalURL,
-		registryAuthHandlers,
 		servicesManager.Auth,
 		logger,
 	)
@@ -307,15 +290,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			vpn.GET("/tunnel-endpoint", vpnHandlers.GetTunnelEndpoint)
 		}
 
-		// Docker Registry token authentication endpoint (public - uses Basic Auth with Kloudlite JWT)
-		// This endpoint is called by Docker when the registry returns 401
-		// Docker sends Basic Auth with username and Kloudlite JWT token as password
-		if registryAuthHandlers != nil {
-			registry := v1.Group("/registry")
-			{
-				registry.GET("/token", registryAuthHandlers.GetToken)
-			}
-		}
 	}
 
 	// Webhook endpoints (for Kubernetes admission controllers)
