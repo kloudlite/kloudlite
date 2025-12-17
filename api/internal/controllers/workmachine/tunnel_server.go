@@ -165,14 +165,12 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 				Spec: corev1.PodSpec{
 					ServiceAccountName:            tunnelServerName,
 					TerminationGracePeriodSeconds: fn.Ptr(int64(10)),
-					SecurityContext: &corev1.PodSecurityContext{
-						Sysctls: []corev1.Sysctl{
-							{
-								Name:  "net.ipv4.ip_forward",
-								Value: "1",
-							},
-						},
-					},
+					// Use host network so tunnel-server binds directly to host interface
+					// This bypasses CNI/iptables hostPort issues and allows external traffic
+					HostNetwork: true,
+					DNSPolicy:   corev1.DNSClusterFirstWithHostNet,
+					// Note: ip_forward sysctl is set at host level, not needed here
+					// (and sysctls can't be used with hostNetwork anyway)
 					NodeSelector: map[string]string{
 						"kloudlite.io/workmachine": obj.Name,
 					},
