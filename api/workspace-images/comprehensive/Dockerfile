@@ -17,7 +17,7 @@ RUN chmod +x /usr/local/bin/kl
 # Install system dependencies including shells first with apt cache mount
 # Add fish-shell PPA for fish 3.4+ (required for starship compatibility with set -f)
 # Note: Container image building is handled by Docker-in-Docker daemon (docker-dind StatefulSet)
-# accessed via DOCKER_HOST env var. Docker commands are embedded in the kl binary.
+# accessed via DOCKER_HOST env var. Docker CLI is installed for 'kl build' command.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y software-properties-common \
@@ -99,6 +99,26 @@ RUN --mount=type=cache,target=/tmp/fonts-cache \
 # Install starship prompt with cache mount
 RUN --mount=type=cache,target=/tmp/starship-cache \
   curl -sS https://starship.rs/install.sh | sh -s -- -y
+
+# Install Docker CLI (for kl build command)
+# Uses Docker-in-Docker daemon via DOCKER_HOST env var
+ARG DOCKER_VERSION=27.4.1
+RUN --mount=type=cache,target=/tmp/docker-cache \
+  if [ "$TARGETARCH" = "amd64" ]; then \
+    DOCKER_ARCH="x86_64"; \
+  elif [ "$TARGETARCH" = "arm64" ]; then \
+    DOCKER_ARCH="aarch64"; \
+  else \
+    echo "ERROR: Unsupported architecture: $TARGETARCH" && exit 1; \
+  fi && \
+  cd /tmp/docker-cache && \
+  if [ ! -f "docker-${DOCKER_VERSION}-${DOCKER_ARCH}.tgz" ]; then \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION}.tgz" \
+      -o "docker-${DOCKER_VERSION}-${DOCKER_ARCH}.tgz"; \
+  fi && \
+  tar -xzf "docker-${DOCKER_VERSION}-${DOCKER_ARCH}.tgz" --strip-components=1 -C /usr/local/bin docker/docker && \
+  chmod +x /usr/local/bin/docker && \
+  docker --version
 
 USER root
 
