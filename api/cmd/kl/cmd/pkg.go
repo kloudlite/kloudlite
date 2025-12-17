@@ -541,7 +541,7 @@ func waitForPackageInstallation(ctx context.Context, packageName string) error {
 	return waitForPackageInstallationWithLogs(ctx, packageName, "")
 }
 
-func waitForPackageInstallationWithLogs(ctx context.Context, packageName string, nixpkgsCommit string) error {
+func waitForPackageInstallationWithLogs(ctx context.Context, packageName string, _ string) error {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
@@ -565,23 +565,22 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 	logCtx, cancelLogs := context.WithCancel(ctx)
 	defer cancelLogs()
 
-	// Start streaming logs in background if we have a commit hash to filter by
-	if nixpkgsCommit != "" {
-		// Use workspace namespace for host-manager (host-manager runs in same namespace as workspace)
-		hostManagerNamespace := WsClient.Namespace
+	// Start streaming logs in background using workspace name as the tag
+	// The host-manager outputs logs with [pkg:<workspace>] format
+	hostManagerNamespace := WsClient.Namespace
+	workspaceName := WsClient.Name
 
-		go func() {
-			err := WsClient.StreamHostManagerLogs(logCtx, hostManagerNamespace, nixpkgsCommit, func(line string) {
-				// Print each line of nix installation output
-				fmt.Printf("  %s\n", line)
-			})
-			// Ignore context cancelled errors (expected when installation completes)
-			if err != nil && !errors.Is(err, context.Canceled) {
-				// Print streaming error for debugging
-				fmt.Fprintf(os.Stderr, "\n[!] Log streaming error: %v\n", err)
-			}
-		}()
-	}
+	go func() {
+		err := WsClient.StreamHostManagerLogs(logCtx, hostManagerNamespace, workspaceName, func(line string) {
+			// Print each line of nix installation output
+			fmt.Printf("  %s\n", line)
+		})
+		// Ignore context cancelled errors (expected when installation completes)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			// Print streaming error for debugging
+			fmt.Fprintf(os.Stderr, "\n[!] Log streaming error: %v\n", err)
+		}
+	}()
 
 	for {
 		select {
@@ -600,18 +599,12 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 
 			// If PackageRequest doesn't exist yet or status is empty, keep waiting
 			if pkgReq == nil || pkgReq.Status.Phase == "" {
-				if nixpkgsCommit == "" {
-					fmt.Print(".")
-				}
 				continue
 			}
 
 			// Wait for controller to process our generation
 			// ObservedGeneration indicates the controller has started processing this spec version
 			if pkgReq.Status.ObservedGeneration < targetGeneration {
-				if nixpkgsCommit == "" {
-					fmt.Print(".")
-				}
 				continue
 			}
 
@@ -641,10 +634,7 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 				}
 			}
 
-			// Still installing - if not streaming logs, show a dot
-			if nixpkgsCommit == "" {
-				fmt.Print(".")
-			}
+			// Still installing - logs are being streamed in background
 		}
 	}
 }
