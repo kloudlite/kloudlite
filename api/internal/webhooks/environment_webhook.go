@@ -384,12 +384,46 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
-	// Prevent cloning from environment whose WorkMachine is stopped
+	// Prevent cloning from environment whose WorkMachine is stopped or user doesn't have access
 	if env.Spec.CloneFrom != "" && operation == admissionv1.Create {
 		// Fetch the source environment
 		var sourceEnv environmentsv1.Environment
 		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.CloneFrom}, &sourceEnv); err != nil {
 			return fmt.Errorf("source environment '%s' not found for cloning", env.Spec.CloneFrom)
+		}
+
+		// Check if user has access to clone the source environment
+		cloningUser := env.Spec.OwnedBy
+		sourceOwner := sourceEnv.Spec.OwnedBy
+		sourceVisibility := sourceEnv.Spec.Visibility
+		if sourceVisibility == "" {
+			sourceVisibility = "private"
+		}
+
+		hasAccess := false
+		switch sourceVisibility {
+		case "private":
+			// Only the owner can clone a private environment
+			hasAccess = (cloningUser == sourceOwner)
+		case "shared":
+			// Owner or users in sharedWith list can clone
+			if cloningUser == sourceOwner {
+				hasAccess = true
+			} else {
+				for _, sharedUser := range sourceEnv.Spec.SharedWith {
+					if sharedUser == cloningUser {
+						hasAccess = true
+						break
+					}
+				}
+			}
+		case "open":
+			// Anyone can clone an open environment
+			hasAccess = true
+		}
+
+		if !hasAccess {
+			return fmt.Errorf("cannot clone environment '%s': you don't have access to this %s environment", env.Spec.CloneFrom, sourceVisibility)
 		}
 
 		// Check if source environment's WorkMachine is running
