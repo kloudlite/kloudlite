@@ -139,9 +139,6 @@ export function WorkspacesList({
                 Environment
               </th>
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                Packages
-              </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Created
               </th>
               <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
@@ -165,8 +162,6 @@ export function WorkspacesList({
                         : phase === 'Stopped'
                           ? 'bg-secondary text-secondary-foreground'
                           : 'bg-secondary text-secondary-foreground'
-
-              // Package info is now stored in PackageRequest (fetched on demand in packages sheet)
 
               return (
                 <tr
@@ -219,9 +214,6 @@ export function WorkspacesList({
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap">
-                    <span className="text-muted-foreground text-xs">View details</span>
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.metadata.creationTimestamp
