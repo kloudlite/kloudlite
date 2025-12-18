@@ -21,7 +21,12 @@ var (
 	pkgVersion string
 	pkgChannel string
 	pkgCommit  string
+	pkgExact   bool
 )
+
+// DefaultNixpkgsChannel is the default channel used for fast package installs
+// Using nixos-unstable for latest packages; can be changed to a stable release like "nixos-24.11"
+const DefaultNixpkgsChannel = "nixos-unstable"
 
 var pkgCmd = &cobra.Command{
 	Use:     "pkg",
@@ -73,15 +78,21 @@ var pkgAddCmd = &cobra.Command{
 	Short:   "Add packages to the workspace",
 	Long: `Add one or more packages to your workspace.
 
-When run without arguments, enters interactive mode with fuzzy search and version selection.
-When run with package names, automatically installs the latest version of each package.`,
-	Example: `  # Interactive mode
+By default, packages are installed from the nixos-unstable channel for fast installs.
+Use --exact to pin to a specific version (slower, as each version may need a different nixpkgs commit).
+
+When run without arguments, enters interactive mode with fuzzy search and version selection.`,
+	Example: `  # Fast install from channel (default)
+  kl pkg add nodejs python git
+  kl p a vim curl
+
+  # Interactive mode
   kl pkg add
   kl p a
 
-  # Add multiple packages
-  kl pkg add git vim curl
-  kl p a nodejs python`,
+  # Pin to exact version (slower)
+  kl pkg add nodejs --exact
+  kl p a python@3.11.0 --exact`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return handlePackageAdd(args)
 	},
@@ -150,6 +161,9 @@ var pkgListCmd = &cobra.Command{
 }
 
 func init() {
+	// Add flags to add command
+	pkgAddCmd.Flags().BoolVar(&pkgExact, "exact", false, "Pin to exact version (slower, uses specific nixpkgs commit)")
+
 	// Add flags to install command
 	pkgInstallCmd.Flags().StringVar(&pkgVersion, "version", "", "Semantic version (e.g. 24.0.0)")
 	pkgInstallCmd.Flags().StringVar(&pkgChannel, "channel", "", "Nixpkgs channel (e.g. nixos-24.05)")
@@ -204,7 +218,7 @@ func packageAddByNames(packageNames []string) error {
 	for _, pkgName := range packageNames {
 		fmt.Printf("\n[+] Processing package: %s\n", pkgName)
 
-		// Search for the package
+		// Search for the package to validate it exists and get the attr path
 		fmt.Printf(" Searching for '%s'...\n", pkgName)
 		searchResp, err := devbox.SearchPackages(pkgName)
 		if err != nil {
@@ -219,36 +233,58 @@ func packageAddByNames(packageNames []string) error {
 
 		// Use the first (best) match
 		selectedPkg := searchResp.Packages[0]
-		if len(selectedPkg.Versions) == 0 {
-			fmt.Fprintf(os.Stderr, "  [!] No versions available for %s\n", pkgName)
-			continue
+
+		var newPackage packagesv1.PackageSpec
+		var displayInfo string
+
+		if pkgExact {
+			// Exact mode: resolve to specific nixpkgs commit (slower but precise)
+			if len(selectedPkg.Versions) == 0 {
+				fmt.Fprintf(os.Stderr, "  [!] No versions available for %s\n", pkgName)
+				continue
+			}
+
+			// Use the latest version
+			selectedVersion := selectedPkg.Versions[0].Version
+
+			// Resolve version to commit hash
+			fmt.Printf(" Resolving %s@%s...\n", selectedPkg.Name, selectedVersion)
+			resolveResp, err := devbox.ResolvePackageVersion(selectedPkg.Name, selectedVersion)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "  [!] Failed to resolve %s: %v\n", pkgName, err)
+				continue
+			}
+
+			if len(resolveResp.Systems) == 0 {
+				fmt.Fprintf(os.Stderr, "  [!] No system information available for %s\n", pkgName)
+				continue
+			}
+
+			// Get commit hash from first system
+			var commitHash, attrPath string
+			for _, sysInfo := range resolveResp.Systems {
+				commitHash = sysInfo.FlakeInstallable.Ref.Rev
+				attrPath = sysInfo.FlakeInstallable.AttrPath
+				break
+			}
+
+			fmt.Printf("[✓] Resolved to commit %s\n", commitHash[:8])
+
+			newPackage = packagesv1.PackageSpec{
+				Name:          attrPath,
+				NixpkgsCommit: commitHash,
+			}
+			displayInfo = fmt.Sprintf("%s@%s (exact)", selectedPkg.Name, selectedVersion)
+		} else {
+			// Default mode: use channel for fast installs
+			fmt.Printf("[✓] Using channel %s (fast mode)\n", DefaultNixpkgsChannel)
+
+			newPackage = packagesv1.PackageSpec{
+				Name:    selectedPkg.Name,
+				Channel: DefaultNixpkgsChannel,
+			}
+			displayInfo = fmt.Sprintf("%s (from %s)", selectedPkg.Name, DefaultNixpkgsChannel)
 		}
-
-		// Use the latest version
-		selectedVersion := selectedPkg.Versions[0].Version
-
-		// Resolve version to commit hash
-		fmt.Printf(" Resolving %s@%s...\n", selectedPkg.Name, selectedVersion)
-		resolveResp, err := devbox.ResolvePackageVersion(selectedPkg.Name, selectedVersion)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "  [!] Failed to resolve %s: %v\n", pkgName, err)
-			continue
-		}
-
-		if len(resolveResp.Systems) == 0 {
-			fmt.Fprintf(os.Stderr, "  [!] No system information available for %s\n", pkgName)
-			continue
-		}
-
-		// Get commit hash from first system
-		var commitHash, attrPath string
-		for _, sysInfo := range resolveResp.Systems {
-			commitHash = sysInfo.FlakeInstallable.Ref.Rev
-			attrPath = sysInfo.FlakeInstallable.AttrPath
-			break
-		}
-
-		fmt.Printf("[✓] Resolved to commit %s\n", commitHash[:8])
 
 		// Get or create PackageRequest
 		pkgReq, err := WsClient.GetOrCreatePackageRequest(ctx)
@@ -260,8 +296,8 @@ func packageAddByNames(packageNames []string) error {
 		// Check if package already exists
 		alreadyExists := false
 		for _, pkg := range pkgReq.Spec.Packages {
-			if pkg.Name == attrPath {
-				fmt.Printf("  [!] Package %s is already in the package request\n", attrPath)
+			if pkg.Name == newPackage.Name {
+				fmt.Printf("  [!] Package %s is already in the package request\n", newPackage.Name)
 				alreadyExists = true
 				break
 			}
@@ -271,11 +307,6 @@ func packageAddByNames(packageNames []string) error {
 			continue
 		}
 
-		newPackage := packagesv1.PackageSpec{
-			Name:          attrPath,
-			NixpkgsCommit: commitHash,
-		}
-
 		pkgReq.Spec.Packages = append(pkgReq.Spec.Packages, newPackage)
 
 		if err := WsClient.UpdatePackageRequest(ctx, pkgReq); err != nil {
@@ -283,11 +314,11 @@ func packageAddByNames(packageNames []string) error {
 			continue
 		}
 
-		fmt.Printf("[✓] Package %s@%s added to package request\n", selectedPkg.Name, selectedVersion)
+		fmt.Printf("[✓] Package %s added to package request\n", displayInfo)
 		fmt.Println("[...] Installing (streaming nix output)...")
 
 		// Wait for package installation with log streaming
-		if err := waitForPackageInstallationWithLogs(ctx, attrPath, commitHash); err != nil {
+		if err := waitForPackageInstallationWithLogs(ctx, newPackage.Name, newPackage.NixpkgsCommit); err != nil {
 			fmt.Fprintf(os.Stderr, "  [!] Installation failed: %v\n", err)
 		}
 	}
@@ -358,7 +389,7 @@ func packageAddInteractive() error {
 		return fmt.Errorf("failed to update package request: %w", err)
 	}
 
-	fmt.Printf("[✓] Package %s@%s added to package request\n", selectedPkg.Name, selectedVersion)
+	fmt.Printf("[✓] Package %s@%s (exact) added to package request\n", selectedPkg.Name, selectedVersion)
 	fmt.Println("[...] Installing (streaming nix output)...")
 
 	// Wait for package installation with log streaming
@@ -782,9 +813,20 @@ func handlePackageList() error {
 		fmt.Println("  No packages specified")
 	} else {
 		tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "NAME\tCHANNEL\tCOMMIT")
+		fmt.Fprintln(tw, "NAME\tSOURCE\tMODE")
 		for _, pkg := range pkgReq.Spec.Packages {
-			fmt.Fprintf(tw, "%s\t%s\t%s\n", pkg.Name, pkg.Channel, pkg.NixpkgsCommit)
+			var source, mode string
+			if pkg.Channel != "" {
+				source = pkg.Channel
+				mode = "fast"
+			} else if pkg.NixpkgsCommit != "" {
+				source = pkg.NixpkgsCommit
+				mode = "exact"
+			} else {
+				source = "default"
+				mode = "fast"
+			}
+			fmt.Fprintf(tw, "%s\t%s\t%s\n", pkg.Name, source, mode)
 		}
 		tw.Flush()
 	}
