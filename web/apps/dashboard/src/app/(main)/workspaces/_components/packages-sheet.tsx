@@ -80,23 +80,21 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
         const pkgReqResult = await getPackageRequest(workspace.metadata.name, workspace.metadata.namespace)
         const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
 
-        // Create sets for status tracking from PackageRequest.status (new simplified structure)
-        const installedPackagesSet = new Set(pkgReq?.status?.packages || [])
-        const failedPackage = pkgReq?.status?.failedPackage || ''
+        // Get status phase from PackageRequest
         const statusPhase = pkgReq?.status?.phase || 'Pending'
+        const failedPackage = pkgReq?.status?.failedPackage || ''
 
         // Load packages from PackageRequest.spec.packages (source of truth)
         const existingPackages: PackageWithVersion[] = (pkgReq?.spec?.packages || []).map((pkg) => {
-          const isInstalled = installedPackagesSet.has(pkg.name)
-          const isFailed = failedPackage === pkg.name
-          // If phase is Ready and package is in installed list, it's installed
+          // If phase is Ready, all packages are installed
           // If phase is Failed and this is the failed package, it's failed
           // Otherwise it's pending
-          const status = statusPhase === 'Ready' && isInstalled
-            ? 'installed'
-            : isFailed
-              ? 'failed'
-              : 'pending'
+          let status: 'installed' | 'pending' | 'failed' = 'pending'
+          if (statusPhase === 'Ready') {
+            status = 'installed'
+          } else if (statusPhase === 'Failed' && failedPackage === pkg.name) {
+            status = 'failed'
+          }
 
           return {
             ...pkg,
