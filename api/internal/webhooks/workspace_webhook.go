@@ -478,12 +478,24 @@ func validateWorkspaceSettings(settings *workspacesv1.WorkspaceSettings) error {
 
 // validateCloneSource validates the clone source workspace
 func (w *WorkspaceWebhook) validateCloneSource(ctx context.Context, workspace *workspacesv1.Workspace) error {
-	sourceWorkspaceName := workspace.Spec.CopyFrom
+	copyFrom := workspace.Spec.CopyFrom
 
-	// Fetch source workspace (need to look in same namespace since workspaces are now namespaced)
+	// Parse CopyFrom which can be either "name" (same namespace) or "namespace/name" (cross-namespace)
+	var sourceNamespace, sourceWorkspaceName string
+	if strings.Contains(copyFrom, "/") {
+		parts := strings.SplitN(copyFrom, "/", 2)
+		sourceNamespace = parts[0]
+		sourceWorkspaceName = parts[1]
+	} else {
+		// Legacy: same namespace clone
+		sourceNamespace = workspace.Namespace
+		sourceWorkspaceName = copyFrom
+	}
+
+	// Fetch source workspace
 	var sourceWorkspace workspacesv1.Workspace
-	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspaceName, Namespace: workspace.Namespace}, &sourceWorkspace); err != nil {
-		return fmt.Errorf("source workspace '%s' does not exist in namespace '%s'", sourceWorkspaceName, workspace.Namespace)
+	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspaceName, Namespace: sourceNamespace}, &sourceWorkspace); err != nil {
+		return fmt.Errorf("source workspace '%s' does not exist in namespace '%s'", sourceWorkspaceName, sourceNamespace)
 	}
 
 	// Validate source workspace is not being deleted
@@ -501,9 +513,38 @@ func (w *WorkspaceWebhook) validateCloneSource(ctx context.Context, workspace *w
 		return fmt.Errorf("source workspace's WorkMachine '%s' is currently '%s'. WorkMachine must be running to clone workspace", sourceWorkspace.Spec.WorkmachineName, sourceWorkMachine.Status.State)
 	}
 
-	// Validate user has permission to clone (must be same owner)
-	if workspace.Spec.OwnedBy != sourceWorkspace.Spec.OwnedBy {
-		return fmt.Errorf("can only clone workspaces you own. Source workspace is owned by '%s' but target is owned by '%s'", sourceWorkspace.Spec.OwnedBy, workspace.Spec.OwnedBy)
+	// Validate user has permission to clone based on visibility
+	cloningUser := workspace.Spec.OwnedBy
+	sourceOwner := sourceWorkspace.Spec.OwnedBy
+	sourceVisibility := string(sourceWorkspace.Spec.Visibility)
+	if sourceVisibility == "" {
+		sourceVisibility = "private"
+	}
+
+	hasAccess := false
+	switch sourceVisibility {
+	case "private":
+		// Only owner can clone private workspaces
+		hasAccess = (cloningUser == sourceOwner)
+	case "shared":
+		// Owner or users in SharedWith list can clone
+		if cloningUser == sourceOwner {
+			hasAccess = true
+		} else {
+			for _, sharedUser := range sourceWorkspace.Spec.SharedWith {
+				if sharedUser == cloningUser {
+					hasAccess = true
+					break
+				}
+			}
+		}
+	case "open":
+		// Anyone with a WorkMachine can clone open workspaces
+		hasAccess = true
+	}
+
+	if !hasAccess {
+		return fmt.Errorf("cannot clone workspace: you don't have access to this %s workspace", sourceVisibility)
 	}
 
 	return nil

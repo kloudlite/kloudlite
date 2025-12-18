@@ -42,6 +42,70 @@ func NewWorkspaceHandlers(wsRepo repository.WorkspaceRepository, userRepo reposi
 	}
 }
 
+// userHasAccessToWorkspace checks if a user has access to view a workspace
+func (h *WorkspaceHandlers) userHasAccessToWorkspace(username string, ws *workspacesv1.Workspace) bool {
+	// Owner always has access
+	if ws.Spec.OwnedBy == username {
+		return true
+	}
+
+	visibility := string(ws.Spec.Visibility)
+	if visibility == "" {
+		visibility = "private"
+	}
+
+	switch visibility {
+	case "private":
+		return false
+	case "shared":
+		for _, sharedUser := range ws.Spec.SharedWith {
+			if sharedUser == username {
+				return true
+			}
+		}
+		return false
+	case "open":
+		return true
+	default:
+		return false
+	}
+}
+
+// sanitizeWorkspaceForNonOwner removes sensitive info from workspace response for non-owners
+func (h *WorkspaceHandlers) sanitizeWorkspaceForNonOwner(ws workspacesv1.Workspace) workspacesv1.Workspace {
+	// Keep only exposed URLs, remove IDE connections
+	// accessUrls contains: code-server, ttyd, ssh, vscode-tunnel, etc.
+	// These should be hidden for non-owners
+	ws.Status.AccessURLs = make(map[string]string)
+
+	// Keep exposedRoutes (user-defined port exposures)
+	// ws.Status.ExposedRoutes - KEEP THIS
+
+	// Hide pod details
+	ws.Status.PodName = ""
+	ws.Status.PodIP = ""
+	ws.Status.NodeName = ""
+
+	// Hide connection/idle info
+	ws.Status.ActiveConnections = 0
+	ws.Status.LastActivityTime = nil
+
+	return ws
+}
+
+// requireOwnership checks if the authenticated user is the workspace owner
+// Returns false and sends 403 response if not the owner
+func (h *WorkspaceHandlers) requireOwnership(c *gin.Context, ws *workspacesv1.Workspace) bool {
+	username, _, _, _ := middleware.GetUserFromContext(c)
+	if ws.Spec.OwnedBy != username {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Only the workspace owner can perform this action",
+		})
+		return false
+	}
+	return true
+}
+
 // CreateWorkspace handles POST /api/v1/namespaces/:namespace/workspaces
 func (h *WorkspaceHandlers) CreateWorkspace(c *gin.Context) {
 	// The namespace parameter is ignored - we'll use the user's WorkMachine namespace
@@ -137,6 +201,16 @@ func (h *WorkspaceHandlers) GetWorkspace(c *gin.Context) {
 		namespace = "default"
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
 	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -153,6 +227,19 @@ func (h *WorkspaceHandlers) GetWorkspace(c *gin.Context) {
 		return
 	}
 
+	// Check if user has access to this workspace
+	if !h.userHasAccessToWorkspace(username, workspace) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You don't have access to this workspace",
+		})
+		return
+	}
+
+	// Sanitize response for non-owners
+	if workspace.Spec.OwnedBy != username {
+		*workspace = h.sanitizeWorkspaceForNonOwner(*workspace)
+	}
+
 	c.JSON(http.StatusOK, workspace)
 }
 
@@ -161,6 +248,16 @@ func (h *WorkspaceHandlers) ListWorkspaces(c *gin.Context) {
 	namespace := c.Param("namespace")
 	if namespace == "" {
 		namespace = "default"
+	}
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
 	}
 
 	// Check for query parameters
@@ -203,11 +300,24 @@ func (h *WorkspaceHandlers) ListWorkspaces(c *gin.Context) {
 		return
 	}
 
+	// Filter workspaces based on user access (visibility)
+	var accessibleWorkspaces []workspacesv1.Workspace
+	for _, ws := range workspaces.Items {
+		if h.userHasAccessToWorkspace(username, &ws) {
+			// Sanitize response for non-owners
+			if ws.Spec.OwnedBy != username {
+				ws = h.sanitizeWorkspaceForNonOwner(ws)
+			}
+			accessibleWorkspaces = append(accessibleWorkspaces, ws)
+		}
+	}
+	workspaces.Items = accessibleWorkspaces
+
 	c.JSON(http.StatusOK, workspaces)
 }
 
 // ListAllWorkspaces handles GET /api/v1/workspaces
-// Returns all workspaces the authenticated user has access to
+// Returns all workspaces the authenticated user has access to (owned + shared + open)
 func (h *WorkspaceHandlers) ListAllWorkspaces(c *gin.Context) {
 	// Get the authenticated user from JWT middleware context
 	username, _, _, exists := middleware.GetUserFromContext(c)
@@ -222,38 +332,8 @@ func (h *WorkspaceHandlers) ListAllWorkspaces(c *gin.Context) {
 	// Check for query parameters
 	status := c.Query("status")
 
-	var workspaces *workspacesv1.WorkspaceList
-	var err error
-
-	// Always filter by the authenticated user's ownership
-	// Users can only see their own workspaces
-	if status != "" {
-		// For status filter combined with owner
-		switch status {
-		case "active", "suspended", "archived":
-			// Get all workspaces owned by the user first
-			workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithLabelSelector("kloudlite.io/owned-by="+username))
-			if err == nil {
-				// Filter by status
-				var filtered []workspacesv1.Workspace
-				for _, ws := range workspaces.Items {
-					if string(ws.Spec.Status) == status {
-						filtered = append(filtered, ws)
-					}
-				}
-				workspaces.Items = filtered
-			}
-		default:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid status filter. Must be one of: active, suspended, archived",
-			})
-			return
-		}
-	} else {
-		// List only workspaces owned by the authenticated user
-		workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithLabelSelector("kloudlite.io/owned-by="+username))
-	}
-
+	// Fetch ALL workspaces, then filter by visibility access
+	workspaces, err := h.wsRepo.ListAll(c.Request.Context())
 	if err != nil {
 		h.logger.Error("Failed to list all workspaces", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -263,7 +343,37 @@ func (h *WorkspaceHandlers) ListAllWorkspaces(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, workspaces)
+	// Filter by visibility access
+	var accessibleWorkspaces []workspacesv1.Workspace
+	for _, ws := range workspaces.Items {
+		if h.userHasAccessToWorkspace(username, &ws) {
+			// Apply status filter if specified
+			if status != "" {
+				switch status {
+				case "active", "suspended", "archived":
+					if string(ws.Spec.Status) != status {
+						continue
+					}
+				default:
+					c.JSON(http.StatusBadRequest, gin.H{
+						"error": "Invalid status filter. Must be one of: active, suspended, archived",
+					})
+					return
+				}
+			}
+
+			// Sanitize response for non-owners
+			if ws.Spec.OwnedBy != username {
+				ws = h.sanitizeWorkspaceForNonOwner(ws)
+			}
+			accessibleWorkspaces = append(accessibleWorkspaces, ws)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"items": accessibleWorkspaces,
+		"count": len(accessibleWorkspaces),
+	})
 }
 
 // UpdateWorkspace handles PUT /api/v1/namespaces/:namespace/workspaces/:name
@@ -289,6 +399,11 @@ func (h *WorkspaceHandlers) UpdateWorkspace(c *gin.Context) {
 			"error":   "Failed to get workspace",
 			"details": err.Error(),
 		})
+		return
+	}
+
+	// Only owner can update workspace
+	if !h.requireOwnership(c, workspace) {
 		return
 	}
 
@@ -332,7 +447,8 @@ func (h *WorkspaceHandlers) DeleteWorkspace(c *gin.Context) {
 		namespace = "default"
 	}
 
-	err := h.wsRepo.Delete(c.Request.Context(), namespace, name)
+	// Get workspace to check ownership
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -340,6 +456,21 @@ func (h *WorkspaceHandlers) DeleteWorkspace(c *gin.Context) {
 			})
 			return
 		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Only owner can delete workspace
+	if !h.requireOwnership(c, workspace) {
+		return
+	}
+
+	err = h.wsRepo.Delete(c.Request.Context(), namespace, name)
+	if err != nil {
 		h.logger.Error("Failed to delete workspace", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to delete workspace",
@@ -360,7 +491,8 @@ func (h *WorkspaceHandlers) SuspendWorkspace(c *gin.Context) {
 		namespace = "default"
 	}
 
-	err := h.wsRepo.SuspendWorkspace(c.Request.Context(), name, namespace)
+	// Get workspace to check ownership
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -368,6 +500,21 @@ func (h *WorkspaceHandlers) SuspendWorkspace(c *gin.Context) {
 			})
 			return
 		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Only owner can suspend workspace
+	if !h.requireOwnership(c, workspace) {
+		return
+	}
+
+	err = h.wsRepo.SuspendWorkspace(c.Request.Context(), name, namespace)
+	if err != nil {
 		h.logger.Error("Failed to suspend workspace", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to suspend workspace",
@@ -390,7 +537,8 @@ func (h *WorkspaceHandlers) ActivateWorkspace(c *gin.Context) {
 		namespace = "default"
 	}
 
-	err := h.wsRepo.ActivateWorkspace(c.Request.Context(), name, namespace)
+	// Get workspace to check ownership
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -398,6 +546,21 @@ func (h *WorkspaceHandlers) ActivateWorkspace(c *gin.Context) {
 			})
 			return
 		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Only owner can activate workspace
+	if !h.requireOwnership(c, workspace) {
+		return
+	}
+
+	err = h.wsRepo.ActivateWorkspace(c.Request.Context(), name, namespace)
+	if err != nil {
 		h.logger.Error("Failed to activate workspace", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to activate workspace",
@@ -420,7 +583,8 @@ func (h *WorkspaceHandlers) ArchiveWorkspace(c *gin.Context) {
 		namespace = "default"
 	}
 
-	err := h.wsRepo.ArchiveWorkspace(c.Request.Context(), name, namespace)
+	// Get workspace to check ownership
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -428,6 +592,21 @@ func (h *WorkspaceHandlers) ArchiveWorkspace(c *gin.Context) {
 			})
 			return
 		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Only owner can archive workspace
+	if !h.requireOwnership(c, workspace) {
+		return
+	}
+
+	err = h.wsRepo.ArchiveWorkspace(c.Request.Context(), name, namespace)
+	if err != nil {
 		h.logger.Error("Failed to archive workspace", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to archive workspace",
@@ -482,29 +661,37 @@ func (h *WorkspaceHandlers) CloneWorkspace(c *gin.Context) {
 		return
 	}
 
-	// Verify user owns the source workspace
-	if sourceWorkspace.Spec.OwnedBy != username {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You can only clone workspaces you own"})
+	// Check visibility-based access (not just ownership)
+	if !h.userHasAccessToWorkspace(username, sourceWorkspace) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to clone this workspace"})
+		return
+	}
+
+	// Clone goes to the cloning user's WorkMachine namespace (not source namespace)
+	clonerWorkMachine, err := h.wmRepo.GetByOwner(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get cloner's WorkMachine", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": "You don't have a WorkMachine to clone to"})
 		return
 	}
 
 	h.logger.Info("Cloning workspace",
-		zap.String("source", sourceWorkspaceName),
+		zap.String("source", fmt.Sprintf("%s/%s", namespace, sourceWorkspaceName)),
 		zap.String("target", req.Name),
-		zap.String("namespace", namespace))
+		zap.String("targetNamespace", clonerWorkMachine.Spec.TargetNamespace))
 
-	// Create new workspace with CopyFrom set
+	// Create new workspace with CopyFrom set in user's own namespace
 	newWorkspace := &workspacesv1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Name,
-			Namespace: namespace,
+			Namespace: clonerWorkMachine.Spec.TargetNamespace, // User's own namespace
 		},
 		Spec: req.Spec,
 	}
 
-	newWorkspace.Spec.CopyFrom = sourceWorkspaceName
+	newWorkspace.Spec.CopyFrom = fmt.Sprintf("%s/%s", namespace, sourceWorkspaceName) // Full reference
 	newWorkspace.Spec.OwnedBy = username
-	newWorkspace.Spec.WorkmachineName = sourceWorkspace.Spec.WorkmachineName
+	newWorkspace.Spec.WorkmachineName = clonerWorkMachine.Name
 
 	if err := h.wsRepo.Create(c.Request.Context(), newWorkspace); err != nil {
 		h.logger.Error("Failed to create cloned workspace", zap.Error(err))
@@ -549,6 +736,11 @@ func (h *WorkspaceHandlers) GetMetrics(c *gin.Context) {
 			"error":   "Failed to get workspace",
 			"details": err.Error(),
 		})
+		return
+	}
+
+	// Only owner can access metrics
+	if !h.requireOwnership(c, workspace) {
 		return
 	}
 
@@ -639,7 +831,7 @@ func (h *WorkspaceHandlers) GetPackageRequest(c *gin.Context) {
 	}
 
 	// Verify the workspace exists first
-	_, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -652,6 +844,11 @@ func (h *WorkspaceHandlers) GetPackageRequest(c *gin.Context) {
 			"error":   "Failed to get workspace",
 			"details": err.Error(),
 		})
+		return
+	}
+
+	// Only owner can access package request
+	if !h.requireOwnership(c, workspace) {
 		return
 	}
 
@@ -721,6 +918,11 @@ func (h *WorkspaceHandlers) UpdatePackageRequest(c *gin.Context) {
 			"error":   "Failed to get workspace",
 			"details": err.Error(),
 		})
+		return
+	}
+
+	// Only owner can update package request
+	if !h.requireOwnership(c, workspace) {
 		return
 	}
 
