@@ -65,7 +65,11 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
   try {
     const pkgResult = await getPackageRequest(name, namespace)
     if (pkgResult.success && pkgResult.data) {
-      packageStatus = pkgResult.data.status
+      packageStatus = {
+        ...pkgResult.data.status,
+        // Get package count from spec since status doesn't include it
+        packageCount: pkgResult.data.spec?.packages?.length || 0,
+      }
     }
   } catch (err) {
     console.error('Failed to fetch package status:', err)
