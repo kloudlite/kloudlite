@@ -105,11 +105,18 @@ func (r *EnvironmentReconciler) buildNetworkPolicy(ctx context.Context, environm
 		ingressRules = append(ingressRules, *visibilityRule)
 	}
 
-	// Rule 3: Custom ingress rules from spec (allowed namespaces and custom rules)
+	// Rule 3: Allow traffic from other environments owned by the same user
+	// This enables inter-environment communication (e.g., for cloning PVC data)
+	ownerEnvRule := r.buildOwnerEnvironmentsIngressRule(ctx, environment, logger)
+	if ownerEnvRule != nil {
+		ingressRules = append(ingressRules, *ownerEnvRule)
+	}
+
+	// Rule 4: Custom ingress rules from spec (allowed namespaces and custom rules)
 	customRules := r.buildCustomIngressRules(environment)
 	ingressRules = append(ingressRules, customRules...)
 
-	// Rule 4: Allow intra-namespace traffic (pods within same namespace)
+	// Rule 5: Allow intra-namespace traffic (pods within same namespace)
 	intraNsRule := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{
 			{
@@ -226,6 +233,50 @@ func (r *EnvironmentReconciler) buildVisibilityIngressRule(ctx context.Context, 
 	default:
 		return nil, fmt.Errorf("unknown visibility: %s", visibility)
 	}
+}
+
+// buildOwnerEnvironmentsIngressRule builds an ingress rule allowing traffic from all environments owned by the same user
+// This enables inter-environment communication (e.g., cloning, shared services)
+func (r *EnvironmentReconciler) buildOwnerEnvironmentsIngressRule(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) *networkingv1.NetworkPolicyIngressRule {
+	owner := environment.Spec.OwnedBy
+	if owner == "" {
+		return nil
+	}
+
+	// List all environments owned by the same user
+	var envList environmentsv1.EnvironmentList
+	if err := r.List(ctx, &envList, client.MatchingFields{"spec.ownedBy": owner}); err != nil {
+		logger.Warn("Failed to list environments for owner", zap.String("owner", owner), zap.Error(err))
+		return nil
+	}
+
+	if len(envList.Items) <= 1 {
+		// Only this environment exists, no need for cross-environment rule
+		return nil
+	}
+
+	var peers []networkingv1.NetworkPolicyPeer
+	for _, env := range envList.Items {
+		if env.Name == environment.Name {
+			continue // Skip self
+		}
+		if env.Spec.TargetNamespace == "" {
+			continue
+		}
+		peers = append(peers, networkingv1.NetworkPolicyPeer{
+			NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": env.Spec.TargetNamespace,
+				},
+			},
+		})
+	}
+
+	if len(peers) == 0 {
+		return nil
+	}
+
+	return &networkingv1.NetworkPolicyIngressRule{From: peers}
 }
 
 // getWorkMachineNamespaceForUser looks up the WorkMachine namespace for a user email
