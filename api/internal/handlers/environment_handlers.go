@@ -151,6 +151,16 @@ func (h *EnvironmentHandlers) GetEnvironment(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
 	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment",
@@ -169,6 +179,14 @@ func (h *EnvironmentHandlers) GetEnvironment(c *gin.Context) {
 		return
 	}
 
+	// Check if user has access to this environment
+	if !h.userHasAccessToEnvironment(username, env) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You don't have access to this environment",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, env)
 }
 
@@ -177,6 +195,16 @@ func (h *EnvironmentHandlers) ListEnvironments(c *gin.Context) {
 	// Parse query parameters for filtering
 	labelSelector := c.Query("labelSelector")
 	status := c.Query("status") // active, inactive, all
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
 
 	var envList *environmentsv1.EnvironmentList
 	var err error
@@ -205,10 +233,54 @@ func (h *EnvironmentHandlers) ListEnvironments(c *gin.Context) {
 		return
 	}
 
+	// Filter environments based on user access
+	// User can see environments where:
+	// 1. They are the owner
+	// 2. Visibility is "shared" and they are in sharedWith list
+	// 3. Visibility is "open"
+	var accessibleEnvs []environmentsv1.Environment
+	for _, env := range envList.Items {
+		if h.userHasAccessToEnvironment(username, &env) {
+			accessibleEnvs = append(accessibleEnvs, env)
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"environments": envList.Items,
-		"count":        len(envList.Items),
+		"environments": accessibleEnvs,
+		"count":        len(accessibleEnvs),
 	})
+}
+
+// userHasAccessToEnvironment checks if a user has access to view an environment
+func (h *EnvironmentHandlers) userHasAccessToEnvironment(username string, env *environmentsv1.Environment) bool {
+	// Owner always has access
+	if env.Spec.OwnedBy == username {
+		return true
+	}
+
+	visibility := env.Spec.Visibility
+	if visibility == "" {
+		visibility = "private"
+	}
+
+	switch visibility {
+	case "private":
+		// Only owner has access (already checked above)
+		return false
+	case "shared":
+		// Check if user is in sharedWith list
+		for _, sharedUser := range env.Spec.SharedWith {
+			if sharedUser == username {
+				return true
+			}
+		}
+		return false
+	case "open":
+		// Everyone has access
+		return true
+	default:
+		return false
+	}
 }
 
 // UpdateEnvironment handles PUT /api/v1/environments/:name

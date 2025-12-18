@@ -207,24 +207,42 @@ func (h *WorkspaceHandlers) ListWorkspaces(c *gin.Context) {
 }
 
 // ListAllWorkspaces handles GET /api/v1/workspaces
-// Returns all workspaces across all namespaces
+// Returns all workspaces the authenticated user has access to
 func (h *WorkspaceHandlers) ListAllWorkspaces(c *gin.Context) {
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
 	// Check for query parameters
-	owner := c.Query("owner")
 	status := c.Query("status")
 
 	var workspaces *workspacesv1.WorkspaceList
 	var err error
 
-	// Filter based on query parameters
-	if owner != "" {
-		// For owner filter, we use ListAll with label selector
-		workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithLabelSelector("kloudlite.io/owned-by="+owner))
-	} else if status != "" {
-		// For status filter, use field selector
+	// Always filter by the authenticated user's ownership
+	// Users can only see their own workspaces
+	if status != "" {
+		// For status filter combined with owner
 		switch status {
 		case "active", "suspended", "archived":
-			workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithFieldSelector("spec.status="+status))
+			// Get all workspaces owned by the user first
+			workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithLabelSelector("kloudlite.io/owned-by="+username))
+			if err == nil {
+				// Filter by status
+				var filtered []workspacesv1.Workspace
+				for _, ws := range workspaces.Items {
+					if string(ws.Spec.Status) == status {
+						filtered = append(filtered, ws)
+					}
+				}
+				workspaces.Items = filtered
+			}
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Invalid status filter. Must be one of: active, suspended, archived",
@@ -232,7 +250,8 @@ func (h *WorkspaceHandlers) ListAllWorkspaces(c *gin.Context) {
 			return
 		}
 	} else {
-		workspaces, err = h.wsRepo.ListAll(c.Request.Context())
+		// List only workspaces owned by the authenticated user
+		workspaces, err = h.wsRepo.ListAll(c.Request.Context(), repository.WithLabelSelector("kloudlite.io/owned-by="+username))
 	}
 
 	if err != nil {
