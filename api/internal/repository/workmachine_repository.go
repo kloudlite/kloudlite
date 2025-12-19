@@ -58,60 +58,78 @@ func (r *workMachineRepository) GetByOwner(ctx context.Context, owner string) (*
 	return &list.Items[0], nil
 }
 
-// StartMachine starts a WorkMachine
+// StartMachine starts a WorkMachine with retry on conflict
 func (r *workMachineRepository) StartMachine(ctx context.Context, name string) error {
 	log.Printf("[DEBUG] StartMachine called for machine: %s", name)
 
-	machine, err := r.Get(ctx, name)
-	if err != nil {
-		log.Printf("[ERROR] Failed to get machine %s: %v", name, err)
-		return err
+	// Retry up to 3 times on conflict
+	for i := 0; i < 3; i++ {
+		machine, err := r.Get(ctx, name)
+		if err != nil {
+			log.Printf("[ERROR] Failed to get machine %s: %v", name, err)
+			return err
+		}
+
+		log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
+			machine.Name, machine.Status.State, machine.Spec.State)
+
+		// Update desired state to running
+		oldDesiredState := machine.Spec.State
+		machine.Spec.State = machinesv1.MachineStateRunning
+		log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.State)
+
+		err = r.Update(ctx, machine)
+		if err != nil {
+			if apierrors.IsConflict(err) {
+				log.Printf("[DEBUG] Conflict updating machine %s, retrying (%d/3)", name, i+1)
+				continue
+			}
+			log.Printf("[ERROR] Failed to update machine %s: %v", name, err)
+			return err
+		}
+
+		log.Printf("[DEBUG] Successfully updated machine %s", name)
+		return nil
 	}
 
-	log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
-		machine.Name, machine.Status.State, machine.Spec.State)
-
-	// Update desired state to running
-	oldDesiredState := machine.Spec.State
-	machine.Spec.State = machinesv1.MachineStateRunning
-	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.State)
-
-	err = r.Update(ctx, machine)
-	if err != nil {
-		log.Printf("[ERROR] Failed to update machine %s: %v", name, err)
-		return err
-	}
-
-	log.Printf("[DEBUG] Successfully updated machine %s", name)
-	return nil
+	return fmt.Errorf("failed to update machine %s after 3 retries due to conflicts", name)
 }
 
-// StopMachine stops a WorkMachine
+// StopMachine stops a WorkMachine with retry on conflict
 func (r *workMachineRepository) StopMachine(ctx context.Context, name string) error {
 	log.Printf("[DEBUG] StopMachine called for machine: %s", name)
 
-	machine, err := r.Get(ctx, name)
-	if err != nil {
-		log.Printf("[ERROR] Failed to get machine %s: %v", name, err)
-		return err
+	// Retry up to 3 times on conflict
+	for i := 0; i < 3; i++ {
+		machine, err := r.Get(ctx, name)
+		if err != nil {
+			log.Printf("[ERROR] Failed to get machine %s: %v", name, err)
+			return err
+		}
+
+		log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
+			machine.Name, machine.Status.State, machine.Spec.State)
+
+		// Update desired state to stopped
+		oldDesiredState := machine.Spec.State
+		machine.Spec.State = machinesv1.MachineStateStopped
+		log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.State)
+
+		err = r.Update(ctx, machine)
+		if err != nil {
+			if apierrors.IsConflict(err) {
+				log.Printf("[DEBUG] Conflict updating machine %s, retrying (%d/3)", name, i+1)
+				continue
+			}
+			log.Printf("[ERROR] Failed to update machine %s: %v", name, err)
+			return err
+		}
+
+		log.Printf("[DEBUG] Successfully updated machine %s", name)
+		return nil
 	}
 
-	log.Printf("[DEBUG] Current machine state - Name: %s, Current: %s, Desired: %s",
-		machine.Name, machine.Status.State, machine.Spec.State)
-
-	// Update desired state to stopped
-	oldDesiredState := machine.Spec.State
-	machine.Spec.State = machinesv1.MachineStateStopped
-	log.Printf("[DEBUG] Updating desired state from %s to %s", oldDesiredState, machine.Spec.State)
-
-	err = r.Update(ctx, machine)
-	if err != nil {
-		log.Printf("[ERROR] Failed to update machine %s: %v", name, err)
-		return err
-	}
-
-	log.Printf("[DEBUG] Successfully updated machine %s", name)
-	return nil
+	return fmt.Errorf("failed to update machine %s after 3 retries due to conflicts", name)
 }
 
 // ListByMachineType returns WorkMachines using a specific machine type
