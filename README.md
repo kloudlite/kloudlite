@@ -25,84 +25,68 @@
 </div>
 <br/>
 
-**Kloudlite** is an open-source platform that provides cloud development environments with instant access to production-like infrastructure. Skip the build-deploy cycle — connect your workspace to environments, intercept services, and see your changes in real time.
+**Kloudlite** gives you instant cloud development environments connected to your production-like infrastructure. Write code, intercept live services, and test changes in real time — no build or deploy steps required.
 
-## Key Features
+## Why Kloudlite?
 
-- **Cloud Workspaces** — Full development environments accessible via SSH, VS Code, or web terminal (ttyd)
-- **Service Interception** — Redirect traffic from any environment service to your workspace for real-time debugging
-- **Environment Connections** — Connect workspaces to environments with automatic DNS resolution for all services
-- **Nix Package Management** — Install any package instantly with `kl pkg add`
-- **Port Exposure** — Expose workspace ports with public URLs for webhooks and sharing
-- **AI Tool Integration** — Built-in MCP server for Claude, Codex, and OpenCode
-- **Local VPN Access** — Connect your local machine to the cluster via `kltun` for direct service access
+**The Problem**: Traditional development loops are slow. You write code, build, deploy to staging, wait, test, find bugs, and repeat. Each cycle takes minutes to hours.
 
-## How It Works
+**The Solution**: Kloudlite eliminates the loop. Your workspace is already connected to your environment. Intercept any service, and traffic flows directly to your code. Changes are instant.
 
-Kloudlite runs workspaces and environments in the same Kubernetes cluster:
+## Features
+
+### Cloud Workspaces
+Get a full development environment in seconds. Access via:
+- **SSH** — Use your favorite local IDE with remote SSH
+- **VS Code** — Browser-based VS Code with full extension support
+- **Web Terminal** — Quick access from any browser
+
+### Service Interception
+Intercept any service running in your environment. Traffic that would go to that service comes to your workspace instead. Debug with real requests, test your changes instantly.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Kloudlite Cluster                        │
-│                                                             │
-│  ┌─────────────────┐       ┌─────────────────────────────┐  │
-│  │    Workspace    │       │        Environment          │  │
-│  │                 │       │                             │  │
-│  │  • VS Code      │◄─────►│  • Services                 │  │
-│  │  • SSH Access   │ intercept │  • Deployments          │  │
-│  │  • Web Terminal │       │  • Databases                │  │
-│  │  • kl CLI       │       │                             │  │
-│  └─────────────────┘       └─────────────────────────────┘  │
-│           ▲                                                 │
-└───────────│─────────────────────────────────────────────────┘
-            │ WireGuard VPN (kltun)
-            │
-    ┌───────┴───────┐
-    │ Local Machine │
-    │   (optional)  │
-    └───────────────┘
+Production traffic → Your intercepted service → Your workspace code
 ```
 
-**Service Intercepts**: When you intercept a service, traffic destined for that service is redirected to your workspace using SOCAT port forwarding. This lets you debug with real production traffic without deploying.
+### Environment Connections
+Connect your workspace to any environment. All services become accessible — databases, APIs, queues. DNS just works.
 
-**Local VPN (`kltun`)**: Optionally connect your local machine directly to the cluster via WireGuard VPN for accessing services and workspaces from your local IDE.
+### Package Management
+Install any package instantly with Nix:
+```bash
+kl pkg add nodejs python3 go
+```
 
-## Components
+### Port Exposure
+Expose any port from your workspace with a public URL. Perfect for:
+- Testing webhooks
+- Sharing work with teammates
+- Mobile app development
 
-| Component | Description |
-|-----------|-------------|
-| **Dashboard** | Web UI for managing workspaces and environments |
-| **kl** | CLI tool inside workspaces for package management and configuration |
-| **kltun** | VPN client for connecting local machines to the cluster |
-| **Controllers** | Kubernetes operators managing workspace and environment lifecycle |
+### AI-Powered Development
+Built-in MCP server for AI coding assistants. Works with Claude, Codex, and OpenCode out of the box.
+
+### Local Access (Optional)
+Want to use your local machine? Connect via VPN with `kltun` and access all services directly from your local IDE.
+
+## Getting Started
+
+1. **Create a workspace** from the [Kloudlite Dashboard](https://kloudlite.io)
+2. **Connect** via SSH, VS Code, or web terminal
+3. **Link to an environment** to access services
+4. **Start coding** — intercept services, expose ports, install packages
 
 ## Resources
 
 - [Website](https://kloudlite.io)
 - [Documentation](https://kloudlite.io/docs)
-- [Roadmap](https://github.com/orgs/kloudlite/projects/22/views/5)
-- [Helm Charts](https://github.com/kloudlite/helm-charts)
-
-## Contact
-
-- [Discord](https://discord.com/invite/m5tYzQfcG8) — Join our community
-- [Twitter](https://x.com/kloudlite) — Follow us
-- [Contact Us](https://kloudlite.io/contact-us)
+- [Discord Community](https://discord.com/invite/m5tYzQfcG8)
+- [Twitter](https://x.com/kloudlite)
 
 ## Security
 
-If you've found a security vulnerability, please report it to support@kloudlite.io.
+Found a vulnerability? Report it to support@kloudlite.io.
 
 ## License
 
-Kloudlite is distributed under the AGPL Version 3.0 license. See [LICENSE](LICENSE) for details.
-
-## Built With
-
-- [Kubernetes](https://github.com/kubernetes/kubernetes) & [K3s](https://github.com/k3s-io/k3s) — Container orchestration
-- [WireGuard](https://github.com/WireGuard) — VPN for local machine connectivity
-- [Nix](https://github.com/NixOS/nix) — Reproducible package management
-- [Next.js](https://github.com/vercel/next.js) — Web dashboard
-- [Go](https://github.com/golang/go) — Backend services and CLI
-- [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime) — Kubernetes controllers
-
+AGPL Version 3.0 — See [LICENSE](LICENSE) for details.
