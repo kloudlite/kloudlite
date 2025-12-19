@@ -45,9 +45,9 @@ Engineering teams burn hours on feedback loops:
 Kloudlite collapses the inner development loop:
 
 - **Zero deployment testing** — Run your code against live services instantly
-- **Environment agility** — Hot-swap between dev, staging, and prod-mirror environments
-- **Parallel collaboration** — Engineers and QA operate in shared environments simultaneously
-- **Parity guarantee** — Identical environments across development and testing workflows
+- **Environment ownership** — Each developer owns their environments, configured to their needs
+- **Parallel collaboration** — Multiple team members connect to the same environment when needed
+- **Parity guarantee** — Your environment mirrors production infrastructure exactly
 
 ## Core Capabilities
 
@@ -65,7 +65,7 @@ Production-grade development environments:
 
 ### Multi-Environment Switching
 
-Bind your workspace to any environment — development, staging, feature-branch, or prod-mirror. Switch contexts without rebuilding. Each environment maintains its own service topology, databases, and configurations.
+Own multiple environments tailored to different tasks — feature development, bug investigation, experimentation. Switch your workspace between them instantly. Each environment maintains its own service topology, databases, and configurations.
 
 ### Team Collaboration
 
@@ -106,7 +106,7 @@ Native MCP server integration. Claude, Codex, and OpenCode can manage packages, 
 
 ### Development
 
-Test against real services without deployment. Switch between feature environments instantly. Pair program in shared workspaces.
+Test against real services without deployment. Create environments for each feature or task. Invite teammates to collaborate in your environment when needed.
 
 ### QA & Testing
 
@@ -122,15 +122,14 @@ Single deployment across cloud providers. Centralized work machine and environme
 
 1. Deploy Kloudlite on your cloud (AWS, GCP, Azure) or self-host
 2. Provision work machines and set resource quotas
-3. Define environments mirroring your infrastructure
-4. Configure team access and permissions
+3. Configure team access and permissions
 
 ### Developer Workflow
 
 1. Run `kltun` to establish secure tunnel
-2. Create workspace and bind to target environment
-3. Intercept services as needed
-4. Switch environments without workspace recreation
+2. Create your workspace and environments
+3. Bind workspace to your environment
+4. Intercept services, collaborate with teammates, switch environments as needed
 
 ## Resources
 
