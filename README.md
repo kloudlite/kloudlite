@@ -91,10 +91,17 @@ Built-in MCP (Model Context Protocol) server enables AI coding assistants to int
 
 ## Getting Started
 
-1. **Sign up** at [kloudlite.io](https://kloudlite.io)
-2. **Install** `kltun` on your local machine
-3. **Connect** to your workspace
-4. **Start building** with full access to your environment
+### For Platform Administrators
+
+1. **Deploy Kloudlite** on your cloud provider (AWS, GCP, Azure, or self-hosted)
+2. **Configure** work machines and resource quotas
+3. **Invite** team members and set up access controls
+
+### For Developers
+
+1. **Connect** to your work machine using the provided `kltun` command
+2. **Create** your workspace and environments
+3. **Start building** — access services, intercept traffic, collaborate with your team
 
 ## Documentation
 
