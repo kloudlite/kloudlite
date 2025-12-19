@@ -2,10 +2,9 @@
   <a href="https://kloudlite.io">
     <img src="https://github.com/kloudlite/kloudlite/assets/1580519/a31a5f78-2bde-45f1-8141-d23ee8231eb1" style="height:38px" />
   </a>
-  <h1>
-    Cloud Development Environments
-  </h1>
-  <p><strong>Designed to reduce the development loop</strong></p>
+  <h1>Kloudlite</h1>
+  <p><strong>Cloud Development Environments</strong></p>
+  <p>Reduce your development loop from minutes to seconds</p>
 
   <a href="https://discord.gg/m5tYzQfcG8">
     <img src="https://img.shields.io/discord/934762910717194260?label=discord" alt="Discord">
@@ -23,70 +22,104 @@
     <img src="https://img.shields.io/github/v/release/kloudlite/kloudlite" alt="GitHub Release">
   </a>
 </div>
+
 <br/>
 
-**Kloudlite** gives you instant cloud development environments connected to your production-like infrastructure. Write code, intercept live services, and test changes in real time — no build or deploy steps required.
+## Overview
 
-## Why Kloudlite?
+Kloudlite provides secure, instant-access cloud development environments that connect directly to your production-like infrastructure. Eliminate the traditional build-deploy-test cycle by working in environments that mirror production, with the ability to intercept live services and test changes in real time.
 
-**The Problem**: Traditional development loops are slow. You write code, build, deploy to staging, wait, test, find bugs, and repeat. Each cycle takes minutes to hours.
+## The Problem
 
-**The Solution**: Kloudlite eliminates the loop. Your workspace is already connected to your environment. Intercept any service, and traffic flows directly to your code. Changes are instant.
+Traditional development workflows are slow:
 
-## Features
+1. Write code locally
+2. Build and deploy to staging
+3. Wait for deployment
+4. Test and discover issues
+5. Repeat
+
+Each iteration takes minutes to hours. Developers spend more time waiting than coding.
+
+## The Solution
+
+With Kloudlite, your development environment is already connected to your infrastructure:
+
+- **No deployment required** — Your code runs where your services run
+- **Real traffic testing** — Intercept production services and debug with actual requests
+- **Instant feedback** — See changes immediately without build or deploy steps
+
+## Core Capabilities
+
+### Secure Access
+
+Connect to your workspace and environment services through an encrypted tunnel using `kltun`. All traffic between your local machine and the cloud environment is secured, giving you direct access to every service as if you were on the same network.
 
 ### Cloud Workspaces
-Get a full development environment in seconds. Access via:
-- **SSH** — Use your favorite local IDE with remote SSH
-- **VS Code** — Browser-based VS Code with full extension support
-- **Web Terminal** — Quick access from any browser
+
+Full-featured development environments accessible via:
+
+- **SSH** — Connect with your preferred local IDE
+- **VS Code** — Browser-based IDE with complete extension support
+- **Web Terminal** — Instant access from any browser
 
 ### Service Interception
-Intercept any service running in your environment. Traffic that would go to that service comes to your workspace instead. Debug with real requests, test your changes instantly.
 
-```
-Production traffic → Your intercepted service → Your workspace code
-```
+Redirect traffic from any running service to your workspace. Incoming requests flow directly to your local code, enabling real-time debugging with production traffic patterns.
 
 ### Environment Connections
-Connect your workspace to any environment. All services become accessible — databases, APIs, queues. DNS just works.
+
+Connect your workspace to any environment and gain immediate access to all services — databases, APIs, message queues, and internal tools. DNS resolution is automatic.
 
 ### Package Management
-Install any package instantly with Nix:
+
+Install development tools and dependencies instantly:
+
 ```bash
-kl pkg add nodejs python3 go
+kl pkg add nodejs python3 postgresql redis
 ```
 
+Powered by Nix for reproducible, conflict-free package management.
+
 ### Port Exposure
-Expose any port from your workspace with a public URL. Perfect for:
-- Testing webhooks
-- Sharing work with teammates
-- Mobile app development
 
-### AI-Powered Development
-Built-in MCP server for AI coding assistants. Works with Claude, Codex, and OpenCode out of the box.
+Expose workspace ports with secure public URLs for webhook testing, mobile development, or sharing work with teammates.
 
-### Local Access
-Connect your local machine via `kltun` to access all workspace and environment services directly from your local IDE. Your local tools, your cloud environment.
+### AI Assistant Integration
+
+Built-in MCP (Model Context Protocol) server enables AI coding assistants to interact directly with your workspace. Pre-configured for Claude, Codex, and OpenCode.
 
 ## Getting Started
 
-1. **Create a workspace** from the [Kloudlite Dashboard](https://kloudlite.io)
-2. **Connect** via SSH, VS Code, or web terminal
-3. **Link to an environment** to access services
-4. **Start coding** — intercept services, expose ports, install packages
+1. **Sign up** at [kloudlite.io](https://kloudlite.io)
+2. **Install** `kltun` on your local machine
+3. **Connect** to your workspace
+4. **Start building** with full access to your environment
 
-## Resources
+## Documentation
 
-- [Website](https://kloudlite.io)
-- [Documentation](https://kloudlite.io/docs)
-- [Discord Community](https://discord.com/invite/m5tYzQfcG8)
-- [Twitter](https://x.com/kloudlite)
+- [Getting Started Guide](https://kloudlite.io/docs)
+- [CLI Reference](https://kloudlite.io/docs/cli)
+- [API Documentation](https://kloudlite.io/docs/api)
+
+## Community
+
+- [Discord](https://discord.com/invite/m5tYzQfcG8) — Get help and connect with other developers
+- [Twitter](https://x.com/kloudlite) — Latest updates and announcements
+- [GitHub Issues](https://github.com/kloudlite/kloudlite/issues) — Report bugs and request features
 
 ## Security
 
-Found a vulnerability? Report it to support@kloudlite.io.
+We take security seriously. If you discover a vulnerability, please report it to **security@kloudlite.io**.
 
 ## License
 
-AGPL Version 3.0 — See [LICENSE](LICENSE) for details.
+Kloudlite is open source under the [AGPL-3.0 License](LICENSE).
+
+---
+
+<div align="center">
+  <strong>Stop waiting. Start building.</strong>
+  <br/><br/>
+  <a href="https://kloudlite.io">Get Started →</a>
+</div>
