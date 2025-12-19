@@ -173,4 +173,76 @@ if [ -f /etc/kloudlite/CLAUDE.md ] && [ ! -f "$CLAUDE_MD" ]; then
     echo "CLAUDE.md copied"
 fi
 
+# Initialize Codex CLI MCP configuration in ~/.codex/config.toml
+CODEX_DIR="$KL_HOME/.codex"
+CODEX_CONFIG="$CODEX_DIR/config.toml"
+CODEX_MCP_MARKER="mcp_servers.kloudlite"
+
+mkdir -p "$CODEX_DIR"
+if ! grep -q "$CODEX_MCP_MARKER" "$CODEX_CONFIG" 2>/dev/null; then
+    echo "Setting up Codex MCP configuration..."
+    cat >> "$CODEX_CONFIG" << 'EOF'
+
+# Kloudlite MCP server for workspace management
+[mcp_servers.kloudlite]
+command = "kl"
+args = ["mcp"]
+EOF
+    chown -R kl:kl "$CODEX_DIR"
+    echo "Codex MCP configuration added"
+else
+    echo "Codex MCP configuration already exists"
+fi
+
+# Initialize OpenCode MCP configuration in ~/.config/opencode/opencode.json
+OPENCODE_DIR="$KL_HOME/.config/opencode"
+OPENCODE_CONFIG="$OPENCODE_DIR/opencode.json"
+OPENCODE_MCP_MARKER='"kloudlite"'
+
+mkdir -p "$OPENCODE_DIR"
+if [ ! -f "$OPENCODE_CONFIG" ] || ! grep -q "$OPENCODE_MCP_MARKER" "$OPENCODE_CONFIG" 2>/dev/null; then
+    echo "Setting up OpenCode MCP configuration..."
+    if [ -f "$OPENCODE_CONFIG" ]; then
+        # File exists - merge with Python
+        if command -v python3 &> /dev/null; then
+            python3 -c "
+import json
+import os
+config_path = '$OPENCODE_CONFIG'
+try:
+    with open(config_path, 'r') as f:
+        data = json.load(f)
+except:
+    data = {}
+if 'mcp' not in data:
+    data['mcp'] = {}
+data['mcp']['kloudlite'] = {
+    'type': 'local',
+    'command': ['kl', 'mcp'],
+    'enabled': True
+}
+with open(config_path, 'w') as f:
+    json.dump(data, f, indent=2)
+"
+        fi
+    else
+        # Create new file
+        cat > "$OPENCODE_CONFIG" << 'EOF'
+{
+  "mcp": {
+    "kloudlite": {
+      "type": "local",
+      "command": ["kl", "mcp"],
+      "enabled": true
+    }
+  }
+}
+EOF
+    fi
+    chown -R kl:kl "$OPENCODE_DIR"
+    echo "OpenCode MCP configuration added"
+else
+    echo "OpenCode MCP configuration already exists"
+fi
+
 echo "Shell configurations initialized successfully"
