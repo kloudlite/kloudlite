@@ -473,6 +473,15 @@ func (r *EnvironmentReconciler) handleWaitingForCopyCompletionPhase(ctx context.
 		// Check receiver job status
 		completed, failed, err := copier.GetCopyStatus(ctx, jobStatus.PVCName)
 		if err != nil {
+			// If receiver job is not found and status is "Copying", the job creation was interrupted
+			// Go back to CreatingCopyJobs phase to recreate them
+			if apierrors.IsNotFound(err) && jobStatus.Phase == "Copying" {
+				logger.Warn("Receiver job not found, going back to CreatingCopyJobs phase to recreate",
+					zap.String("pvc", jobStatus.PVCName))
+				r.updateCloningStatus(ctx, environment, environmentsv1.CloningPhaseCreatingCopyJobs,
+					"Recreating missing copy jobs", logger)
+				return reconcile.Result{Requeue: true}, nil
+			}
 			logger.Warn("Failed to check copy status", zap.String("pvc", jobStatus.PVCName), zap.Error(err))
 			allCompleted = false
 			continue
