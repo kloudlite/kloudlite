@@ -4,7 +4,7 @@
   </a>
   <h1>Kloudlite</h1>
   <p><strong>Cloud Development Environments</strong></p>
-  <p>Reduce your development loop from minutes to seconds</p>
+  <p>Test against live services without deploying</p>
 
   <a href="https://discord.gg/m5tYzQfcG8">
     <img src="https://img.shields.io/discord/934762910717194260?label=discord" alt="Discord">
@@ -25,118 +25,112 @@
 
 <br/>
 
-## Overview
+## What is Kloudlite?
 
-Kloudlite is an open-source platform delivering secure, production-parity development environments for engineering and QA teams. Intercept live services, switch environments on the fly, and validate changes against real infrastructure — without waiting for builds or deployments.
+Kloudlite provides cloud-based development workspaces with live service connectivity. Think Telepresence meets cloud IDEs — but with per-developer environment ownership, instant environment switching, and cross-team collaboration built in.
 
-## Why Kloudlite?
+Your code runs against real services. No container builds. No deployments. No waiting.
 
-### The Problem
+## The Inner Loop Problem
 
-Engineering teams burn hours on feedback loops:
+The traditional development cycle — code, build, deploy, test — takes minutes per iteration. Most of that time is spent waiting for builds and deployments, not actually validating changes.
 
-- Code → Build → Deploy → Wait → Test → Debug → Repeat
-- QA can't reproduce issues without matching environment configurations
-- Environment sharing requires manual setup and constant synchronization
-- Context switching between environments kills productivity
+Kloudlite eliminates build and deploy from your inner loop. You write code in a cloud workspace that's already connected to your services. Changes are testable immediately. The feedback loop drops from minutes to seconds.
 
-### The Solution
+## Core Concepts
 
-Kloudlite collapses the inner development loop:
+**Workspace** — A container running on your work machine with your dev tools installed. Accessible via SSH, VS Code Server, or web terminal. Mounts code from the host filesystem. Multiple workspaces share system volumes for efficiency.
 
-- **Zero deployment testing** — Run your code against live services instantly
-- **Environment ownership** — Each developer owns their environments, configured to their needs
-- **Parallel collaboration** — Multiple team members connect to the same environment when needed
-- **Parity guarantee** — Your environment mirrors production infrastructure exactly
+**Environment** — An isolated namespace containing your services, databases, and configurations. You own your environments — create as many as you need for different features or experiments. Switch your workspace between them instantly.
 
-## Core Capabilities
+**Intercept** — Routes traffic from any service in your environment to your workspace. Debug with production-like traffic patterns. Validate fixes before pushing.
 
-### Secure Tunnel
+**Tunnel** — WireGuard-based connection from your local machine to your work machine via `kltun`. All services become DNS-resolvable locally. Your IDE connects over this tunnel.
 
-Encrypted tunnel via `kltun` establishes direct connectivity to your work machine. One command gives you network-level access to all services in your connected environments.
+## Architecture
 
-### Cloud Workspaces
-
-Production-grade development environments:
-
-- **SSH** — Remote development with your local IDE
-- **VS Code Server** — Full IDE in browser with extension support
-- **Web Terminal** — Direct shell access via ttyd
-
-### Multi-Environment Switching
-
-Own multiple environments tailored to different tasks — feature development, bug investigation, experimentation. Switch your workspace between them instantly. Each environment maintains its own service topology, databases, and configurations.
-
-### Team Collaboration
-
-Multiple engineers and QA connect to the same environment concurrently. Debug together, run parallel test suites, or validate the same fix simultaneously — isolated workspaces, shared infrastructure.
-
-### Service Interception
-
-Route traffic from any service directly to your workspace. Intercept requests at the service mesh level, debug with production traffic patterns, and validate fixes before they hit CI/CD.
-
-### Environment Connectivity
-
-Full service discovery within connected environments. Access databases, APIs, queues, caches — all resolvable by service name. No port-forwarding, no proxy configuration.
-
-### Package Management
-
-Nix-powered package installation:
-
-```bash
-kl pkg add go@1.21 nodejs python3 postgresql-client
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         Kubernetes Cluster (Team)                            │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │                          Control Plane                                 │  │
+│  │     API Server  ◄───►  Dashboard  ◄───►  Kubernetes Controllers        │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+│  ┌──────────────────────────┐      ┌──────────────────────────┐             │
+│  │   Work Machine (Dev A)   │      │   Work Machine (Dev B)   │    ...      │
+│  │                          │      │                          │             │
+│  │  ┌────────────────────┐  │      │  ┌────────────────────┐  │             │
+│  │  │  Namespace: dev-a  │  │      │  │  Namespace: dev-b  │  │             │
+│  │  │   ┌─────────────┐  │  │      │  │   ┌─────────────┐  │  │             │
+│  │  │   │ Workspace 1 │  │  │      │  │   │ Workspace 1 │  │  │             │
+│  │  │   │ Workspace 2 │  │  │      │  │   │ Workspace 2 │  │  │             │
+│  │  │   └─────────────┘  │  │      │  │   └─────────────┘  │  │             │
+│  │  └────────────────────┘  │      │  └────────────────────┘  │             │
+│  │                          │      │                          │             │
+│  │  ┌────────────────────┐  │      │  ┌────────────────────┐  │             │
+│  │  │ Env: dev-a-feature │  │      │  │ Env: dev-b-feature │  │             │
+│  │  │  (services, DBs)   │  │      │  │  (services, DBs)   │  │             │
+│  │  └────────────────────┘  │      │  └────────────────────┘  │             │
+│  └──────────────────────────┘      └──────────────────────────┘             │
+│                                                                              │
+│        All nodes can reach any environment — collaborate across teams        │
+└──────────────────────────────────────────────────────────────────────────────┘
+           ▲                                        ▲
+           │ WireGuard (kltun)                      │ WireGuard (kltun)
+           ▼                                        ▼
+   ┌───────────────┐                        ┌───────────────┐
+   │  Dev A Local  │                        │  Dev B Local  │
+   │   (IDE, CLI)  │                        │   (IDE, CLI)  │
+   └───────────────┘                        └───────────────┘
 ```
 
-Reproducible, isolated, no dependency conflicts.
+**Work Machine** — Dedicated node per developer in the cluster. Runs your workspaces and environments.
 
-### Port Exposure
+**Workspaces** — Containers in your namespace. Share host volumes for code and system packages. Include:
+- Nix package management (`kl pkg add go@1.21 nodejs python3`)
+- IDE integration (SSH, VS Code Server, Web Terminal)
+- Mounted workspace folders from host
 
-Expose local ports with public endpoints:
+**Environments** — Isolated namespaces with your services. Each developer owns their environments. Connect to any team member's environment for debugging or collaboration.
 
-- Webhook receivers
-- OAuth callbacks
-- Mobile backend testing
-- Stakeholder demos
+## Capabilities
 
-### AI Tooling
+| Feature | Description |
+|---------|-------------|
+| **Service Interception** | Route traffic from any service to your workspace for live debugging |
+| **Multi-Environment** | Own multiple environments, switch between them without rebuilds |
+| **Cross-Team Access** | Connect to any environment in the cluster for collaboration |
+| **Nix Packages** | `kl pkg add go@1.21 nodejs` — reproducible, conflict-free |
+| **Port Exposure** | Public URLs for webhooks, OAuth callbacks, external testing |
+| **MCP Server** | AI tools (Claude, Codex, OpenCode) control workspace via `kl mcp` |
 
-Native MCP server integration. Claude, Codex, and OpenCode can manage packages, switch environments, and control intercepts directly from your conversation.
+## Project Structure
 
-## Use Cases
+```
+api/
+├── cmd/server/                    # Control plane API server
+├── cmd/kl/                        # CLI (runs inside workspace)
+├── cmd/workmachine-node-manager/  # Host-level Nix package management
+├── internal/controllers/          # K8s controllers
+│   ├── workspace/                 # Workspace lifecycle
+│   ├── environment/               # Environment management
+│   └── serviceintercept/          # Traffic interception
+└── manifests/                     # CRDs and RBAC
 
-### Development
+web/                               # Next.js dashboard
+devenv/                            # Local K3s development setup
+```
 
-Test against real services without deployment. Create environments for each feature or task. Invite teammates to collaborate in your environment when needed.
-
-### QA & Testing
-
-Access identical environments as engineering. Reproduce issues reliably. Validate fixes in real time without waiting for release cycles.
-
-### Platform Engineering
-
-Single deployment across cloud providers. Centralized work machine and environment management. Fine-grained access controls per team.
+**Stack:** Go 1.24, controller-runtime, Kubernetes CRDs, WireGuard, Nix, Next.js 15, React 19
 
 ## Getting Started
 
-### Infrastructure Setup
-
-1. Deploy Kloudlite on your cloud (AWS, GCP, Azure) or self-host
-2. Provision work machines and set resource quotas
-3. Configure team access and permissions
-
-### Developer Workflow
-
-1. Run `kltun` to establish secure tunnel
-2. Create your workspace and environments
-3. Bind workspace to your environment
-4. Intercept services, collaborate with teammates, switch environments as needed
-
-## Resources
-
-- [Documentation](https://kloudlite.io/docs)
-- [CLI Reference](https://kloudlite.io/docs/cli)
-- [API Docs](https://kloudlite.io/docs/api)
-- [Helm Charts](https://github.com/kloudlite/helm-charts)
+- **Self-host:** Deploy on AWS, GCP, or Azure — [Installation Guide](https://kloudlite.io/docs/install)
+- **Documentation:** [kloudlite.io/docs](https://kloudlite.io/docs)
+- **CLI Reference:** [kloudlite.io/docs/cli](https://kloudlite.io/docs/cli)
+- **Helm Charts:** [github.com/kloudlite/helm-charts](https://github.com/kloudlite/helm-charts)
 
 ## Community
 
@@ -144,18 +138,8 @@ Single deployment across cloud providers. Centralized work machine and environme
 - [Twitter](https://x.com/kloudlite)
 - [GitHub Issues](https://github.com/kloudlite/kloudlite/issues)
 
-## Security
-
-All traffic encrypted. Environments isolated. Access controlled. Report vulnerabilities to **security@kloudlite.io**.
+Security issues: **security@kloudlite.io**
 
 ## License
 
 [AGPL-3.0](LICENSE)
-
----
-
-<div align="center">
-  <strong>Faster feedback. Seamless collaboration. Ship with confidence.</strong>
-  <br/><br/>
-  <a href="https://kloudlite.io">Get Started →</a>
-</div>
