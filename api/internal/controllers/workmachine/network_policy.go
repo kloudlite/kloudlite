@@ -67,20 +67,24 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 	}
 	ingressRules = append(ingressRules, systemRule)
 
-	// Rule 2: Allow from owner's environment namespaces
-	// Environment namespaces have label kloudlite.io/workmachine-name set to the workmachine name
-	ownerEnvRule := networkingv1.NetworkPolicyIngressRule{
+	// Rule 2: Allow from all environment namespaces
+	// Environment namespaces have label kloudlite.io/environment
+	// This enables intercepts from any environment to reach workspaces
+	envRule := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{
 			{
 				NamespaceSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"kloudlite.io/workmachine-name": obj.Name,
+					MatchExpressions: []metav1.LabelSelectorRequirement{
+						{
+							Key:      "kloudlite.io/environment",
+							Operator: metav1.LabelSelectorOpExists,
+						},
 					},
 				},
 			},
 		},
 	}
-	ingressRules = append(ingressRules, ownerEnvRule)
+	ingressRules = append(ingressRules, envRule)
 
 	// Rule 3: Allow intra-namespace traffic (pods within the same workmachine namespace)
 	intraNsRule := networkingv1.NetworkPolicyIngressRule{
