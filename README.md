@@ -27,137 +27,136 @@
 
 ## Overview
 
-Kloudlite is an open-source platform that provides secure, production-mirror cloud development environments for developers and QA teams. Connect to any environment, intercept live services, and test changes instantly — eliminating the traditional build-deploy-wait cycle that slows down software delivery.
+Kloudlite is an open-source platform delivering secure, production-parity development environments for engineering and QA teams. Intercept live services, switch environments on the fly, and validate changes against real infrastructure — without waiting for builds or deployments.
 
 ## Why Kloudlite?
 
 ### The Problem
 
-Software teams lose countless hours to slow feedback loops:
+Engineering teams burn hours on feedback loops:
 
-- Developers wait for builds and deployments to test changes
-- QA teams struggle to reproduce issues without access to the right environment
-- Collaboration requires complex environment sharing and configuration
-- Switching between environments means rebuilding context every time
+- Code → Build → Deploy → Wait → Test → Debug → Repeat
+- QA can't reproduce issues without matching environment configurations
+- Environment sharing requires manual setup and constant synchronization
+- Context switching between environments kills productivity
 
 ### The Solution
 
-Kloudlite eliminates these barriers:
+Kloudlite collapses the inner development loop:
 
-- **Instant feedback** — Test changes in real time without deploying
-- **Environment switching** — Move between dev, staging, and production-like environments seamlessly
-- **Team collaboration** — Multiple team members connect to the same environment simultaneously
-- **Unified platform** — Developers and QA work in identical environments, eliminating "works on my machine"
+- **Zero deployment testing** — Run your code against live services instantly
+- **Environment agility** — Hot-swap between dev, staging, and prod-mirror environments
+- **Parallel collaboration** — Engineers and QA operate in shared environments simultaneously
+- **Parity guarantee** — Identical environments across development and testing workflows
 
 ## Core Capabilities
 
-### Secure Access
+### Secure Tunnel
 
-All connections are secured through encrypted tunnels. Run a single command to establish a secure connection to your work machine and gain direct access to every service in your connected environments.
+Encrypted tunnel via `kltun` establishes direct connectivity to your work machine. One command gives you network-level access to all services in your connected environments.
 
 ### Cloud Workspaces
 
-Fully configured development environments ready in seconds:
+Production-grade development environments:
 
-- **SSH** — Use your preferred local IDE with remote development
-- **VS Code** — Browser-based IDE with full extension support
-- **Web Terminal** — Instant access from any browser, anywhere
+- **SSH** — Remote development with your local IDE
+- **VS Code Server** — Full IDE in browser with extension support
+- **Web Terminal** — Direct shell access via ttyd
 
-### Multi-Environment Support
+### Multi-Environment Switching
 
-Switch between environments instantly. Connect your workspace to development, staging, or any custom environment — each with its own services, databases, and configurations. No rebuild, no redeploy, just switch and continue working.
+Bind your workspace to any environment — development, staging, feature-branch, or prod-mirror. Switch contexts without rebuilding. Each environment maintains its own service topology, databases, and configurations.
 
-### Real-Time Collaboration
+### Team Collaboration
 
-Multiple developers and QA engineers can connect to the same environment simultaneously. Share your workspace, debug together, or run parallel tests — all without stepping on each other's work.
+Multiple engineers and QA connect to the same environment concurrently. Debug together, run parallel test suites, or validate the same fix simultaneously — isolated workspaces, shared infrastructure.
 
 ### Service Interception
 
-Intercept any service and redirect its traffic to your workspace. Debug with real production traffic patterns, test edge cases with actual requests, and validate fixes before deployment.
+Route traffic from any service directly to your workspace. Intercept requests at the service mesh level, debug with production traffic patterns, and validate fixes before they hit CI/CD.
 
-### Environment Connections
+### Environment Connectivity
 
-Connect to any environment and instantly access all its services — databases, APIs, message queues, caches, and internal tools. DNS resolution is automatic; services are accessible by name.
+Full service discovery within connected environments. Access databases, APIs, queues, caches — all resolvable by service name. No port-forwarding, no proxy configuration.
 
 ### Package Management
 
-Install any development tool instantly:
+Nix-powered package installation:
 
 ```bash
-kl pkg add nodejs python3 postgresql redis
+kl pkg add go@1.21 nodejs python3 postgresql-client
 ```
 
-Powered by Nix for reproducible, isolated, and conflict-free package management.
+Reproducible, isolated, no dependency conflicts.
 
 ### Port Exposure
 
-Expose workspace ports with secure public URLs. Essential for:
+Expose local ports with public endpoints:
 
-- Webhook development and testing
-- Mobile app backend development
-- Sharing work-in-progress with stakeholders
-- QA testing of unreleased features
+- Webhook receivers
+- OAuth callbacks
+- Mobile backend testing
+- Stakeholder demos
 
-### AI Assistant Integration
+### AI Tooling
 
-Built-in MCP server enables AI coding assistants to manage packages, control environment connections, and handle service interception directly. Pre-configured for Claude, Codex, and OpenCode.
+Native MCP server integration. Claude, Codex, and OpenCode can manage packages, switch environments, and control intercepts directly from your conversation.
 
-## Who Is It For?
+## Use Cases
 
-### Developers
+### Development
 
-Write code and test it instantly against real services. Switch between feature branches and environments without losing context. Collaborate with teammates in shared environments.
+Test against real services without deployment. Switch between feature environments instantly. Pair program in shared workspaces.
 
-### QA Engineers
+### QA & Testing
 
-Access the exact same environments as developers. Reproduce bugs reliably, test against real service configurations, and validate fixes in real time — no more waiting for deployments.
+Access identical environments as engineering. Reproduce issues reliably. Validate fixes in real time without waiting for release cycles.
 
-### Platform Teams
+### Platform Engineering
 
-Deploy once on your cloud provider. Manage work machines, environments, and access controls centrally. Give your teams the infrastructure they need without the overhead.
+Single deployment across cloud providers. Centralized work machine and environment management. Fine-grained access controls per team.
 
 ## Getting Started
 
-### Platform Setup
+### Infrastructure Setup
 
-1. **Deploy** Kloudlite on your cloud provider (AWS, GCP, Azure, or self-hosted)
-2. **Configure** work machines and define resource quotas
-3. **Create** environments that mirror your infrastructure
-4. **Invite** team members and configure access controls
+1. Deploy Kloudlite on your cloud (AWS, GCP, Azure) or self-host
+2. Provision work machines and set resource quotas
+3. Define environments mirroring your infrastructure
+4. Configure team access and permissions
 
-### Developer & QA Workflow
+### Developer Workflow
 
-1. **Connect** to your work machine using the provided connection command
-2. **Create** your workspace
-3. **Switch** between environments as needed
-4. **Collaborate** with your team in shared environments
-5. **Intercept** services to test and debug with real traffic
+1. Run `kltun` to establish secure tunnel
+2. Create workspace and bind to target environment
+3. Intercept services as needed
+4. Switch environments without workspace recreation
 
-## Documentation
+## Resources
 
-- [Getting Started Guide](https://kloudlite.io/docs)
+- [Documentation](https://kloudlite.io/docs)
 - [CLI Reference](https://kloudlite.io/docs/cli)
-- [API Documentation](https://kloudlite.io/docs/api)
+- [API Docs](https://kloudlite.io/docs/api)
 - [Helm Charts](https://github.com/kloudlite/helm-charts)
 
 ## Community
 
-- [Discord](https://discord.com/invite/m5tYzQfcG8) — Get help and connect with other users
-- [Twitter](https://x.com/kloudlite) — Latest updates and announcements
-- [GitHub Issues](https://github.com/kloudlite/kloudlite/issues) — Report bugs and request features
+- [Discord](https://discord.com/invite/m5tYzQfcG8)
+- [Twitter](https://x.com/kloudlite)
+- [GitHub Issues](https://github.com/kloudlite/kloudlite/issues)
 
 ## Security
 
-Security is foundational to Kloudlite. All connections are encrypted, environments are isolated, and access is controlled. If you discover a vulnerability, please report it to **security@kloudlite.io**.
+All traffic encrypted. Environments isolated. Access controlled. Report vulnerabilities to **security@kloudlite.io**.
 
 ## License
 
-Kloudlite is open source under the [AGPL-3.0 License](LICENSE).
+[AGPL-3.0](LICENSE)
 
 ---
 
 <div align="center">
-  <strong>Faster feedback. Better collaboration. Ship with confidence.</strong>
+  <strong>Faster feedback. Seamless collaboration. Ship with confidence.</strong>
   <br/><br/>
   <a href="https://kloudlite.io">Get Started →</a>
 </div>
