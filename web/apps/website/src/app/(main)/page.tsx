@@ -17,7 +17,7 @@ function WebsiteLandingPage() {
           {/* Main Heading */}
           <div className="text-center">
             <h1 className="text-foreground text-2xl leading-tight font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl break-words">
-              Platform of Development Environments
+              Platform of Cloud Development Environments
             </h1>
             <p className="text-muted-foreground mx-auto mt-4 max-w-3xl text-sm sm:text-base md:text-xl lg:text-2xl break-words">
               No Setup. No build. No Deploy. Just Code.
