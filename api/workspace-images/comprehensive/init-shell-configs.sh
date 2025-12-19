@@ -122,4 +122,37 @@ else
     echo "SSH client config already configured"
 fi
 
+# Initialize Claude Code MCP configuration
+CLAUDE_DIR="$KL_HOME/.claude"
+CLAUDE_CONFIG="$CLAUDE_DIR/settings.json"
+CLAUDE_MD="$KL_HOME/CLAUDE.md"
+CLAUDE_MCP_MARKER='"kloudlite"'
+
+mkdir -p "$CLAUDE_DIR"
+if [ ! -f "$CLAUDE_CONFIG" ] || ! grep -q "$CLAUDE_MCP_MARKER" "$CLAUDE_CONFIG" 2>/dev/null; then
+    echo "Setting up Claude MCP configuration..."
+    cat > "$CLAUDE_CONFIG" << 'EOF'
+{
+  "mcpServers": {
+    "kloudlite": {
+      "command": "kl",
+      "args": ["mcp"]
+    }
+  }
+}
+EOF
+    chown -R kl:kl "$CLAUDE_DIR"
+    echo "Claude MCP configuration created"
+else
+    echo "Claude MCP configuration already exists"
+fi
+
+# Copy CLAUDE.md to home directory if not present
+if [ -f /etc/kloudlite/CLAUDE.md ] && [ ! -f "$CLAUDE_MD" ]; then
+    echo "Copying CLAUDE.md to home directory..."
+    cp /etc/kloudlite/CLAUDE.md "$CLAUDE_MD"
+    chown kl:kl "$CLAUDE_MD"
+    echo "CLAUDE.md copied"
+fi
+
 echo "Shell configurations initialized successfully"
