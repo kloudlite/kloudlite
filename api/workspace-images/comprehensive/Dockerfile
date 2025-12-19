@@ -143,6 +143,7 @@ COPY workspace-images/comprehensive/kl-shell-init.zsh /etc/kloudlite/shell-init.
 COPY workspace-images/comprehensive/kl-shell-init.fish /etc/kloudlite/shell-init.fish
 COPY workspace-images/comprehensive/kloudlite-context.sh /etc/kloudlite/kloudlite-context.sh
 COPY workspace-images/comprehensive/init-shell-configs.sh /etc/kloudlite/init-shell-configs.sh
+COPY workspace-images/comprehensive/claude-workspace-instructions.md /etc/kloudlite/CLAUDE.md
 RUN chmod +x /etc/kloudlite/kloudlite-context.sh /etc/kloudlite/init-shell-configs.sh
 
 # Disable Ubuntu's default MOTD scripts and install custom Kloudlite MOTD
