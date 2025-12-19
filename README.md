@@ -66,8 +66,8 @@ Expose any port from your workspace with a public URL. Perfect for:
 ### AI-Powered Development
 Built-in MCP server for AI coding assistants. Works with Claude, Codex, and OpenCode out of the box.
 
-### Local Access (Optional)
-Want to use your local machine? Connect via VPN with `kltun` and access all services directly from your local IDE.
+### Local Access
+Connect your local machine via `kltun` to access all workspace and environment services directly from your local IDE. Your local tools, your cloud environment.
 
 ## Getting Started
 
