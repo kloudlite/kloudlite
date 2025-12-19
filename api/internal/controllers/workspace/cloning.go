@@ -3,6 +3,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -14,6 +15,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+// parseSourceWorkspaceRef parses the CopyFrom field which can be in format "namespace/name" or just "name"
+// If only name is provided, it uses the same namespace as the target workspace
+func parseSourceWorkspaceRef(copyFrom string, defaultNamespace string) (namespace, name string) {
+	parts := strings.SplitN(copyFrom, "/", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return defaultNamespace, copyFrom
+}
 
 // handleCloning manages the workspace directory cloning process
 // This function orchestrates the entire cloning workflow through various phases
@@ -433,7 +444,9 @@ func (r *WorkspaceReconciler) handleCloningResuming(
 
 	// Fetch source workspace
 	sourceWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom, Namespace: workspace.Namespace}, sourceWorkspace); err != nil {
+	// Parse CopyFrom which can be "namespace/name" or just "name"
+	sourceNs, sourceName := parseSourceWorkspaceRef(workspace.Spec.CopyFrom, workspace.Namespace)
+	if err := r.Get(ctx, client.ObjectKey{Name: sourceName, Namespace: sourceNs}, sourceWorkspace); err != nil {
 		logger.Warn("Failed to get source workspace for resume", zap.Error(err))
 		// Don't fail cloning if source workspace is gone, just log it
 	} else {
@@ -540,7 +553,9 @@ func (r *WorkspaceReconciler) handleCloningFailed(
 	// Try to resume source workspace
 	if workspace.Spec.CopyFrom != "" {
 		sourceWorkspace := &workspacev1.Workspace{}
-		if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom, Namespace: workspace.Namespace}, sourceWorkspace); err == nil {
+		// Parse CopyFrom which can be "namespace/name" or just "name"
+		sourceNs, sourceName := parseSourceWorkspaceRef(workspace.Spec.CopyFrom, workspace.Namespace)
+		if err := r.Get(ctx, client.ObjectKey{Name: sourceName, Namespace: sourceNs}, sourceWorkspace); err == nil {
 			// Clear source cloning status to allow it to resume
 			if sourceWorkspace.Status.SourceCloningStatus != nil {
 				sourceWorkspace.Status.SourceCloningStatus = nil
@@ -622,7 +637,9 @@ func (r *WorkspaceReconciler) getSourceWorkspaceOrFail(
 	logger *zap.Logger,
 ) (*workspacev1.Workspace, bool, reconcile.Result, error) {
 	sourceWorkspace := &workspacev1.Workspace{}
-	if err := r.Get(ctx, client.ObjectKey{Name: workspace.Spec.CopyFrom, Namespace: workspace.Namespace}, sourceWorkspace); err != nil {
+	// Parse CopyFrom which can be "namespace/name" or just "name"
+	sourceNs, sourceName := parseSourceWorkspaceRef(workspace.Spec.CopyFrom, workspace.Namespace)
+	if err := r.Get(ctx, client.ObjectKey{Name: sourceName, Namespace: sourceNs}, sourceWorkspace); err != nil {
 		logger.Error("Failed to get source workspace", zap.Error(err))
 		workspace.Status.CloningStatus.Phase = workspacev1.CloningPhaseFailed
 		if errorMessage == "" {
