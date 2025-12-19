@@ -2,7 +2,6 @@
   <a href="https://kloudlite.io">
     <img src="https://github.com/kloudlite/kloudlite/assets/1580519/a31a5f78-2bde-45f1-8141-d23ee8231eb1" style="height:38px" />
   </a>
-  <h1>Kloudlite</h1>
   <p><strong>Cloud Development Environments</strong></p>
   <p>Test against live services without deploying</p>
 
