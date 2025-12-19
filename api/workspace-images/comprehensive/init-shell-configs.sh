@@ -122,16 +122,33 @@ else
     echo "SSH client config already configured"
 fi
 
-# Initialize Claude Code MCP configuration
-CLAUDE_DIR="$KL_HOME/.claude"
-CLAUDE_CONFIG="$CLAUDE_DIR/settings.json"
+# Initialize Claude Code MCP configuration in ~/.claude.json
+CLAUDE_JSON="$KL_HOME/.claude.json"
 CLAUDE_MD="$KL_HOME/CLAUDE.md"
 CLAUDE_MCP_MARKER='"kloudlite"'
 
-mkdir -p "$CLAUDE_DIR"
-if [ ! -f "$CLAUDE_CONFIG" ] || ! grep -q "$CLAUDE_MCP_MARKER" "$CLAUDE_CONFIG" 2>/dev/null; then
+# Add MCP config to ~/.claude.json (merge if file exists)
+if ! grep -q "$CLAUDE_MCP_MARKER" "$CLAUDE_JSON" 2>/dev/null; then
     echo "Setting up Claude MCP configuration..."
-    cat > "$CLAUDE_CONFIG" << 'EOF'
+    if [ -f "$CLAUDE_JSON" ]; then
+        # File exists - use jq to merge if available, otherwise use Python
+        if command -v jq &> /dev/null; then
+            jq '. + {"mcpServers": {"kloudlite": {"command": "kl", "args": ["mcp"]}}}' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+        elif command -v python3 &> /dev/null; then
+            python3 -c "
+import json
+with open('$CLAUDE_JSON', 'r') as f:
+    data = json.load(f)
+data['mcpServers'] = {'kloudlite': {'command': 'kl', 'args': ['mcp']}}
+with open('$CLAUDE_JSON', 'w') as f:
+    json.dump(data, f, indent=2)
+"
+        else
+            echo "Warning: Could not merge MCP config (jq or python3 required)"
+        fi
+    else
+        # Create new file
+        cat > "$CLAUDE_JSON" << 'EOF'
 {
   "mcpServers": {
     "kloudlite": {
@@ -141,8 +158,9 @@ if [ ! -f "$CLAUDE_CONFIG" ] || ! grep -q "$CLAUDE_MCP_MARKER" "$CLAUDE_CONFIG" 
   }
 }
 EOF
-    chown -R kl:kl "$CLAUDE_DIR"
-    echo "Claude MCP configuration created"
+    fi
+    chown kl:kl "$CLAUDE_JSON"
+    echo "Claude MCP configuration added"
 else
     echo "Claude MCP configuration already exists"
 fi
