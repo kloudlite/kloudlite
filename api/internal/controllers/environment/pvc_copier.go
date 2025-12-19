@@ -34,7 +34,25 @@ func NewPVCCopier(client client.Client, sourceNamespace, targetNamespace, target
 }
 
 // CopyPVC copies data from source PVC to target PVC with compression
+// This function is idempotent - it can be called multiple times safely
 func (c *PVCCopier) CopyPVC(ctx context.Context, sourcePVC, targetPVC string, owner metav1.Object) error {
+	senderJobName := fmt.Sprintf("pvc-copy-sender-%s", targetPVC)
+	receiverJobName := fmt.Sprintf("pvc-copy-receiver-%s", targetPVC)
+
+	// Check if receiver job already exists (copy is already in progress or complete)
+	existingReceiverJob := &batchv1.Job{}
+	receiverExists := false
+	if err := c.client.Get(ctx, types.NamespacedName{
+		Name:      receiverJobName,
+		Namespace: c.targetNamespace,
+	}, existingReceiverJob); err == nil {
+		receiverExists = true
+		// If receiver exists and is complete or running, we're done
+		if existingReceiverJob.Status.Succeeded > 0 || existingReceiverJob.Status.Active > 0 {
+			return nil
+		}
+	}
+
 	// Get source PVC to extract node binding information
 	pvc := &corev1.PersistentVolumeClaim{}
 	if err := c.client.Get(ctx, types.NamespacedName{
@@ -66,28 +84,42 @@ func (c *PVCCopier) CopyPVC(ctx context.Context, sourcePVC, targetPVC string, ow
 		}
 	}
 
-	// Create source sender job with node affinity
-	senderJob := c.createSenderJob(sourcePVC, targetPVC, boundNodeName, owner)
-	if err := controllerutil.SetControllerReference(owner, senderJob, c.client.Scheme()); err != nil {
-		return fmt.Errorf("failed to set owner reference for sender job: %w", err)
+	// Check if sender job already exists
+	existingSenderJob := &batchv1.Job{}
+	senderExists := false
+	if err := c.client.Get(ctx, types.NamespacedName{
+		Name:      senderJobName,
+		Namespace: c.sourceNamespace,
+	}, existingSenderJob); err == nil {
+		senderExists = true
 	}
-	if err := c.client.Create(ctx, senderJob); err != nil {
-		return fmt.Errorf("failed to create sender job: %w", err)
+
+	// Create sender job if it doesn't exist
+	if !senderExists {
+		senderJob := c.createSenderJob(sourcePVC, targetPVC, boundNodeName, owner)
+		if err := controllerutil.SetControllerReference(owner, senderJob, c.client.Scheme()); err != nil {
+			return fmt.Errorf("failed to set owner reference for sender job: %w", err)
+		}
+		if err := c.client.Create(ctx, senderJob); err != nil {
+			return fmt.Errorf("failed to create sender job: %w", err)
+		}
 	}
 
 	// Wait for sender pod to be ready
-	senderPodIP, err := c.waitForSenderReady(ctx, senderJob.Name)
+	senderPodIP, err := c.waitForSenderReady(ctx, senderJobName)
 	if err != nil {
 		return fmt.Errorf("sender pod failed to become ready: %w", err)
 	}
 
-	// Create target receiver job with sender IP
-	receiverJob := c.createReceiverJob(sourcePVC, targetPVC, senderPodIP, owner)
-	if err := controllerutil.SetControllerReference(owner, receiverJob, c.client.Scheme()); err != nil {
-		return fmt.Errorf("failed to set owner reference for receiver job: %w", err)
-	}
-	if err := c.client.Create(ctx, receiverJob); err != nil {
-		return fmt.Errorf("failed to create receiver job: %w", err)
+	// Create receiver job if it doesn't exist
+	if !receiverExists {
+		receiverJob := c.createReceiverJob(sourcePVC, targetPVC, senderPodIP, owner)
+		if err := controllerutil.SetControllerReference(owner, receiverJob, c.client.Scheme()); err != nil {
+			return fmt.Errorf("failed to set owner reference for receiver job: %w", err)
+		}
+		if err := c.client.Create(ctx, receiverJob); err != nil {
+			return fmt.Errorf("failed to create receiver job: %w", err)
+		}
 	}
 
 	return nil
