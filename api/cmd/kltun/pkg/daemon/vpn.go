@@ -220,29 +220,25 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 		// Store VPN IP for reference
 		conn.VPNIP = peerResp.IP
 
-		// Add vpn-check hostname pointing to our VPN IP
+		// Add vpn-check hostname pointing to 127.0.0.1 (localhost)
 		// This allows dashboard to verify kltun HTTPS server is reachable
+		// We use 127.0.0.1 so the server is always accessible when daemon is running
 		vpnCheckHostname := strings.Replace(tunnelInfo.Hostname, "vpn-connect", "vpn-check", 1)
-		if err := s.hostsManager.Add(vpnCheckHostname, peerResp.IP, fmt.Sprintf("# kltun session %s vpn-check", sessionID)); err != nil {
+		if err := s.hostsManager.Add(vpnCheckHostname, "127.0.0.1", fmt.Sprintf("# kltun session %s vpn-check", sessionID)); err != nil {
 			fmt.Printf("[Session %s] Warning: Failed to add vpn-check host: %v\n", sessionID, err)
 		} else {
-			fmt.Printf("[Session %s] ✓ Added vpn-check: %s -> %s\n", sessionID, vpnCheckHostname, peerResp.IP)
+			fmt.Printf("[Session %s] ✓ Added vpn-check: %s -> 127.0.0.1\n", sessionID, vpnCheckHostname)
 		}
 
 		// Download TLS certs and start HTTPS server for status/health endpoints
+		// The HTTPS server runs on 127.0.0.1:443 for the lifetime of the daemon
 		fmt.Printf("[Session %s] Downloading TLS certs for HTTPS server...\n", sessionID)
 		tlsCerts, err := tunnelClient.GetTLSCerts()
 		if err != nil {
 			fmt.Printf("[Session %s] Warning: Failed to get TLS certs, HTTPS server not started: %v\n", sessionID, err)
 		} else {
-			httpsServer := NewHTTPSServer(peerResp.IP, []byte(tlsCerts.TLSCert), []byte(tlsCerts.TLSKey), s)
-			conn.HTTPSServer = httpsServer
-			go func() {
-				if err := httpsServer.Start(ctx); err != nil {
-					fmt.Printf("[Session %s] HTTPS server error: %v\n", sessionID, err)
-				}
-			}()
-			fmt.Printf("[Session %s] ✓ HTTPS server started on %s:443\n", sessionID, peerResp.IP)
+			// Start daemon-level HTTPS server (only starts once, subsequent calls are no-ops)
+			s.StartHTTPSServer([]byte(tlsCerts.TLSCert), []byte(tlsCerts.TLSKey))
 		}
 	}
 	s.connMutex.Unlock()
@@ -278,14 +274,8 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	s.connMutex.RUnlock()
 
 	if exists {
-		// Stop HTTPS server if running
-		if conn.HTTPSServer != nil {
-			fmt.Printf("[Session %s] Stopping HTTPS server...\n", sessionID)
-			if err := conn.HTTPSServer.Stop(); err != nil {
-				fmt.Printf("[Session %s] Warning: Failed to stop HTTPS server: %v\n", sessionID, err)
-			}
-			conn.HTTPSServer = nil
-		}
+		// Note: HTTPS server is daemon-level and not stopped here
+		// It continues running to report status even after VPN disconnects
 
 		conn.WGMutex.Lock()
 		if conn.WireGuardDevice != nil {
