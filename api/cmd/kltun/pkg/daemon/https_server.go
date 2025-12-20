@@ -63,10 +63,10 @@ func (h *HTTPSServer) Start(ctx context.Context) error {
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	// Create HTTP mux
+	// Create HTTP mux with CORS middleware
 	mux := http.NewServeMux()
-	mux.HandleFunc("/status", h.handleStatus)
-	mux.HandleFunc("/health", h.handleHealth)
+	mux.HandleFunc("/status", h.corsMiddleware(h.handleStatus))
+	mux.HandleFunc("/health", h.corsMiddleware(h.handleHealth))
 
 	// Create server bound to VPN IP
 	addr := fmt.Sprintf("%s:443", h.vpnIP)
@@ -172,4 +172,28 @@ func (h *HTTPSServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// corsMiddleware adds CORS headers to allow cross-origin requests from dashboard
+func (h *HTTPSServer) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Allow requests from any origin (the dashboard could be on various subdomains)
+		origin := r.Header.Get("Origin")
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+
+		// Handle preflight OPTIONS request
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next(w, r)
+	}
 }
