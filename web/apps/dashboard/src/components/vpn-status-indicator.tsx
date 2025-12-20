@@ -17,8 +17,20 @@ interface VPNStatusIndicatorProps {
   isWorkMachineRunning?: boolean
 }
 
+function formatUptime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours < 24) return `${hours}h ${remainingMinutes}m`
+  const days = Math.floor(hours / 24)
+  const remainingHours = hours % 24
+  return `${days}d ${remainingHours}h`
+}
+
 export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIndicatorProps) {
-  const { status, isChecking, checkVPNStatus } = useVPNStatus({ enabled: isWorkMachineRunning })
+  const { status, isChecking, checkVPNStatus, vpnIP, uptimeSeconds } = useVPNStatus({ enabled: isWorkMachineRunning })
   const [token, setToken] = useState<string>('')
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
 
@@ -185,10 +197,24 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
         )}
 
         {isWorkMachineRunning && status === 'connected' && (
-          <div className="px-2 py-2">
+          <div className="px-2 py-2 space-y-2">
             <p className="text-sm text-green-600 dark:text-green-400">
               Your VPN connection is active. You can access your workspaces and cluster services.
             </p>
+            <div className="text-xs text-muted-foreground space-y-1">
+              {vpnIP && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">VPN IP:</span>
+                  <code className="bg-muted px-1.5 py-0.5 rounded">{vpnIP}</code>
+                </div>
+              )}
+              {uptimeSeconds !== undefined && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Uptime:</span>
+                  <span>{formatUptime(uptimeSeconds)}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
