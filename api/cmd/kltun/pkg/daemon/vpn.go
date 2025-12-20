@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/kltun/pkg/api"
@@ -218,6 +219,15 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 		// Store VPN IP for reference
 		conn.VPNIP = peerResp.IP
+
+		// Add vpn-check hostname pointing to our VPN IP
+		// This allows dashboard to verify kltun HTTPS server is reachable
+		vpnCheckHostname := strings.Replace(tunnelInfo.Hostname, "vpn-connect", "vpn-check", 1)
+		if err := s.hostsManager.Add(vpnCheckHostname, peerResp.IP, fmt.Sprintf("# kltun session %s vpn-check", sessionID)); err != nil {
+			fmt.Printf("[Session %s] Warning: Failed to add vpn-check host: %v\n", sessionID, err)
+		} else {
+			fmt.Printf("[Session %s] ✓ Added vpn-check: %s -> %s\n", sessionID, vpnCheckHostname, peerResp.IP)
+		}
 
 		// Download TLS certs and start HTTPS server for status/health endpoints
 		fmt.Printf("[Session %s] Downloading TLS certs for HTTPS server...\n", sessionID)
