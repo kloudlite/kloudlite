@@ -251,3 +251,39 @@ func (c *TunnelClient) Health() error {
 
 	return nil
 }
+
+// TLSCertsResponse represents the TLS certificates for kltun HTTPS server
+type TLSCertsResponse struct {
+	TLSCert string `json:"tls_cert"` // Server certificate PEM
+	TLSKey  string `json:"tls_key"`  // Server private key PEM
+	CACert  string `json:"ca_cert"`  // CA certificate PEM
+}
+
+// GetTLSCerts gets the TLS certificates for kltun HTTPS server from the tunnel server
+func (c *TunnelClient) GetTLSCerts() (*TLSCertsResponse, error) {
+	url := fmt.Sprintf("%s/tls-cert", c.BaseURL)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	c.setAuthHeader(req)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("tunnel server returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result TLSCertsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &result, nil
+}

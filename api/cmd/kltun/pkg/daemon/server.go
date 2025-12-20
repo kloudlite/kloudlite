@@ -65,6 +65,10 @@ type VPNConnection struct {
 
 	// Reconnection control
 	ReconnectChan chan struct{} // Signal to trigger reconnection attempt
+
+	// HTTPS server for status/health endpoints
+	HTTPSServer *HTTPSServer
+	VPNIP       string // VPN IP address (e.g., "10.17.0.2")
 }
 
 // GetState returns the current connection state
