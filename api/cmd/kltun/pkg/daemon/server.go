@@ -27,6 +27,12 @@ type Server struct {
 	connMutex    sync.RWMutex
 	shutdownCh   chan struct{}
 	wg           sync.WaitGroup
+
+	// HTTPS server for status/health endpoints (daemon-level, not per-connection)
+	httpsServer     *HTTPSServer
+	httpsServerOnce sync.Once
+	tlsCertPEM      []byte
+	tlsKeyPEM       []byte
 }
 
 // ConnectionState represents the state of a VPN connection
@@ -66,9 +72,8 @@ type VPNConnection struct {
 	// Reconnection control
 	ReconnectChan chan struct{} // Signal to trigger reconnection attempt
 
-	// HTTPS server for status/health endpoints
-	HTTPSServer *HTTPSServer
-	VPNIP       string // VPN IP address (e.g., "10.17.0.2")
+	// VPN IP address (e.g., "10.17.0.2")
+	VPNIP string
 }
 
 // GetState returns the current connection state
@@ -155,6 +160,14 @@ func (s *Server) Stop() {
 	}
 	s.connMutex.Unlock()
 
+	// Stop HTTPS server if running
+	if s.httpsServer != nil {
+		fmt.Println("Stopping HTTPS status server...")
+		if err := s.httpsServer.Stop(); err != nil {
+			fmt.Printf("Warning: Failed to stop HTTPS server: %v\n", err)
+		}
+	}
+
 	if s.listener != nil {
 		s.listener.Close()
 	}
@@ -222,4 +235,33 @@ func (s *Server) handleRequest(req *Request) *Response {
 	default:
 		return NewErrorResponse(req.ID, ErrCodeMethodNotFound, "Method not found", req.Method)
 	}
+}
+
+// StartHTTPSServer starts the HTTPS status server on 127.0.0.1:443
+// This is called once when the first VPN connection is established and TLS certs are available
+// The server runs for the lifetime of the daemon, regardless of VPN connection state
+func (s *Server) StartHTTPSServer(certPEM, keyPEM []byte) {
+	s.httpsServerOnce.Do(func() {
+		s.tlsCertPEM = certPEM
+		s.tlsKeyPEM = keyPEM
+		s.httpsServer = NewHTTPSServer("127.0.0.1", certPEM, keyPEM, s)
+
+		go func() {
+			// Create a long-lived context for the HTTPS server
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			// Store cancel func so Stop() can use it if needed
+			go func() {
+				<-s.shutdownCh
+				cancel()
+			}()
+
+			if err := s.httpsServer.Start(ctx); err != nil {
+				fmt.Printf("[HTTPS] Server error: %v\n", err)
+			}
+		}()
+
+		fmt.Println("[HTTPS] Status server started on 127.0.0.1:443")
+	})
 }
