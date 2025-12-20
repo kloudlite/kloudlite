@@ -30,7 +30,7 @@ function formatUptime(seconds: number): string {
 }
 
 export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIndicatorProps) {
-  const { status, isChecking, checkVPNStatus, vpnIP, uptimeSeconds } = useVPNStatus({ enabled: isWorkMachineRunning })
+  const { status, statusMessage, isChecking, isReconnecting, checkVPNStatus, vpnIP, connectionUptimeSeconds, tunnelEndpoint } = useVPNStatus({ enabled: isWorkMachineRunning })
   const [token, setToken] = useState<string>('')
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
 
@@ -70,16 +70,26 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
     if (!isWorkMachineRunning) {
       return <ShieldOff className="h-4 w-4 text-muted-foreground opacity-50" />
     }
+    if (isReconnecting) {
+      return <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+    }
     if (status === 'connected') {
       return <Shield className="h-4 w-4 text-green-500" />
+    }
+    if (status === 'idle') {
+      return <ShieldOff className="h-4 w-4 text-muted-foreground" />
     }
     return <ShieldOff className="h-4 w-4 text-red-500" />
   }
 
-  const getStatusMessage = () => {
+  const getStatusLabel = () => {
     if (!isWorkMachineRunning) return 'VPN Unavailable'
     if (isChecking) return 'Checking VPN status...'
+    // Use the status message from the daemon if available
+    if (statusMessage) return statusMessage
     if (status === 'connected') return 'VPN Connected'
+    if (status === 'reconnecting') return 'Reconnecting...'
+    if (status === 'idle') return 'VPN Idle'
     return 'VPN Not Connected'
   }
 
@@ -108,7 +118,7 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
       <DropdownMenuTrigger asChild>
         <button
           className="text-muted-foreground hover:text-foreground transition-colors"
-          title={getStatusMessage()}
+          title={getStatusLabel()}
         >
           {getIcon()}
         </button>
@@ -116,7 +126,7 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
       <DropdownMenuContent align="end" className="w-[500px]">
         <DropdownMenuLabel className="flex items-center gap-2">
           {getIcon()}
-          {getStatusMessage()}
+          {getStatusLabel()}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
@@ -208,13 +218,43 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
                   <code className="bg-muted px-1.5 py-0.5 rounded">{vpnIP}</code>
                 </div>
               )}
-              {uptimeSeconds !== undefined && (
+              {tunnelEndpoint && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Server:</span>
+                  <code className="bg-muted px-1.5 py-0.5 rounded">{tunnelEndpoint}</code>
+                </div>
+              )}
+              {connectionUptimeSeconds !== undefined && connectionUptimeSeconds > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Uptime:</span>
-                  <span>{formatUptime(uptimeSeconds)}</span>
+                  <span>{formatUptime(connectionUptimeSeconds)}</span>
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {isWorkMachineRunning && status === 'reconnecting' && (
+          <div className="px-2 py-2">
+            <div className="flex items-start gap-2 p-3 rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+              <Loader2 className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5 animate-spin" />
+              <div>
+                <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                  Reconnecting to VPN
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  Connection lost. Attempting to reconnect automatically...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isWorkMachineRunning && status === 'idle' && (
+          <div className="px-2 py-2">
+            <p className="text-sm text-muted-foreground">
+              VPN daemon is running but no connection is active.
+            </p>
           </div>
         )}
 

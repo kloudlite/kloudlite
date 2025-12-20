@@ -2,23 +2,41 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 
-export type VPNStatus = 'checking' | 'connected' | 'disconnected'
+export type VPNStatus = 'checking' | 'connected' | 'disconnected' | 'reconnecting' | 'idle'
+
+// New response format from kltun daemon
+interface DaemonStatusResponse {
+  running: boolean
+  started_at: string
+  uptime_seconds: number
+}
 
 interface VPNStatusResponse {
   status: string
-  vpn_ip: string
-  session_id: string
-  uptime_seconds: number
-  tunnel_endpoint: string
+  status_message: string
+  vpn_ip?: string
+  session_id?: string
+  connection_uptime_seconds: number
+  tunnel_endpoint?: string
+  dashboard_server?: string
+}
+
+interface StatusResponse {
+  daemon: DaemonStatusResponse
+  vpn: VPNStatusResponse
   timestamp: string
 }
 
 interface VPNStatusInfo {
   status: VPNStatus
+  statusMessage?: string
   vpnIP?: string
   sessionID?: string
-  uptimeSeconds?: number
+  connectionUptimeSeconds?: number
   tunnelEndpoint?: string
+  dashboardServer?: string
+  daemonRunning?: boolean
+  daemonUptimeSeconds?: number
   lastChecked?: Date
 }
 
@@ -80,14 +98,35 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
         clearTimeout(timeoutId)
 
         if (response.ok) {
-          const data: VPNStatusResponse = await response.json()
-          lastStatusRef.current = 'connected'
+          const data: StatusResponse = await response.json()
+
+          // Map VPN status from daemon response
+          let mappedStatus: VPNStatus = 'disconnected'
+          switch (data.vpn.status) {
+            case 'connected':
+              mappedStatus = 'connected'
+              break
+            case 'reconnecting':
+              mappedStatus = 'reconnecting'
+              break
+            case 'idle':
+              mappedStatus = 'idle'
+              break
+            default:
+              mappedStatus = 'disconnected'
+          }
+
+          lastStatusRef.current = mappedStatus
           setStatusInfo({
-            status: 'connected',
-            vpnIP: data.vpn_ip,
-            sessionID: data.session_id,
-            uptimeSeconds: data.uptime_seconds,
-            tunnelEndpoint: data.tunnel_endpoint,
+            status: mappedStatus,
+            statusMessage: data.vpn.status_message,
+            vpnIP: data.vpn.vpn_ip,
+            sessionID: data.vpn.session_id,
+            connectionUptimeSeconds: data.vpn.connection_uptime_seconds,
+            tunnelEndpoint: data.vpn.tunnel_endpoint,
+            dashboardServer: data.vpn.dashboard_server,
+            daemonRunning: data.daemon.running,
+            daemonUptimeSeconds: data.daemon.uptime_seconds,
             lastChecked: new Date(),
           })
         } else {
@@ -131,12 +170,18 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
 
   return {
     status: statusInfo.status,
+    statusMessage: statusInfo.statusMessage,
     isConnected: statusInfo.status === 'connected',
+    isReconnecting: statusInfo.status === 'reconnecting',
+    isIdle: statusInfo.status === 'idle',
     isChecking: !mounted || statusInfo.status === 'checking',
     vpnIP: statusInfo.vpnIP,
     sessionID: statusInfo.sessionID,
-    uptimeSeconds: statusInfo.uptimeSeconds,
+    connectionUptimeSeconds: statusInfo.connectionUptimeSeconds,
     tunnelEndpoint: statusInfo.tunnelEndpoint,
+    dashboardServer: statusInfo.dashboardServer,
+    daemonRunning: statusInfo.daemonRunning,
+    daemonUptimeSeconds: statusInfo.daemonUptimeSeconds,
     lastChecked: statusInfo.lastChecked,
     checkVPNStatus,
   }

@@ -27,6 +27,7 @@ type Server struct {
 	connMutex    sync.RWMutex
 	shutdownCh   chan struct{}
 	wg           sync.WaitGroup
+	startedAt    time.Time // When the daemon started
 
 	// HTTPS server for status/health endpoints (daemon-level, not per-connection)
 	httpsServer     *HTTPSServer
@@ -98,6 +99,7 @@ func NewServer() (*Server, error) {
 		hostsManager: hostsManager,
 		connections:  make(map[string]*VPNConnection),
 		shutdownCh:   make(chan struct{}),
+		startedAt:    time.Now(),
 	}, nil
 }
 
