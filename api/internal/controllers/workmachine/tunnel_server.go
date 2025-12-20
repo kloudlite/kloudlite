@@ -198,6 +198,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 								// The secret contains tls.crt, tls.key, and ca.crt
 								"--tls-secret", kloudliteWildcardCertName,
 								"--ca-cert-secret", kloudliteWildcardCertName,
+								"--kltun-tls-secret", kloudliteWildcardCertName,
 								"--wireguard-target", "127.0.0.1:51820",
 								"--watch-config",
 								"--config-path", "/etc/wireguard/wg0.conf",
