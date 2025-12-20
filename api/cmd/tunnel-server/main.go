@@ -48,6 +48,9 @@ type Config struct {
 	// CA certificate config
 	CACertSecretName string // Kubernetes secret name containing ca.crt
 
+	// TLS certificate config for kltun HTTPS server (wildcard cert)
+	KltunTLSSecretName string // Kubernetes secret name containing tls.crt, tls.key, ca.crt for kltun
+
 	// Hosts endpoint config
 	Namespace        string
 	RouterServiceRef string
@@ -72,6 +75,7 @@ func main() {
 	flag.StringVar(&cfg.WgServerAddress, "wg-server-address", "10.17.0.1", "WireGuard server address")
 	flag.StringVar(&cfg.WgEndpoint, "wg-endpoint", os.Getenv("PUBLIC_HOST"), "WireGuard server public endpoint (e.g., tunnel.example.com:443), can also be set via PUBLIC_HOST env var")
 	flag.StringVar(&cfg.CACertSecretName, "ca-cert-secret", "tunnel-server-ca", "Kubernetes secret name containing ca.crt")
+	flag.StringVar(&cfg.KltunTLSSecretName, "kltun-tls-secret", "kltun-tls", "Kubernetes secret name containing TLS cert for kltun HTTPS server")
 	flag.StringVar(&cfg.Namespace, "namespace", os.Getenv("POD_NAMESPACE"), "Namespace to query for ingresses (defaults to POD_NAMESPACE env var)")
 	flag.StringVar(&cfg.RouterServiceRef, "router-service", "wm-ingress-controller", "Name of the router service for hosts resolution")
 	flag.StringVar(&cfg.JWTSecret, "jwt-secret", os.Getenv("JWT_SECRET"), "JWT secret for token validation (can also be set via JWT_SECRET env var)")
@@ -176,6 +180,16 @@ func main() {
 	})
 	mux.Handle("/ca-cert", jwtMiddleware(caCertHandler))
 
+	// TLS certificate handler for kltun HTTPS server (serves wildcard cert)
+	// Secret ref can be "namespace/secretName" or just "secretName" (uses cfg.Namespace)
+	kltunTLSSecretNamespace, kltunTLSSecretName := parseSecretRef(cfg.KltunTLSSecretName, cfg.Namespace)
+	tlsCertHandler := handlers.NewTLSCertHandler(logger, handlers.TLSCertHandlerConfig{
+		K8sClient:  k8sClient,
+		Namespace:  kltunTLSSecretNamespace,
+		SecretName: kltunTLSSecretName,
+	})
+	mux.Handle("/tls-cert", jwtMiddleware(tlsCertHandler))
+
 	// Create hosts cache with watch-based updates
 	hostsCache, err := handlers.NewHostsCache(logger, k8sClient, handlers.HostsCacheConfig{
 		Namespace:        cfg.Namespace,
@@ -202,6 +216,7 @@ func main() {
 		zap.String("wg-public-key", "GET /wg/public-key"),
 		zap.String("wg-peer", "POST|DELETE /wg/peer"),
 		zap.String("ca-cert", "GET /ca-cert"),
+		zap.String("tls-cert", "GET /tls-cert"),
 		zap.String("hosts", "GET /hosts"),
 		zap.String("vpn-status", "GET /"),
 		zap.String("dns-server", cfg.DNSListenAddr))

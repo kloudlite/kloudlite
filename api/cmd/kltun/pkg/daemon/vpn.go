@@ -215,6 +215,25 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 
 		// Start reconnection loop goroutine
 		go s.reconnectionLoop(ctx, conn, s.hostsManager)
+
+		// Store VPN IP for reference
+		conn.VPNIP = peerResp.IP
+
+		// Download TLS certs and start HTTPS server for status/health endpoints
+		fmt.Printf("[Session %s] Downloading TLS certs for HTTPS server...\n", sessionID)
+		tlsCerts, err := tunnelClient.GetTLSCerts()
+		if err != nil {
+			fmt.Printf("[Session %s] Warning: Failed to get TLS certs, HTTPS server not started: %v\n", sessionID, err)
+		} else {
+			httpsServer := NewHTTPSServer(peerResp.IP, []byte(tlsCerts.TLSCert), []byte(tlsCerts.TLSKey), s)
+			conn.HTTPSServer = httpsServer
+			go func() {
+				if err := httpsServer.Start(ctx); err != nil {
+					fmt.Printf("[Session %s] HTTPS server error: %v\n", sessionID, err)
+				}
+			}()
+			fmt.Printf("[Session %s] ✓ HTTPS server started on %s:443\n", sessionID, peerResp.IP)
+		}
 	}
 	s.connMutex.Unlock()
 
@@ -249,6 +268,15 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	s.connMutex.RUnlock()
 
 	if exists {
+		// Stop HTTPS server if running
+		if conn.HTTPSServer != nil {
+			fmt.Printf("[Session %s] Stopping HTTPS server...\n", sessionID)
+			if err := conn.HTTPSServer.Stop(); err != nil {
+				fmt.Printf("[Session %s] Warning: Failed to stop HTTPS server: %v\n", sessionID, err)
+			}
+			conn.HTTPSServer = nil
+		}
+
 		conn.WGMutex.Lock()
 		if conn.WireGuardDevice != nil {
 			fmt.Printf("[Session %s] Closing WireGuard device...\n", sessionID)
