@@ -11,6 +11,13 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	// Dial backoff settings
+	initialDialBackoff = 1 * time.Second
+	maxDialBackoff     = 30 * time.Second
+	backoffMultiplier  = 2
+)
+
 // UDPClient handles UDP tunneling from local UDP to remote server via WebSocket
 type UDPClient struct {
 	localAddr  string
@@ -19,6 +26,14 @@ type UDPClient struct {
 	logger     *zap.Logger
 	dialer     transport.Dialer
 	sessions   sync.Map // Map of client addresses to session info
+
+	// Backoff state for dial failures
+	dialBackoff struct {
+		mu              sync.Mutex
+		lastFailure     time.Time
+		currentBackoff  time.Duration
+		consecutiveFail int
+	}
 }
 
 // udpSession represents a UDP tunnel session
@@ -107,16 +122,50 @@ func (c *UDPClient) getOrCreateSession(ctx context.Context, clientAddr *net.UDPA
 		return session
 	}
 
+	// Check if we're in backoff period (to prevent rapid retry loops)
+	c.dialBackoff.mu.Lock()
+	if c.dialBackoff.currentBackoff > 0 {
+		elapsed := time.Since(c.dialBackoff.lastFailure)
+		if elapsed < c.dialBackoff.currentBackoff {
+			c.dialBackoff.mu.Unlock()
+			return nil // Still in backoff period, skip this dial attempt
+		}
+	}
+	c.dialBackoff.mu.Unlock()
+
 	// Create new session
 	sessionCtx, cancel := context.WithCancel(ctx)
 
 	// Connect to tunnel server via WebSocket
 	tunnelConn, err := c.dialer.Dial(sessionCtx, c.serverURL)
 	if err != nil {
-		c.logger.Error("failed to dial tunnel server", zap.Error(err))
+		// Update backoff state on failure
+		c.dialBackoff.mu.Lock()
+		c.dialBackoff.lastFailure = time.Now()
+		c.dialBackoff.consecutiveFail++
+		if c.dialBackoff.currentBackoff == 0 {
+			c.dialBackoff.currentBackoff = initialDialBackoff
+		} else {
+			c.dialBackoff.currentBackoff *= backoffMultiplier
+			if c.dialBackoff.currentBackoff > maxDialBackoff {
+				c.dialBackoff.currentBackoff = maxDialBackoff
+			}
+		}
+		backoff := c.dialBackoff.currentBackoff
+		c.dialBackoff.mu.Unlock()
+
+		c.logger.Error("failed to dial tunnel server, backing off",
+			zap.Error(err),
+			zap.Duration("backoff", backoff))
 		cancel()
 		return nil
 	}
+
+	// Reset backoff on successful dial
+	c.dialBackoff.mu.Lock()
+	c.dialBackoff.currentBackoff = 0
+	c.dialBackoff.consecutiveFail = 0
+	c.dialBackoff.mu.Unlock()
 
 	// Send tunnel request header: CONNECT_UDP <remote_addr>\n
 	header := fmt.Sprintf("CONNECT_UDP %s\n", c.remoteAddr)
