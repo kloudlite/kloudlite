@@ -3,12 +3,14 @@ package workmachine
 import (
 	"fmt"
 
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -17,7 +19,7 @@ const (
 )
 
 // ensureNetworkPolicy creates or updates the NetworkPolicy for the workmachine namespace
-// This ensures only the owner's environments and system namespaces can access pods in the workmachine namespace
+// This ensures only the owner's environments, shared environments, and system namespaces can access pods in the workmachine namespace
 func (r *WorkMachineReconciler) ensureNetworkPolicy(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	policy := &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
@@ -25,6 +27,9 @@ func (r *WorkMachineReconciler) ensureNetworkPolicy(check *reconciler.Check[*v1.
 			Namespace: obj.Spec.TargetNamespace,
 		},
 	}
+
+	// Find environments shared with this workmachine's owner
+	sharedEnvNamespaces := r.findSharedEnvironmentNamespaces(check, obj.Spec.OwnedBy)
 
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, policy, func() error {
 		policy.Labels = map[string]string{
@@ -36,7 +41,7 @@ func (r *WorkMachineReconciler) ensureNetworkPolicy(check *reconciler.Check[*v1.
 			policy.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 
-		policy.Spec = r.buildWorkmachineNetworkPolicySpec(obj)
+		policy.Spec = r.buildWorkmachineNetworkPolicySpec(obj, sharedEnvNamespaces)
 		return nil
 	}); err != nil {
 		return check.Failed(fmt.Errorf("failed to create/update network policy: %w", err))
@@ -46,7 +51,7 @@ func (r *WorkMachineReconciler) ensureNetworkPolicy(check *reconciler.Check[*v1.
 }
 
 // buildWorkmachineNetworkPolicySpec builds the NetworkPolicy spec for a workmachine namespace
-func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMachine) networkingv1.NetworkPolicySpec {
+func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMachine, sharedEnvNamespaces []string) networkingv1.NetworkPolicySpec {
 	var ingressRules []networkingv1.NetworkPolicyIngressRule
 
 	// Rule 1: Allow from system namespaces (kube-system, kloudlite)
@@ -67,26 +72,42 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 	}
 	ingressRules = append(ingressRules, systemRule)
 
-	// Rule 2: Allow from all environment namespaces
-	// Environment namespaces have label kloudlite.io/environment
-	// This enables intercepts from any environment to reach workspaces
-	envRule := networkingv1.NetworkPolicyIngressRule{
-		From: []networkingv1.NetworkPolicyPeer{
-			{
-				NamespaceSelector: &metav1.LabelSelector{
-					MatchExpressions: []metav1.LabelSelectorRequirement{
-						{
-							Key:      "kloudlite.io/environment",
-							Operator: metav1.LabelSelectorOpExists,
+	// Rule 2: Allow from owner's namespaces (environments + workmachine)
+	// Uses owned-by label for dynamic selection
+	if obj.Spec.OwnedBy != "" {
+		sanitizedOwner := sanitizeForLabel(obj.Spec.OwnedBy)
+		ownerRule := networkingv1.NetworkPolicyIngressRule{
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"kloudlite.io/owned-by": sanitizedOwner,
 						},
 					},
 				},
 			},
-		},
+		}
+		ingressRules = append(ingressRules, ownerRule)
 	}
-	ingressRules = append(ingressRules, envRule)
 
-	// Rule 3: Allow intra-namespace traffic (pods within the same workmachine namespace)
+	// Rule 3: Allow from environments shared with this workmachine's owner
+	// These are environments where owner is in the sharedWith list
+	if len(sharedEnvNamespaces) > 0 {
+		var peers []networkingv1.NetworkPolicyPeer
+		for _, ns := range sharedEnvNamespaces {
+			peers = append(peers, networkingv1.NetworkPolicyPeer{
+				NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"kubernetes.io/metadata.name": ns,
+					},
+				},
+			})
+		}
+		sharedRule := networkingv1.NetworkPolicyIngressRule{From: peers}
+		ingressRules = append(ingressRules, sharedRule)
+	}
+
+	// Rule 4: Allow intra-namespace traffic (pods within the same workmachine namespace)
 	intraNsRule := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{
 			{
@@ -96,7 +117,7 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 	}
 	ingressRules = append(ingressRules, intraNsRule)
 
-	// Rule 4: Allow from wm-ingress-controller pods in any workmachine namespace
+	// Rule 5: Allow from wm-ingress-controller pods in any workmachine namespace
 	// This enables exposed ports to be accessible via other users' ingress controllers
 	ingressControllerRule := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{
@@ -116,7 +137,7 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 	}
 	ingressRules = append(ingressRules, ingressControllerRule)
 
-	// Rule 5: Allow from VPN clients (WireGuard network)
+	// Rule 6: Allow from VPN clients (WireGuard network)
 	// VPN clients connect via tunnel-server and need access to services in the workmachine namespace
 	vpnRule := networkingv1.NetworkPolicyIngressRule{
 		From: []networkingv1.NetworkPolicyPeer{
@@ -164,4 +185,37 @@ func (r *WorkMachineReconciler) cleanupNetworkPolicy(check *reconciler.Check[*v1
 	}
 
 	return check.Passed()
+}
+
+// findSharedEnvironmentNamespaces finds all environment namespaces where the given user is in the sharedWith list
+// This allows the workmachine to receive traffic from environments shared with its owner
+func (r *WorkMachineReconciler) findSharedEnvironmentNamespaces(check *reconciler.Check[*v1.WorkMachine], owner string) []string {
+	if owner == "" {
+		return nil
+	}
+
+	var envList environmentsv1.EnvironmentList
+	if err := r.List(check.Context(), &envList, client.InNamespace("")); err != nil {
+		return nil
+	}
+
+	var sharedNamespaces []string
+	for _, env := range envList.Items {
+		// Skip environments owned by the same user (already covered by owned-by label)
+		if env.Spec.OwnedBy == owner {
+			continue
+		}
+
+		// Check if owner is in the sharedWith list
+		for _, sharedUser := range env.Spec.SharedWith {
+			if sharedUser == owner {
+				if env.Spec.TargetNamespace != "" {
+					sharedNamespaces = append(sharedNamespaces, env.Spec.TargetNamespace)
+				}
+				break
+			}
+		}
+	}
+
+	return sharedNamespaces
 }
