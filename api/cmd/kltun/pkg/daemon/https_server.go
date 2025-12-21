@@ -30,13 +30,13 @@ type DaemonStatus struct {
 
 // VPNStatus represents the VPN connection state
 type VPNStatus struct {
-	Status                   string `json:"status"`                     // idle, connecting, connected, reconnecting, disconnected
-	StatusMessage            string `json:"status_message"`             // Human-readable status message
-	VPNIP                    string `json:"vpn_ip,omitempty"`           // VPN IP address (when connected)
-	SessionID                string `json:"session_id,omitempty"`       // Connection session ID
-	ConnectionUptimeSeconds  int64  `json:"connection_uptime_seconds"`  // Connection uptime in seconds
-	TunnelEndpoint           string `json:"tunnel_endpoint,omitempty"`  // Tunnel server endpoint
-	DashboardServer          string `json:"dashboard_server,omitempty"` // Dashboard server URL
+	Status                  string `json:"status"`                     // idle, connecting, connected, reconnecting, disconnected
+	StatusMessage           string `json:"status_message"`             // Human-readable status message
+	VPNIP                   string `json:"vpn_ip,omitempty"`           // VPN IP address (when connected)
+	SessionID               string `json:"session_id,omitempty"`       // Connection session ID
+	ConnectionUptimeSeconds int64  `json:"connection_uptime_seconds"`  // Connection uptime in seconds
+	TunnelEndpoint          string `json:"tunnel_endpoint,omitempty"`  // Tunnel server endpoint
+	DashboardServer         string `json:"dashboard_server,omitempty"` // Dashboard server URL
 }
 
 // StatusResponse represents the complete status response
