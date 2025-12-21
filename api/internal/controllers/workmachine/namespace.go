@@ -2,6 +2,7 @@ package workmachine
 
 import (
 	"fmt"
+	"strings"
 
 	environmentV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -19,10 +20,15 @@ import (
 func (r *WorkMachineReconciler) createNamespace(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, ns, func() error {
-		ns.SetLabels(fn.MapMerge(ns.GetLabels(), map[string]string{
+		labels := map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
-		}))
+		}
+		// Add owned-by label for network policy (enables cross-namespace communication)
+		if obj.Spec.OwnedBy != "" {
+			labels["kloudlite.io/owned-by"] = sanitizeForLabel(obj.Spec.OwnedBy)
+		}
+		ns.SetLabels(fn.MapMerge(ns.GetLabels(), labels))
 
 		if !fn.IsOwner(ns, obj) {
 			// Check if namespace already has other owners
@@ -221,4 +227,22 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 
 	// Namespace is deleted
 	return check.Passed()
+}
+
+// sanitizeForLabel sanitizes a string (like email) for use as a Kubernetes label value
+func sanitizeForLabel(value string) string {
+	if value == "" {
+		return ""
+	}
+	// Replace special characters with safe alternatives
+	sanitized := strings.ReplaceAll(value, "@", "-at-")
+	sanitized = strings.ReplaceAll(sanitized, ".", "-dot-")
+	sanitized = strings.ReplaceAll(sanitized, "_", "-")
+	sanitized = strings.ToLower(sanitized)
+	// Trim to 63 chars (k8s label limit)
+	if len(sanitized) > 63 {
+		sanitized = sanitized[:63]
+	}
+	sanitized = strings.Trim(sanitized, "-")
+	return sanitized
 }

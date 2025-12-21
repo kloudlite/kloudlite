@@ -31,6 +31,12 @@ func (r *EnvironmentReconciler) applyLabelsAndAnnotations(namespace *corev1.Name
 		namespace.Labels["kloudlite.io/workmachine-name"] = environment.Spec.WorkMachineName
 	}
 
+	// Add owned-by label for network policy (sanitized for label value)
+	// This enables cross-namespace communication between resources owned by the same user
+	if environment.Spec.OwnedBy != "" {
+		namespace.Labels["kloudlite.io/owned-by"] = utils.SanitizeForLabel(environment.Spec.OwnedBy)
+	}
+
 	// Add created-by annotation (emails contain invalid label characters)
 	namespace.Annotations["kloudlite.io/created-by"] = environment.Spec.OwnedBy
 
