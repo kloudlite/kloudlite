@@ -6,6 +6,7 @@ import (
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -148,6 +149,7 @@ func (r *EnvironmentReconciler) buildNetworkPolicy(ctx context.Context, environm
 }
 
 // buildVisibilityIngressRule builds ingress rule based on visibility setting
+// Uses owned-by labels for dynamic namespace selection (includes both workmachine and environment namespaces)
 func (r *EnvironmentReconciler) buildVisibilityIngressRule(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (*networkingv1.NetworkPolicyIngressRule, error) {
 	visibility := environment.Spec.Visibility
 	if visibility == "" {
@@ -156,19 +158,17 @@ func (r *EnvironmentReconciler) buildVisibilityIngressRule(ctx context.Context, 
 
 	switch visibility {
 	case "private":
-		// Allow only from owner's workmachine namespace
-		ownerNs, err := r.getWorkMachineNamespaceForUser(ctx, environment.Spec.OwnedBy)
-		if err != nil {
-			logger.Warn("Could not find owner's workmachine namespace",
-				zap.String("owner", environment.Spec.OwnedBy), zap.Error(err))
-			return nil, nil // Skip visibility rule if owner not found
+		// Allow only from owner's namespaces (workmachine + environments)
+		// Uses owned-by label for dynamic selection
+		if environment.Spec.OwnedBy == "" {
+			return nil, nil
 		}
 		return &networkingv1.NetworkPolicyIngressRule{
 			From: []networkingv1.NetworkPolicyPeer{
 				{
 					NamespaceSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
-							"kubernetes.io/metadata.name": ownerNs,
+							"kloudlite.io/owned-by": utils.SanitizeForLabel(environment.Spec.OwnedBy),
 						},
 					},
 				},
@@ -176,36 +176,26 @@ func (r *EnvironmentReconciler) buildVisibilityIngressRule(ctx context.Context, 
 		}, nil
 
 	case "shared":
-		// Allow from owner + sharedWith users
+		// Allow from owner + sharedWith users using owned-by labels
 		var peers []networkingv1.NetworkPolicyPeer
 
-		// Add owner
-		ownerNs, err := r.getWorkMachineNamespaceForUser(ctx, environment.Spec.OwnedBy)
-		if err == nil {
+		// Add owner's namespaces
+		if environment.Spec.OwnedBy != "" {
 			peers = append(peers, networkingv1.NetworkPolicyPeer{
 				NamespaceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						"kubernetes.io/metadata.name": ownerNs,
+						"kloudlite.io/owned-by": utils.SanitizeForLabel(environment.Spec.OwnedBy),
 					},
 				},
 			})
-		} else {
-			logger.Warn("Could not find owner's workmachine namespace",
-				zap.String("owner", environment.Spec.OwnedBy), zap.Error(err))
 		}
 
-		// Add sharedWith users
+		// Add sharedWith users' namespaces
 		for _, username := range environment.Spec.SharedWith {
-			ns, err := r.getWorkMachineNamespaceForUser(ctx, username)
-			if err != nil {
-				logger.Warn("Could not find workmachine namespace for shared user",
-					zap.String("user", username), zap.Error(err))
-				continue
-			}
 			peers = append(peers, networkingv1.NetworkPolicyPeer{
 				NamespaceSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						"kubernetes.io/metadata.name": ns,
+						"kloudlite.io/owned-by": utils.SanitizeForLabel(username),
 					},
 				},
 			})
@@ -235,48 +225,31 @@ func (r *EnvironmentReconciler) buildVisibilityIngressRule(ctx context.Context, 
 	}
 }
 
-// buildOwnerEnvironmentsIngressRule builds an ingress rule allowing traffic from all environments owned by the same user
-// This enables inter-environment communication (e.g., cloning, shared services)
+// buildOwnerEnvironmentsIngressRule builds an ingress rule allowing traffic from all namespaces owned by the same user
+// This enables inter-environment and workmachine-environment communication (e.g., cloning, shared services)
+// Uses label selector so new environments are automatically allowed without updating existing policies
 func (r *EnvironmentReconciler) buildOwnerEnvironmentsIngressRule(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) *networkingv1.NetworkPolicyIngressRule {
 	owner := environment.Spec.OwnedBy
 	if owner == "" {
 		return nil
 	}
 
-	// List all environments owned by the same user
-	var envList environmentsv1.EnvironmentList
-	if err := r.List(ctx, &envList, client.MatchingFields{"spec.ownedBy": owner}); err != nil {
-		logger.Warn("Failed to list environments for owner", zap.String("owner", owner), zap.Error(err))
-		return nil
-	}
+	// Use label selector to allow traffic from any namespace owned by the same user
+	// This is dynamic - new environments/workmachines are automatically allowed without policy updates
+	// The owner is sanitized to match the label format (email -> label-safe string)
+	sanitizedOwner := utils.SanitizeForLabel(owner)
 
-	if len(envList.Items) <= 1 {
-		// Only this environment exists, no need for cross-environment rule
-		return nil
-	}
-
-	var peers []networkingv1.NetworkPolicyPeer
-	for _, env := range envList.Items {
-		if env.Name == environment.Name {
-			continue // Skip self
-		}
-		if env.Spec.TargetNamespace == "" {
-			continue
-		}
-		peers = append(peers, networkingv1.NetworkPolicyPeer{
-			NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": env.Spec.TargetNamespace,
+	return &networkingv1.NetworkPolicyIngressRule{
+		From: []networkingv1.NetworkPolicyPeer{
+			{
+				NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"kloudlite.io/owned-by": sanitizedOwner,
+					},
 				},
 			},
-		})
+		},
 	}
-
-	if len(peers) == 0 {
-		return nil
-	}
-
-	return &networkingv1.NetworkPolicyIngressRule{From: peers}
 }
 
 // getWorkMachineNamespaceForUser looks up the WorkMachine namespace for a user email
