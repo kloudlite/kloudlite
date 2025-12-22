@@ -11,6 +11,7 @@ import {
   startMyWorkMachine,
   stopMyWorkMachine,
 } from '@/app/actions/work-machine.actions'
+import { unpinWorkspace, unpinEnvironment } from '@/app/actions/user-preferences.actions'
 import { toast } from 'sonner'
 import { Server, Loader2 } from 'lucide-react'
 
@@ -74,13 +75,33 @@ interface MachineType {
   gpu?: string
 }
 
+interface PinnedWorkspace {
+  id: string
+  name: string
+  environment: string
+  status: 'active' | 'idle'
+  branch: string
+  language: string
+  framework: string
+}
+
+interface PinnedEnvironment {
+  id: string
+  name: string
+  status: 'active' | 'idle'
+  services: number
+  workspaces: number
+  configs: number
+  secrets: number
+}
+
 interface WorkMachinesContentProps {
   initialMachines: WorkMachine[]
   currentUser: string
   isAdmin: boolean
   availableMachineTypes: MachineType[]
-  pinnedWorkspaces: never[]
-  pinnedEnvironments: never[]
+  pinnedWorkspaces: PinnedWorkspace[]
+  pinnedEnvironments: PinnedEnvironment[]
 }
 
 export function WorkMachinesContent({
@@ -181,6 +202,28 @@ export function WorkMachinesContent({
       toast.error('An error occurred')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleUnpinWorkspace = async (id: string) => {
+    // id format is "namespace/name"
+    const [namespace, name] = id.split('/')
+    const result = await unpinWorkspace(name, namespace)
+    if (result.success) {
+      toast.success('Workspace unpinned from dashboard')
+      router.refresh()
+    } else {
+      toast.error('Failed to unpin workspace', { description: result.error })
+    }
+  }
+
+  const handleUnpinEnvironment = async (id: string) => {
+    const result = await unpinEnvironment(id)
+    if (result.success) {
+      toast.success('Environment unpinned from dashboard')
+      router.refresh()
+    } else {
+      toast.error('Failed to unpin environment', { description: result.error })
     }
   }
 
@@ -298,7 +341,12 @@ export function WorkMachinesContent({
         {/* Pinned Resources Section */}
         <div>
           <h2 className="mb-4 text-base font-semibold">Quick Access</h2>
-          <PinnedResources workspaces={pinnedWorkspaces} environments={pinnedEnvironments} />
+          <PinnedResources
+            workspaces={pinnedWorkspaces}
+            environments={pinnedEnvironments}
+            onUnpinWorkspace={handleUnpinWorkspace}
+            onUnpinEnvironment={handleUnpinEnvironment}
+          />
         </div>
       </div>
     </main>

@@ -3,6 +3,7 @@ import { getSession } from '@/lib/get-session'
 import { WorkspacesList } from './_components/workspaces-list'
 import { workspaceService } from '@/lib/services/workspace.service'
 import { workMachineService } from '@/lib/services/work-machine.service'
+import { getMyPreferences } from '@/app/actions/user-preferences.actions'
 import type { Workspace } from '@kloudlite/types'
 
 export default async function WorkspacesPage() {
@@ -44,6 +45,15 @@ export default async function WorkspacesPage() {
     workspaces = []
   }
 
+  // Fetch user preferences to determine which workspaces are pinned
+  const prefsResult = await getMyPreferences()
+  const pinnedWorkspaceIds = new Set<string>()
+  if (prefsResult.success && prefsResult.data?.spec.pinnedWorkspaces) {
+    for (const ref of prefsResult.data.spec.pinnedWorkspaces) {
+      pinnedWorkspaceIds.add(`${ref.namespace}/${ref.name}`)
+    }
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
       {/* Title and Filter Section */}
@@ -61,6 +71,7 @@ export default async function WorkspacesPage() {
           currentUser={currentUser}
           namespace={namespace}
           workMachineRunning={workMachineRunning}
+          pinnedWorkspaceIds={Array.from(pinnedWorkspaceIds)}
         />
       </div>
     </main>

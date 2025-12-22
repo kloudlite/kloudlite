@@ -3,6 +3,7 @@ import { getSession } from '@/lib/get-session'
 import { EnvironmentsList } from './_components/environments-list'
 import { environmentService } from '@/lib/services/environment.service'
 import { workMachineService } from '@/lib/services/work-machine.service'
+import { getMyPreferences } from '@/app/actions/user-preferences.actions'
 import { environmentToUIModel, type EnvironmentUIModel } from '@kloudlite/types'
 
 export default async function EnvironmentsPage() {
@@ -286,6 +287,15 @@ export default async function EnvironmentsPage() {
   ]
   */
 
+  // Fetch user preferences to determine which environments are pinned
+  const prefsResult = await getMyPreferences()
+  const pinnedEnvironmentIds = new Set<string>()
+  if (prefsResult.success && prefsResult.data?.spec.pinnedEnvironments) {
+    for (const envName of prefsResult.data.spec.pinnedEnvironments) {
+      pinnedEnvironmentIds.add(envName)
+    }
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
       {/* Title and Filter Section */}
@@ -302,6 +312,7 @@ export default async function EnvironmentsPage() {
           environments={allEnvironments}
           currentUser={currentUser}
           workMachineRunning={workMachineRunning}
+          pinnedEnvironmentIds={Array.from(pinnedEnvironmentIds)}
         />
       </div>
     </main>

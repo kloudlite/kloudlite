@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { MoreHorizontal, Loader2, AlertCircle } from 'lucide-react'
+import { MoreHorizontal, Loader2, AlertCircle, Pin, PinOff } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import {
   DropdownMenu,
@@ -29,19 +29,42 @@ import {
   activateWorkspace,
   archiveWorkspace,
 } from '@/app/actions/workspace.actions'
+import { pinWorkspace, unpinWorkspace } from '@/app/actions/user-preferences.actions'
 import { CloneWorkspaceSheet } from './clone-workspace-sheet'
+import { toast } from 'sonner'
 
 interface WorkspaceRowActionsProps {
   workspace: Workspace
   workMachineRunning?: boolean
+  isPinned?: boolean
 }
 
-export function WorkspaceRowActions({ workspace, workMachineRunning = false }: WorkspaceRowActionsProps) {
+export function WorkspaceRowActions({ workspace, workMachineRunning = false, isPinned = false }: WorkspaceRowActionsProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showCloneSheet, setShowCloneSheet] = useState(false)
+
+  const handlePin = async () => {
+    const result = await pinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+    if (result.success) {
+      toast.success('Workspace pinned to dashboard')
+      router.refresh()
+    } else {
+      toast.error('Failed to pin workspace', { description: result.error })
+    }
+  }
+
+  const handleUnpin = async () => {
+    const result = await unpinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+    if (result.success) {
+      toast.success('Workspace unpinned from dashboard')
+      router.refresh()
+    } else {
+      toast.error('Failed to unpin workspace', { description: result.error })
+    }
+  }
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -101,6 +124,17 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false }: W
               Open Workspace
             </Link>
           </DropdownMenuItem>
+          {isPinned ? (
+            <DropdownMenuItem onClick={handleUnpin}>
+              <PinOff className="mr-2 h-4 w-4" />
+              Unpin from Dashboard
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={handlePin}>
+              <Pin className="mr-2 h-4 w-4" />
+              Pin to Dashboard
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault()
