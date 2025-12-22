@@ -237,13 +237,13 @@ func (h *DashboardHandlers) hasRole(roles []platformv1alpha1.RoleType, role plat
 
 // EnvironmentDetailsResponse represents the environment details response
 type EnvironmentDetailsResponse struct {
-	Environment *environmentsv1.Environment  `json:"environment"`
-	Services    []dto.ServiceInfo            `json:"services"`
-	Composition *environmentsv1.Composition  `json:"composition,omitempty"`
-	Namespace   string                       `json:"namespace"`
-	EnvHash     string                       `json:"envHash"`
-	Subdomain   string                       `json:"subdomain"`
-	IsActive    bool                         `json:"isActive"`
+	Environment *environmentsv1.Environment `json:"environment"`
+	Services    []dto.ServiceInfo           `json:"services"`
+	Composition *environmentsv1.Composition `json:"composition,omitempty"`
+	Namespace   string                      `json:"namespace"`
+	EnvHash     string                      `json:"envHash"`
+	Subdomain   string                      `json:"subdomain"`
+	IsActive    bool                        `json:"isActive"`
 }
 
 // GetEnvironmentDetails handles GET /environments/:name/details
@@ -396,11 +396,11 @@ func (h *DashboardHandlers) listServicesInNamespace(ctx context.Context, namespa
 
 // WorkspacesListResponse represents the workspaces list response
 type WorkspacesListResponse struct {
-	Workspaces           []workspacesv1.Workspace          `json:"workspaces"`
-	WorkMachine          *machinesv1.WorkMachine           `json:"workMachine,omitempty"`
-	Preferences          *platformv1alpha1.UserPreferences `json:"preferences,omitempty"`
-	PinnedWorkspaceIds   []string                          `json:"pinnedWorkspaceIds"`
-	WorkMachineRunning   bool                              `json:"workMachineRunning"`
+	Workspaces         []workspacesv1.Workspace          `json:"workspaces"`
+	WorkMachine        *machinesv1.WorkMachine           `json:"workMachine,omitempty"`
+	Preferences        *platformv1alpha1.UserPreferences `json:"preferences,omitempty"`
+	PinnedWorkspaceIds []string                          `json:"pinnedWorkspaceIds"`
+	WorkMachineRunning bool                              `json:"workMachineRunning"`
 }
 
 // GetWorkspacesListFull handles GET /workspaces/list-full
@@ -474,11 +474,11 @@ func (h *DashboardHandlers) GetWorkspacesListFull(c *gin.Context) {
 
 // EnvironmentsListResponse represents the environments list response
 type EnvironmentsListResponse struct {
-	Environments          []environmentsv1.Environment      `json:"environments"`
-	WorkMachine           *machinesv1.WorkMachine           `json:"workMachine,omitempty"`
-	Preferences           *platformv1alpha1.UserPreferences `json:"preferences,omitempty"`
-	PinnedEnvironmentIds  []string                          `json:"pinnedEnvironmentIds"`
-	WorkMachineRunning    bool                              `json:"workMachineRunning"`
+	Environments         []environmentsv1.Environment      `json:"environments"`
+	WorkMachine          *machinesv1.WorkMachine           `json:"workMachine,omitempty"`
+	Preferences          *platformv1alpha1.UserPreferences `json:"preferences,omitempty"`
+	PinnedEnvironmentIds []string                          `json:"pinnedEnvironmentIds"`
+	WorkMachineRunning   bool                              `json:"workMachineRunning"`
 }
 
 // GetEnvironmentsListFull handles GET /environments/list-full
