@@ -14,6 +14,7 @@ interface ServicesListProps {
   composition: Composition | null
   envHash: string // Hash from environment.status.hash
   subdomain: string // Subdomain from environment.status.subdomain
+  isEnvActive?: boolean // Whether the environment is active
 }
 
 export function ServicesList({
@@ -22,6 +23,7 @@ export function ServicesList({
   composition,
   envHash,
   subdomain,
+  isEnvActive = true,
 }: ServicesListProps) {
   const [open, setOpen] = useState(false)
   const [copiedDns, setCopiedDns] = useState<string | null>(null)
@@ -62,7 +64,7 @@ export function ServicesList({
           />
         </div>
 
-        {composition?.status?.state === 'failed' && (
+        {isEnvActive && composition?.status?.state === 'failed' && (
           <Alert variant="destructive" className="mt-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Composition Failed</AlertTitle>
@@ -72,7 +74,7 @@ export function ServicesList({
           </Alert>
         )}
 
-        {composition?.status?.state === 'degraded' && (
+        {isEnvActive && composition?.status?.state === 'degraded' && (
           <Alert variant="destructive" className="mt-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Composition Degraded</AlertTitle>
@@ -110,7 +112,7 @@ export function ServicesList({
         />
       </div>
 
-      {composition?.status?.state === 'failed' && (
+      {isEnvActive && composition?.status?.state === 'failed' && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Composition Failed</AlertTitle>
@@ -120,7 +122,7 @@ export function ServicesList({
         </Alert>
       )}
 
-      {composition?.status?.state === 'degraded' && (
+      {isEnvActive && composition?.status?.state === 'degraded' && (
         <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Composition Degraded</AlertTitle>
