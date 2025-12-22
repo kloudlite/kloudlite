@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Settings, Users, Globe, Lock, AlertTriangle } from 'lucide-react'
+import { Users, AlertTriangle } from 'lucide-react'
 
 interface SettingsSectionNavProps {
   environmentId: string
@@ -13,28 +13,10 @@ export function SettingsSectionNav({ environmentId }: SettingsSectionNavProps) {
 
   const sections = [
     {
-      id: 'general',
-      label: 'General',
-      icon: Settings,
-      href: `/environments/${environmentId}/settings/general`,
-    },
-    {
       id: 'access',
       label: 'Access Control',
       icon: Users,
       href: `/environments/${environmentId}/settings/access`,
-    },
-    {
-      id: 'network',
-      label: 'Network',
-      icon: Globe,
-      href: `/environments/${environmentId}/settings/network`,
-    },
-    {
-      id: 'security',
-      label: 'Security',
-      icon: Lock,
-      href: `/environments/${environmentId}/settings/security`,
     },
     {
       id: 'danger',

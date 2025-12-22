@@ -8,5 +8,5 @@ interface PageProps {
 
 export default async function SettingsPage({ params }: PageProps) {
   const { id } = await params
-  redirect(`/environments/${id}/settings/general`)
+  redirect(`/environments/${id}/settings/access`)
 }
