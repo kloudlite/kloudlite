@@ -1,6 +1,10 @@
 package repository
 
-import "fmt"
+import (
+	"fmt"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+)
 
 // RepositoryError represents a repository-specific error
 type RepositoryError struct {
@@ -122,7 +126,8 @@ func IsNotFound(err error) bool {
 	if repoErr, ok := err.(RepositoryError); ok {
 		return repoErr.Type == ErrTypeNotFound
 	}
-	return false
+	// Also check for wrapped Kubernetes API errors
+	return apierrors.IsNotFound(err)
 }
 
 // IsAlreadyExists checks if an error is an already exists error
