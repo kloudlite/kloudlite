@@ -122,9 +122,6 @@ export default async function HomePage() {
     name: string
     environment: string
     status: 'active' | 'idle'
-    branch: string
-    language: string
-    framework: string
   }
   const pinnedWorkspaces: PinnedWorkspace[] = []
   if (prefs?.spec.pinnedWorkspaces) {
@@ -136,9 +133,6 @@ export default async function HomePage() {
           name: ws.metadata.name,
           environment: ws.status?.connectedEnvironment?.name || '-',
           status: ws.status?.phase === 'Running' ? 'active' : 'idle',
-          branch: ws.spec.gitRepository?.branch || 'main',
-          language: 'TypeScript',
-          framework: 'Next.js',
         })
       } catch {
         // Workspace may have been deleted - skip it
@@ -151,10 +145,6 @@ export default async function HomePage() {
     id: string
     name: string
     status: 'active' | 'idle'
-    services: number
-    workspaces: number
-    configs: number
-    secrets: number
   }
   const pinnedEnvironments: PinnedEnvironment[] = []
   if (prefs?.spec.pinnedEnvironments) {
@@ -165,10 +155,6 @@ export default async function HomePage() {
           id: envName,
           name: envName,
           status: env.status?.state === 'active' ? 'active' : 'idle',
-          services: env.status?.resourceCount?.services || 0,
-          workspaces: 0,
-          configs: env.status?.resourceCount?.configMaps || 0,
-          secrets: env.status?.resourceCount?.secrets || 0,
         })
       } catch {
         // Environment may have been deleted - skip it
