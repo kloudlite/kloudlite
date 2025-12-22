@@ -39,20 +39,10 @@ func (h *UserHandlers) getCurrentUserRoles(c *gin.Context) []platformv1alpha1.Ro
 	return roles
 }
 
-// hasRole checks if user has a specific role
-func (h *UserHandlers) hasRole(roles []platformv1alpha1.RoleType, targetRole platformv1alpha1.RoleType) bool {
-	for _, role := range roles {
-		if role == targetRole {
-			return true
-		}
-	}
-	return false
-}
-
 // canCreateUserWithRoles checks if current user can create a user with the specified roles
 func (h *UserHandlers) canCreateUserWithRoles(currentUserRoles []platformv1alpha1.RoleType, targetRoles []platformv1alpha1.RoleType) bool {
-	isSuperAdmin := h.hasRole(currentUserRoles, platformv1alpha1.RoleSuperAdmin)
-	isAdmin := h.hasRole(currentUserRoles, platformv1alpha1.RoleAdmin)
+	isSuperAdmin := HasRole(currentUserRoles, platformv1alpha1.RoleSuperAdmin)
+	isAdmin := HasRole(currentUserRoles, platformv1alpha1.RoleAdmin)
 
 	// Super admin can create users with any roles
 	if isSuperAdmin {
@@ -75,8 +65,8 @@ func (h *UserHandlers) canCreateUserWithRoles(currentUserRoles []platformv1alpha
 
 // canModifyUser checks if current user can modify the target user
 func (h *UserHandlers) canModifyUser(currentUserRoles []platformv1alpha1.RoleType, targetUser *platformv1alpha1.User) bool {
-	isSuperAdmin := h.hasRole(currentUserRoles, platformv1alpha1.RoleSuperAdmin)
-	isAdmin := h.hasRole(currentUserRoles, platformv1alpha1.RoleAdmin)
+	isSuperAdmin := HasRole(currentUserRoles, platformv1alpha1.RoleSuperAdmin)
+	isAdmin := HasRole(currentUserRoles, platformv1alpha1.RoleAdmin)
 
 	// Super admin can modify any user
 	if isSuperAdmin {

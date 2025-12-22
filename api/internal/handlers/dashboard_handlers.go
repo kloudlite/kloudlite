@@ -80,7 +80,7 @@ func (h *DashboardHandlers) GetDashboard(c *gin.Context) {
 	}
 
 	// Check if user is admin
-	isAdmin := h.hasRole(roles, platformv1alpha1.RoleAdmin) || h.hasRole(roles, platformv1alpha1.RoleSuperAdmin)
+	isAdmin := HasRole(roles, platformv1alpha1.RoleAdmin) || HasRole(roles, platformv1alpha1.RoleSuperAdmin)
 
 	// Response data
 	var response DashboardResponse
@@ -223,74 +223,6 @@ func (h *DashboardHandlers) GetDashboard(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
-}
-
-// hasRole checks if the user has a specific role
-func (h *DashboardHandlers) hasRole(roles []platformv1alpha1.RoleType, role platformv1alpha1.RoleType) bool {
-	for _, r := range roles {
-		if r == role {
-			return true
-		}
-	}
-	return false
-}
-
-// userHasAccessToEnvironment checks if a user has access to view an environment
-func (h *DashboardHandlers) userHasAccessToEnvironment(username string, env *environmentsv1.Environment) bool {
-	// Owner always has access
-	if env.Spec.OwnedBy == username {
-		return true
-	}
-
-	visibility := env.Spec.Visibility
-	if visibility == "" {
-		visibility = "private"
-	}
-
-	switch visibility {
-	case "private":
-		return false
-	case "shared":
-		for _, sharedUser := range env.Spec.SharedWith {
-			if sharedUser == username {
-				return true
-			}
-		}
-		return false
-	case "open":
-		return true
-	default:
-		return false
-	}
-}
-
-// userHasAccessToWorkspace checks if a user has access to view a workspace
-func (h *DashboardHandlers) userHasAccessToWorkspace(username string, ws *workspacesv1.Workspace) bool {
-	// Owner always has access
-	if ws.Spec.OwnedBy == username {
-		return true
-	}
-
-	visibility := string(ws.Spec.Visibility)
-	if visibility == "" {
-		visibility = "private"
-	}
-
-	switch visibility {
-	case "private":
-		return false
-	case "shared":
-		for _, sharedUser := range ws.Spec.SharedWith {
-			if sharedUser == username {
-				return true
-			}
-		}
-		return false
-	case "open":
-		return true
-	default:
-		return false
-	}
 }
 
 // EnvironmentDetailsResponse represents the environment details response
@@ -488,7 +420,7 @@ func (h *DashboardHandlers) GetWorkspacesListFull(c *gin.Context) {
 		// Filter by visibility access
 		var accessibleWorkspaces []workspacesv1.Workspace
 		for _, ws := range workspaces.Items {
-			if h.userHasAccessToWorkspace(username, &ws) {
+			if UserHasAccessToWorkspace(username, &ws) {
 				accessibleWorkspaces = append(accessibleWorkspaces, ws)
 			}
 		}
@@ -573,7 +505,7 @@ func (h *DashboardHandlers) GetEnvironmentsListFull(c *gin.Context) {
 		// Filter by visibility access
 		var accessibleEnvs []environmentsv1.Environment
 		for _, env := range envs.Items {
-			if h.userHasAccessToEnvironment(username, &env) {
+			if UserHasAccessToEnvironment(username, &env) {
 				accessibleEnvs = append(accessibleEnvs, env)
 			}
 		}
