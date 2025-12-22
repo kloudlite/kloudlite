@@ -16,37 +16,27 @@ export default async function WorkspacesPage() {
   // Use username for filtering (matches ownedBy field in backend)
   const currentUser = session.user?.username || session.user?.email || 'user@example.com'
 
-  // Get user's work machine to determine target namespace (for creating workspaces)
-  let namespace = 'default'
-  let workMachineRunning = false
+  // Fetch all data in parallel
+  const [workMachineResult, workspacesResult, prefsResult] = await Promise.all([
+    workMachineService.getMyWorkMachine().catch((err) => {
+      console.error('Failed to fetch work machine:', err)
+      return null
+    }),
+    workspaceService.listAll().catch((err) => {
+      console.error('Failed to fetch workspaces:', err)
+      return { items: [] }
+    }),
+    getMyPreferences(),
+  ])
 
-  try {
-    const workMachine = await workMachineService.getMyWorkMachine()
-    if (workMachine?.spec?.targetNamespace) {
-      namespace = workMachine.spec.targetNamespace
-    }
-    // Check if WorkMachine is running
-    workMachineRunning = workMachine?.status?.state === 'running'
-  } catch (err) {
-    console.error('Failed to fetch work machine:', err)
-    // Use default namespace if work machine is not found
-    // This is expected for users who haven't set up a work machine yet
-  }
+  // Extract work machine info
+  const namespace = workMachineResult?.spec?.targetNamespace || 'default'
+  const workMachineRunning = workMachineResult?.status?.state === 'running'
 
-  // Fetch all workspaces across all namespaces so users can see other users' workspaces
-  let workspaces: Workspace[] = []
+  // Extract workspaces
+  const workspaces: Workspace[] = workspacesResult.items || []
 
-  try {
-    const response = await workspaceService.listAll()
-    workspaces = response.items || []
-  } catch (err) {
-    console.error('Failed to fetch workspaces:', err)
-    // Use empty array on error - user will see empty state
-    workspaces = []
-  }
-
-  // Fetch user preferences to determine which workspaces are pinned
-  const prefsResult = await getMyPreferences()
+  // Extract pinned workspace IDs from preferences
   const pinnedWorkspaceIds = new Set<string>()
   if (prefsResult.success && prefsResult.data?.spec.pinnedWorkspaces) {
     for (const ref of prefsResult.data.spec.pinnedWorkspaces) {
