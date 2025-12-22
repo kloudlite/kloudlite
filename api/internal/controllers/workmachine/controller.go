@@ -42,6 +42,7 @@ type Env struct {
 
 	HostManagerImage  string `env:"HOST_MANAGER_IMAGE" required:"true"`
 	TunnelServerImage string `env:"TUNNEL_SERVER_IMAGE" required:"true"`
+	CodeAnalyzerImage string `env:"CODE_ANALYZER_IMAGE" required:"true"`
 
 	// JWT secret for tunnel server authentication (shared with API server and frontend)
 	JWTSecret string `env:"JWT_SECRET" required:"true"`
@@ -230,6 +231,26 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 					obj.Spec.State == v1.MachineStateDisabled
 			},
 			OnCreate: r.cleanupTunnelServer,
+			OnDelete: nil,
+		},
+		{
+			Name:  "when-running/ensure-code-analyzer",
+			Title: "Ensure code analyzer is running for code analysis",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureCodeAnalyzer,
+			OnDelete: r.cleanupCodeAnalyzer,
+		},
+		{
+			Name:  "when-stopped/cleanup-code-analyzer",
+			Title: "Cleanup code analyzer when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupCodeAnalyzer,
 			OnDelete: nil,
 		},
 		{
