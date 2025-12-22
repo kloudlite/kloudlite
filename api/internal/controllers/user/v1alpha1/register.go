@@ -17,5 +17,5 @@ var (
 )
 
 func init() {
-	SchemeBuilder.Register(&User{}, &UserList{})
+	SchemeBuilder.Register(&User{}, &UserList{}, &UserPreferences{}, &UserPreferencesList{})
 }

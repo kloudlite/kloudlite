@@ -14,6 +14,7 @@ interface WorkspacesListProps {
   currentUser: string
   namespace?: string
   workMachineRunning?: boolean
+  pinnedWorkspaceIds?: string[]
 }
 
 export function WorkspacesList({
@@ -21,7 +22,9 @@ export function WorkspacesList({
   currentUser,
   namespace = 'default',
   workMachineRunning = false,
+  pinnedWorkspaceIds = [],
 }: WorkspacesListProps) {
+  const pinnedSet = new Set(pinnedWorkspaceIds)
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active' | 'suspended' | 'archived'>('all')
 
@@ -225,7 +228,11 @@ export function WorkspacesList({
                       : '-'}
                   </td>
                   <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
-                    <WorkspaceRowActions workspace={workspace} workMachineRunning={workMachineRunning} />
+                    <WorkspaceRowActions
+                      workspace={workspace}
+                      workMachineRunning={workMachineRunning}
+                      isPinned={pinnedSet.has(`${workspace.metadata.namespace}/${workspace.metadata.name}`)}
+                    />
                   </td>
                 </tr>
               )

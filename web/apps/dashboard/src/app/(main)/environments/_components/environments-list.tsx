@@ -13,6 +13,8 @@ import {
   Edit,
   Loader2,
   Copy,
+  Pin,
+  PinOff,
 } from 'lucide-react'
 import { VisibilityBadge } from '@/components/visibility-selector'
 import {
@@ -28,6 +30,7 @@ import { DeleteEnvironmentConfirm } from '@/components/dialogs/delete-environmen
 import { CloneEnvironmentDialog } from '@/components/dialogs/clone-environment'
 import { ImportEnvironmentDialog } from '@/components/dialogs/import-environment'
 import { activateEnvironment, deactivateEnvironment, exportEnvironmentConfig } from '@/app/actions/environment.actions'
+import { pinEnvironment, unpinEnvironment } from '@/app/actions/user-preferences.actions'
 import { Download, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import type { EnvironmentUIModel } from '@kloudlite/types'
@@ -36,6 +39,7 @@ interface EnvironmentsListProps {
   environments: EnvironmentUIModel[]
   currentUser: string
   workMachineRunning?: boolean
+  pinnedEnvironmentIds?: string[]
 }
 
 // Format cloning phase to user-friendly text
@@ -104,7 +108,9 @@ export function EnvironmentsList({
   environments: initialEnvironments,
   currentUser,
   workMachineRunning = false,
+  pinnedEnvironmentIds = [],
 }: EnvironmentsListProps) {
+  const pinnedSet = new Set(pinnedEnvironmentIds)
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -118,6 +124,26 @@ export function EnvironmentsList({
   )
   const [deleteEnvironmentName, setDeleteEnvironmentName] = useState<string | null>(null)
   const [, startTransition] = useTransition()
+
+  const handlePin = async (envName: string) => {
+    const result = await pinEnvironment(envName)
+    if (result.success) {
+      toast.success('Environment pinned to dashboard')
+      router.refresh()
+    } else {
+      toast.error('Failed to pin environment', { description: result.error })
+    }
+  }
+
+  const handleUnpin = async (envName: string) => {
+    const result = await unpinEnvironment(envName)
+    if (result.success) {
+      toast.success('Environment unpinned from dashboard')
+      router.refresh()
+    } else {
+      toast.error('Failed to unpin environment', { description: result.error })
+    }
+  }
   const [environments, setEnvironments] = useState<EnvironmentUIModel[]>(initialEnvironments)
   const router = useRouter()
 
@@ -444,6 +470,17 @@ export function EnvironmentsList({
                         <DropdownMenuItem asChild>
                           <Link href={`/environments/${env.id}`}>View Details</Link>
                         </DropdownMenuItem>
+                        {pinnedSet.has(env.name) ? (
+                          <DropdownMenuItem onClick={() => handleUnpin(env.name)}>
+                            <PinOff className="mr-2 h-4 w-4" />
+                            Unpin from Dashboard
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handlePin(env.name)}>
+                            <Pin className="mr-2 h-4 w-4" />
+                            Pin to Dashboard
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => handleEditClick(env)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Settings

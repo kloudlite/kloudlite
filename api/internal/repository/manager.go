@@ -17,12 +17,13 @@ type Manager struct {
 	Clientset *kubernetes.Clientset
 
 	// Individual repositories
-	Users        UserRepository
-	Environments EnvironmentRepository
-	MachineTypes MachineTypeRepository
-	WorkMachines WorkMachineRepository
-	Workspaces   WorkspaceRepository
-	Compositions CompositionRepository
+	Users           UserRepository
+	UserPreferences UserPreferencesRepository
+	Environments    EnvironmentRepository
+	MachineTypes    MachineTypeRepository
+	WorkMachines    WorkMachineRepository
+	Workspaces      WorkspaceRepository
+	Compositions    CompositionRepository
 }
 
 // ManagerOptions contains options for creating a repository manager
@@ -64,6 +65,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 
 	// Create individual repositories
 	users := NewUserRepository(k8sClient)
+	userPreferences := NewUserPreferencesRepository(k8sClient)
 	environments := NewEnvironmentRepository(k8sClient)
 	machineTypes := NewMachineTypeRepository(k8sClient)
 	workMachines := NewWorkMachineRepository(k8sClient)
@@ -71,14 +73,15 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	compositions := NewCompositionRepository(k8sClient)
 
 	return &Manager{
-		K8sClient:    k8sClient,
-		Clientset:    clientset,
-		Users:        users,
-		Environments: environments,
-		MachineTypes: machineTypes,
-		WorkMachines: workMachines,
-		Workspaces:   workspaces,
-		Compositions: compositions,
+		K8sClient:       k8sClient,
+		Clientset:       clientset,
+		Users:           users,
+		UserPreferences: userPreferences,
+		Environments:    environments,
+		MachineTypes:    machineTypes,
+		WorkMachines:    workMachines,
+		Workspaces:      workspaces,
+		Compositions:    compositions,
 	}, nil
 }
 

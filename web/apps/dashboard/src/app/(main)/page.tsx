@@ -3,6 +3,9 @@ import { getSession } from '@/lib/get-session'
 import { WorkMachinesContent } from './workspaces/_components/work-machines-content'
 import { getMyWorkMachine, listAllWorkMachines } from '@/app/actions/work-machine.actions'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
+import { getMyPreferences } from '@/app/actions/user-preferences.actions'
+import { workspaceService } from '@/lib/services/workspace.service'
+import { environmentService } from '@/lib/services/environment.service'
 import type { WorkMachine } from '@kloudlite/types'
 
 // Helper to map work machine CR to display format
@@ -109,8 +112,69 @@ export default async function HomePage() {
     }
   }
 
-  const pinnedWorkspaces: never[] = []
-  const pinnedEnvironments: never[] = []
+  // Fetch user preferences for pinned resources
+  const prefsResult = await getMyPreferences()
+  const prefs = prefsResult.success ? prefsResult.data : null
+
+  // Fetch full workspace data for pinned workspaces
+  interface PinnedWorkspace {
+    id: string
+    name: string
+    environment: string
+    status: 'active' | 'idle'
+    branch: string
+    language: string
+    framework: string
+  }
+  const pinnedWorkspaces: PinnedWorkspace[] = []
+  if (prefs?.spec.pinnedWorkspaces) {
+    for (const ref of prefs.spec.pinnedWorkspaces) {
+      try {
+        const ws = await workspaceService.get(ref.name, ref.namespace || '')
+        pinnedWorkspaces.push({
+          id: `${ref.namespace}/${ref.name}`,
+          name: ws.metadata.name,
+          environment: ws.status?.connectedEnvironment?.name || '-',
+          status: ws.status?.phase === 'Running' ? 'active' : 'idle',
+          branch: ws.spec.gitRepository?.branch || 'main',
+          language: 'TypeScript',
+          framework: 'Next.js',
+        })
+      } catch {
+        // Workspace may have been deleted - skip it
+      }
+    }
+  }
+
+  // Fetch full environment data for pinned environments
+  interface PinnedEnvironment {
+    id: string
+    name: string
+    status: 'active' | 'idle'
+    services: number
+    workspaces: number
+    configs: number
+    secrets: number
+  }
+  const pinnedEnvironments: PinnedEnvironment[] = []
+  if (prefs?.spec.pinnedEnvironments) {
+    for (const envName of prefs.spec.pinnedEnvironments) {
+      try {
+        const env = await environmentService.getEnvironment(envName)
+        pinnedEnvironments.push({
+          id: envName,
+          name: envName,
+          status: env.status?.state === 'active' ? 'active' : 'idle',
+          services: env.status?.resourceCount?.services || 0,
+          workspaces: 0,
+          configs: env.status?.resourceCount?.configMaps || 0,
+          secrets: env.status?.resourceCount?.secrets || 0,
+        })
+      } catch {
+        // Environment may have been deleted - skip it
+      }
+    }
+  }
 
   return (
     <WorkMachinesContent

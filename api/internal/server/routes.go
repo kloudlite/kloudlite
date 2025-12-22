@@ -82,6 +82,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		logger,
 		cfg.Auth.JWTSecret,
 	)
+	userPreferencesHandlers := handlers.NewUserPreferencesHandlers(
+		servicesManager.RepositoryManager.UserPreferences,
+		logger,
+	)
 	// Registry catalog handlers for listing repositories and tags
 	// Note: Registry runs without auth - authentication is handled at ingress layer
 	registryCatalogHandlers := handlers.NewRegistryCatalogHandlers(
@@ -145,6 +149,16 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				users.POST("/:name/activate", userHandlers.ActivateUser)
 				users.POST("/:name/deactivate", userHandlers.DeactivateUser)
 				users.GET("", userHandlers.ListUsers)
+			}
+
+			// User preferences routes (pinned workspaces/environments)
+			userPrefs := protected.Group("/user-preferences")
+			{
+				userPrefs.GET("", userPreferencesHandlers.GetMyPreferences)
+				userPrefs.POST("/pinned-workspaces", userPreferencesHandlers.PinWorkspace)
+				userPrefs.DELETE("/pinned-workspaces", userPreferencesHandlers.UnpinWorkspace)
+				userPrefs.POST("/pinned-environments", userPreferencesHandlers.PinEnvironment)
+				userPrefs.DELETE("/pinned-environments", userPreferencesHandlers.UnpinEnvironment)
 			}
 
 			// Environment routes
