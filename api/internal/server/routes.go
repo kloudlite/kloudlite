@@ -159,6 +159,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.POST("/:name/activate", environmentHandlers.ActivateEnvironment)
 				environments.POST("/:name/deactivate", environmentHandlers.DeactivateEnvironment)
 				environments.GET("/:name/status", environmentHandlers.GetEnvironmentStatus)
+				environments.GET("/:name/status-stream", environmentHandlers.GetEnvironmentStatusStream)
 
 				// Environment config routes (legacy - keeping for backwards compatibility)
 				environments.PUT("/:name/config", environmentConfigHandlers.SetConfig)
@@ -243,6 +244,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				// Package request management (source of truth for package installation)
 				workspaces.GET("/:name/packages", workspaceHandlers.GetPackageRequest)
 				workspaces.PUT("/:name/packages", workspaceHandlers.UpdatePackageRequest)
+
+				// Status streaming (SSE)
+				workspaces.GET("/:name/status-stream", workspaceHandlers.GetWorkspaceStatusStream)
 			}
 
 			// Composition routes (namespaced)
