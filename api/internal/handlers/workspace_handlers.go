@@ -43,35 +43,6 @@ func NewWorkspaceHandlers(wsRepo repository.WorkspaceRepository, userRepo reposi
 	}
 }
 
-// userHasAccessToWorkspace checks if a user has access to view a workspace
-func (h *WorkspaceHandlers) userHasAccessToWorkspace(username string, ws *workspacesv1.Workspace) bool {
-	// Owner always has access
-	if ws.Spec.OwnedBy == username {
-		return true
-	}
-
-	visibility := string(ws.Spec.Visibility)
-	if visibility == "" {
-		visibility = "private"
-	}
-
-	switch visibility {
-	case "private":
-		return false
-	case "shared":
-		for _, sharedUser := range ws.Spec.SharedWith {
-			if sharedUser == username {
-				return true
-			}
-		}
-		return false
-	case "open":
-		return true
-	default:
-		return false
-	}
-}
-
 // sanitizeWorkspaceForNonOwner removes sensitive info from workspace response for non-owners
 func (h *WorkspaceHandlers) sanitizeWorkspaceForNonOwner(ws workspacesv1.Workspace) workspacesv1.Workspace {
 	// Keep only exposed URLs, remove IDE connections
@@ -229,7 +200,7 @@ func (h *WorkspaceHandlers) GetWorkspace(c *gin.Context) {
 	}
 
 	// Check if user has access to this workspace
-	if !h.userHasAccessToWorkspace(username, workspace) {
+	if !UserHasAccessToWorkspace(username, workspace) {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "You don't have access to this workspace",
 		})
@@ -304,7 +275,7 @@ func (h *WorkspaceHandlers) ListWorkspaces(c *gin.Context) {
 	// Filter workspaces based on user access (visibility)
 	var accessibleWorkspaces []workspacesv1.Workspace
 	for _, ws := range workspaces.Items {
-		if h.userHasAccessToWorkspace(username, &ws) {
+		if UserHasAccessToWorkspace(username, &ws) {
 			// Sanitize response for non-owners
 			if ws.Spec.OwnedBy != username {
 				ws = h.sanitizeWorkspaceForNonOwner(ws)
@@ -347,7 +318,7 @@ func (h *WorkspaceHandlers) ListAllWorkspaces(c *gin.Context) {
 	// Filter by visibility access
 	var accessibleWorkspaces []workspacesv1.Workspace
 	for _, ws := range workspaces.Items {
-		if h.userHasAccessToWorkspace(username, &ws) {
+		if UserHasAccessToWorkspace(username, &ws) {
 			// Apply status filter if specified
 			if status != "" {
 				switch status {
@@ -663,7 +634,7 @@ func (h *WorkspaceHandlers) CloneWorkspace(c *gin.Context) {
 	}
 
 	// Check visibility-based access (not just ownership)
-	if !h.userHasAccessToWorkspace(username, sourceWorkspace) {
+	if !UserHasAccessToWorkspace(username, sourceWorkspace) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to clone this workspace"})
 		return
 	}
@@ -1056,7 +1027,7 @@ func (h *WorkspaceHandlers) GetWorkspaceStatusStream(c *gin.Context) {
 	}
 
 	// Check access
-	if !h.userHasAccessToWorkspace(username, ws) {
+	if !UserHasAccessToWorkspace(username, ws) {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "You don't have access to this workspace",
 		})
