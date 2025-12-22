@@ -162,7 +162,7 @@ func main() {
 	analysisQueue.Start()
 
 	// Discover and watch existing workspaces
-	go discoverAndWatchWorkspaces(ctx, config.WorkspacesPath, watcherManager, logger)
+	go discoverAndWatchWorkspaces(ctx, config.WorkspacesPath, watcherManager, reportStorage, analysisQueue, logger)
 
 	// Handle shutdown signals
 	sigChan := make(chan os.Signal, 1)
@@ -203,7 +203,7 @@ func main() {
 }
 
 // discoverAndWatchWorkspaces discovers existing workspaces and starts watching them
-func discoverAndWatchWorkspaces(ctx context.Context, workspacesPath string, manager *watcher.Manager, logger *zap.Logger) {
+func discoverAndWatchWorkspaces(ctx context.Context, workspacesPath string, manager *watcher.Manager, reportStorage *storage.Storage, analysisQueue *queue.Queue, logger *zap.Logger) {
 	// Wait a bit for the service to fully start
 	time.Sleep(5 * time.Second)
 
@@ -234,15 +234,27 @@ func discoverAndWatchWorkspaces(ctx context.Context, workspacesPath string, mana
 				zap.String("workspace", workspaceName),
 				zap.Error(err),
 			)
+			continue
+		}
+
+		// Check if reports exist, if not trigger initial analysis
+		securityReport, _ := reportStorage.GetLatestReport(workspaceName, storage.ReportTypeSecurity)
+		qualityReport, _ := reportStorage.GetLatestReport(workspaceName, storage.ReportTypeQuality)
+
+		if securityReport == nil || qualityReport == nil {
+			logger.Info("No existing reports found, triggering initial analysis",
+				zap.String("workspace", workspaceName),
+			)
+			analysisQueue.EnqueueAnalysis(workspaceName)
 		}
 	}
 
 	// Continue monitoring for new workspaces
-	go monitorForNewWorkspaces(ctx, workspacesPath, manager, logger)
+	go monitorForNewWorkspaces(ctx, workspacesPath, manager, reportStorage, analysisQueue, logger)
 }
 
 // monitorForNewWorkspaces periodically checks for new workspace directories
-func monitorForNewWorkspaces(ctx context.Context, workspacesPath string, manager *watcher.Manager, logger *zap.Logger) {
+func monitorForNewWorkspaces(ctx context.Context, workspacesPath string, manager *watcher.Manager, reportStorage *storage.Storage, analysisQueue *queue.Queue, logger *zap.Logger) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -278,6 +290,17 @@ func monitorForNewWorkspaces(ctx context.Context, workspacesPath string, manager
 						logger.Info("Started watching new workspace",
 							zap.String("workspace", workspaceName),
 						)
+
+						// Trigger initial analysis for new workspace
+						securityReport, _ := reportStorage.GetLatestReport(workspaceName, storage.ReportTypeSecurity)
+						qualityReport, _ := reportStorage.GetLatestReport(workspaceName, storage.ReportTypeQuality)
+
+						if securityReport == nil || qualityReport == nil {
+							logger.Info("No existing reports found, triggering initial analysis",
+								zap.String("workspace", workspaceName),
+							)
+							analysisQueue.EnqueueAnalysis(workspaceName)
+						}
 					}
 				}
 			}
