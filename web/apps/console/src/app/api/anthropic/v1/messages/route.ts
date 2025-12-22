@@ -7,16 +7,25 @@ export const dynamic = 'force-dynamic'
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 
 /**
- * Validates JWT token from Authorization header
+ * Validates JWT token from x-api-key header (Claude Code compatible)
+ * or Authorization Bearer header (standard)
  * Returns user payload if valid, null if invalid
  */
 async function validateToken(request: NextRequest): Promise<{ username?: string; email?: string } | null> {
-  const authHeader = request.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return null
+  // Claude Code sends token via x-api-key header
+  let token = request.headers.get('x-api-key')
+
+  // Also support standard Bearer token
+  if (!token) {
+    const authHeader = request.headers.get('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.slice(7)
+    }
   }
 
-  const token = authHeader.slice(7)
+  if (!token) {
+    return null
+  }
   const jwtSecret = process.env.JWT_SECRET
 
   if (!jwtSecret) {
