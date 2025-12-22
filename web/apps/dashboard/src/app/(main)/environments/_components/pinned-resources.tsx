@@ -2,17 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import {
-  Code2,
-  Globe,
-  Pin,
-  PinOff,
-  ExternalLink,
-  Plus,
-  Folder,
-  Server,
-  GitBranch,
-} from 'lucide-react'
+import { Code2, Globe, PinOff, ExternalLink, Plus, Folder, Server } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 
 interface PinnedWorkspace {
@@ -20,19 +10,12 @@ interface PinnedWorkspace {
   name: string
   environment: string
   status: 'active' | 'idle'
-  branch: string
-  language: string
-  framework: string
 }
 
 interface PinnedEnvironment {
   id: string
   name: string
   status: 'active' | 'idle'
-  services: number
-  workspaces: number
-  configs: number
-  secrets: number
 }
 
 interface PinnedResourcesProps {
@@ -56,10 +39,7 @@ export function PinnedResources({
       {/* Pinned Workspaces */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <Pin className="h-4 w-4" />
-            Pinned Workspaces
-          </h3>
+          <h3 className="text-sm font-semibold">Pinned Workspaces</h3>
           <Link href="/workspaces">
             <Button variant="ghost" size="sm" className="gap-1">
               <Plus className="h-3 w-3" />
@@ -73,11 +53,11 @@ export function PinnedResources({
             {workspaces.map((workspace) => (
               <div
                 key={workspace.id}
-                className="bg-card hover:border-accent rounded-lg border p-4 transition-colors"
+                className="bg-card hover:border-accent rounded-lg border p-3 transition-colors"
                 onMouseEnter={() => setHoveredWorkspace(workspace.id)}
                 onMouseLeave={() => setHoveredWorkspace(null)}
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-center justify-between">
                   <Link href={`/workspaces/${workspace.id}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
                       <div className="bg-info/10 dark:bg-info/20 rounded-lg p-2">
@@ -85,7 +65,7 @@ export function PinnedResources({
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="truncate text-sm font-semibold">{workspace.name}</h4>
+                          <h4 className="truncate text-sm font-medium">{workspace.name}</h4>
                           <span
                             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                               workspace.status === 'active'
@@ -96,21 +76,12 @@ export function PinnedResources({
                             {workspace.status}
                           </span>
                         </div>
-                        <div className="mt-1.5 flex items-center gap-4">
-                          <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                        {workspace.environment !== '-' && (
+                          <span className="text-muted-foreground flex items-center gap-1 text-xs mt-1">
                             <Globe className="h-3 w-3" />
                             {workspace.environment}
                           </span>
-                          <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                            <GitBranch className="h-3 w-3" />
-                            {workspace.branch}
-                          </span>
-                        </div>
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="text-muted-foreground text-xs">
-                            {workspace.language} • {workspace.framework}
-                          </span>
-                        </div>
+                        )}
                       </div>
                     </div>
                   </Link>
@@ -151,10 +122,7 @@ export function PinnedResources({
       {/* Pinned Environments */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <Pin className="h-4 w-4" />
-            Pinned Environments
-          </h3>
+          <h3 className="text-sm font-semibold">Pinned Environments</h3>
           <Link href="/environments">
             <Button variant="ghost" size="sm" className="gap-1">
               <Plus className="h-3 w-3" />
@@ -168,11 +136,11 @@ export function PinnedResources({
             {environments.map((env) => (
               <div
                 key={env.id}
-                className="bg-card hover:border-accent rounded-lg border p-4 transition-colors"
+                className="bg-card hover:border-accent rounded-lg border p-3 transition-colors"
                 onMouseEnter={() => setHoveredEnvironment(env.id)}
                 onMouseLeave={() => setHoveredEnvironment(null)}
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-center justify-between">
                   <Link href={`/environments/${env.id}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
                       <div className="bg-success/10 dark:bg-success/20 rounded-lg p-2">
@@ -180,7 +148,7 @@ export function PinnedResources({
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="truncate text-sm font-semibold">{env.name}</h4>
+                          <h4 className="truncate text-sm font-medium">{env.name}</h4>
                           <span
                             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                               env.status === 'active'
@@ -189,20 +157,6 @@ export function PinnedResources({
                             }`}
                           >
                             {env.status}
-                          </span>
-                        </div>
-                        <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-                          <span className="text-muted-foreground text-xs">
-                            {env.services} services
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            {env.workspaces} workspaces
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            {env.configs} configs
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            {env.secrets} secrets
                           </span>
                         </div>
                       </div>

@@ -80,19 +80,12 @@ interface PinnedWorkspace {
   name: string
   environment: string
   status: 'active' | 'idle'
-  branch: string
-  language: string
-  framework: string
 }
 
 interface PinnedEnvironment {
   id: string
   name: string
   status: 'active' | 'idle'
-  services: number
-  workspaces: number
-  configs: number
-  secrets: number
 }
 
 interface WorkMachinesContentProps {
