@@ -128,11 +128,10 @@ export default async function HomePage() {
     for (const ref of prefs.spec.pinnedWorkspaces) {
       try {
         const ws = await workspaceService.get(ref.name, ref.namespace || '')
-        const connectedEnv = ws.status?.connectedEnvironment
         pinnedWorkspaces.push({
           id: `${ref.namespace}/${ref.name}`,
           name: `${ws.spec.ownedBy}/${ws.spec.displayName || ws.metadata.name}`,
-          environment: connectedEnv ? `${connectedEnv.ownedBy || ''}/${connectedEnv.name || ''}`.replace(/^\//, '') : '-',
+          environment: ws.status?.connectedEnvironment?.name || '-',
           status: ws.status?.phase === 'Running' ? 'active' : 'idle',
         })
       } catch {
