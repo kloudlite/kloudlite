@@ -27,12 +27,14 @@ export default async function ServicesPage({ params }: PageProps) {
   let namespace = ''
   let envHash = ''
   let subdomain = ''
+  let isEnvActive = false
   try {
     const environment = await environmentService.getEnvironment(environmentName)
     namespace = environment.spec.targetNamespace || ''
     // Get hash and subdomain from status (computed by controller)
     envHash = environment.status?.hash || ''
     subdomain = environment.status?.subdomain || ''
+    isEnvActive = environment.status?.state === 'active'
   } catch (error) {
     console.error('Failed to fetch environment:', error)
     return (
@@ -43,6 +45,7 @@ export default async function ServicesPage({ params }: PageProps) {
           composition={null}
           envHash=""
           subdomain=""
+          isEnvActive={false}
         />
       </div>
     )
@@ -71,6 +74,7 @@ export default async function ServicesPage({ params }: PageProps) {
       composition={composition}
       envHash={envHash}
       subdomain={subdomain}
+      isEnvActive={isEnvActive}
     />
   )
 }
