@@ -48,24 +48,21 @@ export default async function ServicesPage({ params }: PageProps) {
     )
   }
 
-  // Fetch services from API using the target namespace
-  let services: K8sService[] = []
-  try {
-    const response = await serviceService.listServices(namespace)
-    services = response.services || []
-  } catch (error) {
-    console.error('Failed to fetch services:', error)
-    services = []
-  }
+  // Fetch services and composition in parallel (both only need namespace)
+  const [servicesResult, compositionResult] = await Promise.all([
+    serviceService.listServices(namespace).catch((error) => {
+      console.error('Failed to fetch services:', error)
+      return { services: [] }
+    }),
+    compositionService.getComposition(namespace, 'main-composition').catch(() => {
+      // Composition doesn't exist yet, that's okay
+      console.log('Main composition not found, will be created on first save')
+      return null
+    }),
+  ])
 
-  // Fetch the main composition (service intercepts are part of composition)
-  let composition: Composition | null = null
-  try {
-    composition = await compositionService.getComposition(namespace, 'main-composition')
-  } catch {
-    // Composition doesn't exist yet, that's okay
-    console.log('Main composition not found, will be created on first save')
-  }
+  const services: K8sService[] = servicesResult.services || []
+  const composition: Composition | null = compositionResult
 
   return (
     <ServicesList

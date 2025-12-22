@@ -16,30 +16,25 @@ export default async function EnvironmentsPage() {
   // Use username for filtering (matches ownedBy field in backend)
   const currentUser = session.user?.username || session.user?.email || 'test-user'
 
-  // Check if WorkMachine is running
-  let workMachineRunning = false
-  try {
-    const workMachine = await workMachineService.getMyWorkMachine()
-    workMachineRunning = workMachine?.status?.state === 'running'
-  } catch (err) {
-    console.error('Failed to fetch work machine:', err)
-  }
+  // Fetch all data in parallel
+  const [workMachineResult, environmentsResult, prefsResult] = await Promise.all([
+    workMachineService.getMyWorkMachine().catch((err) => {
+      console.error('Failed to fetch work machine:', err)
+      return null
+    }),
+    environmentService.listEnvironments().catch((error) => {
+      console.error('Failed to fetch environments:', error)
+      return { environments: [] }
+    }),
+    getMyPreferences(),
+  ])
 
-  // Fetch real environments from API
-  let allEnvironments: EnvironmentUIModel[] = []
-  try {
-    const response = await environmentService.listEnvironments()
-    allEnvironments = response.environments.map((env) => {
-      // Use the ownedBy field which contains the username (User's metadata.name)
-      const owner = env.spec.ownedBy || 'unknown'
+  const workMachineRunning = workMachineResult?.status?.state === 'running'
 
-      return environmentToUIModel(env, owner)
-    })
-  } catch (error) {
-    console.error('Failed to fetch environments:', error)
-    // Use empty array on error
-    allEnvironments = []
-  }
+  const allEnvironments: EnvironmentUIModel[] = environmentsResult.environments.map((env) => {
+    const owner = env.spec.ownedBy || 'unknown'
+    return environmentToUIModel(env, owner)
+  })
 
   // Commented out mock data - keeping for reference
   /*
@@ -287,8 +282,7 @@ export default async function EnvironmentsPage() {
   ]
   */
 
-  // Fetch user preferences to determine which environments are pinned
-  const prefsResult = await getMyPreferences()
+  // Extract pinned environment IDs from preferences (already fetched above)
   const pinnedEnvironmentIds = new Set<string>()
   if (prefsResult.success && prefsResult.data?.spec.pinnedEnvironments) {
     for (const envName of prefsResult.data.spec.pinnedEnvironments) {

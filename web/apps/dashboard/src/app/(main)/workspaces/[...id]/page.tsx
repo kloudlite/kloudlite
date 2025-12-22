@@ -46,16 +46,21 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  // Check if WorkMachine is running
-  let workMachineRunning = false
-  try {
-    const workMachine = await workMachineService.getMyWorkMachine()
-    workMachineRunning = workMachine?.status?.state === 'running'
-  } catch (err) {
-    console.error('Failed to fetch work machine:', err)
-  }
+  // Fetch work machine and package request in parallel (both independent)
+  const [workMachineResult, pkgResult] = await Promise.all([
+    workMachineService.getMyWorkMachine().catch((err) => {
+      console.error('Failed to fetch work machine:', err)
+      return null
+    }),
+    getPackageRequest(name, namespace).catch((err) => {
+      console.error('Failed to fetch package status:', err)
+      return { success: false, data: null }
+    }),
+  ])
 
-  // Fetch package request status
+  const workMachineRunning = workMachineResult?.status?.state === 'running'
+
+  // Extract package status
   let packageStatus: {
     phase?: string
     message?: string
@@ -63,17 +68,11 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     packageCount?: number
     failedPackage?: string
   } | null = null
-  try {
-    const pkgResult = await getPackageRequest(name, namespace)
-    if (pkgResult.success && pkgResult.data) {
-      packageStatus = {
-        ...pkgResult.data.status,
-        // Get package count from spec since status doesn't include it
-        packageCount: pkgResult.data.spec?.packages?.length || 0,
-      }
+  if (pkgResult.success && pkgResult.data) {
+    packageStatus = {
+      ...pkgResult.data.status,
+      packageCount: pkgResult.data.spec?.packages?.length || 0,
     }
-  } catch (err) {
-    console.error('Failed to fetch package status:', err)
   }
 
   const displayName = `${workspace.spec.ownedBy || 'unknown'}/${workspace.spec.displayName || workspace.metadata.name}`
