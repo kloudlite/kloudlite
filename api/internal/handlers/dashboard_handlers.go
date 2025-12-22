@@ -82,9 +82,14 @@ func (h *DashboardHandlers) GetDashboard(c *gin.Context) {
 	// Check if user is admin
 	isAdmin := HasRole(roles, platformv1alpha1.RoleAdmin) || HasRole(roles, platformv1alpha1.RoleSuperAdmin)
 
-	// Response data
-	var response DashboardResponse
-	response.IsAdmin = isAdmin
+	// Response data - initialize slices to empty arrays to avoid null in JSON
+	response := DashboardResponse{
+		IsAdmin:            isAdmin,
+		MachineTypes:       []machinesv1.MachineType{},
+		WorkMachines:       []machinesv1.WorkMachine{},
+		PinnedWorkspaces:   []workspacesv1.Workspace{},
+		PinnedEnvironments: []environmentsv1.Environment{},
+	}
 
 	// Use WaitGroup for parallel fetching
 	var wg sync.WaitGroup
@@ -262,6 +267,7 @@ func (h *DashboardHandlers) GetEnvironmentDetails(c *gin.Context) {
 	namespace := env.Spec.TargetNamespace
 	response := EnvironmentDetailsResponse{
 		Environment: env,
+		Services:    []dto.ServiceInfo{}, // Initialize to empty array to avoid null in JSON
 		Namespace:   namespace,
 		EnvHash:     env.Status.Hash,
 		Subdomain:   env.Status.Subdomain,
@@ -312,7 +318,7 @@ func (h *DashboardHandlers) listServicesInNamespace(ctx context.Context, namespa
 		client.MatchingLabels{"kloudlite.io/managed": "true"},
 	); err != nil {
 		h.logger.Warn("Failed to list deployments", zap.String("namespace", namespace), zap.Error(err))
-		return nil
+		return []dto.ServiceInfo{} // Return empty array instead of nil
 	}
 
 	// List all services in the namespace to enrich deployment data
@@ -404,7 +410,11 @@ func (h *DashboardHandlers) GetWorkspacesListFull(c *gin.Context) {
 		return
 	}
 
-	var response WorkspacesListResponse
+	// Initialize response with empty slices to avoid null in JSON
+	response := WorkspacesListResponse{
+		Workspaces:         []workspacesv1.Workspace{},
+		PinnedWorkspaceIds: []string{},
+	}
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
@@ -489,7 +499,11 @@ func (h *DashboardHandlers) GetEnvironmentsListFull(c *gin.Context) {
 		return
 	}
 
-	var response EnvironmentsListResponse
+	// Initialize response with empty slices to avoid null in JSON
+	response := EnvironmentsListResponse{
+		Environments:         []environmentsv1.Environment{},
+		PinnedEnvironmentIds: []string{},
+	}
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
