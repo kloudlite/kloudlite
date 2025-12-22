@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { apiClient } from '../api-client'
 import type {
   Workspace,
@@ -110,3 +111,34 @@ export class WorkspaceService {
 
 // Export singleton instance
 export const workspaceService = new WorkspaceService()
+
+// Cached versions of read-only operations for request deduplication in Server Components
+// These prevent duplicate API calls when the same data is needed in multiple places during a single render
+
+/** Cached version of listAll - deduplicates requests within a render pass */
+export const getWorkspacesListAll = cache(
+  async (params?: WorkspaceListParams): Promise<WorkspaceListResponse> => {
+    return workspaceService.listAll(params)
+  }
+)
+
+/** Cached version of list (by namespace) - deduplicates requests within a render pass */
+export const getWorkspacesList = cache(
+  async (namespace: string = 'default', params?: WorkspaceListParams): Promise<WorkspaceListResponse> => {
+    return workspaceService.list(namespace, params)
+  }
+)
+
+/** Cached version of get - deduplicates requests within a render pass */
+export const getWorkspace = cache(
+  async (name: string, namespace: string = 'default'): Promise<Workspace> => {
+    return workspaceService.get(name, namespace)
+  }
+)
+
+/** Cached version of getMetrics - deduplicates requests within a render pass */
+export const getWorkspaceMetrics = cache(
+  async (name: string, namespace: string = 'default'): Promise<WorkspaceMetrics> => {
+    return workspaceService.getMetrics(name, namespace)
+  }
+)

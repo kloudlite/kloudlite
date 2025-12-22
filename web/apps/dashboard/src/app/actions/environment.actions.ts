@@ -3,14 +3,29 @@
 import { revalidatePath } from 'next/cache'
 import { environmentService } from '@/lib/services/environment.service'
 import { compositionService } from '@/lib/services/composition.service'
-import type { EnvironmentCreateRequest, EnvironmentUpdateRequest } from '@kloudlite/types'
+import {
+  environmentCreateSchema,
+  environmentUpdateSchema,
+  environmentNameSchema,
+  cloneEnvironmentSchema,
+  importEnvironmentConfigSchema,
+} from '@/lib/validations'
 
 /**
  * Server action to create an environment
  */
-export async function createEnvironment(data: EnvironmentCreateRequest) {
+export async function createEnvironment(data: unknown) {
+  // Validate input
+  const validated = environmentCreateSchema.safeParse(data)
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   try {
-    const result = await environmentService.createEnvironment(data)
+    const result = await environmentService.createEnvironment(validated.data)
     revalidatePath('/environments')
     return { success: true, data: result }
   } catch (err) {
@@ -26,9 +41,27 @@ export async function createEnvironment(data: EnvironmentCreateRequest) {
 /**
  * Server action to update an environment
  */
-export async function updateEnvironment(name: string, data: EnvironmentUpdateRequest) {
+export async function updateEnvironment(name: string, data: unknown) {
+  // Validate environment name
+  const nameValidation = environmentNameSchema.safeParse(name)
+  if (!nameValidation.success) {
+    return {
+      success: false,
+      error: 'Invalid environment name',
+    }
+  }
+
+  // Validate update data
+  const validated = environmentUpdateSchema.safeParse(data)
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   try {
-    const result = await environmentService.updateEnvironment(name, data)
+    const result = await environmentService.updateEnvironment(name, validated.data)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -126,14 +159,30 @@ export async function cloneEnvironment(
   cloneFiles: boolean,
   currentUser: string,
 ) {
+  // Validate all parameters
+  const validated = cloneEnvironmentSchema.safeParse({
+    sourceName,
+    targetName,
+    targetNamespace,
+    cloneEnvVars,
+    cloneFiles,
+    currentUser,
+  })
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   try {
     const result = await environmentService.cloneEnvironment(
-      sourceName,
-      targetName,
-      targetNamespace,
-      cloneEnvVars,
-      cloneFiles,
-      currentUser,
+      validated.data.sourceName,
+      validated.data.targetName,
+      validated.data.targetNamespace,
+      validated.data.cloneEnvVars,
+      validated.data.cloneFiles,
+      validated.data.currentUser,
     )
     revalidatePath('/environments')
     return { success: true, data: result }
@@ -207,22 +256,31 @@ export async function importEnvironmentConfig(
   newEnvName: string,
   targetNamespace: string,
   currentUser: string,
-  exportData: {
-    configs?: Record<string, string>
-    secrets?: Record<string, string>
-    files?: Array<{ name: string; content: string }>
-    compositions?: Array<{ name: string; spec: unknown }>
-  },
+  exportData: unknown,
 ) {
+  // Validate all parameters
+  const validated = importEnvironmentConfigSchema.safeParse({
+    newEnvName,
+    targetNamespace,
+    currentUser,
+    exportData,
+  })
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   const errors: string[] = []
 
   try {
     // Step 1: Create the environment
     const createResult = await environmentService.createEnvironment({
-      name: newEnvName,
+      name: validated.data.newEnvName,
       spec: {
-        targetNamespace,
-        ownedBy: currentUser,
+        targetNamespace: validated.data.targetNamespace,
+        ownedBy: validated.data.currentUser,
         activated: false,
       },
     })
@@ -231,11 +289,13 @@ export async function importEnvironmentConfig(
       return { success: false, error: 'Failed to create environment' }
     }
 
+    const { exportData: validatedExportData } = validated.data
+
     // Step 2: Import configs
-    if (exportData.configs) {
-      for (const [key, value] of Object.entries(exportData.configs)) {
+    if (validatedExportData.configs) {
+      for (const [key, value] of Object.entries(validatedExportData.configs)) {
         try {
-          await environmentService.createEnvVar(newEnvName, key, value, 'config')
+          await environmentService.createEnvVar(validated.data.newEnvName, key, value, 'config')
         } catch (err) {
           errors.push(`Failed to import config "${key}": ${err instanceof Error ? err.message : 'Unknown error'}`)
         }
@@ -243,10 +303,10 @@ export async function importEnvironmentConfig(
     }
 
     // Step 3: Import secrets
-    if (exportData.secrets) {
-      for (const [key, value] of Object.entries(exportData.secrets)) {
+    if (validatedExportData.secrets) {
+      for (const [key, value] of Object.entries(validatedExportData.secrets)) {
         try {
-          await environmentService.createEnvVar(newEnvName, key, value, 'secret')
+          await environmentService.createEnvVar(validated.data.newEnvName, key, value, 'secret')
         } catch (err) {
           errors.push(`Failed to import secret "${key}": ${err instanceof Error ? err.message : 'Unknown error'}`)
         }
@@ -254,10 +314,10 @@ export async function importEnvironmentConfig(
     }
 
     // Step 4: Import files
-    if (exportData.files) {
-      for (const file of exportData.files) {
+    if (validatedExportData.files) {
+      for (const file of validatedExportData.files) {
         try {
-          await environmentService.setFile(newEnvName, file.name, file.content)
+          await environmentService.setFile(validated.data.newEnvName, file.name, file.content)
         } catch (err) {
           errors.push(`Failed to import file "${file.name}": ${err instanceof Error ? err.message : 'Unknown error'}`)
         }
@@ -265,10 +325,10 @@ export async function importEnvironmentConfig(
     }
 
     // Step 5: Import compositions
-    if (exportData.compositions) {
-      for (const comp of exportData.compositions) {
+    if (validatedExportData.compositions) {
+      for (const comp of validatedExportData.compositions) {
         try {
-          await compositionService.createComposition(targetNamespace, {
+          await compositionService.createComposition(validated.data.targetNamespace, {
             name: comp.name,
             spec: comp.spec as Parameters<typeof compositionService.createComposition>[1]['spec'],
           })
@@ -283,12 +343,12 @@ export async function importEnvironmentConfig(
     if (errors.length > 0) {
       return {
         success: true,
-        data: { name: newEnvName },
+        data: { name: validated.data.newEnvName },
         warnings: errors,
       }
     }
 
-    return { success: true, data: { name: newEnvName } }
+    return { success: true, data: { name: validated.data.newEnvName } }
   } catch (err) {
     console.error('Import environment config error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')

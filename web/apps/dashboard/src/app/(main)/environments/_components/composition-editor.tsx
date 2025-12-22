@@ -22,6 +22,14 @@ import type { Extension } from '@codemirror/state'
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
+  loading: () => (
+    <div className="flex h-[500px] items-center justify-center bg-muted/30 rounded-md">
+      <div className="flex flex-col items-center gap-2">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Loading editor...</span>
+      </div>
+    </div>
+  ),
 })
 
 interface CompositionEditorProps {

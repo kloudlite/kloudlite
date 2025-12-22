@@ -1,6 +1,7 @@
 'use server'
 
 import { environmentService } from '@/lib/services/environment.service'
+import { environmentNameSchema, envVarSchema, fileSchema } from '@/lib/validations'
 import type {
   ConfigData,
   SetConfigResponse,
@@ -62,7 +63,19 @@ export async function createEnvVar(
   value: string,
   type: 'config' | 'secret',
 ): Promise<SetEnvVarResponse> {
-  return environmentService.createEnvVar(environmentName, key, value, type)
+  // Validate environment name
+  const nameValidation = environmentNameSchema.safeParse(environmentName)
+  if (!nameValidation.success) {
+    throw new Error('Invalid environment name')
+  }
+
+  // Validate env var data
+  const validated = envVarSchema.safeParse({ key, value, type })
+  if (!validated.success) {
+    throw new Error(validated.error.errors.map((e) => e.message).join(', '))
+  }
+
+  return environmentService.createEnvVar(environmentName, validated.data.key, validated.data.value, validated.data.type)
 }
 
 export async function setEnvVar(
@@ -71,7 +84,19 @@ export async function setEnvVar(
   value: string,
   type: 'config' | 'secret',
 ): Promise<SetEnvVarResponse> {
-  return environmentService.setEnvVar(environmentName, key, value, type)
+  // Validate environment name
+  const nameValidation = environmentNameSchema.safeParse(environmentName)
+  if (!nameValidation.success) {
+    throw new Error('Invalid environment name')
+  }
+
+  // Validate env var data
+  const validated = envVarSchema.safeParse({ key, value, type })
+  if (!validated.success) {
+    throw new Error(validated.error.errors.map((e) => e.message).join(', '))
+  }
+
+  return environmentService.setEnvVar(environmentName, validated.data.key, validated.data.value, validated.data.type)
 }
 
 export async function deleteEnvVar(
@@ -95,7 +120,19 @@ export async function setFile(
   filename: string,
   content: string,
 ): Promise<SetFileResponse> {
-  return environmentService.setFile(environmentName, filename, content)
+  // Validate environment name
+  const nameValidation = environmentNameSchema.safeParse(environmentName)
+  if (!nameValidation.success) {
+    throw new Error('Invalid environment name')
+  }
+
+  // Validate file data
+  const validated = fileSchema.safeParse({ filename, content })
+  if (!validated.success) {
+    throw new Error(validated.error.errors.map((e) => e.message).join(', '))
+  }
+
+  return environmentService.setFile(environmentName, validated.data.filename, validated.data.content)
 }
 
 export async function deleteFile(
