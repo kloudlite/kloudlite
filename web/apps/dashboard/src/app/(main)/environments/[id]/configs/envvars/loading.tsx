@@ -11,30 +11,46 @@ export default function EnvVarsLoading() {
       </div>
 
       {/* Table skeleton */}
-      <div className="rounded-lg border">
-        {/* Table header */}
-        <div className="border-b bg-muted/30 px-4 py-3">
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-muted h-4 w-12 animate-pulse rounded" />
-            <div className="bg-muted h-4 w-16 animate-pulse rounded" />
-            <div className="bg-muted h-4 w-10 animate-pulse rounded" />
-            <div className="bg-muted h-4 w-16 animate-pulse rounded" />
-          </div>
-        </div>
-        {/* Table rows */}
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="border-b px-4 py-3 last:border-b-0">
-            <div className="grid grid-cols-4 gap-4">
-              <div className="bg-muted h-4 w-28 animate-pulse rounded" />
-              <div className="bg-muted h-4 w-40 animate-pulse rounded" />
-              <div className="bg-muted h-5 w-14 animate-pulse rounded-full" />
-              <div className="flex gap-2">
-                <div className="bg-muted h-8 w-8 animate-pulse rounded" />
-                <div className="bg-muted h-8 w-8 animate-pulse rounded" />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="bg-card overflow-hidden rounded-lg border">
+        <table className="min-w-full">
+          <thead className="bg-muted/50 border-b">
+            <tr>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <div className="bg-muted h-3 w-8 animate-pulse rounded" />
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <div className="bg-muted h-3 w-12 animate-pulse rounded" />
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <div className="bg-muted h-3 w-10 animate-pulse rounded" />
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+                <div className="bg-muted ml-auto h-3 w-16 animate-pulse rounded" />
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <tr key={i}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-muted h-4 w-4 animate-pulse rounded" />
+                    <div className="bg-muted h-4 w-28 animate-pulse rounded" />
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="bg-muted h-4 w-40 animate-pulse rounded" />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="bg-muted h-5 w-14 animate-pulse rounded-full" />
+                </td>
+                <td className="px-6 py-4 text-right whitespace-nowrap">
+                  <div className="bg-muted ml-auto h-8 w-16 animate-pulse rounded" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
