@@ -128,10 +128,11 @@ export default async function HomePage() {
     for (const ref of prefs.spec.pinnedWorkspaces) {
       try {
         const ws = await workspaceService.get(ref.name, ref.namespace || '')
+        const connectedEnv = ws.status?.connectedEnvironment
         pinnedWorkspaces.push({
           id: `${ref.namespace}/${ref.name}`,
-          name: ws.metadata.name,
-          environment: ws.status?.connectedEnvironment?.name || '-',
+          name: `${ws.spec.ownedBy}/${ws.spec.displayName || ws.metadata.name}`,
+          environment: connectedEnv ? `${connectedEnv.ownedBy || ''}/${connectedEnv.name || ''}`.replace(/^\//, '') : '-',
           status: ws.status?.phase === 'Running' ? 'active' : 'idle',
         })
       } catch {
@@ -153,7 +154,7 @@ export default async function HomePage() {
         const env = await environmentService.getEnvironment(envName)
         pinnedEnvironments.push({
           id: envName,
-          name: envName,
+          name: `${env.spec.ownedBy}/${env.spec.name || env.metadata.name}`,
           status: env.status?.state === 'active' ? 'active' : 'idle',
         })
       } catch {
