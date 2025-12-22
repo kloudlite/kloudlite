@@ -235,6 +235,64 @@ func (h *DashboardHandlers) hasRole(roles []platformv1alpha1.RoleType, role plat
 	return false
 }
 
+// userHasAccessToEnvironment checks if a user has access to view an environment
+func (h *DashboardHandlers) userHasAccessToEnvironment(username string, env *environmentsv1.Environment) bool {
+	// Owner always has access
+	if env.Spec.OwnedBy == username {
+		return true
+	}
+
+	visibility := env.Spec.Visibility
+	if visibility == "" {
+		visibility = "private"
+	}
+
+	switch visibility {
+	case "private":
+		return false
+	case "shared":
+		for _, sharedUser := range env.Spec.SharedWith {
+			if sharedUser == username {
+				return true
+			}
+		}
+		return false
+	case "open":
+		return true
+	default:
+		return false
+	}
+}
+
+// userHasAccessToWorkspace checks if a user has access to view a workspace
+func (h *DashboardHandlers) userHasAccessToWorkspace(username string, ws *workspacesv1.Workspace) bool {
+	// Owner always has access
+	if ws.Spec.OwnedBy == username {
+		return true
+	}
+
+	visibility := string(ws.Spec.Visibility)
+	if visibility == "" {
+		visibility = "private"
+	}
+
+	switch visibility {
+	case "private":
+		return false
+	case "shared":
+		for _, sharedUser := range ws.Spec.SharedWith {
+			if sharedUser == username {
+				return true
+			}
+		}
+		return false
+	case "open":
+		return true
+	default:
+		return false
+	}
+}
+
 // EnvironmentDetailsResponse represents the environment details response
 type EnvironmentDetailsResponse struct {
 	Environment *environmentsv1.Environment `json:"environment"`
@@ -418,7 +476,7 @@ func (h *DashboardHandlers) GetWorkspacesListFull(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// Fetch workspaces
+	// Fetch workspaces and filter by visibility
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -427,8 +485,15 @@ func (h *DashboardHandlers) GetWorkspacesListFull(c *gin.Context) {
 			h.logger.Error("Failed to list workspaces", zap.Error(err))
 			return
 		}
+		// Filter by visibility access
+		var accessibleWorkspaces []workspacesv1.Workspace
+		for _, ws := range workspaces.Items {
+			if h.userHasAccessToWorkspace(username, &ws) {
+				accessibleWorkspaces = append(accessibleWorkspaces, ws)
+			}
+		}
 		mu.Lock()
-		response.Workspaces = workspaces.Items
+		response.Workspaces = accessibleWorkspaces
 		mu.Unlock()
 	}()
 
@@ -496,7 +561,7 @@ func (h *DashboardHandlers) GetEnvironmentsListFull(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// Fetch environments
+	// Fetch environments and filter by visibility
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -505,8 +570,15 @@ func (h *DashboardHandlers) GetEnvironmentsListFull(c *gin.Context) {
 			h.logger.Error("Failed to list environments", zap.Error(err))
 			return
 		}
+		// Filter by visibility access
+		var accessibleEnvs []environmentsv1.Environment
+		for _, env := range envs.Items {
+			if h.userHasAccessToEnvironment(username, &env) {
+				accessibleEnvs = append(accessibleEnvs, env)
+			}
+		}
 		mu.Lock()
-		response.Environments = envs.Items
+		response.Environments = accessibleEnvs
 		mu.Unlock()
 	}()
 
