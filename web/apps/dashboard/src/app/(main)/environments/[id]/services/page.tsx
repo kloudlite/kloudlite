@@ -1,11 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
-import { serviceService } from '@/lib/services/service.service'
-import { environmentService } from '@/lib/services/environment.service'
-import { compositionService } from '@/lib/services/composition.service'
-import type { K8sService } from '@kloudlite/types'
-import type { Composition } from '@kloudlite/types'
+import { getEnvironmentDetails } from '@/lib/services/dashboard.service'
 
 interface PageProps {
   params: Promise<{
@@ -21,60 +17,32 @@ export default async function ServicesPage({ params }: PageProps) {
   }
 
   const { id } = await params
-  const environmentName = id
 
-  // Fetch the environment to get its target namespace, hash and subdomain from status
-  let namespace = ''
-  let envHash = ''
-  let subdomain = ''
-  let isEnvActive = false
+  // Single API call to get environment, services, and composition
   try {
-    const environment = await environmentService.getEnvironment(environmentName)
-    namespace = environment.spec.targetNamespace || ''
-    // Get hash and subdomain from status (computed by controller)
-    envHash = environment.status?.hash || ''
-    subdomain = environment.status?.subdomain || ''
-    isEnvActive = environment.status?.state === 'active'
-  } catch (error) {
-    console.error('Failed to fetch environment:', error)
+    const data = await getEnvironmentDetails(id)
+
     return (
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <ServicesList
-          services={[]}
-          namespace={environmentName}
-          composition={null}
-          envHash=""
-          subdomain=""
-          isEnvActive={false}
-        />
-      </div>
+      <ServicesList
+        services={data.services}
+        namespace={data.namespace}
+        composition={data.composition}
+        envHash={data.envHash}
+        subdomain={data.subdomain}
+        isEnvActive={data.isActive}
+      />
+    )
+  } catch (error) {
+    console.error('Failed to fetch environment details:', error)
+    return (
+      <ServicesList
+        services={[]}
+        namespace={id}
+        composition={null}
+        envHash=""
+        subdomain=""
+        isEnvActive={false}
+      />
     )
   }
-
-  // Fetch services and composition in parallel (both only need namespace)
-  const [servicesResult, compositionResult] = await Promise.all([
-    serviceService.listServices(namespace).catch((error) => {
-      console.error('Failed to fetch services:', error)
-      return { services: [] }
-    }),
-    compositionService.getComposition(namespace, 'main-composition').catch(() => {
-      // Composition doesn't exist yet, that's okay
-      console.log('Main composition not found, will be created on first save')
-      return null
-    }),
-  ])
-
-  const services: K8sService[] = servicesResult.services || []
-  const composition: Composition | null = compositionResult
-
-  return (
-    <ServicesList
-      services={services}
-      namespace={namespace}
-      composition={composition}
-      envHash={envHash}
-      subdomain={subdomain}
-      isEnvActive={isEnvActive}
-    />
-  )
 }

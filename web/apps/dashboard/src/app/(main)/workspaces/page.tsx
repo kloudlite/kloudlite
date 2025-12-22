@@ -1,10 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { WorkspacesList } from './_components/workspaces-list'
-import { workspaceService } from '@/lib/services/workspace.service'
-import { workMachineService } from '@/lib/services/work-machine.service'
-import { getMyPreferences } from '@/app/actions/user-preferences.actions'
-import type { Workspace } from '@kloudlite/types'
+import { getWorkspacesListFull } from '@/lib/services/dashboard.service'
 
 export default async function WorkspacesPage() {
   const session = await getSession()
@@ -16,33 +13,20 @@ export default async function WorkspacesPage() {
   // Use username for filtering (matches ownedBy field in backend)
   const currentUser = session.user?.username || session.user?.email || 'user@example.com'
 
-  // Fetch all data in parallel
-  const [workMachineResult, workspacesResult, prefsResult] = await Promise.all([
-    workMachineService.getMyWorkMachine().catch((err) => {
-      console.error('Failed to fetch work machine:', err)
-      return null
-    }),
-    workspaceService.listAll().catch((err) => {
-      console.error('Failed to fetch workspaces:', err)
-      return { items: [] }
-    }),
-    getMyPreferences(),
-  ])
-
-  // Extract work machine info
-  const namespace = workMachineResult?.spec?.targetNamespace || 'default'
-  const workMachineRunning = workMachineResult?.status?.state === 'running'
-
-  // Extract workspaces
-  const workspaces: Workspace[] = workspacesResult.items || []
-
-  // Extract pinned workspace IDs from preferences
-  const pinnedWorkspaceIds = new Set<string>()
-  if (prefsResult.success && prefsResult.data?.spec.pinnedWorkspaces) {
-    for (const ref of prefsResult.data.spec.pinnedWorkspaces) {
-      pinnedWorkspaceIds.add(`${ref.namespace}/${ref.name}`)
+  // Single API call to get workspaces, work machine, and preferences
+  const data = await getWorkspacesListFull().catch((err) => {
+    console.error('Failed to fetch workspaces list:', err)
+    return {
+      workspaces: [],
+      workMachine: null,
+      preferences: null,
+      pinnedWorkspaceIds: [],
+      workMachineRunning: false,
     }
-  }
+  })
+
+  // Extract work machine namespace
+  const namespace = data.workMachine?.spec?.targetNamespace || 'default'
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
@@ -57,11 +41,11 @@ export default async function WorkspacesPage() {
 
         {/* Workspaces List with Filter */}
         <WorkspacesList
-          workspaces={workspaces}
+          workspaces={data.workspaces}
           currentUser={currentUser}
           namespace={namespace}
-          workMachineRunning={workMachineRunning}
-          pinnedWorkspaceIds={Array.from(pinnedWorkspaceIds)}
+          workMachineRunning={data.workMachineRunning}
+          pinnedWorkspaceIds={data.pinnedWorkspaceIds}
         />
       </div>
     </main>
