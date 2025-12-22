@@ -188,9 +188,7 @@ export function EnvironmentsList({
     try {
       const result = await activateEnvironment(envName)
       if (result.success) {
-        toast.success('Environment activated', {
-          description: `${envName} has been activated successfully.`,
-        })
+        toast.success('Environment activated')
         startTransition(() => {
           router.refresh()
         })
@@ -210,9 +208,7 @@ export function EnvironmentsList({
     try {
       const result = await deactivateEnvironment(envName)
       if (result.success) {
-        toast.success('Environment deactivated', {
-          description: `${envName} has been deactivated successfully.`,
-        })
+        toast.success('Environment deactivated')
         startTransition(() => {
           router.refresh()
         })
