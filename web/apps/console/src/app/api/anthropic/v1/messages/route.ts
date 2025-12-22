@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { jwtVerify } from 'jose'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -6,13 +7,55 @@ export const dynamic = 'force-dynamic'
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 
 /**
+ * Validates JWT token from Authorization header
+ * Returns user payload if valid, null if invalid
+ */
+async function validateToken(request: NextRequest): Promise<{ username?: string; email?: string } | null> {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null
+  }
+
+  const token = authHeader.slice(7)
+  const jwtSecret = process.env.JWT_SECRET
+
+  if (!jwtSecret) {
+    console.error('[Claude Proxy] JWT_SECRET environment variable not set')
+    return null
+  }
+
+  try {
+    const secret = new TextEncoder().encode(jwtSecret)
+    const { payload } = await jwtVerify(token, secret)
+    return {
+      username: payload.username as string | undefined,
+      email: payload.email as string | undefined,
+    }
+  } catch (error) {
+    console.error('[Claude Proxy] JWT verification failed:', error)
+    return null
+  }
+}
+
+/**
  * Claude API Proxy
  * Forwards requests to Anthropic's Claude API
+ * Requires valid Kloudlite JWT token for authentication
  * Supports both streaming (SSE) and non-streaming responses
  */
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  // Validate JWT token
+  const user = await validateToken(request)
+  if (!user) {
+    return Response.json(
+      { error: { type: 'authentication_error', message: 'Invalid or missing authorization token' } },
+      { status: 401 }
+    )
+  }
 
+  console.log('[Claude Proxy] Authenticated user:', user.username || user.email)
+
+  const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     console.error('[Claude Proxy] ANTHROPIC_API_KEY environment variable not set')
     return Response.json(
