@@ -1,11 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { WorkMachinesContent } from './workspaces/_components/work-machines-content'
-import { getMyWorkMachine, listAllWorkMachines } from '@/app/actions/work-machine.actions'
-import { listMachineTypes } from '@/app/actions/machine-type.actions'
-import { getMyPreferences } from '@/app/actions/user-preferences.actions'
-import { workspaceService } from '@/lib/services/workspace.service'
-import { environmentService } from '@/lib/services/environment.service'
+import { getDashboardData } from '@/lib/services/dashboard.service'
 import type { WorkMachine } from '@kloudlite/types'
 
 // Helper to map work machine CR to display format
@@ -76,100 +72,57 @@ export default async function HomePage() {
   }
 
   const currentUser = session.user?.email || 'user@example.com'
-  const userRoles = session.user?.roles || []
-  const isSuperAdmin = userRoles.includes('super-admin')
-  const isAdmin = userRoles.includes('admin') || isSuperAdmin
 
-  // Fetch machine types, work machines, and preferences in parallel
-  const [machineTypesResult, workMachinesResult, prefsResult] = await Promise.all([
-    listMachineTypes(),
-    isAdmin ? listAllWorkMachines() : getMyWorkMachine(),
-    getMyPreferences(),
-  ])
+  // Single API call to get all dashboard data
+  const dashboardData = await getDashboardData()
 
-  const availableMachineTypes =
-    machineTypesResult.success && machineTypesResult.data
-      ? machineTypesResult.data.items
-          .filter((mt) => mt.spec.active !== false)
-          .map((mt) => ({
-            id: mt.metadata.name,
-            name: mt.spec.displayName || mt.metadata.name,
-            description: mt.spec.description || '',
-            category: mt.spec.category || 'general',
-            cpu: mt.spec.resources?.cpu || '',
-            memory: mt.spec.resources?.memory || '',
-            gpu: mt.spec.resources?.gpu,
-          }))
-      : []
+  // Transform machine types for the component
+  const availableMachineTypes = dashboardData.machineTypes
+    .filter((mt) => mt.spec.active !== false)
+    .map((mt) => ({
+      id: mt.metadata.name,
+      name: mt.spec.displayName || mt.metadata.name,
+      description: mt.spec.description || '',
+      category: mt.spec.category || 'general',
+      cpu: mt.spec.resources?.cpu || '',
+      memory: mt.spec.resources?.memory || '',
+      gpu: mt.spec.resources?.gpu,
+    }))
 
-  // Transform work machines result
-  let workMachines: ReturnType<typeof transformWorkMachine>[] = []
-  if (workMachinesResult.success && workMachinesResult.data) {
-    if (isAdmin && 'items' in workMachinesResult.data) {
-      workMachines = workMachinesResult.data.items.map(transformWorkMachine)
-    } else if (!isAdmin) {
-      workMachines = [transformWorkMachine(workMachinesResult.data as WorkMachine)]
-    }
-  }
+  // Transform work machines
+  const workMachines = dashboardData.workMachines.map(transformWorkMachine)
 
-  const prefs = prefsResult.success ? prefsResult.data : null
-
-  // Fetch pinned workspaces and environments in parallel
+  // Transform pinned workspaces
   interface PinnedWorkspace {
     id: string
     name: string
     environment: string
     status: 'active' | 'idle'
   }
+  const pinnedWorkspaces: PinnedWorkspace[] = dashboardData.pinnedWorkspaces.map((ws) => ({
+    id: `${ws.metadata.namespace}/${ws.metadata.name}`,
+    name: `${ws.spec.ownedBy}/${ws.spec.displayName || ws.metadata.name}`,
+    environment: ws.status?.connectedEnvironment?.name || '-',
+    status: ws.status?.phase === 'Running' ? 'active' : 'idle',
+  }))
+
+  // Transform pinned environments
   interface PinnedEnvironment {
     id: string
     name: string
     status: 'active' | 'idle'
   }
-
-  // Fetch all pinned workspaces in parallel
-  const pinnedWorkspacePromises = (prefs?.spec.pinnedWorkspaces || []).map(async (ref): Promise<PinnedWorkspace | null> => {
-    try {
-      const ws = await workspaceService.get(ref.name, ref.namespace || '')
-      return {
-        id: `${ref.namespace}/${ref.name}`,
-        name: `${ws.spec.ownedBy}/${ws.spec.displayName || ws.metadata.name}`,
-        environment: ws.status?.connectedEnvironment?.name || '-',
-        status: ws.status?.phase === 'Running' ? 'active' : 'idle',
-      }
-    } catch {
-      return null // Workspace may have been deleted
-    }
-  })
-
-  // Fetch all pinned environments in parallel
-  const pinnedEnvironmentPromises = (prefs?.spec.pinnedEnvironments || []).map(async (envName): Promise<PinnedEnvironment | null> => {
-    try {
-      const env = await environmentService.getEnvironment(envName)
-      return {
-        id: envName,
-        name: `${env.spec.ownedBy}/${env.spec.name || env.metadata.name}`,
-        status: env.status?.state === 'active' ? 'active' : 'idle',
-      }
-    } catch {
-      return null // Environment may have been deleted
-    }
-  })
-
-  // Wait for all pinned resources to load in parallel
-  const [pinnedWorkspacesResults, pinnedEnvironmentsResults] = await Promise.all([
-    Promise.all(pinnedWorkspacePromises),
-    Promise.all(pinnedEnvironmentPromises),
-  ])
-
-  const pinnedWorkspaces: PinnedWorkspace[] = pinnedWorkspacesResults.filter((ws): ws is PinnedWorkspace => ws !== null)
-  const pinnedEnvironments: PinnedEnvironment[] = pinnedEnvironmentsResults.filter((env): env is PinnedEnvironment => env !== null)
+  const pinnedEnvironments: PinnedEnvironment[] = dashboardData.pinnedEnvironments.map((env) => ({
+    id: env.metadata.name,
+    name: `${env.spec.ownedBy}/${env.spec.name || env.metadata.name}`,
+    status: env.status?.state === 'active' ? 'active' : 'idle',
+  }))
 
   return (
     <WorkMachinesContent
       initialMachines={workMachines}
       currentUser={currentUser}
-      isAdmin={isAdmin}
+      isAdmin={dashboardData.isAdmin}
       availableMachineTypes={availableMachineTypes}
       pinnedWorkspaces={pinnedWorkspaces}
       pinnedEnvironments={pinnedEnvironments}
