@@ -2,11 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { workspaceService } from '@/lib/services/workspace.service'
-import type {
-  WorkspaceCreateRequest,
-  WorkspaceUpdateRequest,
-  WorkspaceListParams,
-} from '@kloudlite/types'
+import {
+  workspaceCreateSchema,
+  workspaceUpdateSchema,
+  workspaceNameSchema,
+  packageUpdateSchema,
+} from '@/lib/validations'
+import type { WorkspaceListParams } from '@kloudlite/types'
 
 /**
  * Server action to list workspaces
@@ -45,9 +47,18 @@ export async function getWorkspace(name: string, namespace: string = 'default') 
 /**
  * Server action to create a workspace
  */
-export async function createWorkspace(namespace: string, data: WorkspaceCreateRequest) {
+export async function createWorkspace(namespace: string, data: unknown) {
+  // Validate input
+  const validated = workspaceCreateSchema.safeParse(data)
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   try {
-    const result = await workspaceService.create(data, namespace)
+    const result = await workspaceService.create(validated.data, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -63,13 +74,27 @@ export async function createWorkspace(namespace: string, data: WorkspaceCreateRe
 /**
  * Server action to update a workspace
  */
-export async function updateWorkspace(
-  name: string,
-  namespace: string,
-  data: WorkspaceUpdateRequest,
-) {
+export async function updateWorkspace(name: string, namespace: string, data: unknown) {
+  // Validate workspace name
+  const nameValidation = workspaceNameSchema.safeParse(name)
+  if (!nameValidation.success) {
+    return {
+      success: false,
+      error: 'Invalid workspace name',
+    }
+  }
+
+  // Validate update data
+  const validated = workspaceUpdateSchema.safeParse(data)
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   try {
-    const result = await workspaceService.update(name, data, namespace)
+    const result = await workspaceService.update(name, validated.data, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -205,11 +230,29 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
  */
 export async function cloneWorkspace(
   sourceWorkspaceName: string,
-  data: WorkspaceCreateRequest,
+  data: unknown,
   namespace: string = 'default',
 ) {
+  // Validate source workspace name
+  const sourceNameValidation = workspaceNameSchema.safeParse(sourceWorkspaceName)
+  if (!sourceNameValidation.success) {
+    return {
+      success: false,
+      error: 'Invalid source workspace name',
+    }
+  }
+
+  // Validate clone data
+  const validated = workspaceCreateSchema.safeParse(data)
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   try {
-    const result = await workspaceService.clone(sourceWorkspaceName, data, namespace)
+    const result = await workspaceService.clone(sourceWorkspaceName, validated.data, namespace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -228,9 +271,27 @@ export async function cloneWorkspace(
  */
 export async function updatePackageRequest(
   workspaceName: string,
-  packages: Array<{ name: string; nixpkgsCommit?: string }>,
+  packages: unknown,
   namespace: string = 'default',
 ) {
+  // Validate workspace name
+  const nameValidation = workspaceNameSchema.safeParse(workspaceName)
+  if (!nameValidation.success) {
+    return {
+      success: false,
+      error: 'Invalid workspace name',
+    }
+  }
+
+  // Validate packages
+  const validated = packageUpdateSchema.safeParse({ packages })
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.errors.map((e) => e.message).join(', '),
+    }
+  }
+
   try {
     const { env } = await import('@/lib/env')
     const { getAuthToken } = await import('@/lib/get-session')
@@ -250,7 +311,7 @@ export async function updatePackageRequest(
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ packages }),
+      body: JSON.stringify({ packages: validated.data.packages }),
     })
 
     if (!response.ok) {
