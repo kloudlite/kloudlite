@@ -80,8 +80,13 @@ export default async function HomePage() {
   const isSuperAdmin = userRoles.includes('super-admin')
   const isAdmin = userRoles.includes('admin') || isSuperAdmin
 
-  // Fetch machine types
-  const machineTypesResult = await listMachineTypes()
+  // Fetch machine types, work machines, and preferences in parallel
+  const [machineTypesResult, workMachinesResult, prefsResult] = await Promise.all([
+    listMachineTypes(),
+    isAdmin ? listAllWorkMachines() : getMyWorkMachine(),
+    getMyPreferences(),
+  ])
+
   const availableMachineTypes =
     machineTypesResult.success && machineTypesResult.data
       ? machineTypesResult.data.items
@@ -97,70 +102,68 @@ export default async function HomePage() {
           }))
       : []
 
-  // Fetch real work machine data from CRs
+  // Transform work machines result
   let workMachines: ReturnType<typeof transformWorkMachine>[] = []
-
-  if (isAdmin) {
-    const result = await listAllWorkMachines()
-    if (result.success && result.data) {
-      workMachines = result.data.items.map(transformWorkMachine)
-    }
-  } else {
-    const result = await getMyWorkMachine()
-    if (result.success && result.data) {
-      workMachines = [transformWorkMachine(result.data)]
+  if (workMachinesResult.success && workMachinesResult.data) {
+    if (isAdmin && 'items' in workMachinesResult.data) {
+      workMachines = workMachinesResult.data.items.map(transformWorkMachine)
+    } else if (!isAdmin) {
+      workMachines = [transformWorkMachine(workMachinesResult.data as WorkMachine)]
     }
   }
 
-  // Fetch user preferences for pinned resources
-  const prefsResult = await getMyPreferences()
   const prefs = prefsResult.success ? prefsResult.data : null
 
-  // Fetch full workspace data for pinned workspaces
+  // Fetch pinned workspaces and environments in parallel
   interface PinnedWorkspace {
     id: string
     name: string
     environment: string
     status: 'active' | 'idle'
   }
-  const pinnedWorkspaces: PinnedWorkspace[] = []
-  if (prefs?.spec.pinnedWorkspaces) {
-    for (const ref of prefs.spec.pinnedWorkspaces) {
-      try {
-        const ws = await workspaceService.get(ref.name, ref.namespace || '')
-        pinnedWorkspaces.push({
-          id: `${ref.namespace}/${ref.name}`,
-          name: `${ws.spec.ownedBy}/${ws.spec.displayName || ws.metadata.name}`,
-          environment: ws.status?.connectedEnvironment?.name || '-',
-          status: ws.status?.phase === 'Running' ? 'active' : 'idle',
-        })
-      } catch {
-        // Workspace may have been deleted - skip it
-      }
-    }
-  }
-
-  // Fetch full environment data for pinned environments
   interface PinnedEnvironment {
     id: string
     name: string
     status: 'active' | 'idle'
   }
-  const pinnedEnvironments: PinnedEnvironment[] = []
-  if (prefs?.spec.pinnedEnvironments) {
-    for (const envName of prefs.spec.pinnedEnvironments) {
-      try {
-        const env = await environmentService.getEnvironment(envName)
-        pinnedEnvironments.push({
-          id: envName,
-          name: `${env.spec.ownedBy}/${env.spec.name || env.metadata.name}`,
-          status: env.status?.state === 'active' ? 'active' : 'idle',
-        })
-      } catch {
-        // Environment may have been deleted - skip it
+
+  // Fetch all pinned workspaces in parallel
+  const pinnedWorkspacePromises = (prefs?.spec.pinnedWorkspaces || []).map(async (ref): Promise<PinnedWorkspace | null> => {
+    try {
+      const ws = await workspaceService.get(ref.name, ref.namespace || '')
+      return {
+        id: `${ref.namespace}/${ref.name}`,
+        name: `${ws.spec.ownedBy}/${ws.spec.displayName || ws.metadata.name}`,
+        environment: ws.status?.connectedEnvironment?.name || '-',
+        status: ws.status?.phase === 'Running' ? 'active' : 'idle',
       }
+    } catch {
+      return null // Workspace may have been deleted
     }
-  }
+  })
+
+  // Fetch all pinned environments in parallel
+  const pinnedEnvironmentPromises = (prefs?.spec.pinnedEnvironments || []).map(async (envName): Promise<PinnedEnvironment | null> => {
+    try {
+      const env = await environmentService.getEnvironment(envName)
+      return {
+        id: envName,
+        name: `${env.spec.ownedBy}/${env.spec.name || env.metadata.name}`,
+        status: env.status?.state === 'active' ? 'active' : 'idle',
+      }
+    } catch {
+      return null // Environment may have been deleted
+    }
+  })
+
+  // Wait for all pinned resources to load in parallel
+  const [pinnedWorkspacesResults, pinnedEnvironmentsResults] = await Promise.all([
+    Promise.all(pinnedWorkspacePromises),
+    Promise.all(pinnedEnvironmentPromises),
+  ])
+
+  const pinnedWorkspaces: PinnedWorkspace[] = pinnedWorkspacesResults.filter((ws): ws is PinnedWorkspace => ws !== null)
+  const pinnedEnvironments: PinnedEnvironment[] = pinnedEnvironmentsResults.filter((env): env is PinnedEnvironment => env !== null)
 
   return (
     <WorkMachinesContent
