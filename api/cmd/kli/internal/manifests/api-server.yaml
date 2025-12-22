@@ -59,6 +59,8 @@ spec:
               value: "ghcr.io/kloudlite/kloudlite/workmachine-node-manager:development"
             - name: TUNNEL_SERVER_IMAGE
               value: "ghcr.io/kloudlite/kloudlite/tunnel-server:development"
+            - name: CODE_ANALYZER_IMAGE
+              value: "ghcr.io/kloudlite/kloudlite/code-analyzer:development"
           volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs
