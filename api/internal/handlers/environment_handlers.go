@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -642,4 +644,148 @@ func (h *EnvironmentHandlers) GetEnvironmentStatus(c *gin.Context) {
 		"resourceQuotas":  env.Spec.ResourceQuotas,
 		"networkPolicies": env.Spec.NetworkPolicies,
 	})
+}
+
+// EnvironmentStatusEvent represents a status event for SSE streaming
+type EnvironmentStatusEvent struct {
+	State         string                        `json:"state"`
+	Message       string                        `json:"message"`
+	Activated     bool                          `json:"activated"`
+	CloningStatus *environmentsv1.CloningStatus `json:"cloningStatus,omitempty"`
+	Timestamp     time.Time                     `json:"timestamp"`
+}
+
+// GetEnvironmentStatusStream handles GET /api/v1/environments/:name/status-stream
+// This endpoint streams status updates via Server-Sent Events (SSE)
+func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
+	ctx := c.Request.Context()
+	name := c.Param("name")
+
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Environment name is required",
+		})
+		return
+	}
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Verify environment exists and user has access
+	env, err := h.envRepo.Get(ctx, name)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Environment not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Check access
+	if !h.userHasAccessToEnvironment(username, env) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You don't have access to this environment",
+		})
+		return
+	}
+
+	// Set SSE headers
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
+
+	// Helper function to build and send status event
+	sendStatusEvent := func(env *environmentsv1.Environment) {
+		event := EnvironmentStatusEvent{
+			State:         string(env.Status.State),
+			Message:       env.Status.Message,
+			Activated:     env.Spec.Activated,
+			CloningStatus: env.Status.CloningStatus,
+			Timestamp:     time.Now().UTC(),
+		}
+
+		eventData, err := json.Marshal(event)
+		if err != nil {
+			h.logger.Error("Failed to marshal status event", zap.Error(err))
+			return
+		}
+
+		c.Writer.Write([]byte("event: status\n"))
+		c.Writer.Write([]byte("data: "))
+		c.Writer.Write(eventData)
+		c.Writer.Write([]byte("\n\n"))
+		c.Writer.Flush()
+	}
+
+	// Send initial status immediately
+	sendStatusEvent(env)
+
+	// Start watching for changes
+	watchChan, err := h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+	if err != nil {
+		h.logger.Error("Failed to start environment watch", zap.Error(err))
+		// Fall back to polling if watch fails
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				env, err := h.envRepo.Get(ctx, name)
+				if err != nil {
+					continue
+				}
+				sendStatusEvent(env)
+			}
+		}
+	}
+
+	// Stream watch events
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-watchChan:
+			if !ok {
+				// Watch channel closed, restart it
+				watchChan, err = h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+				if err != nil {
+					h.logger.Error("Failed to restart environment watch", zap.Error(err))
+					return
+				}
+				continue
+			}
+
+			if event.Error != nil {
+				h.logger.Error("Watch error", zap.Error(event.Error))
+				continue
+			}
+
+			if event.Type == repository.WatchEventDeleted {
+				// Environment was deleted, send final event and close
+				c.Writer.Write([]byte("event: deleted\n"))
+				c.Writer.Write([]byte("data: {\"deleted\": true}\n\n"))
+				c.Writer.Flush()
+				return
+			}
+
+			if event.Object != nil {
+				sendStatusEvent(event.Object)
+			}
+		}
+	}
 }

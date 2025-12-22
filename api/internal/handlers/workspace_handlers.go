@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -999,4 +1000,161 @@ func (h *WorkspaceHandlers) UpdatePackageRequest(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, &pkgReq)
+}
+
+// WorkspaceStatusEvent represents a status event for SSE streaming
+type WorkspaceStatusEvent struct {
+	Phase             string            `json:"phase"`
+	Message           string            `json:"message"`
+	Status            string            `json:"status"`
+	ActiveConnections int               `json:"activeConnections"`
+	IdleState         string            `json:"idleState"`
+	AccessURLs        map[string]string `json:"accessUrls,omitempty"`
+	Timestamp         time.Time         `json:"timestamp"`
+}
+
+// GetWorkspaceStatusStream handles GET /api/v1/namespaces/:namespace/workspaces/:name/status-stream
+// This endpoint streams status updates via Server-Sent Events (SSE)
+func (h *WorkspaceHandlers) GetWorkspaceStatusStream(c *gin.Context) {
+	ctx := c.Request.Context()
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Workspace name is required",
+		})
+		return
+	}
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Verify workspace exists and user has access
+	ws, err := h.wsRepo.Get(ctx, namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Workspace not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Check access
+	if !h.userHasAccessToWorkspace(username, ws) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You don't have access to this workspace",
+		})
+		return
+	}
+
+	// Set SSE headers
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("X-Accel-Buffering", "no")
+
+	// Helper function to build and send status event
+	sendStatusEvent := func(ws *workspacesv1.Workspace) {
+		event := WorkspaceStatusEvent{
+			Phase:             ws.Status.Phase,
+			Message:           ws.Status.Message,
+			Status:            string(ws.Spec.Status),
+			ActiveConnections: ws.Status.ActiveConnections,
+			IdleState:         ws.Status.IdleState,
+			Timestamp:         time.Now().UTC(),
+		}
+
+		// Only include access URLs for owner
+		if ws.Spec.OwnedBy == username {
+			event.AccessURLs = ws.Status.AccessURLs
+		}
+
+		eventData, err := json.Marshal(event)
+		if err != nil {
+			h.logger.Error("Failed to marshal status event", zap.Error(err))
+			return
+		}
+
+		c.Writer.Write([]byte("event: status\n"))
+		c.Writer.Write([]byte("data: "))
+		c.Writer.Write(eventData)
+		c.Writer.Write([]byte("\n\n"))
+		c.Writer.Flush()
+	}
+
+	// Send initial status immediately
+	sendStatusEvent(ws)
+
+	// Start watching for changes
+	watchChan, err := h.wsRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+	if err != nil {
+		h.logger.Error("Failed to start workspace watch", zap.Error(err))
+		// Fall back to polling if watch fails
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				ws, err := h.wsRepo.Get(ctx, namespace, name)
+				if err != nil {
+					continue
+				}
+				sendStatusEvent(ws)
+			}
+		}
+	}
+
+	// Stream watch events
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-watchChan:
+			if !ok {
+				// Watch channel closed, restart it
+				watchChan, err = h.wsRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+				if err != nil {
+					h.logger.Error("Failed to restart workspace watch", zap.Error(err))
+					return
+				}
+				continue
+			}
+
+			if event.Error != nil {
+				h.logger.Error("Watch error", zap.Error(event.Error))
+				continue
+			}
+
+			if event.Type == repository.WatchEventDeleted {
+				// Workspace was deleted, send final event and close
+				c.Writer.Write([]byte("event: deleted\n"))
+				c.Writer.Write([]byte("data: {\"deleted\": true}\n\n"))
+				c.Writer.Flush()
+				return
+			}
+
+			if event.Object != nil {
+				sendStatusEvent(event.Object)
+			}
+		}
+	}
 }

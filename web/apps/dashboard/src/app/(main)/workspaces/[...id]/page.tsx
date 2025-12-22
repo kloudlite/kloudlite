@@ -8,6 +8,7 @@ import { WorkspaceConnectOptions } from '../_components/workspace-connect-option
 import { WorkspaceActions } from '../_components/workspace-actions'
 import { PackagesSheet } from '../_components/packages-sheet'
 import { WorkspaceMetrics } from '../_components/workspace-metrics'
+import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
 import { workspaceService } from '@/lib/services/workspace.service'
 import { workMachineService } from '@/lib/services/work-machine.service'
 import { getPackageRequest } from '@/app/actions/workspace.actions'
@@ -84,18 +85,6 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
   // Use runtime phase for status display
   const phase = workspace.status?.phase || 'Pending'
-  const statusColor =
-    phase === 'Running'
-      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-      : phase === 'Creating' || phase === 'Pending'
-        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-        : phase === 'Failed'
-          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-          : phase === 'Terminating'
-            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-            : phase === 'Stopped'
-              ? 'bg-secondary text-secondary-foreground'
-              : 'bg-secondary text-secondary-foreground'
 
   // Package info is now stored in PackageRequest (fetched on demand in PackagesSheet component)
 
@@ -120,11 +109,11 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                   </p>
                 )}
                 <div className="text-muted-foreground mt-3 flex items-center gap-4 text-sm">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}
-                  >
-                    {phase}
-                  </span>
+                  <WorkspaceStatusIndicator
+                    namespace={namespace}
+                    workspaceName={name}
+                    initialPhase={phase}
+                  />
                   {workspace.status?.message && (
                     <>
                       <span>•</span>

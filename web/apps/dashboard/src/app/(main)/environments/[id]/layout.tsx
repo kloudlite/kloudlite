@@ -3,6 +3,7 @@ import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
 import { environmentService } from '@/lib/services/environment.service'
+import { EnvironmentStatusIndicator } from '@/components/environment-status-indicator'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -94,25 +95,10 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
                   <span>•</span>
                   <span>Created: {environment.created}</span>
                   <span>•</span>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      environment.status === 'active'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : environment.status === 'inactive'
-                          ? 'bg-secondary text-secondary-foreground'
-                          : environment.status === 'activating'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                            : environment.status === 'deactivating'
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : environment.status === 'deleting'
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                : environment.status === 'error'
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                  : 'bg-secondary text-secondary-foreground'
-                    }`}
-                  >
-                    {environment.status}
-                  </span>
+                  <EnvironmentStatusIndicator
+                    environmentName={environment.name}
+                    initialState={environment.status}
+                  />
                 </div>
               </div>
             </div>
