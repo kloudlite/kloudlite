@@ -1,17 +1,24 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	"github.com/kloudlite/kloudlite/api/internal/dto"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -22,6 +29,8 @@ type DashboardHandlers struct {
 	userPreferencesRepo repository.UserPreferencesRepository
 	workspaceRepo       repository.WorkspaceRepository
 	environmentRepo     repository.EnvironmentRepository
+	compositionRepo     repository.CompositionRepository
+	k8sClient           client.Client
 	logger              *zap.Logger
 }
 
@@ -32,6 +41,8 @@ func NewDashboardHandlers(
 	userPreferencesRepo repository.UserPreferencesRepository,
 	workspaceRepo repository.WorkspaceRepository,
 	environmentRepo repository.EnvironmentRepository,
+	compositionRepo repository.CompositionRepository,
+	k8sClient client.Client,
 	logger *zap.Logger,
 ) *DashboardHandlers {
 	return &DashboardHandlers{
@@ -40,6 +51,8 @@ func NewDashboardHandlers(
 		userPreferencesRepo: userPreferencesRepo,
 		workspaceRepo:       workspaceRepo,
 		environmentRepo:     environmentRepo,
+		compositionRepo:     compositionRepo,
+		k8sClient:           k8sClient,
 		logger:              logger,
 	}
 }
@@ -220,4 +233,401 @@ func (h *DashboardHandlers) hasRole(roles []platformv1alpha1.RoleType, role plat
 		}
 	}
 	return false
+}
+
+// EnvironmentDetailsResponse represents the environment details response
+type EnvironmentDetailsResponse struct {
+	Environment *environmentsv1.Environment  `json:"environment"`
+	Services    []dto.ServiceInfo            `json:"services"`
+	Composition *environmentsv1.Composition  `json:"composition,omitempty"`
+	Namespace   string                       `json:"namespace"`
+	EnvHash     string                       `json:"envHash"`
+	Subdomain   string                       `json:"subdomain"`
+	IsActive    bool                         `json:"isActive"`
+}
+
+// GetEnvironmentDetails handles GET /environments/:name/details
+// Returns environment, services, and composition in a single request
+func (h *DashboardHandlers) GetEnvironmentDetails(c *gin.Context) {
+	ctx := c.Request.Context()
+	envName := c.Param("name")
+
+	if envName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Environment name is required"})
+		return
+	}
+
+	// Get environment first to get the namespace
+	env, err := h.environmentRepo.Get(ctx, envName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Environment not found"})
+			return
+		}
+		h.logger.Error("Failed to get environment", zap.Error(err), zap.String("name", envName))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get environment", "details": err.Error()})
+		return
+	}
+
+	namespace := env.Spec.TargetNamespace
+	response := EnvironmentDetailsResponse{
+		Environment: env,
+		Namespace:   namespace,
+		EnvHash:     env.Status.Hash,
+		Subdomain:   env.Status.Subdomain,
+		IsActive:    env.Status.State == environmentsv1.EnvironmentStateActive,
+	}
+
+	// Fetch services and composition in parallel
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	// Fetch services (deployments with kloudlite.io/managed=true label)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		services := h.listServicesInNamespace(ctx, namespace)
+		mu.Lock()
+		response.Services = services
+		mu.Unlock()
+	}()
+
+	// Fetch main composition
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		comp, err := h.compositionRepo.Get(ctx, namespace, "main-composition")
+		if err != nil {
+			// Composition may not exist yet - that's okay
+			if client.IgnoreNotFound(err) != nil {
+				h.logger.Warn("Failed to fetch composition", zap.Error(err), zap.String("namespace", namespace))
+			}
+			return
+		}
+		mu.Lock()
+		response.Composition = comp
+		mu.Unlock()
+	}()
+
+	wg.Wait()
+	c.JSON(http.StatusOK, response)
+}
+
+// listServicesInNamespace fetches deployments and services in a namespace
+func (h *DashboardHandlers) listServicesInNamespace(ctx context.Context, namespace string) []dto.ServiceInfo {
+	// List all deployments managed by compositions
+	deploymentList := &appsv1.DeploymentList{}
+	if err := h.k8sClient.List(ctx, deploymentList,
+		client.InNamespace(namespace),
+		client.MatchingLabels{"kloudlite.io/managed": "true"},
+	); err != nil {
+		h.logger.Warn("Failed to list deployments", zap.String("namespace", namespace), zap.Error(err))
+		return nil
+	}
+
+	// List all services in the namespace to enrich deployment data
+	serviceList := &corev1.ServiceList{}
+	if err := h.k8sClient.List(ctx, serviceList, client.InNamespace(namespace)); err != nil {
+		h.logger.Warn("Failed to list k8s services", zap.String("namespace", namespace), zap.Error(err))
+	}
+
+	// Create a map of services by name for quick lookup
+	serviceMap := make(map[string]*corev1.Service)
+	for i := range serviceList.Items {
+		svc := &serviceList.Items[i]
+		serviceMap[svc.Name] = svc
+	}
+
+	// Transform the deployments to service info format
+	services := make([]dto.ServiceInfo, 0, len(deploymentList.Items))
+	for _, deploy := range deploymentList.Items {
+		svc, hasSvc := serviceMap[deploy.Name]
+
+		var ports []dto.ServicePort
+		var clusterIP string
+		var svcType string
+
+		if hasSvc {
+			ports = make([]dto.ServicePort, 0, len(svc.Spec.Ports))
+			for _, port := range svc.Spec.Ports {
+				ports = append(ports, dto.ServicePort{
+					Name:       port.Name,
+					Protocol:   string(port.Protocol),
+					Port:       port.Port,
+					TargetPort: port.TargetPort.String(),
+				})
+			}
+			clusterIP = svc.Spec.ClusterIP
+			svcType = string(svc.Spec.Type)
+		} else {
+			ports = make([]dto.ServicePort, 0)
+			if len(deploy.Spec.Template.Spec.Containers) > 0 {
+				for _, port := range deploy.Spec.Template.Spec.Containers[0].Ports {
+					ports = append(ports, dto.ServicePort{
+						Name:       port.Name,
+						Protocol:   string(port.Protocol),
+						Port:       port.ContainerPort,
+						TargetPort: fmt.Sprintf("%d", port.ContainerPort),
+					})
+				}
+			}
+			svcType = "None"
+		}
+
+		image := ""
+		if len(deploy.Spec.Template.Spec.Containers) > 0 {
+			image = deploy.Spec.Template.Spec.Containers[0].Image
+		}
+
+		services = append(services, dto.ServiceInfo{
+			Name:      deploy.Name,
+			Namespace: deploy.Namespace,
+			Type:      svcType,
+			ClusterIP: clusterIP,
+			Ports:     ports,
+			Selector:  deploy.Spec.Selector.MatchLabels,
+			Replicas:  deploy.Status.ReadyReplicas,
+			Image:     image,
+		})
+	}
+
+	return services
+}
+
+// WorkspacesListResponse represents the workspaces list response
+type WorkspacesListResponse struct {
+	Workspaces           []workspacesv1.Workspace          `json:"workspaces"`
+	WorkMachine          *machinesv1.WorkMachine           `json:"workMachine,omitempty"`
+	Preferences          *platformv1alpha1.UserPreferences `json:"preferences,omitempty"`
+	PinnedWorkspaceIds   []string                          `json:"pinnedWorkspaceIds"`
+	WorkMachineRunning   bool                              `json:"workMachineRunning"`
+}
+
+// GetWorkspacesListFull handles GET /workspaces/list-full
+// Returns workspaces, work machine, and preferences in a single request
+func (h *DashboardHandlers) GetWorkspacesListFull(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	var response WorkspacesListResponse
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	// Fetch workspaces
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		workspaces, err := h.workspaceRepo.ListAll(ctx)
+		if err != nil {
+			h.logger.Error("Failed to list workspaces", zap.Error(err))
+			return
+		}
+		mu.Lock()
+		response.Workspaces = workspaces.Items
+		mu.Unlock()
+	}()
+
+	// Fetch work machine
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wm, err := h.workMachineRepo.GetByOwner(ctx, username)
+		if err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				h.logger.Error("Failed to get work machine", zap.Error(err))
+			}
+			return
+		}
+		mu.Lock()
+		response.WorkMachine = wm
+		response.WorkMachineRunning = wm.Status.State == machinesv1.MachineStateRunning
+		mu.Unlock()
+	}()
+
+	// Fetch preferences
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		prefs, err := h.userPreferencesRepo.GetOrCreate(ctx, username)
+		if err != nil {
+			h.logger.Error("Failed to get preferences", zap.Error(err))
+			return
+		}
+		mu.Lock()
+		response.Preferences = prefs
+		pinnedIds := make([]string, 0, len(prefs.Spec.PinnedWorkspaces))
+		for _, ref := range prefs.Spec.PinnedWorkspaces {
+			pinnedIds = append(pinnedIds, fmt.Sprintf("%s/%s", ref.Namespace, ref.Name))
+		}
+		response.PinnedWorkspaceIds = pinnedIds
+		mu.Unlock()
+	}()
+
+	wg.Wait()
+	c.JSON(http.StatusOK, response)
+}
+
+// EnvironmentsListResponse represents the environments list response
+type EnvironmentsListResponse struct {
+	Environments          []environmentsv1.Environment      `json:"environments"`
+	WorkMachine           *machinesv1.WorkMachine           `json:"workMachine,omitempty"`
+	Preferences           *platformv1alpha1.UserPreferences `json:"preferences,omitempty"`
+	PinnedEnvironmentIds  []string                          `json:"pinnedEnvironmentIds"`
+	WorkMachineRunning    bool                              `json:"workMachineRunning"`
+}
+
+// GetEnvironmentsListFull handles GET /environments/list-full
+// Returns environments, work machine, and preferences in a single request
+func (h *DashboardHandlers) GetEnvironmentsListFull(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	var response EnvironmentsListResponse
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	// Fetch environments
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		envs, err := h.environmentRepo.List(ctx)
+		if err != nil {
+			h.logger.Error("Failed to list environments", zap.Error(err))
+			return
+		}
+		mu.Lock()
+		response.Environments = envs.Items
+		mu.Unlock()
+	}()
+
+	// Fetch work machine
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wm, err := h.workMachineRepo.GetByOwner(ctx, username)
+		if err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				h.logger.Error("Failed to get work machine", zap.Error(err))
+			}
+			return
+		}
+		mu.Lock()
+		response.WorkMachine = wm
+		response.WorkMachineRunning = wm.Status.State == machinesv1.MachineStateRunning
+		mu.Unlock()
+	}()
+
+	// Fetch preferences
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		prefs, err := h.userPreferencesRepo.GetOrCreate(ctx, username)
+		if err != nil {
+			h.logger.Error("Failed to get preferences", zap.Error(err))
+			return
+		}
+		mu.Lock()
+		response.Preferences = prefs
+		response.PinnedEnvironmentIds = prefs.Spec.PinnedEnvironments
+		mu.Unlock()
+	}()
+
+	wg.Wait()
+	c.JSON(http.StatusOK, response)
+}
+
+// WorkspaceDetailsResponse represents the workspace details response
+type WorkspaceDetailsResponse struct {
+	Workspace          *workspacesv1.Workspace    `json:"workspace"`
+	WorkMachine        *machinesv1.WorkMachine    `json:"workMachine,omitempty"`
+	PackageRequest     *packagesv1.PackageRequest `json:"packageRequest,omitempty"`
+	WorkMachineRunning bool                       `json:"workMachineRunning"`
+}
+
+// GetWorkspaceDetails handles GET /namespaces/:namespace/workspaces/:name/details
+// Returns workspace, work machine, and package request in a single request
+func (h *DashboardHandlers) GetWorkspaceDetails(c *gin.Context) {
+	ctx := c.Request.Context()
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" || name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Namespace and name are required"})
+		return
+	}
+
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Fetch workspace first
+	ws, err := h.workspaceRepo.Get(ctx, namespace, name)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Workspace not found"})
+			return
+		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get workspace", "details": err.Error()})
+		return
+	}
+
+	var response WorkspaceDetailsResponse
+	response.Workspace = ws
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	// Fetch work machine
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wm, err := h.workMachineRepo.GetByOwner(ctx, username)
+		if err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				h.logger.Error("Failed to get work machine", zap.Error(err))
+			}
+			return
+		}
+		mu.Lock()
+		response.WorkMachine = wm
+		response.WorkMachineRunning = wm.Status.State == machinesv1.MachineStateRunning
+		mu.Unlock()
+	}()
+
+	// Fetch package request
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		packageRequestName := fmt.Sprintf("%s-packages", name)
+		var pkgReq packagesv1.PackageRequest
+		err := h.k8sClient.Get(ctx, types.NamespacedName{
+			Namespace: namespace,
+			Name:      packageRequestName,
+		}, &pkgReq)
+		if err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				h.logger.Warn("Failed to get package request", zap.Error(err))
+			}
+			return
+		}
+		mu.Lock()
+		response.PackageRequest = &pkgReq
+		mu.Unlock()
+	}()
+
+	wg.Wait()
+	c.JSON(http.StatusOK, response)
 }

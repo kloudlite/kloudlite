@@ -92,6 +92,8 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.UserPreferences,
 		servicesManager.RepositoryManager.Workspaces,
 		servicesManager.RepositoryManager.Environments,
+		servicesManager.RepositoryManager.Compositions,
+		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
 	// Registry catalog handlers for listing repositories and tags
@@ -143,8 +145,12 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		protected := v1.Group("/")
 		protected.Use(jwtMiddleware)
 		{
-			// Dashboard route (aggregates all homepage data)
+			// Dashboard routes (aggregates page data for single-call optimization)
 			protected.GET("/dashboard", dashboardHandlers.GetDashboard)
+			protected.GET("/environments/:name/details", dashboardHandlers.GetEnvironmentDetails)
+			protected.GET("/workspaces/list-full", dashboardHandlers.GetWorkspacesListFull)
+			protected.GET("/environments/list-full", dashboardHandlers.GetEnvironmentsListFull)
+			protected.GET("/namespaces/:namespace/workspaces/:name/details", dashboardHandlers.GetWorkspaceDetails)
 
 			// User routes
 			users := protected.Group("/users")

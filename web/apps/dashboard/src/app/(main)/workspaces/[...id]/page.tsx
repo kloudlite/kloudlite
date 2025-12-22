@@ -9,9 +9,7 @@ import { WorkspaceActions } from '../_components/workspace-actions'
 import { PackagesSheet } from '../_components/packages-sheet'
 import { WorkspaceMetrics } from '../_components/workspace-metrics'
 import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
-import { workspaceService } from '@/lib/services/workspace.service'
-import { workMachineService } from '@/lib/services/work-machine.service'
-import { getPackageRequest } from '@/app/actions/workspace.actions'
+import { getWorkspaceDetails } from '@/lib/services/dashboard.service'
 
 interface PageProps {
   params: Promise<{
@@ -32,35 +30,22 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
   const namespace = id.length === 2 ? id[0] : 'default'
   const name = id.length === 2 ? id[1] : id[0]
 
-  // Fetch workspace data
-  let workspace
-
+  // Single API call to get workspace, work machine, and package request
+  let data
   try {
-    workspace = await workspaceService.get(name, namespace)
+    data = await getWorkspaceDetails(namespace, name)
   } catch (err) {
-    console.error('Failed to fetch workspace:', err)
+    console.error('Failed to fetch workspace details:', err)
     notFound()
   }
+
+  const { workspace, workMachineRunning, packageRequest } = data
 
   if (!workspace) {
     notFound()
   }
 
-  // Fetch work machine and package request in parallel (both independent)
-  const [workMachineResult, pkgResult] = await Promise.all([
-    workMachineService.getMyWorkMachine().catch((err) => {
-      console.error('Failed to fetch work machine:', err)
-      return null
-    }),
-    getPackageRequest(name, namespace).catch((err) => {
-      console.error('Failed to fetch package status:', err)
-      return { success: false, data: null }
-    }),
-  ])
-
-  const workMachineRunning = workMachineResult?.status?.state === 'running'
-
-  // Extract package status
+  // Extract package status from package request
   let packageStatus: {
     phase?: string
     message?: string
@@ -68,10 +53,10 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     packageCount?: number
     failedPackage?: string
   } | null = null
-  if (pkgResult.success && pkgResult.data) {
+  if (packageRequest) {
     packageStatus = {
-      ...pkgResult.data.status,
-      packageCount: pkgResult.data.spec?.packages?.length || 0,
+      ...packageRequest.status,
+      packageCount: packageRequest.spec?.packages?.length || 0,
     }
   }
 

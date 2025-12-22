@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { EnvironmentsList } from './_components/environments-list'
-import { environmentService } from '@/lib/services/environment.service'
-import { workMachineService } from '@/lib/services/work-machine.service'
-import { getMyPreferences } from '@/app/actions/user-preferences.actions'
+import { getEnvironmentsListFull } from '@/lib/services/dashboard.service'
 import { environmentToUIModel, type EnvironmentUIModel } from '@kloudlite/types'
 
 export default async function EnvironmentsPage() {
@@ -16,22 +14,19 @@ export default async function EnvironmentsPage() {
   // Use username for filtering (matches ownedBy field in backend)
   const currentUser = session.user?.username || session.user?.email || 'test-user'
 
-  // Fetch all data in parallel
-  const [workMachineResult, environmentsResult, prefsResult] = await Promise.all([
-    workMachineService.getMyWorkMachine().catch((err) => {
-      console.error('Failed to fetch work machine:', err)
-      return null
-    }),
-    environmentService.listEnvironments().catch((error) => {
-      console.error('Failed to fetch environments:', error)
-      return { environments: [] }
-    }),
-    getMyPreferences(),
-  ])
+  // Single API call to get environments, work machine, and preferences
+  const data = await getEnvironmentsListFull().catch((err) => {
+    console.error('Failed to fetch environments list:', err)
+    return {
+      environments: [],
+      workMachine: null,
+      preferences: null,
+      pinnedEnvironmentIds: [],
+      workMachineRunning: false,
+    }
+  })
 
-  const workMachineRunning = workMachineResult?.status?.state === 'running'
-
-  const allEnvironments: EnvironmentUIModel[] = environmentsResult.environments.map((env) => {
+  const allEnvironments: EnvironmentUIModel[] = data.environments.map((env) => {
     const owner = env.spec.ownedBy || 'unknown'
     return environmentToUIModel(env, owner)
   })
@@ -282,14 +277,6 @@ export default async function EnvironmentsPage() {
   ]
   */
 
-  // Extract pinned environment IDs from preferences (already fetched above)
-  const pinnedEnvironmentIds = new Set<string>()
-  if (prefsResult.success && prefsResult.data?.spec.pinnedEnvironments) {
-    for (const envName of prefsResult.data.spec.pinnedEnvironments) {
-      pinnedEnvironmentIds.add(envName)
-    }
-  }
-
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
       {/* Title and Filter Section */}
@@ -305,8 +292,8 @@ export default async function EnvironmentsPage() {
         <EnvironmentsList
           environments={allEnvironments}
           currentUser={currentUser}
-          workMachineRunning={workMachineRunning}
-          pinnedEnvironmentIds={Array.from(pinnedEnvironmentIds)}
+          workMachineRunning={data.workMachineRunning}
+          pinnedEnvironmentIds={data.pinnedEnvironmentIds}
         />
       </div>
     </main>
