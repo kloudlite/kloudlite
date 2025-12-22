@@ -1,4 +1,3 @@
-import { cache } from 'react'
 import { apiClient } from '@/lib/api-client'
 import type {
   Environment,
@@ -184,31 +183,3 @@ export class EnvironmentService {
 
 // Export singleton instance
 export const environmentService = new EnvironmentService()
-
-// Cached versions of read-only operations for request deduplication in Server Components
-// These prevent duplicate API calls when the same data is needed in multiple places during a single render
-
-/** Cached version of listEnvironments - deduplicates requests within a render pass */
-export const getEnvironmentsList = cache(async (): Promise<EnvironmentListResponse> => {
-  return environmentService.listEnvironments()
-})
-
-/** Cached version of getEnvironment - deduplicates requests within a render pass */
-export const getEnvironment = cache(async (name: string): Promise<Environment> => {
-  return environmentService.getEnvironment(name)
-})
-
-/** Cached version of getEnvironmentStatus - deduplicates requests within a render pass */
-export const getEnvironmentStatus = cache(async (name: string): Promise<EnvironmentStatusResponse> => {
-  return environmentService.getEnvironmentStatus(name)
-})
-
-/** Cached version of getEnvVars - deduplicates requests within a render pass */
-export const getEnvironmentEnvVars = cache(async (name: string): Promise<GetEnvVarsResponse> => {
-  return environmentService.getEnvVars(name)
-})
-
-/** Cached version of listFiles - deduplicates requests within a render pass */
-export const getEnvironmentFiles = cache(async (name: string): Promise<ListFilesResponse> => {
-  return environmentService.listFiles(name)
-})
