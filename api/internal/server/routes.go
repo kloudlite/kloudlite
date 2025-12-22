@@ -86,6 +86,14 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.UserPreferences,
 		logger,
 	)
+	dashboardHandlers := handlers.NewDashboardHandlers(
+		servicesManager.RepositoryManager.MachineTypes,
+		servicesManager.RepositoryManager.WorkMachines,
+		servicesManager.RepositoryManager.UserPreferences,
+		servicesManager.RepositoryManager.Workspaces,
+		servicesManager.RepositoryManager.Environments,
+		logger,
+	)
 	// Registry catalog handlers for listing repositories and tags
 	// Note: Registry runs without auth - authentication is handled at ingress layer
 	registryCatalogHandlers := handlers.NewRegistryCatalogHandlers(
@@ -135,6 +143,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		protected := v1.Group("/")
 		protected.Use(jwtMiddleware)
 		{
+			// Dashboard route (aggregates all homepage data)
+			protected.GET("/dashboard", dashboardHandlers.GetDashboard)
+
 			// User routes
 			users := protected.Group("/users")
 			{
