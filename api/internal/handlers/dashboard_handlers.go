@@ -46,12 +46,12 @@ func NewDashboardHandlers(
 
 // DashboardResponse represents the dashboard data response
 type DashboardResponse struct {
-	MachineTypes       []machinesv1.MachineType         `json:"machineTypes"`
-	WorkMachines       []machinesv1.WorkMachine         `json:"workMachines"`
+	MachineTypes       []machinesv1.MachineType          `json:"machineTypes"`
+	WorkMachines       []machinesv1.WorkMachine          `json:"workMachines"`
 	Preferences        *platformv1alpha1.UserPreferences `json:"preferences,omitempty"`
-	PinnedWorkspaces   []workspacesv1.Workspace         `json:"pinnedWorkspaces"`
-	PinnedEnvironments []environmentsv1.Environment     `json:"pinnedEnvironments"`
-	IsAdmin            bool                             `json:"isAdmin"`
+	PinnedWorkspaces   []workspacesv1.Workspace          `json:"pinnedWorkspaces"`
+	PinnedEnvironments []environmentsv1.Environment      `json:"pinnedEnvironments"`
+	IsAdmin            bool                              `json:"isAdmin"`
 }
 
 // GetDashboard handles GET /dashboard
