@@ -247,6 +247,29 @@ export async function getInstallationByKey(installationKey: string): Promise<Ins
 }
 
 /**
+ * Get installation by secret key
+ * Used for API authentication (e.g., Claude proxy)
+ */
+export async function getInstallationBySecretKey(secretKey: string): Promise<Installation | null> {
+  const result = await supabase
+    .from('installations')
+    .select('*')
+    .eq('secret_key', secretKey)
+    .single()
+
+  if (result.error) {
+    if (result.error.code === 'PGRST116') return null
+    console.error('Error getting installation by secret key:', result.error)
+    return null
+  }
+
+  const data = result.data as InstallationRow | null
+  if (!data) return null
+
+  return getInstallationById(data.id)
+}
+
+/**
  * Get all installations for a user
  */
 export async function getUserInstallations(userId: string): Promise<Installation[]> {

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { jwtVerify } from 'jose'
+import { getInstallationBySecretKey } from '@/lib/console/supabase-storage-service'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -7,62 +7,37 @@ export const dynamic = 'force-dynamic'
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 
 /**
- * Validates JWT token from x-api-key header (Claude Code compatible)
- * or Authorization Bearer header (standard)
- * Returns user payload if valid, null if invalid
- */
-async function validateToken(request: NextRequest): Promise<{ username?: string; email?: string } | null> {
-  // Claude Code sends token via x-api-key header
-  let token = request.headers.get('x-api-key')
-
-  // Also support standard Bearer token
-  if (!token) {
-    const authHeader = request.headers.get('Authorization')
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.slice(7)
-    }
-  }
-
-  if (!token) {
-    return null
-  }
-  const jwtSecret = process.env.JWT_SECRET
-
-  if (!jwtSecret) {
-    console.error('[Claude Proxy] JWT_SECRET environment variable not set')
-    return null
-  }
-
-  try {
-    const secret = new TextEncoder().encode(jwtSecret)
-    const { payload } = await jwtVerify(token, secret)
-    return {
-      username: payload.username as string | undefined,
-      email: payload.email as string | undefined,
-    }
-  } catch (error) {
-    console.error('[Claude Proxy] JWT verification failed:', error)
-    return null
-  }
-}
-
-/**
  * Claude API Proxy
  * Forwards requests to Anthropic's Claude API
- * Requires valid Kloudlite JWT token for authentication
+ * Requires valid installation secret key for authentication
  * Supports both streaming (SSE) and non-streaming responses
+ *
+ * Authentication:
+ * - Claude Code sends the secret key via x-api-key header
+ * - The secret key is obtained during installation via verify-key endpoint
  */
 export async function POST(request: NextRequest) {
-  // Validate JWT token
-  const user = await validateToken(request)
-  if (!user) {
+  // Get secret key from x-api-key header (Claude Code compatible)
+  const secretKey = request.headers.get('x-api-key')
+
+  if (!secretKey) {
     return Response.json(
-      { error: { type: 'authentication_error', message: 'Invalid or missing authorization token' } },
+      { error: { type: 'authentication_error', message: 'Missing API key' } },
       { status: 401 }
     )
   }
 
-  console.log('[Claude Proxy] Authenticated user:', user.username || user.email)
+  // Validate secret key against database
+  const installation = await getInstallationBySecretKey(secretKey)
+
+  if (!installation) {
+    return Response.json(
+      { error: { type: 'authentication_error', message: 'Invalid API key' } },
+      { status: 401 }
+    )
+  }
+
+  console.log('[Claude Proxy] Authenticated installation:', installation.id, installation.subdomain)
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
