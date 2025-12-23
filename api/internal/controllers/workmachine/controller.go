@@ -33,6 +33,7 @@ import (
 
 type Env struct {
 	KloudliteInstallationID string `env:"INSTALLATION_KEY" required:"true"`
+	InstallationSecret      string `env:"INSTALLATION_SECRET" required:"true"`
 
 	K3sVersion    string `env:"K3S_VERSION" required:"true"`
 	K3sServerURL  string `env:"K3S_SERVER_URL" required:"true"`
