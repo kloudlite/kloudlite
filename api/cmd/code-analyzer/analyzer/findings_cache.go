@@ -248,6 +248,7 @@ func (m *FindingsCacheManager) GetFindingsForFiles(cache *FindingsCache, files [
 
 // DeduplicateFindings removes duplicate findings based on file, line, and normalized title
 // This helps stabilize results across non-deterministic Claude outputs
+// Also filters out informational findings that indicate "no issues found"
 func DeduplicateFindings(findings []Finding) []Finding {
 	if len(findings) == 0 {
 		return findings
@@ -257,6 +258,16 @@ func DeduplicateFindings(findings []Finding) []Finding {
 	seen := make(map[string]Finding)
 
 	for _, f := range findings {
+		// Skip informational findings - these are "no issues found" reports
+		if strings.ToLower(f.Severity) == "informational" || strings.ToLower(f.Severity) == "info" {
+			continue
+		}
+
+		// Skip findings with "no action required" in recommendation
+		if strings.Contains(strings.ToLower(f.Recommendation), "no action required") {
+			continue
+		}
+
 		sig := generateFindingSignature(f)
 
 		// If we haven't seen this finding, or if this one has higher severity, keep it

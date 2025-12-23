@@ -1288,8 +1288,9 @@ func (h *WorkspaceHandlers) TriggerCodeAnalysis(c *gin.Context) {
 	}
 
 	// Build code-analyzer service URL
+	// Always use force=true for manual triggers to ensure fresh analysis
 	codeAnalyzerURL := fmt.Sprintf("http://code-analyzer.%s.svc.cluster.local:8082", namespace)
-	analyzeURL := fmt.Sprintf("%s/analyze/%s", codeAnalyzerURL, name)
+	analyzeURL := fmt.Sprintf("%s/analyze/%s?force=true", codeAnalyzerURL, name)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()

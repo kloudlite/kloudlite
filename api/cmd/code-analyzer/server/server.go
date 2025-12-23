@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -86,6 +88,27 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 			zap.Duration("duration", time.Since(start)),
 		)
 	})
+}
+
+// clearWorkspaceCache clears the findings cache and manifest for a workspace
+// This forces a full re-analysis on the next run
+func (s *Server) clearWorkspaceCache(workspace string) {
+	basePath := s.storage.GetBasePath()
+	workspaceDir := filepath.Join(basePath, workspace)
+
+	// Remove findings cache
+	findingsCachePath := filepath.Join(workspaceDir, "findings-cache.json")
+	if err := os.Remove(findingsCachePath); err != nil && !os.IsNotExist(err) {
+		s.logger.Warn("Failed to remove findings cache", zap.String("workspace", workspace), zap.Error(err))
+	}
+
+	// Remove manifest
+	manifestPath := filepath.Join(workspaceDir, "manifest.json")
+	if err := os.Remove(manifestPath); err != nil && !os.IsNotExist(err) {
+		s.logger.Warn("Failed to remove manifest", zap.String("workspace", workspace), zap.Error(err))
+	}
+
+	s.logger.Info("Cleared workspace cache for forced re-analysis", zap.String("workspace", workspace))
 }
 
 // HealthResponse represents health check response
@@ -269,6 +292,12 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 			Message: "Analysis already in progress",
 		})
 		return
+	}
+
+	// Check for force parameter - clears cache to force full re-analysis
+	force := r.URL.Query().Get("force") == "true"
+	if force {
+		s.clearWorkspaceCache(workspace)
 	}
 
 	// Trigger manual analysis
