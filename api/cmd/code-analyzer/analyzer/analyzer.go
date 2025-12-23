@@ -181,22 +181,39 @@ func (a *Analyzer) convertToStorageReport(report *AggregatedReport) *storage.Agg
 
 // generateLegacyReports generates separate security and quality reports for backward compatibility
 func (a *Analyzer) generateLegacyReports(workspaceName string, report *AggregatedReport) {
+	// Try to load findings from cache if ScanResults is empty
+	var allFindings []Finding
+	if len(report.ScanResults) == 0 {
+		// Load from findings cache
+		findingsCacheMgr := NewFindingsCacheManager(a.storage.GetBasePath(), a.logger)
+		cache, err := findingsCacheMgr.LoadCache(workspaceName)
+		if err == nil && cache != nil {
+			allFindings = findingsCacheMgr.GetAllFindings(cache)
+		}
+	} else {
+		// Extract from scan results
+		for _, sr := range report.ScanResults {
+			if sr.Error == "" {
+				allFindings = append(allFindings, sr.Findings...)
+			}
+		}
+	}
+
 	// Generate security report
 	securityFindings := make([]storage.Finding, 0)
-	for _, sr := range report.ScanResults {
-		if sr.Category == CategorySecurity && sr.Error == "" {
-			for _, f := range sr.Findings {
-				securityFindings = append(securityFindings, storage.Finding{
-					ID:             f.ID,
-					Severity:       storage.Severity(f.Severity),
-					Category:       f.Category,
-					File:           f.File,
-					Line:           f.Line,
-					Title:          f.Title,
-					Description:    f.Description,
-					Recommendation: f.Recommendation,
-				})
-			}
+	for _, f := range allFindings {
+		// Check if security finding by ID prefix
+		if len(f.ID) >= 3 && f.ID[:3] == "SEC" {
+			securityFindings = append(securityFindings, storage.Finding{
+				ID:             f.ID,
+				Severity:       storage.Severity(f.Severity),
+				Category:       f.Category,
+				File:           f.File,
+				Line:           f.Line,
+				Title:          f.Title,
+				Description:    f.Description,
+				Recommendation: f.Recommendation,
+			})
 		}
 	}
 
@@ -220,20 +237,19 @@ func (a *Analyzer) generateLegacyReports(workspaceName string, report *Aggregate
 
 	// Generate quality report
 	qualityFindings := make([]storage.Finding, 0)
-	for _, sr := range report.ScanResults {
-		if (sr.Category == CategoryQuality || sr.Category == CategoryLanguage) && sr.Error == "" {
-			for _, f := range sr.Findings {
-				qualityFindings = append(qualityFindings, storage.Finding{
-					ID:             f.ID,
-					Severity:       storage.Severity(f.Severity),
-					Category:       f.Category,
-					File:           f.File,
-					Line:           f.Line,
-					Title:          f.Title,
-					Description:    f.Description,
-					Recommendation: f.Recommendation,
-				})
-			}
+	for _, f := range allFindings {
+		// Check if quality finding by ID prefix (not SEC)
+		if len(f.ID) < 3 || f.ID[:3] != "SEC" {
+			qualityFindings = append(qualityFindings, storage.Finding{
+				ID:             f.ID,
+				Severity:       storage.Severity(f.Severity),
+				Category:       f.Category,
+				File:           f.File,
+				Line:           f.Line,
+				Title:          f.Title,
+				Description:    f.Description,
+				Recommendation: f.Recommendation,
+			})
 		}
 	}
 
