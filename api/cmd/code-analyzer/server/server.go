@@ -163,18 +163,47 @@ func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse path: /reports/{workspace}/security or /reports/{workspace}/quality
+	// Parse path: /reports/{workspace}/security or /reports/{workspace}/quality or /reports/{workspace}/aggregated
 	// Or: /reports/{workspace}/security/history
 	path := strings.TrimPrefix(r.URL.Path, "/reports/")
 	parts := strings.Split(path, "/")
 
 	if len(parts) < 2 {
-		http.Error(w, "Invalid path. Use /reports/{workspace}/security or /reports/{workspace}/quality", http.StatusBadRequest)
+		http.Error(w, "Invalid path. Use /reports/{workspace}/security, /reports/{workspace}/quality, or /reports/{workspace}/aggregated", http.StatusBadRequest)
 		return
 	}
 
 	workspace := parts[0]
 	reportType := parts[1]
+
+	// Handle aggregated reports separately
+	if reportType == "aggregated" {
+		// Check if requesting history
+		if len(parts) >= 3 && parts[2] == "history" {
+			history, err := s.storage.GetAggregatedReportHistory(workspace)
+			if err != nil {
+				s.writeError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			s.writeJSON(w, http.StatusOK, map[string]interface{}{"history": history})
+			return
+		}
+
+		// Get latest aggregated report
+		report, err := s.storage.GetLatestAggregatedReport(workspace)
+		if err != nil {
+			s.writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		if report == nil {
+			s.writeError(w, http.StatusNotFound, "No aggregated report found")
+			return
+		}
+
+		s.writeJSON(w, http.StatusOK, report)
+		return
+	}
 
 	var rt storage.ReportType
 	switch reportType {
@@ -183,7 +212,7 @@ func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 	case "quality":
 		rt = storage.ReportTypeQuality
 	default:
-		http.Error(w, "Invalid report type. Use 'security' or 'quality'", http.StatusBadRequest)
+		http.Error(w, "Invalid report type. Use 'security', 'quality', or 'aggregated'", http.StatusBadRequest)
 		return
 	}
 

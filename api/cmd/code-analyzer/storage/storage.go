@@ -16,8 +16,9 @@ import (
 type ReportType string
 
 const (
-	ReportTypeSecurity ReportType = "security"
-	ReportTypeQuality  ReportType = "quality"
+	ReportTypeSecurity   ReportType = "security"
+	ReportTypeQuality    ReportType = "quality"
+	ReportTypeAggregated ReportType = "aggregated"
 )
 
 // Severity represents finding severity level
@@ -72,12 +73,75 @@ type Report struct {
 	Error      string     `json:"error,omitempty"`
 }
 
+// ScanResult represents the result of a single scan
+type ScanResult struct {
+	ScanID   string      `json:"scanId"`
+	ScanName string      `json:"scanName"`
+	Category string      `json:"category"`
+	Duration string      `json:"duration"`
+	Findings []Finding   `json:"findings"`
+	Summary  ScanSummary `json:"summary"`
+	Error    string      `json:"error,omitempty"`
+	Skipped  bool        `json:"skipped,omitempty"`
+}
+
+// ScanSummary represents summary for a single scan
+type ScanSummary struct {
+	CriticalCount int `json:"criticalCount,omitempty"`
+	HighCount     int `json:"highCount,omitempty"`
+	MediumCount   int `json:"mediumCount,omitempty"`
+	LowCount      int `json:"lowCount,omitempty"`
+	TotalCount    int `json:"totalCount"`
+}
+
+// AggregatedSummary represents combined summary across all scans
+type AggregatedSummary struct {
+	Security SecuritySummary `json:"security"`
+	Quality  QualitySummary  `json:"quality"`
+}
+
+// SecuritySummary for aggregated report
+type SecuritySummary struct {
+	CriticalCount int `json:"criticalCount"`
+	HighCount     int `json:"highCount"`
+	MediumCount   int `json:"mediumCount"`
+	LowCount      int `json:"lowCount"`
+	TotalCount    int `json:"totalCount"`
+}
+
+// QualitySummary for aggregated report
+type QualitySummary struct {
+	Score       int `json:"score"`
+	HighCount   int `json:"highCount"`
+	MediumCount int `json:"mediumCount"`
+	LowCount    int `json:"lowCount"`
+	TotalCount  int `json:"totalCount"`
+}
+
+// AggregatedReport represents the combined results of all scans
+type AggregatedReport struct {
+	Version      string            `json:"version"`
+	Workspace    string            `json:"workspace"`
+	AnalyzedAt   time.Time         `json:"analyzedAt"`
+	Duration     string            `json:"duration"`
+	Languages    []string          `json:"languages"`
+	FilesCount   int               `json:"filesAnalyzed"`
+	ScansRun     int               `json:"scansRun"`
+	ScansSkipped int               `json:"scansSkipped"`
+	ScansFailed  int               `json:"scansFailed"`
+	Summary      AggregatedSummary `json:"summary"`
+	ScanResults  []ScanResult      `json:"scanResults"`
+	Error        string            `json:"error,omitempty"`
+}
+
 // WorkspaceMetadata contains metadata about workspace analysis
 type WorkspaceMetadata struct {
-	LastSecurityAnalysis time.Time `json:"lastSecurityAnalysis,omitempty"`
-	LastQualityAnalysis  time.Time `json:"lastQualityAnalysis,omitempty"`
-	TotalFilesAnalyzed   int       `json:"totalFilesAnalyzed"`
-	UpdatedAt            time.Time `json:"updatedAt"`
+	LastSecurityAnalysis   time.Time `json:"lastSecurityAnalysis,omitempty"`
+	LastQualityAnalysis    time.Time `json:"lastQualityAnalysis,omitempty"`
+	LastAggregatedAnalysis time.Time `json:"lastAggregatedAnalysis,omitempty"`
+	TotalFilesAnalyzed     int       `json:"totalFilesAnalyzed"`
+	Languages              []string  `json:"languages,omitempty"`
+	UpdatedAt              time.Time `json:"updatedAt"`
 }
 
 // ReportInfo contains basic info about a stored report
@@ -280,6 +344,97 @@ func (s *Storage) ListWorkspaces() ([]string, error) {
 func (s *Storage) DeleteWorkspaceReports(workspace string) error {
 	workspaceDir := filepath.Join(s.basePath, workspace)
 	return os.RemoveAll(workspaceDir)
+}
+
+// SaveAggregatedReport saves an aggregated report to storage
+func (s *Storage) SaveAggregatedReport(workspace string, report *AggregatedReport) error {
+	// Create workspace directory if needed
+	workspaceDir := filepath.Join(s.basePath, workspace)
+	reportDir := filepath.Join(workspaceDir, string(ReportTypeAggregated))
+
+	if err := os.MkdirAll(reportDir, 0755); err != nil {
+		return fmt.Errorf("failed to create report directory: %w", err)
+	}
+
+	// Marshal report to JSON
+	data, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal report: %w", err)
+	}
+
+	// Save with timestamp filename
+	timestamp := report.AnalyzedAt.Format("2006-01-02T15-04-05")
+	timestampFile := filepath.Join(reportDir, fmt.Sprintf("%s.json", timestamp))
+	if err := os.WriteFile(timestampFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write timestamp report: %w", err)
+	}
+
+	// Also save as latest.json
+	latestFile := filepath.Join(reportDir, "latest.json")
+	if err := os.WriteFile(latestFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write latest report: %w", err)
+	}
+
+	// Update workspace metadata
+	if err := s.updateAggregatedMetadata(workspace, report); err != nil {
+		s.logger.Warn("Failed to update metadata", zap.Error(err))
+	}
+
+	// Cleanup old reports (keep last 10)
+	s.cleanupOldReports(reportDir, 10)
+
+	s.logger.Info("Saved aggregated report",
+		zap.String("workspace", workspace),
+		zap.Int("scans_run", report.ScansRun),
+		zap.String("file", timestampFile),
+	)
+
+	return nil
+}
+
+// GetLatestAggregatedReport retrieves the latest aggregated report for a workspace
+func (s *Storage) GetLatestAggregatedReport(workspace string) (*AggregatedReport, error) {
+	latestFile := filepath.Join(s.basePath, workspace, string(ReportTypeAggregated), "latest.json")
+
+	data, err := os.ReadFile(latestFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil // No report found
+		}
+		return nil, fmt.Errorf("failed to read report: %w", err)
+	}
+
+	var report AggregatedReport
+	if err := json.Unmarshal(data, &report); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal report: %w", err)
+	}
+
+	return &report, nil
+}
+
+// GetAggregatedReportHistory returns list of historical aggregated reports
+func (s *Storage) GetAggregatedReportHistory(workspace string) ([]ReportInfo, error) {
+	return s.GetReportHistory(workspace, ReportTypeAggregated)
+}
+
+func (s *Storage) updateAggregatedMetadata(workspace string, report *AggregatedReport) error {
+	metadata, err := s.GetMetadata(workspace)
+	if err != nil {
+		metadata = &WorkspaceMetadata{}
+	}
+
+	metadata.LastAggregatedAnalysis = report.AnalyzedAt
+	metadata.TotalFilesAnalyzed = report.FilesCount
+	metadata.Languages = report.Languages
+	metadata.UpdatedAt = time.Now()
+
+	data, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	metadataFile := filepath.Join(s.basePath, workspace, "metadata.json")
+	return os.WriteFile(metadataFile, data, 0644)
 }
 
 func (s *Storage) updateMetadata(workspace string, report *Report) error {
