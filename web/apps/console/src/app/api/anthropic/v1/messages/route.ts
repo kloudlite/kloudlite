@@ -52,14 +52,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const isStreaming = body.stream === true
 
+    // Get anthropic-beta header from request if present (for prompt caching, etc.)
+    const anthropicBeta = request.headers.get('anthropic-beta')
+
     // Forward request to Anthropic API
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': request.headers.get('anthropic-version') || '2023-06-01',
+    }
+
+    // Forward anthropic-beta header if present (required for prompt caching)
+    if (anthropicBeta) {
+      headers['anthropic-beta'] = anthropicBeta
+    }
+
     const response = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
+      headers,
       body: JSON.stringify(body),
     })
 
