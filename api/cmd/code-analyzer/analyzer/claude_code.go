@@ -199,7 +199,6 @@ func (c *ClaudeCode) runClaudeCode(ctx context.Context, workspaceDir, prompt str
 	// Build command
 	args := []string{
 		"-p", prompt, // Print mode - non-interactive
-		"--max-turns", "10", // Allow multiple turns for file reading and analysis
 		"--output-format", "text", // Text output
 	}
 
