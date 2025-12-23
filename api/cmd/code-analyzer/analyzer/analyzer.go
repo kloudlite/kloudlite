@@ -20,14 +20,16 @@ const (
 // Analyzer orchestrates code analysis
 type Analyzer struct {
 	claudeCode     *ClaudeCode
+	claudeAPI      *ClaudeAPI
 	executor       *Executor
 	storage        *storage.Storage
 	workspacesPath string
 	logger         *zap.Logger
 	maxConcurrent  int
+	useDirectAPI   bool
 }
 
-// NewAnalyzer creates a new analyzer
+// NewAnalyzer creates a new analyzer using Claude CLI
 func NewAnalyzer(
 	claudeCode *ClaudeCode,
 	storage *storage.Storage,
@@ -41,13 +43,37 @@ func NewAnalyzer(
 		workspacesPath: workspacesPath,
 		logger:         logger,
 		maxConcurrent:  DefaultMaxConcurrent,
+		useDirectAPI:   false,
+	}
+}
+
+// NewAnalyzerWithAPI creates a new analyzer using direct Claude API with prompt caching
+func NewAnalyzerWithAPI(
+	claudeAPI *ClaudeAPI,
+	storage *storage.Storage,
+	workspacesPath string,
+	reportsPath string,
+	logger *zap.Logger,
+) *Analyzer {
+	return &Analyzer{
+		claudeAPI:      claudeAPI,
+		executor:       NewExecutorWithAPI(claudeAPI, reportsPath, logger, DefaultMaxConcurrent),
+		storage:        storage,
+		workspacesPath: workspacesPath,
+		logger:         logger,
+		maxConcurrent:  DefaultMaxConcurrent,
+		useDirectAPI:   true,
 	}
 }
 
 // SetMaxConcurrent sets the maximum concurrent scans
 func (a *Analyzer) SetMaxConcurrent(max int) {
 	a.maxConcurrent = max
-	a.executor = NewExecutor(a.claudeCode, a.logger, max)
+	if a.useDirectAPI {
+		a.executor = NewExecutorWithAPI(a.claudeAPI, a.storage.GetBasePath(), a.logger, max)
+	} else {
+		a.executor = NewExecutor(a.claudeCode, a.logger, max)
+	}
 }
 
 // AnalyzeWorkspace runs all applicable scans on a workspace in parallel

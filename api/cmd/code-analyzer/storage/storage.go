@@ -165,6 +165,11 @@ func NewStorage(basePath string, logger *zap.Logger) *Storage {
 	}
 }
 
+// GetBasePath returns the base path for reports storage
+func (s *Storage) GetBasePath() string {
+	return s.basePath
+}
+
 // SaveReport saves a report to storage
 func (s *Storage) SaveReport(workspace string, report *Report) error {
 	// Create workspace directory if needed

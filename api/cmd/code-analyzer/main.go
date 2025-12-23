@@ -31,6 +31,7 @@ type Config struct {
 	MaxConcurrentJobs  int
 	MaxConcurrentScans int
 	HTTPPort           int
+	UseDirectAPI       bool // Use direct Claude API with prompt caching instead of CLI
 }
 
 func getEnv(key, defaultValue string) string {
@@ -49,6 +50,18 @@ func getEnvInt(key string, defaultValue int) int {
 	return defaultValue
 }
 
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		switch value {
+		case "true", "1", "yes", "on":
+			return true
+		case "false", "0", "no", "off":
+			return false
+		}
+	}
+	return defaultValue
+}
+
 func loadConfig() (*Config, error) {
 	config := &Config{
 		Namespace:          getEnv("NAMESPACE", ""),
@@ -61,6 +74,7 @@ func loadConfig() (*Config, error) {
 		MaxConcurrentJobs:  getEnvInt("MAX_CONCURRENT_ANALYSES", 2),
 		MaxConcurrentScans: getEnvInt("MAX_CONCURRENT_SCANS", 3),
 		HTTPPort:           getEnvInt("HTTP_PORT", 8082),
+		UseDirectAPI:       getEnvBool("USE_DIRECT_API", true), // Default to direct API for better performance
 	}
 
 	// Validate required config
@@ -108,26 +122,46 @@ func main() {
 		zap.Int("debounce_seconds", config.DebounceSeconds),
 		zap.Int("max_concurrent_jobs", config.MaxConcurrentJobs),
 		zap.Int("max_concurrent_scans", config.MaxConcurrentScans),
+		zap.Bool("use_direct_api", config.UseDirectAPI),
 	)
 
 	// Create storage
 	reportStorage := storage.NewStorage(config.ReportsPath, logger)
 
-	// Create Claude Code client
-	claudeCode := analyzer.NewClaudeCode(
-		config.ClaudeAPIURL,
-		config.ClaudeAPIKey,
-		config.WorkspacesPath,
-		logger,
-	)
+	// Create analyzer based on mode
+	var codeAnalyzer *analyzer.Analyzer
 
-	// Create analyzer
-	codeAnalyzer := analyzer.NewAnalyzer(
-		claudeCode,
-		reportStorage,
-		config.WorkspacesPath,
-		logger,
-	)
+	if config.UseDirectAPI {
+		// Use direct Claude API with prompt caching for better performance
+		logger.Info("Using direct Claude API mode with prompt caching")
+		claudeAPI := analyzer.NewClaudeAPI(
+			config.ClaudeAPIURL,
+			config.ClaudeAPIKey,
+			logger,
+		)
+		codeAnalyzer = analyzer.NewAnalyzerWithAPI(
+			claudeAPI,
+			reportStorage,
+			config.WorkspacesPath,
+			config.ReportsPath,
+			logger,
+		)
+	} else {
+		// Use Claude CLI mode (legacy)
+		logger.Info("Using Claude CLI mode (legacy)")
+		claudeCode := analyzer.NewClaudeCode(
+			config.ClaudeAPIURL,
+			config.ClaudeAPIKey,
+			config.WorkspacesPath,
+			logger,
+		)
+		codeAnalyzer = analyzer.NewAnalyzer(
+			claudeCode,
+			reportStorage,
+			config.WorkspacesPath,
+			logger,
+		)
+	}
 	codeAnalyzer.SetMaxConcurrent(config.MaxConcurrentScans)
 
 	// Create analysis queue
