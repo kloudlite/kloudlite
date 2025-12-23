@@ -200,6 +200,7 @@ func (c *ClaudeCode) runClaudeCode(ctx context.Context, workspaceDir, prompt str
 	args := []string{
 		"-p", prompt, // Print mode - non-interactive
 		"--output-format", "text", // Text output
+		"--model", "claude-sonnet-4-20250514", // Use Sonnet 4.5 for faster analysis
 	}
 
 	cmd := exec.CommandContext(ctx, "claude", args...)
