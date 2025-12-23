@@ -1129,3 +1129,193 @@ func (h *WorkspaceHandlers) GetWorkspaceStatusStream(c *gin.Context) {
 		}
 	}
 }
+
+// CodeAnalysisReport represents the response from code-analyzer service
+type CodeAnalysisReport struct {
+	Version    string    `json:"version"`
+	Type       string    `json:"type"`
+	Workspace  string    `json:"workspace"`
+	AnalyzedAt time.Time `json:"analyzedAt"`
+	Summary    struct {
+		Score         int `json:"score"`
+		CriticalCount int `json:"criticalCount"`
+		HighCount     int `json:"highCount"`
+		MediumCount   int `json:"mediumCount"`
+		LowCount      int `json:"lowCount"`
+	} `json:"summary"`
+	Findings []struct {
+		Severity       string `json:"severity"`
+		Category       string `json:"category"`
+		File           string `json:"file"`
+		Line           int    `json:"line"`
+		Title          string `json:"title"`
+		Description    string `json:"description"`
+		Recommendation string `json:"recommendation"`
+	} `json:"findings"`
+}
+
+// CodeAnalysisResponse represents the combined code analysis response
+type CodeAnalysisResponse struct {
+	Security *CodeAnalysisReport `json:"security"`
+	Quality  *CodeAnalysisReport `json:"quality"`
+	Status   struct {
+		Watching        bool      `json:"watching"`
+		InProgress      bool      `json:"inProgress"`
+		PendingAnalysis bool      `json:"pendingAnalysis"`
+		LastAnalysis    time.Time `json:"lastAnalysis,omitempty"`
+	} `json:"status"`
+}
+
+// GetCodeAnalysis handles GET /api/v1/namespaces/:namespace/workspaces/:name/code-analysis
+// Proxies request to the code-analyzer service running on the WorkMachine
+func (h *WorkspaceHandlers) GetCodeAnalysis(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	// Verify the workspace exists
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Workspace not found",
+			})
+			return
+		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Only owner can access code analysis
+	if !h.requireOwnership(c, workspace) {
+		return
+	}
+
+	// Build code-analyzer service URL
+	// The code-analyzer service runs in the same namespace as the workspace
+	codeAnalyzerURL := fmt.Sprintf("http://code-analyzer.%s.svc.cluster.local:8082", namespace)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	response := CodeAnalysisResponse{}
+
+	// Fetch security report
+	securityURL := fmt.Sprintf("%s/reports/%s/security", codeAnalyzerURL, name)
+	securityReq, err := http.NewRequestWithContext(ctx, "GET", securityURL, nil)
+	if err == nil {
+		securityResp, err := http.DefaultClient.Do(securityReq)
+		if err == nil {
+			defer securityResp.Body.Close()
+			if securityResp.StatusCode == http.StatusOK {
+				var report CodeAnalysisReport
+				if err := json.NewDecoder(securityResp.Body).Decode(&report); err == nil {
+					response.Security = &report
+				}
+			}
+		}
+	}
+
+	// Fetch quality report
+	qualityURL := fmt.Sprintf("%s/reports/%s/quality", codeAnalyzerURL, name)
+	qualityReq, err := http.NewRequestWithContext(ctx, "GET", qualityURL, nil)
+	if err == nil {
+		qualityResp, err := http.DefaultClient.Do(qualityReq)
+		if err == nil {
+			defer qualityResp.Body.Close()
+			if qualityResp.StatusCode == http.StatusOK {
+				var report CodeAnalysisReport
+				if err := json.NewDecoder(qualityResp.Body).Decode(&report); err == nil {
+					response.Quality = &report
+				}
+			}
+		}
+	}
+
+	// Fetch status
+	statusURL := fmt.Sprintf("%s/status/%s", codeAnalyzerURL, name)
+	statusReq, err := http.NewRequestWithContext(ctx, "GET", statusURL, nil)
+	if err == nil {
+		statusResp, err := http.DefaultClient.Do(statusReq)
+		if err == nil {
+			defer statusResp.Body.Close()
+			if statusResp.StatusCode == http.StatusOK {
+				json.NewDecoder(statusResp.Body).Decode(&response.Status)
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// TriggerCodeAnalysis handles POST /api/v1/namespaces/:namespace/workspaces/:name/code-analysis
+// Triggers a manual code analysis for the workspace
+func (h *WorkspaceHandlers) TriggerCodeAnalysis(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	// Verify the workspace exists
+	workspace, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Workspace not found",
+			})
+			return
+		}
+		h.logger.Error("Failed to get workspace", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Only owner can trigger code analysis
+	if !h.requireOwnership(c, workspace) {
+		return
+	}
+
+	// Build code-analyzer service URL
+	codeAnalyzerURL := fmt.Sprintf("http://code-analyzer.%s.svc.cluster.local:8082", namespace)
+	analyzeURL := fmt.Sprintf("%s/analyze/%s", codeAnalyzerURL, name)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", analyzeURL, nil)
+	if err != nil {
+		h.logger.Error("Failed to create analyze request", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to trigger analysis",
+		})
+		return
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		h.logger.Warn("Failed to reach code-analyzer service", zap.Error(err))
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"error":   "Code analyzer service unavailable",
+			"details": "The code analyzer may not be running on this workspace's machine",
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	c.JSON(resp.StatusCode, result)
+}

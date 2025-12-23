@@ -276,6 +276,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.GET("/:name/packages", workspaceHandlers.GetPackageRequest)
 				workspaces.PUT("/:name/packages", workspaceHandlers.UpdatePackageRequest)
 
+				// Code analysis reports
+				workspaces.GET("/:name/code-analysis", workspaceHandlers.GetCodeAnalysis)
+				workspaces.POST("/:name/code-analysis", workspaceHandlers.TriggerCodeAnalysis)
+
 				// Status streaming (SSE)
 				workspaces.GET("/:name/status-stream", workspaceHandlers.GetWorkspaceStatusStream)
 			}
