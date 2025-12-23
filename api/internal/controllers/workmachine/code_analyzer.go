@@ -117,7 +117,7 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 								},
 								{
 									Name:  "CLAUDE_API_KEY",
-									Value: r.env.KloudliteInstallationID,
+									Value: r.env.InstallationSecret,
 								},
 								{
 									Name:  "WORKSPACES_PATH",
