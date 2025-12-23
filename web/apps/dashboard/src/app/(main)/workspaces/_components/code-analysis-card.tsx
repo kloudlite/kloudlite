@@ -148,7 +148,7 @@ export function CodeAnalysisCard({ workspaceName, namespace }: CodeAnalysisCardP
       } else {
         setError(result.error || 'Failed to load analysis')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to load analysis')
     } finally {
       setLoading(false)
