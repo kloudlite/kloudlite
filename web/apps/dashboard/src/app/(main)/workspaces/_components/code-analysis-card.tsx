@@ -134,7 +134,7 @@ export function CodeAnalysisCard({ workspaceName, namespace }: CodeAnalysisCardP
 
   const totalIssues = securityTotal + qualityTotal
 
-  const detailPageUrl = `/workspaces/${namespace}/${workspaceName}/code-analysis`
+  const detailPageUrl = `/code-analysis/${namespace}/${workspaceName}`
 
   return (
     <Link href={detailPageUrl} className="block">

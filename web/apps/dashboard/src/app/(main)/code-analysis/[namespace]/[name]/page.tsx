@@ -200,9 +200,8 @@ function FindingRow({ finding, isExpanded, onToggle }: { finding: FindingWithTyp
 
 export default function CodeAnalysisPage() {
   const params = useParams()
-  const id = params.id as string[]
-  const namespace = id.length === 2 ? id[0] : 'default'
-  const workspaceName = id.length === 2 ? id[1] : id[0]
+  const namespace = params.namespace as string
+  const workspaceName = params.name as string
 
   const [data, setData] = useState<CodeAnalysisResponse | null>(null)
   const [loading, setLoading] = useState(true)
