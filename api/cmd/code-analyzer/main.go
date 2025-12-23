@@ -21,15 +21,16 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	Namespace         string
-	WorkmachineName   string
-	ClaudeAPIURL      string
-	ClaudeAPIKey      string
-	WorkspacesPath    string
-	ReportsPath       string
-	DebounceSeconds   int
-	MaxConcurrentJobs int
-	HTTPPort          int
+	Namespace          string
+	WorkmachineName    string
+	ClaudeAPIURL       string
+	ClaudeAPIKey       string
+	WorkspacesPath     string
+	ReportsPath        string
+	DebounceSeconds    int
+	MaxConcurrentJobs  int
+	MaxConcurrentScans int
+	HTTPPort           int
 }
 
 func getEnv(key, defaultValue string) string {
@@ -50,15 +51,16 @@ func getEnvInt(key string, defaultValue int) int {
 
 func loadConfig() (*Config, error) {
 	config := &Config{
-		Namespace:         getEnv("NAMESPACE", ""),
-		WorkmachineName:   getEnv("WORKMACHINE_NAME", ""),
-		ClaudeAPIURL:      getEnv("CLAUDE_API_URL", "https://console.kloudlite.io/api/anthropic/v1/messages"),
-		ClaudeAPIKey:      getEnv("CLAUDE_API_KEY", ""),
-		WorkspacesPath:    getEnv("WORKSPACES_PATH", "/var/lib/kloudlite/home/workspaces"),
-		ReportsPath:       getEnv("REPORTS_PATH", "/var/lib/kloudlite/code-analysis"),
-		DebounceSeconds:   getEnvInt("DEBOUNCE_SECONDS", 45),
-		MaxConcurrentJobs: getEnvInt("MAX_CONCURRENT_ANALYSES", 2),
-		HTTPPort:          getEnvInt("HTTP_PORT", 8082),
+		Namespace:          getEnv("NAMESPACE", ""),
+		WorkmachineName:    getEnv("WORKMACHINE_NAME", ""),
+		ClaudeAPIURL:       getEnv("CLAUDE_API_URL", "https://console.kloudlite.io/api/anthropic/v1/messages"),
+		ClaudeAPIKey:       getEnv("CLAUDE_API_KEY", ""),
+		WorkspacesPath:     getEnv("WORKSPACES_PATH", "/var/lib/kloudlite/home/workspaces"),
+		ReportsPath:        getEnv("REPORTS_PATH", "/var/lib/kloudlite/code-analysis"),
+		DebounceSeconds:    getEnvInt("DEBOUNCE_SECONDS", 45),
+		MaxConcurrentJobs:  getEnvInt("MAX_CONCURRENT_ANALYSES", 2),
+		MaxConcurrentScans: getEnvInt("MAX_CONCURRENT_SCANS", 3),
+		HTTPPort:           getEnvInt("HTTP_PORT", 8082),
 	}
 
 	// Validate required config
@@ -104,7 +106,8 @@ func main() {
 		zap.String("workspaces_path", config.WorkspacesPath),
 		zap.String("reports_path", config.ReportsPath),
 		zap.Int("debounce_seconds", config.DebounceSeconds),
-		zap.Int("max_concurrent", config.MaxConcurrentJobs),
+		zap.Int("max_concurrent_jobs", config.MaxConcurrentJobs),
+		zap.Int("max_concurrent_scans", config.MaxConcurrentScans),
 	)
 
 	// Create storage
@@ -125,6 +128,7 @@ func main() {
 		config.WorkspacesPath,
 		logger,
 	)
+	codeAnalyzer.SetMaxConcurrent(config.MaxConcurrentScans)
 
 	// Create analysis queue
 	analysisQueue := queue.NewQueue(

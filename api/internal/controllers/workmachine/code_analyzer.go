@@ -136,6 +136,10 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 									Value: "2",
 								},
 								{
+									Name:  "MAX_CONCURRENT_SCANS",
+									Value: "3",
+								},
+								{
 									Name:  "HTTP_PORT",
 									Value: fmt.Sprintf("%d", codeAnalyzerPort),
 								},
