@@ -22,11 +22,34 @@ type ScanDefinition struct {
 
 // StandardPromptRules is prepended to all scan prompts
 const StandardPromptRules = `CRITICAL ANALYSIS RULES:
-1. Report ONLY confirmed issues with concrete evidence
-2. DO NOT report theoretical, potential, or speculative issues
-3. DO NOT report suggestions, improvements, or best practices
-4. If no confirmed issues exist, return {"findings":[],"summary":{"count":0}}
-5. Each finding MUST have exact file:line location and evidence
+
+1. TRACE DATA FLOW - Before reporting any issue:
+   - Trace the data from source to sink
+   - Check if validation/sanitization exists ANYWHERE in the flow
+   - If mitigated at ANY point, it is NOT a vulnerability
+
+2. MITIGATIONS THAT MAKE CODE SECURE (do NOT report these):
+   - Input validation functions (isValid*, validate*, check*)
+   - Sanitization (html.EscapeString, sanitize*, escape*)
+   - Parameterized queries (?, $1, :param placeholders)
+   - Safe APIs (exec.Command with validated args, prepared statements)
+   - Allowlists/whitelists for inputs
+   - Type checking that restricts input format
+
+3. Report ONLY if ALL conditions met:
+   - Vulnerable pattern exists AND
+   - User input reaches it AND
+   - NO mitigation exists in the data flow
+
+4. Output format:
+   - If issues found: {"findings":[...],"summary":{"count":N}}
+   - If NO issues (code is secure): {"findings":[],"summary":{"count":0}}
+
+5. DO NOT report:
+   - Issues where mitigation exists (even partial)
+   - Theoretical issues without proof of exploitability
+   - Best practices or suggestions
+   - Code that "could be improved"
 
 `
 
@@ -95,20 +118,23 @@ Output ONLY valid JSON:
 		Enabled:  true,
 		Prompt: StandardPromptRules + `SCAN: Command Injection (OWASP A03, CWE-78)
 
-REPORT ONLY if you find these CONFIRMED patterns:
-- exec.Command with user input in command or arguments
-- os.system/subprocess with unsanitized user input
-- Shell execution (sh -c) with user-controlled strings
-- eval() with user input (in JS/Python)
+REPORT ONLY if ALL these conditions are met:
+- User input flows directly to exec.Command/os.system/subprocess
+- Input is NOT validated before use
+- No input sanitization or whitelist check exists
 
-DO NOT REPORT:
-- Hardcoded commands without user input
-- Commands with validated/whitelisted arguments only
-- exec.Command with constant strings
-- System calls for internal operations without external input
+DO NOT REPORT (these are MITIGATED):
+- exec.Command where arguments come from DNS resolution (not raw user input)
+- Commands where input passes through validation functions first (isValidHostname, isValidIP, etc.)
+- Commands with only constant/config strings, no user input
+- Arguments that are validated against regex or whitelist before use
+- Commands using "--" separator to prevent option injection
+- Input that passes through net.LookupIP or similar resolution (DNS-resolved IPs are safe)
+
+IMPORTANT: If you see validation like isValidHostname() or isInternalIP() before the command, it's NOT vulnerable.
 
 Output ONLY valid JSON:
-{"findings":[{"id":"SEC-03-X","severity":"critical","file":"path","line":N,"title":"Command Injection","description":"User input [variable] passed to [function] without sanitization","recommendation":"Validate input against whitelist or avoid shell execution"}],"summary":{"count":N}}`,
+{"findings":[{"id":"SEC-03-X","severity":"critical","file":"path","line":N,"title":"Command Injection","description":"User input [variable] passed to [function] without ANY validation","recommendation":"Validate input against whitelist or avoid shell execution"}],"summary":{"count":N}}`,
 	},
 
 	{
@@ -120,20 +146,24 @@ Output ONLY valid JSON:
 		Prompt: StandardPromptRules + `SCAN: Cross-Site Scripting (OWASP A03, CWE-79)
 
 REPORT ONLY if you find these CONFIRMED patterns:
-- innerHTML/outerHTML with user input
+- innerHTML/outerHTML with user input AND no escaping
 - document.write() with unsanitized data
-- Unescaped template rendering: {{.UserInput}} without escaping
-- Response.Write with unsanitized user input in HTML context
-- dangerouslySetInnerHTML with user data
+- fmt.Fprintf to ResponseWriter with user input AND no html.EscapeString
+- dangerouslySetInnerHTML with user data AND no sanitization
 
-DO NOT REPORT:
-- Properly escaped template output (html/template in Go)
+DO NOT REPORT (these are MITIGATED - NOT vulnerable):
+- html.EscapeString() used on user input before output
+- html/template package (auto-escapes by default)
 - React JSX expressions (auto-escaped)
-- User input in non-HTML contexts (JSON responses)
-- Static HTML without user input
+- JSON responses (not HTML context)
+- Content-Type: application/json responses
+- User input assigned to variable that is later escaped
+- Any output where escaping happens before rendering
+
+IMPORTANT: If html.EscapeString(userInput) appears ANYWHERE before the output, it is SECURE.
 
 Output ONLY valid JSON:
-{"findings":[{"id":"SEC-04-X","severity":"high","file":"path","line":N,"title":"XSS Vulnerability","description":"User input rendered without escaping via [method]","recommendation":"Escape output or use safe templating"}],"summary":{"count":N}}`,
+{"findings":[{"id":"SEC-04-X","severity":"high","file":"path","line":N,"title":"XSS Vulnerability","description":"User input rendered without ANY escaping via [method]","recommendation":"Use html.EscapeString or safe templating"}],"summary":{"count":N}}`,
 	},
 
 	{
@@ -169,16 +199,20 @@ Output ONLY valid JSON:
 		Prompt: StandardPromptRules + `SCAN: Server-Side Request Forgery (OWASP A10, CWE-918)
 
 REPORT ONLY if you find these CONFIRMED patterns:
-- HTTP client requests with user-controlled URLs
-- URL fetching without domain validation
-- Redirect following to user-supplied URLs
-- Internal service access via user input
+- HTTP requests with user-controlled URLs AND no validation
+- URL fetching without ANY domain/IP validation
+- No check for internal/private IP addresses before request
 
-DO NOT REPORT:
-- Requests to hardcoded/whitelisted URLs only
-- URLs validated against allowlist
-- Internal API calls without user input
-- Webhook URLs stored in database (runtime configured)
+DO NOT REPORT (these are MITIGATED - NOT vulnerable):
+- isInternalIP() or similar checks before making requests
+- Domain allowlist/whitelist validation (isAllowedDomain, allowedDomains)
+- IP address validation that blocks private ranges
+- safeDialContext or custom dialers that validate IPs
+- Requests only to hardcoded URLs
+- DNS resolution followed by IP validation before connection
+- net.LookupIP combined with internal IP checks
+
+IMPORTANT: If code checks isInternalIP() or validates against allowedDomains before making the request, it is SECURE.
 
 Output ONLY valid JSON:
 {"findings":[{"id":"SEC-06-X","severity":"high","file":"path","line":N,"title":"SSRF Vulnerability","description":"HTTP request to user-controlled URL [variable] without validation","recommendation":"Validate URL against allowlist"}],"summary":{"count":N}}`,
@@ -241,17 +275,23 @@ Output ONLY valid JSON:
 		Prompt: StandardPromptRules + `SCAN: Cryptographic Issues (OWASP A02, CWE-327)
 
 REPORT ONLY if you find these CONFIRMED patterns:
-- MD5/SHA1 used for password hashing (not HMAC)
+- MD5/SHA1 used for PASSWORD hashing (not checksums)
 - DES/3DES/RC4 encryption
 - ECB mode block cipher
-- Hardcoded encryption keys/IVs
-- Math.random()/rand() for security purposes
+- Hardcoded encryption keys/IVs in source code
+- Math.random()/rand() for cryptographic purposes
+- bcrypt cost < 10 (costs 10-14 are ACCEPTABLE, 12+ is STRONG)
 
-DO NOT REPORT:
-- MD5/SHA1 for checksums or non-security purposes
-- Proper algorithms (bcrypt, argon2, AES-GCM)
-- Keys loaded from environment/config
-- Secure random generators (crypto/rand)
+DO NOT REPORT (these are SECURE):
+- bcrypt with cost >= 10 (cost 10-14 is secure, 12+ is strong)
+- argon2, scrypt for password hashing
+- AES-GCM, ChaCha20-Poly1305 for encryption
+- MD5/SHA1 for checksums, cache keys, or non-security hashing
+- crypto/rand for random generation
+- Keys loaded from environment variables or config files
+- Password complexity validation (this is a MITIGATION, not a weakness)
+
+IMPORTANT: bcrypt cost 10-14 is SECURE per OWASP. Do NOT report as weak.
 
 Output ONLY valid JSON:
 {"findings":[{"id":"SEC-09-X","severity":"high","file":"path","line":N,"title":"Weak Cryptography","description":"[Algorithm] used for [purpose] at line N","recommendation":"Use [recommended algorithm]"}],"summary":{"count":N}}`,
