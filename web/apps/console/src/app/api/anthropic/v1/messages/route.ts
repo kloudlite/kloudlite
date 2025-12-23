@@ -4,7 +4,9 @@ import { getInstallationBySecretKey } from '@/lib/console/supabase-storage-servi
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
+const ANTHROPIC_API_URL = process.env.ANTHROPIC_BASE_URL
+  ? `${process.env.ANTHROPIC_BASE_URL}/v1/messages`
+  : 'https://api.anthropic.com/v1/messages'
 
 /**
  * Claude API Proxy
@@ -39,9 +41,9 @@ export async function POST(request: NextRequest) {
 
   console.log('[Claude Proxy] Authenticated installation:', installation.id, installation.subdomain)
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.ANTHROPIC_AUTH_TOKEN
   if (!apiKey) {
-    console.error('[Claude Proxy] ANTHROPIC_API_KEY environment variable not set')
+    console.error('[Claude Proxy] ANTHROPIC_AUTH_TOKEN environment variable not set')
     return Response.json(
       { error: { type: 'configuration_error', message: 'API key not configured' } },
       { status: 500 }
