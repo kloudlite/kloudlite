@@ -8,6 +8,7 @@ import { WorkspaceConnectOptions } from '../_components/workspace-connect-option
 import { WorkspaceActions } from '../_components/workspace-actions'
 import { PackagesSheet } from '../_components/packages-sheet'
 import { WorkspaceMetrics } from '../_components/workspace-metrics'
+import { CodeAnalysisCard } from '../_components/code-analysis-card'
 import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
 import { getWorkspaceDetails } from '@/lib/services/dashboard.service'
 
@@ -192,6 +193,12 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
             {/* Real-time Metrics */}
             <WorkspaceMetrics
+              workspaceName={workspace.metadata.name}
+              namespace={workspace.metadata.namespace}
+            />
+
+            {/* Code Analysis */}
+            <CodeAnalysisCard
               workspaceName={workspace.metadata.name}
               namespace={workspace.metadata.namespace}
             />
