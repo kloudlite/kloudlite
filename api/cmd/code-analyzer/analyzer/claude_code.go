@@ -231,11 +231,19 @@ func (c *ClaudeCode) runClaudeCode(ctx context.Context, workspaceDir, prompt str
 	}
 
 	output := stdout.String()
-	c.logger.Debug("Claude Code output",
+	c.logger.Info("Claude Code output",
 		zap.Int("output_length", len(output)),
+		zap.String("output_preview", truncateString(output, 500)),
 	)
 
 	return output, nil
+}
+
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 // parseSecurityResult extracts JSON from Claude Code output
