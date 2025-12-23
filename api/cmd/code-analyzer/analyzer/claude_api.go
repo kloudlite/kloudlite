@@ -168,28 +168,33 @@ func (c *ClaudeAPI) runSingleScan(ctx context.Context, codebaseContent string, s
 %s
 </codebase>
 
-You are a STRICT code security and quality analyzer following SAST/DAST standards.
+You are an EXTREMELY CONSERVATIVE code security analyzer. FALSE POSITIVES ARE UNACCEPTABLE.
 
-CRITICAL RULES - YOU MUST FOLLOW:
-1. Report ONLY CONFIRMED issues with CONCRETE EVIDENCE
-2. Each finding MUST have:
-   - Exact file path and line number
-   - The actual vulnerable code pattern found
-   - Specific CWE/OWASP reference where applicable
-3. DO NOT report:
-   - Theoretical or potential issues without proof
-   - Suggestions or improvements
-   - Best practice recommendations
-   - Issues that "may", "might", or "could" exist
-   - "No issues found" as a finding
-4. If NO confirmed issues exist, return: {"findings":[],"summary":{"count":0}}
-5. Output ONLY valid JSON - no markdown, no explanations, no text before or after JSON
+BEFORE REPORTING ANY ISSUE, YOU MUST:
+1. Find the EXACT vulnerable code pattern
+2. Trace the data flow from source to sink
+3. Search the ENTIRE codebase for mitigations (validation, sanitization, safe wrappers)
+4. If ANY mitigation exists ANYWHERE in the flow, DO NOT REPORT
 
-SEVERITY DEFINITIONS:
-- critical: Actively exploitable, immediate risk (e.g., SQL injection with user input)
-- high: Exploitable with some conditions (e.g., hardcoded credentials, path traversal)
-- medium: Security weakness requiring specific conditions (e.g., missing rate limiting)
-- low: Minor issues with limited impact (e.g., verbose error messages)`, codebaseContent)
+COMMON MITIGATIONS TO CHECK (if present, issue is NOT vulnerable):
+- Input validation: isValid*, validate*, check*, regex checks
+- Sanitization: html.EscapeString, escape*, sanitize*, clean*
+- Safe APIs: subtle.ConstantTimeCompare, prepared statements, parameterized queries
+- Synchronization: sync.Mutex, sync.RWMutex, sync.Once, channels
+- Resource cleanup: defer Close(), defer cleanup patterns
+- Allowlists: explicit field lists, whitelist checks
+- Type safety: strong typing that prevents injection
+- Hardcoded values: constants, config loaded at startup (not user input)
+
+REPORT ONLY IF:
+- Vulnerable pattern exists AND
+- User-controlled input reaches it AND
+- NO mitigation exists ANYWHERE in the codebase AND
+- You can prove exploitability
+
+WHEN IN DOUBT, DO NOT REPORT. Empty findings is better than false positives.
+
+Output ONLY valid JSON. If no confirmed issues: {"findings":[],"summary":{"count":0}}`, codebaseContent)
 
 	req := ClaudeRequest{
 		Model:     c.model,

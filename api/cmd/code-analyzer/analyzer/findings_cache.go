@@ -307,6 +307,43 @@ func isSpeculativeFinding(f Finding) bool {
 	// Combine all text for checking
 	allText := strings.ToLower(f.Title + " " + f.Description + " " + f.Recommendation)
 
+	// Phrases that indicate the finding is self-contradicting or retracted
+	retractedPhrases := []string{
+		"report is retracted",
+		"finding is retracted",
+		"finding is withdrawn",
+		"is withdrawn",
+		"is retracted",
+		"not a vulnerability",
+		"not vulnerable",
+		"appears to be safe",
+		"this is safe",
+		"this appears safe",
+		"correctly synchronized",
+		"properly synchronized",
+		"mitigated by mutex",
+		"mitigated by sync",
+		"protected by mutex",
+		"protected by lock",
+		"is correctly used",
+		"is properly used",
+		"mass assignment is not possible",
+		"this prevents",
+		"this is mitigated",
+		"the vulnerability relies on the assumption",
+		"would require",
+		"however, the code",
+		"however, looking closer",
+		"this seems safe",
+		"appears correct",
+	}
+
+	for _, phrase := range retractedPhrases {
+		if strings.Contains(allText, phrase) {
+			return true
+		}
+	}
+
 	// Phrases that indicate speculative/suggestive findings
 	speculativePhrases := []string{
 		"no action required",
