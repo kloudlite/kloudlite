@@ -3,6 +3,7 @@ package analyzer
 import (
 	"context"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/code-analyzer/storage"
@@ -37,11 +38,11 @@ func NewAnalyzer(
 	}
 }
 
-// AnalyzeWorkspace runs both security and quality analysis on a workspace
+// AnalyzeWorkspace runs both security and quality analysis on a workspace in parallel
 func (a *Analyzer) AnalyzeWorkspace(ctx context.Context, workspaceName string) error {
 	workspaceDir := filepath.Join(a.workspacesPath, workspaceName)
 
-	a.logger.Info("Starting workspace analysis", zap.String("workspace", workspaceName))
+	a.logger.Info("Starting workspace analysis (parallel)", zap.String("workspace", workspaceName))
 
 	// Count files for metadata
 	fileCount, err := CountFiles(workspaceDir, MaxFileSize)
@@ -50,15 +51,25 @@ func (a *Analyzer) AnalyzeWorkspace(ctx context.Context, workspaceName string) e
 		fileCount = 0
 	}
 
-	// Run security analysis
-	if err := a.runSecurityAnalysis(ctx, workspaceName, workspaceDir, fileCount); err != nil {
-		a.logger.Error("Security analysis failed", zap.String("workspace", workspaceName), zap.Error(err))
-	}
+	// Run security and quality analysis in parallel
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	// Run quality analysis
-	if err := a.runQualityAnalysis(ctx, workspaceName, workspaceDir, fileCount); err != nil {
-		a.logger.Error("Quality analysis failed", zap.String("workspace", workspaceName), zap.Error(err))
-	}
+	go func() {
+		defer wg.Done()
+		if err := a.runSecurityAnalysis(ctx, workspaceName, workspaceDir, fileCount); err != nil {
+			a.logger.Error("Security analysis failed", zap.String("workspace", workspaceName), zap.Error(err))
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := a.runQualityAnalysis(ctx, workspaceName, workspaceDir, fileCount); err != nil {
+			a.logger.Error("Quality analysis failed", zap.String("workspace", workspaceName), zap.Error(err))
+		}
+	}()
+
+	wg.Wait()
 
 	a.logger.Info("Completed workspace analysis", zap.String("workspace", workspaceName))
 	return nil
