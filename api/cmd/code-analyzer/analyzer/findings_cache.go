@@ -1,10 +1,15 @@
 package analyzer
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -239,4 +244,107 @@ func (m *FindingsCacheManager) GetFindingsForFiles(cache *FindingsCache, files [
 	}
 
 	return findings
+}
+
+// DeduplicateFindings removes duplicate findings based on file, line, and normalized title
+// This helps stabilize results across non-deterministic Claude outputs
+func DeduplicateFindings(findings []Finding) []Finding {
+	if len(findings) == 0 {
+		return findings
+	}
+
+	// Map to track unique findings by their signature
+	seen := make(map[string]Finding)
+
+	for _, f := range findings {
+		sig := generateFindingSignature(f)
+
+		// If we haven't seen this finding, or if this one has higher severity, keep it
+		if existing, exists := seen[sig]; !exists {
+			seen[sig] = f
+		} else if severityRank(f.Severity) > severityRank(existing.Severity) {
+			seen[sig] = f
+		}
+	}
+
+	// Convert map to slice
+	result := make([]Finding, 0, len(seen))
+	for _, f := range seen {
+		result = append(result, f)
+	}
+
+	// Sort by file, then line for consistent ordering
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].File != result[j].File {
+			return result[i].File < result[j].File
+		}
+		if result[i].Line != result[j].Line {
+			return result[i].Line < result[j].Line
+		}
+		return result[i].Title < result[j].Title
+	})
+
+	return result
+}
+
+// generateFindingSignature creates a unique signature for a finding
+// based on file, line, and normalized title
+func generateFindingSignature(f Finding) string {
+	// Normalize the title by:
+	// 1. Converting to lowercase
+	// 2. Removing special characters
+	// 3. Extracting key terms
+	normalizedTitle := normalizeTitle(f.Title)
+
+	// Create a composite key
+	key := fmt.Sprintf("%s:%d:%s", f.File, f.Line, normalizedTitle)
+
+	// Hash it to get a consistent signature
+	hash := sha256.Sum256([]byte(key))
+	return hex.EncodeToString(hash[:8]) // Use first 8 bytes for shorter signature
+}
+
+// normalizeTitle normalizes a finding title for comparison
+func normalizeTitle(title string) string {
+	// Convert to lowercase
+	normalized := strings.ToLower(title)
+
+	// Remove common variations
+	// E.g., "SQL Injection" vs "SQL Injection Vulnerability" vs "Potential SQL Injection"
+	prefixesToRemove := []string{"potential ", "possible ", "suspected ", "likely "}
+	for _, prefix := range prefixesToRemove {
+		normalized = strings.TrimPrefix(normalized, prefix)
+	}
+
+	suffixesToRemove := []string{" vulnerability", " issue", " problem", " risk", " detected", " found"}
+	for _, suffix := range suffixesToRemove {
+		normalized = strings.TrimSuffix(normalized, suffix)
+	}
+
+	// Remove special characters and extra whitespace
+	re := regexp.MustCompile(`[^a-z0-9\s]`)
+	normalized = re.ReplaceAllString(normalized, " ")
+
+	// Collapse multiple spaces
+	spaceRe := regexp.MustCompile(`\s+`)
+	normalized = spaceRe.ReplaceAllString(normalized, " ")
+
+	// Trim and return
+	return strings.TrimSpace(normalized)
+}
+
+// severityRank returns a numeric rank for severity (higher = more severe)
+func severityRank(severity string) int {
+	switch strings.ToLower(severity) {
+	case "critical":
+		return 4
+	case "high":
+		return 3
+	case "medium":
+		return 2
+	case "low":
+		return 1
+	default:
+		return 0
+	}
 }
