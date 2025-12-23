@@ -483,14 +483,20 @@ func (e *Executor) RunIncrementalScans(ctx context.Context, workspaceDir, worksp
 	// Merge findings with cached findings for unchanged files
 	allFindings := MergeFindings(existingCache, newFindings, filesToAnalyze, diff.Deleted)
 
+	// Deduplicate findings to stabilize results across non-deterministic Claude outputs
+	allFindings = DeduplicateFindings(allFindings)
+
 	// Compute new manifest
 	newManifest, err := e.manifestMgr.ComputeCurrentManifest(workspaceDir, workspaceName)
 	if err != nil {
 		e.logger.Warn("Failed to compute new manifest", zap.Error(err))
 	}
 
+	// Deduplicate new findings before caching
+	deduplicatedNewFindings := DeduplicateFindings(newFindings)
+
 	// Update findings cache
-	newCache := e.findingsCacheMgr.UpdateCache(workspaceName, existingCache, newFindings, filesToAnalyze, newManifest)
+	newCache := e.findingsCacheMgr.UpdateCache(workspaceName, existingCache, deduplicatedNewFindings, filesToAnalyze, newManifest)
 
 	// Save manifest and cache
 	if newManifest != nil {
@@ -547,6 +553,9 @@ func (e *Executor) createErrorReport(workspaceName string, startTime time.Time, 
 // buildReportFromCache builds a report from cached findings
 func (e *Executor) buildReportFromCache(workspaceName string, startTime time.Time, cache *FindingsCache, diff *DiffResult) *AggregatedReport {
 	allFindings := e.findingsCacheMgr.GetAllFindings(cache)
+
+	// Deduplicate findings from cache
+	allFindings = DeduplicateFindings(allFindings)
 
 	return &AggregatedReport{
 		Version:    "2.1.0",
