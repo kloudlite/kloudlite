@@ -116,12 +116,20 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Connection Options - Takes 2/3 width */}
-          <div className="lg:col-span-2">
+          {/* Connection Options and Code Analysis - Takes 2/3 width */}
+          <div className="lg:col-span-2 space-y-6">
             <WorkspaceConnectOptions
               workspaceId={`${workspace.metadata.namespace}/${workspace.metadata.name}`}
               workspace={workspace}
             />
+
+            {/* Code Analysis - Only visible when WorkMachine is running */}
+            {workMachineRunning && (
+              <CodeAnalysisCard
+                workspaceName={workspace.metadata.name}
+                namespace={workspace.metadata.namespace}
+              />
+            )}
           </div>
 
           {/* Workspace Details - Takes 1/3 width */}
@@ -193,12 +201,6 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
             {/* Real-time Metrics */}
             <WorkspaceMetrics
-              workspaceName={workspace.metadata.name}
-              namespace={workspace.metadata.namespace}
-            />
-
-            {/* Code Analysis */}
-            <CodeAnalysisCard
               workspaceName={workspace.metadata.name}
               namespace={workspace.metadata.namespace}
             />
