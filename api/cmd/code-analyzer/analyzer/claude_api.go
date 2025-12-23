@@ -163,16 +163,42 @@ func (c *ClaudeAPI) runSingleScan(ctx context.Context, codebaseContent string, s
 	}
 
 	// Build request with cached codebase in system message
+	// Include strict analysis rules to ensure evidence-based findings
+	systemPrompt := fmt.Sprintf(`<codebase>
+%s
+</codebase>
+
+You are a STRICT code security and quality analyzer following SAST/DAST standards.
+
+CRITICAL RULES - YOU MUST FOLLOW:
+1. Report ONLY CONFIRMED issues with CONCRETE EVIDENCE
+2. Each finding MUST have:
+   - Exact file path and line number
+   - The actual vulnerable code pattern found
+   - Specific CWE/OWASP reference where applicable
+3. DO NOT report:
+   - Theoretical or potential issues without proof
+   - Suggestions or improvements
+   - Best practice recommendations
+   - Issues that "may", "might", or "could" exist
+   - "No issues found" as a finding
+4. If NO confirmed issues exist, return: {"findings":[],"summary":{"count":0}}
+5. Output ONLY valid JSON - no markdown, no explanations, no text before or after JSON
+
+SEVERITY DEFINITIONS:
+- critical: Actively exploitable, immediate risk (e.g., SQL injection with user input)
+- high: Exploitable with some conditions (e.g., hardcoded credentials, path traversal)
+- medium: Security weakness requiring specific conditions (e.g., missing rate limiting)
+- low: Minor issues with limited impact (e.g., verbose error messages)`, codebaseContent)
+
 	req := ClaudeRequest{
 		Model:     c.model,
 		MaxTokens: 4096,
 		System: []SystemBlock{
 			{
-				Type: "text",
-				Text: fmt.Sprintf("<codebase>\n%s\n</codebase>\n\nYou are a code security and quality analyzer. Analyze the codebase above and respond ONLY with valid JSON.", codebaseContent),
-				CacheControl: &CacheControl{
-					Type: "ephemeral",
-				},
+				Type:         "text",
+				Text:         systemPrompt,
+				CacheControl: &CacheControl{Type: "ephemeral"},
 			},
 		},
 		Messages: []Message{

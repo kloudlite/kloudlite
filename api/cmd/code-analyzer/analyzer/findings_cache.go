@@ -248,7 +248,10 @@ func (m *FindingsCacheManager) GetFindingsForFiles(cache *FindingsCache, files [
 
 // DeduplicateFindings removes duplicate findings based on file, line, and normalized title
 // This helps stabilize results across non-deterministic Claude outputs
-// Also filters out informational findings that indicate "no issues found"
+// Also filters out:
+// - Informational findings that indicate "no issues found"
+// - Speculative/suggestive findings without concrete evidence
+// - Best practice suggestions rather than actual issues
 func DeduplicateFindings(findings []Finding) []Finding {
 	if len(findings) == 0 {
 		return findings
@@ -263,8 +266,8 @@ func DeduplicateFindings(findings []Finding) []Finding {
 			continue
 		}
 
-		// Skip findings with "no action required" in recommendation
-		if strings.Contains(strings.ToLower(f.Recommendation), "no action required") {
+		// Skip speculative/suggestive findings
+		if isSpeculativeFinding(f) {
 			continue
 		}
 
@@ -296,6 +299,82 @@ func DeduplicateFindings(findings []Finding) []Finding {
 	})
 
 	return result
+}
+
+// isSpeculativeFinding returns true if the finding is speculative/suggestive
+// rather than a confirmed issue with evidence
+func isSpeculativeFinding(f Finding) bool {
+	// Combine all text for checking
+	allText := strings.ToLower(f.Title + " " + f.Description + " " + f.Recommendation)
+
+	// Phrases that indicate speculative/suggestive findings
+	speculativePhrases := []string{
+		"no action required",
+		"no issues found",
+		"no vulnerabilities detected",
+		"no security issues",
+		"appears to be secure",
+		"looks secure",
+		"properly implemented",
+		"correctly implemented",
+		"best practice suggests",
+		"consider adding",
+		"consider using",
+		"consider implementing",
+		"you may want to",
+		"you might want to",
+		"it would be better",
+		"it might be better",
+		"could be improved",
+		"should consider",
+		"recommend adding",
+		"recommend implementing",
+		"for better security",
+		"for improved security",
+		"as a best practice",
+		"following best practices",
+		"enhancement suggestion",
+		"improvement suggestion",
+		"no critical issues",
+		"no major issues",
+	}
+
+	for _, phrase := range speculativePhrases {
+		if strings.Contains(allText, phrase) {
+			return true
+		}
+	}
+
+	// Check for patterns that suggest speculation rather than confirmation
+	// These are weaker signals, only use when combined with lack of evidence
+	weakSpeculativePatterns := []string{
+		"may be vulnerable",
+		"might be vulnerable",
+		"could be vulnerable",
+		"potentially vulnerable",
+		"possibly vulnerable",
+		"may lead to",
+		"might lead to",
+		"could lead to",
+		"may allow",
+		"might allow",
+		"could allow",
+		"may expose",
+		"might expose",
+		"could expose",
+	}
+
+	for _, pattern := range weakSpeculativePatterns {
+		if strings.Contains(allText, pattern) {
+			// Check if there's concrete evidence in the description
+			// If the description is vague (short or lacks file/line specifics), skip it
+			if len(f.Description) < 100 && f.Line == 0 {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // generateFindingSignature creates a unique signature for a finding
