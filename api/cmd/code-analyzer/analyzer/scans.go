@@ -21,35 +21,29 @@ type ScanDefinition struct {
 }
 
 // StandardPromptRules is prepended to all scan prompts
-const StandardPromptRules = `CRITICAL ANALYSIS RULES:
+const StandardPromptRules = `ZERO FALSE POSITIVES POLICY - When in doubt, DO NOT REPORT.
 
-1. TRACE DATA FLOW - Before reporting any issue:
-   - Trace the data from source to sink
-   - Check if validation/sanitization exists ANYWHERE in the flow
-   - If mitigated at ANY point, it is NOT a vulnerability
+BEFORE REPORTING, VERIFY ALL OF THESE:
+1. ✓ Vulnerable pattern exists at the exact line you're reporting
+2. ✓ User-controlled input actually reaches this code (trace the data flow)
+3. ✓ NO mitigation exists ANYWHERE (search entire codebase)
+4. ✓ You can explain exactly how to exploit it
 
-2. MITIGATIONS THAT MAKE CODE SECURE (do NOT report these):
-   - Input validation functions (isValid*, validate*, check*)
-   - Sanitization (html.EscapeString, sanitize*, escape*)
-   - Parameterized queries (?, $1, :param placeholders)
-   - Safe APIs (exec.Command with validated args, prepared statements)
-   - Allowlists/whitelists for inputs
-   - Type checking that restricts input format
+IF ANY CHECK FAILS → DO NOT REPORT
 
-3. Report ONLY if ALL conditions met:
-   - Vulnerable pattern exists AND
-   - User input reaches it AND
-   - NO mitigation exists in the data flow
+THESE ARE NOT VULNERABILITIES (never report):
+- Hardcoded config values (constants, env vars loaded at init)
+- Code protected by validation functions (isValid*, validate*, check*)
+- Sanitized output (html.EscapeString, escape*, sanitize*)
+- Parameterized queries (?, $1, :param)
+- Mutex-protected maps (sync.Mutex, sync.RWMutex)
+- sync.Once initialization patterns
+- defer Close() for resource cleanup
+- subtle.ConstantTimeCompare for timing-safe comparison
+- bcrypt with cost >= 10
 
-4. Output format:
-   - If issues found: {"findings":[...],"summary":{"count":N}}
-   - If NO issues (code is secure): {"findings":[],"summary":{"count":0}}
-
-5. DO NOT report:
-   - Issues where mitigation exists (even partial)
-   - Theoretical issues without proof of exploitability
-   - Best practices or suggestions
-   - Code that "could be improved"
+EMPTY RESULT IS CORRECT when code is secure:
+{"findings":[],"summary":{"count":0}}
 
 `
 
