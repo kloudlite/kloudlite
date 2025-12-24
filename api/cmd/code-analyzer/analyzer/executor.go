@@ -2,19 +2,17 @@ package analyzer
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"sync"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
 )
 
-// ScanResult represents the result of a single scan
+// ScanResult represents the result of a scan
 type ScanResult struct {
 	ScanID   string        `json:"scanId"`
 	ScanName string        `json:"scanName"`
-	Category ScanCategory  `json:"category"`
+	Category string        `json:"category"`
 	Duration time.Duration `json:"duration"`
 	Findings []Finding     `json:"findings"`
 	Summary  ScanSummary   `json:"summary"`
@@ -31,17 +29,20 @@ type ScanSummary struct {
 	TotalCount    int `json:"totalCount"`
 }
 
-// Finding represents a scan finding (reusable across all scans)
+// Finding represents a scan finding
 type Finding struct {
-	ID             string `json:"id"`
-	Severity       string `json:"severity"`
-	Category       string `json:"category"`
-	File           string `json:"file"`
-	Line           int    `json:"line,omitempty"`
-	Title          string `json:"title"`
-	Description    string `json:"description"`
-	Recommendation string `json:"recommendation"`
-	CWE            string `json:"cwe,omitempty"`
+	ID             string   `json:"id"`
+	Severity       string   `json:"severity"`
+	Category       string   `json:"category"`
+	File           string   `json:"file"`
+	Line           int      `json:"line,omitempty"`
+	Title          string   `json:"title"`
+	Description    string   `json:"description"`
+	Recommendation string   `json:"recommendation"`
+	CWE            string   `json:"cwe,omitempty"`
+	OWASP          string   `json:"owasp,omitempty"`
+	Evidence       string   `json:"evidence,omitempty"`
+	Tags           []string `json:"tags,omitempty"`
 }
 
 // AggregatedReport represents the combined results of all scans
@@ -84,499 +85,181 @@ type AggQualitySummary struct {
 	TotalCount  int `json:"totalCount"`
 }
 
-// Executor handles parallel scan execution
+// Executor handles scan execution using Semgrep
 type Executor struct {
-	claudeCode       *ClaudeCode
-	claudeAPI        *ClaudeAPI
-	manifestMgr      *ManifestManager
-	findingsCacheMgr *FindingsCacheManager
-	logger           *zap.Logger
-	maxConcurrent    int
-	useDirectAPI     bool
-	reportsPath      string
+	semgrep     *SemgrepRunner
+	reportsPath string
+	logger      *zap.Logger
 }
 
-// NewExecutor creates a new scan executor
-func NewExecutor(claudeCode *ClaudeCode, logger *zap.Logger, maxConcurrent int) *Executor {
-	if maxConcurrent <= 0 {
-		maxConcurrent = 10 // Default to 10 concurrent scans
-	}
+// NewExecutor creates a new scan executor with Semgrep
+func NewExecutor(reportsPath string, logger *zap.Logger) *Executor {
 	return &Executor{
-		claudeCode:    claudeCode,
-		logger:        logger,
-		maxConcurrent: maxConcurrent,
-		useDirectAPI:  false, // Default to CLI mode for backward compatibility
+		semgrep:     NewSemgrepRunner(logger),
+		reportsPath: reportsPath,
+		logger:      logger,
 	}
 }
 
-// NewExecutorWithAPI creates an executor that uses direct API calls with caching
-func NewExecutorWithAPI(claudeAPI *ClaudeAPI, reportsPath string, logger *zap.Logger, maxConcurrent int) *Executor {
-	if maxConcurrent <= 0 {
-		maxConcurrent = 10
-	}
+// NewExecutorWithConfig creates an executor with custom Semgrep config
+func NewExecutorWithConfig(config SemgrepConfig, reportsPath string, logger *zap.Logger) *Executor {
 	return &Executor{
-		claudeAPI:        claudeAPI,
-		manifestMgr:      NewManifestManager(reportsPath, MaxFileSize, logger),
-		findingsCacheMgr: NewFindingsCacheManager(reportsPath, logger),
-		logger:           logger,
-		maxConcurrent:    maxConcurrent,
-		useDirectAPI:     true,
-		reportsPath:      reportsPath,
+		semgrep:     NewSemgrepRunnerWithConfig(config, logger),
+		reportsPath: reportsPath,
+		logger:      logger,
 	}
 }
 
-// RunAllScans executes all applicable scans in parallel
+// RunAllScans executes Semgrep scan on the workspace
 func (e *Executor) RunAllScans(ctx context.Context, workspaceDir, workspaceName string, fileCount int) *AggregatedReport {
-	// Use incremental analysis if direct API is enabled
-	if e.useDirectAPI {
-		return e.RunIncrementalScans(ctx, workspaceDir, workspaceName, nil)
-	}
-
 	startTime := time.Now()
 
-	// Detect languages in the workspace
-	languages, err := DetectLanguages(workspaceDir)
+	e.logger.Info("Starting Semgrep analysis",
+		zap.String("workspace", workspaceName),
+		zap.String("directory", workspaceDir),
+	)
+
+	// Run Semgrep scan
+	result, err := e.semgrep.Scan(ctx, workspaceDir)
 	if err != nil {
-		e.logger.Warn("Failed to detect languages", zap.Error(err))
-		languages = []Language{}
+		e.logger.Error("Semgrep scan failed", zap.Error(err))
+		return e.createErrorReport(workspaceName, startTime, err)
 	}
 
-	e.logger.Info("Detected languages",
-		zap.String("workspace", workspaceName),
-		zap.Strings("languages", LanguagesToStrings(languages)),
-	)
+	// Detect languages for report metadata
+	languages := DetectLanguages(workspaceDir)
 
-	// Filter scans based on detected languages
-	applicableScans := FilterScansForLanguages(ScanRegistry, languages)
-	skippedCount := len(ScanRegistry) - len(applicableScans)
+	// Categorize findings
+	securityFindings, qualityFindings := e.categorizeFindings(result.Findings)
 
-	e.logger.Info("Running scans",
-		zap.String("workspace", workspaceName),
-		zap.Int("total_scans", len(ScanRegistry)),
-		zap.Int("applicable_scans", len(applicableScans)),
-		zap.Int("skipped_scans", skippedCount),
-	)
-
-	// Create channels for results and semaphore for concurrency control
-	results := make(chan *ScanResult, len(applicableScans))
-	semaphore := make(chan struct{}, e.maxConcurrent)
-	var wg sync.WaitGroup
-
-	// Launch all scans in parallel (with concurrency limit)
-	for _, scan := range applicableScans {
-		wg.Add(1)
-		go func(s ScanDefinition) {
-			defer wg.Done()
-
-			// Acquire semaphore
-			semaphore <- struct{}{}
-			defer func() { <-semaphore }()
-
-			result := e.runSingleScan(ctx, workspaceDir, s)
-			results <- result
-		}(scan)
+	// Build scan results
+	scanResults := []ScanResult{
+		{
+			ScanID:   "SEMGREP-SECURITY",
+			ScanName: "Semgrep Security Scan",
+			Category: "security",
+			Duration: result.Duration,
+			Findings: securityFindings,
+			Summary:  e.buildSummary(securityFindings),
+		},
+		{
+			ScanID:   "SEMGREP-QUALITY",
+			ScanName: "Semgrep Quality Scan",
+			Category: "quality",
+			Duration: result.Duration,
+			Findings: qualityFindings,
+			Summary:  e.buildSummary(qualityFindings),
+		},
 	}
 
-	// Wait for all scans to complete and close results channel
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
-	// Collect all results
-	scanResults := make([]ScanResult, 0, len(applicableScans))
-	failedCount := 0
-	for result := range results {
-		scanResults = append(scanResults, *result)
-		if result.Error != "" {
-			failedCount++
-		}
+	// Handle any error from Semgrep
+	if result.Error != "" {
+		scanResults[0].Error = result.Error
+		scanResults[1].Error = result.Error
 	}
 
-	// Calculate duration
 	duration := time.Since(startTime)
 
-	// Aggregate results
+	// Build aggregated report
 	report := &AggregatedReport{
-		Version:      "2.0.0",
-		Workspace:    workspaceName,
-		AnalyzedAt:   startTime,
-		Duration:     duration.String(),
-		Languages:    LanguagesToStrings(languages),
-		FilesCount:   fileCount,
-		ScansRun:     len(applicableScans),
-		ScansSkipped: skippedCount,
-		ScansFailed:  failedCount,
-		ScanResults:  scanResults,
-		Summary:      e.aggregateSummary(scanResults),
+		Version:     "3.0.0", // New version for Semgrep-based analysis
+		Workspace:   workspaceName,
+		AnalyzedAt:  startTime,
+		Duration:    duration.String(),
+		Languages:   languages,
+		FilesCount:  fileCount,
+		ScansRun:    1, // Semgrep runs as single scan
+		ScanResults: scanResults,
+		Summary:     e.aggregateSummary(result.Findings),
 	}
 
-	e.logger.Info("Completed all scans",
+	if result.Error != "" {
+		report.ScansFailed = 1
+	}
+
+	e.logger.Info("Completed Semgrep analysis",
 		zap.String("workspace", workspaceName),
 		zap.Duration("duration", duration),
-		zap.Int("scans_run", len(applicableScans)),
-		zap.Int("scans_failed", failedCount),
+		zap.Int("security_findings", len(securityFindings)),
+		zap.Int("quality_findings", len(qualityFindings)),
 	)
 
 	return report
 }
 
-// runSingleScan executes a single scan and returns the result
-func (e *Executor) runSingleScan(ctx context.Context, workspaceDir string, scan ScanDefinition) *ScanResult {
-	startTime := time.Now()
-
-	e.logger.Debug("Starting scan",
-		zap.String("scan_id", scan.ID),
-		zap.String("scan_name", scan.Name),
-	)
-
-	// Run Claude Code with the scan's prompt
-	output, err := e.claudeCode.runClaudeCode(ctx, workspaceDir, scan.Prompt)
-	duration := time.Since(startTime)
-
-	result := &ScanResult{
-		ScanID:   scan.ID,
-		ScanName: scan.Name,
-		Category: scan.Category,
-		Duration: duration,
-		Findings: []Finding{},
-		Summary:  ScanSummary{},
+// categorizeFindings splits findings into security and quality categories
+func (e *Executor) categorizeFindings(findings []Finding) (security []Finding, quality []Finding) {
+	for _, f := range findings {
+		if e.isSecurityFinding(f) {
+			security = append(security, f)
+		} else {
+			quality = append(quality, f)
+		}
 	}
-
-	if err != nil {
-		e.logger.Warn("Scan failed",
-			zap.String("scan_id", scan.ID),
-			zap.Error(err),
-		)
-		result.Error = err.Error()
-		return result
-	}
-
-	// Parse the JSON output
-	findings, summary, err := e.parseOutput(output, scan)
-	if err != nil {
-		e.logger.Warn("Failed to parse scan output",
-			zap.String("scan_id", scan.ID),
-			zap.Error(err),
-		)
-		result.Error = fmt.Sprintf("parse error: %v", err)
-		return result
-	}
-
-	result.Findings = findings
-	result.Summary = summary
-
-	e.logger.Debug("Scan completed",
-		zap.String("scan_id", scan.ID),
-		zap.Duration("duration", duration),
-		zap.Int("findings", len(findings)),
-	)
-
-	return result
+	return
 }
 
-// parseOutput parses the JSON output from Claude Code
-func (e *Executor) parseOutput(output string, scan ScanDefinition) ([]Finding, ScanSummary, error) {
-	jsonStr := extractJSON(output)
-	if jsonStr == "" {
-		return []Finding{}, ScanSummary{}, fmt.Errorf("no JSON found in output")
+// isSecurityFinding determines if a finding is security-related
+func (e *Executor) isSecurityFinding(f Finding) bool {
+	// Check category
+	if f.Category == "security" {
+		return true
 	}
 
-	// Try to parse the standard format
-	var parsed struct {
-		Findings []Finding `json:"findings"`
-		Summary  struct {
-			CriticalCount int `json:"criticalCount"`
-			HighCount     int `json:"highCount"`
-			MediumCount   int `json:"mediumCount"`
-			LowCount      int `json:"lowCount"`
-			Count         int `json:"count"`
-			Score         int `json:"score"`
-		} `json:"summary"`
-	}
-
-	if err := json.Unmarshal([]byte(jsonStr), &parsed); err != nil {
-		return []Finding{}, ScanSummary{}, fmt.Errorf("failed to parse JSON: %w", err)
-	}
-
-	// Add CWE references to findings if available
-	for i := range parsed.Findings {
-		if len(scan.CWE) > 0 && parsed.Findings[i].CWE == "" {
-			parsed.Findings[i].CWE = scan.CWE[0]
+	// Check tags for security indicators
+	for _, tag := range f.Tags {
+		if strings.HasPrefix(tag, "SEC_") {
+			return true
 		}
 	}
 
+	// Check rule ID for security patterns
+	ruleID := strings.ToLower(f.ID)
+	securityPatterns := []string{
+		"security", "injection", "xss", "ssrf", "secret",
+		"credential", "password", "auth", "crypto", "traversal",
+		"xxe", "deserial", "command", "sqli", "rce",
+	}
+	for _, pattern := range securityPatterns {
+		if strings.Contains(ruleID, pattern) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// buildSummary creates a summary from findings
+func (e *Executor) buildSummary(findings []Finding) ScanSummary {
 	summary := ScanSummary{
-		CriticalCount: parsed.Summary.CriticalCount,
-		HighCount:     parsed.Summary.HighCount,
-		MediumCount:   parsed.Summary.MediumCount,
-		LowCount:      parsed.Summary.LowCount,
-		TotalCount:    len(parsed.Findings),
+		TotalCount: len(findings),
 	}
 
-	// If count field was used instead of individual counts
-	if parsed.Summary.Count > 0 && summary.TotalCount == 0 {
-		summary.TotalCount = parsed.Summary.Count
-	}
-
-	return parsed.Findings, summary, nil
-}
-
-// aggregateSummary combines summaries from all scan results
-func (e *Executor) aggregateSummary(results []ScanResult) AggregatedSummary {
-	summary := AggregatedSummary{
-		Security: AggSecuritySummary{},
-		Quality:  AggQualitySummary{Score: 100}, // Start with perfect score
-	}
-
-	qualityIssueCount := 0
-
-	for _, result := range results {
-		if result.Error != "" || result.Skipped {
-			continue
-		}
-
-		switch result.Category {
-		case CategorySecurity:
-			summary.Security.CriticalCount += result.Summary.CriticalCount
-			summary.Security.HighCount += result.Summary.HighCount
-			summary.Security.MediumCount += result.Summary.MediumCount
-			summary.Security.LowCount += result.Summary.LowCount
-			summary.Security.TotalCount += result.Summary.TotalCount
-
-		case CategoryQuality, CategoryLanguage:
-			summary.Quality.HighCount += result.Summary.HighCount
-			summary.Quality.MediumCount += result.Summary.MediumCount
-			summary.Quality.LowCount += result.Summary.LowCount
-			summary.Quality.TotalCount += result.Summary.TotalCount
-			qualityIssueCount += result.Summary.TotalCount
+	for _, f := range findings {
+		switch f.Severity {
+		case "critical":
+			summary.CriticalCount++
+		case "high":
+			summary.HighCount++
+		case "medium":
+			summary.MediumCount++
+		case "low":
+			summary.LowCount++
 		}
 	}
-
-	// Calculate quality score based on issues found
-	// Deduct points: High=-10, Medium=-5, Low=-2
-	deduction := summary.Quality.HighCount*10 + summary.Quality.MediumCount*5 + summary.Quality.LowCount*2
-	summary.Quality.Score = max(0, 100-deduction)
 
 	return summary
 }
 
-// RunIncrementalScans runs scans using direct API with incremental analysis
-// If changedFiles is nil, it computes the diff from the manifest
-// If changedFiles is provided (from watcher), it uses those files directly
-func (e *Executor) RunIncrementalScans(ctx context.Context, workspaceDir, workspaceName string, changedFiles []string) *AggregatedReport {
-	startTime := time.Now()
-
-	e.logger.Info("Starting incremental scan analysis",
-		zap.String("workspace", workspaceName),
-		zap.Int("changed_files_hint", len(changedFiles)),
-	)
-
-	// Load previous manifest
-	lastManifest, err := e.manifestMgr.LoadManifest(workspaceName)
-	if err != nil {
-		e.logger.Warn("Failed to load manifest, running full analysis", zap.Error(err))
-	}
-
-	// Compute diff
-	var diff *DiffResult
-	if changedFiles != nil && len(changedFiles) > 0 {
-		// Use provided changed files (from watcher)
-		diff, err = e.manifestMgr.ComputeDiffFromChangedFiles(workspaceDir, changedFiles, lastManifest)
-	} else {
-		// Compute diff from manifest
-		diff, err = e.manifestMgr.ComputeDiff(workspaceDir, lastManifest)
-	}
-	if err != nil {
-		e.logger.Error("Failed to compute diff", zap.Error(err))
-		return e.createErrorReport(workspaceName, startTime, err)
-	}
-
-	// Log diff summary
-	e.logger.Info("Computed file diff",
-		zap.Int("added", len(diff.Added)),
-		zap.Int("modified", len(diff.Modified)),
-		zap.Int("deleted", len(diff.Deleted)),
-		zap.Int("unchanged", len(diff.Unchanged)),
-		zap.Bool("has_changes", diff.HasChanges),
-	)
-
-	// Load existing findings cache
-	existingCache, err := e.findingsCacheMgr.LoadCache(workspaceName)
-	if err != nil {
-		e.logger.Warn("Failed to load findings cache", zap.Error(err))
-	}
-
-	// If no changes, return cached report
-	if !diff.HasChanges && existingCache != nil {
-		e.logger.Info("No changes detected, returning cached report")
-		return e.buildReportFromCache(workspaceName, startTime, existingCache, diff)
-	}
-
-	// Detect languages
-	languages, err := DetectLanguages(workspaceDir)
-	if err != nil {
-		e.logger.Warn("Failed to detect languages", zap.Error(err))
-		languages = []Language{}
-	}
-
-	// Filter applicable scans
-	applicableScans := FilterScansForLanguages(ScanRegistry, languages)
-	skippedCount := len(ScanRegistry) - len(applicableScans)
-
-	// Determine files to analyze
-	filesToAnalyze := diff.GetChangedFiles()
-	if lastManifest == nil {
-		// First analysis: analyze all files
-		filesToAnalyze = diff.AllFiles
-	}
-
-	e.logger.Info("Running incremental scans",
-		zap.Int("files_to_analyze", len(filesToAnalyze)),
-		zap.Int("applicable_scans", len(applicableScans)),
-	)
-
-	// Build codebase content for changed files
-	codebaseContent, err := BuildCodebaseContent(workspaceDir, filesToAnalyze, MaxFileSize)
-	if err != nil {
-		e.logger.Error("Failed to build codebase content", zap.Error(err))
-		return e.createErrorReport(workspaceName, startTime, err)
-	}
-
-	// Build scan requests
-	scanRequests := make([]ScanRequest, len(applicableScans))
-	for i, scan := range applicableScans {
-		scanRequests[i] = ScanRequest{
-			ScanID:   scan.ID,
-			ScanName: scan.Name,
-			Category: scan.Category,
-			Prompt:   scan.Prompt,
-		}
-	}
-
-	// Run all scans with cached context
-	scanResponses := e.claudeAPI.RunScansWithCache(ctx, codebaseContent, scanRequests, e.maxConcurrent)
-
-	// Convert responses to results and collect findings
-	scanResults := make([]ScanResult, len(scanResponses))
-	var newFindings []Finding
-	failedCount := 0
-
-	for i, resp := range scanResponses {
-		scanResults[i] = ScanResult{
-			ScanID:   resp.ScanID,
-			ScanName: resp.ScanName,
-			Category: resp.Category,
-			Duration: resp.Duration,
-			Findings: resp.Findings,
-			Summary:  resp.Summary,
-			Error:    resp.Error,
-		}
-
-		if resp.Error != "" {
-			failedCount++
-		} else {
-			newFindings = append(newFindings, resp.Findings...)
-		}
-	}
-
-	// Merge findings with cached findings for unchanged files
-	allFindings := MergeFindings(existingCache, newFindings, filesToAnalyze, diff.Deleted)
-
-	// Deduplicate findings to stabilize results across non-deterministic Claude outputs
-	allFindings = DeduplicateFindings(allFindings)
-
-	// Compute new manifest
-	newManifest, err := e.manifestMgr.ComputeCurrentManifest(workspaceDir, workspaceName)
-	if err != nil {
-		e.logger.Warn("Failed to compute new manifest", zap.Error(err))
-	}
-
-	// Deduplicate new findings before caching
-	deduplicatedNewFindings := DeduplicateFindings(newFindings)
-
-	// Update findings cache
-	newCache := e.findingsCacheMgr.UpdateCache(workspaceName, existingCache, deduplicatedNewFindings, filesToAnalyze, newManifest)
-
-	// Save manifest and cache
-	if newManifest != nil {
-		if err := e.manifestMgr.SaveManifest(workspaceName, newManifest); err != nil {
-			e.logger.Warn("Failed to save manifest", zap.Error(err))
-		}
-	}
-	if newCache != nil {
-		if err := e.findingsCacheMgr.SaveCache(workspaceName, newCache); err != nil {
-			e.logger.Warn("Failed to save findings cache", zap.Error(err))
-		}
-	}
-
-	// Calculate duration
-	duration := time.Since(startTime)
-
-	// Build report
-	report := &AggregatedReport{
-		Version:      "2.1.0", // New version for incremental analysis
-		Workspace:    workspaceName,
-		AnalyzedAt:   startTime,
-		Duration:     duration.String(),
-		Languages:    LanguagesToStrings(languages),
-		FilesCount:   len(diff.AllFiles),
-		ScansRun:     len(applicableScans),
-		ScansSkipped: skippedCount,
-		ScansFailed:  failedCount,
-		ScanResults:  scanResults,
-		Summary:      e.aggregateSummaryFromFindings(allFindings),
-	}
-
-	e.logger.Info("Completed incremental scan analysis",
-		zap.String("workspace", workspaceName),
-		zap.Duration("duration", duration),
-		zap.Int("scans_run", len(applicableScans)),
-		zap.Int("scans_failed", failedCount),
-		zap.Int("total_findings", len(allFindings)),
-	)
-
-	return report
-}
-
-// createErrorReport creates an error report
-func (e *Executor) createErrorReport(workspaceName string, startTime time.Time, err error) *AggregatedReport {
-	return &AggregatedReport{
-		Version:    "2.1.0",
-		Workspace:  workspaceName,
-		AnalyzedAt: startTime,
-		Duration:   time.Since(startTime).String(),
-		Error:      err.Error(),
-	}
-}
-
-// buildReportFromCache builds a report from cached findings
-func (e *Executor) buildReportFromCache(workspaceName string, startTime time.Time, cache *FindingsCache, diff *DiffResult) *AggregatedReport {
-	allFindings := e.findingsCacheMgr.GetAllFindings(cache)
-
-	// Deduplicate findings from cache
-	allFindings = DeduplicateFindings(allFindings)
-
-	return &AggregatedReport{
-		Version:    "2.1.0",
-		Workspace:  workspaceName,
-		AnalyzedAt: startTime,
-		Duration:   time.Since(startTime).String(),
-		FilesCount: len(diff.AllFiles),
-		Summary:    e.aggregateSummaryFromFindings(allFindings),
-	}
-}
-
-// aggregateSummaryFromFindings calculates summary from a list of findings
-func (e *Executor) aggregateSummaryFromFindings(findings []Finding) AggregatedSummary {
+// aggregateSummary builds the aggregated summary
+func (e *Executor) aggregateSummary(findings []Finding) AggregatedSummary {
 	summary := AggregatedSummary{
 		Security: AggSecuritySummary{},
 		Quality:  AggQualitySummary{Score: 100},
 	}
 
 	for _, f := range findings {
-		// Determine if security or quality based on finding ID prefix
-		isSecurity := len(f.ID) > 3 && f.ID[:3] == "SEC"
+		isSecurity := e.isSecurityFinding(f)
 
 		switch f.Severity {
 		case "critical":
@@ -610,9 +293,21 @@ func (e *Executor) aggregateSummaryFromFindings(findings []Finding) AggregatedSu
 		}
 	}
 
-	// Calculate quality score
+	// Calculate quality score based on issues found
 	deduction := summary.Quality.HighCount*10 + summary.Quality.MediumCount*5 + summary.Quality.LowCount*2
 	summary.Quality.Score = max(0, 100-deduction)
 
 	return summary
+}
+
+// createErrorReport creates an error report
+func (e *Executor) createErrorReport(workspaceName string, startTime time.Time, err error) *AggregatedReport {
+	return &AggregatedReport{
+		Version:     "3.0.0",
+		Workspace:   workspaceName,
+		AnalyzedAt:  startTime,
+		Duration:    time.Since(startTime).String(),
+		ScansFailed: 1,
+		Error:       err.Error(),
+	}
 }
