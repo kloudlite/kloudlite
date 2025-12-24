@@ -147,15 +147,21 @@ function getShortTitle(title: string): string {
   return title.substring(0, 77) + '...'
 }
 
-function getFileName(filePath: string): string {
-  // Extract just the filename from the full path
+function getRelativePath(filePath: string): string {
+  // Extract path relative to workspace folder
+  // Paths look like: /var/lib/kloudlite/home/workspaces/{workspace}/path/to/file
+  const workspacesMatch = filePath.match(/\/workspaces\/[^/]+\/(.+)$/)
+  if (workspacesMatch) {
+    return workspacesMatch[1]
+  }
+  // Fallback: just return the filename
   const parts = filePath.split('/')
   return parts[parts.length - 1]
 }
 
 function FindingRow({ finding, isExpanded, onToggle }: { finding: FindingWithType; isExpanded: boolean; onToggle: () => void }) {
   const shortTitle = getShortTitle(finding.title)
-  const fileName = getFileName(finding.file)
+  const relativePath = getRelativePath(finding.file)
 
   return (
     <>
@@ -183,11 +189,11 @@ function FindingRow({ finding, isExpanded, onToggle }: { finding: FindingWithTyp
         <td className="w-28 px-4 py-3">
           <span className="text-muted-foreground text-sm">{finding.category}</span>
         </td>
-        <td className="w-48 px-4 py-3">
-          <div className="flex items-center gap-1" title={finding.file}>
+        <td className="w-56 px-4 py-3">
+          <div className="flex items-center gap-1" title={relativePath}>
             <FileCode className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
-            <span className="text-muted-foreground font-mono text-xs truncate max-w-[180px]">
-              {fileName}
+            <span className="text-muted-foreground font-mono text-xs truncate max-w-[200px]">
+              {relativePath}
               {finding.line ? `:${finding.line}` : ''}
             </span>
           </div>
@@ -213,7 +219,7 @@ function FindingRow({ finding, isExpanded, onToggle }: { finding: FindingWithTyp
               <div>
                 <h4 className="text-sm font-medium mb-1">Location</h4>
                 <p className="text-muted-foreground font-mono text-xs bg-muted/50 px-2 py-1 rounded inline-block">
-                  {finding.file}{finding.line ? `:${finding.line}` : ''}
+                  {relativePath}{finding.line ? `:${finding.line}` : ''}
                 </p>
               </div>
             </div>
@@ -498,7 +504,7 @@ export default function CodeAnalysisPage() {
                       <th className="text-muted-foreground w-28 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Category
                       </th>
-                      <th className="text-muted-foreground w-48 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      <th className="text-muted-foreground w-56 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Location
                       </th>
                       <th className="text-muted-foreground w-24 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
