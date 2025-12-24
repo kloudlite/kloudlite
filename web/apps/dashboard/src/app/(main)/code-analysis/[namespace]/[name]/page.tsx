@@ -138,58 +138,84 @@ interface FindingWithType extends CodeAnalysisFinding {
   id: string
 }
 
+function getShortTitle(title: string): string {
+  // Extract a short title from the description - take first sentence or first 80 chars
+  const firstSentence = title.split(/[.!?]\s/)[0]
+  if (firstSentence.length <= 80) {
+    return firstSentence + (title.length > firstSentence.length ? '...' : '')
+  }
+  return title.substring(0, 77) + '...'
+}
+
+function getFileName(filePath: string): string {
+  // Extract just the filename from the full path
+  const parts = filePath.split('/')
+  return parts[parts.length - 1]
+}
+
 function FindingRow({ finding, isExpanded, onToggle }: { finding: FindingWithType; isExpanded: boolean; onToggle: () => void }) {
+  const shortTitle = getShortTitle(finding.title)
+  const fileName = getFileName(finding.file)
+
   return (
     <>
       <tr
         className="hover:bg-muted/50 cursor-pointer transition-colors"
         onClick={onToggle}
       >
-        <td className="px-4 py-3">
+        <td className="w-10 px-4 py-3">
           <button className="text-muted-foreground hover:text-foreground">
             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
         </td>
         <td className="px-4 py-3">
-          <div className="flex items-center gap-2">
-            {finding.type === 'security' ? (
-              <Shield className="h-4 w-4 text-red-500" />
-            ) : (
-              <Code2 className="h-4 w-4 text-blue-500" />
-            )}
-            <span className="font-medium">{finding.title}</span>
+          <div className="flex items-start gap-2">
+            <div className="mt-0.5 flex-shrink-0">
+              {finding.type === 'security' ? (
+                <Shield className="h-4 w-4 text-red-500" />
+              ) : (
+                <Code2 className="h-4 w-4 text-blue-500" />
+              )}
+            </div>
+            <span className="font-medium text-sm leading-snug">{shortTitle}</span>
           </div>
         </td>
-        <td className="px-4 py-3">
+        <td className="w-28 px-4 py-3">
           <span className="text-muted-foreground text-sm">{finding.category}</span>
         </td>
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-1">
-            <FileCode className="text-muted-foreground h-3.5 w-3.5" />
-            <span className="text-muted-foreground font-mono text-sm">
-              {finding.file}
+        <td className="w-48 px-4 py-3">
+          <div className="flex items-center gap-1" title={finding.file}>
+            <FileCode className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
+            <span className="text-muted-foreground font-mono text-xs truncate max-w-[180px]">
+              {fileName}
               {finding.line ? `:${finding.line}` : ''}
             </span>
           </div>
         </td>
-        <td className="px-4 py-3">
+        <td className="w-24 px-4 py-3">
           <SeverityBadge severity={finding.severity} />
         </td>
       </tr>
       {isExpanded && (
         <tr className="bg-muted/30">
           <td colSpan={5} className="px-4 py-4">
-            <div className="ml-8 space-y-3">
+            <div className="ml-8 space-y-4">
               <div>
-                <h4 className="text-sm font-medium">Description</h4>
-                <p className="text-muted-foreground mt-1 text-sm">{finding.description}</p>
+                <h4 className="text-sm font-medium mb-1">Description</h4>
+                <p className="text-muted-foreground text-sm whitespace-pre-wrap">{finding.description || finding.title}</p>
               </div>
               {finding.recommendation && (
                 <div>
-                  <h4 className="text-sm font-medium">Recommendation</h4>
-                  <p className="text-muted-foreground mt-1 text-sm">{finding.recommendation}</p>
+                  <h4 className="text-sm font-medium mb-1">Recommendation</h4>
+                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">{finding.recommendation}</p>
                 </div>
               )}
+              <div>
+                <h4 className="text-sm font-medium mb-1">Location</h4>
+                <p className="text-muted-foreground font-mono text-xs bg-muted/50 px-2 py-1 rounded inline-block">
+                  {finding.file}{finding.line ? `:${finding.line}` : ''}
+                </p>
+              </div>
             </div>
           </td>
         </tr>
@@ -462,20 +488,20 @@ export default function CodeAnalysisPage() {
             {/* Findings Table */}
             <div className="bg-card overflow-hidden rounded-lg border">
               <div className="overflow-x-auto">
-                <table className="min-w-full">
+                <table className="min-w-full table-fixed">
                   <thead className="bg-muted/50 border-b">
                     <tr>
                       <th className="w-10 px-4 py-3"></th>
                       <th className="text-muted-foreground px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Issue
                       </th>
-                      <th className="text-muted-foreground px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      <th className="text-muted-foreground w-28 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Category
                       </th>
-                      <th className="text-muted-foreground px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      <th className="text-muted-foreground w-48 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Location
                       </th>
-                      <th className="text-muted-foreground px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      <th className="text-muted-foreground w-24 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Severity
                       </th>
                     </tr>
