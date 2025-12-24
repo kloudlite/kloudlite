@@ -147,8 +147,11 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnDelete: nil,
 		},
 		{
-			Name:     "when-running/ensure-wm-ingress-controller",
-			Title:    "Ensure Workmachine Ingress Controller",
+			Name:  "when-running/ensure-wm-ingress-controller",
+			Title: "Ensure Workmachine Ingress Controller",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
 			OnCreate: r.ensureWorkmachineIngressController,
 			OnDelete: r.cleanupWorkmachineIngressController,
 		},

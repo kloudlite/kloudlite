@@ -12,6 +12,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal"
 	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/manifests"
 	"golang.org/x/crypto/ssh"
 )
@@ -322,7 +323,7 @@ echo "Instance Private IP: $PRIVATE_IP"
 echo "Instance Public IP: $PUBLIC_IP"
 
 # K3s configuration
-K3S_VERSION="v1.31.1+k3s1"
+K3S_VERSION="%s"
 K3S_AGENT_TOKEN="%s"
 K3S_SERVER_URL="https://$PRIVATE_IP:6443"
 
@@ -589,7 +590,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, subnetID, nsgID, storageAccountName, fullDomain, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
+`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, subnetID, nsgID, storageAccountName, fullDomain, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
 }
 
 // WaitForVM waits for the VM to be in running state and returns its IPs

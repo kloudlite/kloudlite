@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal"
 	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/manifests"
 )
 
@@ -341,7 +342,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, workerSgID, region, amiID, fullDomain, fullDomain, region, bucketName, fullDomain, fullDomain, manifests.AWSMachineTypes, bucketName, region)
+`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, workerSgID, region, amiID, fullDomain, fullDomain, region, bucketName, fullDomain, fullDomain, manifests.AWSMachineTypes, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
