@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import { useState, useEffect } from 'react'
 
 const personas = [
   'Frontend Developer',
@@ -40,10 +40,10 @@ const colors = [
 ]
 
 export function TypingText() {
-  const [text, setText] = React.useState('')
-  const [personaIndex, setPersonaIndex] = React.useState(0)
+  const [text, setText] = useState('')
+  const [personaIndex, setPersonaIndex] = useState(0)
 
-  React.useEffect(() => {
+  useEffect(() => {
     let currentIndex = 0
     let isDeleting = false
     let timeout: NodeJS.Timeout
