@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -260,18 +261,112 @@ Output ONLY valid JSON. If no confirmed issues: {"findings":[],"summary":{"count
 		return response
 	}
 
-	response.Findings = findings
+	// Verify findings to eliminate false positives
+	verifiedFindings := c.verifyFindings(ctx, codebaseContent, findings)
+
+	response.Findings = verifiedFindings
 	response.Summary = summary
+	response.Summary.TotalCount = len(verifiedFindings)
 
 	c.logger.Info("Scan completed",
 		zap.String("scan_id", scan.ScanID),
 		zap.Duration("duration", response.Duration),
-		zap.Int("findings", len(findings)),
+		zap.Int("candidates", len(findings)),
+		zap.Int("verified", len(verifiedFindings)),
 		zap.Int("cache_read_tokens", claudeResp.Usage.CacheReadInputTokens),
 		zap.Int("cache_creation_tokens", claudeResp.Usage.CacheCreationInputTokens),
 	)
 
 	return response
+}
+
+// verifyFindings performs a second pass to verify each finding is actually exploitable
+func (c *ClaudeAPI) verifyFindings(ctx context.Context, codebaseContent string, findings []Finding) []Finding {
+	if len(findings) == 0 {
+		return findings
+	}
+
+	verified := make([]Finding, 0)
+
+	for _, f := range findings {
+		if c.isVerifiedVulnerability(ctx, codebaseContent, f) {
+			verified = append(verified, f)
+		} else {
+			c.logger.Debug("Finding rejected by verification",
+				zap.String("id", f.ID),
+				zap.String("title", f.Title),
+				zap.String("file", f.File),
+				zap.Int("line", f.Line),
+			)
+		}
+	}
+
+	return verified
+}
+
+// isVerifiedVulnerability asks Claude to verify if a finding is actually exploitable
+func (c *ClaudeAPI) isVerifiedVulnerability(ctx context.Context, codebaseContent string, f Finding) bool {
+	verifyPrompt := fmt.Sprintf(`You are a security code reviewer. Your job is to VERIFY if a reported issue is a REAL vulnerability.
+
+REPORTED ISSUE:
+- Title: %s
+- File: %s, Line: %d
+- Description: %s
+
+TASK: Search the codebase for MITIGATIONS that would make this issue NOT exploitable.
+
+Check for:
+1. Input validation before the vulnerable code (isValid*, validate*, check*)
+2. Sanitization (html.EscapeString, escape*, sanitize*)
+3. Parameterized queries (?, $1, :param placeholders)
+4. Synchronization (sync.Mutex, sync.RWMutex, sync.Once)
+5. Resource cleanup (defer Close(), connection pools)
+6. Hardcoded values instead of user input
+7. Any other mitigation that prevents exploitation
+
+RESPOND WITH ONLY ONE WORD:
+- "VULNERABLE" if the issue is real and exploitable with NO mitigations
+- "MITIGATED" if ANY mitigation exists that prevents exploitation
+
+Remember: When in doubt, say MITIGATED. False positives are worse than missing issues.`, f.Title, f.File, f.Line, f.Description)
+
+	req := ClaudeRequest{
+		Model:     c.model,
+		MaxTokens: 50,
+		System: []SystemBlock{
+			{
+				Type:         "text",
+				Text:         "<codebase>\n" + codebaseContent + "\n</codebase>",
+				CacheControl: &CacheControl{Type: "ephemeral"},
+			},
+		},
+		Messages: []Message{
+			{Role: "user", Content: verifyPrompt},
+		},
+	}
+
+	respBody, err := c.post(ctx, req)
+	if err != nil {
+		c.logger.Warn("Verification request failed, rejecting finding", zap.Error(err))
+		return false // Fail closed - if we can't verify, reject the finding
+	}
+
+	var claudeResp ClaudeResponse
+	if err := json.Unmarshal(respBody, &claudeResp); err != nil {
+		return false
+	}
+
+	// Extract response text
+	var response string
+	for _, block := range claudeResp.Content {
+		if block.Type == "text" {
+			response = strings.TrimSpace(strings.ToUpper(block.Text))
+			break
+		}
+	}
+
+	// Only accept if explicitly confirmed as VULNERABLE
+	return strings.Contains(response, "VULNERABLE") && !strings.Contains(response, "MITIGATED")
 }
 
 // post sends a POST request to the Claude API
