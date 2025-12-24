@@ -144,7 +144,16 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 			return check.UpdateMsg("Draining node (waiting for pods to terminate gracefully)").RequeueAfter(5 * time.Second)
 		}
 
-		// Step 5: All pods have terminated, now safe to stop the VM
+		// Step 5: Delete the Kubernetes node object to prevent metrics-server timeouts
+		if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, node); err == nil {
+			if err := r.Delete(check.Context(), node); err != nil && !apiErrors.IsNotFound(err) {
+				check.Logger().Warn("failed to delete node", "node", obj.Name, "error", err)
+			} else {
+				check.Logger().Info("deleted node object", "node", obj.Name)
+			}
+		}
+
+		// Step 6: All pods have terminated, now safe to stop the VM
 		if err := r.cloudProviderAPI.StopMachine(check.Context(), obj.Status.MachineID); err != nil {
 			return check.Failed(fmt.Errorf("failed to stop machine: %w", err))
 		}
