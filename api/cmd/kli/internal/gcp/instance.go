@@ -11,6 +11,7 @@ import (
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/apiv1/computepb"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal"
 	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/manifests"
 )
 
@@ -557,7 +558,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, "v1.31.1+k3s1", k3sToken, secretKey, jwtSecret, jwtSecret,
+`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret,
 		installationKey, cfg.Project, cfg.Region, cfg.Zone, fullDomain, fullDomain,
 		cfg.Project, cfg.Region, bucketName, fullDomain, fullDomain,
 		manifests.GCPMachineTypes,
