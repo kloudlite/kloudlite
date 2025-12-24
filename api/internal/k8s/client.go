@@ -3,7 +3,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -100,27 +99,10 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("failed to add packages scheme: %w", err)
 	}
 
-	// Create controller-runtime client with optimized settings
-	// Get the default transport from the REST config which includes TLS settings
-	transport, err := rest.TransportFor(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create transport: %w", err)
-	}
-
-	// Apply connection pooling optimizations to the transport
-	if httpTransport, ok := transport.(*http.Transport); ok {
-		httpTransport.MaxIdleConns = 100                 // Maximum number of idle connections
-		httpTransport.MaxIdleConnsPerHost = 10           // Maximum idle connections per host
-		httpTransport.IdleConnTimeout = 90 * time.Second // How long to keep idle connections
-	}
-
+	// Create controller-runtime client
+	// Note: Don't pass custom HTTPClient - it bypasses the rate limiter from config.QPS/Burst
 	runtimeClient, err := client.New(config, client.Options{
 		Scheme: scheme,
-		// HTTP client with the transport that includes TLS config
-		HTTPClient: &http.Client{
-			Transport: transport,
-			Timeout:   30 * time.Second,
-		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller-runtime client: %w", err)
