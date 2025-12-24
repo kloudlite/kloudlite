@@ -21,17 +21,13 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	Namespace          string
-	WorkmachineName    string
-	ClaudeAPIURL       string
-	ClaudeAPIKey       string
-	WorkspacesPath     string
-	ReportsPath        string
-	DebounceSeconds    int
-	MaxConcurrentJobs  int
-	MaxConcurrentScans int
-	HTTPPort           int
-	UseDirectAPI       bool // Use direct Claude API with prompt caching instead of CLI
+	Namespace         string
+	WorkmachineName   string
+	WorkspacesPath    string
+	ReportsPath       string
+	DebounceSeconds   int
+	MaxConcurrentJobs int
+	HTTPPort          int
 }
 
 func getEnv(key, defaultValue string) string {
@@ -50,39 +46,16 @@ func getEnvInt(key string, defaultValue int) int {
 	return defaultValue
 }
 
-func getEnvBool(key string, defaultValue bool) bool {
-	if value := os.Getenv(key); value != "" {
-		switch value {
-		case "true", "1", "yes", "on":
-			return true
-		case "false", "0", "no", "off":
-			return false
-		}
+func loadConfig() *Config {
+	return &Config{
+		Namespace:         getEnv("NAMESPACE", ""),
+		WorkmachineName:   getEnv("WORKMACHINE_NAME", ""),
+		WorkspacesPath:    getEnv("WORKSPACES_PATH", "/var/lib/kloudlite/home/workspaces"),
+		ReportsPath:       getEnv("REPORTS_PATH", "/var/lib/kloudlite/code-analysis"),
+		DebounceSeconds:   getEnvInt("DEBOUNCE_SECONDS", 45),
+		MaxConcurrentJobs: getEnvInt("MAX_CONCURRENT_ANALYSES", 2),
+		HTTPPort:          getEnvInt("HTTP_PORT", 8082),
 	}
-	return defaultValue
-}
-
-func loadConfig() (*Config, error) {
-	config := &Config{
-		Namespace:          getEnv("NAMESPACE", ""),
-		WorkmachineName:    getEnv("WORKMACHINE_NAME", ""),
-		ClaudeAPIURL:       getEnv("CLAUDE_API_URL", "https://console.kloudlite.io/api/anthropic/v1/messages"),
-		ClaudeAPIKey:       getEnv("CLAUDE_API_KEY", ""),
-		WorkspacesPath:     getEnv("WORKSPACES_PATH", "/var/lib/kloudlite/home/workspaces"),
-		ReportsPath:        getEnv("REPORTS_PATH", "/var/lib/kloudlite/code-analysis"),
-		DebounceSeconds:    getEnvInt("DEBOUNCE_SECONDS", 45),
-		MaxConcurrentJobs:  getEnvInt("MAX_CONCURRENT_ANALYSES", 2),
-		MaxConcurrentScans: getEnvInt("MAX_CONCURRENT_SCANS", 3),
-		HTTPPort:           getEnvInt("HTTP_PORT", 8082),
-		UseDirectAPI:       getEnvBool("USE_DIRECT_API", true), // Default to direct API for better performance
-	}
-
-	// Validate required config
-	if config.ClaudeAPIKey == "" {
-		return nil, fmt.Errorf("CLAUDE_API_KEY is required")
-	}
-
-	return config, nil
 }
 
 func setupLogger() *zap.Logger {
@@ -106,13 +79,10 @@ func main() {
 	logger := setupLogger()
 	defer logger.Sync()
 
-	logger.Info("Starting code-analyzer service")
+	logger.Info("Starting code-analyzer service (Semgrep-based)")
 
 	// Load configuration
-	config, err := loadConfig()
-	if err != nil {
-		logger.Fatal("Failed to load configuration", zap.Error(err))
-	}
+	config := loadConfig()
 
 	logger.Info("Configuration loaded",
 		zap.String("namespace", config.Namespace),
@@ -121,48 +91,17 @@ func main() {
 		zap.String("reports_path", config.ReportsPath),
 		zap.Int("debounce_seconds", config.DebounceSeconds),
 		zap.Int("max_concurrent_jobs", config.MaxConcurrentJobs),
-		zap.Int("max_concurrent_scans", config.MaxConcurrentScans),
-		zap.Bool("use_direct_api", config.UseDirectAPI),
 	)
 
 	// Create storage
 	reportStorage := storage.NewStorage(config.ReportsPath, logger)
 
-	// Create analyzer based on mode
-	var codeAnalyzer *analyzer.Analyzer
-
-	if config.UseDirectAPI {
-		// Use direct Claude API with prompt caching for better performance
-		logger.Info("Using direct Claude API mode with prompt caching")
-		claudeAPI := analyzer.NewClaudeAPI(
-			config.ClaudeAPIURL,
-			config.ClaudeAPIKey,
-			logger,
-		)
-		codeAnalyzer = analyzer.NewAnalyzerWithAPI(
-			claudeAPI,
-			reportStorage,
-			config.WorkspacesPath,
-			config.ReportsPath,
-			logger,
-		)
-	} else {
-		// Use Claude CLI mode (legacy)
-		logger.Info("Using Claude CLI mode (legacy)")
-		claudeCode := analyzer.NewClaudeCode(
-			config.ClaudeAPIURL,
-			config.ClaudeAPIKey,
-			config.WorkspacesPath,
-			logger,
-		)
-		codeAnalyzer = analyzer.NewAnalyzer(
-			claudeCode,
-			reportStorage,
-			config.WorkspacesPath,
-			logger,
-		)
-	}
-	codeAnalyzer.SetMaxConcurrent(config.MaxConcurrentScans)
+	// Create Semgrep-based analyzer
+	codeAnalyzer := analyzer.NewAnalyzer(
+		reportStorage,
+		config.WorkspacesPath,
+		logger,
+	)
 
 	// Create analysis queue
 	analysisQueue := queue.NewQueue(

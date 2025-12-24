@@ -2,85 +2,64 @@ package analyzer
 
 import (
 	"context"
+	"os"
 	"path/filepath"
-	"sync"
-	"time"
 
 	"github.com/kloudlite/kloudlite/api/cmd/code-analyzer/storage"
 	"go.uber.org/zap"
 )
 
 const (
-	ReportVersion        = "1.0.0"
-	AggregatedVersion    = "2.0.0"
-	MaxFileSize          = 100 * 1024 // 100KB
-	DefaultMaxConcurrent = 10         // Run up to 10 scans concurrently
+	ReportVersion     = "3.0.0"
+	AggregatedVersion = "3.0.0"
+	MaxFileSize       = 100 * 1024 // 100KB
 )
 
-// Analyzer orchestrates code analysis
+// Analyzer orchestrates code analysis using Semgrep
 type Analyzer struct {
-	claudeCode     *ClaudeCode
-	claudeAPI      *ClaudeAPI
 	executor       *Executor
 	storage        *storage.Storage
 	workspacesPath string
 	logger         *zap.Logger
-	maxConcurrent  int
-	useDirectAPI   bool
 }
 
-// NewAnalyzer creates a new analyzer using Claude CLI
+// NewAnalyzer creates a new analyzer with default Semgrep configuration
 func NewAnalyzer(
-	claudeCode *ClaudeCode,
 	storage *storage.Storage,
 	workspacesPath string,
 	logger *zap.Logger,
 ) *Analyzer {
 	return &Analyzer{
-		claudeCode:     claudeCode,
-		executor:       NewExecutor(claudeCode, logger, DefaultMaxConcurrent),
+		executor:       NewExecutor(storage.GetBasePath(), logger),
 		storage:        storage,
 		workspacesPath: workspacesPath,
 		logger:         logger,
-		maxConcurrent:  DefaultMaxConcurrent,
-		useDirectAPI:   false,
 	}
 }
 
-// NewAnalyzerWithAPI creates a new analyzer using direct Claude API with prompt caching
-func NewAnalyzerWithAPI(
-	claudeAPI *ClaudeAPI,
+// NewAnalyzerWithConfig creates a new analyzer with custom Semgrep configuration
+func NewAnalyzerWithConfig(
+	config SemgrepConfig,
 	storage *storage.Storage,
 	workspacesPath string,
-	reportsPath string,
 	logger *zap.Logger,
 ) *Analyzer {
 	return &Analyzer{
-		claudeAPI:      claudeAPI,
-		executor:       NewExecutorWithAPI(claudeAPI, reportsPath, logger, DefaultMaxConcurrent),
+		executor:       NewExecutorWithConfig(config, storage.GetBasePath(), logger),
 		storage:        storage,
 		workspacesPath: workspacesPath,
 		logger:         logger,
-		maxConcurrent:  DefaultMaxConcurrent,
-		useDirectAPI:   true,
 	}
 }
 
-// SetMaxConcurrent sets the maximum concurrent scans
-func (a *Analyzer) SetMaxConcurrent(max int) {
-	a.maxConcurrent = max
-	if a.useDirectAPI {
-		a.executor = NewExecutorWithAPI(a.claudeAPI, a.storage.GetBasePath(), a.logger, max)
-	} else {
-		a.executor = NewExecutor(a.claudeCode, a.logger, max)
-	}
-}
-
-// AnalyzeWorkspace runs all applicable scans on a workspace in parallel
+// AnalyzeWorkspace runs Semgrep analysis on a workspace
 func (a *Analyzer) AnalyzeWorkspace(ctx context.Context, workspaceName string) error {
 	workspaceDir := filepath.Join(a.workspacesPath, workspaceName)
 
-	a.logger.Info("Starting multi-scan workspace analysis", zap.String("workspace", workspaceName))
+	a.logger.Info("Starting workspace analysis",
+		zap.String("workspace", workspaceName),
+		zap.String("directory", workspaceDir),
+	)
 
 	// Count files for metadata
 	fileCount, err := CountFiles(workspaceDir, MaxFileSize)
@@ -89,23 +68,22 @@ func (a *Analyzer) AnalyzeWorkspace(ctx context.Context, workspaceName string) e
 		fileCount = 0
 	}
 
-	// Run all scans in parallel using the executor
+	// Run Semgrep scan
 	report := a.executor.RunAllScans(ctx, workspaceDir, workspaceName, fileCount)
 
-	// Convert executor report to storage format and save
+	// Convert and save aggregated report
 	aggregatedReport := a.convertToStorageReport(report)
 	if err := a.storage.SaveAggregatedReport(workspaceName, aggregatedReport); err != nil {
 		a.logger.Error("Failed to save aggregated report", zap.Error(err))
 		return err
 	}
 
-	// Also generate legacy security and quality reports for backward compatibility
+	// Generate legacy security and quality reports for backward compatibility
 	a.generateLegacyReports(workspaceName, report)
 
-	a.logger.Info("Completed multi-scan workspace analysis",
+	a.logger.Info("Completed workspace analysis",
 		zap.String("workspace", workspaceName),
 		zap.String("duration", report.Duration),
-		zap.Int("scans_run", report.ScansRun),
 		zap.Int("security_findings", report.Summary.Security.TotalCount),
 		zap.Int("quality_findings", report.Summary.Quality.TotalCount),
 	)
@@ -128,12 +106,16 @@ func (a *Analyzer) convertToStorageReport(report *AggregatedReport) *storage.Agg
 				Title:          f.Title,
 				Description:    f.Description,
 				Recommendation: f.Recommendation,
+				CWE:            f.CWE,
+				OWASP:          f.OWASP,
+				Evidence:       f.Evidence,
+				Tags:           f.Tags,
 			}
 		}
 		scanResults[i] = storage.ScanResult{
 			ScanID:   sr.ScanID,
 			ScanName: sr.ScanName,
-			Category: string(sr.Category),
+			Category: sr.Category,
 			Duration: sr.Duration.String(),
 			Findings: findings,
 			Summary: storage.ScanSummary{
@@ -181,29 +163,18 @@ func (a *Analyzer) convertToStorageReport(report *AggregatedReport) *storage.Agg
 
 // generateLegacyReports generates separate security and quality reports for backward compatibility
 func (a *Analyzer) generateLegacyReports(workspaceName string, report *AggregatedReport) {
-	// Try to load findings from cache if ScanResults is empty
+	// Collect all findings from scan results
 	var allFindings []Finding
-	if len(report.ScanResults) == 0 {
-		// Load from findings cache
-		findingsCacheMgr := NewFindingsCacheManager(a.storage.GetBasePath(), a.logger)
-		cache, err := findingsCacheMgr.LoadCache(workspaceName)
-		if err == nil && cache != nil {
-			allFindings = findingsCacheMgr.GetAllFindings(cache)
-		}
-	} else {
-		// Extract from scan results
-		for _, sr := range report.ScanResults {
-			if sr.Error == "" {
-				allFindings = append(allFindings, sr.Findings...)
-			}
+	for _, sr := range report.ScanResults {
+		if sr.Error == "" {
+			allFindings = append(allFindings, sr.Findings...)
 		}
 	}
 
 	// Generate security report
-	securityFindings := make([]storage.Finding, 0)
+	var securityFindings []storage.Finding
 	for _, f := range allFindings {
-		// Check if security finding by ID prefix
-		if len(f.ID) >= 3 && f.ID[:3] == "SEC" {
+		if f.Category == "security" || a.hasSecurityTag(f) {
 			securityFindings = append(securityFindings, storage.Finding{
 				ID:             f.ID,
 				Severity:       storage.Severity(f.Severity),
@@ -213,6 +184,10 @@ func (a *Analyzer) generateLegacyReports(workspaceName string, report *Aggregate
 				Title:          f.Title,
 				Description:    f.Description,
 				Recommendation: f.Recommendation,
+				CWE:            f.CWE,
+				OWASP:          f.OWASP,
+				Evidence:       f.Evidence,
+				Tags:           f.Tags,
 			})
 		}
 	}
@@ -231,15 +206,14 @@ func (a *Analyzer) generateLegacyReports(workspaceName string, report *Aggregate
 			LowCount:      report.Summary.Security.LowCount,
 		},
 		Findings: securityFindings,
-		Metadata: storage.Metadata{Model: "claude-code-multi-scan"},
+		Metadata: storage.Metadata{Model: "semgrep"},
 	}
 	a.storage.SaveReport(workspaceName, securityReport)
 
 	// Generate quality report
-	qualityFindings := make([]storage.Finding, 0)
+	var qualityFindings []storage.Finding
 	for _, f := range allFindings {
-		// Check if quality finding by ID prefix (not SEC)
-		if len(f.ID) < 3 || f.ID[:3] != "SEC" {
+		if f.Category != "security" && !a.hasSecurityTag(f) {
 			qualityFindings = append(qualityFindings, storage.Finding{
 				ID:             f.ID,
 				Severity:       storage.Severity(f.Severity),
@@ -249,6 +223,10 @@ func (a *Analyzer) generateLegacyReports(workspaceName string, report *Aggregate
 				Title:          f.Title,
 				Description:    f.Description,
 				Recommendation: f.Recommendation,
+				CWE:            f.CWE,
+				OWASP:          f.OWASP,
+				Evidence:       f.Evidence,
+				Tags:           f.Tags,
 			})
 		}
 	}
@@ -267,203 +245,44 @@ func (a *Analyzer) generateLegacyReports(workspaceName string, report *Aggregate
 			LowCount:    report.Summary.Quality.LowCount,
 		},
 		Findings: qualityFindings,
-		Metadata: storage.Metadata{Model: "claude-code-multi-scan"},
+		Metadata: storage.Metadata{Model: "semgrep"},
 	}
 	a.storage.SaveReport(workspaceName, qualityReport)
 }
 
-// AnalyzeWorkspaceLegacy runs the old-style security and quality analysis in parallel
-func (a *Analyzer) AnalyzeWorkspaceLegacy(ctx context.Context, workspaceName string) error {
-	workspaceDir := filepath.Join(a.workspacesPath, workspaceName)
-
-	a.logger.Info("Starting legacy workspace analysis (parallel)", zap.String("workspace", workspaceName))
-
-	// Count files for metadata
-	fileCount, err := CountFiles(workspaceDir, MaxFileSize)
-	if err != nil {
-		a.logger.Warn("Failed to count files", zap.Error(err))
-		fileCount = 0
+// hasSecurityTag checks if a finding has a security-related tag
+func (a *Analyzer) hasSecurityTag(f Finding) bool {
+	for _, tag := range f.Tags {
+		if len(tag) > 4 && tag[:4] == "SEC_" {
+			return true
+		}
 	}
-
-	// Run security and quality analysis in parallel
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		if err := a.runSecurityAnalysis(ctx, workspaceName, workspaceDir, fileCount); err != nil {
-			a.logger.Error("Security analysis failed", zap.String("workspace", workspaceName), zap.Error(err))
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := a.runQualityAnalysis(ctx, workspaceName, workspaceDir, fileCount); err != nil {
-			a.logger.Error("Quality analysis failed", zap.String("workspace", workspaceName), zap.Error(err))
-		}
-	}()
-
-	wg.Wait()
-
-	a.logger.Info("Completed legacy workspace analysis", zap.String("workspace", workspaceName))
-	return nil
+	return false
 }
 
-// AnalyzeSecurity runs only security analysis
+// AnalyzeSecurity runs only security analysis (for backward compatibility)
 func (a *Analyzer) AnalyzeSecurity(ctx context.Context, workspaceName string) error {
-	workspaceDir := filepath.Join(a.workspacesPath, workspaceName)
-	fileCount, _ := CountFiles(workspaceDir, MaxFileSize)
-	return a.runSecurityAnalysis(ctx, workspaceName, workspaceDir, fileCount)
+	return a.AnalyzeWorkspace(ctx, workspaceName)
 }
 
-// AnalyzeQuality runs only quality analysis
+// AnalyzeQuality runs only quality analysis (for backward compatibility)
 func (a *Analyzer) AnalyzeQuality(ctx context.Context, workspaceName string) error {
-	workspaceDir := filepath.Join(a.workspacesPath, workspaceName)
-	fileCount, _ := CountFiles(workspaceDir, MaxFileSize)
-	return a.runQualityAnalysis(ctx, workspaceName, workspaceDir, fileCount)
+	return a.AnalyzeWorkspace(ctx, workspaceName)
 }
 
-func (a *Analyzer) runSecurityAnalysis(ctx context.Context, workspaceName, workspaceDir string, fileCount int) error {
-	a.logger.Info("Running security analysis", zap.String("workspace", workspaceName))
-
-	result, duration, err := a.claudeCode.AnalyzeSecurity(ctx, workspaceDir)
-	if err != nil {
-		// Save error report
-		errorReport := &storage.Report{
-			Version:    ReportVersion,
-			Type:       storage.ReportTypeSecurity,
-			Workspace:  workspaceName,
-			AnalyzedAt: time.Now(),
-			Duration:   duration.String(),
-			FilesCount: fileCount,
-			Summary:    storage.Summary{},
-			Findings:   []storage.Finding{},
-			Error:      err.Error(),
+// CountFiles counts the number of files in a directory (excluding large files)
+func CountFiles(dir string, maxSize int64) (int, error) {
+	count := 0
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // Skip files we can't access
 		}
-		a.storage.SaveReport(workspaceName, errorReport)
-		return err
-	}
-
-	// Convert result to storage format
-	report := &storage.Report{
-		Version:    ReportVersion,
-		Type:       storage.ReportTypeSecurity,
-		Workspace:  workspaceName,
-		AnalyzedAt: time.Now(),
-		Duration:   duration.String(),
-		FilesCount: fileCount,
-		Summary: storage.Summary{
-			CriticalCount: result.Summary.CriticalCount,
-			HighCount:     result.Summary.HighCount,
-			MediumCount:   result.Summary.MediumCount,
-			LowCount:      result.Summary.LowCount,
-		},
-		Findings: convertSecurityFindings(result.Findings),
-		Metadata: storage.Metadata{
-			Model: "claude-code",
-		},
-	}
-
-	if err := a.storage.SaveReport(workspaceName, report); err != nil {
-		a.logger.Error("Failed to save security report", zap.Error(err))
-		return err
-	}
-
-	a.logger.Info("Security analysis complete",
-		zap.String("workspace", workspaceName),
-		zap.Duration("duration", duration),
-		zap.Int("findings", len(result.Findings)),
-	)
-
-	return nil
-}
-
-func (a *Analyzer) runQualityAnalysis(ctx context.Context, workspaceName, workspaceDir string, fileCount int) error {
-	a.logger.Info("Running quality analysis", zap.String("workspace", workspaceName))
-
-	result, duration, err := a.claudeCode.AnalyzeQuality(ctx, workspaceDir)
-	if err != nil {
-		// Save error report
-		errorReport := &storage.Report{
-			Version:    ReportVersion,
-			Type:       storage.ReportTypeQuality,
-			Workspace:  workspaceName,
-			AnalyzedAt: time.Now(),
-			Duration:   duration.String(),
-			FilesCount: fileCount,
-			Summary:    storage.Summary{Score: 0},
-			Findings:   []storage.Finding{},
-			Error:      err.Error(),
+		// Skip directories
+		if info.IsDir() {
+			return nil
 		}
-		a.storage.SaveReport(workspaceName, errorReport)
-		return err
-	}
-
-	// Convert result to storage format
-	report := &storage.Report{
-		Version:    ReportVersion,
-		Type:       storage.ReportTypeQuality,
-		Workspace:  workspaceName,
-		AnalyzedAt: time.Now(),
-		Duration:   duration.String(),
-		FilesCount: fileCount,
-		Summary: storage.Summary{
-			Score:       result.Summary.Score,
-			HighCount:   result.Summary.HighCount,
-			MediumCount: result.Summary.MediumCount,
-			LowCount:    result.Summary.LowCount,
-		},
-		Findings: convertQualityFindings(result.Findings),
-		Metadata: storage.Metadata{
-			Model: "claude-code",
-		},
-	}
-
-	if err := a.storage.SaveReport(workspaceName, report); err != nil {
-		a.logger.Error("Failed to save quality report", zap.Error(err))
-		return err
-	}
-
-	a.logger.Info("Quality analysis complete",
-		zap.String("workspace", workspaceName),
-		zap.Duration("duration", duration),
-		zap.Int("findings", len(result.Findings)),
-		zap.Int("score", result.Summary.Score),
-	)
-
-	return nil
-}
-
-func convertSecurityFindings(findings []SecurityFinding) []storage.Finding {
-	result := make([]storage.Finding, len(findings))
-	for i, f := range findings {
-		result[i] = storage.Finding{
-			ID:             f.ID,
-			Severity:       storage.Severity(f.Severity),
-			Category:       f.Category,
-			File:           f.File,
-			Line:           f.Line,
-			Title:          f.Title,
-			Description:    f.Description,
-			Recommendation: f.Recommendation,
-		}
-	}
-	return result
-}
-
-func convertQualityFindings(findings []QualityFinding) []storage.Finding {
-	result := make([]storage.Finding, len(findings))
-	for i, f := range findings {
-		result[i] = storage.Finding{
-			ID:             f.ID,
-			Severity:       storage.Severity(f.Severity),
-			Category:       f.Category,
-			File:           f.File,
-			Line:           f.Line,
-			Title:          f.Title,
-			Description:    f.Description,
-			Recommendation: f.Recommendation,
-		}
-	}
-	return result
+		count++
+		return nil
+	})
+	return count, err
 }

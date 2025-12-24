@@ -1,12 +1,12 @@
-FROM alpine:3.19
+FROM python:3.11-alpine
 
-RUN apk --no-cache add ca-certificates curl nodejs npm
-
-# Install Claude Code CLI
-RUN npm install -g @anthropic-ai/claude-code
+# Install Semgrep and required dependencies
+RUN apk --no-cache add ca-certificates git && \
+    pip install --no-cache-dir semgrep
 
 WORKDIR /
 
+# Copy the binary
 COPY ./bin/code-analyzer /usr/local/bin/code-analyzer
 
 RUN chmod +x /usr/local/bin/code-analyzer

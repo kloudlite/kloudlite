@@ -41,6 +41,10 @@ type Finding struct {
 	Title          string   `json:"title"`
 	Description    string   `json:"description"`
 	Recommendation string   `json:"recommendation"`
+	CWE            string   `json:"cwe,omitempty"`
+	OWASP          string   `json:"owasp,omitempty"`
+	Evidence       string   `json:"evidence,omitempty"`
+	Tags           []string `json:"tags,omitempty"`
 }
 
 // Summary represents the report summary
