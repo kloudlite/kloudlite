@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Terminal, X, Loader2, Download, Trash2, Pause, Play } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
+import { useSSE } from '@/lib/hooks/use-sse'
 
 interface ServiceLogsViewerProps {
   serviceName: string
@@ -19,21 +20,9 @@ export function ServiceLogsViewer({
   onClose,
 }: ServiceLogsViewerProps) {
   const [logs, setLogs] = useState<string[]>([])
-  const [isConnected, setIsConnected] = useState(false)
-  const [isConnecting, setIsConnecting] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const logsContainerRef = useRef<HTMLDivElement>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
   const pausedLogsRef = useRef<string[]>([])
-  const reconnectAttemptsRef = useRef(0)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isCleaningUpRef = useRef(false)
-
-  // Reconnection constants
-  const MAX_RECONNECT_ATTEMPTS = 10
-  const BASE_RECONNECT_DELAY = 1000
-  const MAX_RECONNECT_DELAY = 30000
 
   const scrollToBottom = useCallback(() => {
     if (logsContainerRef.current && !isPaused) {
@@ -41,91 +30,28 @@ export function ServiceLogsViewer({
     }
   }, [isPaused])
 
-  const connect = useCallback(() => {
-    if (isCleaningUpRef.current) return
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-    }
+  const url = useMemo(() => {
+    if (!isOpen) return null
+    return `/api/v1/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(serviceName)}/logs?follow=true&tailLines=200`
+  }, [isOpen, namespace, serviceName])
 
-    setIsConnecting(true)
-    setError(null)
-
-    const url = `/api/v1/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(serviceName)}/logs?follow=true&tailLines=200`
-    const eventSource = new EventSource(url)
-    eventSourceRef.current = eventSource
-
-    eventSource.onopen = () => {
-      setIsConnected(true)
-      setIsConnecting(false)
-      setError(null)
-      reconnectAttemptsRef.current = 0
-    }
-
-    eventSource.onmessage = (event) => {
-      const line = event.data
+  const handleMessage = useCallback(
+    (data: string) => {
       if (isPaused) {
-        pausedLogsRef.current.push(line)
+        pausedLogsRef.current.push(data)
       } else {
-        setLogs((prev) => [...prev, line])
-        // Schedule scroll after state update
+        setLogs((prev) => [...prev, data])
         setTimeout(scrollToBottom, 0)
       }
-    }
+    },
+    [isPaused, scrollToBottom]
+  )
 
-    eventSource.onerror = () => {
-      setIsConnected(false)
-      setIsConnecting(false)
-      eventSource.close()
-      eventSourceRef.current = null
-
-      // Don't reconnect if cleaning up
-      if (isCleaningUpRef.current) return
-
-      // Attempt reconnection with exponential backoff
-      if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-        const delay = Math.min(
-          BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current),
-          MAX_RECONNECT_DELAY
-        )
-        reconnectAttemptsRef.current++
-        setError(`Reconnecting in ${Math.round(delay / 1000)}s...`)
-
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (!isCleaningUpRef.current) {
-            connect()
-          }
-        }, delay)
-      } else {
-        setError('Connection failed after multiple attempts')
-      }
-    }
-  }, [namespace, serviceName, isPaused, scrollToBottom])
-
-  const disconnect = useCallback(() => {
-    isCleaningUpRef.current = true
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
-    }
-    setIsConnected(false)
-    setIsConnecting(false)
-  }, [])
-
-  // Connect when opened
-  useEffect(() => {
-    if (isOpen && !isConnected && !isConnecting) {
-      isCleaningUpRef.current = false
-      reconnectAttemptsRef.current = 0
-      connect()
-    }
-    return () => {
-      disconnect()
-    }
-  }, [isOpen, connect, disconnect, isConnected, isConnecting])
+  const { isConnected, error } = useSSE(url, {
+    enabled: isOpen,
+    onMessage: handleMessage,
+    parseJson: false,
+  })
 
   // Handle pause/resume
   useEffect(() => {
@@ -136,6 +62,14 @@ export function ServiceLogsViewer({
     }
   }, [isPaused, scrollToBottom])
 
+  // Clear logs when closed
+  useEffect(() => {
+    if (!isOpen) {
+      setLogs([])
+      pausedLogsRef.current = []
+    }
+  }, [isOpen])
+
   const handleClear = () => {
     setLogs([])
     pausedLogsRef.current = []
@@ -144,24 +78,24 @@ export function ServiceLogsViewer({
   const handleDownload = () => {
     const content = logs.join('\n')
     const blob = new Blob([content], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
+    const downloadUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
+    a.href = downloadUrl
     a.download = `${serviceName}-logs-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    URL.revokeObjectURL(downloadUrl)
   }
 
   const handleClose = () => {
-    disconnect()
     setLogs([])
-    setError(null)
     onClose()
   }
 
   if (!isOpen) return null
+
+  const isConnecting = !isConnected && !error
 
   return (
     <div className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[40vh] min-h-[300px] flex-col border-t shadow-lg">
@@ -169,9 +103,7 @@ export function ServiceLogsViewer({
       <div className="bg-muted/50 flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-3">
           <Terminal className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Logs: {serviceName}
-          </span>
+          <span className="text-sm font-medium">Logs: {serviceName}</span>
           {isConnecting && (
             <span className="text-muted-foreground flex items-center gap-1 text-xs">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -180,13 +112,11 @@ export function ServiceLogsViewer({
           )}
           {isConnected && (
             <span className="flex items-center gap-1 text-xs text-green-500">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
               Live
             </span>
           )}
-          {error && (
-            <span className="text-xs text-red-500">{error}</span>
-          )}
+          {error && <span className="text-xs text-red-500">{error}</span>}
           {isPaused && (
             <span className="text-muted-foreground text-xs">
               (Paused - {pausedLogsRef.current.length} new lines)
@@ -223,12 +153,7 @@ export function ServiceLogsViewer({
           >
             <Download className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            title="Close"
-          >
+          <Button variant="ghost" size="sm" onClick={handleClose} title="Close">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -252,7 +177,7 @@ export function ServiceLogsViewer({
                   'whitespace-pre-wrap break-all text-zinc-300',
                   line.toLowerCase().includes('error') && 'text-red-400',
                   line.toLowerCase().includes('warn') && 'text-yellow-400',
-                  line.toLowerCase().includes('info') && 'text-blue-400',
+                  line.toLowerCase().includes('info') && 'text-blue-400'
                 )}
               >
                 {line}
