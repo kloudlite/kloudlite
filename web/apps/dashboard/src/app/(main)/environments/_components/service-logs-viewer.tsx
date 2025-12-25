@@ -26,6 +26,14 @@ export function ServiceLogsViewer({
   const logsContainerRef = useRef<HTMLDivElement>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
   const pausedLogsRef = useRef<string[]>([])
+  const reconnectAttemptsRef = useRef(0)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isCleaningUpRef = useRef(false)
+
+  // Reconnection constants
+  const MAX_RECONNECT_ATTEMPTS = 10
+  const BASE_RECONNECT_DELAY = 1000
+  const MAX_RECONNECT_DELAY = 30000
 
   const scrollToBottom = useCallback(() => {
     if (logsContainerRef.current && !isPaused) {
@@ -34,6 +42,7 @@ export function ServiceLogsViewer({
   }, [isPaused])
 
   const connect = useCallback(() => {
+    if (isCleaningUpRef.current) return
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
     }
@@ -49,6 +58,7 @@ export function ServiceLogsViewer({
       setIsConnected(true)
       setIsConnecting(false)
       setError(null)
+      reconnectAttemptsRef.current = 0
     }
 
     eventSource.onmessage = (event) => {
@@ -65,16 +75,38 @@ export function ServiceLogsViewer({
     eventSource.onerror = () => {
       setIsConnected(false)
       setIsConnecting(false)
-      if (eventSource.readyState === EventSource.CLOSED) {
-        setError('Connection closed')
-      } else {
-        setError('Connection error')
-      }
       eventSource.close()
+      eventSourceRef.current = null
+
+      // Don't reconnect if cleaning up
+      if (isCleaningUpRef.current) return
+
+      // Attempt reconnection with exponential backoff
+      if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+        const delay = Math.min(
+          BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current),
+          MAX_RECONNECT_DELAY
+        )
+        reconnectAttemptsRef.current++
+        setError(`Reconnecting in ${Math.round(delay / 1000)}s...`)
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (!isCleaningUpRef.current) {
+            connect()
+          }
+        }, delay)
+      } else {
+        setError('Connection failed after multiple attempts')
+      }
     }
   }, [namespace, serviceName, isPaused, scrollToBottom])
 
   const disconnect = useCallback(() => {
+    isCleaningUpRef.current = true
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
       eventSourceRef.current = null
@@ -86,6 +118,8 @@ export function ServiceLogsViewer({
   // Connect when opened
   useEffect(() => {
     if (isOpen && !isConnected && !isConnecting) {
+      isCleaningUpRef.current = false
+      reconnectAttemptsRef.current = 0
       connect()
     }
     return () => {
