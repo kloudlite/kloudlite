@@ -28,6 +28,13 @@ interface UseEnvironmentStatusOptions {
   onDeleted?: () => void
 }
 
+// Maximum reconnection attempts before giving up
+const MAX_RECONNECT_ATTEMPTS = 10
+// Base delay for exponential backoff (ms)
+const BASE_RECONNECT_DELAY = 1000
+// Maximum delay between reconnections (ms)
+const MAX_RECONNECT_DELAY = 30000
+
 export function useEnvironmentStatus(
   envName: string | undefined,
   options: UseEnvironmentStatusOptions = {}
@@ -38,9 +45,25 @@ export function useEnvironmentStatus(
   const [error, setError] = useState<string | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
   const previousStateRef = useRef<string | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isCleaningUpRef = useRef(false)
+
+  const cleanup = useCallback(() => {
+    isCleaningUpRef.current = true
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
+    }
+  }, [])
 
   const connect = useCallback(() => {
     if (!envName || !enabled) return
+    if (isCleaningUpRef.current) return
 
     // Close existing connection if any
     if (eventSourceRef.current) {
@@ -56,6 +79,8 @@ export function useEnvironmentStatus(
     eventSource.onopen = () => {
       setIsConnected(true)
       setError(null)
+      // Reset reconnect attempts on successful connection
+      reconnectAttemptsRef.current = 0
     }
 
     eventSource.addEventListener('status', (event) => {
@@ -82,12 +107,34 @@ export function useEnvironmentStatus(
       }
     })
 
-    eventSource.onerror = (err) => {
-      console.error('SSE connection error:', err)
-      setError('Connection error')
+    eventSource.onerror = () => {
+      // SSE error - likely Cloudflare timeout or network issue
       setIsConnected(false)
       eventSource.close()
       eventSourceRef.current = null
+
+      // Don't reconnect if cleaning up
+      if (isCleaningUpRef.current) return
+
+      // Attempt reconnection with exponential backoff
+      if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+        const delay = Math.min(
+          BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current),
+          MAX_RECONNECT_DELAY
+        )
+        reconnectAttemptsRef.current++
+
+        console.log(`SSE connection lost, reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`)
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (!isCleaningUpRef.current) {
+            connect()
+          }
+        }, delay)
+      } else {
+        setError('Connection failed after multiple attempts')
+        console.error('SSE connection failed after maximum reconnect attempts')
+      }
     }
   }, [envName, enabled, onStateChange, onDeleted])
 
@@ -98,17 +145,18 @@ export function useEnvironmentStatus(
       return
     }
 
+    isCleaningUpRef.current = false
+    reconnectAttemptsRef.current = 0
     connect()
 
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-        eventSourceRef.current = null
-      }
+      cleanup()
     }
-  }, [envName, enabled, connect])
+  }, [envName, enabled, connect, cleanup])
 
   const reconnect = useCallback(() => {
+    isCleaningUpRef.current = false
+    reconnectAttemptsRef.current = 0
     connect()
   }, [connect])
 

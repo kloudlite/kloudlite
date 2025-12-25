@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -753,6 +754,148 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 
 			if event.Object != nil {
 				sendStatusEvent(event.Object)
+			}
+		}
+	}
+}
+
+// GetEnvironmentStatusWebSocket handles WebSocket connections for environment status streaming
+// This endpoint provides real-time status updates via WebSocket (better Cloudflare support than SSE)
+func (h *EnvironmentHandlers) GetEnvironmentStatusWebSocket(c *gin.Context) {
+	name := c.Param("name")
+
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Environment name is required"})
+		return
+	}
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Verify environment exists and user has access
+	env, err := h.envRepo.Get(c.Request.Context(), name)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Environment not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !UserHasAccessToEnvironment(username, env) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this environment"})
+		return
+	}
+
+	// Upgrade to WebSocket
+	conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		h.logger.Error("Failed to upgrade to WebSocket", zap.Error(err))
+		return
+	}
+	defer conn.Close()
+
+	h.logger.Info("WebSocket connection established for environment status",
+		zap.String("environment", name),
+		zap.String("user", username))
+
+	// Create a context that cancels when connection closes
+	ctx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+
+	// Handle incoming messages (for ping/pong and close)
+	go func() {
+		for {
+			_, _, err := conn.ReadMessage()
+			if err != nil {
+				cancel()
+				return
+			}
+		}
+	}()
+
+	// Helper function to send status event
+	sendStatus := func(env *environmentsv1.Environment) error {
+		event := EnvironmentStatusEvent{
+			State:         string(env.Status.State),
+			Message:       env.Status.Message,
+			Activated:     env.Spec.Activated,
+			CloningStatus: env.Status.CloningStatus,
+			Timestamp:     time.Now().UTC(),
+		}
+		return conn.WriteJSON(map[string]interface{}{
+			"type": "status",
+			"data": event,
+		})
+	}
+
+	// Send initial status
+	if err := sendStatus(env); err != nil {
+		h.logger.Error("Failed to send initial status", zap.Error(err))
+		return
+	}
+
+	// Start watching for changes
+	watchChan, err := h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+	if err != nil {
+		h.logger.Warn("Watch not available, using polling fallback", zap.Error(err))
+		// Fall back to polling
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				env, err := h.envRepo.Get(ctx, name)
+				if err != nil {
+					continue
+				}
+				if err := sendStatus(env); err != nil {
+					return
+				}
+			}
+		}
+	}
+
+	// Stream watch events
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-watchChan:
+			if !ok {
+				watchChan, err = h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+				if err != nil {
+					h.logger.Error("Failed to restart environment watch", zap.Error(err))
+					return
+				}
+				continue
+			}
+
+			if event.Error != nil {
+				h.logger.Error("Watch error", zap.Error(event.Error))
+				continue
+			}
+
+			if event.Type == repository.WatchEventDeleted {
+				conn.WriteJSON(map[string]interface{}{
+					"type": "deleted",
+					"data": map[string]bool{"deleted": true},
+				})
+				return
+			}
+
+			if event.Object != nil {
+				if err := sendStatus(event.Object); err != nil {
+					return
+				}
 			}
 		}
 	}

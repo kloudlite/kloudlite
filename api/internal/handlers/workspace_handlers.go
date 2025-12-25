@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
@@ -22,6 +23,15 @@ import (
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// WebSocket upgrader with permissive origin check (auth is handled via JWT)
+var wsUpgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins, auth is handled via JWT
+	},
+}
 
 // WorkspaceHandlers handles HTTP requests for Workspace resources
 type WorkspaceHandlers struct {
@@ -1125,6 +1135,158 @@ func (h *WorkspaceHandlers) GetWorkspaceStatusStream(c *gin.Context) {
 
 			if event.Object != nil {
 				sendStatusEvent(event.Object)
+			}
+		}
+	}
+}
+
+// GetWorkspaceStatusWebSocket handles WebSocket connections for workspace status streaming
+// This endpoint provides real-time status updates via WebSocket (better Cloudflare support than SSE)
+func (h *WorkspaceHandlers) GetWorkspaceStatusWebSocket(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace name is required"})
+		return
+	}
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Verify workspace exists and user has access
+	ws, err := h.wsRepo.Get(c.Request.Context(), namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Workspace not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !UserHasAccessToWorkspace(username, ws) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this workspace"})
+		return
+	}
+
+	// Upgrade to WebSocket
+	conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		h.logger.Error("Failed to upgrade to WebSocket", zap.Error(err))
+		return
+	}
+	defer conn.Close()
+
+	h.logger.Info("WebSocket connection established for workspace status",
+		zap.String("namespace", namespace),
+		zap.String("workspace", name),
+		zap.String("user", username))
+
+	// Create a context that cancels when connection closes
+	ctx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+
+	// Handle incoming messages (for ping/pong and close)
+	go func() {
+		for {
+			_, _, err := conn.ReadMessage()
+			if err != nil {
+				cancel()
+				return
+			}
+		}
+	}()
+
+	// Helper function to send status event
+	sendStatus := func(ws *workspacesv1.Workspace) error {
+		event := WorkspaceStatusEvent{
+			Phase:             ws.Status.Phase,
+			Message:           ws.Status.Message,
+			Status:            string(ws.Spec.Status),
+			ActiveConnections: ws.Status.ActiveConnections,
+			IdleState:         ws.Status.IdleState,
+			Timestamp:         time.Now().UTC(),
+		}
+		if ws.Spec.OwnedBy == username {
+			event.AccessURLs = ws.Status.AccessURLs
+		}
+		return conn.WriteJSON(map[string]interface{}{
+			"type": "status",
+			"data": event,
+		})
+	}
+
+	// Send initial status
+	if err := sendStatus(ws); err != nil {
+		h.logger.Error("Failed to send initial status", zap.Error(err))
+		return
+	}
+
+	// Start watching for changes
+	watchChan, err := h.wsRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+	if err != nil {
+		h.logger.Warn("Watch not available, using polling fallback", zap.Error(err))
+		// Fall back to polling
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				ws, err := h.wsRepo.Get(ctx, namespace, name)
+				if err != nil {
+					continue
+				}
+				if err := sendStatus(ws); err != nil {
+					return
+				}
+			}
+		}
+	}
+
+	// Stream watch events
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-watchChan:
+			if !ok {
+				watchChan, err = h.wsRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+				if err != nil {
+					h.logger.Error("Failed to restart workspace watch", zap.Error(err))
+					return
+				}
+				continue
+			}
+
+			if event.Error != nil {
+				h.logger.Error("Watch error", zap.Error(event.Error))
+				continue
+			}
+
+			if event.Type == repository.WatchEventDeleted {
+				conn.WriteJSON(map[string]interface{}{
+					"type": "deleted",
+					"data": map[string]bool{"deleted": true},
+				})
+				return
+			}
+
+			if event.Object != nil {
+				if err := sendStatus(event.Object); err != nil {
+					return
+				}
 			}
 		}
 	}
