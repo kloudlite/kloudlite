@@ -22,11 +22,11 @@ type WorkMachineRepository interface {
 
 type workMachineRepository struct {
 	ClusterRepository[*machinesv1.WorkMachine, *machinesv1.WorkMachineList]
-	k8sClient client.Client
+	k8sClient client.WithWatch
 }
 
 // NewWorkMachineRepository creates a new WorkMachine repository
-func NewWorkMachineRepository(k8sClient client.Client) WorkMachineRepository {
+func NewWorkMachineRepository(k8sClient client.WithWatch) WorkMachineRepository {
 	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *machinesv1.WorkMachine { return &machinesv1.WorkMachine{} },

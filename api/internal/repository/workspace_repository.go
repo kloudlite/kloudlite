@@ -27,11 +27,11 @@ type WorkspaceRepository interface {
 // workspaceRepository implements WorkspaceRepository
 type workspaceRepository struct {
 	NamespacedRepository[*workspacesv1.Workspace, *workspacesv1.WorkspaceList]
-	client client.Client
+	client client.WithWatch
 }
 
 // NewWorkspaceRepository creates a new WorkspaceRepository
-func NewWorkspaceRepository(k8sClient client.Client) WorkspaceRepository {
+func NewWorkspaceRepository(k8sClient client.WithWatch) WorkspaceRepository {
 	baseRepo := NewK8sNamespacedRepository(
 		k8sClient,
 		func() *workspacesv1.Workspace { return &workspacesv1.Workspace{} },

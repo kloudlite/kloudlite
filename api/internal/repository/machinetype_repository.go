@@ -19,11 +19,11 @@ type MachineTypeRepository interface {
 
 type machineTypeRepository struct {
 	ClusterRepository[*machinesv1.MachineType, *machinesv1.MachineTypeList]
-	k8sClient client.Client
+	k8sClient client.WithWatch
 }
 
 // NewMachineTypeRepository creates a new MachineType repository
-func NewMachineTypeRepository(k8sClient client.Client) MachineTypeRepository {
+func NewMachineTypeRepository(k8sClient client.WithWatch) MachineTypeRepository {
 	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *machinesv1.MachineType { return &machinesv1.MachineType{} },

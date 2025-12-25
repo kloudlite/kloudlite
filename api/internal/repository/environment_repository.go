@@ -22,11 +22,11 @@ type EnvironmentRepository interface {
 // environmentRepository implements EnvironmentRepository
 type environmentRepository struct {
 	ClusterRepository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
-	client client.Client
+	client client.WithWatch
 }
 
 // NewEnvironmentRepository creates a new EnvironmentRepository
-func NewEnvironmentRepository(k8sClient client.Client) EnvironmentRepository {
+func NewEnvironmentRepository(k8sClient client.WithWatch) EnvironmentRepository {
 	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *environmentsv1.Environment { return &environmentsv1.Environment{} },

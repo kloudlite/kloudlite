@@ -25,7 +25,7 @@ type userRepository struct {
 }
 
 // NewUserRepository creates a new UserRepository
-func NewUserRepository(k8sClient client.Client) UserRepository {
+func NewUserRepository(k8sClient client.WithWatch) UserRepository {
 	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *platformv1alpha1.User { return &platformv1alpha1.User{} },
