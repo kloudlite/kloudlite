@@ -191,6 +191,8 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.POST("/:name/deactivate", environmentHandlers.DeactivateEnvironment)
 				environments.GET("/:name/status", environmentHandlers.GetEnvironmentStatus)
 				environments.GET("/:name/status-stream", environmentHandlers.GetEnvironmentStatusStream)
+				// Status streaming (WebSocket - preferred for Cloudflare compatibility)
+				environments.GET("/:name/status-ws", environmentHandlers.GetEnvironmentStatusWebSocket)
 
 				// Environment config routes (legacy - keeping for backwards compatibility)
 				environments.PUT("/:name/config", environmentConfigHandlers.SetConfig)
@@ -280,8 +282,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.GET("/:name/code-analysis", workspaceHandlers.GetCodeAnalysis)
 				workspaces.POST("/:name/code-analysis", workspaceHandlers.TriggerCodeAnalysis)
 
-				// Status streaming (SSE)
+				// Status streaming (SSE - legacy, may timeout with Cloudflare)
 				workspaces.GET("/:name/status-stream", workspaceHandlers.GetWorkspaceStatusStream)
+				// Status streaming (WebSocket - preferred for Cloudflare compatibility)
+				workspaces.GET("/:name/status-ws", workspaceHandlers.GetWorkspaceStatusWebSocket)
 			}
 
 			// Composition routes (namespaced)
