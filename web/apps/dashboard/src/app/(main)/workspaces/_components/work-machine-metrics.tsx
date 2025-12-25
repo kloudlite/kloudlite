@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Cpu, MemoryStick, Zap } from 'lucide-react'
+import { useSSE } from '@/lib/hooks/use-sse'
 
 interface NodeMetrics {
   cpu: {
@@ -32,6 +33,11 @@ interface GPUMetrics {
   powerLimit?: number
 }
 
+interface MetricsEvent {
+  nodeMetrics?: NodeMetrics
+  gpuMetrics?: GPUMetrics
+}
+
 interface WorkMachineMetricsProps {
   workMachineName: string
   machineState?: string
@@ -45,102 +51,38 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
 
-// Reconnection constants
-const MAX_RECONNECT_ATTEMPTS = 10
-const BASE_RECONNECT_DELAY = 1000
-const MAX_RECONNECT_DELAY = 30000
-
-export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachineMetricsProps) {
+export function WorkMachineMetrics({
+  workMachineName,
+  machineState,
+}: WorkMachineMetricsProps) {
   const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
   const [gpuMetrics, setGpuMetrics] = useState<GPUMetrics | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
-  const reconnectAttemptsRef = useRef(0)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isCleaningUpRef = useRef(false)
 
-  useEffect(() => {
-    // Don't fetch metrics when machine is stopped or no name provided
-    if (machineState === 'stopped' || !workMachineName) {
-      return
-    }
-
-    isCleaningUpRef.current = false
-    reconnectAttemptsRef.current = 0
-
-    const connect = () => {
-      if (isCleaningUpRef.current) return
-
-      // Close existing connection if any
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-      }
-
-      // Create SSE connection
-      const eventSource = new EventSource(
-        `/api/v1/work-machines/${workMachineName}/metrics-stream`
-      )
-      eventSourceRef.current = eventSource
-
-      eventSource.onopen = () => {
-        setError(null)
-        reconnectAttemptsRef.current = 0
-      }
-
-      eventSource.addEventListener('metrics', (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.nodeMetrics) {
-            setMetrics(data.nodeMetrics)
-          }
-          if (data.gpuMetrics) {
-            setGpuMetrics(data.gpuMetrics)
-          }
-        } catch (err) {
-          console.error('Failed to parse metrics event:', err)
-        }
-      })
-
-      eventSource.onerror = () => {
-        eventSource.close()
-        eventSourceRef.current = null
-
-        // Don't reconnect if cleaning up
-        if (isCleaningUpRef.current) return
-
-        // Attempt reconnection with exponential backoff
-        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-          const delay = Math.min(
-            BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current),
-            MAX_RECONNECT_DELAY
-          )
-          reconnectAttemptsRef.current++
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (!isCleaningUpRef.current) {
-              connect()
-            }
-          }, delay)
-        } else {
-          setError('Failed to load metrics - connection error')
-        }
-      }
-    }
-
-    connect()
-
-    return () => {
-      isCleaningUpRef.current = true
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = null
-      }
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-        eventSourceRef.current = null
-      }
-    }
+  const url = useMemo(() => {
+    if (machineState === 'stopped' || !workMachineName) return null
+    return `/api/v1/work-machines/${workMachineName}/metrics-stream`
   }, [workMachineName, machineState])
+
+  const handleMetrics = useCallback((data: MetricsEvent) => {
+    if (data.nodeMetrics) {
+      setMetrics(data.nodeMetrics)
+    }
+    if (data.gpuMetrics) {
+      setGpuMetrics(data.gpuMetrics)
+    }
+  }, [])
+
+  const eventHandlers = useMemo(
+    () => ({
+      metrics: handleMetrics,
+    }),
+    [handleMetrics]
+  )
+
+  const { error } = useSSE<MetricsEvent>(url, {
+    enabled: machineState !== 'stopped' && !!workMachineName,
+    eventHandlers,
+  })
 
   // Don't show metrics when machine is stopped
   if (machineState === 'stopped') {
@@ -186,7 +128,7 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
 
   if (!metrics) {
     const SkeletonCard = () => (
-      <div className="bg-card rounded-lg border p-6 animate-pulse">
+      <div className="bg-card animate-pulse rounded-lg border p-6">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-muted h-9 w-9 rounded-lg"></div>
@@ -235,7 +177,9 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
               <p className="text-muted-foreground text-xs">Processing power</p>
             </div>
           </div>
-          <span className={`text-2xl font-medium ${getUsageTextColor(cpuPercent)}`}>
+          <span
+            className={`text-2xl font-medium ${getUsageTextColor(cpuPercent)}`}
+          >
             {cpuPercent}%
           </span>
         </div>
@@ -252,7 +196,8 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
           </div>
         </div>
         <div className="mt-3 text-xs">
-          {(metrics.cpu.usage / 1000).toFixed(2)} / {(metrics.cpu.capacity / 1000).toFixed(2)} vCPU
+          {(metrics.cpu.usage / 1000).toFixed(2)} /{' '}
+          {(metrics.cpu.capacity / 1000).toFixed(2)} vCPU
         </div>
       </div>
 
@@ -268,7 +213,9 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
               <p className="text-muted-foreground text-xs">RAM utilization</p>
             </div>
           </div>
-          <span className={`text-2xl font-medium ${getUsageTextColor(memoryPercent)}`}>
+          <span
+            className={`text-2xl font-medium ${getUsageTextColor(memoryPercent)}`}
+          >
             {memoryPercent}%
           </span>
         </div>
@@ -285,7 +232,8 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
           </div>
         </div>
         <div className="mt-3 text-xs">
-          {formatBytes(metrics.memory.usage)} / {formatBytes(metrics.memory.capacity)}
+          {formatBytes(metrics.memory.usage)} /{' '}
+          {formatBytes(metrics.memory.capacity)}
         </div>
       </div>
 
@@ -299,10 +247,14 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
               </div>
               <div>
                 <h3 className="text-sm font-semibold">GPU Usage</h3>
-                <p className="text-muted-foreground text-xs">{gpuMetrics?.model || 'Graphics processor'}</p>
+                <p className="text-muted-foreground text-xs">
+                  {gpuMetrics?.model || 'Graphics processor'}
+                </p>
               </div>
             </div>
-            <span className={`text-2xl font-medium ${getUsageTextColor(gpuUtilPercent)}`}>
+            <span
+              className={`text-2xl font-medium ${getUsageTextColor(gpuUtilPercent)}`}
+            >
               {gpuUtilPercent}%
             </span>
           </div>
@@ -338,7 +290,8 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
             {gpuMetrics?.memoryUsed && gpuMetrics?.memoryTotal && (
               <div>
                 <span className="text-muted-foreground">VRAM: </span>
-                {(gpuMetrics.memoryUsed / 1024).toFixed(1)} / {(gpuMetrics.memoryTotal / 1024).toFixed(1)} GB
+                {(gpuMetrics.memoryUsed / 1024).toFixed(1)} /{' '}
+                {(gpuMetrics.memoryTotal / 1024).toFixed(1)} GB
               </div>
             )}
             {gpuMetrics?.temperature && (
