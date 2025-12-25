@@ -45,11 +45,19 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
 
+// Reconnection constants
+const MAX_RECONNECT_ATTEMPTS = 10
+const BASE_RECONNECT_DELAY = 1000
+const MAX_RECONNECT_DELAY = 30000
+
 export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachineMetricsProps) {
   const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
   const [gpuMetrics, setGpuMetrics] = useState<GPUMetrics | null>(null)
   const [error, setError] = useState<string | null>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isCleaningUpRef = useRef(false)
 
   useEffect(() => {
     // Don't fetch metrics when machine is stopped or no name provided
@@ -57,45 +65,80 @@ export function WorkMachineMetrics({ workMachineName, machineState }: WorkMachin
       return
     }
 
-    // Close existing connection if any
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-    }
+    isCleaningUpRef.current = false
+    reconnectAttemptsRef.current = 0
 
-    // Create SSE connection
-    const eventSource = new EventSource(
-      `/api/v1/work-machines/${workMachineName}/metrics-stream`
-    )
-    eventSourceRef.current = eventSource
+    const connect = () => {
+      if (isCleaningUpRef.current) return
 
-    eventSource.onopen = () => {
-      console.log('SSE connection established for metrics')
-      setError(null)
-    }
-
-    eventSource.addEventListener('metrics', (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        if (data.nodeMetrics) {
-          setMetrics(data.nodeMetrics)
-        }
-        if (data.gpuMetrics) {
-          setGpuMetrics(data.gpuMetrics)
-        }
-      } catch (err) {
-        console.error('Failed to parse metrics event:', err)
+      // Close existing connection if any
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
       }
-    })
 
-    eventSource.onerror = (err) => {
-      console.error('SSE connection error:', err)
-      setError('Failed to load metrics - connection error')
-      eventSource.close()
+      // Create SSE connection
+      const eventSource = new EventSource(
+        `/api/v1/work-machines/${workMachineName}/metrics-stream`
+      )
+      eventSourceRef.current = eventSource
+
+      eventSource.onopen = () => {
+        setError(null)
+        reconnectAttemptsRef.current = 0
+      }
+
+      eventSource.addEventListener('metrics', (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.nodeMetrics) {
+            setMetrics(data.nodeMetrics)
+          }
+          if (data.gpuMetrics) {
+            setGpuMetrics(data.gpuMetrics)
+          }
+        } catch (err) {
+          console.error('Failed to parse metrics event:', err)
+        }
+      })
+
+      eventSource.onerror = () => {
+        eventSource.close()
+        eventSourceRef.current = null
+
+        // Don't reconnect if cleaning up
+        if (isCleaningUpRef.current) return
+
+        // Attempt reconnection with exponential backoff
+        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+          const delay = Math.min(
+            BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current),
+            MAX_RECONNECT_DELAY
+          )
+          reconnectAttemptsRef.current++
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (!isCleaningUpRef.current) {
+              connect()
+            }
+          }, delay)
+        } else {
+          setError('Failed to load metrics - connection error')
+        }
+      }
     }
+
+    connect()
 
     return () => {
-      eventSource.close()
-      eventSourceRef.current = null
+      isCleaningUpRef.current = true
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
     }
   }, [workMachineName, machineState])
 
