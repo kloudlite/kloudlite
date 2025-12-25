@@ -98,7 +98,7 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
           cache: 'no-cache',
           // Required for Chrome's Local Network Access policy
           // @ts-expect-error - targetAddressSpace is not yet in TypeScript types
-          targetAddressSpace: 'local',
+          targetAddressSpace: 'loopback',
         })
         clearTimeout(timeoutId)
 
