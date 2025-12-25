@@ -35,11 +35,11 @@ type UserPreferencesRepository interface {
 // userPreferencesRepository implements UserPreferencesRepository
 type userPreferencesRepository struct {
 	ClusterRepository[*platformv1alpha1.UserPreferences, *platformv1alpha1.UserPreferencesList]
-	client client.Client
+	client client.WithWatch
 }
 
 // NewUserPreferencesRepository creates a new UserPreferencesRepository
-func NewUserPreferencesRepository(k8sClient client.Client) UserPreferencesRepository {
+func NewUserPreferencesRepository(k8sClient client.WithWatch) UserPreferencesRepository {
 	baseRepo := NewK8sClusterRepository(
 		k8sClient,
 		func() *platformv1alpha1.UserPreferences { return &platformv1alpha1.UserPreferences{} },

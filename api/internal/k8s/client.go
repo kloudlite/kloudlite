@@ -28,7 +28,8 @@ type Client struct {
 	Clientset kubernetes.Interface
 
 	// Controller-runtime client for custom resources and unified API
-	RuntimeClient client.Client
+	// Uses WithWatch to support Kubernetes watch functionality
+	RuntimeClient client.WithWatch
 
 	// REST config
 	Config *rest.Config
@@ -99,9 +100,9 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("failed to add packages scheme: %w", err)
 	}
 
-	// Create controller-runtime client
+	// Create controller-runtime client with Watch support
 	// Note: Don't pass custom HTTPClient - it bypasses the rate limiter from config.QPS/Burst
-	runtimeClient, err := client.New(config, client.Options{
+	runtimeClient, err := client.NewWithWatch(config, client.Options{
 		Scheme: scheme,
 	})
 	if err != nil {

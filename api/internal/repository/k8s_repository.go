@@ -9,19 +9,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // K8sClusterRepository implements ClusterRepository for cluster-scoped resources
 type K8sClusterRepository[T client.Object, L client.ObjectList] struct {
-	client    client.Client
+	client    client.WithWatch
 	newObject func() T
 	newList   func() L
 }
 
 // NewK8sClusterRepository creates a new cluster-scoped repository
 func NewK8sClusterRepository[T client.Object, L client.ObjectList](
-	k8sClient client.Client,
+	k8sClient client.WithWatch,
 	newObject func() T,
 	newList func() L,
 ) ClusterRepository[T, L] {
@@ -158,19 +159,95 @@ func (r *K8sClusterRepository[T, L]) List(ctx context.Context, opts ...ListOptio
 
 // Watch watches for changes to cluster-scoped resources
 func (r *K8sClusterRepository[T, L]) Watch(ctx context.Context, opts ...WatchOption) (<-chan WatchEvent[T], error) {
-	return nil, fmt.Errorf("watch functionality not yet implemented")
+	watchOpts := &WatchOptions{}
+	for _, opt := range opts {
+		opt(watchOpts)
+	}
+
+	// Build list options for watch
+	list := r.newList()
+	listOpts := &client.ListOptions{}
+
+	if watchOpts.LabelSelector != "" {
+		selector, err := metav1.ParseToLabelSelector(watchOpts.LabelSelector)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse label selector: %w", err)
+		}
+		labelSelector, err := metav1.LabelSelectorAsSelector(selector)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert label selector: %w", err)
+		}
+		listOpts.LabelSelector = labelSelector
+	}
+
+	if watchOpts.FieldSelector != "" {
+		listOpts.FieldSelector = fields.ParseSelectorOrDie(watchOpts.FieldSelector)
+	}
+
+	// Start the watch
+	watcher, err := r.client.Watch(ctx, list, listOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start watch: %w", err)
+	}
+
+	// Create event channel
+	eventChan := make(chan WatchEvent[T], 100)
+
+	// Start goroutine to process watch events
+	go func() {
+		defer close(eventChan)
+		defer watcher.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event, ok := <-watcher.ResultChan():
+				if !ok {
+					return
+				}
+
+				watchEvent := WatchEvent[T]{}
+
+				switch event.Type {
+				case watch.Added:
+					watchEvent.Type = WatchEventAdded
+				case watch.Modified:
+					watchEvent.Type = WatchEventModified
+				case watch.Deleted:
+					watchEvent.Type = WatchEventDeleted
+				case watch.Error:
+					watchEvent.Type = WatchEventError
+					if status, ok := event.Object.(*metav1.Status); ok {
+						watchEvent.Error = fmt.Errorf("watch error: %s", status.Message)
+					}
+					eventChan <- watchEvent
+					continue
+				default:
+					continue
+				}
+
+				if obj, ok := event.Object.(T); ok {
+					watchEvent.Object = obj
+					eventChan <- watchEvent
+				}
+			}
+		}
+	}()
+
+	return eventChan, nil
 }
 
 // K8sNamespacedRepository implements NamespacedRepository for namespace-scoped resources
 type K8sNamespacedRepository[T client.Object, L client.ObjectList] struct {
-	client    client.Client
+	client    client.WithWatch
 	newObject func() T
 	newList   func() L
 }
 
 // NewK8sNamespacedRepository creates a new namespace-scoped repository
 func NewK8sNamespacedRepository[T client.Object, L client.ObjectList](
-	k8sClient client.Client,
+	k8sClient client.WithWatch,
 	newObject func() T,
 	newList func() L,
 ) NamespacedRepository[T, L] {
@@ -316,5 +393,83 @@ func (r *K8sNamespacedRepository[T, L]) List(ctx context.Context, namespace stri
 
 // Watch watches for changes to namespace-scoped resources
 func (r *K8sNamespacedRepository[T, L]) Watch(ctx context.Context, namespace string, opts ...WatchOption) (<-chan WatchEvent[T], error) {
-	return nil, fmt.Errorf("watch functionality not yet implemented")
+	watchOpts := &WatchOptions{}
+	for _, opt := range opts {
+		opt(watchOpts)
+	}
+
+	// Build list options for watch
+	list := r.newList()
+	listOpts := &client.ListOptions{
+		Namespace: namespace,
+	}
+
+	if watchOpts.LabelSelector != "" {
+		selector, err := metav1.ParseToLabelSelector(watchOpts.LabelSelector)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse label selector: %w", err)
+		}
+		labelSelector, err := metav1.LabelSelectorAsSelector(selector)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert label selector: %w", err)
+		}
+		listOpts.LabelSelector = labelSelector
+	}
+
+	if watchOpts.FieldSelector != "" {
+		listOpts.FieldSelector = fields.ParseSelectorOrDie(watchOpts.FieldSelector)
+	}
+
+	// Start the watch
+	watcher, err := r.client.Watch(ctx, list, listOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start watch: %w", err)
+	}
+
+	// Create event channel
+	eventChan := make(chan WatchEvent[T], 100)
+
+	// Start goroutine to process watch events
+	go func() {
+		defer close(eventChan)
+		defer watcher.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event, ok := <-watcher.ResultChan():
+				if !ok {
+					return
+				}
+
+				watchEvent := WatchEvent[T]{}
+
+				switch event.Type {
+				case watch.Added:
+					watchEvent.Type = WatchEventAdded
+				case watch.Modified:
+					watchEvent.Type = WatchEventModified
+				case watch.Deleted:
+					watchEvent.Type = WatchEventDeleted
+				case watch.Error:
+					watchEvent.Type = WatchEventError
+					if status, ok := event.Object.(*metav1.Status); ok {
+						watchEvent.Error = fmt.Errorf("watch error: %s", status.Message)
+					}
+					eventChan <- watchEvent
+					continue
+				default:
+					continue
+				}
+
+				if obj, ok := event.Object.(T); ok {
+					watchEvent.Object = obj
+					eventChan <- watchEvent
+				}
+			}
+		}
+	}()
+
+	return eventChan, nil
 }

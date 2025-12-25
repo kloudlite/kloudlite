@@ -10,8 +10,8 @@ import (
 
 // Manager coordinates all repositories and provides a unified interface
 type Manager struct {
-	// K8s client (exposed for webhook usage)
-	K8sClient client.Client
+	// K8s client with watch support (exposed for webhook usage)
+	K8sClient client.WithWatch
 
 	// Clientset for operations requiring typed client (e.g., pod logs)
 	Clientset *kubernetes.Clientset
@@ -28,8 +28,8 @@ type Manager struct {
 
 // ManagerOptions contains options for creating a repository manager
 type ManagerOptions struct {
-	// K8s client (if nil, will create a new one)
-	K8sClient client.Client
+	// K8s client with watch support (if nil, will create a new one)
+	K8sClient client.WithWatch
 
 	// Clientset for operations requiring typed client (e.g., pod logs)
 	Clientset *kubernetes.Clientset
@@ -44,7 +44,7 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 		opts = &ManagerOptions{}
 	}
 
-	var k8sClient client.Client
+	var k8sClient client.WithWatch
 	var clientset *kubernetes.Clientset
 
 	// Create or use existing k8s client

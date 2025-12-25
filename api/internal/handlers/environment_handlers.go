@@ -703,9 +703,9 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 	// Start watching for changes
 	watchChan, err := h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
 	if err != nil {
-		h.logger.Error("Failed to start environment watch", zap.Error(err))
+		h.logger.Warn("Watch not available, using polling fallback", zap.Error(err))
 		// Fall back to polling if watch fails
-		ticker := time.NewTicker(2 * time.Second)
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 
 		for {

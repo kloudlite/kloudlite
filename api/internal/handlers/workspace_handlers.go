@@ -1076,8 +1076,8 @@ func (h *WorkspaceHandlers) GetWorkspaceStatusStream(c *gin.Context) {
 	watchChan, err := h.wsRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
 	if err != nil {
 		h.logger.Warn("Watch not available, using polling fallback", zap.Error(err))
-		// Fall back to polling if watch fails - use longer interval to avoid k8s API throttling
-		ticker := time.NewTicker(10 * time.Second)
+		// Fall back to polling if watch fails
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 
 		for {

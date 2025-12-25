@@ -20,11 +20,11 @@ type CompositionRepository interface {
 // compositionRepository implements CompositionRepository
 type compositionRepository struct {
 	NamespacedRepository[*environmentsv1.Composition, *environmentsv1.CompositionList]
-	client client.Client
+	client client.WithWatch
 }
 
 // NewCompositionRepository creates a new CompositionRepository
-func NewCompositionRepository(k8sClient client.Client) CompositionRepository {
+func NewCompositionRepository(k8sClient client.WithWatch) CompositionRepository {
 	baseRepo := NewK8sNamespacedRepository(
 		k8sClient,
 		func() *environmentsv1.Composition { return &environmentsv1.Composition{} },
