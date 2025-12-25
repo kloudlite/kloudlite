@@ -248,7 +248,7 @@ func (h *HTTPSServer) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Request-Private-Network")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 		// Required for Chrome's Private Network Access (PNA) to allow public sites
 		// to make requests to local/private network addresses
