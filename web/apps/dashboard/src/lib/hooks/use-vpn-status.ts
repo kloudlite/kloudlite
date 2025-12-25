@@ -92,13 +92,10 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
       try {
         const response = await fetch(vpnCheckUrl, {
           method: 'GET',
+          mode: 'cors',
+          credentials: 'omit',
           signal: controller.signal,
           cache: 'no-cache',
-          // Required for Chrome's Private Network Access (PNA) policy
-          // This tells Chrome we intentionally want to access a loopback address (127.0.0.1)
-          // 'local' is for loopback (127.x.x.x), 'private' is for private networks (10.x, 192.168.x)
-          // @ts-expect-error - targetAddressSpace is a newer fetch option not yet in TypeScript types
-          targetAddressSpace: 'local',
         })
         clearTimeout(timeoutId)
 
