@@ -94,6 +94,10 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
           method: 'GET',
           signal: controller.signal,
           cache: 'no-cache',
+          // Required for Chrome's Private Network Access (PNA) policy
+          // This tells Chrome we intentionally want to access a private network address
+          // @ts-expect-error - targetAddressSpace is a newer fetch option not yet in TypeScript types
+          targetAddressSpace: 'private',
         })
         clearTimeout(timeoutId)
 
