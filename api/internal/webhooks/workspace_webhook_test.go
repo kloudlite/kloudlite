@@ -2,7 +2,6 @@ package webhooks
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -598,7 +597,6 @@ func TestWorkspaceWebhook_MutateWorkspace_LabelsAndFinalizer(t *testing.T) {
 	// Check for workspace-name label
 	foundWorkspaceNameLabel := false
 	foundOwnedByLabel := false
-	foundOwnerEmailLabel := false
 	foundFinalizer := false
 
 	for _, patch := range patches {
@@ -611,11 +609,6 @@ func TestWorkspaceWebhook_MutateWorkspace_LabelsAndFinalizer(t *testing.T) {
 			foundOwnedByLabel = true
 			assert.Equal(t, "testuser", patch["value"])
 		}
-		if path == "/metadata/labels/kloudlite.io~1owner-email" {
-			foundOwnerEmailLabel = true
-			expectedEmail := base64.URLEncoding.EncodeToString([]byte("test@example.com"))
-			assert.Equal(t, expectedEmail, patch["value"])
-		}
 		if path == "/metadata/finalizers" {
 			finalizers, ok := patch["value"].([]interface{})
 			if ok && len(finalizers) > 0 {
@@ -627,7 +620,6 @@ func TestWorkspaceWebhook_MutateWorkspace_LabelsAndFinalizer(t *testing.T) {
 
 	assert.True(t, foundWorkspaceNameLabel)
 	assert.True(t, foundOwnedByLabel)
-	assert.True(t, foundOwnerEmailLabel)
 	assert.True(t, foundFinalizer)
 }
 

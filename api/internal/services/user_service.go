@@ -267,8 +267,8 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 		ObjectMeta: metav1.ObjectMeta{
 			Name: workMachineName,
 			Labels: map[string]string{
-				"kloudlite.io/user-email": sanitizeForLabel(user.Spec.Email),
-				"kloudlite.io/managed":    "true",
+				"kloudlite.io/owned-by": user.Name,
+				"kloudlite.io/managed":  "true",
 			},
 		},
 	}
@@ -282,7 +282,7 @@ func (s *userService) createWorkMachineForUser(ctx context.Context, user *platfo
 
 	workMachine.Spec = machinesv1.WorkMachineSpec{
 		DisplayName:     username + "'s workmachine",
-		OwnedBy:         user.Spec.Email,
+		OwnedBy:         user.Name,
 		TargetNamespace: targetNamespace,
 		State:           machinesv1.MachineStateRunning,
 		MachineType:     mt.Name,
@@ -364,7 +364,7 @@ func (s *userService) deleteEnvironmentsForUser(ctx context.Context, user *platf
 	var deletionErrors []string
 	for i := range envList.Items {
 		env := &envList.Items[i]
-		if env.Spec.OwnedBy == user.Spec.Email {
+		if env.Spec.OwnedBy == user.Name {
 			if err := s.envRepo.Delete(ctx, env.Name); err != nil {
 				if !repository.IsNotFound(err) {
 					deletionErrors = append(deletionErrors, fmt.Sprintf("environment %s: %v", env.Name, err))
@@ -379,25 +379,6 @@ func (s *userService) deleteEnvironmentsForUser(ctx context.Context, user *platf
 	}
 
 	return nil
-}
-
-// sanitizeForLabel sanitizes a string to be used as a label value
-func sanitizeForLabel(value string) string {
-	// Replace special characters with hyphens for label value
-	sanitized := strings.ReplaceAll(value, "@", "-at-")
-	sanitized = strings.ReplaceAll(sanitized, ".", "-dot-")
-	sanitized = strings.ReplaceAll(sanitized, "_", "-")
-	sanitized = strings.ToLower(sanitized)
-
-	// Ensure it starts and ends with alphanumeric
-	sanitized = strings.Trim(sanitized, "-")
-
-	// Limit length to 63 characters (Kubernetes label value limit)
-	if len(sanitized) > 63 {
-		sanitized = sanitized[:63]
-	}
-
-	return sanitized
 }
 
 // ActivateUser activates a user account

@@ -14,7 +14,6 @@ import (
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
-	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -164,15 +163,13 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 	}
 	patches = append(patches, workspaceNameLabelPatch)
 
-	// Look up user to get email and user ID
+	// Look up user to get username
 	owner := workspace.Spec.OwnedBy
 	var userName string
-	var userEmail string
 
 	ctx := context.Background()
 	if strings.Contains(owner, "@") {
 		// Owner is an email, find the user
-		userEmail = owner
 		userList := &platformv1alpha1.UserList{}
 		if err := w.k8sClient.List(ctx, userList); err == nil {
 			for _, u := range userList.Items {
@@ -189,10 +186,6 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 	} else {
 		// Owner is a username
 		userName = owner
-		var user platformv1alpha1.User
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: userName}, &user); err == nil {
-			userEmail = user.Spec.Email
-		}
 	}
 
 	// Add created-by label with username
@@ -210,17 +203,6 @@ func (w *WorkspaceWebhook) handleMutation(req *admissionv1.AdmissionRequest) *ad
 		"value": userName,
 	}
 	patches = append(patches, ownerLabelPatch)
-
-	// Add base64 encoded email as a label
-	if userEmail != "" {
-		encodedEmail := fn.LabelValueEncoder(userEmail)
-		emailLabelPatch := map[string]interface{}{
-			"op":    "add",
-			"path":  "/metadata/labels/kloudlite.io~1owner-email",
-			"value": encodedEmail,
-		}
-		patches = append(patches, emailLabelPatch)
-	}
 
 	// Ensure finalizers array exists
 	if workspace.Finalizers == nil {

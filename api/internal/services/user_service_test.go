@@ -310,7 +310,7 @@ func TestCreateUser(t *testing.T) {
 			},
 			createFunc: func(ctx context.Context, wm *machinesv1.WorkMachine) error {
 				assert.Equal(t, "wm-test", wm.Name)
-				assert.Equal(t, "test@example.com", wm.Spec.OwnedBy)
+				assert.Equal(t, "test-user", wm.Spec.OwnedBy) // OwnedBy uses username, not email
 				assert.Equal(t, "wm-test", wm.Spec.TargetNamespace)
 				return nil
 			},
@@ -1068,33 +1068,5 @@ func TestDeactivateUser(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, user)
 		assert.Contains(t, err.Error(), "modified by another process")
-	})
-}
-
-func TestSanitizeForLabel(t *testing.T) {
-	t.Run("should sanitize email with @ and .", func(t *testing.T) {
-		result := sanitizeForLabel("test.user@example.com")
-		assert.Equal(t, "test-dot-user-at-example-dot-com", result)
-	})
-
-	t.Run("should handle underscores", func(t *testing.T) {
-		result := sanitizeForLabel("test_user@example.com")
-		assert.Equal(t, "test-user-at-example-dot-com", result)
-	})
-
-	t.Run("should convert to lowercase", func(t *testing.T) {
-		result := sanitizeForLabel("TestUser@Example.COM")
-		assert.Equal(t, "testuser-at-example-dot-com", result)
-	})
-
-	t.Run("should trim leading and trailing hyphens", func(t *testing.T) {
-		result := sanitizeForLabel("-test@example.com-")
-		assert.Equal(t, "test-at-example-dot-com", result)
-	})
-
-	t.Run("should limit length to 63 characters", func(t *testing.T) {
-		longEmail := "very.long.email.address.that.exceeds.sixtythree.characters@example.com"
-		result := sanitizeForLabel(longEmail)
-		assert.LessOrEqual(t, len(result), 63)
 	})
 }
