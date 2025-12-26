@@ -61,7 +61,7 @@ const networkPoliciesSchema = z
 export const environmentSpecSchema = z.object({
   targetNamespace: z.string().optional(),
   name: z.string().optional(),
-  ownedBy: z.string().email('Owner must be a valid email'),
+  ownedBy: z.string().min(1, 'Owner is required'),
   visibility: visibilitySchema,
   sharedWith: z.array(z.string().email()).optional(),
   activated: z.boolean(),

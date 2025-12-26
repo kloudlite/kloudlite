@@ -81,7 +81,7 @@ const objectReferenceSchema = z
 export const workspaceSpecSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name too long'),
   description: z.string().max(500, 'Description too long').optional(),
-  ownedBy: z.string().email('Owner must be a valid email'),
+  ownedBy: z.string().min(1, 'Owner is required'),
   visibility: visibilitySchema,
   sharedWith: z.array(z.string().email()).optional(),
   workMachineRef: objectReferenceSchema,
