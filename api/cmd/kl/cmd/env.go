@@ -123,6 +123,13 @@ func handleEnvConnectInteractive() error {
 
 	ctx := context.Background()
 
+	// Get current user from workspace
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get workspace: %w", err)
+	}
+	currentUser := workspace.Spec.OwnedBy
+
 	// List all environments
 	fmt.Println("Loading environments...")
 	envList := &environmentsv1.EnvironmentList{}
@@ -133,17 +140,37 @@ func handleEnvConnectInteractive() error {
 		return fmt.Errorf("failed to list environments: %w", err)
 	}
 
-	if len(envList.Items) == 0 {
-		return fmt.Errorf("no environments found")
+	// Filter environments by ownership/sharing
+	var filteredEnvs []environmentsv1.Environment
+	for _, env := range envList.Items {
+		if env.Spec.OwnedBy == currentUser ||
+			env.Spec.Visibility == "open" ||
+			containsUser(env.Spec.SharedWith, currentUser) {
+			filteredEnvs = append(filteredEnvs, env)
+		}
+	}
+
+	if len(filteredEnvs) == 0 {
+		return fmt.Errorf("no environments found that you own or have access to")
 	}
 
 	// Use native fzf for better control over layout
-	selectedEnv, err := selectEnvironmentWithFzf(envList.Items)
+	selectedEnv, err := selectEnvironmentWithFzf(filteredEnvs)
 	if err != nil {
 		return err
 	}
 
 	return handleEnvConnect(selectedEnv.Name)
+}
+
+// containsUser checks if a user is in the list of users
+func containsUser(users []string, user string) bool {
+	for _, u := range users {
+		if u == user {
+			return true
+		}
+	}
+	return false
 }
 
 func handleEnvConnect(environmentName string) error {
