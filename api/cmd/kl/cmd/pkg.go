@@ -619,6 +619,15 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 			fmt.Println("\n[!] Interrupted by user")
 			return fmt.Errorf("interrupted by user")
 		case <-timeout:
+			// Debug: Print current status on timeout
+			if debugPkgReq, debugErr := WsClient.GetPackageRequest(ctx); debugErr == nil && debugPkgReq != nil {
+				fmt.Fprintf(os.Stderr, "\n[DEBUG] Timeout occurred. Current status:\n")
+				fmt.Fprintf(os.Stderr, "  Phase: %s\n", debugPkgReq.Status.Phase)
+				fmt.Fprintf(os.Stderr, "  Message: %s\n", debugPkgReq.Status.Message)
+				fmt.Fprintf(os.Stderr, "  ObservedGeneration: %d (target: %d)\n", debugPkgReq.Status.ObservedGeneration, targetGeneration)
+				fmt.Fprintf(os.Stderr, "  Packages: %v\n", debugPkgReq.Status.Packages)
+				fmt.Fprintf(os.Stderr, "  Looking for: %s\n", packageName)
+			}
 			return fmt.Errorf("timeout waiting for package installation")
 
 		case <-ticker.C:
@@ -641,6 +650,7 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 
 			// Check if package is installed (only trust when phase is Ready)
 			if pkgReq.Status.Phase == "Ready" {
+				// First check if package is in the list
 				for _, pkg := range pkgReq.Status.Packages {
 					if pkg == packageName {
 						fmt.Printf("\n[✓] Package installed successfully: %s\n", packageName)
@@ -648,6 +658,19 @@ func waitForPackageInstallationWithLogs(ctx context.Context, packageName string,
 							fmt.Printf("  Binary path: %s/bin\n", pkgReq.Status.PackagesPath)
 						}
 						return nil
+					}
+				}
+				// Fallback: if phase is Ready but package list is empty/nil,
+				// check if package is in spec (status might not have synced packages list)
+				if len(pkgReq.Status.Packages) == 0 {
+					for _, pkg := range pkgReq.Spec.Packages {
+						if pkg.Name == packageName {
+							fmt.Printf("\n[✓] Package installed successfully: %s\n", packageName)
+							if pkgReq.Status.PackagesPath != "" {
+								fmt.Printf("  Binary path: %s/bin\n", pkgReq.Status.PackagesPath)
+							}
+							return nil
+						}
 					}
 				}
 			}

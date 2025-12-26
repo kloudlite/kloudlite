@@ -5,8 +5,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -88,6 +90,70 @@ func (m *NixProfileManager) ComputeSpecHash(packages []packagesv1.PackageSpec) s
 	return hex.EncodeToString(hash[:8]) // Short hash is sufficient
 }
 
+// branchCommitCache caches branch to commit SHA mappings
+var branchCommitCache = struct {
+	sync.RWMutex
+	cache map[string]struct {
+		commit    string
+		expiresAt time.Time
+	}
+}{
+	cache: make(map[string]struct {
+		commit    string
+		expiresAt time.Time
+	}),
+}
+
+// resolveBranchToCommit resolves a GitHub branch name to its commit SHA
+// This makes the URL cacheable by Nix since commit SHAs are immutable
+func resolveBranchToCommit(branch string) (string, error) {
+	// Check cache first (cache for 1 hour to avoid excessive API calls)
+	branchCommitCache.RLock()
+	if cached, ok := branchCommitCache.cache[branch]; ok && time.Now().Before(cached.expiresAt) {
+		branchCommitCache.RUnlock()
+		return cached.commit, nil
+	}
+	branchCommitCache.RUnlock()
+
+	// Fetch from GitHub API
+	url := fmt.Sprintf("https://api.github.com/repos/NixOS/nixpkgs/branches/%s", branch)
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch branch info: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("GitHub API returned status %d for branch %s", resp.StatusCode, branch)
+	}
+
+	var result struct {
+		Commit struct {
+			SHA string `json:"sha"`
+		} `json:"commit"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to decode branch info: %w", err)
+	}
+
+	if result.Commit.SHA == "" {
+		return "", fmt.Errorf("no commit SHA found for branch %s", branch)
+	}
+
+	// Cache the result for 1 hour
+	branchCommitCache.Lock()
+	branchCommitCache.cache[branch] = struct {
+		commit    string
+		expiresAt time.Time
+	}{
+		commit:    result.Commit.SHA,
+		expiresAt: time.Now().Add(1 * time.Hour),
+	}
+	branchCommitCache.Unlock()
+
+	return result.Commit.SHA, nil
+}
+
 // GenerateProfileNix creates a .nix file for the workspace's packages
 func (m *NixProfileManager) GenerateProfileNix(workspace string, packages []packagesv1.PackageSpec) (string, error) {
 	profileDir := m.GetProfileDir(workspace)
@@ -133,10 +199,26 @@ func (m *NixProfileManager) GenerateProfileNix(workspace string, packages []pack
 			nixContent.WriteString(fmt.Sprintf("    url = \"https://github.com/nixos/nixpkgs/archive/%s.tar.gz\";\n", src.commit))
 			nixContent.WriteString("  }) { config.allowUnfree = true; };\n")
 		} else if src.channel != "" {
-			// Use channel/release branch
-			nixContent.WriteString(fmt.Sprintf("  %s = import (fetchTarball {\n", varName))
-			nixContent.WriteString(fmt.Sprintf("    url = \"https://github.com/nixos/nixpkgs/archive/refs/heads/%s.tar.gz\";\n", src.channel))
-			nixContent.WriteString("  }) { config.allowUnfree = true; };\n")
+			// Resolve channel/branch to specific commit for cacheable URL
+			commitSHA, err := resolveBranchToCommit(src.channel)
+			if err != nil {
+				m.logger.Warn("Failed to resolve branch to commit, using branch URL (uncacheable)",
+					zap2.String("branch", src.channel),
+					zap2.Error(err))
+				// Fallback to branch URL if resolution fails
+				nixContent.WriteString(fmt.Sprintf("  %s = import (fetchTarball {\n", varName))
+				nixContent.WriteString(fmt.Sprintf("    url = \"https://github.com/nixos/nixpkgs/archive/refs/heads/%s.tar.gz\";\n", src.channel))
+				nixContent.WriteString("  }) { config.allowUnfree = true; };\n")
+			} else {
+				// Use resolved commit SHA (cacheable)
+				m.logger.Info("Resolved branch to commit",
+					zap2.String("branch", src.channel),
+					zap2.String("commit", commitSHA[:12]))
+				nixContent.WriteString(fmt.Sprintf("  # Channel: %s (resolved to commit)\n", src.channel))
+				nixContent.WriteString(fmt.Sprintf("  %s = import (fetchTarball {\n", varName))
+				nixContent.WriteString(fmt.Sprintf("    url = \"https://github.com/nixos/nixpkgs/archive/%s.tar.gz\";\n", commitSHA))
+				nixContent.WriteString("  }) { config.allowUnfree = true; };\n")
+			}
 		} else {
 			// Use default nixpkgs (unstable)
 			nixContent.WriteString(fmt.Sprintf("  %s = import <nixpkgs> { config.allowUnfree = true; };\n", varName))
