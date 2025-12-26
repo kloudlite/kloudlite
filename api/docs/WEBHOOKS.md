@@ -89,8 +89,8 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 - Replaces `@` with `-at-`, `.` with `-`
 
 **Labels**:
-- `kloudlite.io/owned-by`: User ID
-- `kloudlite.io/owner-email`: Base64 encoded email
+- `kloudlite.io/owned-by`: Username
+- `kloudlite.io/created-by`: Username
 - `kloudlite.io/machine-type`: Machine type name
 
 **NodeSelector** (if not provided):

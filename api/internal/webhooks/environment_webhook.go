@@ -14,7 +14,6 @@ import (
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
-	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -149,13 +148,10 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	// This is needed for generating the targetNamespace with username prefix
 	ownedBy := env.Spec.OwnedBy
 	var userName string
-	var userEmail string
 
 	// Determine if OwnedBy is an email or username
 	if strings.Contains(ownedBy, "@") {
-		// OwnedBy is an email
-		userEmail = ownedBy
-		// Find the actual user name
+		// OwnedBy is an email - find the actual username
 		userList := &platformv1alpha1.UserList{}
 		if err := w.k8sClient.List(context.Background(), userList); err == nil {
 			for _, u := range userList.Items {
@@ -172,11 +168,6 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	} else {
 		// OwnedBy is a username
 		userName = ownedBy
-		// Look up the email
-		var user platformv1alpha1.User
-		if err := w.k8sClient.Get(context.Background(), client.ObjectKey{Name: userName}, &user); err == nil {
-			userEmail = user.Spec.Email
-		}
 	}
 
 	// Generate targetNamespace if not provided
@@ -244,28 +235,6 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		"value": userName,
 	}
 	patches = append(patches, ownerPatch)
-
-	// Add sanitized email as a label in both metadata and spec
-	if userEmail != "" {
-		// Sanitize email for use as Kubernetes label value
-		sanitizedEmail := utils.SanitizeForLabel(userEmail)
-
-		// Metadata label
-		metadataEmailPatch := map[string]interface{}{
-			"op":    "add",
-			"path":  "/metadata/labels/kloudlite.io~1owner-email",
-			"value": sanitizedEmail,
-		}
-		patches = append(patches, metadataEmailPatch)
-
-		// Spec label for namespace
-		emailPatch := map[string]interface{}{
-			"op":    "add",
-			"path":  "/spec/labels/kloudlite.io~1owner-email",
-			"value": sanitizedEmail,
-		}
-		patches = append(patches, emailPatch)
-	}
 
 	// Add targetNamespace label for easy validation and lookup
 	if env.Spec.TargetNamespace != "" {

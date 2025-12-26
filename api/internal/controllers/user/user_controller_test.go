@@ -570,7 +570,7 @@ func TestUserReconciler_Reconcile_WorkMachineOwnedByDifferentUser(t *testing.T) 
 			Name: "wm-test-user",
 		},
 		Spec: machinesv1.WorkMachineSpec{
-			OwnedBy:         "different@example.com", // Different owner
+			OwnedBy:         "different-user", // Different owner (username, not email)
 			MachineType:     "standard-4",
 			TargetNamespace: "wm-test-user",
 			State:           machinesv1.MachineStateStopped,
@@ -600,7 +600,7 @@ func TestUserReconciler_Reconcile_WorkMachineOwnedByDifferentUser(t *testing.T) 
 	retrievedMachine := &machinesv1.WorkMachine{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "wm-test-user"}, retrievedMachine)
 	assert.NoError(t, err)
-	assert.Equal(t, "different@example.com", retrievedMachine.Spec.OwnedBy)
+	assert.Equal(t, "different-user", retrievedMachine.Spec.OwnedBy)
 }
 
 func TestUserReconciler_Reconcile_UserStatusConditions(t *testing.T) {
