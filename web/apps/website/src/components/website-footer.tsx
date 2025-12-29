@@ -36,7 +36,7 @@ export function WebsiteFooter() {
           <div className="col-span-2 md:col-span-1">
             <KloudliteLogo showText={true} linkToHome={true} />
             <p className="mt-4 text-sm text-foreground/40 leading-relaxed">
-              Cloud development environments connected to live services.
+              Cloud development environments designed to reduce the development loop.
             </p>
           </div>
 
