@@ -5,7 +5,7 @@ import { Input } from '@kloudlite/ui'
 import { Textarea } from '@kloudlite/ui'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { CheckCircle2 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -19,7 +19,6 @@ export default function ContactForm() {
   const [canSubmit, setCanSubmit] = useState(true)
   const [timeRemaining, setTimeRemaining] = useState(0)
 
-  // Check rate limit on component mount
   useEffect(() => {
     const lastSubmission = localStorage.getItem('lastContactSubmission')
     if (lastSubmission) {
@@ -32,7 +31,6 @@ export default function ContactForm() {
     }
   }, [])
 
-  // Update time remaining every minute
   useEffect(() => {
     if (!canSubmit && timeRemaining > 0) {
       const timer = setInterval(() => {
@@ -44,7 +42,7 @@ export default function ContactForm() {
           }
           return prev - 1
         })
-      }, 60000) // Update every minute
+      }, 60000)
       return () => clearInterval(timer)
     }
     return undefined
@@ -63,9 +61,7 @@ export default function ContactForm() {
     try {
       const response = await fetch('/api/contact/submit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
 
@@ -75,149 +71,127 @@ export default function ContactForm() {
         throw new Error(data.error || 'Failed to submit form')
       }
 
-      // Store submission timestamp
       localStorage.setItem('lastContactSubmission', Date.now().toString())
       setCanSubmit(false)
-      setTimeRemaining(60) // 60 minutes
-
-      // Show success state
+      setTimeRemaining(60)
       setIsSuccess(true)
-      toast.success(data.message || "Message sent successfully! We'll get back to you soon.", {
-        duration: 5000,
-      })
+      toast.success(data.message || "Message sent! We'll get back to you soon.")
       setFormData({ name: '', email: '', subject: '', message: '' })
-
-      // Hide success state after 10 seconds
       setTimeout(() => setIsSuccess(false), 10000)
     } catch (error) {
       console.error('Form submission error:', error)
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to send message. Please try again.',
-      )
+      toast.error(error instanceof Error ? error.message : 'Failed to send message.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+          <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 className="text-foreground text-lg font-semibold">Message Sent</h3>
+        <p className="text-foreground/50 mt-2 text-sm max-w-sm">
+          Thank you for reaching out. We&apos;ll get back to you within 24 hours.
+        </p>
+      </div>
+    )
+  }
+
+  if (!canSubmit) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-foreground/50 text-sm">
+          You can send another message in <span className="text-foreground font-medium">{timeRemaining}</span> minute{timeRemaining !== 1 ? 's' : ''}.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className="bg-card border-border rounded-lg border p-8">
-      <h2 className="text-foreground text-2xl font-semibold">Send us a message</h2>
-      <p className="text-muted-foreground mt-2">
-        Fill out the form below and we&apos;ll get back to you as soon as possible.
-      </p>
-
-      {/* Success Message */}
-      {isSuccess && (
-        <div className="mt-6 rounded-lg bg-green-50 p-6 dark:bg-green-950/20">
-          <div className="flex items-start gap-4">
-            <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-green-600 dark:text-green-400" />
-            <div>
-              <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
-                Message Sent Successfully!
-              </h3>
-              <p className="mt-1 text-sm text-green-800 dark:text-green-200">
-                Thank you for reaching out. We&apos;ve received your message and will get back to
-                you as soon as possible.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Rate Limit Warning */}
-      {!canSubmit && !isSuccess && (
-        <div className="mt-6 rounded-lg bg-amber-50 p-4 dark:bg-amber-950/20">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
-            You can send another message in {timeRemaining} minute{timeRemaining !== 1 ? 's' : ''}.
-          </p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-foreground text-sm font-medium">
-              Name
-            </label>
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              placeholder="Your name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-foreground text-sm font-medium">
-              Email
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="your@email.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </div>
-
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
-          <label htmlFor="subject" className="text-foreground text-sm font-medium">
-            Subject
+          <label htmlFor="name" className="text-foreground/70 text-sm">
+            Name
           </label>
           <Input
-            id="subject"
-            name="subject"
+            id="name"
+            name="name"
             type="text"
-            placeholder="What is this about?"
-            value={formData.subject}
+            placeholder="Your name"
+            value={formData.name}
             onChange={handleChange}
             required
+            className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 h-11"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="message" className="text-foreground text-sm font-medium">
-            Message
+          <label htmlFor="email" className="text-foreground/70 text-sm">
+            Email
           </label>
-          <Textarea
-            id="message"
-            name="message"
-            placeholder="Your message..."
-            rows={6}
-            value={formData.message}
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@company.com"
+            value={formData.email}
             onChange={handleChange}
             required
+            className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 h-11"
           />
         </div>
+      </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full sm:w-auto"
-          disabled={isSubmitting || !canSubmit}
-        >
-          {isSubmitting ? 'Sending...' : !canSubmit ? 'Please Wait...' : 'Send Message'}
-        </Button>
-        {!canSubmit && (
-          <p className="text-muted-foreground text-sm">
-            Rate limit: You can send another message in {timeRemaining} minute
-            {timeRemaining !== 1 ? 's' : ''}
-          </p>
-        )}
-      </form>
-    </div>
+      <div className="space-y-2">
+        <label htmlFor="subject" className="text-foreground/70 text-sm">
+          Subject
+        </label>
+        <Input
+          id="subject"
+          name="subject"
+          type="text"
+          placeholder="How can we help?"
+          value={formData.subject}
+          onChange={handleChange}
+          required
+          className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 h-11"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="message" className="text-foreground/70 text-sm">
+          Message
+        </label>
+        <Textarea
+          id="message"
+          name="message"
+          placeholder="Tell us more about your inquiry..."
+          rows={5}
+          value={formData.message}
+          onChange={handleChange}
+          required
+          className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 resize-none"
+        />
+      </div>
+
+      <Button
+        type="submit"
+        className="rounded-none h-11 px-6"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? 'Sending...' : 'Send Message'}
+        {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
+      </Button>
+    </form>
   )
 }

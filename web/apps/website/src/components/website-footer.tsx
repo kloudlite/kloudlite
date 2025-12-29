@@ -5,11 +5,10 @@ import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { ThemeSwitcher } from '@/components/theme-switcher'
 
 const footerLinks = {
-  Product: [
-    { label: 'Workspaces', href: '/docs/workspaces' },
-    { label: 'Environments', href: '/docs/environments' },
-    { label: 'Packages', href: '/docs/packages' },
-    { label: 'Intercepts', href: '/docs/intercepts' },
+  'Core Concepts': [
+    { label: 'Workspaces', href: '/workspaces' },
+    { label: 'Environments', href: '/environments' },
+    { label: 'Workmachines', href: '/workmachines' },
   ],
   Resources: [
     { label: 'Documentation', href: '/docs' },

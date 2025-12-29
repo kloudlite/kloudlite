@@ -8,7 +8,7 @@ import { cn } from '@kloudlite/lib'
 import { Menu, X } from 'lucide-react'
 
 interface WebsiteHeaderProps {
-  currentPage?: 'home' | 'docs' | 'pricing'
+  currentPage?: 'home' | 'docs' | 'pricing' | 'about' | 'contact' | 'changelog' | 'workspaces' | 'environments' | 'workmachines'
   alwaysShowBorder?: boolean
   showSearch?: boolean
 }
@@ -80,6 +80,16 @@ export function WebsiteHeader({ currentPage, alwaysShowBorder = false, showSearc
             >
               Pricing
             </Link>
+            <Link
+              href="/about"
+              className={
+                currentPage === 'about'
+                  ? 'text-foreground text-sm font-medium transition-all duration-100 active:translate-y-0.5'
+                  : 'text-foreground/60 hover:text-foreground text-sm transition-all duration-100 active:translate-y-0.5'
+              }
+            >
+              About
+            </Link>
           </div>
         </div>
 
@@ -122,6 +132,18 @@ export function WebsiteHeader({ currentPage, alwaysShowBorder = false, showSearc
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
+              </Link>
+              <Link
+                href="/about"
+                className={cn(
+                  'block text-sm transition-colors',
+                  currentPage === 'about'
+                    ? 'text-foreground font-medium'
+                    : 'text-foreground/60 hover:text-foreground'
+                )}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                About
               </Link>
               <div className="pt-2">
                 <GetStartedButton size="sm" className="w-full" />
