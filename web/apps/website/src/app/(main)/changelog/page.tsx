@@ -169,7 +169,7 @@ export default function ChangelogPage() {
   return (
     <div className="bg-background h-screen">
       <ScrollArea className="h-full">
-        <WebsiteHeader />
+        <WebsiteHeader currentPage="changelog" />
         <main>
           <div className="px-6 pt-8 lg:px-8 lg:pt-12">
             <GridContainer className="px-6 lg:px-12">
