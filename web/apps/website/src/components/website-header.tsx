@@ -97,7 +97,7 @@ export function WebsiteHeader({ currentPage, alwaysShowBorder = false, showSearc
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-foreground/10 bg-background/95 backdrop-blur-xl">
+          <div className="md:hidden bg-background/95 backdrop-blur-xl">
             <div className="px-6 py-4 space-y-4">
               <Link
                 href="/docs"
