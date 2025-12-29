@@ -6,7 +6,7 @@ export default async function DocsLayout({ children }: { children: React.ReactNo
   const theme = await getTheme()
   return (
     <div className="bg-background flex min-h-screen flex-col">
-      <WebsiteHeader currentPage="docs" showSearch={true} />
+      <WebsiteHeader currentPage="docs" alwaysShowBorder />
 
       {/* Main Content Area with Sidebar */}
       <div className="mx-auto w-full max-w-[90rem]">

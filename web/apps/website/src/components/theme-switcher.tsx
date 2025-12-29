@@ -45,10 +45,19 @@ export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
     return <Monitor className="h-4 w-4" />
   }
 
+  // Avoid hydration mismatch by not rendering dropdown until mounted
+  if (!mounted) {
+    return (
+      <button className="text-muted-foreground hover:text-foreground transition-all duration-100 active:translate-y-0.5">
+        <Monitor className="h-4 w-4" />
+      </button>
+    )
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="text-muted-foreground hover:text-foreground transition-colors">
+        <button className="text-muted-foreground hover:text-foreground transition-all duration-100 active:translate-y-0.5">
           {getIcon()}
         </button>
       </DropdownMenuTrigger>
