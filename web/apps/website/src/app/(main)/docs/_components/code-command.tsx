@@ -6,7 +6,7 @@ interface CodeCommandProps {
 }
 
 export function CodeCommand({ children, className }: CodeCommandProps) {
-  return <div className={cn('bg-muted rounded p-3 font-mono text-sm', className)}>{children}</div>
+  return <div className={cn('bg-muted p-3 font-mono text-sm', className)}>{children}</div>
 }
 
 interface CodeInlineProps {
@@ -16,7 +16,7 @@ interface CodeInlineProps {
 
 export function CodeInline({ children, className }: CodeInlineProps) {
   return (
-    <code className={cn('bg-muted rounded px-1.5 py-0.5 font-mono text-sm', className)}>
+    <code className={cn('bg-muted px-1.5 py-0.5 font-mono text-sm', className)}>
       {children}
     </code>
   )

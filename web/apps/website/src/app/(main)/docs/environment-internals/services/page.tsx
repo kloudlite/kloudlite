@@ -1,381 +1,133 @@
+import Link from 'next/link'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
-import {
-  Database,
-  Container,
-  Network,
-  FileText,
-  Settings,
-  CheckCircle2,
-  Info,
-  AlertTriangle,
-} from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 const tocItems = [
-  { id: 'overview', title: 'Overview' },
-  { id: 'docker-compose', title: 'Docker Compose' },
-  { id: 'service-types', title: 'Service Types' },
-  { id: 'networking', title: 'Service Networking' },
-  { id: 'configuration', title: 'Configuration' },
-  { id: 'service-lifecycle', title: 'Service Lifecycle & Troubleshooting' },
-  { id: 'best-practices', title: 'Best Practices' },
+  { id: 'composition', title: 'Composition' },
+  { id: 'images-ports', title: 'Images & Ports' },
+  { id: 'volumes', title: 'Volumes' },
+  { id: 'networking', title: 'Networking' },
 ]
 
 export default function ServicesPage() {
   return (
     <DocsContentLayout tocItems={tocItems}>
-      <h1 className="text-foreground mb-8 text-3xl sm:text-4xl font-bold">Services</h1>
+      <h1 className="text-foreground mb-6 text-3xl sm:text-4xl font-bold tracking-tight">Services</h1>
 
-      {/* Overview */}
-      <section id="overview" className="mb-12 sm:mb-16">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-            <Container className="text-primary-foreground h-6 w-6" />
+      <p className="text-muted-foreground mb-8 leading-relaxed">
+        Define services using Docker Compose syntax. Databases, caches, APIs—anything that runs
+        in a container can be deployed to your environment.
+      </p>
+
+      {/* Composition */}
+      <section id="composition" className="mb-10">
+        <h2 className="text-foreground text-xl font-bold mb-4">Composition</h2>
+
+        <div className="bg-zinc-950 border border-zinc-800 overflow-hidden">
+          <div className="bg-zinc-900 px-4 py-2 border-b border-zinc-800">
+            <span className="text-zinc-400 text-xs font-mono">docker-compose.yml</span>
           </div>
-          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">Overview</h2>
-        </div>
-
-        <p className="text-muted-foreground mb-6 leading-relaxed">
-          Services are the applications and infrastructure components that run within your
-          environments. They are defined using Docker Compose and can include databases, caches,
-          APIs, message queues, and any other containerized services your application needs.
-        </p>
-
-        <div className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 rounded-lg border p-3 sm:p-4">
-          <div className="flex gap-2 sm:gap-3">
-            <Info className="text-blue-600 dark:text-blue-400 h-5 w-5 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-blue-900 dark:text-blue-100 text-sm font-medium m-0 mb-1">
-                Environment Services
-              </p>
-              <p className="text-blue-800 dark:text-blue-200 text-sm m-0 leading-relaxed">
-                Services run in the environment&apos;s namespace and are accessible to workspaces
-                connected to that environment. Each service gets its own DNS name for easy discovery.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Docker Compose */}
-      <section id="docker-compose" className="mb-12 sm:mb-16">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-            <FileText className="text-primary-foreground h-6 w-6" />
-          </div>
-          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">
-            Docker Compose Definition
-          </h2>
-        </div>
-
-        <p className="text-muted-foreground mb-6 leading-relaxed">
-          Services are defined using standard Docker Compose syntax. Kloudlite processes your
-          compose file and deploys the services to the environment.
-        </p>
-
-        <div className="bg-card rounded-lg border p-4 sm:p-6 mb-6">
-          <p className="text-card-foreground text-sm mb-3 m-0 font-medium">
-            Example: Database and Cache Services
-          </p>
-          <div className="bg-muted rounded p-4 font-mono text-xs overflow-x-auto">
-            <pre className="m-0 leading-relaxed">
-{`services:
+          <pre className="p-4 overflow-x-auto">
+            <code className="text-zinc-300 font-mono text-sm leading-normal">{`services:
   postgres:
     image: postgres:16
-    environment:
-      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
-      POSTGRES_DB: myapp
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: \${DB_PASSWORD}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
 
 volumes:
-  postgres-data:
-  redis-data:`}
-            </pre>
+  postgres_data:`}</code>
+          </pre>
+        </div>
+      </section>
+
+      {/* Images & Ports */}
+      <section id="images-ports" className="mb-10">
+        <h2 className="text-foreground text-xl font-bold mb-4">Images & Ports</h2>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-card border p-4">
+            <p className="font-medium text-foreground text-sm mb-2 m-0">Images</p>
+            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground space-y-1">
+              <div>image: postgres:16</div>
+              <div>image: ghcr.io/org/api:latest</div>
+            </div>
+          </div>
+          <div className="bg-card border p-4">
+            <p className="font-medium text-foreground text-sm mb-2 m-0">Ports</p>
+            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground space-y-1">
+              <div>- "5432:5432" # host:container</div>
+              <div>- "3000:8080" # map 8080 to 3000</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Service Types */}
-      <section id="service-types" className="mb-12 sm:mb-16">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-            <Database className="text-primary-foreground h-6 w-6" />
-          </div>
-          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">
-            Common Service Types
-          </h2>
-        </div>
+      {/* Volumes */}
+      <section id="volumes" className="mb-10">
+        <h2 className="text-foreground text-xl font-bold mb-4">Volumes</h2>
 
-        <div className="grid gap-4 sm:gap-6 mb-6">
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <div className="flex items-start gap-4">
-              <div className="bg-primary/10 rounded-lg p-2">
-                <Database className="text-primary h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-card-foreground text-lg font-semibold mb-2 m-0">
-                  Databases
-                </h4>
-                <p className="text-muted-foreground text-sm leading-relaxed m-0 mb-3">
-                  PostgreSQL, MySQL, MongoDB, and other relational or NoSQL databases
-                </p>
-                <ul className="space-y-1.5 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Persistent storage with volumes
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Environment variable configuration
-                  </li>
-                </ul>
-              </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-card border p-4">
+            <p className="font-medium text-foreground text-sm mb-2 m-0">Named Volumes</p>
+            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
+              - postgres_data:/var/lib/postgresql/data
             </div>
+            <p className="text-muted-foreground text-xs mt-2">Persist data across restarts</p>
           </div>
-
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <div className="flex items-start gap-4">
-              <div className="bg-primary/10 rounded-lg p-2">
-                <Settings className="text-primary h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-card-foreground text-lg font-semibold mb-2 m-0">
-                  Caches & Message Queues
-                </h4>
-                <p className="text-muted-foreground text-sm leading-relaxed m-0 mb-3">
-                  Redis, Memcached, RabbitMQ, Kafka for caching and message processing
-                </p>
-                <ul className="space-y-1.5 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Fast data access
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Asynchronous processing
-                  </li>
-                </ul>
-              </div>
+          <div className="bg-card border p-4">
+            <p className="font-medium text-foreground text-sm mb-2 m-0">Config Files</p>
+            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
+              - /files/nginx.conf:/etc/nginx/nginx.conf
             </div>
-          </div>
-
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <div className="flex items-start gap-4">
-              <div className="bg-primary/10 rounded-lg p-2">
-                <Container className="text-primary h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-card-foreground text-lg font-semibold mb-2 m-0">
-                  Application Services
-                </h4>
-                <p className="text-muted-foreground text-sm leading-relaxed m-0 mb-3">
-                  APIs, microservices, background workers running your application code
-                </p>
-                <ul className="space-y-1.5 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Multiple replicas support
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Environment-specific configuration
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <p className="text-muted-foreground text-xs mt-2">
+              Mount files using{' '}
+              <Link href="/docs/environment-internals/configs-secrets#config-files" className="text-primary hover:underline">
+                /files/ prefix
+              </Link>
+            </p>
           </div>
         </div>
       </section>
 
       {/* Networking */}
-      <section id="networking" className="mb-12 sm:mb-16">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-            <Network className="text-primary-foreground h-6 w-6" />
-          </div>
-          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">
-            Service Networking
-          </h2>
-        </div>
+      <section id="networking" className="mb-10">
+        <h2 className="text-foreground text-xl font-bold mb-4">Networking</h2>
 
-        <p className="text-muted-foreground mb-6 leading-relaxed">
-          Services within an environment can communicate with each other using their service names
-          as DNS hostnames. This provides simple service discovery without hardcoding IPs.
+        <p className="text-muted-foreground mb-4 text-sm">
+          Services communicate using service names as hostnames. DNS resolution is automatic.
         </p>
 
-        <div className="bg-card rounded-lg border p-4 sm:p-6 mb-6">
-          <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
-            Connecting to Services:
-          </h4>
-          <ul className="space-y-2 m-0">
-            <li className="flex items-start gap-2 text-sm">
-              <CheckCircle2 className="text-green-500 h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span className="text-muted-foreground">
-                <strong>From Workspaces:</strong> Connect using service name and port (e.g.,{' '}
-                <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
-                  postgres:5432
-                </code>
-                )
-              </span>
-            </li>
-            <li className="flex items-start gap-2 text-sm">
-              <CheckCircle2 className="text-green-500 h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span className="text-muted-foreground">
-                <strong>Between Services:</strong> Services in the same environment can call each
-                other by name
-              </span>
-            </li>
-            <li className="flex items-start gap-2 text-sm">
-              <CheckCircle2 className="text-green-500 h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span className="text-muted-foreground">
-                <strong>Port Mapping:</strong> Expose specific ports for service communication
-              </span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      {/* Configuration */}
-      <section id="configuration" className="mb-12 sm:mb-16">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-            <Settings className="text-primary-foreground h-6 w-6" />
-          </div>
-          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">Configuration</h2>
-        </div>
-
-        <p className="text-muted-foreground mb-6 leading-relaxed">
-          Services can be configured using environment variables, volumes, and other Docker Compose
-          features. Configuration can reference environment-level configs and secrets.
-        </p>
-
-        <div className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800 rounded-lg border p-3 sm:p-4">
-          <div className="flex gap-2 sm:gap-3">
-            <CheckCircle2 className="text-green-600 dark:text-green-400 h-5 w-5 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-green-900 dark:text-green-100 text-sm font-medium m-0 mb-1">
-                Best Practice
-              </p>
-              <p className="text-green-800 dark:text-green-200 text-sm m-0 leading-relaxed">
-                Use environment variables for configuration and mount volumes for data persistence.
-                Reference configs and secrets defined at the environment level for sensitive data.
-              </p>
-            </div>
+        <div className="bg-card border p-4">
+          <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground space-y-1">
+            <div>postgres://user:pass@<span className="text-primary">postgres</span>:5432/db</div>
+            <div>redis://<span className="text-primary">redis</span>:6379</div>
+            <div>http://<span className="text-primary">api</span>:8080/health</div>
           </div>
         </div>
       </section>
 
-      {/* Service Lifecycle & Troubleshooting */}
-      <section id="service-lifecycle" className="mb-12 sm:mb-16">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-            <Info className="text-primary-foreground h-6 w-6" />
+      {/* Next Links */}
+      <div className="border-t pt-8">
+        <Link
+          href="/docs/environment-internals/configs-secrets"
+          className="bg-card border p-4 hover:border-primary transition-colors flex items-center justify-between gap-4 no-underline"
+        >
+          <div>
+            <p className="text-foreground font-medium m-0">Configs & Secrets</p>
+            <p className="text-muted-foreground text-sm m-0">Manage environment variables and config files</p>
           </div>
-          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">
-            Service Lifecycle & Troubleshooting
-          </h2>
-        </div>
-
-        <p className="text-muted-foreground mb-6 leading-relaxed">
-          Every time you edit the Docker Compose definition, the Composition controller reconciles the
-          spec and performs a rolling update. Understanding that lifecycle makes it easier to predict
-          behaviour and diagnose issues when something fails to deploy.
-        </p>
-
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6">
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
-              Update Flow
-            </h4>
-            <ol className="text-muted-foreground text-sm space-y-2 m-0 list-decimal list-inside">
-              <li>Save the updated Compose file from the console or CLI.</li>
-              <li>The controller compares the desired spec with existing Kubernetes resources.</li>
-              <li>Deployments are patched; pods roll out one replica at a time to avoid downtime.</li>
-              <li>Status for each service is published back to the environment dashboard.</li>
-            </ol>
-          </div>
-
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <h4 className="text-card-foreground font-semibold mb-3 m-0 text-base">
-              Inspecting Runtime State
-            </h4>
-            <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
-              Use Kubernetes tooling when you need deeper visibility into the namespace created for
-              your environment (default pattern:{' '}
-              <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">env-{`{environment-name}`}</code>).
-            </p>
-            <div className="bg-muted rounded p-4 font-mono text-xs overflow-x-auto space-y-2">
-              <pre className="m-0 leading-relaxed">kubectl get pods -n env-myapp</pre>
-              <pre className="m-0 leading-relaxed">kubectl logs deployment/api -n env-myapp</pre>
-              <pre className="m-0 leading-relaxed">kubectl describe pod api-6d7f8c -n env-myapp</pre>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 rounded-lg border p-4 sm:p-5">
-          <h4 className="text-amber-900 dark:text-amber-100 font-semibold mb-2 m-0 text-base flex items-center gap-2">
-            <AlertTriangle className="text-amber-600 dark:text-amber-400 h-5 w-5" />
-            Troubleshooting Checklist
-          </h4>
-          <ul className="text-amber-800 dark:text-amber-200 text-sm space-y-1.5 m-0 list-disc list-inside">
-            <li>Check the environment dashboard for failed services and descriptive error messages.</li>
-            <li>Review recent events:{' '}
-              <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
-                kubectl get events -n env-myapp --sort-by=.lastTimestamp
-              </code>
-            </li>
-            <li>Verify referenced ConfigMaps or Secrets exist and include the expected keys.</li>
-            <li>Ensure port mappings do not collide with other services inside the namespace.</li>
-          </ul>
-        </div>
-      </section>
-
-      {/* Best Practices */}
-      <section id="best-practices" className="mb-12 sm:mb-16">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-            <CheckCircle2 className="text-primary-foreground h-6 w-6" />
-          </div>
-          <h2 className="text-foreground m-0 text-2xl sm:text-3xl font-bold">Best Practices</h2>
-        </div>
-
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base">
-              Define Reliable Services
-            </h4>
-            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
-              <li>Add <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">healthcheck</code> probes to restart unhealthy containers quickly.</li>
-              <li>Prefer named volumes so data persists across redeployments.</li>
-              <li>Specify resource requests/limits to prevent noisy-neighbour problems.</li>
-            </ul>
-          </div>
-
-          <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <h4 className="text-card-foreground font-semibold mb-2 m-0 text-base">
-              Manage Configuration Cleanly
-            </h4>
-            <ul className="text-muted-foreground text-sm space-y-1.5 m-0 list-disc list-inside">
-              <li>Keep credentials in Secrets and surface them in Compose via{' '}
-                <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
-                  ${'{'}VAR_NAME{'}'}
-                </code>.
-              </li>
-              <li>Use labels or annotations to surface ownership, alerts, or routing metadata.</li>
-              <li>Split large systems into multiple environments instead of overloading a single Compose file.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
+          <ArrowRight className="h-5 w-5 text-muted-foreground" />
+        </Link>
+      </div>
     </DocsContentLayout>
   )
 }

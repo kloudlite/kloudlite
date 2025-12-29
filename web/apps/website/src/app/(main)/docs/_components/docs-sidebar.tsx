@@ -7,7 +7,7 @@ import { ThemeSwitcher } from '@/components/theme-switcher'
 import type { Theme } from '@/lib/theme'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@kloudlite/ui'
 import { Menu } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface NavItem {
   title: string
@@ -31,12 +31,21 @@ const navigation: NavItem[] = [
     ],
   },
   {
+    title: 'Workmachines',
+    href: '/docs/workmachines',
+    items: [
+      { title: 'Overview', href: '/docs/workmachines' },
+      { title: 'Access', href: '/docs/workmachines/access' },
+    ],
+  },
+  {
     title: 'Environments',
     href: '/docs/environment-internals',
     items: [
       { title: 'Overview', href: '/docs/concepts/environments' },
       { title: 'Services', href: '/docs/environment-internals/services' },
       { title: 'Configs & Secrets', href: '/docs/environment-internals/configs-secrets' },
+      { title: 'Cloning & Sharing', href: '/docs/environment-internals/cloning-sharing' },
     ],
   },
   {
@@ -48,27 +57,16 @@ const navigation: NavItem[] = [
       { title: 'Env Connection', href: '/docs/workspace-internals/environment-connection' },
       { title: 'Service Intercepts', href: '/docs/workspace-internals/intercepts' },
       { title: 'Pkg Management', href: '/docs/workspace-internals/packages' },
+      { title: 'Expose Ports', href: '/docs/workspace-internals/expose-ports' },
+      { title: 'Cloning & Sharing', href: '/docs/workspace-internals/cloning-sharing' },
     ],
   },
   {
-    title: 'Installation',
-    href: '/docs/installation',
+    title: 'References',
+    href: '/docs/references',
     items: [
-      { title: 'BYOC Setup', href: '/docs/installation/byoc' },
-      { title: 'Cloud vs BYOC', href: '/docs/installation/cloud-vs-byoc' },
-    ],
-  },
-  {
-    title: 'Help & Support',
-    href: '/docs/help',
-    items: [
-      { title: 'FAQ', href: '/docs/faq' },
-      { title: 'Contact Us', href: '/contact' },
-      { title: 'Report Issue', href: 'https://github.com/kloudlite/kloudlite/issues/new' },
-      {
-        title: 'Feature Request',
-        href: 'https://github.com/kloudlite/kloudlite/issues/new?labels=enhancement',
-      },
+      { title: 'GitHub', href: 'https://github.com/kloudlite/kloudlite' },
+      { title: 'Issues', href: 'https://github.com/kloudlite/kloudlite/issues' },
     ],
   },
 ]
@@ -83,7 +81,7 @@ function NavigationContent({ pathname, onLinkClick }: { pathname: string; onLink
             href={section.href}
             onClick={onLinkClick}
             className={cn(
-              'block px-3 py-2 text-sm font-semibold transition-colors',
+              'block px-3 py-2 text-sm font-semibold transition-all duration-100 active:translate-y-0.5',
               pathname === section.href
                 ? 'text-foreground'
                 : 'text-muted-foreground hover:text-foreground',
@@ -99,7 +97,7 @@ function NavigationContent({ pathname, onLinkClick }: { pathname: string; onLink
                     href={item.href}
                     onClick={onLinkClick}
                     className={cn(
-                      'block py-1 pl-3 text-sm transition-colors',
+                      'block py-1 pl-3 text-sm transition-all duration-100 active:translate-y-0.5',
                       pathname === item.href
                         ? 'text-foreground font-medium'
                         : 'text-muted-foreground hover:text-foreground',
@@ -120,35 +118,42 @@ function NavigationContent({ pathname, onLinkClick }: { pathname: string; onLink
 export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed bottom-6 right-6 z-50">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-colors">
-              <Menu className="h-6 w-6" />
-            </button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-80 p-0">
-            <div className="flex h-full flex-col">
-              <div className="border-b px-4 py-3 sm:px-6 sm:py-4">
-                <SheetTitle className="text-lg font-semibold">Documentation</SheetTitle>
-              </div>
-              <nav className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6">
-                <NavigationContent pathname={pathname} onLinkClick={() => setOpen(false)} />
-              </nav>
-              <div className="border-t px-4 py-3 sm:px-6 sm:py-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-muted-foreground text-xs">© 2024 Kloudlite</p>
-                  <ThemeSwitcher initialTheme={initialTheme} />
+      {/* Mobile Menu Button - only render after mount to avoid hydration mismatch */}
+      {mounted && (
+        <div className="lg:hidden fixed bottom-6 right-6 z-50">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-100 active:translate-y-0.5">
+                <Menu className="h-6 w-6" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80 p-0">
+              <div className="flex h-full flex-col">
+                <div className="border-b px-4 py-3 sm:px-6 sm:py-4">
+                  <SheetTitle className="text-lg font-semibold">Documentation</SheetTitle>
+                </div>
+                <nav className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6">
+                  <NavigationContent pathname={pathname} onLinkClick={() => setOpen(false)} />
+                </nav>
+                <div className="border-t px-4 py-3 sm:px-6 sm:py-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground text-xs">© 2024 Kloudlite</p>
+                    <ThemeSwitcher initialTheme={initialTheme} />
+                  </div>
                 </div>
               </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
 
       {/* Desktop Sidebar */}
       <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 flex-shrink-0 flex-col overflow-y-auto border-r bg-background lg:flex">

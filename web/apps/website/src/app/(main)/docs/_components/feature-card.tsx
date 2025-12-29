@@ -17,10 +17,10 @@ export function FeatureCard({
   className,
 }: FeatureCardProps) {
   return (
-    <div className={cn('bg-card rounded-lg border p-4 sm:p-6', className)}>
+    <div className={cn('bg-card border p-4 sm:p-6', className)}>
       <div
         className={cn(
-          'mb-3 flex h-12 w-12 items-center justify-center rounded-lg',
+          'mb-3 flex h-12 w-12 items-center justify-center',
           variant === 'primary' && 'bg-primary',
           variant === 'destructive' && 'bg-destructive'
         )}

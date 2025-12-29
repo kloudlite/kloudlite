@@ -6,7 +6,7 @@ interface DocCardProps {
 }
 
 export function DocCard({ children, className }: DocCardProps) {
-  return <div className={cn('bg-card rounded-lg border p-4 sm:p-6', className)}>{children}</div>
+  return <div className={cn('bg-card border p-4 sm:p-6', className)}>{children}</div>
 }
 
 interface DocCardTitleProps {
