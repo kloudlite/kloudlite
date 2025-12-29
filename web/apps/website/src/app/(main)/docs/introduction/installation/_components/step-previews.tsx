@@ -8,26 +8,26 @@ function PreviewFrame({ children, url = 'console.kloudlite.io' }: { children: Re
   return (
     <div className="relative rounded-lg overflow-hidden shadow-lg border border-border/50">
       {/* Browser chrome */}
-      <div className="bg-zinc-800 px-4 py-2.5 flex items-center gap-3">
+      <div className="bg-zinc-800 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-3">
         <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-          <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-          <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#ff5f57]" />
+          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#febc2e]" />
+          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#28c840]" />
         </div>
         <div className="flex-1 flex justify-center">
-          <div className="bg-zinc-700/50 rounded px-3 py-1 text-zinc-400 text-[10px] flex items-center gap-2">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-zinc-700/50 rounded px-2 sm:px-3 py-1 text-zinc-400 text-[9px] sm:text-[10px] flex items-center gap-1 sm:gap-2">
+            <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            {url}
+            <span className="truncate max-w-[120px] sm:max-w-none">{url}</span>
           </div>
         </div>
-        <div className="text-[9px] font-medium text-zinc-500 bg-zinc-700/50 px-2 py-0.5 rounded">
+        <div className="text-[8px] sm:text-[9px] font-medium text-zinc-500 bg-zinc-700/50 px-1.5 sm:px-2 py-0.5 rounded">
           PREVIEW
         </div>
       </div>
       {/* Content */}
-      <div className="bg-card">
+      <div className="bg-card overflow-x-auto">
         {children}
       </div>
     </div>
@@ -108,9 +108,9 @@ export function SignUpPreview() {
 
   return (
     <PreviewFrame url="auth.kloudlite.io">
-      <div className="text-xs flex min-h-[320px]">
-        {/* Left branding section */}
-        <div className="w-2/5 bg-zinc-900 text-white p-6 flex flex-col justify-between">
+      <div className="text-xs flex flex-col sm:flex-row min-h-[280px] sm:min-h-[320px]">
+        {/* Left branding section - hidden on mobile */}
+        <div className="hidden sm:flex w-2/5 bg-zinc-900 text-white p-6 flex-col justify-between">
           <div>
             <div className="font-bold text-lg mb-4">Kloudlite</div>
             <p className="text-zinc-400 text-[11px] leading-relaxed">
@@ -134,9 +134,9 @@ export function SignUpPreview() {
         </div>
 
         {/* Right form section */}
-        <div className="flex-1 p-6 flex items-center justify-center bg-background">
+        <div className="flex-1 p-4 sm:p-6 flex items-center justify-center bg-background">
           <div className="w-full max-w-xs space-y-4">
-            <div className="text-center mb-6">
+            <div className="text-center mb-4 sm:mb-6">
               <p className="font-medium text-base">Get started for free</p>
               <p className="text-muted-foreground text-[11px] mt-1">Sign in with your preferred provider</p>
             </div>
@@ -179,15 +179,15 @@ export function CreateInstallationPreview() {
     <PreviewFrame>
       <div className="text-xs">
         {/* Header */}
-        <div className="bg-background border-b px-4 py-3 flex items-center justify-between">
+        <div className="bg-background border-b px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-muted-foreground">Back</span>
+            <span className="text-muted-foreground hidden sm:inline">Back</span>
             <span className="font-bold">Kloudlite</span>
           </div>
         </div>
 
-        <div className="p-6 max-w-md mx-auto">
-          <InstallationProgress currentStep={0} />
+        <div className="p-4 sm:p-6 max-w-md mx-auto">
+          <div className="hidden sm:block"><InstallationProgress currentStep={0} /></div>
 
         <h2 className="font-semibold text-base mb-1">Create Installation</h2>
         <p className="text-muted-foreground text-[11px] mb-6">Set up your Kloudlite installation details</p>
@@ -261,15 +261,15 @@ export function CloudProviderPreview() {
     <PreviewFrame>
       <div className="text-xs">
         {/* Header */}
-        <div className="bg-background border-b px-4 py-3 flex items-center justify-between">
+        <div className="bg-background border-b px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-muted-foreground">Back</span>
+            <span className="text-muted-foreground hidden sm:inline">Back</span>
             <span className="font-bold">Kloudlite</span>
           </div>
         </div>
 
-        <div className="p-6 max-w-lg mx-auto">
-        <InstallationProgress currentStep={1} />
+        <div className="p-4 sm:p-6 max-w-lg mx-auto">
+        <div className="hidden sm:block"><InstallationProgress currentStep={1} /></div>
 
         <h2 className="font-semibold text-base mb-1">Install Kloudlite</h2>
         <p className="text-muted-foreground text-[11px] mb-6">Deploy Kloudlite on your cloud infrastructure</p>
@@ -366,21 +366,21 @@ export function InstallCommandPreview() {
   return (
     <div className="relative rounded-lg overflow-hidden shadow-lg border border-border/50 text-xs">
       {/* Terminal header */}
-      <div className="bg-zinc-800 px-4 py-2.5 flex items-center justify-between">
+      <div className="bg-zinc-800 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-            <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-            <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#ff5f57]" />
+            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#febc2e]" />
+            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#28c840]" />
           </div>
-          <span className="text-zinc-400 ml-2">Terminal</span>
+          <span className="text-zinc-400 ml-2 hidden sm:inline">Terminal</span>
         </div>
         <div className="text-[9px] font-medium text-zinc-500 bg-zinc-700/50 px-2 py-0.5 rounded">
           PREVIEW
         </div>
       </div>
 
-      <div className="bg-card p-4 space-y-4">
+      <div className="bg-card p-3 sm:p-4 space-y-4">
         {/* Command Box */}
         <div className="bg-zinc-900 border border-zinc-700 rounded">
           <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-700">
@@ -440,14 +440,14 @@ export function InstallationCompletePreview() {
     <PreviewFrame>
       <div className="text-xs">
         {/* Header */}
-        <div className="bg-background border-b px-4 py-3 flex items-center justify-between">
+        <div className="bg-background border-b px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="font-bold">Kloudlite</span>
           </div>
         </div>
 
-        <div className="p-6 max-w-md mx-auto text-center">
-        <InstallationProgress currentStep={complete ? 3 : 2} />
+        <div className="p-4 sm:p-6 max-w-md mx-auto text-center">
+        <div className="hidden sm:block"><InstallationProgress currentStep={complete ? 3 : 2} /></div>
 
         {verifying ? (
           <div className="animate-in fade-in">

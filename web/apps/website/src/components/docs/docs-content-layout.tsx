@@ -15,7 +15,7 @@ export function DocsContentLayout({ children, tocItems = [] }: DocsContentLayout
   return (
     <div className="relative flex gap-8 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
       {/* Main content */}
-      <div className="flex-1 min-w-0 py-8 px-0 xl:px-8">
+      <div className="flex-1 min-w-0 py-6 sm:py-8 pb-24 lg:pb-8 xl:px-8">
         {children}
       </div>
 
