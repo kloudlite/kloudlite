@@ -1,4 +1,4 @@
-import { ScrollArea, Button } from '@kloudlite/ui'
+import { ScrollArea } from '@kloudlite/ui'
 import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
 import { cn } from '@kloudlite/lib'
