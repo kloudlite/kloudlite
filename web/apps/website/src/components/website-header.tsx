@@ -10,9 +10,10 @@ import { Menu, X } from 'lucide-react'
 interface WebsiteHeaderProps {
   currentPage?: 'home' | 'docs' | 'pricing'
   alwaysShowBorder?: boolean
+  showSearch?: boolean
 }
 
-export function WebsiteHeader({ currentPage, alwaysShowBorder = false }: WebsiteHeaderProps) {
+export function WebsiteHeader({ currentPage, alwaysShowBorder = false, showSearch: _showSearch = false }: WebsiteHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
