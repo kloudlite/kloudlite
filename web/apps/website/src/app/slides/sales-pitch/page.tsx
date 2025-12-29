@@ -1166,50 +1166,6 @@ function AICodeScans({ show }: SlideProps) {
   )
 }
 
-// Collaboration - the twist (same capability, team-wide impact)
-function Collaboration({ show }: SlideProps) {
-  const benefits = [
-    { title: "Share Active Development", desc: "Team members access work-in-progress code directly" },
-    { title: "Pre-Merge Validation", desc: "QA validates features before code integration" },
-    { title: "Accelerated Onboarding", desc: "New engineers productive within hours" },
-  ]
-
-  return (
-    <div className="w-full max-w-4xl px-8 text-center">
-      <A show={show} delay={0} from="fade">
-        <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-6">
-          Team Collaboration
-        </p>
-      </A>
-      <A show={show} delay={100} from="bottom">
-        <h2 className="text-3xl lg:text-5xl font-bold tracking-[-0.03em] text-foreground/40">
-          Same infrastructure,
-        </h2>
-      </A>
-      <A show={show} delay={200} from="scale">
-        <h2 className="text-4xl lg:text-6xl font-bold tracking-[-0.03em] text-primary mb-10">
-          organization-wide value.
-        </h2>
-      </A>
-      <div className="grid lg:grid-cols-3 gap-6 text-left">
-        {benefits.map((b, i) => (
-          <A key={i} show={show} delay={400 + i * 120} from="bottom">
-            <div className="p-6 border border-foreground/10 hover:border-primary/30 transition-colors">
-              <p className="font-semibold text-lg mb-2">{b.title}</p>
-              <p className="text-foreground/50 text-sm">{b.desc}</p>
-            </div>
-          </A>
-        ))}
-      </div>
-      <A show={show} delay={800} from="fade">
-        <p className="text-foreground/50 text-lg mt-10">
-          Service intercepts enable <span className="text-foreground font-medium">both velocity and collaboration</span>.
-        </p>
-      </A>
-    </div>
-  )
-}
-
 // Impact slide - Before/After comparison
 function TheImpact({ show }: SlideProps) {
   return (
