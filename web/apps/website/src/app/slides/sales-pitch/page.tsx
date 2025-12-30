@@ -20,22 +20,6 @@ function CrossMarker({ className }: { className?: string }) {
   )
 }
 
-// Logo icon component
-function LogoIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 130 131" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <path
-        d="M51.9912 66.6496C51.2636 65.9244 51.2636 64.7486 51.9912 64.0235L89.4072 26.7312C90.1348 26.006 91.3145 26.006 92.042 26.7312L129.458 64.0237C130.186 64.7489 130.186 65.9246 129.458 66.6498L92.0423 103.942C91.3147 104.667 90.135 104.667 89.4074 103.942L51.9912 66.6496Z"
-        className="fill-primary"
-      />
-      <path
-        d="M66.5331 1.04291C65.8055 0.317729 64.6259 0.317729 63.8983 1.04291L0.545688 64.186C-0.181896 64.9111 -0.181896 66.0869 0.545688 66.8121L63.8983 129.955C64.6259 130.68 65.8055 130.68 66.5331 129.955L76.9755 119.547C77.7031 118.822 77.7031 117.646 76.9755 116.921L26.4574 66.5701C25.7298 65.8449 25.7298 64.6692 26.4574 63.944L76.7327 13.8349C77.4603 13.1097 77.4603 11.934 76.7327 11.2088L66.5331 1.04291Z"
-        className="fill-primary"
-      />
-    </svg>
-  )
-}
-
 // Animated element wrapper - uses CSS classes for animations
 function A({
   children,
@@ -90,16 +74,12 @@ function TitleSlide({ show }: SlideProps) {
   return (
     <div className="text-center">
       <A show={show} delay={0} from="scale">
-        <LogoIcon className="h-24 w-24 lg:h-32 lg:w-32 mb-6 mx-auto" />
-      </A>
-      <A show={show} delay={100} from="bottom">
-        <h1 className="text-5xl lg:text-7xl font-bold tracking-[-0.04em]">
-          <span className="text-foreground/30">K</span>
-          <span className="text-foreground">loudlite</span>
-        </h1>
+        <div className="flex justify-center mb-8">
+          <KloudliteLogo showText={true} linkToHome={false} className="scale-[2] lg:scale-[2.5]" />
+        </div>
       </A>
       <A show={show} delay={200} from="bottom">
-        <p className="text-lg lg:text-2xl text-foreground/40 mt-6">
+        <p className="text-lg lg:text-2xl text-foreground/40 mt-8">
           Cloud Development Environments
         </p>
       </A>
@@ -403,13 +383,9 @@ function IntroKloudlite({ show }: SlideProps) {
   return (
     <div className="w-full max-w-4xl px-8 text-center">
       <A show={show} delay={0} from="scale">
-        <LogoIcon className="h-20 w-20 lg:h-28 lg:w-28 mx-auto mb-8" />
-      </A>
-      <A show={show} delay={200} from="bottom">
-        <h2 className="text-4xl lg:text-6xl font-bold tracking-[-0.04em]">
-          <span className="text-foreground/30">K</span>
-          <span className="text-foreground">loudlite</span>
-        </h2>
+        <div className="flex justify-center mb-8">
+          <KloudliteLogo showText={true} linkToHome={false} className="scale-[2] lg:scale-[2.5]" />
+        </div>
       </A>
       <A show={show} delay={350} from="bottom">
         <p className="text-lg lg:text-xl text-foreground/50 mt-4">
@@ -1313,7 +1289,9 @@ function CTASlide({ show }: SlideProps) {
   return (
     <div className="text-center">
       <A show={show} delay={0} from="scale">
-        <LogoIcon className="h-20 w-20 lg:h-24 lg:w-24 mx-auto mb-8" />
+        <div className="flex justify-center mb-8">
+          <KloudliteLogo showText={true} linkToHome={false} className="scale-[2] lg:scale-[2.5]" />
+        </div>
       </A>
       <A show={show} delay={100} from="bottom">
         <p className="text-2xl lg:text-3xl text-foreground/50 mb-2">
