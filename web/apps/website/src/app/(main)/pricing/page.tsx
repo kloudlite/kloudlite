@@ -77,14 +77,14 @@ function PricingPage() {
                   </p>
 
                   {/* Tab Switcher */}
-                  <div className="mt-10 inline-flex gap-2">
+                  <div className="mt-10 inline-flex p-1 bg-foreground/5 border border-foreground/10">
                     <button
                       onClick={() => setActiveTab('byoc')}
                       className={cn(
-                        'rounded-none px-6 py-2.5 text-sm font-medium transition-all duration-100 active:translate-y-0.5 border',
+                        'relative px-6 py-2.5 text-sm font-medium transition-all duration-200',
                         activeTab === 'byoc'
-                          ? 'bg-foreground text-background border-foreground'
-                          : 'text-foreground/60 border-foreground/10 hover:border-foreground/20 hover:text-foreground'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-foreground/50 hover:text-foreground/70'
                       )}
                     >
                       Self-Hosted
@@ -92,10 +92,10 @@ function PricingPage() {
                     <button
                       onClick={() => setActiveTab('cloud')}
                       className={cn(
-                        'rounded-none px-6 py-2.5 text-sm font-medium transition-all duration-100 active:translate-y-0.5 border',
+                        'relative px-6 py-2.5 text-sm font-medium transition-all duration-200',
                         activeTab === 'cloud'
-                          ? 'bg-foreground text-background border-foreground'
-                          : 'text-foreground/60 border-foreground/10 hover:border-foreground/20 hover:text-foreground'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-foreground/50 hover:text-foreground/70'
                       )}
                     >
                       Cloud
