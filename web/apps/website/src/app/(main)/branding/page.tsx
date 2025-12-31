@@ -130,19 +130,19 @@ export default function BrandingPage() {
 
                 {/* Icon Variants - 4 in a row */}
                 <div className="sm:col-span-1 lg:col-span-2 grid grid-cols-4 border-b border-foreground/10">
-                  <div className="p-6 flex flex-col items-center justify-center h-[140px] bg-white border-r border-foreground/10">
+                  <div className="p-6 flex flex-col items-center justify-center bg-white border-r border-foreground/10">
                     <LogoIcon fill="#2258E5" />
                     <p className="text-neutral-500 mt-3 text-[10px] font-medium">Primary</p>
                   </div>
-                  <div className="p-6 flex flex-col items-center justify-center h-[140px] bg-neutral-950 border-r border-foreground/10">
+                  <div className="p-6 flex flex-col items-center justify-center bg-neutral-950 border-r border-foreground/10">
                     <LogoIcon fill="#2258E5" />
                     <p className="text-neutral-500 mt-3 text-[10px] font-medium">Primary</p>
                   </div>
-                  <div className="p-6 flex flex-col items-center justify-center h-[140px] bg-neutral-950 border-r border-foreground/10">
+                  <div className="p-6 flex flex-col items-center justify-center bg-neutral-950 border-r border-foreground/10">
                     <LogoIcon fill="#ffffff" />
                     <p className="text-neutral-500 mt-3 text-[10px] font-medium">White</p>
                   </div>
-                  <div className="p-6 flex flex-col items-center justify-center h-[140px] bg-white">
+                  <div className="p-6 flex flex-col items-center justify-center bg-white">
                     <LogoIcon fill="#09090b" />
                     <p className="text-neutral-500 mt-3 text-[10px] font-medium">Black</p>
                   </div>
