@@ -143,8 +143,8 @@ export function CloneWorkspaceSheet({
               <div className="text-muted-foreground text-xs space-y-1">
                 <div>Name: {workspace.spec.displayName}</div>
                 <div>Folder: {workspace.spec.folderName || workspace.metadata.name}</div>
-                {workspace.spec.workmachineName && (
-                  <div>WorkMachine: {workspace.spec.workmachineName}</div>
+                {workspace.spec.workmachine && (
+                  <div>WorkMachine: {workspace.spec.workmachine}</div>
                 )}
               </div>
               <div className="bg-background mt-2 rounded border p-2 text-xs">
