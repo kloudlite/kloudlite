@@ -40,30 +40,27 @@ const navigation: NavItem[] = [
   },
   {
     title: 'Environments',
-    href: '/docs/environment-internals',
+    href: '/docs/concepts/environments',
     items: [
       { title: 'Overview', href: '/docs/concepts/environments' },
       { title: 'Services', href: '/docs/environment-internals/services' },
       { title: 'Configs & Secrets', href: '/docs/environment-internals/configs-secrets' },
-      { title: 'Cloning & Sharing', href: '/docs/environment-internals/cloning-sharing' },
     ],
   },
   {
     title: 'Workspaces',
-    href: '/docs/workspace-internals',
+    href: '/docs/concepts/workspaces',
     items: [
       { title: 'Overview', href: '/docs/concepts/workspaces' },
       { title: 'CLI Reference', href: '/docs/workspace-internals/cli' },
       { title: 'Env Connection', href: '/docs/workspace-internals/environment-connection' },
       { title: 'Service Intercepts', href: '/docs/workspace-internals/intercepts' },
-      { title: 'Pkg Management', href: '/docs/workspace-internals/packages' },
-      { title: 'Expose Ports', href: '/docs/workspace-internals/expose-ports' },
-      { title: 'Cloning & Sharing', href: '/docs/workspace-internals/cloning-sharing' },
+      { title: 'Packages', href: '/docs/workspace-internals/packages' },
     ],
   },
   {
     title: 'References',
-    href: '/docs/references',
+    href: 'https://github.com/kloudlite/kloudlite',
     items: [
       { title: 'GitHub', href: 'https://github.com/kloudlite/kloudlite' },
       { title: 'Issues', href: 'https://github.com/kloudlite/kloudlite/issues' },

@@ -63,17 +63,12 @@ function PricingPage() {
               {/* Hero Section */}
               <div className="py-20 lg:py-24">
                 <div className="text-center">
-                  <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
-                    <span className="text-foreground/40">S</span><span className="text-foreground">imple</span>{' '}
-                    <span className="text-foreground/40">P</span><span className="text-foreground">ricing</span>
-                    <br />
-                    <span className="text-foreground/40">for every team.</span>
+                  <h1 className="text-[2.5rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl lg:text-[4rem]">
+                    <span className="text-foreground">Pricing</span>
                   </h1>
 
-                  <p className="text-foreground/55 mx-auto mt-6 max-w-md text-lg leading-relaxed">
-                    Start free with your own infrastructure,
-                    <br />
-                    or let us manage everything for you.
+                  <p className="text-foreground/60 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                    Start free with your own infrastructure, or let us manage everything for you.
                   </p>
 
                   {/* Tab Switcher */}
