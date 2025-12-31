@@ -57,7 +57,7 @@ export default function ContactPage() {
               </div>
 
               {/* Quick Contact Options */}
-              <div className="grid lg:grid-cols-2 -mx-6 lg:-mx-12 border-t border-foreground/10">
+              <div className="grid lg:grid-cols-2 -mx-6 lg:-mx-12 border-t border-b border-foreground/10">
                 <a
                   href="mailto:hello@kloudlite.io"
                   className="p-8 lg:p-10 border-b lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors"
