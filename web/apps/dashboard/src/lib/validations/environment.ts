@@ -13,16 +13,6 @@ const kubernetesNameSchema = z
 // Visibility enum
 const visibilitySchema = z.enum(['private', 'shared', 'open']).optional()
 
-// Resource quotas schema - only includes fields that are actually enforced
-const resourceQuotasSchema = z
-  .object({
-    'limits.cpu': z.string().optional(),
-    'limits.memory': z.string().optional(),
-    'requests.cpu': z.string().optional(),
-    'requests.memory': z.string().optional(),
-  })
-  .optional()
-
 // Network policy port schema
 const networkPolicyPortSchema = z.object({
   port: z.number().int().min(1).max(65535).optional(),
@@ -67,12 +57,10 @@ export const environmentSpecSchema = z.object({
   sharedWith: z.array(z.string()).optional(),
   workmachineName: z.string().optional(),
   activated: z.boolean(),
-  resourceQuotas: resourceQuotasSchema,
   networkPolicies: networkPoliciesSchema,
   labels: z.record(z.string()).optional(),
   annotations: z.record(z.string()).optional(),
   cloneFrom: z.string().optional(),
-  nodeName: z.string().optional(),
 })
 
 // Environment create request schema
