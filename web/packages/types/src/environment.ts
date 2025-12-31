@@ -12,15 +12,12 @@ export interface EnvironmentMetadata {
   managedFields?: unknown[]
 }
 
-// ResourceQuotas - JSON field names use dot notation per Go API
+// ResourceQuotas - only includes fields that are actually enforced
 export interface ResourceQuotas {
   'limits.cpu'?: string
   'limits.memory'?: string
   'requests.cpu'?: string
   'requests.memory'?: string
-  persistentvolumeclaims?: string
-  'services.nodeports'?: string
-  'services.loadbalancers'?: string
 }
 
 export interface NetworkPolicyPort {

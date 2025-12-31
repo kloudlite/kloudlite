@@ -13,16 +13,13 @@ const kubernetesNameSchema = z
 // Visibility enum
 const visibilitySchema = z.enum(['private', 'shared', 'open']).optional()
 
-// Resource quotas schema - matches Go API with dot notation JSON fields
+// Resource quotas schema - only includes fields that are actually enforced
 const resourceQuotasSchema = z
   .object({
     'limits.cpu': z.string().optional(),
     'limits.memory': z.string().optional(),
     'requests.cpu': z.string().optional(),
     'requests.memory': z.string().optional(),
-    persistentvolumeclaims: z.string().optional(),
-    'services.nodeports': z.string().optional(),
-    'services.loadbalancers': z.string().optional(),
   })
   .optional()
 
