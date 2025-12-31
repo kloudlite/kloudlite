@@ -59,23 +59,23 @@ export default function WhyKloudlitePage() {
               {/* Core Value */}
               <div className="grid lg:grid-cols-3 -mx-6 lg:-mx-12 border-t border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10">
-                  <p className="text-foreground/20 text-4xl font-bold font-mono">01</p>
+                  <p className="text-foreground/30 text-4xl font-bold font-mono">01</p>
                   <h3 className="text-foreground mt-4 text-lg font-bold tracking-[-0.02em]">No Local Setup</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed">
+                  <p className="text-foreground/70 mt-2 text-sm leading-relaxed">
                     Cloud workspaces with your repo, packages, and tools. Ready in seconds.
                   </p>
                 </div>
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10">
-                  <p className="text-foreground/20 text-4xl font-bold font-mono">02</p>
+                  <p className="text-foreground/30 text-4xl font-bold font-mono">02</p>
                   <h3 className="text-foreground mt-4 text-lg font-bold tracking-[-0.02em]">Real Services</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed">
+                  <p className="text-foreground/70 mt-2 text-sm leading-relaxed">
                     Connect to your running databases, APIs, and queues. No mocks.
                   </p>
                 </div>
                 <div className="p-8 lg:p-10">
-                  <p className="text-foreground/20 text-4xl font-bold font-mono">03</p>
+                  <p className="text-foreground/30 text-4xl font-bold font-mono">03</p>
                   <h3 className="text-foreground mt-4 text-lg font-bold tracking-[-0.02em]">Traffic Intercept</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed">
+                  <p className="text-foreground/70 mt-2 text-sm leading-relaxed">
                     Route live requests to your workspace. Debug with production data.
                   </p>
                 </div>
@@ -84,61 +84,61 @@ export default function WhyKloudlitePage() {
               {/* The Shift */}
               <div className="grid lg:grid-cols-2 -mx-6 lg:-mx-12 border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Without Kloudlite</p>
+                  <p className="text-foreground/60 text-xs font-semibold uppercase tracking-wider">Without Kloudlite</p>
                   <div className="mt-6 space-y-3 font-mono text-sm">
-                    <p className="text-foreground/40">git clone → install deps → setup db → configure env → mock services → code → push → wait for CI → deploy → test → find bug → repeat</p>
+                    <p className="text-foreground/60">git clone → install deps → setup db → configure env → mock services → code → push → wait for CI → deploy → test → find bug → repeat</p>
                   </div>
-                  <p className="text-foreground/30 text-xs mt-6 font-mono">Hours to days per feature</p>
+                  <p className="text-foreground/50 text-xs mt-6 font-mono">Hours to days per feature</p>
                 </div>
                 <div className="p-8 lg:p-10 bg-foreground/[0.02]">
                   <p className="text-primary text-xs font-semibold uppercase tracking-wider">With Kloudlite</p>
                   <div className="mt-6 space-y-3 font-mono text-sm">
-                    <p className="text-foreground/70">open workspace → connect env → code → done</p>
+                    <p className="text-foreground/80">open workspace → connect env → code → done</p>
                   </div>
-                  <p className="text-primary/60 text-xs mt-6 font-mono">Minutes</p>
+                  <p className="text-primary/80 text-xs mt-6 font-mono">Minutes</p>
                 </div>
               </div>
 
               {/* Technical Highlights */}
               <div className="grid lg:grid-cols-2 -mx-6 lg:-mx-12 border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Architecture</p>
-                  <ul className="mt-6 space-y-2 text-sm text-foreground/60">
+                  <p className="text-foreground/60 text-xs font-semibold uppercase tracking-wider">Architecture</p>
+                  <ul className="mt-6 space-y-2 text-sm text-foreground/70">
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       VPN-based connectivity to environments
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       Docker Compose compatible services
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       Nix-based reproducible packages
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       SSH, VS Code, and IDE access
                     </li>
                   </ul>
                 </div>
                 <div className="p-8 lg:p-10">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Built For</p>
-                  <ul className="mt-6 space-y-2 text-sm text-foreground/60">
+                  <p className="text-foreground/60 text-xs font-semibold uppercase tracking-wider">Built For</p>
+                  <ul className="mt-6 space-y-2 text-sm text-foreground/70">
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       Microservices and distributed systems
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       Teams needing fast onboarding
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       AI coding agents (Claude, Cursor)
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1 h-1 bg-foreground/30 rounded-full" />
+                      <span className="w-1 h-1 bg-foreground/50 rounded-full" />
                       Integration testing against real data
                     </li>
                   </ul>
@@ -153,10 +153,10 @@ export default function WhyKloudlitePage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Learn</p>
+                      <p className="text-foreground/60 text-xs font-semibold uppercase tracking-wider">Learn</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">Documentation</h3>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-foreground/40 group-hover:text-foreground/60 group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
                 <Link
@@ -165,10 +165,10 @@ export default function WhyKloudlitePage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Start</p>
+                      <p className="text-foreground/60 text-xs font-semibold uppercase tracking-wider">Start</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">View Pricing</h3>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-foreground/40 group-hover:text-foreground/60 group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
               </div>
