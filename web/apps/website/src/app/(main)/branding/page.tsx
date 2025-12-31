@@ -58,7 +58,7 @@ function FullLogo({ iconFill = '#4f46e5', textFill = '#09090b' }: { iconFill?: s
 function ColorCard({ name, hex, className }: { name: string; hex: string; className?: string }) {
   return (
     <div className="group">
-      <div className={cn('h-28 rounded-lg border border-black/10', className)} />
+      <div className={cn('h-28 rounded-lg border border-foreground/20', className)} />
       <div className="mt-3 flex items-center justify-between">
         <div>
           <p className="text-foreground text-sm font-medium">{name}</p>
@@ -98,22 +98,22 @@ export default function BrandingPage() {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Light Background */}
-                  <div className="rounded-xl overflow-hidden border border-gray-200">
-                    <div className="bg-white p-12 flex items-center justify-center min-h-[200px]">
+                  <div className="rounded-lg overflow-hidden border border-foreground/20">
+                    <div className="bg-white p-12 flex items-center justify-center min-h-[180px]">
                       <FullLogo iconFill="#4f46e5" textFill="#09090b" />
                     </div>
-                    <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
-                      <p className="text-gray-600 text-sm font-medium">Light Background</p>
+                    <div className="bg-neutral-100 px-4 py-3 border-t border-neutral-200">
+                      <p className="text-neutral-600 text-sm font-medium">Light Background</p>
                     </div>
                   </div>
 
                   {/* Dark Background */}
-                  <div className="rounded-xl overflow-hidden border border-gray-800">
-                    <div className="bg-[#09090b] p-12 flex items-center justify-center min-h-[200px]">
+                  <div className="rounded-lg overflow-hidden border border-foreground/20">
+                    <div className="bg-neutral-950 p-12 flex items-center justify-center min-h-[180px]">
                       <FullLogo iconFill="#4f46e5" textFill="#ffffff" />
                     </div>
-                    <div className="bg-[#18181b] px-4 py-3 border-t border-gray-800">
-                      <p className="text-gray-400 text-sm font-medium">Dark Background</p>
+                    <div className="bg-neutral-900 px-4 py-3 border-t border-neutral-800">
+                      <p className="text-neutral-400 text-sm font-medium">Dark Background</p>
                     </div>
                   </div>
                 </div>
@@ -128,44 +128,44 @@ export default function BrandingPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {/* Primary on Light */}
-                  <div className="rounded-xl overflow-hidden border border-gray-200">
-                    <div className="bg-white p-8 flex items-center justify-center aspect-square">
+                  <div className="rounded-lg overflow-hidden border border-foreground/20">
+                    <div className="bg-white p-6 flex items-center justify-center aspect-square">
                       <LogoIcon fill="#4f46e5" />
                     </div>
-                    <div className="bg-gray-50 px-3 py-2 border-t border-gray-200">
-                      <p className="text-gray-600 text-xs font-medium">Primary / Light</p>
+                    <div className="bg-neutral-100 px-3 py-2 border-t border-neutral-200">
+                      <p className="text-neutral-600 text-xs font-medium">Primary / Light</p>
                     </div>
                   </div>
 
                   {/* Primary on Dark */}
-                  <div className="rounded-xl overflow-hidden border border-gray-800">
-                    <div className="bg-[#09090b] p-8 flex items-center justify-center aspect-square">
+                  <div className="rounded-lg overflow-hidden border border-foreground/20">
+                    <div className="bg-neutral-950 p-6 flex items-center justify-center aspect-square">
                       <LogoIcon fill="#4f46e5" />
                     </div>
-                    <div className="bg-[#18181b] px-3 py-2 border-t border-gray-800">
-                      <p className="text-gray-400 text-xs font-medium">Primary / Dark</p>
+                    <div className="bg-neutral-900 px-3 py-2 border-t border-neutral-800">
+                      <p className="text-neutral-400 text-xs font-medium">Primary / Dark</p>
                     </div>
                   </div>
 
                   {/* White on Dark */}
-                  <div className="rounded-xl overflow-hidden border border-gray-800">
-                    <div className="bg-[#09090b] p-8 flex items-center justify-center aspect-square">
+                  <div className="rounded-lg overflow-hidden border border-foreground/20">
+                    <div className="bg-neutral-950 p-6 flex items-center justify-center aspect-square">
                       <LogoIcon fill="#ffffff" />
                     </div>
-                    <div className="bg-[#18181b] px-3 py-2 border-t border-gray-800">
-                      <p className="text-gray-400 text-xs font-medium">White / Dark</p>
+                    <div className="bg-neutral-900 px-3 py-2 border-t border-neutral-800">
+                      <p className="text-neutral-400 text-xs font-medium">White / Dark</p>
                     </div>
                   </div>
 
                   {/* Black on Light */}
-                  <div className="rounded-xl overflow-hidden border border-gray-200">
-                    <div className="bg-white p-8 flex items-center justify-center aspect-square">
+                  <div className="rounded-lg overflow-hidden border border-foreground/20">
+                    <div className="bg-white p-6 flex items-center justify-center aspect-square">
                       <LogoIcon fill="#09090b" />
                     </div>
-                    <div className="bg-gray-50 px-3 py-2 border-t border-gray-200">
-                      <p className="text-gray-600 text-xs font-medium">Black / Light</p>
+                    <div className="bg-neutral-100 px-3 py-2 border-t border-neutral-200">
+                      <p className="text-neutral-600 text-xs font-medium">Black / Light</p>
                     </div>
                   </div>
                 </div>
@@ -178,7 +178,7 @@ export default function BrandingPage() {
                   <p className="text-foreground/50 mt-1 text-sm">Brand color palette</p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <ColorCard name="Primary" hex="#4F46E5" className="bg-[#4f46e5]" />
                   <ColorCard name="Black" hex="#09090B" className="bg-[#09090b]" />
                   <ColorCard name="White" hex="#FFFFFF" className="bg-white" />
@@ -193,7 +193,7 @@ export default function BrandingPage() {
                   <p className="text-foreground/50 mt-1 text-sm">Font families and styles</p>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-4">
                   <div className="p-6 rounded-lg border border-foreground/10">
                     <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider mb-3">Primary Font</p>
                     <p className="text-foreground text-4xl font-bold tracking-tight">Inter</p>
@@ -214,9 +214,9 @@ export default function BrandingPage() {
                   <p className="text-foreground/50 mt-1 text-sm">Best practices for brand consistency</p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="p-6 rounded-lg border border-green-500/20 bg-green-500/5">
-                    <p className="text-green-600 dark:text-green-400 text-sm font-semibold uppercase tracking-wider flex items-center gap-2 mb-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-6 rounded-lg border border-foreground/10">
+                    <p className="text-green-500 text-sm font-semibold uppercase tracking-wider flex items-center gap-2 mb-4">
                       <Check className="h-4 w-4" /> Do
                     </p>
                     <ul className="space-y-3 text-foreground/70 text-sm">
@@ -239,8 +239,8 @@ export default function BrandingPage() {
                     </ul>
                   </div>
 
-                  <div className="p-6 rounded-lg border border-red-500/20 bg-red-500/5">
-                    <p className="text-red-600 dark:text-red-400 text-sm font-semibold uppercase tracking-wider flex items-center gap-2 mb-4">
+                  <div className="p-6 rounded-lg border border-foreground/10">
+                    <p className="text-red-500 text-sm font-semibold uppercase tracking-wider flex items-center gap-2 mb-4">
                       <X className="h-4 w-4" /> Don&apos;t
                     </p>
                     <ul className="space-y-3 text-foreground/70 text-sm">
