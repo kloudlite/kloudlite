@@ -2,7 +2,7 @@ import { ScrollArea } from '@kloudlite/ui'
 import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
 import { cn } from '@kloudlite/lib'
-import { Mail, Github, Twitter, Linkedin, ArrowRight } from 'lucide-react'
+import { Mail, Github, Twitter, Linkedin, ArrowRight, MapPin } from 'lucide-react'
 import ContactForm from './contact-form'
 
 // Cross marker component
@@ -57,10 +57,10 @@ export default function ContactPage() {
               </div>
 
               {/* Quick Contact Options */}
-              <div className="grid lg:grid-cols-3 -mx-6 lg:-mx-12 border-t border-foreground/10">
+              <div className="grid lg:grid-cols-2 -mx-6 lg:-mx-12 border-t border-foreground/10">
                 <a
                   href="mailto:hello@kloudlite.io"
-                  className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors"
+                  className="p-8 lg:p-10 border-b lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -76,7 +76,7 @@ export default function ContactPage() {
 
                 <a
                   href="mailto:support@kloudlite.io"
-                  className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors"
+                  className="p-8 lg:p-10 border-b border-foreground/10 group hover:bg-foreground/[0.02] transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -94,7 +94,7 @@ export default function ContactPage() {
                   href="https://github.com/kloudlite/kloudlite"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-8 lg:p-10 border-b border-foreground/10 group hover:bg-foreground/[0.02] transition-colors"
+                  className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -107,6 +107,22 @@ export default function ContactPage() {
                     <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
                   </div>
                 </a>
+
+                <div className="p-8 lg:p-10 border-b lg:border-b-0 border-foreground/10">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-foreground/40 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Office</p>
+                      <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">Headquarters</h3>
+                      <p className="text-foreground/50 mt-1 text-sm leading-relaxed">
+                        415, Floor 4, Shaft-1, Tower-B<br />
+                        VRR Fortuna, Carmelaram<br />
+                        Janatha Colony, Bangalore<br />
+                        Karnataka, India - 560035
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Contact Form Section */}

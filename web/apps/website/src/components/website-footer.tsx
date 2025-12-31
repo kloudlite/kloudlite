@@ -20,6 +20,10 @@ const footerLinks = {
     { label: 'About', href: '/about' },
     { label: 'Contact', href: '/contact' },
   ],
+  Legal: [
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+  ],
   Connect: [
     { label: 'GitHub', href: 'https://github.com/kloudlite/kloudlite', external: true },
     { label: 'Twitter', href: 'https://twitter.com/kloudlite', external: true },
@@ -31,7 +35,7 @@ export function WebsiteFooter() {
   return (
     <footer className="border-t border-foreground/10 mt-20">
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-6">
           {/* Logo and tagline */}
           <div className="col-span-2 md:col-span-1">
             <KloudliteLogo showText={true} linkToHome={true} />
