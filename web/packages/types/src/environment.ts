@@ -12,14 +12,6 @@ export interface EnvironmentMetadata {
   managedFields?: unknown[]
 }
 
-// ResourceQuotas - only includes fields that are actually enforced
-export interface ResourceQuotas {
-  'limits.cpu'?: string
-  'limits.memory'?: string
-  'requests.cpu'?: string
-  'requests.memory'?: string
-}
-
 export interface NetworkPolicyPort {
   port?: number
   protocol?: 'TCP' | 'UDP'
@@ -53,12 +45,10 @@ export interface EnvironmentSpec {
   sharedWith?: string[] // List of usernames when visibility is 'shared'
   workmachineName?: string // Auto-populated by webhook based on user's workmachine
   activated: boolean
-  resourceQuotas?: ResourceQuotas
   networkPolicies?: NetworkPolicies
   labels?: Record<string, string>
   annotations?: Record<string, string>
   cloneFrom?: string
-  nodeName?: string
 }
 
 // Cloning status types
@@ -113,9 +103,6 @@ export interface SourceCloningStatus {
 export interface EnvironmentStatus {
   state?: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
   message?: string
-  phase?: string
-  namespaceCreated?: boolean
-  resourcesApplied?: boolean
   lastActivatedTime?: string
   lastDeactivatedTime?: string
   resourceCount?: {
@@ -133,9 +120,8 @@ export interface EnvironmentStatus {
   }>
   cloningStatus?: CloningStatus
   sourceCloningStatus?: SourceCloningStatus
-  // Hash and subdomain for VPN-accessible URLs
-  hash?: string // 8-character hash derived from envName-owner
-  subdomain?: string // Subdomain from workmachine (e.g., "beanbag.khost.dev")
+  hash?: string
+  subdomain?: string
 }
 
 export interface Environment {
