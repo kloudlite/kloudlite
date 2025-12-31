@@ -666,10 +666,8 @@ func (s *MCPServer) handleConfigGet(ctx context.Context, args map[string]interfa
 		var sb strings.Builder
 		sb.WriteString("Workspace Configuration:\n")
 		sb.WriteString(fmt.Sprintf("  display-name: %s\n", ws.Spec.DisplayName))
-		sb.WriteString(fmt.Sprintf("  description: %s\n", ws.Spec.Description))
 		sb.WriteString(fmt.Sprintf("  owner: %s\n", ws.Spec.OwnedBy))
 		if ws.Spec.Settings != nil {
-			sb.WriteString(fmt.Sprintf("  auto-stop: %v\n", ws.Spec.Settings.AutoStop))
 			sb.WriteString(fmt.Sprintf("  idle-timeout: %d minutes\n", ws.Spec.Settings.IdleTimeout))
 		}
 		return sb.String(), nil
@@ -679,15 +677,8 @@ func (s *MCPServer) handleConfigGet(ctx context.Context, args map[string]interfa
 	switch key {
 	case "display-name":
 		return ws.Spec.DisplayName, nil
-	case "description":
-		return ws.Spec.Description, nil
 	case "owner":
 		return ws.Spec.OwnedBy, nil
-	case "auto-stop":
-		if ws.Spec.Settings != nil {
-			return fmt.Sprintf("%v", ws.Spec.Settings.AutoStop), nil
-		}
-		return "false", nil
 	case "idle-timeout":
 		if ws.Spec.Settings != nil {
 			return fmt.Sprintf("%d", ws.Spec.Settings.IdleTimeout), nil
@@ -714,8 +705,6 @@ func (s *MCPServer) handleConfigSet(ctx context.Context, args map[string]interfa
 	switch key {
 	case "display-name":
 		ws.Spec.DisplayName = value
-	case "description":
-		ws.Spec.Description = value
 	default:
 		return "", fmt.Errorf("cannot set config key: %s (read-only or unknown)", key)
 	}
