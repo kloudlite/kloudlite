@@ -97,7 +97,7 @@ export default function BrandingPage() {
               {/* Grid Layout */}
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 border-t border-foreground/10 -mx-6 lg:-mx-12">
                 {/* Logo Section Title */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
+                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
                   <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                     Logo
                   </h2>
@@ -107,19 +107,19 @@ export default function BrandingPage() {
                 </div>
 
                 {/* Logo Light */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 lg:border-r flex flex-col items-center justify-center h-[180px] bg-white">
+                <div className="p-8 lg:p-10 border-b lg:border-r border-foreground/10 flex flex-col items-center justify-center h-[180px] bg-white">
                   <FullLogo iconFill="#4f46e5" textFill="#09090b" />
                   <p className="text-neutral-500 mt-4 text-xs font-medium">Light Background</p>
                 </div>
 
                 {/* Logo Dark */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r lg:border-r-0 flex flex-col items-center justify-center h-[180px] bg-neutral-950">
+                <div className="p-8 lg:p-10 border-b border-foreground/10 flex flex-col items-center justify-center h-[180px] bg-neutral-950">
                   <FullLogo iconFill="#4f46e5" textFill="#ffffff" />
                   <p className="text-neutral-500 mt-4 text-xs font-medium">Dark Background</p>
                 </div>
 
                 {/* Icon Section Title */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
+                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
                   <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                     Icon
                   </h2>
@@ -149,7 +149,7 @@ export default function BrandingPage() {
                 </div>
 
                 {/* Colors Section Title */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
+                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
                   <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                     Colors
                   </h2>
@@ -191,7 +191,7 @@ export default function BrandingPage() {
                 </div>
 
                 {/* Typography Section Title */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
+                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
                   <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                     Typography
                   </h2>
@@ -215,7 +215,7 @@ export default function BrandingPage() {
                 </div>
 
                 {/* Usage Guidelines Title */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
+                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
                   <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                     Usage
                   </h2>
