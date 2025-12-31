@@ -88,11 +88,6 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-2xl font-semibold">{displayName}</h1>
-                {workspace.spec.description && (
-                  <p className="text-muted-foreground mt-1.5 text-sm">
-                    {workspace.spec.description}
-                  </p>
-                )}
                 <div className="text-muted-foreground mt-3 flex items-center gap-4 text-sm">
                   <WorkspaceStatusIndicator
                     namespace={namespace}
