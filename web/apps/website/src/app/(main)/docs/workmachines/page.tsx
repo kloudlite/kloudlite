@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
-import { ArrowRight, Power, SlidersHorizontal, Package, Container, Clock, PlayCircle, StopCircle } from 'lucide-react'
+import { ArrowRight, Power, SlidersHorizontal, Package, Container, Clock } from 'lucide-react'
 
 const tocItems = [
   { id: 'overview', title: 'Overview' },
