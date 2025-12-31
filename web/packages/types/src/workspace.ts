@@ -15,16 +15,18 @@ export interface Workspace {
 
 export type Visibility = 'private' | 'shared' | 'open'
 
+export interface EnvironmentConnection {
+  environmentRef: ObjectReference
+}
+
 export interface WorkspaceSpec {
   displayName: string
   description?: string
   ownedBy: string
   visibility?: Visibility // 'private' (only owner), 'shared' (specific users), 'open' (all team)
   sharedWith?: string[] // List of usernames when visibility is 'shared'
-  workMachineRef?: ObjectReference
-  workmachineName?: string
-  environmentRef?: ObjectReference
-  machineTypeRef?: ObjectReference
+  workmachine: string // JSON field name is "workmachine" per Go API
+  environmentConnection?: EnvironmentConnection // Nested structure per Go API
   folderName?: string
   // packages are now managed via PackageRequest resource (owned by workspace)
   resourceQuota?: ResourceQuota
@@ -37,11 +39,9 @@ export interface WorkspaceSpec {
   expose?: ExposedPort[] // Ports to expose from the workspace
 }
 
-export type ExposeProtocol = 'tcp' | 'udp' | 'http'
-
+// ExposedPort - matches Go API (only port, no protocol)
 export interface ExposedPort {
   port: number
-  protocol: ExposeProtocol
 }
 
 export interface GitRepository {
