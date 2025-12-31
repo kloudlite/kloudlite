@@ -32,7 +32,7 @@ function GridContainer({ children, className }: { children: React.ReactNode; cla
   )
 }
 
-function LogoIcon({ fill = '#4f46e5' }: { fill?: string }) {
+function LogoIcon({ fill = '#2258E5' }: { fill?: string }) {
   return (
     <svg viewBox="0 0 130 131" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-10 w-auto">
       <path
@@ -47,7 +47,7 @@ function LogoIcon({ fill = '#4f46e5' }: { fill?: string }) {
   )
 }
 
-function FullLogo({ iconFill = '#4f46e5', textFill = '#09090b' }: { iconFill?: string; textFill?: string }) {
+function FullLogo({ iconFill = '#2258E5', textFill = '#09090b' }: { iconFill?: string; textFill?: string }) {
   return (
     <svg viewBox="0 0 628 131" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto">
       <path
@@ -108,13 +108,13 @@ export default function BrandingPage() {
 
                 {/* Logo Light */}
                 <div className="p-8 lg:p-10 border-b lg:border-r border-foreground/10 flex flex-col items-center justify-center h-[180px] bg-white">
-                  <FullLogo iconFill="#4f46e5" textFill="#09090b" />
+                  <FullLogo iconFill="#2258E5" textFill="#09090b" />
                   <p className="text-neutral-500 mt-4 text-xs font-medium">Light Background</p>
                 </div>
 
                 {/* Logo Dark */}
                 <div className="p-8 lg:p-10 border-b border-foreground/10 flex flex-col items-center justify-center h-[180px] bg-neutral-950">
-                  <FullLogo iconFill="#4f46e5" textFill="#ffffff" />
+                  <FullLogo iconFill="#2258E5" textFill="#ffffff" />
                   <p className="text-neutral-500 mt-4 text-xs font-medium">Dark Background</p>
                 </div>
 
@@ -131,11 +131,11 @@ export default function BrandingPage() {
                 {/* Icon Variants - 4 in a row */}
                 <div className="sm:col-span-1 lg:col-span-2 grid grid-cols-4 border-b border-foreground/10">
                   <div className="p-6 flex flex-col items-center justify-center h-[140px] bg-white border-r border-foreground/10">
-                    <LogoIcon fill="#4f46e5" />
+                    <LogoIcon fill="#2258E5" />
                     <p className="text-neutral-500 mt-3 text-[10px] font-medium">Primary</p>
                   </div>
                   <div className="p-6 flex flex-col items-center justify-center h-[140px] bg-neutral-950 border-r border-foreground/10">
-                    <LogoIcon fill="#4f46e5" />
+                    <LogoIcon fill="#2258E5" />
                     <p className="text-neutral-500 mt-3 text-[10px] font-medium">Primary</p>
                   </div>
                   <div className="p-6 flex flex-col items-center justify-center h-[140px] bg-neutral-950 border-r border-foreground/10">
@@ -161,10 +161,10 @@ export default function BrandingPage() {
                 {/* Color Swatches */}
                 <div className="sm:col-span-1 lg:col-span-2 grid grid-cols-4 border-b border-foreground/10">
                   <div className="flex flex-col border-r border-foreground/10">
-                    <div className="h-20 bg-[#4f46e5]" />
+                    <div className="h-20 bg-[#2258E5]" />
                     <div className="p-3 bg-foreground/[0.015]">
                       <p className="text-foreground text-xs font-medium">Primary</p>
-                      <p className="text-foreground/50 text-[10px] font-mono">#4F46E5</p>
+                      <p className="text-foreground/50 text-[10px] font-mono">#2258E5</p>
                     </div>
                   </div>
                   <div className="flex flex-col border-r border-foreground/10">
