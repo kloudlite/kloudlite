@@ -13,20 +13,22 @@ const kubernetesNameSchema = z
 // Visibility enum
 const visibilitySchema = z.enum(['private', 'shared', 'open']).optional()
 
-// Resource quotas schema
+// Resource quotas schema - matches Go API with dot notation JSON fields
 const resourceQuotasSchema = z
   .object({
-    limitsCPU: z.string().optional(),
-    limitsMemory: z.string().optional(),
-    requestsCPU: z.string().optional(),
-    requestsMemory: z.string().optional(),
-    persistentVolumeClaims: z.string().optional(),
+    'limits.cpu': z.string().optional(),
+    'limits.memory': z.string().optional(),
+    'requests.cpu': z.string().optional(),
+    'requests.memory': z.string().optional(),
+    persistentvolumeclaims: z.string().optional(),
+    'services.nodeports': z.string().optional(),
+    'services.loadbalancers': z.string().optional(),
   })
   .optional()
 
 // Network policy port schema
 const networkPolicyPortSchema = z.object({
-  port: z.number().int().min(1).max(65535),
+  port: z.number().int().min(1).max(65535).optional(),
   protocol: z.enum(['TCP', 'UDP']).optional(),
 })
 
@@ -49,27 +51,31 @@ const ingressRuleSchema = z.object({
   ports: z.array(networkPolicyPortSchema).optional(),
 })
 
-// Network policies schema
+// Network policies schema - matches Go API
 const networkPoliciesSchema = z
   .object({
+    enabled: z.boolean(),
     allowedNamespaces: z.array(z.string()).optional(),
     ingressRules: z.array(ingressRuleSchema).optional(),
   })
   .optional()
 
-// Environment spec schema
+// Environment spec schema - matches Go API environment/v1/types.go
+// Note: targetNamespace and workmachineName are auto-populated by webhook if not provided
 export const environmentSpecSchema = z.object({
   targetNamespace: z.string().optional(),
   name: z.string().optional(),
   ownedBy: z.string().min(1, 'Owner is required'),
   visibility: visibilitySchema,
-  sharedWith: z.array(z.string().email()).optional(),
+  sharedWith: z.array(z.string()).optional(),
+  workmachineName: z.string().optional(),
   activated: z.boolean(),
-  labels: z.record(z.string()).optional(),
-  annotations: z.record(z.string()).optional(),
   resourceQuotas: resourceQuotasSchema,
   networkPolicies: networkPoliciesSchema,
+  labels: z.record(z.string()).optional(),
+  annotations: z.record(z.string()).optional(),
   cloneFrom: z.string().optional(),
+  nodeName: z.string().optional(),
 })
 
 // Environment create request schema
@@ -90,7 +96,7 @@ export const cloneEnvironmentSchema = z.object({
   targetNamespace: kubernetesNameSchema,
   cloneEnvVars: z.boolean(),
   cloneFiles: z.boolean(),
-  currentUser: z.string().email(),
+  currentUser: z.string(),
 })
 
 // Environment variable schema
@@ -118,7 +124,7 @@ export const fileSchema = z.object({
 export const importEnvironmentConfigSchema = z.object({
   newEnvName: kubernetesNameSchema,
   targetNamespace: kubernetesNameSchema,
-  currentUser: z.string().email(),
+  currentUser: z.string(),
   exportData: z.object({
     configs: z.record(z.string()).optional(),
     secrets: z.record(z.string()).optional(),
