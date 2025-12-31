@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"go.uber.org/zap"
@@ -510,13 +511,19 @@ func (r *WorkspaceReconciler) handleCloningResuming(
 	return reconcile.Result{Requeue: true}, nil
 }
 
-// handleCloningCompleted clears the copyFrom field and cloning status
+// handleCloningCompleted clones PackageRequest, clears the copyFrom field and cloning status
 func (r *WorkspaceReconciler) handleCloningCompleted(
 	ctx context.Context,
 	workspace *workspacev1.Workspace,
 	logger *zap.Logger,
 ) (reconcile.Result, error) {
-	logger.Info("Phase: Completed - Clearing copyFrom field")
+	logger.Info("Phase: Completed - Cloning packages and clearing copyFrom field")
+
+	// Clone PackageRequest from source workspace
+	if err := r.clonePackageRequest(ctx, workspace, logger); err != nil {
+		logger.Warn("Failed to clone package request", zap.Error(err))
+		// Don't fail cloning if package cloning fails, just log it
+	}
 
 	// Clear copyFrom field to mark cloning as complete
 	workspace.Spec.CopyFrom = ""
@@ -540,6 +547,96 @@ func (r *WorkspaceReconciler) handleCloningCompleted(
 
 	// Requeue to start normal workspace reconciliation
 	return reconcile.Result{Requeue: true}, nil
+}
+
+// clonePackageRequest copies the PackageRequest from source workspace to target workspace
+func (r *WorkspaceReconciler) clonePackageRequest(
+	ctx context.Context,
+	workspace *workspacev1.Workspace,
+	logger *zap.Logger,
+) error {
+	// Parse source workspace reference
+	sourceNs, sourceName := parseSourceWorkspaceRef(workspace.Status.CloningStatus.SourceWorkspaceName, workspace.Namespace)
+
+	// Get source workspace's PackageRequest
+	sourcePackageRequestName := fmt.Sprintf("%s-packages", sourceName)
+	sourcePackageRequest := &packagesv1.PackageRequest{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      sourcePackageRequestName,
+		Namespace: sourceNs,
+	}, sourcePackageRequest)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Source workspace has no PackageRequest, skipping package cloning")
+			return nil
+		}
+		return fmt.Errorf("failed to get source PackageRequest: %w", err)
+	}
+
+	// Check if source has any packages
+	if len(sourcePackageRequest.Spec.Packages) == 0 {
+		logger.Info("Source workspace has no packages, skipping package cloning")
+		return nil
+	}
+
+	// Create PackageRequest for target workspace
+	targetPackageRequestName := fmt.Sprintf("%s-packages", workspace.Name)
+	targetPackageRequest := &packagesv1.PackageRequest{}
+
+	// Check if target PackageRequest already exists
+	err = r.Get(ctx, client.ObjectKey{
+		Name:      targetPackageRequestName,
+		Namespace: workspace.Namespace,
+	}, targetPackageRequest)
+	if err == nil {
+		// PackageRequest exists, update it with source packages
+		logger.Info("Updating existing PackageRequest with cloned packages",
+			zap.Int("packageCount", len(sourcePackageRequest.Spec.Packages)))
+		targetPackageRequest.Spec.Packages = sourcePackageRequest.Spec.Packages
+		if err := r.Update(ctx, targetPackageRequest); err != nil {
+			return fmt.Errorf("failed to update target PackageRequest: %w", err)
+		}
+		logger.Info("PackageRequest updated with cloned packages")
+		return nil
+	}
+
+	if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to check target PackageRequest: %w", err)
+	}
+
+	// Create new PackageRequest
+	logger.Info("Creating PackageRequest with cloned packages",
+		zap.Int("packageCount", len(sourcePackageRequest.Spec.Packages)))
+
+	targetPackageRequest = &packagesv1.PackageRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      targetPackageRequestName,
+			Namespace: workspace.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "workspaces.kloudlite.io/v1",
+					Kind:       "Workspace",
+					Name:       workspace.Name,
+					UID:        workspace.UID,
+				},
+			},
+		},
+		Spec: packagesv1.PackageRequestSpec{
+			WorkspaceRef: workspace.Name,
+			ProfileName:  targetPackageRequestName,
+			Packages:     sourcePackageRequest.Spec.Packages,
+		},
+	}
+
+	if err := r.Create(ctx, targetPackageRequest); err != nil {
+		return fmt.Errorf("failed to create target PackageRequest: %w", err)
+	}
+
+	logger.Info("PackageRequest created with cloned packages",
+		zap.String("name", targetPackageRequestName),
+		zap.Int("packageCount", len(sourcePackageRequest.Spec.Packages)))
+
+	return nil
 }
 
 // handleCloningFailed handles failed cloning by resuming source workspace
