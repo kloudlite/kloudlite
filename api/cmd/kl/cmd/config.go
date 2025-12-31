@@ -16,18 +16,17 @@ var configCmd = &cobra.Command{
 	Use:     "config",
 	Aliases: []string{"cfg", "c"},
 	Short:   "Manage workspace configuration",
-	Long:    `View and update workspace configuration settings including display name, git config, and environment variables.`,
+	Long:    `View and update workspace configuration settings including display name and environment variables.`,
 	Example: `  # View all configuration
   kl config get
   kl c get
 
   # View specific key
   kl config get display-name
-  kl c get git.user-email
+  kl c get idle-timeout
 
   # Update configuration
   kl config set display-name "My Workspace"
-  kl c set git.user-name "John Doe"
   kl c set env.NODE_ENV production`,
 }
 
@@ -42,7 +41,7 @@ When called with a key, shows only that specific value.`,
 
   # View specific values
   kl config get display-name
-  kl c get git.user-email
+  kl c get idle-timeout
   kl c get env.NODE_ENV`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return handleConfigGet(args)
@@ -56,19 +55,12 @@ var configSetCmd = &cobra.Command{
 
 Supported keys:
   - display-name
-  - description
-  - auto-stop
+  - idle-timeout
   - startup-script
-  - dotfiles-repo
-  - git.user-name
-  - git.user-email
-  - git.default-branch
   - env.<VAR_NAME>`,
 	Example: `  kl config set display-name "Development Workspace"
-  kl c set description "Main development environment"
-  kl c set auto-stop true
-  kl c set git.user-name "John Doe"
-  kl c set git.user-email "john@example.com"
+  kl c set idle-timeout 30
+  kl c set startup-script "echo hello"
   kl c set env.NODE_ENV production`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -101,48 +93,22 @@ func handleConfigGet(args []string) error {
 	// Otherwise, display all configuration
 	fmt.Println("Workspace Configuration:")
 	fmt.Printf("  Display Name: %s\n", workspace.Spec.DisplayName)
-	fmt.Printf("  Description: %s\n", workspace.Spec.Description)
 	fmt.Printf("  Owner: %s\n", workspace.Spec.OwnedBy)
 	fmt.Printf("  VS Code Version: %s\n", workspace.Spec.VSCodeVersion)
 
-	if len(workspace.Spec.Tags) > 0 {
-		fmt.Printf("  Tags: %s\n", strings.Join(workspace.Spec.Tags, ", "))
-	}
-
 	if workspace.Spec.Settings != nil {
 		fmt.Println("\nSettings:")
-		fmt.Printf("  Auto Stop: %v\n", workspace.Spec.Settings.AutoStop)
 		if workspace.Spec.Settings.IdleTimeout > 0 {
 			fmt.Printf("  Idle Timeout: %d minutes\n", workspace.Spec.Settings.IdleTimeout)
 		}
-		if workspace.Spec.Settings.MaxRuntime > 0 {
-			fmt.Printf("  Max Runtime: %d minutes\n", workspace.Spec.Settings.MaxRuntime)
-		}
 		if workspace.Spec.Settings.StartupScript != "" {
 			fmt.Printf("  Startup Script: %s\n", workspace.Spec.Settings.StartupScript)
-		}
-		if workspace.Spec.Settings.DotfilesRepo != "" {
-			fmt.Printf("  Dotfiles Repo: %s\n", workspace.Spec.Settings.DotfilesRepo)
-		}
-
-		if workspace.Spec.Settings.GitConfig != nil {
-			fmt.Println("\nGit Configuration:")
-			fmt.Printf("  User Name: %s\n", workspace.Spec.Settings.GitConfig.UserName)
-			fmt.Printf("  User Email: %s\n", workspace.Spec.Settings.GitConfig.UserEmail)
-			fmt.Printf("  Default Branch: %s\n", workspace.Spec.Settings.GitConfig.DefaultBranch)
 		}
 
 		if len(workspace.Spec.Settings.EnvironmentVariables) > 0 {
 			fmt.Println("\nEnvironment Variables:")
 			for k, v := range workspace.Spec.Settings.EnvironmentVariables {
 				fmt.Printf("  %s: %s\n", k, v)
-			}
-		}
-
-		if len(workspace.Spec.Settings.VSCodeExtensions) > 0 {
-			fmt.Println("\nVS Code Extensions:")
-			for _, ext := range workspace.Spec.Settings.VSCodeExtensions {
-				fmt.Printf("  - %s\n", ext)
 			}
 		}
 	}
@@ -154,35 +120,17 @@ func getConfigValue(workspace *workspacesv1.Workspace, key string) error {
 	switch key {
 	case "display-name":
 		fmt.Println(workspace.Spec.DisplayName)
-	case "description":
-		fmt.Println(workspace.Spec.Description)
 	case "owner":
 		fmt.Println(workspace.Spec.OwnedBy)
 	case "vscode-version":
 		fmt.Println(workspace.Spec.VSCodeVersion)
-	case "auto-stop":
-		if workspace.Spec.Settings != nil {
-			fmt.Println(workspace.Spec.Settings.AutoStop)
-		}
 	case "idle-timeout":
 		if workspace.Spec.Settings != nil {
 			fmt.Println(workspace.Spec.Settings.IdleTimeout)
 		}
-	case "max-runtime":
+	case "startup-script":
 		if workspace.Spec.Settings != nil {
-			fmt.Println(workspace.Spec.Settings.MaxRuntime)
-		}
-	case "git.user-name":
-		if workspace.Spec.Settings != nil && workspace.Spec.Settings.GitConfig != nil {
-			fmt.Println(workspace.Spec.Settings.GitConfig.UserName)
-		}
-	case "git.user-email":
-		if workspace.Spec.Settings != nil && workspace.Spec.Settings.GitConfig != nil {
-			fmt.Println(workspace.Spec.Settings.GitConfig.UserEmail)
-		}
-	case "git.default-branch":
-		if workspace.Spec.Settings != nil && workspace.Spec.Settings.GitConfig != nil {
-			fmt.Println(workspace.Spec.Settings.GitConfig.DefaultBranch)
+			fmt.Println(workspace.Spec.Settings.StartupScript)
 		}
 	default:
 		// Check if it's an environment variable
@@ -224,29 +172,8 @@ func handleConfigSet(args []string) error {
 	switch key {
 	case "display-name":
 		workspace.Spec.DisplayName = value
-	case "description":
-		workspace.Spec.Description = value
-	case "auto-stop":
-		workspace.Spec.Settings.AutoStop = value == "true"
 	case "startup-script":
 		workspace.Spec.Settings.StartupScript = value
-	case "dotfiles-repo":
-		workspace.Spec.Settings.DotfilesRepo = value
-	case "git.user-name":
-		if workspace.Spec.Settings.GitConfig == nil {
-			workspace.Spec.Settings.GitConfig = &workspacesv1.GitConfig{}
-		}
-		workspace.Spec.Settings.GitConfig.UserName = value
-	case "git.user-email":
-		if workspace.Spec.Settings.GitConfig == nil {
-			workspace.Spec.Settings.GitConfig = &workspacesv1.GitConfig{}
-		}
-		workspace.Spec.Settings.GitConfig.UserEmail = value
-	case "git.default-branch":
-		if workspace.Spec.Settings.GitConfig == nil {
-			workspace.Spec.Settings.GitConfig = &workspacesv1.GitConfig{}
-		}
-		workspace.Spec.Settings.GitConfig.DefaultBranch = value
 	default:
 		// Check if it's an environment variable
 		if strings.HasPrefix(key, "env.") {

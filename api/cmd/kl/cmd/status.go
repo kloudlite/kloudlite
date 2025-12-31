@@ -51,23 +51,6 @@ func handleStatus() error {
 		fmt.Printf("  Storage: %s\n", workspace.Status.ResourceUsage.Storage)
 	}
 
-	// Display resource quota
-	if workspace.Spec.ResourceQuota != nil {
-		fmt.Println("\nResource Quota:")
-		if workspace.Spec.ResourceQuota.CPU != "" {
-			fmt.Printf("  CPU: %s\n", workspace.Spec.ResourceQuota.CPU)
-		}
-		if workspace.Spec.ResourceQuota.Memory != "" {
-			fmt.Printf("  Memory: %s\n", workspace.Spec.ResourceQuota.Memory)
-		}
-		if workspace.Spec.ResourceQuota.Storage != "" {
-			fmt.Printf("  Storage: %s\n", workspace.Spec.ResourceQuota.Storage)
-		}
-		if workspace.Spec.ResourceQuota.GPUs > 0 {
-			fmt.Printf("  GPUs: %d\n", workspace.Spec.ResourceQuota.GPUs)
-		}
-	}
-
 	// Display access URLs
 	if len(workspace.Status.AccessURLs) > 0 {
 		fmt.Println("\nAccess URLs:")
