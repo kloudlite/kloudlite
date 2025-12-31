@@ -254,15 +254,16 @@ export default function BrandingPage() {
                 {/* Download CTA */}
                 <div className="p-8 lg:p-12 flex flex-col sm:flex-row items-center justify-between gap-6">
                   <div>
-                    <h3 className="text-foreground text-lg font-semibold">Need the full brand kit?</h3>
-                    <p className="text-foreground/50 text-sm mt-1">Get logos in SVG, PNG, and other formats.</p>
+                    <h3 className="text-foreground text-lg font-semibold">Download Brand Kit</h3>
+                    <p className="text-foreground/50 text-sm mt-1">Get logos and icons in SVG format with usage guidelines.</p>
                   </div>
                   <a
-                    href="mailto:hello@kloudlite.io?subject=Brand%20Assets%20Request"
+                    href="/kloudlite-brand-kit.zip"
+                    download
                     className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
                   >
                     <Download className="h-4 w-4" />
-                    Request Brand Kit
+                    Download Brand Kit
                   </a>
                 </div>
               </div>
