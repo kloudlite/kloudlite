@@ -149,17 +149,14 @@ function WebsiteLandingPage() {
             {/* Hero Section */}
             <div className="py-20 lg:py-24">
               <div className="text-center">
-                <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
-                  <span className="text-foreground/40">C</span><span className="text-foreground">loud</span>{' '}
-                  <span className="text-foreground/40">D</span><span className="text-foreground">evelopment</span>
+                <h1 className="text-[2.5rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl lg:text-[4rem]">
+                  <span className="text-foreground">Cloud Development</span>
                   <br />
-                  <span className="text-foreground/40">E</span><span className="text-foreground">nvironments.</span>
+                  <span className="text-foreground/50">Environments</span>
                 </h1>
 
-                <p className="text-foreground/55 mx-auto mt-6 max-w-md text-lg leading-relaxed">
-                  Crafted to reduce the development loop.
-                  <br />
-                  No setup, no builds, no deployments.
+                <p className="text-foreground/60 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                  Reduce the development loop. No setup, no builds, no deployments.
                 </p>
 
                 <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

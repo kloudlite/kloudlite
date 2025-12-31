@@ -91,11 +91,10 @@ export default function BrandingPage() {
               {/* Hero Section */}
               <div className="py-16 lg:py-20">
                 <div className="text-center">
-                  <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
-                    <span className="text-foreground/40">B</span><span className="text-foreground">rand</span>{' '}
-                    <span className="text-foreground/40">G</span><span className="text-foreground">uidelines</span>
+                  <h1 className="text-[2.5rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl lg:text-[4rem]">
+                    <span className="text-foreground">Brand Guidelines</span>
                   </h1>
-                  <p className="text-foreground/55 mx-auto mt-6 max-w-md text-lg leading-relaxed">
+                  <p className="text-foreground/60 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
                     Resources and guidelines for using the Kloudlite brand.
                   </p>
                 </div>
