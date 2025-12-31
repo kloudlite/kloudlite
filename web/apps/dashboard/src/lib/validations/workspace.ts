@@ -20,9 +20,6 @@ const namespaceSchema = z
     'Namespace must be a valid Kubernetes namespace name'
   )
 
-// Visibility enum
-const visibilitySchema = z.enum(['private', 'shared', 'open']).optional()
-
 // Git repository schema
 const gitRepositorySchema = z
   .object({
@@ -31,36 +28,12 @@ const gitRepositorySchema = z
   })
   .optional()
 
-// Resource quota schema
-const resourceQuotaSchema = z
-  .object({
-    cpu: z.string().optional(),
-    memory: z.string().optional(),
-    storage: z.string().optional(),
-    gpus: z.number().int().min(0).optional(),
-  })
-  .optional()
-
-// Git config schema
-const gitConfigSchema = z
-  .object({
-    userName: z.string().optional(),
-    userEmail: z.string().email().optional(),
-    defaultBranch: z.string().optional(),
-  })
-  .optional()
-
-// Workspace settings schema
+// Workspace settings schema - only fields used by controller
 const workspaceSettingsSchema = z
   .object({
-    autoStop: z.boolean().optional(),
     idleTimeout: z.number().int().min(0).optional(),
-    maxRuntime: z.number().int().min(0).optional(),
     startupScript: z.string().optional(),
     environmentVariables: z.record(z.string()).optional(),
-    vscodeExtensions: z.array(z.string()).optional(),
-    gitConfig: gitConfigSchema,
-    dotfilesRepo: z.string().optional(),
   })
   .optional()
 
@@ -84,26 +57,18 @@ const environmentConnectionSchema = z
   })
   .optional()
 
-// Workspace spec schema - matches Go API workspace_types.go
+// Workspace spec schema - only fields used by controller
 export const workspaceSpecSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name too long'),
-  description: z.string().max(500, 'Description too long').optional(),
   ownedBy: z.string().min(1, 'Owner is required'),
-  visibility: visibilitySchema,
-  sharedWith: z.array(z.string()).optional(),
-  // API uses "workmachine" as JSON field name
   workmachine: z.string().min(1, 'WorkMachine is required'),
-  // API uses "environmentConnection" with nested "environmentRef"
   environmentConnection: environmentConnectionSchema,
   gitRepository: gitRepositorySchema,
   settings: workspaceSettingsSchema,
-  tags: z.array(z.string()).optional(),
-  resourceQuota: resourceQuotaSchema,
   vscodeVersion: z.string().optional(),
   status: z.enum(['active', 'suspended', 'archived']).optional(),
   copyFrom: z.string().optional(),
   expose: z.array(exposedPortSchema).optional(),
-  folderName: z.string().optional(),
 })
 
 // Workspace create request schema

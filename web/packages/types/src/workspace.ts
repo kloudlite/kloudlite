@@ -13,6 +13,7 @@ export interface Workspace {
   status?: WorkspaceStatus
 }
 
+// Visibility is used by environments (not workspaces)
 export type Visibility = 'private' | 'shared' | 'open'
 
 export interface EnvironmentConnection {
@@ -21,22 +22,15 @@ export interface EnvironmentConnection {
 
 export interface WorkspaceSpec {
   displayName: string
-  description?: string
   ownedBy: string
-  visibility?: Visibility // 'private' (only owner), 'shared' (specific users), 'open' (all team)
-  sharedWith?: string[] // List of usernames when visibility is 'shared'
-  workmachine: string // JSON field name is "workmachine" per Go API
-  environmentConnection?: EnvironmentConnection // Nested structure per Go API
-  folderName?: string
-  // packages are now managed via PackageRequest resource (owned by workspace)
-  resourceQuota?: ResourceQuota
+  workmachine: string
+  environmentConnection?: EnvironmentConnection
   settings?: WorkspaceSettings
   status?: 'active' | 'suspended' | 'archived'
-  tags?: string[]
   vscodeVersion?: string
   gitRepository?: GitRepository
   copyFrom?: string
-  expose?: ExposedPort[] // Ports to expose from the workspace
+  expose?: ExposedPort[]
 }
 
 // ExposedPort - matches Go API (only port, no protocol)
@@ -62,26 +56,10 @@ export interface ObjectReference {
   apiVersion?: string
 }
 
-export interface ResourceQuota {
-  cpu?: string
-  memory?: string
-  storage?: string
-  gpus?: number
-}
-
 export interface WorkspaceSettings {
-  autoStop?: boolean
   idleTimeout?: number
-  maxRuntime?: number
   startupScript?: string
   environmentVariables?: Record<string, string>
-  vscodeExtensions?: string[]
-  gitConfig?: {
-    userName?: string
-    userEmail?: string
-    defaultBranch?: string
-  }
-  dotfilesRepo?: string
 }
 
 export interface InstalledPackage {
