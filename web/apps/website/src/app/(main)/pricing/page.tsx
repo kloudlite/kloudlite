@@ -208,6 +208,21 @@ function BYOCPricing() {
 }
 
 function CloudPricing() {
+  const [tier1Users, setTier1Users] = useState(2)
+  const [tier2Users, setTier2Users] = useState(3)
+  const [tier3Users, setTier3Users] = useState(1)
+
+  const baseFee = 29
+  const tier1Price = 29
+  const tier2Price = 49
+  const tier3Price = 89
+
+  const tier1Total = tier1Users * tier1Price
+  const tier2Total = tier2Users * tier2Price
+  const tier3Total = tier3Users * tier3Price
+  const totalUsers = tier1Users + tier2Users + tier3Users
+  const total = baseFee + tier1Total + tier2Total + tier3Total
+
   return (
     <div>
       {/* Control Plane Row */}
@@ -262,6 +277,92 @@ function CloudPricing() {
           extraHourlyRate={0.55}
           features={['16 vCPUs, 64GB RAM', '160 hrs/mo', '500GB storage', '1 hr suspend']}
         />
+      </div>
+
+      {/* Calculator Row */}
+      <div className="grid lg:grid-cols-3 border-b border-foreground/10">
+        <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 flex flex-col justify-center">
+          <h2 className="text-foreground text-xl font-bold tracking-[-0.02em]">
+            Estimate
+          </h2>
+          <p className="text-foreground/50 mt-2 text-sm">
+            Calculate your monthly cost.
+          </p>
+        </div>
+        <div className="lg:col-span-2 p-8 lg:p-10">
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div>
+              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Tier 1 Users</label>
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  onClick={() => setTier1Users(Math.max(0, tier1Users - 1))}
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                >
+                  -
+                </button>
+                <span className="text-foreground text-lg font-semibold w-6 text-center">{tier1Users}</span>
+                <button
+                  onClick={() => setTier1Users(tier1Users + 1)}
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-foreground/40 text-xs mt-2">${tier1Price}/user = ${tier1Total}</p>
+            </div>
+            <div>
+              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Tier 2 Users</label>
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  onClick={() => setTier2Users(Math.max(0, tier2Users - 1))}
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                >
+                  -
+                </button>
+                <span className="text-foreground text-lg font-semibold w-6 text-center">{tier2Users}</span>
+                <button
+                  onClick={() => setTier2Users(tier2Users + 1)}
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-foreground/40 text-xs mt-2">${tier2Price}/user = ${tier2Total}</p>
+            </div>
+            <div>
+              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Tier 3 Users</label>
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  onClick={() => setTier3Users(Math.max(0, tier3Users - 1))}
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                >
+                  -
+                </button>
+                <span className="text-foreground text-lg font-semibold w-6 text-center">{tier3Users}</span>
+                <button
+                  onClick={() => setTier3Users(tier3Users + 1)}
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-foreground/40 text-xs mt-2">${tier3Price}/user = ${tier3Total}</p>
+            </div>
+          </div>
+          <div className="mt-8 pt-6 border-t border-foreground/10 flex items-end justify-between">
+            <div>
+              <p className="text-foreground/50 text-sm">
+                {totalUsers} user{totalUsers !== 1 ? 's' : ''} + ${baseFee} base fee
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Estimated Total</p>
+              <p className="text-foreground text-3xl font-bold tracking-tight mt-1">
+                ${total}<span className="text-foreground/40 text-sm font-normal">/mo</span>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
