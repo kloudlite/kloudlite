@@ -32,9 +32,9 @@ function GridContainer({ children, className }: { children: React.ReactNode; cla
   )
 }
 
-function LogoIcon({ fill = '#2258E5' }: { fill?: string }) {
+function LogoIcon({ fill = '#2258E5', className }: { fill?: string; className?: string }) {
   return (
-    <svg viewBox="0 0 130 131" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-10 w-auto">
+    <svg viewBox="0 0 130 131" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn('h-12 w-auto', className)}>
       <path
         d="M51.9912 66.6496C51.2636 65.9244 51.2636 64.7486 51.9912 64.0235L89.4072 26.7312C90.1348 26.006 91.3145 26.006 92.042 26.7312L129.458 64.0237C130.186 64.7489 130.186 65.9246 129.458 66.6498L92.0423 103.942C91.3147 104.667 90.135 104.667 89.4074 103.942L51.9912 66.6496Z"
         fill={fill}
@@ -47,9 +47,9 @@ function LogoIcon({ fill = '#2258E5' }: { fill?: string }) {
   )
 }
 
-function FullLogo({ iconFill = '#2258E5', textFill = '#09090b' }: { iconFill?: string; textFill?: string }) {
+function FullLogo({ iconFill = '#2258E5', textFill = '#09090b', className }: { iconFill?: string; textFill?: string; className?: string }) {
   return (
-    <svg viewBox="0 0 628 131" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto">
+    <svg viewBox="0 0 628 131" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn('h-8 w-auto', className)}>
       <path
         d="M51.9912 66.6496C51.2636 65.9244 51.2636 64.7486 51.9912 64.0235L89.4072 26.7312C90.1348 26.006 91.3145 26.006 92.042 26.7312L129.458 64.0237C130.186 64.7489 130.186 65.9246 129.458 66.6498L92.0423 103.942C91.3147 104.667 90.135 104.667 89.4074 103.942L51.9912 66.6496Z"
         fill={iconFill}
@@ -71,6 +71,15 @@ function FullLogo({ iconFill = '#2258E5', textFill = '#09090b' }: { iconFill?: s
   )
 }
 
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mb-8">
+      <h2 className="text-foreground text-xl font-semibold tracking-tight">{title}</h2>
+      <p className="text-foreground/50 mt-1 text-sm">{description}</p>
+    </div>
+  )
+}
+
 export default function BrandingPage() {
   return (
     <div className="bg-background h-screen">
@@ -80,185 +89,177 @@ export default function BrandingPage() {
           <div className="px-6 pt-8 lg:px-8 lg:pt-12">
             <GridContainer className="px-6 lg:px-12">
               {/* Hero Section */}
-              <div className="py-20 lg:py-24">
+              <div className="py-16 lg:py-20">
                 <div className="text-center">
                   <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
                     <span className="text-foreground/40">B</span><span className="text-foreground">rand</span>{' '}
                     <span className="text-foreground/40">G</span><span className="text-foreground">uidelines</span>
                   </h1>
                   <p className="text-foreground/55 mx-auto mt-6 max-w-md text-lg leading-relaxed">
-                    Resources and guidelines for using
-                    <br />
-                    the Kloudlite brand.
+                    Resources and guidelines for using the Kloudlite brand.
                   </p>
                 </div>
               </div>
 
-              {/* Grid Layout */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 border-t border-foreground/10 -mx-6 lg:-mx-12">
-                {/* Logo Section Title */}
-                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
-                  <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-                    Logo
-                  </h2>
-                  <p className="text-foreground/50 mt-3 text-base">
-                    Primary brand mark.
-                  </p>
-                </div>
+              {/* Content */}
+              <div className="border-t border-foreground/10 -mx-6 lg:-mx-12">
 
-                {/* Logo Light */}
-                <div className="p-8 lg:p-10 border-b lg:border-r border-foreground/10 flex flex-col items-center justify-center h-[180px] bg-white">
-                  <FullLogo iconFill="#2258E5" textFill="#09090b" />
-                  <p className="text-neutral-500 mt-4 text-xs font-medium">Light Background</p>
-                </div>
-
-                {/* Logo Dark */}
-                <div className="p-8 lg:p-10 border-b border-foreground/10 flex flex-col items-center justify-center h-[180px] bg-neutral-950">
-                  <FullLogo iconFill="#2258E5" textFill="#ffffff" />
-                  <p className="text-neutral-500 mt-4 text-xs font-medium">Dark Background</p>
-                </div>
-
-                {/* Icon Section Title */}
-                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
-                  <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-                    Icon
-                  </h2>
-                  <p className="text-foreground/50 mt-3 text-base">
-                    For favicons and small spaces.
-                  </p>
-                </div>
-
-                {/* Icon Variants - 4 in a row */}
-                <div className="sm:col-span-1 lg:col-span-2 grid grid-cols-4 border-b border-foreground/10">
-                  <div className="p-6 flex flex-col items-center justify-center bg-white border-r border-foreground/10">
-                    <LogoIcon fill="#2258E5" />
-                    <p className="text-neutral-500 mt-3 text-[10px] font-medium">Primary</p>
-                  </div>
-                  <div className="p-6 flex flex-col items-center justify-center bg-neutral-950 border-r border-foreground/10">
-                    <LogoIcon fill="#2258E5" />
-                    <p className="text-neutral-500 mt-3 text-[10px] font-medium">Primary</p>
-                  </div>
-                  <div className="p-6 flex flex-col items-center justify-center bg-neutral-950 border-r border-foreground/10">
-                    <LogoIcon fill="#ffffff" />
-                    <p className="text-neutral-500 mt-3 text-[10px] font-medium">White</p>
-                  </div>
-                  <div className="p-6 flex flex-col items-center justify-center bg-white">
-                    <LogoIcon fill="#09090b" />
-                    <p className="text-neutral-500 mt-3 text-[10px] font-medium">Black</p>
-                  </div>
-                </div>
-
-                {/* Colors Section Title */}
-                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
-                  <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-                    Colors
-                  </h2>
-                  <p className="text-foreground/50 mt-3 text-base">
-                    Brand color palette.
-                  </p>
-                </div>
-
-                {/* Color Swatches */}
-                <div className="sm:col-span-1 lg:col-span-2 grid grid-cols-4 border-b border-foreground/10">
-                  <div className="flex flex-col border-r border-foreground/10">
-                    <div className="h-20 bg-[#2258E5]" />
-                    <div className="p-3 bg-foreground/[0.015]">
-                      <p className="text-foreground text-xs font-medium">Primary</p>
-                      <p className="text-foreground/50 text-[10px] font-mono">#2258E5</p>
+                {/* Logo Section */}
+                <div className="p-8 lg:p-12 border-b border-foreground/10">
+                  <SectionHeader title="Logo" description="The primary Kloudlite wordmark for general use." />
+                  <div className="grid grid-cols-2 border border-foreground/10">
+                    <div className="flex items-center justify-center p-12 bg-white">
+                      <FullLogo iconFill="#2258E5" textFill="#09090b" className="h-10" />
+                    </div>
+                    <div className="flex items-center justify-center p-12 bg-neutral-950 border-l border-foreground/10">
+                      <FullLogo iconFill="#2258E5" textFill="#ffffff" className="h-10" />
                     </div>
                   </div>
-                  <div className="flex flex-col border-r border-foreground/10">
-                    <div className="h-20 bg-[#09090b]" />
-                    <div className="p-3 bg-foreground/[0.015]">
-                      <p className="text-foreground text-xs font-medium">Black</p>
-                      <p className="text-foreground/50 text-[10px] font-mono">#09090B</p>
+                  <div className="grid grid-cols-2 text-center border-x border-b border-foreground/10">
+                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">Light Background</p>
+                    <p className="py-3 text-xs text-foreground/40 font-medium">Dark Background</p>
+                  </div>
+                </div>
+
+                {/* Icon Section */}
+                <div className="p-8 lg:p-12 border-b border-foreground/10">
+                  <SectionHeader title="Icon" description="The logomark for favicons, app icons, and compact spaces." />
+                  <div className="grid grid-cols-4 border border-foreground/10">
+                    <div className="flex items-center justify-center p-8 aspect-square bg-white">
+                      <LogoIcon fill="#2258E5" />
+                    </div>
+                    <div className="flex items-center justify-center p-8 aspect-square bg-neutral-950 border-l border-foreground/10">
+                      <LogoIcon fill="#2258E5" />
+                    </div>
+                    <div className="flex items-center justify-center p-8 aspect-square bg-neutral-950 border-l border-foreground/10">
+                      <LogoIcon fill="#ffffff" />
+                    </div>
+                    <div className="flex items-center justify-center p-8 aspect-square bg-white border-l border-foreground/10">
+                      <LogoIcon fill="#09090b" />
                     </div>
                   </div>
-                  <div className="flex flex-col border-r border-foreground/10">
-                    <div className="h-20 bg-white border-b border-foreground/10" />
-                    <div className="p-3 bg-foreground/[0.015]">
-                      <p className="text-foreground text-xs font-medium">White</p>
-                      <p className="text-foreground/50 text-[10px] font-mono">#FFFFFF</p>
-                    </div>
+                  <div className="grid grid-cols-4 text-center border-x border-b border-foreground/10">
+                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">Primary</p>
+                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">Primary</p>
+                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">White</p>
+                    <p className="py-3 text-xs text-foreground/40 font-medium">Black</p>
                   </div>
-                  <div className="flex flex-col">
-                    <div className="h-20 bg-[#71717a]" />
-                    <div className="p-3 bg-foreground/[0.015]">
-                      <p className="text-foreground text-xs font-medium">Gray</p>
-                      <p className="text-foreground/50 text-[10px] font-mono">#71717A</p>
+                </div>
+
+                {/* Colors Section */}
+                <div className="p-8 lg:p-12 border-b border-foreground/10">
+                  <SectionHeader title="Colors" description="The official brand color palette." />
+                  <div className="grid grid-cols-4 border border-foreground/10">
+                    <div className="flex flex-col">
+                      <div className="aspect-[4/3] bg-[#2258E5]" />
+                      <div className="p-4 border-t border-foreground/10">
+                        <p className="text-foreground text-sm font-medium">Primary</p>
+                        <p className="text-foreground/40 text-xs font-mono mt-1">#2258E5</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col border-l border-foreground/10">
+                      <div className="aspect-[4/3] bg-[#09090b]" />
+                      <div className="p-4 border-t border-foreground/10">
+                        <p className="text-foreground text-sm font-medium">Black</p>
+                        <p className="text-foreground/40 text-xs font-mono mt-1">#09090B</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col border-l border-foreground/10">
+                      <div className="aspect-[4/3] bg-white border-b border-foreground/10" />
+                      <div className="p-4">
+                        <p className="text-foreground text-sm font-medium">White</p>
+                        <p className="text-foreground/40 text-xs font-mono mt-1">#FFFFFF</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col border-l border-foreground/10">
+                      <div className="aspect-[4/3] bg-[#71717a]" />
+                      <div className="p-4 border-t border-foreground/10">
+                        <p className="text-foreground text-sm font-medium">Gray</p>
+                        <p className="text-foreground/40 text-xs font-mono mt-1">#71717A</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Typography Section Title */}
-                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
-                  <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-                    Typography
-                  </h2>
-                  <p className="text-foreground/50 mt-3 text-base">
-                    Font families.
-                  </p>
-                </div>
-
-                {/* Typography Details */}
-                <div className="sm:col-span-1 lg:col-span-2 grid grid-cols-2 border-b border-foreground/10">
-                  <div className="p-6 lg:p-8 border-r border-foreground/10 bg-foreground/[0.015]">
-                    <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider mb-2">Primary</p>
-                    <p className="text-foreground text-3xl font-bold tracking-tight">Inter</p>
-                    <p className="text-foreground/50 mt-2 text-sm">Headings & body text</p>
-                  </div>
-                  <div className="p-6 lg:p-8 bg-foreground/[0.015]">
-                    <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider mb-2">Monospace</p>
-                    <p className="text-foreground text-2xl font-mono">JetBrains Mono</p>
-                    <p className="text-foreground/50 mt-2 text-sm">Code snippets</p>
+                {/* Typography Section */}
+                <div className="p-8 lg:p-12 border-b border-foreground/10">
+                  <SectionHeader title="Typography" description="The typefaces used across Kloudlite products." />
+                  <div className="grid grid-cols-2 border border-foreground/10">
+                    <div className="p-8">
+                      <p className="text-foreground/40 text-xs font-medium uppercase tracking-wider mb-4">Primary</p>
+                      <p className="text-foreground text-4xl font-semibold tracking-tight">Inter</p>
+                      <p className="text-foreground/50 mt-3 text-sm">Used for headings, body text, and UI elements.</p>
+                    </div>
+                    <div className="p-8 border-l border-foreground/10">
+                      <p className="text-foreground/40 text-xs font-medium uppercase tracking-wider mb-4">Monospace</p>
+                      <p className="text-foreground text-3xl font-mono">JetBrains Mono</p>
+                      <p className="text-foreground/50 mt-3 text-sm">Used for code snippets and technical content.</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Usage Guidelines Title */}
-                <div className="p-8 lg:p-10 border-b border-r border-foreground/10 flex flex-col justify-center bg-foreground/[0.015]">
-                  <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-                    Usage
-                  </h2>
-                  <p className="text-foreground/50 mt-3 text-base">
-                    Best practices.
-                  </p>
-                </div>
-
-                {/* Do's and Don'ts */}
-                <div className="sm:col-span-1 lg:col-span-2 grid grid-cols-2 border-b border-foreground/10">
-                  <div className="p-6 lg:p-8 border-r border-foreground/10 bg-foreground/[0.015]">
-                    <p className="text-green-500 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 mb-4">
-                      <Check className="h-4 w-4" /> Do
-                    </p>
-                    <ul className="space-y-2 text-foreground/60 text-sm">
-                      <li>• Use adequate clear space</li>
-                      <li>• Maintain proportions</li>
-                      <li>• Use high contrast backgrounds</li>
-                      <li>• Use official brand colors</li>
-                    </ul>
-                  </div>
-                  <div className="p-6 lg:p-8 bg-foreground/[0.015]">
-                    <p className="text-red-500 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 mb-4">
-                      <X className="h-4 w-4" /> Don&apos;t
-                    </p>
-                    <ul className="space-y-2 text-foreground/60 text-sm">
-                      <li>• Stretch or distort the logo</li>
-                      <li>• Change logo colors</li>
-                      <li>• Add shadows or effects</li>
-                      <li>• Use on busy backgrounds</li>
-                    </ul>
+                {/* Usage Guidelines */}
+                <div className="p-8 lg:p-12 border-b border-foreground/10">
+                  <SectionHeader title="Usage Guidelines" description="Best practices for using the Kloudlite brand." />
+                  <div className="grid grid-cols-2 border border-foreground/10">
+                    <div className="p-8">
+                      <p className="text-green-600 dark:text-green-500 text-xs font-medium uppercase tracking-wider flex items-center gap-2 mb-6">
+                        <Check className="h-4 w-4" /> Do
+                      </p>
+                      <ul className="space-y-3 text-foreground/60 text-sm">
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Use adequate clear space around the logo
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Maintain original proportions when scaling
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Use on high contrast backgrounds
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Use official brand colors only
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="p-8 border-l border-foreground/10">
+                      <p className="text-red-600 dark:text-red-500 text-xs font-medium uppercase tracking-wider flex items-center gap-2 mb-6">
+                        <X className="h-4 w-4" /> Don&apos;t
+                      </p>
+                      <ul className="space-y-3 text-foreground/60 text-sm">
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Stretch or distort the logo
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Change or alter the logo colors
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Add shadows, gradients, or effects
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-foreground/30">—</span>
+                          Place on busy or low-contrast backgrounds
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
                 {/* Download CTA */}
-                <div className="sm:col-span-2 lg:col-span-3 p-8 lg:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 bg-foreground/[0.015]">
+                <div className="p-8 lg:p-12 flex flex-col sm:flex-row items-center justify-between gap-6">
                   <div>
                     <h3 className="text-foreground text-lg font-semibold">Need the full brand kit?</h3>
-                    <p className="text-foreground/50 text-sm mt-1">Get logos in all formats and specifications.</p>
+                    <p className="text-foreground/50 text-sm mt-1">Get logos in SVG, PNG, and other formats.</p>
                   </div>
                   <a
                     href="mailto:hello@kloudlite.io?subject=Brand%20Assets%20Request"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-medium rounded-none hover:bg-primary/90 transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
                   >
                     <Download className="h-4 w-4" />
                     Request Brand Kit
