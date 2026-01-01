@@ -47,6 +47,7 @@ import { toast } from 'sonner'
 interface SnapshotsSheetProps {
   workspace: Workspace
   trigger?: React.ReactNode
+  workMachineRunning?: boolean
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -109,7 +110,7 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-export function SnapshotsSheet({ workspace, trigger }: SnapshotsSheetProps) {
+export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false }: SnapshotsSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
@@ -243,6 +244,12 @@ export function SnapshotsSheet({ workspace, trigger }: SnapshotsSheetProps) {
               {/* Create Snapshot Form */}
               <div className="bg-muted/50 space-y-3 rounded-lg border p-4">
                 <h4 className="text-sm font-medium">Create New Snapshot</h4>
+                {!workMachineRunning && (
+                  <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <p className="text-xs">WorkMachine must be running to create snapshots</p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="description">Description (optional)</Label>
                   <Input
@@ -250,12 +257,12 @@ export function SnapshotsSheet({ workspace, trigger }: SnapshotsSheetProps) {
                     placeholder="e.g., Before refactoring auth module"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    disabled={isCreating}
+                    disabled={isCreating || !workMachineRunning}
                   />
                 </div>
                 <Button
                   onClick={handleCreate}
-                  disabled={isCreating}
+                  disabled={isCreating || !workMachineRunning}
                   className="w-full"
                 >
                   {isCreating ? (
@@ -319,6 +326,8 @@ export function SnapshotsSheet({ workspace, trigger }: SnapshotsSheetProps) {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleRestoreClick(snapshot)}
+                                disabled={!workMachineRunning}
+                                title={!workMachineRunning ? 'WorkMachine must be running to restore' : undefined}
                               >
                                 <RotateCcw className="mr-1 h-3 w-3" />
                                 Restore

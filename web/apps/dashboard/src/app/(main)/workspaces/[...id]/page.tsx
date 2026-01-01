@@ -213,6 +213,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
               <div className="p-4">
                 <SnapshotsSheet
                   workspace={workspace}
+                  workMachineRunning={workMachineRunning}
                   trigger={
                     <Button variant="outline" className="w-full justify-between">
                       <span className="flex items-center gap-2">

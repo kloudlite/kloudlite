@@ -46,6 +46,7 @@ import { toast } from 'sonner'
 interface EnvironmentSnapshotsSheetProps {
   environmentName: string
   trigger?: React.ReactNode
+  isActive?: boolean
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -108,7 +109,7 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-export function EnvironmentSnapshotsSheet({ environmentName, trigger }: EnvironmentSnapshotsSheetProps) {
+export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive = false }: EnvironmentSnapshotsSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
@@ -241,6 +242,12 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
               {/* Create Snapshot Form */}
               <div className="bg-muted/50 space-y-3 rounded-lg border p-4">
                 <h4 className="text-sm font-medium">Create New Snapshot</h4>
+                {!isActive && (
+                  <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <p className="text-xs">Environment must be active to create snapshots</p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="description">Description (optional)</Label>
                   <Input
@@ -248,12 +255,12 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
                     placeholder="e.g., Before database migration"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    disabled={isCreating}
+                    disabled={isCreating || !isActive}
                   />
                 </div>
                 <Button
                   onClick={handleCreate}
-                  disabled={isCreating}
+                  disabled={isCreating || !isActive}
                   className="w-full"
                 >
                   {isCreating ? (
@@ -317,6 +324,8 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleRestoreClick(snapshot)}
+                                disabled={!isActive}
+                                title={!isActive ? 'Environment must be active to restore' : undefined}
                               >
                                 <RotateCcw className="mr-1 h-3 w-3" />
                                 Restore
