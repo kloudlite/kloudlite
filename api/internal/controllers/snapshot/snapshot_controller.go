@@ -20,10 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -1015,7 +1013,7 @@ func formatSize(bytes int64) string {
 // SetupWithManager sets up the controller with the Manager
 func (r *SnapshotReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&snapshotv1.Snapshot{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&snapshotv1.Snapshot{}).
 		Owns(&snapshotv1.SnapshotRequest{}).
 		Complete(r)
 }
