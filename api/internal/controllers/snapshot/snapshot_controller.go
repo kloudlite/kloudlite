@@ -86,6 +86,8 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req reconcile.Reques
 		return r.handleCreating(ctx, snapshot, logger)
 	case snapshotv1.SnapshotStateReady:
 		return reconcile.Result{}, nil
+	case snapshotv1.SnapshotStateRestoring:
+		return r.handleRestoring(ctx, snapshot, logger)
 	case snapshotv1.SnapshotStateDeleting:
 		return r.handleDeleting(ctx, snapshot, logger)
 	case snapshotv1.SnapshotStateFailed:
@@ -561,6 +563,184 @@ func (r *SnapshotReconciler) exportWorkspaceMetadata(ctx context.Context, worksp
 	}
 
 	return metadataPath, nil
+}
+
+// handleRestoring handles the snapshot restore process
+func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
+	logger.Info("Handling snapshot restore",
+		zap.String("snapshotType", string(snapshot.Status.SnapshotType)),
+		zap.String("targetName", snapshot.Status.TargetName))
+
+	// Dispatch based on snapshot type
+	if snapshot.Status.SnapshotType == snapshotv1.SnapshotTypeWorkspace {
+		return r.handleWorkspaceRestoring(ctx, snapshot, logger)
+	}
+
+	// Environment restore
+	if snapshot.Spec.EnvironmentRef == nil {
+		return r.updateStatusFailed(ctx, snapshot, "Environment reference is required for environment restore", logger)
+	}
+
+	envName := snapshot.Spec.EnvironmentRef.Name
+
+	// Fetch the environment
+	env := &environmentsv1.Environment{}
+	if err := r.Get(ctx, client.ObjectKey{Name: envName}, env); err != nil {
+		logger.Error("Failed to get environment", zap.Error(err))
+		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Environment not found: %s", envName), logger)
+	}
+
+	namespace := env.Spec.TargetNamespace
+	if namespace == "" {
+		return r.updateStatusFailed(ctx, snapshot, "Environment has no target namespace", logger)
+	}
+
+	// Create restore SnapshotRequests for each PVC snapshot
+	for _, pvcInfo := range snapshot.Status.PVCSnapshots {
+		// Target path is the original PVC location
+		targetPath := filepath.Join("/var/lib/kloudlite/storage/environments", namespace, pvcInfo.PVCName)
+
+		restoreReq := &snapshotv1.SnapshotRequest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-restore-%s", snapshot.Name, pvcInfo.PVCName),
+				Namespace: snapshot.Status.WorkMachineName,
+				Labels: map[string]string{
+					"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+					"snapshots.kloudlite.io/operation": "restore",
+					"snapshots.kloudlite.io/pvc":       pvcInfo.PVCName,
+				},
+			},
+			Spec: snapshotv1.SnapshotRequestSpec{
+				Operation:       snapshotv1.SnapshotOperationRestore,
+				SourcePath:      pvcInfo.SnapshotPath,
+				SnapshotPath:    targetPath,
+				SnapshotRef:     snapshot.Name,
+				EnvironmentName: envName,
+			},
+		}
+
+		if err := r.Create(ctx, restoreReq); err != nil {
+			if !apierrors.IsAlreadyExists(err) {
+				logger.Error("Failed to create restore SnapshotRequest", zap.Error(err), zap.String("pvc", pvcInfo.PVCName))
+				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create restore request for PVC %s", pvcInfo.PVCName), logger)
+			}
+		}
+	}
+
+	// Check if all restore requests are complete
+	allComplete, err := r.checkRestoreRequestsComplete(ctx, snapshot, logger)
+	if err != nil {
+		logger.Error("Failed to check restore request status", zap.Error(err))
+		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %v", err), logger)
+	}
+
+	if !allComplete {
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	// Restore complete - update status back to Ready
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+		snapshot.Status.State = snapshotv1.SnapshotStateReady
+		snapshot.Status.Message = "Snapshot restored successfully"
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update status to Ready", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Snapshot restored successfully", zap.String("environment", envName))
+	return reconcile.Result{}, nil
+}
+
+// handleWorkspaceRestoring handles workspace snapshot restore
+func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
+	wsRef := snapshot.Spec.WorkspaceRef
+	if wsRef == nil {
+		return r.updateStatusFailed(ctx, snapshot, "Workspace reference is required for workspace restore", logger)
+	}
+
+	wmNamespace := snapshot.Status.WorkMachineName
+	workspaceSnapshotPath := filepath.Join(snapshot.Status.SnapshotPath, "home")
+	targetPath := filepath.Join(workspaceHomePath, wsRef.Name)
+
+	// Create restore SnapshotRequest
+	restoreReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-restore-home", snapshot.Name),
+			Namespace: wmNamespace,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+				"snapshots.kloudlite.io/operation": "restore",
+				"snapshots.kloudlite.io/workspace": wsRef.Name,
+			},
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:     snapshotv1.SnapshotOperationRestore,
+			SourcePath:    workspaceSnapshotPath,
+			SnapshotPath:  targetPath,
+			SnapshotRef:   snapshot.Name,
+			WorkspaceName: wsRef.Name,
+		},
+	}
+
+	if err := r.Create(ctx, restoreReq); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			logger.Error("Failed to create restore SnapshotRequest", zap.Error(err))
+			return r.updateStatusFailed(ctx, snapshot, "Failed to create restore request for workspace", logger)
+		}
+	}
+
+	// Check if restore request is complete
+	allComplete, err := r.checkRestoreRequestsComplete(ctx, snapshot, logger)
+	if err != nil {
+		logger.Error("Failed to check restore request status", zap.Error(err))
+		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %v", err), logger)
+	}
+
+	if !allComplete {
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	// Restore complete - update status back to Ready
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+		snapshot.Status.State = snapshotv1.SnapshotStateReady
+		snapshot.Status.Message = "Workspace snapshot restored successfully"
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update status to Ready", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Workspace snapshot restored successfully", zap.String("workspace", wsRef.Name))
+	return reconcile.Result{}, nil
+}
+
+// checkRestoreRequestsComplete checks if all restore SnapshotRequests are complete
+func (r *SnapshotReconciler) checkRestoreRequestsComplete(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (bool, error) {
+	snapshotReqList := &snapshotv1.SnapshotRequestList{}
+	if err := r.List(ctx, snapshotReqList, client.MatchingLabels{
+		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+		"snapshots.kloudlite.io/operation": "restore",
+	}); err != nil {
+		return false, err
+	}
+
+	if len(snapshotReqList.Items) == 0 {
+		// No restore requests created yet, wait
+		return false, nil
+	}
+
+	for _, req := range snapshotReqList.Items {
+		if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted {
+			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
+				logger.Error("Restore SnapshotRequest failed", zap.String("request", req.Name), zap.String("message", req.Status.Message))
+				return false, fmt.Errorf("restore request %s failed: %s", req.Name, req.Status.Message)
+			}
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // handleDeleting handles the snapshot deletion
