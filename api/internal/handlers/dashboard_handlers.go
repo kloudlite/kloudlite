@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -262,6 +263,22 @@ func (h *DashboardHandlers) GetEnvironmentDetails(c *gin.Context) {
 		h.logger.Error("Failed to get environment", zap.Error(err), zap.String("name", envName))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get environment", "details": err.Error()})
 		return
+	}
+
+	// Populate ownedBy and name from labels if empty
+	// Pattern: kloudlite.io/environment-name: {owner}--{name}
+	if env.Spec.OwnedBy == "" || env.Spec.Name == "" {
+		if envLabel, ok := env.Spec.Labels["kloudlite.io/environment-name"]; ok && envLabel != "" {
+			parts := strings.SplitN(envLabel, "--", 2)
+			if len(parts) == 2 {
+				if env.Spec.OwnedBy == "" {
+					env.Spec.OwnedBy = parts[0]
+				}
+				if env.Spec.Name == "" {
+					env.Spec.Name = parts[1]
+				}
+			}
+		}
 	}
 
 	namespace := env.Spec.TargetNamespace
