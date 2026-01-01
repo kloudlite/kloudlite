@@ -131,9 +131,11 @@ func (p *provider) getMachine(ctx context.Context, machineID string) (*ec2types.
 
 func (p *provider) getRootVolume(ctx context.Context, instance *ec2types.Instance) (*ec2types.Volume, error) {
 	var volumeID *string
+	rootDeviceName := fn.ValueOf(instance.RootDeviceName)
 	for _, m := range instance.BlockDeviceMappings {
-		if m.DeviceName == instance.RootDeviceName && m.Ebs != nil {
+		if fn.ValueOf(m.DeviceName) == rootDeviceName && m.Ebs != nil {
 			volumeID = m.Ebs.VolumeId
+			break
 		}
 	}
 
@@ -142,6 +144,37 @@ func (p *provider) getRootVolume(ctx context.Context, instance *ec2types.Instanc
 	}
 
 	// Get current size
+	output, err := p.ec2Client.DescribeVolumes(ctx, &ec2.DescribeVolumesInput{
+		VolumeIds: []string{*volumeID},
+	})
+	if err != nil {
+		return nil, errors.Wrap(fmt.Sprintf("failed to get volume (ID: %s)", *volumeID), err)
+	}
+
+	if len(output.Volumes) == 0 {
+		return nil, errors.New(fmt.Sprintf("volume (ID: %s) not found", *volumeID))
+	}
+
+	return &output.Volumes[0], nil
+}
+
+// storageDeviceName is the device name for the BTRFS storage volume
+const storageDeviceName = "/dev/xvdf"
+
+func (p *provider) getStorageVolume(ctx context.Context, instance *ec2types.Instance) (*ec2types.Volume, error) {
+	var volumeID *string
+	for _, m := range instance.BlockDeviceMappings {
+		if fn.ValueOf(m.DeviceName) == storageDeviceName && m.Ebs != nil {
+			volumeID = m.Ebs.VolumeId
+			break
+		}
+	}
+
+	if volumeID == nil {
+		return nil, errors.New("storage volume not found (device: " + storageDeviceName + ")")
+	}
+
+	// Get current volume info
 	output, err := p.ec2Client.DescribeVolumes(ctx, &ec2.DescribeVolumesInput{
 		VolumeIds: []string{*volumeID},
 	})
@@ -382,21 +415,35 @@ func (p *provider) IncreaseVolumeSize(ctx context.Context, machineID string, new
 		return err
 	}
 
-	volume, err := p.getRootVolume(ctx, instance)
+	// Get the storage volume (not root volume) - this is the BTRFS volume for snapshots
+	volume, err := p.getStorageVolume(ctx, instance)
 	if err != nil {
+		// If storage volume doesn't exist, check if root volume is large enough
+		// This handles single-volume configurations where root serves as storage
+		rootVolume, rootErr := p.getRootVolume(ctx, instance)
+		if rootErr != nil {
+			return err // Return original storage volume error
+		}
+		rootSize := fn.ValueOf(rootVolume.Size)
+		if rootSize >= newSize {
+			// Root volume is large enough, no resize needed
+			return nil
+		}
+		// Root exists but storage doesn't - this is an unexpected state
 		return err
 	}
 
 	currentSize := fn.ValueOf(volume.Size)
-	if newSize < currentSize {
-		return fmt.Errorf("new size (%d GB) must be greater than current size (%d GB)", newSize, currentSize)
+	if newSize <= currentSize {
+		// Already at or above requested size, nothing to do
+		return nil
 	}
 
 	if _, err = p.ec2Client.ModifyVolume(ctx, &ec2.ModifyVolumeInput{
 		VolumeId: volume.VolumeId,
 		Size:     &newSize,
 	}); err != nil {
-		return errors.Wrap(fmt.Sprintf("failed to increase volume's (ID: %s) size", *volume.VolumeId), err)
+		return errors.Wrap(fmt.Sprintf("failed to increase storage volume's (ID: %s) size", *volume.VolumeId), err)
 	}
 
 	return nil
