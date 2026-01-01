@@ -18,6 +18,53 @@ import { createEnvironment } from '@/app/actions/environment.actions'
 import type { EnvironmentCreateRequest, Visibility } from '@kloudlite/types'
 import { VisibilitySelector } from '@/components/visibility-selector'
 
+// Format backend error messages into user-friendly text
+function formatErrorMessage(error: string): string {
+  if (!error) return 'An error occurred'
+
+  // Try to parse as JSON if it looks like JSON
+  if (error.startsWith('{') || error.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(error)
+      // Extract details or error message
+      const message = parsed.details || parsed.error || parsed.message || error
+      return formatErrorMessage(message)
+    } catch {
+      // Not valid JSON, continue with string parsing
+    }
+  }
+
+  // Handle WorkMachine stopped state error
+  const workMachineStoppedMatch = error.match(/WorkMachine '([^']+)' is in '([^']+)' state/)
+  if (workMachineStoppedMatch) {
+    const state = workMachineStoppedMatch[2]
+    if (state === 'stopped') {
+      return 'Your WorkMachine is stopped. Please start your WorkMachine first before creating environments.'
+    }
+    return `Your WorkMachine is in '${state}' state. Please wait for it to be ready.`
+  }
+
+  // Handle admission webhook errors - extract the meaningful part
+  if (error.includes('admission webhook')) {
+    const reasonMatch = error.match(/denied the request: (.+)/)
+    if (reasonMatch) {
+      return formatErrorMessage(reasonMatch[1])
+    }
+  }
+
+  // Handle "cannot activate environment" prefix
+  if (error.startsWith('cannot activate environment:')) {
+    return formatErrorMessage(error.replace('cannot activate environment:', '').trim())
+  }
+
+  // Handle "failed to create resource:" prefix
+  if (error.startsWith('failed to create resource:')) {
+    return formatErrorMessage(error.replace('failed to create resource:', '').trim())
+  }
+
+  return error
+}
+
 interface CreateEnvironmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -115,12 +162,12 @@ export function CreateEnvironmentDialog({
           onSuccess()
         }
       } else {
-        setError(result.error || 'Failed to create environment. Please try again.')
+        setError(formatErrorMessage(result.error || 'Failed to create environment. Please try again.'))
       }
     } catch (err) {
       console.error('Failed to create environment:', err)
       const error = err instanceof Error ? err : new Error('Failed to create environment')
-      setError(error.message)
+      setError(formatErrorMessage(error.message))
     } finally {
       setLoading(false)
     }
