@@ -367,15 +367,14 @@ export async function updateEnvironmentAccess(
   data: { visibility: 'private' | 'shared' | 'open'; sharedWith?: string[] },
 ) {
   try {
-    const result = await environmentService.updateEnvironment(name, {
+    // Use the existing updateEnvironment action with partial spec
+    const result = await updateEnvironment(name, {
       spec: {
         visibility: data.visibility,
         sharedWith: data.sharedWith,
       },
     })
-    revalidatePath('/environments')
-    revalidatePath(`/environments/${name}`)
-    return { success: true, data: result }
+    return result
   } catch (err) {
     console.error('Update environment access error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
