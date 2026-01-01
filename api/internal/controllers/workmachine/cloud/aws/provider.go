@@ -239,6 +239,10 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	// Convert Kubernetes-friendly machine type name (e.g., "m5-xlarge") to AWS instance type (e.g., "m5.xlarge")
 	awsInstanceType := strings.ReplaceAll(wm.Spec.MachineType, "-", ".")
 
+	// Root volume is fixed at 50GB for OS only
+	// Storage volume (btrfs) uses VolumeSize from spec
+	rootVolumeSize := int32(50)
+
 	runInput := &ec2.RunInstancesInput{
 		ImageId:          fn.Ptr(ami),
 		InstanceType:     ec2types.InstanceType(awsInstanceType),
@@ -248,7 +252,17 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		UserData:         fn.Ptr(base64.StdEncoding.EncodeToString(userData)),
 		BlockDeviceMappings: []ec2types.BlockDeviceMapping{
 			{
+				// Root volume - fixed 50GB for OS
 				DeviceName: amiInfo.Images[0].RootDeviceName,
+				Ebs: &ec2types.EbsBlockDevice{
+					VolumeSize:          &rootVolumeSize,
+					VolumeType:          ec2types.VolumeTypeGp3,
+					DeleteOnTermination: fn.Ptr(true),
+				},
+			},
+			{
+				// Storage volume - btrfs formatted for snapshots
+				DeviceName: fn.Ptr("/dev/xvdf"),
 				Ebs: &ec2types.EbsBlockDevice{
 					VolumeSize:          wm.Spec.VolumeSize,
 					VolumeType:          volumeType,
@@ -281,7 +295,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		AvailabilityZone: aws.ToString(instance.Placement.AvailabilityZone),
 		Message:          "Instance created successfully",
 		Region:           p.Region,
-		RootVolumeSize:   *wm.Spec.VolumeSize,
+		StorageVolumeSize: *wm.Spec.VolumeSize,
 	}, nil
 }
 

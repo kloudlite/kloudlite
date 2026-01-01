@@ -45,8 +45,12 @@ export class WorkMachineService {
   /**
    * Create current user's work machine
    */
-  async createMyWorkMachine(machineType: string): Promise<WorkMachine> {
-    return apiClient.post<WorkMachine>(`${this.baseUrl}/my`, { machineType })
+  async createMyWorkMachine(machineType: string, volumeSize?: number): Promise<WorkMachine> {
+    const body: { machineType: string; volumeSize?: number } = { machineType }
+    if (volumeSize !== undefined) {
+      body.volumeSize = volumeSize
+    }
+    return apiClient.post<WorkMachine>(`${this.baseUrl}/my`, body)
   }
 
   /**

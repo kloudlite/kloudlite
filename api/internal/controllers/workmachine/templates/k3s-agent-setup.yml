@@ -30,6 +30,49 @@ log "Disabling swap and preparing system..."
 swapoff -a || true
 sed -i '/ swap / s/^/#/' /etc/fstab || true
 
+# --- BTRFS Storage Setup ---
+log "Setting up btrfs storage volume..."
+
+# Wait for btrfs volume to attach (appears as nvme1n1 on Nitro instances or xvdf on others)
+for i in {1..60}; do
+  if [ -b /dev/nvme1n1 ]; then
+    BTRFS_DEV=/dev/nvme1n1
+    break
+  elif [ -b /dev/xvdf ]; then
+    BTRFS_DEV=/dev/xvdf
+    break
+  fi
+  log "Waiting for btrfs volume to attach... ($i/60)"
+  sleep 2
+done
+
+if [ -z "${BTRFS_DEV:-}" ]; then
+  log "ERROR: BTRFS volume not found after 120 seconds"
+  exit 1
+fi
+
+log "Found btrfs volume at $BTRFS_DEV"
+
+# Format as btrfs if not already formatted
+if ! blkid "$BTRFS_DEV" 2>/dev/null | grep -q btrfs; then
+  log "Formatting $BTRFS_DEV as btrfs..."
+  mkfs.btrfs -f "$BTRFS_DEV"
+fi
+
+# Create mount point and mount with compression
+mkdir -p /var/lib/kloudlite/storage
+mount -o noatime,compress=zstd "$BTRFS_DEV" /var/lib/kloudlite/storage
+
+# Add to fstab for persistence across reboots
+if ! grep -q "/var/lib/kloudlite/storage" /etc/fstab; then
+  echo "$BTRFS_DEV /var/lib/kloudlite/storage btrfs noatime,compress=zstd 0 0" >> /etc/fstab
+fi
+
+# Create directory structure for environments and snapshots
+mkdir -p /var/lib/kloudlite/storage/{environments,workspaces,.snapshots}
+
+log "BTRFS storage ready at /var/lib/kloudlite/storage"
+
 log "Starting K3s agent setup..."
 
 export K3S_VERSION={{.K3sVersion}}

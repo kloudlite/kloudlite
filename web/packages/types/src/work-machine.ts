@@ -23,6 +23,11 @@ export interface WorkMachineSpec {
   state: MachineState
   sshPublicKeys?: string[]
   autoShutdown?: AutoShutdownConfig
+  // Volume size for btrfs storage in GB (default: 100, min: 50, max: 1000)
+  // Root volume is fixed at 50GB for OS only
+  volumeSize?: number
+  // Volume type (e.g., gp3, gp2, io1 for AWS)
+  volumeType?: string
 }
 
 export type MachineState = 'starting' | 'running' | 'stopping' | 'stopped' | 'disabled' | 'errored'
@@ -49,6 +54,12 @@ export interface WorkMachineStatus {
   sshPublicKey?: string
   allIdleSince?: string
   isAutoStopped?: boolean
+  // Storage volume size in GB (btrfs volume for PVCs and snapshots)
+  storageVolumeSize?: number
+  // Public IP of the instance
+  publicIP?: string
+  // Private IP of the instance
+  privateIP?: string
 }
 
 // API Response types
