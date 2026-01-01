@@ -229,9 +229,30 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	// Create SnapshotRequest for each PVC
 	var pvcSnapshots []snapshotv1.PVCSnapshotInfo
 	for _, pvc := range pvcList.Items {
-		// Determine source path from PVC
-		// Local-path-provisioner uses /var/lib/kloudlite/storage/environments/<namespace>/<pvc>
-		sourcePath := filepath.Join("/var/lib/kloudlite/storage/environments", namespace, pvc.Name)
+		// Get the actual PV path from the PersistentVolume
+		pvName := pvc.Spec.VolumeName
+		if pvName == "" {
+			logger.Warn("PVC has no bound PV, skipping", zap.String("pvc", pvc.Name))
+			continue
+		}
+
+		pv := &corev1.PersistentVolume{}
+		if err := r.Get(ctx, client.ObjectKey{Name: pvName}, pv); err != nil {
+			logger.Error("Failed to get PV", zap.Error(err), zap.String("pv", pvName))
+			continue
+		}
+
+		// Get the actual host path from the PV (local-path-provisioner uses spec.local.path)
+		var sourcePath string
+		if pv.Spec.Local != nil && pv.Spec.Local.Path != "" {
+			sourcePath = pv.Spec.Local.Path
+		} else if pv.Spec.HostPath != nil && pv.Spec.HostPath.Path != "" {
+			sourcePath = pv.Spec.HostPath.Path
+		} else {
+			logger.Warn("PV has no local or hostPath, skipping", zap.String("pv", pvName))
+			continue
+		}
+
 		pvcSnapshotPath := filepath.Join(snapshotPath, "pvcs", pvc.Name)
 
 		// Create SnapshotRequest
@@ -270,6 +291,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		pvcSnapshots = append(pvcSnapshots, snapshotv1.PVCSnapshotInfo{
 			PVCName:      pvc.Name,
 			SnapshotPath: pvcSnapshotPath,
+			SourcePath:   sourcePath,
 		})
 	}
 
@@ -595,8 +617,31 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 
 	// Create restore SnapshotRequests for each PVC snapshot
 	for _, pvcInfo := range snapshot.Status.PVCSnapshots {
-		// Target path is the original PVC location
-		targetPath := filepath.Join("/var/lib/kloudlite/storage/environments", namespace, pvcInfo.PVCName)
+		// Target path is the original PV location (stored in SourcePath)
+		targetPath := pvcInfo.SourcePath
+		if targetPath == "" {
+			// Fallback: look up PV path if not stored in snapshot
+			pvcList := &corev1.PersistentVolumeClaimList{}
+			if err := r.List(ctx, pvcList, client.InNamespace(namespace)); err == nil {
+				for _, pvc := range pvcList.Items {
+					if pvc.Name == pvcInfo.PVCName && pvc.Spec.VolumeName != "" {
+						pv := &corev1.PersistentVolume{}
+						if err := r.Get(ctx, client.ObjectKey{Name: pvc.Spec.VolumeName}, pv); err == nil {
+							if pv.Spec.Local != nil && pv.Spec.Local.Path != "" {
+								targetPath = pv.Spec.Local.Path
+							} else if pv.Spec.HostPath != nil && pv.Spec.HostPath.Path != "" {
+								targetPath = pv.Spec.HostPath.Path
+							}
+						}
+						break
+					}
+				}
+			}
+		}
+		if targetPath == "" {
+			logger.Error("Could not determine target path for PVC", zap.String("pvc", pvcInfo.PVCName))
+			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Could not determine target path for PVC %s", pvcInfo.PVCName), logger)
+		}
 
 		restoreReq := &snapshotv1.SnapshotRequest{
 			ObjectMeta: metav1.ObjectMeta{
