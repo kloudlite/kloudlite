@@ -196,6 +196,10 @@ type PVCSnapshotInfo struct {
 	// SnapshotPath is the path to this PVC's snapshot
 	SnapshotPath string `json:"snapshotPath"`
 
+	// SourcePath is the original PV host path (for restore)
+	// +optional
+	SourcePath string `json:"sourcePath,omitempty"`
+
 	// SizeBytes is the size of this PVC snapshot
 	SizeBytes int64 `json:"sizeBytes"`
 }
