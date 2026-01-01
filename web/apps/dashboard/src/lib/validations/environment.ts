@@ -123,7 +123,7 @@ export const fileSchema = z.object({
 // Import environment config schema
 export const importEnvironmentConfigSchema = z.object({
   newEnvName: kubernetesNameSchema,
-  targetNamespace: kubernetesNameSchema,
+  targetNamespace: z.string().optional(), // Webhook will auto-generate if empty
   currentUser: z.string(),
   exportData: z.object({
     configs: z.record(z.string()).optional(),

@@ -89,12 +89,10 @@ export function ImportEnvironmentDialog({
     setIsSubmitting(true)
 
     try {
-      // Extract namespace from current user
-      const targetNamespace = `env-${currentUser.replace('@', '-').replace('.', '-')}`
-
+      // Don't pass targetNamespace - let the webhook auto-generate it
       const result = await importEnvironmentConfig(
         newEnvName.trim(),
-        targetNamespace,
+        '', // Webhook will generate: env-{owner}--{name}
         currentUser,
         {
           configs: parsedData.configs,
