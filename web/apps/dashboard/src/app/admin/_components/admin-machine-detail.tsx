@@ -230,7 +230,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
               <h2 className="text-lg font-medium">Active Environments</h2>
             </div>
             <div className="divide-border divide-y">
-              {machine.environments.map((environment) => (
+              {(machine.environments || []).map((environment) => (
                 <div key={environment.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-4">
                     <Server className="text-muted-foreground h-5 w-5" />
