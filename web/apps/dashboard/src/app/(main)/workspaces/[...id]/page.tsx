@@ -2,11 +2,12 @@ import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { LocalTime } from '@/components/local-time'
-import { Package, ArrowRight, Globe, ExternalLink, Activity } from 'lucide-react'
+import { Package, ArrowRight, Globe, ExternalLink, Activity, Camera } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { WorkspaceConnectOptions } from '../_components/workspace-connect-options'
 import { WorkspaceActions } from '../_components/workspace-actions'
 import { PackagesSheet } from '../_components/packages-sheet'
+import { SnapshotsSheet } from '../_components/snapshots-sheet'
 import { WorkspaceMetrics } from '../_components/workspace-metrics'
 import { CodeAnalysisCard } from '../_components/code-analysis-card'
 import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
@@ -186,6 +187,37 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                       <span className="flex items-center gap-2">
                         <Package className="h-4 w-4" />
                         Manage Packages
+                      </span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Snapshots */}
+            <div className="bg-card rounded-lg border">
+              <div className="border-b p-4">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/10 rounded-lg p-2">
+                    <Camera className="text-primary h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold">Snapshots</h3>
+                    <p className="text-muted-foreground text-xs">
+                      Save and restore workspace state
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4">
+                <SnapshotsSheet
+                  workspace={workspace}
+                  trigger={
+                    <Button variant="outline" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <Camera className="h-4 w-4" />
+                        Manage Snapshots
                       </span>
                       <ArrowRight className="h-4 w-4" />
                     </Button>
