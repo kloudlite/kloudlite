@@ -153,6 +153,9 @@ spec:
                     snapshotPath:
                       description: SnapshotPath is the path to this PVC's snapshot
                       type: string
+                    sourcePath:
+                      description: SourcePath is the original PV host path (for restore)
+                      type: string
                   required:
                   - pvcName
                   - sizeBytes
