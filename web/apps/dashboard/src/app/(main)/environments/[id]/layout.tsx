@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
-import { environmentService } from '@/lib/services/environment.service'
+import { getEnvironmentDetails } from '@/lib/services/dashboard.service'
 import { EnvironmentStatusIndicator } from '@/components/environment-status-indicator'
 
 interface LayoutProps {
@@ -44,10 +44,12 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   // Await params (required in Next.js 15)
   const { id } = await params
 
-  // Fetch real environment data
+  // Fetch real environment data using the cached getEnvironmentDetails
+  // This allows child pages (like services) to share the same cached call
   let environment
   try {
-    const env = await environmentService.getEnvironment(id)
+    const data = await getEnvironmentDetails(id)
+    const env = data.environment
 
     environment = {
       id,
