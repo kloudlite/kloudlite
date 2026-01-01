@@ -9,7 +9,9 @@ import (
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,9 +28,10 @@ import (
 )
 
 const (
-	snapshotFinalizer = "snapshots.kloudlite.io/finalizer"
-	snapshotsBasePath = "/var/lib/kloudlite/storage/.snapshots"
-	metadataBasePath  = "/var/lib/kloudlite/storage/.snapshots-metadata"
+	snapshotFinalizer  = "snapshots.kloudlite.io/finalizer"
+	snapshotsBasePath  = "/var/lib/kloudlite/storage/.snapshots"
+	metadataBasePath   = "/var/lib/kloudlite/storage/.snapshots-metadata"
+	workspaceHomePath  = "/var/lib/kloudlite/home/workspaces"
 )
 
 // SnapshotReconciler reconciles Snapshot objects
@@ -97,6 +100,16 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req reconcile.Reques
 func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
 	logger.Info("Snapshot is pending, starting creation")
 
+	// Determine snapshot type
+	if snapshot.Spec.WorkspaceRef != nil {
+		return r.handleWorkspacePending(ctx, snapshot, logger)
+	}
+
+	// Environment snapshot
+	if snapshot.Spec.EnvironmentRef == nil {
+		return r.updateStatusFailed(ctx, snapshot, "Either environmentRef or workspaceRef must be set", logger)
+	}
+
 	envName := snapshot.Spec.EnvironmentRef.Name
 
 	// Fetch the environment
@@ -109,8 +122,64 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 	// Set state to Creating
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 		snapshot.Status.State = snapshotv1.SnapshotStateCreating
-		snapshot.Status.Message = "Preparing to create snapshot"
+		snapshot.Status.Message = "Preparing to create environment snapshot"
 		snapshot.Status.WorkMachineName = env.Spec.WorkMachineName
+		snapshot.Status.SnapshotType = snapshotv1.SnapshotTypeEnvironment
+		snapshot.Status.TargetName = envName
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update status to Creating", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{Requeue: true}, nil
+}
+
+// handleWorkspacePending starts the workspace snapshot creation process
+func (r *SnapshotReconciler) handleWorkspacePending(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
+	wsRef := snapshot.Spec.WorkspaceRef
+	wmNamespace := fmt.Sprintf("wm-%s", snapshot.Spec.OwnedBy)
+
+	logger.Info("Starting workspace snapshot",
+		zap.String("workspace", wsRef.Name),
+		zap.String("workmachine", wsRef.WorkmachineName))
+
+	// Fetch the workspace
+	workspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: wsRef.Name, Namespace: wmNamespace}, workspace); err != nil {
+		logger.Error("Failed to get workspace", zap.Error(err), zap.String("workspace", wsRef.Name))
+		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Workspace not found: %s", wsRef.Name), logger)
+	}
+
+	// Validate ownership
+	if workspace.Spec.OwnedBy != snapshot.Spec.OwnedBy {
+		return r.updateStatusFailed(ctx, snapshot, "Workspace is not owned by the snapshot creator", logger)
+	}
+
+	// Store previous workspace status and suspend the workspace
+	previousStatus := workspace.Spec.Status
+	wasSuspended := previousStatus == "suspended"
+
+	if !wasSuspended {
+		// Suspend the workspace
+		logger.Info("Suspending workspace for snapshot", zap.String("workspace", wsRef.Name))
+		workspace.Spec.Status = "suspended"
+		if err := r.Update(ctx, workspace); err != nil {
+			logger.Error("Failed to suspend workspace", zap.Error(err))
+			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to suspend workspace: %v", err), logger)
+		}
+	}
+
+	// Set state to Creating
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+		snapshot.Status.State = snapshotv1.SnapshotStateCreating
+		snapshot.Status.Message = "Suspending workspace and preparing to create snapshot"
+		snapshot.Status.WorkMachineName = wmNamespace
+		snapshot.Status.SnapshotType = snapshotv1.SnapshotTypeWorkspace
+		snapshot.Status.TargetName = wsRef.Name
+		snapshot.Status.WorkspaceName = wsRef.Name
+		snapshot.Status.WorkspaceWasSuspended = wasSuspended
+		snapshot.Status.PreviousWorkspaceStatus = previousStatus
 		return nil
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Creating", zap.Error(err))
@@ -122,6 +191,16 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 
 // handleCreating manages the snapshot creation process
 func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
+	// Dispatch based on snapshot type
+	if snapshot.Status.SnapshotType == snapshotv1.SnapshotTypeWorkspace {
+		return r.handleWorkspaceCreating(ctx, snapshot, logger)
+	}
+
+	// Environment snapshot
+	if snapshot.Spec.EnvironmentRef == nil {
+		return r.updateStatusFailed(ctx, snapshot, "Environment reference is required for environment snapshots", logger)
+	}
+
 	envName := snapshot.Spec.EnvironmentRef.Name
 
 	// Fetch the environment
@@ -255,6 +334,235 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	return reconcile.Result{}, nil
 }
 
+// handleWorkspaceCreating manages the workspace snapshot creation process
+func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
+	wsRef := snapshot.Spec.WorkspaceRef
+	wmNamespace := snapshot.Status.WorkMachineName
+
+	logger.Info("Creating workspace snapshot",
+		zap.String("workspace", wsRef.Name),
+		zap.String("namespace", wmNamespace))
+
+	// Fetch the workspace to check pod status
+	workspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: wsRef.Name, Namespace: wmNamespace}, workspace); err != nil {
+		logger.Error("Failed to get workspace", zap.Error(err))
+		return r.handleWorkspaceSnapshotFailure(ctx, snapshot, fmt.Sprintf("Workspace not found: %s", wsRef.Name), logger)
+	}
+
+	// Wait for workspace pod to terminate
+	podName := fmt.Sprintf("workspace-%s", wsRef.Name)
+	pod := &corev1.Pod{}
+	podErr := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: wmNamespace}, pod)
+
+	if podErr == nil {
+		// Pod still exists, wait for it to terminate
+		logger.Info("Waiting for workspace pod to terminate", zap.String("pod", podName))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Waiting for workspace pod to terminate..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status message", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	if !apierrors.IsNotFound(podErr) {
+		logger.Error("Failed to check workspace pod", zap.Error(podErr))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	// Pod is terminated, proceed with snapshot
+
+	// Generate snapshot path based on timestamp
+	snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
+	snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("ws-%s-%s", wsRef.Name, snapshotTimestamp))
+
+	// Workspace home directory path
+	sourcePath := filepath.Join(workspaceHomePath, wsRef.Name)
+	workspaceSnapshotPath := filepath.Join(snapshotPath, "home")
+
+	// Create SnapshotRequest for workspace home directory
+	snapshotReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-home", snapshot.Name),
+			Namespace: wmNamespace,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+				"snapshots.kloudlite.io/workspace": wsRef.Name,
+			},
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:     snapshotv1.SnapshotOperationCreate,
+			SourcePath:    sourcePath,
+			SnapshotPath:  workspaceSnapshotPath,
+			SnapshotRef:   snapshot.Name,
+			WorkspaceName: wsRef.Name,
+			ReadOnly:      true,
+		},
+	}
+
+	// Set owner reference
+	if err := controllerutil.SetControllerReference(snapshot, snapshotReq, r.Scheme); err != nil {
+		logger.Error("Failed to set owner reference", zap.Error(err))
+	}
+
+	// Create SnapshotRequest
+	if err := r.Create(ctx, snapshotReq); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			logger.Error("Failed to create SnapshotRequest", zap.Error(err))
+			return r.handleWorkspaceSnapshotFailure(ctx, snapshot, "Failed to create SnapshotRequest for workspace home", logger)
+		}
+	}
+
+	// Export workspace metadata if requested
+	var packageRequestsPath string
+	if snapshot.Spec.IncludeMetadata {
+		var err error
+		packageRequestsPath, err = r.exportWorkspaceMetadata(ctx, wsRef.Name, wmNamespace, snapshotPath, logger)
+		if err != nil {
+			logger.Warn("Failed to export workspace metadata, continuing anyway", zap.Error(err))
+		}
+	}
+
+	// Check if SnapshotRequest is complete
+	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, logger)
+	if err != nil {
+		logger.Error("Failed to check SnapshotRequest status", zap.Error(err))
+		return r.handleWorkspaceSnapshotFailure(ctx, snapshot, fmt.Sprintf("SnapshotRequest failed: %v", err), logger)
+	}
+
+	if !allComplete {
+		// Update status with progress
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Creating workspace snapshot..."
+			snapshot.Status.SnapshotPath = snapshotPath
+			snapshot.Status.PackageRequestsPath = packageRequestsPath
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status with progress", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	// Snapshot complete - get size from SnapshotRequest
+	var totalSize int64
+	snapshotReqList := &snapshotv1.SnapshotRequestList{}
+	if err := r.List(ctx, snapshotReqList, client.MatchingLabels{"snapshots.kloudlite.io/snapshot": snapshot.Name}); err == nil {
+		for _, req := range snapshotReqList.Items {
+			totalSize += req.Status.SizeBytes
+		}
+	}
+
+	// Resume workspace if it wasn't already suspended
+	if !snapshot.Status.WorkspaceWasSuspended {
+		logger.Info("Resuming workspace after snapshot", zap.String("workspace", wsRef.Name))
+
+		// Refetch workspace to get latest version
+		if err := r.Get(ctx, client.ObjectKey{Name: wsRef.Name, Namespace: wmNamespace}, workspace); err == nil {
+			originalStatus := snapshot.Status.PreviousWorkspaceStatus
+			if originalStatus == "" {
+				originalStatus = "active"
+			}
+			workspace.Spec.Status = originalStatus
+			if err := r.Update(ctx, workspace); err != nil {
+				logger.Warn("Failed to resume workspace", zap.Error(err))
+				// Don't fail the snapshot - it was created successfully
+			}
+		}
+	}
+
+	// Update status to Ready
+	now := metav1.Now()
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+		snapshot.Status.State = snapshotv1.SnapshotStateReady
+		snapshot.Status.Message = "Workspace snapshot created successfully"
+		snapshot.Status.SnapshotPath = snapshotPath
+		snapshot.Status.SizeBytes = totalSize
+		snapshot.Status.SizeHuman = formatSize(totalSize)
+		snapshot.Status.CreatedAt = &now
+		snapshot.Status.PackageRequestsPath = packageRequestsPath
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update status to Ready", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Workspace snapshot created successfully",
+		zap.String("workspace", wsRef.Name),
+		zap.String("path", snapshotPath),
+		zap.Int64("sizeBytes", totalSize))
+
+	return reconcile.Result{}, nil
+}
+
+// handleWorkspaceSnapshotFailure handles a workspace snapshot failure and resumes the workspace
+func (r *SnapshotReconciler) handleWorkspaceSnapshotFailure(ctx context.Context, snapshot *snapshotv1.Snapshot, message string, logger *zap.Logger) (reconcile.Result, error) {
+	// Try to resume workspace if we suspended it
+	if !snapshot.Status.WorkspaceWasSuspended && snapshot.Spec.WorkspaceRef != nil {
+		wsRef := snapshot.Spec.WorkspaceRef
+		wmNamespace := snapshot.Status.WorkMachineName
+
+		workspace := &workspacev1.Workspace{}
+		if err := r.Get(ctx, client.ObjectKey{Name: wsRef.Name, Namespace: wmNamespace}, workspace); err == nil {
+			originalStatus := snapshot.Status.PreviousWorkspaceStatus
+			if originalStatus == "" {
+				originalStatus = "active"
+			}
+			workspace.Spec.Status = originalStatus
+			if err := r.Update(ctx, workspace); err != nil {
+				logger.Warn("Failed to resume workspace after snapshot failure", zap.Error(err))
+			} else {
+				logger.Info("Resumed workspace after snapshot failure", zap.String("workspace", wsRef.Name))
+			}
+		}
+	}
+
+	return r.updateStatusFailed(ctx, snapshot, message, logger)
+}
+
+// exportWorkspaceMetadata exports workspace-specific metadata (PackageRequests, settings)
+func (r *SnapshotReconciler) exportWorkspaceMetadata(ctx context.Context, workspaceName, wmNamespace, snapshotPath string, logger *zap.Logger) (string, error) {
+	metadataPath := filepath.Join(snapshotPath, "metadata")
+
+	// Create metadata directory
+	if err := os.MkdirAll(metadataPath, 0755); err != nil {
+		return "", fmt.Errorf("failed to create metadata directory: %w", err)
+	}
+
+	// Export PackageRequests for this workspace
+	packageRequests := &packagesv1.PackageRequestList{}
+	if err := r.List(ctx, packageRequests, client.InNamespace(wmNamespace)); err == nil {
+		// Filter to only include PackageRequests for this workspace
+		var filtered []packagesv1.PackageRequest
+		for _, pr := range packageRequests.Items {
+			if pr.Spec.WorkspaceRef == workspaceName {
+				filtered = append(filtered, pr)
+			}
+		}
+
+		packageRequestsPath := filepath.Join(metadataPath, "package-requests.json")
+		if err := exportToJSON(packageRequestsPath, filtered); err != nil {
+			logger.Warn("Failed to export PackageRequests", zap.Error(err))
+		} else {
+			logger.Info("Exported PackageRequests", zap.Int("count", len(filtered)))
+		}
+	}
+
+	// Export Workspace resource itself (settings, config, etc.)
+	workspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: workspaceName, Namespace: wmNamespace}, workspace); err == nil {
+		workspacePath := filepath.Join(metadataPath, "workspace.json")
+		if err := exportToJSON(workspacePath, workspace); err != nil {
+			logger.Warn("Failed to export Workspace", zap.Error(err))
+		} else {
+			logger.Info("Exported Workspace settings")
+		}
+	}
+
+	return metadataPath, nil
+}
+
 // handleDeleting handles the snapshot deletion
 func (r *SnapshotReconciler) handleDeleting(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
 	// List and wait for all SnapshotRequests to be deleted
@@ -289,27 +597,57 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 		}
 	}
 
-	// Create delete SnapshotRequests for each PVC snapshot
-	for _, pvcInfo := range snapshot.Status.PVCSnapshots {
-		deleteReq := &snapshotv1.SnapshotRequest{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-delete-%s", snapshot.Name, pvcInfo.PVCName),
-				Namespace: snapshot.Status.WorkMachineName,
-				Labels: map[string]string{
-					"snapshots.kloudlite.io/snapshot":  snapshot.Name,
-					"snapshots.kloudlite.io/operation": "delete",
+	// Handle deletion based on snapshot type
+	if snapshot.Status.SnapshotType == snapshotv1.SnapshotTypeWorkspace {
+		// Delete workspace snapshot
+		if snapshot.Status.SnapshotPath != "" {
+			workspaceSnapshotPath := filepath.Join(snapshot.Status.SnapshotPath, "home")
+			deleteReq := &snapshotv1.SnapshotRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-delete-home", snapshot.Name),
+					Namespace: snapshot.Status.WorkMachineName,
+					Labels: map[string]string{
+						"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+						"snapshots.kloudlite.io/operation": "delete",
+					},
 				},
-			},
-			Spec: snapshotv1.SnapshotRequestSpec{
-				Operation:    snapshotv1.SnapshotOperationDelete,
-				SnapshotPath: pvcInfo.SnapshotPath,
-				SnapshotRef:  snapshot.Name,
-			},
-		}
+				Spec: snapshotv1.SnapshotRequestSpec{
+					Operation:     snapshotv1.SnapshotOperationDelete,
+					SnapshotPath:  workspaceSnapshotPath,
+					SnapshotRef:   snapshot.Name,
+					WorkspaceName: snapshot.Status.WorkspaceName,
+				},
+			}
 
-		if err := r.Create(ctx, deleteReq); err != nil {
-			if !apierrors.IsAlreadyExists(err) {
-				logger.Warn("Failed to create delete SnapshotRequest", zap.Error(err))
+			if err := r.Create(ctx, deleteReq); err != nil {
+				if !apierrors.IsAlreadyExists(err) {
+					logger.Warn("Failed to create delete SnapshotRequest for workspace", zap.Error(err))
+				}
+			}
+		}
+	} else {
+		// Create delete SnapshotRequests for each PVC snapshot (environment)
+		for _, pvcInfo := range snapshot.Status.PVCSnapshots {
+			deleteReq := &snapshotv1.SnapshotRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-delete-%s", snapshot.Name, pvcInfo.PVCName),
+					Namespace: snapshot.Status.WorkMachineName,
+					Labels: map[string]string{
+						"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+						"snapshots.kloudlite.io/operation": "delete",
+					},
+				},
+				Spec: snapshotv1.SnapshotRequestSpec{
+					Operation:    snapshotv1.SnapshotOperationDelete,
+					SnapshotPath: pvcInfo.SnapshotPath,
+					SnapshotRef:  snapshot.Name,
+				},
+			}
+
+			if err := r.Create(ctx, deleteReq); err != nil {
+				if !apierrors.IsAlreadyExists(err) {
+					logger.Warn("Failed to create delete SnapshotRequest", zap.Error(err))
+				}
 			}
 		}
 	}

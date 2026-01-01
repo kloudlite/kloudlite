@@ -16,24 +16,27 @@ import (
 
 // SnapshotHandlers handles HTTP requests for Snapshot resources
 type SnapshotHandlers struct {
-	snapshotRepo repository.SnapshotRepository
-	envRepo      repository.EnvironmentRepository
-	k8sClient    client.Client
-	logger       *zap.Logger
+	snapshotRepo  repository.SnapshotRepository
+	envRepo       repository.EnvironmentRepository
+	workspaceRepo repository.WorkspaceRepository
+	k8sClient     client.Client
+	logger        *zap.Logger
 }
 
 // NewSnapshotHandlers creates a new SnapshotHandlers
 func NewSnapshotHandlers(
 	snapshotRepo repository.SnapshotRepository,
 	envRepo repository.EnvironmentRepository,
+	workspaceRepo repository.WorkspaceRepository,
 	k8sClient client.Client,
 	logger *zap.Logger,
 ) *SnapshotHandlers {
 	return &SnapshotHandlers{
-		snapshotRepo: snapshotRepo,
-		envRepo:      envRepo,
-		k8sClient:    k8sClient,
-		logger:       logger,
+		snapshotRepo:  snapshotRepo,
+		envRepo:       envRepo,
+		workspaceRepo: workspaceRepo,
+		k8sClient:     k8sClient,
+		logger:        logger,
 	}
 }
 
@@ -105,7 +108,7 @@ func (h *SnapshotHandlers) CreateSnapshot(c *gin.Context) {
 			},
 		},
 		Spec: snapshotv1.SnapshotSpec{
-			EnvironmentRef: snapshotv1.EnvironmentReference{
+			EnvironmentRef: &snapshotv1.EnvironmentReference{
 				Name: envName,
 			},
 			Description:     req.Description,
@@ -256,7 +259,12 @@ func (h *SnapshotHandlers) RestoreSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Determine target environment
+	// Determine target environment (only for environment snapshots)
+	if snapshot.Spec.EnvironmentRef == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Restore is only supported for environment snapshots"})
+		return
+	}
+
 	targetEnvName := req.TargetEnvironment
 	if targetEnvName == "" {
 		targetEnvName = snapshot.Spec.EnvironmentRef.Name
@@ -351,6 +359,152 @@ func (h *SnapshotHandlers) ListAllSnapshots(c *gin.Context) {
 	snapshots, err := h.snapshotRepo.ListByOwner(c.Request.Context(), username)
 	if err != nil {
 		h.logger.Error("Failed to list snapshots", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list snapshots"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"snapshots": snapshots.Items,
+		"count":     len(snapshots.Items),
+	})
+}
+
+// CreateWorkspaceSnapshotRequest is the request body for creating a workspace snapshot
+type CreateWorkspaceSnapshotRequest struct {
+	Description     string `json:"description,omitempty"`
+	IncludeMetadata bool   `json:"includeMetadata"`
+	KeepForDays     *int32 `json:"keepForDays,omitempty"`
+}
+
+// CreateWorkspaceSnapshot handles POST /api/v1/workspaces/:name/snapshots
+func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
+	workspaceName := c.Param("name")
+	if workspaceName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace name is required"})
+		return
+	}
+
+	var req CreateWorkspaceSnapshotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Allow empty body - use defaults
+		req = CreateWorkspaceSnapshotRequest{IncludeMetadata: true}
+	}
+
+	// Get authenticated user
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Determine workmachine namespace
+	wmNamespace := fmt.Sprintf("wm-%s", username)
+
+	// Verify workspace exists and user has access
+	workspace, err := h.workspaceRepo.Get(c.Request.Context(), workspaceName, wmNamespace)
+	if err != nil {
+		h.logger.Error("Failed to get workspace", zap.Error(err), zap.String("workspace", workspaceName))
+		c.JSON(http.StatusNotFound, gin.H{"error": "Workspace not found"})
+		return
+	}
+
+	// Check ownership
+	if workspace.Spec.OwnedBy != username {
+		h.logger.Warn("User attempting to snapshot workspace they don't own",
+			zap.String("user", username),
+			zap.String("workspace", workspaceName),
+			zap.String("owner", workspace.Spec.OwnedBy))
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to snapshot this workspace"})
+		return
+	}
+
+	// Generate snapshot name
+	timestamp := time.Now().UTC().Format("20060102-150405")
+	snapshotName := fmt.Sprintf("ws-%s-%s", workspaceName, timestamp)
+
+	// Build retention policy
+	var retentionPolicy *snapshotv1.RetentionPolicy
+	if req.KeepForDays != nil {
+		retentionPolicy = &snapshotv1.RetentionPolicy{
+			KeepForDays: req.KeepForDays,
+		}
+	}
+
+	// Create snapshot
+	snapshot := &snapshotv1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: snapshotName,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/workspace": workspaceName,
+				"kloudlite.io/owned-by":            username,
+			},
+		},
+		Spec: snapshotv1.SnapshotSpec{
+			WorkspaceRef: &snapshotv1.WorkspaceReference{
+				Name:            workspaceName,
+				WorkmachineName: workspace.Spec.WorkmachineName,
+			},
+			Description:     req.Description,
+			OwnedBy:         username,
+			IncludeMetadata: req.IncludeMetadata,
+			RetentionPolicy: retentionPolicy,
+		},
+	}
+
+	if err := h.snapshotRepo.Create(c.Request.Context(), snapshot); err != nil {
+		h.logger.Error("Failed to create workspace snapshot", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to create snapshot",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	h.logger.Info("Workspace snapshot created successfully",
+		zap.String("snapshot", snapshotName),
+		zap.String("workspace", workspaceName))
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":  "Workspace snapshot creation started",
+		"snapshot": snapshot,
+	})
+}
+
+// ListWorkspaceSnapshots handles GET /api/v1/workspaces/:name/snapshots
+func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
+	workspaceName := c.Param("name")
+	if workspaceName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace name is required"})
+		return
+	}
+
+	// Get authenticated user
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Determine workmachine namespace
+	wmNamespace := fmt.Sprintf("wm-%s", username)
+
+	// Verify workspace exists and user has access
+	workspace, err := h.workspaceRepo.Get(c.Request.Context(), workspaceName, wmNamespace)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Workspace not found"})
+		return
+	}
+
+	// Check ownership
+	if workspace.Spec.OwnedBy != username {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to view snapshots for this workspace"})
+		return
+	}
+
+	// List snapshots for this workspace
+	snapshots, err := h.snapshotRepo.ListByWorkspace(c.Request.Context(), workspaceName)
+	if err != nil {
+		h.logger.Error("Failed to list workspace snapshots", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list snapshots"})
 		return
 	}

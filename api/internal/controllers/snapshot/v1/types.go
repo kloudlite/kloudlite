@@ -10,7 +10,8 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environmentRef.name`
+// +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.status.snapshotType`
+// +kubebuilder:printcolumn:name="Target",type=string,JSONPath=`.status.targetName`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.status.sizeHuman`
 // +kubebuilder:printcolumn:name="Created",type=date,JSONPath=`.status.createdAt`
@@ -26,10 +27,15 @@ type Snapshot struct {
 }
 
 // SnapshotSpec defines the desired state of Snapshot
+// Only ONE of EnvironmentRef or WorkspaceRef should be set
 type SnapshotSpec struct {
 	// EnvironmentRef references the environment to snapshot
-	// +kubebuilder:validation:Required
-	EnvironmentRef EnvironmentReference `json:"environmentRef"`
+	// +optional
+	EnvironmentRef *EnvironmentReference `json:"environmentRef,omitempty"`
+
+	// WorkspaceRef references the workspace to snapshot
+	// +optional
+	WorkspaceRef *WorkspaceReference `json:"workspaceRef,omitempty"`
 
 	// Description is an optional description for this snapshot
 	// +optional
@@ -40,7 +46,8 @@ type SnapshotSpec struct {
 	OwnedBy string `json:"ownedBy"`
 
 	// IncludeMetadata controls whether to include K8s resource metadata
-	// (ConfigMaps, Secrets, Deployments, etc.)
+	// (ConfigMaps, Secrets, Deployments, etc. for environments;
+	// PackageRequests and settings for workspaces)
 	// +kubebuilder:default=true
 	IncludeMetadata bool `json:"includeMetadata"`
 
@@ -54,6 +61,17 @@ type EnvironmentReference struct {
 	// Name is the name of the environment
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
+}
+
+// WorkspaceReference is a reference to a workspace
+type WorkspaceReference struct {
+	// Name is the name of the workspace
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// WorkmachineName is the workmachine where the workspace runs
+	// +kubebuilder:validation:Required
+	WorkmachineName string `json:"workmachineName"`
 }
 
 // RetentionPolicy defines when a snapshot should be automatically deleted
@@ -91,11 +109,31 @@ const (
 	SnapshotStateFailed SnapshotState = "Failed"
 )
 
+// SnapshotType represents the type of snapshot (environment or workspace)
+type SnapshotType string
+
+const (
+	// SnapshotTypeEnvironment is an environment snapshot
+	SnapshotTypeEnvironment SnapshotType = "Environment"
+
+	// SnapshotTypeWorkspace is a workspace snapshot
+	SnapshotTypeWorkspace SnapshotType = "Workspace"
+)
+
 // SnapshotStatus defines the observed state of Snapshot
 type SnapshotStatus struct {
 	// State is the current state of the snapshot
 	// +kubebuilder:default=Pending
 	State SnapshotState `json:"state,omitempty"`
+
+	// SnapshotType indicates whether this is an environment or workspace snapshot
+	// +optional
+	SnapshotType SnapshotType `json:"snapshotType,omitempty"`
+
+	// TargetName is the name of the environment or workspace being snapshotted
+	// Used for display in kubectl output
+	// +optional
+	TargetName string `json:"targetName,omitempty"`
 
 	// Message provides human-readable status information
 	// +optional
@@ -125,13 +163,29 @@ type SnapshotStatus struct {
 	// +optional
 	WorkMachineName string `json:"workMachineName,omitempty"`
 
-	// PVCSnapshots lists individual PVC snapshot information
+	// PVCSnapshots lists individual PVC snapshot information (for environment snapshots)
 	// +optional
 	PVCSnapshots []PVCSnapshotInfo `json:"pvcSnapshots,omitempty"`
 
-	// ResourceMetadata tracks captured K8s resources
+	// ResourceMetadata tracks captured K8s resources (for environment snapshots)
 	// +optional
 	ResourceMetadata *ResourceMetadataInfo `json:"resourceMetadata,omitempty"`
+
+	// WorkspaceName is the name of the snapshotted workspace (for workspace snapshots)
+	// +optional
+	WorkspaceName string `json:"workspaceName,omitempty"`
+
+	// PackageRequestsPath is the path to stored PackageRequest JSON (for workspace snapshots)
+	// +optional
+	PackageRequestsPath string `json:"packageRequestsPath,omitempty"`
+
+	// WorkspaceWasSuspended indicates if the workspace was suspended during snapshot
+	// +optional
+	WorkspaceWasSuspended bool `json:"workspaceWasSuspended,omitempty"`
+
+	// PreviousWorkspaceStatus stores the workspace's status before suspension
+	// +optional
+	PreviousWorkspaceStatus string `json:"previousWorkspaceStatus,omitempty"`
 }
 
 // PVCSnapshotInfo contains info about a snapshotted PVC

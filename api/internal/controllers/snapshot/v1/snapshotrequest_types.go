@@ -55,9 +55,13 @@ type SnapshotRequestSpec struct {
 	// +optional
 	SnapshotRef string `json:"snapshotRef,omitempty"`
 
-	// EnvironmentName is the environment being snapshotted
+	// EnvironmentName is the environment being snapshotted (for environment snapshots)
 	// +optional
 	EnvironmentName string `json:"environmentName,omitempty"`
+
+	// WorkspaceName is the workspace being snapshotted (for workspace snapshots)
+	// +optional
+	WorkspaceName string `json:"workspaceName,omitempty"`
 
 	// ReadOnly indicates whether to create a read-only snapshot (recommended)
 	// +kubebuilder:default=true

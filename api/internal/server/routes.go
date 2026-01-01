@@ -106,6 +106,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	snapshotHandlers := handlers.NewSnapshotHandlers(
 		servicesManager.RepositoryManager.Snapshots,
 		servicesManager.RepositoryManager.Environments,
+		servicesManager.RepositoryManager.Workspaces,
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
@@ -291,6 +292,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				// Code analysis reports
 				workspaces.GET("/:name/code-analysis", workspaceHandlers.GetCodeAnalysis)
 				workspaces.POST("/:name/code-analysis", workspaceHandlers.TriggerCodeAnalysis)
+
+				// Workspace snapshots
+				workspaces.POST("/:name/snapshots", snapshotHandlers.CreateWorkspaceSnapshot)
+				workspaces.GET("/:name/snapshots", snapshotHandlers.ListWorkspaceSnapshots)
 
 				// Status streaming (SSE - legacy, may timeout with Cloudflare)
 				workspaces.GET("/:name/status-stream", workspaceHandlers.GetWorkspaceStatusStream)
