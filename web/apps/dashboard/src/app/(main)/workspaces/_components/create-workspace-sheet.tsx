@@ -23,9 +23,10 @@ import { VisibilitySelector } from '@/components/visibility-selector'
 interface CreateWorkspaceSheetProps {
   namespace: string
   user: string
+  workMachineRunning?: boolean
 }
 
-export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetProps) {
+export function CreateWorkspaceSheet({ namespace, user, workMachineRunning = false }: CreateWorkspaceSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -113,9 +114,14 @@ export function CreateWorkspaceSheet({ namespace, user }: CreateWorkspaceSheetPr
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button
+          size="sm"
+          className="gap-2"
+          disabled={!workMachineRunning}
+          title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
+        >
           <Plus className="h-4 w-4" />
-          New Workspace
+          {workMachineRunning ? 'New Workspace' : 'New Workspace (VM stopped)'}
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-2xl">
