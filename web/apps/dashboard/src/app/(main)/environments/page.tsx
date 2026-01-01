@@ -26,8 +26,8 @@ export default async function EnvironmentsPage() {
     }
   })
 
-  const allEnvironments: EnvironmentUIModel[] = data.environments.map((env) => {
-    const owner = env.spec.ownedBy || 'unknown'
+  const allEnvironments: EnvironmentUIModel[] = (data.environments || []).map((env) => {
+    const owner = env.spec?.ownedBy || 'unknown'
     return environmentToUIModel(env, owner)
   })
 
