@@ -159,7 +159,8 @@ func (p *provider) getRootVolume(ctx context.Context, instance *ec2types.Instanc
 }
 
 // storageDeviceName is the device name for the BTRFS storage volume
-const storageDeviceName = "/dev/xvdf"
+// Using /dev/sdf (AWS recommended) instead of /dev/xvdf for Nitro instances
+const storageDeviceName = "/dev/sdf"
 
 func (p *provider) getStorageVolume(ctx context.Context, instance *ec2types.Instance) (*ec2types.Volume, error) {
 	var volumeID *string
@@ -295,7 +296,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 			},
 			{
 				// Storage volume - btrfs formatted for snapshots
-				DeviceName: fn.Ptr("/dev/xvdf"),
+				DeviceName: fn.Ptr(storageDeviceName),
 				Ebs: &ec2types.EbsBlockDevice{
 					VolumeSize:          wm.Spec.VolumeSize,
 					VolumeType:          volumeType,
@@ -418,18 +419,6 @@ func (p *provider) IncreaseVolumeSize(ctx context.Context, machineID string, new
 	// Get the storage volume (not root volume) - this is the BTRFS volume for snapshots
 	volume, err := p.getStorageVolume(ctx, instance)
 	if err != nil {
-		// If storage volume doesn't exist, check if root volume is large enough
-		// This handles single-volume configurations where root serves as storage
-		rootVolume, rootErr := p.getRootVolume(ctx, instance)
-		if rootErr != nil {
-			return err // Return original storage volume error
-		}
-		rootSize := fn.ValueOf(rootVolume.Size)
-		if rootSize >= newSize {
-			// Root volume is large enough, no resize needed
-			return nil
-		}
-		// Root exists but storage doesn't - this is an unexpected state
 		return err
 	}
 
