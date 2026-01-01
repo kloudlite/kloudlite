@@ -189,6 +189,59 @@ func (r *SnapshotReconciler) handleWorkspacePending(ctx context.Context, snapsho
 	return reconcile.Result{Requeue: true}, nil
 }
 
+// scaleEnvironment scales all deployments and statefulsets in a namespace to the specified replica count
+func (r *SnapshotReconciler) scaleEnvironment(ctx context.Context, namespace string, replicas int32, logger *zap.Logger) error {
+	// Scale deployments
+	deployments := &appsv1.DeploymentList{}
+	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list deployments: %w", err)
+	}
+	for _, deploy := range deployments.Items {
+		if deploy.Spec.Replicas != nil && *deploy.Spec.Replicas != replicas {
+			deploy.Spec.Replicas = &replicas
+			if err := r.Update(ctx, &deploy); err != nil {
+				logger.Warn("Failed to scale deployment", zap.String("deployment", deploy.Name), zap.Error(err))
+			} else {
+				logger.Info("Scaled deployment", zap.String("deployment", deploy.Name), zap.Int32("replicas", replicas))
+			}
+		}
+	}
+
+	// Scale statefulsets
+	statefulsets := &appsv1.StatefulSetList{}
+	if err := r.List(ctx, statefulsets, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list statefulsets: %w", err)
+	}
+	for _, sts := range statefulsets.Items {
+		if sts.Spec.Replicas != nil && *sts.Spec.Replicas != replicas {
+			sts.Spec.Replicas = &replicas
+			if err := r.Update(ctx, &sts); err != nil {
+				logger.Warn("Failed to scale statefulset", zap.String("statefulset", sts.Name), zap.Error(err))
+			} else {
+				logger.Info("Scaled statefulset", zap.String("statefulset", sts.Name), zap.Int32("replicas", replicas))
+			}
+		}
+	}
+
+	return nil
+}
+
+// waitForPodsTerminated waits for all pods in a namespace to terminate
+func (r *SnapshotReconciler) waitForPodsTerminated(ctx context.Context, namespace string, logger *zap.Logger) bool {
+	pods := &corev1.PodList{}
+	if err := r.List(ctx, pods, client.InNamespace(namespace)); err != nil {
+		logger.Warn("Failed to list pods", zap.Error(err))
+		return false
+	}
+	// Check if any non-terminated pods exist (excluding jobs/completed pods)
+	for _, pod := range pods.Items {
+		if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
+			return false
+		}
+	}
+	return true
+}
+
 // handleCreating manages the snapshot creation process
 func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
 	// Dispatch based on snapshot type
@@ -215,6 +268,23 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return r.updateStatusFailed(ctx, snapshot, "Environment has no target namespace", logger)
 	}
 
+	// Scale down environment to stop all pods before snapshot
+	if err := r.scaleEnvironment(ctx, namespace, 0, logger); err != nil {
+		logger.Warn("Failed to scale down environment", zap.Error(err))
+	}
+
+	// Wait for pods to terminate
+	if !r.waitForPodsTerminated(ctx, namespace, logger) {
+		logger.Info("Waiting for environment pods to terminate")
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Stopping environment pods..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
 	// Generate snapshot path based on timestamp
 	snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
 	snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("%s-%s", envName, snapshotTimestamp))
@@ -223,6 +293,10 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	pvcList := &corev1.PersistentVolumeClaimList{}
 	if err := r.List(ctx, pvcList, client.InNamespace(namespace)); err != nil {
 		logger.Error("Failed to list PVCs", zap.Error(err))
+		// Scale environment back up on failure
+		if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+			logger.Warn("Failed to scale up environment after PVC list failure", zap.Error(scaleErr))
+		}
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to list PVCs: %v", err), logger)
 	}
 
@@ -284,6 +358,10 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		if err := r.Create(ctx, snapshotReq); err != nil {
 			if !apierrors.IsAlreadyExists(err) {
 				logger.Error("Failed to create SnapshotRequest", zap.Error(err), zap.String("pvc", pvc.Name))
+				// Scale environment back up on failure
+				if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+					logger.Warn("Failed to scale up environment after SnapshotRequest creation failure", zap.Error(scaleErr))
+				}
 				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create SnapshotRequest for PVC %s", pvc.Name), logger)
 			}
 		}
@@ -347,6 +425,11 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Ready", zap.Error(err))
 		return reconcile.Result{}, err
+	}
+
+	// Scale environment back up
+	if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
+		logger.Warn("Failed to scale up environment after snapshot", zap.Error(err))
 	}
 
 	logger.Info("Snapshot created successfully",
@@ -615,6 +698,23 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return r.updateStatusFailed(ctx, snapshot, "Environment has no target namespace", logger)
 	}
 
+	// Scale down environment to stop all pods before restore
+	if err := r.scaleEnvironment(ctx, namespace, 0, logger); err != nil {
+		logger.Warn("Failed to scale down environment", zap.Error(err))
+	}
+
+	// Wait for pods to terminate
+	if !r.waitForPodsTerminated(ctx, namespace, logger) {
+		logger.Info("Waiting for environment pods to terminate before restore")
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Stopping environment pods before restore..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
 	// Create restore SnapshotRequests for each PVC snapshot
 	for _, pvcInfo := range snapshot.Status.PVCSnapshots {
 		// Target path is the original PV location (stored in SourcePath)
@@ -640,6 +740,10 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		}
 		if targetPath == "" {
 			logger.Error("Could not determine target path for PVC", zap.String("pvc", pvcInfo.PVCName))
+			// Scale environment back up on failure
+			if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+				logger.Warn("Failed to scale up environment after target path lookup failure", zap.Error(scaleErr))
+			}
 			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Could not determine target path for PVC %s", pvcInfo.PVCName), logger)
 		}
 
@@ -665,6 +769,10 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		if err := r.Create(ctx, restoreReq); err != nil {
 			if !apierrors.IsAlreadyExists(err) {
 				logger.Error("Failed to create restore SnapshotRequest", zap.Error(err), zap.String("pvc", pvcInfo.PVCName))
+				// Scale environment back up on failure
+				if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+					logger.Warn("Failed to scale up environment after restore request creation failure", zap.Error(scaleErr))
+				}
 				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create restore request for PVC %s", pvcInfo.PVCName), logger)
 			}
 		}
@@ -674,6 +782,10 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 	allComplete, err := r.checkRestoreRequestsComplete(ctx, snapshot, logger)
 	if err != nil {
 		logger.Error("Failed to check restore request status", zap.Error(err))
+		// Scale environment back up even on failure
+		if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+			logger.Warn("Failed to scale up environment after restore failure", zap.Error(scaleErr))
+		}
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %v", err), logger)
 	}
 
@@ -689,6 +801,11 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Ready", zap.Error(err))
 		return reconcile.Result{}, err
+	}
+
+	// Scale environment back up after restore
+	if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
+		logger.Warn("Failed to scale up environment after restore", zap.Error(err))
 	}
 
 	logger.Info("Snapshot restored successfully", zap.String("environment", envName))
