@@ -15,6 +15,7 @@ import (
 // createHostManagerRBAC creates RBAC resources for the workmachine-node-manager (host manager pod)
 // This service account runs in the workmachine namespace and needs access to:
 // - PackageRequests (namespace-scoped, but needs cluster-wide access) - to install Nix packages
+// - SnapshotRequests (namespace-scoped) - to execute BTRFS snapshot operations
 // - Workspaces (namespace-scoped, but needs cluster-wide access) - to manage SSH configuration
 // - Nodes (cluster-wide) - to update GPU status
 // - Secrets (in workmachine namespace) - to manage SSH keys
@@ -61,6 +62,17 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 			{
 				APIGroups: []string{"packages.kloudlite.io"},
 				Resources: []string{"packagerequests/status"},
+				Verbs:     []string{"get", "update", "patch"},
+			},
+			// SnapshotRequests - for BTRFS snapshot operations (workspace/environment snapshots)
+			{
+				APIGroups: []string{"snapshots.kloudlite.io"},
+				Resources: []string{"snapshotrequests"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"snapshots.kloudlite.io"},
+				Resources: []string{"snapshotrequests/status"},
 				Verbs:     []string{"get", "update", "patch"},
 			},
 			// Workspaces - for SSH configuration management and directory cleanup
