@@ -41,11 +41,11 @@ export default async function WorkspacesPage() {
 
         {/* Workspaces List with Filter */}
         <WorkspacesList
-          workspaces={data.workspaces}
+          workspaces={data.workspaces || []}
           currentUser={currentUser}
           namespace={namespace}
           workMachineRunning={data.workMachineRunning}
-          pinnedWorkspaceIds={data.pinnedWorkspaceIds}
+          pinnedWorkspaceIds={data.pinnedWorkspaceIds || []}
         />
       </div>
     </main>
