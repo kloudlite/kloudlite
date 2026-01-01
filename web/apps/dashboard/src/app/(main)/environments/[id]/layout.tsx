@@ -4,6 +4,7 @@ import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
 import { getEnvironmentDetails } from '@/lib/services/dashboard.service'
 import { EnvironmentStatusIndicator } from '@/components/environment-status-indicator'
+import { EnvironmentSnapshotsSheet } from '../_components/environment-snapshots-sheet'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -103,6 +104,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
                   />
                 </div>
               </div>
+              <EnvironmentSnapshotsSheet environmentName={environment.name} />
             </div>
           </div>
         </div>
