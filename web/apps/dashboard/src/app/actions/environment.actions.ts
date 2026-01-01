@@ -280,10 +280,10 @@ export async function importEnvironmentConfig(
 
   try {
     // Step 1: Create the environment
+    // Don't pass targetNamespace - webhook will auto-generate it as env-{owner}--{name}
     const createResult = await environmentService.createEnvironment({
       name: validated.data.newEnvName,
       spec: {
-        targetNamespace: validated.data.targetNamespace,
         ownedBy: validated.data.currentUser,
         activated: false,
       },
@@ -292,6 +292,9 @@ export async function importEnvironmentConfig(
     if (!createResult) {
       return { success: false, error: 'Failed to create environment' }
     }
+
+    // Get the targetNamespace from the created environment
+    const targetNamespace = createResult.environment?.spec?.targetNamespace || ''
 
     const { exportData: validatedExportData } = validated.data
 
@@ -329,10 +332,10 @@ export async function importEnvironmentConfig(
     }
 
     // Step 5: Import compositions
-    if (validatedExportData.compositions) {
+    if (validatedExportData.compositions && targetNamespace) {
       for (const comp of validatedExportData.compositions) {
         try {
-          await compositionService.createComposition(validated.data.targetNamespace, {
+          await compositionService.createComposition(targetNamespace, {
             name: comp.name,
             spec: comp.spec as Parameters<typeof compositionService.createComposition>[1]['spec'],
           })
