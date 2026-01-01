@@ -121,7 +121,7 @@ export function CreateWorkspaceSheet({ namespace, user, workMachineRunning = fal
           title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
         >
           <Plus className="h-4 w-4" />
-          {workMachineRunning ? 'New Workspace' : 'New Workspace (VM stopped)'}
+          {workMachineRunning ? 'New Workspace' : 'New Workspace (WorkMachine stopped)'}
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-2xl">
