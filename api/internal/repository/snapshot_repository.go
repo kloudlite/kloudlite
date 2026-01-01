@@ -13,6 +13,7 @@ type SnapshotRepository interface {
 
 	// Domain-specific methods
 	ListByEnvironment(ctx context.Context, envName string) (*snapshotv1.SnapshotList, error)
+	ListByWorkspace(ctx context.Context, workspaceName string) (*snapshotv1.SnapshotList, error)
 	ListByOwner(ctx context.Context, owner string) (*snapshotv1.SnapshotList, error)
 	ListReady(ctx context.Context) (*snapshotv1.SnapshotList, error)
 }
@@ -40,6 +41,11 @@ func NewSnapshotRepository(k8sClient client.WithWatch) SnapshotRepository {
 // ListByEnvironment retrieves all snapshots for an environment
 func (r *snapshotRepository) ListByEnvironment(ctx context.Context, envName string) (*snapshotv1.SnapshotList, error) {
 	return r.List(ctx, WithLabelSelector("snapshots.kloudlite.io/environment="+envName))
+}
+
+// ListByWorkspace retrieves all snapshots for a workspace
+func (r *snapshotRepository) ListByWorkspace(ctx context.Context, workspaceName string) (*snapshotv1.SnapshotList, error) {
+	return r.List(ctx, WithLabelSelector("snapshots.kloudlite.io/workspace="+workspaceName))
 }
 
 // ListByOwner retrieves all snapshots owned by a user

@@ -1,0 +1,233 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: snapshots.snapshots.kloudlite.io
+spec:
+  group: snapshots.kloudlite.io
+  names:
+    kind: Snapshot
+    listKind: SnapshotList
+    plural: snapshots
+    singular: snapshot
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.snapshotType
+      name: Type
+      type: string
+    - jsonPath: .status.targetName
+      name: Target
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .status.sizeHuman
+      name: Size
+      type: string
+    - jsonPath: .status.createdAt
+      name: Created
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Snapshot represents a point-in-time snapshot of an environment's
+          data and metadata
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              SnapshotSpec defines the desired state of Snapshot
+              Only ONE of EnvironmentRef or WorkspaceRef should be set
+            properties:
+              description:
+                description: Description is an optional description for this snapshot
+                type: string
+              environmentRef:
+                description: EnvironmentRef references the environment to snapshot
+                properties:
+                  name:
+                    description: Name is the name of the environment
+                    type: string
+                required:
+                - name
+                type: object
+              includeMetadata:
+                default: true
+                description: |-
+                  IncludeMetadata controls whether to include K8s resource metadata
+                  (ConfigMaps, Secrets, Deployments, etc. for environments;
+                  PackageRequests and settings for workspaces)
+                type: boolean
+              ownedBy:
+                description: OwnedBy is the username who created this snapshot
+                type: string
+              retentionPolicy:
+                description: RetentionPolicy defines when this snapshot should be
+                  deleted
+                properties:
+                  expiresAt:
+                    description: ExpiresAt is when this snapshot should be automatically
+                      deleted
+                    format: date-time
+                    type: string
+                  keepForDays:
+                    description: KeepForDays is the number of days to keep the snapshot
+                    format: int32
+                    minimum: 1
+                    type: integer
+                type: object
+              workspaceRef:
+                description: WorkspaceRef references the workspace to snapshot
+                properties:
+                  name:
+                    description: Name is the name of the workspace
+                    type: string
+                  workmachineName:
+                    description: WorkmachineName is the workmachine where the workspace
+                      runs
+                    type: string
+                required:
+                - name
+                - workmachineName
+                type: object
+            required:
+            - includeMetadata
+            - ownedBy
+            type: object
+          status:
+            description: SnapshotStatus defines the observed state of Snapshot
+            properties:
+              createdAt:
+                description: CreatedAt is when the snapshot was successfully created
+                format: date-time
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              metadataPath:
+                description: MetadataPath is the path to stored K8s metadata JSON
+                type: string
+              packageRequestsPath:
+                description: PackageRequestsPath is the path to stored PackageRequest
+                  JSON (for workspace snapshots)
+                type: string
+              previousWorkspaceStatus:
+                description: PreviousWorkspaceStatus stores the workspace's status
+                  before suspension
+                type: string
+              pvcSnapshots:
+                description: PVCSnapshots lists individual PVC snapshot information
+                  (for environment snapshots)
+                items:
+                  description: PVCSnapshotInfo contains info about a snapshotted PVC
+                  properties:
+                    pvcName:
+                      description: PVCName is the name of the PVC
+                      type: string
+                    sizeBytes:
+                      description: SizeBytes is the size of this PVC snapshot
+                      format: int64
+                      type: integer
+                    snapshotPath:
+                      description: SnapshotPath is the path to this PVC's snapshot
+                      type: string
+                  required:
+                  - pvcName
+                  - sizeBytes
+                  - snapshotPath
+                  type: object
+                type: array
+              resourceMetadata:
+                description: ResourceMetadata tracks captured K8s resources (for environment
+                  snapshots)
+                properties:
+                  configMaps:
+                    description: ConfigMaps count
+                    format: int32
+                    type: integer
+                  deployments:
+                    description: Deployments count
+                    format: int32
+                    type: integer
+                  secrets:
+                    description: Secrets count
+                    format: int32
+                    type: integer
+                  services:
+                    description: Services count
+                    format: int32
+                    type: integer
+                  statefulSets:
+                    description: StatefulSets count
+                    format: int32
+                    type: integer
+                required:
+                - configMaps
+                - deployments
+                - secrets
+                - services
+                - statefulSets
+                type: object
+              sizeBytes:
+                description: SizeBytes is the total size of the snapshot in bytes
+                format: int64
+                type: integer
+              sizeHuman:
+                description: SizeHuman is the human-readable size (e.g., "1.5 GB")
+                type: string
+              snapshotPath:
+                description: SnapshotPath is the btrfs snapshot path on disk
+                type: string
+              snapshotType:
+                description: SnapshotType indicates whether this is an environment
+                  or workspace snapshot
+                type: string
+              state:
+                default: Pending
+                description: State is the current state of the snapshot
+                type: string
+              targetName:
+                description: |-
+                  TargetName is the name of the environment or workspace being snapshotted
+                  Used for display in kubectl output
+                type: string
+              workMachineName:
+                description: WorkMachineName is the workmachine where the snapshot
+                  is stored
+                type: string
+              workspaceName:
+                description: WorkspaceName is the name of the snapshotted workspace
+                  (for workspace snapshots)
+                type: string
+              workspaceWasSuspended:
+                description: WorkspaceWasSuspended indicates if the workspace was
+                  suspended during snapshot
+                type: boolean
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

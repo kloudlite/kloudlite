@@ -1,0 +1,117 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: snapshotrequests.snapshots.kloudlite.io
+spec:
+  group: snapshots.kloudlite.io
+  names:
+    kind: SnapshotRequest
+    listKind: SnapshotRequestList
+    plural: snapshotrequests
+    singular: snapshotrequest
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.operation
+      name: Operation
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          SnapshotRequest is a namespaced resource that instructs the workmachine-node-manager
+          to perform btrfs snapshot operations on the local filesystem
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnapshotRequestSpec defines the desired snapshot operation
+            properties:
+              environmentName:
+                description: EnvironmentName is the environment being snapshotted
+                  (for environment snapshots)
+                type: string
+              operation:
+                description: Operation is the type of operation to perform
+                enum:
+                - create
+                - delete
+                - restore
+                type: string
+              readOnly:
+                default: true
+                description: ReadOnly indicates whether to create a read-only snapshot
+                  (recommended)
+                type: boolean
+              snapshotPath:
+                description: SnapshotPath is where to create the snapshot or the snapshot
+                  to delete/restore from
+                type: string
+              snapshotRef:
+                description: SnapshotRef references the parent Snapshot resource
+                type: string
+              sourcePath:
+                description: SourcePath is the btrfs subvolume path to snapshot (for
+                  create/restore)
+                type: string
+              workspaceName:
+                description: WorkspaceName is the workspace being snapshotted (for
+                  workspace snapshots)
+                type: string
+            required:
+            - operation
+            - readOnly
+            - snapshotPath
+            type: object
+          status:
+            description: SnapshotRequestStatus defines the observed state of SnapshotRequest
+            properties:
+              finishedAt:
+                description: FinishedAt is when the operation finished
+                format: date-time
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              phase:
+                default: Pending
+                description: Phase is the current phase of the request
+                type: string
+              sizeBytes:
+                description: SizeBytes is the size of the snapshot (for create operations)
+                format: int64
+                type: integer
+              startedAt:
+                description: StartedAt is when the operation started
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

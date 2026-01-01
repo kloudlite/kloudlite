@@ -94,8 +94,8 @@ spec:
                 type: object
               deleteVolumePostTermination:
                 default: true
-                description: DeleteVolumePostTermination controls whether root volume
-                  is cleaned up post deletion
+                description: DeleteVolumePostTermination controls whether storage
+                  volume is cleaned up post deletion
                 type: boolean
               displayName:
                 description: DisplayName is the human-readable name for the work machine
@@ -131,14 +131,17 @@ spec:
                 type: string
               volumeSize:
                 default: 100
-                description: VolumeSize is the size of the root EBS volume in GB
+                description: |-
+                  VolumeSize is the size of the BTRFS storage volume in GB
+                  This volume stores environment PVCs, workspace data, and supports snapshots
+                  Root volume is fixed at 50GB for OS only
                 format: int32
                 maximum: 1000
-                minimum: 100
+                minimum: 50
                 type: integer
               volumeType:
                 description: |-
-                  VolumeType is the volume type
+                  VolumeType is the volume type for the storage volume
                   eg. for AWS (gp3, gp2, io1, io2)
                 type: string
             required:
@@ -352,12 +355,6 @@ spec:
               region:
                 description: Region is the cloud region where the instance is running
                 type: string
-              rootVolumeSize:
-                description: |-
-                  RootVolumeSize is size in GBs for the root volume.
-                  It is used while processing request for increasing volume size
-                format: int32
-                type: integer
               sshPublicKey:
                 description: |-
                   SSHPublicKey is the WorkMachine's public SSH key for all workspaces
@@ -376,6 +373,12 @@ spec:
                 description: StoppedAt timestamp when the machine was last stopped
                 format: date-time
                 type: string
+              storageVolumeSize:
+                description: |-
+                  StorageVolumeSize is size in GBs for the btrfs storage volume.
+                  Root volume is fixed at 50GB. This tracks the storage volume used for PVCs and snapshots.
+                format: int32
+                type: integer
             type: object
         type: object
     served: true
