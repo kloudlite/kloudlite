@@ -350,7 +350,14 @@ export function EnvironmentsList({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" className="gap-2" onClick={() => setImportDialogOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2"
+            onClick={() => setImportDialogOpen(true)}
+            disabled={!workMachineRunning}
+            title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
+          >
             <Upload className="h-4 w-4" />
             Import
           </Button>
@@ -362,7 +369,7 @@ export function EnvironmentsList({
             title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
           >
             <Plus className="h-4 w-4" />
-            {workMachineRunning ? 'New Environment' : 'New Environment (VM stopped)'}
+            {workMachineRunning ? 'New Environment' : 'New Environment (WorkMachine stopped)'}
           </Button>
         </div>
       </div>
@@ -502,7 +509,7 @@ export function EnvironmentsList({
                             disabled={!workMachineRunning}
                           >
                             <Power className="mr-2 h-4 w-4" />
-                            {workMachineRunning ? 'Activate' : 'Activate (VM stopped)'}
+                            {workMachineRunning ? 'Activate' : 'Activate (WorkMachine stopped)'}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
@@ -511,7 +518,7 @@ export function EnvironmentsList({
                           disabled={!workMachineRunning}
                         >
                           <Copy className="mr-2 h-4 w-4" />
-                          {workMachineRunning ? 'Clone Environment' : 'Clone (VM stopped)'}
+                          {workMachineRunning ? 'Clone Environment' : 'Clone (WorkMachine stopped)'}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleExportConfig(env)}>
                           <Download className="mr-2 h-4 w-4" />
