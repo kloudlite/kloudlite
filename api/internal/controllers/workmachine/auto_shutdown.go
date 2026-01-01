@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // WorkspaceActivitySummary contains aggregated workspace activity information
@@ -62,6 +64,23 @@ func (r *WorkMachineReconciler) aggregateWorkspaceStates(ctx context.Context, ta
 	return summary, nil
 }
 
+// hasInProgressSnapshots checks if there are any snapshot operations in progress
+func (r *WorkMachineReconciler) hasInProgressSnapshots(ctx context.Context, namespace string) (bool, error) {
+	snapshotReqs := &snapshotv1.SnapshotRequestList{}
+	if err := r.List(ctx, snapshotReqs, client.InNamespace(namespace)); err != nil {
+		return false, err
+	}
+
+	for _, req := range snapshotReqs.Items {
+		// In-progress if phase is not Completed or Failed
+		if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted &&
+			req.Status.Phase != snapshotv1.SnapshotRequestPhaseFailed {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // checkAutoShutdown is a reconciliation step that handles automatic WorkMachine shutdown
 // based on workspace idle states
 func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
@@ -98,6 +117,28 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 	obj.Status.ActiveWorkspaceCount = summary.ActiveWorkspaceCount
 	if summary.LastActivityTime != nil {
 		obj.Status.LastWorkspaceActivity = summary.LastActivityTime
+	}
+
+	// Check for in-progress snapshot operations
+	hasSnapshots, err := r.hasInProgressSnapshots(ctx, obj.Spec.TargetNamespace)
+	if err != nil {
+		check.Logger().Warn("failed to check in-progress snapshots", "error", err)
+	}
+	if hasSnapshots {
+		check.Logger().Info("in-progress snapshots detected, skipping auto-shutdown check")
+		// Reset idle timer since snapshot operations are active
+		if obj.Status.AllIdleSince != nil {
+			obj.Status.AllIdleSince = nil
+			if err := r.Status().Update(ctx, obj); err != nil {
+				return check.Errored(fmt.Errorf("failed to reset AllIdleSince: %w", err))
+			}
+		}
+		// Get check interval for requeuing
+		var checkInterval int32 = 5
+		if obj.Spec.AutoShutdown != nil && obj.Spec.AutoShutdown.CheckIntervalMinutes > 0 {
+			checkInterval = obj.Spec.AutoShutdown.CheckIntervalMinutes
+		}
+		return check.Requeue(time.Duration(checkInterval) * time.Minute)
 	}
 
 	now := metav1.Now()
