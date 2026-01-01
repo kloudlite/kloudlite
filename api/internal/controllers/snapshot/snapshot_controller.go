@@ -28,10 +28,10 @@ import (
 )
 
 const (
-	snapshotFinalizer  = "snapshots.kloudlite.io/finalizer"
-	snapshotsBasePath  = "/var/lib/kloudlite/storage/.snapshots"
-	metadataBasePath   = "/var/lib/kloudlite/storage/.snapshots-metadata"
-	workspaceHomePath  = "/var/lib/kloudlite/home/workspaces"
+	snapshotFinalizer = "snapshots.kloudlite.io/finalizer"
+	snapshotsBasePath = "/var/lib/kloudlite/storage/.snapshots"
+	metadataBasePath  = "/var/lib/kloudlite/storage/.snapshots-metadata"
+	workspaceHomePath = "/var/lib/kloudlite/home/workspaces"
 )
 
 // SnapshotReconciler reconciles Snapshot objects

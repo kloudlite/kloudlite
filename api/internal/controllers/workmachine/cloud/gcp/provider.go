@@ -198,13 +198,13 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	}
 
 	return &v1.MachineInfo{
-		MachineID:        instanceName,
-		State:            mapGCPStateToMachineState(createdInstance.Status),
-		PrivateIP:        getPrivateIP(createdInstance),
-		PublicIP:         getPublicIP(createdInstance),
-		AvailabilityZone: p.Zone,
-		Message:          "Instance created successfully",
-		Region:           p.Region,
+		MachineID:         instanceName,
+		State:             mapGCPStateToMachineState(createdInstance.Status),
+		PrivateIP:         getPrivateIP(createdInstance),
+		PublicIP:          getPublicIP(createdInstance),
+		AvailabilityZone:  p.Zone,
+		Message:           "Instance created successfully",
+		Region:            p.Region,
 		StorageVolumeSize: *wm.Spec.VolumeSize,
 	}, nil
 }

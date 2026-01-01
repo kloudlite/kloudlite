@@ -288,13 +288,13 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	instance := runOutput.Instances[0]
 
 	return &v1.MachineInfo{
-		MachineID:        *instance.InstanceId,
-		State:            mapEC2StateToMachineState(instance.State),
-		PrivateIP:        fn.ValueOf(instance.PrivateIpAddress),
-		PublicIP:         fn.ValueOf(instance.PublicIpAddress),
-		AvailabilityZone: aws.ToString(instance.Placement.AvailabilityZone),
-		Message:          "Instance created successfully",
-		Region:           p.Region,
+		MachineID:         *instance.InstanceId,
+		State:             mapEC2StateToMachineState(instance.State),
+		PrivateIP:         fn.ValueOf(instance.PrivateIpAddress),
+		PublicIP:          fn.ValueOf(instance.PublicIpAddress),
+		AvailabilityZone:  aws.ToString(instance.Placement.AvailabilityZone),
+		Message:           "Instance created successfully",
+		Region:            p.Region,
 		StorageVolumeSize: *wm.Spec.VolumeSize,
 	}, nil
 }

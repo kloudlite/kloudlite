@@ -469,13 +469,13 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	}
 
 	return &v1.MachineInfo{
-		MachineID:        *vm.ID,
-		State:            mapAzureStateToMachineState(&vm.VirtualMachine),
-		PrivateIP:        privateIP,
-		PublicIP:         publicIPAddr,
-		AvailabilityZone: p.location,
-		Message:          "Instance created successfully",
-		Region:           p.location,
+		MachineID:         *vm.ID,
+		State:             mapAzureStateToMachineState(&vm.VirtualMachine),
+		PrivateIP:         privateIP,
+		PublicIP:          publicIPAddr,
+		AvailabilityZone:  p.location,
+		Message:           "Instance created successfully",
+		Region:            p.location,
 		StorageVolumeSize: volumeSize,
 	}, nil
 }
