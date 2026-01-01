@@ -237,13 +237,14 @@ func (r *SnapshotRequestReconciler) deleteSnapshot(req *snapshotv1.SnapshotReque
 
 // restoreSnapshot restores from a btrfs snapshot
 func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) error {
-	snapshotPath := req.Spec.SnapshotPath
-	targetPath := req.Spec.SourcePath
+	// For restore: SourcePath is the snapshot source, SnapshotPath is the restore target
+	sourcePath := req.Spec.SourcePath   // The snapshot to restore FROM
+	targetPath := req.Spec.SnapshotPath // Where to restore TO
 
-	// Check if snapshot exists
-	checkScript := fmt.Sprintf("test -e %s", snapshotPath)
+	// Check if source snapshot exists
+	checkScript := fmt.Sprintf("test -e %s", sourcePath)
 	if _, err := r.CmdExec.Execute(checkScript); err != nil {
-		return fmt.Errorf("snapshot path does not exist: %s", snapshotPath)
+		return fmt.Errorf("source snapshot does not exist: %s", sourcePath)
 	}
 
 	// Check if target is a btrfs subvolume - if so, delete it first
@@ -263,12 +264,12 @@ func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequ
 		}
 	}
 
-	// Check if snapshot is a btrfs subvolume
-	checkSnapshotSubvolScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", snapshotPath)
+	// Check if source snapshot is a btrfs subvolume
+	checkSnapshotSubvolScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", sourcePath)
 	if _, err := r.CmdExec.Execute(checkSnapshotSubvolScript); err != nil {
 		// Snapshot is not a subvolume, use rsync to restore
 		logger.Info("Snapshot is not a btrfs subvolume, using rsync",
-			zap2.String("source", snapshotPath))
+			zap2.String("source", sourcePath))
 
 		// Create target directory
 		mkdirScript := fmt.Sprintf("mkdir -p %s", targetPath)
@@ -277,7 +278,7 @@ func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequ
 		}
 
 		// Rsync restore
-		rsyncScript := fmt.Sprintf("rsync -a --delete %s/ %s/", snapshotPath, targetPath)
+		rsyncScript := fmt.Sprintf("rsync -a --delete %s/ %s/", sourcePath, targetPath)
 		if output, rsyncErr := r.CmdExec.Execute(rsyncScript); rsyncErr != nil {
 			return fmt.Errorf("rsync restore failed: %s - %w", string(output), rsyncErr)
 		}
@@ -285,9 +286,9 @@ func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequ
 	}
 
 	// Create a writable snapshot from the read-only snapshot
-	restoreScript := fmt.Sprintf("btrfs subvolume snapshot %s %s", snapshotPath, targetPath)
+	restoreScript := fmt.Sprintf("btrfs subvolume snapshot %s %s", sourcePath, targetPath)
 	logger.Info("Restoring btrfs snapshot",
-		zap2.String("source", snapshotPath),
+		zap2.String("source", sourcePath),
 		zap2.String("destination", targetPath))
 
 	output, err := r.CmdExec.Execute(restoreScript)
