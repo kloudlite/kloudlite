@@ -171,14 +171,14 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 
 	specVolume := fn.ValueOf(obj.Spec.VolumeSize)
 
-	if specVolume > obj.Status.RootVolumeSize {
-		check.Logger().Info("increasing volume size", "from", obj.Status.RootVolumeSize, "to", obj.Spec.VolumeSize)
+	if specVolume > obj.Status.StorageVolumeSize {
+		check.Logger().Info("increasing storage volume size", "from", obj.Status.StorageVolumeSize, "to", obj.Spec.VolumeSize)
 
 		if err := r.cloudProviderAPI.IncreaseVolumeSize(check.Context(), obj.Status.MachineID, specVolume); err != nil {
-			return check.Failed(errors.Wrap("failed to increase volume size", err))
+			return check.Failed(errors.Wrap("failed to increase storage volume size", err))
 		}
 
-		obj.Status.RootVolumeSize = specVolume
+		obj.Status.StorageVolumeSize = specVolume
 		if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
 			return check.Errored(errors.Wrap(fmt.Sprintf("failed to reboot machine(ID: %s)", obj.Status.MachineID), err))
 		}
@@ -189,7 +189,7 @@ func (r *WorkMachineReconciler) setupCloudMachine(check *reconciler.Check[*v1.Wo
 	// Update status with current machine info
 	obj.Status.PublicIP = machineInfo.PublicIP
 	obj.Status.PrivateIP = machineInfo.PrivateIP
-	obj.Status.RootVolumeSize = specVolume
+	obj.Status.StorageVolumeSize = specVolume
 	obj.Status.Message = machineInfo.Message
 
 	// Update Node labels with IPs when node exists and IPs are available

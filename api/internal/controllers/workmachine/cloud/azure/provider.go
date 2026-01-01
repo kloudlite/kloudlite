@@ -476,7 +476,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		AvailabilityZone: p.location,
 		Message:          "Instance created successfully",
 		Region:           p.location,
-		RootVolumeSize:   volumeSize,
+		StorageVolumeSize: volumeSize,
 	}, nil
 }
 

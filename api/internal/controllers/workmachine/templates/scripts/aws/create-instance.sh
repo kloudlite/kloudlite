@@ -14,8 +14,8 @@ set -euo pipefail
 # - SUBNET_ID: Subnet ID
 # - VPC_ID: VPC ID
 # - ALLOWED_CIDR: CIDR to allow to workmachine node (default: 0.0.0.0/0)
-# - ROOT_VOLUME_SIZE: Root volume size in GB
-# - ROOT_VOLUME_TYPE: Root volume type (gp3, gp2, etc)
+# - VOLUME_SIZE: Storage volume size in GB (btrfs formatted for snapshots)
+# - VOLUME_TYPE: Storage volume type (gp3, gp2, etc)
 # - K3S_TOKEN: K3s agent token for joining cluster
 # - K3S_SERVER_URL: K3s server URL
 # - AVAILABILITY_ZONE: (optional) Availability zone
@@ -39,8 +39,8 @@ required_vars=(
   "AMI"
   "INSTANCE_TYPE"
   # "ALLOWED_CIDR"            # (default: 0.0.0.0/0)
-  "ROOT_VOLUME_SIZE"
-  # "ROOT_VOLUME_TYPE"        # (default: gp3)
+  "VOLUME_SIZE"
+  # "VOLUME_TYPE"             # (default: gp3)
   "K3S_TOKEN"
   "K3S_SERVER_URL"
 
@@ -56,7 +56,11 @@ for var in "${required_vars[@]}"; do
 done
 
 ALLOWED_CIDR=${ALLOWED_CIDR:-0.0.0.0/0}
-ROOT_VOLUME_TYPE=${ROOT_VOLUME_TYPE:-gp3}
+VOLUME_TYPE=${VOLUME_TYPE:-gp3}
+
+# Root volume is fixed at 50GB for OS only
+# VOLUME_SIZE is used for btrfs storage volume
+ROOT_VOLUME_SIZE=50
 
 log "Starting instance creation for ${MACHINE_NAME}"
 
@@ -180,7 +184,7 @@ RUN_INSTANCE_ARGS=(
   --instance-type "${INSTANCE_TYPE}"
   --security-group-ids "${SG_ID}"
   --key-name "${ssh_key_name}"
-  --block-device-mappings "[{\"DeviceName\":\"${ROOT_DEVICE_NAME}\",\"Ebs\":{\"VolumeSize\":${ROOT_VOLUME_SIZE},\"VolumeType\":\"${ROOT_VOLUME_TYPE}\",\"DeleteOnTermination\":true}}]"
+  --block-device-mappings "[{\"DeviceName\":\"${ROOT_DEVICE_NAME}\",\"Ebs\":{\"VolumeSize\":${ROOT_VOLUME_SIZE},\"VolumeType\":\"gp3\",\"DeleteOnTermination\":true}},{\"DeviceName\":\"/dev/xvdf\",\"Ebs\":{\"VolumeSize\":${VOLUME_SIZE},\"VolumeType\":\"${VOLUME_TYPE}\",\"DeleteOnTermination\":false}}]"
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=workmachine-${MACHINE_NAME}},{Key=kloudlite.io/workmachine,Value=${MACHINE_NAME}},{Key=kloudlite.io/owner,Value=${OWNER}},{Key=kloudlite.io/managed-by,Value=kloudlite-controller}]" "ResourceType=volume,Tags=[{Key=Name,Value=workmachine-${MACHINE_NAME}},{Key=kloudlite.io/workmachine,Value=${MACHINE_NAME}},{Key=kloudlite.io/owner,Value=${OWNER}}]"
 )
 

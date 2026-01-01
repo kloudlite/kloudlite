@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	environmentV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -156,6 +157,25 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 				if err := r.Update(check.Context(), &ws); err != nil && !apiErrors.IsNotFound(err) {
 					return check.Failed(fmt.Errorf("failed to remove finalizer from workspace %s: %w", ws.Name, err))
 				}
+			}
+		}
+	}
+
+	// Clean up PackageRequests in the workmachine namespace
+	// The node-manager adds finalizers to these, but it's gone when workmachine is deleted
+	packageRequestList := &packagesv1.PackageRequestList{}
+	if err := r.List(check.Context(), packageRequestList, client.InNamespace(namespaceName)); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Errored(err)
+		}
+	}
+
+	for _, pkgReq := range packageRequestList.Items {
+		// Remove the package-cleanup finalizer added by node-manager
+		if controllerutil.ContainsFinalizer(&pkgReq, "workspaces.kloudlite.io/package-cleanup") {
+			controllerutil.RemoveFinalizer(&pkgReq, "workspaces.kloudlite.io/package-cleanup")
+			if err := r.Update(check.Context(), &pkgReq); err != nil && !apiErrors.IsNotFound(err) {
+				return check.Failed(fmt.Errorf("failed to remove finalizer from PackageRequest %s: %w", pkgReq.Name, err))
 			}
 		}
 	}

@@ -61,9 +61,9 @@ export async function stopMyWorkMachine() {
   }
 }
 
-export async function createMyWorkMachine(machineType: string) {
+export async function createMyWorkMachine(machineType: string, volumeSize?: number) {
   try {
-    const data = await workMachineService.createMyWorkMachine(machineType)
+    const data = await workMachineService.createMyWorkMachine(machineType, volumeSize)
     return { success: true, data }
   } catch (err) {
     console.error('Create work machine error:', err)

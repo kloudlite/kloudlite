@@ -103,6 +103,12 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.Auth,
 		logger,
 	)
+	snapshotHandlers := handlers.NewSnapshotHandlers(
+		servicesManager.RepositoryManager.Snapshots,
+		servicesManager.RepositoryManager.Environments,
+		servicesManager.RepositoryManager.K8sClient,
+		logger,
+	)
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
@@ -193,6 +199,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.GET("/:name/status-stream", environmentHandlers.GetEnvironmentStatusStream)
 				// Status streaming (WebSocket - preferred for Cloudflare compatibility)
 				environments.GET("/:name/status-ws", environmentHandlers.GetEnvironmentStatusWebSocket)
+
+				// Snapshot routes (per-environment)
+				environments.POST("/:name/snapshots", snapshotHandlers.CreateSnapshot)
+				environments.GET("/:name/snapshots", snapshotHandlers.ListSnapshots)
 
 				// Environment config routes (legacy - keeping for backwards compatibility)
 				environments.PUT("/:name/config", environmentConfigHandlers.SetConfig)
@@ -322,6 +332,15 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				registryCatalog.DELETE("/tags", registryCatalogHandlers.DeleteTag)
 				// Delete repository uses query param: ?repo=namespace/image
 				registryCatalog.DELETE("/repositories", registryCatalogHandlers.DeleteRepository)
+			}
+
+			// Snapshot routes (global)
+			snapshots := protected.Group("/snapshots")
+			{
+				snapshots.GET("", snapshotHandlers.ListAllSnapshots)
+				snapshots.GET("/:name", snapshotHandlers.GetSnapshot)
+				snapshots.POST("/:name/restore", snapshotHandlers.RestoreSnapshot)
+				snapshots.DELETE("/:name", snapshotHandlers.DeleteSnapshot)
 			}
 		}
 

@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-path-config
+  namespace: kube-system
+data:
+  config.json: |
+    {
+      "nodePathMap": [
+        {
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": ["/var/lib/kloudlite/storage/environments"]
+        }
+      ]
+    }
+  setup: |
+    #!/bin/bash
+    set -eu
+
+    # VOL_DIR format: /var/lib/kloudlite/storage/environments/pvcname_namespace_pvname
+    # Extract namespace from the directory name
+    PVC_DIR=$(basename "$VOL_DIR")
+    NAMESPACE=$(echo "$PVC_DIR" | rev | cut -d'_' -f2 | rev)
+    BASE_DIR=$(dirname "$VOL_DIR")
+    NS_SUBVOL="${BASE_DIR}/${NAMESPACE}"
+
+    # Create namespace subvolume if it doesn't exist (for btrfs snapshots)
+    if [ ! -d "$NS_SUBVOL" ]; then
+      echo "Creating btrfs subvolume for namespace: $NAMESPACE"
+      btrfs subvolume create "$NS_SUBVOL" || mkdir -p "$NS_SUBVOL"
+    fi
+
+    # Create PVC directory inside namespace subvolume
+    PVC_PATH="${NS_SUBVOL}/${PVC_DIR}"
+    mkdir -m 0777 -p "$PVC_PATH"
+
+    # Create symlink from expected VOL_DIR to actual path
+    if [ ! -L "$VOL_DIR" ]; then
+      ln -sfn "$PVC_PATH" "$VOL_DIR"
+    fi
+
+    echo "PVC storage ready at $PVC_PATH"
+  teardown: |
+    #!/bin/bash
+    set -eu
+
+    # Remove symlink and actual directory
+    if [ -L "$VOL_DIR" ]; then
+      REAL_PATH=$(readlink -f "$VOL_DIR")
+      rm -f "$VOL_DIR"
+      rm -rf "$REAL_PATH"
+    else
+      rm -rf "$VOL_DIR"
+    fi
+  helperPod.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      priorityClassName: system-node-critical
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: helper-pod
+          image: rancher/mirrored-library-busybox:1.36.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true

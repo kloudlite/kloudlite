@@ -63,17 +63,19 @@ type WorkMachineSpec struct {
 	// +kubebuilder:validation:Required
 	MachineType string `json:"machineType"`
 
-	// VolumeSize is the size of the root EBS volume in GB
-	//+kubebuilder:default=100
-	//+kubebuilder:validation:Minimum=100
-	//+kubebuilder:validation:Maximum=1000
+	// VolumeSize is the size of the BTRFS storage volume in GB
+	// This volume stores environment PVCs, workspace data, and supports snapshots
+	// Root volume is fixed at 50GB for OS only
+	// +kubebuilder:default=100
+	// +kubebuilder:validation:Minimum=50
+	// +kubebuilder:validation:Maximum=1000
 	VolumeSize *int32 `json:"volumeSize"`
 
-	// VolumeType is the volume type
+	// VolumeType is the volume type for the storage volume
 	// eg. for AWS (gp3, gp2, io1, io2)
 	VolumeType string `json:"volumeType,omitempty"`
 
-	// DeleteVolumePostTermination controls whether root volume is cleaned up post deletion
+	// DeleteVolumePostTermination controls whether storage volume is cleaned up post deletion
 	// +kubebuilder:default=true
 	DeleteVolumePostTermination bool `json:"deleteVolumePostTermination,omitempty"`
 
@@ -274,9 +276,9 @@ type MachineInfo struct {
 	// State is the current state of the instance
 	State MachineState `json:"state,omitempty"`
 
-	// RootVolumeSize is size in GBs for the root volume.
-	// It is used while processing request for increasing volume size
-	RootVolumeSize int32 `json:"rootVolumeSize,omitempty"`
+	// StorageVolumeSize is size in GBs for the btrfs storage volume.
+	// Root volume is fixed at 50GB. This tracks the storage volume used for PVCs and snapshots.
+	StorageVolumeSize int32 `json:"storageVolumeSize,omitempty"`
 
 	// PublicIP is the public IP address of the instance (if available)
 	PublicIP string `json:"publicIP,omitempty"`
