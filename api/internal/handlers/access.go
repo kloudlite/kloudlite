@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strings"
+
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -16,10 +18,28 @@ func HasRole(roles []platformv1alpha1.RoleType, targetRole platformv1alpha1.Role
 	return false
 }
 
+// getEnvironmentOwner extracts owner from spec or labels
+func getEnvironmentOwner(env *environmentsv1.Environment) string {
+	if env.Spec.OwnedBy != "" {
+		return env.Spec.OwnedBy
+	}
+	// Extract from label: kloudlite.io/environment-name: {owner}--{name}
+	if envLabel, ok := env.Spec.Labels["kloudlite.io/environment-name"]; ok && envLabel != "" {
+		parts := strings.SplitN(envLabel, "--", 2)
+		if len(parts) >= 1 {
+			return parts[0]
+		}
+	}
+	return ""
+}
+
 // UserHasAccessToEnvironment checks if a user has access to view an environment
 func UserHasAccessToEnvironment(username string, env *environmentsv1.Environment) bool {
+	// Get owner (from spec or labels)
+	owner := getEnvironmentOwner(env)
+
 	// Owner always has access
-	if env.Spec.OwnedBy == username {
+	if owner == username {
 		return true
 	}
 
