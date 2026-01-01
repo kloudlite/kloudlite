@@ -364,7 +364,7 @@ export async function importEnvironmentConfig(
  */
 export async function updateEnvironmentAccess(
   name: string,
-  data: { visibility: 'private' | 'shared' | 'public'; sharedWith?: string[] },
+  data: { visibility: 'private' | 'shared' | 'open'; sharedWith?: string[] },
 ) {
   try {
     const result = await environmentService.updateEnvironment(name, {

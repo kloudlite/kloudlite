@@ -107,12 +107,12 @@ export function AccessSettings({ environmentId, visibility, sharedWith, owner }:
                 <input
                   type="radio"
                   name="visibility"
-                  checked={currentVisibility === 'public'}
-                  onChange={() => handleVisibilityChange('public')}
+                  checked={currentVisibility === 'open'}
+                  onChange={() => handleVisibilityChange('open')}
                   disabled={isPending}
                   className="text-info"
                 />
-                <span className="text-sm">Public - Accessible to everyone</span>
+                <span className="text-sm">Open - Accessible to everyone</span>
               </label>
             </div>
           </div>
