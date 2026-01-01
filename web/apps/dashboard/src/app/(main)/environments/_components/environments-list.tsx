@@ -354,9 +354,15 @@ export function EnvironmentsList({
             <Upload className="h-4 w-4" />
             Import
           </Button>
-          <Button size="sm" className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+          <Button
+            size="sm"
+            className="gap-2"
+            onClick={() => setCreateDialogOpen(true)}
+            disabled={!workMachineRunning}
+            title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
+          >
             <Plus className="h-4 w-4" />
-            New Environment
+            {workMachineRunning ? 'New Environment' : 'New Environment (VM stopped)'}
           </Button>
         </div>
       </div>
