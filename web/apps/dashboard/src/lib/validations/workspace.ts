@@ -57,11 +57,16 @@ const environmentConnectionSchema = z
   })
   .optional()
 
+// Visibility enum
+const visibilitySchema = z.enum(['private', 'shared', 'open']).optional()
+
 // Workspace spec schema - only fields used by controller
 export const workspaceSpecSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name too long'),
   ownedBy: z.string().min(1, 'Owner is required'),
-  workmachine: z.string().min(1, 'WorkMachine is required'),
+  workmachine: z.string().optional(), // Auto-populated from namespace by webhook
+  visibility: visibilitySchema,
+  sharedWith: z.array(z.string()).optional(),
   environmentConnection: environmentConnectionSchema,
   gitRepository: gitRepositorySchema,
   settings: workspaceSettingsSchema,
@@ -77,9 +82,25 @@ export const workspaceCreateSchema = z.object({
   spec: workspaceSpecSchema,
 })
 
+// Workspace update spec schema - all fields optional for partial updates
+export const workspaceUpdateSpecSchema = z.object({
+  displayName: z.string().min(1).max(100).optional(),
+  ownedBy: z.string().optional(),
+  workmachine: z.string().optional(),
+  visibility: visibilitySchema,
+  sharedWith: z.array(z.string()).optional(),
+  environmentConnection: environmentConnectionSchema,
+  gitRepository: gitRepositorySchema,
+  settings: workspaceSettingsSchema,
+  vscodeVersion: z.string().optional(),
+  status: z.enum(['active', 'suspended', 'archived']).optional(),
+  copyFrom: z.string().optional(),
+  expose: z.array(exposedPortSchema).optional(),
+})
+
 // Workspace update request schema
 export const workspaceUpdateSchema = z.object({
-  spec: workspaceSpecSchema,
+  spec: workspaceUpdateSpecSchema,
 })
 
 // Package update schema

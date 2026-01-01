@@ -58,7 +58,11 @@ export async function createWorkspace(namespace: string, data: unknown) {
   }
 
   try {
-    const result = await workspaceService.create(validated.data, namespace)
+    // Cast to WorkspaceCreateRequest - workmachine is auto-populated by webhook from namespace
+    const result = await workspaceService.create(
+      validated.data as import('@kloudlite/types').WorkspaceCreateRequest,
+      namespace
+    )
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -94,7 +98,12 @@ export async function updateWorkspace(name: string, namespace: string, data: unk
   }
 
   try {
-    const result = await workspaceService.update(name, validated.data, namespace)
+    // Cast to WorkspaceUpdateRequest - backend handles partial updates
+    const result = await workspaceService.update(
+      name,
+      validated.data as import('@kloudlite/types').WorkspaceUpdateRequest,
+      namespace
+    )
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -252,7 +261,12 @@ export async function cloneWorkspace(
   }
 
   try {
-    const result = await workspaceService.clone(sourceWorkspaceName, validated.data, namespace)
+    // Cast to WorkspaceCreateRequest - workmachine is auto-populated by webhook from namespace
+    const result = await workspaceService.clone(
+      sourceWorkspaceName,
+      validated.data as import('@kloudlite/types').WorkspaceCreateRequest,
+      namespace
+    )
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
