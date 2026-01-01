@@ -69,9 +69,24 @@ export const environmentCreateSchema = z.object({
   spec: environmentSpecSchema,
 })
 
+// Environment update spec schema - all fields optional for partial updates
+export const environmentUpdateSpecSchema = z.object({
+  targetNamespace: z.string().optional(),
+  name: z.string().optional(),
+  ownedBy: z.string().optional(),
+  visibility: visibilitySchema,
+  sharedWith: z.array(z.string()).optional(),
+  workmachineName: z.string().optional(),
+  activated: z.boolean().optional(),
+  networkPolicies: networkPoliciesSchema,
+  labels: z.record(z.string()).optional(),
+  annotations: z.record(z.string()).optional(),
+  cloneFrom: z.string().optional(),
+})
+
 // Environment update request schema
 export const environmentUpdateSchema = z.object({
-  spec: environmentSpecSchema,
+  spec: environmentUpdateSpecSchema,
 })
 
 // Clone environment schema

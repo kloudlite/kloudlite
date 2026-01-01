@@ -61,7 +61,11 @@ export async function updateEnvironment(name: string, data: unknown) {
   }
 
   try {
-    const result = await environmentService.updateEnvironment(name, validated.data)
+    // Cast to EnvironmentUpdateRequest - backend handles partial updates
+    const result = await environmentService.updateEnvironment(
+      name,
+      validated.data as import('@kloudlite/types').EnvironmentUpdateRequest
+    )
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
