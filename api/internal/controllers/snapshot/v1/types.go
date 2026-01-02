@@ -12,6 +12,7 @@ import (
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.status.snapshotType`
 // +kubebuilder:printcolumn:name="Target",type=string,JSONPath=`.status.targetName`
+// +kubebuilder:printcolumn:name="Parent",type=string,JSONPath=`.spec.parentSnapshotRef.name`,priority=1
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.status.sizeHuman`
 // +kubebuilder:printcolumn:name="Created",type=date,JSONPath=`.status.createdAt`
@@ -37,6 +38,12 @@ type SnapshotSpec struct {
 	// +optional
 	WorkspaceRef *WorkspaceReference `json:"workspaceRef,omitempty"`
 
+	// ParentSnapshotRef references the parent snapshot this was derived from
+	// This is set automatically when creating a snapshot from an environment/workspace
+	// that was previously restored from another snapshot
+	// +optional
+	ParentSnapshotRef *ParentSnapshotReference `json:"parentSnapshotRef,omitempty"`
+
 	// Description is an optional description for this snapshot
 	// +optional
 	Description string `json:"description,omitempty"`
@@ -54,6 +61,17 @@ type SnapshotSpec struct {
 	// RetentionPolicy defines when this snapshot should be deleted
 	// +optional
 	RetentionPolicy *RetentionPolicy `json:"retentionPolicy,omitempty"`
+}
+
+// ParentSnapshotReference identifies the parent snapshot in the lineage
+type ParentSnapshotReference struct {
+	// Name is the name of the parent snapshot
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// RestoredAt is when this parent snapshot was restored to create the current state
+	// +optional
+	RestoredAt *metav1.Time `json:"restoredAt,omitempty"`
 }
 
 // EnvironmentReference is a reference to an environment

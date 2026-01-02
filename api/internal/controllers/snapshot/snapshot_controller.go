@@ -826,6 +826,11 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 					logger.Warn("Failed to delete completed restore request", zap.Error(err), zap.String("request", req.Name))
 				}
 			}
+			// Track this restore on the environment for parent lineage
+			if err := r.updateEnvironmentLastRestored(ctx, envName, snapshot.Name, logger); err != nil {
+				logger.Warn("Failed to update environment's lastRestoredSnapshot", zap.Error(err))
+				// Continue - this is not a fatal error
+			}
 			logger.Info("Snapshot restored successfully", zap.String("environment", envName))
 			return reconcile.Result{}, nil
 		}
@@ -989,6 +994,11 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
 					logger.Warn("Failed to delete completed restore request", zap.Error(err), zap.String("request", req.Name))
 				}
+			}
+			// Track this restore on the workspace for parent lineage
+			if err := r.updateWorkspaceLastRestored(ctx, wsRef.Name, snapshot.Status.WorkMachineName, snapshot.Name, logger); err != nil {
+				logger.Warn("Failed to update workspace's lastRestoredSnapshot", zap.Error(err))
+				// Continue - this is not a fatal error
 			}
 			logger.Info("Workspace snapshot restored successfully", zap.String("workspace", wsRef.Name))
 			return reconcile.Result{}, nil
@@ -1321,6 +1331,42 @@ func formatSize(bytes int64) string {
 	default:
 		return fmt.Sprintf("%d B", bytes)
 	}
+}
+
+// updateEnvironmentLastRestored updates the environment's LastRestoredSnapshot status
+// This is used to track parent-child lineage when creating new snapshots
+func (r *SnapshotReconciler) updateEnvironmentLastRestored(ctx context.Context, envName, snapshotName string, logger *zap.Logger) error {
+	env := &environmentsv1.Environment{}
+	if err := r.Get(ctx, client.ObjectKey{Name: envName}, env); err != nil {
+		return fmt.Errorf("failed to get environment: %w", err)
+	}
+
+	now := metav1.Now()
+	return statusutil.UpdateStatusWithRetry(ctx, r.Client, env, func() error {
+		env.Status.LastRestoredSnapshot = &environmentsv1.LastRestoredSnapshotInfo{
+			Name:       snapshotName,
+			RestoredAt: now,
+		}
+		return nil
+	}, logger)
+}
+
+// updateWorkspaceLastRestored updates the workspace's LastRestoredSnapshot status
+// This is used to track parent-child lineage when creating new snapshots
+func (r *SnapshotReconciler) updateWorkspaceLastRestored(ctx context.Context, workspaceName, wmNamespace, snapshotName string, logger *zap.Logger) error {
+	workspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: workspaceName, Namespace: wmNamespace}, workspace); err != nil {
+		return fmt.Errorf("failed to get workspace: %w", err)
+	}
+
+	now := metav1.Now()
+	return statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
+		workspace.Status.LastRestoredSnapshot = &workspacev1.WorkspaceLastRestoredSnapshotInfo{
+			Name:       snapshotName,
+			RestoredAt: now,
+		}
+		return nil
+	}, logger)
 }
 
 // SetupWithManager sets up the controller with the Manager

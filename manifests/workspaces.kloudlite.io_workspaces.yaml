@@ -484,6 +484,22 @@ spec:
                 description: LastActivityTime tracks when the workspace was last active
                 format: date-time
                 type: string
+              lastRestoredSnapshot:
+                description: |-
+                  LastRestoredSnapshot tracks the last snapshot that was restored to this workspace
+                  Used for automatic parent lineage tracking when new snapshots are created
+                properties:
+                  name:
+                    description: Name is the name of the snapshot that was restored
+                    type: string
+                  restoredAt:
+                    description: RestoredAt is when the snapshot was restored
+                    format: date-time
+                    type: string
+                required:
+                - name
+                - restoredAt
+                type: object
               message:
                 description: Message provides additional information about the current
                   state

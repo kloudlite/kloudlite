@@ -1231,6 +1231,22 @@ spec:
                   was deactivated
                 format: date-time
                 type: string
+              lastRestoredSnapshot:
+                description: |-
+                  LastRestoredSnapshot tracks the last snapshot that was restored to this environment
+                  Used for automatic parent lineage tracking when new snapshots are created
+                properties:
+                  name:
+                    description: Name is the name of the snapshot that was restored
+                    type: string
+                  restoredAt:
+                    description: RestoredAt is when the snapshot was restored
+                    format: date-time
+                    type: string
+                required:
+                - name
+                - restoredAt
+                type: object
               message:
                 description: Message provides human-readable information about the
                   current state
@@ -2511,6 +2527,10 @@ spec:
     - jsonPath: .status.targetName
       name: Target
       type: string
+    - jsonPath: .spec.parentSnapshotRef.name
+      name: Parent
+      priority: 1
+      type: string
     - jsonPath: .status.state
       name: State
       type: string
@@ -2573,6 +2593,23 @@ spec:
               ownedBy:
                 description: OwnedBy is the username who created this snapshot
                 type: string
+              parentSnapshotRef:
+                description: |-
+                  ParentSnapshotRef references the parent snapshot this was derived from
+                  This is set automatically when creating a snapshot from an environment/workspace
+                  that was previously restored from another snapshot
+                properties:
+                  name:
+                    description: Name is the name of the parent snapshot
+                    type: string
+                  restoredAt:
+                    description: RestoredAt is when this parent snapshot was restored
+                      to create the current state
+                    format: date-time
+                    type: string
+                required:
+                - name
+                type: object
               retentionPolicy:
                 description: RetentionPolicy defines when this snapshot should be
                   deleted
@@ -3210,6 +3247,22 @@ spec:
                 description: LastActivityTime tracks when the workspace was last active
                 format: date-time
                 type: string
+              lastRestoredSnapshot:
+                description: |-
+                  LastRestoredSnapshot tracks the last snapshot that was restored to this workspace
+                  Used for automatic parent lineage tracking when new snapshots are created
+                properties:
+                  name:
+                    description: Name is the name of the snapshot that was restored
+                    type: string
+                  restoredAt:
+                    description: RestoredAt is when the snapshot was restored
+                    format: date-time
+                    type: string
+                required:
+                - name
+                - restoredAt
+                type: object
               message:
                 description: Message provides additional information about the current
                   state

@@ -98,23 +98,38 @@ func (h *SnapshotHandlers) CreateSnapshot(c *gin.Context) {
 		}
 	}
 
+	// Check for parent snapshot lineage
+	var parentSnapshotRef *snapshotv1.ParentSnapshotReference
+	labels := map[string]string{
+		"snapshots.kloudlite.io/environment": envName,
+		"kloudlite.io/owned-by":              username,
+	}
+	if env.Status.LastRestoredSnapshot != nil {
+		parentSnapshotRef = &snapshotv1.ParentSnapshotReference{
+			Name:       env.Status.LastRestoredSnapshot.Name,
+			RestoredAt: &env.Status.LastRestoredSnapshot.RestoredAt,
+		}
+		labels["snapshots.kloudlite.io/parent"] = env.Status.LastRestoredSnapshot.Name
+		h.logger.Info("Setting parent snapshot reference",
+			zap.String("snapshot", snapshotName),
+			zap.String("parent", env.Status.LastRestoredSnapshot.Name))
+	}
+
 	// Create snapshot
 	snapshot := &snapshotv1.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: snapshotName,
-			Labels: map[string]string{
-				"snapshots.kloudlite.io/environment": envName,
-				"kloudlite.io/owned-by":              username,
-			},
+			Name:   snapshotName,
+			Labels: labels,
 		},
 		Spec: snapshotv1.SnapshotSpec{
 			EnvironmentRef: &snapshotv1.EnvironmentReference{
 				Name: envName,
 			},
-			Description:     req.Description,
-			OwnedBy:         username,
-			IncludeMetadata: req.IncludeMetadata,
-			RetentionPolicy: retentionPolicy,
+			ParentSnapshotRef: parentSnapshotRef,
+			Description:       req.Description,
+			OwnedBy:           username,
+			IncludeMetadata:   req.IncludeMetadata,
+			RetentionPolicy:   retentionPolicy,
 		},
 	}
 
@@ -430,24 +445,39 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		}
 	}
 
+	// Check for parent snapshot lineage
+	var parentSnapshotRef *snapshotv1.ParentSnapshotReference
+	labels := map[string]string{
+		"snapshots.kloudlite.io/workspace": workspaceName,
+		"kloudlite.io/owned-by":            username,
+	}
+	if workspace.Status.LastRestoredSnapshot != nil {
+		parentSnapshotRef = &snapshotv1.ParentSnapshotReference{
+			Name:       workspace.Status.LastRestoredSnapshot.Name,
+			RestoredAt: &workspace.Status.LastRestoredSnapshot.RestoredAt,
+		}
+		labels["snapshots.kloudlite.io/parent"] = workspace.Status.LastRestoredSnapshot.Name
+		h.logger.Info("Setting parent snapshot reference",
+			zap.String("snapshot", snapshotName),
+			zap.String("parent", workspace.Status.LastRestoredSnapshot.Name))
+	}
+
 	// Create snapshot
 	snapshot := &snapshotv1.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: snapshotName,
-			Labels: map[string]string{
-				"snapshots.kloudlite.io/workspace": workspaceName,
-				"kloudlite.io/owned-by":            username,
-			},
+			Name:   snapshotName,
+			Labels: labels,
 		},
 		Spec: snapshotv1.SnapshotSpec{
 			WorkspaceRef: &snapshotv1.WorkspaceReference{
 				Name:            workspaceName,
 				WorkmachineName: workspace.Spec.WorkmachineName,
 			},
-			Description:     req.Description,
-			OwnedBy:         username,
-			IncludeMetadata: req.IncludeMetadata,
-			RetentionPolicy: retentionPolicy,
+			ParentSnapshotRef: parentSnapshotRef,
+			Description:       req.Description,
+			OwnedBy:           username,
+			IncludeMetadata:   req.IncludeMetadata,
+			RetentionPolicy:   retentionPolicy,
 		},
 	}
 

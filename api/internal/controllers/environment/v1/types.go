@@ -224,6 +224,22 @@ type EnvironmentStatus struct {
 	// Subdomain is the subdomain assigned to this environment's workmachine (e.g., "beanbag.khost.dev")
 	// +optional
 	Subdomain string `json:"subdomain,omitempty"`
+
+	// LastRestoredSnapshot tracks the last snapshot that was restored to this environment
+	// Used for automatic parent lineage tracking when new snapshots are created
+	// +optional
+	LastRestoredSnapshot *LastRestoredSnapshotInfo `json:"lastRestoredSnapshot,omitempty"`
+}
+
+// LastRestoredSnapshotInfo tracks the last restored snapshot for lineage
+type LastRestoredSnapshotInfo struct {
+	// Name is the name of the snapshot that was restored
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// RestoredAt is when the snapshot was restored
+	// +kubebuilder:validation:Required
+	RestoredAt metav1.Time `json:"restoredAt"`
 }
 
 // EnvironmentState represents the state of an environment
