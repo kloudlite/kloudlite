@@ -772,6 +772,7 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 
 	// Delete any existing restore requests from previous restore attempts
 	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
+	deletedAny := false
 	if err := r.List(ctx, existingRestoreReqs, client.MatchingLabels{
 		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
 		"snapshots.kloudlite.io/operation": "restore",
@@ -782,9 +783,16 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 				logger.Info("Deleting old restore request", zap.String("request", req.Name))
 				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
 					logger.Warn("Failed to delete old restore request", zap.Error(err))
+				} else {
+					deletedAny = true
 				}
 			}
 		}
+	}
+	// If we deleted old requests, requeue to let the deletion complete before creating new ones
+	if deletedAny {
+		logger.Info("Requeuing after deleting old restore requests")
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
 	// Create restore SnapshotRequests for each PVC snapshot
@@ -901,6 +909,7 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 
 	// Delete any existing restore requests from previous restore attempts
 	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
+	deletedAny := false
 	if err := r.List(ctx, existingRestoreReqs, client.MatchingLabels{
 		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
 		"snapshots.kloudlite.io/operation": "restore",
@@ -911,9 +920,16 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 				logger.Info("Deleting old restore request", zap.String("request", req.Name))
 				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
 					logger.Warn("Failed to delete old restore request", zap.Error(err))
+				} else {
+					deletedAny = true
 				}
 			}
 		}
+	}
+	// If we deleted old requests, requeue to let the deletion complete before creating new ones
+	if deletedAny {
+		logger.Info("Requeuing after deleting old restore requests")
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
 	// Create restore SnapshotRequest
