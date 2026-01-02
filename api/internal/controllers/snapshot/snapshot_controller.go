@@ -476,6 +476,12 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		logger.Info("Skipping scale up, other snapshots still in progress")
 	}
 
+	// Update environment's lastRestoredSnapshot to track the new snapshot as current
+	if err := r.updateEnvironmentLastRestored(ctx, envName, snapshot.Name, logger); err != nil {
+		logger.Warn("Failed to update environment's lastRestoredSnapshot", zap.Error(err))
+		// Continue - this is not a fatal error
+	}
+
 	logger.Info("Snapshot created successfully",
 		zap.String("path", snapshotPath),
 		zap.Int64("sizeBytes", totalSize))
@@ -646,6 +652,12 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Ready", zap.Error(err))
 		return reconcile.Result{}, err
+	}
+
+	// Update workspace's lastRestoredSnapshot to track the new snapshot as current
+	if err := r.updateWorkspaceLastRestored(ctx, wsRef.Name, wmNamespace, snapshot.Name, logger); err != nil {
+		logger.Warn("Failed to update workspace's lastRestoredSnapshot", zap.Error(err))
+		// Continue - this is not a fatal error
 	}
 
 	logger.Info("Workspace snapshot created successfully",
