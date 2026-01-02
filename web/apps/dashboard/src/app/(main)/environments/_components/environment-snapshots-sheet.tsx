@@ -6,10 +6,6 @@ import {
   Camera,
   Plus,
   Loader2,
-  RotateCcw,
-  Trash2,
-  Clock,
-  HardDrive,
   AlertCircle,
 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
@@ -42,71 +38,12 @@ import {
   deleteSnapshot,
 } from '@/app/actions/snapshot.actions'
 import { toast } from 'sonner'
+import { SnapshotTimeline } from '@/app/(main)/workspaces/_components/snapshot-timeline'
 
 interface EnvironmentSnapshotsSheetProps {
   environmentName: string
   trigger?: React.ReactNode
   isActive?: boolean
-}
-
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-  if (diffInSeconds < 60) return 'just now'
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`
-  return date.toLocaleDateString()
-}
-
-function getStateBadge(state: Snapshot['status']['state']) {
-  const baseClasses = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium'
-
-  switch (state) {
-    case 'Ready':
-      return (
-        <span className={`${baseClasses} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}>
-          Ready
-        </span>
-      )
-    case 'Creating':
-      return (
-        <span className={`${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400`}>
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Creating
-        </span>
-      )
-    case 'Restoring':
-      return (
-        <span className={`${baseClasses} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`}>
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Restoring
-        </span>
-      )
-    case 'Deleting':
-      return (
-        <span className={`${baseClasses} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400`}>
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Deleting
-        </span>
-      )
-    case 'Failed':
-      return (
-        <span className={`${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}>
-          <AlertCircle className="h-3 w-3" />
-          Failed
-        </span>
-      )
-    case 'Pending':
-    default:
-      return (
-        <span className={`${baseClasses} bg-secondary text-secondary-foreground`}>
-          Pending
-        </span>
-      )
-  }
 }
 
 export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive = false }: EnvironmentSnapshotsSheetProps) {
@@ -277,77 +214,13 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
                 </Button>
               </div>
 
-              {/* Snapshots List */}
-              {snapshots.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Snapshots ({snapshots.length})</h4>
-                  <div className="space-y-2">
-                    {snapshots.map((snapshot) => (
-                      <div
-                        key={snapshot.metadata.name}
-                        className="bg-card rounded-lg border p-4"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="truncate font-mono text-sm">
-                                {snapshot.metadata.name}
-                              </span>
-                              {getStateBadge(snapshot.status.state)}
-                            </div>
-                            <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs">
-                              {snapshot.status.sizeHuman && (
-                                <span className="flex items-center gap-1">
-                                  <HardDrive className="h-3 w-3" />
-                                  {snapshot.status.sizeHuman}
-                                </span>
-                              )}
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
-                              </span>
-                            </div>
-                            {snapshot.spec.description && (
-                              <p className="text-muted-foreground mt-2 text-sm italic">
-                                &quot;{snapshot.spec.description}&quot;
-                              </p>
-                            )}
-                            {snapshot.status.state === 'Failed' && snapshot.status.message && (
-                              <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                                {snapshot.status.message}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {snapshot.status.state === 'Ready' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRestoreClick(snapshot)}
-                                disabled={!isActive}
-                                title={!isActive ? 'Environment must be active to restore' : undefined}
-                              >
-                                <RotateCcw className="mr-1 h-3 w-3" />
-                                Restore
-                              </Button>
-                            )}
-                            {(snapshot.status.state === 'Ready' || snapshot.status.state === 'Failed') && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteClick(snapshot)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Snapshot Timeline */}
+              <SnapshotTimeline
+                snapshots={snapshots}
+                onRestore={handleRestoreClick}
+                onDelete={handleDeleteClick}
+                disabled={!isActive}
+              />
 
               {snapshots.length === 0 && (
                 <div className="text-muted-foreground py-8 text-center">
