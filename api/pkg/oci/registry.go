@@ -54,23 +54,24 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 	// Build the image starting with empty
 	img = empty.Image
 
-	// Append existing layers if any
+	// Collect all layers to add
+	var allLayers []v1.Layer
 	if len(existingLayers) > 0 {
-		for _, layer := range existingLayers {
-			img, err = mutate.AppendLayers(img, layer)
-			if err != nil {
-				return nil, fmt.Errorf("failed to append existing layer: %w", err)
-			}
+		allLayers = append(allLayers, existingLayers...)
+	}
+	allLayers = append(allLayers, newLayer)
+
+	// Get DiffIDs for the config
+	var diffIDs []v1.Hash
+	for _, layer := range allLayers {
+		diffID, err := layer.DiffID()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get layer diff ID: %w", err)
 		}
+		diffIDs = append(diffIDs, diffID)
 	}
 
-	// Append the new layer
-	img, err = mutate.AppendLayers(img, newLayer)
-	if err != nil {
-		return nil, fmt.Errorf("failed to append new layer: %w", err)
-	}
-
-	// Create config with our custom labels
+	// Create config with our custom labels and proper RootFS
 	configFile := &v1.ConfigFile{
 		Architecture: "amd64",
 		OS:           "linux",
@@ -82,14 +83,21 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 			},
 		},
 		RootFS: v1.RootFS{
-			Type: "layers",
+			Type:    "layers",
+			DiffIDs: diffIDs,
 		},
 	}
 
-	// Set the config file
+	// Set the config file FIRST (before layers)
 	img, err = mutate.ConfigFile(img, configFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set config: %w", err)
+	}
+
+	// NOW append all layers
+	img, err = mutate.AppendLayers(img, allLayers...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to append layers: %w", err)
 	}
 
 	// Push to registry
