@@ -450,6 +450,13 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		totalSize += pvcInfo.SizeBytes
 	}
 
+	// Update environment's lastRestoredSnapshot BEFORE setting snapshot to Ready
+	// This ensures the frontend sees the current snapshot when it refreshes
+	if err := r.updateEnvironmentLastRestored(ctx, envName, snapshot.Name, logger); err != nil {
+		logger.Warn("Failed to update environment's lastRestoredSnapshot", zap.Error(err))
+		// Continue - this is not a fatal error
+	}
+
 	// Update status to Ready
 	now := metav1.Now()
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
@@ -474,12 +481,6 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		}
 	} else {
 		logger.Info("Skipping scale up, other snapshots still in progress")
-	}
-
-	// Update environment's lastRestoredSnapshot to track the new snapshot as current
-	if err := r.updateEnvironmentLastRestored(ctx, envName, snapshot.Name, logger); err != nil {
-		logger.Warn("Failed to update environment's lastRestoredSnapshot", zap.Error(err))
-		// Continue - this is not a fatal error
 	}
 
 	logger.Info("Snapshot created successfully",
@@ -638,6 +639,13 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 		}
 	}
 
+	// Update workspace's lastRestoredSnapshot BEFORE setting snapshot to Ready
+	// This ensures the frontend sees the current snapshot when it refreshes
+	if err := r.updateWorkspaceLastRestored(ctx, wsRef.Name, wmNamespace, snapshot.Name, logger); err != nil {
+		logger.Warn("Failed to update workspace's lastRestoredSnapshot", zap.Error(err))
+		// Continue - this is not a fatal error
+	}
+
 	// Update status to Ready
 	now := metav1.Now()
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
@@ -652,12 +660,6 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Ready", zap.Error(err))
 		return reconcile.Result{}, err
-	}
-
-	// Update workspace's lastRestoredSnapshot to track the new snapshot as current
-	if err := r.updateWorkspaceLastRestored(ctx, wsRef.Name, wmNamespace, snapshot.Name, logger); err != nil {
-		logger.Warn("Failed to update workspace's lastRestoredSnapshot", zap.Error(err))
-		// Continue - this is not a fatal error
 	}
 
 	logger.Info("Workspace snapshot created successfully",
