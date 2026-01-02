@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/google/go-containerregistry/pkg/v1/types"
 )
 
 // Client handles OCI registry operations for snapshots
@@ -84,10 +83,6 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to set config: %w", err)
 	}
-
-	// Convert to OCI format (the registry requires OCI manifest format)
-	img = mutate.MediaType(img, types.OCIManifestSchema1)
-	img = mutate.ConfigMediaType(img, types.OCIConfigJSON)
 
 	// Push to registry
 	remoteOpts := c.remoteOptions()
