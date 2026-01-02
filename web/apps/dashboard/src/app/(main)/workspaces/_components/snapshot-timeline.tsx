@@ -19,6 +19,7 @@ interface SnapshotTimelineProps {
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
+  currentSnapshotName?: string // The last restored snapshot name (from workspace/environment status)
 }
 
 interface TimelineNode {
@@ -98,7 +99,7 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-function buildTimeline(snapshots: Snapshot[]): { nodes: TimelineNode[], maxColumn: number } {
+function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): { nodes: TimelineNode[], maxColumn: number } {
   if (snapshots.length === 0) return { nodes: [], maxColumn: 0 }
 
   const snapshotMap = new Map<string, Snapshot>()
@@ -120,7 +121,10 @@ function buildTimeline(snapshots: Snapshot[]): { nodes: TimelineNode[], maxColum
     new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
   )
 
-  const mostRecentName = sortedByTime[0]?.metadata.name
+  // Use currentSnapshotName if provided, otherwise fall back to most recent
+  const headSnapshotName = currentSnapshotName && snapshotMap.has(currentSnapshotName)
+    ? currentSnapshotName
+    : sortedByTime[0]?.metadata.name
 
   const columnAssignments = new Map<string, number>()
   let nextColumn = 0
@@ -164,7 +168,7 @@ function buildTimeline(snapshots: Snapshot[]): { nodes: TimelineNode[], maxColum
       snapshot,
       column: columnAssignments.get(name) ?? 0,
       parentColumn,
-      isCurrent: name === mostRecentName,
+      isCurrent: name === headSnapshotName,
       isBranchPoint: children.length > 1,
       hasSiblings: siblings.length > 1,
     }
@@ -396,8 +400,8 @@ function TimelineItem({ node, maxColumn, onRestore, onDelete, disabled }: Timeli
   )
 }
 
-export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled }: SnapshotTimelineProps) {
-  const { nodes, maxColumn } = useMemo(() => buildTimeline(snapshots), [snapshots])
+export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, currentSnapshotName }: SnapshotTimelineProps) {
+  const { nodes, maxColumn } = useMemo(() => buildTimeline(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
 
   if (snapshots.length === 0) {
     return null

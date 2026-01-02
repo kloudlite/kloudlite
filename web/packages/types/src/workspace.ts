@@ -141,6 +141,11 @@ export interface WorkspaceStatus {
   subdomain?: string // Subdomain from workmachine (e.g., "beanbag.khost.dev")
   // Exposed HTTP routes - keys are port numbers, values are full URLs
   exposedRoutes?: Record<string, string> // e.g., {"3000": "https://p3000-a1b2c3d4.example.khost.dev"}
+  // Last restored snapshot tracking
+  lastRestoredSnapshot?: {
+    name: string
+    restoredAt: string
+  }
 }
 
 // Request/Response types

@@ -153,6 +153,23 @@ export async function getEnvironmentStatus(name: string) {
 }
 
 /**
+ * Server action to get an environment by name
+ */
+export async function getEnvironment(name: string) {
+  try {
+    const result = await environmentService.getEnvironment(name)
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Get environment error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
  * Server action to clone an environment
  */
 export async function cloneEnvironment(
