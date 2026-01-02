@@ -23,14 +23,8 @@ interface SnapshotTimelineProps {
 
 interface SnapshotNode {
   snapshot: Snapshot
-  children: SnapshotNode[]
   hasParent: boolean
-  isLastInChain: boolean
-}
-
-interface LineageChain {
-  nodes: SnapshotNode[]
-  rootName: string | null
+  depth: number
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -94,19 +88,17 @@ function getStateBadge(state: Snapshot['status']['state']) {
 }
 
 /**
- * Build lineage chains from flat snapshot list
- * Groups snapshots by their lineage (parent-child relationships)
+ * Build a flat list with depth information for rendering
  */
-function buildLineageChains(snapshots: Snapshot[]): LineageChain[] {
+function buildSnapshotList(snapshots: Snapshot[]): SnapshotNode[] {
   if (snapshots.length === 0) return []
 
-  // Create a map for quick lookup
+  // Create maps for lookup
   const snapshotMap = new Map<string, Snapshot>()
-  snapshots.forEach(s => snapshotMap.set(s.metadata.name, s))
-
-  // Build parent -> children map
   const childrenMap = new Map<string, Snapshot[]>()
   const hasParentInList = new Set<string>()
+
+  snapshots.forEach(s => snapshotMap.set(s.metadata.name, s))
 
   snapshots.forEach(snapshot => {
     const parentName = snapshot.spec.parentSnapshotRef?.name
@@ -118,101 +110,85 @@ function buildLineageChains(snapshots: Snapshot[]): LineageChain[] {
     }
   })
 
-  // Find root snapshots (no parent or parent not in list)
-  const rootSnapshots = snapshots.filter(s => !hasParentInList.has(s.metadata.name))
+  // Find roots
+  const roots = snapshots.filter(s => !hasParentInList.has(s.metadata.name))
 
-  // Build chains starting from each root
-  const chains: LineageChain[] = []
-
-  // Helper to build node tree
-  function buildNodeTree(snapshot: Snapshot, isLastInChain: boolean): SnapshotNode {
-    const children = childrenMap.get(snapshot.metadata.name) || []
-    // Sort children by creation time (newest first)
-    children.sort((a, b) =>
-      new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
-      new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
-    )
-
-    return {
-      snapshot,
-      hasParent: hasParentInList.has(snapshot.metadata.name),
-      isLastInChain: isLastInChain && children.length === 0,
-      children: children.map((child, idx) =>
-        buildNodeTree(child, idx === children.length - 1)
-      ),
-    }
-  }
-
-  // Helper to flatten tree to array (for rendering)
-  function flattenTree(node: SnapshotNode, result: SnapshotNode[]): void {
-    result.push(node)
-    node.children.forEach(child => flattenTree(child, result))
-  }
-
-  // Sort roots by creation time (newest first)
-  rootSnapshots.sort((a, b) =>
-    new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
-    new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
+  // Sort roots by creation time (oldest first for bottom-up display)
+  roots.sort((a, b) =>
+    new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime() -
+    new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
   )
 
-  rootSnapshots.forEach(root => {
-    const tree = buildNodeTree(root, true)
-    const nodes: SnapshotNode[] = []
-    flattenTree(tree, nodes)
+  // Build flat list with DFS
+  const result: SnapshotNode[] = []
 
-    // Reverse to show oldest first within a chain (parent before children)
-    // But chains themselves are sorted newest-root first
-    chains.push({
-      nodes: nodes.reverse(),
-      rootName: root.metadata.name,
+  function traverse(snapshot: Snapshot, depth: number) {
+    const children = childrenMap.get(snapshot.metadata.name) || []
+    // Sort children by creation time (oldest first)
+    children.sort((a, b) =>
+      new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime() -
+      new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
+    )
+
+    result.push({
+      snapshot,
+      hasParent: hasParentInList.has(snapshot.metadata.name),
+      depth,
     })
-  })
 
-  return chains
+    children.forEach(child => traverse(child, depth + 1))
+  }
+
+  roots.forEach(root => traverse(root, 0))
+
+  // Reverse to show newest at top
+  return result.reverse()
 }
 
 interface TimelineItemProps {
   node: SnapshotNode
-  isFirst: boolean
   isLast: boolean
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
 }
 
-function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
+function TimelineItem({ node, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
   const { snapshot, hasParent } = node
 
   return (
-    <div className="relative pl-8">
-      {/* Continuous vertical line */}
-      {!isLast && (
+    <div className="flex gap-3">
+      {/* Left side - line and dot */}
+      <div className="flex flex-col items-center" style={{ width: '16px' }}>
+        {/* Line segment above dot */}
         <div
-          className="absolute left-[7px] top-5 bottom-0 w-[2px] bg-muted-foreground/30"
+          className={cn(
+            "w-0.5 flex-1",
+            hasParent ? "bg-gray-300 dark:bg-gray-600" : "bg-transparent"
+          )}
+          style={{ minHeight: '8px' }}
         />
-      )}
-      {!isFirst && (
+        {/* Dot */}
         <div
-          className="absolute left-[7px] top-0 h-5 w-[2px] bg-muted-foreground/30"
+          className={cn(
+            "w-3 h-3 rounded-full flex-shrink-0",
+            hasParent
+              ? "bg-blue-500"
+              : "bg-gray-400 dark:bg-gray-500"
+          )}
         />
-      )}
-
-      {/* Node dot - positioned absolutely on the line */}
-      <div
-        className={cn(
-          "absolute left-0 top-3 h-4 w-4 rounded-full border-2 flex items-center justify-center",
-          hasParent
-            ? "bg-primary border-primary"
-            : "bg-background border-muted-foreground"
-        )}
-      >
-        {!hasParent && (
-          <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-        )}
+        {/* Line segment below dot */}
+        <div
+          className={cn(
+            "w-0.5 flex-1",
+            !isLast ? "bg-gray-300 dark:bg-gray-600" : "bg-transparent"
+          )}
+          style={{ minHeight: '8px' }}
+        />
       </div>
 
-      {/* Snapshot card */}
-      <div className="pb-4">
+      {/* Right side - card content */}
+      <div className="flex-1 pb-3">
         <div className="bg-card rounded-lg border p-4 hover:bg-muted/30 transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -235,7 +211,7 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
                   {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
                 </span>
                 {hasParent && snapshot.spec.parentSnapshotRef && (
-                  <span className="flex items-center gap-1 text-primary">
+                  <span className="flex items-center gap-1 text-blue-500">
                     <GitBranch className="h-3 w-3" />
                     from {snapshot.spec.parentSnapshotRef.name.split('-').slice(-2).join('-')}
                   </span>
@@ -287,7 +263,7 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
 }
 
 export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled }: SnapshotTimelineProps) {
-  const chains = useMemo(() => buildLineageChains(snapshots), [snapshots])
+  const nodes = useMemo(() => buildSnapshotList(snapshots), [snapshots])
 
   if (snapshots.length === 0) {
     return null
@@ -300,33 +276,16 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled }: S
         Snapshot History ({snapshots.length})
       </h4>
 
-      <div className="space-y-6">
-        {chains.map((chain, chainIdx) => (
-          <div key={chain.rootName || chainIdx}>
-            {/* Chain separator (only between chains) */}
-            {chainIdx > 0 && (
-              <div className="mb-4 flex items-center gap-2">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">different lineage</span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-            )}
-
-            {/* Timeline items in this chain */}
-            <div>
-              {chain.nodes.map((node, nodeIdx) => (
-                <TimelineItem
-                  key={node.snapshot.metadata.name}
-                  node={node}
-                  isFirst={nodeIdx === 0}
-                  isLast={nodeIdx === chain.nodes.length - 1}
-                  onRestore={onRestore}
-                  onDelete={onDelete}
-                  disabled={disabled}
-                />
-              ))}
-            </div>
-          </div>
+      <div>
+        {nodes.map((node, idx) => (
+          <TimelineItem
+            key={node.snapshot.metadata.name}
+            node={node}
+            isLast={idx === nodes.length - 1}
+            onRestore={onRestore}
+            onDelete={onDelete}
+            disabled={disabled}
+          />
         ))}
       </div>
     </div>
