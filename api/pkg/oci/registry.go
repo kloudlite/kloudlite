@@ -1,9 +1,7 @@
 package oci
 
 import (
-	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -13,11 +11,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
-)
-
-const (
-	// ConfigMediaType is the media type for snapshot image config
-	ConfigMediaType = "application/vnd.kloudlite.snapshot.config.v1+json"
 )
 
 // Client handles OCI registry operations for snapshots
@@ -59,18 +52,17 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 		return nil, fmt.Errorf("failed to create snapshot layer: %w", err)
 	}
 
-	// Build the image
+	// Build the image starting with empty
+	img = empty.Image
+
+	// Append existing layers if any
 	if len(existingLayers) > 0 {
-		// Append new layer to existing layers
-		img = empty.Image
 		for _, layer := range existingLayers {
 			img, err = mutate.AppendLayers(img, layer)
 			if err != nil {
 				return nil, fmt.Errorf("failed to append existing layer: %w", err)
 			}
 		}
-	} else {
-		img = empty.Image
 	}
 
 	// Append the new layer
@@ -79,19 +71,13 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 		return nil, fmt.Errorf("failed to append new layer: %w", err)
 	}
 
-	// Set custom config
-	configBytes, err := json.Marshal(ImageConfig{
-		ImageType: "kloudlite-snapshot-chain",
-		Version:   "v1",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal config: %w", err)
-	}
-
+	// Set config with our custom labels to identify snapshot images
 	img, err = mutate.ConfigFile(img, &v1.ConfigFile{
 		Config: v1.Config{
 			Labels: map[string]string{
-				"io.kloudlite.snapshot": "true",
+				"io.kloudlite.snapshot":   "true",
+				"io.kloudlite.image-type": "kloudlite-snapshot-chain",
+				"io.kloudlite.version":    "v1",
 			},
 		},
 	})
@@ -99,11 +85,9 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 		return nil, fmt.Errorf("failed to set config: %w", err)
 	}
 
-	// Override the config media type by creating a custom manifest
-	img = &customMediaTypeImage{
-		Image:       img,
-		configBytes: configBytes,
-	}
+	// Convert to OCI format (the registry requires OCI manifest format)
+	img = mutate.MediaType(img, types.OCIManifestSchema1)
+	img = mutate.ConfigMediaType(img, types.OCIConfigJSON)
 
 	// Push to registry
 	remoteOpts := c.remoteOptions()
@@ -247,75 +231,4 @@ func (c *Client) remoteOptions() []remote.Option {
 	}
 
 	return opts
-}
-
-// customMediaTypeImage wraps an image to override media types for OCI format
-type customMediaTypeImage struct {
-	v1.Image
-	configBytes []byte
-}
-
-func (c *customMediaTypeImage) MediaType() (types.MediaType, error) {
-	return types.OCIManifestSchema1, nil
-}
-
-func (c *customMediaTypeImage) RawConfigFile() ([]byte, error) {
-	return c.configBytes, nil
-}
-
-// ConfigName returns the digest of our custom config bytes
-func (c *customMediaTypeImage) ConfigName() (v1.Hash, error) {
-	digest, _, err := v1.SHA256(bytes.NewReader(c.configBytes))
-	if err != nil {
-		return v1.Hash{}, err
-	}
-	return digest, nil
-}
-
-// Manifest returns an OCI-format manifest instead of Docker format
-func (c *customMediaTypeImage) Manifest() (*v1.Manifest, error) {
-	// Get the underlying manifest
-	m, err := c.Image.Manifest()
-	if err != nil {
-		return nil, err
-	}
-
-	// Create a copy with OCI media types
-	ociManifest := &v1.Manifest{
-		SchemaVersion: 2,
-		MediaType:     types.OCIManifestSchema1,
-		Config: v1.Descriptor{
-			MediaType: ConfigMediaType, // Use our custom config media type
-			Size:      int64(len(c.configBytes)),
-			Digest:    m.Config.Digest, // This will be recalculated
-		},
-		Layers: make([]v1.Descriptor, len(m.Layers)),
-	}
-
-	// Convert layer media types to OCI format
-	for i, layer := range m.Layers {
-		ociManifest.Layers[i] = v1.Descriptor{
-			MediaType: types.OCILayer,
-			Size:      layer.Size,
-			Digest:    layer.Digest,
-		}
-	}
-
-	// Recalculate config digest from actual config bytes
-	configDigest, _, err := v1.SHA256(bytes.NewReader(c.configBytes))
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate config digest: %w", err)
-	}
-	ociManifest.Config.Digest = configDigest
-
-	return ociManifest, nil
-}
-
-// RawManifest returns the raw bytes of the OCI manifest
-func (c *customMediaTypeImage) RawManifest() ([]byte, error) {
-	m, err := c.Manifest()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(m)
 }
