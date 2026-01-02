@@ -255,6 +255,7 @@ func (h *SnapshotHandlers) GetSnapshot(c *gin.Context) {
 // RestoreSnapshotRequest is the request body for restoring a snapshot
 type RestoreSnapshotRequest struct {
 	TargetEnvironment string `json:"targetEnvironment,omitempty"` // If empty, restore to original environment
+	TargetWorkspace   string `json:"targetWorkspace,omitempty"`   // If empty, restore to original workspace
 }
 
 // RestoreSnapshot handles POST /api/v1/snapshots/:name/restore
@@ -301,9 +302,53 @@ func (h *SnapshotHandlers) RestoreSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Determine target environment (only for environment snapshots)
+	// Handle workspace snapshots
+	if snapshot.Spec.WorkspaceRef != nil {
+		targetWorkspaceName := req.TargetWorkspace
+		if targetWorkspaceName == "" {
+			targetWorkspaceName = snapshot.Spec.WorkspaceRef.Name
+		}
+
+		// Get the workspace namespace from the workmachine name
+		wmNamespace := fmt.Sprintf("wm-%s", snapshot.Spec.OwnedBy)
+
+		// Verify target workspace exists and user has access
+		targetWorkspace, err := h.workspaceRepo.Get(c.Request.Context(), wmNamespace, targetWorkspaceName)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Target workspace not found"})
+			return
+		}
+
+		if targetWorkspace.Spec.OwnedBy != username {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to restore to this workspace"})
+			return
+		}
+
+		// Update snapshot status to trigger restore
+		snapshot.Status.State = snapshotv1.SnapshotStateRestoring
+		snapshot.Status.Message = fmt.Sprintf("Restoring to workspace %s", targetWorkspaceName)
+
+		if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
+			h.logger.Error("Failed to update snapshot status for restore", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate restore"})
+			return
+		}
+
+		h.logger.Info("Workspace snapshot restore initiated",
+			zap.String("snapshot", snapshotName),
+			zap.String("targetWorkspace", targetWorkspaceName))
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":         "Restore initiated",
+			"snapshot":        snapshotName,
+			"targetWorkspace": targetWorkspaceName,
+		})
+		return
+	}
+
+	// Handle environment snapshots
 	if snapshot.Spec.EnvironmentRef == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Restore is only supported for environment snapshots"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Snapshot has no environment or workspace reference"})
 		return
 	}
 

@@ -959,8 +959,65 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 	}
 
 	wmNamespace := snapshot.Status.WorkMachineName
+	if wmNamespace == "" {
+		// Derive namespace from owner if not set in status
+		wmNamespace = fmt.Sprintf("wm-%s", snapshot.Spec.OwnedBy)
+	}
+
 	workspaceSnapshotPath := filepath.Join(snapshot.Status.SnapshotPath, "home")
 	targetPath := filepath.Join(workspaceHomePath, wsRef.Name)
+
+	// Fetch the workspace to check if it needs to be suspended
+	workspace := &workspacev1.Workspace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: wsRef.Name, Namespace: wmNamespace}, workspace); err != nil {
+		logger.Error("Failed to get workspace for restore", zap.Error(err))
+		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Workspace not found: %s", wsRef.Name), logger)
+	}
+
+	// Store previous workspace status and suspend the workspace if not already suspended
+	if workspace.Spec.Status != "suspended" {
+		logger.Info("Suspending workspace before restore", zap.String("workspace", wsRef.Name))
+
+		// Store the previous status in the snapshot for later restoration
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.PreviousWorkspaceStatus = workspace.Spec.Status
+			snapshot.Status.WorkspaceWasSuspended = false
+			snapshot.Status.WorkMachineName = wmNamespace
+			snapshot.Status.Message = "Suspending workspace before restore..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to store previous workspace status", zap.Error(err))
+		}
+
+		workspace.Spec.Status = "suspended"
+		if err := r.Update(ctx, workspace); err != nil {
+			logger.Error("Failed to suspend workspace for restore", zap.Error(err))
+			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to suspend workspace: %v", err), logger)
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	// Wait for workspace pod to terminate
+	podName := fmt.Sprintf("workspace-%s", wsRef.Name)
+	pod := &corev1.Pod{}
+	podErr := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: wmNamespace}, pod)
+
+	if podErr == nil {
+		// Pod still exists, wait for it to terminate
+		logger.Info("Waiting for workspace pod to terminate before restore", zap.String("pod", podName))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Waiting for workspace pod to terminate..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status message", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	if !apierrors.IsNotFound(podErr) {
+		logger.Error("Failed to check workspace pod for restore", zap.Error(podErr))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
 
 	// Check existing restore requests
 	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
@@ -994,6 +1051,24 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 		}
 
 		if allCompleted {
+			// Resume workspace if we suspended it
+			if !snapshot.Status.WorkspaceWasSuspended {
+				logger.Info("Resuming workspace after restore", zap.String("workspace", wsRef.Name))
+
+				// Refetch workspace to get latest version
+				if err := r.Get(ctx, client.ObjectKey{Name: wsRef.Name, Namespace: wmNamespace}, workspace); err == nil {
+					originalStatus := snapshot.Status.PreviousWorkspaceStatus
+					if originalStatus == "" {
+						originalStatus = "active"
+					}
+					workspace.Spec.Status = originalStatus
+					if err := r.Update(ctx, workspace); err != nil {
+						logger.Warn("Failed to resume workspace after restore", zap.Error(err))
+						// Don't fail - restore was successful
+					}
+				}
+			}
+
 			// Restore complete - update status back to Ready
 			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 				snapshot.Status.State = snapshotv1.SnapshotStateReady
@@ -1010,7 +1085,7 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 				}
 			}
 			// Track this restore on the workspace for parent lineage
-			if err := r.updateWorkspaceLastRestored(ctx, wsRef.Name, snapshot.Status.WorkMachineName, snapshot.Name, logger); err != nil {
+			if err := r.updateWorkspaceLastRestored(ctx, wsRef.Name, wmNamespace, snapshot.Name, logger); err != nil {
 				logger.Warn("Failed to update workspace's lastRestoredSnapshot", zap.Error(err))
 				// Continue - this is not a fatal error
 			}
