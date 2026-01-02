@@ -175,7 +175,7 @@ function buildTimeline(snapshots: Snapshot[]): { nodes: TimelineNode[], maxColum
 
 // SVG-based graph for reliable line rendering
 function TimelineGraph({ nodes, maxColumn }: { nodes: TimelineNode[], maxColumn: number }) {
-  const rowHeight = 120 // Approximate height per row
+  const rowHeight = 120
   const colWidth = 24
   const graphWidth = (maxColumn + 1) * colWidth
   const graphHeight = nodes.length * rowHeight
@@ -189,50 +189,52 @@ function TimelineGraph({ nodes, maxColumn }: { nodes: TimelineNode[], maxColumn:
     const cx = column * colWidth + colWidth / 2
     const cy = index * rowHeight + rowHeight / 2
 
-    // Draw vertical line to next node in same column
-    const nextInColumn = nodes.findIndex((n, i) => i > index && n.column === column)
-    if (nextInColumn !== -1) {
-      const nextCy = nextInColumn * rowHeight + rowHeight / 2
-      lines.push(
-        <line
-          key={`vline-${index}-${column}`}
-          x1={cx}
-          y1={cy}
-          x2={cx}
-          y2={nextCy}
-          stroke={colors.line}
-          strokeWidth={2}
-        />
-      )
-    }
+    // Find parent index
+    const parentIdx = parentColumn !== null
+      ? nodes.findIndex(n => n.snapshot.metadata.name === node.snapshot.spec.parentSnapshotRef?.name)
+      : -1
+    const parentCy = parentIdx !== -1 ? parentIdx * rowHeight + rowHeight / 2 : -1
 
-    // Draw horizontal line from parent column to this column
-    if (parentColumn !== null && parentColumn !== column) {
-      const parentIdx = nodes.findIndex(n => n.snapshot.metadata.name === node.snapshot.spec.parentSnapshotRef?.name)
-      if (parentIdx !== -1) {
-        const parentCx = parentColumn * colWidth + colWidth / 2
-        const parentCy = parentIdx * rowHeight + rowHeight / 2
-        // Horizontal connector at this node's Y position
+    if (parentIdx !== -1) {
+      if (parentColumn === column) {
+        // Same column - draw vertical line from this node to parent
         lines.push(
           <line
-            key={`hline-${index}`}
-            x1={Math.min(cx, parentCx)}
+            key={`vline-${index}`}
+            x1={cx}
             y1={cy}
-            x2={Math.max(cx, parentCx)}
-            y2={cy}
+            x2={cx}
+            y2={parentCy}
             stroke={colors.line}
             strokeWidth={2}
           />
         )
-        // Vertical line from parent to this horizontal connector
+      } else if (parentColumn !== null) {
+        // Different column - this is a branch
+        const parentCx = parentColumn * colWidth + colWidth / 2
+
+        // Vertical line on THIS column from this node down to parent's row
         lines.push(
           <line
-            key={`vline-parent-${index}`}
-            x1={parentCx}
+            key={`vline-branch-${index}`}
+            x1={cx}
+            y1={cy}
+            x2={cx}
+            y2={parentCy}
+            stroke={colors.line}
+            strokeWidth={2}
+          />
+        )
+
+        // Horizontal connector at parent's row from this column to parent column
+        lines.push(
+          <line
+            key={`hline-${index}`}
+            x1={cx}
             y1={parentCy}
             x2={parentCx}
-            y2={cy}
-            stroke={BRANCH_COLORS[parentColumn % BRANCH_COLORS.length].line}
+            y2={parentCy}
+            stroke={colors.line}
             strokeWidth={2}
           />
         )
@@ -254,7 +256,6 @@ function TimelineGraph({ nodes, maxColumn }: { nodes: TimelineNode[], maxColumn:
     )
 
     if (isCurrent) {
-      // Inner icon placeholder - just use a smaller circle
       dots.push(
         <circle
           key={`dot-inner-${index}`}
