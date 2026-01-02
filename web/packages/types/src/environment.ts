@@ -122,6 +122,10 @@ export interface EnvironmentStatus {
   sourceCloningStatus?: SourceCloningStatus
   hash?: string
   subdomain?: string
+  lastRestoredSnapshot?: {
+    name: string
+    restoredAt: string
+  }
 }
 
 export interface Environment {

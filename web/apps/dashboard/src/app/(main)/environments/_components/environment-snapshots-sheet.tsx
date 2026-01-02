@@ -37,6 +37,7 @@ import {
   restoreSnapshot,
   deleteSnapshot,
 } from '@/app/actions/snapshot.actions'
+import { getEnvironment } from '@/app/actions/environment.actions'
 import { toast } from 'sonner'
 import { SnapshotTimeline } from '@/app/(main)/workspaces/_components/snapshot-timeline'
 
@@ -50,6 +51,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
+  const [currentSnapshotName, setCurrentSnapshotName] = useState<string | undefined>()
   const [isCreating, setIsCreating] = useState(false)
   const [description, setDescription] = useState('')
 
@@ -61,9 +63,20 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
   const [isDeleting, setIsDeleting] = useState(false)
 
   const loadSnapshots = useCallback(async () => {
-    const result = await listEnvironmentSnapshots(environmentName)
-    if (result.success && result.data) {
-      setSnapshots(result.data.snapshots || [])
+    // Fetch snapshots and environment in parallel
+    const [snapshotResult, envResult] = await Promise.all([
+      listEnvironmentSnapshots(environmentName),
+      getEnvironment(environmentName),
+    ])
+
+    if (snapshotResult.success && snapshotResult.data) {
+      setSnapshots(snapshotResult.data.snapshots || [])
+    }
+
+    if (envResult.success && envResult.data?.status?.lastRestoredSnapshot) {
+      setCurrentSnapshotName(envResult.data.status.lastRestoredSnapshot.name)
+    } else {
+      setCurrentSnapshotName(undefined)
     }
   }, [environmentName])
 
@@ -220,6 +233,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
                 onRestore={handleRestoreClick}
                 onDelete={handleDeleteClick}
                 disabled={!isActive}
+                currentSnapshotName={currentSnapshotName}
               />
 
               {snapshots.length === 0 && (

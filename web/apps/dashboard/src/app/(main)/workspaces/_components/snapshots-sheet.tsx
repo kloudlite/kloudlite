@@ -222,6 +222,7 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
                 onRestore={handleRestoreClick}
                 onDelete={handleDeleteClick}
                 disabled={!workMachineRunning}
+                currentSnapshotName={workspace.status?.lastRestoredSnapshot?.name}
               />
 
               {snapshots.length === 0 && (
