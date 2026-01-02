@@ -242,6 +242,35 @@ func (r *SnapshotReconciler) waitForPodsTerminated(ctx context.Context, namespac
 	return true
 }
 
+// hasOtherInProgressSnapshots checks if there are other snapshots for the same environment
+// that are still in progress (Creating or Restoring state)
+func (r *SnapshotReconciler) hasOtherInProgressSnapshots(ctx context.Context, currentSnapshot *snapshotv1.Snapshot, envName string, logger *zap.Logger) bool {
+	snapshotList := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, snapshotList); err != nil {
+		logger.Warn("Failed to list snapshots", zap.Error(err))
+		return false
+	}
+
+	for _, snap := range snapshotList.Items {
+		// Skip current snapshot
+		if snap.Name == currentSnapshot.Name {
+			continue
+		}
+		// Check if it's for the same environment
+		if snap.Spec.EnvironmentRef != nil && snap.Spec.EnvironmentRef.Name == envName {
+			// Check if it's in progress
+			if snap.Status.State == snapshotv1.SnapshotStateCreating ||
+				snap.Status.State == snapshotv1.SnapshotStateRestoring {
+				logger.Info("Found other in-progress snapshot",
+					zap.String("otherSnapshot", snap.Name),
+					zap.String("state", string(snap.Status.State)))
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // handleCreating manages the snapshot creation process
 func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
 	// Dispatch based on snapshot type
@@ -438,9 +467,13 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{}, err
 	}
 
-	// Scale environment back up
-	if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
-		logger.Warn("Failed to scale up environment after snapshot", zap.Error(err))
+	// Scale environment back up only if no other snapshots are in progress
+	if !r.hasOtherInProgressSnapshots(ctx, snapshot, envName, logger) {
+		if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
+			logger.Warn("Failed to scale up environment after snapshot", zap.Error(err))
+		}
+	} else {
+		logger.Info("Skipping scale up, other snapshots still in progress")
 	}
 
 	logger.Info("Snapshot created successfully",
@@ -825,9 +858,13 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return reconcile.Result{}, err
 	}
 
-	// Scale environment back up after restore
-	if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
-		logger.Warn("Failed to scale up environment after restore", zap.Error(err))
+	// Scale environment back up only if no other snapshots are in progress
+	if !r.hasOtherInProgressSnapshots(ctx, snapshot, envName, logger) {
+		if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
+			logger.Warn("Failed to scale up environment after restore", zap.Error(err))
+		}
+	} else {
+		logger.Info("Skipping scale up after restore, other snapshots still in progress")
 	}
 
 	logger.Info("Snapshot restored successfully", zap.String("environment", envName))
