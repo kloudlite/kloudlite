@@ -298,6 +298,22 @@ type WorkspaceStatus struct {
 	// Example: {"3000": "https://p3000-a1b2c3d4.example.khost.dev"}
 	// +optional
 	ExposedRoutes map[string]string `json:"exposedRoutes,omitempty"`
+
+	// LastRestoredSnapshot tracks the last snapshot that was restored to this workspace
+	// Used for automatic parent lineage tracking when new snapshots are created
+	// +optional
+	LastRestoredSnapshot *WorkspaceLastRestoredSnapshotInfo `json:"lastRestoredSnapshot,omitempty"`
+}
+
+// WorkspaceLastRestoredSnapshotInfo tracks the last restored snapshot for lineage
+type WorkspaceLastRestoredSnapshotInfo struct {
+	// Name is the name of the snapshot that was restored
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// RestoredAt is when the snapshot was restored
+	// +kubebuilder:validation:Required
+	RestoredAt metav1.Time `json:"restoredAt"`
 }
 
 // ResourceUsage tracks current resource consumption

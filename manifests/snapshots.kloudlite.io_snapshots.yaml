@@ -21,6 +21,10 @@ spec:
     - jsonPath: .status.targetName
       name: Target
       type: string
+    - jsonPath: .spec.parentSnapshotRef.name
+      name: Parent
+      priority: 1
+      type: string
     - jsonPath: .status.state
       name: State
       type: string
@@ -83,6 +87,23 @@ spec:
               ownedBy:
                 description: OwnedBy is the username who created this snapshot
                 type: string
+              parentSnapshotRef:
+                description: |-
+                  ParentSnapshotRef references the parent snapshot this was derived from
+                  This is set automatically when creating a snapshot from an environment/workspace
+                  that was previously restored from another snapshot
+                properties:
+                  name:
+                    description: Name is the name of the parent snapshot
+                    type: string
+                  restoredAt:
+                    description: RestoredAt is when this parent snapshot was restored
+                      to create the current state
+                    format: date-time
+                    type: string
+                required:
+                - name
+                type: object
               retentionPolicy:
                 description: RetentionPolicy defines when this snapshot should be
                   deleted
