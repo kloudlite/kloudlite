@@ -16,6 +16,7 @@ type SnapshotRepository interface {
 	ListByWorkspace(ctx context.Context, workspaceName string) (*snapshotv1.SnapshotList, error)
 	ListByOwner(ctx context.Context, owner string) (*snapshotv1.SnapshotList, error)
 	ListReady(ctx context.Context) (*snapshotv1.SnapshotList, error)
+	ListByParent(ctx context.Context, parentSnapshotName string) (*snapshotv1.SnapshotList, error)
 }
 
 // snapshotRepository implements SnapshotRepository
@@ -69,4 +70,9 @@ func (r *snapshotRepository) ListReady(ctx context.Context) (*snapshotv1.Snapsho
 	}
 
 	return readySnapshots, nil
+}
+
+// ListByParent retrieves all snapshots that have the given snapshot as their parent
+func (r *snapshotRepository) ListByParent(ctx context.Context, parentSnapshotName string) (*snapshotv1.SnapshotList, error) {
+	return r.List(ctx, WithLabelSelector("snapshots.kloudlite.io/parent="+parentSnapshotName))
 }

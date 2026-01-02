@@ -1164,6 +1164,12 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
+	// Re-link children to this snapshot's parent before deletion
+	if err := r.relinkChildSnapshots(ctx, snapshot, logger); err != nil {
+		logger.Error("Failed to re-link child snapshots", zap.Error(err))
+		// Continue with deletion even if re-linking fails
+	}
+
 	// Remove finalizer
 	controllerutil.RemoveFinalizer(snapshot, snapshotFinalizer)
 	if err := r.Update(ctx, snapshot); err != nil {
@@ -1173,6 +1179,64 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 
 	logger.Info("Snapshot cleanup complete")
 	return reconcile.Result{}, nil
+}
+
+// relinkChildSnapshots updates all child snapshots to point to this snapshot's parent
+func (r *SnapshotReconciler) relinkChildSnapshots(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) error {
+	// Find all snapshots that have this snapshot as their parent
+	childSnapshots := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, childSnapshots, client.MatchingLabels{
+		"snapshots.kloudlite.io/parent": snapshot.Name,
+	}); err != nil {
+		return fmt.Errorf("failed to list child snapshots: %w", err)
+	}
+
+	if len(childSnapshots.Items) == 0 {
+		return nil
+	}
+
+	logger.Info("Re-linking child snapshots", zap.Int("count", len(childSnapshots.Items)))
+
+	// Get the parent of the snapshot being deleted
+	var newParent *snapshotv1.ParentSnapshotReference
+	newParentLabel := ""
+	if snapshot.Spec.ParentSnapshotRef != nil {
+		newParent = snapshot.Spec.ParentSnapshotRef.DeepCopy()
+		newParentLabel = snapshot.Spec.ParentSnapshotRef.Name
+	}
+
+	// Update each child to point to the new parent
+	for i := range childSnapshots.Items {
+		child := &childSnapshots.Items[i]
+		logger.Info("Re-linking child snapshot",
+			zap.String("child", child.Name),
+			zap.String("oldParent", snapshot.Name),
+			zap.String("newParent", newParentLabel),
+		)
+
+		// Update spec
+		child.Spec.ParentSnapshotRef = newParent
+
+		// Update label
+		if child.Labels == nil {
+			child.Labels = make(map[string]string)
+		}
+		if newParentLabel != "" {
+			child.Labels["snapshots.kloudlite.io/parent"] = newParentLabel
+		} else {
+			delete(child.Labels, "snapshots.kloudlite.io/parent")
+		}
+
+		if err := r.Update(ctx, child); err != nil {
+			logger.Warn("Failed to re-link child snapshot",
+				zap.String("child", child.Name),
+				zap.Error(err),
+			)
+			// Continue with other children
+		}
+	}
+
+	return nil
 }
 
 // checkSnapshotRequestsComplete checks if all SnapshotRequests for a Snapshot are complete
