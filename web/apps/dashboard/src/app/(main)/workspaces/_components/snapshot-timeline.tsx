@@ -9,8 +9,9 @@ import {
   RotateCcw,
   Trash2,
   History,
+  GitBranch,
 } from 'lucide-react'
-import { Button } from '@kloudlite/ui'
+import { Button, Badge } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
 import type { Snapshot } from '@/lib/services/snapshot.service'
 
@@ -52,44 +53,44 @@ function getStateBadge(state: Snapshot['status']['state']) {
   switch (state) {
     case 'Ready':
       return (
-        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">
           Ready
-        </span>
+        </Badge>
       )
     case 'Creating':
       return (
-        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+          <Loader2 className="h-3 w-3 animate-spin mr-1" />
           Creating
-        </span>
+        </Badge>
       )
     case 'Restoring':
       return (
-        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
+          <Loader2 className="h-3 w-3 animate-spin mr-1" />
           Restoring
-        </span>
+        </Badge>
       )
     case 'Deleting':
       return (
-        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800">
+          <Loader2 className="h-3 w-3 animate-spin mr-1" />
           Deleting
-        </span>
+        </Badge>
       )
     case 'Failed':
       return (
-        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-          <AlertCircle className="h-2.5 w-2.5" />
+        <Badge variant="destructive">
+          <AlertCircle className="h-3 w-3 mr-1" />
           Failed
-        </span>
+        </Badge>
       )
     case 'Pending':
     default:
       return (
-        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+        <Badge variant="secondary">
           Pending
-        </span>
+        </Badge>
       )
   }
 }
@@ -166,16 +167,22 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
         >
           {/* Header row */}
           <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-wrap">
               {isCurrent && (
-                <span className="inline-flex items-center rounded bg-blue-500 px-1.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide">
+                <Badge className="bg-blue-500 hover:bg-blue-500 text-white">
                   Current
-                </span>
+                </Badge>
               )}
               <code className="text-xs font-mono text-muted-foreground truncate">
                 {shortHash}
               </code>
               {getStateBadge(snapshot.status.state)}
+              {parentHash && (
+                <Badge variant="outline" className="text-muted-foreground">
+                  <GitBranch className="h-3 w-3 mr-1" />
+                  from {parentHash}
+                </Badge>
+              )}
             </div>
 
             {/* Actions */}
@@ -213,7 +220,7 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
           )}
 
           {/* Meta row */}
-          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
@@ -222,11 +229,6 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
               <span className="flex items-center gap-1">
                 <HardDrive className="h-3 w-3" />
                 {snapshot.status.sizeHuman}
-              </span>
-            )}
-            {parentHash && (
-              <span className="text-muted-foreground/70">
-                from {parentHash}
               </span>
             )}
           </div>
