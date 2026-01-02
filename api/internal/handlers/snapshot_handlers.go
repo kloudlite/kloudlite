@@ -444,7 +444,7 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 	wmNamespace := namespace
 
 	// Verify workspace exists and user has access
-	workspace, err := h.workspaceRepo.Get(c.Request.Context(), workspaceName, wmNamespace)
+	workspace, err := h.workspaceRepo.Get(c.Request.Context(), wmNamespace, workspaceName)
 	if err != nil {
 		h.logger.Error("Failed to get workspace", zap.Error(err), zap.String("workspace", workspaceName))
 		c.JSON(http.StatusNotFound, gin.H{"error": "Workspace not found"})
@@ -575,7 +575,7 @@ func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
 	wmNamespace := namespace
 
 	// Verify workspace exists and user has access
-	workspace, err := h.workspaceRepo.Get(c.Request.Context(), workspaceName, wmNamespace)
+	workspace, err := h.workspaceRepo.Get(c.Request.Context(), wmNamespace, workspaceName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Workspace not found"})
 		return
