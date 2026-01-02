@@ -273,6 +273,21 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		logger.Warn("Failed to scale down environment", zap.Error(err))
 	}
 
+	// Generate snapshot path once and store it in status (reuse if already set)
+	snapshotPath := snapshot.Status.SnapshotPath
+	if snapshotPath == "" {
+		snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
+		snapshotPath = filepath.Join(snapshotsBasePath, fmt.Sprintf("%s-%s", envName, snapshotTimestamp))
+		// Store the path immediately so subsequent reconciles use the same path
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.SnapshotPath = snapshotPath
+			snapshot.Status.Message = "Preparing snapshot..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to store snapshot path", zap.Error(err))
+		}
+	}
+
 	// Wait for pods to terminate
 	if !r.waitForPodsTerminated(ctx, namespace, logger) {
 		logger.Info("Waiting for environment pods to terminate")
@@ -284,10 +299,6 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		}
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
-
-	// Generate snapshot path based on timestamp
-	snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
-	snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("%s-%s", envName, snapshotTimestamp))
 
 	// List PVCs in the environment namespace
 	pvcList := &corev1.PersistentVolumeClaimList{}
@@ -479,9 +490,20 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 
 	// Pod is terminated, proceed with snapshot
 
-	// Generate snapshot path based on timestamp
-	snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
-	snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("ws-%s-%s", wsRef.Name, snapshotTimestamp))
+	// Generate snapshot path once and store it in status (reuse if already set)
+	snapshotPath := snapshot.Status.SnapshotPath
+	if snapshotPath == "" {
+		snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
+		snapshotPath = filepath.Join(snapshotsBasePath, fmt.Sprintf("ws-%s-%s", wsRef.Name, snapshotTimestamp))
+		// Store the path immediately so subsequent reconciles use the same path
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.SnapshotPath = snapshotPath
+			snapshot.Status.Message = "Preparing workspace snapshot..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to store snapshot path", zap.Error(err))
+		}
+	}
 
 	// Workspace home directory path
 	sourcePath := filepath.Join(workspaceHomePath, wsRef.Name)
