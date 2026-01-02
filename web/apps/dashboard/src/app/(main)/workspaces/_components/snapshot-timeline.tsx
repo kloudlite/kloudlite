@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Trash2,
   GitBranch,
+  GitCommit,
 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
@@ -25,9 +26,6 @@ interface SnapshotTimelineProps {
 interface TimelineNode {
   snapshot: Snapshot
   isCurrent: boolean
-  isBranchPoint: boolean
-  hasSiblings: boolean
-  hasParent: boolean
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -40,6 +38,16 @@ function formatTimeAgo(dateString: string): string {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`
   return date.toLocaleDateString()
+}
+
+// Extract short hash from snapshot name (last segment after the last dash, typically timestamp)
+function getShortHash(name: string): string {
+  const parts = name.split('-')
+  if (parts.length >= 2) {
+    // Return last two parts joined (e.g., "20260102-084537" -> "084537")
+    return parts.slice(-1)[0]
+  }
+  return name.slice(-8)
 }
 
 function getStateBadge(state: Snapshot['status']['state']) {
@@ -94,18 +102,7 @@ function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): Tim
   if (snapshots.length === 0) return []
 
   const snapshotMap = new Map<string, Snapshot>()
-  const childrenMap = new Map<string, string[]>()
-
   snapshots.forEach(s => snapshotMap.set(s.metadata.name, s))
-
-  snapshots.forEach(snapshot => {
-    const parentName = snapshot.spec.parentSnapshotRef?.name
-    if (parentName && snapshotMap.has(parentName)) {
-      const children = childrenMap.get(parentName) || []
-      children.push(snapshot.metadata.name)
-      childrenMap.set(parentName, children)
-    }
-  })
 
   const sortedByTime = [...snapshots].sort((a, b) =>
     new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
@@ -118,21 +115,10 @@ function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): Tim
     ? currentSnapshotName
     : sortedByTime[0]?.metadata.name
 
-  return sortedByTime.map((snapshot) => {
-    const name = snapshot.metadata.name
-    const parentName = snapshot.spec.parentSnapshotRef?.name
-    const children = childrenMap.get(name) || []
-    const siblings = parentName ? (childrenMap.get(parentName) || []) : []
-    const hasParent = parentName ? snapshotMap.has(parentName) : false
-
-    return {
-      snapshot,
-      isCurrent: name === headSnapshotName,
-      isBranchPoint: children.length > 1,
-      hasSiblings: siblings.length > 1,
-      hasParent,
-    }
-  })
+  return sortedByTime.map((snapshot) => ({
+    snapshot,
+    isCurrent: snapshot.metadata.name === headSnapshotName,
+  }))
 }
 
 interface TimelineItemProps {
@@ -145,7 +131,8 @@ interface TimelineItemProps {
 }
 
 function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
-  const { snapshot, isCurrent, isBranchPoint, hasSiblings } = node
+  const { snapshot, isCurrent } = node
+  const shortHash = getShortHash(snapshot.metadata.name)
 
   return (
     <div className="relative flex gap-4">
@@ -160,14 +147,10 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
         {/* Dot */}
         <div
           className={cn(
-            "relative z-10 rounded-full border-2 flex-shrink-0",
+            "relative z-10 rounded-full flex-shrink-0",
             isCurrent
-              ? "w-4 h-4 bg-blue-500 border-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/50"
-              : isBranchPoint
-              ? "w-3 h-3 bg-purple-500 border-purple-500"
-              : hasSiblings
-              ? "w-3 h-3 bg-orange-500 border-orange-500"
-              : "w-2.5 h-2.5 bg-gray-400 border-gray-400 dark:bg-gray-500 dark:border-gray-500"
+              ? "w-4 h-4 bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/50"
+              : "w-2.5 h-2.5 bg-gray-400 dark:bg-gray-500"
           )}
         />
 
@@ -194,28 +177,16 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
                     HEAD
                   </span>
                 )}
-                {hasSiblings && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                    <GitBranch className="h-3 w-3" />
-                    Branch
-                  </span>
-                )}
-                {isBranchPoint && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                    <GitBranch className="h-3 w-3" />
-                    Fork
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  <GitCommit className="h-3 w-3" />
+                  {shortHash}
+                </span>
                 {getStateBadge(snapshot.status.state)}
               </div>
 
-              <p className="font-mono text-sm text-foreground truncate">
-                {snapshot.metadata.name}
-              </p>
-
               {snapshot.spec.description && (
-                <p className="text-sm text-muted-foreground mt-1 italic">
-                  &quot;{snapshot.spec.description}&quot;
+                <p className="text-sm text-foreground">
+                  {snapshot.spec.description}
                 </p>
               )}
 
@@ -230,14 +201,13 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
                     {snapshot.status.sizeHuman}
                   </span>
                 )}
+                {snapshot.spec.parentSnapshotRef && (
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <GitBranch className="h-3 w-3" />
+                    parent: {getShortHash(snapshot.spec.parentSnapshotRef.name)}
+                  </span>
+                )}
               </div>
-
-              {snapshot.spec.parentSnapshotRef && (
-                <div className="flex items-center gap-1 mt-1 text-xs text-blue-600 dark:text-blue-400">
-                  <GitBranch className="h-3 w-3" />
-                  from {snapshot.spec.parentSnapshotRef.name.split('-').slice(-2).join('-')}
-                </div>
-              )}
 
               {snapshot.status.state === 'Failed' && snapshot.status.message && (
                 <p className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded px-2 py-1">
