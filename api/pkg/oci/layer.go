@@ -26,30 +26,51 @@ const (
 	LayerMediaType = "application/vnd.kloudlite.snapshot.layer.v1+tar"
 )
 
-// CreateSnapshotLayer creates an OCI layer from a btrfs snapshot
+// TarDataFileName is used for non-btrfs snapshots (regular tar archive)
+const TarDataFileName = "data.tar.gz"
+
+// CreateSnapshotLayer creates an OCI layer from a snapshot
 // The layer is a tar containing:
-// - data.btrfs.gz: gzipped btrfs send stream
+// - data.btrfs.gz: gzipped btrfs send stream (for btrfs subvolumes)
+// - OR data.tar.gz: gzipped tar archive (for regular directories)
 // - metadata.json: snapshot metadata
 func CreateSnapshotLayer(snapshotPath, parentSnapshotPath string, metadata *SnapshotMetadata) (v1.Layer, error) {
 	// Create a buffer for the tar
 	var tarBuf bytes.Buffer
 	tw := tar.NewWriter(&tarBuf)
 
-	// Create btrfs send stream
-	btrfsData, err := createBtrfsSendStream(snapshotPath, parentSnapshotPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create btrfs send stream: %w", err)
+	// Check if snapshot is a btrfs subvolume
+	isBtrfs := isBtrfsSubvolume(snapshotPath)
+
+	var snapshotData []byte
+	var dataFileName string
+	var err error
+
+	if isBtrfs {
+		// Use btrfs send for btrfs subvolumes
+		snapshotData, err = createBtrfsSendStream(snapshotPath, parentSnapshotPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create btrfs send stream: %w", err)
+		}
+		dataFileName = DataFileName
+	} else {
+		// Use tar for regular directories
+		snapshotData, err = createTarArchive(snapshotPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create tar archive: %w", err)
+		}
+		dataFileName = TarDataFileName
 	}
 
-	// Add data.btrfs.gz to tar
+	// Add data file to tar
 	if err := tw.WriteHeader(&tar.Header{
-		Name: DataFileName,
+		Name: dataFileName,
 		Mode: 0644,
-		Size: int64(len(btrfsData)),
+		Size: int64(len(snapshotData)),
 	}); err != nil {
 		return nil, fmt.Errorf("failed to write data header: %w", err)
 	}
-	if _, err := tw.Write(btrfsData); err != nil {
+	if _, err := tw.Write(snapshotData); err != nil {
 		return nil, fmt.Errorf("failed to write data: %w", err)
 	}
 
@@ -125,6 +146,7 @@ func createBtrfsSendStream(snapshotPath, parentSnapshotPath string) ([]byte, err
 
 // ExtractSnapshotLayer extracts a snapshot layer to the target directory
 // Returns the snapshot metadata and the path where the snapshot was received
+// Handles both btrfs (data.btrfs.gz) and tar (data.tar.gz) formats
 func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, string, error) {
 	// Get layer as tar reader
 	rc, err := layer.Uncompressed()
@@ -136,7 +158,8 @@ func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, 
 	tr := tar.NewReader(rc)
 
 	var metadata *SnapshotMetadata
-	var btrfsData []byte
+	var snapshotData []byte
+	var isBtrfsFormat bool
 
 	// Extract files from tar
 	for {
@@ -160,22 +183,35 @@ func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, 
 			}
 
 		case DataFileName:
-			btrfsData, err = io.ReadAll(tr)
+			snapshotData, err = io.ReadAll(tr)
 			if err != nil {
 				return nil, "", fmt.Errorf("failed to read btrfs data: %w", err)
 			}
+			isBtrfsFormat = true
+
+		case TarDataFileName:
+			snapshotData, err = io.ReadAll(tr)
+			if err != nil {
+				return nil, "", fmt.Errorf("failed to read tar data: %w", err)
+			}
+			isBtrfsFormat = false
 		}
 	}
 
 	if metadata == nil {
 		return nil, "", fmt.Errorf("metadata.json not found in layer")
 	}
-	if btrfsData == nil {
-		return nil, "", fmt.Errorf("data.btrfs.gz not found in layer")
+	if snapshotData == nil {
+		return nil, "", fmt.Errorf("snapshot data not found in layer")
 	}
 
-	// Decompress and receive btrfs stream
-	snapshotPath, err := receiveBtrfsStream(btrfsData, targetDir)
+	// Extract based on format
+	var snapshotPath string
+	if isBtrfsFormat {
+		snapshotPath, err = receiveBtrfsStream(snapshotData, targetDir)
+	} else {
+		snapshotPath, err = extractTarArchive(snapshotData, targetDir)
+	}
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to receive btrfs stream: %w", err)
 	}
@@ -232,6 +268,77 @@ func receiveBtrfsStream(compressedData []byte, targetDir string) (string, error)
 
 	if snapshotPath == "" {
 		return "", fmt.Errorf("no snapshot found after btrfs receive")
+	}
+
+	return snapshotPath, nil
+}
+
+// isBtrfsSubvolume checks if a path is a btrfs subvolume using nsenter
+func isBtrfsSubvolume(path string) bool {
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "btrfs", "subvolume", "show", path)
+	return cmd.Run() == nil
+}
+
+// createTarArchive creates a gzipped tar archive of a directory
+// Uses nsenter to run tar on the host
+func createTarArchive(snapshotPath string) ([]byte, error) {
+	// Use tar with gzip compression via nsenter
+	// -C changes to parent dir, then archives the basename
+	parentDir := filepath.Dir(snapshotPath)
+	baseName := filepath.Base(snapshotPath)
+
+	tarCmd := fmt.Sprintf("tar -czf - -C %s %s", parentDir, baseName)
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "sh", "-c", tarCmd)
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("tar failed: %w, stderr: %s", err, stderr.String())
+	}
+
+	return stdout.Bytes(), nil
+}
+
+// extractTarArchive extracts a gzipped tar archive to target directory
+// Uses nsenter to run tar on the host
+func extractTarArchive(compressedData []byte, targetDir string) (string, error) {
+	// Ensure target directory exists using nsenter
+	mkdirCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "mkdir", "-p", targetDir)
+	if output, err := mkdirCmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("failed to create target dir: %w, output: %s", err, string(output))
+	}
+
+	// Extract tar using nsenter
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "tar", "-xzf", "-", "-C", targetDir)
+	cmd.Stdin = bytes.NewReader(compressedData)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("tar extract failed: %w, stderr: %s", err, stderr.String())
+	}
+
+	// Find extracted directory
+	lsCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "ls", targetDir)
+	lsOutput, err := lsCmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to list target dir: %w", err)
+	}
+
+	var snapshotPath string
+	entries := strings.Split(strings.TrimSpace(string(lsOutput)), "\n")
+	for _, entry := range entries {
+		if entry != "" {
+			snapshotPath = filepath.Join(targetDir, entry)
+		}
+	}
+
+	if snapshotPath == "" {
+		return "", fmt.Errorf("no directory found after tar extract")
 	}
 
 	return snapshotPath, nil
