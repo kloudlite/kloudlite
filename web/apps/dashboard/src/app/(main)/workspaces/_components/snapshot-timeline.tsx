@@ -140,7 +140,6 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): GraphR
     if (laneMap.has(name)) return
 
     const parentName = snapshot.spec.parentSnapshotRef?.name
-    const children = childrenMap.get(name) || []
 
     if (parentName && laneMap.has(parentName)) {
       const parentLane = laneMap.get(parentName)!
