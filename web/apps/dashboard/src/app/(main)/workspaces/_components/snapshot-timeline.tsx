@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, type ReactElement } from 'react'
 import {
   Clock,
   HardDrive,
@@ -180,8 +180,8 @@ function TimelineGraph({ nodes, maxColumn }: { nodes: TimelineNode[], maxColumn:
   const graphWidth = (maxColumn + 1) * colWidth
   const graphHeight = nodes.length * rowHeight
 
-  const lines: JSX.Element[] = []
-  const dots: JSX.Element[] = []
+  const lines: ReactElement[] = []
+  const dots: ReactElement[] = []
 
   nodes.forEach((node, index) => {
     const { column, parentColumn, isCurrent, isBranchPoint } = node
