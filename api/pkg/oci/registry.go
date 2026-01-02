@@ -263,6 +263,15 @@ func (c *customMediaTypeImage) RawConfigFile() ([]byte, error) {
 	return c.configBytes, nil
 }
 
+// ConfigName returns the digest of our custom config bytes
+func (c *customMediaTypeImage) ConfigName() (v1.Hash, error) {
+	digest, _, err := v1.SHA256(bytes.NewReader(c.configBytes))
+	if err != nil {
+		return v1.Hash{}, err
+	}
+	return digest, nil
+}
+
 // Manifest returns an OCI-format manifest instead of Docker format
 func (c *customMediaTypeImage) Manifest() (*v1.Manifest, error) {
 	// Get the underlying manifest
