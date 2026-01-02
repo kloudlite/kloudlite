@@ -27,12 +27,8 @@ interface GraphNode {
   snapshot: Snapshot
   column: number
   hasParent: boolean
-  isBranchStart: boolean
   isCurrent: boolean
-  connectors: {
-    fromColumn: number
-    toColumn: number
-  }[]
+  parentColumn: number | null
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -109,7 +105,7 @@ const BRANCH_COLORS = [
 function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): { nodes: GraphNode[], maxColumn: number } {
   if (snapshots.length === 0) return { nodes: [], maxColumn: 0 }
 
-  // Create maps for lookup
+  // Create maps
   const snapshotMap = new Map<string, Snapshot>()
   const childrenMap = new Map<string, Snapshot[]>()
   const hasParentInList = new Set<string>()
@@ -126,7 +122,7 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): { node
     }
   })
 
-  // Find roots and sort by creation time (oldest first)
+  // Find roots
   const roots = snapshots
     .filter(s => !hasParentInList.has(s.metadata.name))
     .sort((a, b) =>
@@ -134,33 +130,16 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): { node
       new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
     )
 
-  // Find the most recent snapshot to mark as current
+  // Find most recent snapshot
   const sortedByTime = [...snapshots].sort((a, b) =>
     new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
     new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
   )
   const mostRecentName = currentSnapshotName || sortedByTime[0]?.metadata.name
 
-  // Build graph with column assignments
+  // Assign columns and build result
   const result: GraphNode[] = []
-  let maxColumn = 0
-  const columnStack: number[] = [0] // Available columns
-
-  function getNextColumn(): number {
-    if (columnStack.length > 0) {
-      return columnStack.shift()!
-    }
-    return ++maxColumn
-  }
-
-  function releaseColumn(col: number) {
-    if (!columnStack.includes(col)) {
-      columnStack.push(col)
-      columnStack.sort((a, b) => a - b)
-    }
-  }
-
-  // Track active columns for each snapshot
+  let nextColumn = 0
   const snapshotColumns = new Map<string, number>()
 
   function traverse(snapshot: Snapshot, column: number, parentColumn: number | null) {
@@ -172,62 +151,67 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): { node
       new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
     )
 
-    const isBranchStart = parentColumn !== null && parentColumn !== column
-    const connectors: GraphNode['connectors'] = []
-
-    if (parentColumn !== null && parentColumn !== column) {
-      connectors.push({ fromColumn: parentColumn, toColumn: column })
-    }
-
     result.push({
       snapshot,
       column,
       hasParent: hasParentInList.has(snapshot.metadata.name),
-      isBranchStart,
       isCurrent: snapshot.metadata.name === mostRecentName,
-      connectors,
+      parentColumn,
     })
 
-    // Process children - first child continues on same column, others branch
+    // First child continues on same column, others get new columns
     children.forEach((child, idx) => {
       if (idx === 0) {
         traverse(child, column, column)
       } else {
-        const newCol = getNextColumn()
-        if (newCol > maxColumn) maxColumn = newCol
-        traverse(child, newCol, column)
+        nextColumn++
+        traverse(child, nextColumn, column)
       }
     })
-
-    // If no children, release this column
-    if (children.length === 0) {
-      releaseColumn(column)
-    }
   }
 
   roots.forEach((root, idx) => {
-    const col = idx === 0 ? 0 : getNextColumn()
-    if (col > maxColumn) maxColumn = col
+    const col = idx === 0 ? 0 : ++nextColumn
     traverse(root, col, null)
   })
 
-  // Reverse to show newest at top
-  return { nodes: result.reverse(), maxColumn }
+  // Reverse for newest-first display
+  return { nodes: result.reverse(), maxColumn: nextColumn }
 }
 
 interface TimelineItemProps {
   node: GraphNode
+  nodes: GraphNode[]
+  nodeIndex: number
   maxColumn: number
-  nextNode: GraphNode | null
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
 }
 
-function TimelineItem({ node, maxColumn, nextNode, onRestore, onDelete, disabled }: TimelineItemProps) {
-  const { snapshot, column, hasParent, isCurrent, connectors } = node
-  const columnWidth = 24
-  const graphWidth = (maxColumn + 1) * columnWidth + 8
+function TimelineItem({ node, nodes, nodeIndex, maxColumn, onRestore, onDelete, disabled }: TimelineItemProps) {
+  const { snapshot, column, hasParent, isCurrent, parentColumn } = node
+  const columnWidth = 28
+  const graphWidth = (maxColumn + 1) * columnWidth + 16
+
+  // Determine which columns need vertical lines in this row
+  const activeColumns = new Set<number>()
+
+  // Current node's column is always active
+  activeColumns.add(column)
+
+  // Check nodes below (after in array since we reversed) to see which columns continue
+  for (let i = nodeIndex + 1; i < nodes.length; i++) {
+    const belowNode = nodes[i]
+    activeColumns.add(belowNode.column)
+    // If a node below has a parent in a different column, that column is also active
+    if (belowNode.parentColumn !== null && belowNode.parentColumn !== belowNode.column) {
+      activeColumns.add(belowNode.parentColumn)
+    }
+  }
+
+  // Check if this node branches (parent is in a different column)
+  const hasBranchConnector = parentColumn !== null && parentColumn !== column
 
   return (
     <div className="flex">
@@ -236,52 +220,47 @@ function TimelineItem({ node, maxColumn, nextNode, onRestore, onDelete, disabled
         className="relative flex-shrink-0"
         style={{ width: graphWidth, minHeight: '80px' }}
       >
-        {/* Vertical lines for all columns */}
+        {/* Vertical lines */}
         {Array.from({ length: maxColumn + 1 }).map((_, col) => {
-          // Show line if this column has activity
-          const showLine = col === column ||
-            (nextNode && nextNode.column === col) ||
-            connectors.some(c => c.fromColumn === col || c.toColumn === col)
-
-          if (!showLine) return null
-
-          const isMainLine = col === column
+          if (!activeColumns.has(col)) return null
 
           return (
             <div
               key={col}
               className={cn(
                 "absolute top-0 bottom-0 w-0.5",
-                isMainLine ? BRANCH_COLORS[col % BRANCH_COLORS.length] : "bg-gray-300 dark:bg-gray-600"
+                BRANCH_COLORS[col % BRANCH_COLORS.length]
               )}
-              style={{ left: col * columnWidth + 7 }}
+              style={{ left: col * columnWidth + 11 }}
             />
           )
         })}
 
-        {/* Branch connector (horizontal line) */}
-        {connectors.map((conn, idx) => (
+        {/* Branch connector (horizontal line from parent column to this column) */}
+        {hasBranchConnector && parentColumn !== null && (
           <div
-            key={idx}
-            className="absolute h-0.5 bg-gray-400 dark:bg-gray-500"
+            className={cn(
+              "absolute h-0.5",
+              BRANCH_COLORS[column % BRANCH_COLORS.length]
+            )}
             style={{
-              left: Math.min(conn.fromColumn, conn.toColumn) * columnWidth + 8,
-              width: Math.abs(conn.toColumn - conn.fromColumn) * columnWidth,
-              top: '40px',
+              left: Math.min(parentColumn, column) * columnWidth + 12,
+              width: Math.abs(column - parentColumn) * columnWidth,
+              top: '38px',
             }}
           />
-        ))}
+        )}
 
         {/* Node dot */}
         <div
           className={cn(
-            "absolute rounded-full flex items-center justify-center",
-            isCurrent ? "w-5 h-5 ring-2 ring-yellow-400 ring-offset-2 ring-offset-background" : "w-3 h-3",
+            "absolute rounded-full flex items-center justify-center z-10",
+            isCurrent ? "w-6 h-6 ring-2 ring-yellow-400 ring-offset-2 ring-offset-background" : "w-4 h-4",
             BRANCH_COLORS[column % BRANCH_COLORS.length]
           )}
           style={{
-            left: column * columnWidth + (isCurrent ? 4 : 6),
-            top: isCurrent ? '34px' : '38px'
+            left: column * columnWidth + (isCurrent ? 8 : 9),
+            top: isCurrent ? '32px' : '34px'
           }}
         >
           {isCurrent && (
@@ -325,7 +304,10 @@ function TimelineItem({ node, maxColumn, nextNode, onRestore, onDelete, disabled
                   {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
                 </span>
                 {hasParent && snapshot.spec.parentSnapshotRef && (
-                  <span className="flex items-center gap-1 text-blue-500">
+                  <span className={cn(
+                    "flex items-center gap-1",
+                    BRANCH_COLORS[column % BRANCH_COLORS.length].replace('bg-', 'text-')
+                  )}>
                     <GitBranch className="h-3 w-3" />
                     from {snapshot.spec.parentSnapshotRef.name.split('-').slice(-2).join('-')}
                   </span>
@@ -395,8 +377,9 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
           <TimelineItem
             key={node.snapshot.metadata.name}
             node={node}
+            nodes={nodes}
+            nodeIndex={idx}
             maxColumn={maxColumn}
-            nextNode={idx < nodes.length - 1 ? nodes[idx + 1] : null}
             onRestore={onRestore}
             onDelete={onDelete}
             disabled={disabled}
