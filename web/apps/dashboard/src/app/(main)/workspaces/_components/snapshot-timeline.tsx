@@ -81,37 +81,198 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-interface SnapshotItemProps {
+// Branch colors for different lanes
+const BRANCH_COLORS = [
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-purple-500',
+  'bg-orange-500',
+  'bg-pink-500',
+  'bg-cyan-500',
+]
+
+interface SnapshotWithLane {
   snapshot: Snapshot
+  lane: number
   isCurrent: boolean
+  connectsTo: number | null // lane it connects to (for merge visualization)
+}
+
+function buildLaneAssignments(snapshots: Snapshot[], currentSnapshotName?: string): SnapshotWithLane[] {
+  if (snapshots.length === 0) return []
+
+  // Sort by creation time (newest first)
+  const sorted = [...snapshots].sort((a, b) => {
+    const aTime = new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
+    const bTime = new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
+    return bTime - aTime
+  })
+
+  // Build parent -> children map
+  const childrenMap = new Map<string, string[]>()
+  const snapshotMap = new Map<string, Snapshot>()
+
+  sorted.forEach(s => {
+    snapshotMap.set(s.metadata.name, s)
+    const parentName = s.spec.parentSnapshotRef?.name
+    if (parentName) {
+      const existing = childrenMap.get(parentName) || []
+      existing.push(s.metadata.name)
+      childrenMap.set(parentName, existing)
+    }
+  })
+
+  // Find snapshots that are branch points (have multiple children)
+  const branchPoints = new Set<string>()
+  childrenMap.forEach((children, parent) => {
+    if (children.length > 1) {
+      branchPoints.add(parent)
+    }
+  })
+
+  // Assign lanes - newer snapshots get processed first
+  const laneAssignments = new Map<string, number>()
+  const activeLanes = new Set<number>()
+  let nextLane = 0
+
+  // Process in reverse chronological order (newest first)
+  sorted.forEach(snapshot => {
+    const name = snapshot.metadata.name
+    const parentName = snapshot.spec.parentSnapshotRef?.name
+
+    // Check if we already have a lane assignment (from being a parent of processed snapshot)
+    if (laneAssignments.has(name)) {
+      return
+    }
+
+    // If parent exists and has a lane, check if we need a new lane
+    if (parentName && laneAssignments.has(parentName)) {
+      const parentLane = laneAssignments.get(parentName)!
+      const siblings = childrenMap.get(parentName) || []
+
+      // If this is not the first child of the parent, create a new lane
+      const isFirstChild = siblings[0] === name
+      if (isFirstChild) {
+        laneAssignments.set(name, parentLane)
+      } else {
+        // New branch - assign new lane
+        laneAssignments.set(name, nextLane)
+        activeLanes.add(nextLane)
+        nextLane++
+      }
+    } else if (parentName && snapshotMap.has(parentName)) {
+      // Parent exists but not yet assigned - assign parent's lane first
+      const parentLane = nextLane
+      laneAssignments.set(parentName, parentLane)
+      activeLanes.add(parentLane)
+      nextLane++
+
+      const siblings = childrenMap.get(parentName) || []
+      const isFirstChild = siblings[0] === name
+      if (isFirstChild) {
+        laneAssignments.set(name, parentLane)
+      } else {
+        laneAssignments.set(name, nextLane)
+        activeLanes.add(nextLane)
+        nextLane++
+      }
+    } else {
+      // Root snapshot or parent not in list - new lane
+      laneAssignments.set(name, nextLane)
+      activeLanes.add(nextLane)
+      nextLane++
+    }
+  })
+
+  // Build result with lane info
+  return sorted.map(snapshot => {
+    const lane = laneAssignments.get(snapshot.metadata.name) || 0
+    const parentName = snapshot.spec.parentSnapshotRef?.name
+    let connectsTo: number | null = null
+
+    if (parentName && laneAssignments.has(parentName)) {
+      const parentLane = laneAssignments.get(parentName)!
+      if (parentLane !== lane) {
+        connectsTo = parentLane
+      }
+    }
+
+    return {
+      snapshot,
+      lane,
+      isCurrent: snapshot.metadata.name === currentSnapshotName,
+      connectsTo,
+    }
+  })
+}
+
+interface SnapshotItemProps {
+  item: SnapshotWithLane
+  totalLanes: number
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
   isLast: boolean
+  activeLanesBelow: Set<number>
 }
 
-function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled, isLast }: SnapshotItemProps) {
+function SnapshotItem({ item, totalLanes, onRestore, onDelete, disabled, isLast, activeLanesBelow }: SnapshotItemProps) {
+  const { snapshot, lane, isCurrent, connectsTo } = item
   const shortHash = getShortHash(snapshot.metadata.name)
+  const laneWidth = 16 // pixels per lane
 
   return (
     <div className="flex">
-      {/* Timeline line and dot */}
-      <div className="flex flex-col items-center mr-3">
-        <div className={cn(
-          "w-2 h-2 rounded-full mt-4 flex-shrink-0",
-          isCurrent
-            ? "bg-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
-            : "bg-gray-400 dark:bg-gray-500"
-        )} />
-        {!isLast && (
-          <div className="w-0.5 flex-1 bg-gray-200 dark:bg-gray-700 mt-1" />
+      {/* Lane visualization */}
+      <div className="flex-shrink-0 relative" style={{ width: Math.max(totalLanes, 1) * laneWidth + 8 }}>
+        {/* Vertical lines for active lanes */}
+        {Array.from({ length: totalLanes }).map((_, idx) => {
+          const isActive = activeLanesBelow.has(idx) || idx === lane
+          if (!isActive) return null
+
+          return (
+            <div
+              key={idx}
+              className={cn(
+                "absolute w-0.5 top-0",
+                isLast && idx === lane ? "h-4" : "h-full",
+                BRANCH_COLORS[idx % BRANCH_COLORS.length]
+              )}
+              style={{ left: idx * laneWidth + 6 }}
+            />
+          )
+        })}
+
+        {/* Dot for this snapshot */}
+        <div
+          className={cn(
+            "absolute w-2.5 h-2.5 rounded-full top-4 -translate-y-1/2",
+            isCurrent && "ring-2 ring-offset-1 ring-offset-background",
+            BRANCH_COLORS[lane % BRANCH_COLORS.length],
+            isCurrent && "ring-blue-300 dark:ring-blue-700"
+          )}
+          style={{ left: lane * laneWidth + 4 }}
+        />
+
+        {/* Connection line to parent lane if different */}
+        {connectsTo !== null && (
+          <div
+            className={cn(
+              "absolute h-0.5 top-4 -translate-y-1/2",
+              BRANCH_COLORS[lane % BRANCH_COLORS.length]
+            )}
+            style={{
+              left: Math.min(lane, connectsTo) * laneWidth + 8,
+              width: Math.abs(connectsTo - lane) * laneWidth - 2,
+            }}
+          />
         )}
       </div>
 
       {/* Content */}
       <div
         className={cn(
-          "group flex-1 py-2.5 px-3 rounded-lg border transition-colors mb-2",
+          "group flex-1 py-2 px-3 rounded-lg border transition-colors mb-1.5",
           isCurrent
             ? "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
             : "border-border hover:bg-muted/50"
@@ -119,7 +280,6 @@ function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled, isLa
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            {/* Hash */}
             <code className={cn(
               "text-sm font-mono",
               isCurrent ? "text-blue-600 dark:text-blue-400 font-semibold" : "text-foreground"
@@ -127,18 +287,15 @@ function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled, isLa
               {shortHash}
             </code>
 
-            {/* Current badge */}
             {isCurrent && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                 HEAD
               </Badge>
             )}
 
-            {/* State badge */}
             {getStateBadge(snapshot.status.state)}
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {snapshot.status.state === 'Ready' && !isCurrent && (
               <Button
@@ -165,14 +322,12 @@ function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled, isLa
           </div>
         </div>
 
-        {/* Description */}
         {snapshot.spec.description && (
           <p className="text-sm text-foreground mt-1">
             {snapshot.spec.description}
           </p>
         )}
 
-        {/* Meta */}
         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
@@ -186,7 +341,6 @@ function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled, isLa
           )}
         </div>
 
-        {/* Error */}
         {snapshot.status.state === 'Failed' && snapshot.status.message && (
           <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
             {snapshot.status.message}
@@ -198,14 +352,26 @@ function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled, isLa
 }
 
 export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, currentSnapshotName }: SnapshotTimelineProps) {
-  // Sort snapshots by creation time (newest first) - simple flat list like git log
-  const sortedSnapshots = useMemo(() => {
-    return [...snapshots].sort((a, b) => {
-      const aTime = new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
-      const bTime = new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
-      return bTime - aTime
-    })
-  }, [snapshots])
+  const items = useMemo(() => buildLaneAssignments(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
+
+  const totalLanes = useMemo(() => {
+    if (items.length === 0) return 0
+    return Math.max(...items.map(i => i.lane)) + 1
+  }, [items])
+
+  // Calculate which lanes are active below each item
+  const activeLanesBelowList = useMemo(() => {
+    const result: Set<number>[] = []
+    const activeLanes = new Set<number>()
+
+    // Process from bottom to top
+    for (let i = items.length - 1; i >= 0; i--) {
+      result[i] = new Set(activeLanes)
+      activeLanes.add(items[i].lane)
+    }
+
+    return result
+  }, [items])
 
   if (snapshots.length === 0) {
     return null
@@ -221,15 +387,16 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
       </div>
 
       <div>
-        {sortedSnapshots.map((snapshot, idx) => (
+        {items.map((item, idx) => (
           <SnapshotItem
-            key={snapshot.metadata.name}
-            snapshot={snapshot}
-            isCurrent={snapshot.metadata.name === currentSnapshotName}
+            key={item.snapshot.metadata.name}
+            item={item}
+            totalLanes={totalLanes}
             onRestore={onRestore}
             onDelete={onDelete}
             disabled={disabled}
-            isLast={idx === sortedSnapshots.length - 1}
+            isLast={idx === items.length - 1}
+            activeLanesBelow={activeLanesBelowList[idx]}
           />
         ))}
       </div>
