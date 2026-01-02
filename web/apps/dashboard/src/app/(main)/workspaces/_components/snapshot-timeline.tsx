@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Trash2,
   GitBranch,
-  CircleDot,
+  GitCommitHorizontal,
 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
@@ -20,15 +20,13 @@ interface SnapshotTimelineProps {
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
-  currentSnapshotName?: string
 }
 
-interface GraphNode {
+interface TimelineNode {
   snapshot: Snapshot
-  column: number
   hasParent: boolean
   isCurrent: boolean
-  parentColumn: number | null
+  siblingCount: number // Number of siblings (other children of same parent)
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -91,19 +89,8 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-const BRANCH_COLORS = [
-  'bg-blue-500',
-  'bg-green-500',
-  'bg-purple-500',
-  'bg-orange-500',
-  'bg-pink-500',
-]
-
-/**
- * Build graph with column assignments for branching visualization
- */
-function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): { nodes: GraphNode[], maxColumn: number } {
-  if (snapshots.length === 0) return { nodes: [], maxColumn: 0 }
+function buildTimeline(snapshots: Snapshot[]): TimelineNode[] {
+  if (snapshots.length === 0) return []
 
   // Create maps
   const snapshotMap = new Map<string, Snapshot>()
@@ -122,211 +109,139 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): { node
     }
   })
 
-  // Find roots
-  const roots = snapshots
-    .filter(s => !hasParentInList.has(s.metadata.name))
-    .sort((a, b) =>
-      new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime() -
-      new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
-    )
-
   // Find most recent snapshot
   const sortedByTime = [...snapshots].sort((a, b) =>
     new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
     new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
   )
-  const mostRecentName = currentSnapshotName || sortedByTime[0]?.metadata.name
+  const mostRecentName = sortedByTime[0]?.metadata.name
 
-  // Assign columns and build result
-  const result: GraphNode[] = []
-  let nextColumn = 0
-  const snapshotColumns = new Map<string, number>()
+  // Build timeline - sort by creation time, newest first
+  return sortedByTime.map(snapshot => {
+    const parentName = snapshot.spec.parentSnapshotRef?.name
+    const siblings = parentName ? (childrenMap.get(parentName) || []) : []
 
-  function traverse(snapshot: Snapshot, column: number, parentColumn: number | null) {
-    snapshotColumns.set(snapshot.metadata.name, column)
-
-    const children = childrenMap.get(snapshot.metadata.name) || []
-    children.sort((a, b) =>
-      new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime() -
-      new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
-    )
-
-    result.push({
+    return {
       snapshot,
-      column,
       hasParent: hasParentInList.has(snapshot.metadata.name),
       isCurrent: snapshot.metadata.name === mostRecentName,
-      parentColumn,
-    })
-
-    // First child continues on same column, others get new columns
-    children.forEach((child, idx) => {
-      if (idx === 0) {
-        traverse(child, column, column)
-      } else {
-        nextColumn++
-        traverse(child, nextColumn, column)
-      }
-    })
-  }
-
-  roots.forEach((root, idx) => {
-    const col = idx === 0 ? 0 : ++nextColumn
-    traverse(root, col, null)
+      siblingCount: siblings.length - 1, // -1 because we don't count self
+    }
   })
-
-  // Reverse for newest-first display
-  return { nodes: result.reverse(), maxColumn: nextColumn }
 }
 
 interface TimelineItemProps {
-  node: GraphNode
-  nodes: GraphNode[]
-  nodeIndex: number
-  maxColumn: number
+  node: TimelineNode
+  isFirst: boolean
+  isLast: boolean
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
 }
 
-function TimelineItem({ node, nodes, nodeIndex, maxColumn, onRestore, onDelete, disabled }: TimelineItemProps) {
-  const { snapshot, column, hasParent, isCurrent, parentColumn } = node
-  const columnWidth = 28
-  const graphWidth = (maxColumn + 1) * columnWidth + 16
-
-  // Determine which columns need vertical lines in this row
-  const activeColumns = new Set<number>()
-
-  // Current node's column is always active
-  activeColumns.add(column)
-
-  // Check nodes below (after in array since we reversed) to see which columns continue
-  for (let i = nodeIndex + 1; i < nodes.length; i++) {
-    const belowNode = nodes[i]
-    activeColumns.add(belowNode.column)
-    // If a node below has a parent in a different column, that column is also active
-    if (belowNode.parentColumn !== null && belowNode.parentColumn !== belowNode.column) {
-      activeColumns.add(belowNode.parentColumn)
-    }
-  }
-
-  // Check if this node branches (parent is in a different column)
-  const hasBranchConnector = parentColumn !== null && parentColumn !== column
+function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
+  const { snapshot, hasParent, isCurrent, siblingCount } = node
+  const hasSiblings = siblingCount > 0
 
   return (
-    <div className="flex">
-      {/* Graph area */}
-      <div
-        className="relative flex-shrink-0"
-        style={{ width: graphWidth, minHeight: '80px' }}
-      >
-        {/* Vertical lines */}
-        {Array.from({ length: maxColumn + 1 }).map((_, col) => {
-          if (!activeColumns.has(col)) return null
+    <div className="relative flex gap-4">
+      {/* Timeline track */}
+      <div className="flex flex-col items-center w-6 flex-shrink-0">
+        {/* Line above */}
+        <div className={cn(
+          "w-0.5 flex-1 min-h-3",
+          isFirst ? "bg-transparent" : "bg-gray-200 dark:bg-gray-700"
+        )} />
 
-          return (
-            <div
-              key={col}
-              className={cn(
-                "absolute top-0 bottom-0 w-0.5",
-                BRANCH_COLORS[col % BRANCH_COLORS.length]
-              )}
-              style={{ left: col * columnWidth + 11 }}
-            />
-          )
-        })}
-
-        {/* Branch connector (horizontal line from parent column to this column) */}
-        {hasBranchConnector && parentColumn !== null && (
-          <div
-            className={cn(
-              "absolute h-0.5",
-              BRANCH_COLORS[column % BRANCH_COLORS.length]
-            )}
-            style={{
-              left: Math.min(parentColumn, column) * columnWidth + 12,
-              width: Math.abs(column - parentColumn) * columnWidth,
-              top: '38px',
-            }}
-          />
-        )}
-
-        {/* Node dot */}
-        <div
-          className={cn(
-            "absolute rounded-full flex items-center justify-center z-10",
-            isCurrent ? "w-6 h-6 ring-2 ring-yellow-400 ring-offset-2 ring-offset-background" : "w-4 h-4",
-            BRANCH_COLORS[column % BRANCH_COLORS.length]
-          )}
-          style={{
-            left: column * columnWidth + (isCurrent ? 8 : 9),
-            top: isCurrent ? '32px' : '34px'
-          }}
-        >
+        {/* Dot */}
+        <div className={cn(
+          "relative flex-shrink-0 rounded-full flex items-center justify-center",
+          isCurrent
+            ? "w-5 h-5 bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900"
+            : hasSiblings
+              ? "w-4 h-4 bg-orange-400 ring-2 ring-orange-100 dark:ring-orange-900"
+              : "w-3 h-3 bg-gray-400 dark:bg-gray-500"
+        )}>
           {isCurrent && (
-            <div className="w-2 h-2 rounded-full bg-yellow-300" />
+            <GitCommitHorizontal className="w-3 h-3 text-white" />
           )}
         </div>
+
+        {/* Line below */}
+        <div className={cn(
+          "w-0.5 flex-1 min-h-3",
+          isLast ? "bg-transparent" : "bg-gray-200 dark:bg-gray-700"
+        )} />
       </div>
 
-      {/* Card content */}
-      <div className="flex-1 pb-3">
+      {/* Content */}
+      <div className="flex-1 pb-4 min-w-0">
         <div className={cn(
-          "rounded-lg border p-4 transition-colors",
+          "rounded-lg border p-4 transition-all",
           isCurrent
-            ? "bg-yellow-50 border-yellow-300 dark:bg-yellow-900/20 dark:border-yellow-700"
-            : "bg-card hover:bg-muted/30"
+            ? "bg-blue-50 border-blue-200 shadow-sm dark:bg-blue-950/30 dark:border-blue-800"
+            : "bg-card hover:bg-muted/50 hover:shadow-sm"
         )}>
-          <div className="flex items-start justify-between gap-4">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* Tags row */}
+              <div className="flex items-center gap-2 flex-wrap mb-2">
                 {isCurrent && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-yellow-200 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
-                    <CircleDot className="h-3 w-3" />
-                    Current
+                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-500 px-2 py-0.5 text-xs font-medium text-white">
+                    HEAD
                   </span>
                 )}
-                <span className="truncate font-mono text-sm">
-                  {snapshot.metadata.name}
-                </span>
+                {hasSiblings && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    <GitBranch className="h-3 w-3" />
+                    Branch
+                  </span>
+                )}
                 {getStateBadge(snapshot.status.state)}
               </div>
 
-              <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs flex-wrap">
+              {/* Name */}
+              <p className="font-mono text-sm text-foreground truncate">
+                {snapshot.metadata.name}
+              </p>
+
+              {/* Description */}
+              {snapshot.spec.description && (
+                <p className="text-sm text-muted-foreground mt-1 italic">
+                  &quot;{snapshot.spec.description}&quot;
+                </p>
+              )}
+
+              {/* Metadata row */}
+              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
+                </span>
                 {snapshot.status.sizeHuman && (
                   <span className="flex items-center gap-1">
                     <HardDrive className="h-3 w-3" />
                     {snapshot.status.sizeHuman}
                   </span>
                 )}
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
-                </span>
                 {hasParent && snapshot.spec.parentSnapshotRef && (
-                  <span className={cn(
-                    "flex items-center gap-1",
-                    BRANCH_COLORS[column % BRANCH_COLORS.length].replace('bg-', 'text-')
-                  )}>
+                  <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                     <GitBranch className="h-3 w-3" />
                     from {snapshot.spec.parentSnapshotRef.name.split('-').slice(-2).join('-')}
                   </span>
                 )}
               </div>
 
-              {snapshot.spec.description && (
-                <p className="text-muted-foreground mt-2 text-sm italic">
-                  &quot;{snapshot.spec.description}&quot;
-                </p>
-              )}
-
+              {/* Error message */}
               {snapshot.status.state === 'Failed' && snapshot.status.message && (
-                <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                <p className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded px-2 py-1">
                   {snapshot.status.message}
                 </p>
               )}
             </div>
 
+            {/* Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {snapshot.status.state === 'Ready' && (
                 <Button
@@ -334,9 +249,9 @@ function TimelineItem({ node, nodes, nodeIndex, maxColumn, onRestore, onDelete, 
                   size="sm"
                   onClick={() => onRestore(snapshot)}
                   disabled={disabled}
-                  title={disabled ? 'Resource must be running to restore' : undefined}
+                  className="h-8"
                 >
-                  <RotateCcw className="mr-1 h-3 w-3" />
+                  <RotateCcw className="h-3 w-3 mr-1.5" />
                   Restore
                 </Button>
               )}
@@ -345,7 +260,7 @@ function TimelineItem({ node, nodes, nodeIndex, maxColumn, onRestore, onDelete, 
                   variant="ghost"
                   size="sm"
                   onClick={() => onDelete(snapshot)}
-                  className="text-destructive hover:text-destructive"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -358,28 +273,28 @@ function TimelineItem({ node, nodes, nodeIndex, maxColumn, onRestore, onDelete, 
   )
 }
 
-export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, currentSnapshotName }: SnapshotTimelineProps) {
-  const { nodes, maxColumn } = useMemo(() => buildGraph(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
+export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled }: SnapshotTimelineProps) {
+  const nodes = useMemo(() => buildTimeline(snapshots), [snapshots])
 
   if (snapshots.length === 0) {
     return null
   }
 
   return (
-    <div className="space-y-2">
-      <h4 className="text-sm font-medium flex items-center gap-2">
+    <div>
+      <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
         <GitBranch className="h-4 w-4" />
-        Snapshot History ({snapshots.length})
+        Snapshot History
+        <span className="text-muted-foreground font-normal">({snapshots.length})</span>
       </h4>
 
-      <div>
+      <div className="relative">
         {nodes.map((node, idx) => (
           <TimelineItem
             key={node.snapshot.metadata.name}
             node={node}
-            nodes={nodes}
-            nodeIndex={idx}
-            maxColumn={maxColumn}
+            isFirst={idx === 0}
+            isLast={idx === nodes.length - 1}
             onRestore={onRestore}
             onDelete={onDelete}
             disabled={disabled}
