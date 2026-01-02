@@ -112,7 +112,7 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 			ParentSnapshotPath: parentSnapshotPath,
 			SnapshotRef:        snapshot.Name,
 			RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
-				RegistryURL:  "image-registry:5000",
+				RegistryURL:  "image-registry.kloudlite.svc.cluster.local:5000",
 				Repository:   repository,
 				Tag:          tag,
 				ParentLayers: parentLayers,
@@ -238,7 +238,7 @@ func (r *SnapshotReconciler) handlePulling(ctx context.Context, snapshot *snapsh
 			SnapshotPath: snapshotPath,
 			SnapshotRef:  snapshot.Name,
 			RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
-				RegistryURL: "image-registry:5000",
+				RegistryURL: "image-registry.kloudlite.svc.cluster.local:5000",
 				Repository:  repository,
 				Tag:         tag,
 			},
