@@ -24,10 +24,21 @@ interface SnapshotTimelineProps {
 
 interface TimelineNode {
   snapshot: Snapshot
-  hasParent: boolean
+  column: number
+  parentColumn: number | null
   isCurrent: boolean
-  siblingCount: number // Number of siblings (other children of same parent)
+  isBranchPoint: boolean // Has multiple children
+  hasSiblings: boolean // Has siblings (shares parent with others)
 }
+
+// Colors for different columns/branches
+const BRANCH_COLORS = [
+  { line: 'bg-blue-500', dot: 'bg-blue-500', ring: 'ring-blue-200 dark:ring-blue-900' },
+  { line: 'bg-purple-500', dot: 'bg-purple-500', ring: 'ring-purple-200 dark:ring-purple-900' },
+  { line: 'bg-green-500', dot: 'bg-green-500', ring: 'ring-green-200 dark:ring-green-900' },
+  { line: 'bg-orange-500', dot: 'bg-orange-500', ring: 'ring-orange-200 dark:ring-orange-900' },
+  { line: 'bg-pink-500', dot: 'bg-pink-500', ring: 'ring-pink-200 dark:ring-pink-900' },
+]
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString)
@@ -89,93 +100,200 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-function buildTimeline(snapshots: Snapshot[]): TimelineNode[] {
-  if (snapshots.length === 0) return []
+function buildTimeline(snapshots: Snapshot[]): { nodes: TimelineNode[], maxColumn: number } {
+  if (snapshots.length === 0) return { nodes: [], maxColumn: 0 }
 
-  // Create maps
+  // Create maps for relationships
   const snapshotMap = new Map<string, Snapshot>()
-  const childrenMap = new Map<string, Snapshot[]>()
-  const hasParentInList = new Set<string>()
+  const childrenMap = new Map<string, string[]>() // parent -> children names
 
   snapshots.forEach(s => snapshotMap.set(s.metadata.name, s))
 
+  // Build parent -> children relationships
   snapshots.forEach(snapshot => {
     const parentName = snapshot.spec.parentSnapshotRef?.name
     if (parentName && snapshotMap.has(parentName)) {
-      hasParentInList.add(snapshot.metadata.name)
       const children = childrenMap.get(parentName) || []
-      children.push(snapshot)
+      children.push(snapshot.metadata.name)
       childrenMap.set(parentName, children)
     }
   })
 
-  // Find most recent snapshot
+  // Sort by creation time, newest first (this is display order)
   const sortedByTime = [...snapshots].sort((a, b) =>
     new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
     new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
   )
+
   const mostRecentName = sortedByTime[0]?.metadata.name
 
-  // Build timeline - sort by creation time, newest first
-  return sortedByTime.map(snapshot => {
+  // Assign columns: each unique lineage path gets a column
+  // We trace from each snapshot to root and assign columns based on branch points
+  const columnAssignments = new Map<string, number>()
+  let nextColumn = 0
+
+  // Process in reverse chronological order (oldest first for column assignment)
+  const oldestFirst = [...sortedByTime].reverse()
+
+  oldestFirst.forEach(snapshot => {
+    const name = snapshot.metadata.name
     const parentName = snapshot.spec.parentSnapshotRef?.name
+
+    if (!parentName || !snapshotMap.has(parentName)) {
+      // Root snapshot - assign new column
+      columnAssignments.set(name, nextColumn++)
+    } else {
+      // Has parent in list
+      const siblings = childrenMap.get(parentName) || []
+      const parentColumn = columnAssignments.get(parentName) ?? 0
+
+      if (siblings.length === 1) {
+        // Only child - inherit parent's column
+        columnAssignments.set(name, parentColumn)
+      } else {
+        // Multiple children - first child inherits, others get new columns
+        const siblingIndex = siblings.indexOf(name)
+        if (siblingIndex === 0) {
+          columnAssignments.set(name, parentColumn)
+        } else {
+          columnAssignments.set(name, nextColumn++)
+        }
+      }
+    }
+  })
+
+  // Build timeline nodes
+  const nodes: TimelineNode[] = sortedByTime.map(snapshot => {
+    const name = snapshot.metadata.name
+    const parentName = snapshot.spec.parentSnapshotRef?.name
+    const children = childrenMap.get(name) || []
+    const parentColumn = parentName && snapshotMap.has(parentName)
+      ? columnAssignments.get(parentName) ?? null
+      : null
+
+    // Check if this snapshot has siblings
     const siblings = parentName ? (childrenMap.get(parentName) || []) : []
 
     return {
       snapshot,
-      hasParent: hasParentInList.has(snapshot.metadata.name),
-      isCurrent: snapshot.metadata.name === mostRecentName,
-      siblingCount: siblings.length - 1, // -1 because we don't count self
+      column: columnAssignments.get(name) ?? 0,
+      parentColumn,
+      isCurrent: name === mostRecentName,
+      isBranchPoint: children.length > 1,
+      hasSiblings: siblings.length > 1,
     }
   })
+
+  return { nodes, maxColumn: Math.max(0, nextColumn - 1) }
 }
 
 interface TimelineItemProps {
   node: TimelineNode
-  isFirst: boolean
-  isLast: boolean
+  index: number
+  totalNodes: number
+  maxColumn: number
+  allNodes: TimelineNode[]
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
 }
 
-function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
-  const { snapshot, hasParent, isCurrent, siblingCount } = node
-  const hasSiblings = siblingCount > 0
+function TimelineItem({
+  node,
+  index,
+  totalNodes,
+  maxColumn,
+  allNodes,
+  onRestore,
+  onDelete,
+  disabled
+}: TimelineItemProps) {
+  const { snapshot, column, parentColumn, isCurrent, isBranchPoint, hasSiblings } = node
+  const isFirst = index === 0
+  const isLast = index === totalNodes - 1
+  const colors = BRANCH_COLORS[column % BRANCH_COLORS.length]
+
+  // Calculate which columns need vertical lines at this row
+  // A column needs a line if there's a snapshot below that uses this column
+  const activeColumns = new Set<number>()
+  for (let i = index; i < totalNodes; i++) {
+    activeColumns.add(allNodes[i].column)
+    // Also add parent columns for nodes that branch
+    if (allNodes[i].parentColumn !== null && allNodes[i].parentColumn !== allNodes[i].column) {
+      // Find if parent is below current index
+      const parentIdx = allNodes.findIndex(n => n.snapshot.metadata.name === allNodes[i].snapshot.spec.parentSnapshotRef?.name)
+      if (parentIdx > index) {
+        activeColumns.add(allNodes[i].parentColumn)
+      }
+    }
+  }
+
+  // Width for the graph area (each column is 24px wide)
+  const graphWidth = (maxColumn + 1) * 24
+  const dotCenterX = column * 24 + 12
 
   return (
-    <div className="relative flex gap-4">
-      {/* Timeline track */}
-      <div className="flex flex-col items-center w-6 flex-shrink-0">
-        {/* Line above */}
-        <div className={cn(
-          "w-0.5 flex-1 min-h-3",
-          isFirst ? "bg-transparent" : "bg-gray-200 dark:bg-gray-700"
-        )} />
+    <div className="relative flex">
+      {/* Graph area with columns */}
+      <div
+        className="relative flex-shrink-0"
+        style={{ width: Math.max(graphWidth, 24), minHeight: '100%' }}
+      >
+        {/* Vertical lines for all active columns */}
+        {Array.from(activeColumns).map(col => {
+          const colColors = BRANCH_COLORS[col % BRANCH_COLORS.length]
+          const colX = col * 24 + 12
+          const isCurrentColumn = col === column
 
-        {/* Dot */}
-        <div className={cn(
-          "relative flex-shrink-0 rounded-full flex items-center justify-center",
-          isCurrent
-            ? "w-5 h-5 bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900"
-            : hasSiblings
-              ? "w-4 h-4 bg-orange-400 ring-2 ring-orange-100 dark:ring-orange-900"
-              : "w-3 h-3 bg-gray-400 dark:bg-gray-500"
-        )}>
+          return (
+            <div
+              key={col}
+              className={cn("absolute w-0.5", colColors.line)}
+              style={{
+                left: colX - 1,
+                top: isCurrentColumn && isFirst ? '50%' : 0,
+                bottom: isCurrentColumn && isLast ? '50%' : 0,
+              }}
+            />
+          )
+        })}
+
+        {/* Horizontal connector line from parent column to this column */}
+        {parentColumn !== null && parentColumn !== column && (
+          <div
+            className={cn("absolute h-0.5", colors.line)}
+            style={{
+              left: Math.min(parentColumn, column) * 24 + 12,
+              width: Math.abs(parentColumn - column) * 24,
+              top: '50%',
+              transform: 'translateY(-50%)',
+            }}
+          />
+        )}
+
+        {/* Dot for this snapshot */}
+        <div
+          className={cn(
+            "absolute rounded-full flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2",
+            isCurrent
+              ? `w-6 h-6 ${colors.dot} ring-4 ${colors.ring}`
+              : isBranchPoint
+                ? `w-5 h-5 ${colors.dot} ring-2 ${colors.ring}`
+                : `w-3 h-3 ${colors.dot}`
+          )}
+          style={{
+            left: dotCenterX,
+            top: '50%',
+          }}
+        >
           {isCurrent && (
             <GitCommitHorizontal className="w-3 h-3 text-white" />
           )}
         </div>
-
-        {/* Line below */}
-        <div className={cn(
-          "w-0.5 flex-1 min-h-3",
-          isLast ? "bg-transparent" : "bg-gray-200 dark:bg-gray-700"
-        )} />
       </div>
 
       {/* Content */}
-      <div className="flex-1 pb-4 min-w-0">
+      <div className="flex-1 py-2 min-w-0">
         <div className={cn(
           "rounded-lg border p-4 transition-all",
           isCurrent
@@ -193,9 +311,18 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
                   </span>
                 )}
                 {hasSiblings && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                  <span className={cn(
+                    "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
+                    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                  )}>
                     <GitBranch className="h-3 w-3" />
                     Branch
+                  </span>
+                )}
+                {isBranchPoint && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                    <GitBranch className="h-3 w-3" />
+                    Fork
                   </span>
                 )}
                 {getStateBadge(snapshot.status.state)}
@@ -225,7 +352,7 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
                     {snapshot.status.sizeHuman}
                   </span>
                 )}
-                {hasParent && snapshot.spec.parentSnapshotRef && (
+                {snapshot.spec.parentSnapshotRef && (
                   <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                     <GitBranch className="h-3 w-3" />
                     from {snapshot.spec.parentSnapshotRef.name.split('-').slice(-2).join('-')}
@@ -274,7 +401,7 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
 }
 
 export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled }: SnapshotTimelineProps) {
-  const nodes = useMemo(() => buildTimeline(snapshots), [snapshots])
+  const { nodes, maxColumn } = useMemo(() => buildTimeline(snapshots), [snapshots])
 
   if (snapshots.length === 0) {
     return null
@@ -293,8 +420,10 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled }: S
           <TimelineItem
             key={node.snapshot.metadata.name}
             node={node}
-            isFirst={idx === 0}
-            isLast={idx === nodes.length - 1}
+            index={idx}
+            totalNodes={nodes.length}
+            maxColumn={maxColumn}
+            allNodes={nodes}
             onRestore={onRestore}
             onDelete={onDelete}
             disabled={disabled}
