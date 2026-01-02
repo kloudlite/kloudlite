@@ -8,8 +8,7 @@ import {
   Loader2,
   RotateCcw,
   Trash2,
-  GitBranch,
-  GitCommit,
+  History,
 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
@@ -34,64 +33,61 @@ function formatTimeAgo(dateString: string): string {
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
   if (diffInSeconds < 60) return 'just now'
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
   return date.toLocaleDateString()
 }
 
-// Extract short hash from snapshot name (last segment after the last dash, typically timestamp)
+// Extract short hash from snapshot name
 function getShortHash(name: string): string {
   const parts = name.split('-')
   if (parts.length >= 2) {
-    // Return last two parts joined (e.g., "20260102-084537" -> "084537")
     return parts.slice(-1)[0]
   }
-  return name.slice(-8)
+  return name.slice(-6)
 }
 
 function getStateBadge(state: Snapshot['status']['state']) {
-  const baseClasses = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium'
-
   switch (state) {
     case 'Ready':
       return (
-        <span className={`${baseClasses} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}>
+        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
           Ready
         </span>
       )
     case 'Creating':
       return (
-        <span className={`${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400`}>
-          <Loader2 className="h-3 w-3 animate-spin" />
+        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+          <Loader2 className="h-2.5 w-2.5 animate-spin" />
           Creating
         </span>
       )
     case 'Restoring':
       return (
-        <span className={`${baseClasses} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`}>
-          <Loader2 className="h-3 w-3 animate-spin" />
+        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+          <Loader2 className="h-2.5 w-2.5 animate-spin" />
           Restoring
         </span>
       )
     case 'Deleting':
       return (
-        <span className={`${baseClasses} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400`}>
-          <Loader2 className="h-3 w-3 animate-spin" />
+        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+          <Loader2 className="h-2.5 w-2.5 animate-spin" />
           Deleting
         </span>
       )
     case 'Failed':
       return (
-        <span className={`${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}>
-          <AlertCircle className="h-3 w-3" />
+        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+          <AlertCircle className="h-2.5 w-2.5" />
           Failed
         </span>
       )
     case 'Pending':
     default:
       return (
-        <span className={`${baseClasses} bg-secondary text-secondary-foreground`}>
+        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
           Pending
         </span>
       )
@@ -109,8 +105,6 @@ function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): Tim
     new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
   )
 
-  // HEAD is determined by backend via lastRestoredSnapshot
-  // If not set, default to newest snapshot
   const headSnapshotName = currentSnapshotName && snapshotMap.has(currentSnapshotName)
     ? currentSnapshotName
     : sortedByTime[0]?.metadata.name
@@ -133,99 +127,68 @@ interface TimelineItemProps {
 function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
   const { snapshot, isCurrent } = node
   const shortHash = getShortHash(snapshot.metadata.name)
+  const parentHash = snapshot.spec.parentSnapshotRef
+    ? getShortHash(snapshot.spec.parentSnapshotRef.name)
+    : null
 
   return (
-    <div className="relative flex gap-4">
+    <div className="relative flex gap-3">
       {/* Timeline track */}
-      <div className="relative flex flex-col items-center" style={{ width: 20 }}>
-        {/* Line above dot */}
-        {!isFirst && (
-          <div className="w-0.5 flex-1 bg-border" />
-        )}
+      <div className="relative flex flex-col items-center w-5 flex-shrink-0">
+        {/* Line above */}
+        {!isFirst && <div className="w-px flex-1 bg-border" />}
         {isFirst && <div className="flex-1" />}
 
         {/* Dot */}
         <div
           className={cn(
-            "relative z-10 rounded-full flex-shrink-0",
+            "relative z-10 rounded-full flex-shrink-0 transition-all",
             isCurrent
-              ? "w-4 h-4 bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/50"
-              : "w-2.5 h-2.5 bg-gray-400 dark:bg-gray-500"
+              ? "w-3 h-3 bg-blue-500 ring-[3px] ring-blue-500/20"
+              : "w-2 h-2 bg-gray-300 dark:bg-gray-600"
           )}
         />
 
-        {/* Line below dot */}
-        {!isLast && (
-          <div className="w-0.5 flex-1 bg-border" />
-        )}
+        {/* Line below */}
+        {!isLast && <div className="w-px flex-1 bg-border" />}
         {isLast && <div className="flex-1" />}
       </div>
 
       {/* Content */}
       <div className="flex-1 pb-4 min-w-0">
-        <div className={cn(
-          "rounded-lg border p-4 transition-all",
-          isCurrent
-            ? "bg-blue-50 border-blue-200 shadow-sm dark:bg-blue-950/30 dark:border-blue-800"
-            : "bg-card hover:bg-muted/50 hover:shadow-sm"
-        )}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                {isCurrent && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-500 px-2 py-0.5 text-xs font-medium text-white">
-                    HEAD
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                  <GitCommit className="h-3 w-3" />
-                  {shortHash}
+        <div
+          className={cn(
+            "group rounded-lg border p-3 transition-all",
+            isCurrent
+              ? "bg-blue-50/50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900"
+              : "bg-card hover:bg-muted/30 hover:border-muted-foreground/20"
+          )}
+        >
+          {/* Header row */}
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-2 min-w-0">
+              {isCurrent && (
+                <span className="inline-flex items-center rounded bg-blue-500 px-1.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide">
+                  Current
                 </span>
-                {getStateBadge(snapshot.status.state)}
-              </div>
-
-              {snapshot.spec.description && (
-                <p className="text-sm text-foreground">
-                  {snapshot.spec.description}
-                </p>
               )}
-
-              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
-                </span>
-                {snapshot.status.sizeHuman && (
-                  <span className="flex items-center gap-1">
-                    <HardDrive className="h-3 w-3" />
-                    {snapshot.status.sizeHuman}
-                  </span>
-                )}
-                {snapshot.spec.parentSnapshotRef && (
-                  <span className="flex items-center gap-1 text-muted-foreground">
-                    <GitBranch className="h-3 w-3" />
-                    parent: {getShortHash(snapshot.spec.parentSnapshotRef.name)}
-                  </span>
-                )}
-              </div>
-
-              {snapshot.status.state === 'Failed' && snapshot.status.message && (
-                <p className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded px-2 py-1">
-                  {snapshot.status.message}
-                </p>
-              )}
+              <code className="text-xs font-mono text-muted-foreground truncate">
+                {shortHash}
+              </code>
+              {getStateBadge(snapshot.status.state)}
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {snapshot.status.state === 'Ready' && (
+            {/* Actions */}
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {snapshot.status.state === 'Ready' && !isCurrent && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onRestore(snapshot)}
                   disabled={disabled}
-                  className="h-8"
+                  className="h-7 px-2 text-xs"
                 >
-                  <RotateCcw className="h-3 w-3 mr-1.5" />
+                  <RotateCcw className="h-3 w-3 mr-1" />
                   Restore
                 </Button>
               )}
@@ -234,13 +197,46 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
                   variant="ghost"
                   size="sm"
                   onClick={() => onDelete(snapshot)}
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
           </div>
+
+          {/* Description */}
+          {snapshot.spec.description && (
+            <p className="text-sm text-foreground mb-1.5 line-clamp-2">
+              {snapshot.spec.description}
+            </p>
+          )}
+
+          {/* Meta row */}
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
+            </span>
+            {snapshot.status.sizeHuman && snapshot.status.sizeHuman !== '0 B' && (
+              <span className="flex items-center gap-1">
+                <HardDrive className="h-3 w-3" />
+                {snapshot.status.sizeHuman}
+              </span>
+            )}
+            {parentHash && (
+              <span className="text-muted-foreground/70">
+                from {parentHash}
+              </span>
+            )}
+          </div>
+
+          {/* Error message */}
+          {snapshot.status.state === 'Failed' && snapshot.status.message && (
+            <p className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded px-2 py-1.5">
+              {snapshot.status.message}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -256,11 +252,11 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
 
   return (
     <div>
-      <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
-        <GitBranch className="h-4 w-4" />
-        Snapshot History
-        <span className="text-muted-foreground font-normal">({snapshots.length})</span>
-      </h4>
+      <div className="flex items-center gap-2 mb-3">
+        <History className="h-4 w-4 text-muted-foreground" />
+        <h4 className="text-sm font-medium">History</h4>
+        <span className="text-xs text-muted-foreground">({snapshots.length})</span>
+      </div>
 
       <div>
         {nodes.map((node, idx) => (

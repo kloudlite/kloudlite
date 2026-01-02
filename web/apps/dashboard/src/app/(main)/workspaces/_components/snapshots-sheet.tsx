@@ -18,7 +18,6 @@ import {
   SheetTrigger,
 } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
-import { Label } from '@kloudlite/ui'
 import { ScrollArea } from '@kloudlite/ui'
 import {
   AlertDialog,
@@ -168,68 +167,65 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
             </Button>
           )}
         </SheetTrigger>
-        <SheetContent className="flex w-full flex-col p-6 sm:max-w-2xl">
-          <SheetHeader className="mb-6">
+        <SheetContent className="flex w-full flex-col p-0 sm:max-w-xl">
+          <SheetHeader className="border-b px-6 py-4">
             <SheetTitle>Workspace Snapshots</SheetTitle>
             <SheetDescription>
               Save and restore your workspace state
             </SheetDescription>
           </SheetHeader>
 
-          <ScrollArea className="flex-1">
-            <div className="space-y-6 pr-4">
-              {/* Create Snapshot Form */}
-              <div className="bg-muted/50 space-y-3 rounded-lg border p-4">
-                <h4 className="text-sm font-medium">Create New Snapshot</h4>
-                {!workMachineRunning && (
-                  <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <p className="text-xs">WorkMachine must be running to create snapshots</p>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description (optional)</Label>
-                  <Input
-                    id="description"
-                    placeholder="e.g., Before refactoring auth module"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    disabled={isCreating || !workMachineRunning}
-                  />
+          {/* Sticky Create Section */}
+          <div className="border-b bg-muted/30 px-6 py-4">
+            <div className="space-y-3">
+              {!workMachineRunning && (
+                <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <p className="text-xs">WorkMachine must be running to create snapshots</p>
                 </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Snapshot description (optional)"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={isCreating || !workMachineRunning}
+                  className="flex-1"
+                />
                 <Button
                   onClick={handleCreate}
                   disabled={isCreating || !workMachineRunning}
-                  className="w-full"
+                  size="sm"
                 >
                   {isCreating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Snapshot
+                      <Plus className="mr-1 h-4 w-4" />
+                      Create
                     </>
                   )}
                 </Button>
               </div>
+            </div>
+          </div>
 
-              {/* Snapshot Timeline */}
-              <SnapshotTimeline
-                snapshots={snapshots}
-                onRestore={handleRestoreClick}
-                onDelete={handleDeleteClick}
-                disabled={!workMachineRunning}
-                currentSnapshotName={workspace.status?.lastRestoredSnapshot?.name}
-              />
-
-              {snapshots.length === 0 && (
-                <div className="text-muted-foreground py-8 text-center">
-                  <Camera className="mx-auto mb-3 h-12 w-12 opacity-50" />
-                  <p className="text-sm">No snapshots yet</p>
-                  <p className="text-xs">Create your first snapshot to save workspace state</p>
+          {/* Scrollable History Section */}
+          <ScrollArea className="flex-1">
+            <div className="px-6 py-4">
+              {snapshots.length > 0 ? (
+                <SnapshotTimeline
+                  snapshots={snapshots}
+                  onRestore={handleRestoreClick}
+                  onDelete={handleDeleteClick}
+                  disabled={!workMachineRunning}
+                  currentSnapshotName={workspace.status?.lastRestoredSnapshot?.name}
+                />
+              ) : (
+                <div className="text-muted-foreground py-12 text-center">
+                  <Camera className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                  <p className="text-sm font-medium">No snapshots yet</p>
+                  <p className="text-xs mt-1">Create your first snapshot to save workspace state</p>
                 </div>
               )}
             </div>
