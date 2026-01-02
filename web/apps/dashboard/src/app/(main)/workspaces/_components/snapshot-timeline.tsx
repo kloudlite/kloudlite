@@ -217,7 +217,6 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): { node
 
 interface TimelineItemProps {
   node: GraphNode
-  isLast: boolean
   maxColumn: number
   nextNode: GraphNode | null
   onRestore: (snapshot: Snapshot) => void
@@ -225,8 +224,8 @@ interface TimelineItemProps {
   disabled?: boolean
 }
 
-function TimelineItem({ node, isLast, maxColumn, nextNode, onRestore, onDelete, disabled }: TimelineItemProps) {
-  const { snapshot, column, hasParent, isBranchStart, isCurrent, connectors } = node
+function TimelineItem({ node, maxColumn, nextNode, onRestore, onDelete, disabled }: TimelineItemProps) {
+  const { snapshot, column, hasParent, isCurrent, connectors } = node
   const columnWidth = 24
   const graphWidth = (maxColumn + 1) * columnWidth + 8
 
@@ -396,7 +395,6 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
           <TimelineItem
             key={node.snapshot.metadata.name}
             node={node}
-            isLast={idx === nodes.length - 1}
             maxColumn={maxColumn}
             nextNode={idx < nodes.length - 1 ? nodes[idx + 1] : null}
             onRestore={onRestore}
