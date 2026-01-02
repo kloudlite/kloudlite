@@ -717,19 +717,28 @@ func (h *SnapshotHandlers) PushSnapshot(c *gin.Context) {
 		tag = snapshotName
 	}
 
-	// Update snapshot to trigger push
+	// Update snapshot spec to set registry reference
 	snapshot.Spec.RegistryRef = &snapshotv1.SnapshotRegistryRef{
 		Repository: repository,
 		Tag:        tag,
 	}
-	snapshot.Status.State = snapshotv1.SnapshotStatePushing
-	snapshot.Status.Message = "Syncing snapshot to cloud..."
 
 	if err := h.k8sClient.Update(c.Request.Context(), snapshot); err != nil {
 		h.logger.Error("Failed to update snapshot spec for sync", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate sync"})
 		return
 	}
+
+	// Re-fetch snapshot to get updated resourceVersion before status update
+	if err := h.k8sClient.Get(c.Request.Context(), client.ObjectKeyFromObject(snapshot), snapshot); err != nil {
+		h.logger.Error("Failed to re-fetch snapshot after spec update", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate sync"})
+		return
+	}
+
+	// Now update status to trigger the push
+	snapshot.Status.State = snapshotv1.SnapshotStatePushing
+	snapshot.Status.Message = "Syncing snapshot to cloud..."
 
 	if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
 		h.logger.Error("Failed to update snapshot status for sync", zap.Error(err))
