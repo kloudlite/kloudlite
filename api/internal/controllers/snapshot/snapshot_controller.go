@@ -770,29 +770,65 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Delete any existing restore requests from previous restore attempts
+	// Check existing restore requests
 	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
-	deletedAny := false
 	if err := r.List(ctx, existingRestoreReqs, client.MatchingLabels{
 		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
 		"snapshots.kloudlite.io/operation": "restore",
-	}); err == nil {
+	}); err == nil && len(existingRestoreReqs.Items) > 0 {
+		// Check for in-progress or pending requests - these are from THIS restore attempt
+		anyInProgress := false
+		anyPending := false
+		allCompleted := true
 		for _, req := range existingRestoreReqs.Items {
-			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseCompleted ||
-				req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
-				logger.Info("Deleting old restore request", zap.String("request", req.Name))
-				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
-					logger.Warn("Failed to delete old restore request", zap.Error(err))
-				} else {
-					deletedAny = true
+			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
+				// Scale up and fail
+				if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+					logger.Warn("Failed to scale up environment after restore failure", zap.Error(scaleErr))
 				}
+				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %s", req.Status.Message), logger)
+			}
+			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseInProgress {
+				anyInProgress = true
+				allCompleted = false
+			} else if req.Status.Phase == snapshotv1.SnapshotRequestPhasePending || req.Status.Phase == "" {
+				anyPending = true
+				allCompleted = false
+			} else if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted {
+				allCompleted = false
 			}
 		}
-	}
-	// If we deleted old requests, requeue to let the deletion complete before creating new ones
-	if deletedAny {
-		logger.Info("Requeuing after deleting old restore requests")
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+
+		if anyInProgress || anyPending {
+			// Active restore in progress, wait for it
+			logger.Info("Restore in progress, waiting...", zap.Bool("inProgress", anyInProgress), zap.Bool("pending", anyPending))
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+
+		if allCompleted {
+			// All restore requests completed - mark snapshot as ready and scale up
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+				snapshot.Status.State = snapshotv1.SnapshotStateReady
+				snapshot.Status.Message = "Snapshot restored successfully"
+				return nil
+			}, logger); err != nil {
+				logger.Error("Failed to update status to Ready", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+			if !r.hasOtherInProgressSnapshots(ctx, snapshot, envName, logger) {
+				if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
+					logger.Warn("Failed to scale up environment after restore", zap.Error(err))
+				}
+			}
+			// Delete the completed restore requests to allow future restores
+			for _, req := range existingRestoreReqs.Items {
+				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
+					logger.Warn("Failed to delete completed restore request", zap.Error(err), zap.String("request", req.Name))
+				}
+			}
+			logger.Info("Snapshot restored successfully", zap.String("environment", envName))
+			return reconcile.Result{}, nil
+		}
 	}
 
 	// Create restore SnapshotRequests for each PVC snapshot
@@ -907,29 +943,56 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 	workspaceSnapshotPath := filepath.Join(snapshot.Status.SnapshotPath, "home")
 	targetPath := filepath.Join(workspaceHomePath, wsRef.Name)
 
-	// Delete any existing restore requests from previous restore attempts
+	// Check existing restore requests
 	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
-	deletedAny := false
 	if err := r.List(ctx, existingRestoreReqs, client.MatchingLabels{
 		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
 		"snapshots.kloudlite.io/operation": "restore",
-	}); err == nil {
+	}); err == nil && len(existingRestoreReqs.Items) > 0 {
+		// Check for in-progress or pending requests - these are from THIS restore attempt
+		anyInProgress := false
+		anyPending := false
+		allCompleted := true
 		for _, req := range existingRestoreReqs.Items {
-			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseCompleted ||
-				req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
-				logger.Info("Deleting old restore request", zap.String("request", req.Name))
-				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
-					logger.Warn("Failed to delete old restore request", zap.Error(err))
-				} else {
-					deletedAny = true
-				}
+			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
+				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %s", req.Status.Message), logger)
+			}
+			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseInProgress {
+				anyInProgress = true
+				allCompleted = false
+			} else if req.Status.Phase == snapshotv1.SnapshotRequestPhasePending || req.Status.Phase == "" {
+				anyPending = true
+				allCompleted = false
+			} else if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted {
+				allCompleted = false
 			}
 		}
-	}
-	// If we deleted old requests, requeue to let the deletion complete before creating new ones
-	if deletedAny {
-		logger.Info("Requeuing after deleting old restore requests")
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+
+		if anyInProgress || anyPending {
+			// Active restore in progress, wait for it
+			logger.Info("Workspace restore in progress, waiting...", zap.Bool("inProgress", anyInProgress), zap.Bool("pending", anyPending))
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+
+		if allCompleted {
+			// Restore complete - update status back to Ready
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+				snapshot.Status.State = snapshotv1.SnapshotStateReady
+				snapshot.Status.Message = "Workspace snapshot restored successfully"
+				return nil
+			}, logger); err != nil {
+				logger.Error("Failed to update status to Ready", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+			// Delete the completed restore requests to allow future restores
+			for _, req := range existingRestoreReqs.Items {
+				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
+					logger.Warn("Failed to delete completed restore request", zap.Error(err), zap.String("request", req.Name))
+				}
+			}
+			logger.Info("Workspace snapshot restored successfully", zap.String("workspace", wsRef.Name))
+			return reconcile.Result{}, nil
+		}
 	}
 
 	// Create restore SnapshotRequest
@@ -959,29 +1022,8 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 		}
 	}
 
-	// Check if restore request is complete
-	allComplete, err := r.checkRestoreRequestsComplete(ctx, snapshot, logger)
-	if err != nil {
-		logger.Error("Failed to check restore request status", zap.Error(err))
-		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %v", err), logger)
-	}
-
-	if !allComplete {
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
-	}
-
-	// Restore complete - update status back to Ready
-	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-		snapshot.Status.State = snapshotv1.SnapshotStateReady
-		snapshot.Status.Message = "Workspace snapshot restored successfully"
-		return nil
-	}, logger); err != nil {
-		logger.Error("Failed to update status to Ready", zap.Error(err))
-		return reconcile.Result{}, err
-	}
-
-	logger.Info("Workspace snapshot restored successfully", zap.String("workspace", wsRef.Name))
-	return reconcile.Result{}, nil
+	// Requeue to check status
+	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 }
 
 // checkRestoreRequestsComplete checks if all restore SnapshotRequests are complete
