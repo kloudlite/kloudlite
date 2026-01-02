@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
@@ -83,16 +83,22 @@ func CreateSnapshotLayer(snapshotPath, parentSnapshotPath string, metadata *Snap
 }
 
 // createBtrfsSendStream creates a gzipped btrfs send stream
+// Uses nsenter to run btrfs commands on the host since we're in a container
 func createBtrfsSendStream(snapshotPath, parentSnapshotPath string) ([]byte, error) {
-	var cmd *exec.Cmd
+	var btrfsCmd string
 
 	if parentSnapshotPath != "" {
 		// Incremental send
-		cmd = exec.Command("btrfs", "send", "-p", parentSnapshotPath, snapshotPath)
+		btrfsCmd = fmt.Sprintf("btrfs send -p %s %s", parentSnapshotPath, snapshotPath)
 	} else {
 		// Full send
-		cmd = exec.Command("btrfs", "send", snapshotPath)
+		btrfsCmd = fmt.Sprintf("btrfs send %s", snapshotPath)
 	}
+
+	// Use nsenter to run btrfs on the host
+	// -t 1: target PID 1 (host's init process)
+	// -m: enter mount namespace
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "sh", "-c", btrfsCmd)
 
 	// Capture stdout
 	var stdout bytes.Buffer
@@ -178,10 +184,12 @@ func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, 
 }
 
 // receiveBtrfsStream decompresses and receives a btrfs stream
+// Uses nsenter to run btrfs commands on the host since we're in a container
 func receiveBtrfsStream(compressedData []byte, targetDir string) (string, error) {
-	// Ensure target directory exists
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create target dir: %w", err)
+	// Ensure target directory exists using nsenter
+	mkdirCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "mkdir", "-p", targetDir)
+	if output, err := mkdirCmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("failed to create target dir: %w, output: %s", err, string(output))
 	}
 
 	// Decompress
@@ -191,8 +199,10 @@ func receiveBtrfsStream(compressedData []byte, targetDir string) (string, error)
 	}
 	defer gzr.Close()
 
-	// Run btrfs receive
-	cmd := exec.Command("btrfs", "receive", targetDir)
+	// Run btrfs receive using nsenter
+	// -t 1: target PID 1 (host's init process)
+	// -m: enter mount namespace
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "btrfs", "receive", targetDir)
 	cmd.Stdin = gzr
 
 	var stderr bytes.Buffer
@@ -204,16 +214,20 @@ func receiveBtrfsStream(compressedData []byte, targetDir string) (string, error)
 
 	// The received snapshot will be in targetDir with the original name
 	// We need to find it - btrfs receive creates a subvolume with the original name
-	entries, err := os.ReadDir(targetDir)
+	// Use nsenter to list the directory
+	lsCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "ls", targetDir)
+	lsOutput, err := lsCmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to read target dir: %w", err)
+		return "", fmt.Errorf("failed to list target dir: %w", err)
 	}
 
 	// Find the newest entry (the one we just received)
 	var snapshotPath string
+	entries := strings.Split(strings.TrimSpace(string(lsOutput)), "\n")
 	for _, entry := range entries {
-		path := filepath.Join(targetDir, entry.Name())
-		snapshotPath = path
+		if entry != "" {
+			snapshotPath = filepath.Join(targetDir, entry)
+		}
 	}
 
 	if snapshotPath == "" {
