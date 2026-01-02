@@ -188,22 +188,22 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
       {/* Continuous vertical line */}
       {!isLast && (
         <div
-          className="absolute left-[7px] top-4 bottom-0 w-0.5 bg-border"
+          className="absolute left-[7px] top-5 bottom-0 w-[2px] bg-muted-foreground/30"
         />
       )}
       {!isFirst && (
         <div
-          className="absolute left-[7px] top-0 h-4 w-0.5 bg-border"
+          className="absolute left-[7px] top-0 h-5 w-[2px] bg-muted-foreground/30"
         />
       )}
 
       {/* Node dot - positioned absolutely on the line */}
       <div
         className={cn(
-          "absolute left-0 top-4 h-4 w-4 rounded-full border-2 flex items-center justify-center bg-background",
+          "absolute left-0 top-3 h-4 w-4 rounded-full border-2 flex items-center justify-center",
           hasParent
             ? "bg-primary border-primary"
-            : "border-muted-foreground"
+            : "bg-background border-muted-foreground"
         )}
       >
         {!hasParent && (
