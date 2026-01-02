@@ -158,6 +158,25 @@ spec:
           status:
             description: SnapshotStatus defines the observed state of Snapshot
             properties:
+              cloudSync:
+                description: CloudSync provides user-friendly cloud sync status (computed
+                  from RegistryStatus)
+                properties:
+                  compressedSize:
+                    description: CompressedSize is the total compressed size in bytes
+                    format: int64
+                    type: integer
+                  synced:
+                    description: Synced indicates if the snapshot has been synced
+                      to cloud
+                    type: boolean
+                  syncedAt:
+                    description: SyncedAt is when the snapshot was synced
+                    format: date-time
+                    type: string
+                required:
+                - synced
+                type: object
               createdAt:
                 description: CreatedAt is when the snapshot was successfully created
                 format: date-time
