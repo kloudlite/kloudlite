@@ -157,7 +157,7 @@ function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): { n
   })
 
   // Build nodes with parent index for line drawing
-  const nodes: TimelineNode[] = sortedByTime.map((snapshot, index) => {
+  const nodes: TimelineNode[] = sortedByTime.map((snapshot) => {
     const name = snapshot.metadata.name
     const parentName = snapshot.spec.parentSnapshotRef?.name
     const children = childrenMap.get(name) || []
