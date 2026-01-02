@@ -1,8 +1,11 @@
 package oci
 
 import (
+	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -232,13 +235,21 @@ func (c *Client) pullImage(ref name.Reference) (v1.Image, error) {
 func (c *Client) remoteOptions() []remote.Option {
 	var opts []remote.Option
 
-	// For internal registry, we typically don't need auth
-	// but we can add it here if needed in the future
+	if c.insecure {
+		// Create a custom transport that skips TLS verification
+		// and handles redirects to external hostnames
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		opts = append(opts, remote.WithTransport(transport))
+	}
 
 	return opts
 }
 
-// customMediaTypeImage wraps an image to override media types
+// customMediaTypeImage wraps an image to override media types for OCI format
 type customMediaTypeImage struct {
 	v1.Image
 	configBytes []byte
@@ -250,4 +261,52 @@ func (c *customMediaTypeImage) MediaType() (types.MediaType, error) {
 
 func (c *customMediaTypeImage) RawConfigFile() ([]byte, error) {
 	return c.configBytes, nil
+}
+
+// Manifest returns an OCI-format manifest instead of Docker format
+func (c *customMediaTypeImage) Manifest() (*v1.Manifest, error) {
+	// Get the underlying manifest
+	m, err := c.Image.Manifest()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a copy with OCI media types
+	ociManifest := &v1.Manifest{
+		SchemaVersion: 2,
+		MediaType:     types.OCIManifestSchema1,
+		Config: v1.Descriptor{
+			MediaType: ConfigMediaType, // Use our custom config media type
+			Size:      int64(len(c.configBytes)),
+			Digest:    m.Config.Digest, // This will be recalculated
+		},
+		Layers: make([]v1.Descriptor, len(m.Layers)),
+	}
+
+	// Convert layer media types to OCI format
+	for i, layer := range m.Layers {
+		ociManifest.Layers[i] = v1.Descriptor{
+			MediaType: types.OCILayer,
+			Size:      layer.Size,
+			Digest:    layer.Digest,
+		}
+	}
+
+	// Recalculate config digest from actual config bytes
+	configDigest, _, err := v1.SHA256(bytes.NewReader(c.configBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate config digest: %w", err)
+	}
+	ociManifest.Config.Digest = configDigest
+
+	return ociManifest, nil
+}
+
+// RawManifest returns the raw bytes of the OCI manifest
+func (c *customMediaTypeImage) RawManifest() ([]byte, error) {
+	m, err := c.Manifest()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(m)
 }
