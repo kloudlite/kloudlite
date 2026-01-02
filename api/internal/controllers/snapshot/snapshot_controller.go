@@ -967,37 +967,35 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 	workspaceSnapshotPath := filepath.Join(snapshot.Status.SnapshotPath, "home")
 	targetPath := filepath.Join(workspaceHomePath, wsRef.Name)
 
-	// Fetch the workspace to check if it needs to be suspended
+	// Fetch the workspace
 	workspace := &workspacev1.Workspace{}
 	if err := r.Get(ctx, client.ObjectKey{Name: wsRef.Name, Namespace: wmNamespace}, workspace); err != nil {
 		logger.Error("Failed to get workspace for restore", zap.Error(err))
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Workspace not found: %s", wsRef.Name), logger)
 	}
 
-	// Store previous workspace status and suspend the workspace if not already suspended
-	if workspace.Spec.Status != "suspended" {
-		logger.Info("Suspending workspace before restore", zap.String("workspace", wsRef.Name))
-
-		// Store the previous status in the snapshot for later restoration
+	// Store previous status if not already stored
+	if snapshot.Status.PreviousWorkspaceStatus == "" && workspace.Spec.Status != "suspended" {
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.PreviousWorkspaceStatus = workspace.Spec.Status
 			snapshot.Status.WorkspaceWasSuspended = false
 			snapshot.Status.WorkMachineName = wmNamespace
-			snapshot.Status.Message = "Suspending workspace before restore..."
 			return nil
 		}, logger); err != nil {
 			logger.Warn("Failed to store previous workspace status", zap.Error(err))
 		}
-
-		workspace.Spec.Status = "suspended"
-		if err := r.Update(ctx, workspace); err != nil {
-			logger.Error("Failed to suspend workspace for restore", zap.Error(err))
-			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to suspend workspace: %v", err), logger)
-		}
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Wait for workspace pod to terminate
+	// Suspend workspace if not already suspended (like scaleEnvironment for environments)
+	if workspace.Spec.Status != "suspended" {
+		logger.Info("Suspending workspace before restore", zap.String("workspace", wsRef.Name))
+		workspace.Spec.Status = "suspended"
+		if err := r.Update(ctx, workspace); err != nil {
+			logger.Warn("Failed to suspend workspace, will retry", zap.Error(err))
+		}
+	}
+
+	// Wait for workspace pod to terminate (like waitForPodsTerminated for environments)
 	podName := fmt.Sprintf("workspace-%s", wsRef.Name)
 	pod := &corev1.Pod{}
 	podErr := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: wmNamespace}, pod)
@@ -1006,7 +1004,7 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 		// Pod still exists, wait for it to terminate
 		logger.Info("Waiting for workspace pod to terminate before restore", zap.String("pod", podName))
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = "Waiting for workspace pod to terminate..."
+			snapshot.Status.Message = "Stopping workspace pod before restore..."
 			return nil
 		}, logger); err != nil {
 			logger.Warn("Failed to update status message", zap.Error(err))
