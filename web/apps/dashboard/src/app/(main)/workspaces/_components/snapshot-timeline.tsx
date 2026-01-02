@@ -184,27 +184,19 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
   const { snapshot, hasParent } = node
 
   return (
-    <div className="relative">
-      {/* Vertical connecting line */}
-      {!isFirst && (
-        <div
-          className="absolute left-[7px] top-0 w-0.5 bg-border"
-          style={{ height: '24px' }}
-        />
-      )}
-      {!isLast && (
-        <div
-          className="absolute left-[7px] bottom-0 w-0.5 bg-border"
-          style={{ top: '24px' }}
-        />
-      )}
+    <div className="relative flex gap-3">
+      {/* Timeline track (left side) */}
+      <div className="relative flex flex-col items-center">
+        {/* Line above the dot */}
+        {!isFirst && (
+          <div className="w-0.5 flex-1 bg-border" style={{ minHeight: '12px' }} />
+        )}
+        {isFirst && <div className="flex-1" style={{ minHeight: '12px' }} />}
 
-      {/* Node indicator and content */}
-      <div className="relative z-10 flex items-start gap-3">
         {/* Node dot */}
         <div
           className={cn(
-            "mt-1.5 h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+            "h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center z-10",
             hasParent
               ? "bg-primary border-primary"
               : "bg-background border-muted-foreground"
@@ -215,74 +207,80 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
           )}
         </div>
 
-        {/* Snapshot card */}
-        <div className="flex-1 pb-4">
-          <div className="bg-card rounded-lg border p-4 hover:bg-muted/30 transition-colors">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="truncate font-mono text-sm">
-                    {snapshot.metadata.name}
-                  </span>
-                  {getStateBadge(snapshot.status.state)}
-                </div>
+        {/* Line below the dot */}
+        {!isLast && (
+          <div className="w-0.5 flex-1 bg-border" style={{ minHeight: '12px' }} />
+        )}
+        {isLast && <div className="flex-1" style={{ minHeight: '12px' }} />}
+      </div>
 
-                <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs flex-wrap">
-                  {snapshot.status.sizeHuman && (
-                    <span className="flex items-center gap-1">
-                      <HardDrive className="h-3 w-3" />
-                      {snapshot.status.sizeHuman}
-                    </span>
-                  )}
+      {/* Snapshot card */}
+      <div className="flex-1 py-2">
+        <div className="bg-card rounded-lg border p-4 hover:bg-muted/30 transition-colors">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="truncate font-mono text-sm">
+                  {snapshot.metadata.name}
+                </span>
+                {getStateBadge(snapshot.status.state)}
+              </div>
+
+              <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs flex-wrap">
+                {snapshot.status.sizeHuman && (
                   <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
+                    <HardDrive className="h-3 w-3" />
+                    {snapshot.status.sizeHuman}
                   </span>
-                  {hasParent && snapshot.spec.parentSnapshotRef && (
-                    <span className="flex items-center gap-1 text-primary">
-                      <GitBranch className="h-3 w-3" />
-                      from {snapshot.spec.parentSnapshotRef.name.split('-').slice(-2).join('-')}
-                    </span>
-                  )}
-                </div>
-
-                {snapshot.spec.description && (
-                  <p className="text-muted-foreground mt-2 text-sm italic">
-                    &quot;{snapshot.spec.description}&quot;
-                  </p>
                 )}
-
-                {snapshot.status.state === 'Failed' && snapshot.status.message && (
-                  <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                    {snapshot.status.message}
-                  </p>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
+                </span>
+                {hasParent && snapshot.spec.parentSnapshotRef && (
+                  <span className="flex items-center gap-1 text-primary">
+                    <GitBranch className="h-3 w-3" />
+                    from {snapshot.spec.parentSnapshotRef.name.split('-').slice(-2).join('-')}
+                  </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {snapshot.status.state === 'Ready' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onRestore(snapshot)}
-                    disabled={disabled}
-                    title={disabled ? 'Resource must be running to restore' : undefined}
-                  >
-                    <RotateCcw className="mr-1 h-3 w-3" />
-                    Restore
-                  </Button>
-                )}
-                {(snapshot.status.state === 'Ready' || snapshot.status.state === 'Failed') && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(snapshot)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+              {snapshot.spec.description && (
+                <p className="text-muted-foreground mt-2 text-sm italic">
+                  &quot;{snapshot.spec.description}&quot;
+                </p>
+              )}
+
+              {snapshot.status.state === 'Failed' && snapshot.status.message && (
+                <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                  {snapshot.status.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {snapshot.status.state === 'Ready' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onRestore(snapshot)}
+                  disabled={disabled}
+                  title={disabled ? 'Resource must be running to restore' : undefined}
+                >
+                  <RotateCcw className="mr-1 h-3 w-3" />
+                  Restore
+                </Button>
+              )}
+              {(snapshot.status.state === 'Ready' || snapshot.status.state === 'Failed') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(snapshot)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
