@@ -51,11 +51,8 @@ function getShortHash(name: string): string {
 function getStateBadge(state: Snapshot['status']['state']) {
   switch (state) {
     case 'Ready':
-      return (
-        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">
-          Ready
-        </Badge>
-      )
+      // Don't show badge for Ready state
+      return null
     case 'Creating':
       return (
         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
