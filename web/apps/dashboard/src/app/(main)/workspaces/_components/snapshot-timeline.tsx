@@ -9,7 +9,6 @@ import {
   RotateCcw,
   Trash2,
   History,
-  GitBranch,
 } from 'lucide-react'
 import { Button, Badge } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
@@ -23,8 +22,9 @@ interface SnapshotTimelineProps {
   currentSnapshotName?: string
 }
 
-interface TimelineNode {
+interface TreeNode {
   snapshot: Snapshot
+  children: TreeNode[]
   isCurrent: boolean
 }
 
@@ -95,50 +95,148 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): TimelineNode[] {
+// Build tree structure from snapshots based on parent references
+function buildTree(snapshots: Snapshot[], currentSnapshotName?: string): TreeNode[] {
   if (snapshots.length === 0) return []
 
   const snapshotMap = new Map<string, Snapshot>()
-  snapshots.forEach(s => snapshotMap.set(s.metadata.name, s))
+  const childrenMap = new Map<string, string[]>() // parentName -> childNames[]
 
-  const sortedByTime = [...snapshots].sort((a, b) =>
-    new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
-    new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
+  snapshots.forEach(s => {
+    snapshotMap.set(s.metadata.name, s)
+    const parentName = s.spec.parentSnapshotRef?.name
+    if (parentName) {
+      const existing = childrenMap.get(parentName) || []
+      existing.push(s.metadata.name)
+      childrenMap.set(parentName, existing)
+    }
+  })
+
+  // Find root nodes (no parent or parent not in our list)
+  const rootSnapshots = snapshots.filter(s => {
+    const parentName = s.spec.parentSnapshotRef?.name
+    return !parentName || !snapshotMap.has(parentName)
+  })
+
+  // Sort roots by creation time (oldest first - roots at bottom)
+  rootSnapshots.sort((a, b) =>
+    new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime() -
+    new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
   )
 
-  const headSnapshotName = currentSnapshotName && snapshotMap.has(currentSnapshotName)
-    ? currentSnapshotName
-    : sortedByTime[0]?.metadata.name
+  // Recursively build tree
+  function buildNode(snapshot: Snapshot): TreeNode {
+    const childNames = childrenMap.get(snapshot.metadata.name) || []
+    const childSnapshots = childNames
+      .map(name => snapshotMap.get(name)!)
+      .filter(Boolean)
+      // Sort children by creation time (newest first)
+      .sort((a, b) =>
+        new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
+        new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
+      )
 
-  return sortedByTime.map((snapshot) => ({
-    snapshot,
-    isCurrent: snapshot.metadata.name === headSnapshotName,
-  }))
+    return {
+      snapshot,
+      children: childSnapshots.map(buildNode),
+      isCurrent: snapshot.metadata.name === currentSnapshotName,
+    }
+  }
+
+  return rootSnapshots.map(buildNode)
 }
 
-interface TimelineItemProps {
-  node: TimelineNode
-  isFirst: boolean
-  isLast: boolean
+// Flatten tree to render order (DFS, children before parent for bottom-up view)
+interface FlatNode {
+  snapshot: Snapshot
+  isCurrent: boolean
+  depth: number
+  isLastChild: boolean
+  ancestorIsLast: boolean[] // Track which ancestors are last children (for line drawing)
+}
+
+function flattenTree(roots: TreeNode[]): FlatNode[] {
+  const result: FlatNode[] = []
+
+  function traverse(node: TreeNode, depth: number, isLastChild: boolean, ancestorIsLast: boolean[]) {
+    // First render children (newest first, so they appear at top)
+    node.children.forEach((child, idx) => {
+      traverse(child, depth + 1, idx === node.children.length - 1, [...ancestorIsLast, isLastChild])
+    })
+
+    // Then render self
+    result.push({
+      snapshot: node.snapshot,
+      isCurrent: node.isCurrent,
+      depth,
+      isLastChild,
+      ancestorIsLast,
+    })
+  }
+
+  // Process roots (oldest at bottom)
+  roots.forEach((root, idx) => {
+    traverse(root, 0, idx === roots.length - 1, [])
+  })
+
+  return result
+}
+
+interface TreeNodeItemProps {
+  node: FlatNode
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
+  isFirst: boolean
+  isLast: boolean
+  totalNodes: number
+  nodeIndex: number
 }
 
-function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
-  const { snapshot, isCurrent } = node
+function TreeNodeItem({ node, onRestore, onDelete, disabled, isFirst, isLast }: TreeNodeItemProps) {
+  const { snapshot, isCurrent, depth } = node
   const shortHash = getShortHash(snapshot.metadata.name)
-  const parentHash = snapshot.spec.parentSnapshotRef
-    ? getShortHash(snapshot.spec.parentSnapshotRef.name)
-    : null
+  const indentWidth = depth * 24 // 24px per level
 
   return (
-    <div className="relative flex gap-3">
-      {/* Timeline track */}
+    <div className="relative flex">
+      {/* Indent spacer */}
+      {depth > 0 && (
+        <div style={{ width: indentWidth }} className="flex-shrink-0 relative">
+          {/* Vertical lines for each ancestor level */}
+          {node.ancestorIsLast.map((isLast, idx) => (
+            !isLast && (
+              <div
+                key={idx}
+                className="absolute top-0 bottom-0 w-px bg-border"
+                style={{ left: idx * 24 + 10 }}
+              />
+            )
+          ))}
+          {/* Horizontal connector to this node */}
+          <div
+            className="absolute w-3 h-px bg-border"
+            style={{
+              left: (depth - 1) * 24 + 10,
+              top: '50%',
+            }}
+          />
+          {/* Vertical line segment */}
+          <div
+            className={cn(
+              "absolute w-px bg-border",
+              node.isLastChild ? "top-0 h-1/2" : "top-0 bottom-0"
+            )}
+            style={{ left: (depth - 1) * 24 + 10 }}
+          />
+        </div>
+      )}
+
+      {/* Timeline dot column */}
       <div className="relative flex flex-col items-center w-5 flex-shrink-0">
         {/* Line above */}
-        {!isFirst && <div className="w-px flex-1 bg-border" />}
-        {isFirst && <div className="flex-1" />}
+        {(!isFirst && depth === 0) && <div className="w-px flex-1 bg-border" />}
+        {(isFirst || depth > 0) && <div className="flex-1" />}
 
         {/* Dot */}
         <div
@@ -146,17 +244,17 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
             "relative z-10 rounded-full flex-shrink-0 transition-all",
             isCurrent
               ? "w-3 h-3 bg-blue-500 ring-[3px] ring-blue-500/20"
-              : "w-2 h-2 bg-gray-300 dark:bg-gray-600"
+              : "w-2.5 h-2.5 bg-gray-300 dark:bg-gray-600"
           )}
         />
 
         {/* Line below */}
-        {!isLast && <div className="w-px flex-1 bg-border" />}
-        {isLast && <div className="flex-1" />}
+        {(!isLast && depth === 0) && <div className="w-px flex-1 bg-border" />}
+        {(isLast || depth > 0) && <div className="flex-1" />}
       </div>
 
       {/* Content */}
-      <div className="flex-1 pb-4 min-w-0">
+      <div className="flex-1 pb-3 min-w-0 ml-2">
         <div
           className={cn(
             "group rounded-lg border p-3 transition-all",
@@ -173,16 +271,10 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
                   Current
                 </Badge>
               )}
-              <code className="text-xs font-mono text-muted-foreground truncate">
+              <code className="text-xs font-mono text-muted-foreground">
                 {shortHash}
               </code>
               {getStateBadge(snapshot.status.state)}
-              {parentHash && (
-                <Badge variant="outline" className="text-muted-foreground">
-                  <GitBranch className="h-3 w-3 mr-1" />
-                  from {parentHash}
-                </Badge>
-              )}
             </div>
 
             {/* Actions */}
@@ -246,7 +338,10 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
 }
 
 export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, currentSnapshotName }: SnapshotTimelineProps) {
-  const nodes = useMemo(() => buildTimeline(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
+  const flatNodes = useMemo(() => {
+    const tree = buildTree(snapshots, currentSnapshotName)
+    return flattenTree(tree)
+  }, [snapshots, currentSnapshotName])
 
   if (snapshots.length === 0) {
     return null
@@ -261,15 +356,17 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
       </div>
 
       <div>
-        {nodes.map((node, idx) => (
-          <TimelineItem
+        {flatNodes.map((node, idx) => (
+          <TreeNodeItem
             key={node.snapshot.metadata.name}
             node={node}
             isFirst={idx === 0}
-            isLast={idx === nodes.length - 1}
+            isLast={idx === flatNodes.length - 1}
             onRestore={onRestore}
             onDelete={onDelete}
             disabled={disabled}
+            totalNodes={flatNodes.length}
+            nodeIndex={idx}
           />
         ))}
       </div>
