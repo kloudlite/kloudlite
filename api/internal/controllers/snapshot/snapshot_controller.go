@@ -274,10 +274,10 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	}
 
 	// Generate snapshot path once and store it in status (reuse if already set)
+	// Use snapshot name (which is unique) to prevent path collisions with concurrent snapshots
 	snapshotPath := snapshot.Status.SnapshotPath
 	if snapshotPath == "" {
-		snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
-		snapshotPath = filepath.Join(snapshotsBasePath, fmt.Sprintf("%s-%s", envName, snapshotTimestamp))
+		snapshotPath = filepath.Join(snapshotsBasePath, snapshot.Name)
 		// Store the path immediately so subsequent reconciles use the same path
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.SnapshotPath = snapshotPath
@@ -491,10 +491,10 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 	// Pod is terminated, proceed with snapshot
 
 	// Generate snapshot path once and store it in status (reuse if already set)
+	// Use snapshot name (which is unique) to prevent path collisions with concurrent snapshots
 	snapshotPath := snapshot.Status.SnapshotPath
 	if snapshotPath == "" {
-		snapshotTimestamp := time.Now().UTC().Format("20060102-150405")
-		snapshotPath = filepath.Join(snapshotsBasePath, fmt.Sprintf("ws-%s-%s", wsRef.Name, snapshotTimestamp))
+		snapshotPath = filepath.Join(snapshotsBasePath, snapshot.Name)
 		// Store the path immediately so subsequent reconciles use the same path
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.SnapshotPath = snapshotPath
