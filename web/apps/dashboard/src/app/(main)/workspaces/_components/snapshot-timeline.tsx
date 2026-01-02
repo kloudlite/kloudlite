@@ -331,7 +331,9 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onSync, disabled, i
           )}
 
           {isSynced && (
-            <Cloud className="h-3.5 w-3.5 text-cyan-500" title="Synced to cloud" />
+            <span title="Synced to cloud">
+              <Cloud className="h-3.5 w-3.5 text-cyan-500" />
+            </span>
           )}
 
           {getStateBadge(snapshot.status.state)}
