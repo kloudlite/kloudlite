@@ -34,12 +34,18 @@ const (
 
 	// SnapshotOperationRestore restores data from a snapshot
 	SnapshotOperationRestore SnapshotRequestOperation = "restore"
+
+	// SnapshotOperationPush pushes a snapshot to the registry as OCI image
+	SnapshotOperationPush SnapshotRequestOperation = "push"
+
+	// SnapshotOperationPull pulls a snapshot from the registry
+	SnapshotOperationPull SnapshotRequestOperation = "pull"
 )
 
 // SnapshotRequestSpec defines the desired snapshot operation
 type SnapshotRequestSpec struct {
 	// Operation is the type of operation to perform
-	// +kubebuilder:validation:Enum=create;delete;restore
+	// +kubebuilder:validation:Enum=create;delete;restore;push;pull
 	// +kubebuilder:validation:Required
 	Operation SnapshotRequestOperation `json:"operation"`
 
@@ -66,6 +72,34 @@ type SnapshotRequestSpec struct {
 	// ReadOnly indicates whether to create a read-only snapshot (recommended)
 	// +kubebuilder:default=true
 	ReadOnly bool `json:"readOnly"`
+
+	// ParentSnapshotPath is the path to the parent snapshot (for incremental push)
+	// +optional
+	ParentSnapshotPath string `json:"parentSnapshotPath,omitempty"`
+
+	// RegistryRef contains registry configuration for push/pull operations
+	// +optional
+	RegistryRef *SnapshotRequestRegistryRef `json:"registryRef,omitempty"`
+}
+
+// SnapshotRequestRegistryRef contains registry configuration for push/pull
+type SnapshotRequestRegistryRef struct {
+	// RegistryURL is the registry base URL (e.g., "image-registry:5000")
+	// +kubebuilder:validation:Required
+	RegistryURL string `json:"registryURL"`
+
+	// Repository is the image repository path (e.g., "snapshots/username")
+	// +kubebuilder:validation:Required
+	Repository string `json:"repository"`
+
+	// Tag is the image tag
+	// +kubebuilder:validation:Required
+	Tag string `json:"tag"`
+
+	// ParentLayers are the layer digests from parent snapshot(s) to include
+	// These layers are referenced but not re-uploaded during push
+	// +optional
+	ParentLayers []string `json:"parentLayers,omitempty"`
 }
 
 // SnapshotRequestPhase represents the current phase of the request
@@ -106,6 +140,18 @@ type SnapshotRequestStatus struct {
 	// FinishedAt is when the operation finished
 	// +optional
 	FinishedAt *metav1.Time `json:"finishedAt,omitempty"`
+
+	// Digest is the OCI image manifest digest (for push operations)
+	// +optional
+	Digest string `json:"digest,omitempty"`
+
+	// LayerDigests are the digests of all layers pushed (for push operations)
+	// +optional
+	LayerDigests []string `json:"layerDigests,omitempty"`
+
+	// CompressedSize is the total compressed size in bytes (for push operations)
+	// +optional
+	CompressedSize int64 `json:"compressedSize,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

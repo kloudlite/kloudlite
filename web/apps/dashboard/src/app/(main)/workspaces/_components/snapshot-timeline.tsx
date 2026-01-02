@@ -8,6 +8,8 @@ import {
   Loader2,
   RotateCcw,
   Trash2,
+  Cloud,
+  CloudUpload,
 } from 'lucide-react'
 import { Button, Badge } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
@@ -17,6 +19,7 @@ interface SnapshotTimelineProps {
   snapshots: Snapshot[]
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
+  onSync?: (snapshot: Snapshot) => void
   disabled?: boolean
   currentSnapshotName?: string
 }
@@ -57,6 +60,20 @@ function getStateBadge(state: Snapshot['status']['state']) {
         <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
           <Loader2 className="h-3 w-3 animate-spin" />
           Restoring
+        </span>
+      )
+    case 'Pushing':
+      return (
+        <span className="inline-flex items-center gap-1 text-xs text-cyan-600 dark:text-cyan-400">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Syncing
+        </span>
+      )
+    case 'Pulling':
+      return (
+        <span className="inline-flex items-center gap-1 text-xs text-cyan-600 dark:text-cyan-400">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Cloning
         </span>
       )
     case 'Deleting':
@@ -216,15 +233,17 @@ interface SnapshotRowProps {
   totalLanes: number
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
+  onSync?: (snapshot: Snapshot) => void
   disabled?: boolean
   isFirst: boolean
   isLast: boolean
 }
 
-function SnapshotRow({ row, totalLanes, onRestore, onDelete, disabled, isFirst, isLast }: SnapshotRowProps) {
+function SnapshotRow({ row, totalLanes, onRestore, onDelete, onSync, disabled, isFirst, isLast }: SnapshotRowProps) {
   const { item, activeLanes, branchFrom } = row
   const { snapshot, isCurrent } = item
   const shortHash = getShortHash(snapshot.metadata.name)
+  const isSynced = snapshot.status.cloudSync?.synced
 
   const graphWidth = Math.max(totalLanes, 1) * LANE_WIDTH + 8
   const dotX = item.lane * LANE_WIDTH + LANE_WIDTH / 2
@@ -311,6 +330,10 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, disabled, isFirst, 
             </Badge>
           )}
 
+          {isSynced && (
+            <Cloud className="h-3.5 w-3.5 text-cyan-500" title="Synced to cloud" />
+          )}
+
           {getStateBadge(snapshot.status.state)}
 
           {snapshot.spec.description && (
@@ -336,6 +359,19 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, disabled, isFirst, 
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {snapshot.status.state === 'Ready' && !isSynced && onSync && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSync(snapshot)}
+                disabled={disabled}
+                className="h-6 px-2 text-xs"
+                title="Sync to cloud"
+              >
+                <CloudUpload className="h-3 w-3 mr-1" />
+                Sync
+              </Button>
+            )}
             {snapshot.status.state === 'Ready' && !isCurrent && (
               <Button
                 variant="ghost"
@@ -365,7 +401,7 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, disabled, isFirst, 
   )
 }
 
-export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, currentSnapshotName }: SnapshotTimelineProps) {
+export function SnapshotTimeline({ snapshots, onRestore, onDelete, onSync, disabled, currentSnapshotName }: SnapshotTimelineProps) {
   const rows = useMemo(() => buildGraph(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
 
   const totalLanes = useMemo(() => {
@@ -394,6 +430,7 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
             totalLanes={totalLanes}
             onRestore={onRestore}
             onDelete={onDelete}
+            onSync={onSync}
             disabled={disabled}
             isFirst={idx === 0}
             isLast={idx === rows.length - 1}

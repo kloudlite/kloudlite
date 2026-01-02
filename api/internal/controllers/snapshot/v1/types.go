@@ -61,6 +61,10 @@ type SnapshotSpec struct {
 	// RetentionPolicy defines when this snapshot should be deleted
 	// +optional
 	RetentionPolicy *RetentionPolicy `json:"retentionPolicy,omitempty"`
+
+	// RegistryRef configures where to push this snapshot in the registry
+	// +optional
+	RegistryRef *SnapshotRegistryRef `json:"registryRef,omitempty"`
 }
 
 // ParentSnapshotReference identifies the parent snapshot in the lineage
@@ -104,6 +108,21 @@ type RetentionPolicy struct {
 	KeepForDays *int32 `json:"keepForDays,omitempty"`
 }
 
+// SnapshotRegistryRef configures registry push/pull settings
+type SnapshotRegistryRef struct {
+	// Repository is the registry repository path (e.g., "snapshots/username")
+	// +kubebuilder:validation:Required
+	Repository string `json:"repository"`
+
+	// Tag is the image tag (defaults to snapshot name)
+	// +optional
+	Tag string `json:"tag,omitempty"`
+
+	// AutoPush automatically pushes to registry when snapshot is ready
+	// +optional
+	AutoPush bool `json:"autoPush,omitempty"`
+}
+
 // SnapshotState represents the current state of a snapshot
 type SnapshotState string
 
@@ -125,6 +144,12 @@ const (
 
 	// SnapshotStateFailed means the snapshot operation failed
 	SnapshotStateFailed SnapshotState = "Failed"
+
+	// SnapshotStatePushing means the snapshot is being pushed to registry
+	SnapshotStatePushing SnapshotState = "Pushing"
+
+	// SnapshotStatePulling means the snapshot is being pulled from registry
+	SnapshotStatePulling SnapshotState = "Pulling"
 )
 
 // SnapshotType represents the type of snapshot (environment or workspace)
@@ -204,6 +229,28 @@ type SnapshotStatus struct {
 	// PreviousWorkspaceStatus stores the workspace's status before suspension
 	// +optional
 	PreviousWorkspaceStatus string `json:"previousWorkspaceStatus,omitempty"`
+
+	// RegistryStatus tracks the snapshot's registry push status
+	// +optional
+	RegistryStatus *SnapshotRegistryStatus `json:"registryStatus,omitempty"`
+
+	// CloudSync provides user-friendly cloud sync status (computed from RegistryStatus)
+	// +optional
+	CloudSync *SnapshotCloudSync `json:"cloudSync,omitempty"`
+}
+
+// SnapshotCloudSync provides user-friendly cloud sync status
+type SnapshotCloudSync struct {
+	// Synced indicates if the snapshot has been synced to cloud
+	Synced bool `json:"synced"`
+
+	// SyncedAt is when the snapshot was synced
+	// +optional
+	SyncedAt *metav1.Time `json:"syncedAt,omitempty"`
+
+	// CompressedSize is the total compressed size in bytes
+	// +optional
+	CompressedSize int64 `json:"compressedSize,omitempty"`
 }
 
 // PVCSnapshotInfo contains info about a snapshotted PVC
@@ -238,6 +285,36 @@ type ResourceMetadataInfo struct {
 
 	// StatefulSets count
 	StatefulSets int32 `json:"statefulSets"`
+}
+
+// SnapshotRegistryStatus tracks the snapshot's registry push status
+type SnapshotRegistryStatus struct {
+	// Pushed indicates if the snapshot has been pushed to registry
+	Pushed bool `json:"pushed,omitempty"`
+
+	// PushedAt is when the snapshot was pushed
+	// +optional
+	PushedAt *metav1.Time `json:"pushedAt,omitempty"`
+
+	// ImageRef is the full image reference (registry/repo:tag)
+	// +optional
+	ImageRef string `json:"imageRef,omitempty"`
+
+	// Digest is the image manifest digest (sha256:...)
+	// +optional
+	Digest string `json:"digest,omitempty"`
+
+	// LayerDigests are the digests of all layers in order
+	// +optional
+	LayerDigests []string `json:"layerDigests,omitempty"`
+
+	// LayerCount is the number of layers in the image
+	// +optional
+	LayerCount int32 `json:"layerCount,omitempty"`
+
+	// CompressedSize is the total compressed size in bytes
+	// +optional
+	CompressedSize int64 `json:"compressedSize,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

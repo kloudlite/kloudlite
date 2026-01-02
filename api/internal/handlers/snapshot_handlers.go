@@ -645,3 +645,181 @@ func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
 		"count":     len(snapshots.Items),
 	})
 }
+
+// PushSnapshotRequest is the request body for pushing a snapshot to registry
+type PushSnapshotRequest struct {
+	Repository string `json:"repository,omitempty"` // Defaults to snapshots/{username}
+	Tag        string `json:"tag,omitempty"`        // Defaults to snapshot name
+}
+
+// PushSnapshot handles POST /api/v1/snapshots/:name/sync
+// Note: We use "sync" instead of "push" in the API to hide the registry implementation
+func (h *SnapshotHandlers) PushSnapshot(c *gin.Context) {
+	snapshotName := c.Param("name")
+	if snapshotName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Snapshot name is required"})
+		return
+	}
+
+	var req PushSnapshotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Allow empty body - use defaults
+		req = PushSnapshotRequest{}
+	}
+
+	// Get authenticated user
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Get snapshot
+	snapshot, err := h.snapshotRepo.Get(c.Request.Context(), snapshotName)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Snapshot not found"})
+		return
+	}
+
+	// Check ownership
+	if snapshot.Spec.OwnedBy != username {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to sync this snapshot"})
+		return
+	}
+
+	// Verify snapshot is ready
+	if snapshot.Status.State != snapshotv1.SnapshotStateReady {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Snapshot is not ready for sync",
+			"state":   snapshot.Status.State,
+			"message": snapshot.Status.Message,
+		})
+		return
+	}
+
+	// Check if already synced
+	if snapshot.Status.RegistryStatus != nil && snapshot.Status.RegistryStatus.Pushed {
+		c.JSON(http.StatusOK, gin.H{
+			"message":  "Snapshot already synced to cloud",
+			"snapshot": snapshotName,
+			"synced":   true,
+		})
+		return
+	}
+
+	// Set up registry reference with defaults
+	repository := req.Repository
+	if repository == "" {
+		repository = fmt.Sprintf("snapshots/%s", username)
+	}
+	tag := req.Tag
+	if tag == "" {
+		tag = snapshotName
+	}
+
+	// Update snapshot to trigger push
+	snapshot.Spec.RegistryRef = &snapshotv1.SnapshotRegistryRef{
+		Repository: repository,
+		Tag:        tag,
+	}
+	snapshot.Status.State = snapshotv1.SnapshotStatePushing
+	snapshot.Status.Message = "Syncing snapshot to cloud..."
+
+	if err := h.k8sClient.Update(c.Request.Context(), snapshot); err != nil {
+		h.logger.Error("Failed to update snapshot spec for sync", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate sync"})
+		return
+	}
+
+	if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
+		h.logger.Error("Failed to update snapshot status for sync", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate sync"})
+		return
+	}
+
+	h.logger.Info("Snapshot sync to cloud initiated",
+		zap.String("snapshot", snapshotName))
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Snapshot sync to cloud initiated",
+		"snapshot": snapshotName,
+	})
+}
+
+// PullSnapshotRequest is the request body for pulling/cloning a snapshot from registry
+type PullSnapshotRequest struct {
+	Repository string `json:"repository"` // Required: repository path
+	Tag        string `json:"tag"`        // Required: image tag
+	Name       string `json:"name"`       // Optional: name for the new snapshot
+}
+
+// PullSnapshot handles POST /api/v1/snapshots/clone
+// Note: We use "clone" instead of "pull" in the API to hide the registry implementation
+func (h *SnapshotHandlers) PullSnapshot(c *gin.Context) {
+	var req PullSnapshotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if req.Repository == "" || req.Tag == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Repository and tag are required"})
+		return
+	}
+
+	// Get authenticated user
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Generate snapshot name if not provided
+	snapshotName := req.Name
+	if snapshotName == "" {
+		timestamp := time.Now().UTC().Format("20060102-150405")
+		snapshotName = fmt.Sprintf("clone-%s", timestamp)
+	}
+
+	// Create snapshot with pull state
+	snapshot := &snapshotv1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: snapshotName,
+			Labels: map[string]string{
+				"kloudlite.io/owned-by":         username,
+				"snapshots.kloudlite.io/cloned": "true",
+			},
+		},
+		Spec: snapshotv1.SnapshotSpec{
+			OwnedBy:         username,
+			IncludeMetadata: true,
+			RegistryRef: &snapshotv1.SnapshotRegistryRef{
+				Repository: req.Repository,
+				Tag:        req.Tag,
+			},
+		},
+		Status: snapshotv1.SnapshotStatus{
+			State:   snapshotv1.SnapshotStatePulling,
+			Message: "Cloning snapshot from cloud...",
+		},
+	}
+
+	if err := h.snapshotRepo.Create(c.Request.Context(), snapshot); err != nil {
+		h.logger.Error("Failed to create snapshot for clone", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to create snapshot",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	h.logger.Info("Snapshot clone from cloud initiated",
+		zap.String("snapshot", snapshotName),
+		zap.String("repository", req.Repository),
+		zap.String("tag", req.Tag))
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":  "Snapshot clone from cloud initiated",
+		"snapshot": snapshot,
+	})
+}

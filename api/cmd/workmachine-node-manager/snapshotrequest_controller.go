@@ -9,6 +9,7 @@ import (
 	"time"
 
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
+	"github.com/kloudlite/kloudlite/api/pkg/oci"
 	zap2 "go.uber.org/zap"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,6 +85,7 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 
 	// Execute the operation
 	var opErr error
+	var pushResult *oci.PushResult
 	switch snapshotReq.Spec.Operation {
 	case snapshotv1.SnapshotOperationCreate:
 		opErr = r.createSnapshot(snapshotReq, logger)
@@ -91,6 +93,10 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 		opErr = r.deleteSnapshot(snapshotReq, logger)
 	case snapshotv1.SnapshotOperationRestore:
 		opErr = r.restoreSnapshot(snapshotReq, logger)
+	case snapshotv1.SnapshotOperationPush:
+		pushResult, opErr = r.pushSnapshot(snapshotReq, logger)
+	case snapshotv1.SnapshotOperationPull:
+		opErr = r.pullSnapshot(snapshotReq, logger)
 	default:
 		opErr = fmt.Errorf("unknown operation: %s", snapshotReq.Spec.Operation)
 	}
@@ -124,6 +130,13 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 		latest.Status.Message = fmt.Sprintf("%s operation completed successfully", snapshotReq.Spec.Operation)
 		latest.Status.FinishedAt = &now
 		latest.Status.SizeBytes = sizeBytes
+
+		// Add push-specific status
+		if pushResult != nil {
+			latest.Status.Digest = pushResult.Digest
+			latest.Status.LayerDigests = pushResult.LayerDigests
+			latest.Status.CompressedSize = pushResult.CompressedSize
+		}
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Completed", zap2.Error(err))
 		return reconcile.Result{}, err
@@ -297,6 +310,133 @@ func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequ
 	}
 
 	logger.Info("Btrfs snapshot restored successfully")
+	return nil
+}
+
+// pushSnapshot pushes a snapshot to the OCI registry
+func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (*oci.PushResult, error) {
+	if req.Spec.RegistryRef == nil {
+		return nil, fmt.Errorf("registryRef is required for push operation")
+	}
+
+	snapshotPath := req.Spec.SnapshotPath
+	parentSnapshotPath := req.Spec.ParentSnapshotPath
+
+	// Check if snapshot exists
+	checkScript := fmt.Sprintf("test -e %s", snapshotPath)
+	if _, err := r.CmdExec.Execute(checkScript); err != nil {
+		return nil, fmt.Errorf("snapshot path does not exist: %s", snapshotPath)
+	}
+
+	// Build metadata from the SnapshotRequest
+	// In a real implementation, we'd fetch the actual Snapshot resource
+	// For now, we use basic metadata from the request
+	metadata := &oci.SnapshotMetadata{
+		Name: req.Spec.SnapshotRef,
+		Spec: oci.SnapshotMetadataSpec{
+			OwnedBy: "", // Will be populated by the controller
+		},
+		Status: oci.SnapshotMetadataStatus{
+			WorkMachineName: "", // Will be populated by the controller
+		},
+	}
+
+	// If we have environment or workspace info, add it
+	if req.Spec.EnvironmentName != "" {
+		metadata.Spec.EnvironmentRef = &oci.EnvironmentReference{
+			Name: req.Spec.EnvironmentName,
+		}
+		metadata.Status.SnapshotType = "Environment"
+	}
+	if req.Spec.WorkspaceName != "" {
+		metadata.Spec.WorkspaceRef = &oci.WorkspaceReference{
+			Name: req.Spec.WorkspaceName,
+		}
+		metadata.Status.SnapshotType = "Workspace"
+	}
+
+	logger.Info("Pushing snapshot to registry",
+		zap2.String("snapshotPath", snapshotPath),
+		zap2.String("parentPath", parentSnapshotPath),
+		zap2.String("registry", req.Spec.RegistryRef.RegistryURL),
+		zap2.String("repository", req.Spec.RegistryRef.Repository),
+		zap2.String("tag", req.Spec.RegistryRef.Tag),
+	)
+
+	// Create OCI client and push
+	client := oci.NewClient(true) // Use insecure for internal registry
+	result, err := client.Push(oci.PushOptions{
+		RegistryURL:        req.Spec.RegistryRef.RegistryURL,
+		Repository:         req.Spec.RegistryRef.Repository,
+		Tag:                req.Spec.RegistryRef.Tag,
+		SnapshotPath:       snapshotPath,
+		ParentSnapshotPath: parentSnapshotPath,
+		Metadata:           metadata,
+		ParentLayers:       req.Spec.RegistryRef.ParentLayers,
+		Insecure:           true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to push snapshot: %w", err)
+	}
+
+	logger.Info("Snapshot pushed successfully",
+		zap2.String("imageRef", result.ImageRef),
+		zap2.String("digest", result.Digest),
+		zap2.Int("layerCount", len(result.LayerDigests)),
+		zap2.Int64("compressedSize", result.CompressedSize),
+	)
+
+	return result, nil
+}
+
+// pullSnapshot pulls a snapshot chain from the OCI registry
+func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) error {
+	if req.Spec.RegistryRef == nil {
+		return fmt.Errorf("registryRef is required for pull operation")
+	}
+
+	targetDir := req.Spec.SnapshotPath
+
+	// Ensure target directory exists
+	mkdirScript := fmt.Sprintf("mkdir -p %s", targetDir)
+	if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
+		return fmt.Errorf("failed to create target directory: %s - %w", string(output), err)
+	}
+
+	logger.Info("Pulling snapshot from registry",
+		zap2.String("registry", req.Spec.RegistryRef.RegistryURL),
+		zap2.String("repository", req.Spec.RegistryRef.Repository),
+		zap2.String("tag", req.Spec.RegistryRef.Tag),
+		zap2.String("targetDir", targetDir),
+	)
+
+	// Create OCI client and pull
+	client := oci.NewClient(true) // Use insecure for internal registry
+	result, err := client.Pull(oci.PullOptions{
+		RegistryURL: req.Spec.RegistryRef.RegistryURL,
+		Repository:  req.Spec.RegistryRef.Repository,
+		Tag:         req.Spec.RegistryRef.Tag,
+		TargetDir:   targetDir,
+		Insecure:    true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to pull snapshot: %w", err)
+	}
+
+	logger.Info("Snapshot chain pulled successfully",
+		zap2.Int("snapshotCount", len(result.Snapshots)),
+	)
+
+	// Log each pulled snapshot
+	for _, snap := range result.Snapshots {
+		path := result.SnapshotPaths[snap.Name]
+		logger.Info("Pulled snapshot",
+			zap2.String("name", snap.Name),
+			zap2.String("path", path),
+			zap2.String("type", snap.Status.SnapshotType),
+		)
+	}
+
 	return nil
 }
 
