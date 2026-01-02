@@ -24,21 +24,11 @@ interface SnapshotTimelineProps {
 
 interface TimelineNode {
   snapshot: Snapshot
-  column: number
-  parentColumn: number | null
-  parentIndex: number | null
   isCurrent: boolean
   isBranchPoint: boolean
   hasSiblings: boolean
+  hasParent: boolean
 }
-
-const BRANCH_COLORS = [
-  { bg: 'bg-blue-500', text: 'text-blue-500', border: 'border-blue-500' },
-  { bg: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500' },
-  { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500' },
-  { bg: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500' },
-  { bg: 'bg-pink-500', text: 'text-pink-500', border: 'border-pink-500' },
-]
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString)
@@ -100,8 +90,8 @@ function getStateBadge(state: Snapshot['status']['state']) {
   }
 }
 
-function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): { nodes: TimelineNode[], maxColumn: number } {
-  if (snapshots.length === 0) return { nodes: [], maxColumn: 0 }
+function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): TimelineNode[] {
+  if (snapshots.length === 0) return []
 
   const snapshotMap = new Map<string, Snapshot>()
   const childrenMap = new Map<string, string[]>()
@@ -128,160 +118,68 @@ function buildTimeline(snapshots: Snapshot[], currentSnapshotName?: string): { n
     ? currentSnapshotName
     : sortedByTime[0]?.metadata.name
 
-  const columnAssignments = new Map<string, number>()
-  let nextColumn = 0
-
-  const oldestFirst = [...sortedByTime].reverse()
-
-  oldestFirst.forEach(snapshot => {
-    const name = snapshot.metadata.name
-    const parentName = snapshot.spec.parentSnapshotRef?.name
-
-    if (!parentName || !snapshotMap.has(parentName)) {
-      columnAssignments.set(name, nextColumn++)
-    } else {
-      const siblings = childrenMap.get(parentName) || []
-      const parentColumn = columnAssignments.get(parentName) ?? 0
-
-      if (siblings.length === 1) {
-        columnAssignments.set(name, parentColumn)
-      } else {
-        const siblingIndex = siblings.indexOf(name)
-        if (siblingIndex === 0) {
-          columnAssignments.set(name, parentColumn)
-        } else {
-          columnAssignments.set(name, nextColumn++)
-        }
-      }
-    }
-  })
-
-  // Build nodes with parent index for line drawing
-  const nodes: TimelineNode[] = sortedByTime.map((snapshot) => {
+  return sortedByTime.map((snapshot) => {
     const name = snapshot.metadata.name
     const parentName = snapshot.spec.parentSnapshotRef?.name
     const children = childrenMap.get(name) || []
-    const parentColumn = parentName && snapshotMap.has(parentName)
-      ? columnAssignments.get(parentName) ?? null
-      : null
-
-    // Find parent index in sorted array
-    const parentIndex = parentName
-      ? sortedByTime.findIndex(s => s.metadata.name === parentName)
-      : null
-
     const siblings = parentName ? (childrenMap.get(parentName) || []) : []
+    const hasParent = parentName ? snapshotMap.has(parentName) : false
 
     return {
       snapshot,
-      column: columnAssignments.get(name) ?? 0,
-      parentColumn,
-      parentIndex: parentIndex !== -1 ? parentIndex : null,
       isCurrent: name === headSnapshotName,
       isBranchPoint: children.length > 1,
       hasSiblings: siblings.length > 1,
+      hasParent,
     }
   })
-
-  return { nodes, maxColumn: Math.max(0, nextColumn - 1) }
 }
 
 interface TimelineItemProps {
   node: TimelineNode
-  index: number
-  totalNodes: number
-  maxColumn: number
+  isFirst: boolean
+  isLast: boolean
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
   disabled?: boolean
 }
 
-function TimelineItem({ node, index, totalNodes, maxColumn, onRestore, onDelete, disabled }: TimelineItemProps) {
-  const { snapshot, column, parentColumn, parentIndex, isCurrent, isBranchPoint, hasSiblings } = node
-  const colors = BRANCH_COLORS[column % BRANCH_COLORS.length]
-  const isLast = index === totalNodes - 1
-  const colWidth = 28
-  const graphWidth = (maxColumn + 1) * colWidth + 16
-
-  // Determine if we need to draw lines
-  const hasVerticalLineDown = parentIndex !== null && parentColumn === column && parentIndex > index
-  const hasBranchLine = parentIndex !== null && parentColumn !== null && parentColumn !== column
+function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: TimelineItemProps) {
+  const { snapshot, isCurrent, isBranchPoint, hasSiblings } = node
 
   return (
-    <div className="relative flex">
-      {/* Graph column area */}
-      <div className="relative flex-shrink-0" style={{ width: graphWidth }}>
-        {/* Vertical line going down (same column parent) */}
-        {hasVerticalLineDown && (
-          <div
-            className={cn("absolute w-0.5", colors.bg)}
-            style={{
-              left: column * colWidth + colWidth / 2 + 8 - 1,
-              top: '50%',
-              bottom: 0,
-            }}
-          />
+    <div className="relative flex gap-4">
+      {/* Timeline track */}
+      <div className="relative flex flex-col items-center" style={{ width: 20 }}>
+        {/* Line above dot */}
+        {!isFirst && (
+          <div className="w-0.5 flex-1 bg-border" />
         )}
-
-        {/* Branch: vertical line on this column going down to parent's row */}
-        {hasBranchLine && parentColumn !== null && (
-          <>
-            {/* Vertical line down */}
-            <div
-              className={cn("absolute w-0.5", colors.bg)}
-              style={{
-                left: column * colWidth + colWidth / 2 + 8 - 1,
-                top: '50%',
-                bottom: 0,
-              }}
-            />
-          </>
-        )}
-
-        {/* Continue vertical line from above (if not first and same column as previous) */}
-        {index > 0 && (
-          <div
-            className={cn("absolute w-0.5", colors.bg)}
-            style={{
-              left: column * colWidth + colWidth / 2 + 8 - 1,
-              top: 0,
-              bottom: '50%',
-            }}
-          />
-        )}
-
-        {/* Horizontal connector for branches */}
-        {hasBranchLine && parentColumn !== null && isLast && (
-          <div
-            className={cn("absolute h-0.5", colors.bg)}
-            style={{
-              left: Math.min(column, parentColumn) * colWidth + colWidth / 2 + 8,
-              width: Math.abs(column - parentColumn) * colWidth,
-              top: '50%',
-              transform: 'translateY(-50%)',
-            }}
-          />
-        )}
+        {isFirst && <div className="flex-1" />}
 
         {/* Dot */}
         <div
           className={cn(
-            "absolute rounded-full border-2 border-white dark:border-gray-900",
-            colors.bg,
-            isCurrent ? "w-4 h-4 ring-4 ring-blue-200 dark:ring-blue-900" :
-            isBranchPoint ? "w-3.5 h-3.5 ring-2 ring-purple-200 dark:ring-purple-900" :
-            "w-2.5 h-2.5"
+            "relative z-10 rounded-full border-2 flex-shrink-0",
+            isCurrent
+              ? "w-4 h-4 bg-blue-500 border-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/50"
+              : isBranchPoint
+              ? "w-3 h-3 bg-purple-500 border-purple-500"
+              : hasSiblings
+              ? "w-3 h-3 bg-orange-500 border-orange-500"
+              : "w-2.5 h-2.5 bg-gray-400 border-gray-400 dark:bg-gray-500 dark:border-gray-500"
           )}
-          style={{
-            left: column * colWidth + colWidth / 2 + 8,
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
         />
+
+        {/* Line below dot */}
+        {!isLast && (
+          <div className="w-0.5 flex-1 bg-border" />
+        )}
+        {isLast && <div className="flex-1" />}
       </div>
 
       {/* Content */}
-      <div className="flex-1 py-2 min-w-0">
+      <div className="flex-1 pb-4 min-w-0">
         <div className={cn(
           "rounded-lg border p-4 transition-all",
           isCurrent
@@ -380,7 +278,7 @@ function TimelineItem({ node, index, totalNodes, maxColumn, onRestore, onDelete,
 }
 
 export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, currentSnapshotName }: SnapshotTimelineProps) {
-  const { nodes, maxColumn } = useMemo(() => buildTimeline(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
+  const nodes = useMemo(() => buildTimeline(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
 
   if (snapshots.length === 0) {
     return null
@@ -399,9 +297,8 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
           <TimelineItem
             key={node.snapshot.metadata.name}
             node={node}
-            index={idx}
-            totalNodes={nodes.length}
-            maxColumn={maxColumn}
+            isFirst={idx === 0}
+            isLast={idx === nodes.length - 1}
             onRestore={onRestore}
             onDelete={onDelete}
             disabled={disabled}
