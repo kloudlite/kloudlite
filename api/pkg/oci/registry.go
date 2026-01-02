@@ -70,8 +70,10 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 		return nil, fmt.Errorf("failed to append new layer: %w", err)
 	}
 
-	// Set config with our custom labels to identify snapshot images
-	img, err = mutate.ConfigFile(img, &v1.ConfigFile{
+	// Create config with our custom labels
+	configFile := &v1.ConfigFile{
+		Architecture: "amd64",
+		OS:           "linux",
 		Config: v1.Config{
 			Labels: map[string]string{
 				"io.kloudlite.snapshot":   "true",
@@ -79,7 +81,13 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 				"io.kloudlite.version":    "v1",
 			},
 		},
-	})
+		RootFS: v1.RootFS{
+			Type: "layers",
+		},
+	}
+
+	// Set the config file
+	img, err = mutate.ConfigFile(img, configFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set config: %w", err)
 	}
