@@ -184,38 +184,35 @@ function TimelineItem({ node, isFirst, isLast, onRestore, onDelete, disabled }: 
   const { snapshot, hasParent } = node
 
   return (
-    <div className="relative flex gap-3">
-      {/* Timeline track (left side) */}
-      <div className="relative flex flex-col items-center">
-        {/* Line above the dot */}
-        {!isFirst && (
-          <div className="w-0.5 flex-1 bg-border" style={{ minHeight: '12px' }} />
-        )}
-        {isFirst && <div className="flex-1" style={{ minHeight: '12px' }} />}
-
-        {/* Node dot */}
+    <div className="relative pl-8">
+      {/* Continuous vertical line */}
+      {!isLast && (
         <div
-          className={cn(
-            "h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center z-10",
-            hasParent
-              ? "bg-primary border-primary"
-              : "bg-background border-muted-foreground"
-          )}
-        >
-          {!hasParent && (
-            <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-          )}
-        </div>
+          className="absolute left-[7px] top-4 bottom-0 w-0.5 bg-border"
+        />
+      )}
+      {!isFirst && (
+        <div
+          className="absolute left-[7px] top-0 h-4 w-0.5 bg-border"
+        />
+      )}
 
-        {/* Line below the dot */}
-        {!isLast && (
-          <div className="w-0.5 flex-1 bg-border" style={{ minHeight: '12px' }} />
+      {/* Node dot - positioned absolutely on the line */}
+      <div
+        className={cn(
+          "absolute left-0 top-4 h-4 w-4 rounded-full border-2 flex items-center justify-center bg-background",
+          hasParent
+            ? "bg-primary border-primary"
+            : "border-muted-foreground"
         )}
-        {isLast && <div className="flex-1" style={{ minHeight: '12px' }} />}
+      >
+        {!hasParent && (
+          <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+        )}
       </div>
 
       {/* Snapshot card */}
-      <div className="flex-1 py-2">
+      <div className="pb-4">
         <div className="bg-card rounded-lg border p-4 hover:bg-muted/30 transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
