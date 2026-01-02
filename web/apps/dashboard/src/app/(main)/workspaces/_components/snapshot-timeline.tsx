@@ -175,9 +175,9 @@ function buildTimeline(snapshots: Snapshot[]): { nodes: TimelineNode[], maxColum
 
 // SVG-based graph for reliable line rendering
 function TimelineGraph({ nodes, maxColumn }: { nodes: TimelineNode[], maxColumn: number }) {
-  const rowHeight = 120
-  const colWidth = 24
-  const graphWidth = (maxColumn + 1) * colWidth
+  const rowHeight = 140 // Height of each card row
+  const colWidth = 28
+  const graphWidth = (maxColumn + 1) * colWidth + 8 // Extra padding
   const graphHeight = nodes.length * rowHeight
 
   const lines: ReactElement[] = []
@@ -186,8 +186,8 @@ function TimelineGraph({ nodes, maxColumn }: { nodes: TimelineNode[], maxColumn:
   nodes.forEach((node, index) => {
     const { column, parentColumn, isCurrent, isBranchPoint } = node
     const colors = BRANCH_COLORS[column % BRANCH_COLORS.length]
-    const cx = column * colWidth + colWidth / 2
-    const cy = index * rowHeight + rowHeight / 2
+    const cx = column * colWidth + colWidth / 2 + 4 // 4px left padding
+    const cy = index * rowHeight + 70 // Center of 140px row
 
     // Find parent index
     const parentIdx = parentColumn !== null
@@ -291,10 +291,10 @@ interface TimelineItemProps {
 
 function TimelineItem({ node, maxColumn, onRestore, onDelete, disabled }: TimelineItemProps) {
   const { snapshot, isCurrent, isBranchPoint, hasSiblings } = node
-  const graphWidth = (maxColumn + 1) * 24
+  const graphWidth = (maxColumn + 1) * 28 + 8 // Match SVG width calculation
 
   return (
-    <div className="flex" style={{ minHeight: 120 }}>
+    <div className="flex" style={{ minHeight: 140 }}>
       {/* Space for graph */}
       <div style={{ width: graphWidth, minWidth: graphWidth }} className="flex-shrink-0" />
 
