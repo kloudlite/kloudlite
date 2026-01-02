@@ -8,7 +8,6 @@ import {
   Loader2,
   RotateCcw,
   Trash2,
-  History,
 } from 'lucide-react'
 import { Button, Badge } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
@@ -51,47 +50,43 @@ function getShortHash(name: string): string {
 function getStateBadge(state: Snapshot['status']['state']) {
   switch (state) {
     case 'Ready':
-      // Don't show badge for Ready state
       return null
     case 'Creating':
       return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
-          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+        <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+          <Loader2 className="h-3 w-3 animate-spin" />
           Creating
-        </Badge>
+        </span>
       )
     case 'Restoring':
       return (
-        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
-          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+        <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+          <Loader2 className="h-3 w-3 animate-spin" />
           Restoring
-        </Badge>
+        </span>
       )
     case 'Deleting':
       return (
-        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800">
-          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+        <span className="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+          <Loader2 className="h-3 w-3 animate-spin" />
           Deleting
-        </Badge>
+        </span>
       )
     case 'Failed':
       return (
-        <Badge variant="destructive">
-          <AlertCircle className="h-3 w-3 mr-1" />
+        <span className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+          <AlertCircle className="h-3 w-3" />
           Failed
-        </Badge>
+        </span>
       )
     case 'Pending':
     default:
       return (
-        <Badge variant="secondary">
-          Pending
-        </Badge>
+        <span className="text-xs text-muted-foreground">Pending</span>
       )
   }
 }
 
-// Build tree structure from snapshots
 function buildTree(snapshots: Snapshot[], currentSnapshotName?: string): TreeNode[] {
   if (snapshots.length === 0) return []
 
@@ -108,13 +103,11 @@ function buildTree(snapshots: Snapshot[], currentSnapshotName?: string): TreeNod
     }
   })
 
-  // Find root nodes
   const rootSnapshots = snapshots.filter(s => {
     const parentName = s.spec.parentSnapshotRef?.name
     return !parentName || !snapshotMap.has(parentName)
   })
 
-  // Sort roots by creation time (newest first)
   rootSnapshots.sort((a, b) =>
     new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime() -
     new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
@@ -140,7 +133,7 @@ function buildTree(snapshots: Snapshot[], currentSnapshotName?: string): TreeNod
   return rootSnapshots.map(buildNode)
 }
 
-interface SnapshotCardProps {
+interface SnapshotItemProps {
   snapshot: Snapshot
   isCurrent: boolean
   onRestore: (snapshot: Snapshot) => void
@@ -148,31 +141,40 @@ interface SnapshotCardProps {
   disabled?: boolean
 }
 
-function SnapshotCard({ snapshot, isCurrent, onRestore, onDelete, disabled }: SnapshotCardProps) {
+function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled }: SnapshotItemProps) {
   const shortHash = getShortHash(snapshot.metadata.name)
 
   return (
     <div
       className={cn(
-        "group rounded-lg border p-3 transition-all",
+        "group py-2.5 px-3 rounded-md transition-colors",
         isCurrent
-          ? "bg-blue-50/50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900"
-          : "bg-card hover:bg-muted/30 hover:border-muted-foreground/20"
+          ? "bg-blue-50 dark:bg-blue-950/30"
+          : "hover:bg-muted/50"
       )}
     >
-      <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          {isCurrent && (
-            <Badge className="bg-blue-500 hover:bg-blue-500 text-white">
-              Current
-            </Badge>
-          )}
-          <code className="text-xs font-mono text-muted-foreground">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Hash */}
+          <code className={cn(
+            "text-sm font-mono",
+            isCurrent ? "text-blue-600 dark:text-blue-400 font-semibold" : "text-muted-foreground"
+          )}>
             {shortHash}
           </code>
+
+          {/* Current badge */}
+          {isCurrent && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+              HEAD
+            </Badge>
+          )}
+
+          {/* State badge */}
           {getStateBadge(snapshot.status.state)}
         </div>
 
+        {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {snapshot.status.state === 'Ready' && !isCurrent && (
             <Button
@@ -180,7 +182,7 @@ function SnapshotCard({ snapshot, isCurrent, onRestore, onDelete, disabled }: Sn
               size="sm"
               onClick={() => onRestore(snapshot)}
               disabled={disabled}
-              className="h-7 px-2 text-xs"
+              className="h-6 px-2 text-xs"
             >
               <RotateCcw className="h-3 w-3 mr-1" />
               Restore
@@ -191,21 +193,23 @@ function SnapshotCard({ snapshot, isCurrent, onRestore, onDelete, disabled }: Sn
               variant="ghost"
               size="sm"
               onClick={() => onDelete(snapshot)}
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 w-3" />
             </Button>
           )}
         </div>
       </div>
 
+      {/* Description */}
       {snapshot.spec.description && (
-        <p className="text-sm text-foreground mb-1.5 line-clamp-2">
+        <p className="text-sm text-foreground mt-1 ml-0">
           {snapshot.spec.description}
         </p>
       )}
 
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      {/* Meta */}
+      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
@@ -218,8 +222,9 @@ function SnapshotCard({ snapshot, isCurrent, onRestore, onDelete, disabled }: Sn
         )}
       </div>
 
+      {/* Error */}
       {snapshot.status.state === 'Failed' && snapshot.status.message && (
-        <p className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded px-2 py-1.5">
+        <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
           {snapshot.status.message}
         </p>
       )}
@@ -234,31 +239,51 @@ interface TreeNodeRendererProps {
   disabled?: boolean
   depth: number
   isLast: boolean
+  parentHasMore: boolean[]
 }
 
-function TreeNodeRenderer({ node, onRestore, onDelete, disabled, depth, isLast }: TreeNodeRendererProps) {
+function TreeNodeRenderer({ node, onRestore, onDelete, disabled, depth, isLast, parentHasMore }: TreeNodeRendererProps) {
   const hasChildren = node.children.length > 0
 
   return (
     <div className="relative">
-      {/* The snapshot card with connector */}
-      <div className="flex items-stretch">
-        {/* Left connector area */}
+      <div className="flex">
+        {/* Tree lines */}
         {depth > 0 && (
-          <div className="w-6 flex-shrink-0 relative">
-            {/* Vertical line from above */}
-            <div className={cn(
-              "absolute left-2 w-px bg-border",
-              isLast ? "top-0 h-5" : "top-0 bottom-0"
-            )} />
-            {/* Horizontal connector */}
-            <div className="absolute left-2 top-5 w-4 h-px bg-border" />
+          <div className="flex-shrink-0 relative" style={{ width: depth * 20 }}>
+            {/* Vertical lines for ancestors */}
+            {parentHasMore.map((hasMore, idx) => (
+              hasMore && (
+                <div
+                  key={idx}
+                  className="absolute top-0 bottom-0 w-0.5 bg-gray-300 dark:bg-gray-600"
+                  style={{ left: idx * 20 + 8 }}
+                />
+              )
+            ))}
+            {/* Elbow connector */}
+            <div
+              className="absolute w-0.5 bg-gray-300 dark:bg-gray-600"
+              style={{
+                left: (depth - 1) * 20 + 8,
+                top: 0,
+                height: isLast ? 20 : '100%',
+              }}
+            />
+            <div
+              className="absolute h-0.5 bg-gray-300 dark:bg-gray-600"
+              style={{
+                left: (depth - 1) * 20 + 8,
+                top: 20,
+                width: 12,
+              }}
+            />
           </div>
         )}
 
-        {/* Card */}
-        <div className="flex-1 pb-2">
-          <SnapshotCard
+        {/* Snapshot item */}
+        <div className="flex-1 min-w-0">
+          <SnapshotItem
             snapshot={node.snapshot}
             isCurrent={node.isCurrent}
             onRestore={onRestore}
@@ -270,12 +295,7 @@ function TreeNodeRenderer({ node, onRestore, onDelete, disabled, depth, isLast }
 
       {/* Children */}
       {hasChildren && (
-        <div className={cn("relative", depth > 0 ? "ml-6" : "ml-0")}>
-          {/* Vertical line connecting children */}
-          {depth === 0 && (
-            <div className="absolute left-2 top-0 bottom-2 w-px bg-border" />
-          )}
-
+        <div className="relative">
           {node.children.map((child, idx) => (
             <TreeNodeRenderer
               key={child.snapshot.metadata.name}
@@ -285,6 +305,7 @@ function TreeNodeRenderer({ node, onRestore, onDelete, disabled, depth, isLast }
               disabled={disabled}
               depth={depth + 1}
               isLast={idx === node.children.length - 1}
+              parentHasMore={[...parentHasMore, !isLast]}
             />
           ))}
         </div>
@@ -302,13 +323,14 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
-        <History className="h-4 w-4 text-muted-foreground" />
-        <h4 className="text-sm font-medium">History</h4>
-        <span className="text-xs text-muted-foreground">({snapshots.length})</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Snapshots
+        </span>
+        <span className="text-xs text-muted-foreground">{snapshots.length}</span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0">
         {trees.map((tree, idx) => (
           <TreeNodeRenderer
             key={tree.snapshot.metadata.name}
@@ -318,6 +340,7 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, disabled, cur
             disabled={disabled}
             depth={0}
             isLast={idx === trees.length - 1}
+            parentHasMore={[]}
           />
         ))}
       </div>
