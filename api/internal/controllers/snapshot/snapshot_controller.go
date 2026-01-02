@@ -770,6 +770,23 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
+	// Delete any existing restore requests from previous restore attempts
+	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
+	if err := r.List(ctx, existingRestoreReqs, client.MatchingLabels{
+		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+		"snapshots.kloudlite.io/operation": "restore",
+	}); err == nil {
+		for _, req := range existingRestoreReqs.Items {
+			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseCompleted ||
+				req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
+				logger.Info("Deleting old restore request", zap.String("request", req.Name))
+				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
+					logger.Warn("Failed to delete old restore request", zap.Error(err))
+				}
+			}
+		}
+	}
+
 	// Create restore SnapshotRequests for each PVC snapshot
 	for _, pvcInfo := range snapshot.Status.PVCSnapshots {
 		// Target path is the original PV location (stored in SourcePath)
@@ -881,6 +898,23 @@ func (r *SnapshotReconciler) handleWorkspaceRestoring(ctx context.Context, snaps
 	wmNamespace := snapshot.Status.WorkMachineName
 	workspaceSnapshotPath := filepath.Join(snapshot.Status.SnapshotPath, "home")
 	targetPath := filepath.Join(workspaceHomePath, wsRef.Name)
+
+	// Delete any existing restore requests from previous restore attempts
+	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
+	if err := r.List(ctx, existingRestoreReqs, client.MatchingLabels{
+		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+		"snapshots.kloudlite.io/operation": "restore",
+	}); err == nil {
+		for _, req := range existingRestoreReqs.Items {
+			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseCompleted ||
+				req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
+				logger.Info("Deleting old restore request", zap.String("request", req.Name))
+				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
+					logger.Warn("Failed to delete old restore request", zap.Error(err))
+				}
+			}
+		}
+	}
 
 	// Create restore SnapshotRequest
 	restoreReq := &snapshotv1.SnapshotRequest{
