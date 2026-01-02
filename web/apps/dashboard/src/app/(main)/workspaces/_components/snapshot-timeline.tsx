@@ -147,10 +147,10 @@ function SnapshotItem({ snapshot, isCurrent, onRestore, onDelete, disabled }: Sn
   return (
     <div
       className={cn(
-        "group py-2.5 px-3 rounded-md transition-colors",
+        "group py-2.5 px-3 rounded-lg border transition-colors",
         isCurrent
-          ? "bg-blue-50 dark:bg-blue-950/30"
-          : "hover:bg-muted/50"
+          ? "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+          : "border-border hover:bg-muted/50 hover:border-muted-foreground/30"
       )}
     >
       <div className="flex items-center justify-between gap-3">
@@ -282,7 +282,7 @@ function TreeNodeRenderer({ node, onRestore, onDelete, disabled, depth, isLast, 
         )}
 
         {/* Snapshot item */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 mb-2">
           <SnapshotItem
             snapshot={node.snapshot}
             isCurrent={node.isCurrent}
