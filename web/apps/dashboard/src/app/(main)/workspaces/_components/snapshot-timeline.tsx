@@ -219,11 +219,12 @@ function TimelineItem({
   for (let i = index; i < totalNodes; i++) {
     activeColumns.add(allNodes[i].column)
     // Also add parent columns for nodes that branch
-    if (allNodes[i].parentColumn !== null && allNodes[i].parentColumn !== allNodes[i].column) {
+    const nodeParentCol = allNodes[i].parentColumn
+    if (nodeParentCol !== null && nodeParentCol !== allNodes[i].column) {
       // Find if parent is below current index
       const parentIdx = allNodes.findIndex(n => n.snapshot.metadata.name === allNodes[i].snapshot.spec.parentSnapshotRef?.name)
       if (parentIdx > index) {
-        activeColumns.add(allNodes[i].parentColumn)
+        activeColumns.add(nodeParentCol)
       }
     }
   }
