@@ -35,6 +35,7 @@ import {
   createEnvironmentSnapshot,
   restoreSnapshot,
   deleteSnapshot,
+  syncSnapshotToCloud,
 } from '@/app/actions/snapshot.actions'
 import { getEnvironment } from '@/app/actions/environment.actions'
 import { toast } from 'sonner'
@@ -91,7 +92,12 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
     if (!open) return undefined
 
     const hasInProgress = snapshots.some(
-      (s) => s.status.state === 'Creating' || s.status.state === 'Restoring' || s.status.state === 'Deleting'
+      (s) =>
+        s.status.state === 'Creating' ||
+        s.status.state === 'Restoring' ||
+        s.status.state === 'Deleting' ||
+        s.status.state === 'Pushing' ||
+        s.status.state === 'Pulling'
     )
 
     if (hasInProgress) {
@@ -147,6 +153,17 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
   const handleDeleteClick = (snapshot: Snapshot) => {
     setSelectedSnapshot(snapshot)
     setDeleteDialogOpen(true)
+  }
+
+  const handleSync = async (snapshot: Snapshot) => {
+    const result = await syncSnapshotToCloud(snapshot.metadata.name)
+
+    if (result.success) {
+      toast.success('Syncing snapshot to cloud')
+      loadSnapshots()
+    } else {
+      toast.error(result.error || 'Failed to sync snapshot')
+    }
   }
 
   const handleDeleteConfirm = async () => {
@@ -229,6 +246,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
                   snapshots={snapshots}
                   onRestore={handleRestoreClick}
                   onDelete={handleDeleteClick}
+                  onSync={handleSync}
                   disabled={!isActive}
                   currentSnapshotName={currentSnapshotName}
                 />

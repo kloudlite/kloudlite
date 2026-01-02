@@ -104,6 +104,24 @@ spec:
                 required:
                 - name
                 type: object
+              registryRef:
+                description: RegistryRef configures where to push this snapshot in
+                  the registry
+                properties:
+                  autoPush:
+                    description: AutoPush automatically pushes to registry when snapshot
+                      is ready
+                    type: boolean
+                  repository:
+                    description: Repository is the registry repository path (e.g.,
+                      "snapshots/username")
+                    type: string
+                  tag:
+                    description: Tag is the image tag (defaults to snapshot name)
+                    type: string
+                required:
+                - repository
+                type: object
               retentionPolicy:
                 description: RetentionPolicy defines when this snapshot should be
                   deleted
@@ -183,6 +201,37 @@ spec:
                   - snapshotPath
                   type: object
                 type: array
+              registryStatus:
+                description: RegistryStatus tracks the snapshot's registry push status
+                properties:
+                  compressedSize:
+                    description: CompressedSize is the total compressed size in bytes
+                    format: int64
+                    type: integer
+                  digest:
+                    description: Digest is the image manifest digest (sha256:...)
+                    type: string
+                  imageRef:
+                    description: ImageRef is the full image reference (registry/repo:tag)
+                    type: string
+                  layerCount:
+                    description: LayerCount is the number of layers in the image
+                    format: int32
+                    type: integer
+                  layerDigests:
+                    description: LayerDigests are the digests of all layers in order
+                    items:
+                      type: string
+                    type: array
+                  pushed:
+                    description: Pushed indicates if the snapshot has been pushed
+                      to registry
+                    type: boolean
+                  pushedAt:
+                    description: PushedAt is when the snapshot was pushed
+                    format: date-time
+                    type: string
+                type: object
               resourceMetadata:
                 description: ResourceMetadata tracks captured K8s resources (for environment
                   snapshots)

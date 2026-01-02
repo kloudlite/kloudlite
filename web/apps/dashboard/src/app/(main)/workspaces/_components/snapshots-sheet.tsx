@@ -36,6 +36,7 @@ import {
   createSnapshot,
   restoreSnapshot,
   deleteSnapshot,
+  syncSnapshotToCloud,
 } from '@/app/actions/snapshot.actions'
 import { toast } from 'sonner'
 import { SnapshotTimeline } from './snapshot-timeline'
@@ -79,7 +80,12 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
     if (!open) return undefined
 
     const hasInProgress = snapshots.some(
-      (s) => s.status.state === 'Creating' || s.status.state === 'Restoring' || s.status.state === 'Deleting'
+      (s) =>
+        s.status.state === 'Creating' ||
+        s.status.state === 'Restoring' ||
+        s.status.state === 'Deleting' ||
+        s.status.state === 'Pushing' ||
+        s.status.state === 'Pulling'
     )
 
     if (hasInProgress) {
@@ -136,6 +142,17 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
   const handleDeleteClick = (snapshot: Snapshot) => {
     setSelectedSnapshot(snapshot)
     setDeleteDialogOpen(true)
+  }
+
+  const handleSync = async (snapshot: Snapshot) => {
+    const result = await syncSnapshotToCloud(snapshot.metadata.name)
+
+    if (result.success) {
+      toast.success('Syncing snapshot to cloud')
+      loadSnapshots()
+    } else {
+      toast.error(result.error || 'Failed to sync snapshot')
+    }
   }
 
   const handleDeleteConfirm = async () => {
@@ -218,6 +235,7 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
                   snapshots={snapshots}
                   onRestore={handleRestoreClick}
                   onDelete={handleDeleteClick}
+                  onSync={handleSync}
                   disabled={!workMachineRunning}
                   currentSnapshotName={workspace.status?.lastRestoredSnapshot?.name}
                 />

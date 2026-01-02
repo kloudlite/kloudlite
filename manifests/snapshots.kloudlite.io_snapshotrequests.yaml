@@ -61,12 +61,43 @@ spec:
                 - create
                 - delete
                 - restore
+                - push
+                - pull
+                type: string
+              parentSnapshotPath:
+                description: ParentSnapshotPath is the path to the parent snapshot
+                  (for incremental push)
                 type: string
               readOnly:
                 default: true
                 description: ReadOnly indicates whether to create a read-only snapshot
                   (recommended)
                 type: boolean
+              registryRef:
+                description: RegistryRef contains registry configuration for push/pull
+                  operations
+                properties:
+                  parentLayers:
+                    description: |-
+                      ParentLayers are the layer digests from parent snapshot(s) to include
+                      These layers are referenced but not re-uploaded during push
+                    items:
+                      type: string
+                    type: array
+                  registryURL:
+                    description: RegistryURL is the registry base URL (e.g., "image-registry:5000")
+                    type: string
+                  repository:
+                    description: Repository is the image repository path (e.g., "snapshots/username")
+                    type: string
+                  tag:
+                    description: Tag is the image tag
+                    type: string
+                required:
+                - registryURL
+                - repository
+                - tag
+                type: object
               snapshotPath:
                 description: SnapshotPath is where to create the snapshot or the snapshot
                   to delete/restore from
@@ -90,10 +121,24 @@ spec:
           status:
             description: SnapshotRequestStatus defines the observed state of SnapshotRequest
             properties:
+              compressedSize:
+                description: CompressedSize is the total compressed size in bytes
+                  (for push operations)
+                format: int64
+                type: integer
+              digest:
+                description: Digest is the OCI image manifest digest (for push operations)
+                type: string
               finishedAt:
                 description: FinishedAt is when the operation finished
                 format: date-time
                 type: string
+              layerDigests:
+                description: LayerDigests are the digests of all layers pushed (for
+                  push operations)
+                items:
+                  type: string
+                type: array
               message:
                 description: Message provides human-readable status information
                 type: string

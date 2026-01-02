@@ -133,3 +133,39 @@ export async function deleteSnapshot(snapshotName: string) {
     }
   }
 }
+
+/**
+ * Server action to sync a snapshot to the cloud
+ */
+export async function syncSnapshotToCloud(snapshotName: string) {
+  try {
+    const result = await snapshotService.syncToCloud(snapshotName)
+    revalidatePath('/workspaces')
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Sync snapshot to cloud error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to clone a snapshot from the cloud
+ */
+export async function cloneSnapshotFromCloud(imageRef: string) {
+  try {
+    const result = await snapshotService.cloneFromCloud(imageRef)
+    revalidatePath('/workspaces')
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Clone snapshot from cloud error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
