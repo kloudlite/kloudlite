@@ -14,6 +14,10 @@ export interface Snapshot {
     environmentRef?: {
       name: string
     }
+    parentSnapshotRef?: {
+      name: string
+      restoredAt?: string
+    }
     description?: string
     ownedBy: string
     includeMetadata: boolean
