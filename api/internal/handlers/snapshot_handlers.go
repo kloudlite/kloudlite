@@ -418,11 +418,12 @@ type CreateWorkspaceSnapshotRequest struct {
 	KeepForDays     *int32 `json:"keepForDays,omitempty"`
 }
 
-// CreateWorkspaceSnapshot handles POST /api/v1/workspaces/:name/snapshots
+// CreateWorkspaceSnapshot handles POST /api/v1/namespaces/:namespace/workspaces/:name/snapshots
 func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
+	namespace := c.Param("namespace")
 	workspaceName := c.Param("name")
-	if workspaceName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace name is required"})
+	if namespace == "" || workspaceName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Namespace and workspace name are required"})
 		return
 	}
 
@@ -439,8 +440,8 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Determine workmachine namespace
-	wmNamespace := fmt.Sprintf("wm-%s", username)
+	// Use namespace from route parameter
+	wmNamespace := namespace
 
 	// Verify workspace exists and user has access
 	workspace, err := h.workspaceRepo.Get(c.Request.Context(), workspaceName, wmNamespace)
@@ -554,11 +555,12 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 	})
 }
 
-// ListWorkspaceSnapshots handles GET /api/v1/workspaces/:name/snapshots
+// ListWorkspaceSnapshots handles GET /api/v1/namespaces/:namespace/workspaces/:name/snapshots
 func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
+	namespace := c.Param("namespace")
 	workspaceName := c.Param("name")
-	if workspaceName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace name is required"})
+	if namespace == "" || workspaceName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Namespace and workspace name are required"})
 		return
 	}
 
@@ -569,8 +571,8 @@ func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
 		return
 	}
 
-	// Determine workmachine namespace
-	wmNamespace := fmt.Sprintf("wm-%s", username)
+	// Use namespace from route parameter
+	wmNamespace := namespace
 
 	// Verify workspace exists and user has access
 	workspace, err := h.workspaceRepo.Get(c.Request.Context(), workspaceName, wmNamespace)
