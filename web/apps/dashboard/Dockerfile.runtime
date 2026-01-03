@@ -13,11 +13,13 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --chown=nextjs:nodejs .next/standalone ./
 COPY --chown=nextjs:nodejs .next/static ./apps/dashboard/.next/static
 COPY --chown=nextjs:nodejs public ./apps/dashboard/public
-# Copy custom server with WebSocket proxy support
-COPY --chown=nextjs:nodejs server.js ./apps/dashboard/server.js
+
+# Copy proxy server and startup script
+COPY --chown=nextjs:nodejs proxy-server.js ./apps/dashboard/proxy-server.js
+COPY --chown=nextjs:nodejs start.sh ./apps/dashboard/start.sh
+RUN chmod +x ./apps/dashboard/start.sh
 
 # Install ws package for WebSocket proxy
-# Create temp dir to avoid workspace resolution issues
 RUN mkdir -p /tmp/ws-install && \
     cd /tmp/ws-install && \
     bun add ws && \
@@ -36,4 +38,4 @@ ENV PORT=3000 \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD bun -e "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["bun", "apps/dashboard/server.js"]
+CMD ["/app/apps/dashboard/start.sh"]
