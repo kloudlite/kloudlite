@@ -46,7 +46,15 @@ const server = http.createServer((req, res) => {
   }
 
   const proxyReq = http.request(options, (proxyRes) => {
-    res.writeHead(proxyRes.statusCode, proxyRes.headers)
+    // Filter hop-by-hop headers from response too
+    const responseHeaders = {}
+    for (const [key, value] of Object.entries(proxyRes.headers)) {
+      // Skip transfer-encoding as it will be set automatically when piping
+      if (key.toLowerCase() !== 'transfer-encoding') {
+        responseHeaders[key] = value
+      }
+    }
+    res.writeHead(proxyRes.statusCode, responseHeaders)
     proxyRes.pipe(res)
   })
 
