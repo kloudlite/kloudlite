@@ -259,8 +259,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				// Admin routes for all machines
 				workMachines.GET("", workMachineHandlers.ListAllWorkMachines)
 				workMachines.GET("/:name", workMachineHandlers.GetWorkMachine)
-				workMachines.GET("/:name/metrics", workMachineHandlers.GetWorkMachineMetrics)       // SSE streaming
-				workMachines.GET("/:name/metrics-ws", workMachineHandlers.GetWorkMachineMetricsWebSocket) // WebSocket streaming
+				workMachines.GET("/:name/metrics-ws", workMachineHandlers.GetWorkMachineMetricsWebSocket)
 			}
 
 			// Workspace routes (namespaced)
@@ -315,8 +314,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			services := protected.Group("/namespaces/:namespace/services")
 			{
 				services.GET("", serviceHandlers.ListServices)
-				services.GET("/:name/logs", serviceHandlers.GetServiceLogs)       // SSE streaming
-				services.GET("/:name/logs-ws", serviceHandlers.GetServiceLogsWebSocket) // WebSocket streaming
+				services.GET("/:name/logs-ws", serviceHandlers.GetServiceLogsWebSocket)
 			}
 
 			// OAuth Provider routes (protected - for admin management)
