@@ -43,6 +43,12 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 		tag = snapshot.Name
 	}
 
+	// Remove the tag from any other snapshot that has it (tags are unique per repository)
+	targetImageRef := fmt.Sprintf("image-registry:5000/%s:%s", repository, tag)
+	if err := r.removeTagFromOtherSnapshots(ctx, snapshot.Name, targetImageRef, logger); err != nil {
+		logger.Warn("Failed to remove tag from other snapshots", zap.Error(err))
+	}
+
 	// Get parent snapshot's registry layers if parent exists and was pushed
 	var parentLayers []string
 	var parentSnapshotPath string
@@ -261,4 +267,41 @@ func (r *SnapshotReconciler) handlePulling(ctx context.Context, snapshot *snapsh
 	}
 
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+}
+
+// removeTagFromOtherSnapshots removes the tag from any other snapshot that has it
+// This ensures tags are unique - when pushing with a tag, it's removed from other snapshots
+func (r *SnapshotReconciler) removeTagFromOtherSnapshots(ctx context.Context, currentSnapshotName string, imageRef string, logger *zap.Logger) error {
+	// List all snapshots
+	allSnapshots := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, allSnapshots); err != nil {
+		return fmt.Errorf("failed to list snapshots: %w", err)
+	}
+
+	for _, s := range allSnapshots.Items {
+		// Skip the current snapshot being pushed
+		if s.Name == currentSnapshotName {
+			continue
+		}
+
+		// Check if this snapshot has the same imageRef
+		if s.Status.RegistryStatus != nil && s.Status.RegistryStatus.ImageRef == imageRef {
+			logger.Info("Removing tag from snapshot that previously had it",
+				zap.String("snapshot", s.Name),
+				zap.String("imageRef", imageRef))
+
+			// Clear the registry status for this snapshot since the tag now points elsewhere
+			snapshotCopy := s.DeepCopy()
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshotCopy, func() error {
+				snapshotCopy.Status.RegistryStatus = nil
+				return nil
+			}, logger); err != nil {
+				logger.Warn("Failed to clear registry status from snapshot",
+					zap.String("snapshot", s.Name),
+					zap.Error(err))
+			}
+		}
+	}
+
+	return nil
 }
