@@ -233,24 +233,6 @@ type SnapshotStatus struct {
 	// RegistryStatus tracks the snapshot's registry push status
 	// +optional
 	RegistryStatus *SnapshotRegistryStatus `json:"registryStatus,omitempty"`
-
-	// CloudSync provides user-friendly cloud sync status (computed from RegistryStatus)
-	// +optional
-	CloudSync *SnapshotCloudSync `json:"cloudSync,omitempty"`
-}
-
-// SnapshotCloudSync provides user-friendly cloud sync status
-type SnapshotCloudSync struct {
-	// Synced indicates if the snapshot has been synced to cloud
-	Synced bool `json:"synced"`
-
-	// SyncedAt is when the snapshot was synced
-	// +optional
-	SyncedAt *metav1.Time `json:"syncedAt,omitempty"`
-
-	// CompressedSize is the total compressed size in bytes
-	// +optional
-	CompressedSize int64 `json:"compressedSize,omitempty"`
 }
 
 // PVCSnapshotInfo contains info about a snapshotted PVC

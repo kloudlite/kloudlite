@@ -135,15 +135,16 @@ export async function deleteSnapshot(snapshotName: string) {
 }
 
 /**
- * Server action to sync a snapshot to the cloud
+ * Server action to push a snapshot to the registry
  */
-export async function syncSnapshotToCloud(snapshotName: string) {
+export async function pushSnapshot(snapshotName: string, tag: string) {
   try {
-    const result = await snapshotService.syncToCloud(snapshotName)
+    const result = await snapshotService.push(snapshotName, tag)
     revalidatePath('/workspaces')
+    revalidatePath('/environments')
     return { success: true, data: result }
   } catch (err) {
-    console.error('Sync snapshot to cloud error:', err)
+    console.error('Push snapshot error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
@@ -153,15 +154,20 @@ export async function syncSnapshotToCloud(snapshotName: string) {
 }
 
 /**
- * Server action to clone a snapshot from the cloud
+ * Server action to pull a snapshot from the registry
  */
-export async function cloneSnapshotFromCloud(imageRef: string) {
+export async function pullSnapshot(
+  repository: string,
+  tag: string,
+  name?: string,
+) {
   try {
-    const result = await snapshotService.cloneFromCloud(imageRef)
+    const result = await snapshotService.pull(repository, tag, name)
     revalidatePath('/workspaces')
+    revalidatePath('/environments')
     return { success: true, data: result }
   } catch (err) {
-    console.error('Clone snapshot from cloud error:', err)
+    console.error('Pull snapshot error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,

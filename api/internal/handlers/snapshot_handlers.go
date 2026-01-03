@@ -648,12 +648,11 @@ func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
 
 // PushSnapshotRequest is the request body for pushing a snapshot to registry
 type PushSnapshotRequest struct {
-	Repository string `json:"repository,omitempty"` // Defaults to snapshots/{username}
-	Tag        string `json:"tag,omitempty"`        // Defaults to snapshot name
+	Repository string `json:"repository,omitempty"` // Optional: defaults to snapshots/{username}/ws/{ws} or /env/{env}
+	Tag        string `json:"tag"`                  // Required: tag for the snapshot image
 }
 
-// PushSnapshot handles POST /api/v1/snapshots/:name/sync
-// Note: We use "sync" instead of "push" in the API to hide the registry implementation
+// PushSnapshot handles POST /api/v1/snapshots/:name/push
 func (h *SnapshotHandlers) PushSnapshot(c *gin.Context) {
 	snapshotName := c.Param("name")
 	if snapshotName == "" {
@@ -663,8 +662,14 @@ func (h *SnapshotHandlers) PushSnapshot(c *gin.Context) {
 
 	var req PushSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		// Allow empty body - use defaults
-		req = PushSnapshotRequest{}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Tag is required - snapshots are immutable
+	if req.Tag == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tag is required for push"})
+		return
 	}
 
 	// Get authenticated user
@@ -683,39 +688,34 @@ func (h *SnapshotHandlers) PushSnapshot(c *gin.Context) {
 
 	// Check ownership
 	if snapshot.Spec.OwnedBy != username {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to sync this snapshot"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to push this snapshot"})
 		return
 	}
 
 	// Verify snapshot is ready
 	if snapshot.Status.State != snapshotv1.SnapshotStateReady {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Snapshot is not ready for sync",
+			"error":   "Snapshot is not ready for push",
 			"state":   snapshot.Status.State,
 			"message": snapshot.Status.Message,
 		})
 		return
 	}
 
-	// Check if already synced
+	// Check if already pushed - snapshots are immutable
 	if snapshot.Status.RegistryStatus != nil && snapshot.Status.RegistryStatus.Pushed {
-		c.JSON(http.StatusOK, gin.H{
-			"message":  "Snapshot already synced to cloud",
+		c.JSON(http.StatusConflict, gin.H{
+			"error":    "Snapshot already pushed",
 			"snapshot": snapshotName,
-			"synced":   true,
+			"imageRef": snapshot.Status.RegistryStatus.ImageRef,
 		})
 		return
 	}
 
-	// Set up registry reference with defaults
+	// Set up registry reference - repository defaults based on snapshot type
 	repository := req.Repository
-	if repository == "" {
-		repository = fmt.Sprintf("snapshots/%s", username)
-	}
-	tag := req.Tag
-	if tag == "" {
-		tag = snapshotName
-	}
+	// Note: if empty, controller will set based on snapshot type (ws/env)
+	tag := req.Tag // Already validated as required
 
 	// Update snapshot spec to set registry reference
 	snapshot.Spec.RegistryRef = &snapshotv1.SnapshotRegistryRef{
@@ -724,46 +724,47 @@ func (h *SnapshotHandlers) PushSnapshot(c *gin.Context) {
 	}
 
 	if err := h.k8sClient.Update(c.Request.Context(), snapshot); err != nil {
-		h.logger.Error("Failed to update snapshot spec for sync", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate sync"})
+		h.logger.Error("Failed to update snapshot spec for push", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate push"})
 		return
 	}
 
 	// Re-fetch snapshot to get updated resourceVersion before status update
 	if err := h.k8sClient.Get(c.Request.Context(), client.ObjectKeyFromObject(snapshot), snapshot); err != nil {
 		h.logger.Error("Failed to re-fetch snapshot after spec update", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate sync"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate push"})
 		return
 	}
 
 	// Now update status to trigger the push
 	snapshot.Status.State = snapshotv1.SnapshotStatePushing
-	snapshot.Status.Message = "Syncing snapshot to cloud..."
+	snapshot.Status.Message = "Pushing snapshot to registry..."
 
 	if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
-		h.logger.Error("Failed to update snapshot status for sync", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate sync"})
+		h.logger.Error("Failed to update snapshot status for push", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate push"})
 		return
 	}
 
-	h.logger.Info("Snapshot sync to cloud initiated",
-		zap.String("snapshot", snapshotName))
+	h.logger.Info("Snapshot push initiated",
+		zap.String("snapshot", snapshotName),
+		zap.String("tag", tag))
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":  "Snapshot sync to cloud initiated",
+		"message":  "Snapshot push initiated",
 		"snapshot": snapshotName,
+		"tag":      tag,
 	})
 }
 
-// PullSnapshotRequest is the request body for pulling/cloning a snapshot from registry
+// PullSnapshotRequest is the request body for pulling a snapshot from registry
 type PullSnapshotRequest struct {
 	Repository string `json:"repository"` // Required: repository path
 	Tag        string `json:"tag"`        // Required: image tag
 	Name       string `json:"name"`       // Optional: name for the new snapshot
 }
 
-// PullSnapshot handles POST /api/v1/snapshots/clone
-// Note: We use "clone" instead of "pull" in the API to hide the registry implementation
+// PullSnapshot handles POST /api/v1/snapshots/pull
 func (h *SnapshotHandlers) PullSnapshot(c *gin.Context) {
 	var req PullSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

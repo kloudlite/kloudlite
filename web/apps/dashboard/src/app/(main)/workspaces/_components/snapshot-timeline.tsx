@@ -19,7 +19,7 @@ interface SnapshotTimelineProps {
   snapshots: Snapshot[]
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
-  onSync?: (snapshot: Snapshot) => void
+  onPush?: (snapshot: Snapshot) => void
   disabled?: boolean
   currentSnapshotName?: string
 }
@@ -66,14 +66,14 @@ function getStateBadge(state: Snapshot['status']['state']) {
       return (
         <span className="inline-flex items-center gap-1 text-xs text-cyan-600 dark:text-cyan-400">
           <Loader2 className="h-3 w-3 animate-spin" />
-          Syncing
+          Pushing
         </span>
       )
     case 'Pulling':
       return (
         <span className="inline-flex items-center gap-1 text-xs text-cyan-600 dark:text-cyan-400">
           <Loader2 className="h-3 w-3 animate-spin" />
-          Cloning
+          Pulling
         </span>
       )
     case 'Deleting':
@@ -233,17 +233,17 @@ interface SnapshotRowProps {
   totalLanes: number
   onRestore: (snapshot: Snapshot) => void
   onDelete: (snapshot: Snapshot) => void
-  onSync?: (snapshot: Snapshot) => void
+  onPush?: (snapshot: Snapshot) => void
   disabled?: boolean
   isFirst: boolean
   isLast: boolean
 }
 
-function SnapshotRow({ row, totalLanes, onRestore, onDelete, onSync, disabled, isFirst, isLast }: SnapshotRowProps) {
+function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, isFirst, isLast }: SnapshotRowProps) {
   const { item, activeLanes, branchFrom } = row
   const { snapshot, isCurrent } = item
   const shortHash = getShortHash(snapshot.metadata.name)
-  const isSynced = snapshot.status.cloudSync?.synced
+  const isPushed = snapshot.status.registryStatus?.pushed
 
   const graphWidth = Math.max(totalLanes, 1) * LANE_WIDTH + 8
   const dotX = item.lane * LANE_WIDTH + LANE_WIDTH / 2
@@ -330,8 +330,8 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onSync, disabled, i
             </Badge>
           )}
 
-          {isSynced && (
-            <span title="Synced to cloud">
+          {isPushed && (
+            <span title="Pushed to registry">
               <Cloud className="h-3.5 w-3.5 text-cyan-500" />
             </span>
           )}
@@ -361,17 +361,17 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onSync, disabled, i
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {snapshot.status.state === 'Ready' && !isSynced && onSync && (
+            {snapshot.status.state === 'Ready' && !isPushed && onPush && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onSync(snapshot)}
+                onClick={() => onPush(snapshot)}
                 disabled={disabled}
                 className="h-6 px-2 text-xs"
-                title="Sync to cloud"
+                title="Push to registry"
               >
                 <CloudUpload className="h-3 w-3 mr-1" />
-                Sync
+                Push
               </Button>
             )}
             {snapshot.status.state === 'Ready' && !isCurrent && (
@@ -403,7 +403,7 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onSync, disabled, i
   )
 }
 
-export function SnapshotTimeline({ snapshots, onRestore, onDelete, onSync, disabled, currentSnapshotName }: SnapshotTimelineProps) {
+export function SnapshotTimeline({ snapshots, onRestore, onDelete, onPush, disabled, currentSnapshotName }: SnapshotTimelineProps) {
   const rows = useMemo(() => buildGraph(snapshots, currentSnapshotName), [snapshots, currentSnapshotName])
 
   const totalLanes = useMemo(() => {
@@ -432,7 +432,7 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, onSync, disab
             totalLanes={totalLanes}
             onRestore={onRestore}
             onDelete={onDelete}
-            onSync={onSync}
+            onPush={onPush}
             disabled={disabled}
             isFirst={idx === 0}
             isLast={idx === rows.length - 1}

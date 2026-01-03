@@ -44,10 +44,14 @@ export interface Snapshot {
     createdAt?: string
     snapshotPath?: string
     workMachineName?: string
-    // Cloud sync status (abstracted from registry)
-    cloudSync?: {
-      synced: boolean
-      syncedAt?: string
+    // Registry status for pushed snapshots
+    registryStatus?: {
+      pushed: boolean
+      pushedAt?: string
+      imageRef?: string
+      digest?: string
+      layerDigests?: string[]
+      layerCount?: number
       compressedSize?: number
     }
   }
@@ -74,16 +78,24 @@ export interface RestoreSnapshotResponse {
   snapshot: Snapshot
 }
 
-export interface SyncToCloudResponse {
+export interface PushSnapshotRequest {
+  tag: string
+  repository?: string
+}
+
+export interface PushSnapshotResponse {
   message: string
-  snapshot: Snapshot
+  snapshot: string
+  tag: string
 }
 
-export interface CloneFromCloudRequest {
-  imageRef: string
+export interface PullSnapshotRequest {
+  repository: string
+  tag: string
+  name?: string
 }
 
-export interface CloneFromCloudResponse {
+export interface PullSnapshotResponse {
   message: string
   snapshot: Snapshot
 }
@@ -150,19 +162,40 @@ export class SnapshotService {
     return apiClient.delete<void>(`${this.baseUrl}/snapshots/${snapshotName}`)
   }
 
-  // Sync a snapshot to the cloud
-  async syncToCloud(snapshotName: string): Promise<SyncToCloudResponse> {
-    return apiClient.post<SyncToCloudResponse>(
-      `${this.baseUrl}/snapshots/${snapshotName}/sync`,
+  // Push a snapshot to the registry
+  async push(
+    snapshotName: string,
+    tag: string,
+    repository?: string,
+  ): Promise<PushSnapshotResponse> {
+    return apiClient.post<PushSnapshotResponse>(
+      `${this.baseUrl}/snapshots/${snapshotName}/push`,
+      { tag, repository },
     )
   }
 
-  // Clone a snapshot from the cloud
-  async cloneFromCloud(imageRef: string): Promise<CloneFromCloudResponse> {
-    return apiClient.post<CloneFromCloudResponse>(
-      `${this.baseUrl}/snapshots/clone`,
-      { imageRef },
+  // Pull a snapshot from the registry
+  async pull(
+    repository: string,
+    tag: string,
+    name?: string,
+  ): Promise<PullSnapshotResponse> {
+    return apiClient.post<PullSnapshotResponse>(
+      `${this.baseUrl}/snapshots/pull`,
+      { repository, tag, name },
     )
+  }
+
+  // Get existing tags for a snapshot repository
+  async getTags(repository: string): Promise<string[]> {
+    try {
+      const response = await apiClient.get<{ name: string; tags: string[] }>(
+        `${this.baseUrl}/registry/repositories/${encodeURIComponent(repository)}/tags`,
+      )
+      return response.tags || []
+    } catch {
+      return []
+    }
   }
 }
 
