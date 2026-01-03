@@ -89,8 +89,14 @@ func (h *RegistryCatalogHandlers) ListRepositories(c *gin.Context) {
 	}
 
 	// Filter out repositories with no tags (deleted repos remain in catalog until GC)
+	// Also filter out snapshot repositories (snapshots/*) - these are internal
 	var repos []RepositoryInfo
 	for _, name := range catalogResp.Repositories {
+		// Skip snapshot repositories - they are internal and should not be shown as artifacts
+		if strings.HasPrefix(name, "snapshots/") {
+			continue
+		}
+
 		// Check if repository has any tags
 		hasTags, err := h.repositoryHasTags(c.Request.Context(), name)
 		if err != nil {
@@ -149,6 +155,12 @@ func (h *RegistryCatalogHandlers) ListTags(c *gin.Context) {
 	// Remove leading slash if present (from wildcard capture)
 	repo = strings.TrimPrefix(repo, "/")
 
+	// Block access to snapshot repositories - they are internal
+	if strings.HasPrefix(repo, "snapshots/") {
+		c.JSON(http.StatusNotFound, gin.H{"error": "repository not found"})
+		return
+	}
+
 	// Call registry tags/list endpoint (no auth needed)
 	url := fmt.Sprintf("%s/v2/%s/tags/list", h.registryURL, repo)
 
@@ -195,6 +207,12 @@ func (h *RegistryCatalogHandlers) DeleteTag(c *gin.Context) {
 	repo := c.Query("repo")
 	if repo == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "repository name is required (use ?repo=name)"})
+		return
+	}
+
+	// Block access to snapshot repositories - they are internal
+	if strings.HasPrefix(repo, "snapshots/") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "snapshot repositories cannot be modified through this API"})
 		return
 	}
 
@@ -295,6 +313,12 @@ func (h *RegistryCatalogHandlers) DeleteRepository(c *gin.Context) {
 	repo := c.Query("repo")
 	if repo == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "repository name is required (use ?repo=name)"})
+		return
+	}
+
+	// Block access to snapshot repositories - they are internal
+	if strings.HasPrefix(repo, "snapshots/") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "snapshot repositories cannot be modified through this API"})
 		return
 	}
 

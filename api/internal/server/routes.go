@@ -345,9 +345,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				snapshots.GET("", snapshotHandlers.ListAllSnapshots)
 				snapshots.GET("/:name", snapshotHandlers.GetSnapshot)
 				snapshots.POST("/:name/restore", snapshotHandlers.RestoreSnapshot)
-				snapshots.POST("/:name/sync", snapshotHandlers.PushSnapshot) // Sync to cloud (push to registry)
+				snapshots.POST("/:name/push", snapshotHandlers.PushSnapshot) // Push snapshot to registry
 				snapshots.DELETE("/:name", snapshotHandlers.DeleteSnapshot)
-				snapshots.POST("/clone", snapshotHandlers.PullSnapshot) // Clone from cloud (pull from registry)
+				snapshots.POST("/pull", snapshotHandlers.PullSnapshot) // Pull snapshot from registry
 			}
 		}
 

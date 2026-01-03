@@ -36,8 +36,17 @@ import {
   createSnapshot,
   restoreSnapshot,
   deleteSnapshot,
-  syncSnapshotToCloud,
+  pushSnapshot,
 } from '@/app/actions/snapshot.actions'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@kloudlite/ui'
+import { Label } from '@kloudlite/ui'
 import { toast } from 'sonner'
 import { SnapshotTimeline } from './snapshot-timeline'
 
@@ -57,9 +66,12 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
   // Confirmation dialogs
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [pushDialogOpen, setPushDialogOpen] = useState(false)
   const [selectedSnapshot, setSelectedSnapshot] = useState<Snapshot | null>(null)
   const [isRestoring, setIsRestoring] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isPushing, setIsPushing] = useState(false)
+  const [pushTag, setPushTag] = useState('')
 
   const loadSnapshots = useCallback(async () => {
     const result = await listSnapshots(workspace.metadata.name, workspace.metadata.namespace)
@@ -144,15 +156,31 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
     setDeleteDialogOpen(true)
   }
 
-  const handleSync = async (snapshot: Snapshot) => {
-    const result = await syncSnapshotToCloud(snapshot.metadata.name)
+  const handlePushClick = (snapshot: Snapshot) => {
+    setSelectedSnapshot(snapshot)
+    // Suggest a default tag based on snapshot name or date
+    const shortHash = snapshot.metadata.name.split('-').slice(-1)[0]
+    setPushTag(`v${shortHash}`)
+    setPushDialogOpen(true)
+  }
+
+  const handlePushConfirm = async () => {
+    if (!selectedSnapshot || !pushTag.trim()) return
+
+    setIsPushing(true)
+
+    const result = await pushSnapshot(selectedSnapshot.metadata.name, pushTag.trim())
 
     if (result.success) {
-      toast.success('Syncing snapshot to cloud')
+      toast.success('Pushing snapshot to registry')
+      setPushDialogOpen(false)
+      setPushTag('')
       loadSnapshots()
     } else {
-      toast.error(result.error || 'Failed to sync snapshot')
+      toast.error(result.error || 'Failed to push snapshot')
     }
+
+    setIsPushing(false)
   }
 
   const handleDeleteConfirm = async () => {
@@ -235,7 +263,7 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
                   snapshots={snapshots}
                   onRestore={handleRestoreClick}
                   onDelete={handleDeleteClick}
-                  onSync={handleSync}
+                  onPush={handlePushClick}
                   disabled={!workMachineRunning}
                   currentSnapshotName={workspace.status?.lastRestoredSnapshot?.name}
                 />
@@ -306,6 +334,49 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Push Dialog with Tag Input */}
+      <Dialog open={pushDialogOpen} onOpenChange={setPushDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Push Snapshot</DialogTitle>
+            <DialogDescription>
+              Push this snapshot to the registry. Provide a tag to identify this version.
+              Once pushed, the snapshot cannot be pushed again (snapshots are immutable).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="push-tag">Tag</Label>
+              <Input
+                id="push-tag"
+                placeholder="e.g., v1.0, latest, stable"
+                value={pushTag}
+                onChange={(e) => setPushTag(e.target.value)}
+                disabled={isPushing}
+              />
+              <p className="text-xs text-muted-foreground">
+                Tags help you identify and pull specific versions of your snapshot.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPushDialogOpen(false)} disabled={isPushing}>
+              Cancel
+            </Button>
+            <Button onClick={handlePushConfirm} disabled={isPushing || !pushTag.trim()}>
+              {isPushing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Pushing...
+                </>
+              ) : (
+                'Push'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

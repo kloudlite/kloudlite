@@ -26,7 +26,17 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 	// Determine the repository and tag
 	repository := snapshot.Spec.RegistryRef.Repository
 	if repository == "" {
-		repository = fmt.Sprintf("snapshots/%s", snapshot.Spec.OwnedBy)
+		// Build repository path based on snapshot type:
+		// - Workspace snapshots: snapshots/{user}/ws/{workspace_name}
+		// - Environment snapshots: snapshots/{user}/env/{environment_name}
+		if snapshot.Status.SnapshotType == snapshotv1.SnapshotTypeWorkspace {
+			repository = fmt.Sprintf("snapshots/%s/ws/%s", snapshot.Spec.OwnedBy, snapshot.Status.WorkspaceName)
+		} else if snapshot.Spec.EnvironmentRef != nil {
+			repository = fmt.Sprintf("snapshots/%s/env/%s", snapshot.Spec.OwnedBy, snapshot.Spec.EnvironmentRef.Name)
+		} else {
+			// Fallback to old format if type cannot be determined
+			repository = fmt.Sprintf("snapshots/%s", snapshot.Spec.OwnedBy)
+		}
 	}
 	tag := snapshot.Spec.RegistryRef.Tag
 	if tag == "" {
@@ -62,7 +72,7 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 				now := metav1.Now()
 				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 					snapshot.Status.State = snapshotv1.SnapshotStateReady
-					snapshot.Status.Message = "Snapshot synced to cloud successfully"
+					snapshot.Status.Message = "Snapshot pushed successfully"
 					snapshot.Status.RegistryStatus = &snapshotv1.SnapshotRegistryStatus{
 						Pushed:         true,
 						PushedAt:       &now,
@@ -70,12 +80,6 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 						Digest:         req.Status.Digest,
 						LayerDigests:   req.Status.LayerDigests,
 						LayerCount:     int32(len(req.Status.LayerDigests)),
-						CompressedSize: req.Status.CompressedSize,
-					}
-					// Set user-friendly CloudSync status
-					snapshot.Status.CloudSync = &snapshotv1.SnapshotCloudSync{
-						Synced:         true,
-						SyncedAt:       &now,
 						CompressedSize: req.Status.CompressedSize,
 					}
 					return nil
@@ -175,18 +179,13 @@ func (r *SnapshotReconciler) handlePulling(ctx context.Context, snapshot *snapsh
 				now := metav1.Now()
 				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 					snapshot.Status.State = snapshotv1.SnapshotStateReady
-					snapshot.Status.Message = "Snapshot cloned from cloud successfully"
+					snapshot.Status.Message = "Snapshot pulled successfully"
 					snapshot.Status.CreatedAt = &now
 					snapshot.Status.RegistryStatus = &snapshotv1.SnapshotRegistryStatus{
 						Pushed:   true,
 						PushedAt: &now,
 						ImageRef: fmt.Sprintf("image-registry:5000/%s:%s", repository, tag),
 						Digest:   req.Status.Digest,
-					}
-					// Set user-friendly CloudSync status
-					snapshot.Status.CloudSync = &snapshotv1.SnapshotCloudSync{
-						Synced:   true,
-						SyncedAt: &now,
 					}
 					return nil
 				}, logger); err != nil {
