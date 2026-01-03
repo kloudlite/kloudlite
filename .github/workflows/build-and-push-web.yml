@@ -210,9 +210,6 @@ jobs:
           # Base URL
           NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
 
-          # API URL (for WebSocket connections)
-          NEXT_PUBLIC_API_URL=${{ secrets.DASHBOARD_API_URL || 'https://api.kloudlite.io' }}
-
           # OAuth Configuration (GitHub)
           NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }}
           AUTH_GITHUB_ID=${{ secrets.GITHUB_CLIENT_ID }}

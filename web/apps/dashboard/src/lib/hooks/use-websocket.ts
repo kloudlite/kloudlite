@@ -1,27 +1,30 @@
 'use client'
 
 import { useEffect, useRef, useCallback, useState } from 'react'
+import { env } from '@/lib/env'
 
 // Reconnection constants
 const MAX_RECONNECT_ATTEMPTS = 10
 const BASE_RECONNECT_DELAY = 1000
 const MAX_RECONNECT_DELAY = 30000
 
-// Convert relative path to WebSocket URL using current origin
+// Convert HTTP URL to WebSocket URL
 function toWebSocketUrl(path: string): string {
-  // If path is already a full WebSocket URL, use it directly
+  // If path is already a full URL, use it directly
   if (path.startsWith('ws://') || path.startsWith('wss://')) {
     return path
   }
 
-  // Use current browser origin and convert to WebSocket protocol
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.host
+  // Get the API URL and convert to WebSocket URL
+  const apiUrl = env.apiUrl
+
+  // Convert http(s) to ws(s)
+  const wsBaseUrl = apiUrl.replace(/^http/, 'ws')
 
   // Ensure path starts with /
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
 
-  return `${protocol}//${host}${normalizedPath}`
+  return `${wsBaseUrl}${normalizedPath}`
 }
 
 export interface UseWebSocketOptions<T> {

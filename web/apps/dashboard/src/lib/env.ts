@@ -9,10 +9,12 @@ function validateEnv() {
     typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build'
 
   // Console uses API_URL to connect to the Kloudlite API server for workspace management
-  // Note: This is optional - if not set, the app will use relative URLs which work
-  // when properly proxied through ingress or Next.js rewrites
   if (process.env.NODE_ENV === 'production' && !isBuildTime && !apiUrl) {
-    console.warn('NEXT_PUBLIC_API_URL not set, using relative URLs')
+    throw new Error(
+      'CRITICAL: NEXT_PUBLIC_API_URL environment variable is not set. ' +
+        'Console requires this to connect to the API server. ' +
+        'Please set NEXT_PUBLIC_API_URL in your environment variables.',
+    )
   }
 
   // In development or build time, warn but allow localhost fallback
