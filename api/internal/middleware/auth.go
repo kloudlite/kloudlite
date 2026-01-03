@@ -20,9 +20,26 @@ func JWTMiddleware(authService services.AuthService, logger *zap.Logger, skipAut
 			return
 		}
 
-		// Extract token from Authorization header
+		// Extract token from Authorization header or query param (for WebSocket)
+		var tokenString string
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+
+		if authHeader != "" {
+			// Check for Bearer token format
+			const bearerPrefix = "Bearer "
+			if !strings.HasPrefix(authHeader, bearerPrefix) {
+				logger.Warn("Invalid Authorization header format")
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
+				c.Abort()
+				return
+			}
+			tokenString = authHeader[len(bearerPrefix):]
+		} else {
+			// For WebSocket connections, check query param
+			tokenString = c.Query("token")
+		}
+
+		if tokenString == "" {
 			// Log only safe, non-sensitive headers for debugging
 			safeHeaders := make(map[string]string)
 			sensitiveHeaderKeys := []string{"authorization", "cookie", "set-cookie", "x-api-key", "x-auth-token"}
@@ -47,23 +64,6 @@ func JWTMiddleware(authService services.AuthService, logger *zap.Logger, skipAut
 				zap.Any("safe_headers", safeHeaders),
 			)
 			SendErrorResponse(c, http.StatusUnauthorized, "Authorization header required")
-			c.Abort()
-			return
-		}
-
-		// Check for Bearer token format
-		const bearerPrefix = "Bearer "
-		if !strings.HasPrefix(authHeader, bearerPrefix) {
-			logger.Warn("Invalid Authorization header format")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
-			c.Abort()
-			return
-		}
-
-		tokenString := authHeader[len(bearerPrefix):]
-		if tokenString == "" {
-			logger.Warn("Empty JWT token")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Empty token"})
 			c.Abort()
 			return
 		}
