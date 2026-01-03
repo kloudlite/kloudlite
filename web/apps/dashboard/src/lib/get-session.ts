@@ -15,10 +15,11 @@ export async function getSession(): Promise<Session | null> {
   }
 
   // Check for superadmin JWT token
+  // NextAuth v5 uses 'authjs' prefix by default
   const cookieStore = await cookies()
   const cookieName = process.env.NODE_ENV === 'production'
-    ? '__Secure-next-auth.session-token'
-    : 'next-auth.session-token'
+    ? '__Secure-authjs.session-token'
+    : 'authjs.session-token'
 
   const token = cookieStore.get(cookieName)?.value
 
