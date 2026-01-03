@@ -4,21 +4,13 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Terminal, X, Loader2, Download, Trash2, Pause, Play } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
-import { useWebSocket } from '@/lib/hooks/use-websocket'
+import { useSSE } from '@/lib/hooks/use-sse'
 
 interface ServiceLogsViewerProps {
   serviceName: string
   namespace: string
   isOpen: boolean
   onClose: () => void
-}
-
-interface LogMessage {
-  type: string
-  data?: string
-  pod?: string
-  container?: string
-  error?: string
 }
 
 export function ServiceLogsViewer({
@@ -38,9 +30,10 @@ export function ServiceLogsViewer({
     }
   }, [isPaused])
 
+  // Use SSE endpoint (works through Next.js proxy)
   const url = useMemo(() => {
     if (!isOpen) return null
-    return `/api/v1/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(serviceName)}/logs-ws?tailLines=200`
+    return `/api/v1/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(serviceName)}/logs?follow=true&tailLines=200`
   }, [isOpen, namespace, serviceName])
 
   const handleLog = useCallback(
@@ -55,18 +48,9 @@ export function ServiceLogsViewer({
     [isPaused, scrollToBottom]
   )
 
-  const eventHandlers = useMemo(
-    () => ({
-      log: (msg: LogMessage) => {
-        if (msg.data) handleLog(msg.data)
-      },
-    }),
-    [handleLog]
-  )
-
-  const { isConnected, error } = useWebSocket<LogMessage>(url, {
+  const { isConnected, error } = useSSE(url, {
     enabled: isOpen,
-    eventHandlers,
+    onMessage: handleLog,
   })
 
   // Handle pause/resume
