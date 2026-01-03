@@ -57,8 +57,23 @@ export function ServiceLogsViewer({
 
   const eventHandlers = useMemo(
     () => ({
-      log: (msg: LogMessage) => {
-        if (msg.data) handleLog(msg.data)
+      // The WebSocket hook extracts the data field from {type: "log", data: "..."} messages
+      // So we receive the data string directly, not the full LogMessage object
+      log: (data: string | LogMessage) => {
+        if (typeof data === 'string') {
+          handleLog(data)
+        } else if (data?.data) {
+          handleLog(data.data)
+        }
+      },
+      // Handle connected event from backend
+      connected: () => {
+        // Connection confirmed, logs will start streaming
+      },
+      // Handle error event from backend
+      error: (data: string | { error?: string }) => {
+        const errorMsg = typeof data === 'string' ? data : data?.error || 'Unknown error'
+        console.error('Log stream error:', errorMsg)
       },
     }),
     [handleLog]
