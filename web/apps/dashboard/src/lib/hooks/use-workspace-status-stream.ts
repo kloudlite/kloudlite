@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useRef, useCallback, useMemo } from 'react'
-import { useSSE } from './use-sse'
+import { useWebSocket } from './use-websocket'
 
 interface WorkspaceStatusEvent {
+  type?: string
   phase: string
   message: string
   status: string
@@ -41,7 +42,8 @@ export function useWorkspaceStatusStream(
 
   const url = useMemo(() => {
     if (!namespace || !workspaceName) return null
-    return `/api/v1/namespaces/${encodeURIComponent(namespace)}/workspaces/${encodeURIComponent(workspaceName)}/status-stream`
+    // Use WebSocket endpoint
+    return `/api/v1/namespaces/${encodeURIComponent(namespace)}/workspaces/${encodeURIComponent(workspaceName)}/status-ws`
   }, [namespace, workspaceName])
 
   const handleStatus = useCallback((data: WorkspaceStatusEvent) => {
@@ -76,7 +78,7 @@ export function useWorkspaceStatusStream(
     onReadyCalledRef.current = false
   }, [])
 
-  const { isConnected, error, reconnect } = useSSE<WorkspaceStatusEvent>(url, {
+  const { isConnected, error, reconnect } = useWebSocket<WorkspaceStatusEvent>(url, {
     enabled,
     eventHandlers,
     onOpen: handleOpen,
