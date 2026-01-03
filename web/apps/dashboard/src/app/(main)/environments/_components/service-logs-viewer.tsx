@@ -232,9 +232,9 @@ function LogEntryRow({ entry, searchTerm }: { entry: LogEntry; searchTerm: strin
           {entry.level === 'unknown' ? '---' : entry.level}
         </span>
 
-        {/* Raw log line */}
+        {/* Message (extracted for JSON, raw for plain text) */}
         <span className={cn('flex-1 break-all', entry.level === 'error' ? 'text-red-400' : entry.level === 'warn' ? 'text-yellow-400' : 'text-zinc-300')}>
-          {highlightText(entry.raw)}
+          {highlightText(entry.message)}
         </span>
       </div>
 
