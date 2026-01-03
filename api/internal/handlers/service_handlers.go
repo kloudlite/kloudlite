@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -288,5 +289,156 @@ func (h *ServiceHandlers) GetServiceLogs(c *gin.Context) {
 		h.logger.Debug("Log stream ended",
 			zap.String("pod", targetPod.Name),
 			zap.Error(err))
+	}
+}
+
+// GetServiceLogsWebSocket handles WebSocket connections for service logs streaming
+// This endpoint provides real-time logs via WebSocket (better Cloudflare support than SSE)
+func (h *ServiceHandlers) GetServiceLogsWebSocket(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	namespace := c.Param("namespace")
+	serviceName := c.Param("name")
+
+	if namespace == "" || serviceName == "" {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error: "Namespace and service name are required",
+		})
+		return
+	}
+
+	// Parse query parameters
+	tailLines := int64(200)
+	if t := c.Query("tailLines"); t != "" {
+		if parsed, err := strconv.ParseInt(t, 10, 64); err == nil && parsed > 0 {
+			tailLines = parsed
+		}
+	}
+	container := c.Query("container")
+
+	// Find the deployment for this service
+	deployment := &appsv1.Deployment{}
+	if err := h.k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      serviceName,
+	}, deployment); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, dto.ErrorResponse{
+				Error: fmt.Sprintf("Service deployment '%s' not found in namespace '%s'", serviceName, namespace),
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "Failed to get service deployment",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	// Find pods for this deployment
+	podList := &corev1.PodList{}
+	if err := h.k8sClient.List(ctx, podList,
+		client.InNamespace(namespace),
+		client.MatchingLabels(deployment.Spec.Selector.MatchLabels),
+	); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "Failed to list pods",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	if len(podList.Items) == 0 {
+		c.JSON(http.StatusNotFound, dto.ErrorResponse{
+			Error: fmt.Sprintf("No pods found for service '%s'", serviceName),
+		})
+		return
+	}
+
+	// Use the first running pod, or fallback to first pod
+	var targetPod *corev1.Pod
+	for i := range podList.Items {
+		pod := &podList.Items[i]
+		if pod.Status.Phase == corev1.PodRunning {
+			targetPod = pod
+			break
+		}
+	}
+	if targetPod == nil {
+		targetPod = &podList.Items[0]
+	}
+
+	// Determine container name
+	if container == "" && len(targetPod.Spec.Containers) > 0 {
+		container = targetPod.Spec.Containers[0].Name
+	}
+
+	// Upgrade to WebSocket
+	conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		h.logger.Error("Failed to upgrade to WebSocket", zap.Error(err))
+		return
+	}
+	defer conn.Close()
+
+	// Create a context that cancels when connection closes
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Handle incoming messages (for close detection)
+	go func() {
+		for {
+			_, _, err := conn.ReadMessage()
+			if err != nil {
+				cancel()
+				return
+			}
+		}
+	}()
+
+	// Build log options - always follow for WebSocket
+	logOptions := &corev1.PodLogOptions{
+		Container:  container,
+		Follow:     true,
+		TailLines:  &tailLines,
+		Timestamps: false,
+	}
+
+	// Get log stream from Kubernetes
+	req := h.clientset.CoreV1().Pods(namespace).GetLogs(targetPod.Name, logOptions)
+	stream, err := req.Stream(ctx)
+	if err != nil {
+		conn.WriteJSON(map[string]interface{}{
+			"type":  "error",
+			"error": "Failed to get logs stream",
+		})
+		return
+	}
+	defer stream.Close()
+
+	// Send initial connection info
+	conn.WriteJSON(map[string]interface{}{
+		"type":      "connected",
+		"pod":       targetPod.Name,
+		"container": container,
+	})
+
+	// Stream logs line by line as WebSocket messages
+	scanner := bufio.NewScanner(stream)
+	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+
+	for scanner.Scan() {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			line := scanner.Text()
+			if err := conn.WriteJSON(map[string]interface{}{
+				"type": "log",
+				"data": line,
+			}); err != nil {
+				return
+			}
+		}
 	}
 }

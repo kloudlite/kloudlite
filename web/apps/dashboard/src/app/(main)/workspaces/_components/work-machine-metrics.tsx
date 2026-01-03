@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { Cpu, MemoryStick, Zap } from 'lucide-react'
-import { useSSE } from '@/lib/hooks/use-sse'
+import { useWebSocket } from '@/lib/hooks/use-websocket'
 
 interface NodeMetrics {
   cpu: {
@@ -60,7 +60,7 @@ export function WorkMachineMetrics({
 
   const url = useMemo(() => {
     if (machineState === 'stopped' || !workMachineName) return null
-    return `/api/v1/work-machines/${workMachineName}/metrics-stream`
+    return `/api/v1/work-machines/${workMachineName}/metrics-ws`
   }, [workMachineName, machineState])
 
   const handleMetrics = useCallback((data: MetricsEvent) => {
@@ -79,7 +79,7 @@ export function WorkMachineMetrics({
     [handleMetrics]
   )
 
-  const { error } = useSSE<MetricsEvent>(url, {
+  const { error } = useWebSocket<MetricsEvent>(url, {
     enabled: machineState !== 'stopped' && !!workMachineName,
     eventHandlers,
   })
