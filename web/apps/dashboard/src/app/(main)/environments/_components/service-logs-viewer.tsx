@@ -92,6 +92,12 @@ function extractLevel(parsed: Record<string, unknown>): LogLevel {
 
 // Extract message from parsed JSON
 function extractMessage(parsed: Record<string, unknown>, raw: string): string {
+  // For MongoDB logs, check for nested message in attr.message.msg first
+  const nestedMsg = getNestedValue(parsed, 'attr.message.msg')
+  if (nestedMsg && typeof nestedMsg === 'string') {
+    return nestedMsg
+  }
+
   // Common message field names
   const messageFields = ['message', 'msg', 'text', 'log', 'error', 'err']
 
@@ -100,11 +106,6 @@ function extractMessage(parsed: Record<string, unknown>, raw: string): string {
     if (value && typeof value === 'string') {
       return value
     }
-  }
-
-  // For MongoDB logs, extract the msg from attr
-  if (parsed.msg && typeof parsed.msg === 'string') {
-    return parsed.msg
   }
 
   // Fallback to raw
