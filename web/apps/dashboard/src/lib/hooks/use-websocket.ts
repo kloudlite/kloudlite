@@ -1,11 +1,31 @@
 'use client'
 
 import { useEffect, useRef, useCallback, useState } from 'react'
+import { env } from '@/lib/env'
 
 // Reconnection constants
 const MAX_RECONNECT_ATTEMPTS = 10
 const BASE_RECONNECT_DELAY = 1000
 const MAX_RECONNECT_DELAY = 30000
+
+// Convert HTTP URL to WebSocket URL
+function toWebSocketUrl(path: string): string {
+  // If path is already a full URL, use it directly
+  if (path.startsWith('ws://') || path.startsWith('wss://')) {
+    return path
+  }
+
+  // Get the API URL and convert to WebSocket URL
+  const apiUrl = env.apiUrl
+
+  // Convert http(s) to ws(s)
+  const wsBaseUrl = apiUrl.replace(/^http/, 'ws')
+
+  // Ensure path starts with /
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  return `${wsBaseUrl}${normalizedPath}`
+}
 
 export interface UseWebSocketOptions<T> {
   /** Whether the WebSocket connection is enabled */
@@ -98,8 +118,8 @@ export function useWebSocket<T = unknown>(
       tokenRef.current = await getAuthToken()
     }
 
-    // Build WebSocket URL with auth token
-    let wsUrl = url.replace(/^http/, 'ws')
+    // Build WebSocket URL - use direct connection to API server
+    let wsUrl = toWebSocketUrl(url)
     if (tokenRef.current) {
       const separator = wsUrl.includes('?') ? '&' : '?'
       wsUrl = `${wsUrl}${separator}token=${encodeURIComponent(tokenRef.current)}`
