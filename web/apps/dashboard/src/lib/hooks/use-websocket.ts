@@ -26,6 +26,18 @@ export interface UseWebSocketResult {
   reconnect: () => void
 }
 
+// Fetch auth token for WebSocket connections
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const response = await fetch('/api/auth/token')
+    if (!response.ok) return null
+    const data = await response.json()
+    return data.token
+  } catch {
+    return null
+  }
+}
+
 export function useWebSocket<T = unknown>(
   url: string | null | undefined,
   options: UseWebSocketOptions<T> = {}
@@ -45,6 +57,7 @@ export function useWebSocket<T = unknown>(
   const reconnectAttemptsRef = useRef(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isCleaningUpRef = useRef(false)
+  const tokenRef = useRef<string | null>(null)
 
   // Store callbacks in refs to avoid recreating connect function
   const onMessageRef = useRef(onMessage)
@@ -72,7 +85,7 @@ export function useWebSocket<T = unknown>(
     }
   }, [])
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (!url || !enabled || isCleaningUpRef.current) return
 
     // Close existing connection if any
@@ -80,8 +93,18 @@ export function useWebSocket<T = unknown>(
       wsRef.current.close()
     }
 
-    // Convert http(s) URL to ws(s) URL
-    const wsUrl = url.replace(/^http/, 'ws')
+    // Get auth token if not cached
+    if (!tokenRef.current) {
+      tokenRef.current = await getAuthToken()
+    }
+
+    // Build WebSocket URL with auth token
+    let wsUrl = url.replace(/^http/, 'ws')
+    if (tokenRef.current) {
+      const separator = wsUrl.includes('?') ? '&' : '?'
+      wsUrl = `${wsUrl}${separator}token=${encodeURIComponent(tokenRef.current)}`
+    }
+
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
