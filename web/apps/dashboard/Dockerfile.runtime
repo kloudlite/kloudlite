@@ -17,7 +17,12 @@ COPY --chown=nextjs:nodejs public ./apps/dashboard/public
 COPY --chown=nextjs:nodejs server.js ./apps/dashboard/server.js
 
 # Install ws package for WebSocket proxy
-RUN cd apps/dashboard && bun add ws
+# Create temp dir to avoid workspace resolution issues
+RUN mkdir -p /tmp/ws-install && \
+    cd /tmp/ws-install && \
+    bun add ws && \
+    cp -r node_modules/ws /app/apps/dashboard/node_modules/ && \
+    rm -rf /tmp/ws-install
 
 USER nextjs
 
