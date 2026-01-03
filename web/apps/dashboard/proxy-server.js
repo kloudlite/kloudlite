@@ -26,13 +26,23 @@ function isWebSocketPath(pathname) {
 
 // Create main server
 const server = http.createServer((req, res) => {
-  // Forward all HTTP requests to Next.js
+  // Filter out hop-by-hop headers that shouldn't be forwarded
+  const hopByHopHeaders = ['connection', 'keep-alive', 'transfer-encoding', 'te', 'trailer', 'upgrade']
+  const forwardHeaders = {}
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (!hopByHopHeaders.includes(key.toLowerCase())) {
+      forwardHeaders[key] = value
+    }
+  }
+  // Set host header for Next.js
+  forwardHeaders['host'] = `127.0.0.1:${nextPort}`
+
   const options = {
     hostname: '127.0.0.1',
     port: nextPort,
     path: req.url,
     method: req.method,
-    headers: req.headers,
+    headers: forwardHeaders,
   }
 
   const proxyReq = http.request(options, (proxyRes) => {
@@ -42,8 +52,10 @@ const server = http.createServer((req, res) => {
 
   proxyReq.on('error', (err) => {
     console.error('Proxy error:', err.message)
-    res.writeHead(502)
-    res.end('Proxy error')
+    if (!res.headersSent) {
+      res.writeHead(502)
+      res.end('Proxy error')
+    }
   })
 
   req.pipe(proxyReq)
