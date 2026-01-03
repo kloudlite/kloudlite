@@ -120,11 +120,32 @@ function addSecurityHeaders(response: NextResponse, req: NextRequest): NextRespo
     subdomain = hostParts[hostParts.length - baseParts.length - 1]
   }
 
-  // Build VPN check URL if we have a subdomain
-  const vpnCheckUrl = subdomain ? `https://vpn-check.${subdomain}.${baseDomain}` : ''
-  const connectSrc = vpnCheckUrl
-    ? `'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* ${vpnCheckUrl}`
-    : `'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*`
+  // Build CSP connect-src with allowed patterns
+  // Allow VPN check for any tenant subdomain (vpn-check.X.khost.dev pattern)
+  // Also get additional allowed subdomains from env var if set
+  const allowedSubdomains = process.env.ALLOWED_TENANT_SUBDOMAINS?.split(',').map((s) => s.trim()) || []
+  if (subdomain && !allowedSubdomains.includes(subdomain)) {
+    allowedSubdomains.push(subdomain)
+  }
+
+  const connectSrcParts = [
+    "'self'",
+    'http://localhost:*',
+    'https://localhost:*',
+    'ws://localhost:*',
+    'wss://localhost:*',
+    // Allow single-level subdomains of base domain
+    `https://*.${baseDomain}`,
+    `wss://*.${baseDomain}`,
+  ]
+
+  // Add wildcard patterns for each known tenant subdomain (covers vpn-check.X.domain pattern)
+  for (const sub of allowedSubdomains) {
+    connectSrcParts.push(`https://*.${sub}.${baseDomain}`)
+    connectSrcParts.push(`wss://*.${sub}.${baseDomain}`)
+  }
+
+  const connectSrc = connectSrcParts.join(' ')
 
   response.headers.set(
     'Content-Security-Policy',
