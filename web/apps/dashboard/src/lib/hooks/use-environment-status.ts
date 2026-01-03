@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useMemo } from 'react'
-import { useSSE } from './use-sse'
+import { useWebSocket } from './use-websocket'
 
 interface CloningStatus {
   phase: string
@@ -16,6 +16,7 @@ interface CloningStatus {
 }
 
 interface EnvironmentStatusEvent {
+  type?: string
   state: string
   message: string
   activated: boolean
@@ -46,7 +47,8 @@ export function useEnvironmentStatus(
 
   const url = useMemo(() => {
     if (!envName) return null
-    return `/api/v1/environments/${encodeURIComponent(envName)}/status-stream`
+    // Use WebSocket endpoint
+    return `/api/v1/environments/${encodeURIComponent(envName)}/status-ws`
   }, [envName])
 
   const handleStatus = useCallback((data: EnvironmentStatusEvent) => {
@@ -71,7 +73,7 @@ export function useEnvironmentStatus(
     [handleStatus, handleDeleted]
   )
 
-  const { isConnected, error, reconnect } = useSSE<EnvironmentStatusEvent>(url, {
+  const { isConnected, error, reconnect } = useWebSocket<EnvironmentStatusEvent>(url, {
     enabled,
     eventHandlers,
   })

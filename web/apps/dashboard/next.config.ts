@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next'
 import path from 'path'
 
+const apiUrl = process.env.API_URL || 'http://api-server.kloudlite.svc.cluster.local'
+
 const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployment
   output: 'standalone',
@@ -18,6 +20,22 @@ const nextConfig: NextConfig = {
   experimental: {
     // Optimize package imports
     optimizePackageImports: ['@radix-ui/react-icons', '@radix-ui/react-dialog'],
+  },
+
+  // Rewrites to proxy WebSocket connections to the backend
+  async rewrites() {
+    return [
+      // Environment status WebSocket
+      {
+        source: '/api/v1/environments/:name/status-ws',
+        destination: `${apiUrl}/api/v1/environments/:name/status-ws`,
+      },
+      // Workspace status WebSocket
+      {
+        source: '/api/v1/namespaces/:namespace/workspaces/:name/status-ws',
+        destination: `${apiUrl}/api/v1/namespaces/:namespace/workspaces/:name/status-ws`,
+      },
+    ]
   },
 }
 
