@@ -34,7 +34,19 @@ const server = http.createServer((req, res) => {
       forwardHeaders[key] = value
     }
   }
-  // Set host header for Next.js
+
+  // Preserve original host in x-forwarded-host for Next.js Server Actions
+  const originalHost = req.headers.host
+  if (originalHost && !forwardHeaders['x-forwarded-host']) {
+    forwardHeaders['x-forwarded-host'] = originalHost
+  }
+
+  // Set x-forwarded-proto if not already set
+  if (!forwardHeaders['x-forwarded-proto']) {
+    forwardHeaders['x-forwarded-proto'] = 'https'
+  }
+
+  // Set host header for internal routing to Next.js
   forwardHeaders['host'] = `127.0.0.1:${nextPort}`
 
   const options = {
