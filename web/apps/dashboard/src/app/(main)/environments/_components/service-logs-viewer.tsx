@@ -232,9 +232,9 @@ function LogEntryRow({ entry, searchTerm }: { entry: LogEntry; searchTerm: strin
           {entry.level === 'unknown' ? '---' : entry.level}
         </span>
 
-        {/* Message */}
-        <span className={cn('flex-1 break-all', colors.text)}>
-          {highlightText(entry.message)}
+        {/* Raw log line */}
+        <span className={cn('flex-1 break-all', entry.level === 'error' ? 'text-red-400' : entry.level === 'warn' ? 'text-yellow-400' : 'text-zinc-300')}>
+          {highlightText(entry.raw)}
         </span>
       </div>
 
