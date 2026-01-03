@@ -331,8 +331,13 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
           )}
 
           {isPushed && (
-            <span title="Pushed to registry">
-              <Cloud className="h-3.5 w-3.5 text-cyan-500" />
+            <span className="inline-flex items-center gap-1 text-cyan-600 dark:text-cyan-400" title={snapshot.status.registryStatus?.imageRef}>
+              <Cloud className="h-3.5 w-3.5" />
+              {snapshot.status.registryStatus?.imageRef && (
+                <span className="text-xs font-medium">
+                  {snapshot.status.registryStatus.imageRef.split(':').pop()}
+                </span>
+              )}
             </span>
           )}
 
