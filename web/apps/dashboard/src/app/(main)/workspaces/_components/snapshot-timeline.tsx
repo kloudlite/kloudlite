@@ -331,14 +331,10 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
           )}
 
           {isPushed && (
-            <span className="inline-flex items-center gap-1 text-cyan-600 dark:text-cyan-400" title={snapshot.status.registryStatus?.imageRef}>
-              <Cloud className="h-3.5 w-3.5" />
-              {snapshot.status.registryStatus?.imageRef && (
-                <span className="text-xs font-medium">
-                  {snapshot.status.registryStatus.imageRef.split(':').pop()}
-                </span>
-              )}
-            </span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-1 bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300">
+              <Cloud className="h-3 w-3" />
+              {snapshot.status.registryStatus?.imageRef?.split(':').pop() || 'pushed'}
+            </Badge>
           )}
 
           {getStateBadge(snapshot.status.state)}
