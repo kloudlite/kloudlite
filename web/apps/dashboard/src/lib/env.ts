@@ -8,13 +8,9 @@ function validateEnv() {
   const isBuildTime =
     typeof window === 'undefined' && process.env.NEXT_PHASE === 'phase-production-build'
 
-  // Console uses API_URL to connect to the Kloudlite API server for workspace management
+  // NEXT_PUBLIC_API_URL is optional - WebSocket connections are proxied through the server
   if (process.env.NODE_ENV === 'production' && !isBuildTime && !apiUrl) {
-    throw new Error(
-      'CRITICAL: NEXT_PUBLIC_API_URL environment variable is not set. ' +
-        'Console requires this to connect to the API server. ' +
-        'Please set NEXT_PUBLIC_API_URL in your environment variables.',
-    )
+    console.warn('NEXT_PUBLIC_API_URL not set, using relative URLs')
   }
 
   // In development or build time, warn but allow localhost fallback

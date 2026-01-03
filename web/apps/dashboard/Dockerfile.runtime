@@ -13,6 +13,11 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --chown=nextjs:nodejs .next/standalone ./
 COPY --chown=nextjs:nodejs .next/static ./apps/dashboard/.next/static
 COPY --chown=nextjs:nodejs public ./apps/dashboard/public
+# Copy custom server with WebSocket proxy support
+COPY --chown=nextjs:nodejs server.js ./apps/dashboard/server.js
+
+# Install ws package for WebSocket proxy
+RUN cd apps/dashboard && bun add ws
 
 USER nextjs
 
