@@ -643,3 +643,149 @@ func (h *WorkMachineHandlers) GetWorkMachineMetricsStream(c *gin.Context) {
 		}
 	}
 }
+
+// GetWorkMachineMetricsWebSocket handles WebSocket connections for work machine metrics streaming
+// This endpoint provides real-time metrics updates via WebSocket (better Cloudflare support than SSE)
+func (h *WorkMachineHandlers) GetWorkMachineMetricsWebSocket(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Get work machine name from URL parameter
+	workMachineName := c.Param("name")
+	if workMachineName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Work machine name is required"})
+		return
+	}
+
+	// Verify WorkMachine exists
+	wm, err := h.manager.WorkMachineRepository.Get(ctx, workMachineName)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Work machine not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Upgrade to WebSocket
+	conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	// Create a context that cancels when connection closes
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Handle incoming messages (for ping/pong and close)
+	go func() {
+		for {
+			_, _, err := conn.ReadMessage()
+			if err != nil {
+				cancel()
+				return
+			}
+		}
+	}()
+
+	// Create a ticker for 5-second intervals
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	// Helper function to fetch node metrics
+	fetchNodeMetrics := func() *NodeMetrics {
+		reqCtx, reqCancel := context.WithTimeout(ctx, 3*time.Second)
+		defer reqCancel()
+
+		metrics := &NodeMetrics{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		}
+
+		var nodeMetrics metricsv1beta1.NodeMetrics
+		if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &nodeMetrics); err != nil {
+			return metrics
+		}
+
+		var node corev1.Node
+		if err := h.manager.K8sClient.Get(reqCtx, client.ObjectKey{Name: wm.Name}, &node); err != nil {
+			return metrics
+		}
+
+		if cpu, ok := nodeMetrics.Usage[corev1.ResourceCPU]; ok {
+			metrics.CPU.Usage = cpu.MilliValue()
+		}
+		if capacity, ok := node.Status.Capacity[corev1.ResourceCPU]; ok {
+			metrics.CPU.Capacity = capacity.MilliValue()
+		}
+		if allocatable, ok := node.Status.Allocatable[corev1.ResourceCPU]; ok {
+			metrics.CPU.Allocatable = allocatable.MilliValue()
+		}
+
+		if mem, ok := nodeMetrics.Usage[corev1.ResourceMemory]; ok {
+			metrics.Memory.Usage = mem.Value()
+		}
+		if capacity, ok := node.Status.Capacity[corev1.ResourceMemory]; ok {
+			metrics.Memory.Capacity = capacity.Value()
+		}
+		if allocatable, ok := node.Status.Allocatable[corev1.ResourceMemory]; ok {
+			metrics.Memory.Allocatable = allocatable.Value()
+		}
+
+		return metrics
+	}
+
+	// Helper function to fetch GPU metrics
+	fetchGPUMetrics := func() *GPUMetrics {
+		reqCtx, reqCancel := context.WithTimeout(ctx, 3*time.Second)
+		defer reqCancel()
+
+		metricsURL := "http://host-manager." + wm.Spec.TargetNamespace + ":8081/metrics/gpu"
+		req, err := http.NewRequestWithContext(reqCtx, "GET", metricsURL, nil)
+		if err != nil {
+			return nil
+		}
+
+		httpClient := &http.Client{Timeout: 3 * time.Second}
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return nil
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil
+		}
+
+		var metrics GPUMetrics
+		if err := json.NewDecoder(resp.Body).Decode(&metrics); err != nil {
+			return nil
+		}
+		return &metrics
+	}
+
+	// Send initial metrics immediately
+	event := MetricsStreamEvent{
+		NodeMetrics: fetchNodeMetrics(),
+		GPUMetrics:  fetchGPUMetrics(),
+	}
+	if err := conn.WriteJSON(map[string]interface{}{"type": "metrics", "data": event}); err != nil {
+		return
+	}
+
+	// Stream metrics at regular intervals
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			event := MetricsStreamEvent{
+				NodeMetrics: fetchNodeMetrics(),
+				GPUMetrics:  fetchGPUMetrics(),
+			}
+			if err := conn.WriteJSON(map[string]interface{}{"type": "metrics", "data": event}); err != nil {
+				return
+			}
+		}
+	}
+}

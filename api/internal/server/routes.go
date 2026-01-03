@@ -197,8 +197,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.POST("/:name/activate", environmentHandlers.ActivateEnvironment)
 				environments.POST("/:name/deactivate", environmentHandlers.DeactivateEnvironment)
 				environments.GET("/:name/status", environmentHandlers.GetEnvironmentStatus)
-				environments.GET("/:name/status-stream", environmentHandlers.GetEnvironmentStatusStream)
-				// Status streaming (WebSocket - preferred for Cloudflare compatibility)
 				environments.GET("/:name/status-ws", environmentHandlers.GetEnvironmentStatusWebSocket)
 
 				// Snapshot routes (per-environment)
@@ -261,7 +259,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				// Admin routes for all machines
 				workMachines.GET("", workMachineHandlers.ListAllWorkMachines)
 				workMachines.GET("/:name", workMachineHandlers.GetWorkMachine)
-				workMachines.GET("/:name/metrics-stream", workMachineHandlers.GetWorkMachineMetricsStream)
+				workMachines.GET("/:name/metrics-ws", workMachineHandlers.GetWorkMachineMetricsWebSocket)
 			}
 
 			// Workspace routes (namespaced)
@@ -297,9 +295,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.POST("/:name/snapshots", snapshotHandlers.CreateWorkspaceSnapshot)
 				workspaces.GET("/:name/snapshots", snapshotHandlers.ListWorkspaceSnapshots)
 
-				// Status streaming (SSE - legacy, may timeout with Cloudflare)
-				workspaces.GET("/:name/status-stream", workspaceHandlers.GetWorkspaceStatusStream)
-				// Status streaming (WebSocket - preferred for Cloudflare compatibility)
+				// Status streaming (WebSocket)
 				workspaces.GET("/:name/status-ws", workspaceHandlers.GetWorkspaceStatusWebSocket)
 			}
 
@@ -318,7 +314,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			services := protected.Group("/namespaces/:namespace/services")
 			{
 				services.GET("", serviceHandlers.ListServices)
-				services.GET("/:name/logs", serviceHandlers.GetServiceLogs)
+				services.GET("/:name/logs-ws", serviceHandlers.GetServiceLogsWebSocket)
 			}
 
 			// OAuth Provider routes (protected - for admin management)

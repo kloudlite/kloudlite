@@ -35,6 +35,16 @@ const nextConfig: NextConfig = {
         source: '/api/v1/namespaces/:namespace/workspaces/:name/status-ws',
         destination: `${apiUrl}/api/v1/namespaces/:namespace/workspaces/:name/status-ws`,
       },
+      // Work machine metrics WebSocket
+      {
+        source: '/api/v1/work-machines/:name/metrics-ws',
+        destination: `${apiUrl}/api/v1/work-machines/:name/metrics-ws`,
+      },
+      // Service logs WebSocket
+      {
+        source: '/api/v1/namespaces/:namespace/services/:name/logs-ws',
+        destination: `${apiUrl}/api/v1/namespaces/:namespace/services/:name/logs-ws`,
+      },
     ]
   },
 }
