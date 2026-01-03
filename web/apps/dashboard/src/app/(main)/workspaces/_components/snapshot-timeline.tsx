@@ -281,15 +281,18 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
           <svg
             className="absolute inset-0 pointer-events-none"
             style={{ width: graphWidth, height: '100%' }}
+            viewBox={`0 0 ${graphWidth} 44`}
+            preserveAspectRatio="none"
           >
             <path
               d={`M ${branchFrom.fromLane * LANE_WIDTH + LANE_WIDTH / 2} 0
-                  C ${branchFrom.fromLane * LANE_WIDTH + LANE_WIDTH / 2} 50%,
-                    ${branchFrom.toLane * LANE_WIDTH + LANE_WIDTH / 2} 50%,
-                    ${branchFrom.toLane * LANE_WIDTH + LANE_WIDTH / 2} 50%`}
+                  C ${branchFrom.fromLane * LANE_WIDTH + LANE_WIDTH / 2} 22,
+                    ${branchFrom.toLane * LANE_WIDTH + LANE_WIDTH / 2} 22,
+                    ${branchFrom.toLane * LANE_WIDTH + LANE_WIDTH / 2} 22`}
               fill="none"
               stroke={BRANCH_COLORS[branchFrom.toLane % BRANCH_COLORS.length].stroke}
               strokeWidth={LINE_WIDTH}
+              vectorEffect="non-scaling-stroke"
             />
           </svg>
         )}
