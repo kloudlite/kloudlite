@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
+	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
@@ -16,11 +18,12 @@ import (
 
 // SnapshotHandlers handles HTTP requests for Snapshot resources
 type SnapshotHandlers struct {
-	snapshotRepo  repository.SnapshotRepository
-	envRepo       repository.EnvironmentRepository
-	workspaceRepo repository.WorkspaceRepository
-	k8sClient     client.Client
-	logger        *zap.Logger
+	snapshotRepo    repository.SnapshotRepository
+	envRepo         repository.EnvironmentRepository
+	workspaceRepo   repository.WorkspaceRepository
+	workmachineRepo repository.WorkMachineRepository
+	k8sClient       client.Client
+	logger          *zap.Logger
 }
 
 // NewSnapshotHandlers creates a new SnapshotHandlers
@@ -28,15 +31,17 @@ func NewSnapshotHandlers(
 	snapshotRepo repository.SnapshotRepository,
 	envRepo repository.EnvironmentRepository,
 	workspaceRepo repository.WorkspaceRepository,
+	workmachineRepo repository.WorkMachineRepository,
 	k8sClient client.Client,
 	logger *zap.Logger,
 ) *SnapshotHandlers {
 	return &SnapshotHandlers{
-		snapshotRepo:  snapshotRepo,
-		envRepo:       envRepo,
-		workspaceRepo: workspaceRepo,
-		k8sClient:     k8sClient,
-		logger:        logger,
+		snapshotRepo:    snapshotRepo,
+		envRepo:         envRepo,
+		workspaceRepo:   workspaceRepo,
+		workmachineRepo: workmachineRepo,
+		k8sClient:       k8sClient,
+		logger:          logger,
 	}
 }
 
@@ -831,5 +836,232 @@ func (h *SnapshotHandlers) PullSnapshot(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message":  "Snapshot clone from cloud initiated",
 		"snapshot": snapshot,
+	})
+}
+
+// CreateWorkspaceFromSnapshotRequest is the request body for creating a workspace from snapshot
+type CreateWorkspaceFromSnapshotRequest struct {
+	Name          string `json:"name" binding:"required"`
+	DisplayName   string `json:"displayName" binding:"required"`
+	SnapshotName  string `json:"snapshotName" binding:"required"`
+	Description   string `json:"description,omitempty"`
+	VSCodeVersion string `json:"vscodeVersion,omitempty"`
+}
+
+// CreateWorkspaceFromSnapshot handles POST /api/v1/workspaces/from-snapshot
+// This creates a new workspace from a pushed snapshot
+func (h *SnapshotHandlers) CreateWorkspaceFromSnapshot(c *gin.Context) {
+	var req CreateWorkspaceFromSnapshotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+
+	// Get authenticated user
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Validate snapshot exists and is pushed
+	snapshot, err := h.snapshotRepo.Get(c.Request.Context(), req.SnapshotName)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Snapshot '%s' not found", req.SnapshotName)})
+		return
+	}
+
+	if snapshot.Status.RegistryStatus == nil || !snapshot.Status.RegistryStatus.Pushed {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Snapshot is not pushed to registry. Only pushed snapshots can be used to create workspaces."})
+		return
+	}
+
+	if snapshot.Status.SnapshotType != snapshotv1.SnapshotTypeWorkspace {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Snapshot is not a workspace snapshot"})
+		return
+	}
+
+	// Get user's WorkMachine for namespace
+	workMachine, err := h.workmachineRepo.GetByOwner(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get user's WorkMachine", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": "You don't have a WorkMachine. Please create one first."})
+		return
+	}
+
+	vscodeVersion := req.VSCodeVersion
+	if vscodeVersion == "" {
+		vscodeVersion = "latest"
+	}
+
+	// Create new workspace with FromSnapshot set
+	workspace := &workspacesv1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Name,
+			Namespace: workMachine.Spec.TargetNamespace,
+		},
+		Spec: workspacesv1.WorkspaceSpec{
+			DisplayName:     req.DisplayName,
+			Description:     req.Description,
+			OwnedBy:         username,
+			WorkmachineName: workMachine.Name,
+			VSCodeVersion:   vscodeVersion,
+			FromSnapshot: &workspacesv1.FromSnapshotRef{
+				SnapshotName: req.SnapshotName,
+			},
+		},
+	}
+
+	if err := h.workspaceRepo.Create(c.Request.Context(), workspace); err != nil {
+		h.logger.Error("Failed to create workspace from snapshot", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to create workspace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	h.logger.Info("Workspace created from snapshot",
+		zap.String("workspace", req.Name),
+		zap.String("snapshot", req.SnapshotName),
+		zap.String("owner", username))
+
+	c.JSON(http.StatusCreated, workspace)
+}
+
+// CreateEnvironmentFromSnapshotRequest is the request body for creating an environment from snapshot
+type CreateEnvironmentFromSnapshotRequest struct {
+	Name            string `json:"name" binding:"required"`
+	SnapshotName    string `json:"snapshotName" binding:"required"`
+	TargetNamespace string `json:"targetNamespace,omitempty"` // Optional, generated if not provided
+	Activated       bool   `json:"activated"`                 // Whether to start active
+}
+
+// CreateEnvironmentFromSnapshot handles POST /api/v1/environments/from-snapshot
+// This creates a new environment from a pushed snapshot
+func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
+	var req CreateEnvironmentFromSnapshotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+
+	// Get authenticated user
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Validate snapshot exists and is pushed
+	snapshot, err := h.snapshotRepo.Get(c.Request.Context(), req.SnapshotName)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Snapshot '%s' not found", req.SnapshotName)})
+		return
+	}
+
+	if snapshot.Status.RegistryStatus == nil || !snapshot.Status.RegistryStatus.Pushed {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Snapshot is not pushed to registry. Only pushed snapshots can be used to create environments."})
+		return
+	}
+
+	if snapshot.Status.SnapshotType != snapshotv1.SnapshotTypeEnvironment {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Snapshot is not an environment snapshot"})
+		return
+	}
+
+	// Get user's WorkMachine
+	workMachine, err := h.workmachineRepo.GetByOwner(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get user's WorkMachine", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": "You don't have a WorkMachine. Please create one first."})
+		return
+	}
+
+	// Generate target namespace if not provided
+	targetNamespace := req.TargetNamespace
+	if targetNamespace == "" {
+		targetNamespace = fmt.Sprintf("env-%s", req.Name)
+	}
+
+	// Create new environment with FromSnapshot set
+	environment := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: req.Name,
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			Name:            req.Name,
+			TargetNamespace: targetNamespace,
+			OwnedBy:         username,
+			WorkMachineName: workMachine.Name,
+			Activated:       req.Activated,
+			FromSnapshot: &environmentsv1.FromSnapshotRef{
+				SnapshotName: req.SnapshotName,
+			},
+		},
+	}
+
+	if err := h.envRepo.Create(c.Request.Context(), environment); err != nil {
+		h.logger.Error("Failed to create environment from snapshot", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to create environment",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	h.logger.Info("Environment created from snapshot",
+		zap.String("environment", req.Name),
+		zap.String("snapshot", req.SnapshotName),
+		zap.String("owner", username))
+
+	c.JSON(http.StatusCreated, environment)
+}
+
+// ListPushedSnapshots handles GET /api/v1/snapshots/pushed
+// Returns all pushed snapshots available for cloning (team-wide access)
+func (h *SnapshotHandlers) ListPushedSnapshots(c *gin.Context) {
+	// Get authenticated user
+	_, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Filter by type if provided
+	snapshotType := c.Query("type") // "workspace" or "environment"
+
+	// List all snapshots (team-wide access)
+	snapshots, err := h.snapshotRepo.List(c.Request.Context())
+	if err != nil {
+		h.logger.Error("Failed to list snapshots", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list snapshots"})
+		return
+	}
+
+	// Filter to only pushed snapshots
+	var pushedSnapshots []snapshotv1.Snapshot
+	for _, snap := range snapshots.Items {
+		// Only include pushed snapshots
+		if snap.Status.RegistryStatus == nil || !snap.Status.RegistryStatus.Pushed {
+			continue
+		}
+
+		// Filter by type if specified
+		if snapshotType != "" {
+			if snapshotType == "workspace" && snap.Status.SnapshotType != snapshotv1.SnapshotTypeWorkspace {
+				continue
+			}
+			if snapshotType == "environment" && snap.Status.SnapshotType != snapshotv1.SnapshotTypeEnvironment {
+				continue
+			}
+		}
+
+		pushedSnapshots = append(pushedSnapshots, snap)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"snapshots": pushedSnapshots,
+		"count":     len(pushedSnapshots),
 	})
 }

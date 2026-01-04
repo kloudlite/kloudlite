@@ -88,27 +88,3 @@ func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1
 	}
 }
 
-// updateCloningStatus updates the cloning status phase and message
-func (r *EnvironmentReconciler) updateCloningStatus(ctx context.Context, environment *environmentsv1.Environment, phase environmentsv1.CloningPhase, message string, logger *zap.Logger) {
-	if environment.Status.CloningStatus == nil {
-		now := metav1.Now()
-		environment.Status.CloningStatus = &environmentsv1.CloningStatus{
-			StartTime: &now,
-		}
-	}
-
-	environment.Status.CloningStatus.Phase = phase
-	environment.Status.CloningStatus.Message = message
-
-	// Set completion time if phase is completed or failed
-	if phase == environmentsv1.CloningPhaseCompleted || phase == environmentsv1.CloningPhaseFailed {
-		now := metav1.Now()
-		environment.Status.CloningStatus.CompletionTime = &now
-	}
-
-	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
-		return nil
-	}, logger); err != nil {
-		logger.Error("Failed to update cloning status", zap.Error(err))
-	}
-}

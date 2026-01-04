@@ -617,11 +617,11 @@ func (h *EnvironmentHandlers) GetEnvironmentStatus(c *gin.Context) {
 
 // EnvironmentStatusEvent represents a status event for SSE streaming
 type EnvironmentStatusEvent struct {
-	State         string                        `json:"state"`
-	Message       string                        `json:"message"`
-	Activated     bool                          `json:"activated"`
-	CloningStatus *environmentsv1.CloningStatus `json:"cloningStatus,omitempty"`
-	Timestamp     time.Time                     `json:"timestamp"`
+	State                 string                                `json:"state"`
+	Message               string                                `json:"message"`
+	Activated             bool                                  `json:"activated"`
+	SnapshotRestoreStatus *environmentsv1.SnapshotRestoreStatus `json:"snapshotRestoreStatus,omitempty"`
+	Timestamp             time.Time                             `json:"timestamp"`
 }
 
 // GetEnvironmentStatusStream handles GET /api/v1/environments/:name/status-stream
@@ -678,11 +678,11 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 	// Helper function to build and send status event
 	sendStatusEvent := func(env *environmentsv1.Environment) {
 		event := EnvironmentStatusEvent{
-			State:         string(env.Status.State),
-			Message:       env.Status.Message,
-			Activated:     env.Spec.Activated,
-			CloningStatus: env.Status.CloningStatus,
-			Timestamp:     time.Now().UTC(),
+			State:                 string(env.Status.State),
+			Message:               env.Status.Message,
+			Activated:             env.Spec.Activated,
+			SnapshotRestoreStatus: env.Status.SnapshotRestoreStatus,
+			Timestamp:             time.Now().UTC(),
 		}
 
 		eventData, err := json.Marshal(event)
@@ -822,11 +822,11 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusWebSocket(c *gin.Context) {
 	// Helper function to send status event
 	sendStatus := func(env *environmentsv1.Environment) error {
 		event := EnvironmentStatusEvent{
-			State:         string(env.Status.State),
-			Message:       env.Status.Message,
-			Activated:     env.Spec.Activated,
-			CloningStatus: env.Status.CloningStatus,
-			Timestamp:     time.Now().UTC(),
+			State:                 string(env.Status.State),
+			Message:               env.Status.Message,
+			Activated:             env.Spec.Activated,
+			SnapshotRestoreStatus: env.Status.SnapshotRestoreStatus,
+			Timestamp:             time.Now().UTC(),
 		}
 		return conn.WriteJSON(map[string]interface{}{
 			"type": "status",

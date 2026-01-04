@@ -119,9 +119,6 @@ export function EnvironmentsList({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
-  const [cloneSourceEnvironment, setCloneSourceEnvironment] = useState<EnvironmentUIModel | null>(
-    null,
-  )
   const [deleteEnvironmentName, setDeleteEnvironmentName] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
@@ -234,8 +231,7 @@ export function EnvironmentsList({
     setDeleteConfirmOpen(true)
   }
 
-  const handleCloneClick = (env: EnvironmentUIModel) => {
-    setCloneSourceEnvironment(env)
+  const handleCloneClick = () => {
     setCloneDialogOpen(true)
   }
 
@@ -512,13 +508,9 @@ export function EnvironmentsList({
                             {workMachineRunning ? 'Activate' : 'Activate (WorkMachine stopped)'}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
-                          onClick={() => workMachineRunning && handleCloneClick(env)}
-                          className={!workMachineRunning ? "text-muted-foreground cursor-not-allowed" : ""}
-                          disabled={!workMachineRunning}
-                        >
+                        <DropdownMenuItem onClick={() => handleCloneClick()}>
                           <Copy className="mr-2 h-4 w-4" />
-                          {workMachineRunning ? 'Clone Environment' : 'Clone (WorkMachine stopped)'}
+                          Create from Snapshot
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleExportConfig(env)}>
                           <Download className="mr-2 h-4 w-4" />
@@ -583,15 +575,11 @@ export function EnvironmentsList({
         />
       )}
 
-      {cloneSourceEnvironment && (
-        <CloneEnvironmentDialog
-          open={cloneDialogOpen}
-          onOpenChange={setCloneDialogOpen}
-          sourceEnvironment={cloneSourceEnvironment}
-          onSuccess={handleCloneSuccess}
-          currentUser={currentUser}
-        />
-      )}
+      <CloneEnvironmentDialog
+        open={cloneDialogOpen}
+        onOpenChange={setCloneDialogOpen}
+        onSuccess={handleCloneSuccess}
+      />
 
       <ImportEnvironmentDialog
         open={importDialogOpen}

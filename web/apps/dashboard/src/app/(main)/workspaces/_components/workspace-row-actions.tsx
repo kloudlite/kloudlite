@@ -179,7 +179,6 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
       </DropdownMenu>
 
       <CloneWorkspaceSheet
-        workspace={workspace}
         open={showCloneSheet}
         onOpenChange={setShowCloneSheet}
       />

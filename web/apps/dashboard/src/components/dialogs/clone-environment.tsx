@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -13,33 +13,68 @@ import { Button } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
 import { Alert, AlertDescription } from '@kloudlite/ui'
-import { Loader2, AlertCircle, Copy } from 'lucide-react'
-import { cloneEnvironment } from '@/app/actions/environment.actions'
-import type { EnvironmentUIModel } from '@kloudlite/types'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@kloudlite/ui'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@kloudlite/ui'
+import { Loader2, AlertCircle, Camera, Check, ChevronsUpDown } from 'lucide-react'
+import { listPushedSnapshots, createEnvironmentFromSnapshot } from '@/app/actions/snapshot.actions'
+import type { Snapshot } from '@/lib/services/snapshot.service'
+import { cn } from '@/lib/utils'
 
 interface CloneEnvironmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  sourceEnvironment: EnvironmentUIModel
   onSuccess?: () => void
-  currentUser?: string
+  preselectedSnapshot?: Snapshot
 }
 
 export function CloneEnvironmentDialog({
   open,
   onOpenChange,
-  sourceEnvironment,
   onSuccess,
-  currentUser = 'test-user',
+  preselectedSnapshot,
 }: CloneEnvironmentDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Use the environment's spec.name which is the actual name without owner prefix
-  const getDefaultName = () => {
-    const baseName = sourceEnvironment.spec?.name || sourceEnvironment.name
-    return `${baseName}-copy`
-  }
-  const [name, setName] = useState(getDefaultName())
+  const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false)
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([])
+  const [popoverOpen, setPopoverOpen] = useState(false)
+  const [selectedSnapshot, setSelectedSnapshot] = useState<Snapshot | null>(preselectedSnapshot || null)
+  const [name, setName] = useState('')
+
+  // Load pushed snapshots when dialog opens
+  useEffect(() => {
+    if (open) {
+      setIsLoadingSnapshots(true)
+      listPushedSnapshots('environment').then((result) => {
+        if (result.success && result.data) {
+          setSnapshots(result.data.snapshots || [])
+        }
+        setIsLoadingSnapshots(false)
+      })
+
+      // Set preselected snapshot if provided
+      if (preselectedSnapshot) {
+        setSelectedSnapshot(preselectedSnapshot)
+        const sourceName = preselectedSnapshot.status.targetName || preselectedSnapshot.metadata.name
+        setName(`${sourceName}-clone`)
+      } else {
+        setSelectedSnapshot(null)
+        setName('')
+      }
+      setError(null)
+    }
+  }, [open, preselectedSnapshot])
 
   const validateNamespace = (name: string): string | null => {
     if (!name) {
@@ -82,6 +117,11 @@ export function CloneEnvironmentDialog({
     e.preventDefault()
     setError(null)
 
+    if (!selectedSnapshot) {
+      setError('Please select a snapshot')
+      return
+    }
+
     // Validate environment name
     const nameError = validateNamespace(name)
     if (nameError) {
@@ -92,18 +132,16 @@ export function CloneEnvironmentDialog({
     setLoading(true)
 
     try {
-      const result = await cloneEnvironment(
-        sourceEnvironment.name,
+      const result = await createEnvironmentFromSnapshot({
         name,
-        '', // targetNamespace - always empty, let webhook auto-generate
-        true, // cloneEnvVars - always true, controller handles all resources
-        true, // cloneFiles - always true, controller handles all resources
-        currentUser,
-      )
+        snapshotName: selectedSnapshot.metadata.name,
+        activated: true,
+      })
 
       if (result.success) {
         // Reset form
-        setName(getDefaultName())
+        setName('')
+        setSelectedSnapshot(null)
         onOpenChange(false)
 
         // Call success callback
@@ -111,11 +149,11 @@ export function CloneEnvironmentDialog({
           onSuccess()
         }
       } else {
-        setError(result.error || 'Failed to clone environment. Please try again.')
+        setError(result.error || 'Failed to create environment from snapshot. Please try again.')
       }
     } catch (err) {
-      console.error('Failed to clone environment:', err)
-      const error = err instanceof Error ? err : new Error('Failed to clone environment')
+      console.error('Failed to create environment from snapshot:', err)
+      const error = err instanceof Error ? err : new Error('Failed to create environment from snapshot')
       setError(error.message)
     } finally {
       setLoading(false)
@@ -124,30 +162,135 @@ export function CloneEnvironmentDialog({
 
   const handleClose = () => {
     if (!loading) {
-      setName(getDefaultName())
+      setName('')
+      setSelectedSnapshot(null)
       setError(null)
       onOpenChange(false)
     }
   }
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Copy className="h-5 w-5" />
-              Clone Environment
+              <Camera className="h-5 w-5" />
+              Create Environment from Snapshot
             </DialogTitle>
             <DialogDescription>
-              Create a copy of &quot;{sourceEnvironment.name}&quot; with all its resources including
-              environment variables, secrets, configuration files, and compositions.
+              Create a new environment from a pushed snapshot. The snapshot will be pulled from the
+              registry and all resources will be restored.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Snapshot Selection */}
             <div className="space-y-2">
-              <Label htmlFor="name">New Environment Name</Label>
+              <Label>Select Snapshot *</Label>
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={popoverOpen}
+                    className="w-full justify-between font-normal"
+                    disabled={loading || isLoadingSnapshots}
+                  >
+                    {isLoadingSnapshots ? (
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading snapshots...
+                      </span>
+                    ) : selectedSnapshot ? (
+                      <span className="flex items-center gap-2">
+                        <Camera className="h-4 w-4" />
+                        {selectedSnapshot.status.targetName || selectedSnapshot.metadata.name}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Select a snapshot...</span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search snapshots..." />
+                    <CommandList>
+                      <CommandEmpty>
+                        {snapshots.length === 0
+                          ? 'No pushed snapshots available. Push a snapshot first to clone from it.'
+                          : 'No matching snapshots found.'}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {snapshots.map((snapshot) => (
+                          <CommandItem
+                            key={snapshot.metadata.name}
+                            value={snapshot.metadata.name}
+                            onSelect={() => {
+                              setSelectedSnapshot(snapshot)
+                              setPopoverOpen(false)
+                              // Suggest name based on source
+                              if (!name) {
+                                const sourceName = snapshot.status.targetName || snapshot.metadata.name
+                                setName(`${sourceName}-clone`)
+                              }
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                selectedSnapshot?.metadata.name === snapshot.metadata.name
+                                  ? 'opacity-100'
+                                  : 'opacity-0',
+                              )}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {snapshot.status.targetName || snapshot.metadata.name}
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Owner: {snapshot.spec.ownedBy} | Size: {snapshot.status.sizeHuman || 'N/A'}
+                                {snapshot.status.registryStatus?.pushedAt && (
+                                  <> | Pushed: {formatDate(snapshot.status.registryStatus.pushedAt)}</>
+                                )}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Selected Snapshot Info */}
+            {selectedSnapshot && (
+              <div className="bg-muted space-y-2 rounded-lg p-3">
+                <div className="text-sm font-medium">Snapshot Details</div>
+                <div className="text-muted-foreground text-xs space-y-1">
+                  <div>Source: {selectedSnapshot.status.targetName}</div>
+                  <div>Owner: {selectedSnapshot.spec.ownedBy}</div>
+                  <div>Size: {selectedSnapshot.status.sizeHuman || 'N/A'}</div>
+                </div>
+              </div>
+            )}
+
+            {/* New Environment Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">New Environment Name *</Label>
               <Input
                 id="name"
                 placeholder="my-cloned-environment"
@@ -173,9 +316,9 @@ export function CloneEnvironmentDialog({
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !selectedSnapshot}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Cloning...' : 'Clone Environment'}
+              {loading ? 'Creating...' : 'Create from Snapshot'}
             </Button>
           </DialogFooter>
         </form>

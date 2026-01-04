@@ -100,6 +100,30 @@ export interface PullSnapshotResponse {
   snapshot: Snapshot
 }
 
+export interface PushedSnapshotListResponse {
+  snapshots: Snapshot[]
+  count: number
+}
+
+export interface CreateWorkspaceFromSnapshotRequest {
+  name: string
+  displayName?: string
+  snapshotName: string
+}
+
+export interface CreateEnvironmentFromSnapshotRequest {
+  name: string
+  snapshotName: string
+  targetNamespace?: string
+  activated?: boolean
+}
+
+export interface CreateFromSnapshotResponse {
+  message: string
+  workspace?: unknown
+  environment?: unknown
+}
+
 export class SnapshotService {
   private baseUrl = '/api/v1'
 
@@ -196,6 +220,34 @@ export class SnapshotService {
     } catch {
       return []
     }
+  }
+
+  // List pushed snapshots available for cloning
+  async listPushed(type?: 'workspace' | 'environment'): Promise<PushedSnapshotListResponse> {
+    const params = type ? `?type=${type}` : ''
+    return apiClient.get<PushedSnapshotListResponse>(
+      `${this.baseUrl}/snapshots/pushed${params}`,
+    )
+  }
+
+  // Create a workspace from a pushed snapshot
+  async createWorkspaceFromSnapshot(
+    data: CreateWorkspaceFromSnapshotRequest,
+  ): Promise<CreateFromSnapshotResponse> {
+    return apiClient.post<CreateFromSnapshotResponse>(
+      `${this.baseUrl}/workspaces/from-snapshot`,
+      data,
+    )
+  }
+
+  // Create an environment from a pushed snapshot
+  async createEnvironmentFromSnapshot(
+    data: CreateEnvironmentFromSnapshotRequest,
+  ): Promise<CreateFromSnapshotResponse> {
+    return apiClient.post<CreateFromSnapshotResponse>(
+      `${this.baseUrl}/environments/from-snapshot`,
+      data,
+    )
   }
 }
 
