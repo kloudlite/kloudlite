@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { snapshotService } from '@/lib/services/snapshot.service'
-import type { CreateSnapshotRequest } from '@/lib/services/snapshot.service'
+import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateEnvironmentFromSnapshotRequest } from '@/lib/services/snapshot.service'
 
 /**
  * Server action to list snapshots for a workspace
@@ -168,6 +168,59 @@ export async function pullSnapshot(
     return { success: true, data: result }
   } catch (err) {
     console.error('Pull snapshot error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to list pushed snapshots available for cloning
+ */
+export async function listPushedSnapshots(type?: 'workspace' | 'environment') {
+  try {
+    const result = await snapshotService.listPushed(type)
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('List pushed snapshots error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to create a workspace from a pushed snapshot
+ */
+export async function createWorkspaceFromSnapshot(data: CreateWorkspaceFromSnapshotRequest) {
+  try {
+    const result = await snapshotService.createWorkspaceFromSnapshot(data)
+    revalidatePath('/workspaces')
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Create workspace from snapshot error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to create an environment from a pushed snapshot
+ */
+export async function createEnvironmentFromSnapshot(data: CreateEnvironmentFromSnapshotRequest) {
+  try {
+    const result = await snapshotService.createEnvironmentFromSnapshot(data)
+    revalidatePath('/environments')
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Create environment from snapshot error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,

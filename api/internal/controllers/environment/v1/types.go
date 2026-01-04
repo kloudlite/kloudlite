@@ -80,10 +80,11 @@ type EnvironmentSpec struct {
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
 
-	// CloneFrom specifies the source environment name to clone resources from
-	// This field is automatically cleared after successful cloning
+	// FromSnapshot specifies a pushed snapshot to create this environment from
+	// Only snapshots with status.registryStatus.pushed=true can be used
+	// This field is automatically cleared after successful restoration
 	// +optional
-	CloneFrom string `json:"cloneFrom,omitempty"`
+	FromSnapshot *FromSnapshotRef `json:"fromSnapshot,omitempty"`
 
 	// NodeName specifies the node where all environment resources should run
 	// This is set from the WorkMachine's node assignment
@@ -208,13 +209,9 @@ type EnvironmentStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
-	// CloningStatus tracks the progress of environment cloning including volumes
+	// SnapshotRestoreStatus tracks the progress of creating environment from a registry snapshot
 	// +optional
-	CloningStatus *CloningStatus `json:"cloningStatus,omitempty"`
-
-	// SourceCloningStatus tracks when this environment is being used as a cloning source
-	// +optional
-	SourceCloningStatus *SourceCloningStatus `json:"sourceCloningStatus,omitempty"`
+	SnapshotRestoreStatus *SnapshotRestoreStatus `json:"snapshotRestoreStatus,omitempty"`
 
 	// Hash is an 8-character hash derived from environment name and owner for DNS-safe hostnames
 	// Format: hash(envName-owner)
@@ -275,152 +272,69 @@ type ResourceCount struct {
 	PVCs         int32 `json:"pvcs,omitempty"`
 }
 
-// CloningStatus tracks the progress of environment cloning including volumes
-type CloningStatus struct {
-	// Phase represents the current phase of cloning
-	// +kubebuilder:validation:Enum=Pending;Suspending;CloningResources;CloningPVCs;CreatingCopyJobs;WaitingForCopyCompletion;VerifyingCopies;CloningCompositions;Resuming;Completed;Failed
-	Phase CloningPhase `json:"phase"`
+// FromSnapshotRef specifies a pushed snapshot to create the environment from
+type FromSnapshotRef struct {
+	// SnapshotName is the name of the snapshot resource to clone from
+	// The snapshot must have status.registryStatus.pushed=true
+	// +kubebuilder:validation:Required
+	SnapshotName string `json:"snapshotName"`
+}
 
-	// Message provides detailed information about the current cloning phase
+// SnapshotRestorePhase represents the current phase of snapshot restoration
+type SnapshotRestorePhase string
+
+const (
+	// SnapshotRestorePhasePending indicates restoration is pending to start
+	SnapshotRestorePhasePending SnapshotRestorePhase = "Pending"
+
+	// SnapshotRestorePhasePulling indicates snapshot is being pulled from registry
+	SnapshotRestorePhasePulling SnapshotRestorePhase = "Pulling"
+
+	// SnapshotRestorePhaseRestoring indicates snapshot is being restored to environment
+	SnapshotRestorePhaseRestoring SnapshotRestorePhase = "Restoring"
+
+	// SnapshotRestorePhaseCompleted indicates restoration completed successfully
+	SnapshotRestorePhaseCompleted SnapshotRestorePhase = "Completed"
+
+	// SnapshotRestorePhaseFailed indicates restoration failed
+	SnapshotRestorePhaseFailed SnapshotRestorePhase = "Failed"
+)
+
+// SnapshotRestoreStatus tracks the progress of creating environment from a registry snapshot
+type SnapshotRestoreStatus struct {
+	// Phase represents the current phase of snapshot restoration
+	// +kubebuilder:validation:Enum=Pending;Pulling;Restoring;Completed;Failed
+	// +optional
+	Phase SnapshotRestorePhase `json:"phase,omitempty"`
+
+	// Message provides additional information about the current state
 	// +optional
 	Message string `json:"message,omitempty"`
 
-	// TotalPVCs is the total number of PVCs to clone
+	// SourceSnapshot is the name of the snapshot being restored from
 	// +optional
-	TotalPVCs int32 `json:"totalPVCs,omitempty"`
+	SourceSnapshot string `json:"sourceSnapshot,omitempty"`
 
-	// ClonedPVCs is the number of PVCs successfully cloned
+	// ImageRef is the registry image reference being pulled
 	// +optional
-	ClonedPVCs int32 `json:"clonedPVCs,omitempty"`
+	ImageRef string `json:"imageRef,omitempty"`
 
-	// CurrentPVC is the name of the PVC currently being cloned
+	// SnapshotRequestName is the name of the SnapshotRequest created for pulling
 	// +optional
-	CurrentPVC string `json:"currentPVC,omitempty"`
+	SnapshotRequestName string `json:"snapshotRequestName,omitempty"`
 
-	// BytesTransferred tracks total bytes transferred during copy
-	// +optional
-	BytesTransferred int64 `json:"bytesTransferred,omitempty"`
-
-	// StartTime is when the cloning process started
+	// StartTime when restoration started
 	// +optional
 	StartTime *metav1.Time `json:"startTime,omitempty"`
 
-	// CompletionTime is when the cloning process completed (success or failure)
+	// CompletionTime when restoration completed (success or failure)
 	// +optional
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 
-	// FailedPVCs lists PVCs that failed to clone
-	// +optional
-	FailedPVCs []string `json:"failedPVCs,omitempty"`
-
-	// CopyJobsStatus tracks the status of individual PVC copy jobs
-	// +optional
-	CopyJobsStatus []PVCCopyJobStatus `json:"copyJobsStatus,omitempty"`
-}
-
-// CloningPhase represents the phase of environment cloning
-type CloningPhase string
-
-const (
-	// CloningPhasePending means cloning is pending to start
-	CloningPhasePending CloningPhase = "Pending"
-
-	// CloningPhaseSuspending means source environment is being suspended
-	CloningPhaseSuspending CloningPhase = "Suspending"
-
-	// CloningPhaseCloningResources means ConfigMaps, Secrets, and Compositions are being cloned
-	CloningPhaseCloningResources CloningPhase = "CloningResources"
-
-	// CloningPhaseCloningPVCs means PVCs are being created in target namespace
-	CloningPhaseCloningPVCs CloningPhase = "CloningPVCs"
-
-	// CloningPhaseCreatingCopyJobs means sender and receiver jobs are being created
-	CloningPhaseCreatingCopyJobs CloningPhase = "CreatingCopyJobs"
-
-	// CloningPhaseWaitingForCopyCompletion means waiting for all PVC copy jobs to complete
-	CloningPhaseWaitingForCopyCompletion CloningPhase = "WaitingForCopyCompletion"
-
-	// CloningPhaseVerifyingCopies means verifying all PVC copies completed successfully
-	CloningPhaseVerifyingCopies CloningPhase = "VerifyingCopies"
-
-	// CloningPhaseCloningCompositions means Compositions are being cloned after PVC data is copied
-	CloningPhaseCloningCompositions CloningPhase = "CloningCompositions"
-
-	// CloningPhaseResuming means source environment is being resumed
-	CloningPhaseResuming CloningPhase = "Resuming"
-
-	// CloningPhaseCompleted means cloning completed successfully
-	CloningPhaseCompleted CloningPhase = "Completed"
-
-	// CloningPhaseFailed means cloning failed
-	CloningPhaseFailed CloningPhase = "Failed"
-)
-
-// PVCCopyJobStatus tracks individual PVC copy job status
-type PVCCopyJobStatus struct {
-	// PVCName is the name of the PVC being copied
-	PVCName string `json:"pvcName"`
-
-	// Phase represents the current phase of this copy job
-	// +kubebuilder:validation:Enum=Pending;Creating;Copying;Completed;Failed
-	Phase string `json:"phase"`
-
-	// SenderJobName is the name of the sender job in source namespace
-	// +optional
-	SenderJobName string `json:"senderJobName,omitempty"`
-
-	// ReceiverJobName is the name of the receiver job in target namespace
-	// +optional
-	ReceiverJobName string `json:"receiverJobName,omitempty"`
-
-	// BytesTransferred is the number of bytes transferred for this PVC
-	// +optional
-	BytesTransferred int64 `json:"bytesTransferred,omitempty"`
-
-	// StartTime when copy job started
-	// +optional
-	StartTime *metav1.Time `json:"startTime,omitempty"`
-
-	// CompletionTime when copy job completed
-	// +optional
-	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
-
-	// ErrorMessage if copy job failed
+	// ErrorMessage if restoration failed
 	// +optional
 	ErrorMessage string `json:"errorMessage,omitempty"`
 }
-
-// SourceCloningStatus indicates this environment is being cloned from
-type SourceCloningStatus struct {
-	// TargetEnvironmentName is the environment being created from this source
-	TargetEnvironmentName string `json:"targetEnvironmentName"`
-
-	// Phase represents the current phase of cloning from this source
-	// +kubebuilder:validation:Enum=Suspended;Copying;Resuming
-	Phase SourceCloningPhase `json:"phase"`
-
-	// Message provides detailed information
-	// +optional
-	Message string `json:"message,omitempty"`
-
-	// StartTime when cloning from this source started
-	// +optional
-	StartTime *metav1.Time `json:"startTime,omitempty"`
-}
-
-// SourceCloningPhase represents the phase when environment is being used as cloning source
-type SourceCloningPhase string
-
-const (
-	// SourceCloningPhaseSuspended means source environment is suspended for cloning
-	SourceCloningPhaseSuspended SourceCloningPhase = "Suspended"
-
-	// SourceCloningPhaseCopying means PVC data is being copied from this source
-	SourceCloningPhaseCopying SourceCloningPhase = "Copying"
-
-	// SourceCloningPhaseResuming means source environment is being resumed after cloning
-	SourceCloningPhaseResuming SourceCloningPhase = "Resuming"
-)
 
 // EnvironmentCondition represents a condition of the environment
 type EnvironmentCondition struct {

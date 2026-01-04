@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -357,17 +358,12 @@ func (w *WorkspaceWebhook) validateWorkspace(workspace *workspacesv1.Workspace, 
 		if workMachine.Status.State != machinesv1.MachineStateRunning {
 			return fmt.Errorf("cannot delete workspace: WorkMachine '%s' is currently '%s'. Please start the WorkMachine before deleting workspaces to allow proper cleanup of workspace directories", workspace.Spec.WorkmachineName, workMachine.Status.State)
 		}
-
-		// Prevent deletion if workspace is being used as a clone source
-		if workspace.Status.SourceCloningStatus != nil {
-			return fmt.Errorf("cannot delete workspace: it is currently being used as a clone source by workspace '%s'. Please wait for cloning to complete", workspace.Status.SourceCloningStatus.TargetWorkspaceName)
-		}
 	}
 
-	// Validate clone source if copyFrom is specified
-	if workspace.Spec.CopyFrom != "" && operation == admissionv1.Create {
-		if err := w.validateCloneSource(ctx, workspace); err != nil {
-			return fmt.Errorf("invalid clone source: %w", err)
+	// Validate snapshot source if fromSnapshot is specified
+	if workspace.Spec.FromSnapshot != nil && operation == admissionv1.Create {
+		if err := w.validateSnapshotSource(ctx, workspace); err != nil {
+			return fmt.Errorf("invalid snapshot source: %w", err)
 		}
 	}
 
@@ -458,75 +454,24 @@ func validateWorkspaceSettings(settings *workspacesv1.WorkspaceSettings) error {
 	return nil
 }
 
-// validateCloneSource validates the clone source workspace
-func (w *WorkspaceWebhook) validateCloneSource(ctx context.Context, workspace *workspacesv1.Workspace) error {
-	copyFrom := workspace.Spec.CopyFrom
+// validateSnapshotSource validates the snapshot source for workspace creation
+func (w *WorkspaceWebhook) validateSnapshotSource(ctx context.Context, workspace *workspacesv1.Workspace) error {
+	snapshotName := workspace.Spec.FromSnapshot.SnapshotName
 
-	// Parse CopyFrom which can be either "name" (same namespace) or "namespace/name" (cross-namespace)
-	var sourceNamespace, sourceWorkspaceName string
-	if strings.Contains(copyFrom, "/") {
-		parts := strings.SplitN(copyFrom, "/", 2)
-		sourceNamespace = parts[0]
-		sourceWorkspaceName = parts[1]
-	} else {
-		// Legacy: same namespace clone
-		sourceNamespace = workspace.Namespace
-		sourceWorkspaceName = copyFrom
+	// Fetch the snapshot to validate it exists and is pushed
+	var snapshot snapshotv1.Snapshot
+	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: snapshotName}, &snapshot); err != nil {
+		return fmt.Errorf("snapshot '%s' not found", snapshotName)
 	}
 
-	// Fetch source workspace
-	var sourceWorkspace workspacesv1.Workspace
-	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspaceName, Namespace: sourceNamespace}, &sourceWorkspace); err != nil {
-		return fmt.Errorf("source workspace '%s' does not exist in namespace '%s'", sourceWorkspaceName, sourceNamespace)
+	// Validate snapshot is pushed to registry
+	if snapshot.Status.RegistryStatus == nil || !snapshot.Status.RegistryStatus.Pushed {
+		return fmt.Errorf("snapshot '%s' is not pushed to registry. Only pushed snapshots can be used to create workspaces", snapshotName)
 	}
 
-	// Validate source workspace is not being deleted
-	if sourceWorkspace.DeletionTimestamp != nil {
-		return fmt.Errorf("source workspace '%s' is being deleted and cannot be cloned", sourceWorkspaceName)
-	}
-
-	// Validate source workspace's WorkMachine exists and is running
-	var sourceWorkMachine machinesv1.WorkMachine
-	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceWorkspace.Spec.WorkmachineName}, &sourceWorkMachine); err != nil {
-		return fmt.Errorf("source workspace's WorkMachine '%s' does not exist", sourceWorkspace.Spec.WorkmachineName)
-	}
-
-	if sourceWorkMachine.Status.State != machinesv1.MachineStateRunning {
-		return fmt.Errorf("source workspace's WorkMachine '%s' is currently '%s'. WorkMachine must be running to clone workspace", sourceWorkspace.Spec.WorkmachineName, sourceWorkMachine.Status.State)
-	}
-
-	// Validate user has permission to clone based on visibility
-	cloningUser := workspace.Spec.OwnedBy
-	sourceOwner := sourceWorkspace.Spec.OwnedBy
-	sourceVisibility := string(sourceWorkspace.Spec.Visibility)
-	if sourceVisibility == "" {
-		sourceVisibility = "private"
-	}
-
-	hasAccess := false
-	switch sourceVisibility {
-	case "private":
-		// Only owner can clone private workspaces
-		hasAccess = (cloningUser == sourceOwner)
-	case "shared":
-		// Owner or users in SharedWith list can clone
-		if cloningUser == sourceOwner {
-			hasAccess = true
-		} else {
-			for _, sharedUser := range sourceWorkspace.Spec.SharedWith {
-				if sharedUser == cloningUser {
-					hasAccess = true
-					break
-				}
-			}
-		}
-	case "open":
-		// Anyone with a WorkMachine can clone open workspaces
-		hasAccess = true
-	}
-
-	if !hasAccess {
-		return fmt.Errorf("cannot clone workspace: you don't have access to this %s workspace", sourceVisibility)
+	// Validate snapshot type is workspace
+	if snapshot.Status.SnapshotType != snapshotv1.SnapshotTypeWorkspace {
+		return fmt.Errorf("snapshot '%s' is not a workspace snapshot", snapshotName)
 	}
 
 	return nil

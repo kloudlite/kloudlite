@@ -107,6 +107,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.Snapshots,
 		servicesManager.RepositoryManager.Environments,
 		servicesManager.RepositoryManager.Workspaces,
+		servicesManager.RepositoryManager.WorkMachines,
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
@@ -339,12 +340,17 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			snapshots := protected.Group("/snapshots")
 			{
 				snapshots.GET("", snapshotHandlers.ListAllSnapshots)
+				snapshots.GET("/pushed", snapshotHandlers.ListPushedSnapshots) // List pushed snapshots for cloning
 				snapshots.GET("/:name", snapshotHandlers.GetSnapshot)
 				snapshots.POST("/:name/restore", snapshotHandlers.RestoreSnapshot)
 				snapshots.POST("/:name/push", snapshotHandlers.PushSnapshot) // Push snapshot to registry
 				snapshots.DELETE("/:name", snapshotHandlers.DeleteSnapshot)
 				snapshots.POST("/pull", snapshotHandlers.PullSnapshot) // Pull snapshot from registry
 			}
+
+			// Create from snapshot routes
+			protected.POST("/workspaces/from-snapshot", snapshotHandlers.CreateWorkspaceFromSnapshot)
+			protected.POST("/environments/from-snapshot", snapshotHandlers.CreateEnvironmentFromSnapshot)
 		}
 
 		// VPN connection endpoints (public - used by kltun CLI)

@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
@@ -353,61 +354,22 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
-	// Prevent cloning from environment whose WorkMachine is stopped or user doesn't have access
-	if env.Spec.CloneFrom != "" && operation == admissionv1.Create {
-		// Fetch the source environment
-		var sourceEnv environmentsv1.Environment
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.CloneFrom}, &sourceEnv); err != nil {
-			return fmt.Errorf("source environment '%s' not found for cloning", env.Spec.CloneFrom)
+	// Validate snapshot exists and is pushed when fromSnapshot is set
+	if env.Spec.FromSnapshot != nil && operation == admissionv1.Create {
+		// Fetch the snapshot to validate it exists and is pushed
+		var snapshot snapshotv1.Snapshot
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.FromSnapshot.SnapshotName}, &snapshot); err != nil {
+			return fmt.Errorf("snapshot '%s' not found", env.Spec.FromSnapshot.SnapshotName)
 		}
 
-		// Check if user has access to clone the source environment
-		cloningUser := env.Spec.OwnedBy
-		sourceOwner := sourceEnv.Spec.OwnedBy
-		sourceVisibility := sourceEnv.Spec.Visibility
-		if sourceVisibility == "" {
-			sourceVisibility = "private"
+		// Validate snapshot is pushed to registry
+		if snapshot.Status.RegistryStatus == nil || !snapshot.Status.RegistryStatus.Pushed {
+			return fmt.Errorf("snapshot '%s' is not pushed to registry. Only pushed snapshots can be used to create environments", env.Spec.FromSnapshot.SnapshotName)
 		}
 
-		hasAccess := false
-		switch sourceVisibility {
-		case "private":
-			// Only the owner can clone a private environment
-			hasAccess = (cloningUser == sourceOwner)
-		case "shared":
-			// Owner or users in sharedWith list can clone
-			if cloningUser == sourceOwner {
-				hasAccess = true
-			} else {
-				for _, sharedUser := range sourceEnv.Spec.SharedWith {
-					if sharedUser == cloningUser {
-						hasAccess = true
-						break
-					}
-				}
-			}
-		case "open":
-			// Anyone can clone an open environment
-			hasAccess = true
-		}
-
-		if !hasAccess {
-			return fmt.Errorf("cannot clone environment '%s': you don't have access to this %s environment", env.Spec.CloneFrom, sourceVisibility)
-		}
-
-		// Check if source environment's WorkMachine is running
-		if sourceEnv.Spec.WorkMachineName != "" {
-			var sourceWorkMachine machinesv1.WorkMachine
-			if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: sourceEnv.Spec.WorkMachineName}, &sourceWorkMachine); err == nil {
-				// Check spec state
-				if sourceWorkMachine.Spec.State == "stopped" || sourceWorkMachine.Spec.State == "disabled" {
-					return fmt.Errorf("cannot clone from environment '%s': its WorkMachine '%s' is in '%s' state. Please start the WorkMachine first", env.Spec.CloneFrom, sourceEnv.Spec.WorkMachineName, sourceWorkMachine.Spec.State)
-				}
-				// Check runtime status
-				if sourceWorkMachine.Status.State == machinesv1.MachineStateStopped || sourceWorkMachine.Status.State == machinesv1.MachineStateStopping {
-					return fmt.Errorf("cannot clone from environment '%s': its WorkMachine '%s' is currently %s. Please start the WorkMachine and wait for it to be running", env.Spec.CloneFrom, sourceEnv.Spec.WorkMachineName, sourceWorkMachine.Status.State)
-				}
-			}
+		// Validate snapshot type is environment
+		if snapshot.Status.SnapshotType != snapshotv1.SnapshotTypeEnvironment {
+			return fmt.Errorf("snapshot '%s' is not an environment snapshot", env.Spec.FromSnapshot.SnapshotName)
 		}
 	}
 
@@ -496,20 +458,15 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 			return fmt.Errorf("cannot delete an activated environment, please deactivate it first")
 		}
 
-		// Fetch current environment to check cloning status
+		// Fetch current environment to check restore status
 		var currentEnv environmentsv1.Environment
 		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Name}, &currentEnv); err == nil {
-			// Check if environment is being cloned TO
-			if currentEnv.Status.CloningStatus != nil {
-				phase := currentEnv.Status.CloningStatus.Phase
-				if phase != "Completed" && phase != "Failed" {
-					return fmt.Errorf("cannot delete environment during cloning. Current phase: %s. Please wait for cloning to complete or fail", phase)
+			// Check if environment is being restored from snapshot
+			if currentEnv.Status.SnapshotRestoreStatus != nil {
+				phase := currentEnv.Status.SnapshotRestoreStatus.Phase
+				if phase != environmentsv1.SnapshotRestorePhaseCompleted && phase != environmentsv1.SnapshotRestorePhaseFailed {
+					return fmt.Errorf("cannot delete environment during snapshot restore. Current phase: %s. Please wait for restore to complete or fail", phase)
 				}
-			}
-
-			// Check if environment is being cloned FROM (used as source)
-			if currentEnv.Status.SourceCloningStatus != nil {
-				return fmt.Errorf("cannot delete environment while it's being used as cloning source for: %s. Please wait for cloning to complete", currentEnv.Status.SourceCloningStatus.TargetEnvironmentName)
 			}
 		}
 	}

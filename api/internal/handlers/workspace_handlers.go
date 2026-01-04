@@ -603,85 +603,14 @@ func (h *WorkspaceHandlers) ArchiveWorkspace(c *gin.Context) {
 }
 
 // CloneWorkspace handles POST /api/v1/namespaces/:namespace/workspaces/:name/clone
+// DEPRECATED: Direct workspace cloning is no longer supported. Use snapshot-based cloning instead.
 func (h *WorkspaceHandlers) CloneWorkspace(c *gin.Context) {
-	namespace := c.Param("namespace")
-	sourceWorkspaceName := c.Param("name")
-
-	if namespace == "" {
-		namespace = "default"
-	}
-
-	var req struct {
-		Name string                     `json:"name" binding:"required"`
-		Spec workspacesv1.WorkspaceSpec `json:"spec" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Failed to parse clone workspace request", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	username, _, _, exists := middleware.GetUserFromContext(c)
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
-
-	// Verify source workspace exists
-	sourceWorkspace, err := h.wsRepo.Get(c.Request.Context(), namespace, sourceWorkspaceName)
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Source workspace not found"})
-			return
-		}
-		h.logger.Error("Failed to get source workspace", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get source workspace", "details": err.Error()})
-		return
-	}
-
-	// Check visibility-based access (not just ownership)
-	if !UserHasAccessToWorkspace(username, sourceWorkspace) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to clone this workspace"})
-		return
-	}
-
-	// Clone goes to the cloning user's WorkMachine namespace (not source namespace)
-	clonerWorkMachine, err := h.wmRepo.GetByOwner(c.Request.Context(), username)
-	if err != nil {
-		h.logger.Error("Failed to get cloner's WorkMachine", zap.String("username", username), zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{"error": "You don't have a WorkMachine to clone to"})
-		return
-	}
-
-	h.logger.Info("Cloning workspace",
-		zap.String("source", fmt.Sprintf("%s/%s", namespace, sourceWorkspaceName)),
-		zap.String("target", req.Name),
-		zap.String("targetNamespace", clonerWorkMachine.Spec.TargetNamespace))
-
-	// Create new workspace with CopyFrom set in user's own namespace
-	newWorkspace := &workspacesv1.Workspace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      req.Name,
-			Namespace: clonerWorkMachine.Spec.TargetNamespace, // User's own namespace
-		},
-		Spec: req.Spec,
-	}
-
-	newWorkspace.Spec.CopyFrom = fmt.Sprintf("%s/%s", namespace, sourceWorkspaceName) // Full reference
-	newWorkspace.Spec.OwnedBy = username
-	newWorkspace.Spec.WorkmachineName = clonerWorkMachine.Name
-
-	if err := h.wsRepo.Create(c.Request.Context(), newWorkspace); err != nil {
-		h.logger.Error("Failed to create cloned workspace", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cloned workspace", "details": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, newWorkspace)
+	// Cloning via direct PVC copy is no longer supported
+	// Use snapshot-based cloning instead: push a snapshot and create workspace from it
+	c.JSON(http.StatusGone, gin.H{
+		"error":   "Direct workspace cloning is no longer supported",
+		"message": "Please use snapshot-based cloning: create a snapshot, push it to the registry, then create a new workspace from the pushed snapshot.",
+	})
 }
 
 // WorkspaceMetrics represents CPU and memory metrics for a workspace

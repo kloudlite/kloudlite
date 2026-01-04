@@ -113,11 +113,12 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		}
 	}
 
-	// Check if cloning is requested
-	if environment.Spec.CloneFrom != "" {
-		logger.Info("Cloning requested from source environment",
-			zap.String("source", environment.Spec.CloneFrom))
-		return r.handleCloning(ctx, environment, logger)
+	// Handle environment creation from snapshot if fromSnapshot is set
+	// Snapshot restore takes precedence over normal environment reconciliation
+	if environment.Spec.FromSnapshot != nil {
+		logger.Info("Environment has fromSnapshot set, handling snapshot restore",
+			zap.String("snapshotName", environment.Spec.FromSnapshot.SnapshotName))
+		return r.handleSnapshotRestore(ctx, environment, logger)
 	}
 
 	// Note: TargetNamespace is always set by the mutation webhook.
