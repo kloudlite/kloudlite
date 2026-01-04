@@ -161,6 +161,18 @@ func (r *SnapshotRequestReconciler) createSnapshot(req *snapshotv1.SnapshotReque
 		return fmt.Errorf("failed to create parent directory: %s - %w", string(output), err)
 	}
 
+	// Write metadata files if provided (for environment snapshots)
+	if req.Spec.Metadata != nil {
+		metadataBasePath := req.Spec.MetadataPath
+		if metadataBasePath == "" {
+			metadataBasePath = snapshotPath
+		}
+		if err := r.writeMetadataFiles(metadataBasePath, req.Spec.Metadata, logger); err != nil {
+			logger.Warn("Failed to write metadata files during create", zap2.Error(err))
+			// Continue with snapshot creation even if metadata writing fails
+		}
+	}
+
 	// Check if source is a btrfs subvolume
 	checkScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", sourcePath)
 	if _, err := r.CmdExec.Execute(checkScript); err != nil {
