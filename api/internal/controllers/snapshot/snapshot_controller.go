@@ -71,6 +71,19 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req reconcile.Reques
 	case snapshotv1.SnapshotStateCreating:
 		return r.handleCreating(ctx, snapshot, logger)
 	case snapshotv1.SnapshotStateReady:
+		// Check if autoPush is enabled and snapshot not yet pushed
+		if snapshot.Spec.RegistryRef != nil && snapshot.Spec.RegistryRef.AutoPush {
+			if snapshot.Status.RegistryStatus == nil || !snapshot.Status.RegistryStatus.Pushed {
+				logger.Info("AutoPush enabled, transitioning to Pushing state")
+				snapshot.Status.State = snapshotv1.SnapshotStatePushing
+				snapshot.Status.Message = "Starting push to registry..."
+				if err := r.Status().Update(ctx, snapshot); err != nil {
+					logger.Error("Failed to update state to Pushing", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+				return reconcile.Result{Requeue: true}, nil
+			}
+		}
 		return reconcile.Result{}, nil
 	case snapshotv1.SnapshotStateRestoring:
 		return r.handleRestoring(ctx, snapshot, logger)
