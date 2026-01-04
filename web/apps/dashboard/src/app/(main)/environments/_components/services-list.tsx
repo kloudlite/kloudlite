@@ -235,8 +235,9 @@ export function ServicesList({
         </div>
       </div>
 
-      {/* Service Logs Viewer */}
+      {/* Service Logs Viewer - key forces remount when service changes */}
       <ServiceLogsViewer
+        key={`${namespace}-${logsService}`}
         serviceName={logsService || ''}
         namespace={namespace}
         isOpen={!!logsService}
