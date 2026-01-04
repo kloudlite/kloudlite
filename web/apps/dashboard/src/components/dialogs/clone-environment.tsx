@@ -261,7 +261,7 @@ export function CloneEnvironmentDialog({
                                 {snapshot.status.registryStatus?.tag || snapshot.metadata.name}
                               </span>
                               <span className="text-muted-foreground text-xs">
-                                Source: {snapshot.status.targetName} | Size: {snapshot.status.sizeHuman || 'N/A'}
+                                Source: {snapshot.spec.ownedBy}/{snapshot.status.targetName} | Size: {snapshot.status.sizeHuman || 'N/A'}
                                 {snapshot.status.registryStatus?.pushedAt && (
                                   <> | Pushed: {formatDate(snapshot.status.registryStatus.pushedAt)}</>
                                 )}
@@ -282,8 +282,7 @@ export function CloneEnvironmentDialog({
                 <div className="text-sm font-medium">Snapshot Details</div>
                 <div className="text-muted-foreground text-xs space-y-1">
                   <div>Tag: {selectedSnapshot.status.registryStatus?.tag || 'N/A'}</div>
-                  <div>Source: {selectedSnapshot.status.targetName}</div>
-                  <div>Owner: {selectedSnapshot.spec.ownedBy}</div>
+                  <div>Source: {selectedSnapshot.spec.ownedBy}/{selectedSnapshot.status.targetName}</div>
                   <div>Size: {selectedSnapshot.status.sizeHuman || 'N/A'}</div>
                 </div>
               </div>
