@@ -198,10 +198,19 @@ func (r *SnapshotReconciler) relinkChildSnapshots(ctx context.Context, snapshot 
 }
 
 // checkSnapshotRequestsComplete checks if all SnapshotRequests for a Snapshot are complete
-func (r *SnapshotReconciler) checkSnapshotRequestsComplete(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (bool, error) {
+// expectedCount is the minimum number of SnapshotRequests expected (to handle cache sync issues)
+func (r *SnapshotReconciler) checkSnapshotRequestsComplete(ctx context.Context, snapshot *snapshotv1.Snapshot, expectedCount int, logger *zap.Logger) (bool, error) {
 	snapshotReqList := &snapshotv1.SnapshotRequestList{}
 	if err := r.List(ctx, snapshotReqList, client.MatchingLabels{"snapshots.kloudlite.io/snapshot": snapshot.Name}); err != nil {
 		return false, err
+	}
+
+	// If we haven't seen all expected SnapshotRequests yet, wait for cache to sync
+	if len(snapshotReqList.Items) < expectedCount {
+		logger.Info("Waiting for SnapshotRequests to appear in cache",
+			zap.Int("found", len(snapshotReqList.Items)),
+			zap.Int("expected", expectedCount))
+		return false, nil
 	}
 
 	for _, req := range snapshotReqList.Items {

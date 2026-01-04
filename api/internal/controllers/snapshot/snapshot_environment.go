@@ -225,7 +225,8 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	}
 
 	// Check if all SnapshotRequests are complete
-	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, logger)
+	// Pass expected count to handle cache sync issues
+	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, len(pvcSnapshots), logger)
 	if err != nil {
 		logger.Error("Failed to check SnapshotRequest status", zap.Error(err))
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
