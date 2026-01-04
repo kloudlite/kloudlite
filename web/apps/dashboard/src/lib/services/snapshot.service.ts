@@ -48,6 +48,7 @@ export interface Snapshot {
     registryStatus?: {
       pushed: boolean
       pushedAt?: string
+      tag?: string
       imageRef?: string
       digest?: string
       layerDigests?: string[]
