@@ -2699,11 +2699,18 @@ spec:
                     description: PushedAt is when the snapshot was pushed
                     format: date-time
                     type: string
+                  tag:
+                    description: Tag is the image tag used in the registry
+                    type: string
                 type: object
               resourceMetadata:
                 description: ResourceMetadata tracks captured K8s resources (for environment
                   snapshots)
                 properties:
+                  compositions:
+                    description: Compositions count
+                    format: int32
+                    type: integer
                   configMaps:
                     description: ConfigMaps count
                     format: int32
@@ -2725,6 +2732,7 @@ spec:
                     format: int32
                     type: integer
                 required:
+                - compositions
                 - configMaps
                 - deployments
                 - secrets
