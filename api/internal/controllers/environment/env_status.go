@@ -87,4 +87,3 @@ func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1
 		environment.Status.Conditions = append(environment.Status.Conditions, newCondition)
 	}
 }
-
