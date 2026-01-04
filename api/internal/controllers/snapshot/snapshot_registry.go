@@ -128,6 +128,7 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 				Tag:          tag,
 				ParentLayers: parentLayers,
 			},
+			Metadata: snapshot.Status.CollectedMetadata,
 		},
 	}
 

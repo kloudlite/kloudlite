@@ -55,6 +55,30 @@ spec:
                 description: EnvironmentName is the environment being snapshotted
                   (for environment snapshots)
                 type: string
+              metadata:
+                description: |-
+                  Metadata contains K8s resource metadata to write to the snapshot directory
+                  This is used for environment snapshots to include ConfigMaps, Secrets, Deployments, etc.
+                properties:
+                  compositions:
+                    description: Compositions JSON
+                    type: string
+                  configMaps:
+                    description: ConfigMaps JSON
+                    type: string
+                  deployments:
+                    description: Deployments JSON
+                    type: string
+                  secrets:
+                    description: Secrets JSON
+                    type: string
+                  services:
+                    description: Services JSON
+                    type: string
+                  statefulSets:
+                    description: StatefulSets JSON
+                    type: string
+                type: object
               operation:
                 description: Operation is the type of operation to perform
                 enum:

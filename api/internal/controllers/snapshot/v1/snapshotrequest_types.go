@@ -80,6 +80,38 @@ type SnapshotRequestSpec struct {
 	// RegistryRef contains registry configuration for push/pull operations
 	// +optional
 	RegistryRef *SnapshotRequestRegistryRef `json:"registryRef,omitempty"`
+
+	// Metadata contains K8s resource metadata to write to the snapshot directory
+	// This is used for environment snapshots to include ConfigMaps, Secrets, Deployments, etc.
+	// +optional
+	Metadata *SnapshotMetadata `json:"metadata,omitempty"`
+}
+
+// SnapshotMetadata contains K8s resource metadata as JSON strings
+type SnapshotMetadata struct {
+	// ConfigMaps JSON
+	// +optional
+	ConfigMaps string `json:"configMaps,omitempty"`
+
+	// Secrets JSON
+	// +optional
+	Secrets string `json:"secrets,omitempty"`
+
+	// Deployments JSON
+	// +optional
+	Deployments string `json:"deployments,omitempty"`
+
+	// Services JSON
+	// +optional
+	Services string `json:"services,omitempty"`
+
+	// StatefulSets JSON
+	// +optional
+	StatefulSets string `json:"statefulSets,omitempty"`
+
+	// Compositions JSON
+	// +optional
+	Compositions string `json:"compositions,omitempty"`
 }
 
 // SnapshotRequestRegistryRef contains registry configuration for push/pull

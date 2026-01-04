@@ -158,6 +158,29 @@ spec:
           status:
             description: SnapshotStatus defines the observed state of Snapshot
             properties:
+              collectedMetadata:
+                description: CollectedMetadata stores the collected K8s resource JSON
+                  for push operations
+                properties:
+                  compositions:
+                    description: Compositions JSON
+                    type: string
+                  configMaps:
+                    description: ConfigMaps JSON
+                    type: string
+                  deployments:
+                    description: Deployments JSON
+                    type: string
+                  secrets:
+                    description: Secrets JSON
+                    type: string
+                  services:
+                    description: Services JSON
+                    type: string
+                  statefulSets:
+                    description: StatefulSets JSON
+                    type: string
+                type: object
               createdAt:
                 description: CreatedAt is when the snapshot was successfully created
                 format: date-time

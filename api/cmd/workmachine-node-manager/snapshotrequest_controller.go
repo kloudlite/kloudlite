@@ -328,6 +328,14 @@ func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest
 		return nil, fmt.Errorf("snapshot path does not exist: %s", snapshotPath)
 	}
 
+	// Write metadata files if provided
+	if req.Spec.Metadata != nil {
+		if err := r.writeMetadataFiles(snapshotPath, req.Spec.Metadata, logger); err != nil {
+			logger.Warn("Failed to write metadata files", zap2.Error(err))
+			// Continue with push even if metadata writing fails
+		}
+	}
+
 	// Build metadata from the SnapshotRequest
 	// In a real implementation, we'd fetch the actual Snapshot resource
 	// For now, we use basic metadata from the request
@@ -437,6 +445,58 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 		)
 	}
 
+	return nil
+}
+
+// writeMetadataFiles writes K8s resource metadata JSON files to the snapshot directory
+func (r *SnapshotRequestReconciler) writeMetadataFiles(snapshotPath string, metadata *snapshotv1.SnapshotMetadata, logger *zap2.Logger) error {
+	metadataDir := filepath.Join(snapshotPath, "metadata")
+
+	// Create metadata directory
+	mkdirScript := fmt.Sprintf("mkdir -p %s", metadataDir)
+	if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
+		return fmt.Errorf("failed to create metadata directory: %s - %w", string(output), err)
+	}
+
+	logger.Info("Writing metadata files", zap2.String("dir", metadataDir))
+
+	// Write each metadata file using cat with heredoc
+	writeFile := func(filename, content string) error {
+		if content == "" {
+			return nil
+		}
+		filePath := filepath.Join(metadataDir, filename)
+		// Use printf to handle special characters properly
+		// First write to a temp file, then move it
+		script := fmt.Sprintf("cat > %s << 'METADATA_EOF'\n%s\nMETADATA_EOF", filePath, content)
+		if output, err := r.CmdExec.Execute(script); err != nil {
+			return fmt.Errorf("failed to write %s: %s - %w", filename, string(output), err)
+		}
+		logger.Info("Wrote metadata file", zap2.String("file", filename))
+		return nil
+	}
+
+	// Write all metadata files
+	if err := writeFile("configmaps.json", metadata.ConfigMaps); err != nil {
+		return err
+	}
+	if err := writeFile("secrets.json", metadata.Secrets); err != nil {
+		return err
+	}
+	if err := writeFile("deployments.json", metadata.Deployments); err != nil {
+		return err
+	}
+	if err := writeFile("services.json", metadata.Services); err != nil {
+		return err
+	}
+	if err := writeFile("statefulsets.json", metadata.StatefulSets); err != nil {
+		return err
+	}
+	if err := writeFile("compositions.json", metadata.Compositions); err != nil {
+		return err
+	}
+
+	logger.Info("Metadata files written successfully")
 	return nil
 }
 
