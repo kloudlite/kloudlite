@@ -325,7 +325,7 @@ export function ServiceLogsViewer({
     }
   }, [isPaused, scrollToBottom])
 
-  // Clear logs when closed
+  // Clear logs when closed or when service changes
   useEffect(() => {
     if (!isOpen) {
       setLogs([])
@@ -333,6 +333,13 @@ export function ServiceLogsViewer({
       idCounterRef.current = 0
     }
   }, [isOpen])
+
+  // Clear logs when service or namespace changes
+  useEffect(() => {
+    setLogs([])
+    pausedLogsRef.current = []
+    idCounterRef.current = 0
+  }, [serviceName, namespace])
 
   // Filter logs
   const filteredLogs = useMemo(() => {
