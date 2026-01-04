@@ -175,8 +175,8 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 		}
 	}
 
-	// Check if SnapshotRequest is complete
-	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, logger)
+	// Check if SnapshotRequest is complete (workspace has 1 SnapshotRequest for home directory)
+	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, 1, logger)
 	if err != nil {
 		logger.Error("Failed to check SnapshotRequest status", zap.Error(err))
 		return r.handleWorkspaceSnapshotFailure(ctx, snapshot, fmt.Sprintf("SnapshotRequest failed: %v", err), logger)
