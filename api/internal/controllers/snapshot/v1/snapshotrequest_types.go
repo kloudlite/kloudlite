@@ -85,6 +85,11 @@ type SnapshotRequestSpec struct {
 	// This is used for environment snapshots to include ConfigMaps, Secrets, Deployments, etc.
 	// +optional
 	Metadata *SnapshotMetadata `json:"metadata,omitempty"`
+
+	// MetadataPath is the base path where metadata should be written
+	// This is separate from SnapshotPath when metadata needs to go to a parent directory
+	// +optional
+	MetadataPath string `json:"metadataPath,omitempty"`
 }
 
 // SnapshotMetadata contains K8s resource metadata as JSON strings

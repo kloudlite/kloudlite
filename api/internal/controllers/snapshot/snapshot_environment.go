@@ -127,8 +127,23 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to list PVCs: %v", err), logger)
 	}
 
+	// Collect K8s metadata FIRST (before creating PVC snapshots)
+	// This ensures metadata is available for all SnapshotRequests
+	var resourceMetadata *snapshotv1.ResourceMetadataInfo
+	var snapshotMetadata *snapshotv1.SnapshotMetadata
+	if snapshot.Spec.IncludeMetadata {
+		exported, err := r.exportMetadata(ctx, namespace, logger)
+		if err != nil {
+			logger.Warn("Failed to collect metadata, continuing anyway", zap.Error(err))
+		} else if exported != nil {
+			resourceMetadata = exported.Info
+			snapshotMetadata = exported.Metadata
+		}
+	}
+
 	// Create SnapshotRequest for each PVC
 	var pvcSnapshots []snapshotv1.PVCSnapshotInfo
+	isFirstPVC := true
 	for _, pvc := range pvcList.Items {
 		// Get the actual PV path from the PersistentVolume
 		pvName := pvc.Spec.VolumeName
@@ -176,6 +191,15 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 			},
 		}
 
+		// Include metadata in the FIRST PVC snapshot request
+		// The host-manager will write it to the snapshot's metadata directory
+		if isFirstPVC && snapshotMetadata != nil {
+			snapshotReq.Spec.Metadata = snapshotMetadata
+			// Set the base snapshot path for metadata (not the PVC-specific path)
+			snapshotReq.Spec.MetadataPath = snapshotPath
+			isFirstPVC = false
+		}
+
 		// Set owner reference
 		if err := controllerutil.SetControllerReference(snapshot, snapshotReq, r.Scheme); err != nil {
 			logger.Error("Failed to set owner reference", zap.Error(err))
@@ -198,19 +222,6 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 			SnapshotPath: pvcSnapshotPath,
 			SourcePath:   sourcePath,
 		})
-	}
-
-	// Collect K8s metadata if requested
-	var resourceMetadata *snapshotv1.ResourceMetadataInfo
-	var snapshotMetadata *snapshotv1.SnapshotMetadata
-	if snapshot.Spec.IncludeMetadata {
-		exported, err := r.exportMetadata(ctx, namespace, logger)
-		if err != nil {
-			logger.Warn("Failed to collect metadata, continuing anyway", zap.Error(err))
-		} else if exported != nil {
-			resourceMetadata = exported.Info
-			snapshotMetadata = exported.Metadata
-		}
 	}
 
 	// Check if all SnapshotRequests are complete
