@@ -267,6 +267,9 @@ type ResourceMetadataInfo struct {
 
 	// StatefulSets count
 	StatefulSets int32 `json:"statefulSets"`
+
+	// Compositions count
+	Compositions int32 `json:"compositions"`
 }
 
 // SnapshotRegistryStatus tracks the snapshot's registry push status
@@ -277,6 +280,10 @@ type SnapshotRegistryStatus struct {
 	// PushedAt is when the snapshot was pushed
 	// +optional
 	PushedAt *metav1.Time `json:"pushedAt,omitempty"`
+
+	// Tag is the image tag used in the registry
+	// +optional
+	Tag string `json:"tag,omitempty"`
 
 	// ImageRef is the full image reference (registry/repo:tag)
 	// +optional

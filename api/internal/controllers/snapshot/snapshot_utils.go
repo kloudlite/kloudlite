@@ -328,12 +328,22 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snap
 		}
 	}
 
+	// Export Compositions
+	compositions := &environmentsv1.CompositionList{}
+	if err := r.List(ctx, compositions, client.InNamespace(namespace)); err == nil {
+		info.Compositions = int32(len(compositions.Items))
+		if err := exportToJSON(filepath.Join(metadataPath, "compositions.json"), compositions); err != nil {
+			logger.Warn("Failed to export Compositions", zap.Error(err))
+		}
+	}
+
 	logger.Info("Exported metadata",
 		zap.Int32("configMaps", info.ConfigMaps),
 		zap.Int32("secrets", info.Secrets),
 		zap.Int32("deployments", info.Deployments),
 		zap.Int32("services", info.Services),
-		zap.Int32("statefulSets", info.StatefulSets))
+		zap.Int32("statefulSets", info.StatefulSets),
+		zap.Int32("compositions", info.Compositions))
 
 	return info, nil
 }

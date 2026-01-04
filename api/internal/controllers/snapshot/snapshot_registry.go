@@ -82,6 +82,7 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 					snapshot.Status.RegistryStatus = &snapshotv1.SnapshotRegistryStatus{
 						Pushed:         true,
 						PushedAt:       &now,
+						Tag:            tag,
 						ImageRef:       fmt.Sprintf("image-registry:5000/%s:%s", repository, tag),
 						Digest:         req.Status.Digest,
 						LayerDigests:   req.Status.LayerDigests,

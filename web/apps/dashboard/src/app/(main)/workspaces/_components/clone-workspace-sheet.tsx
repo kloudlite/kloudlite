@@ -200,7 +200,7 @@ export function CloneWorkspaceSheet({
                     ) : selectedSnapshot ? (
                       <span className="flex items-center gap-2">
                         <Camera className="h-4 w-4" />
-                        {selectedSnapshot.status.targetName || selectedSnapshot.metadata.name}
+                        {selectedSnapshot.status.registryStatus?.tag || selectedSnapshot.metadata.name}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">Select a snapshot...</span>
@@ -242,10 +242,10 @@ export function CloneWorkspaceSheet({
                             />
                             <div className="flex flex-col">
                               <span className="font-medium">
-                                {snapshot.status.targetName || snapshot.metadata.name}
+                                {snapshot.status.registryStatus?.tag || snapshot.metadata.name}
                               </span>
                               <span className="text-muted-foreground text-xs">
-                                Owner: {snapshot.spec.ownedBy} | Size: {snapshot.status.sizeHuman || 'N/A'}
+                                Source: {snapshot.status.targetName} | Size: {snapshot.status.sizeHuman || 'N/A'}
                                 {snapshot.status.registryStatus?.pushedAt && (
                                   <> | Pushed: {formatDate(snapshot.status.registryStatus.pushedAt)}</>
                                 )}
@@ -265,6 +265,7 @@ export function CloneWorkspaceSheet({
               <div className="bg-muted space-y-2 rounded-lg p-4">
                 <div className="text-sm font-medium">Snapshot Details</div>
                 <div className="text-muted-foreground text-xs space-y-1">
+                  <div>Tag: {selectedSnapshot.status.registryStatus?.tag || 'N/A'}</div>
                   <div>Source: {selectedSnapshot.status.targetName}</div>
                   <div>Owner: {selectedSnapshot.spec.ownedBy}</div>
                   <div>Size: {selectedSnapshot.status.sizeHuman || 'N/A'}</div>

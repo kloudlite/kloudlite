@@ -231,7 +231,19 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// All snapshots complete - calculate total size
+	// All snapshots complete - get sizes from completed SnapshotRequests
+	snapshotReqNamespace := fmt.Sprintf("wm-%s", env.Spec.OwnedBy)
+	for i, pvcInfo := range pvcSnapshots {
+		snapshotReqName := fmt.Sprintf("%s-%s", snapshot.Name, pvcInfo.PVCName)
+		snapshotReq := &snapshotv1.SnapshotRequest{}
+		if err := r.Get(ctx, client.ObjectKey{Name: snapshotReqName, Namespace: snapshotReqNamespace}, snapshotReq); err == nil {
+			pvcSnapshots[i].SizeBytes = snapshotReq.Status.SizeBytes
+		} else {
+			logger.Warn("Failed to get SnapshotRequest for size", zap.String("name", snapshotReqName), zap.Error(err))
+		}
+	}
+
+	// Calculate total size
 	var totalSize int64
 	for _, pvcInfo := range pvcSnapshots {
 		totalSize += pvcInfo.SizeBytes

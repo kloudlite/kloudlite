@@ -364,6 +364,11 @@ func (r *EnvironmentReconciler) restoreResourcesFromSnapshot(
 		logger.Warn("Failed to restore Services", zap.Error(err))
 	}
 
+	// Restore Compositions
+	if err := r.restoreCompositions(ctx, metadataPath, targetNamespace, logger); err != nil {
+		logger.Warn("Failed to restore Compositions", zap.Error(err))
+	}
+
 	return nil
 }
 
@@ -639,6 +644,52 @@ func (r *EnvironmentReconciler) restoreServices(
 	}
 
 	logger.Info("Restored Services", zap.Int("count", restored))
+	return nil
+}
+
+// restoreCompositions restores Compositions from snapshot metadata
+func (r *EnvironmentReconciler) restoreCompositions(
+	ctx context.Context,
+	metadataPath, targetNamespace string,
+	logger *zap.Logger,
+) error {
+	filePath := filepath.Join(metadataPath, "compositions.json")
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil // No compositions to restore
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read compositions.json: %w", err)
+	}
+
+	var compositionList environmentsv1.CompositionList
+	if err := json.Unmarshal(data, &compositionList); err != nil {
+		return fmt.Errorf("failed to parse compositions.json: %w", err)
+	}
+
+	restored := 0
+	for _, comp := range compositionList.Items {
+		newComp := &environmentsv1.Composition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        comp.Name,
+				Namespace:   targetNamespace,
+				Labels:      comp.Labels,
+				Annotations: comp.Annotations,
+			},
+			Spec: comp.Spec,
+		}
+
+		if err := r.Create(ctx, newComp); err != nil {
+			if !apierrors.IsAlreadyExists(err) {
+				logger.Warn("Failed to create Composition", zap.String("name", comp.Name), zap.Error(err))
+				continue
+			}
+		}
+		restored++
+	}
+
+	logger.Info("Restored Compositions", zap.Int("count", restored))
 	return nil
 }
 
