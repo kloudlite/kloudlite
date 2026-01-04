@@ -193,6 +193,8 @@ export function useWebSocket<T = unknown>(
 
   useEffect(() => {
     if (!enabled || !url) {
+      // Cleanup when disabled or no URL
+      cleanup()
       setIsConnected(false)
       return
     }
