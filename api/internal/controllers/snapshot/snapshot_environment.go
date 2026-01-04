@@ -200,13 +200,16 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		})
 	}
 
-	// Export K8s metadata if requested
+	// Collect K8s metadata if requested
 	var resourceMetadata *snapshotv1.ResourceMetadataInfo
+	var snapshotMetadata *snapshotv1.SnapshotMetadata
 	if snapshot.Spec.IncludeMetadata {
-		var err error
-		resourceMetadata, err = r.exportMetadata(ctx, namespace, snapshotPath, logger)
+		exported, err := r.exportMetadata(ctx, namespace, logger)
 		if err != nil {
-			logger.Warn("Failed to export metadata, continuing anyway", zap.Error(err))
+			logger.Warn("Failed to collect metadata, continuing anyway", zap.Error(err))
+		} else if exported != nil {
+			resourceMetadata = exported.Info
+			snapshotMetadata = exported.Metadata
 		}
 	}
 
@@ -267,6 +270,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		snapshot.Status.CreatedAt = &now
 		snapshot.Status.PVCSnapshots = pvcSnapshots
 		snapshot.Status.ResourceMetadata = resourceMetadata
+		snapshot.Status.CollectedMetadata = snapshotMetadata
 		return nil
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Ready", zap.Error(err))

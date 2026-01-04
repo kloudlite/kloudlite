@@ -214,6 +214,10 @@ type SnapshotStatus struct {
 	// +optional
 	ResourceMetadata *ResourceMetadataInfo `json:"resourceMetadata,omitempty"`
 
+	// CollectedMetadata stores the collected K8s resource JSON for push operations
+	// +optional
+	CollectedMetadata *SnapshotMetadata `json:"collectedMetadata,omitempty"`
+
 	// WorkspaceName is the name of the snapshotted workspace (for workspace snapshots)
 	// +optional
 	WorkspaceName string `json:"workspaceName,omitempty"`

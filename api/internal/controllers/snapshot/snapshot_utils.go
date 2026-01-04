@@ -265,23 +265,25 @@ func (r *SnapshotReconciler) checkRestoreRequestsComplete(ctx context.Context, s
 	return true, nil
 }
 
-// exportMetadata exports K8s resources to JSON files
-func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snapshotPath string, logger *zap.Logger) (*snapshotv1.ResourceMetadataInfo, error) {
-	metadataPath := filepath.Join(snapshotPath, "metadata")
+// ExportedMetadata contains both the resource info counts and the JSON data
+type ExportedMetadata struct {
+	Info     *snapshotv1.ResourceMetadataInfo
+	Metadata *snapshotv1.SnapshotMetadata
+}
 
-	// Create metadata directory
-	if err := createDir(metadataPath); err != nil {
-		return nil, fmt.Errorf("failed to create metadata directory: %w", err)
-	}
-
+// exportMetadata collects K8s resources as JSON strings to be passed to SnapshotRequest
+func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace string, logger *zap.Logger) (*ExportedMetadata, error) {
 	info := &snapshotv1.ResourceMetadataInfo{}
+	metadata := &snapshotv1.SnapshotMetadata{}
 
 	// Export ConfigMaps
 	configMaps := &corev1.ConfigMapList{}
 	if err := r.List(ctx, configMaps, client.InNamespace(namespace)); err == nil {
 		info.ConfigMaps = int32(len(configMaps.Items))
-		if err := exportToJSON(filepath.Join(metadataPath, "configmaps.json"), configMaps); err != nil {
-			logger.Warn("Failed to export ConfigMaps", zap.Error(err))
+		if data, err := json.Marshal(configMaps); err == nil {
+			metadata.ConfigMaps = string(data)
+		} else {
+			logger.Warn("Failed to marshal ConfigMaps", zap.Error(err))
 		}
 	}
 
@@ -296,8 +298,10 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snap
 			}
 		}
 		info.Secrets = int32(len(filtered))
-		if err := exportToJSON(filepath.Join(metadataPath, "secrets.json"), filtered); err != nil {
-			logger.Warn("Failed to export Secrets", zap.Error(err))
+		if data, err := json.Marshal(filtered); err == nil {
+			metadata.Secrets = string(data)
+		} else {
+			logger.Warn("Failed to marshal Secrets", zap.Error(err))
 		}
 	}
 
@@ -305,8 +309,10 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snap
 	deployments := &appsv1.DeploymentList{}
 	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err == nil {
 		info.Deployments = int32(len(deployments.Items))
-		if err := exportToJSON(filepath.Join(metadataPath, "deployments.json"), deployments); err != nil {
-			logger.Warn("Failed to export Deployments", zap.Error(err))
+		if data, err := json.Marshal(deployments); err == nil {
+			metadata.Deployments = string(data)
+		} else {
+			logger.Warn("Failed to marshal Deployments", zap.Error(err))
 		}
 	}
 
@@ -314,8 +320,10 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snap
 	services := &corev1.ServiceList{}
 	if err := r.List(ctx, services, client.InNamespace(namespace)); err == nil {
 		info.Services = int32(len(services.Items))
-		if err := exportToJSON(filepath.Join(metadataPath, "services.json"), services); err != nil {
-			logger.Warn("Failed to export Services", zap.Error(err))
+		if data, err := json.Marshal(services); err == nil {
+			metadata.Services = string(data)
+		} else {
+			logger.Warn("Failed to marshal Services", zap.Error(err))
 		}
 	}
 
@@ -323,8 +331,10 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snap
 	statefulSets := &appsv1.StatefulSetList{}
 	if err := r.List(ctx, statefulSets, client.InNamespace(namespace)); err == nil {
 		info.StatefulSets = int32(len(statefulSets.Items))
-		if err := exportToJSON(filepath.Join(metadataPath, "statefulsets.json"), statefulSets); err != nil {
-			logger.Warn("Failed to export StatefulSets", zap.Error(err))
+		if data, err := json.Marshal(statefulSets); err == nil {
+			metadata.StatefulSets = string(data)
+		} else {
+			logger.Warn("Failed to marshal StatefulSets", zap.Error(err))
 		}
 	}
 
@@ -332,12 +342,14 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snap
 	compositions := &environmentsv1.CompositionList{}
 	if err := r.List(ctx, compositions, client.InNamespace(namespace)); err == nil {
 		info.Compositions = int32(len(compositions.Items))
-		if err := exportToJSON(filepath.Join(metadataPath, "compositions.json"), compositions); err != nil {
-			logger.Warn("Failed to export Compositions", zap.Error(err))
+		if data, err := json.Marshal(compositions); err == nil {
+			metadata.Compositions = string(data)
+		} else {
+			logger.Warn("Failed to marshal Compositions", zap.Error(err))
 		}
 	}
 
-	logger.Info("Exported metadata",
+	logger.Info("Collected metadata",
 		zap.Int32("configMaps", info.ConfigMaps),
 		zap.Int32("secrets", info.Secrets),
 		zap.Int32("deployments", info.Deployments),
@@ -345,7 +357,7 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace, snap
 		zap.Int32("statefulSets", info.StatefulSets),
 		zap.Int32("compositions", info.Compositions))
 
-	return info, nil
+	return &ExportedMetadata{Info: info, Metadata: metadata}, nil
 }
 
 // createDir creates a directory with proper permissions
