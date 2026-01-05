@@ -1109,12 +1109,17 @@ func (r *GPUStatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// WorkspaceCleanupReconciler watches Workspace resources and cleans up workspace directories
+// WorkspaceCleanupReconciler watches Workspace resources and manages workspace btrfs subvolumes
+// It creates btrfs subvolumes when workspaces are created and deletes them when workspaces are deleted
 type WorkspaceCleanupReconciler struct {
 	client.Client
-	Logger *zap2.Logger
-	FS     FileSystem
+	Logger  *zap2.Logger
+	FS      FileSystem
+	CmdExec CommandExecutor
 }
+
+// workspaceStoragePath is the base path for workspace btrfs subvolumes
+const workspaceStoragePath = "/var/lib/kloudlite/storage/workspaces"
 
 func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
@@ -1122,7 +1127,7 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 		zap2.String("namespace", req.Namespace),
 	)
 
-	logger.Info("Reconciling Workspace for directory cleanup")
+	logger.Info("Reconciling Workspace for btrfs storage management")
 
 	// Fetch Workspace (namespaced)
 	workspace := &workspacev1.Workspace{}
@@ -1137,25 +1142,30 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 	if workspace.DeletionTimestamp != nil {
 		// Workspace is being deleted
 		if containsString(workspace.Finalizers, workspaceCleanupFinalizer) {
-			logger.Info("Workspace is being deleted, cleaning up directory")
+			logger.Info("Workspace is being deleted, cleaning up btrfs subvolume")
 
-			// Clean up workspace directory
-			workspaceDir := fmt.Sprintf("%s/workspaces/%s", workspaceHomePath, workspace.Name)
-			logger.Info("Removing workspace directory", zap2.String("path", workspaceDir))
+			// Clean up workspace btrfs subvolume
+			workspaceDir := fmt.Sprintf("%s/%s", workspaceStoragePath, workspace.Name)
+			logger.Info("Removing workspace storage", zap2.String("path", workspaceDir))
 
-			// Use rm -rf to remove directory and all contents
-			removeScript := fmt.Sprintf("rm -rf %s", workspaceDir)
-			cmd := exec.Command("sh", "-c", removeScript)
-			output, err := cmd.CombinedOutput()
+			// Try btrfs subvolume delete first, fallback to rm -rf
+			// Use nsenter to run on host filesystem
+			deleteScript := fmt.Sprintf("btrfs subvolume delete %s 2>/dev/null || rm -rf %s", workspaceDir, workspaceDir)
+			output, err := r.CmdExec.Execute(deleteScript)
 			if err != nil {
-				logger.Error("Failed to remove workspace directory",
+				logger.Error("Failed to remove workspace storage",
 					zap2.String("path", workspaceDir),
 					zap2.Error(err),
 					zap2.String("output", string(output)))
-				return reconcile.Result{}, fmt.Errorf("failed to remove workspace directory: %w", err)
+				return reconcile.Result{}, fmt.Errorf("failed to remove workspace storage: %w", err)
 			}
 
-			logger.Info("Successfully removed workspace directory", zap2.String("path", workspaceDir))
+			logger.Info("Successfully removed workspace storage", zap2.String("path", workspaceDir))
+
+			// Also clean up old workspace directory path if it exists (migration cleanup)
+			oldWorkspaceDir := fmt.Sprintf("%s/workspaces/%s", workspaceHomePath, workspace.Name)
+			oldCleanupScript := fmt.Sprintf("rm -rf %s 2>/dev/null || true", oldWorkspaceDir)
+			r.CmdExec.Execute(oldCleanupScript)
 
 			// Remove finalizer
 			workspace.Finalizers = removeString(workspace.Finalizers, workspaceCleanupFinalizer)
@@ -1169,8 +1179,60 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 		return reconcile.Result{}, nil
 	}
 
-	// Finalizer is now added by the workspace controller
-	// This reconciler only handles cleanup during deletion
+	// Workspace is NOT being deleted - ensure btrfs subvolume exists
+	// This creates the subvolume BEFORE the pod starts
+	workspaceDir := fmt.Sprintf("%s/%s", workspaceStoragePath, workspace.Name)
+
+	// Check if btrfs subvolume already exists
+	checkScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", workspaceDir)
+	if _, err := r.CmdExec.Execute(checkScript); err == nil {
+		// Subvolume already exists
+		logger.Debug("Workspace btrfs subvolume already exists", zap2.String("path", workspaceDir))
+		return reconcile.Result{}, nil
+	}
+
+	// Check if directory exists but is not a subvolume (needs migration)
+	checkDirScript := fmt.Sprintf("test -d %s", workspaceDir)
+	if _, err := r.CmdExec.Execute(checkDirScript); err == nil {
+		// Directory exists but is not a subvolume - convert it
+		logger.Info("Converting existing directory to btrfs subvolume", zap2.String("path", workspaceDir))
+
+		tempDir := workspaceDir + ".tmp"
+		convertScript := fmt.Sprintf(`
+			mv %s %s &&
+			btrfs subvolume create %s &&
+			cp -a %s/. %s/ 2>/dev/null || true &&
+			rm -rf %s &&
+			chown 1001:1001 %s
+		`, workspaceDir, tempDir, workspaceDir, tempDir, workspaceDir, tempDir, workspaceDir)
+
+		if output, err := r.CmdExec.Execute(convertScript); err != nil {
+			logger.Error("Failed to convert directory to btrfs subvolume",
+				zap2.String("path", workspaceDir),
+				zap2.Error(err),
+				zap2.String("output", string(output)))
+			// Try to restore original directory
+			r.CmdExec.Execute(fmt.Sprintf("rm -rf %s; mv %s %s 2>/dev/null || true", workspaceDir, tempDir, workspaceDir))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+
+		logger.Info("Successfully converted directory to btrfs subvolume", zap2.String("path", workspaceDir))
+		return reconcile.Result{}, nil
+	}
+
+	// Create new btrfs subvolume
+	logger.Info("Creating workspace btrfs subvolume", zap2.String("path", workspaceDir))
+	createScript := fmt.Sprintf("btrfs subvolume create %s && chown 1001:1001 %s", workspaceDir, workspaceDir)
+
+	if output, err := r.CmdExec.Execute(createScript); err != nil {
+		logger.Error("Failed to create workspace btrfs subvolume",
+			zap2.String("path", workspaceDir),
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	logger.Info("Successfully created workspace btrfs subvolume", zap2.String("path", workspaceDir))
 	return reconcile.Result{}, nil
 }
 
@@ -1534,11 +1596,12 @@ func main() {
 		zapLogger.Fatal("Failed to setup SSH config controller", zap2.Error(err))
 	}
 
-	// Setup workspace cleanup reconciler
+	// Setup workspace cleanup reconciler (manages btrfs subvolumes for workspaces)
 	workspaceCleanupReconciler := &WorkspaceCleanupReconciler{
-		Client: mgr.GetClient(),
-		Logger: zapLogger,
-		FS:     fs,
+		Client:  mgr.GetClient(),
+		Logger:  zapLogger,
+		FS:      fs,
+		CmdExec: &HostCommandExecutor{}, // Use host executor for btrfs commands
 	}
 
 	if err := workspaceCleanupReconciler.SetupWithManager(mgr); err != nil {

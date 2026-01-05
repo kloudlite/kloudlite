@@ -222,9 +222,13 @@ fi
 # Ensure /home/kl is owned by kl user (hostPath may be created as root)
 chown 1001:1001 /home/kl
 
-# Create workspace directory
-mkdir -p /home/kl/workspaces/%s
-chown -R 1001:1001 /home/kl/workspaces
+# Create workspaces parent directory (workspace subdir is btrfs-mounted)
+mkdir -p /home/kl/workspaces
+chown 1001:1001 /home/kl/workspaces
+
+# Ensure workspace directory ownership (mounted from btrfs storage)
+# The btrfs subvolume is created by workmachine-node-manager before pod starts
+chown 1001:1001 /home/kl/workspaces/%s
 
 # Create .docker directory for docker buildx
 mkdir -p /home/kl/.docker
@@ -312,6 +316,11 @@ chmod 644 /tmp-writable/kloudlite-context.json
 								MountPath: "/home/kl",
 							},
 							{
+								// Workspace project directory from btrfs storage
+								Name:      "workspace-storage",
+								MountPath: fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name),
+							},
+							{
 								Name:      "etc-environment",
 								MountPath: "/etc-writable",
 							},
@@ -368,6 +377,11 @@ chmod 644 /tmp-writable/kloudlite-context.json
 							{
 								Name:      "kl-home",
 								MountPath: "/home/kl",
+							},
+							{
+								// Workspace project directory from btrfs storage
+								Name:      "workspace-storage",
+								MountPath: fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name),
 							},
 							{
 								Name:      "ssh-host-keys",
@@ -428,6 +442,11 @@ chmod 644 /tmp-writable/kloudlite-context.json
 						{
 							Name:      "kl-home",
 							MountPath: "/home/kl",
+						},
+						{
+							// Workspace project directory from btrfs storage (enables native btrfs snapshots)
+							Name:      "workspace-storage",
+							MountPath: fmt.Sprintf("/home/kl/workspaces/%s", workspace.Name),
 						},
 						{
 							Name:      "ssh-authorized-keys",
@@ -525,6 +544,17 @@ chmod 644 /tmp-writable/kloudlite-context.json
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
 							Path: "/var/lib/kloudlite/home",
+							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
+						},
+					},
+				},
+				{
+					// Workspace project directory on btrfs storage for native snapshot support
+					// The btrfs subvolume is created by workmachine-node-manager
+					Name: "workspace-storage",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: fmt.Sprintf("/var/lib/kloudlite/storage/workspaces/%s", workspace.Name),
 							Type: fn.Ptr(corev1.HostPathDirectoryOrCreate),
 						},
 					},
