@@ -86,7 +86,7 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 	// Execute the operation
 	var opErr error
 	var pushResult *oci.PushResult
-	var pulledMetadata *snapshotv1.SnapshotMetadata
+	var pullResult *pullSnapshotResult
 	switch snapshotReq.Spec.Operation {
 	case snapshotv1.SnapshotOperationCreate:
 		opErr = r.createSnapshot(snapshotReq, logger)
@@ -97,7 +97,7 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 	case snapshotv1.SnapshotOperationPush:
 		pushResult, opErr = r.pushSnapshot(snapshotReq, logger)
 	case snapshotv1.SnapshotOperationPull:
-		pulledMetadata, opErr = r.pullSnapshot(snapshotReq, logger)
+		pullResult, opErr = r.pullSnapshot(snapshotReq, logger)
 	default:
 		opErr = fmt.Errorf("unknown operation: %s", snapshotReq.Spec.Operation)
 	}
@@ -139,9 +139,10 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 			latest.Status.CompressedSize = pushResult.CompressedSize
 		}
 
-		// Add pull-specific status (K8s resource metadata)
-		if pulledMetadata != nil {
-			latest.Status.PulledMetadata = pulledMetadata
+		// Add pull-specific status (K8s resource metadata and snapshot chain)
+		if pullResult != nil {
+			latest.Status.PulledMetadata = pullResult.metadata
+			latest.Status.PulledSnapshots = pullResult.snapshots
 		}
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Completed", zap2.Error(err))
@@ -450,7 +451,13 @@ func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest
 
 // pullSnapshot pulls a snapshot chain from the OCI registry
 // Returns the K8s resource metadata from the pulled OCI layer
-func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (*snapshotv1.SnapshotMetadata, error) {
+// pullSnapshotResult contains the result of a pull operation
+type pullSnapshotResult struct {
+	metadata  *snapshotv1.SnapshotMetadata
+	snapshots []snapshotv1.PulledSnapshotInfo
+}
+
+func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (*pullSnapshotResult, error) {
 	if req.Spec.RegistryRef == nil {
 		return nil, fmt.Errorf("registryRef is required for pull operation")
 	}
@@ -487,8 +494,11 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 		zap2.Int("snapshotCount", len(result.Snapshots)),
 	)
 
-	// Find the K8s resource metadata from the pulled snapshots
-	var pulledMetadata *snapshotv1.SnapshotMetadata
+	// Build result with K8s metadata and snapshot chain info
+	pullResult := &pullSnapshotResult{
+		snapshots: make([]snapshotv1.PulledSnapshotInfo, 0, len(result.Snapshots)),
+	}
+
 	for _, snap := range result.Snapshots {
 		path := result.SnapshotPaths[snap.Name]
 		logger.Info("Pulled snapshot",
@@ -497,9 +507,30 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 			zap2.String("type", snap.Status.SnapshotType),
 		)
 
+		// Build snapshot info for parent chain tracking
+		snapInfo := snapshotv1.PulledSnapshotInfo{
+			Name:            snap.Name,
+			Path:            path,
+			SnapshotType:    snap.Status.SnapshotType,
+			TargetName:      snap.Status.TargetName,
+			WorkspaceName:   snap.Status.WorkspaceName,
+			WorkMachineName: snap.Status.WorkMachineName,
+			OwnedBy:         snap.Spec.OwnedBy,
+		}
+
+		// Add parent reference if exists
+		if snap.Spec.ParentSnapshotRef != nil {
+			snapInfo.ParentSnapshotName = snap.Spec.ParentSnapshotRef.Name
+		}
+
+		// Add environment reference if exists
+		if snap.Spec.EnvironmentRef != nil {
+			snapInfo.EnvironmentName = snap.Spec.EnvironmentRef.Name
+		}
+
 		// Extract K8s resource metadata from the OCI metadata
 		if snap.Resources != nil {
-			pulledMetadata = &snapshotv1.SnapshotMetadata{
+			snapInfo.Resources = &snapshotv1.SnapshotMetadata{
 				ConfigMaps:   snap.Resources.ConfigMaps,
 				Secrets:      snap.Resources.Secrets,
 				Deployments:  snap.Resources.Deployments,
@@ -507,11 +538,17 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 				StatefulSets: snap.Resources.StatefulSets,
 				Compositions: snap.Resources.Compositions,
 			}
-			logger.Info("Found K8s resource metadata in OCI layer")
+			// Use the first snapshot with resources as the main metadata
+			if pullResult.metadata == nil {
+				pullResult.metadata = snapInfo.Resources
+			}
+			logger.Info("Found K8s resource metadata in OCI layer", zap2.String("snapshot", snap.Name))
 		}
+
+		pullResult.snapshots = append(pullResult.snapshots, snapInfo)
 	}
 
-	return pulledMetadata, nil
+	return pullResult, nil
 }
 
 // getSnapshotSize returns the size of the snapshot in bytes

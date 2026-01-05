@@ -194,6 +194,44 @@ type SnapshotRequestStatus struct {
 	// This is used by the environment controller to restore K8s resources without reading files from disk
 	// +optional
 	PulledMetadata *SnapshotMetadata `json:"pulledMetadata,omitempty"`
+
+	// PulledSnapshots contains metadata for all snapshots pulled from registry (including parent chain)
+	// This enables creating Snapshot CRs for the entire parent lineage
+	// +optional
+	PulledSnapshots []PulledSnapshotInfo `json:"pulledSnapshots,omitempty"`
+}
+
+// PulledSnapshotInfo contains metadata about a pulled snapshot from the registry
+type PulledSnapshotInfo struct {
+	// Name is the original snapshot name
+	Name string `json:"name"`
+
+	// Path is the local path where this snapshot was extracted
+	Path string `json:"path"`
+
+	// SnapshotType indicates whether this is an environment or workspace snapshot
+	SnapshotType string `json:"snapshotType,omitempty"`
+
+	// TargetName is the name of the environment or workspace that was snapshotted
+	TargetName string `json:"targetName,omitempty"`
+
+	// WorkspaceName for workspace snapshots
+	WorkspaceName string `json:"workspaceName,omitempty"`
+
+	// WorkMachineName where the original snapshot was created
+	WorkMachineName string `json:"workMachineName,omitempty"`
+
+	// OwnedBy is the owner of the original snapshot
+	OwnedBy string `json:"ownedBy"`
+
+	// ParentSnapshotName is the name of this snapshot's parent (if any)
+	ParentSnapshotName string `json:"parentSnapshotName,omitempty"`
+
+	// EnvironmentName for environment snapshots
+	EnvironmentName string `json:"environmentName,omitempty"`
+
+	// Resources contains K8s resource metadata (for environment snapshots)
+	Resources *SnapshotMetadata `json:"resources,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
