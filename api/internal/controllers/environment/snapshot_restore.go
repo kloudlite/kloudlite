@@ -329,8 +329,9 @@ func (r *EnvironmentReconciler) restoreResourcesFromSnapshot(
 	targetNamespace string,
 	logger *zap.Logger,
 ) error {
-	// Determine the snapshot path
-	snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("env-%s-restore", environment.Name))
+	// Determine the snapshot path - pulled content is at {basePath}/env-{name}-restore/{snapshotName}/
+	snapshotName := environment.Spec.FromSnapshot.SnapshotName
+	snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("env-%s-restore", environment.Name), snapshotName)
 	metadataPath := filepath.Join(snapshotPath, "metadata")
 
 	// Check if metadata directory exists
