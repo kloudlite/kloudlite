@@ -983,6 +983,13 @@ func (r *EnvironmentReconciler) ensurePVCBindingHelperPod(
 			NodeSelector: map[string]string{
 				"kubernetes.io/hostname": environment.Spec.WorkMachineName,
 			},
+			Tolerations: []corev1.Toleration{
+				{
+					Key:      "kloudlite.io/workmachine",
+					Operator: corev1.TolerationOpExists,
+					Effect:   corev1.TaintEffectNoSchedule,
+				},
+			},
 			Containers: []corev1.Container{
 				{
 					Name:         "binder",
