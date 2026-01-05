@@ -42,6 +42,27 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Environment not found: %s", envName), logger)
 	}
 
+	// Ensure labels are set for querying by environment
+	labelsUpdated := false
+	if snapshot.Labels == nil {
+		snapshot.Labels = make(map[string]string)
+	}
+	if snapshot.Labels["snapshots.kloudlite.io/environment"] != envName {
+		snapshot.Labels["snapshots.kloudlite.io/environment"] = envName
+		labelsUpdated = true
+	}
+	if snapshot.Labels["kloudlite.io/owned-by"] != snapshot.Spec.OwnedBy {
+		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
+		labelsUpdated = true
+	}
+	if labelsUpdated {
+		if err := r.Update(ctx, snapshot); err != nil {
+			logger.Error("Failed to update snapshot labels", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	// Set state to Creating
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 		snapshot.Status.State = snapshotv1.SnapshotStateCreating
