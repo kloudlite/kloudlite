@@ -267,23 +267,31 @@ func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequ
 	if strings.Contains(sourcePath, "*") {
 		logger.Info("Resolving glob pattern in source path", zap2.String("pattern", sourcePath))
 
-		// Try to find matching path - handles both old and new formats:
-		// Old format: pvc-{uid}_{namespace}_{claimName} (matches *{claimName}*)
-		// New format: {claimName}/{pv-name}/ (matches *{claimName}*)
-		// Use find to handle both files and directories
+		// New pathPattern format: {claimName}/* where we need to find the PV subdirectory
+		// Structure: {snapshotBase}/{claimName}/{pv-name}/(data files)
+		// We want to copy the CONTENTS of {pv-name}/ to target
 		baseDir := filepath.Dir(sourcePath)
 		pattern := filepath.Base(sourcePath)
 
-		// First try exact glob match
+		// First try exact glob match to find the PV directory
 		globScript := fmt.Sprintf("ls -d %s 2>/dev/null | head -1", sourcePath)
 		output, err := r.CmdExec.Execute(globScript)
 		resolved := strings.TrimSpace(string(output))
 
 		if err != nil || resolved == "" {
-			// Try find command for nested directories (new format)
-			findScript := fmt.Sprintf("find %s -maxdepth 2 -type d -name '%s' 2>/dev/null | head -1", baseDir, strings.ReplaceAll(pattern, "*", "*"))
+			// Try find command for nested directories
+			findScript := fmt.Sprintf("find %s -maxdepth 1 -type d -name '%s' 2>/dev/null | head -1", baseDir, strings.ReplaceAll(pattern, "*", "*"))
 			output, err = r.CmdExec.Execute(findScript)
 			resolved = strings.TrimSpace(string(output))
+		}
+
+		// If still not found, check if baseDir itself contains the data (old format)
+		if resolved == "" {
+			checkScript := fmt.Sprintf("test -d %s && ls %s 2>/dev/null | head -1", baseDir, baseDir)
+			output, err = r.CmdExec.Execute(checkScript)
+			if err == nil && strings.TrimSpace(string(output)) != "" {
+				resolved = baseDir
+			}
 		}
 
 		if resolved == "" {
