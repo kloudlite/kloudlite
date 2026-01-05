@@ -183,6 +183,13 @@ func (r *SnapshotReconciler) handlePulling(ctx context.Context, snapshot *snapsh
 				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Pull failed: %s", req.Status.Message), logger)
 			}
 			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseCompleted {
+				// Create Snapshot CRs for parent chain if they don't exist
+				if len(req.Status.PulledSnapshots) > 1 {
+					if err := r.createParentSnapshotCRs(ctx, snapshot, &req, logger); err != nil {
+						logger.Warn("Failed to create parent snapshot CRs", zap.Error(err))
+					}
+				}
+
 				// Pull completed - update status
 				now := metav1.Now()
 				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
@@ -269,6 +276,107 @@ func (r *SnapshotReconciler) handlePulling(ctx context.Context, snapshot *snapsh
 	}
 
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+}
+
+// createParentSnapshotCRs creates Snapshot CRs for the parent chain snapshots
+// that were pulled along with the main snapshot
+func (r *SnapshotReconciler) createParentSnapshotCRs(
+	ctx context.Context,
+	mainSnapshot *snapshotv1.Snapshot,
+	req *snapshotv1.SnapshotRequest,
+	logger *zap.Logger,
+) error {
+	for _, pulledSnap := range req.Status.PulledSnapshots {
+		// Skip the main snapshot itself
+		if pulledSnap.Name == mainSnapshot.Name {
+			continue
+		}
+
+		// Check if snapshot already exists
+		existing := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: pulledSnap.Name}, existing); err == nil {
+			logger.Debug("Parent snapshot CR already exists", zap.String("name", pulledSnap.Name))
+			continue
+		}
+
+		// Create Snapshot CR for this parent
+		logger.Info("Creating Snapshot CR for parent snapshot", zap.String("name", pulledSnap.Name))
+
+		parentSnapshot := &snapshotv1.Snapshot{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: pulledSnap.Name,
+				Labels: map[string]string{
+					"snapshots.kloudlite.io/pulled-from-parent-chain": "true",
+				},
+			},
+			Spec: snapshotv1.SnapshotSpec{
+				OwnedBy:         pulledSnap.OwnedBy,
+				IncludeMetadata: true,
+			},
+		}
+
+		// Set parent reference if exists
+		if pulledSnap.ParentSnapshotName != "" {
+			parentSnapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
+				Name: pulledSnap.ParentSnapshotName,
+			}
+		}
+
+		// Set environment or workspace ref based on type
+		if pulledSnap.SnapshotType == string(snapshotv1.SnapshotTypeEnvironment) {
+			parentSnapshot.Spec.EnvironmentRef = &snapshotv1.EnvironmentReference{
+				Name: pulledSnap.EnvironmentName,
+			}
+		} else if pulledSnap.SnapshotType == string(snapshotv1.SnapshotTypeWorkspace) {
+			parentSnapshot.Spec.WorkspaceRef = &snapshotv1.WorkspaceReference{
+				Name:            pulledSnap.WorkspaceName,
+				WorkmachineName: pulledSnap.WorkMachineName,
+			}
+		}
+
+		// Create the snapshot CR
+		if err := r.Create(ctx, parentSnapshot); err != nil {
+			if !apierrors.IsAlreadyExists(err) {
+				logger.Error("Failed to create parent snapshot CR",
+					zap.String("name", pulledSnap.Name),
+					zap.Error(err))
+				continue
+			}
+		}
+
+		// Update status to Ready since the snapshot was already pulled
+		now := metav1.Now()
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, parentSnapshot, func() error {
+			parentSnapshot.Status.State = snapshotv1.SnapshotStateReady
+			parentSnapshot.Status.Message = "Pulled as part of parent chain"
+			parentSnapshot.Status.SnapshotType = snapshotv1.SnapshotType(pulledSnap.SnapshotType)
+			parentSnapshot.Status.TargetName = pulledSnap.TargetName
+			parentSnapshot.Status.SnapshotPath = pulledSnap.Path
+			parentSnapshot.Status.CreatedAt = &now
+			parentSnapshot.Status.WorkMachineName = mainSnapshot.Status.WorkMachineName
+			parentSnapshot.Status.WorkspaceName = pulledSnap.WorkspaceName
+
+			// Mark as pushed since we pulled it from registry
+			parentSnapshot.Status.RegistryStatus = &snapshotv1.SnapshotRegistryStatus{
+				Pushed:   true,
+				PushedAt: &now,
+			}
+
+			// Set collected metadata for environment snapshots
+			if pulledSnap.Resources != nil {
+				parentSnapshot.Status.CollectedMetadata = pulledSnap.Resources
+			}
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update parent snapshot status",
+				zap.String("name", pulledSnap.Name),
+				zap.Error(err))
+		}
+
+		logger.Info("Created parent snapshot CR", zap.String("name", pulledSnap.Name))
+	}
+
+	return nil
 }
 
 // removeTagFromOtherSnapshots removes the tag from any other snapshot that has it
