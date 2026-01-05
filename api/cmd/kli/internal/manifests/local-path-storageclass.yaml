@@ -1,0 +1,12 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: rancher.io/local-path
+parameters:
+  nodePath: /var/lib/kloudlite/storage/environments
+  pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}/{{ .PVName }}"
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete

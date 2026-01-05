@@ -193,6 +193,20 @@ data:
 		}
 		fmt.Printf("✓ Written Ingress Proxy to %s\n", ingressProxyPath)
 
+		// Write Local Path StorageClass (for PVC storage with pathPattern)
+		localPathStorageClassPath := filepath.Join(manifestsDir, "local-path-storageclass.yaml")
+		if err := os.WriteFile(localPathStorageClassPath, []byte(manifests.LocalPathStorageClass), 0644); err != nil {
+			return fmt.Errorf("failed to write Local Path StorageClass: %w", err)
+		}
+		fmt.Printf("✓ Written Local Path StorageClass to %s\n", localPathStorageClassPath)
+
+		// Write Local Path Provisioner Config (btrfs subvolume setup for snapshots)
+		localPathConfigPath := filepath.Join(manifestsDir, "local-path-provisioner-config.yaml")
+		if err := os.WriteFile(localPathConfigPath, []byte(manifests.LocalPathProvisionerConfig), 0644); err != nil {
+			return fmt.Errorf("failed to write Local Path Provisioner Config: %w", err)
+		}
+		fmt.Printf("✓ Written Local Path Provisioner Config to %s\n", localPathConfigPath)
+
 		fmt.Println("\nKloudlite manifests installed successfully!")
 		fmt.Println("K3s will auto-apply these manifests on startup.")
 

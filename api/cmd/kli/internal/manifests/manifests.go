@@ -31,3 +31,9 @@ var ImageRegistry string
 
 //go:embed ingress-proxy.yaml
 var IngressProxy string
+
+//go:embed local-path-provisioner-config.yaml
+var LocalPathProvisionerConfig string
+
+//go:embed local-path-storageclass.yaml
+var LocalPathStorageClass string
