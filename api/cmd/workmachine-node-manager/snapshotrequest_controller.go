@@ -266,12 +266,30 @@ func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequ
 	// If source path contains glob pattern, resolve it
 	if strings.Contains(sourcePath, "*") {
 		logger.Info("Resolving glob pattern in source path", zap2.String("pattern", sourcePath))
+
+		// Try to find matching path - handles both old and new formats:
+		// Old format: pvc-{uid}_{namespace}_{claimName} (matches *{claimName}*)
+		// New format: {claimName}/{pv-name}/ (matches *{claimName}*)
+		// Use find to handle both files and directories
+		baseDir := filepath.Dir(sourcePath)
+		pattern := filepath.Base(sourcePath)
+
+		// First try exact glob match
 		globScript := fmt.Sprintf("ls -d %s 2>/dev/null | head -1", sourcePath)
 		output, err := r.CmdExec.Execute(globScript)
-		if err != nil || strings.TrimSpace(string(output)) == "" {
+		resolved := strings.TrimSpace(string(output))
+
+		if err != nil || resolved == "" {
+			// Try find command for nested directories (new format)
+			findScript := fmt.Sprintf("find %s -maxdepth 2 -type d -name '%s' 2>/dev/null | head -1", baseDir, strings.ReplaceAll(pattern, "*", "*"))
+			output, err = r.CmdExec.Execute(findScript)
+			resolved = strings.TrimSpace(string(output))
+		}
+
+		if resolved == "" {
 			return fmt.Errorf("no matching source path found for pattern: %s", sourcePath)
 		}
-		sourcePath = strings.TrimSpace(string(output))
+		sourcePath = resolved
 		logger.Info("Resolved source path", zap2.String("path", sourcePath))
 	}
 

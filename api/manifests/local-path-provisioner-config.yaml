@@ -17,41 +17,25 @@ data:
     #!/bin/bash
     set -eu
 
-    # VOL_DIR format: /var/lib/kloudlite/storage/environments/pvcname_namespace_pvname
-    # Extract namespace from the directory name
-    PVC_DIR=$(basename "$VOL_DIR")
-    NAMESPACE=$(echo "$PVC_DIR" | rev | cut -d'_' -f2 | rev)
-    BASE_DIR=$(dirname "$VOL_DIR")
+    # VOL_DIR format with pathPattern: /var/lib/kloudlite/storage/environments/{namespace}/{claim-name}/{pv-name}
+    # Extract namespace (first directory after base path)
+    NAMESPACE=$(echo "$VOL_DIR" | sed "s|/var/lib/kloudlite/storage/environments/||" | cut -d'/' -f1)
+    BASE_DIR="/var/lib/kloudlite/storage/environments"
     NS_SUBVOL="${BASE_DIR}/${NAMESPACE}"
 
-    # Create namespace subvolume if it doesn't exist (for btrfs snapshots)
+    # Create namespace btrfs subvolume if it doesn't exist (for snapshots)
     if [ ! -d "$NS_SUBVOL" ]; then
       echo "Creating btrfs subvolume for namespace: $NAMESPACE"
       btrfs subvolume create "$NS_SUBVOL" || mkdir -p "$NS_SUBVOL"
     fi
 
-    # Create PVC directory inside namespace subvolume
-    PVC_PATH="${NS_SUBVOL}/${PVC_DIR}"
-    mkdir -m 0777 -p "$PVC_PATH"
-
-    # Create symlink from expected VOL_DIR to actual path
-    if [ ! -L "$VOL_DIR" ]; then
-      ln -sfn "$PVC_PATH" "$VOL_DIR"
-    fi
-
-    echo "PVC storage ready at $PVC_PATH"
+    # Create the PVC directory (pathPattern provides the full nested path)
+    mkdir -m 0777 -p "$VOL_DIR"
+    echo "PVC storage ready at $VOL_DIR"
   teardown: |
     #!/bin/bash
     set -eu
-
-    # Remove symlink and actual directory
-    if [ -L "$VOL_DIR" ]; then
-      REAL_PATH=$(readlink -f "$VOL_DIR")
-      rm -f "$VOL_DIR"
-      rm -rf "$REAL_PATH"
-    else
-      rm -rf "$VOL_DIR"
-    fi
+    rm -rf "$VOL_DIR"
   helperPod.yaml: |
     apiVersion: v1
     kind: Pod

@@ -460,25 +460,24 @@ func (r *EnvironmentReconciler) getPVCRestorePaths(
 	pvc *corev1.PersistentVolumeClaim,
 	logger *zap.Logger,
 ) (sourcePath, targetPath string) {
-	// The snapshot contains directories like: pvc-{uid}_{original-namespace}_{claim-name}
-	// We need to match by claim name since the PVC UID and namespace will be different in the clone
-
 	claimName := pvc.Name
-	pvcUID := string(pvc.UID)
+	pvName := pvc.Spec.VolumeName // Get PV name from bound PVC
 
-	// Target path is where the PVC is actually mounted by local-path-provisioner
-	// Format: /var/lib/kloudlite/storage/environments/{namespace}/pvc-{uid}_{namespace}_{claim-name}
 	environmentsBasePath := "/var/lib/kloudlite/storage/environments"
-	targetPath = filepath.Join(environmentsBasePath, targetNamespace, fmt.Sprintf("pvc-%s_%s_%s", pvcUID, targetNamespace, claimName))
 
-	// Source path - we need to find the matching directory in the snapshot by claim name
-	// The snapshot data is at: {pulledSnapshotBase}/pvc-*_env-*_{claim-name}
-	// Since we can't list files from the controller, we construct the expected pattern
-	// The actual matching will be done by the node manager using glob patterns
-	sourcePath = filepath.Join(pulledSnapshotBase, fmt.Sprintf("*_%s", claimName))
+	// New pathPattern format: {namespace}/{claim-name}/{pv-name}
+	// This matches the StorageClass pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}/{{ .PVName }}"
+	targetPath = filepath.Join(environmentsBasePath, targetNamespace, claimName, pvName)
+
+	// Source path - glob pattern to match by claim name
+	// Old format in snapshot: pvc-{uid}_{namespace}_{claimName} (flat in namespace dir)
+	// New format in snapshot: {claimName}/{pv-name} (nested directory)
+	// Use pattern that matches claim name in either position
+	sourcePath = filepath.Join(pulledSnapshotBase, fmt.Sprintf("*%s*", claimName))
 
 	logger.Info("Determined PVC restore paths",
 		zap.String("pvc", pvc.Name),
+		zap.String("pvName", pvName),
 		zap.String("sourcePattern", sourcePath),
 		zap.String("target", targetPath))
 

@@ -26,13 +26,28 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 		return fmt.Errorf("failed to get environment: %w", err)
 	}
 
-	// Check if environment is activated
+	// Check if environment is activated and not restoring from snapshot
 	environmentActivated := true
+	snapshotRestoreInProgress := false
 	if environment != nil {
 		environmentActivated = environment.Spec.Activated
+
+		// Check if snapshot restore is in progress
+		// Don't scale up pods until data restoration is complete
+		if environment.Status.SnapshotRestoreStatus != nil {
+			phase := environment.Status.SnapshotRestoreStatus.Phase
+			if phase != "" && phase != compositionsv1.SnapshotRestorePhaseCompleted {
+				snapshotRestoreInProgress = true
+				logger.Info("Snapshot restore in progress, keeping deployments scaled down",
+					zap.String("environment", environment.Name),
+					zap.String("restorePhase", string(phase)))
+			}
+		}
+
 		logger.Info("Environment activation state",
 			zap.String("environment", environment.Name),
-			zap.Bool("activated", environmentActivated))
+			zap.Bool("activated", environmentActivated),
+			zap.Bool("snapshotRestoreInProgress", snapshotRestoreInProgress))
 	}
 
 	// Save old deployed resources for cleanup comparison
@@ -129,8 +144,9 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 			}
 		}
 
-		// If environment is not activated, scale deployment to 0 replicas
-		if !environmentActivated {
+		// If environment is not activated or snapshot restore is in progress, scale deployment to 0 replicas
+		// This ensures pods don't start until PVC data restoration is complete
+		if !environmentActivated || snapshotRestoreInProgress {
 			if deployment.Spec.Replicas != nil && *deployment.Spec.Replicas > 0 {
 				// Store original replica count in annotation (only if not already set)
 				if deployment.Annotations == nil {
@@ -148,11 +164,16 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 				// Scale to 0
 				zero := int32(0)
 				deployment.Spec.Replicas = &zero
-				logger.Info("Scaling deployment to 0 (environment inactive)",
-					zap.String("deployment", deployment.Name))
+				reason := "environment inactive"
+				if snapshotRestoreInProgress {
+					reason = "snapshot restore in progress"
+				}
+				logger.Info("Scaling deployment to 0",
+					zap.String("deployment", deployment.Name),
+					zap.String("reason", reason))
 			}
 		} else {
-			// Environment is active - restore original replicas if they exist
+			// Environment is active and no restore in progress - restore original replicas if they exist
 			if deployment.Annotations != nil {
 				if originalReplicas, exists := deployment.Annotations[originalReplicasAnnotation]; exists {
 					if replicas, err := strconv.ParseInt(originalReplicas, 10, 32); err == nil && replicas > 0 {
@@ -160,7 +181,7 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 						deployment.Spec.Replicas = &r
 						// Remove the annotation since we've restored the value
 						delete(deployment.Annotations, originalReplicasAnnotation)
-						logger.Info("Restored deployment replicas (environment active)",
+						logger.Info("Restored deployment replicas (environment active, restore complete)",
 							zap.String("deployment", deployment.Name),
 							zap.Int32("replicas", r))
 					}
