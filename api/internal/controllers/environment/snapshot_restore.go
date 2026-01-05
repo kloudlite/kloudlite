@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	snapshotsBasePath = "/kl-data/snapshots"
+	snapshotsBasePath = "/var/lib/kloudlite/storage/.snapshots"
 )
 
 // handleSnapshotRestore handles creating an environment from a pushed snapshot

@@ -194,6 +194,12 @@ type SnapshotStatus struct {
 	// +optional
 	SnapshotPath string `json:"snapshotPath,omitempty"`
 
+	// SourcePath is the source directory that was snapshotted
+	// For environments: /var/lib/kloudlite/storage/environments/{namespace}
+	// For workspaces: /var/lib/kloudlite/home/workspaces/{workspace}
+	// +optional
+	SourcePath string `json:"sourcePath,omitempty"`
+
 	// MetadataPath is the path to stored K8s metadata JSON
 	// +optional
 	MetadataPath string `json:"metadataPath,omitempty"`
@@ -205,10 +211,6 @@ type SnapshotStatus struct {
 	// WorkMachineName is the workmachine where the snapshot is stored
 	// +optional
 	WorkMachineName string `json:"workMachineName,omitempty"`
-
-	// PVCSnapshots lists individual PVC snapshot information (for environment snapshots)
-	// +optional
-	PVCSnapshots []PVCSnapshotInfo `json:"pvcSnapshots,omitempty"`
 
 	// ResourceMetadata tracks captured K8s resources (for environment snapshots)
 	// +optional
@@ -237,22 +239,6 @@ type SnapshotStatus struct {
 	// RegistryStatus tracks the snapshot's registry push status
 	// +optional
 	RegistryStatus *SnapshotRegistryStatus `json:"registryStatus,omitempty"`
-}
-
-// PVCSnapshotInfo contains info about a snapshotted PVC
-type PVCSnapshotInfo struct {
-	// PVCName is the name of the PVC
-	PVCName string `json:"pvcName"`
-
-	// SnapshotPath is the path to this PVC's snapshot
-	SnapshotPath string `json:"snapshotPath"`
-
-	// SourcePath is the original PV host path (for restore)
-	// +optional
-	SourcePath string `json:"sourcePath,omitempty"`
-
-	// SizeBytes is the size of this PVC snapshot
-	SizeBytes int64 `json:"sizeBytes"`
 }
 
 // ResourceMetadataInfo tracks the count of captured K8s resources

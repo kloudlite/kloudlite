@@ -89,14 +89,18 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		logger.Warn("Failed to scale down environment", zap.Error(err))
 	}
 
-	// Generate snapshot path once and store it in status (reuse if already set)
-	// Use snapshot name (which is unique) to prevent path collisions with concurrent snapshots
+	// Source path: the entire environment directory (btrfs subvolume)
+	// All PVCs for this environment are stored under this directory
+	sourcePath := filepath.Join("/var/lib/kloudlite/storage/environments", namespace)
+
+	// Snapshot path: where the btrfs snapshot will be created
 	snapshotPath := snapshot.Status.SnapshotPath
 	if snapshotPath == "" {
 		snapshotPath = filepath.Join(snapshotsBasePath, snapshot.Name)
 		// Store the path immediately so subsequent reconciles use the same path
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.SnapshotPath = snapshotPath
+			snapshot.Status.SourcePath = sourcePath
 			snapshot.Status.Message = "Preparing snapshot..."
 			return nil
 		}, logger); err != nil {
@@ -116,19 +120,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// List PVCs in the environment namespace
-	pvcList := &corev1.PersistentVolumeClaimList{}
-	if err := r.List(ctx, pvcList, client.InNamespace(namespace)); err != nil {
-		logger.Error("Failed to list PVCs", zap.Error(err))
-		// Scale environment back up on failure
-		if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-			logger.Warn("Failed to scale up environment after PVC list failure", zap.Error(scaleErr))
-		}
-		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to list PVCs: %v", err), logger)
-	}
-
-	// Collect K8s metadata FIRST (before creating PVC snapshots)
-	// This ensures metadata is available for all SnapshotRequests
+	// Collect K8s metadata
 	var resourceMetadata *snapshotv1.ResourceMetadataInfo
 	var snapshotMetadata *snapshotv1.SnapshotMetadata
 	if snapshot.Spec.IncludeMetadata {
@@ -141,92 +133,49 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		}
 	}
 
-	// Create SnapshotRequest for each PVC
-	var pvcSnapshots []snapshotv1.PVCSnapshotInfo
-	isFirstPVC := true
-	for _, pvc := range pvcList.Items {
-		// Get the actual PV path from the PersistentVolume
-		pvName := pvc.Spec.VolumeName
-		if pvName == "" {
-			logger.Warn("PVC has no bound PV, skipping", zap.String("pvc", pvc.Name))
-			continue
-		}
+	// Create a SINGLE SnapshotRequest for the entire environment directory
+	snapshotReqName := fmt.Sprintf("%s-env", snapshot.Name)
+	snapshotReqNamespace := fmt.Sprintf("wm-%s", env.Spec.OwnedBy)
 
-		pv := &corev1.PersistentVolume{}
-		if err := r.Get(ctx, client.ObjectKey{Name: pvName}, pv); err != nil {
-			logger.Error("Failed to get PV", zap.Error(err), zap.String("pv", pvName))
-			continue
-		}
-
-		// Get the actual host path from the PV (local-path-provisioner uses spec.local.path)
-		var sourcePath string
-		if pv.Spec.Local != nil && pv.Spec.Local.Path != "" {
-			sourcePath = pv.Spec.Local.Path
-		} else if pv.Spec.HostPath != nil && pv.Spec.HostPath.Path != "" {
-			sourcePath = pv.Spec.HostPath.Path
-		} else {
-			logger.Warn("PV has no local or hostPath, skipping", zap.String("pv", pvName))
-			continue
-		}
-
-		pvcSnapshotPath := filepath.Join(snapshotPath, "pvcs", pvc.Name)
-
-		// Create SnapshotRequest
-		snapshotReq := &snapshotv1.SnapshotRequest{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%s", snapshot.Name, pvc.Name),
-				Namespace: fmt.Sprintf("wm-%s", env.Spec.OwnedBy),
-				Labels: map[string]string{
-					"snapshots.kloudlite.io/snapshot": snapshot.Name,
-					"snapshots.kloudlite.io/pvc":      pvc.Name,
-				},
+	snapshotReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      snapshotReqName,
+			Namespace: snapshotReqNamespace,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/snapshot": snapshot.Name,
 			},
-			Spec: snapshotv1.SnapshotRequestSpec{
-				Operation:       snapshotv1.SnapshotOperationCreate,
-				SourcePath:      sourcePath,
-				SnapshotPath:    pvcSnapshotPath,
-				SnapshotRef:     snapshot.Name,
-				EnvironmentName: envName,
-				ReadOnly:        true,
-			},
-		}
-
-		// Include metadata in the FIRST PVC snapshot request
-		// The host-manager will write it to the snapshot's metadata directory
-		if isFirstPVC && snapshotMetadata != nil {
-			snapshotReq.Spec.Metadata = snapshotMetadata
-			// Set the base snapshot path for metadata (not the PVC-specific path)
-			snapshotReq.Spec.MetadataPath = snapshotPath
-			isFirstPVC = false
-		}
-
-		// Set owner reference
-		if err := controllerutil.SetControllerReference(snapshot, snapshotReq, r.Scheme); err != nil {
-			logger.Error("Failed to set owner reference", zap.Error(err))
-		}
-
-		// Create or update SnapshotRequest
-		if err := r.Create(ctx, snapshotReq); err != nil {
-			if !apierrors.IsAlreadyExists(err) {
-				logger.Error("Failed to create SnapshotRequest", zap.Error(err), zap.String("pvc", pvc.Name))
-				// Scale environment back up on failure
-				if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-					logger.Warn("Failed to scale up environment after SnapshotRequest creation failure", zap.Error(scaleErr))
-				}
-				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create SnapshotRequest for PVC %s", pvc.Name), logger)
-			}
-		}
-
-		pvcSnapshots = append(pvcSnapshots, snapshotv1.PVCSnapshotInfo{
-			PVCName:      pvc.Name,
-			SnapshotPath: pvcSnapshotPath,
-			SourcePath:   sourcePath,
-		})
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:       snapshotv1.SnapshotOperationCreate,
+			SourcePath:      sourcePath,
+			SnapshotPath:    snapshotPath,
+			SnapshotRef:     snapshot.Name,
+			EnvironmentName: envName,
+			ReadOnly:        true,
+			Metadata:        snapshotMetadata,
+			MetadataPath:    snapshotPath,
+		},
 	}
 
-	// Check if all SnapshotRequests are complete
-	// Pass expected count to handle cache sync issues
-	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, len(pvcSnapshots), logger)
+	// Set owner reference
+	if err := controllerutil.SetControllerReference(snapshot, snapshotReq, r.Scheme); err != nil {
+		logger.Error("Failed to set owner reference", zap.Error(err))
+	}
+
+	// Create SnapshotRequest
+	if err := r.Create(ctx, snapshotReq); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			logger.Error("Failed to create SnapshotRequest", zap.Error(err))
+			// Scale environment back up on failure
+			if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+				logger.Warn("Failed to scale up environment after SnapshotRequest creation failure", zap.Error(scaleErr))
+			}
+			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create SnapshotRequest: %v", err), logger)
+		}
+	}
+
+	// Check if SnapshotRequest is complete (expectedCount = 1 for single environment snapshot)
+	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, 1, logger)
 	if err != nil {
 		logger.Error("Failed to check SnapshotRequest status", zap.Error(err))
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
@@ -235,9 +184,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	if !allComplete {
 		// Update status with progress
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = "Creating btrfs snapshots..."
-			snapshot.Status.SnapshotPath = snapshotPath
-			snapshot.Status.PVCSnapshots = pvcSnapshots
+			snapshot.Status.Message = "Creating btrfs snapshot..."
 			snapshot.Status.ResourceMetadata = resourceMetadata
 			return nil
 		}, logger); err != nil {
@@ -246,29 +193,18 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// All snapshots complete - get sizes from completed SnapshotRequests
-	snapshotReqNamespace := fmt.Sprintf("wm-%s", env.Spec.OwnedBy)
-	for i, pvcInfo := range pvcSnapshots {
-		snapshotReqName := fmt.Sprintf("%s-%s", snapshot.Name, pvcInfo.PVCName)
-		snapshotReq := &snapshotv1.SnapshotRequest{}
-		if err := r.Get(ctx, client.ObjectKey{Name: snapshotReqName, Namespace: snapshotReqNamespace}, snapshotReq); err == nil {
-			pvcSnapshots[i].SizeBytes = snapshotReq.Status.SizeBytes
-		} else {
-			logger.Warn("Failed to get SnapshotRequest for size", zap.String("name", snapshotReqName), zap.Error(err))
-		}
-	}
-
-	// Calculate total size
+	// Snapshot complete - get size from completed SnapshotRequest
 	var totalSize int64
-	for _, pvcInfo := range pvcSnapshots {
-		totalSize += pvcInfo.SizeBytes
+	completedReq := &snapshotv1.SnapshotRequest{}
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotReqName, Namespace: snapshotReqNamespace}, completedReq); err == nil {
+		totalSize = completedReq.Status.SizeBytes
+	} else {
+		logger.Warn("Failed to get SnapshotRequest for size", zap.Error(err))
 	}
 
-	// Update environment's lastRestoredSnapshot BEFORE setting snapshot to Ready
-	// This ensures the frontend sees the current snapshot when it refreshes
+	// Update environment's lastRestoredSnapshot
 	if err := r.updateEnvironmentLastRestored(ctx, envName, snapshot.Name, logger); err != nil {
 		logger.Warn("Failed to update environment's lastRestoredSnapshot", zap.Error(err))
-		// Continue - this is not a fatal error
 	}
 
 	// Update status to Ready
@@ -277,10 +213,10 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		snapshot.Status.State = snapshotv1.SnapshotStateReady
 		snapshot.Status.Message = "Snapshot created successfully"
 		snapshot.Status.SnapshotPath = snapshotPath
+		snapshot.Status.SourcePath = sourcePath
 		snapshot.Status.SizeBytes = totalSize
 		snapshot.Status.SizeHuman = formatSize(totalSize)
 		snapshot.Status.CreatedAt = &now
-		snapshot.Status.PVCSnapshots = pvcSnapshots
 		snapshot.Status.ResourceMetadata = resourceMetadata
 		snapshot.Status.CollectedMetadata = snapshotMetadata
 		return nil
@@ -300,6 +236,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 
 	logger.Info("Snapshot created successfully",
 		zap.String("path", snapshotPath),
+		zap.String("source", sourcePath),
 		zap.Int64("sizeBytes", totalSize))
 
 	return reconcile.Result{}, nil
@@ -352,43 +289,33 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Check existing restore requests
-	existingRestoreReqs := &snapshotv1.SnapshotRequestList{}
-	if err := r.List(ctx, existingRestoreReqs, client.MatchingLabels{
-		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
-		"snapshots.kloudlite.io/operation": "restore",
-	}); err == nil && len(existingRestoreReqs.Items) > 0 {
-		// Check for in-progress or pending requests - these are from THIS restore attempt
-		anyInProgress := false
-		anyPending := false
-		allCompleted := true
-		for _, req := range existingRestoreReqs.Items {
-			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
-				// Scale up and fail
-				if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-					logger.Warn("Failed to scale up environment after restore failure", zap.Error(scaleErr))
-				}
-				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %s", req.Status.Message), logger)
-			}
-			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseInProgress {
-				anyInProgress = true
-				allCompleted = false
-			} else if req.Status.Phase == snapshotv1.SnapshotRequestPhasePending || req.Status.Phase == "" {
-				anyPending = true
-				allCompleted = false
-			} else if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted {
-				allCompleted = false
-			}
-		}
+	// Source path: the btrfs snapshot containing the environment data
+	snapshotPath := snapshot.Status.SnapshotPath
+	if snapshotPath == "" {
+		return r.updateStatusFailed(ctx, snapshot, "Snapshot path is not set", logger)
+	}
 
-		if anyInProgress || anyPending {
-			// Active restore in progress, wait for it
-			logger.Info("Restore in progress, waiting...", zap.Bool("inProgress", anyInProgress), zap.Bool("pending", anyPending))
-			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
-		}
+	// Target path: the environment directory to restore to
+	targetPath := filepath.Join("/var/lib/kloudlite/storage/environments", namespace)
 
-		if allCompleted {
-			// All restore requests completed - mark snapshot as ready and scale up
+	// Check existing restore request
+	restoreReqName := fmt.Sprintf("%s-restore", snapshot.Name)
+	restoreReqNamespace := fmt.Sprintf("wm-%s", env.Spec.OwnedBy)
+
+	existingReq := &snapshotv1.SnapshotRequest{}
+	err := r.Get(ctx, client.ObjectKey{Name: restoreReqName, Namespace: restoreReqNamespace}, existingReq)
+	if err == nil {
+		// Restore request exists - check its status
+		switch existingReq.Status.Phase {
+		case snapshotv1.SnapshotRequestPhaseFailed:
+			// Scale up and fail
+			if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
+				logger.Warn("Failed to scale up environment after restore failure", zap.Error(scaleErr))
+			}
+			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %s", existingReq.Status.Message), logger)
+
+		case snapshotv1.SnapshotRequestPhaseCompleted:
+			// Restore completed successfully
 			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 				snapshot.Status.State = snapshotv1.SnapshotStateReady
 				snapshot.Status.Message = "Snapshot restored successfully"
@@ -397,126 +324,81 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 				logger.Error("Failed to update status to Ready", zap.Error(err))
 				return reconcile.Result{}, err
 			}
+
+			// Scale environment back up
 			if !r.hasOtherInProgressSnapshots(ctx, snapshot, envName, logger) {
 				if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
 					logger.Warn("Failed to scale up environment after restore", zap.Error(err))
 				}
 			}
-			// Delete the completed restore requests to allow future restores
-			for _, req := range existingRestoreReqs.Items {
-				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
-					logger.Warn("Failed to delete completed restore request", zap.Error(err), zap.String("request", req.Name))
-				}
+
+			// Delete the completed restore request to allow future restores
+			if err := r.Delete(ctx, existingReq); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete completed restore request", zap.Error(err))
 			}
+
 			// Track this restore on the environment for parent lineage
 			if err := r.updateEnvironmentLastRestored(ctx, envName, snapshot.Name, logger); err != nil {
 				logger.Warn("Failed to update environment's lastRestoredSnapshot", zap.Error(err))
-				// Continue - this is not a fatal error
 			}
+
 			logger.Info("Snapshot restored successfully", zap.String("environment", envName))
 			return reconcile.Result{}, nil
+
+		default:
+			// Still in progress or pending
+			logger.Info("Restore in progress, waiting...", zap.String("phase", string(existingReq.Status.Phase)))
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 		}
+	} else if !apierrors.IsNotFound(err) {
+		logger.Error("Failed to get restore request", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// Create restore SnapshotRequests for each PVC snapshot
-	for _, pvcInfo := range snapshot.Status.PVCSnapshots {
-		// Target path is the original PV location (stored in SourcePath)
-		targetPath := pvcInfo.SourcePath
-		if targetPath == "" {
-			// Fallback: look up PV path if not stored in snapshot
-			pvcList := &corev1.PersistentVolumeClaimList{}
-			if err := r.List(ctx, pvcList, client.InNamespace(namespace)); err == nil {
-				for _, pvc := range pvcList.Items {
-					if pvc.Name == pvcInfo.PVCName && pvc.Spec.VolumeName != "" {
-						pv := &corev1.PersistentVolume{}
-						if err := r.Get(ctx, client.ObjectKey{Name: pvc.Spec.VolumeName}, pv); err == nil {
-							if pv.Spec.Local != nil && pv.Spec.Local.Path != "" {
-								targetPath = pv.Spec.Local.Path
-							} else if pv.Spec.HostPath != nil && pv.Spec.HostPath.Path != "" {
-								targetPath = pv.Spec.HostPath.Path
-							}
-						}
-						break
-					}
-				}
-			}
-		}
-		if targetPath == "" {
-			logger.Error("Could not determine target path for PVC", zap.String("pvc", pvcInfo.PVCName))
+	// Create a SINGLE restore SnapshotRequest for the entire environment directory
+	restoreReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      restoreReqName,
+			Namespace: restoreReqNamespace,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+				"snapshots.kloudlite.io/operation": "restore",
+			},
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:       snapshotv1.SnapshotOperationRestore,
+			SourcePath:      snapshotPath,  // The btrfs snapshot
+			SnapshotPath:    targetPath,    // The environment directory
+			SnapshotRef:     snapshot.Name,
+			EnvironmentName: envName,
+		},
+	}
+
+	// Set owner reference
+	if err := controllerutil.SetControllerReference(snapshot, restoreReq, r.Scheme); err != nil {
+		logger.Error("Failed to set owner reference", zap.Error(err))
+	}
+
+	if err := r.Create(ctx, restoreReq); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			logger.Error("Failed to create restore SnapshotRequest", zap.Error(err))
 			// Scale environment back up on failure
 			if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-				logger.Warn("Failed to scale up environment after target path lookup failure", zap.Error(scaleErr))
+				logger.Warn("Failed to scale up environment after restore request creation failure", zap.Error(scaleErr))
 			}
-			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Could not determine target path for PVC %s", pvcInfo.PVCName), logger)
-		}
-
-		restoreReq := &snapshotv1.SnapshotRequest{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-restore-%s", snapshot.Name, pvcInfo.PVCName),
-				Namespace: snapshot.Status.WorkMachineName,
-				Labels: map[string]string{
-					"snapshots.kloudlite.io/snapshot":  snapshot.Name,
-					"snapshots.kloudlite.io/operation": "restore",
-					"snapshots.kloudlite.io/pvc":       pvcInfo.PVCName,
-				},
-			},
-			Spec: snapshotv1.SnapshotRequestSpec{
-				Operation:       snapshotv1.SnapshotOperationRestore,
-				SourcePath:      pvcInfo.SnapshotPath,
-				SnapshotPath:    targetPath,
-				SnapshotRef:     snapshot.Name,
-				EnvironmentName: envName,
-			},
-		}
-
-		if err := r.Create(ctx, restoreReq); err != nil {
-			if !apierrors.IsAlreadyExists(err) {
-				logger.Error("Failed to create restore SnapshotRequest", zap.Error(err), zap.String("pvc", pvcInfo.PVCName))
-				// Scale environment back up on failure
-				if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-					logger.Warn("Failed to scale up environment after restore request creation failure", zap.Error(scaleErr))
-				}
-				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create restore request for PVC %s", pvcInfo.PVCName), logger)
-			}
+			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create restore request: %v", err), logger)
 		}
 	}
 
-	// Check if all restore requests are complete
-	allComplete, err := r.checkRestoreRequestsComplete(ctx, snapshot, logger)
-	if err != nil {
-		logger.Error("Failed to check restore request status", zap.Error(err))
-		// Scale environment back up even on failure
-		if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-			logger.Warn("Failed to scale up environment after restore failure", zap.Error(scaleErr))
-		}
-		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %v", err), logger)
-	}
-
-	if !allComplete {
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
-	}
-
-	// Restore complete - update status back to Ready
+	// Update status
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-		snapshot.Status.State = snapshotv1.SnapshotStateReady
-		snapshot.Status.Message = "Snapshot restored successfully"
+		snapshot.Status.Message = "Restoring environment data..."
 		return nil
 	}, logger); err != nil {
-		logger.Error("Failed to update status to Ready", zap.Error(err))
-		return reconcile.Result{}, err
+		logger.Warn("Failed to update status", zap.Error(err))
 	}
 
-	// Scale environment back up only if no other snapshots are in progress
-	if !r.hasOtherInProgressSnapshots(ctx, snapshot, envName, logger) {
-		if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
-			logger.Warn("Failed to scale up environment after restore", zap.Error(err))
-		}
-	} else {
-		logger.Info("Skipping scale up after restore, other snapshots still in progress")
-	}
-
-	logger.Info("Snapshot restored successfully", zap.String("environment", envName))
-	return reconcile.Result{}, nil
+	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 }
 
 // scaleEnvironment scales all deployments and statefulsets in a namespace to the specified replica count

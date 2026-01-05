@@ -2361,6 +2361,35 @@ spec:
                 description: EnvironmentName is the environment being snapshotted
                   (for environment snapshots)
                 type: string
+              metadata:
+                description: |-
+                  Metadata contains K8s resource metadata to write to the snapshot directory
+                  This is used for environment snapshots to include ConfigMaps, Secrets, Deployments, etc.
+                properties:
+                  compositions:
+                    description: Compositions JSON
+                    type: string
+                  configMaps:
+                    description: ConfigMaps JSON
+                    type: string
+                  deployments:
+                    description: Deployments JSON
+                    type: string
+                  secrets:
+                    description: Secrets JSON
+                    type: string
+                  services:
+                    description: Services JSON
+                    type: string
+                  statefulSets:
+                    description: StatefulSets JSON
+                    type: string
+                type: object
+              metadataPath:
+                description: |-
+                  MetadataPath is the base path where metadata should be written
+                  This is separate from SnapshotPath when metadata needs to go to a parent directory
+                type: string
               operation:
                 description: Operation is the type of operation to perform
                 enum:
@@ -2626,6 +2655,29 @@ spec:
           status:
             description: SnapshotStatus defines the observed state of Snapshot
             properties:
+              collectedMetadata:
+                description: CollectedMetadata stores the collected K8s resource JSON
+                  for push operations
+                properties:
+                  compositions:
+                    description: Compositions JSON
+                    type: string
+                  configMaps:
+                    description: ConfigMaps JSON
+                    type: string
+                  deployments:
+                    description: Deployments JSON
+                    type: string
+                  secrets:
+                    description: Secrets JSON
+                    type: string
+                  services:
+                    description: Services JSON
+                    type: string
+                  statefulSets:
+                    description: StatefulSets JSON
+                    type: string
+                type: object
               createdAt:
                 description: CreatedAt is when the snapshot was successfully created
                 format: date-time
@@ -2644,31 +2696,6 @@ spec:
                 description: PreviousWorkspaceStatus stores the workspace's status
                   before suspension
                 type: string
-              pvcSnapshots:
-                description: PVCSnapshots lists individual PVC snapshot information
-                  (for environment snapshots)
-                items:
-                  description: PVCSnapshotInfo contains info about a snapshotted PVC
-                  properties:
-                    pvcName:
-                      description: PVCName is the name of the PVC
-                      type: string
-                    sizeBytes:
-                      description: SizeBytes is the size of this PVC snapshot
-                      format: int64
-                      type: integer
-                    snapshotPath:
-                      description: SnapshotPath is the path to this PVC's snapshot
-                      type: string
-                    sourcePath:
-                      description: SourcePath is the original PV host path (for restore)
-                      type: string
-                  required:
-                  - pvcName
-                  - sizeBytes
-                  - snapshotPath
-                  type: object
-                type: array
               registryStatus:
                 description: RegistryStatus tracks the snapshot's registry push status
                 properties:
@@ -2752,6 +2779,12 @@ spec:
               snapshotType:
                 description: SnapshotType indicates whether this is an environment
                   or workspace snapshot
+                type: string
+              sourcePath:
+                description: |-
+                  SourcePath is the source directory that was snapshotted
+                  For environments: /var/lib/kloudlite/storage/environments/{namespace}
+                  For workspaces: /var/lib/kloudlite/home/workspaces/{workspace}
                 type: string
               state:
                 default: Pending
