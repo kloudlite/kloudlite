@@ -968,6 +968,7 @@ func (r *EnvironmentReconciler) ensurePVCBindingHelperPod(
 	}
 
 	// Create helper pod that just sleeps to allow PVC binding
+	// Must be scheduled on the workmachine node where the storage is located
 	helperPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
@@ -979,6 +980,9 @@ func (r *EnvironmentReconciler) ensurePVCBindingHelperPod(
 		},
 		Spec: corev1.PodSpec{
 			RestartPolicy: corev1.RestartPolicyNever,
+			NodeSelector: map[string]string{
+				"kubernetes.io/hostname": environment.Spec.WorkMachineName,
+			},
 			Containers: []corev1.Container{
 				{
 					Name:         "binder",
