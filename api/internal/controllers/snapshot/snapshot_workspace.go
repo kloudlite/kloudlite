@@ -40,6 +40,27 @@ func (r *SnapshotReconciler) handleWorkspacePending(ctx context.Context, snapsho
 		return r.updateStatusFailed(ctx, snapshot, "Workspace is not owned by the snapshot creator", logger)
 	}
 
+	// Ensure labels are set for querying by workspace
+	labelsUpdated := false
+	if snapshot.Labels == nil {
+		snapshot.Labels = make(map[string]string)
+	}
+	if snapshot.Labels["snapshots.kloudlite.io/workspace"] != wsRef.Name {
+		snapshot.Labels["snapshots.kloudlite.io/workspace"] = wsRef.Name
+		labelsUpdated = true
+	}
+	if snapshot.Labels["kloudlite.io/owned-by"] != snapshot.Spec.OwnedBy {
+		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
+		labelsUpdated = true
+	}
+	if labelsUpdated {
+		if err := r.Update(ctx, snapshot); err != nil {
+			logger.Error("Failed to update snapshot labels", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	// Store previous workspace status and suspend the workspace
 	previousStatus := workspace.Spec.Status
 	wasSuspended := previousStatus == "suspended"
