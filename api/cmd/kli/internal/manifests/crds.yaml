@@ -1214,6 +1214,10 @@ spec:
                     description: SnapshotRequestName is the name of the SnapshotRequest
                       created for pulling
                     type: string
+                  dataRestoreRequestName:
+                    description: DataRestoreRequestName is the name of the SnapshotRequest
+                      for restoring environment data
+                    type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being
                       restored from
@@ -2513,6 +2517,59 @@ spec:
                     description: StatefulSets JSON
                     type: string
                 type: object
+              pulledSnapshots:
+                description: PulledSnapshots contains metadata for all snapshots pulled
+                  from registry (including parent chain)
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      description: Name is the original snapshot name
+                      type: string
+                    path:
+                      description: Path is the local path where this snapshot was extracted
+                      type: string
+                    snapshotType:
+                      description: SnapshotType indicates whether this is an environment or workspace snapshot
+                      type: string
+                    targetName:
+                      description: TargetName is the name of the environment or workspace that was snapshotted
+                      type: string
+                    workspaceName:
+                      description: WorkspaceName for workspace snapshots
+                      type: string
+                    workMachineName:
+                      description: WorkMachineName where the original snapshot was created
+                      type: string
+                    ownedBy:
+                      description: OwnedBy is the owner of the original snapshot
+                      type: string
+                    parentSnapshotName:
+                      description: ParentSnapshotName is the name of this snapshot's parent
+                      type: string
+                    environmentName:
+                      description: EnvironmentName for environment snapshots
+                      type: string
+                    resources:
+                      description: Resources contains K8s resource metadata
+                      type: object
+                      properties:
+                        compositions:
+                          type: string
+                        configMaps:
+                          type: string
+                        deployments:
+                          type: string
+                        secrets:
+                          type: string
+                        services:
+                          type: string
+                        statefulSets:
+                          type: string
+                  required:
+                    - name
+                    - ownedBy
             type: object
         type: object
     served: true
@@ -3351,6 +3408,10 @@ spec:
                   snapshotRequestName:
                     description: SnapshotRequestName is the name of the SnapshotRequest
                       created for pulling
+                    type: string
+                  dataRestoreRequestName:
+                    description: DataRestoreRequestName is the name of the SnapshotRequest
+                      for restoring workspace data
                     type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being
