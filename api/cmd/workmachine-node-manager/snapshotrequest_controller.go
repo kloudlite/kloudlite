@@ -86,6 +86,7 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 	// Execute the operation
 	var opErr error
 	var pushResult *oci.PushResult
+	var pulledMetadata *snapshotv1.SnapshotMetadata
 	switch snapshotReq.Spec.Operation {
 	case snapshotv1.SnapshotOperationCreate:
 		opErr = r.createSnapshot(snapshotReq, logger)
@@ -96,7 +97,7 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 	case snapshotv1.SnapshotOperationPush:
 		pushResult, opErr = r.pushSnapshot(snapshotReq, logger)
 	case snapshotv1.SnapshotOperationPull:
-		opErr = r.pullSnapshot(snapshotReq, logger)
+		pulledMetadata, opErr = r.pullSnapshot(snapshotReq, logger)
 	default:
 		opErr = fmt.Errorf("unknown operation: %s", snapshotReq.Spec.Operation)
 	}
@@ -137,6 +138,11 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 			latest.Status.LayerDigests = pushResult.LayerDigests
 			latest.Status.CompressedSize = pushResult.CompressedSize
 		}
+
+		// Add pull-specific status (K8s resource metadata)
+		if pulledMetadata != nil {
+			latest.Status.PulledMetadata = pulledMetadata
+		}
 	}, logger); err != nil {
 		logger.Error("Failed to update status to Completed", zap2.Error(err))
 		return reconcile.Result{}, err
@@ -161,17 +167,8 @@ func (r *SnapshotRequestReconciler) createSnapshot(req *snapshotv1.SnapshotReque
 		return fmt.Errorf("failed to create parent directory: %s - %w", string(output), err)
 	}
 
-	// Write metadata files if provided (for environment snapshots)
-	if req.Spec.Metadata != nil {
-		metadataBasePath := req.Spec.MetadataPath
-		if metadataBasePath == "" {
-			metadataBasePath = snapshotPath
-		}
-		if err := r.writeMetadataFiles(metadataBasePath, req.Spec.Metadata, logger); err != nil {
-			logger.Warn("Failed to write metadata files during create", zap2.Error(err))
-			// Continue with snapshot creation even if metadata writing fails
-		}
-	}
+	// Note: K8s resource metadata is stored in the OCI layer's metadata.json during push,
+	// not as files in the snapshot directory. This allows read-only btrfs snapshots.
 
 	// Check if source is a btrfs subvolume
 	checkScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", sourcePath)
@@ -340,17 +337,7 @@ func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest
 		return nil, fmt.Errorf("snapshot path does not exist: %s", snapshotPath)
 	}
 
-	// Write metadata files if provided
-	if req.Spec.Metadata != nil {
-		if err := r.writeMetadataFiles(snapshotPath, req.Spec.Metadata, logger); err != nil {
-			logger.Warn("Failed to write metadata files", zap2.Error(err))
-			// Continue with push even if metadata writing fails
-		}
-	}
-
 	// Build metadata from the SnapshotRequest
-	// In a real implementation, we'd fetch the actual Snapshot resource
-	// For now, we use basic metadata from the request
 	metadata := &oci.SnapshotMetadata{
 		Name: req.Spec.SnapshotRef,
 		Spec: oci.SnapshotMetadataSpec{
@@ -373,6 +360,20 @@ func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest
 			Name: req.Spec.WorkspaceName,
 		}
 		metadata.Status.SnapshotType = "Workspace"
+	}
+
+	// Include K8s resource metadata in the OCI metadata (stored in metadata.json)
+	// This avoids having to write files to the read-only btrfs snapshot
+	if req.Spec.Metadata != nil {
+		metadata.Resources = &oci.ResourceMetadata{
+			ConfigMaps:   req.Spec.Metadata.ConfigMaps,
+			Secrets:      req.Spec.Metadata.Secrets,
+			Deployments:  req.Spec.Metadata.Deployments,
+			Services:     req.Spec.Metadata.Services,
+			StatefulSets: req.Spec.Metadata.StatefulSets,
+			Compositions: req.Spec.Metadata.Compositions,
+		}
+		logger.Info("Including K8s resource metadata in OCI layer")
 	}
 
 	logger.Info("Pushing snapshot to registry",
@@ -410,9 +411,10 @@ func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest
 }
 
 // pullSnapshot pulls a snapshot chain from the OCI registry
-func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) error {
+// Returns the K8s resource metadata from the pulled OCI layer
+func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (*snapshotv1.SnapshotMetadata, error) {
 	if req.Spec.RegistryRef == nil {
-		return fmt.Errorf("registryRef is required for pull operation")
+		return nil, fmt.Errorf("registryRef is required for pull operation")
 	}
 
 	targetDir := req.Spec.SnapshotPath
@@ -420,7 +422,7 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 	// Ensure target directory exists
 	mkdirScript := fmt.Sprintf("mkdir -p %s", targetDir)
 	if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
-		return fmt.Errorf("failed to create target directory: %s - %w", string(output), err)
+		return nil, fmt.Errorf("failed to create target directory: %s - %w", string(output), err)
 	}
 
 	logger.Info("Pulling snapshot from registry",
@@ -440,14 +442,15 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 		Insecure:    true,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to pull snapshot: %w", err)
+		return nil, fmt.Errorf("failed to pull snapshot: %w", err)
 	}
 
 	logger.Info("Snapshot chain pulled successfully",
 		zap2.Int("snapshotCount", len(result.Snapshots)),
 	)
 
-	// Log each pulled snapshot
+	// Find the K8s resource metadata from the pulled snapshots
+	var pulledMetadata *snapshotv1.SnapshotMetadata
 	for _, snap := range result.Snapshots {
 		path := result.SnapshotPaths[snap.Name]
 		logger.Info("Pulled snapshot",
@@ -455,61 +458,22 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 			zap2.String("path", path),
 			zap2.String("type", snap.Status.SnapshotType),
 		)
-	}
 
-	return nil
-}
-
-// writeMetadataFiles writes K8s resource metadata JSON files to the snapshot directory
-func (r *SnapshotRequestReconciler) writeMetadataFiles(snapshotPath string, metadata *snapshotv1.SnapshotMetadata, logger *zap2.Logger) error {
-	metadataDir := filepath.Join(snapshotPath, "metadata")
-
-	// Create metadata directory
-	mkdirScript := fmt.Sprintf("mkdir -p %s", metadataDir)
-	if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
-		return fmt.Errorf("failed to create metadata directory: %s - %w", string(output), err)
-	}
-
-	logger.Info("Writing metadata files", zap2.String("dir", metadataDir))
-
-	// Write each metadata file using cat with heredoc
-	writeFile := func(filename, content string) error {
-		if content == "" {
-			return nil
+		// Extract K8s resource metadata from the OCI metadata
+		if snap.Resources != nil {
+			pulledMetadata = &snapshotv1.SnapshotMetadata{
+				ConfigMaps:   snap.Resources.ConfigMaps,
+				Secrets:      snap.Resources.Secrets,
+				Deployments:  snap.Resources.Deployments,
+				Services:     snap.Resources.Services,
+				StatefulSets: snap.Resources.StatefulSets,
+				Compositions: snap.Resources.Compositions,
+			}
+			logger.Info("Found K8s resource metadata in OCI layer")
 		}
-		filePath := filepath.Join(metadataDir, filename)
-		// Use printf to handle special characters properly
-		// First write to a temp file, then move it
-		script := fmt.Sprintf("cat > %s << 'METADATA_EOF'\n%s\nMETADATA_EOF", filePath, content)
-		if output, err := r.CmdExec.Execute(script); err != nil {
-			return fmt.Errorf("failed to write %s: %s - %w", filename, string(output), err)
-		}
-		logger.Info("Wrote metadata file", zap2.String("file", filename))
-		return nil
 	}
 
-	// Write all metadata files
-	if err := writeFile("configmaps.json", metadata.ConfigMaps); err != nil {
-		return err
-	}
-	if err := writeFile("secrets.json", metadata.Secrets); err != nil {
-		return err
-	}
-	if err := writeFile("deployments.json", metadata.Deployments); err != nil {
-		return err
-	}
-	if err := writeFile("services.json", metadata.Services); err != nil {
-		return err
-	}
-	if err := writeFile("statefulsets.json", metadata.StatefulSets); err != nil {
-		return err
-	}
-	if err := writeFile("compositions.json", metadata.Compositions); err != nil {
-		return err
-	}
-
-	logger.Info("Metadata files written successfully")
-	return nil
+	return pulledMetadata, nil
 }
 
 // getSnapshotSize returns the size of the snapshot in bytes

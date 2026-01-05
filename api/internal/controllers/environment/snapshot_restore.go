@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -22,6 +21,8 @@ import (
 )
 
 const (
+	// snapshotsBasePath is where snapshots are stored on the host filesystem
+	// This is used for pull operations - the extracted data goes here
 	snapshotsBasePath = "/var/lib/kloudlite/storage/.snapshots"
 )
 
@@ -229,6 +230,7 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 
 	case snapshotv1.SnapshotRequestPhaseCompleted:
 		// Pull completed, move to Restoring phase
+		// Note: We keep the pull request until after restoration to access the pulled metadata
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
 			environment.Status.SnapshotRestoreStatus.Phase = environmentsv1.SnapshotRestorePhaseRestoring
 			environment.Status.SnapshotRestoreStatus.Message = "Snapshot pulled, restoring resources"
@@ -236,11 +238,6 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 		}, logger); err != nil {
 			logger.Error("Failed to update status after pull", zap.Error(err))
 			return reconcile.Result{}, err
-		}
-
-		// Delete the completed pull request
-		if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
-			logger.Warn("Failed to delete completed pull request", zap.Error(err))
 		}
 
 		logger.Info("Pull completed, moving to Restoring phase")
@@ -262,11 +259,37 @@ func (r *EnvironmentReconciler) handleRestoreRestoring(
 	logger.Info("Phase: Restoring - Applying resources from snapshot")
 
 	targetNamespace := environment.Spec.TargetNamespace
+	status := environment.Status.SnapshotRestoreStatus
 
-	// Restore resources from snapshot metadata
-	if err := r.restoreResourcesFromSnapshot(ctx, environment, targetNamespace, logger); err != nil {
-		logger.Warn("Failed to restore some resources", zap.Error(err))
-		// Don't fail the entire restore if some resource restoration fails
+	// Fetch the pull request to get the pulled metadata
+	pullReqName := status.SnapshotRequestName
+	wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
+
+	pullReq := &snapshotv1.SnapshotRequest{}
+	if err := r.Get(ctx, client.ObjectKey{Name: pullReqName, Namespace: wmNamespace}, pullReq); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Warn("Pull request not found, cannot restore metadata")
+		} else {
+			logger.Error("Failed to get pull request", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+	}
+
+	// Restore resources from the pulled metadata (stored in OCI layer's metadata.json)
+	if pullReq.Status.PulledMetadata != nil {
+		if err := r.restoreResourcesFromMetadata(ctx, pullReq.Status.PulledMetadata, targetNamespace, environment.Name, logger); err != nil {
+			logger.Warn("Failed to restore some resources", zap.Error(err))
+			// Don't fail the entire restore if some resource restoration fails
+		}
+	} else {
+		logger.Info("No K8s resource metadata found in pulled snapshot")
+	}
+
+	// Delete the completed pull request now that we've used its metadata
+	if pullReq.Name != "" {
+		if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
+			logger.Warn("Failed to delete completed pull request", zap.Error(err))
+		}
 	}
 
 	// Track the restored snapshot for lineage
@@ -322,76 +345,69 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 	return reconcile.Result{Requeue: true}, nil
 }
 
-// restoreResourcesFromSnapshot reads metadata from the pulled snapshot and creates resources
-func (r *EnvironmentReconciler) restoreResourcesFromSnapshot(
+// restoreResourcesFromMetadata restores K8s resources from the metadata struct (from OCI layer)
+func (r *EnvironmentReconciler) restoreResourcesFromMetadata(
 	ctx context.Context,
-	environment *environmentsv1.Environment,
-	targetNamespace string,
+	metadata *snapshotv1.SnapshotMetadata,
+	targetNamespace, envName string,
 	logger *zap.Logger,
 ) error {
-	// Determine the snapshot path - pulled content is at {basePath}/env-{name}-restore/{snapshotName}/
-	snapshotName := environment.Spec.FromSnapshot.SnapshotName
-	snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("env-%s-restore", environment.Name), snapshotName)
-	metadataPath := filepath.Join(snapshotPath, "metadata")
-
-	// Check if metadata directory exists
-	if _, err := os.Stat(metadataPath); os.IsNotExist(err) {
-		logger.Info("No metadata directory found in snapshot", zap.String("path", metadataPath))
-		return nil
-	}
+	logger.Info("Restoring resources from OCI metadata")
 
 	// Restore ConfigMaps
-	if err := r.restoreConfigMaps(ctx, metadataPath, targetNamespace, environment.Name, logger); err != nil {
-		logger.Warn("Failed to restore ConfigMaps", zap.Error(err))
+	if metadata.ConfigMaps != "" {
+		if err := r.restoreConfigMapsFromJSON(ctx, metadata.ConfigMaps, targetNamespace, envName, logger); err != nil {
+			logger.Warn("Failed to restore ConfigMaps", zap.Error(err))
+		}
 	}
 
 	// Restore Secrets
-	if err := r.restoreSecrets(ctx, metadataPath, targetNamespace, environment.Name, logger); err != nil {
-		logger.Warn("Failed to restore Secrets", zap.Error(err))
+	if metadata.Secrets != "" {
+		if err := r.restoreSecretsFromJSON(ctx, metadata.Secrets, targetNamespace, envName, logger); err != nil {
+			logger.Warn("Failed to restore Secrets", zap.Error(err))
+		}
 	}
 
 	// Restore Deployments
-	if err := r.restoreDeployments(ctx, metadataPath, targetNamespace, logger); err != nil {
-		logger.Warn("Failed to restore Deployments", zap.Error(err))
+	if metadata.Deployments != "" {
+		if err := r.restoreDeploymentsFromJSON(ctx, metadata.Deployments, targetNamespace, logger); err != nil {
+			logger.Warn("Failed to restore Deployments", zap.Error(err))
+		}
 	}
 
 	// Restore StatefulSets
-	if err := r.restoreStatefulSets(ctx, metadataPath, targetNamespace, logger); err != nil {
-		logger.Warn("Failed to restore StatefulSets", zap.Error(err))
+	if metadata.StatefulSets != "" {
+		if err := r.restoreStatefulSetsFromJSON(ctx, metadata.StatefulSets, targetNamespace, logger); err != nil {
+			logger.Warn("Failed to restore StatefulSets", zap.Error(err))
+		}
 	}
 
 	// Restore Services
-	if err := r.restoreServices(ctx, metadataPath, targetNamespace, logger); err != nil {
-		logger.Warn("Failed to restore Services", zap.Error(err))
+	if metadata.Services != "" {
+		if err := r.restoreServicesFromJSON(ctx, metadata.Services, targetNamespace, logger); err != nil {
+			logger.Warn("Failed to restore Services", zap.Error(err))
+		}
 	}
 
 	// Restore Compositions
-	if err := r.restoreCompositions(ctx, metadataPath, targetNamespace, logger); err != nil {
-		logger.Warn("Failed to restore Compositions", zap.Error(err))
+	if metadata.Compositions != "" {
+		if err := r.restoreCompositionsFromJSON(ctx, metadata.Compositions, targetNamespace, logger); err != nil {
+			logger.Warn("Failed to restore Compositions", zap.Error(err))
+		}
 	}
 
 	return nil
 }
 
-// restoreConfigMaps restores ConfigMaps from snapshot metadata
-func (r *EnvironmentReconciler) restoreConfigMaps(
+// restoreConfigMapsFromJSON restores ConfigMaps from JSON string
+func (r *EnvironmentReconciler) restoreConfigMapsFromJSON(
 	ctx context.Context,
-	metadataPath, targetNamespace, envName string,
+	jsonData, targetNamespace, envName string,
 	logger *zap.Logger,
 ) error {
-	filePath := filepath.Join(metadataPath, "configmaps.json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read configmaps.json: %w", err)
-	}
-
 	var configMapList corev1.ConfigMapList
-	if err := json.Unmarshal(data, &configMapList); err != nil {
-		return fmt.Errorf("failed to parse configmaps.json: %w", err)
+	if err := json.Unmarshal([]byte(jsonData), &configMapList); err != nil {
+		return fmt.Errorf("failed to parse configmaps JSON: %w", err)
 	}
 
 	restored := 0
@@ -431,25 +447,15 @@ func (r *EnvironmentReconciler) restoreConfigMaps(
 	return nil
 }
 
-// restoreSecrets restores Secrets from snapshot metadata
-func (r *EnvironmentReconciler) restoreSecrets(
+// restoreSecretsFromJSON restores Secrets from JSON string
+func (r *EnvironmentReconciler) restoreSecretsFromJSON(
 	ctx context.Context,
-	metadataPath, targetNamespace, envName string,
+	jsonData, targetNamespace, envName string,
 	logger *zap.Logger,
 ) error {
-	filePath := filepath.Join(metadataPath, "secrets.json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read secrets.json: %w", err)
-	}
-
 	var secrets []corev1.Secret
-	if err := json.Unmarshal(data, &secrets); err != nil {
-		return fmt.Errorf("failed to parse secrets.json: %w", err)
+	if err := json.Unmarshal([]byte(jsonData), &secrets); err != nil {
+		return fmt.Errorf("failed to parse secrets JSON: %w", err)
 	}
 
 	restored := 0
@@ -489,25 +495,15 @@ func (r *EnvironmentReconciler) restoreSecrets(
 	return nil
 }
 
-// restoreDeployments restores Deployments from snapshot metadata
-func (r *EnvironmentReconciler) restoreDeployments(
+// restoreDeploymentsFromJSON restores Deployments from JSON string
+func (r *EnvironmentReconciler) restoreDeploymentsFromJSON(
 	ctx context.Context,
-	metadataPath, targetNamespace string,
+	jsonData, targetNamespace string,
 	logger *zap.Logger,
 ) error {
-	filePath := filepath.Join(metadataPath, "deployments.json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read deployments.json: %w", err)
-	}
-
 	var deploymentList appsv1.DeploymentList
-	if err := json.Unmarshal(data, &deploymentList); err != nil {
-		return fmt.Errorf("failed to parse deployments.json: %w", err)
+	if err := json.Unmarshal([]byte(jsonData), &deploymentList); err != nil {
+		return fmt.Errorf("failed to parse deployments JSON: %w", err)
 	}
 
 	restored := 0
@@ -539,25 +535,15 @@ func (r *EnvironmentReconciler) restoreDeployments(
 	return nil
 }
 
-// restoreStatefulSets restores StatefulSets from snapshot metadata
-func (r *EnvironmentReconciler) restoreStatefulSets(
+// restoreStatefulSetsFromJSON restores StatefulSets from JSON string
+func (r *EnvironmentReconciler) restoreStatefulSetsFromJSON(
 	ctx context.Context,
-	metadataPath, targetNamespace string,
+	jsonData, targetNamespace string,
 	logger *zap.Logger,
 ) error {
-	filePath := filepath.Join(metadataPath, "statefulsets.json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read statefulsets.json: %w", err)
-	}
-
 	var stsList appsv1.StatefulSetList
-	if err := json.Unmarshal(data, &stsList); err != nil {
-		return fmt.Errorf("failed to parse statefulsets.json: %w", err)
+	if err := json.Unmarshal([]byte(jsonData), &stsList); err != nil {
+		return fmt.Errorf("failed to parse statefulsets JSON: %w", err)
 	}
 
 	restored := 0
@@ -589,25 +575,15 @@ func (r *EnvironmentReconciler) restoreStatefulSets(
 	return nil
 }
 
-// restoreServices restores Services from snapshot metadata
-func (r *EnvironmentReconciler) restoreServices(
+// restoreServicesFromJSON restores Services from JSON string
+func (r *EnvironmentReconciler) restoreServicesFromJSON(
 	ctx context.Context,
-	metadataPath, targetNamespace string,
+	jsonData, targetNamespace string,
 	logger *zap.Logger,
 ) error {
-	filePath := filepath.Join(metadataPath, "services.json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read services.json: %w", err)
-	}
-
 	var svcList corev1.ServiceList
-	if err := json.Unmarshal(data, &svcList); err != nil {
-		return fmt.Errorf("failed to parse services.json: %w", err)
+	if err := json.Unmarshal([]byte(jsonData), &svcList); err != nil {
+		return fmt.Errorf("failed to parse services JSON: %w", err)
 	}
 
 	restored := 0
@@ -648,25 +624,15 @@ func (r *EnvironmentReconciler) restoreServices(
 	return nil
 }
 
-// restoreCompositions restores Compositions from snapshot metadata
-func (r *EnvironmentReconciler) restoreCompositions(
+// restoreCompositionsFromJSON restores Compositions from JSON string
+func (r *EnvironmentReconciler) restoreCompositionsFromJSON(
 	ctx context.Context,
-	metadataPath, targetNamespace string,
+	jsonData, targetNamespace string,
 	logger *zap.Logger,
 ) error {
-	filePath := filepath.Join(metadataPath, "compositions.json")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return nil // No compositions to restore
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read compositions.json: %w", err)
-	}
-
 	var compositionList environmentsv1.CompositionList
-	if err := json.Unmarshal(data, &compositionList); err != nil {
-		return fmt.Errorf("failed to parse compositions.json: %w", err)
+	if err := json.Unmarshal([]byte(jsonData), &compositionList); err != nil {
+		return fmt.Errorf("failed to parse compositions JSON: %w", err)
 	}
 
 	restored := 0
