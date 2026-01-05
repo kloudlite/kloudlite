@@ -290,8 +290,11 @@ const (
 	// SnapshotRestorePhasePulling indicates snapshot is being pulled from registry
 	SnapshotRestorePhasePulling SnapshotRestorePhase = "Pulling"
 
-	// SnapshotRestorePhaseRestoring indicates snapshot is being restored to environment
+	// SnapshotRestorePhaseRestoring indicates K8s resources are being restored
 	SnapshotRestorePhaseRestoring SnapshotRestorePhase = "Restoring"
+
+	// SnapshotRestorePhaseDataRestoring indicates PVC data is being restored from snapshot
+	SnapshotRestorePhaseDataRestoring SnapshotRestorePhase = "DataRestoring"
 
 	// SnapshotRestorePhaseCompleted indicates restoration completed successfully
 	SnapshotRestorePhaseCompleted SnapshotRestorePhase = "Completed"
@@ -303,7 +306,7 @@ const (
 // SnapshotRestoreStatus tracks the progress of creating environment from a registry snapshot
 type SnapshotRestoreStatus struct {
 	// Phase represents the current phase of snapshot restoration
-	// +kubebuilder:validation:Enum=Pending;Pulling;Restoring;Completed;Failed
+	// +kubebuilder:validation:Enum=Pending;Pulling;Restoring;DataRestoring;Completed;Failed
 	// +optional
 	Phase SnapshotRestorePhase `json:"phase,omitempty"`
 

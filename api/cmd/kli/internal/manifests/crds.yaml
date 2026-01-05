@@ -1206,6 +1206,7 @@ spec:
                     - Pending
                     - Pulling
                     - Restoring
+                    - DataRestoring
                     - Completed
                     - Failed
                     type: string
@@ -3343,6 +3344,7 @@ spec:
                     - Pending
                     - Pulling
                     - Restoring
+                    - DataRestoring
                     - Completed
                     - Failed
                     type: string

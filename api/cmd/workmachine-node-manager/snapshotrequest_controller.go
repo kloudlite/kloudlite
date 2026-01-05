@@ -260,8 +260,20 @@ func (r *SnapshotRequestReconciler) deleteSnapshot(req *snapshotv1.SnapshotReque
 // restoreSnapshot restores from a btrfs snapshot
 func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) error {
 	// For restore: SourcePath is the snapshot source, SnapshotPath is the restore target
-	sourcePath := req.Spec.SourcePath   // The snapshot to restore FROM
+	sourcePath := req.Spec.SourcePath   // The snapshot to restore FROM (may contain glob pattern)
 	targetPath := req.Spec.SnapshotPath // Where to restore TO
+
+	// If source path contains glob pattern, resolve it
+	if strings.Contains(sourcePath, "*") {
+		logger.Info("Resolving glob pattern in source path", zap2.String("pattern", sourcePath))
+		globScript := fmt.Sprintf("ls -d %s 2>/dev/null | head -1", sourcePath)
+		output, err := r.CmdExec.Execute(globScript)
+		if err != nil || strings.TrimSpace(string(output)) == "" {
+			return fmt.Errorf("no matching source path found for pattern: %s", sourcePath)
+		}
+		sourcePath = strings.TrimSpace(string(output))
+		logger.Info("Resolved source path", zap2.String("path", sourcePath))
+	}
 
 	// Check if source snapshot exists
 	checkScript := fmt.Sprintf("test -e %s", sourcePath)

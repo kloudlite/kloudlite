@@ -68,6 +68,9 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(
 	case environmentsv1.SnapshotRestorePhaseRestoring:
 		return r.handleRestoreRestoring(ctx, environment, logger)
 
+	case environmentsv1.SnapshotRestorePhaseDataRestoring:
+		return r.handleRestoreDataRestoring(ctx, environment, logger)
+
 	case environmentsv1.SnapshotRestorePhaseCompleted:
 		return r.handleRestoreCompleted(ctx, environment, logger)
 
@@ -256,7 +259,7 @@ func (r *EnvironmentReconciler) handleRestoreRestoring(
 	environment *environmentsv1.Environment,
 	logger *zap.Logger,
 ) (reconcile.Result, error) {
-	logger.Info("Phase: Restoring - Applying resources from snapshot")
+	logger.Info("Phase: Restoring - Applying K8s resources from snapshot")
 
 	targetNamespace := environment.Spec.TargetNamespace
 	status := environment.Status.SnapshotRestoreStatus
@@ -285,21 +288,200 @@ func (r *EnvironmentReconciler) handleRestoreRestoring(
 		logger.Info("No K8s resource metadata found in pulled snapshot")
 	}
 
-	// Delete the completed pull request now that we've used its metadata
-	if pullReq.Name != "" {
-		if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
-			logger.Warn("Failed to delete completed pull request", zap.Error(err))
+	// Move to DataRestoring phase to restore PVC data
+	// Keep the pull request for now - we need the snapshot path for data restoration
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		environment.Status.SnapshotRestoreStatus.Phase = environmentsv1.SnapshotRestorePhaseDataRestoring
+		environment.Status.SnapshotRestoreStatus.Message = "K8s resources restored, restoring PVC data"
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update status", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Moving to DataRestoring phase")
+	return reconcile.Result{Requeue: true}, nil
+}
+
+// handleRestoreDataRestoring restores PVC data from the pulled snapshot
+func (r *EnvironmentReconciler) handleRestoreDataRestoring(
+	ctx context.Context,
+	environment *environmentsv1.Environment,
+	logger *zap.Logger,
+) (reconcile.Result, error) {
+	logger.Info("Phase: DataRestoring - Restoring PVC data from snapshot")
+
+	targetNamespace := environment.Spec.TargetNamespace
+	status := environment.Status.SnapshotRestoreStatus
+	wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
+	snapshotName := environment.Spec.FromSnapshot.SnapshotName
+
+	// Get the pull request to find the snapshot path
+	pullReq := &snapshotv1.SnapshotRequest{}
+	if err := r.Get(ctx, client.ObjectKey{Name: status.SnapshotRequestName, Namespace: wmNamespace}, pullReq); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Warn("Pull request not found, skipping data restoration")
+			return r.moveToCompleted(ctx, environment, logger)
+		}
+		logger.Error("Failed to get pull request", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	// The pulled snapshot data is at: {snapshotPath}/{snapshotName}/
+	pulledSnapshotBase := filepath.Join(pullReq.Spec.SnapshotPath, snapshotName)
+
+	// List PVCs in the target namespace
+	pvcList := &corev1.PersistentVolumeClaimList{}
+	if err := r.List(ctx, pvcList, client.InNamespace(targetNamespace)); err != nil {
+		logger.Error("Failed to list PVCs", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	if len(pvcList.Items) == 0 {
+		logger.Info("No PVCs found, skipping data restoration")
+		return r.moveToCompleted(ctx, environment, logger)
+	}
+
+	// Check/create restore requests for each PVC
+	allCompleted := true
+	anyFailed := false
+
+	for _, pvc := range pvcList.Items {
+		// Skip PVCs that aren't bound yet
+		if pvc.Status.Phase != corev1.ClaimBound {
+			logger.Info("PVC not bound yet, waiting", zap.String("pvc", pvc.Name))
+			allCompleted = false
+			continue
+		}
+
+		restoreReqName := fmt.Sprintf("%s-data-restore-%s", environment.Name, pvc.Name)
+
+		// Check if restore request already exists
+		restoreReq := &snapshotv1.SnapshotRequest{}
+		if err := r.Get(ctx, client.ObjectKey{Name: restoreReqName, Namespace: wmNamespace}, restoreReq); err != nil {
+			if !apierrors.IsNotFound(err) {
+				logger.Error("Failed to get restore request", zap.Error(err), zap.String("pvc", pvc.Name))
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+
+			// Create restore request
+			// Source: snapshot data path matching by claim name
+			// Target: actual PVC mount path
+			sourcePath, targetPath := r.getPVCRestorePaths(pulledSnapshotBase, targetNamespace, &pvc, logger)
+			if sourcePath == "" {
+				logger.Warn("Could not determine source path for PVC", zap.String("pvc", pvc.Name))
+				continue
+			}
+
+			newRestoreReq := &snapshotv1.SnapshotRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      restoreReqName,
+					Namespace: wmNamespace,
+					Labels: map[string]string{
+						"environments.kloudlite.io/environment": environment.Name,
+						"environments.kloudlite.io/operation":   "data-restore",
+						"environments.kloudlite.io/pvc":         pvc.Name,
+					},
+				},
+				Spec: snapshotv1.SnapshotRequestSpec{
+					Operation:       snapshotv1.SnapshotOperationRestore,
+					SourcePath:      sourcePath,
+					SnapshotPath:    targetPath,
+					EnvironmentName: environment.Name,
+				},
+			}
+
+			if err := r.Create(ctx, newRestoreReq); err != nil {
+				if !apierrors.IsAlreadyExists(err) {
+					logger.Error("Failed to create restore request", zap.Error(err), zap.String("pvc", pvc.Name))
+					return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+				}
+			}
+
+			logger.Info("Created data restore request",
+				zap.String("pvc", pvc.Name),
+				zap.String("source", sourcePath),
+				zap.String("target", targetPath))
+			allCompleted = false
+			continue
+		}
+
+		// Check restore request status
+		switch restoreReq.Status.Phase {
+		case snapshotv1.SnapshotRequestPhaseCompleted:
+			logger.Info("PVC data restore completed", zap.String("pvc", pvc.Name))
+			// Clean up completed restore request
+			if err := r.Delete(ctx, restoreReq); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete completed restore request", zap.Error(err))
+			}
+		case snapshotv1.SnapshotRequestPhaseFailed:
+			logger.Error("PVC data restore failed", zap.String("pvc", pvc.Name), zap.String("error", restoreReq.Status.Message))
+			anyFailed = true
+		default:
+			logger.Info("PVC data restore in progress", zap.String("pvc", pvc.Name), zap.String("phase", string(restoreReq.Status.Phase)))
+			allCompleted = false
 		}
 	}
 
-	// Track the restored snapshot for lineage
+	if anyFailed {
+		logger.Warn("Some PVC data restores failed, proceeding anyway")
+	}
+
+	if !allCompleted {
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	// All restores completed, clean up pull request and move to Completed
+	if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
+		logger.Warn("Failed to delete pull request", zap.Error(err))
+	}
+
+	return r.moveToCompleted(ctx, environment, logger)
+}
+
+// getPVCRestorePaths determines the source (snapshot) and target (actual PVC) paths
+func (r *EnvironmentReconciler) getPVCRestorePaths(
+	pulledSnapshotBase, targetNamespace string,
+	pvc *corev1.PersistentVolumeClaim,
+	logger *zap.Logger,
+) (sourcePath, targetPath string) {
+	// The snapshot contains directories like: pvc-{uid}_{original-namespace}_{claim-name}
+	// We need to match by claim name since the PVC UID and namespace will be different in the clone
+
+	claimName := pvc.Name
+	pvcUID := string(pvc.UID)
+
+	// Target path is where the PVC is actually mounted by local-path-provisioner
+	// Format: /var/lib/kloudlite/storage/environments/{namespace}/pvc-{uid}_{namespace}_{claim-name}
+	environmentsBasePath := "/var/lib/kloudlite/storage/environments"
+	targetPath = filepath.Join(environmentsBasePath, targetNamespace, fmt.Sprintf("pvc-%s_%s_%s", pvcUID, targetNamespace, claimName))
+
+	// Source path - we need to find the matching directory in the snapshot by claim name
+	// The snapshot data is at: {pulledSnapshotBase}/pvc-*_env-*_{claim-name}
+	// Since we can't list files from the controller, we construct the expected pattern
+	// The actual matching will be done by the node manager using glob patterns
+	sourcePath = filepath.Join(pulledSnapshotBase, fmt.Sprintf("*_%s", claimName))
+
+	logger.Info("Determined PVC restore paths",
+		zap.String("pvc", pvc.Name),
+		zap.String("sourcePattern", sourcePath),
+		zap.String("target", targetPath))
+
+	return sourcePath, targetPath
+}
+
+// moveToCompleted updates status to Completed phase
+func (r *EnvironmentReconciler) moveToCompleted(
+	ctx context.Context,
+	environment *environmentsv1.Environment,
+	logger *zap.Logger,
+) (reconcile.Result, error) {
 	now := metav1.Now()
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
 		environment.Status.SnapshotRestoreStatus.Phase = environmentsv1.SnapshotRestorePhaseCompleted
 		environment.Status.SnapshotRestoreStatus.Message = "Snapshot restore completed"
 		environment.Status.SnapshotRestoreStatus.CompletionTime = &now
 
-		// Track the last restored snapshot for lineage
 		environment.Status.LastRestoredSnapshot = &environmentsv1.LastRestoredSnapshotInfo{
 			Name:       environment.Spec.FromSnapshot.SnapshotName,
 			RestoredAt: now,
