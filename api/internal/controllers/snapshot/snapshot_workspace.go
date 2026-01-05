@@ -148,7 +148,7 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 			SnapshotPath:  workspaceSnapshotPath,
 			SnapshotRef:   snapshot.Name,
 			WorkspaceName: wsRef.Name,
-			ReadOnly:      true,
+			ReadOnly:      false, // Must be writable so metadata can be added during push
 		},
 	}
 
