@@ -2489,6 +2489,29 @@ spec:
                 description: StartedAt is when the operation started
                 format: date-time
                 type: string
+              pulledMetadata:
+                description: PulledMetadata contains the K8s resource metadata extracted
+                  from the OCI layer (for pull operations)
+                properties:
+                  compositions:
+                    description: Compositions JSON
+                    type: string
+                  configMaps:
+                    description: ConfigMaps JSON
+                    type: string
+                  deployments:
+                    description: Deployments JSON
+                    type: string
+                  secrets:
+                    description: Secrets JSON
+                    type: string
+                  services:
+                    description: Services JSON
+                    type: string
+                  statefulSets:
+                    description: StatefulSets JSON
+                    type: string
+                type: object
             type: object
         type: object
     served: true
