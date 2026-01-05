@@ -469,11 +469,13 @@ func (r *EnvironmentReconciler) getPVCRestorePaths(
 	// This matches the StorageClass pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}/{{ .PVName }}"
 	targetPath = filepath.Join(environmentsBasePath, targetNamespace, claimName, pvName)
 
-	// Source path - glob pattern to match by claim name
-	// Old format in snapshot: pvc-{uid}_{namespace}_{claimName} (flat in namespace dir)
-	// New format in snapshot: {claimName}/{pv-name} (nested directory)
-	// Use pattern that matches claim name in either position
-	sourcePath = filepath.Join(pulledSnapshotBase, fmt.Sprintf("*%s*", claimName))
+	// Source path - find the actual data directory inside the snapshot
+	// Snapshot structure (new pathPattern format):
+	//   {snapshotBase}/{snapshotName}/{claimName}/{old-pv-name}/(data files)
+	// We need to copy CONTENTS of {claimName}/{old-pv-name}/* to target
+	// Use glob pattern to find the claim directory, then the PV subdirectory inside it
+	// The snapshotrequest controller will resolve this and copy the innermost data
+	sourcePath = filepath.Join(pulledSnapshotBase, claimName, "*")
 
 	logger.Info("Determined PVC restore paths",
 		zap.String("pvc", pvc.Name),
