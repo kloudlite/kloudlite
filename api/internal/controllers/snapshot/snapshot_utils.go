@@ -85,11 +85,11 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 			}
 		}
 	} else {
-		// Create delete SnapshotRequests for each PVC snapshot (environment)
-		for _, pvcInfo := range snapshot.Status.PVCSnapshots {
+		// Delete environment snapshot - single delete request for entire environment directory
+		if snapshot.Status.SnapshotPath != "" {
 			deleteReq := &snapshotv1.SnapshotRequest{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("%s-delete-%s", snapshot.Name, pvcInfo.PVCName),
+					Name:      fmt.Sprintf("%s-delete-env", snapshot.Name),
 					Namespace: snapshot.Status.WorkMachineName,
 					Labels: map[string]string{
 						"snapshots.kloudlite.io/snapshot":  snapshot.Name,
@@ -98,7 +98,7 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 				},
 				Spec: snapshotv1.SnapshotRequestSpec{
 					Operation:    snapshotv1.SnapshotOperationDelete,
-					SnapshotPath: pvcInfo.SnapshotPath,
+					SnapshotPath: snapshot.Status.SnapshotPath,
 					SnapshotRef:  snapshot.Name,
 				},
 			}
@@ -239,34 +239,6 @@ func (r *SnapshotReconciler) checkDeleteRequestsComplete(ctx context.Context, sn
 
 	for _, req := range snapshotReqList.Items {
 		if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted {
-			return false, nil
-		}
-	}
-
-	return true, nil
-}
-
-// checkRestoreRequestsComplete checks if all restore SnapshotRequests are complete
-func (r *SnapshotReconciler) checkRestoreRequestsComplete(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (bool, error) {
-	snapshotReqList := &snapshotv1.SnapshotRequestList{}
-	if err := r.List(ctx, snapshotReqList, client.MatchingLabels{
-		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
-		"snapshots.kloudlite.io/operation": "restore",
-	}); err != nil {
-		return false, err
-	}
-
-	if len(snapshotReqList.Items) == 0 {
-		// No restore requests created yet, wait
-		return false, nil
-	}
-
-	for _, req := range snapshotReqList.Items {
-		if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted {
-			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
-				logger.Error("Restore SnapshotRequest failed", zap.String("request", req.Name), zap.String("message", req.Status.Message))
-				return false, fmt.Errorf("restore request %s failed: %s", req.Name, req.Status.Message)
-			}
 			return false, nil
 		}
 	}
