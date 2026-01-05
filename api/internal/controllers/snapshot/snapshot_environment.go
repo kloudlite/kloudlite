@@ -367,8 +367,8 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		},
 		Spec: snapshotv1.SnapshotRequestSpec{
 			Operation:       snapshotv1.SnapshotOperationRestore,
-			SourcePath:      snapshotPath,  // The btrfs snapshot
-			SnapshotPath:    targetPath,    // The environment directory
+			SourcePath:      snapshotPath, // The btrfs snapshot
+			SnapshotPath:    targetPath,   // The environment directory
 			SnapshotRef:     snapshot.Name,
 			EnvironmentName: envName,
 		},
