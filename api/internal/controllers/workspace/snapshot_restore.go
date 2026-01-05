@@ -298,8 +298,8 @@ func (r *WorkspaceReconciler) handleRestoreRestoring(
 			},
 			Spec: snapshotv1.SnapshotRequestSpec{
 				Operation:     snapshotv1.SnapshotOperationRestore,
-				SourcePath:    sourcePath,  // Restore FROM pulled snapshot
-				SnapshotPath:  targetPath,  // Restore TO workspace directory
+				SourcePath:    sourcePath, // Restore FROM pulled snapshot
+				SnapshotPath:  targetPath, // Restore TO workspace directory
 				SnapshotRef:   snapshotName,
 				WorkspaceName: workspace.Name,
 			},
