@@ -257,40 +257,149 @@ func (r *WorkspaceReconciler) handleRestorePulling(
 	}
 }
 
-// handleRestoreRestoring applies packages from snapshot metadata
+// handleRestoreRestoring restores workspace data and packages from snapshot
 func (r *WorkspaceReconciler) handleRestoreRestoring(
 	ctx context.Context,
 	workspace *workspacev1.Workspace,
 	logger *zap.Logger,
 ) (reconcile.Result, error) {
-	logger.Info("Phase: Restoring - Applying packages from snapshot")
+	logger.Info("Phase: Restoring - Restoring workspace data from snapshot")
 
-	// Restore packages from snapshot metadata
-	if err := r.restorePackagesFromSnapshot(ctx, workspace, logger); err != nil {
-		logger.Warn("Failed to restore packages", zap.Error(err))
-		// Don't fail the entire restore if package restoration fails
-	}
+	status := workspace.Status.SnapshotRestoreStatus
+	snapshotName := workspace.Spec.FromSnapshot.SnapshotName
 
-	// Track the restored snapshot for lineage
-	now := metav1.Now()
-	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
-		workspace.Status.SnapshotRestoreStatus.Phase = workspacev1.SnapshotRestorePhaseCompleted
-		workspace.Status.SnapshotRestoreStatus.Message = "Snapshot restore completed"
-		workspace.Status.SnapshotRestoreStatus.CompletionTime = &now
-
-		// Track the last restored snapshot for lineage
-		workspace.Status.LastRestoredSnapshot = &workspacev1.WorkspaceLastRestoredSnapshotInfo{
-			Name:       workspace.Spec.FromSnapshot.SnapshotName,
-			RestoredAt: now,
+	// Check if we need to create a restore request for workspace data
+	restoreReqName := fmt.Sprintf("%s-restore-data", workspace.Name)
+	if status.DataRestoreRequestName == "" {
+		// Create SnapshotRequest to restore workspace data
+		targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+		if err != nil {
+			logger.Error("Failed to get workspace target namespace", zap.Error(err))
+			return r.failSnapshotRestore(ctx, workspace,
+				fmt.Sprintf("Failed to get target namespace: %v", err), logger)
 		}
-		return nil
-	}, logger); err != nil {
-		logger.Error("Failed to update status", zap.Error(err))
-		return reconcile.Result{}, err
+
+		// Source: pulled snapshot home directory
+		// e.g., /kl-data/snapshots/ws-main-clone-btrfs-restore/ws-main-btrfs-test/home
+		sourcePath := filepath.Join(snapshotsBasePath, fmt.Sprintf("ws-%s-restore", workspace.Name), snapshotName, "home")
+
+		// Target: workspace btrfs storage path
+		// e.g., /var/lib/kloudlite/storage/workspaces/main-clone-btrfs
+		targetPath := fmt.Sprintf("/var/lib/kloudlite/storage/workspaces/%s", workspace.Name)
+
+		restoreReq := &snapshotv1.SnapshotRequest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      restoreReqName,
+				Namespace: targetNamespace,
+				Labels: map[string]string{
+					"workspaces.kloudlite.io/workspace": workspace.Name,
+					"workspaces.kloudlite.io/operation": "restore-data",
+				},
+			},
+			Spec: snapshotv1.SnapshotRequestSpec{
+				Operation:     snapshotv1.SnapshotOperationRestore,
+				SourcePath:    sourcePath,  // Restore FROM pulled snapshot
+				SnapshotPath:  targetPath,  // Restore TO workspace directory
+				SnapshotRef:   snapshotName,
+				WorkspaceName: workspace.Name,
+			},
+		}
+
+		if err := r.Create(ctx, restoreReq); err != nil {
+			if !apierrors.IsAlreadyExists(err) {
+				logger.Error("Failed to create restore SnapshotRequest", zap.Error(err))
+				return r.failSnapshotRestore(ctx, workspace,
+					fmt.Sprintf("Failed to create restore request: %v", err), logger)
+			}
+		}
+
+		// Update status with restore request name
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
+			workspace.Status.SnapshotRestoreStatus.DataRestoreRequestName = restoreReqName
+			workspace.Status.SnapshotRestoreStatus.Message = "Restoring workspace data"
+			return nil
+		}, logger); err != nil {
+			logger.Error("Failed to update status with restore request name", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		logger.Info("Created data restore SnapshotRequest",
+			zap.String("name", restoreReqName),
+			zap.String("sourcePath", sourcePath),
+			zap.String("targetPath", targetPath))
+		return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
 	}
 
-	logger.Info("Moving to Completed phase")
-	return reconcile.Result{Requeue: true}, nil
+	// Check status of existing restore request
+	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
+	if err != nil {
+		logger.Error("Failed to get workspace target namespace", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	restoreReq := &snapshotv1.SnapshotRequest{}
+	if err := r.Get(ctx, client.ObjectKey{Name: status.DataRestoreRequestName, Namespace: targetNamespace}, restoreReq); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Request was deleted, reset and retry
+			logger.Warn("Restore request not found, resetting")
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
+				workspace.Status.SnapshotRestoreStatus.DataRestoreRequestName = ""
+				return nil
+			}, logger); err != nil {
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to get restore request", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	switch restoreReq.Status.Phase {
+	case snapshotv1.SnapshotRequestPhaseFailed:
+		return r.failSnapshotRestore(ctx, workspace,
+			fmt.Sprintf("Data restore failed: %s", restoreReq.Status.Message), logger)
+
+	case snapshotv1.SnapshotRequestPhaseCompleted:
+		// Data restore completed, now restore packages
+		logger.Info("Data restore completed, restoring packages")
+
+		// Delete the completed restore request
+		if err := r.Delete(ctx, restoreReq); err != nil && !apierrors.IsNotFound(err) {
+			logger.Warn("Failed to delete completed restore request", zap.Error(err))
+		}
+
+		// Restore packages from snapshot metadata
+		if err := r.restorePackagesFromSnapshot(ctx, workspace, logger); err != nil {
+			logger.Warn("Failed to restore packages", zap.Error(err))
+			// Don't fail the entire restore if package restoration fails
+		}
+
+		// Track the restored snapshot for lineage
+		now := metav1.Now()
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, workspace, func() error {
+			workspace.Status.SnapshotRestoreStatus.Phase = workspacev1.SnapshotRestorePhaseCompleted
+			workspace.Status.SnapshotRestoreStatus.Message = "Snapshot restore completed"
+			workspace.Status.SnapshotRestoreStatus.CompletionTime = &now
+
+			// Track the last restored snapshot for lineage
+			workspace.Status.LastRestoredSnapshot = &workspacev1.WorkspaceLastRestoredSnapshotInfo{
+				Name:       workspace.Spec.FromSnapshot.SnapshotName,
+				RestoredAt: now,
+			}
+			return nil
+		}, logger); err != nil {
+			logger.Error("Failed to update status", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		logger.Info("Moving to Completed phase")
+		return reconcile.Result{Requeue: true}, nil
+
+	default:
+		// Still in progress
+		logger.Info("Data restore in progress", zap.String("phase", string(restoreReq.Status.Phase)))
+		return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
+	}
 }
 
 // handleRestoreCompleted clears the fromSnapshot field and proceeds to normal reconciliation

@@ -379,6 +379,10 @@ type SnapshotRestoreStatus struct {
 	// +optional
 	SnapshotRequestName string `json:"snapshotRequestName,omitempty"`
 
+	// DataRestoreRequestName is the name of the SnapshotRequest for restoring workspace data
+	// +optional
+	DataRestoreRequestName string `json:"dataRestoreRequestName,omitempty"`
+
 	// StartTime when restoration started
 	// +optional
 	StartTime *metav1.Time `json:"startTime,omitempty"`
