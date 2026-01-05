@@ -338,8 +338,23 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 	}
 
 	if len(pvcList.Items) == 0 {
-		logger.Info("No PVCs found, skipping data restoration")
-		return r.moveToCompleted(ctx, environment, logger)
+		// Check if there are compositions that might create PVCs
+		compositionList := &environmentsv1.CompositionList{}
+		if err := r.List(ctx, compositionList, client.InNamespace(targetNamespace)); err != nil {
+			logger.Error("Failed to list compositions", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+
+		if len(compositionList.Items) == 0 {
+			// No compositions and no PVCs - nothing to restore
+			logger.Info("No PVCs and no compositions found, skipping data restoration")
+			return r.moveToCompleted(ctx, environment, logger)
+		}
+
+		// Compositions exist - wait for PVCs to be created
+		logger.Info("No PVCs found yet, waiting for composition to create them",
+			zap.Int("compositions", len(compositionList.Items)))
+		return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
 	}
 
 	// Check/create restore requests for each PVC
