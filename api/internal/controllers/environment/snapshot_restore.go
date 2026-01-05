@@ -360,11 +360,13 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 	// Check/create restore requests for each PVC
 	allCompleted := true
 	anyFailed := false
+	anyPending := false
 
 	for _, pvc := range pvcList.Items {
-		// Skip PVCs that aren't bound yet
+		// Handle PVCs that aren't bound yet (WaitForFirstConsumer)
 		if pvc.Status.Phase != corev1.ClaimBound {
-			logger.Info("PVC not bound yet, waiting", zap.String("pvc", pvc.Name))
+			logger.Info("PVC not bound yet", zap.String("pvc", pvc.Name), zap.String("phase", string(pvc.Status.Phase)))
+			anyPending = true
 			allCompleted = false
 			continue
 		}
@@ -441,6 +443,18 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 	if anyFailed {
 		logger.Warn("Some PVC data restores failed, proceeding anyway")
 	}
+
+	// Handle pending PVCs - create helper pod to trigger WaitForFirstConsumer binding
+	if anyPending {
+		if err := r.ensurePVCBindingHelperPod(ctx, environment, pvcList.Items, logger); err != nil {
+			logger.Error("Failed to ensure PVC binding helper pod", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+		return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
+	}
+
+	// All PVCs are bound, clean up helper pod if it exists
+	r.cleanupPVCBindingHelperPod(ctx, environment, logger)
 
 	if !allCompleted {
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
@@ -896,6 +910,122 @@ func (r *EnvironmentReconciler) failSnapshotRestore(
 	}
 
 	return reconcile.Result{}, nil
+}
+
+// ensurePVCBindingHelperPod creates a temporary pod that mounts all pending PVCs
+// to trigger WaitForFirstConsumer volume binding
+func (r *EnvironmentReconciler) ensurePVCBindingHelperPod(
+	ctx context.Context,
+	environment *environmentsv1.Environment,
+	pvcs []corev1.PersistentVolumeClaim,
+	logger *zap.Logger,
+) error {
+	podName := fmt.Sprintf("%s-pvc-binder", environment.Name)
+	targetNamespace := environment.Spec.TargetNamespace
+
+	// Check if pod already exists
+	existingPod := &corev1.Pod{}
+	if err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, existingPod); err == nil {
+		// Pod exists, check if it's running or completed
+		if existingPod.Status.Phase == corev1.PodSucceeded || existingPod.Status.Phase == corev1.PodFailed {
+			// Delete and recreate
+			if err := r.Delete(ctx, existingPod); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete completed helper pod", zap.Error(err))
+			}
+		} else {
+			logger.Info("PVC binding helper pod already exists", zap.String("phase", string(existingPod.Status.Phase)))
+			return nil
+		}
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to check existing helper pod: %w", err)
+	}
+
+	// Build volume mounts for all pending PVCs
+	var volumes []corev1.Volume
+	var volumeMounts []corev1.VolumeMount
+	for i, pvc := range pvcs {
+		if pvc.Status.Phase == corev1.ClaimBound {
+			continue // Skip already bound PVCs
+		}
+		volName := fmt.Sprintf("vol-%d", i)
+		volumes = append(volumes, corev1.Volume{
+			Name: volName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvc.Name,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      volName,
+			MountPath: fmt.Sprintf("/mnt/%s", pvc.Name),
+		})
+	}
+
+	if len(volumes) == 0 {
+		logger.Info("No pending PVCs to bind")
+		return nil
+	}
+
+	// Create helper pod that just sleeps to allow PVC binding
+	helperPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: targetNamespace,
+			Labels: map[string]string{
+				"kloudlite.io/pvc-binder":               "true",
+				"environments.kloudlite.io/environment": environment.Name,
+			},
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: corev1.RestartPolicyNever,
+			Containers: []corev1.Container{
+				{
+					Name:         "binder",
+					Image:        "busybox:1.36",
+					Command:      []string{"sh", "-c", "echo 'PVCs bound successfully'; sleep 10"},
+					VolumeMounts: volumeMounts,
+				},
+			},
+			Volumes: volumes,
+		},
+	}
+
+	if err := r.Create(ctx, helperPod); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to create PVC binding helper pod: %w", err)
+	}
+
+	logger.Info("Created PVC binding helper pod",
+		zap.String("pod", podName),
+		zap.Int("pendingPVCs", len(volumes)))
+	return nil
+}
+
+// cleanupPVCBindingHelperPod removes the temporary helper pod if it exists
+func (r *EnvironmentReconciler) cleanupPVCBindingHelperPod(
+	ctx context.Context,
+	environment *environmentsv1.Environment,
+	logger *zap.Logger,
+) {
+	podName := fmt.Sprintf("%s-pvc-binder", environment.Name)
+	targetNamespace := environment.Spec.TargetNamespace
+
+	helperPod := &corev1.Pod{}
+	if err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: targetNamespace}, helperPod); err != nil {
+		if !apierrors.IsNotFound(err) {
+			logger.Warn("Failed to get helper pod for cleanup", zap.Error(err))
+		}
+		return
+	}
+
+	if err := r.Delete(ctx, helperPod); err != nil && !apierrors.IsNotFound(err) {
+		logger.Warn("Failed to delete PVC binding helper pod", zap.Error(err))
+	} else {
+		logger.Info("Cleaned up PVC binding helper pod", zap.String("pod", podName))
+	}
 }
 
 // parseImageRef parses an image reference like "image-registry:5000/repo:tag" into repository and tag
