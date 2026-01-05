@@ -189,6 +189,11 @@ type SnapshotRequestStatus struct {
 	// CompressedSize is the total compressed size in bytes (for push operations)
 	// +optional
 	CompressedSize int64 `json:"compressedSize,omitempty"`
+
+	// PulledMetadata contains the K8s resource metadata extracted from the OCI layer (for pull operations)
+	// This is used by the environment controller to restore K8s resources without reading files from disk
+	// +optional
+	PulledMetadata *SnapshotMetadata `json:"pulledMetadata,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

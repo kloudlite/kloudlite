@@ -151,9 +151,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 			SnapshotPath:    snapshotPath,
 			SnapshotRef:     snapshot.Name,
 			EnvironmentName: envName,
-			ReadOnly:        false, // Must be writable so metadata can be added during push
-			Metadata:        snapshotMetadata,
-			MetadataPath:    snapshotPath,
+			ReadOnly:        true,
 		},
 	}
 

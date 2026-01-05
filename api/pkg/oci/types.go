@@ -14,6 +14,10 @@ type SnapshotMetadata struct {
 
 	// Status contains the snapshot status fields
 	Status SnapshotMetadataStatus `json:"status"`
+
+	// Resources contains K8s resource metadata for environment snapshots
+	// This allows resource restoration without reading files from the snapshot
+	Resources *ResourceMetadata `json:"resources,omitempty"`
 }
 
 // SnapshotMetadataSpec mirrors relevant fields from SnapshotSpec
@@ -52,6 +56,17 @@ type SnapshotMetadataStatus struct {
 	CreatedAt       *time.Time `json:"createdAt,omitempty"`
 	WorkMachineName string     `json:"workMachineName,omitempty"`
 	WorkspaceName   string     `json:"workspaceName,omitempty"`
+}
+
+// ResourceMetadata contains K8s resource JSON for environment snapshots
+// This is stored in metadata.json alongside data.tar.gz in the OCI layer
+type ResourceMetadata struct {
+	ConfigMaps   string `json:"configMaps,omitempty"`
+	Secrets      string `json:"secrets,omitempty"`
+	Deployments  string `json:"deployments,omitempty"`
+	Services     string `json:"services,omitempty"`
+	StatefulSets string `json:"statefulSets,omitempty"`
+	Compositions string `json:"compositions,omitempty"`
 }
 
 // ImageConfig is the OCI image config for snapshot images
