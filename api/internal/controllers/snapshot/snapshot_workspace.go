@@ -207,7 +207,7 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 		// Update status with progress
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.Message = "Creating workspace snapshot..."
-			snapshot.Status.SnapshotPath = snapshotPath
+			snapshot.Status.SnapshotPath = workspaceSnapshotPath
 			snapshot.Status.PackageRequestsPath = packageRequestsPath
 			return nil
 		}, logger); err != nil {
@@ -251,11 +251,12 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 	}
 
 	// Update status to Ready
+	// Use workspaceSnapshotPath (the actual btrfs subvolume) for SnapshotPath
 	now := metav1.Now()
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 		snapshot.Status.State = snapshotv1.SnapshotStateReady
 		snapshot.Status.Message = "Workspace snapshot created successfully"
-		snapshot.Status.SnapshotPath = snapshotPath
+		snapshot.Status.SnapshotPath = workspaceSnapshotPath
 		snapshot.Status.SizeBytes = totalSize
 		snapshot.Status.SizeHuman = formatSize(totalSize)
 		snapshot.Status.CreatedAt = &now
@@ -268,7 +269,7 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 
 	logger.Info("Workspace snapshot created successfully",
 		zap.String("workspace", wsRef.Name),
-		zap.String("path", snapshotPath),
+		zap.String("path", workspaceSnapshotPath),
 		zap.Int64("sizeBytes", totalSize))
 
 	return reconcile.Result{}, nil
