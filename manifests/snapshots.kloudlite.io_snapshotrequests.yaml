@@ -106,13 +106,11 @@ spec:
                 description: RegistryRef contains registry configuration for push/pull
                   operations
                 properties:
-                  parentLayers:
+                  parentImageRef:
                     description: |-
-                      ParentLayers are the layer digests from parent snapshot(s) to include
-                      These layers are referenced but not re-uploaded during push
-                    items:
-                      type: string
-                    type: array
+                      ParentImageRef is the full image reference of the parent snapshot
+                      Used to fetch parent layers to prepend to this image
+                    type: string
                   registryURL:
                     description: RegistryURL is the registry base URL (e.g., "image-registry:5000")
                     type: string
@@ -175,6 +173,99 @@ spec:
                 default: Pending
                 description: Phase is the current phase of the request
                 type: string
+              pulledMetadata:
+                description: |-
+                  PulledMetadata contains the K8s resource metadata extracted from the OCI layer (for pull operations)
+                  This is used by the environment controller to restore K8s resources without reading files from disk
+                properties:
+                  compositions:
+                    description: Compositions JSON
+                    type: string
+                  configMaps:
+                    description: ConfigMaps JSON
+                    type: string
+                  deployments:
+                    description: Deployments JSON
+                    type: string
+                  secrets:
+                    description: Secrets JSON
+                    type: string
+                  services:
+                    description: Services JSON
+                    type: string
+                  statefulSets:
+                    description: StatefulSets JSON
+                    type: string
+                type: object
+              pulledSnapshots:
+                description: |-
+                  PulledSnapshots contains metadata for all snapshots pulled from registry (including parent chain)
+                  This enables creating Snapshot CRs for the entire parent lineage
+                items:
+                  description: PulledSnapshotInfo contains metadata about a pulled
+                    snapshot from the registry
+                  properties:
+                    environmentName:
+                      description: EnvironmentName for environment snapshots
+                      type: string
+                    name:
+                      description: Name is the original snapshot name
+                      type: string
+                    ownedBy:
+                      description: OwnedBy is the owner of the original snapshot
+                      type: string
+                    parentSnapshotName:
+                      description: ParentSnapshotName is the name of this snapshot's
+                        parent (if any)
+                      type: string
+                    path:
+                      description: Path is the local path where this snapshot was
+                        extracted
+                      type: string
+                    resources:
+                      description: Resources contains K8s resource metadata (for environment
+                        snapshots)
+                      properties:
+                        compositions:
+                          description: Compositions JSON
+                          type: string
+                        configMaps:
+                          description: ConfigMaps JSON
+                          type: string
+                        deployments:
+                          description: Deployments JSON
+                          type: string
+                        secrets:
+                          description: Secrets JSON
+                          type: string
+                        services:
+                          description: Services JSON
+                          type: string
+                        statefulSets:
+                          description: StatefulSets JSON
+                          type: string
+                      type: object
+                    snapshotType:
+                      description: SnapshotType indicates whether this is an environment
+                        or workspace snapshot
+                      type: string
+                    targetName:
+                      description: TargetName is the name of the environment or workspace
+                        that was snapshotted
+                      type: string
+                    workMachineName:
+                      description: WorkMachineName where the original snapshot was
+                        created
+                      type: string
+                    workspaceName:
+                      description: WorkspaceName for workspace snapshots
+                      type: string
+                  required:
+                  - name
+                  - ownedBy
+                  - path
+                  type: object
+                type: array
               sizeBytes:
                 description: SizeBytes is the size of the snapshot (for create operations)
                 format: int64
