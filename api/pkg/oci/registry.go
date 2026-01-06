@@ -72,17 +72,8 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 	}
 	allLayers = append(allLayers, newLayer)
 
-	// Get DiffIDs for the config
-	var diffIDs []v1.Hash
-	for _, layer := range allLayers {
-		diffID, err := layer.DiffID()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get layer diff ID: %w", err)
-		}
-		diffIDs = append(diffIDs, diffID)
-	}
-
-	// Create config with our custom labels and proper RootFS
+	// Create config with our custom labels
+	// NOTE: Do NOT set DiffIDs here - mutate.AppendLayers will add them automatically
 	configFile := &v1.ConfigFile{
 		Architecture: "amd64",
 		OS:           "linux",
@@ -94,8 +85,8 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 			},
 		},
 		RootFS: v1.RootFS{
-			Type:    "layers",
-			DiffIDs: diffIDs,
+			Type: "layers",
+			// DiffIDs are added automatically by AppendLayers
 		},
 	}
 
@@ -105,7 +96,7 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 		return nil, fmt.Errorf("failed to set config: %w", err)
 	}
 
-	// NOW append all layers
+	// Append all layers - this also adds DiffIDs to the config automatically
 	img, err = mutate.AppendLayers(img, allLayers...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to append layers: %w", err)
