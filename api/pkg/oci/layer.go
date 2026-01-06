@@ -8,15 +8,14 @@ import (
 	"io"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 )
 
 const (
-	// DataFileName is the name of the snapshot data file in the layer tar
-	DataFileName = "data.tar.gz"
+	// DataFileName is the name of the btrfs stream file in the layer tar
+	DataFileName = "data.btrfs"
 
 	// MetadataFileName is the name of the metadata file in the layer tar
 	MetadataFileName = "metadata.json"
@@ -25,30 +24,30 @@ const (
 	LayerMediaType = "application/vnd.kloudlite.snapshot.layer.v1+tar"
 )
 
-// CreateSnapshotLayer creates an OCI layer from a snapshot
+// CreateSnapshotLayer creates an OCI layer from a btrfs snapshot
 // The layer is a tar containing:
-// - data.tar.gz: gzipped tar archive of snapshot directory
+// - data.btrfs: btrfs send stream (full or incremental)
 // - metadata.json: snapshot metadata
 func CreateSnapshotLayer(snapshotPath, parentSnapshotPath string, metadata *SnapshotMetadata) (v1.Layer, error) {
 	// Create a buffer for the tar
 	var tarBuf bytes.Buffer
 	tw := tar.NewWriter(&tarBuf)
 
-	// Create tar archive of snapshot directory
-	snapshotData, err := createTarArchive(snapshotPath)
+	// Create btrfs send stream
+	btrfsStream, err := createBtrfsStream(snapshotPath, parentSnapshotPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create tar archive: %w", err)
+		return nil, fmt.Errorf("failed to create btrfs stream: %w", err)
 	}
 
-	// Add data.tar.gz to tar
+	// Add data.btrfs to tar
 	if err := tw.WriteHeader(&tar.Header{
 		Name: DataFileName,
 		Mode: 0644,
-		Size: int64(len(snapshotData)),
+		Size: int64(len(btrfsStream)),
 	}); err != nil {
 		return nil, fmt.Errorf("failed to write data header: %w", err)
 	}
-	if _, err := tw.Write(snapshotData); err != nil {
+	if _, err := tw.Write(btrfsStream); err != nil {
 		return nil, fmt.Errorf("failed to write data: %w", err)
 	}
 
@@ -81,7 +80,7 @@ func CreateSnapshotLayer(snapshotPath, parentSnapshotPath string, metadata *Snap
 	return layer, nil
 }
 
-// ExtractSnapshotLayer extracts a snapshot layer to the target directory
+// ExtractSnapshotLayer extracts a snapshot layer to the target directory using btrfs receive
 // Returns the snapshot metadata and the path where the snapshot was extracted
 func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, string, error) {
 	// Get layer as tar reader
@@ -94,7 +93,7 @@ func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, 
 	tr := tar.NewReader(rc)
 
 	var metadata *SnapshotMetadata
-	var snapshotData []byte
+	var btrfsStream []byte
 
 	// Extract files from tar
 	for {
@@ -118,9 +117,9 @@ func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, 
 			}
 
 		case DataFileName:
-			snapshotData, err = io.ReadAll(tr)
+			btrfsStream, err = io.ReadAll(tr)
 			if err != nil {
-				return nil, "", fmt.Errorf("failed to read snapshot data: %w", err)
+				return nil, "", fmt.Errorf("failed to read btrfs stream: %w", err)
 			}
 		}
 	}
@@ -128,29 +127,34 @@ func ExtractSnapshotLayer(layer v1.Layer, targetDir string) (*SnapshotMetadata, 
 	if metadata == nil {
 		return nil, "", fmt.Errorf("metadata.json not found in layer")
 	}
-	if snapshotData == nil {
-		return nil, "", fmt.Errorf("data.tar.gz not found in layer")
+	if btrfsStream == nil {
+		return nil, "", fmt.Errorf("data.btrfs not found in layer")
 	}
 
-	// Extract tar archive
-	snapshotPath, err := extractTarArchive(snapshotData, targetDir)
+	// Receive btrfs stream
+	snapshotPath, err := receiveBtrfsStream(btrfsStream, targetDir, metadata.Name)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to extract snapshot: %w", err)
+		return nil, "", fmt.Errorf("failed to receive btrfs stream: %w", err)
 	}
 
 	return metadata, snapshotPath, nil
 }
 
-// createTarArchive creates a gzipped tar archive of a directory
-// Uses nsenter to run tar on the host
-func createTarArchive(snapshotPath string) ([]byte, error) {
-	// Use tar with gzip compression via nsenter
-	// -C changes to parent dir, then archives the basename
-	parentDir := filepath.Dir(snapshotPath)
-	baseName := filepath.Base(snapshotPath)
+// createBtrfsStream creates a btrfs send stream from a snapshot
+// If parentSnapshotPath is provided, creates an incremental stream
+// Uses nsenter to run btrfs on the host filesystem
+func createBtrfsStream(snapshotPath, parentSnapshotPath string) ([]byte, error) {
+	var cmd *exec.Cmd
 
-	tarCmd := fmt.Sprintf("tar -czf - -C %s %s", parentDir, baseName)
-	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "sh", "-c", tarCmd)
+	if parentSnapshotPath != "" {
+		// Incremental send with parent
+		cmd = exec.Command("nsenter", "-t", "1", "-m", "--",
+			"btrfs", "send", "-p", parentSnapshotPath, snapshotPath)
+	} else {
+		// Full send (no parent)
+		cmd = exec.Command("nsenter", "-t", "1", "-m", "--",
+			"btrfs", "send", snapshotPath)
+	}
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -158,50 +162,35 @@ func createTarArchive(snapshotPath string) ([]byte, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("tar failed: %w, stderr: %s", err, stderr.String())
+		return nil, fmt.Errorf("btrfs send failed: %w, stderr: %s", err, stderr.String())
 	}
 
 	return stdout.Bytes(), nil
 }
 
-// extractTarArchive extracts a gzipped tar archive to target directory
-// Uses nsenter to run tar on the host
-func extractTarArchive(compressedData []byte, targetDir string) (string, error) {
+// receiveBtrfsStream receives a btrfs stream to the target directory
+// Uses nsenter to run btrfs on the host filesystem
+// Returns the path where the snapshot was received
+func receiveBtrfsStream(btrfsStream []byte, targetDir, snapshotName string) (string, error) {
 	// Ensure target directory exists using nsenter
 	mkdirCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "mkdir", "-p", targetDir)
 	if output, err := mkdirCmd.CombinedOutput(); err != nil {
 		return "", fmt.Errorf("failed to create target dir: %w, output: %s", err, string(output))
 	}
 
-	// Extract tar using nsenter
-	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "tar", "-xzf", "-", "-C", targetDir)
-	cmd.Stdin = bytes.NewReader(compressedData)
+	// Receive btrfs stream
+	cmd := exec.Command("nsenter", "-t", "1", "-m", "--", "btrfs", "receive", targetDir)
+	cmd.Stdin = bytes.NewReader(btrfsStream)
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("tar extract failed: %w, stderr: %s", err, stderr.String())
+		return "", fmt.Errorf("btrfs receive failed: %w, stderr: %s", err, stderr.String())
 	}
 
-	// Find extracted directory
-	lsCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "ls", targetDir)
-	lsOutput, err := lsCmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("failed to list target dir: %w", err)
-	}
-
-	var snapshotPath string
-	entries := strings.Split(strings.TrimSpace(string(lsOutput)), "\n")
-	for _, entry := range entries {
-		if entry != "" {
-			snapshotPath = filepath.Join(targetDir, entry)
-		}
-	}
-
-	if snapshotPath == "" {
-		return "", fmt.Errorf("no directory found after tar extract")
-	}
+	// The snapshot is received with its original name
+	snapshotPath := filepath.Join(targetDir, snapshotName)
 
 	return snapshotPath, nil
 }

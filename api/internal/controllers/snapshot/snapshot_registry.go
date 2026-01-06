@@ -49,14 +49,14 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 		logger.Warn("Failed to remove tag from other snapshots", zap.Error(err))
 	}
 
-	// Get parent snapshot's registry layers if parent exists and was pushed
-	var parentLayers []string
+	// Get parent snapshot's registry image ref if parent exists and was pushed
+	var parentImageRef string
 	var parentSnapshotPath string
 	if snapshot.Spec.ParentSnapshotRef != nil {
 		parentSnapshot := &snapshotv1.Snapshot{}
 		if err := r.Get(ctx, client.ObjectKey{Name: snapshot.Spec.ParentSnapshotRef.Name}, parentSnapshot); err == nil {
 			if parentSnapshot.Status.RegistryStatus != nil && parentSnapshot.Status.RegistryStatus.Pushed {
-				parentLayers = parentSnapshot.Status.RegistryStatus.LayerDigests
+				parentImageRef = parentSnapshot.Status.RegistryStatus.ImageRef
 			}
 			parentSnapshotPath = parentSnapshot.Status.SnapshotPath
 		}
@@ -123,10 +123,10 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 			ParentSnapshotPath: parentSnapshotPath,
 			SnapshotRef:        snapshot.Name,
 			RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
-				RegistryURL:  "image-registry.kloudlite.svc.cluster.local:5000",
-				Repository:   repository,
-				Tag:          tag,
-				ParentLayers: parentLayers,
+				RegistryURL:    "image-registry.kloudlite.svc.cluster.local:5000",
+				Repository:     repository,
+				Tag:            tag,
+				ParentImageRef: parentImageRef,
 			},
 			Metadata: snapshot.Status.CollectedMetadata,
 		},
