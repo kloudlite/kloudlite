@@ -59,7 +59,7 @@ type SnapshotMetadataStatus struct {
 }
 
 // ResourceMetadata contains K8s resource JSON for environment snapshots
-// This is stored in metadata.json alongside data.tar.gz in the OCI layer
+// This is stored in metadata.json alongside data.btrfs in the OCI layer
 type ResourceMetadata struct {
 	ConfigMaps   string `json:"configMaps,omitempty"`
 	Secrets      string `json:"secrets,omitempty"`
@@ -95,8 +95,9 @@ type PushOptions struct {
 	// Metadata is the snapshot metadata to include in the layer
 	Metadata *SnapshotMetadata
 
-	// ParentLayers are existing layer digests to include from parent image
-	ParentLayers []string
+	// ParentImageRef is the full image reference of the parent snapshot
+	// Used to fetch parent layers to prepend to this image
+	ParentImageRef string
 
 	// Insecure allows HTTP registry connections
 	Insecure bool

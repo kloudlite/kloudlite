@@ -36,16 +36,27 @@ func (c *Client) Push(opts PushOptions) (*PushResult, error) {
 	var img v1.Image
 	var existingLayers []v1.Layer
 
-	if len(opts.ParentLayers) > 0 {
-		// Fetch existing image to get parent layers
-		existingImg, err := c.pullImage(ref)
-		if err == nil {
-			existingLayers, _ = existingImg.Layers()
+	if opts.ParentImageRef != "" {
+		// Fetch parent image to get its layers
+		var nameOpts []name.Option
+		if c.insecure {
+			nameOpts = append(nameOpts, name.Insecure)
 		}
-		// If pull fails, we'll just create new layers
+		parentRef, err := name.ParseReference(opts.ParentImageRef, nameOpts...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse parent image ref: %w", err)
+		}
+		parentImg, err := c.pullImage(parentRef)
+		if err != nil {
+			return nil, fmt.Errorf("failed to pull parent image: %w", err)
+		}
+		existingLayers, err = parentImg.Layers()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get parent layers: %w", err)
+		}
 	}
 
-	// Create the new snapshot layer
+	// Create the new snapshot layer using btrfs send
 	newLayer, err := CreateSnapshotLayer(opts.SnapshotPath, opts.ParentSnapshotPath, opts.Metadata)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snapshot layer: %w", err)

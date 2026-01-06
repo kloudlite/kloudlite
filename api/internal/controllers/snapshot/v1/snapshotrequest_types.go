@@ -133,10 +133,10 @@ type SnapshotRequestRegistryRef struct {
 	// +kubebuilder:validation:Required
 	Tag string `json:"tag"`
 
-	// ParentLayers are the layer digests from parent snapshot(s) to include
-	// These layers are referenced but not re-uploaded during push
+	// ParentImageRef is the full image reference of the parent snapshot
+	// Used to fetch parent layers to prepend to this image
 	// +optional
-	ParentLayers []string `json:"parentLayers,omitempty"`
+	ParentImageRef string `json:"parentImageRef,omitempty"`
 }
 
 // SnapshotRequestPhase represents the current phase of the request

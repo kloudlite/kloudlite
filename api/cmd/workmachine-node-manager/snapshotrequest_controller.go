@@ -432,7 +432,7 @@ func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest
 		SnapshotPath:       snapshotPath,
 		ParentSnapshotPath: parentSnapshotPath,
 		Metadata:           metadata,
-		ParentLayers:       req.Spec.RegistryRef.ParentLayers,
+		ParentImageRef:     req.Spec.RegistryRef.ParentImageRef,
 		Insecure:           true,
 	})
 	if err != nil {
