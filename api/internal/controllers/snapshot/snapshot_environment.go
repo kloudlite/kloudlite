@@ -10,8 +10,6 @@ import (
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -105,10 +103,49 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return r.updateStatusFailed(ctx, snapshot, "Environment has no target namespace", logger)
 	}
 
-	// Scale down environment to stop all pods before snapshot
-	if err := r.scaleEnvironment(ctx, namespace, 0, logger); err != nil {
-		logger.Warn("Failed to scale down environment", zap.Error(err))
+	// Store previous environment state if not already stored
+	if snapshot.Status.PreviousEnvironmentActivated == nil {
+		wasActivated := env.Spec.Activated
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.PreviousEnvironmentActivated = &wasActivated
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to store previous environment state", zap.Error(err))
+		}
 	}
+
+	// Deactivate environment properly using spec.activated field
+	// This triggers the environment controller's proper shutdown sequence
+	if env.Spec.Activated {
+		logger.Info("Deactivating environment for snapshot", zap.String("environment", envName))
+		env.Spec.Activated = false
+		if err := r.Update(ctx, env); err != nil {
+			logger.Error("Failed to deactivate environment", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Deactivating environment..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	// Wait for environment to be fully inactive
+	if env.Status.State != environmentsv1.EnvironmentStateInactive {
+		logger.Info("Waiting for environment to become inactive",
+			zap.String("currentState", string(env.Status.State)))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = fmt.Sprintf("Waiting for environment shutdown (state: %s)...", env.Status.State)
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	logger.Info("Environment is inactive, proceeding with snapshot")
 
 	// Source path: the entire environment directory (btrfs subvolume)
 	// All PVCs for this environment are stored under this directory
@@ -122,23 +159,11 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.SnapshotPath = snapshotPath
 			snapshot.Status.SourcePath = sourcePath
-			snapshot.Status.Message = "Preparing snapshot..."
+			snapshot.Status.Message = "Creating snapshot..."
 			return nil
 		}, logger); err != nil {
 			logger.Warn("Failed to store snapshot path", zap.Error(err))
 		}
-	}
-
-	// Wait for pods to terminate
-	if !r.waitForPodsTerminated(ctx, namespace, logger) {
-		logger.Info("Waiting for environment pods to terminate")
-		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = "Stopping environment pods..."
-			return nil
-		}, logger); err != nil {
-			logger.Warn("Failed to update status", zap.Error(err))
-		}
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
 	// Collect K8s metadata
@@ -185,9 +210,9 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	if err := r.Create(ctx, snapshotReq); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			logger.Error("Failed to create SnapshotRequest", zap.Error(err))
-			// Scale environment back up on failure
-			if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-				logger.Warn("Failed to scale up environment after SnapshotRequest creation failure", zap.Error(scaleErr))
+			// Restore environment activation on failure
+			if restoreErr := r.restoreEnvironmentActivation(ctx, snapshot, env, logger); restoreErr != nil {
+				logger.Warn("Failed to restore environment activation after SnapshotRequest creation failure", zap.Error(restoreErr))
 			}
 			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create SnapshotRequest: %v", err), logger)
 		}
@@ -244,13 +269,13 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{}, err
 	}
 
-	// Scale environment back up only if no other snapshots are in progress
+	// Restore environment activation state if no other snapshots are in progress
 	if !r.hasOtherInProgressSnapshots(ctx, snapshot, envName, logger) {
-		if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
-			logger.Warn("Failed to scale up environment after snapshot", zap.Error(err))
+		if err := r.restoreEnvironmentActivation(ctx, snapshot, env, logger); err != nil {
+			logger.Warn("Failed to restore environment activation", zap.Error(err))
 		}
 	} else {
-		logger.Info("Skipping scale up, other snapshots still in progress")
+		logger.Info("Skipping environment reactivation, other snapshots still in progress")
 	}
 
 	logger.Info("Snapshot created successfully",
@@ -291,22 +316,48 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return r.updateStatusFailed(ctx, snapshot, "Environment has no target namespace", logger)
 	}
 
-	// Scale down environment to stop all pods before restore
-	if err := r.scaleEnvironment(ctx, namespace, 0, logger); err != nil {
-		logger.Warn("Failed to scale down environment", zap.Error(err))
+	// Store previous environment state if not already stored
+	if snapshot.Status.PreviousEnvironmentActivated == nil {
+		wasActivated := env.Spec.Activated
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.PreviousEnvironmentActivated = &wasActivated
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to store previous environment state", zap.Error(err))
+		}
 	}
 
-	// Wait for pods to terminate
-	if !r.waitForPodsTerminated(ctx, namespace, logger) {
-		logger.Info("Waiting for environment pods to terminate before restore")
+	// Deactivate environment properly using spec.activated field
+	if env.Spec.Activated {
+		logger.Info("Deactivating environment for restore", zap.String("environment", envName))
+		env.Spec.Activated = false
+		if err := r.Update(ctx, env); err != nil {
+			logger.Error("Failed to deactivate environment", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+		}
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = "Stopping environment pods before restore..."
+			snapshot.Status.Message = "Deactivating environment before restore..."
 			return nil
 		}, logger); err != nil {
 			logger.Warn("Failed to update status", zap.Error(err))
 		}
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
+
+	// Wait for environment to be fully inactive
+	if env.Status.State != environmentsv1.EnvironmentStateInactive {
+		logger.Info("Waiting for environment to become inactive before restore",
+			zap.String("currentState", string(env.Status.State)))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = fmt.Sprintf("Waiting for environment shutdown (state: %s)...", env.Status.State)
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	logger.Info("Environment is inactive, proceeding with restore")
 
 	// Source path: the btrfs snapshot containing the environment data
 	snapshotPath := snapshot.Status.SnapshotPath
@@ -327,9 +378,9 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		// Restore request exists - check its status
 		switch existingReq.Status.Phase {
 		case snapshotv1.SnapshotRequestPhaseFailed:
-			// Scale up and fail
-			if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-				logger.Warn("Failed to scale up environment after restore failure", zap.Error(scaleErr))
+			// Restore activation and fail
+			if restoreErr := r.restoreEnvironmentActivation(ctx, snapshot, env, logger); restoreErr != nil {
+				logger.Warn("Failed to restore environment activation after restore failure", zap.Error(restoreErr))
 			}
 			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %s", existingReq.Status.Message), logger)
 
@@ -344,10 +395,10 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 				return reconcile.Result{}, err
 			}
 
-			// Scale environment back up
+			// Restore environment activation state
 			if !r.hasOtherInProgressSnapshots(ctx, snapshot, envName, logger) {
-				if err := r.scaleEnvironment(ctx, namespace, 1, logger); err != nil {
-					logger.Warn("Failed to scale up environment after restore", zap.Error(err))
+				if err := r.restoreEnvironmentActivation(ctx, snapshot, env, logger); err != nil {
+					logger.Warn("Failed to restore environment activation after restore", zap.Error(err))
 				}
 			}
 
@@ -401,9 +452,9 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 	if err := r.Create(ctx, restoreReq); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			logger.Error("Failed to create restore SnapshotRequest", zap.Error(err))
-			// Scale environment back up on failure
-			if scaleErr := r.scaleEnvironment(ctx, namespace, 1, logger); scaleErr != nil {
-				logger.Warn("Failed to scale up environment after restore request creation failure", zap.Error(scaleErr))
+			// Restore environment activation on failure
+			if restoreErr := r.restoreEnvironmentActivation(ctx, snapshot, env, logger); restoreErr != nil {
+				logger.Warn("Failed to restore environment activation after restore request creation failure", zap.Error(restoreErr))
 			}
 			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create restore request: %v", err), logger)
 		}
@@ -418,59 +469,6 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 	}
 
 	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
-}
-
-// scaleEnvironment scales all deployments and statefulsets in a namespace to the specified replica count
-func (r *SnapshotReconciler) scaleEnvironment(ctx context.Context, namespace string, replicas int32, logger *zap.Logger) error {
-	// Scale deployments
-	deployments := &appsv1.DeploymentList{}
-	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
-		return fmt.Errorf("failed to list deployments: %w", err)
-	}
-	for _, deploy := range deployments.Items {
-		if deploy.Spec.Replicas != nil && *deploy.Spec.Replicas != replicas {
-			deploy.Spec.Replicas = &replicas
-			if err := r.Update(ctx, &deploy); err != nil {
-				logger.Warn("Failed to scale deployment", zap.String("deployment", deploy.Name), zap.Error(err))
-			} else {
-				logger.Info("Scaled deployment", zap.String("deployment", deploy.Name), zap.Int32("replicas", replicas))
-			}
-		}
-	}
-
-	// Scale statefulsets
-	statefulsets := &appsv1.StatefulSetList{}
-	if err := r.List(ctx, statefulsets, client.InNamespace(namespace)); err != nil {
-		return fmt.Errorf("failed to list statefulsets: %w", err)
-	}
-	for _, sts := range statefulsets.Items {
-		if sts.Spec.Replicas != nil && *sts.Spec.Replicas != replicas {
-			sts.Spec.Replicas = &replicas
-			if err := r.Update(ctx, &sts); err != nil {
-				logger.Warn("Failed to scale statefulset", zap.String("statefulset", sts.Name), zap.Error(err))
-			} else {
-				logger.Info("Scaled statefulset", zap.String("statefulset", sts.Name), zap.Int32("replicas", replicas))
-			}
-		}
-	}
-
-	return nil
-}
-
-// waitForPodsTerminated waits for all pods in a namespace to terminate
-func (r *SnapshotReconciler) waitForPodsTerminated(ctx context.Context, namespace string, logger *zap.Logger) bool {
-	pods := &corev1.PodList{}
-	if err := r.List(ctx, pods, client.InNamespace(namespace)); err != nil {
-		logger.Warn("Failed to list pods", zap.Error(err))
-		return false
-	}
-	// Check if any non-terminated pods exist (excluding jobs/completed pods)
-	for _, pod := range pods.Items {
-		if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
-			return false
-		}
-	}
-	return true
 }
 
 // hasOtherInProgressSnapshots checks if there are other snapshots for the same environment
@@ -500,4 +498,36 @@ func (r *SnapshotReconciler) hasOtherInProgressSnapshots(ctx context.Context, cu
 		}
 	}
 	return false
+}
+
+// restoreEnvironmentActivation restores the environment's activation state after snapshot/restore
+func (r *SnapshotReconciler) restoreEnvironmentActivation(ctx context.Context, snapshot *snapshotv1.Snapshot, env *environmentsv1.Environment, logger *zap.Logger) error {
+	// Check if we have a stored previous state
+	if snapshot.Status.PreviousEnvironmentActivated == nil {
+		logger.Info("No previous environment activation state stored, skipping reactivation")
+		return nil
+	}
+
+	previousActivated := *snapshot.Status.PreviousEnvironmentActivated
+	if !previousActivated {
+		logger.Info("Environment was not active before snapshot, skipping reactivation")
+		return nil
+	}
+
+	// Re-fetch the environment to get the latest state
+	currentEnv := &environmentsv1.Environment{}
+	if err := r.Get(ctx, client.ObjectKey{Name: env.Name}, currentEnv); err != nil {
+		return fmt.Errorf("failed to get environment: %w", err)
+	}
+
+	// Only reactivate if it's currently inactive
+	if !currentEnv.Spec.Activated {
+		logger.Info("Reactivating environment after snapshot", zap.String("environment", env.Name))
+		currentEnv.Spec.Activated = true
+		if err := r.Update(ctx, currentEnv); err != nil {
+			return fmt.Errorf("failed to reactivate environment: %w", err)
+		}
+	}
+
+	return nil
 }

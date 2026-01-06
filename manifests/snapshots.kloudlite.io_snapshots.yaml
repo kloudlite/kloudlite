@@ -195,6 +195,11 @@ spec:
                 description: PackageRequestsPath is the path to stored PackageRequest
                   JSON (for workspace snapshots)
                 type: string
+              previousEnvironmentActivated:
+                description: |-
+                  PreviousEnvironmentActivated stores the environment's activated state before snapshot
+                  Used to restore the environment after snapshot creation
+                type: boolean
               previousWorkspaceStatus:
                 description: PreviousWorkspaceStatus stores the workspace's status
                   before suspension

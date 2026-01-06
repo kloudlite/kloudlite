@@ -236,6 +236,11 @@ type SnapshotStatus struct {
 	// +optional
 	PreviousWorkspaceStatus string `json:"previousWorkspaceStatus,omitempty"`
 
+	// PreviousEnvironmentActivated stores the environment's activated state before snapshot
+	// Used to restore the environment after snapshot creation
+	// +optional
+	PreviousEnvironmentActivated *bool `json:"previousEnvironmentActivated,omitempty"`
+
 	// RegistryStatus tracks the snapshot's registry push status
 	// +optional
 	RegistryStatus *SnapshotRegistryStatus `json:"registryStatus,omitempty"`
