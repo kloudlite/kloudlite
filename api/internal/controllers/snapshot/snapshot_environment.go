@@ -45,14 +45,29 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 	// This enables proper lineage when taking snapshots on cloned environments
 	specUpdated := false
 	if snapshot.Spec.ParentSnapshotRef == nil && env.Status.LastRestoredSnapshot != nil {
+		parentSnapshotName := env.Status.LastRestoredSnapshot.Name
 		logger.Info("Auto-detecting parent snapshot from environment's lastRestoredSnapshot",
-			zap.String("parentSnapshot", env.Status.LastRestoredSnapshot.Name))
+			zap.String("parentSnapshot", parentSnapshotName))
 		restoredAt := env.Status.LastRestoredSnapshot.RestoredAt
 		snapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-			Name:       env.Status.LastRestoredSnapshot.Name,
+			Name:       parentSnapshotName,
 			RestoredAt: &restoredAt,
 		}
 		specUpdated = true
+
+		// Inherit description from parent snapshot if not set
+		if snapshot.Spec.Description == "" {
+			parentSnapshot := &snapshotv1.Snapshot{}
+			if err := r.Get(ctx, client.ObjectKey{Name: parentSnapshotName}, parentSnapshot); err == nil {
+				if parentSnapshot.Spec.Description != "" {
+					logger.Info("Inheriting description from parent snapshot",
+						zap.String("description", parentSnapshot.Spec.Description))
+					snapshot.Spec.Description = parentSnapshot.Spec.Description
+				}
+			} else {
+				logger.Warn("Failed to fetch parent snapshot for description inheritance", zap.Error(err))
+			}
+		}
 	}
 
 	// Ensure labels are set for querying by environment
@@ -66,6 +81,11 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 	}
 	if snapshot.Labels["kloudlite.io/owned-by"] != snapshot.Spec.OwnedBy {
 		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
+		labelsUpdated = true
+	}
+	// Add lineage label for querying related snapshots
+	if snapshot.Spec.Description != "" && snapshot.Labels["snapshots.kloudlite.io/lineage"] != snapshot.Spec.Description {
+		snapshot.Labels["snapshots.kloudlite.io/lineage"] = snapshot.Spec.Description
 		labelsUpdated = true
 	}
 	if labelsUpdated || specUpdated {
