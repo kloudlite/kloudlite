@@ -41,6 +41,20 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Environment not found: %s", envName), logger)
 	}
 
+	// Auto-detect parent snapshot from environment's lastRestoredSnapshot
+	// This enables proper lineage when taking snapshots on cloned environments
+	specUpdated := false
+	if snapshot.Spec.ParentSnapshotRef == nil && env.Status.LastRestoredSnapshot != nil {
+		logger.Info("Auto-detecting parent snapshot from environment's lastRestoredSnapshot",
+			zap.String("parentSnapshot", env.Status.LastRestoredSnapshot.Name))
+		restoredAt := env.Status.LastRestoredSnapshot.RestoredAt
+		snapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
+			Name:       env.Status.LastRestoredSnapshot.Name,
+			RestoredAt: &restoredAt,
+		}
+		specUpdated = true
+	}
+
 	// Ensure labels are set for querying by environment
 	labelsUpdated := false
 	if snapshot.Labels == nil {
@@ -54,9 +68,9 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
 		labelsUpdated = true
 	}
-	if labelsUpdated {
+	if labelsUpdated || specUpdated {
 		if err := r.Update(ctx, snapshot); err != nil {
-			logger.Error("Failed to update snapshot labels", zap.Error(err))
+			logger.Error("Failed to update snapshot", zap.Error(err))
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
