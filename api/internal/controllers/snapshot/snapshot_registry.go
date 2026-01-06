@@ -56,7 +56,18 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 		parentSnapshot := &snapshotv1.Snapshot{}
 		if err := r.Get(ctx, client.ObjectKey{Name: snapshot.Spec.ParentSnapshotRef.Name}, parentSnapshot); err == nil {
 			if parentSnapshot.Status.RegistryStatus != nil && parentSnapshot.Status.RegistryStatus.Pushed {
-				parentImageRef = parentSnapshot.Status.RegistryStatus.ImageRef
+				// Construct parentImageRef using FQDN and the parent's repository/tag
+				// The stored ImageRef uses short hostname which can't be resolved by node manager
+				parentRepo := parentSnapshot.Spec.RegistryRef.Repository
+				if parentRepo == "" {
+					// Fallback: extract from stored ImageRef
+					parentRepo = fmt.Sprintf("snapshots/%s", parentSnapshot.Spec.OwnedBy)
+				}
+				parentTag := parentSnapshot.Status.RegistryStatus.Tag
+				if parentTag == "" {
+					parentTag = parentSnapshot.Name
+				}
+				parentImageRef = fmt.Sprintf("image-registry.kloudlite.svc.cluster.local:5000/%s:%s", parentRepo, parentTag)
 			}
 			parentSnapshotPath = parentSnapshot.Status.SnapshotPath
 		}
