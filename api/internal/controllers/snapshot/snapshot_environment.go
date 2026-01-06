@@ -10,6 +10,7 @@ import (
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -145,7 +146,20 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	logger.Info("Environment is inactive, proceeding with snapshot")
+	// Wait for all pods to actually terminate (not just replicas=0)
+	// This ensures databases have time to checkpoint and flush WAL
+	if !r.waitForPodsTerminated(ctx, namespace, logger) {
+		logger.Info("Waiting for environment pods to terminate")
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Waiting for pods to terminate..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	logger.Info("Environment is inactive and all pods terminated, proceeding with snapshot")
 
 	// Source path: the entire environment directory (btrfs subvolume)
 	// All PVCs for this environment are stored under this directory
@@ -357,7 +371,19 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	logger.Info("Environment is inactive, proceeding with restore")
+	// Wait for all pods to actually terminate before restore
+	if !r.waitForPodsTerminated(ctx, namespace, logger) {
+		logger.Info("Waiting for environment pods to terminate before restore")
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+			snapshot.Status.Message = "Waiting for pods to terminate..."
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update status", zap.Error(err))
+		}
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	logger.Info("Environment is inactive and all pods terminated, proceeding with restore")
 
 	// Source path: the btrfs snapshot containing the environment data
 	snapshotPath := snapshot.Status.SnapshotPath
@@ -498,6 +524,29 @@ func (r *SnapshotReconciler) hasOtherInProgressSnapshots(ctx context.Context, cu
 		}
 	}
 	return false
+}
+
+// waitForPodsTerminated waits for all pods in a namespace to terminate
+// This is critical for databases that need time to checkpoint before snapshot
+func (r *SnapshotReconciler) waitForPodsTerminated(ctx context.Context, namespace string, logger *zap.Logger) bool {
+	pods := &corev1.PodList{}
+	if err := r.List(ctx, pods, client.InNamespace(namespace)); err != nil {
+		logger.Warn("Failed to list pods", zap.Error(err))
+		return false
+	}
+	// Check if any non-terminated pods exist (excluding jobs/completed pods)
+	for _, pod := range pods.Items {
+		if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
+			logger.Debug("Pod still running", zap.String("pod", pod.Name), zap.String("phase", string(pod.Status.Phase)))
+			return false
+		}
+		// Also check if pod is terminating (has deletion timestamp)
+		if pod.DeletionTimestamp != nil {
+			logger.Debug("Pod still terminating", zap.String("pod", pod.Name))
+			return false
+		}
+	}
+	return true
 }
 
 // restoreEnvironmentActivation restores the environment's activation state after snapshot/restore
