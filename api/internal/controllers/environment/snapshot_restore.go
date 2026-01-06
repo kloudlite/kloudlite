@@ -534,6 +534,14 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 ) (reconcile.Result, error) {
 	logger.Info("Phase: Completed - Clearing fromSnapshot and proceeding to normal reconciliation")
 
+	sourceSnapshotName := environment.Status.SnapshotRestoreStatus.SourceSnapshot
+
+	// Auto-create a snapshot on the cloned environment to maintain lineage
+	if err := r.createClonedSnapshot(ctx, environment, sourceSnapshotName, logger); err != nil {
+		logger.Warn("Failed to auto-create snapshot on cloned environment", zap.Error(err))
+		// Don't fail the restore - this is best-effort
+	}
+
 	// Clear fromSnapshot to mark restoration as complete
 	environment.Spec.FromSnapshot = nil
 
@@ -543,7 +551,7 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: fn.Ptr(metav1.Now()),
 		Reason:             "RestoreCompleted",
-		Message:            fmt.Sprintf("Successfully restored from snapshot %s", environment.Status.SnapshotRestoreStatus.SourceSnapshot),
+		Message:            fmt.Sprintf("Successfully restored from snapshot %s", sourceSnapshotName),
 	})
 
 	if err := r.Update(ctx, environment); err != nil {
@@ -555,6 +563,67 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 
 	// Requeue to start normal environment reconciliation
 	return reconcile.Result{Requeue: true}, nil
+}
+
+// createClonedSnapshot creates a snapshot on the cloned environment with proper lineage
+func (r *EnvironmentReconciler) createClonedSnapshot(
+	ctx context.Context,
+	environment *environmentsv1.Environment,
+	sourceSnapshotName string,
+	logger *zap.Logger,
+) error {
+	// Get source snapshot to inherit description
+	sourceSnapshot := &snapshotv1.Snapshot{}
+	if err := r.Get(ctx, client.ObjectKey{Name: sourceSnapshotName}, sourceSnapshot); err != nil {
+		return fmt.Errorf("failed to get source snapshot: %w", err)
+	}
+
+	// Generate snapshot name for the cloned environment
+	snapshotName := fmt.Sprintf("%s-clone-%d", environment.Name, time.Now().Unix())
+
+	// Create snapshot with inherited description and parent reference
+	restoredAt := metav1.Now()
+	newSnapshot := &snapshotv1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: snapshotName,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/environment":  environment.Name,
+				"kloudlite.io/owned-by":               environment.Spec.OwnedBy,
+				"snapshots.kloudlite.io/auto-created": "true",
+			},
+		},
+		Spec: snapshotv1.SnapshotSpec{
+			EnvironmentRef: &snapshotv1.EnvironmentReference{
+				Name: environment.Name,
+			},
+			ParentSnapshotRef: &snapshotv1.ParentSnapshotReference{
+				Name:       sourceSnapshotName,
+				RestoredAt: &restoredAt,
+			},
+			Description:     sourceSnapshot.Spec.Description,
+			OwnedBy:         environment.Spec.OwnedBy,
+			IncludeMetadata: true,
+			RegistryRef: &snapshotv1.SnapshotRegistryRef{
+				Repository: fmt.Sprintf("snapshots/%s", environment.Spec.OwnedBy),
+				AutoPush:   true,
+			},
+		},
+	}
+
+	if err := r.Create(ctx, newSnapshot); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			logger.Info("Snapshot already exists for cloned environment", zap.String("snapshot", snapshotName))
+			return nil
+		}
+		return fmt.Errorf("failed to create snapshot: %w", err)
+	}
+
+	logger.Info("Auto-created snapshot on cloned environment",
+		zap.String("snapshot", snapshotName),
+		zap.String("parent", sourceSnapshotName),
+		zap.String("description", sourceSnapshot.Spec.Description))
+
+	return nil
 }
 
 // restoreResourcesFromMetadata restores K8s resources from the metadata struct (from OCI layer)
