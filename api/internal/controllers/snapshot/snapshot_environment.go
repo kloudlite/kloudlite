@@ -274,11 +274,6 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		logger.Warn("Failed to get SnapshotRequest for size", zap.Error(err))
 	}
 
-	// Update environment's lastRestoredSnapshot
-	if err := r.updateEnvironmentLastRestored(ctx, envName, snapshot.Name, logger); err != nil {
-		logger.Warn("Failed to update environment's lastRestoredSnapshot", zap.Error(err))
-	}
-
 	// Update status to Ready
 	now := metav1.Now()
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
