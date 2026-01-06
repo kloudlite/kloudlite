@@ -204,10 +204,10 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 	}
 
 	if !allComplete {
-		// Update status with progress
+		// Update status with progress (keep snapshotPath as base path during progress)
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.Message = "Creating workspace snapshot..."
-			snapshot.Status.SnapshotPath = workspaceSnapshotPath
+			snapshot.Status.SnapshotPath = snapshotPath
 			snapshot.Status.PackageRequestsPath = packageRequestsPath
 			return nil
 		}, logger); err != nil {
