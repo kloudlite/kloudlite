@@ -83,11 +83,6 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
 		labelsUpdated = true
 	}
-	// Add lineage label for querying related snapshots
-	if snapshot.Spec.Description != "" && snapshot.Labels["snapshots.kloudlite.io/lineage"] != snapshot.Spec.Description {
-		snapshot.Labels["snapshots.kloudlite.io/lineage"] = snapshot.Spec.Description
-		labelsUpdated = true
-	}
 	if labelsUpdated || specUpdated {
 		if err := r.Update(ctx, snapshot); err != nil {
 			logger.Error("Failed to update snapshot", zap.Error(err))

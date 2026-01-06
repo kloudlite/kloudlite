@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -212,18 +213,54 @@ func (h *SnapshotHandlers) ListSnapshots(c *gin.Context) {
 		return
 	}
 
-	// List snapshots for this environment
-	snapshots, err := h.snapshotRepo.ListByEnvironment(c.Request.Context(), envName)
-	if err != nil {
-		h.logger.Error("Failed to list snapshots", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list snapshots"})
-		return
+	// If environment was cloned from a snapshot, list full lineage by walking parent refs
+	// Otherwise, list snapshots for this specific environment
+	var resultSnapshots []snapshotv1.Snapshot
+
+	if env.Status.LastRestoredSnapshot != nil {
+		// Build lineage by walking parentSnapshotRef chain
+		lineage := h.buildSnapshotLineage(c.Request.Context(), env.Status.LastRestoredSnapshot.Name)
+		resultSnapshots = lineage
+	} else {
+		// Not cloned - list snapshots for this environment only
+		snapshots, err := h.snapshotRepo.ListByEnvironment(c.Request.Context(), envName)
+		if err != nil {
+			h.logger.Error("Failed to list snapshots", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list snapshots"})
+			return
+		}
+		resultSnapshots = snapshots.Items
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"snapshots": snapshots.Items,
-		"count":     len(snapshots.Items),
+		"snapshots": resultSnapshots,
+		"count":     len(resultSnapshots),
 	})
+}
+
+// buildSnapshotLineage builds the direct ancestor chain by walking parentSnapshotRef
+// Returns only the direct lineage from root to the given snapshot (no branches)
+// Example: If tree is A->B->C->D and C->E->F, starting from F returns [A,B,C,E,F]
+func (h *SnapshotHandlers) buildSnapshotLineage(ctx context.Context, startSnapshotName string) []snapshotv1.Snapshot {
+	var ancestors []snapshotv1.Snapshot
+
+	// Walk UP the parent chain collecting all ancestors
+	currentName := startSnapshotName
+	for currentName != "" {
+		snapshot, err := h.snapshotRepo.Get(ctx, currentName)
+		if err != nil {
+			break
+		}
+		// Prepend to maintain order from root to leaf
+		ancestors = append([]snapshotv1.Snapshot{*snapshot}, ancestors...)
+
+		if snapshot.Spec.ParentSnapshotRef == nil {
+			break // Reached root
+		}
+		currentName = snapshot.Spec.ParentSnapshotRef.Name
+	}
+
+	return ancestors
 }
 
 // GetSnapshot handles GET /api/v1/snapshots/:name
