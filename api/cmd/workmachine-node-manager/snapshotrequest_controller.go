@@ -200,6 +200,13 @@ func (r *SnapshotRequestReconciler) createSnapshot(req *snapshotv1.SnapshotReque
 		return nil
 	}
 
+	// Sync filesystem before snapshot to ensure all writes are flushed
+	// This is critical for database consistency - checkpoint writes may be in kernel buffers
+	logger.Info("Syncing filesystem before snapshot")
+	if output, err := r.CmdExec.Execute("sync"); err != nil {
+		logger.Warn("Failed to sync filesystem", zap2.Error(err), zap2.String("output", string(output)))
+	}
+
 	// Create btrfs snapshot
 	var snapshotScript string
 	if req.Spec.ReadOnly {
