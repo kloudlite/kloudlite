@@ -7,6 +7,7 @@ import (
 	"time"
 
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -281,6 +282,9 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 	// can restore original deployments while the workspace pod is still available
 	r.cleanupWorkspaceIntercepts(ctx, workspace, logger)
 
+	// Clean up snapshots for this workspace
+	r.cleanupWorkspaceSnapshots(ctx, workspace, logger)
+
 	// Check if WorkMachine owner is being deleted
 	workMachineBeingDeleted := false
 	if workspace.Spec.WorkmachineName != "" {
@@ -378,4 +382,46 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 
 	logger.Info("Workspace cleanup completed")
 	return reconcile.Result{}, nil
+}
+
+// cleanupWorkspaceSnapshots deletes all snapshots associated with this workspace
+func (r *WorkspaceReconciler) cleanupWorkspaceSnapshots(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) {
+	// List all snapshots for this workspace using the label
+	snapshotList := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, snapshotList, client.MatchingLabels{
+		"snapshots.kloudlite.io/workspace": workspace.Name,
+	}); err != nil {
+		logger.Error("Failed to list snapshots for workspace", zap.Error(err))
+		return
+	}
+
+	if len(snapshotList.Items) == 0 {
+		return
+	}
+
+	logger.Info("Deleting snapshots for workspace",
+		zap.String("workspace", workspace.Name),
+		zap.Int("count", len(snapshotList.Items)))
+
+	deletedCount := 0
+	for i := range snapshotList.Items {
+		snapshot := &snapshotList.Items[i]
+		logger.Info("Deleting snapshot",
+			zap.String("snapshot", snapshot.Name),
+			zap.String("workspace", workspace.Name))
+
+		if err := r.Delete(ctx, snapshot); err != nil {
+			logger.Error("Failed to delete snapshot",
+				zap.String("snapshot", snapshot.Name),
+				zap.Error(err))
+			// Continue with other snapshots even if one fails
+			continue
+		}
+		deletedCount++
+	}
+
+	logger.Info("Deleted workspace snapshots",
+		zap.String("workspace", workspace.Name),
+		zap.Int("deleted", deletedCount),
+		zap.Int("total", len(snapshotList.Items)))
 }

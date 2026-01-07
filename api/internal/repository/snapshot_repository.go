@@ -15,8 +15,6 @@ type SnapshotRepository interface {
 	ListByEnvironment(ctx context.Context, envName string) (*snapshotv1.SnapshotList, error)
 	ListByWorkspace(ctx context.Context, workspaceName string) (*snapshotv1.SnapshotList, error)
 	ListByOwner(ctx context.Context, owner string) (*snapshotv1.SnapshotList, error)
-	ListReady(ctx context.Context) (*snapshotv1.SnapshotList, error)
-	ListByParent(ctx context.Context, parentSnapshotName string) (*snapshotv1.SnapshotList, error)
 }
 
 // snapshotRepository implements SnapshotRepository
@@ -52,27 +50,4 @@ func (r *snapshotRepository) ListByWorkspace(ctx context.Context, workspaceName 
 // ListByOwner retrieves all snapshots owned by a user
 func (r *snapshotRepository) ListByOwner(ctx context.Context, owner string) (*snapshotv1.SnapshotList, error) {
 	return r.List(ctx, WithLabelSelector("kloudlite.io/owned-by="+owner))
-}
-
-// ListReady retrieves all ready snapshots
-func (r *snapshotRepository) ListReady(ctx context.Context) (*snapshotv1.SnapshotList, error) {
-	allSnapshots, err := r.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Filter for ready state (client-side since state is in status, not labels)
-	readySnapshots := &snapshotv1.SnapshotList{}
-	for _, s := range allSnapshots.Items {
-		if s.Status.State == snapshotv1.SnapshotStateReady {
-			readySnapshots.Items = append(readySnapshots.Items, s)
-		}
-	}
-
-	return readySnapshots, nil
-}
-
-// ListByParent retrieves all snapshots that have the given snapshot as their parent
-func (r *snapshotRepository) ListByParent(ctx context.Context, parentSnapshotName string) (*snapshotv1.SnapshotList, error) {
-	return r.List(ctx, WithLabelSelector("snapshots.kloudlite.io/parent="+parentSnapshotName))
 }

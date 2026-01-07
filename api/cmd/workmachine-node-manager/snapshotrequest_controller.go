@@ -98,6 +98,8 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 		pushResult, opErr = r.pushSnapshot(snapshotReq, logger)
 	case snapshotv1.SnapshotOperationPull:
 		pullResult, opErr = r.pullSnapshot(snapshotReq, logger)
+	case snapshotv1.SnapshotOperationTag:
+		opErr = r.tagSnapshot(snapshotReq, logger)
 	default:
 		opErr = fmt.Errorf("unknown operation: %s", snapshotReq.Spec.Operation)
 	}
@@ -549,6 +551,44 @@ func (r *SnapshotRequestReconciler) pullSnapshot(req *snapshotv1.SnapshotRequest
 	}
 
 	return pullResult, nil
+}
+
+// tagSnapshot creates an additional tag for an existing image in the registry
+func (r *SnapshotRequestReconciler) tagSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) error {
+	if req.Spec.RegistryRef == nil {
+		return fmt.Errorf("registryRef is required for tag operation")
+	}
+
+	if req.Spec.RegistryRef.SourceTag == "" {
+		return fmt.Errorf("sourceTag is required for tag operation")
+	}
+
+	sourceRef := fmt.Sprintf("%s/%s:%s",
+		req.Spec.RegistryRef.RegistryURL,
+		req.Spec.RegistryRef.Repository,
+		req.Spec.RegistryRef.SourceTag)
+
+	targetRef := fmt.Sprintf("%s/%s:%s",
+		req.Spec.RegistryRef.RegistryURL,
+		req.Spec.RegistryRef.Repository,
+		req.Spec.RegistryRef.Tag)
+
+	logger.Info("Creating additional tag for image",
+		zap2.String("sourceRef", sourceRef),
+		zap2.String("targetRef", targetRef),
+	)
+
+	// Create OCI client and tag
+	client := oci.NewClient(true) // Use insecure for internal registry
+	if err := client.Tag(sourceRef, targetRef); err != nil {
+		return fmt.Errorf("failed to tag image: %w", err)
+	}
+
+	logger.Info("Image tagged successfully",
+		zap2.String("newTag", req.Spec.RegistryRef.Tag),
+	)
+
+	return nil
 }
 
 // getSnapshotSize returns the size of the snapshot in bytes

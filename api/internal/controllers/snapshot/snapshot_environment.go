@@ -83,6 +83,13 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
 		labelsUpdated = true
 	}
+	// Set parent label for lineage tracking (used during deletion re-linking)
+	if snapshot.Spec.ParentSnapshotRef != nil {
+		if snapshot.Labels["snapshots.kloudlite.io/parent"] != snapshot.Spec.ParentSnapshotRef.Name {
+			snapshot.Labels["snapshots.kloudlite.io/parent"] = snapshot.Spec.ParentSnapshotRef.Name
+			labelsUpdated = true
+		}
+	}
 	if labelsUpdated || specUpdated {
 		if err := r.Update(ctx, snapshot); err != nil {
 			logger.Error("Failed to update snapshot", zap.Error(err))
@@ -201,7 +208,6 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		// Store the path immediately so subsequent reconciles use the same path
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.SnapshotPath = snapshotPath
-			snapshot.Status.SourcePath = sourcePath
 			snapshot.Status.Message = "Creating snapshot..."
 			return nil
 		}, logger); err != nil {
@@ -295,7 +301,6 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		snapshot.Status.State = snapshotv1.SnapshotStateReady
 		snapshot.Status.Message = "Snapshot created successfully"
 		snapshot.Status.SnapshotPath = snapshotPath
-		snapshot.Status.SourcePath = sourcePath
 		snapshot.Status.SizeBytes = totalSize
 		snapshot.Status.SizeHuman = formatSize(totalSize)
 		snapshot.Status.CreatedAt = &now
