@@ -489,6 +489,10 @@ spec:
                       or failure)
                     format: date-time
                     type: string
+                  dataRestoreRequestName:
+                    description: DataRestoreRequestName is the name of the SnapshotRequest
+                      for restoring workspace data
+                    type: string
                   errorMessage:
                     description: ErrorMessage if restoration failed
                     type: string

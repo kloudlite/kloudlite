@@ -104,65 +104,24 @@ func (h *SnapshotHandlers) CreateSnapshot(c *gin.Context) {
 		}
 	}
 
-	// Check for parent snapshot lineage
-	// Priority: 1) Last restored snapshot, 2) Most recent existing snapshot
-	var parentSnapshotRef *snapshotv1.ParentSnapshotReference
-	labels := map[string]string{
-		"snapshots.kloudlite.io/environment": envName,
-		"kloudlite.io/owned-by":              username,
-	}
-
-	if env.Status.LastRestoredSnapshot != nil {
-		// Use the last restored snapshot as parent (branching point)
-		parentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-			Name:       env.Status.LastRestoredSnapshot.Name,
-			RestoredAt: &env.Status.LastRestoredSnapshot.RestoredAt,
-		}
-		labels["snapshots.kloudlite.io/parent"] = env.Status.LastRestoredSnapshot.Name
-		h.logger.Info("Setting parent from last restored snapshot",
-			zap.String("snapshot", snapshotName),
-			zap.String("parent", env.Status.LastRestoredSnapshot.Name))
-	} else {
-		// Find the most recent snapshot for this environment to form a chain
-		existingSnapshots, err := h.snapshotRepo.ListByEnvironment(c.Request.Context(), envName)
-		if err == nil && len(existingSnapshots.Items) > 0 {
-			// Find the most recent by creation time
-			mostRecent := &existingSnapshots.Items[0]
-			for i := range existingSnapshots.Items {
-				s := &existingSnapshots.Items[i]
-				if s.Status.CreatedAt != nil && mostRecent.Status.CreatedAt != nil {
-					if s.Status.CreatedAt.After(mostRecent.Status.CreatedAt.Time) {
-						mostRecent = s
-					}
-				} else if s.ObjectMeta.CreationTimestamp.After(mostRecent.ObjectMeta.CreationTimestamp.Time) {
-					mostRecent = s
-				}
-			}
-			parentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-				Name: mostRecent.ObjectMeta.Name,
-			}
-			labels["snapshots.kloudlite.io/parent"] = mostRecent.ObjectMeta.Name
-			h.logger.Info("Setting parent from most recent snapshot",
-				zap.String("snapshot", snapshotName),
-				zap.String("parent", mostRecent.ObjectMeta.Name))
-		}
-	}
-
 	// Create snapshot
+	// Note: ParentSnapshotRef is auto-detected by the controller from env.Status.LastRestoredSnapshot
 	snapshot := &snapshotv1.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   snapshotName,
-			Labels: labels,
+			Name: snapshotName,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/environment": envName,
+				"kloudlite.io/owned-by":              username,
+			},
 		},
 		Spec: snapshotv1.SnapshotSpec{
 			EnvironmentRef: &snapshotv1.EnvironmentReference{
 				Name: envName,
 			},
-			ParentSnapshotRef: parentSnapshotRef,
-			Description:       req.Description,
-			OwnedBy:           username,
-			IncludeMetadata:   req.IncludeMetadata,
-			RetentionPolicy:   retentionPolicy,
+			Description:     req.Description,
+			OwnedBy:         username,
+			IncludeMetadata: req.IncludeMetadata,
+			RetentionPolicy: retentionPolicy,
 		},
 	}
 
@@ -560,66 +519,25 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		}
 	}
 
-	// Check for parent snapshot lineage
-	// Priority: 1) Last restored snapshot, 2) Most recent existing snapshot
-	var parentSnapshotRef *snapshotv1.ParentSnapshotReference
-	labels := map[string]string{
-		"snapshots.kloudlite.io/workspace": workspaceName,
-		"kloudlite.io/owned-by":            username,
-	}
-
-	if workspace.Status.LastRestoredSnapshot != nil {
-		// Use the last restored snapshot as parent (branching point)
-		parentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-			Name:       workspace.Status.LastRestoredSnapshot.Name,
-			RestoredAt: &workspace.Status.LastRestoredSnapshot.RestoredAt,
-		}
-		labels["snapshots.kloudlite.io/parent"] = workspace.Status.LastRestoredSnapshot.Name
-		h.logger.Info("Setting parent from last restored snapshot",
-			zap.String("snapshot", snapshotName),
-			zap.String("parent", workspace.Status.LastRestoredSnapshot.Name))
-	} else {
-		// Find the most recent snapshot for this workspace to form a chain
-		existingSnapshots, err := h.snapshotRepo.ListByWorkspace(c.Request.Context(), workspaceName)
-		if err == nil && len(existingSnapshots.Items) > 0 {
-			// Find the most recent by creation time
-			mostRecent := &existingSnapshots.Items[0]
-			for i := range existingSnapshots.Items {
-				s := &existingSnapshots.Items[i]
-				if s.Status.CreatedAt != nil && mostRecent.Status.CreatedAt != nil {
-					if s.Status.CreatedAt.After(mostRecent.Status.CreatedAt.Time) {
-						mostRecent = s
-					}
-				} else if s.ObjectMeta.CreationTimestamp.After(mostRecent.ObjectMeta.CreationTimestamp.Time) {
-					mostRecent = s
-				}
-			}
-			parentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-				Name: mostRecent.ObjectMeta.Name,
-			}
-			labels["snapshots.kloudlite.io/parent"] = mostRecent.ObjectMeta.Name
-			h.logger.Info("Setting parent from most recent snapshot",
-				zap.String("snapshot", snapshotName),
-				zap.String("parent", mostRecent.ObjectMeta.Name))
-		}
-	}
-
 	// Create snapshot
+	// Note: ParentSnapshotRef is auto-detected by the controller from workspace.Status.LastRestoredSnapshot
 	snapshot := &snapshotv1.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   snapshotName,
-			Labels: labels,
+			Name: snapshotName,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/workspace": workspaceName,
+				"kloudlite.io/owned-by":            username,
+			},
 		},
 		Spec: snapshotv1.SnapshotSpec{
 			WorkspaceRef: &snapshotv1.WorkspaceReference{
 				Name:            workspaceName,
 				WorkmachineName: workspace.Spec.WorkmachineName,
 			},
-			ParentSnapshotRef: parentSnapshotRef,
-			Description:       req.Description,
-			OwnedBy:           username,
-			IncludeMetadata:   req.IncludeMetadata,
-			RetentionPolicy:   retentionPolicy,
+			Description:     req.Description,
+			OwnedBy:         username,
+			IncludeMetadata: req.IncludeMetadata,
+			RetentionPolicy: retentionPolicy,
 		},
 	}
 

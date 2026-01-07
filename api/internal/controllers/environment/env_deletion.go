@@ -6,8 +6,10 @@ import (
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -25,6 +27,12 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 	// Clean up workspace environment connections referencing this environment
 	if err := r.cleanupWorkspaceConnections(ctx, environment, logger); err != nil {
 		logger.Error("Failed to cleanup workspace connections", zap.Error(err))
+		// Continue with deletion even if cleanup fails
+	}
+
+	// Clean up snapshots for this environment
+	if err := r.cleanupEnvironmentSnapshots(ctx, environment, logger); err != nil {
+		logger.Error("Failed to cleanup environment snapshots", zap.Error(err))
 		// Continue with deletion even if cleanup fails
 	}
 
@@ -101,6 +109,49 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 		logger.Info("Cleaned up workspace environment connections",
 			zap.Int("count", cleanedCount))
 	}
+
+	return nil
+}
+
+// cleanupEnvironmentSnapshots deletes all snapshots associated with this environment
+func (r *EnvironmentReconciler) cleanupEnvironmentSnapshots(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	// List all snapshots for this environment using the label
+	snapshotList := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, snapshotList, client.MatchingLabels{
+		"snapshots.kloudlite.io/environment": environment.Name,
+	}); err != nil {
+		return fmt.Errorf("failed to list snapshots for environment: %w", err)
+	}
+
+	if len(snapshotList.Items) == 0 {
+		return nil
+	}
+
+	logger.Info("Deleting snapshots for environment",
+		zap.String("environment", environment.Name),
+		zap.Int("count", len(snapshotList.Items)))
+
+	deletedCount := 0
+	for i := range snapshotList.Items {
+		snapshot := &snapshotList.Items[i]
+		logger.Info("Deleting snapshot",
+			zap.String("snapshot", snapshot.Name),
+			zap.String("environment", environment.Name))
+
+		if err := r.Delete(ctx, snapshot); err != nil {
+			logger.Error("Failed to delete snapshot",
+				zap.String("snapshot", snapshot.Name),
+				zap.Error(err))
+			// Continue with other snapshots even if one fails
+			continue
+		}
+		deletedCount++
+	}
+
+	logger.Info("Deleted environment snapshots",
+		zap.String("environment", environment.Name),
+		zap.Int("deleted", deletedCount),
+		zap.Int("total", len(snapshotList.Items)))
 
 	return nil
 }

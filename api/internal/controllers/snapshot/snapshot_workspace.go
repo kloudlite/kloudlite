@@ -53,6 +53,13 @@ func (r *SnapshotReconciler) handleWorkspacePending(ctx context.Context, snapsho
 		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
 		labelsUpdated = true
 	}
+	// Set parent label for lineage tracking (used during deletion re-linking)
+	if snapshot.Spec.ParentSnapshotRef != nil {
+		if snapshot.Labels["snapshots.kloudlite.io/parent"] != snapshot.Spec.ParentSnapshotRef.Name {
+			snapshot.Labels["snapshots.kloudlite.io/parent"] = snapshot.Spec.ParentSnapshotRef.Name
+			labelsUpdated = true
+		}
+	}
 	if labelsUpdated {
 		if err := r.Update(ctx, snapshot); err != nil {
 			logger.Error("Failed to update snapshot labels", zap.Error(err))
