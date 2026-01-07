@@ -327,6 +327,31 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment, operation admissionv1.Operation) error {
 	ctx := context.Background()
 
+	// Validate spec.name is required
+	if env.Spec.Name == "" {
+		return fmt.Errorf("spec.name is required. Please provide a name for your environment")
+	}
+
+	// Validate spec.name is unique per owner
+	if operation == admissionv1.Create || operation == admissionv1.Update {
+		envList := &environmentsv1.EnvironmentList{}
+		if err := w.k8sClient.List(ctx, envList); err != nil {
+			return fmt.Errorf("failed to list environments: %v", err)
+		}
+
+		for _, existingEnv := range envList.Items {
+			// Skip the current environment being created/updated
+			if existingEnv.Name == env.Name {
+				continue
+			}
+			// Check if same owner has an environment with the same spec.name
+			if existingEnv.Spec.OwnedBy == env.Spec.OwnedBy && existingEnv.Spec.Name == env.Spec.Name {
+				return fmt.Errorf("environment name '%s' already exists for owner '%s'. Please choose a different name",
+					env.Spec.Name, env.Spec.OwnedBy)
+			}
+		}
+	}
+
 	// Validate that WorkMachine reference exists (only for CREATE operations)
 	if operation == admissionv1.Create {
 		if env.Spec.WorkMachineName == "" {
