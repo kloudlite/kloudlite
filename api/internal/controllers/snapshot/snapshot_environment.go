@@ -556,25 +556,29 @@ func (r *SnapshotReconciler) hasOtherInProgressSnapshots(ctx context.Context, cu
 	return false
 }
 
-// waitForPodsTerminated waits for all pods in a namespace to terminate
+// waitForPodsTerminated waits for all pods in a namespace to be fully deleted
 // This is critical for databases that need time to checkpoint before snapshot
+// We wait for ALL pods to be deleted (not just not Running) because:
+// - Pods in Error/CrashLoopBackOff still have running processes
+// - Database containers may still be writing to disk during shutdown
+// - Only Succeeded pods (completed Jobs) are safe to ignore
 func (r *SnapshotReconciler) waitForPodsTerminated(ctx context.Context, namespace string, logger *zap.Logger) bool {
 	pods := &corev1.PodList{}
 	if err := r.List(ctx, pods, client.InNamespace(namespace)); err != nil {
 		logger.Warn("Failed to list pods", zap.Error(err))
 		return false
 	}
-	// Check if any non-terminated pods exist (excluding jobs/completed pods)
+	// Wait for ALL pods to be deleted, except completed Job pods (Succeeded phase)
+	// This ensures databases have fully shut down and checkpointed
 	for _, pod := range pods.Items {
-		if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
-			logger.Debug("Pod still running", zap.String("pod", pod.Name), zap.String("phase", string(pod.Status.Phase)))
-			return false
+		// Skip completed Job pods - they're finished and won't write to disk
+		if pod.Status.Phase == corev1.PodSucceeded {
+			continue
 		}
-		// Also check if pod is terminating (has deletion timestamp)
-		if pod.DeletionTimestamp != nil {
-			logger.Debug("Pod still terminating", zap.String("pod", pod.Name))
-			return false
-		}
+		// Any other pod (Running, Pending, Failed, Unknown) means we should wait
+		// Even Failed/Error pods may have just crashed and filesystem may be inconsistent
+		logger.Debug("Pod still exists", zap.String("pod", pod.Name), zap.String("phase", string(pod.Status.Phase)))
+		return false
 	}
 	return true
 }
