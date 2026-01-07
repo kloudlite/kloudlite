@@ -263,46 +263,8 @@ func (r *SnapshotRequestReconciler) deleteSnapshot(req *snapshotv1.SnapshotReque
 // restoreSnapshot restores from a btrfs snapshot
 func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) error {
 	// For restore: SourcePath is the snapshot source, SnapshotPath is the restore target
-	sourcePath := req.Spec.SourcePath   // The snapshot to restore FROM (may contain glob pattern)
+	sourcePath := req.Spec.SourcePath   // The snapshot to restore FROM
 	targetPath := req.Spec.SnapshotPath // Where to restore TO
-
-	// If source path contains glob pattern, resolve it
-	if strings.Contains(sourcePath, "*") {
-		logger.Info("Resolving glob pattern in source path", zap2.String("pattern", sourcePath))
-
-		// New pathPattern format: {claimName}/* where we need to find the PV subdirectory
-		// Structure: {snapshotBase}/{claimName}/{pv-name}/(data files)
-		// We want to copy the CONTENTS of {pv-name}/ to target
-		baseDir := filepath.Dir(sourcePath)
-		pattern := filepath.Base(sourcePath)
-
-		// First try exact glob match to find the PV directory
-		globScript := fmt.Sprintf("ls -d %s 2>/dev/null | head -1", sourcePath)
-		output, err := r.CmdExec.Execute(globScript)
-		resolved := strings.TrimSpace(string(output))
-
-		if err != nil || resolved == "" {
-			// Try find command for nested directories
-			findScript := fmt.Sprintf("find %s -maxdepth 1 -type d -name '%s' 2>/dev/null | head -1", baseDir, strings.ReplaceAll(pattern, "*", "*"))
-			output, err = r.CmdExec.Execute(findScript)
-			resolved = strings.TrimSpace(string(output))
-		}
-
-		// If still not found, check if baseDir itself contains the data (old format)
-		if resolved == "" {
-			checkScript := fmt.Sprintf("test -d %s && ls %s 2>/dev/null | head -1", baseDir, baseDir)
-			output, err = r.CmdExec.Execute(checkScript)
-			if err == nil && strings.TrimSpace(string(output)) != "" {
-				resolved = baseDir
-			}
-		}
-
-		if resolved == "" {
-			return fmt.Errorf("no matching source path found for pattern: %s", sourcePath)
-		}
-		sourcePath = resolved
-		logger.Info("Resolved source path", zap2.String("path", sourcePath))
-	}
 
 	// Check if source snapshot exists
 	checkScript := fmt.Sprintf("test -e %s", sourcePath)
@@ -345,6 +307,7 @@ func (r *SnapshotRequestReconciler) restoreSnapshot(req *snapshotv1.SnapshotRequ
 		if output, rsyncErr := r.CmdExec.Execute(rsyncScript); rsyncErr != nil {
 			return fmt.Errorf("rsync restore failed: %s - %w", string(output), rsyncErr)
 		}
+
 		return nil
 	}
 

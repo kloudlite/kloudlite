@@ -21,9 +21,9 @@ import (
 )
 
 const (
-	// snapshotsBasePath is where snapshots are stored on the host filesystem
-	// This is used for pull operations - the extracted data goes here
-	snapshotsBasePath = "/var/lib/kloudlite/storage/.snapshots"
+	// environmentsBasePath is where environment data is stored on the host filesystem
+	// For restore operations, we extract directly to this path
+	environmentsBasePath = "/var/lib/kloudlite/storage/environments"
 )
 
 // handleSnapshotRestore handles creating an environment from a pushed snapshot
@@ -157,8 +157,9 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 		// Get the workmachine namespace
 		wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
 
-		// Determine snapshot path for the pulled data
-		snapshotPath := filepath.Join(snapshotsBasePath, fmt.Sprintf("env-%s-restore", environment.Name))
+		// Pull directly to the target namespace's storage path
+		// This creates the btrfs subvolume at the correct location for PVC data
+		snapshotPath := filepath.Join(environmentsBasePath, environment.Spec.TargetNamespace)
 
 		// Parse imageRef to get repository and tag
 		repository, tag := parseImageRef(status.ImageRef)
@@ -303,32 +304,35 @@ func (r *EnvironmentReconciler) handleRestoreRestoring(
 	return reconcile.Result{Requeue: true}, nil
 }
 
-// handleRestoreDataRestoring restores PVC data from the pulled snapshot
+// handleRestoreDataRestoring moves PVC data from snapshot subdirectory to the correct location
+// After pull, data structure is:
+//   {namespace}/{snapshotName}/{claimName}/  (data from snapshot)
+// PVC expects data at:
+//   {namespace}/{claimName}/
+// We need to move {snapshotName}/{claimName}/ contents to {claimName}/ and delete {snapshotName}/
 func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 	ctx context.Context,
 	environment *environmentsv1.Environment,
 	logger *zap.Logger,
 ) (reconcile.Result, error) {
-	logger.Info("Phase: DataRestoring - Restoring PVC data from snapshot")
+	logger.Info("Phase: DataRestoring - Moving PVC data to correct paths")
 
 	targetNamespace := environment.Spec.TargetNamespace
 	status := environment.Status.SnapshotRestoreStatus
 	wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
-	snapshotName := environment.Spec.FromSnapshot.SnapshotName
+	snapshotName := status.SourceSnapshot
 
-	// Get the pull request to find the snapshot path
+	// Get the pull request for cleanup later
 	pullReq := &snapshotv1.SnapshotRequest{}
+	pullReqExists := true
 	if err := r.Get(ctx, client.ObjectKey{Name: status.SnapshotRequestName, Namespace: wmNamespace}, pullReq); err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Warn("Pull request not found, skipping data restoration")
-			return r.moveToCompleted(ctx, environment, logger)
+			pullReqExists = false
+		} else {
+			logger.Error("Failed to get pull request", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 		}
-		logger.Error("Failed to get pull request", zap.Error(err))
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
-
-	// The pulled snapshot data is at: {snapshotPath}/{snapshotName}/
-	pulledSnapshotBase := filepath.Join(pullReq.Spec.SnapshotPath, snapshotName)
 
 	// List PVCs in the target namespace
 	pvcList := &corev1.PersistentVolumeClaimList{}
@@ -337,66 +341,70 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	if len(pvcList.Items) == 0 {
-		// Check if there are compositions that might create PVCs
-		compositionList := &environmentsv1.CompositionList{}
-		if err := r.List(ctx, compositionList, client.InNamespace(targetNamespace)); err != nil {
-			logger.Error("Failed to list compositions", zap.Error(err))
-			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
-		}
+	// List StatefulSets to check if PVCs should exist
+	stsList := &appsv1.StatefulSetList{}
+	if err := r.List(ctx, stsList, client.InNamespace(targetNamespace)); err != nil {
+		logger.Error("Failed to list StatefulSets", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
 
-		if len(compositionList.Items) == 0 {
-			// No compositions and no PVCs - nothing to restore
-			logger.Info("No PVCs and no compositions found, skipping data restoration")
-			return r.moveToCompleted(ctx, environment, logger)
+	// If no PVCs and no StatefulSets, just clean up the snapshot subdirectory
+	if len(pvcList.Items) == 0 && len(stsList.Items) == 0 {
+		logger.Info("No PVCs and no StatefulSets found, cleaning up snapshot directory")
+		r.cleanupSnapshotSubdirectory(ctx, environment, snapshotName, wmNamespace, logger)
+		if pullReqExists {
+			if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete pull request", zap.Error(err))
+			}
 		}
+		return r.moveToCompleted(ctx, environment, logger)
+	}
 
-		// Compositions exist - wait for PVCs to be created
-		logger.Info("No PVCs found yet, waiting for composition to create them",
-			zap.Int("compositions", len(compositionList.Items)))
+	// If StatefulSets exist but no PVCs yet, wait for them
+	if len(pvcList.Items) == 0 && len(stsList.Items) > 0 {
+		logger.Info("Waiting for StatefulSet PVCs to be created")
 		return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
 	}
 
-	// Check/create restore requests for each PVC
-	allCompleted := true
-	anyFailed := false
 	anyPending := false
+	allDataMoved := true
 
 	for _, pvc := range pvcList.Items {
 		// Handle PVCs that aren't bound yet (WaitForFirstConsumer)
 		if pvc.Status.Phase != corev1.ClaimBound {
 			logger.Info("PVC not bound yet", zap.String("pvc", pvc.Name), zap.String("phase", string(pvc.Status.Phase)))
 			anyPending = true
-			allCompleted = false
+			allDataMoved = false
 			continue
 		}
 
-		restoreReqName := fmt.Sprintf("%s-data-restore-%s", environment.Name, pvc.Name)
+		// PVC is bound - check if we need to move data
+		claimName := pvc.Name
 
-		// Check if restore request already exists
-		restoreReq := &snapshotv1.SnapshotRequest{}
-		if err := r.Get(ctx, client.ObjectKey{Name: restoreReqName, Namespace: wmNamespace}, restoreReq); err != nil {
+		// Create a SnapshotRequest to move data from snapshot subdirectory
+		moveReqName := fmt.Sprintf("%s-data-move-%s", environment.Name, pvc.Name)
+
+		moveReq := &snapshotv1.SnapshotRequest{}
+		if err := r.Get(ctx, client.ObjectKey{Name: moveReqName, Namespace: wmNamespace}, moveReq); err != nil {
 			if !apierrors.IsNotFound(err) {
-				logger.Error("Failed to get restore request", zap.Error(err), zap.String("pvc", pvc.Name))
+				logger.Error("Failed to get move request", zap.Error(err), zap.String("pvc", pvc.Name))
 				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 			}
 
-			// Create restore request
-			// Source: snapshot data path matching by claim name
-			// Target: actual PVC mount path
-			sourcePath, targetPath := r.getPVCRestorePaths(pulledSnapshotBase, targetNamespace, &pvc, logger)
-			if sourcePath == "" {
-				logger.Warn("Could not determine source path for PVC", zap.String("pvc", pvc.Name))
-				continue
-			}
+			// Create move request
+			// Source: {namespace}/{snapshotName}/{claimName}/
+			// Target: {namespace}/{claimName}/
+			namespacePath := filepath.Join(environmentsBasePath, targetNamespace)
+			sourcePath := filepath.Join(namespacePath, snapshotName, claimName)
+			targetPath := filepath.Join(namespacePath, claimName)
 
-			newRestoreReq := &snapshotv1.SnapshotRequest{
+			newMoveReq := &snapshotv1.SnapshotRequest{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      restoreReqName,
+					Name:      moveReqName,
 					Namespace: wmNamespace,
 					Labels: map[string]string{
 						"environments.kloudlite.io/environment": environment.Name,
-						"environments.kloudlite.io/operation":   "data-restore",
+						"environments.kloudlite.io/operation":   "data-move",
 						"environments.kloudlite.io/pvc":         pvc.Name,
 					},
 				},
@@ -408,40 +416,39 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 				},
 			}
 
-			if err := r.Create(ctx, newRestoreReq); err != nil {
+			if err := r.Create(ctx, newMoveReq); err != nil {
 				if !apierrors.IsAlreadyExists(err) {
-					logger.Error("Failed to create restore request", zap.Error(err), zap.String("pvc", pvc.Name))
+					logger.Error("Failed to create move request", zap.Error(err), zap.String("pvc", pvc.Name))
 					return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 				}
 			}
 
-			logger.Info("Created data restore request",
+			logger.Info("Created data move request",
 				zap.String("pvc", pvc.Name),
 				zap.String("source", sourcePath),
 				zap.String("target", targetPath))
-			allCompleted = false
+			allDataMoved = false
 			continue
 		}
 
-		// Check restore request status
-		switch restoreReq.Status.Phase {
+		// Check move request status
+		switch moveReq.Status.Phase {
 		case snapshotv1.SnapshotRequestPhaseCompleted:
-			logger.Info("PVC data restore completed", zap.String("pvc", pvc.Name))
-			// Clean up completed restore request
-			if err := r.Delete(ctx, restoreReq); err != nil && !apierrors.IsNotFound(err) {
-				logger.Warn("Failed to delete completed restore request", zap.Error(err))
+			logger.Info("PVC data move completed", zap.String("pvc", pvc.Name))
+			// Clean up completed move request
+			if err := r.Delete(ctx, moveReq); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete completed move request", zap.Error(err))
 			}
 		case snapshotv1.SnapshotRequestPhaseFailed:
-			logger.Error("PVC data restore failed", zap.String("pvc", pvc.Name), zap.String("error", restoreReq.Status.Message))
-			anyFailed = true
+			logger.Warn("PVC data move failed", zap.String("pvc", pvc.Name), zap.String("error", moveReq.Status.Message))
+			// Data might already be in the right place, proceed anyway
+			if err := r.Delete(ctx, moveReq); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete failed move request", zap.Error(err))
+			}
 		default:
-			logger.Info("PVC data restore in progress", zap.String("pvc", pvc.Name), zap.String("phase", string(restoreReq.Status.Phase)))
-			allCompleted = false
+			logger.Info("PVC data move in progress", zap.String("pvc", pvc.Name), zap.String("phase", string(moveReq.Status.Phase)))
+			allDataMoved = false
 		}
-	}
-
-	if anyFailed {
-		logger.Warn("Some PVC data restores failed, proceeding anyway")
 	}
 
 	// Handle pending PVCs - create helper pod to trigger WaitForFirstConsumer binding
@@ -456,16 +463,57 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 	// All PVCs are bound, clean up helper pod if it exists
 	r.cleanupPVCBindingHelperPod(ctx, environment, logger)
 
-	if !allCompleted {
+	if !allDataMoved {
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// All restores completed, clean up pull request and move to Completed
-	if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
-		logger.Warn("Failed to delete pull request", zap.Error(err))
+	// All data moved, clean up snapshot subdirectory and pull request
+	r.cleanupSnapshotSubdirectory(ctx, environment, snapshotName, wmNamespace, logger)
+	if pullReqExists {
+		if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
+			logger.Warn("Failed to delete pull request", zap.Error(err))
+		}
 	}
 
 	return r.moveToCompleted(ctx, environment, logger)
+}
+
+// cleanupSnapshotSubdirectory removes the snapshot subdirectory after data has been moved
+func (r *EnvironmentReconciler) cleanupSnapshotSubdirectory(
+	ctx context.Context,
+	environment *environmentsv1.Environment,
+	snapshotName, wmNamespace string,
+	logger *zap.Logger,
+) {
+	targetNamespace := environment.Spec.TargetNamespace
+	snapshotSubdir := filepath.Join(environmentsBasePath, targetNamespace, snapshotName)
+
+	// Create a delete SnapshotRequest to clean up the snapshot subdirectory
+	cleanupReqName := fmt.Sprintf("%s-cleanup", environment.Name)
+
+	cleanupReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cleanupReqName,
+			Namespace: wmNamespace,
+			Labels: map[string]string{
+				"environments.kloudlite.io/environment": environment.Name,
+				"environments.kloudlite.io/operation":   "cleanup",
+			},
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:       snapshotv1.SnapshotOperationDelete,
+			SnapshotPath:    snapshotSubdir,
+			EnvironmentName: environment.Name,
+		},
+	}
+
+	if err := r.Create(ctx, cleanupReq); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			logger.Warn("Failed to create cleanup request", zap.Error(err))
+		}
+	} else {
+		logger.Info("Created cleanup request for snapshot subdirectory", zap.String("path", snapshotSubdir))
+	}
 }
 
 // getPVCRestorePaths determines the source (snapshot) and target (actual PVC) paths
