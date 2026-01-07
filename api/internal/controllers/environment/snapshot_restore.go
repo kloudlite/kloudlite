@@ -352,9 +352,34 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// If no PVCs and no StatefulSets, just clean up the snapshot subdirectory
-	if len(pvcList.Items) == 0 && len(stsList.Items) == 0 {
-		logger.Info("No PVCs and no StatefulSets found, cleaning up snapshot directory")
+	// List Compositions to check if they might create PVCs
+	compList := &environmentsv1.CompositionList{}
+	if err := r.List(ctx, compList, client.InNamespace(targetNamespace)); err != nil {
+		logger.Error("Failed to list Compositions", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	// Check if any compositions might need PVCs (have volumes defined or are processing)
+	compositionsWithVolumes := 0
+	for _, comp := range compList.Items {
+		// Check if composition defines volumes in its Docker Compose content
+		// Compositions use Deployments (not StatefulSets) and create PVCs independently
+		if comp.Spec.ComposeContent != "" {
+			compositionsWithVolumes++
+		}
+	}
+
+	// Also check if the snapshot metadata had PVCs that should be restored
+	snapshotHadPVCs := false
+	if pullReqExists && pullReq.Status.PulledMetadata != nil && pullReq.Status.PulledMetadata.PVCs != "" {
+		snapshotHadPVCs = true
+		logger.Info("Snapshot metadata contains PVCs to restore")
+	}
+
+	// If no PVCs, no StatefulSets, no compositions with volumes, and snapshot had no PVCs
+	// then we can safely skip data restoration
+	if len(pvcList.Items) == 0 && len(stsList.Items) == 0 && compositionsWithVolumes == 0 && !snapshotHadPVCs {
+		logger.Info("No PVCs, StatefulSets, Compositions with volumes, or snapshot PVCs found - skipping data restore")
 		r.cleanupSnapshotSubdirectory(ctx, environment, snapshotName, wmNamespace, logger)
 		if pullReqExists {
 			if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
@@ -364,10 +389,11 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 		return r.moveToCompleted(ctx, environment, logger)
 	}
 
-	// If no PVCs exist yet, wait for composition controller to create them
-	// Compositions create PVCs independently with selected-node annotation
+	// If no PVCs exist yet but we expect them (from compositions or snapshot), wait
 	if len(pvcList.Items) == 0 {
-		logger.Info("Waiting for PVCs to be created by composition controller")
+		logger.Info("Waiting for PVCs to be created",
+			zap.Int("compositions", compositionsWithVolumes),
+			zap.Bool("snapshotHadPVCs", snapshotHadPVCs))
 		return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
 	}
 
