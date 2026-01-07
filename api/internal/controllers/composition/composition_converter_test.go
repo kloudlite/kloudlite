@@ -294,7 +294,7 @@ func TestConvertVolumeToPVC(t *testing.T) {
 		Name: "data",
 	}
 
-	pvc := convertVolumeToPVC("data", volume, composition, "test-ns", commonLabels)
+	pvc := convertVolumeToPVC("data", volume, composition, "test-ns", commonLabels, nil)
 
 	// Verify PVC metadata
 	assert.Equal(t, "data", pvc.Name)
