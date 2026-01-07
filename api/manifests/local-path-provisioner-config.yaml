@@ -17,7 +17,7 @@ data:
     #!/bin/sh
     set -eu
 
-    # VOL_DIR format with pathPattern: /var/lib/kloudlite/storage/environments/{namespace}/{claim-name}/{pv-name}
+    # VOL_DIR format with pathPattern: /var/lib/kloudlite/storage/environments/{namespace}/{claim-name}
     # Extract namespace (first directory after base path)
     NAMESPACE=$(echo "$VOL_DIR" | sed "s|/var/lib/kloudlite/storage/environments/||" | cut -d'/' -f1)
     BASE_DIR="/var/lib/kloudlite/storage/environments"
