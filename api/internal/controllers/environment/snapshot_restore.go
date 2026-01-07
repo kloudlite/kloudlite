@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	// environmentsBasePath is where environment data is stored on the host filesystem
-	// For restore operations, we extract directly to this path
+	// environmentsBasePath is where live environment data is stored (btrfs subvolumes)
 	environmentsBasePath = "/var/lib/kloudlite/storage/environments"
+	// envSnapshotsBasePath is where pulled snapshots are stored before creating live volumes
+	envSnapshotsBasePath = "/var/lib/kloudlite/storage/.snapshots/envs"
 )
 
 // handleSnapshotRestore handles creating an environment from a pushed snapshot
@@ -157,9 +158,9 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 		// Get the workmachine namespace
 		wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
 
-		// Pull directly to the target namespace's storage path
-		// This creates the btrfs subvolume at the correct location for PVC data
-		snapshotPath := filepath.Join(environmentsBasePath, environment.Spec.TargetNamespace)
+		// Pull to .snapshots/envs/{snapshotName}/ first
+		// After pull, we'll create the live volume at environments/{namespace}/ using btrfs snapshot
+		snapshotPath := filepath.Join(envSnapshotsBasePath, snapshotName)
 
 		// Parse imageRef to get repository and tag
 		repository, tag := parseImageRef(status.ImageRef)
@@ -233,19 +234,77 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 			fmt.Sprintf("Pull failed: %s", pullReq.Status.Message), logger)
 
 	case snapshotv1.SnapshotRequestPhaseCompleted:
-		// Pull completed, move to Restoring phase
-		// Note: We keep the pull request until after restoration to access the pulled metadata
-		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
-			environment.Status.SnapshotRestoreStatus.Phase = environmentsv1.SnapshotRestorePhaseRestoring
-			environment.Status.SnapshotRestoreStatus.Message = "Snapshot pulled, restoring resources"
-			return nil
-		}, logger); err != nil {
-			logger.Error("Failed to update status after pull", zap.Error(err))
-			return reconcile.Result{}, err
+		// Pull completed - now create the live btrfs subvolume from the pulled snapshot
+		// Source: .snapshots/envs/{snapshotName}/ (the pulled snapshot)
+		// Target: environments/{targetNamespace}/ (the live environment)
+		snapshotSourcePath := filepath.Join(envSnapshotsBasePath, snapshotName)
+		liveEnvPath := filepath.Join(environmentsBasePath, environment.Spec.TargetNamespace)
+
+		// Create a SnapshotRequest to create the live subvolume
+		createLiveReqName := fmt.Sprintf("%s-create-live", environment.Name)
+		createLiveReq := &snapshotv1.SnapshotRequest{}
+		if err := r.Get(ctx, client.ObjectKey{Name: createLiveReqName, Namespace: wmNamespace}, createLiveReq); err != nil {
+			if !apierrors.IsNotFound(err) {
+				logger.Error("Failed to get create-live request", zap.Error(err))
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+
+			// Create the request to make a btrfs subvolume snapshot
+			newReq := &snapshotv1.SnapshotRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      createLiveReqName,
+					Namespace: wmNamespace,
+					Labels: map[string]string{
+						"environments.kloudlite.io/environment": environment.Name,
+						"environments.kloudlite.io/operation":   "create-live",
+					},
+				},
+				Spec: snapshotv1.SnapshotRequestSpec{
+					Operation:       snapshotv1.SnapshotOperationRestore,
+					SourcePath:      snapshotSourcePath,
+					SnapshotPath:    liveEnvPath,
+					EnvironmentName: environment.Name,
+				},
+			}
+
+			if err := r.Create(ctx, newReq); err != nil && !apierrors.IsAlreadyExists(err) {
+				logger.Error("Failed to create live volume request", zap.Error(err))
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+
+			logger.Info("Created request to create live environment volume",
+				zap.String("source", snapshotSourcePath),
+				zap.String("target", liveEnvPath))
+			return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
 		}
 
-		logger.Info("Pull completed, moving to Restoring phase")
-		return reconcile.Result{Requeue: true}, nil
+		// Check if the live volume creation is complete
+		switch createLiveReq.Status.Phase {
+		case snapshotv1.SnapshotRequestPhaseFailed:
+			return r.failSnapshotRestore(ctx, environment,
+				fmt.Sprintf("Failed to create live volume: %s", createLiveReq.Status.Message), logger)
+		case snapshotv1.SnapshotRequestPhaseCompleted:
+			// Clean up the create-live request
+			if err := r.Delete(ctx, createLiveReq); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete create-live request", zap.Error(err))
+			}
+
+			// Move to Restoring phase to apply K8s resources
+			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+				environment.Status.SnapshotRestoreStatus.Phase = environmentsv1.SnapshotRestorePhaseRestoring
+				environment.Status.SnapshotRestoreStatus.Message = "Live volume created, restoring K8s resources"
+				return nil
+			}, logger); err != nil {
+				logger.Error("Failed to update status after live volume creation", zap.Error(err))
+				return reconcile.Result{}, err
+			}
+
+			logger.Info("Live volume created, moving to Restoring phase")
+			return reconcile.Result{Requeue: true}, nil
+		default:
+			logger.Info("Waiting for live volume creation", zap.String("phase", string(createLiveReq.Status.Phase)))
+			return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
+		}
 
 	default:
 		// Still in progress
@@ -289,19 +348,14 @@ func (r *EnvironmentReconciler) handleRestoreRestoring(
 		logger.Info("No K8s resource metadata found in pulled snapshot")
 	}
 
-	// Move to DataRestoring phase to restore PVC data
-	// Keep the pull request for now - we need the snapshot path for data restoration
-	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
-		environment.Status.SnapshotRestoreStatus.Phase = environmentsv1.SnapshotRestorePhaseDataRestoring
-		environment.Status.SnapshotRestoreStatus.Message = "K8s resources restored, restoring PVC data"
-		return nil
-	}, logger); err != nil {
-		logger.Error("Failed to update status", zap.Error(err))
-		return reconcile.Result{}, err
+	// Clean up the pull request - no longer needed
+	if err := r.Delete(ctx, pullReq); err != nil && !apierrors.IsNotFound(err) {
+		logger.Warn("Failed to delete pull request", zap.Error(err))
 	}
 
-	logger.Info("Moving to DataRestoring phase")
-	return reconcile.Result{Requeue: true}, nil
+	// Data is already in place (live subvolume created from snapshot)
+	// Skip DataRestoring and go directly to Completed
+	return r.moveToCompleted(ctx, environment, logger)
 }
 
 // handleRestoreDataRestoring moves PVC data from snapshot subdirectory to the correct location

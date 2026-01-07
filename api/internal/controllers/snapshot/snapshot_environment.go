@@ -199,12 +199,13 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 
 	// Source path: the entire environment directory (btrfs subvolume)
 	// All PVCs for this environment are stored under this directory
-	sourcePath := filepath.Join("/var/lib/kloudlite/storage/environments", namespace)
+	sourcePath := filepath.Join(environmentsStorePath, namespace)
 
 	// Snapshot path: where the btrfs snapshot will be created
+	// Store in .snapshots/envs/{snapshotName}/ for environment snapshots
 	snapshotPath := snapshot.Status.SnapshotPath
 	if snapshotPath == "" {
-		snapshotPath = filepath.Join(snapshotsBasePath, snapshot.Name)
+		snapshotPath = filepath.Join(envSnapshotsBasePath, snapshot.Name)
 		// Store the path immediately so subsequent reconciles use the same path
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.SnapshotPath = snapshotPath
