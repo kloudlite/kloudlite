@@ -158,9 +158,10 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 		// Get the workmachine namespace
 		wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
 
-		// Pull to .snapshots/envs/{snapshotName}/ first
-		// After pull, we'll create the live volume at environments/{namespace}/ using btrfs snapshot
-		snapshotPath := filepath.Join(envSnapshotsBasePath, snapshotName)
+		// Pull to .snapshots/envs/ directory
+		// btrfs receive creates the subvolume INSIDE targetDir with the original snapshot name
+		// So if we pull snap3, it will be created at .snapshots/envs/snap3/
+		snapshotPath := envSnapshotsBasePath
 
 		// Parse imageRef to get repository and tag
 		repository, tag := parseImageRef(status.ImageRef)
