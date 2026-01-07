@@ -306,9 +306,13 @@ func (r *EnvironmentReconciler) handleRestoreRestoring(
 
 // handleRestoreDataRestoring moves PVC data from snapshot subdirectory to the correct location
 // After pull, data structure is:
-//   {namespace}/{snapshotName}/{claimName}/  (data from snapshot)
+//
+//	{namespace}/{snapshotName}/{claimName}/  (data from snapshot)
+//
 // PVC expects data at:
-//   {namespace}/{claimName}/
+//
+//	{namespace}/{claimName}/
+//
 // We need to move {snapshotName}/{claimName}/ contents to {claimName}/ and delete {snapshotName}/
 func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 	ctx context.Context,
