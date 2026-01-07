@@ -192,5 +192,12 @@ func receiveBtrfsStream(btrfsStream []byte, targetDir, snapshotName string) (str
 	// The snapshot is received with its original name
 	snapshotPath := filepath.Join(targetDir, snapshotName)
 
+	// Make the received snapshot writable (btrfs receive creates read-only snapshots)
+	// This is necessary so PVC provisioner can work with the data
+	roCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "btrfs", "property", "set", "-ts", snapshotPath, "ro", "false")
+	if output, err := roCmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("failed to make snapshot writable: %w, output: %s", err, string(output))
+	}
+
 	return snapshotPath, nil
 }
