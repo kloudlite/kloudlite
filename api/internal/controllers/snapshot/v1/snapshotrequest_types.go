@@ -40,12 +40,15 @@ const (
 
 	// SnapshotOperationPull pulls a snapshot from the registry
 	SnapshotOperationPull SnapshotRequestOperation = "pull"
+
+	// SnapshotOperationTag adds an additional tag to an existing image
+	SnapshotOperationTag SnapshotRequestOperation = "tag"
 )
 
 // SnapshotRequestSpec defines the desired snapshot operation
 type SnapshotRequestSpec struct {
 	// Operation is the type of operation to perform
-	// +kubebuilder:validation:Enum=create;delete;restore;push;pull
+	// +kubebuilder:validation:Enum=create;delete;restore;push;pull;tag
 	// +kubebuilder:validation:Required
 	Operation SnapshotRequestOperation `json:"operation"`
 
@@ -117,6 +120,10 @@ type SnapshotMetadata struct {
 	// Compositions JSON
 	// +optional
 	Compositions string `json:"compositions,omitempty"`
+
+	// PVCs JSON - Contains PersistentVolumeClaim specs for data restoration
+	// +optional
+	PVCs string `json:"pvcs,omitempty"`
 }
 
 // SnapshotRequestRegistryRef contains registry configuration for push/pull
@@ -134,9 +141,13 @@ type SnapshotRequestRegistryRef struct {
 	Tag string `json:"tag"`
 
 	// ParentImageRef is the full image reference of the parent snapshot
-	// Used to fetch parent layers to prepend to this image
+	// Used for parent reference in v2 format (stored in config labels)
 	// +optional
 	ParentImageRef string `json:"parentImageRef,omitempty"`
+
+	// SourceTag is the source tag for tag operations (copy from this tag)
+	// +optional
+	SourceTag string `json:"sourceTag,omitempty"`
 }
 
 // SnapshotRequestPhase represents the current phase of the request

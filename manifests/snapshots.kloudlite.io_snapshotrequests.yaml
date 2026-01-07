@@ -69,6 +69,10 @@ spec:
                   deployments:
                     description: Deployments JSON
                     type: string
+                  pvcs:
+                    description: PVCs JSON - Contains PersistentVolumeClaim specs
+                      for data restoration
+                    type: string
                   secrets:
                     description: Secrets JSON
                     type: string
@@ -92,6 +96,7 @@ spec:
                 - restore
                 - push
                 - pull
+                - tag
                 type: string
               parentSnapshotPath:
                 description: ParentSnapshotPath is the path to the parent snapshot
@@ -109,13 +114,17 @@ spec:
                   parentImageRef:
                     description: |-
                       ParentImageRef is the full image reference of the parent snapshot
-                      Used to fetch parent layers to prepend to this image
+                      Used for parent reference in v2 format (stored in config labels)
                     type: string
                   registryURL:
                     description: RegistryURL is the registry base URL (e.g., "image-registry:5000")
                     type: string
                   repository:
                     description: Repository is the image repository path (e.g., "snapshots/username")
+                    type: string
+                  sourceTag:
+                    description: SourceTag is the source tag for tag operations (copy
+                      from this tag)
                     type: string
                   tag:
                     description: Tag is the image tag
@@ -187,6 +196,10 @@ spec:
                   deployments:
                     description: Deployments JSON
                     type: string
+                  pvcs:
+                    description: PVCs JSON - Contains PersistentVolumeClaim specs
+                      for data restoration
+                    type: string
                   secrets:
                     description: Secrets JSON
                     type: string
@@ -234,6 +247,10 @@ spec:
                           type: string
                         deployments:
                           description: Deployments JSON
+                          type: string
+                        pvcs:
+                          description: PVCs JSON - Contains PersistentVolumeClaim
+                            specs for data restoration
                           type: string
                         secrets:
                           description: Secrets JSON

@@ -197,6 +197,11 @@ func (in *SnapshotRegistryStatus) DeepCopyInto(out *SnapshotRegistryStatus) {
 		in, out := &in.PushedAt, &out.PushedAt
 		*out = (*in).DeepCopy()
 	}
+	if in.Tags != nil {
+		in, out := &in.Tags, &out.Tags
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.LayerDigests != nil {
 		in, out := &in.LayerDigests, &out.LayerDigests
 		*out = make([]string, len(*in))
