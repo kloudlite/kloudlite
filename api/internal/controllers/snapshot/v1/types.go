@@ -194,16 +194,6 @@ type SnapshotStatus struct {
 	// +optional
 	SnapshotPath string `json:"snapshotPath,omitempty"`
 
-	// SourcePath is the source directory that was snapshotted
-	// For environments: /var/lib/kloudlite/storage/environments/{namespace}
-	// For workspaces: /var/lib/kloudlite/home/workspaces/{workspace}
-	// +optional
-	SourcePath string `json:"sourcePath,omitempty"`
-
-	// MetadataPath is the path to stored K8s metadata JSON
-	// +optional
-	MetadataPath string `json:"metadataPath,omitempty"`
-
 	// CreatedAt is when the snapshot was successfully created
 	// +optional
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
@@ -265,6 +255,9 @@ type ResourceMetadataInfo struct {
 
 	// Compositions count
 	Compositions int32 `json:"compositions"`
+
+	// PVCs count
+	PVCs int32 `json:"pvcs"`
 }
 
 // SnapshotRegistryStatus tracks the snapshot's registry push status
@@ -276,9 +269,13 @@ type SnapshotRegistryStatus struct {
 	// +optional
 	PushedAt *metav1.Time `json:"pushedAt,omitempty"`
 
-	// Tag is the image tag used in the registry
+	// Tag is the primary image tag (always snapshot name)
 	// +optional
 	Tag string `json:"tag,omitempty"`
+
+	// Tags is all tags for this snapshot including user-provided tags
+	// +optional
+	Tags []string `json:"tags,omitempty"`
 
 	// ImageRef is the full image reference (registry/repo:tag)
 	// +optional

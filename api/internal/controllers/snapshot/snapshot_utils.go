@@ -12,6 +12,7 @@ import (
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
+	"github.com/kloudlite/kloudlite/api/pkg/oci"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -120,6 +121,11 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 
 	if !allComplete {
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	// Delete image from registry if pushed
+	if snapshot.Status.RegistryStatus != nil && snapshot.Status.RegistryStatus.Pushed {
+		r.deleteRegistryImage(snapshot, logger)
 	}
 
 	// Re-link children to this snapshot's parent before deletion
@@ -330,13 +336,25 @@ func (r *SnapshotReconciler) exportMetadata(ctx context.Context, namespace strin
 		}
 	}
 
+	// Export PVCs - needed for data restoration to know original claim names
+	pvcs := &corev1.PersistentVolumeClaimList{}
+	if err := r.List(ctx, pvcs, client.InNamespace(namespace)); err == nil {
+		info.PVCs = int32(len(pvcs.Items))
+		if data, err := json.Marshal(pvcs); err == nil {
+			metadata.PVCs = string(data)
+		} else {
+			logger.Warn("Failed to marshal PVCs", zap.Error(err))
+		}
+	}
+
 	logger.Info("Collected metadata",
 		zap.Int32("configMaps", info.ConfigMaps),
 		zap.Int32("secrets", info.Secrets),
 		zap.Int32("deployments", info.Deployments),
 		zap.Int32("services", info.Services),
 		zap.Int32("statefulSets", info.StatefulSets),
-		zap.Int32("compositions", info.Compositions))
+		zap.Int32("compositions", info.Compositions),
+		zap.Int32("pvcs", info.PVCs))
 
 	return &ExportedMetadata{Info: info, Metadata: metadata}, nil
 }
@@ -425,4 +443,47 @@ func (r *SnapshotReconciler) updateWorkspaceLastRestored(ctx context.Context, wo
 		}
 		return nil
 	}, logger)
+}
+
+// deleteRegistryImage deletes the snapshot image from the OCI registry
+func (r *SnapshotReconciler) deleteRegistryImage(snapshot *snapshotv1.Snapshot, logger *zap.Logger) {
+	if snapshot.Status.RegistryStatus == nil || snapshot.Status.RegistryStatus.ImageRef == "" {
+		return
+	}
+
+	imageRef := snapshot.Status.RegistryStatus.ImageRef
+	logger.Info("Deleting snapshot image from registry", zap.String("imageRef", imageRef))
+
+	// Create OCI client and delete the image
+	client := oci.NewClient(true) // Use insecure for internal registry
+	if err := client.Delete(imageRef); err != nil {
+		logger.Warn("Failed to delete image from registry",
+			zap.String("imageRef", imageRef),
+			zap.Error(err))
+		// Continue with snapshot deletion even if registry delete fails
+		// The image will become orphaned but that's better than blocking deletion
+		return
+	}
+
+	// Also delete any additional tags
+	if len(snapshot.Status.RegistryStatus.Tags) > 1 {
+		// Extract registry and repository from imageRef
+		// imageRef format: registry/repo:tag
+		for _, tag := range snapshot.Status.RegistryStatus.Tags {
+			if tag == snapshot.Status.RegistryStatus.Tag {
+				continue // Already deleted with primary imageRef
+			}
+			// Build the full ref for this tag
+			// Get base from imageRef by removing the tag
+			baseRef := imageRef[:len(imageRef)-len(snapshot.Status.RegistryStatus.Tag)]
+			tagRef := baseRef + tag
+			if err := client.Delete(tagRef); err != nil {
+				logger.Warn("Failed to delete additional tag from registry",
+					zap.String("tagRef", tagRef),
+					zap.Error(err))
+			}
+		}
+	}
+
+	logger.Info("Successfully deleted snapshot image from registry", zap.String("imageRef", imageRef))
 }

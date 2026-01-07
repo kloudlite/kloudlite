@@ -171,6 +171,10 @@ spec:
                   deployments:
                     description: Deployments JSON
                     type: string
+                  pvcs:
+                    description: PVCs JSON - Contains PersistentVolumeClaim specs
+                      for data restoration
+                    type: string
                   secrets:
                     description: Secrets JSON
                     type: string
@@ -187,9 +191,6 @@ spec:
                 type: string
               message:
                 description: Message provides human-readable status information
-                type: string
-              metadataPath:
-                description: MetadataPath is the path to stored K8s metadata JSON
                 type: string
               packageRequestsPath:
                 description: PackageRequestsPath is the path to stored PackageRequest
@@ -235,8 +236,14 @@ spec:
                     format: date-time
                     type: string
                   tag:
-                    description: Tag is the image tag used in the registry
+                    description: Tag is the primary image tag (always snapshot name)
                     type: string
+                  tags:
+                    description: Tags is all tags for this snapshot including user-provided
+                      tags
+                    items:
+                      type: string
+                    type: array
                 type: object
               resourceMetadata:
                 description: ResourceMetadata tracks captured K8s resources (for environment
@@ -252,6 +259,10 @@ spec:
                     type: integer
                   deployments:
                     description: Deployments count
+                    format: int32
+                    type: integer
+                  pvcs:
+                    description: PVCs count
                     format: int32
                     type: integer
                   secrets:
@@ -270,6 +281,7 @@ spec:
                 - compositions
                 - configMaps
                 - deployments
+                - pvcs
                 - secrets
                 - services
                 - statefulSets
@@ -287,12 +299,6 @@ spec:
               snapshotType:
                 description: SnapshotType indicates whether this is an environment
                   or workspace snapshot
-                type: string
-              sourcePath:
-                description: |-
-                  SourcePath is the source directory that was snapshotted
-                  For environments: /var/lib/kloudlite/storage/environments/{namespace}
-                  For workspaces: /var/lib/kloudlite/home/workspaces/{workspace}
                 type: string
               state:
                 default: Pending

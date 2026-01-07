@@ -16,6 +16,11 @@ import (
 )
 
 // handlePushing handles the snapshot push to registry process
+// Key behaviors:
+// 1. Each image contains ONLY its own layer (parent referenced via labels)
+// 2. Snapshot name is ALWAYS the primary tag
+// 3. Auto-pushes parent chain if parent not pushed
+// 4. User-provided tag is added as additional tag after primary push
 func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
 	logger.Info("Handling snapshot push to registry")
 
@@ -23,54 +28,91 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 		return r.updateStatusFailed(ctx, snapshot, "Registry reference is required for push operation", logger)
 	}
 
-	// Determine the repository and tag
+	// Determine the repository
 	repository := snapshot.Spec.RegistryRef.Repository
 	if repository == "" {
-		// Build repository path based on snapshot type:
-		// - Workspace snapshots: snapshots/{user}/ws/{workspace_name}
-		// - Environment snapshots: snapshots/{user}/env/{environment_name}
 		if snapshot.Status.SnapshotType == snapshotv1.SnapshotTypeWorkspace {
 			repository = fmt.Sprintf("snapshots/%s/ws/%s", snapshot.Spec.OwnedBy, snapshot.Status.WorkspaceName)
 		} else if snapshot.Spec.EnvironmentRef != nil {
 			repository = fmt.Sprintf("snapshots/%s/env/%s", snapshot.Spec.OwnedBy, snapshot.Spec.EnvironmentRef.Name)
 		} else {
-			// Fallback to old format if type cannot be determined
 			repository = fmt.Sprintf("snapshots/%s", snapshot.Spec.OwnedBy)
 		}
 	}
-	tag := snapshot.Spec.RegistryRef.Tag
-	if tag == "" {
-		tag = snapshot.Name
-	}
 
-	// Remove the tag from any other snapshot that has it (tags are unique per repository)
-	targetImageRef := fmt.Sprintf("image-registry:5000/%s:%s", repository, tag)
-	if err := r.removeTagFromOtherSnapshots(ctx, snapshot.Name, targetImageRef, logger); err != nil {
-		logger.Warn("Failed to remove tag from other snapshots", zap.Error(err))
-	}
+	// Primary tag is ALWAYS the snapshot name (predictable for parent references)
+	primaryTag := snapshot.Name
+	userTag := snapshot.Spec.RegistryRef.Tag // Optional user-provided tag
 
-	// Get parent snapshot's registry image ref if parent exists and was pushed
+	// Auto-push parent chain if parent exists but not pushed
 	var parentImageRef string
 	var parentSnapshotPath string
 	if snapshot.Spec.ParentSnapshotRef != nil {
 		parentSnapshot := &snapshotv1.Snapshot{}
-		if err := r.Get(ctx, client.ObjectKey{Name: snapshot.Spec.ParentSnapshotRef.Name}, parentSnapshot); err == nil {
-			if parentSnapshot.Status.RegistryStatus != nil && parentSnapshot.Status.RegistryStatus.Pushed {
-				// Construct parentImageRef using FQDN and the parent's repository/tag
-				// The stored ImageRef uses short hostname which can't be resolved by node manager
-				parentRepo := parentSnapshot.Spec.RegistryRef.Repository
-				if parentRepo == "" {
-					// Fallback: extract from stored ImageRef
-					parentRepo = fmt.Sprintf("snapshots/%s", parentSnapshot.Spec.OwnedBy)
-				}
-				parentTag := parentSnapshot.Status.RegistryStatus.Tag
-				if parentTag == "" {
-					parentTag = parentSnapshot.Name
-				}
-				parentImageRef = fmt.Sprintf("image-registry.kloudlite.svc.cluster.local:5000/%s:%s", parentRepo, parentTag)
-			}
-			parentSnapshotPath = parentSnapshot.Status.SnapshotPath
+		if err := r.Get(ctx, client.ObjectKey{Name: snapshot.Spec.ParentSnapshotRef.Name}, parentSnapshot); err != nil {
+			return r.updateStatusFailed(ctx, snapshot,
+				fmt.Sprintf("Parent snapshot %s not found", snapshot.Spec.ParentSnapshotRef.Name), logger)
 		}
+
+		// Check if parent needs to be pushed first
+		if parentSnapshot.Status.RegistryStatus == nil || !parentSnapshot.Status.RegistryStatus.Pushed {
+			if parentSnapshot.Status.State != snapshotv1.SnapshotStatePushing {
+				logger.Info("Auto-pushing parent snapshot first", zap.String("parent", parentSnapshot.Name))
+
+				// Set up parent's registry ref (inherit repository from child)
+				needsSpecUpdate := false
+				if parentSnapshot.Spec.RegistryRef == nil {
+					parentSnapshot.Spec.RegistryRef = &snapshotv1.SnapshotRegistryRef{
+						Repository: repository,
+					}
+					needsSpecUpdate = true
+				} else if parentSnapshot.Spec.RegistryRef.Repository == "" {
+					parentSnapshot.Spec.RegistryRef.Repository = repository
+					needsSpecUpdate = true
+				}
+
+				if needsSpecUpdate {
+					if err := r.Update(ctx, parentSnapshot); err != nil {
+						logger.Error("Failed to update parent snapshot spec", zap.Error(err))
+						return reconcile.Result{}, err
+					}
+					// Re-fetch parent after spec update to get fresh resourceVersion
+					if err := r.Get(ctx, client.ObjectKey{Name: parentSnapshot.Name}, parentSnapshot); err != nil {
+						logger.Error("Failed to re-fetch parent snapshot after spec update", zap.Error(err))
+						return reconcile.Result{}, err
+					}
+				}
+
+				// Trigger parent push by updating its status to Pushing
+				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, parentSnapshot, func() error {
+					parentSnapshot.Status.State = snapshotv1.SnapshotStatePushing
+					parentSnapshot.Status.Message = "Auto-pushing as parent of " + snapshot.Name
+					return nil
+				}, logger); err != nil {
+					logger.Error("Failed to update parent snapshot status to Pushing", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+
+				logger.Info("Triggered parent snapshot push", zap.String("parent", parentSnapshot.Name))
+			}
+
+			// Requeue to wait for parent
+			statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+				snapshot.Status.Message = fmt.Sprintf("Waiting for parent %s to be pushed...", parentSnapshot.Name)
+				return nil
+			}, logger)
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+
+		// Parent is pushed - build reference using parent's snapshot name as tag
+		parentRepo := parentSnapshot.Spec.RegistryRef.Repository
+		if parentRepo == "" {
+			parentRepo = fmt.Sprintf("snapshots/%s", parentSnapshot.Spec.OwnedBy)
+		}
+		// Always use snapshot name as tag for parent reference (predictable)
+		parentImageRef = fmt.Sprintf("image-registry.kloudlite.svc.cluster.local:5000/%s:%s",
+			parentRepo, parentSnapshot.Name)
+		parentSnapshotPath = parentSnapshot.Status.SnapshotPath
 	}
 
 	// Check for existing push request
@@ -79,7 +121,6 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 		"snapshots.kloudlite.io/snapshot":  snapshot.Name,
 		"snapshots.kloudlite.io/operation": "push",
 	}); err == nil && len(existingPushReqs.Items) > 0 {
-		// Check status of existing push request
 		for _, req := range existingPushReqs.Items {
 			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseFailed {
 				return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Push failed: %s", req.Status.Message), logger)
@@ -87,14 +128,27 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 			if req.Status.Phase == snapshotv1.SnapshotRequestPhaseCompleted {
 				// Push completed - update status
 				now := metav1.Now()
+				tags := []string{primaryTag}
+
+				// Add user tag if different from primary
+				if userTag != "" && userTag != primaryTag {
+					if err := r.addAdditionalTag(ctx, snapshot, repository, primaryTag, userTag, logger); err != nil {
+						logger.Warn("Failed to add user tag, continuing with primary tag only",
+							zap.String("userTag", userTag), zap.Error(err))
+					} else {
+						tags = append(tags, userTag)
+					}
+				}
+
 				if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 					snapshot.Status.State = snapshotv1.SnapshotStateReady
 					snapshot.Status.Message = "Snapshot pushed successfully"
 					snapshot.Status.RegistryStatus = &snapshotv1.SnapshotRegistryStatus{
 						Pushed:         true,
 						PushedAt:       &now,
-						Tag:            tag,
-						ImageRef:       fmt.Sprintf("image-registry:5000/%s:%s", repository, tag),
+						Tag:            primaryTag,
+						Tags:           tags,
+						ImageRef:       fmt.Sprintf("image-registry:5000/%s:%s", repository, primaryTag),
 						Digest:         req.Status.Digest,
 						LayerDigests:   req.Status.LayerDigests,
 						LayerCount:     int32(len(req.Status.LayerDigests)),
@@ -105,12 +159,14 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 					logger.Error("Failed to update status after push", zap.Error(err))
 					return reconcile.Result{}, err
 				}
+
 				// Delete completed push request
 				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
 					logger.Warn("Failed to delete completed push request", zap.Error(err))
 				}
 				logger.Info("Snapshot pushed to registry successfully",
-					zap.String("imageRef", snapshot.Status.RegistryStatus.ImageRef))
+					zap.String("imageRef", snapshot.Status.RegistryStatus.ImageRef),
+					zap.Strings("tags", tags))
 				return reconcile.Result{}, nil
 			}
 			// Still in progress
@@ -118,7 +174,7 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 		}
 	}
 
-	// Create push SnapshotRequest
+	// Create push SnapshotRequest with primary tag (snapshot name)
 	pushReq := &snapshotv1.SnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-push", snapshot.Name),
@@ -136,7 +192,7 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 			RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
 				RegistryURL:    "image-registry.kloudlite.svc.cluster.local:5000",
 				Repository:     repository,
-				Tag:            tag,
+				Tag:            primaryTag, // Always use snapshot name
 				ParentImageRef: parentImageRef,
 			},
 			Metadata: snapshot.Status.CollectedMetadata,
@@ -166,6 +222,47 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 	}
 
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+}
+
+// addAdditionalTag creates an additional tag for a pushed snapshot
+func (r *SnapshotReconciler) addAdditionalTag(ctx context.Context, snapshot *snapshotv1.Snapshot,
+	repository, sourceTag, targetTag string, logger *zap.Logger) error {
+
+	tagReqName := fmt.Sprintf("%s-tag-%s", snapshot.Name, targetTag)
+	wmNamespace := snapshot.Status.WorkMachineName
+
+	tagReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tagReqName,
+			Namespace: wmNamespace,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/snapshot":  snapshot.Name,
+				"snapshots.kloudlite.io/operation": "tag",
+			},
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:    snapshotv1.SnapshotOperationTag,
+			SnapshotPath: snapshot.Status.SnapshotPath, // Required field
+			RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
+				RegistryURL: "image-registry.kloudlite.svc.cluster.local:5000",
+				Repository:  repository,
+				Tag:         targetTag,
+				SourceTag:   sourceTag,
+			},
+		},
+	}
+
+	if err := r.Create(ctx, tagReq); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			return nil // Already exists, that's fine
+		}
+		return fmt.Errorf("failed to create tag request: %w", err)
+	}
+
+	logger.Info("Created tag request for additional tag",
+		zap.String("sourceTag", sourceTag),
+		zap.String("targetTag", targetTag))
+	return nil
 }
 
 // handlePulling handles the snapshot pull from registry process
