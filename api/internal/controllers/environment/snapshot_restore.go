@@ -281,7 +281,7 @@ func (r *EnvironmentReconciler) handleRestoreRestoring(
 
 	// Restore resources from the pulled metadata (stored in OCI layer's metadata.json)
 	if pullReq.Status.PulledMetadata != nil {
-		if err := r.restoreResourcesFromMetadata(ctx, pullReq.Status.PulledMetadata, targetNamespace, environment.Name, logger); err != nil {
+		if err := r.restoreResourcesFromMetadata(ctx, pullReq.Status.PulledMetadata, targetNamespace, environment, logger); err != nil {
 			logger.Warn("Failed to restore some resources", zap.Error(err))
 			// Don't fail the entire restore if some resource restoration fails
 		}
@@ -364,9 +364,10 @@ func (r *EnvironmentReconciler) handleRestoreDataRestoring(
 		return r.moveToCompleted(ctx, environment, logger)
 	}
 
-	// If StatefulSets exist but no PVCs yet, wait for them
-	if len(pvcList.Items) == 0 && len(stsList.Items) > 0 {
-		logger.Info("Waiting for StatefulSet PVCs to be created")
+	// If no PVCs exist yet, wait for composition controller to create them
+	// Compositions create PVCs independently with selected-node annotation
+	if len(pvcList.Items) == 0 {
+		logger.Info("Waiting for PVCs to be created by composition controller")
 		return reconcile.Result{RequeueAfter: 3 * time.Second}, nil
 	}
 
@@ -682,10 +683,20 @@ func (r *EnvironmentReconciler) createClonedSnapshot(
 func (r *EnvironmentReconciler) restoreResourcesFromMetadata(
 	ctx context.Context,
 	metadata *snapshotv1.SnapshotMetadata,
-	targetNamespace, envName string,
+	targetNamespace string,
+	environment *environmentsv1.Environment,
 	logger *zap.Logger,
 ) error {
 	logger.Info("Restoring resources from OCI metadata")
+	envName := environment.Name
+
+	// Restore PVCs first with selected-node annotation for immediate binding
+	// This must happen before compositions so data can be restored to the PVCs
+	if metadata.PVCs != "" {
+		if err := r.restorePVCsFromJSON(ctx, metadata.PVCs, targetNamespace, environment, logger); err != nil {
+			logger.Warn("Failed to restore PVCs", zap.Error(err))
+		}
+	}
 
 	// Restore ConfigMaps
 	if metadata.ConfigMaps != "" {
@@ -990,6 +1001,69 @@ func (r *EnvironmentReconciler) restoreCompositionsFromJSON(
 	}
 
 	logger.Info("Restored Compositions", zap.Int("count", restored))
+	return nil
+}
+
+// restorePVCsFromJSON restores PVCs from JSON string with selected-node annotation
+func (r *EnvironmentReconciler) restorePVCsFromJSON(
+	ctx context.Context,
+	jsonData, targetNamespace string,
+	environment *environmentsv1.Environment,
+	logger *zap.Logger,
+) error {
+	var pvcList corev1.PersistentVolumeClaimList
+	if err := json.Unmarshal([]byte(jsonData), &pvcList); err != nil {
+		return fmt.Errorf("failed to parse PVCs JSON: %w", err)
+	}
+
+	nodeName := environment.Spec.WorkMachineName
+	restored := 0
+
+	for _, pvc := range pvcList.Items {
+		// Create new PVC with selected-node annotation for immediate binding
+		annotations := make(map[string]string)
+		if nodeName != "" {
+			annotations["volume.kubernetes.io/selected-node"] = nodeName
+		}
+		// Copy existing annotations (except binding-related ones)
+		for k, v := range pvc.Annotations {
+			if k != "pv.kubernetes.io/bind-completed" &&
+				k != "pv.kubernetes.io/bound-by-controller" &&
+				k != "volume.beta.kubernetes.io/storage-provisioner" &&
+				k != "volume.kubernetes.io/storage-provisioner" {
+				annotations[k] = v
+			}
+		}
+
+		newPVC := &corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        pvc.Name,
+				Namespace:   targetNamespace,
+				Labels:      pvc.Labels,
+				Annotations: annotations,
+			},
+			Spec: corev1.PersistentVolumeClaimSpec{
+				AccessModes:      pvc.Spec.AccessModes,
+				Resources:        pvc.Spec.Resources,
+				StorageClassName: pvc.Spec.StorageClassName,
+				VolumeMode:       pvc.Spec.VolumeMode,
+				// Don't copy VolumeName - let the provisioner create a new PV
+			},
+		}
+
+		if err := r.Create(ctx, newPVC); err != nil {
+			if !apierrors.IsAlreadyExists(err) {
+				logger.Warn("Failed to create PVC", zap.String("name", pvc.Name), zap.Error(err))
+				continue
+			}
+		}
+		restored++
+		logger.Info("Restored PVC with selected-node annotation",
+			zap.String("pvc", pvc.Name),
+			zap.String("node", nodeName))
+	}
+
+	logger.Info("Restored PVCs", zap.Int("count", restored))
 	return nil
 }
 

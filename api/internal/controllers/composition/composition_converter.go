@@ -59,7 +59,7 @@ func ConvertComposeToK8s(
 
 	// Convert volumes first (they need to exist before services)
 	for volumeName, volume := range project.Volumes {
-		pvc := convertVolumeToPVC(volumeName, volume, composition, namespace, commonLabels)
+		pvc := convertVolumeToPVC(volumeName, volume, composition, namespace, commonLabels, environment)
 		resources.PVCs = append(resources.PVCs, pvc)
 	}
 
@@ -374,6 +374,7 @@ func convertVolumeToPVC(
 	composition *compositionsv1.Composition,
 	namespace string,
 	commonLabels map[string]string,
+	environment *compositionsv1.Environment,
 ) *corev1.PersistentVolumeClaim {
 	labels := make(map[string]string)
 	for k, v := range commonLabels {
@@ -386,11 +387,19 @@ func convertVolumeToPVC(
 
 	// TODO: Parse size from driver_opts if specified
 
+	// Add selected-node annotation for WaitForFirstConsumer binding
+	// This allows PVCs to be provisioned immediately on the correct node
+	annotations := make(map[string]string)
+	if environment != nil && environment.Spec.WorkMachineName != "" {
+		annotations["volume.kubernetes.io/selected-node"] = environment.Spec.WorkMachineName
+	}
+
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      volumeName,
-			Namespace: namespace,
-			Labels:    labels,
+			Name:        volumeName,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{
