@@ -1294,19 +1294,21 @@ func TestHandleSuspendedWorkspace(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name        string
-		workspace   *workspacev1.Workspace
-		expectError bool
-		expectPhase string
+		name          string
+		workspace     *workspacev1.Workspace
+		expectError   bool
+		expectPhase   string
+		expectRequeue bool
 	}{
 		{
-			name:        "handle suspended workspace",
-			workspace:   workspace,
-			expectError: false,
-			expectPhase: "Stopped",
+			name:          "handle suspended workspace with existing pod",
+			workspace:     workspace,
+			expectError:   false,
+			expectPhase:   "Stopping", // Pod exists, so it goes to Stopping first
+			expectRequeue: true,       // Will requeue to wait for pod deletion
 		},
 		{
-			name: "handle archived workspace",
+			name: "handle archived workspace without pod",
 			workspace: &workspacev1.Workspace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-workspace-archived",
@@ -1323,8 +1325,9 @@ func TestHandleSuspendedWorkspace(t *testing.T) {
 					Phase: "Running",
 				},
 			},
-			expectError: false,
-			expectPhase: "Stopped",
+			expectError:   false,
+			expectPhase:   "Stopped", // No pod exists, goes directly to Stopped
+			expectRequeue: false,
 		},
 	}
 
@@ -1336,11 +1339,20 @@ func TestHandleSuspendedWorkspace(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.False(t, result.Requeue)
+				if tt.expectRequeue {
+					assert.True(t, result.RequeueAfter > 0, "Expected requeue for pod deletion")
+				} else {
+					assert.False(t, result.Requeue)
+					assert.Zero(t, result.RequeueAfter)
+				}
 
 				// Verify workspace status is updated
 				assert.Equal(t, tt.expectPhase, tt.workspace.Status.Phase)
-				assert.Contains(t, tt.workspace.Status.Message, "stopped")
+				if tt.expectPhase == "Stopped" {
+					assert.Contains(t, tt.workspace.Status.Message, "stopped")
+				} else if tt.expectPhase == "Stopping" {
+					assert.Contains(t, tt.workspace.Status.Message, "being stopped")
+				}
 			}
 		})
 	}
