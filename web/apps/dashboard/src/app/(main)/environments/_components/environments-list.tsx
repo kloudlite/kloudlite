@@ -153,6 +153,7 @@ export function EnvironmentsList({
           env.status === 'deleting' ||
           env.status === 'activating' ||
           env.status === 'deactivating' ||
+          env.status === 'snapping' ||
           env.status === 'forking',
       )
 
@@ -422,18 +423,21 @@ export function EnvironmentsList({
                               ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                               : env.status === 'deactivating'
                                 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                : env.status === 'deleting'
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                  : env.status === 'error'
+                                : env.status === 'snapping'
+                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+                                  : env.status === 'deleting'
                                     ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                    : env.status === 'forking'
-                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                      : 'bg-secondary text-secondary-foreground'
+                                    : env.status === 'error'
+                                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                      : env.status === 'forking'
+                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                        : 'bg-secondary text-secondary-foreground'
                       }`}
                     >
                       {(env.status === 'deleting' ||
                         env.status === 'activating' ||
                         env.status === 'deactivating' ||
+                        env.status === 'snapping' ||
                         env.status === 'forking') && <Loader2 className="h-3 w-3 animate-spin" />}
                       {env.status}
                     </span>
@@ -460,7 +464,7 @@ export function EnvironmentsList({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
-                  {env.status === 'deleting' || env.status === 'forking' ? (
+                  {env.status === 'deleting' || env.status === 'forking' || env.status === 'snapping' ? (
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
                       <MoreHorizontal className="h-4 w-4 opacity-30" />
                     </Button>

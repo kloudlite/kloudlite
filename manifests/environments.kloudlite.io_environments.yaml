@@ -78,7 +78,7 @@ spec:
                 properties:
                   snapshotName:
                     description: |-
-                      SnapshotName is the name of the snapshot resource to clone from
+                      SnapshotName is the name of the snapshot resource to fork from
                       The snapshot must have status.registryStatus.pushed=true
                     type: string
                 required:
@@ -373,6 +373,7 @@ spec:
                 - inactive
                 - activating
                 - deactivating
+                - snapping
                 - deleting
                 - error
                 type: string
