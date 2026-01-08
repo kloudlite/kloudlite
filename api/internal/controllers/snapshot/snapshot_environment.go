@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -198,6 +199,29 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	// Source path: the entire environment directory (btrfs subvolume)
 	// All PVCs for this environment are stored under this directory
 	sourcePath := filepath.Join(environmentsStorePath, namespace)
+
+	// Ensure the source btrfs subvolume exists (create if needed for new environments)
+	// This allows snapshotting environments even without PVCs (metadata-only snapshots)
+	if err := r.ensureEnvironmentSubvolume(ctx, env, sourcePath, logger); err != nil {
+		errMsg := err.Error()
+		// Check if this is a "waiting" error (in progress or just created)
+		if strings.Contains(errMsg, "in progress") || strings.Contains(errMsg, "waiting for completion") || strings.Contains(errMsg, "being processed") {
+			logger.Info("Waiting for subvolume to be ensured", zap.String("path", sourcePath))
+			if statusErr := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+				snapshot.Status.Message = "Ensuring environment subvolume exists..."
+				return nil
+			}, logger); statusErr != nil {
+				logger.Warn("Failed to update status", zap.Error(statusErr))
+			}
+			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+		// Actual failure
+		logger.Error("Failed to ensure environment subvolume exists", zap.Error(err))
+		if restoreErr := r.restoreEnvironmentActivation(ctx, snapshot, env, logger); restoreErr != nil {
+			logger.Warn("Failed to restore environment activation", zap.Error(restoreErr))
+		}
+		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Failed to create environment subvolume: %v", err), logger)
+	}
 
 	// Snapshot path: where the btrfs snapshot will be created
 	// Store in .snapshots/envs/{envName}/{snapshotName}/ for environment snapshots

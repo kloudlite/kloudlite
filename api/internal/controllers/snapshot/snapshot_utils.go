@@ -943,6 +943,70 @@ func (r *SnapshotReconciler) restoreCompositions(ctx context.Context, namespace,
 	return nil
 }
 
+// ensureEnvironmentSubvolume ensures the btrfs subvolume exists for an environment
+// This is needed for new environments that don't have any PVCs yet
+func (r *SnapshotReconciler) ensureEnvironmentSubvolume(ctx context.Context, env *environmentsv1.Environment, sourcePath string, logger *zap.Logger) error {
+	// Create a SnapshotRequest to ensure the subvolume exists
+	ensureReqName := fmt.Sprintf("ensure-subvol-%s", env.Spec.TargetNamespace)
+	ensureReqNamespace := fmt.Sprintf("wm-%s", env.Spec.OwnedBy)
+
+	// Check if request already exists and is completed
+	existingReq := &snapshotv1.SnapshotRequest{}
+	err := r.Get(ctx, client.ObjectKey{Name: ensureReqName, Namespace: ensureReqNamespace}, existingReq)
+	if err == nil {
+		// Request exists - check its status
+		switch existingReq.Status.Phase {
+		case snapshotv1.SnapshotRequestPhaseCompleted:
+			logger.Info("Subvolume ensure request already completed", zap.String("path", sourcePath))
+			// Delete the completed request to allow future operations
+			if delErr := r.Delete(ctx, existingReq); delErr != nil && !apierrors.IsNotFound(delErr) {
+				logger.Warn("Failed to delete completed ensure request", zap.Error(delErr))
+			}
+			return nil
+		case snapshotv1.SnapshotRequestPhaseFailed:
+			// Delete failed request and return error
+			if delErr := r.Delete(ctx, existingReq); delErr != nil && !apierrors.IsNotFound(delErr) {
+				logger.Warn("Failed to delete failed ensure request", zap.Error(delErr))
+			}
+			return fmt.Errorf("ensure subvolume failed: %s", existingReq.Status.Message)
+		default:
+			// Still in progress - wait
+			return fmt.Errorf("ensure subvolume request still in progress")
+		}
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to get ensure request: %w", err)
+	}
+
+	// Create the ensure subvolume request
+	ensureReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ensureReqName,
+			Namespace: ensureReqNamespace,
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/operation":   "ensure-subvolume",
+				"snapshots.kloudlite.io/environment": env.Name,
+			},
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:       snapshotv1.SnapshotOperationEnsureSubvolume,
+			SnapshotPath:    sourcePath,
+			EnvironmentName: env.Name,
+		},
+	}
+
+	logger.Info("Creating ensure-subvolume request", zap.String("path", sourcePath))
+	if err := r.Create(ctx, ensureReq); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			// Race condition - request was just created, requeue
+			return fmt.Errorf("ensure subvolume request being processed")
+		}
+		return fmt.Errorf("failed to create ensure request: %w", err)
+	}
+
+	// Request created - caller should requeue and wait for completion
+	return fmt.Errorf("ensure subvolume request created, waiting for completion")
+}
+
 // deleteRegistryImage deletes the snapshot image from the OCI registry
 func (r *SnapshotReconciler) deleteRegistryImage(snapshot *snapshotv1.Snapshot, logger *zap.Logger) {
 	if snapshot.Status.RegistryStatus == nil || snapshot.Status.RegistryStatus.ImageRef == "" {

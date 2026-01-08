@@ -43,12 +43,15 @@ const (
 
 	// SnapshotOperationTag adds an additional tag to an existing image
 	SnapshotOperationTag SnapshotRequestOperation = "tag"
+
+	// SnapshotOperationEnsureSubvolume ensures a btrfs subvolume exists (creates if needed)
+	SnapshotOperationEnsureSubvolume SnapshotRequestOperation = "ensure-subvolume"
 )
 
 // SnapshotRequestSpec defines the desired snapshot operation
 type SnapshotRequestSpec struct {
 	// Operation is the type of operation to perform
-	// +kubebuilder:validation:Enum=create;delete;restore;push;pull;tag
+	// +kubebuilder:validation:Enum=create;delete;restore;push;pull;tag;ensure-subvolume
 	// +kubebuilder:validation:Required
 	Operation SnapshotRequestOperation `json:"operation"`
 
