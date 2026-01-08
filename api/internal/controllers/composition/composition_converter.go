@@ -2,6 +2,7 @@ package composition
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -144,8 +145,17 @@ func convertServiceToDeployment(
 
 	// Add environment variables from service definition
 	// Variables have already been resolved by the compose parser
+	// IMPORTANT: Sort keys to ensure deterministic ordering - Go maps iterate in random order
+	// Without sorting, every reconciliation could produce different env var order,
+	// causing deployment spec changes and unnecessary pod restarts
 	envVars := make([]corev1.EnvVar, 0)
-	for key, val := range service.Environment {
+	serviceEnvKeys := make([]string, 0, len(service.Environment))
+	for key := range service.Environment {
+		serviceEnvKeys = append(serviceEnvKeys, key)
+	}
+	sort.Strings(serviceEnvKeys)
+	for _, key := range serviceEnvKeys {
+		val := service.Environment[key]
 		if val != nil {
 			envVars = append(envVars, corev1.EnvVar{
 				Name:  key,
@@ -153,11 +163,16 @@ func convertServiceToDeployment(
 			})
 		}
 	}
-	// Add composition-level env vars
-	for key, val := range composition.Spec.EnvVars {
+	// Add composition-level env vars (sorted for deterministic ordering)
+	compEnvKeys := make([]string, 0, len(composition.Spec.EnvVars))
+	for key := range composition.Spec.EnvVars {
+		compEnvKeys = append(compEnvKeys, key)
+	}
+	sort.Strings(compEnvKeys)
+	for _, key := range compEnvKeys {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  key,
-			Value: val,
+			Value: composition.Spec.EnvVars[key],
 		})
 	}
 	container.Env = envVars
