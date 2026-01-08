@@ -17,10 +17,11 @@ import (
 
 // handlePushing handles the snapshot push to registry process
 // Key behaviors:
-// 1. Each snapshot is pushed as an independent image (no parent layer dependency)
-// 2. Snapshot name is ALWAYS the primary tag
-// 3. Lineage is tracked via metadata labels, not image layers
-// 4. User-provided tag is added as additional tag after primary push
+// 1. Each snapshot is pushed independently (no waiting for parent to be pushed first)
+// 2. Snapshot name is ALWAYS the primary tag (predictable for parent references)
+// 3. Uses incremental btrfs send if parent exists locally (smaller data)
+// 4. Sets ParentImageRef label for pull to resolve parent chain
+// 5. User-provided tag is added as additional tag after primary push
 func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
 	logger.Info("Handling snapshot push to registry")
 
@@ -103,8 +104,39 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 		}
 	}
 
+	// Build parent references for incremental btrfs send and lineage tracking
+	// Each snapshot is pushed independently (no waiting for parent), but we still use:
+	// - ParentSnapshotPath: for incremental btrfs send (smaller data if parent exists locally)
+	// - ParentImageRef: for pull to resolve parent chain (predictable: repo:parentName)
+	var parentSnapshotPath string
+	var parentImageRef string
+
+	if snapshot.Spec.ParentSnapshotRef != nil && snapshot.Spec.ParentSnapshotRef.Name != "" {
+		parentName := snapshot.Spec.ParentSnapshotRef.Name
+
+		// Look up parent snapshot to get its local path (for incremental btrfs send)
+		parentSnapshot := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: parentName}, parentSnapshot); err == nil {
+			if parentSnapshot.Status.SnapshotPath != "" {
+				parentSnapshotPath = parentSnapshot.Status.SnapshotPath
+				logger.Info("Using parent snapshot for incremental send",
+					zap.String("parent", parentName),
+					zap.String("parentPath", parentSnapshotPath))
+			}
+		} else {
+			logger.Warn("Parent snapshot not found locally, will do full send",
+				zap.String("parent", parentName), zap.Error(err))
+		}
+
+		// Build predictable parent image ref (same repo, parent name as tag)
+		// This allows pull to resolve the parent chain even if parent isn't pushed yet
+		parentImageRef = fmt.Sprintf("image-registry.kloudlite.svc.cluster.local:5000/%s:%s", repository, parentName)
+		logger.Info("Setting parent image reference for lineage tracking",
+			zap.String("parentImageRef", parentImageRef))
+	}
+
 	// Create push SnapshotRequest with primary tag (snapshot name)
-	// Each snapshot is pushed independently - no parent layer dependency
+	// Each snapshot is pushed independently - no waiting for parent push
 	pushReq := &snapshotv1.SnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-push", snapshot.Name),
@@ -115,13 +147,15 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 			},
 		},
 		Spec: snapshotv1.SnapshotRequestSpec{
-			Operation:    snapshotv1.SnapshotOperationPush,
-			SnapshotPath: snapshot.Status.SnapshotPath,
-			SnapshotRef:  snapshot.Name,
+			Operation:          snapshotv1.SnapshotOperationPush,
+			SnapshotPath:       snapshot.Status.SnapshotPath,
+			ParentSnapshotPath: parentSnapshotPath, // For incremental btrfs send
+			SnapshotRef:        snapshot.Name,
 			RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
-				RegistryURL: "image-registry.kloudlite.svc.cluster.local:5000",
-				Repository:  repository,
-				Tag:         primaryTag, // Always use snapshot name
+				RegistryURL:    "image-registry.kloudlite.svc.cluster.local:5000",
+				Repository:     repository,
+				Tag:            primaryTag,      // Always use snapshot name
+				ParentImageRef: parentImageRef, // For pull to resolve parent chain
 			},
 			Metadata: snapshot.Status.CollectedMetadata,
 		},
