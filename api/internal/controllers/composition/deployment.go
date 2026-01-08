@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -233,7 +234,7 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	return nil
 }
 
-// applyResource creates or updates a Kubernetes resource
+// applyResource creates or updates a Kubernetes resource with retry on conflict
 func (r *CompositionReconciler) applyResource(ctx context.Context, resource client.Object, composition *compositionsv1.Composition, logger *zap.Logger) error {
 	// Set controller ownership
 	if err := controllerutil.SetControllerReference(composition, resource, r.Scheme); err != nil {
@@ -327,42 +328,46 @@ func (r *CompositionReconciler) applyResource(ctx context.Context, resource clie
 			zap.String("type", string(svc.Spec.Type)))
 	}
 
-	// Handle Deployment updates - check if spec has changed
+	// Handle Deployment updates with retry on conflict
 	if deploy, ok := resource.(*appsv1.Deployment); ok {
-		existingDeploy := existing.(*appsv1.Deployment)
-
-		// Preserve existing annotations that are not in the new deployment
-		// This prevents annotation changes from triggering unnecessary updates
-		if existingDeploy.Annotations != nil && deploy.Annotations == nil {
-			deploy.Annotations = make(map[string]string)
-		}
-		for k, v := range existingDeploy.Annotations {
-			// Only preserve kloudlite.io annotations that don't exist in new deployment
-			if _, exists := deploy.Annotations[k]; !exists && len(k) >= len("kloudlite.io/") && k[:len("kloudlite.io/")] == "kloudlite.io/" {
-				deploy.Annotations[k] = v
+		return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			// Get the latest version of the deployment
+			existingDeploy := &appsv1.Deployment{}
+			if err := r.Get(ctx, client.ObjectKeyFromObject(deploy), existingDeploy); err != nil {
+				return err
 			}
-		}
 
-		specsEqual := equality.Semantic.DeepEqual(deploy.Spec, existingDeploy.Spec)
-		annotationsEqual := equality.Semantic.DeepEqual(deploy.Annotations, existingDeploy.Annotations)
+			// Preserve existing annotations that are not in the new deployment
+			// This prevents annotation changes from triggering unnecessary updates
+			if existingDeploy.Annotations != nil && deploy.Annotations == nil {
+				deploy.Annotations = make(map[string]string)
+			}
+			for k, v := range existingDeploy.Annotations {
+				// Only preserve kloudlite.io annotations that don't exist in new deployment
+				if _, exists := deploy.Annotations[k]; !exists && len(k) >= len("kloudlite.io/") && k[:len("kloudlite.io/")] == "kloudlite.io/" {
+					deploy.Annotations[k] = v
+				}
+			}
 
-		// Check if specs are equal - if so, skip the update
-		if specsEqual && annotationsEqual {
-			logger.Info("Deployment spec and annotations unchanged, skipping update",
-				zap.String("name", deploy.Name))
-			return nil
-		}
+			specsEqual := equality.Semantic.DeepEqual(deploy.Spec, existingDeploy.Spec)
+			annotationsEqual := equality.Semantic.DeepEqual(deploy.Annotations, existingDeploy.Annotations)
 
-		logger.Info("Deployment will be updated",
-			zap.String("name", deploy.Name),
-			zap.Bool("specsEqual", specsEqual),
-			zap.Bool("annotationsEqual", annotationsEqual),
-			zap.Int("newAnnotations", len(deploy.Annotations)),
-			zap.Int("existingAnnotations", len(existingDeploy.Annotations)),
-			zap.Any("newReplicas", deploy.Spec.Replicas),
-			zap.Any("existingReplicas", existingDeploy.Spec.Replicas),
-			zap.Any("newAnnotationsMap", deploy.Annotations),
-			zap.Any("existingAnnotationsMap", existingDeploy.Annotations))
+			// Check if specs are equal - if so, skip the update
+			if specsEqual && annotationsEqual {
+				logger.Info("Deployment spec and annotations unchanged, skipping update",
+					zap.String("name", deploy.Name))
+				return nil
+			}
+
+			logger.Info("Deployment will be updated",
+				zap.String("name", deploy.Name),
+				zap.Bool("specsEqual", specsEqual),
+				zap.Bool("annotationsEqual", annotationsEqual))
+
+			// Copy resource version for update
+			deploy.SetResourceVersion(existingDeploy.GetResourceVersion())
+			return r.Update(ctx, deploy)
+		})
 	}
 
 	// Copy resource version for update
