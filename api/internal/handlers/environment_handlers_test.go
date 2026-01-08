@@ -455,31 +455,7 @@ func TestDeleteEnvironment(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
-	t.Run("should prevent deletion of activated environment without force", func(t *testing.T) {
-		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
-				return &environmentsv1.Environment{
-					ObjectMeta: metav1.ObjectMeta{Name: name},
-					Spec: environmentsv1.EnvironmentSpec{
-						Activated: true,
-					},
-				}, nil
-			},
-		}
-
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
-		router := gin.New()
-		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
-
-		req, _ := http.NewRequest("DELETE", "/environments/test-env", nil)
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Contains(t, w.Body.String(), "Cannot delete an activated environment")
-	})
-
-	t.Run("should force delete activated environment", func(t *testing.T) {
+	t.Run("should delete activated environment without force", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
 			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
@@ -498,7 +474,7 @@ func TestDeleteEnvironment(t *testing.T) {
 		router := gin.New()
 		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
 
-		req, _ := http.NewRequest("DELETE", "/environments/test-env?force=true", nil)
+		req, _ := http.NewRequest("DELETE", "/environments/test-env", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
