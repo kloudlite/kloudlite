@@ -158,10 +158,11 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 		// Get the workmachine namespace
 		wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
 
-		// Pull to .snapshots/envs/ directory
+		// Pull to .snapshots/envs/{envName}/ directory
+		// Each environment has its own snapshot folder to avoid conflicts when cloning
 		// btrfs receive creates the subvolume INSIDE targetDir with the original snapshot name
-		// So if we pull snap3, it will be created at .snapshots/envs/snap3/
-		snapshotPath := envSnapshotsBasePath
+		// So if we pull snap3 for env main-clone, it will be created at .snapshots/envs/main-clone/snap3/
+		snapshotPath := filepath.Join(envSnapshotsBasePath, environment.Name)
 
 		// Parse imageRef to get repository and tag
 		repository, tag := parseImageRef(status.ImageRef)
@@ -236,9 +237,9 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 
 	case snapshotv1.SnapshotRequestPhaseCompleted:
 		// Pull completed - now create the live btrfs subvolume from the pulled snapshot
-		// Source: .snapshots/envs/{snapshotName}/ (the pulled snapshot)
+		// Source: .snapshots/envs/{envName}/{snapshotName}/ (the pulled snapshot)
 		// Target: environments/{targetNamespace}/ (the live environment)
-		snapshotSourcePath := filepath.Join(envSnapshotsBasePath, snapshotName)
+		snapshotSourcePath := filepath.Join(envSnapshotsBasePath, environment.Name, snapshotName)
 		liveEnvPath := filepath.Join(environmentsBasePath, environment.Spec.TargetNamespace)
 
 		// Create a SnapshotRequest to create the live subvolume
