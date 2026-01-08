@@ -146,6 +146,7 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 }
 
 // relinkChildSnapshots updates all child snapshots to point to this snapshot's parent
+// and triggers re-push with incremental data relative to the new parent
 func (r *SnapshotReconciler) relinkChildSnapshots(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) error {
 	// Find all snapshots that have this snapshot as their parent
 	childSnapshots := &snapshotv1.SnapshotList{}
@@ -169,7 +170,7 @@ func (r *SnapshotReconciler) relinkChildSnapshots(ctx context.Context, snapshot 
 		newParentLabel = snapshot.Spec.ParentSnapshotRef.Name
 	}
 
-	// Update each child to point to the new parent
+	// Update each child to point to the new parent and trigger re-push
 	for i := range childSnapshots.Items {
 		child := &childSnapshots.Items[i]
 		logger.Info("Re-linking child snapshot",
@@ -178,10 +179,16 @@ func (r *SnapshotReconciler) relinkChildSnapshots(ctx context.Context, snapshot 
 			zap.String("newParent", newParentLabel),
 		)
 
-		// Update spec
-		child.Spec.ParentSnapshotRef = newParent
+		// Delete old registry image (has invalid parent reference)
+		if child.Status.RegistryStatus != nil && child.Status.RegistryStatus.Pushed {
+			logger.Info("Deleting child's old registry image before re-push",
+				zap.String("child", child.Name),
+				zap.String("imageRef", child.Status.RegistryStatus.ImageRef))
+			r.deleteRegistryImage(child, logger)
+		}
 
-		// Update label
+		// Update spec (parent reference and label)
+		child.Spec.ParentSnapshotRef = newParent
 		if child.Labels == nil {
 			child.Labels = make(map[string]string)
 		}
@@ -192,11 +199,29 @@ func (r *SnapshotReconciler) relinkChildSnapshots(ctx context.Context, snapshot 
 		}
 
 		if err := r.Update(ctx, child); err != nil {
-			logger.Warn("Failed to re-link child snapshot",
+			logger.Warn("Failed to update child snapshot spec",
 				zap.String("child", child.Name),
 				zap.Error(err),
 			)
-			// Continue with other children
+			continue // Skip status update if spec update failed
+		}
+
+		// Update status to trigger re-push with new parent
+		child.Status.State = snapshotv1.SnapshotStatePushing
+		child.Status.Message = "Re-pushing with new parent after parent deletion"
+		if child.Status.RegistryStatus != nil {
+			child.Status.RegistryStatus.Pushed = false
+		}
+
+		if err := r.Status().Update(ctx, child); err != nil {
+			logger.Warn("Failed to update child snapshot status for re-push",
+				zap.String("child", child.Name),
+				zap.Error(err),
+			)
+		} else {
+			logger.Info("Child snapshot queued for re-push",
+				zap.String("child", child.Name),
+				zap.String("newParent", newParentLabel))
 		}
 	}
 
