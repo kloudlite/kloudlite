@@ -424,7 +424,19 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 			return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Restore failed: %s", existingReq.Status.Message), logger)
 
 		case snapshotv1.SnapshotRequestPhaseCompleted:
-			// Restore completed successfully
+			// Restore completed successfully - now restore K8s metadata
+			logger.Info("btrfs restore complete, restoring K8s metadata")
+
+			// Restore K8s resources (ConfigMaps, Secrets, Deployments, etc.) from snapshot
+			if snapshot.Status.CollectedMetadata != nil {
+				if err := r.importMetadata(ctx, namespace, snapshot.Status.CollectedMetadata, logger); err != nil {
+					logger.Warn("Failed to restore K8s metadata", zap.Error(err))
+					// Continue even if metadata restore fails - PVC data is restored
+				}
+			} else {
+				logger.Info("No collected metadata in snapshot, skipping metadata restore")
+			}
+
 			if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 				snapshot.Status.State = snapshotv1.SnapshotStateReady
 				snapshot.Status.Message = "Snapshot restored successfully"

@@ -445,6 +445,479 @@ func (r *SnapshotReconciler) updateWorkspaceLastRestored(ctx context.Context, wo
 	}, logger)
 }
 
+// importMetadata restores K8s resources from the snapshot's collected metadata
+// This replaces the current resources in the namespace with those from the snapshot
+func (r *SnapshotReconciler) importMetadata(ctx context.Context, namespace string, metadata *snapshotv1.SnapshotMetadata, logger *zap.Logger) error {
+	if metadata == nil {
+		logger.Info("No metadata to restore")
+		return nil
+	}
+
+	logger.Info("Restoring K8s metadata from snapshot", zap.String("namespace", namespace))
+
+	// Restore ConfigMaps
+	if metadata.ConfigMaps != "" {
+		if err := r.restoreConfigMaps(ctx, namespace, metadata.ConfigMaps, logger); err != nil {
+			logger.Warn("Failed to restore ConfigMaps", zap.Error(err))
+		}
+	}
+
+	// Restore Secrets
+	if metadata.Secrets != "" {
+		if err := r.restoreSecrets(ctx, namespace, metadata.Secrets, logger); err != nil {
+			logger.Warn("Failed to restore Secrets", zap.Error(err))
+		}
+	}
+
+	// Restore Compositions (before Deployments/StatefulSets as they may depend on them)
+	if metadata.Compositions != "" {
+		if err := r.restoreCompositions(ctx, namespace, metadata.Compositions, logger); err != nil {
+			logger.Warn("Failed to restore Compositions", zap.Error(err))
+		}
+	}
+
+	// Restore Services
+	if metadata.Services != "" {
+		if err := r.restoreServices(ctx, namespace, metadata.Services, logger); err != nil {
+			logger.Warn("Failed to restore Services", zap.Error(err))
+		}
+	}
+
+	// Restore Deployments
+	if metadata.Deployments != "" {
+		if err := r.restoreDeployments(ctx, namespace, metadata.Deployments, logger); err != nil {
+			logger.Warn("Failed to restore Deployments", zap.Error(err))
+		}
+	}
+
+	// Restore StatefulSets
+	if metadata.StatefulSets != "" {
+		if err := r.restoreStatefulSets(ctx, namespace, metadata.StatefulSets, logger); err != nil {
+			logger.Warn("Failed to restore StatefulSets", zap.Error(err))
+		}
+	}
+
+	logger.Info("Metadata restoration complete")
+	return nil
+}
+
+// restoreConfigMaps restores ConfigMaps from JSON
+func (r *SnapshotReconciler) restoreConfigMaps(ctx context.Context, namespace, jsonData string, logger *zap.Logger) error {
+	var cmList corev1.ConfigMapList
+	if err := json.Unmarshal([]byte(jsonData), &cmList); err != nil {
+		return fmt.Errorf("failed to unmarshal ConfigMaps: %w", err)
+	}
+
+	// Get current ConfigMaps
+	currentList := &corev1.ConfigMapList{}
+	if err := r.List(ctx, currentList, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list current ConfigMaps: %w", err)
+	}
+
+	// Build map of snapshot ConfigMaps
+	snapshotCMs := make(map[string]corev1.ConfigMap)
+	for _, cm := range cmList.Items {
+		snapshotCMs[cm.Name] = cm
+	}
+
+	// Delete ConfigMaps that don't exist in snapshot
+	for _, cm := range currentList.Items {
+		// Skip kube-root-ca.crt as it's managed by Kubernetes
+		if cm.Name == "kube-root-ca.crt" {
+			continue
+		}
+		if _, exists := snapshotCMs[cm.Name]; !exists {
+			logger.Info("Deleting ConfigMap not in snapshot", zap.String("name", cm.Name))
+			if err := r.Delete(ctx, &cm); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete ConfigMap", zap.String("name", cm.Name), zap.Error(err))
+			}
+		}
+	}
+
+	// Create or update ConfigMaps from snapshot
+	for _, cm := range cmList.Items {
+		// Skip kube-root-ca.crt
+		if cm.Name == "kube-root-ca.crt" {
+			continue
+		}
+		newCM := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        cm.Name,
+				Namespace:   namespace,
+				Labels:      cm.Labels,
+				Annotations: cm.Annotations,
+			},
+			Data:       cm.Data,
+			BinaryData: cm.BinaryData,
+		}
+
+		existing := &corev1.ConfigMap{}
+		err := r.Get(ctx, client.ObjectKey{Name: cm.Name, Namespace: namespace}, existing)
+		if apierrors.IsNotFound(err) {
+			logger.Info("Creating ConfigMap from snapshot", zap.String("name", cm.Name))
+			if err := r.Create(ctx, newCM); err != nil {
+				logger.Warn("Failed to create ConfigMap", zap.String("name", cm.Name), zap.Error(err))
+			}
+		} else if err == nil {
+			existing.Data = cm.Data
+			existing.BinaryData = cm.BinaryData
+			existing.Labels = cm.Labels
+			existing.Annotations = cm.Annotations
+			logger.Info("Updating ConfigMap from snapshot", zap.String("name", cm.Name))
+			if err := r.Update(ctx, existing); err != nil {
+				logger.Warn("Failed to update ConfigMap", zap.String("name", cm.Name), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
+// restoreSecrets restores Secrets from JSON
+func (r *SnapshotReconciler) restoreSecrets(ctx context.Context, namespace, jsonData string, logger *zap.Logger) error {
+	var secretList []corev1.Secret
+	if err := json.Unmarshal([]byte(jsonData), &secretList); err != nil {
+		return fmt.Errorf("failed to unmarshal Secrets: %w", err)
+	}
+
+	// Get current Secrets
+	currentList := &corev1.SecretList{}
+	if err := r.List(ctx, currentList, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list current Secrets: %w", err)
+	}
+
+	// Build map of snapshot Secrets
+	snapshotSecrets := make(map[string]corev1.Secret)
+	for _, s := range secretList {
+		snapshotSecrets[s.Name] = s
+	}
+
+	// Delete Secrets that don't exist in snapshot (except service account tokens)
+	for _, s := range currentList.Items {
+		if s.Type == corev1.SecretTypeServiceAccountToken {
+			continue
+		}
+		if _, exists := snapshotSecrets[s.Name]; !exists {
+			logger.Info("Deleting Secret not in snapshot", zap.String("name", s.Name))
+			if err := r.Delete(ctx, &s); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete Secret", zap.String("name", s.Name), zap.Error(err))
+			}
+		}
+	}
+
+	// Create or update Secrets from snapshot
+	for _, s := range secretList {
+		newSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        s.Name,
+				Namespace:   namespace,
+				Labels:      s.Labels,
+				Annotations: s.Annotations,
+			},
+			Type:       s.Type,
+			Data:       s.Data,
+			StringData: s.StringData,
+		}
+
+		existing := &corev1.Secret{}
+		err := r.Get(ctx, client.ObjectKey{Name: s.Name, Namespace: namespace}, existing)
+		if apierrors.IsNotFound(err) {
+			logger.Info("Creating Secret from snapshot", zap.String("name", s.Name))
+			if err := r.Create(ctx, newSecret); err != nil {
+				logger.Warn("Failed to create Secret", zap.String("name", s.Name), zap.Error(err))
+			}
+		} else if err == nil {
+			existing.Data = s.Data
+			existing.StringData = s.StringData
+			existing.Labels = s.Labels
+			existing.Annotations = s.Annotations
+			logger.Info("Updating Secret from snapshot", zap.String("name", s.Name))
+			if err := r.Update(ctx, existing); err != nil {
+				logger.Warn("Failed to update Secret", zap.String("name", s.Name), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
+// restoreServices restores Services from JSON
+func (r *SnapshotReconciler) restoreServices(ctx context.Context, namespace, jsonData string, logger *zap.Logger) error {
+	var svcList corev1.ServiceList
+	if err := json.Unmarshal([]byte(jsonData), &svcList); err != nil {
+		return fmt.Errorf("failed to unmarshal Services: %w", err)
+	}
+
+	// Get current Services
+	currentList := &corev1.ServiceList{}
+	if err := r.List(ctx, currentList, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list current Services: %w", err)
+	}
+
+	// Build map of snapshot Services
+	snapshotSvcs := make(map[string]corev1.Service)
+	for _, svc := range svcList.Items {
+		snapshotSvcs[svc.Name] = svc
+	}
+
+	// Delete Services that don't exist in snapshot
+	for _, svc := range currentList.Items {
+		if _, exists := snapshotSvcs[svc.Name]; !exists {
+			logger.Info("Deleting Service not in snapshot", zap.String("name", svc.Name))
+			if err := r.Delete(ctx, &svc); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete Service", zap.String("name", svc.Name), zap.Error(err))
+			}
+		}
+	}
+
+	// Create or update Services from snapshot
+	for _, svc := range svcList.Items {
+		newSvc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        svc.Name,
+				Namespace:   namespace,
+				Labels:      svc.Labels,
+				Annotations: svc.Annotations,
+			},
+			Spec: corev1.ServiceSpec{
+				Selector:  svc.Spec.Selector,
+				Ports:     svc.Spec.Ports,
+				Type:      svc.Spec.Type,
+				ClusterIP: svc.Spec.ClusterIP,
+			},
+		}
+
+		existing := &corev1.Service{}
+		err := r.Get(ctx, client.ObjectKey{Name: svc.Name, Namespace: namespace}, existing)
+		if apierrors.IsNotFound(err) {
+			// Clear ClusterIP for new services to let K8s assign
+			newSvc.Spec.ClusterIP = ""
+			logger.Info("Creating Service from snapshot", zap.String("name", svc.Name))
+			if err := r.Create(ctx, newSvc); err != nil {
+				logger.Warn("Failed to create Service", zap.String("name", svc.Name), zap.Error(err))
+			}
+		} else if err == nil {
+			// Update mutable fields only
+			existing.Spec.Selector = svc.Spec.Selector
+			existing.Spec.Ports = svc.Spec.Ports
+			existing.Labels = svc.Labels
+			existing.Annotations = svc.Annotations
+			logger.Info("Updating Service from snapshot", zap.String("name", svc.Name))
+			if err := r.Update(ctx, existing); err != nil {
+				logger.Warn("Failed to update Service", zap.String("name", svc.Name), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
+// restoreDeployments restores Deployments from JSON
+func (r *SnapshotReconciler) restoreDeployments(ctx context.Context, namespace, jsonData string, logger *zap.Logger) error {
+	var deployList appsv1.DeploymentList
+	if err := json.Unmarshal([]byte(jsonData), &deployList); err != nil {
+		return fmt.Errorf("failed to unmarshal Deployments: %w", err)
+	}
+
+	// Get current Deployments
+	currentList := &appsv1.DeploymentList{}
+	if err := r.List(ctx, currentList, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list current Deployments: %w", err)
+	}
+
+	// Build map of snapshot Deployments
+	snapshotDeploys := make(map[string]appsv1.Deployment)
+	for _, d := range deployList.Items {
+		snapshotDeploys[d.Name] = d
+	}
+
+	// Delete Deployments that don't exist in snapshot
+	for _, d := range currentList.Items {
+		if _, exists := snapshotDeploys[d.Name]; !exists {
+			logger.Info("Deleting Deployment not in snapshot", zap.String("name", d.Name))
+			if err := r.Delete(ctx, &d); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete Deployment", zap.String("name", d.Name), zap.Error(err))
+			}
+		}
+	}
+
+	// Create or update Deployments from snapshot
+	for _, d := range deployList.Items {
+		// Start with 0 replicas, scaleUpWorkloads will restore them
+		zero := int32(0)
+		newDeploy := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        d.Name,
+				Namespace:   namespace,
+				Labels:      d.Labels,
+				Annotations: d.Annotations,
+			},
+			Spec: appsv1.DeploymentSpec{
+				Replicas: &zero,
+				Selector: d.Spec.Selector,
+				Template: d.Spec.Template,
+				Strategy: d.Spec.Strategy,
+			},
+		}
+
+		existing := &appsv1.Deployment{}
+		err := r.Get(ctx, client.ObjectKey{Name: d.Name, Namespace: namespace}, existing)
+		if apierrors.IsNotFound(err) {
+			logger.Info("Creating Deployment from snapshot", zap.String("name", d.Name))
+			if err := r.Create(ctx, newDeploy); err != nil {
+				logger.Warn("Failed to create Deployment", zap.String("name", d.Name), zap.Error(err))
+			}
+		} else if err == nil {
+			existing.Spec.Template = d.Spec.Template
+			existing.Spec.Strategy = d.Spec.Strategy
+			existing.Labels = d.Labels
+			existing.Annotations = d.Annotations
+			// Keep replicas at 0 during restore
+			existing.Spec.Replicas = &zero
+			logger.Info("Updating Deployment from snapshot", zap.String("name", d.Name))
+			if err := r.Update(ctx, existing); err != nil {
+				logger.Warn("Failed to update Deployment", zap.String("name", d.Name), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
+// restoreStatefulSets restores StatefulSets from JSON
+func (r *SnapshotReconciler) restoreStatefulSets(ctx context.Context, namespace, jsonData string, logger *zap.Logger) error {
+	var stsList appsv1.StatefulSetList
+	if err := json.Unmarshal([]byte(jsonData), &stsList); err != nil {
+		return fmt.Errorf("failed to unmarshal StatefulSets: %w", err)
+	}
+
+	// Get current StatefulSets
+	currentList := &appsv1.StatefulSetList{}
+	if err := r.List(ctx, currentList, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list current StatefulSets: %w", err)
+	}
+
+	// Build map of snapshot StatefulSets
+	snapshotSts := make(map[string]appsv1.StatefulSet)
+	for _, s := range stsList.Items {
+		snapshotSts[s.Name] = s
+	}
+
+	// Delete StatefulSets that don't exist in snapshot
+	for _, s := range currentList.Items {
+		if _, exists := snapshotSts[s.Name]; !exists {
+			logger.Info("Deleting StatefulSet not in snapshot", zap.String("name", s.Name))
+			if err := r.Delete(ctx, &s); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete StatefulSet", zap.String("name", s.Name), zap.Error(err))
+			}
+		}
+	}
+
+	// Create or update StatefulSets from snapshot
+	for _, s := range stsList.Items {
+		// Start with 0 replicas, scaleUpWorkloads will restore them
+		zero := int32(0)
+		newSts := &appsv1.StatefulSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        s.Name,
+				Namespace:   namespace,
+				Labels:      s.Labels,
+				Annotations: s.Annotations,
+			},
+			Spec: appsv1.StatefulSetSpec{
+				Replicas:             &zero,
+				Selector:             s.Spec.Selector,
+				Template:             s.Spec.Template,
+				ServiceName:          s.Spec.ServiceName,
+				VolumeClaimTemplates: s.Spec.VolumeClaimTemplates,
+			},
+		}
+
+		existing := &appsv1.StatefulSet{}
+		err := r.Get(ctx, client.ObjectKey{Name: s.Name, Namespace: namespace}, existing)
+		if apierrors.IsNotFound(err) {
+			logger.Info("Creating StatefulSet from snapshot", zap.String("name", s.Name))
+			if err := r.Create(ctx, newSts); err != nil {
+				logger.Warn("Failed to create StatefulSet", zap.String("name", s.Name), zap.Error(err))
+			}
+		} else if err == nil {
+			existing.Spec.Template = s.Spec.Template
+			existing.Labels = s.Labels
+			existing.Annotations = s.Annotations
+			// Keep replicas at 0 during restore
+			existing.Spec.Replicas = &zero
+			logger.Info("Updating StatefulSet from snapshot", zap.String("name", s.Name))
+			if err := r.Update(ctx, existing); err != nil {
+				logger.Warn("Failed to update StatefulSet", zap.String("name", s.Name), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
+// restoreCompositions restores Compositions from JSON
+func (r *SnapshotReconciler) restoreCompositions(ctx context.Context, namespace, jsonData string, logger *zap.Logger) error {
+	var compList environmentsv1.CompositionList
+	if err := json.Unmarshal([]byte(jsonData), &compList); err != nil {
+		return fmt.Errorf("failed to unmarshal Compositions: %w", err)
+	}
+
+	// Get current Compositions
+	currentList := &environmentsv1.CompositionList{}
+	if err := r.List(ctx, currentList, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list current Compositions: %w", err)
+	}
+
+	// Build map of snapshot Compositions
+	snapshotComps := make(map[string]environmentsv1.Composition)
+	for _, c := range compList.Items {
+		snapshotComps[c.Name] = c
+	}
+
+	// Delete Compositions that don't exist in snapshot
+	for _, c := range currentList.Items {
+		if _, exists := snapshotComps[c.Name]; !exists {
+			logger.Info("Deleting Composition not in snapshot", zap.String("name", c.Name))
+			if err := r.Delete(ctx, &c); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete Composition", zap.String("name", c.Name), zap.Error(err))
+			}
+		}
+	}
+
+	// Create or update Compositions from snapshot
+	for _, c := range compList.Items {
+		newComp := &environmentsv1.Composition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        c.Name,
+				Namespace:   namespace,
+				Labels:      c.Labels,
+				Annotations: c.Annotations,
+			},
+			Spec: c.Spec,
+		}
+
+		existing := &environmentsv1.Composition{}
+		err := r.Get(ctx, client.ObjectKey{Name: c.Name, Namespace: namespace}, existing)
+		if apierrors.IsNotFound(err) {
+			logger.Info("Creating Composition from snapshot", zap.String("name", c.Name))
+			if err := r.Create(ctx, newComp); err != nil {
+				logger.Warn("Failed to create Composition", zap.String("name", c.Name), zap.Error(err))
+			}
+		} else if err == nil {
+			existing.Spec = c.Spec
+			existing.Labels = c.Labels
+			existing.Annotations = c.Annotations
+			logger.Info("Updating Composition from snapshot", zap.String("name", c.Name))
+			if err := r.Update(ctx, existing); err != nil {
+				logger.Warn("Failed to update Composition", zap.String("name", c.Name), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
 // deleteRegistryImage deletes the snapshot image from the OCI registry
 func (r *SnapshotReconciler) deleteRegistryImage(snapshot *snapshotv1.Snapshot, logger *zap.Logger) {
 	if snapshot.Status.RegistryStatus == nil || snapshot.Status.RegistryStatus.ImageRef == "" {
