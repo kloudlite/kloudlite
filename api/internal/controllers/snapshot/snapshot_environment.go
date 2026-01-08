@@ -202,10 +202,11 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	sourcePath := filepath.Join(environmentsStorePath, namespace)
 
 	// Snapshot path: where the btrfs snapshot will be created
-	// Store in .snapshots/envs/{snapshotName}/ for environment snapshots
+	// Store in .snapshots/envs/{envName}/{snapshotName}/ for environment snapshots
+	// Each environment has its own snapshot folder to avoid conflicts when cloning
 	snapshotPath := snapshot.Status.SnapshotPath
 	if snapshotPath == "" {
-		snapshotPath = filepath.Join(envSnapshotsBasePath, snapshot.Name)
+		snapshotPath = filepath.Join(envSnapshotsBasePath, env.Name, snapshot.Name)
 		// Store the path immediately so subsequent reconciles use the same path
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.SnapshotPath = snapshotPath
