@@ -700,21 +700,13 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 	return reconcile.Result{Requeue: true}, nil
 }
 
-// createClonedSnapshot imports the snapshot chain and creates a new snapshot on the cloned environment
+// createClonedSnapshot creates a snapshot on the cloned environment with proper lineage
 func (r *EnvironmentReconciler) createClonedSnapshot(
 	ctx context.Context,
 	environment *environmentsv1.Environment,
 	sourceSnapshotName string,
 	logger *zap.Logger,
 ) error {
-	// Import the entire snapshot chain (ancestors) into this environment
-	// This makes the lineage visible in the cloned environment
-	importedSourceName, err := r.importSnapshotChain(ctx, environment, sourceSnapshotName, logger)
-	if err != nil {
-		logger.Warn("Failed to import snapshot chain, using original snapshot as parent", zap.Error(err))
-		importedSourceName = sourceSnapshotName
-	}
-
 	// Get source snapshot to inherit description
 	sourceSnapshot := &snapshotv1.Snapshot{}
 	if err := r.Get(ctx, client.ObjectKey{Name: sourceSnapshotName}, sourceSnapshot); err != nil {
@@ -740,7 +732,7 @@ func (r *EnvironmentReconciler) createClonedSnapshot(
 				Name: environment.Name,
 			},
 			ParentSnapshotRef: &snapshotv1.ParentSnapshotReference{
-				Name:       importedSourceName,
+				Name:       sourceSnapshotName,
 				RestoredAt: &restoredAt,
 			},
 			Description:     sourceSnapshot.Spec.Description,
@@ -763,133 +755,10 @@ func (r *EnvironmentReconciler) createClonedSnapshot(
 
 	logger.Info("Auto-created snapshot on cloned environment",
 		zap.String("snapshot", snapshotName),
-		zap.String("parent", importedSourceName),
+		zap.String("parent", sourceSnapshotName),
 		zap.String("description", sourceSnapshot.Spec.Description))
 
 	return nil
-}
-
-// importSnapshotChain imports the snapshot and its ancestors into this environment
-// Returns the name of the imported snapshot that corresponds to sourceSnapshotName
-func (r *EnvironmentReconciler) importSnapshotChain(
-	ctx context.Context,
-	environment *environmentsv1.Environment,
-	sourceSnapshotName string,
-	logger *zap.Logger,
-) (string, error) {
-	// Collect the entire ancestor chain (from root to source)
-	var chain []*snapshotv1.Snapshot
-	currentName := sourceSnapshotName
-
-	for currentName != "" {
-		snapshot := &snapshotv1.Snapshot{}
-		if err := r.Get(ctx, client.ObjectKey{Name: currentName}, snapshot); err != nil {
-			if apierrors.IsNotFound(err) {
-				break // End of chain
-			}
-			return "", fmt.Errorf("failed to get snapshot %s: %w", currentName, err)
-		}
-		chain = append([]*snapshotv1.Snapshot{snapshot}, chain...) // Prepend to maintain order
-
-		if snapshot.Spec.ParentSnapshotRef != nil {
-			currentName = snapshot.Spec.ParentSnapshotRef.Name
-		} else {
-			currentName = ""
-		}
-	}
-
-	if len(chain) == 0 {
-		return sourceSnapshotName, nil
-	}
-
-	logger.Info("Importing snapshot chain into environment",
-		zap.String("environment", environment.Name),
-		zap.Int("chainLength", len(chain)))
-
-	// Import each snapshot in order (root first)
-	// Map from original name to imported name
-	nameMapping := make(map[string]string)
-
-	for _, snap := range chain {
-		importedName := fmt.Sprintf("%s-imported-%s", environment.Name, snap.Name)
-
-		// Check if already imported
-		existing := &snapshotv1.Snapshot{}
-		if err := r.Get(ctx, client.ObjectKey{Name: importedName}, existing); err == nil {
-			nameMapping[snap.Name] = importedName
-			logger.Info("Snapshot already imported, skipping",
-				zap.String("original", snap.Name),
-				zap.String("imported", importedName))
-			continue
-		}
-
-		// Create imported snapshot
-		imported := &snapshotv1.Snapshot{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: importedName,
-				Labels: map[string]string{
-					"snapshots.kloudlite.io/environment":      environment.Name,
-					"kloudlite.io/owned-by":                   environment.Spec.OwnedBy,
-					"snapshots.kloudlite.io/imported":         "true",
-					"snapshots.kloudlite.io/original-snapshot": snap.Name,
-				},
-			},
-			Spec: snapshotv1.SnapshotSpec{
-				EnvironmentRef: &snapshotv1.EnvironmentReference{
-					Name: environment.Name,
-				},
-				Description: snap.Spec.Description,
-				OwnedBy:     environment.Spec.OwnedBy,
-				// Copy registry ref to reference the same OCI image
-				RegistryRef: snap.Spec.RegistryRef.DeepCopy(),
-			},
-		}
-
-		// Set parent to the imported parent (if exists)
-		if snap.Spec.ParentSnapshotRef != nil {
-			if mappedParent, ok := nameMapping[snap.Spec.ParentSnapshotRef.Name]; ok {
-				imported.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-					Name: mappedParent,
-				}
-				imported.Labels["snapshots.kloudlite.io/parent"] = mappedParent
-			}
-		}
-
-		if err := r.Create(ctx, imported); err != nil {
-			if apierrors.IsAlreadyExists(err) {
-				nameMapping[snap.Name] = importedName
-				continue
-			}
-			return "", fmt.Errorf("failed to create imported snapshot %s: %w", importedName, err)
-		}
-
-		// Copy status from original (mark as Ready since it references existing OCI image)
-		imported.Status = snapshotv1.SnapshotStatus{
-			State:           snapshotv1.SnapshotStateReady,
-			Message:         fmt.Sprintf("Imported from %s", snap.Name),
-			SnapshotType:    snap.Status.SnapshotType,
-			TargetName:      environment.Name,
-			CreatedAt:       snap.Status.CreatedAt,
-			SizeBytes:       snap.Status.SizeBytes,
-			SizeHuman:       snap.Status.SizeHuman,
-			WorkMachineName: environment.Spec.WorkMachineName,
-			RegistryStatus:  snap.Status.RegistryStatus.DeepCopy(),
-		}
-		if err := r.Status().Update(ctx, imported); err != nil {
-			logger.Warn("Failed to update imported snapshot status", zap.Error(err))
-		}
-
-		nameMapping[snap.Name] = importedName
-		logger.Info("Imported snapshot",
-			zap.String("original", snap.Name),
-			zap.String("imported", importedName))
-	}
-
-	// Return the imported name of the source snapshot
-	if mappedName, ok := nameMapping[sourceSnapshotName]; ok {
-		return mappedName, nil
-	}
-	return sourceSnapshotName, nil
 }
 
 // restoreResourcesFromMetadata restores K8s resources from the metadata struct (from OCI layer)
