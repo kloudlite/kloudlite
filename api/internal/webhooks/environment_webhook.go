@@ -478,11 +478,6 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 
 	// For deletion operations, fetch the current environment to check status
 	if operation == admissionv1.Delete {
-		// Prevent deletion of activated environments
-		if env.Spec.Activated {
-			return fmt.Errorf("cannot delete an activated environment, please deactivate it first")
-		}
-
 		// Fetch current environment to check restore status
 		var currentEnv environmentsv1.Environment
 		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Name}, &currentEnv); err == nil {

@@ -413,11 +413,8 @@ func (h *EnvironmentHandlers) DeleteEnvironment(c *gin.Context) {
 		return
 	}
 
-	// Check if force delete is requested
-	force := c.Query("force") == "true"
-
-	// Get the environment first to check if it's activated
-	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	// Verify environment exists before attempting deletion
+	_, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
 	if err != nil {
 		h.logger.Error("Failed to get environment for deletion",
 			zap.String("name", name),
@@ -435,16 +432,8 @@ func (h *EnvironmentHandlers) DeleteEnvironment(c *gin.Context) {
 		return
 	}
 
-	// Prevent deletion of activated environment unless forced
-	if env.Spec.Activated && !force {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Cannot delete an activated environment",
-			"details": "Deactivate the environment first or use force=true query parameter",
-		})
-		return
-	}
-
 	// Delete the environment (cluster-scoped)
+	// Environment can be deleted regardless of activation state
 	if err := h.envRepo.Delete(c.Request.Context(), name); err != nil {
 		h.logger.Error("Failed to delete environment",
 			zap.String("name", name),
