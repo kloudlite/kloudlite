@@ -2,6 +2,7 @@ package environment
 
 import (
 	"context"
+	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -159,23 +160,42 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		willBeActive := desiredState == environmentsv1.EnvironmentStateActive
 		willBeInactive := desiredState == environmentsv1.EnvironmentStateInactive
 
-		// Handle deactivation transition
-		if wasActive && willBeInactive {
+		// Handle deactivation transition (includes resuming from Deactivating state)
+		if (wasActive && willBeInactive) || currentState == environmentsv1.EnvironmentStateDeactivating {
 			// Set to deactivating state first
 			if currentState != environmentsv1.EnvironmentStateDeactivating {
 				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateDeactivating, "Environment is being deactivated", logger); err != nil {
 					logger.Error("Failed to update status to deactivating", zap.Error(err))
 				}
+				return reconcile.Result{Requeue: true}, nil
 			}
 
 			// Environment is being deactivated - disconnect workspaces and remove service intercepts
 			logger.Info("Environment is being deactivated, cleaning up connections")
 			if err := r.handleEnvironmentDeactivation(ctx, environment, logger); err != nil {
 				logger.Error("Failed to complete environment deactivation cleanup", zap.Error(err))
-				// Continue with status update even if cleanup partially fails
+				// Continue with scaling down even if cleanup partially fails
 			}
 
-			// Now set to inactive
+			// Scale down all deployments in the environment
+			logger.Info("Scaling down deployments for environment deactivation")
+			if err := r.suspendEnvironment(ctx, environment, logger); err != nil {
+				logger.Error("Failed to scale down deployments", zap.Error(err))
+				// Continue - pods may already be scaled down
+			}
+
+			// Wait for all pods to terminate before marking as inactive
+			// This ensures databases have time to checkpoint and WAL is flushed
+			if !r.waitForPodsTerminated(ctx, environment.Spec.TargetNamespace, logger) {
+				logger.Info("Waiting for pods to terminate before marking environment inactive")
+				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateDeactivating, "Waiting for pods to terminate...", logger); err != nil {
+					logger.Warn("Failed to update deactivating message", zap.Error(err))
+				}
+				return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+			}
+
+			// All pods terminated - now set to inactive
+			logger.Info("All pods terminated, marking environment as inactive")
 			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateInactive, "Environment is inactive", logger); err != nil {
 				logger.Error("Failed to update environment status after retries", zap.Error(err))
 			}
@@ -247,4 +267,27 @@ func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 	// Note: We don't watch WorkMachine here because Environment references WorkMachine by name
 	// The Environment controller will handle WorkMachine ownership during reconciliation
+}
+
+// waitForPodsTerminated waits for all pods in a namespace to be fully deleted
+// This ensures databases have time to checkpoint and flush WAL before the
+// environment is marked as inactive. Only Succeeded pods (completed Jobs) are ignored.
+func (r *EnvironmentReconciler) waitForPodsTerminated(ctx context.Context, namespace string, logger *zap.Logger) bool {
+	pods := &corev1.PodList{}
+	if err := r.List(ctx, pods, client.InNamespace(namespace)); err != nil {
+		logger.Warn("Failed to list pods", zap.Error(err))
+		return false
+	}
+
+	// Wait for ALL pods to be deleted, except completed Job pods (Succeeded phase)
+	for _, pod := range pods.Items {
+		// Skip completed Job pods - they're finished and won't write to disk
+		if pod.Status.Phase == corev1.PodSucceeded {
+			continue
+		}
+		// Any other pod (Running, Pending, Failed, Unknown) means we should wait
+		logger.Debug("Pod still exists", zap.String("pod", pod.Name), zap.String("phase", string(pod.Status.Phase)))
+		return false
+	}
+	return true
 }
