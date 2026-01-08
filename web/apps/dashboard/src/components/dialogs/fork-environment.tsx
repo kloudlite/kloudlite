@@ -66,7 +66,7 @@ export function ForkEnvironmentDialog({
       // Set preselected snapshot if provided
       if (preselectedSnapshot) {
         setSelectedSnapshot(preselectedSnapshot)
-        const sourceName = preselectedSnapshot.status.targetName || preselectedSnapshot.metadata.name
+        const sourceName = preselectedSnapshot.spec.environmentRef?.name || preselectedSnapshot.metadata.name
         setName(`${sourceName}-fork`)
       } else {
         setSelectedSnapshot(null)
@@ -241,9 +241,9 @@ export function ForkEnvironmentDialog({
                             onSelect={() => {
                               setSelectedSnapshot(snapshot)
                               setPopoverOpen(false)
-                              // Suggest name based on source
+                              // Suggest name based on source environment's spec.name
                               if (!name) {
-                                const sourceName = snapshot.status.targetName || snapshot.metadata.name
+                                const sourceName = snapshot.spec.environmentRef?.name || snapshot.metadata.name
                                 setName(`${sourceName}-fork`)
                               }
                             }}
