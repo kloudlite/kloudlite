@@ -270,8 +270,12 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	// Check if SnapshotRequest is complete (expectedCount = 1 for single environment snapshot)
 	allComplete, err := r.checkSnapshotRequestsComplete(ctx, snapshot, 1, logger)
 	if err != nil {
-		logger.Error("Failed to check SnapshotRequest status", zap.Error(err))
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		logger.Error("SnapshotRequest failed", zap.Error(err))
+		// Restore environment activation on failure
+		if restoreErr := r.restoreEnvironmentActivation(ctx, snapshot, env, logger); restoreErr != nil {
+			logger.Warn("Failed to restore environment activation after snapshot failure", zap.Error(restoreErr))
+		}
+		return r.updateStatusFailed(ctx, snapshot, err.Error(), logger)
 	}
 
 	if !allComplete {
