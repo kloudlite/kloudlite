@@ -223,7 +223,7 @@ export class SnapshotService {
     }
   }
 
-  // List pushed snapshots available for cloning
+  // List pushed snapshots available for forking
   async listPushed(type?: 'workspace' | 'environment'): Promise<PushedSnapshotListResponse> {
     const params = type ? `?type=${type}` : ''
     return apiClient.get<PushedSnapshotListResponse>(

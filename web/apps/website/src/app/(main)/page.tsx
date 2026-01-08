@@ -204,15 +204,15 @@ function WebsiteLandingPage() {
               <div className="p-8 lg:p-10 border-b border-foreground/10 lg:border-r bg-foreground/[0.015]">
                 <FeatureCard
                   icon={<Copy className="h-5 w-5" />}
-                  title="Environment Cloning"
-                  description="Clone entire environments with a single command."
+                  title="Environment Forking"
+                  description="Fork entire environments with a single command."
                 />
               </div>
               <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r lg:border-r-0 bg-foreground/[0.015]">
                 <FeatureCard
                   icon={<Layers className="h-5 w-5" />}
-                  title="Workspace Cloning"
-                  description="Duplicate workspaces instantly for parallel work."
+                  title="Workspace Forking"
+                  description="Fork workspaces instantly for parallel work."
                 />
               </div>
               {/* Row 2 */}

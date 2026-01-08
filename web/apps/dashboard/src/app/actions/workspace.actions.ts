@@ -235,9 +235,9 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
 }
 
 /**
- * Server action to clone a workspace
+ * Server action to fork a workspace (deprecated - use snapshot-based forking)
  */
-export async function cloneWorkspace(
+export async function forkWorkspace(
   sourceWorkspaceName: string,
   data: unknown,
   namespace: string = 'default',
@@ -251,7 +251,7 @@ export async function cloneWorkspace(
     }
   }
 
-  // Validate clone data
+  // Validate fork data
   const validated = workspaceCreateSchema.safeParse(data)
   if (!validated.success) {
     return {
@@ -262,7 +262,7 @@ export async function cloneWorkspace(
 
   try {
     // Cast to WorkspaceCreateRequest - workmachine is auto-populated by webhook from namespace
-    const result = await workspaceService.clone(
+    const result = await workspaceService.fork(
       sourceWorkspaceName,
       validated.data as import('@kloudlite/types').WorkspaceCreateRequest,
       namespace
@@ -270,7 +270,7 @@ export async function cloneWorkspace(
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
-    console.error('Clone workspace error:', err)
+    console.error('Fork workspace error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,

@@ -330,7 +330,7 @@ type ResourceUsage struct {
 
 // FromSnapshotRef specifies a pushed snapshot to create the workspace from
 type FromSnapshotRef struct {
-	// SnapshotName is the name of the snapshot resource to clone from
+	// SnapshotName is the name of the snapshot resource to fork from
 	// The snapshot must have status.registryStatus.pushed=true
 	// +kubebuilder:validation:Required
 	SnapshotName string `json:"snapshotName"`

@@ -41,22 +41,37 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Environment not found: %s", envName), logger)
 	}
 
-	// Auto-detect parent snapshot from environment's lastRestoredSnapshot
-	// This enables proper lineage when taking snapshots on cloned environments
+	// Auto-detect parent snapshot for proper lineage tracking
+	// Priority: 1) Latest snapshot for this environment, 2) LastRestoredSnapshot (for forked envs)
 	specUpdated := false
-	if snapshot.Spec.ParentSnapshotRef == nil && env.Status.LastRestoredSnapshot != nil {
-		parentSnapshotName := env.Status.LastRestoredSnapshot.Name
-		logger.Info("Auto-detecting parent snapshot from environment's lastRestoredSnapshot",
-			zap.String("parentSnapshot", parentSnapshotName))
-		restoredAt := env.Status.LastRestoredSnapshot.RestoredAt
-		snapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-			Name:       parentSnapshotName,
-			RestoredAt: &restoredAt,
+	if snapshot.Spec.ParentSnapshotRef == nil {
+		var parentSnapshotName string
+
+		// First, try to find the latest existing snapshot for this environment
+		latestSnapshot := r.findLatestSnapshotForEnvironment(ctx, envName, snapshot.Name, logger)
+		if latestSnapshot != nil {
+			parentSnapshotName = latestSnapshot.Name
+			logger.Info("Auto-detecting parent from latest environment snapshot",
+				zap.String("parentSnapshot", parentSnapshotName))
+			snapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
+				Name: parentSnapshotName,
+			}
+			specUpdated = true
+		} else if env.Status.LastRestoredSnapshot != nil {
+			// No existing snapshots - use LastRestoredSnapshot (fork scenario)
+			parentSnapshotName = env.Status.LastRestoredSnapshot.Name
+			logger.Info("Auto-detecting parent from environment's lastRestoredSnapshot (fork origin)",
+				zap.String("parentSnapshot", parentSnapshotName))
+			restoredAt := env.Status.LastRestoredSnapshot.RestoredAt
+			snapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
+				Name:       parentSnapshotName,
+				RestoredAt: &restoredAt,
+			}
+			specUpdated = true
 		}
-		specUpdated = true
 
 		// Inherit description from parent snapshot if not set
-		if snapshot.Spec.Description == "" {
+		if parentSnapshotName != "" && snapshot.Spec.Description == "" {
 			parentSnapshot := &snapshotv1.Snapshot{}
 			if err := r.Get(ctx, client.ObjectKey{Name: parentSnapshotName}, parentSnapshot); err == nil {
 				if parentSnapshot.Spec.Description != "" {
@@ -203,7 +218,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 
 	// Snapshot path: where the btrfs snapshot will be created
 	// Store in .snapshots/envs/{envName}/{snapshotName}/ for environment snapshots
-	// Each environment has its own snapshot folder to avoid conflicts when cloning
+	// Each environment has its own snapshot folder to avoid conflicts when forking
 	snapshotPath := snapshot.Status.SnapshotPath
 	if snapshotPath == "" {
 		snapshotPath = filepath.Join(envSnapshotsBasePath, env.Name, snapshot.Name)
@@ -614,4 +629,48 @@ func (r *SnapshotReconciler) restoreEnvironmentActivation(ctx context.Context, s
 	}
 
 	return nil
+}
+
+// findLatestSnapshotForEnvironment finds the most recent Ready snapshot for an environment
+// Excludes the current snapshot being created (by name)
+func (r *SnapshotReconciler) findLatestSnapshotForEnvironment(
+	ctx context.Context,
+	envName string,
+	excludeSnapshotName string,
+	logger *zap.Logger,
+) *snapshotv1.Snapshot {
+	snapshotList := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, snapshotList, client.MatchingLabels{
+		"snapshots.kloudlite.io/environment": envName,
+	}); err != nil {
+		logger.Warn("Failed to list snapshots for environment", zap.Error(err))
+		return nil
+	}
+
+	var latestSnapshot *snapshotv1.Snapshot
+	var latestTime *metav1.Time
+
+	for i := range snapshotList.Items {
+		snap := &snapshotList.Items[i]
+
+		// Skip the current snapshot being created
+		if snap.Name == excludeSnapshotName {
+			continue
+		}
+
+		// Only consider Ready snapshots
+		if snap.Status.State != snapshotv1.SnapshotStateReady {
+			continue
+		}
+
+		// Find the most recent by CreatedAt
+		if snap.Status.CreatedAt != nil {
+			if latestTime == nil || snap.Status.CreatedAt.After(latestTime.Time) {
+				latestSnapshot = snap
+				latestTime = snap.Status.CreatedAt
+			}
+		}
+	}
+
+	return latestSnapshot
 }

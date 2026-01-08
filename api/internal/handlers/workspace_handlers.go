@@ -603,13 +603,13 @@ func (h *WorkspaceHandlers) ArchiveWorkspace(c *gin.Context) {
 }
 
 // CloneWorkspace handles POST /api/v1/namespaces/:namespace/workspaces/:name/clone
-// DEPRECATED: Direct workspace cloning is no longer supported. Use snapshot-based cloning instead.
+// DEPRECATED: Direct workspace cloning is no longer supported. Use snapshot-based forking instead.
 func (h *WorkspaceHandlers) CloneWorkspace(c *gin.Context) {
 	// Cloning via direct PVC copy is no longer supported
-	// Use snapshot-based cloning instead: push a snapshot and create workspace from it
+	// Use snapshot-based forking instead: push a snapshot and create workspace from it
 	c.JSON(http.StatusGone, gin.H{
 		"error":   "Direct workspace cloning is no longer supported",
-		"message": "Please use snapshot-based cloning: create a snapshot, push it to the registry, then create a new workspace from the pushed snapshot.",
+		"message": "Please use snapshot-based forking: create a snapshot, push it to the registry, then create a new workspace from the pushed snapshot.",
 	})
 }
 

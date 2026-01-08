@@ -52,8 +52,8 @@ export class WorkspaceService {
     return apiClient.post<Workspace>(`${this.baseUrl}/namespaces/${namespace}/workspaces`, data)
   }
 
-  // Clone an existing workspace
-  async clone(
+  // Fork an existing workspace (deprecated - use snapshot-based forking)
+  async fork(
     sourceWorkspaceName: string,
     data: WorkspaceCreateRequest,
     namespace: string = 'default',

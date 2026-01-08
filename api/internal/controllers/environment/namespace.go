@@ -154,11 +154,11 @@ func (r *EnvironmentReconciler) ensureNamespaceExists(ctx context.Context, envir
 	return false, nil
 }
 
-// createNamespaceForCloning creates namespace for a cloned environment
-func (r *EnvironmentReconciler) createNamespaceForCloning(ctx context.Context, environment *environmentsv1.Environment, sourceName string, logger *zap.Logger) error {
+// createNamespaceForForking creates namespace for a forked environment
+func (r *EnvironmentReconciler) createNamespaceForForking(ctx context.Context, environment *environmentsv1.Environment, sourceName string, logger *zap.Logger) error {
 	targetNamespace := environment.Spec.TargetNamespace
 
-	logger.Info("Creating namespace for cloned environment", zap.String("namespace", targetNamespace))
+	logger.Info("Creating namespace for forked environment", zap.String("namespace", targetNamespace))
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -168,9 +168,9 @@ func (r *EnvironmentReconciler) createNamespaceForCloning(ctx context.Context, e
 			},
 			Annotations: map[string]string{
 				"kloudlite.io/environment-uid": string(environment.UID),
-				"kloudlite.io/creation-reason": "auto-created-for-cloned-environment",
+				"kloudlite.io/creation-reason": "auto-created-for-forked-environment",
 				"kloudlite.io/created-by":      environment.Spec.OwnedBy,
-				"kloudlite.io/cloned-from":     sourceName,
+				"kloudlite.io/forked-from":    sourceName,
 			},
 		},
 	}
@@ -178,18 +178,18 @@ func (r *EnvironmentReconciler) createNamespaceForCloning(ctx context.Context, e
 	// Apply labels and annotations using helper function
 	r.applyLabelsAndAnnotations(namespace, environment)
 
-	// Add cloning-specific annotations
+	// Add forking-specific annotations
 	if namespace.Annotations == nil {
 		namespace.Annotations = make(map[string]string)
 	}
-	namespace.Annotations["kloudlite.io/cloned-from"] = sourceName
-	namespace.Annotations["kloudlite.io/creation-reason"] = "auto-created-for-cloned-environment"
+	namespace.Annotations["kloudlite.io/forked-from"] = sourceName
+	namespace.Annotations["kloudlite.io/creation-reason"] = "auto-created-for-forked-environment"
 
 	if err := r.Create(ctx, namespace); err != nil && !apierrors.IsAlreadyExists(err) {
-		logger.Error("Failed to create namespace for cloned environment", zap.Error(err))
+		logger.Error("Failed to create namespace for forked environment", zap.Error(err))
 		return err
 	}
-	logger.Info("Successfully created namespace for cloned environment", zap.String("namespace", targetNamespace))
+	logger.Info("Successfully created namespace for forked environment", zap.String("namespace", targetNamespace))
 
 	return nil
 }

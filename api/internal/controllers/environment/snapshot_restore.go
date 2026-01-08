@@ -159,9 +159,9 @@ func (r *EnvironmentReconciler) handleRestorePulling(
 		wmNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
 
 		// Pull to .snapshots/envs/{envName}/ directory
-		// Each environment has its own snapshot folder to avoid conflicts when cloning
+		// Each environment has its own snapshot folder to avoid conflicts when forking
 		// btrfs receive creates the subvolume INSIDE targetDir with the original snapshot name
-		// So if we pull snap3 for env main-clone, it will be created at .snapshots/envs/main-clone/snap3/
+		// So if we pull snap3 for env main-fork, it will be created at .snapshots/envs/main-fork/snap3/
 		snapshotPath := filepath.Join(envSnapshotsBasePath, environment.Name)
 
 		// Parse imageRef to get repository and tag
@@ -671,9 +671,9 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 
 	sourceSnapshotName := environment.Status.SnapshotRestoreStatus.SourceSnapshot
 
-	// Auto-create a snapshot on the cloned environment to maintain lineage
-	if err := r.createClonedSnapshot(ctx, environment, sourceSnapshotName, logger); err != nil {
-		logger.Warn("Failed to auto-create snapshot on cloned environment", zap.Error(err))
+	// Auto-create snapshots on the forked environment to maintain lineage (like git fork)
+	if err := r.forkSnapshotLineage(ctx, environment, sourceSnapshotName, logger); err != nil {
+		logger.Warn("Failed to fork snapshot lineage to new environment", zap.Error(err))
 		// Don't fail the restore - this is best-effort
 	}
 
@@ -700,65 +700,156 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 	return reconcile.Result{Requeue: true}, nil
 }
 
-// createClonedSnapshot creates a snapshot on the cloned environment with proper lineage
-func (r *EnvironmentReconciler) createClonedSnapshot(
+// forkSnapshotLineage copies the entire snapshot lineage to the forked environment (like git fork)
+// Only the direct lineage of the source snapshot is copied, not other branches
+func (r *EnvironmentReconciler) forkSnapshotLineage(
 	ctx context.Context,
 	environment *environmentsv1.Environment,
 	sourceSnapshotName string,
 	logger *zap.Logger,
 ) error {
-	// Get source snapshot to inherit description
-	sourceSnapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: sourceSnapshotName}, sourceSnapshot); err != nil {
-		return fmt.Errorf("failed to get source snapshot: %w", err)
+	// Build the lineage from root to source (walk up, then reverse)
+	lineage, err := r.buildSnapshotLineage(ctx, sourceSnapshotName, logger)
+	if err != nil {
+		return fmt.Errorf("failed to build snapshot lineage: %w", err)
 	}
 
-	// Generate snapshot name for the cloned environment
-	snapshotName := fmt.Sprintf("%s-clone-%d", environment.Name, time.Now().Unix())
-
-	// Create snapshot with inherited description and parent reference
-	restoredAt := metav1.Now()
-	newSnapshot := &snapshotv1.Snapshot{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: snapshotName,
-			Labels: map[string]string{
-				"snapshots.kloudlite.io/environment":  environment.Name,
-				"kloudlite.io/owned-by":               environment.Spec.OwnedBy,
-				"snapshots.kloudlite.io/auto-created": "true",
-			},
-		},
-		Spec: snapshotv1.SnapshotSpec{
-			EnvironmentRef: &snapshotv1.EnvironmentReference{
-				Name: environment.Name,
-			},
-			ParentSnapshotRef: &snapshotv1.ParentSnapshotReference{
-				Name:       sourceSnapshotName,
-				RestoredAt: &restoredAt,
-			},
-			Description:     sourceSnapshot.Spec.Description,
-			OwnedBy:         environment.Spec.OwnedBy,
-			IncludeMetadata: true,
-			RegistryRef: &snapshotv1.SnapshotRegistryRef{
-				Repository: fmt.Sprintf("snapshots/%s", environment.Spec.OwnedBy),
-				AutoPush:   true,
-			},
-		},
+	if len(lineage) == 0 {
+		return fmt.Errorf("no snapshots found in lineage for %s", sourceSnapshotName)
 	}
 
-	if err := r.Create(ctx, newSnapshot); err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			logger.Info("Snapshot already exists for cloned environment", zap.String("snapshot", snapshotName))
-			return nil
+	logger.Info("Forking snapshot lineage to new environment",
+		zap.String("environment", environment.Name),
+		zap.Int("snapshotCount", len(lineage)))
+
+	// Create copies of each snapshot, linking them together
+	var previousCopyName string
+	for i, originalSnapshot := range lineage {
+		// Generate name for the forked snapshot
+		forkName := fmt.Sprintf("%s-%s", environment.Name, originalSnapshot.Name)
+
+		// Check if already exists (idempotent)
+		existing := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: forkName}, existing); err == nil {
+			logger.Info("Forked snapshot already exists, skipping",
+				zap.String("fork", forkName))
+			previousCopyName = forkName
+			continue
 		}
-		return fmt.Errorf("failed to create snapshot: %w", err)
+
+		// Build parent reference - point to previous fork in chain
+		var parentRef *snapshotv1.ParentSnapshotReference
+		if previousCopyName != "" {
+			parentRef = &snapshotv1.ParentSnapshotReference{
+				Name: previousCopyName,
+			}
+		}
+
+		// Create the forked snapshot
+		forkedSnapshot := &snapshotv1.Snapshot{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: forkName,
+				Labels: map[string]string{
+					"snapshots.kloudlite.io/environment":  environment.Name,
+					"kloudlite.io/owned-by":               environment.Spec.OwnedBy,
+					"snapshots.kloudlite.io/forked-from":  originalSnapshot.Name,
+					"snapshots.kloudlite.io/fork-of-env":  originalSnapshot.Labels["snapshots.kloudlite.io/environment"],
+				},
+			},
+			Spec: snapshotv1.SnapshotSpec{
+				EnvironmentRef: &snapshotv1.EnvironmentReference{
+					Name: environment.Name,
+				},
+				ParentSnapshotRef: parentRef,
+				Description:       originalSnapshot.Spec.Description,
+				OwnedBy:           environment.Spec.OwnedBy,
+				IncludeMetadata:   originalSnapshot.Spec.IncludeMetadata,
+			},
+			Status: snapshotv1.SnapshotStatus{
+				// Copy status from original - these are pre-existing snapshots
+				State:            snapshotv1.SnapshotStateReady,
+				SnapshotType:     originalSnapshot.Status.SnapshotType,
+				TargetName:       environment.Name,
+				Message:          fmt.Sprintf("Forked from %s", originalSnapshot.Name),
+				SizeBytes:        originalSnapshot.Status.SizeBytes,
+				SizeHuman:        originalSnapshot.Status.SizeHuman,
+				SnapshotPath:     originalSnapshot.Status.SnapshotPath, // Points to same btrfs snapshot
+				CreatedAt:        originalSnapshot.Status.CreatedAt,
+				WorkMachineName:  originalSnapshot.Status.WorkMachineName,
+				ResourceMetadata: originalSnapshot.Status.ResourceMetadata,
+			},
+		}
+
+		// Set parent label for lineage tracking
+		if parentRef != nil {
+			forkedSnapshot.Labels["snapshots.kloudlite.io/parent"] = parentRef.Name
+		}
+
+		if err := r.Create(ctx, forkedSnapshot); err != nil {
+			if apierrors.IsAlreadyExists(err) {
+				logger.Info("Forked snapshot already exists", zap.String("fork", forkName))
+				previousCopyName = forkName
+				continue
+			}
+			return fmt.Errorf("failed to create forked snapshot %s: %w", forkName, err)
+		}
+
+		logger.Info("Created forked snapshot",
+			zap.String("fork", forkName),
+			zap.String("original", originalSnapshot.Name),
+			zap.Int("index", i+1),
+			zap.Int("total", len(lineage)))
+
+		previousCopyName = forkName
 	}
 
-	logger.Info("Auto-created snapshot on cloned environment",
-		zap.String("snapshot", snapshotName),
-		zap.String("parent", sourceSnapshotName),
-		zap.String("description", sourceSnapshot.Spec.Description))
+	// Update environment's LastRestoredSnapshot to point to the last fork (the leaf)
+	if previousCopyName != "" {
+		now := metav1.Now()
+		environment.Status.LastRestoredSnapshot = &environmentsv1.LastRestoredSnapshotInfo{
+			Name:       previousCopyName,
+			RestoredAt: now,
+		}
+	}
+
+	logger.Info("Successfully forked snapshot lineage",
+		zap.String("environment", environment.Name),
+		zap.Int("snapshotsForked", len(lineage)),
+		zap.String("leafSnapshot", previousCopyName))
 
 	return nil
+}
+
+// buildSnapshotLineage walks up from a snapshot to root and returns lineage from root to leaf
+func (r *EnvironmentReconciler) buildSnapshotLineage(
+	ctx context.Context,
+	snapshotName string,
+	logger *zap.Logger,
+) ([]*snapshotv1.Snapshot, error) {
+	var lineage []*snapshotv1.Snapshot
+
+	currentName := snapshotName
+	for currentName != "" {
+		snapshot := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: currentName}, snapshot); err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Warn("Snapshot not found while building lineage", zap.String("snapshot", currentName))
+				break
+			}
+			return nil, fmt.Errorf("failed to get snapshot %s: %w", currentName, err)
+		}
+
+		// Prepend to build root-to-leaf order
+		lineage = append([]*snapshotv1.Snapshot{snapshot}, lineage...)
+
+		// Move to parent
+		if snapshot.Spec.ParentSnapshotRef == nil {
+			break // Reached root
+		}
+		currentName = snapshot.Spec.ParentSnapshotRef.Name
+	}
+
+	return lineage, nil
 }
 
 // restoreResourcesFromMetadata restores K8s resources from the metadata struct (from OCI layer)

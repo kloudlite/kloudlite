@@ -7,7 +7,7 @@ import {
   environmentCreateSchema,
   environmentUpdateSchema,
   environmentNameSchema,
-  cloneEnvironmentSchema,
+  forkEnvironmentSchema,
   importEnvironmentConfigSchema,
 } from '@/lib/validations'
 
@@ -170,23 +170,23 @@ export async function getEnvironment(name: string) {
 }
 
 /**
- * Server action to clone an environment
+ * Server action to fork an environment
  */
-export async function cloneEnvironment(
+export async function forkEnvironment(
   sourceName: string,
   targetName: string,
   targetNamespace: string,
-  cloneEnvVars: boolean,
-  cloneFiles: boolean,
+  forkEnvVars: boolean,
+  forkFiles: boolean,
   currentUser: string,
 ) {
   // Validate all parameters
-  const validated = cloneEnvironmentSchema.safeParse({
+  const validated = forkEnvironmentSchema.safeParse({
     sourceName,
     targetName,
     targetNamespace,
-    cloneEnvVars,
-    cloneFiles,
+    forkEnvVars,
+    forkFiles,
     currentUser,
   })
   if (!validated.success) {
@@ -197,18 +197,18 @@ export async function cloneEnvironment(
   }
 
   try {
-    const result = await environmentService.cloneEnvironment(
+    const result = await environmentService.forkEnvironment(
       validated.data.sourceName,
       validated.data.targetName,
       validated.data.targetNamespace,
-      validated.data.cloneEnvVars,
-      validated.data.cloneFiles,
+      validated.data.forkEnvVars,
+      validated.data.forkFiles,
       validated.data.currentUser,
     )
     revalidatePath('/environments')
     return { success: true, data: result }
   } catch (err) {
-    console.error('Clone environment error:', err)
+    console.error('Fork environment error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,

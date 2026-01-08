@@ -172,28 +172,18 @@ func (h *SnapshotHandlers) ListSnapshots(c *gin.Context) {
 		return
 	}
 
-	// If environment was cloned from a snapshot, list full lineage by walking parent refs
-	// Otherwise, list snapshots for this specific environment
-	var resultSnapshots []snapshotv1.Snapshot
-
-	if env.Status.LastRestoredSnapshot != nil {
-		// Build lineage by walking parentSnapshotRef chain
-		lineage := h.buildSnapshotLineage(c.Request.Context(), env.Status.LastRestoredSnapshot.Name)
-		resultSnapshots = lineage
-	} else {
-		// Not cloned - list snapshots for this environment only
-		snapshots, err := h.snapshotRepo.ListByEnvironment(c.Request.Context(), envName)
-		if err != nil {
-			h.logger.Error("Failed to list snapshots", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list snapshots"})
-			return
-		}
-		resultSnapshots = snapshots.Items
+	// List snapshots for this environment only
+	// Each environment has its own snapshots, lineage is tracked via ParentSnapshotRef
+	snapshots, err := h.snapshotRepo.ListByEnvironment(c.Request.Context(), envName)
+	if err != nil {
+		h.logger.Error("Failed to list snapshots", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list snapshots"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"snapshots": resultSnapshots,
-		"count":     len(resultSnapshots),
+		"snapshots": snapshots.Items,
+		"count":     len(snapshots.Items),
 	})
 }
 
@@ -748,7 +738,7 @@ func (h *SnapshotHandlers) PullSnapshot(c *gin.Context) {
 	snapshotName := req.Name
 	if snapshotName == "" {
 		timestamp := time.Now().UTC().Format("20060102-150405")
-		snapshotName = fmt.Sprintf("clone-%s", timestamp)
+		snapshotName = fmt.Sprintf("fork-%s", timestamp)
 	}
 
 	// Create snapshot with pull state
@@ -757,7 +747,7 @@ func (h *SnapshotHandlers) PullSnapshot(c *gin.Context) {
 			Name: snapshotName,
 			Labels: map[string]string{
 				"kloudlite.io/owned-by":         username,
-				"snapshots.kloudlite.io/cloned": "true",
+				"snapshots.kloudlite.io/forked": "true",
 			},
 		},
 		Spec: snapshotv1.SnapshotSpec{
@@ -770,12 +760,12 @@ func (h *SnapshotHandlers) PullSnapshot(c *gin.Context) {
 		},
 		Status: snapshotv1.SnapshotStatus{
 			State:   snapshotv1.SnapshotStatePulling,
-			Message: "Cloning snapshot from cloud...",
+			Message: "Forking snapshot from cloud...",
 		},
 	}
 
 	if err := h.snapshotRepo.Create(c.Request.Context(), snapshot); err != nil {
-		h.logger.Error("Failed to create snapshot for clone", zap.Error(err))
+		h.logger.Error("Failed to create snapshot for fork", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to create snapshot",
 			"details": err.Error(),
@@ -783,13 +773,13 @@ func (h *SnapshotHandlers) PullSnapshot(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Snapshot clone from cloud initiated",
+	h.logger.Info("Snapshot fork from cloud initiated",
 		zap.String("snapshot", snapshotName),
 		zap.String("repository", req.Repository),
 		zap.String("tag", req.Tag))
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":  "Snapshot clone from cloud initiated",
+		"message":  "Snapshot fork from cloud initiated",
 		"snapshot": snapshot,
 	})
 }
@@ -974,7 +964,7 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 }
 
 // ListPushedSnapshots handles GET /api/v1/snapshots/pushed
-// Returns all pushed snapshots available for cloning (team-wide access)
+// Returns all pushed snapshots available for forking (team-wide access)
 func (h *SnapshotHandlers) ListPushedSnapshots(c *gin.Context) {
 	// Get authenticated user
 	_, _, _, exists := middleware.GetUserFromContext(c)

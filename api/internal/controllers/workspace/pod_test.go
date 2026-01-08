@@ -7,6 +7,7 @@ import (
 
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -17,7 +18,20 @@ import (
 
 func TestHasActiveConnections_PodNotFound(t *testing.T) {
 	scheme := testutil.NewTestScheme()
-	k8sClient := testutil.NewFakeClient(scheme).Build()
+
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
+	k8sClient := testutil.NewFakeClient(scheme, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -31,6 +45,9 @@ func TestHasActiveConnections_PodNotFound(t *testing.T) {
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
+		Spec: workspacev1.WorkspaceSpec{
+			WorkmachineName: "test-workmachine",
+		},
 	}
 
 	hasConnections, count, err := reconciler.hasActiveConnections(context.Background(), workspace)
@@ -43,17 +60,32 @@ func TestHasActiveConnections_PodNotFound(t *testing.T) {
 func TestHasActiveConnections_PodNoPodIP(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
 	// Pod without PodIP
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "ws-test-workspace",
 			Namespace: "test-namespace",
 		},
 		Status: corev1.PodStatus{
@@ -62,7 +94,7 @@ func TestHasActiveConnections_PodNoPodIP(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, pod).Build()
+	k8sClient := testutil.NewFakeClient(scheme, pod, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -80,17 +112,32 @@ func TestHasActiveConnections_PodNoPodIP(t *testing.T) {
 func TestHasActiveConnections_PodNotRunning(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
 	// Pod in pending state
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "ws-test-workspace",
 			Namespace: "test-namespace",
 		},
 		Status: corev1.PodStatus{
@@ -99,7 +146,7 @@ func TestHasActiveConnections_PodNotRunning(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, pod).Build()
+	k8sClient := testutil.NewFakeClient(scheme, pod, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -117,10 +164,25 @@ func TestHasActiveConnections_PodNotRunning(t *testing.T) {
 func TestHasActiveConnections_PodJustStarted(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
@@ -128,7 +190,7 @@ func TestHasActiveConnections_PodJustStarted(t *testing.T) {
 	startTime := metav1.NewTime(time.Now().Add(-1 * time.Minute))
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "ws-test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: corev1.PodSpec{
@@ -143,7 +205,7 @@ func TestHasActiveConnections_PodJustStarted(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, pod).Build()
+	k8sClient := testutil.NewFakeClient(scheme, pod, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -161,10 +223,25 @@ func TestHasActiveConnections_PodJustStarted(t *testing.T) {
 func TestHasActiveConnections_NoContainers(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
@@ -172,7 +249,7 @@ func TestHasActiveConnections_NoContainers(t *testing.T) {
 	startTime := metav1.NewTime(time.Now().Add(-10 * time.Minute))
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "ws-test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: corev1.PodSpec{
@@ -185,7 +262,7 @@ func TestHasActiveConnections_NoContainers(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, pod).Build()
+	k8sClient := testutil.NewFakeClient(scheme, pod, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -203,17 +280,32 @@ func TestHasActiveConnections_NoContainers(t *testing.T) {
 func TestIsWorkspaceIdle_WithActiveConnections(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
 	// Pod not running (which counts as active during startup)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "ws-test-workspace",
 			Namespace: "test-namespace",
 		},
 		Status: corev1.PodStatus{
@@ -222,7 +314,7 @@ func TestIsWorkspaceIdle_WithActiveConnections(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, pod).Build()
+	k8sClient := testutil.NewFakeClient(scheme, pod, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -240,17 +332,32 @@ func TestIsWorkspaceIdle_WithActiveConnections(t *testing.T) {
 func TestIsWorkspaceIdle_NoConnections(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
+		},
+		Spec: workspacev1.WorkspaceSpec{
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
 	// Pod with no IP (no connections possible)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "ws-test-workspace",
 			Namespace: "test-namespace",
 		},
 		Status: corev1.PodStatus{
@@ -259,7 +366,7 @@ func TestIsWorkspaceIdle_NoConnections(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, pod).Build()
+	k8sClient := testutil.NewFakeClient(scheme, pod, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -277,20 +384,33 @@ func TestIsWorkspaceIdle_NoConnections(t *testing.T) {
 func TestCheckAndSuspendIdleWorkspace_AutoStopNotEnabled(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			Status: "active",
+			WorkmachineName: "test-workmachine",
+			Status:          "active",
 			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop: false, // Auto-stop not enabled
 			},
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
 		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
@@ -317,6 +437,18 @@ func TestCheckAndSuspendIdleWorkspace_AutoStopNotEnabled(t *testing.T) {
 func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	// Set LastActivityTime to 31 minutes ago (exceeds 30 min timeout)
 	lastActivityTime := metav1.NewTime(time.Now().Add(-31 * time.Minute))
 
@@ -326,7 +458,8 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			Status: "active",
+			WorkmachineName: "test-workmachine",
+			Status:          "active",
 			Settings: &workspacev1.WorkspaceSettings{
 				AutoStop:    true,
 				IdleTimeout: 30, // 30 minutes
@@ -340,7 +473,7 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 	// Pod with no connections (idle)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "workspace-test-workspace",
+			Name:      "ws-test-workspace",
 			Namespace: "test-namespace",
 		},
 		Status: corev1.PodStatus{
@@ -349,7 +482,7 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace, pod).
+	k8sClient := testutil.NewFakeClient(scheme, workspace, pod, workMachine).
 		WithStatusSubresource(&workspacev1.Workspace{}).
 		Build()
 
@@ -376,19 +509,32 @@ func TestCheckAndSuspendIdleWorkspace_IdleTimeoutExceeded(t *testing.T) {
 func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
 		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
@@ -401,8 +547,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 
 	// Create workspace pod
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Find the workspace container
 	var workspaceContainer *corev1.Container
@@ -412,7 +559,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 			break
 		}
 	}
-	assert.NotNil(t, workspaceContainer, "workspace container not found")
+	if workspaceContainer == nil {
+		t.Fatal("workspace container not found")
+	}
 
 	// Verify nix-store volume mount is at /nix (single mount, not three subPath mounts)
 	var nixStoreMount *corev1.VolumeMount
@@ -451,19 +600,32 @@ func TestWorkspaceReconciler_CreateWorkspacePod_NixVolumeMount(t *testing.T) {
 func TestWorkspaceReconciler_CreateWorkspacePod_KloudliteBinMount(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
 		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
@@ -476,8 +638,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_KloudliteBinMount(t *testing.T) 
 
 	// Create workspace pod
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Find the workspace container
 	var workspaceContainer *corev1.Container
@@ -487,7 +650,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_KloudliteBinMount(t *testing.T) 
 			break
 		}
 	}
-	assert.NotNil(t, workspaceContainer, "workspace container not found")
+	if workspaceContainer == nil {
+		t.Fatal("workspace container not found")
+	}
 
 	// Verify kloudlite-bin volume mount is at /kloudlite/bin (NOT /usr/local/bin/kl with SubPath)
 	var klBinMount *corev1.VolumeMount
@@ -548,19 +713,32 @@ func TestWorkspaceReconciler_CreateWorkspacePod_KloudliteBinMount(t *testing.T) 
 func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).
 		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 
@@ -573,8 +751,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 
 	// Create workspace pod
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Find the init-workspace-dir init container
 	var initContainer *corev1.Container
@@ -584,7 +763,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 			break
 		}
 	}
-	assert.NotNil(t, initContainer, "init-workspace-dir container not found")
+	if initContainer == nil {
+		t.Fatal("init-workspace-dir container not found")
+	}
 
 	// Verify the init container command includes PATH configuration in /etc/environment
 	commandStr := ""
@@ -600,15 +781,28 @@ func TestWorkspaceReconciler_CreateWorkspacePod_PathInEnvironmentFile(t *testing
 func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 			ResourceQuota: &workspacev1.ResourceQuota{
 				CPU:    "2",
 				Memory: "4Gi",
@@ -616,7 +810,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -626,8 +820,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T
 	}
 
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Find workspace container
 	var workspaceContainer *corev1.Container
@@ -637,7 +832,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T
 			break
 		}
 	}
-	assert.NotNil(t, workspaceContainer)
+	if workspaceContainer == nil {
+		t.Fatal("workspace container not found")
+	}
 
 	// Verify custom resource limits applied
 	assert.Equal(t, "2", workspaceContainer.Resources.Limits.Cpu().String())
@@ -647,15 +844,28 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomResourceQuota(t *testing.T
 func TestWorkspaceReconciler_CreateWorkspacePod_CustomEnvironmentVariables(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 			Settings: &workspacev1.WorkspaceSettings{
 				EnvironmentVariables: map[string]string{
 					"CUSTOM_VAR": "custom-value",
@@ -665,7 +875,7 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomEnvironmentVariables(t *te
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -675,8 +885,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomEnvironmentVariables(t *te
 	}
 
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Find workspace container
 	var workspaceContainer *corev1.Container
@@ -686,7 +897,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomEnvironmentVariables(t *te
 			break
 		}
 	}
-	assert.NotNil(t, workspaceContainer)
+	if workspaceContainer == nil {
+		t.Fatal("workspace container not found")
+	}
 
 	// Verify custom environment variables are set
 	envVars := make(map[string]string)
@@ -701,6 +914,18 @@ func TestWorkspaceReconciler_CreateWorkspacePod_CustomEnvironmentVariables(t *te
 func TestWorkspaceReconciler_CreateWorkspacePod_StartupScript(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	startupScript := "#!/bin/bash\necho 'Starting workspace'"
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -708,16 +933,17 @@ func TestWorkspaceReconciler_CreateWorkspacePod_StartupScript(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 			Settings: &workspacev1.WorkspaceSettings{
 				StartupScript: startupScript,
 			},
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -727,8 +953,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_StartupScript(t *testing.T) {
 	}
 
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Find workspace container
 	var workspaceContainer *corev1.Container
@@ -738,7 +965,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_StartupScript(t *testing.T) {
 			break
 		}
 	}
-	assert.NotNil(t, workspaceContainer)
+	if workspaceContainer == nil {
+		t.Fatal("workspace container not found")
+	}
 
 	// Verify startup script environment variable is set
 	var startupScriptEnv *corev1.EnvVar
@@ -756,19 +985,32 @@ func TestWorkspaceReconciler_CreateWorkspacePod_StartupScript(t *testing.T) {
 func TestWorkspaceReconciler_CreateWorkspacePod_SSHHostKeys(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -778,8 +1020,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_SSHHostKeys(t *testing.T) {
 	}
 
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Find workspace container
 	var workspaceContainer *corev1.Container
@@ -789,7 +1032,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_SSHHostKeys(t *testing.T) {
 			break
 		}
 	}
-	assert.NotNil(t, workspaceContainer)
+	if workspaceContainer == nil {
+		t.Fatal("workspace container not found")
+	}
 
 	// Verify SSH host key mounts
 	sshKeyMounts := []string{}
@@ -807,19 +1052,32 @@ func TestWorkspaceReconciler_CreateWorkspacePod_SSHHostKeys(t *testing.T) {
 func TestWorkspaceReconciler_CreateWorkspacePod_DNSConfiguration(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-workmachine",
+		},
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+			DisplayName:     "Test WorkMachine",
+			OwnedBy:         "test@example.com",
+			MachineType:     "m5.large",
+		},
+	}
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-workspace",
 			Namespace: "test-namespace",
 		},
 		Spec: workspacev1.WorkspaceSpec{
-			DisplayName: "Test Workspace",
-			OwnedBy:     "test@example.com",
-			Status:      "active",
+			DisplayName:     "Test Workspace",
+			OwnedBy:         "test@example.com",
+			Status:          "active",
+			WorkmachineName: "test-workmachine",
 		},
 	}
 
-	k8sClient := testutil.NewFakeClient(scheme, workspace).Build()
+	k8sClient := testutil.NewFakeClient(scheme, workspace, workMachine).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &WorkspaceReconciler{
@@ -829,8 +1087,9 @@ func TestWorkspaceReconciler_CreateWorkspacePod_DNSConfiguration(t *testing.T) {
 	}
 
 	pod, err := reconciler.createWorkspacePod(workspace)
-	assert.NoError(t, err)
-	assert.NotNil(t, pod)
+	if err != nil || pod == nil {
+		t.Fatalf("Failed to create workspace pod: err=%v, pod=%v", err, pod)
+	}
 
 	// Verify DNS policy is set to None (manual management)
 	assert.Equal(t, corev1.DNSNone, pod.Spec.DNSPolicy)

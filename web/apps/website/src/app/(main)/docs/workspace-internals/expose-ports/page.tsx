@@ -97,11 +97,11 @@ export default function ExposePortsPage() {
       {/* Next Links */}
       <div className="border-t pt-8 space-y-4">
         <Link
-          href="/docs/workspace-internals/cloning-sharing"
+          href="/docs/workspace-internals/forking-sharing"
           className="bg-card border p-4 hover:border-primary transition-colors flex items-center justify-between gap-4 no-underline"
         >
           <div>
-            <p className="text-foreground font-medium m-0">Cloning & Sharing</p>
+            <p className="text-foreground font-medium m-0">Forking Cloning & Sharing Sharing</p>
             <p className="text-muted-foreground text-sm m-0">Share workspaces with your team</p>
           </div>
           <ArrowRight className="h-5 w-5 text-muted-foreground" />
