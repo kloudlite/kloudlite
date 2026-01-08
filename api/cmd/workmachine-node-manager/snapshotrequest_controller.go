@@ -173,31 +173,22 @@ func (r *SnapshotRequestReconciler) createSnapshot(req *snapshotv1.SnapshotReque
 	// Note: K8s resource metadata is stored in the OCI layer's metadata.json during push,
 	// not as files in the snapshot directory. This allows read-only btrfs snapshots.
 
-	// Check if source is a btrfs subvolume
+	// Check if source is a btrfs subvolume - this is required for proper snapshots
 	checkScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", sourcePath)
 	if _, err := r.CmdExec.Execute(checkScript); err != nil {
 		// Source might not exist or not be a subvolume
 		// Try to check if it's a regular directory
 		checkDirScript := fmt.Sprintf("test -d %s", sourcePath)
 		if _, dirErr := r.CmdExec.Execute(checkDirScript); dirErr != nil {
-			logger.Warn("Source path does not exist, creating empty snapshot directory",
-				zap2.String("source", sourcePath))
-			// Create empty directory as placeholder
-			mkdirScript := fmt.Sprintf("mkdir -p %s", snapshotPath)
-			if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
-				return fmt.Errorf("failed to create placeholder directory: %s - %w", string(output), err)
-			}
-			return nil
+			// Source doesn't exist - this is an error, not a fallback
+			return fmt.Errorf("source path does not exist: %s", sourcePath)
 		}
 
-		// Source exists but is not a subvolume - create a regular copy
-		logger.Info("Source is not a btrfs subvolume, using rsync copy",
+		// Source exists but is not a subvolume - this is an error
+		// Snapshots require btrfs subvolumes to support push/pull operations
+		logger.Error("Source is not a btrfs subvolume, cannot create snapshot",
 			zap2.String("source", sourcePath))
-		copyScript := fmt.Sprintf("rsync -a --delete %s/ %s/", sourcePath, snapshotPath)
-		if output, err := r.CmdExec.Execute(copyScript); err != nil {
-			return fmt.Errorf("rsync failed: %s - %w", string(output), err)
-		}
-		return nil
+		return fmt.Errorf("source path is not a btrfs subvolume: %s (snapshots require btrfs subvolumes for push/pull support)", sourcePath)
 	}
 
 	// Sync filesystem before snapshot to ensure all writes are flushed
