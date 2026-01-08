@@ -181,6 +181,16 @@ func (h *SnapshotHandlers) ListSnapshots(c *gin.Context) {
 		return
 	}
 
+	// Debug logging to trace snapshot listing
+	snapshotNames := make([]string, len(snapshots.Items))
+	for i, s := range snapshots.Items {
+		snapshotNames[i] = s.Name
+	}
+	h.logger.Info("ListSnapshots returning snapshots",
+		zap.String("environment", envName),
+		zap.Int("count", len(snapshots.Items)),
+		zap.Strings("snapshots", snapshotNames))
+
 	c.JSON(http.StatusOK, gin.H{
 		"snapshots": snapshots.Items,
 		"count":     len(snapshots.Items),
