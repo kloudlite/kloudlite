@@ -76,7 +76,7 @@ export interface ConnectedEnvironmentInfo {
   availableServices?: string[]
 }
 
-export interface WorkspaceCloningStatus {
+export interface WorkspaceForkingStatus {
   phase?: string
   message?: string
   sourceWorkspaceName?: string
@@ -96,7 +96,7 @@ export interface WorkspaceCloningStatus {
   errorMessage?: string
 }
 
-export interface WorkspaceSourceCloningStatus {
+export interface WorkspaceSourceForkingStatus {
   targetWorkspaceName?: string
   suspended?: boolean
 }
@@ -134,8 +134,8 @@ export interface WorkspaceStatus {
   idleState?: 'active' | 'idle' | string
   idleSince?: string // ISO timestamp of when idle started
   lastActivityTime?: string // ISO timestamp of last activity
-  cloningStatus?: WorkspaceCloningStatus
-  sourceCloningStatus?: WorkspaceSourceCloningStatus
+  forkingStatus?: WorkspaceForkingStatus
+  sourceForkingStatus?: WorkspaceSourceForkingStatus
   // Hash and subdomain for VPN-accessible URLs
   hash?: string // 8-character hash derived from owner-workspaceName
   subdomain?: string // Subdomain from workmachine (e.g., "beanbag.khost.dev")

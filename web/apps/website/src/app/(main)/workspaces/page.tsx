@@ -150,7 +150,7 @@ export default function WorkspacesPage() {
                       <GitBranch className="h-5 w-5 text-foreground/40" />
                     </div>
                     <div>
-                      <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Workspace Cloning</h3>
+                      <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Workspace Forking</h3>
                       <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
                         Clone your workspace for parallel development. Run multiple experiments or AI agents simultaneously.
                       </p>

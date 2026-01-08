@@ -27,7 +27,7 @@ import {
 import { CreateEnvironmentDialog } from '@/components/dialogs/create-environment'
 import { EditEnvironmentDialog } from '@/components/dialogs/edit-environment'
 import { DeleteEnvironmentConfirm } from '@/components/dialogs/delete-environment-confirm'
-import { CloneEnvironmentDialog } from '@/components/dialogs/clone-environment'
+import { ForkEnvironmentDialog } from '@/components/dialogs/fork-environment'
 import { ImportEnvironmentDialog } from '@/components/dialogs/import-environment'
 import { activateEnvironment, deactivateEnvironment, exportEnvironmentConfig } from '@/app/actions/environment.actions'
 import { pinEnvironment, unpinEnvironment } from '@/app/actions/user-preferences.actions'
@@ -42,19 +42,19 @@ interface EnvironmentsListProps {
   pinnedEnvironmentIds?: string[]
 }
 
-// Format cloning phase to user-friendly text
-function formatCloningPhase(phase: string | undefined): string {
+// Format forking phase to user-friendly text
+function formatForkingPhase(phase: string | undefined): string {
   if (!phase) return 'Preparing...'
 
   const phaseMap: Record<string, string> = {
     'Pending': 'Preparing...',
     'Suspending': 'Pausing source environment...',
-    'CloningResources': 'Copying configurations...',
-    'CloningPVCs': 'Creating volumes...',
+    'ForkingResources': 'Copying configurations...',
+    'ForkingPVCs': 'Creating volumes...',
     'CreatingCopyJobs': 'Starting data transfer...',
     'WaitingForCopyCompletion': 'Copying data...',
     'VerifyingCopies': 'Verifying data...',
-    'CloningCompositions': 'Cloning services...',
+    'ForkingCompositions': 'Forking services...',
     'Resuming': 'Resuming source...',
     'Completed': 'Completed',
     'Failed': 'Failed',
@@ -115,7 +115,7 @@ export function EnvironmentsList({
   const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [cloneDialogOpen, setCloneDialogOpen] = useState(false)
+  const [forkDialogOpen, setForkDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
@@ -153,7 +153,7 @@ export function EnvironmentsList({
           env.status === 'deleting' ||
           env.status === 'activating' ||
           env.status === 'deactivating' ||
-          env.status === 'cloning',
+          env.status === 'forking',
       )
 
       if (hasTransitionalEnv) {
@@ -231,8 +231,8 @@ export function EnvironmentsList({
     setDeleteConfirmOpen(true)
   }
 
-  const handleCloneClick = () => {
-    setCloneDialogOpen(true)
+  const handleForkClick = () => {
+    setForkDialogOpen(true)
   }
 
   const handleCreateSuccess = () => {
@@ -244,9 +244,9 @@ export function EnvironmentsList({
     })
   }
 
-  const handleCloneSuccess = () => {
-    toast.success('Environment cloned', {
-      description: 'The environment has been cloned successfully.',
+  const handleForkSuccess = () => {
+    toast.success('Environment forked', {
+      description: 'The environment has been forked successfully.',
     })
     startTransition(() => {
       router.refresh()
@@ -426,7 +426,7 @@ export function EnvironmentsList({
                                   ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                   : env.status === 'error'
                                     ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                    : env.status === 'cloning'
+                                    : env.status === 'forking'
                                       ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                                       : 'bg-secondary text-secondary-foreground'
                       }`}
@@ -434,23 +434,23 @@ export function EnvironmentsList({
                       {(env.status === 'deleting' ||
                         env.status === 'activating' ||
                         env.status === 'deactivating' ||
-                        env.status === 'cloning') && <Loader2 className="h-3 w-3 animate-spin" />}
+                        env.status === 'forking') && <Loader2 className="h-3 w-3 animate-spin" />}
                       {env.status}
                     </span>
-                    {/* Show cloning progress inline */}
-                    {env.status === 'cloning' && env.cloningStatus && (
+                    {/* Show forking progress inline */}
+                    {env.status === 'forking' && env.forkingStatus && (
                       <span className="text-muted-foreground text-xs">
-                        {env.sourceCloningStatus ? (
+                        {env.sourceForkingStatus ? (
                           <span className="italic">
-                            → {formatEnvironmentName(env.sourceCloningStatus.targetEnvironmentName)}
+                            → {formatEnvironmentName(env.sourceForkingStatus.targetEnvironmentName)}
                           </span>
                         ) : (
                           <span className="flex items-center gap-2">
-                            <span>{formatCloningPhase(env.cloningStatus.phase)}</span>
-                            {env.cloningStatus.totalPVCs && env.cloningStatus.totalPVCs > 0 && (
+                            <span>{formatForkingPhase(env.forkingStatus.phase)}</span>
+                            {env.forkingStatus.totalPVCs && env.forkingStatus.totalPVCs > 0 && (
                               <>
                                 <span className="text-muted-foreground/50">•</span>
-                                <span>{env.cloningStatus.clonedPVCs || 0}/{env.cloningStatus.totalPVCs} volumes</span>
+                                <span>{env.forkingStatus.forkedPVCs || 0}/{env.forkingStatus.totalPVCs} volumes</span>
                               </>
                             )}
                           </span>
@@ -460,7 +460,7 @@ export function EnvironmentsList({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
-                  {env.status === 'deleting' || env.status === 'cloning' ? (
+                  {env.status === 'deleting' || env.status === 'forking' ? (
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
                       <MoreHorizontal className="h-4 w-4 opacity-30" />
                     </Button>
@@ -508,7 +508,7 @@ export function EnvironmentsList({
                             {workMachineRunning ? 'Activate' : 'Activate (WorkMachine stopped)'}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => handleCloneClick()}>
+                        <DropdownMenuItem onClick={() => handleForkClick()}>
                           <Copy className="mr-2 h-4 w-4" />
                           Create from Snapshot
                         </DropdownMenuItem>
@@ -575,10 +575,10 @@ export function EnvironmentsList({
         />
       )}
 
-      <CloneEnvironmentDialog
-        open={cloneDialogOpen}
-        onOpenChange={setCloneDialogOpen}
-        onSuccess={handleCloneSuccess}
+      <ForkEnvironmentDialog
+        open={forkDialogOpen}
+        onOpenChange={setForkDialogOpen}
+        onSuccess={handleForkSuccess}
       />
 
       <ImportEnvironmentDialog

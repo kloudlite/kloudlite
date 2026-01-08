@@ -51,12 +51,12 @@ const changelog: ChangelogEntry[] = [
     title: 'AI-Powered Development',
     highlights: [
       'AI agent integrations for Claude Code, Cursor, and OpenCode',
-      'Workspace cloning for parallel development workflows',
+      'Workspace forking for parallel development workflows',
     ],
     changes: {
       added: [
         'AI agent integration support with automatic context sharing',
-        'Workspace cloning with isolated git worktrees',
+        'Workspace forking with isolated git worktrees',
         'Automated code scanning and security analysis',
         'New workspace templates for AI-assisted development',
       ],
@@ -98,15 +98,15 @@ const changelog: ChangelogEntry[] = [
   {
     version: '0.3.0',
     date: 'Oct 10, 2024',
-    title: 'Environment Cloning',
+    title: 'Environment Forking',
     highlights: [
       'Clone entire environments with all services and configs',
       'Share environments with team members instantly',
     ],
     changes: {
       added: [
-        'One-click environment cloning',
-        'Selective resource cloning options',
+        'One-click environment forking',
+        'Selective resource forking options',
         'Environment sharing with granular permissions',
         'Environment comparison view',
       ],

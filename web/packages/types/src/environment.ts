@@ -48,19 +48,19 @@ export interface EnvironmentSpec {
   networkPolicies?: NetworkPolicies
   labels?: Record<string, string>
   annotations?: Record<string, string>
-  cloneFrom?: string
+  forkFrom?: string
 }
 
-// Cloning status types
-export type CloningPhase =
+// Forking status types
+export type ForkingPhase =
   | 'Pending'
   | 'Suspending'
-  | 'CloningResources'
-  | 'CloningPVCs'
+  | 'ForkingResources'
+  | 'ForkingPVCs'
   | 'CreatingCopyJobs'
   | 'WaitingForCopyCompletion'
   | 'VerifyingCopies'
-  | 'CloningCompositions'
+  | 'ForkingCompositions'
   | 'Resuming'
   | 'Completed'
   | 'Failed'
@@ -78,11 +78,11 @@ export interface PVCCopyJobStatus {
   errorMessage?: string
 }
 
-export interface CloningStatus {
-  phase: CloningPhase
+export interface ForkingStatus {
+  phase: ForkingPhase
   message?: string
   totalPVCs?: number
-  clonedPVCs?: number
+  forkedPVCs?: number
   currentPVC?: string
   bytesTransferred?: number
   startTime?: string
@@ -91,11 +91,11 @@ export interface CloningStatus {
   copyJobsStatus?: PVCCopyJobStatus[]
 }
 
-export type SourceCloningPhase = 'Suspended' | 'Copying' | 'Resuming'
+export type SourceForkingPhase = 'Suspended' | 'Copying' | 'Resuming'
 
-export interface SourceCloningStatus {
+export interface SourceForkingStatus {
   targetEnvironmentName: string
-  phase: SourceCloningPhase
+  phase: SourceForkingPhase
   message?: string
   startTime?: string
 }
@@ -118,8 +118,8 @@ export interface EnvironmentStatus {
     message?: string
     lastTransitionTime?: string
   }>
-  cloningStatus?: CloningStatus
-  sourceCloningStatus?: SourceCloningStatus
+  forkingStatus?: ForkingStatus
+  sourceForkingStatus?: SourceForkingStatus
   hash?: string
   subdomain?: string
   lastRestoredSnapshot?: {
@@ -267,7 +267,7 @@ export interface EnvironmentUIModel {
   id: string
   name: string
   owner: string
-  status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'cloning'
+  status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'forking'
   created: string
   targetNamespace: string
   services: number
@@ -275,8 +275,8 @@ export interface EnvironmentUIModel {
   secrets: number
   workspaces: string[]
   lastDeployed: string
-  cloningStatus?: CloningStatus
-  sourceCloningStatus?: SourceCloningStatus
+  forkingStatus?: ForkingStatus
+  sourceForkingStatus?: SourceForkingStatus
   spec?: EnvironmentSpec
 }
 
@@ -299,17 +299,17 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     createdText = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
   }
 
-  // Determine status: prioritize cloning, then deletionTimestamp, then status.state, then spec.activated
-  let status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'cloning'
+  // Determine status: prioritize forking, then deletionTimestamp, then status.state, then spec.activated
+  let status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'forking'
 
-  // Check if environment is being cloned (either as target or source)
-  const isCloning =
-    (env.status?.cloningStatus &&
-      !['Completed', 'Failed'].includes(env.status.cloningStatus.phase)) ||
-    env.status?.sourceCloningStatus
+  // Check if environment is being forked (either as target or source)
+  const isForking =
+    (env.status?.forkingStatus &&
+      !['Completed', 'Failed'].includes(env.status.forkingStatus.phase)) ||
+    env.status?.sourceForkingStatus
 
-  if (isCloning) {
-    status = 'cloning'
+  if (isForking) {
+    status = 'forking'
   } else if (env.metadata.deletionTimestamp) {
     // If deletionTimestamp is set, the resource is being deleted
     status = 'deleting'
@@ -335,8 +335,8 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     lastDeployed: env.status?.lastActivatedTime
       ? new Date(env.status.lastActivatedTime).toLocaleString()
       : 'Never',
-    cloningStatus: env.status?.cloningStatus,
-    sourceCloningStatus: env.status?.sourceCloningStatus,
+    forkingStatus: env.status?.forkingStatus,
+    sourceForkingStatus: env.status?.sourceForkingStatus,
     spec: env.spec,
   }
 }

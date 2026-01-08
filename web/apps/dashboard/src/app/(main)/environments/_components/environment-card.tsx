@@ -70,7 +70,7 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                  Clone Environment
+                  Fork Environment
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                   Export Config

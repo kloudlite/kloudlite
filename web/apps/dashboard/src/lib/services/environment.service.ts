@@ -158,14 +158,14 @@ export class EnvironmentService {
   }
 
   /**
-   * Clone an environment by creating a new environment with cloneFrom field
+   * Fork an environment by creating a new environment with forkFrom field
    */
-  async cloneEnvironment(
+  async forkEnvironment(
     sourceName: string,
     targetName: string,
     targetNamespace: string,
-    _cloneEnvVars: boolean,
-    _cloneFiles: boolean,
+    _forkEnvVars: boolean,
+    _forkFiles: boolean,
     currentUser: string,
   ): Promise<EnvironmentResponse> {
     const request: EnvironmentCreateRequest = {
@@ -174,7 +174,7 @@ export class EnvironmentService {
         targetNamespace,
         ownedBy: currentUser,
         activated: false,
-        cloneFrom: sourceName,
+        forkFrom: sourceName,
       },
     }
     return this.createEnvironment(request)

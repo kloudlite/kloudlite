@@ -1,20 +1,18 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { Loader2, Camera, Check, ChevronsUpDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@kloudlite/ui'
 import { Button } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@kloudlite/ui'
+import { Alert, AlertDescription } from '@kloudlite/ui'
 import {
   Command,
   CommandEmpty,
@@ -28,56 +26,37 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@kloudlite/ui'
-import { listPushedSnapshots, createWorkspaceFromSnapshot } from '@/app/actions/snapshot.actions'
-import { toast } from 'sonner'
+import { Loader2, AlertCircle, Camera, Check, ChevronsUpDown } from 'lucide-react'
+import { listPushedSnapshots, createEnvironmentFromSnapshot } from '@/app/actions/snapshot.actions'
 import type { Snapshot } from '@/lib/services/snapshot.service'
 import { cn } from '@/lib/utils'
 
-interface CloneWorkspaceSheetProps {
-  trigger?: React.ReactNode
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
+interface ForkEnvironmentDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
   preselectedSnapshot?: Snapshot
 }
 
-export function CloneWorkspaceSheet({
-  trigger,
-  open: controlledOpen,
+export function ForkEnvironmentDialog({
+  open,
   onOpenChange,
+  onSuccess,
   preselectedSnapshot,
-}: CloneWorkspaceSheetProps) {
-  const router = useRouter()
-  const [internalOpen, setInternalOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+}: ForkEnvironmentDialogProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false)
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
   const [popoverOpen, setPopoverOpen] = useState(false)
-
-  // Use controlled state if provided, otherwise use internal state
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
-  const setOpen = onOpenChange || setInternalOpen
-
-  // Form fields
-  const [name, setName] = useState('')
   const [selectedSnapshot, setSelectedSnapshot] = useState<Snapshot | null>(preselectedSnapshot || null)
+  const [name, setName] = useState('')
 
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Clean up polling interval on unmount
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-        pollIntervalRef.current = null
-      }
-    }
-  }, [])
-
-  // Load pushed snapshots when sheet opens
+  // Load pushed snapshots when dialog opens
   useEffect(() => {
     if (open) {
       setIsLoadingSnapshots(true)
-      listPushedSnapshots('workspace').then((result) => {
+      listPushedSnapshots('environment').then((result) => {
         if (result.success && result.data) {
           setSnapshots(result.data.snapshots || [])
         }
@@ -87,72 +66,107 @@ export function CloneWorkspaceSheet({
       // Set preselected snapshot if provided
       if (preselectedSnapshot) {
         setSelectedSnapshot(preselectedSnapshot)
-        // Suggest a default name based on snapshot source
         const sourceName = preselectedSnapshot.status.targetName || preselectedSnapshot.metadata.name
-        setName(`${sourceName}-clone`)
+        setName(`${sourceName}-fork`)
       } else {
         setSelectedSnapshot(null)
         setName('')
       }
+      setError(null)
     }
   }, [open, preselectedSnapshot])
 
+  const validateNamespace = (name: string): string | null => {
+    if (!name) {
+      return 'Namespace name is required'
+    }
+    if (name.length > 63) {
+      return 'Namespace name must be no more than 63 characters'
+    }
+    if (name.includes('--')) {
+      return 'Environment name cannot contain "--" (double hyphens)'
+    }
+    const dnsLabelRegex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/
+    if (!dnsLabelRegex.test(name)) {
+      return 'Namespace name must consist of lower case alphanumeric characters or "-", and must start and end with an alphanumeric character'
+    }
+
+    const reservedNamespaces = [
+      'kube-system',
+      'kube-public',
+      'kube-node-lease',
+      'default',
+      'kloudlite-system',
+    ]
+
+    if (reservedNamespaces.includes(name)) {
+      return `Cannot use reserved namespace name: ${name}`
+    }
+
+    const reservedPrefixes = ['kube-', 'openshift-', 'kubernetes-']
+    for (const prefix of reservedPrefixes) {
+      if (name.startsWith(prefix)) {
+        return `Cannot use namespace name with reserved prefix: ${prefix}`
+      }
+    }
+
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!name.trim()) {
-      toast.error('Please enter a workspace name')
-      return
-    }
+    setError(null)
 
     if (!selectedSnapshot) {
-      toast.error('Please select a snapshot')
+      setError('Please select a snapshot')
       return
     }
 
-    startTransition(async () => {
-      // Generate resource name from display name
-      const normalizedName = name
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
+    // Validate environment name
+    const nameError = validateNamespace(name)
+    if (nameError) {
+      setError(`Environment name: ${nameError}`)
+      return
+    }
 
-      const result = await createWorkspaceFromSnapshot({
-        name: normalizedName,
-        displayName: name.trim(),
+    setLoading(true)
+
+    try {
+      const result = await createEnvironmentFromSnapshot({
+        name,
         snapshotName: selectedSnapshot.metadata.name,
+        activated: true,
       })
 
       if (result.success) {
-        toast.success('Workspace creation initiated from snapshot')
-        setOpen(false)
+        // Reset form
         setName('')
         setSelectedSnapshot(null)
+        onOpenChange(false)
 
-        // Immediately refresh and then poll for a few seconds to catch state changes
-        router.refresh()
-
-        // Clear any existing interval before starting a new one
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
+        // Call success callback
+        if (onSuccess) {
+          onSuccess()
         }
-
-        // Poll every second for 10 seconds to catch the workspace state updates
-        let pollCount = 0
-        pollIntervalRef.current = setInterval(() => {
-          router.refresh()
-          pollCount++
-          if (pollCount >= 10 && pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current)
-            pollIntervalRef.current = null
-          }
-        }, 1000)
       } else {
-        toast.error(result.error || 'Failed to create workspace from snapshot')
+        setError(result.error || 'Failed to create environment from snapshot. Please try again.')
       }
-    })
+    } catch (err) {
+      console.error('Failed to create environment from snapshot:', err)
+      const error = err instanceof Error ? err : new Error('Failed to create environment from snapshot')
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClose = () => {
+    if (!loading) {
+      setName('')
+      setSelectedSnapshot(null)
+      setError(null)
+      onOpenChange(false)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -167,19 +181,21 @@ export function CloneWorkspaceSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
-      <SheetContent side="right" className="w-full sm:max-w-lg">
-        <form onSubmit={handleSubmit} className="flex h-full flex-col">
-          <SheetHeader>
-            <SheetTitle>Create Workspace from Snapshot</SheetTitle>
-            <SheetDescription>
-              Create a new workspace from a pushed snapshot. The snapshot will be pulled from the
-              registry and restored.
-            </SheetDescription>
-          </SheetHeader>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-lg">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              Create Environment from Snapshot
+            </DialogTitle>
+            <DialogDescription>
+              Create a new environment from a pushed snapshot. The snapshot will be pulled from the
+              registry and all resources will be restored.
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="flex-1 space-y-6 overflow-y-auto p-4">
+          <div className="space-y-4 py-4">
             {/* Snapshot Selection */}
             <div className="space-y-2">
               <Label>Select Snapshot *</Label>
@@ -190,7 +206,7 @@ export function CloneWorkspaceSheet({
                     role="combobox"
                     aria-expanded={popoverOpen}
                     className="w-full justify-between font-normal"
-                    disabled={isPending || isLoadingSnapshots}
+                    disabled={loading || isLoadingSnapshots}
                   >
                     {isLoadingSnapshots ? (
                       <span className="text-muted-foreground flex items-center gap-2">
@@ -214,7 +230,7 @@ export function CloneWorkspaceSheet({
                     <CommandList>
                       <CommandEmpty>
                         {snapshots.length === 0
-                          ? 'No pushed snapshots available. Push a snapshot first to clone from it.'
+                          ? 'No pushed snapshots available. Push a snapshot first to fork from it.'
                           : 'No matching snapshots found.'}
                       </CommandEmpty>
                       <CommandGroup>
@@ -228,7 +244,7 @@ export function CloneWorkspaceSheet({
                               // Suggest name based on source
                               if (!name) {
                                 const sourceName = snapshot.status.targetName || snapshot.metadata.name
-                                setName(`${sourceName}-clone`)
+                                setName(`${sourceName}-fork`)
                               }
                             }}
                           >
@@ -262,74 +278,51 @@ export function CloneWorkspaceSheet({
 
             {/* Selected Snapshot Info */}
             {selectedSnapshot && (
-              <div className="bg-muted space-y-2 rounded-lg p-4">
+              <div className="bg-muted space-y-2 rounded-lg p-3">
                 <div className="text-sm font-medium">Snapshot Details</div>
                 <div className="text-muted-foreground text-xs space-y-1">
                   <div>Tag: {selectedSnapshot.status.registryStatus?.tag || 'N/A'}</div>
                   <div>Source: {selectedSnapshot.spec.ownedBy}/{selectedSnapshot.status.targetName}</div>
                   <div>Size: {selectedSnapshot.status.sizeHuman || 'N/A'}</div>
-                  {selectedSnapshot.status.registryStatus?.imageRef && (
-                    <div className="font-mono text-xs break-all">
-                      Image: {selectedSnapshot.status.registryStatus.imageRef}
-                    </div>
-                  )}
-                </div>
-                <div className="bg-background mt-2 rounded border p-2 text-xs">
-                  <div className="font-medium">What will be restored:</div>
-                  <ul className="text-muted-foreground mt-1 list-inside list-disc space-y-0.5">
-                    <li>All files and directories from the snapshot</li>
-                    <li>Package specifications (packages will be reinstalled)</li>
-                    <li>Workspace configuration</li>
-                  </ul>
                 </div>
               </div>
             )}
 
-            {/* New Workspace Name */}
+            {/* New Environment Name */}
             <div className="space-y-2">
-              <Label htmlFor="name">New Workspace Name *</Label>
+              <Label htmlFor="name">New Environment Name *</Label>
               <Input
                 id="name"
-                placeholder="my-new-workspace"
+                placeholder="my-forked-environment"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                disabled={isPending}
-                className="font-mono text-sm"
+                disabled={loading}
+                required
               />
               <p className="text-muted-foreground text-xs">
-                The workspace name will be used to create the workspace resources
+                Must be lowercase alphanumeric or &quot;-&quot;, max 63 characters
               </p>
             </div>
 
-            {/* Info Notice */}
-            <div className="bg-blue-50 dark:bg-blue-950/20 space-y-2 rounded-lg border border-blue-200 p-4 dark:border-blue-900">
-              <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                Snapshot Cloning
-              </div>
-              <p className="text-xs text-blue-800 dark:text-blue-200">
-                The snapshot will be pulled from the registry and a new workspace will be created.
-                This process may take a few minutes depending on the snapshot size. The workspace
-                will start automatically after restoration is complete.
-              </p>
-            </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
 
-          <SheetFooter className="p-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isPending}
-            >
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || !selectedSnapshot}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create from Snapshot
+            <Button type="submit" disabled={loading || !selectedSnapshot}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading ? 'Creating...' : 'Create from Snapshot'}
             </Button>
-          </SheetFooter>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

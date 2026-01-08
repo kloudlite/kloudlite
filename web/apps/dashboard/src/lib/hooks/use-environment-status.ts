@@ -3,11 +3,11 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { useWebSocket } from './use-websocket'
 
-interface CloningStatus {
+interface ForkingStatus {
   phase: string
   message?: string
   totalPVCs?: number
-  clonedPVCs?: number
+  forkedPVCs?: number
   currentPVC?: string
   bytesTransferred?: number
   startTime?: string
@@ -20,7 +20,7 @@ interface EnvironmentStatusEvent {
   state: string
   message: string
   activated: boolean
-  cloningStatus?: CloningStatus
+  forkingStatus?: ForkingStatus
   timestamp: string
 }
 
@@ -83,7 +83,7 @@ export function useEnvironmentStatus(
     state: status?.state,
     message: status?.message,
     activated: status?.activated,
-    cloningStatus: status?.cloningStatus,
+    forkingStatus: status?.forkingStatus,
     isConnected,
     error,
     reconnect,
@@ -91,9 +91,9 @@ export function useEnvironmentStatus(
     isActivating: status?.state === 'activating',
     isInactive: status?.state === 'inactive',
     isDeactivating: status?.state === 'deactivating',
-    isCloning:
-      status?.cloningStatus?.phase !== undefined &&
-      status?.cloningStatus?.phase !== 'Completed',
+    isForking:
+      status?.forkingStatus?.phase !== undefined &&
+      status?.forkingStatus?.phase !== 'Completed',
     isError: status?.state === 'error',
   }
 }

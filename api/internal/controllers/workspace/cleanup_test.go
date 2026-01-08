@@ -2,11 +2,11 @@ package workspace
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
+	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -25,6 +25,7 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 	tests := []struct {
 		name                string
 		workspace           *workspacev1.Workspace
+		workMachine         *workmachinev1.WorkMachine
 		existingPod         *corev1.Pod
 		expectFinalizerGone bool
 		expectError         bool
@@ -38,15 +39,27 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 					Finalizers: []string{workspaceFinalizer},
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					OwnedBy:     "test-user",
-					DisplayName: "Test Workspace",
-					Status:      "active",
+					OwnedBy:         "test-user",
+					DisplayName:     "Test Workspace",
+					Status:          "active",
+					WorkmachineName: "test-workmachine",
+				},
+			},
+			workMachine: &workmachinev1.WorkMachine{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-workmachine",
+				},
+				Spec: workmachinev1.WorkMachineSpec{
+					TargetNamespace: "wm-test-user",
+					DisplayName:     "Test WorkMachine",
+					OwnedBy:         "test-user",
+					MachineType:     "m5.large",
 				},
 			},
 			existingPod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "workspace-test-workspace",
-					Namespace: "default",
+					Name:      "ws-test-workspace",
+					Namespace: "wm-test-user",
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -66,9 +79,21 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 					Finalizers: []string{workspaceFinalizer},
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					OwnedBy:     "test-user",
-					DisplayName: "Test Workspace 2",
-					Status:      "active",
+					OwnedBy:         "test-user",
+					DisplayName:     "Test Workspace 2",
+					Status:          "active",
+					WorkmachineName: "test-workmachine-2",
+				},
+			},
+			workMachine: &workmachinev1.WorkMachine{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-workmachine-2",
+				},
+				Spec: workmachinev1.WorkMachineSpec{
+					TargetNamespace: "wm-test-user",
+					DisplayName:     "Test WorkMachine 2",
+					OwnedBy:         "test-user",
+					MachineType:     "m5.large",
 				},
 			},
 			existingPod:         nil,
@@ -84,9 +109,21 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 					Finalizers: []string{}, // No finalizer
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					OwnedBy:     "test-user",
-					DisplayName: "Test Workspace 3",
-					Status:      "active",
+					OwnedBy:         "test-user",
+					DisplayName:     "Test Workspace 3",
+					Status:          "active",
+					WorkmachineName: "test-workmachine-3",
+				},
+			},
+			workMachine: &workmachinev1.WorkMachine{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-workmachine-3",
+				},
+				Spec: workmachinev1.WorkMachineSpec{
+					TargetNamespace: "wm-test-user",
+					DisplayName:     "Test WorkMachine 3",
+					OwnedBy:         "test-user",
+					MachineType:     "m5.large",
 				},
 			},
 			existingPod:         nil,
@@ -99,6 +136,9 @@ func TestWorkspaceReconciler_handleDeletion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Build list of objects to initialize
 			objects := []client.Object{tt.workspace}
+			if tt.workMachine != nil {
+				objects = append(objects, tt.workMachine)
+			}
 			if tt.existingPod != nil {
 				objects = append(objects, tt.existingPod)
 			}
@@ -324,6 +364,7 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 	tests := []struct {
 		name              string
 		workspace         *workspacev1.Workspace
+		workMachine       *workmachinev1.WorkMachine
 		existingPod       *corev1.Pod
 		expectedPhase     string
 		expectedMessage   string
@@ -337,15 +378,27 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					OwnedBy:     "test-user",
-					DisplayName: "Test Workspace",
-					Status:      "suspended",
+					OwnedBy:         "test-user",
+					DisplayName:     "Test Workspace",
+					Status:          "suspended",
+					WorkmachineName: "test-workmachine",
+				},
+			},
+			workMachine: &workmachinev1.WorkMachine{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-workmachine",
+				},
+				Spec: workmachinev1.WorkMachineSpec{
+					TargetNamespace: "wm-test-user",
+					DisplayName:     "Test WorkMachine",
+					OwnedBy:         "test-user",
+					MachineType:     "m5.large",
 				},
 			},
 			existingPod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "workspace-test-workspace",
-					Namespace: "default",
+					Name:      "ws-test-workspace",
+					Namespace: "wm-test-user",
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -368,9 +421,21 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: workspacev1.WorkspaceSpec{
-					OwnedBy:     "test-user",
-					DisplayName: "Test Workspace 2",
-					Status:      "suspended",
+					OwnedBy:         "test-user",
+					DisplayName:     "Test Workspace 2",
+					Status:          "suspended",
+					WorkmachineName: "test-workmachine-2",
+				},
+			},
+			workMachine: &workmachinev1.WorkMachine{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-workmachine-2",
+				},
+				Spec: workmachinev1.WorkMachineSpec{
+					TargetNamespace: "wm-test-user",
+					DisplayName:     "Test WorkMachine 2",
+					OwnedBy:         "test-user",
+					MachineType:     "m5.large",
 				},
 			},
 			existingPod:       nil,
@@ -384,6 +449,9 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Build list of objects to initialize
 			objects := []client.Object{tt.workspace}
+			if tt.workMachine != nil {
+				objects = append(objects, tt.workMachine)
+			}
 			if tt.existingPod != nil {
 				objects = append(objects, tt.existingPod)
 			}
@@ -424,11 +492,11 @@ func TestWorkspaceReconciler_handleSuspendedWorkspace(t *testing.T) {
 			assert.Equal(t, tt.expectedMessage, updatedWorkspace.Status.Message)
 
 			// Verify pod deletion
-			if tt.expectPodDeletion {
+			if tt.expectPodDeletion && tt.existingPod != nil {
 				pod := &corev1.Pod{}
 				err = k8sClient.Get(context.Background(), types.NamespacedName{
-					Name:      fmt.Sprintf("workspace-%s", tt.workspace.Name),
-					Namespace: tt.workspace.Namespace,
+					Name:      tt.existingPod.Name,
+					Namespace: tt.existingPod.Namespace,
 				}, pod)
 				// Pod should have deletion timestamp
 				assert.True(t, apierrors.IsNotFound(err) || pod.DeletionTimestamp != nil)

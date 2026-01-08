@@ -211,15 +211,15 @@ func TestCompositionReconciler_EnvironmentActivationStateTracking(t *testing.T) 
 			description:          "Should skip reconciliation when already running and activation state matches",
 		},
 		{
-			name: "Reconcile cloned composition with inherited running state",
+			name: "Reconcile forked composition with inherited running state",
 			compositionStatus: compositionsv1.CompositionStatus{
 				State:                compositionsv1.CompositionStateRunning,
 				ObservedGeneration:   1,
-				EnvironmentActivated: false, // Cloned composition has default false
+				EnvironmentActivated: false, // Forked composition has default false
 			},
 			environmentActivated: true, // But actual environment is activated
 			expectReconciliation: true,
-			description:          "Should reconcile cloned composition despite showing running state",
+			description:          "Should reconcile forked composition despite showing running state",
 		},
 	}
 

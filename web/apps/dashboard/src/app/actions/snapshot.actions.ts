@@ -177,7 +177,7 @@ export async function pullSnapshot(
 }
 
 /**
- * Server action to list pushed snapshots available for cloning
+ * Server action to list pushed snapshots available for forking
  */
 export async function listPushedSnapshots(type?: 'workspace' | 'environment') {
   try {

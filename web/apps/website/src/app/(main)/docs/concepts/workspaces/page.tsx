@@ -114,7 +114,7 @@ export default function WorkspaceOverviewPage() {
               <h3 className="text-card-foreground text-lg font-semibold m-0">Clone to work independently</h3>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed m-0">
-              Clone workspaces like git worktrees. Run parallel copies for AI-assisted coding
+              Fork workspaces like git worktrees. Run parallel copies for AI-assisted coding
               or testing different approaches.
             </p>
           </div>

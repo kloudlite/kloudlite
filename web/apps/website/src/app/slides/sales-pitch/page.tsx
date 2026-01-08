@@ -879,7 +879,7 @@ function DemoCloneEnv({ show }: SlideProps) {
     <div className="w-full max-w-4xl px-8 text-center">
       <A show={show} delay={0} from="fade">
         <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-4">
-          Demo — Clone Environment
+          Demo — Fork Environment
         </p>
       </A>
       <A show={show} delay={100} from="bottom">
@@ -909,7 +909,7 @@ function DemoCloneEnv({ show }: SlideProps) {
       </A>
       <A show={show} delay={600} from="scale">
         <div className="bg-foreground/5 border border-foreground/10 p-4 font-mono text-sm inline-block mt-8">
-          <span className="text-foreground/50">$</span> <span className="text-primary">kl</span> env clone staging --name feature-auth-v2
+          <span className="text-foreground/50">$</span> <span className="text-primary">kl</span> env fork staging --name feature-auth-v2
         </div>
       </A>
       <A show={show} delay={750} from="fade">
@@ -926,7 +926,7 @@ function DemoCloneWorkspace({ show }: SlideProps) {
     <div className="w-full max-w-4xl px-8 text-center">
       <A show={show} delay={0} from="fade">
         <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-4">
-          Demo — Clone Workspace
+          Demo — Fork Workspace
         </p>
       </A>
       <A show={show} delay={100} from="bottom">
@@ -948,7 +948,7 @@ function DemoCloneWorkspace({ show }: SlideProps) {
           </div>
           <ChevronRight className="h-6 w-6 text-primary" />
           <div className="p-4 border-2 border-primary bg-primary/5 text-left">
-            <p className="text-primary text-xs uppercase tracking-wider mb-2">Cloned For</p>
+            <p className="text-primary text-xs uppercase tracking-wider mb-2">Forked For</p>
             <p className="font-semibold text-primary">bob-review</p>
             <p className="text-foreground/70 text-xs mt-1">Exact same state</p>
           </div>
@@ -956,7 +956,7 @@ function DemoCloneWorkspace({ show }: SlideProps) {
       </A>
       <A show={show} delay={600} from="scale">
         <div className="bg-foreground/5 border border-foreground/10 p-4 font-mono text-sm inline-block mt-8">
-          <span className="text-foreground/50">$</span> <span className="text-primary">kl</span> workspace clone --name bob-review
+          <span className="text-foreground/50">$</span> <span className="text-primary">kl</span> workspace fork --name bob-review
         </div>
       </A>
       <A show={show} delay={750} from="fade">
@@ -1007,17 +1007,17 @@ function AIGitWorktree({ show }: SlideProps) {
       </A>
       <A show={show} delay={100} from="bottom">
         <h3 className="text-3xl lg:text-5xl font-bold tracking-tight mb-4">
-          Clone workspaces for parallel work
+          Fork workspaces for parallel work
         </h3>
       </A>
       <A show={show} delay={250} from="fade">
         <p className="text-lg text-foreground/70 mb-8">
-          Each branch gets its own workspace clone. Work on multiple features simultaneously.
+          Each branch gets its own workspace fork. Work on multiple features simultaneously.
         </p>
       </A>
       <A show={show} delay={400} from="scale">
         <div className="border border-foreground/10 p-6 inline-block text-left">
-          <p className="text-foreground/40 text-xs uppercase tracking-wider mb-4">Active Workspace Clones</p>
+          <p className="text-foreground/40 text-xs uppercase tracking-wider mb-4">Active Workspace Forks</p>
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-primary"></div>
@@ -1039,7 +1039,7 @@ function AIGitWorktree({ show }: SlideProps) {
       </A>
       <A show={show} delay={600} from="fade">
         <p className="text-foreground/50 text-sm mt-8">
-          AI agents work in isolated clones. No conflicts with your code.
+          AI agents work in isolated forks. No conflicts with your code.
         </p>
       </A>
     </div>

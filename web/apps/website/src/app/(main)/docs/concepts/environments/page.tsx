@@ -52,7 +52,7 @@ export default function EnvironmentOverviewPage() {
                 <h3 className="text-card-foreground text-lg font-semibold m-0">Clonable</h3>
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed m-0">
-                Clone environments to get your own isolated copy.
+                Fork environments to get your own isolated copy.
               </p>
             </div>
 
@@ -88,10 +88,10 @@ export default function EnvironmentOverviewPage() {
           <div className="bg-card border p-6">
             <div className="flex items-center gap-3 mb-3">
               <Copy className="h-5 w-5 text-primary" />
-              <h3 className="text-card-foreground text-lg font-semibold m-0">Clone for isolation</h3>
+              <h3 className="text-card-foreground text-lg font-semibold m-0">Fork for isolation</h3>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed m-0">
-              Clone an environment to get your own copy with the same composition, configuration,
+              Fork an environment to get your own copy with the same composition, configuration,
               and data. Perfect for testing changes without affecting others.
             </p>
           </div>

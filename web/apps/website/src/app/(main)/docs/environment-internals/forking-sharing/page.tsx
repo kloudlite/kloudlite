@@ -4,18 +4,18 @@ import { ArrowRight, Users, Copy } from 'lucide-react'
 
 const tocItems = [
   { id: 'sharing', title: 'Sharing Environments' },
-  { id: 'cloning', title: 'Cloning Environments' },
+  { id: 'forking', title: 'Forking Environments' },
 ]
 
-export default function EnvironmentCloningSharingPage() {
+export default function EnvironmentForkingSharingPage() {
   return (
     <DocsContentLayout tocItems={tocItems}>
       <h1 className="text-foreground mb-6 text-3xl sm:text-4xl font-bold tracking-tight">
-        Cloning & Sharing
+        Forking & Sharing
       </h1>
 
       <p className="text-muted-foreground mb-12 leading-relaxed">
-        Share environments with your team or clone them to create isolated copies for testing.
+        Share environments with your team or fork them to create isolated copies for testing.
       </p>
 
       {/* Sharing */}
@@ -48,15 +48,15 @@ export default function EnvironmentCloningSharingPage() {
         </div>
       </section>
 
-      {/* Cloning */}
-      <section id="cloning" className="mb-12">
+      {/* Forking */}
+      <section id="forking" className="mb-12">
         <div className="bg-card border p-6">
           <div className="flex items-center gap-3 mb-3">
             <Copy className="h-5 w-5 text-primary" />
-            <h3 className="text-card-foreground text-lg font-semibold m-0">Cloning environments</h3>
+            <h3 className="text-card-foreground text-lg font-semibold m-0">Forking environments</h3>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-            Clone any environment that is shared with or owned by you to create your own{' '}
+            Fork any environment that is shared with or owned by you to create your own{' '}
             <strong className="text-foreground">isolated copy</strong> with the same composition
             and configuration.
           </p>
@@ -77,7 +77,7 @@ export default function EnvironmentCloningSharingPage() {
             <div>
               <p className="text-foreground text-sm font-medium mb-1">Reproduced issues</p>
               <p className="text-muted-foreground text-xs m-0">
-                Clone a production-like environment to debug issues in isolation.
+                Fork a production-like environment to debug issues in isolation.
               </p>
             </div>
           </div>

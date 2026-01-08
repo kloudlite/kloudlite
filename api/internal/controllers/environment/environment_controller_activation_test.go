@@ -188,9 +188,38 @@ func TestEnvironmentReconciler_DeactivationStatusUpdate(t *testing.T) {
 		},
 	}
 
-	result, err := reconciler.Reconcile(context.Background(), req)
+	// Deactivation is a multi-step process:
+	// 1. First reconcile transitions to "deactivating"
+	// 2. Subsequent reconciles complete the deactivation to "inactive"
+	// Run reconciliation loop until we reach inactive or max iterations
+	maxIterations := 10
+	var result reconcile.Result
+	var err error
+	for i := 0; i < maxIterations; i++ {
+		result, err = reconciler.Reconcile(context.Background(), req)
+		if err != nil {
+			break
+		}
+
+		// Check current state
+		updatedEnv := &environmentsv1.Environment{}
+		err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-env"}, updatedEnv)
+		if err != nil {
+			break
+		}
+
+		// If we've reached inactive state, we're done
+		if updatedEnv.Status.State == environmentsv1.EnvironmentStateInactive {
+			break
+		}
+
+		// If no requeue requested and not inactive, something is wrong
+		if !result.Requeue && result.RequeueAfter == 0 {
+			break
+		}
+	}
+
 	assert.NoError(t, err)
-	assert.False(t, result.Requeue)
 
 	// Verify status was updated to inactive
 	updatedEnv := &environmentsv1.Environment{}

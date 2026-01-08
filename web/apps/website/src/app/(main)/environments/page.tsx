@@ -131,7 +131,7 @@ export default function EnvironmentsPage() {
                     <div>
                       <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Clonable</h3>
                       <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
-                        Clone environments to get your own isolated copy with the same services and data. Perfect for experimentation.
+                        Fork environments to get your own isolated copy with the same services and data. Perfect for experimentation.
                       </p>
                     </div>
                   </div>
@@ -214,9 +214,9 @@ export default function EnvironmentsPage() {
                       <Copy className="h-5 w-5 text-foreground/40" />
                     </div>
                     <div>
-                      <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Clone for Isolation</h3>
+                      <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Fork for Isolation</h3>
                       <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
-                        Clone an environment to get your own copy with the same configuration. Test changes without affecting others.
+                        Fork an environment to get your own copy with the same configuration. Test changes without affecting others.
                       </p>
                     </div>
                   </div>

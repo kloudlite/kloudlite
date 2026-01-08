@@ -340,7 +340,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			snapshots := protected.Group("/snapshots")
 			{
 				snapshots.GET("", snapshotHandlers.ListAllSnapshots)
-				snapshots.GET("/pushed", snapshotHandlers.ListPushedSnapshots) // List pushed snapshots for cloning
+				snapshots.GET("/pushed", snapshotHandlers.ListPushedSnapshots) // List pushed snapshots for forking
 				snapshots.GET("/:name", snapshotHandlers.GetSnapshot)
 				snapshots.POST("/:name/restore", snapshotHandlers.RestoreSnapshot)
 				snapshots.POST("/:name/push", snapshotHandlers.PushSnapshot) // Push snapshot to registry

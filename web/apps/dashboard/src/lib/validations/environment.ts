@@ -60,7 +60,7 @@ export const environmentSpecSchema = z.object({
   networkPolicies: networkPoliciesSchema,
   labels: z.record(z.string()).optional(),
   annotations: z.record(z.string()).optional(),
-  cloneFrom: z.string().optional(),
+  forkFrom: z.string().optional(),
 })
 
 // Environment create request schema
@@ -81,7 +81,7 @@ export const environmentUpdateSpecSchema = z.object({
   networkPolicies: networkPoliciesSchema,
   labels: z.record(z.string()).optional(),
   annotations: z.record(z.string()).optional(),
-  cloneFrom: z.string().optional(),
+  forkFrom: z.string().optional(),
 })
 
 // Environment update request schema
@@ -89,13 +89,13 @@ export const environmentUpdateSchema = z.object({
   spec: environmentUpdateSpecSchema,
 })
 
-// Clone environment schema
-export const cloneEnvironmentSchema = z.object({
+// Fork environment schema
+export const forkEnvironmentSchema = z.object({
   sourceName: kubernetesNameSchema,
   targetName: kubernetesNameSchema,
   targetNamespace: kubernetesNameSchema,
-  cloneEnvVars: z.boolean(),
-  cloneFiles: z.boolean(),
+  forkEnvVars: z.boolean(),
+  forkFiles: z.boolean(),
   currentUser: z.string(),
 })
 
@@ -153,7 +153,7 @@ export const environmentNameSchema = kubernetesNameSchema
 // Export types
 export type EnvironmentCreateInput = z.infer<typeof environmentCreateSchema>
 export type EnvironmentUpdateInput = z.infer<typeof environmentUpdateSchema>
-export type CloneEnvironmentInput = z.infer<typeof cloneEnvironmentSchema>
+export type ForkEnvironmentInput = z.infer<typeof forkEnvironmentSchema>
 export type EnvVarInput = z.infer<typeof envVarSchema>
 export type FileInput = z.infer<typeof fileSchema>
 export type ImportEnvironmentConfigInput = z.infer<typeof importEnvironmentConfigSchema>

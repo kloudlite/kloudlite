@@ -274,7 +274,7 @@ type ResourceCount struct {
 
 // FromSnapshotRef specifies a pushed snapshot to create the environment from
 type FromSnapshotRef struct {
-	// SnapshotName is the name of the snapshot resource to clone from
+	// SnapshotName is the name of the snapshot resource to fork from
 	// The snapshot must have status.registryStatus.pushed=true
 	// +kubebuilder:validation:Required
 	SnapshotName string `json:"snapshotName"`
@@ -376,8 +376,8 @@ const (
 	// EnvironmentConditionNetworkPolicyApplied indicates network policies have been applied
 	EnvironmentConditionNetworkPolicyApplied EnvironmentConditionType = "NetworkPolicyApplied"
 
-	// EnvironmentConditionCloned indicates resources have been cloned from source environment
-	EnvironmentConditionCloned EnvironmentConditionType = "Cloned"
+	// EnvironmentConditionForked indicates resources have been forked from source environment
+	EnvironmentConditionForked EnvironmentConditionType = "Forked"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -30,7 +30,7 @@ import {
   archiveWorkspace,
 } from '@/app/actions/workspace.actions'
 import { pinWorkspace, unpinWorkspace } from '@/app/actions/user-preferences.actions'
-import { CloneWorkspaceSheet } from './clone-workspace-sheet'
+import { ForkWorkspaceSheet } from './fork-workspace-sheet'
 import { toast } from 'sonner'
 
 interface WorkspaceRowActionsProps {
@@ -44,7 +44,7 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [showCloneSheet, setShowCloneSheet] = useState(false)
+  const [showForkSheet, setShowForkSheet] = useState(false)
 
   const handlePin = async () => {
     const result = await pinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
@@ -139,13 +139,13 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
             onSelect={(e) => {
               e.preventDefault()
               if (workMachineRunning) {
-                setShowCloneSheet(true)
+                setShowForkSheet(true)
               }
             }}
             className={!workMachineRunning ? "text-muted-foreground cursor-not-allowed" : ""}
             disabled={!workMachineRunning}
           >
-            {workMachineRunning ? 'Clone' : 'Clone (VM stopped)'}
+            {workMachineRunning ? 'Fork' : 'Fork (VM stopped)'}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {workspace.spec.status !== 'suspended' && (
@@ -178,9 +178,9 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <CloneWorkspaceSheet
-        open={showCloneSheet}
-        onOpenChange={setShowCloneSheet}
+      <ForkWorkspaceSheet
+        open={showForkSheet}
+        onOpenChange={setShowForkSheet}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

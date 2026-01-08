@@ -4,18 +4,18 @@ import { ArrowRight, Users, Copy } from 'lucide-react'
 
 const tocItems = [
   { id: 'sharing', title: 'Sharing Workspaces' },
-  { id: 'cloning', title: 'Cloning Workspaces' },
+  { id: 'forking', title: 'Forking Workspaces' },
 ]
 
-export default function CloningSharingPage() {
+export default function ForkingSharingPage() {
   return (
     <DocsContentLayout tocItems={tocItems}>
       <h1 className="text-foreground mb-6 text-3xl sm:text-4xl font-bold tracking-tight">
-        Cloning & Sharing
+        Forking & Sharing
       </h1>
 
       <p className="text-muted-foreground mb-12 leading-relaxed">
-        Share your workspace with teammates or clone it to run parallel copies for different tasks.
+        Share your workspace with teammates or fork it to run parallel copies for different tasks.
       </p>
 
       {/* Sharing */}
@@ -50,15 +50,15 @@ export default function CloningSharingPage() {
         </div>
       </section>
 
-      {/* Cloning */}
-      <section id="cloning" className="mb-12">
+      {/* Forking */}
+      <section id="forking" className="mb-12">
         <div className="bg-card border p-6">
           <div className="flex items-center gap-3 mb-3">
             <Copy className="h-5 w-5 text-primary" />
-            <h3 className="text-card-foreground text-lg font-semibold m-0">Cloning workspaces</h3>
+            <h3 className="text-card-foreground text-lg font-semibold m-0">Forking workspaces</h3>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-            Clone any workspace that is shared with or owned by you to create your own independent copy.
+            Fork any workspace that is shared with or owned by you to create your own independent copy.
             Works like <strong className="text-foreground">git worktrees</strong> for your
             development environment.
           </p>
@@ -67,7 +67,7 @@ export default function CloningSharingPage() {
             <div>
               <p className="text-foreground text-sm font-medium mb-1">AI-assisted coding</p>
               <p className="text-muted-foreground text-xs m-0">
-                Run an AI agent in a cloned workspace while you continue working in the original.
+                Run an AI agent in a forked workspace while you continue working in the original.
               </p>
             </div>
             <div>
@@ -79,7 +79,7 @@ export default function CloningSharingPage() {
             <div>
               <p className="text-foreground text-sm font-medium mb-1">Team onboarding</p>
               <p className="text-muted-foreground text-xs m-0">
-                Clone a configured workspace to quickly onboard new team members with the same setup.
+                Fork a configured workspace to quickly onboard new team members with the same setup.
               </p>
             </div>
           </div>
