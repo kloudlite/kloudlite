@@ -48,11 +48,9 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   // Fetch real environment data using the cached getEnvironmentDetails
   // This allows child pages (like services) to share the same cached call
   let environment
-  let isActive = false
   try {
     const data = await getEnvironmentDetails(id)
     const env = data.environment
-    isActive = data.isActive
 
     environment = {
       id,
@@ -106,7 +104,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
                   />
                 </div>
               </div>
-              <EnvironmentSnapshotsSheet environmentName={environment.name} isActive={isActive} />
+              <EnvironmentSnapshotsSheet environmentName={environment.name} />
             </div>
           </div>
         </div>

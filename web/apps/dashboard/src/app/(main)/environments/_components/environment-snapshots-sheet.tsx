@@ -6,7 +6,6 @@ import {
   Camera,
   Plus,
   Loader2,
-  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import {
@@ -53,10 +52,9 @@ import { SnapshotTimeline } from '@/app/(main)/workspaces/_components/snapshot-t
 interface EnvironmentSnapshotsSheetProps {
   environmentName: string
   trigger?: React.ReactNode
-  isActive?: boolean
 }
 
-export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive = false }: EnvironmentSnapshotsSheetProps) {
+export function EnvironmentSnapshotsSheet({ environmentName, trigger }: EnvironmentSnapshotsSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
@@ -234,23 +232,17 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
           {/* Sticky Create Section */}
           <div className="border-b bg-muted/30 px-6 py-4">
             <div className="space-y-3">
-              {!isActive && (
-                <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <p className="text-xs">Environment must be active to create snapshots</p>
-                </div>
-              )}
               <div className="flex gap-2">
                 <Input
                   placeholder="Snapshot description (optional)"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  disabled={isCreating || !isActive}
+                  disabled={isCreating}
                   className="flex-1"
                 />
                 <Button
                   onClick={handleCreate}
-                  disabled={isCreating || !isActive}
+                  disabled={isCreating}
                   size="sm"
                 >
                   {isCreating ? (
@@ -275,7 +267,6 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger, isActive =
                   onRestore={handleRestoreClick}
                   onDelete={handleDeleteClick}
                   onPush={handlePushClick}
-                  disabled={!isActive}
                   currentSnapshotName={currentSnapshotName}
                 />
               ) : (
