@@ -257,12 +257,23 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 		// Continue - this is not a fatal error
 	}
 
-	// Update status to Ready
+	// Auto-create RegistryRef if not provided (all snapshots push their incremental data)
+	if snapshot.Spec.RegistryRef == nil {
+		snapshot.Spec.RegistryRef = &snapshotv1.SnapshotRegistryRef{
+			Repository: fmt.Sprintf("snapshots/%s/ws/%s", snapshot.Spec.OwnedBy, snapshot.Status.WorkspaceName),
+		}
+		// Update spec with registry ref
+		if err := r.Update(ctx, snapshot); err != nil {
+			logger.Warn("Failed to update snapshot with RegistryRef", zap.Error(err))
+		}
+	}
+
+	// Update status and transition to Pushing state (auto-push after creation)
 	// Use workspaceSnapshotPath (the actual btrfs subvolume) for SnapshotPath
 	now := metav1.Now()
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-		snapshot.Status.State = snapshotv1.SnapshotStateReady
-		snapshot.Status.Message = "Workspace snapshot created successfully"
+		snapshot.Status.State = snapshotv1.SnapshotStatePushing
+		snapshot.Status.Message = "Pushing snapshot to registry..."
 		snapshot.Status.SnapshotPath = workspaceSnapshotPath
 		snapshot.Status.SizeBytes = totalSize
 		snapshot.Status.SizeHuman = formatSize(totalSize)
@@ -270,7 +281,7 @@ func (r *SnapshotReconciler) handleWorkspaceCreating(ctx context.Context, snapsh
 		snapshot.Status.PackageRequestsPath = packageRequestsPath
 		return nil
 	}, logger); err != nil {
-		logger.Error("Failed to update status to Ready", zap.Error(err))
+		logger.Error("Failed to update status to Pushing", zap.Error(err))
 		return reconcile.Result{}, err
 	}
 

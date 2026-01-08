@@ -109,6 +109,7 @@ type RetentionPolicy struct {
 }
 
 // SnapshotRegistryRef configures registry push/pull settings
+// All snapshots automatically push their incremental data to the registry
 type SnapshotRegistryRef struct {
 	// Repository is the registry repository path (e.g., "snapshots/username")
 	// +kubebuilder:validation:Required
@@ -117,10 +118,6 @@ type SnapshotRegistryRef struct {
 	// Tag is the image tag (defaults to snapshot name)
 	// +optional
 	Tag string `json:"tag,omitempty"`
-
-	// AutoPush automatically pushes to registry when snapshot is ready
-	// +optional
-	AutoPush bool `json:"autoPush,omitempty"`
 }
 
 // SnapshotState represents the current state of a snapshot

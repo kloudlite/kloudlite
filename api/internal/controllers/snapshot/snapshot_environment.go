@@ -295,11 +295,22 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		logger.Warn("Failed to get SnapshotRequest for size", zap.Error(err))
 	}
 
-	// Update status to Ready
+	// Auto-create RegistryRef if not provided (all snapshots push their incremental data)
+	if snapshot.Spec.RegistryRef == nil {
+		snapshot.Spec.RegistryRef = &snapshotv1.SnapshotRegistryRef{
+			Repository: fmt.Sprintf("snapshots/%s/env/%s", snapshot.Spec.OwnedBy, snapshot.Spec.EnvironmentRef.Name),
+		}
+		// Update spec with registry ref
+		if err := r.Update(ctx, snapshot); err != nil {
+			logger.Warn("Failed to update snapshot with RegistryRef", zap.Error(err))
+		}
+	}
+
+	// Update status and transition to Pushing state (auto-push after creation)
 	now := metav1.Now()
 	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-		snapshot.Status.State = snapshotv1.SnapshotStateReady
-		snapshot.Status.Message = "Snapshot created successfully"
+		snapshot.Status.State = snapshotv1.SnapshotStatePushing
+		snapshot.Status.Message = "Pushing snapshot to registry..."
 		snapshot.Status.SnapshotPath = snapshotPath
 		snapshot.Status.SizeBytes = totalSize
 		snapshot.Status.SizeHuman = formatSize(totalSize)
@@ -308,7 +319,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		snapshot.Status.CollectedMetadata = snapshotMetadata
 		return nil
 	}, logger); err != nil {
-		logger.Error("Failed to update status to Ready", zap.Error(err))
+		logger.Error("Failed to update status to Pushing", zap.Error(err))
 		return reconcile.Result{}, err
 	}
 
