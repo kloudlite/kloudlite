@@ -672,9 +672,23 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 	sourceSnapshotName := environment.Status.SnapshotRestoreStatus.SourceSnapshot
 
 	// Auto-create snapshots on the forked environment to maintain lineage (like git fork)
-	if err := r.forkSnapshotLineage(ctx, environment, sourceSnapshotName, logger); err != nil {
+	leafSnapshotName, err := r.forkSnapshotLineage(ctx, environment, sourceSnapshotName, logger)
+	if err != nil {
 		logger.Warn("Failed to fork snapshot lineage to new environment", zap.Error(err))
 		// Don't fail the restore - this is best-effort
+	}
+
+	// Set LastRestoredSnapshot to the leaf snapshot (HEAD of the forked lineage)
+	if leafSnapshotName != "" {
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+			environment.Status.LastRestoredSnapshot = &environmentsv1.LastRestoredSnapshotInfo{
+				Name:       leafSnapshotName,
+				RestoredAt: metav1.Now(),
+			}
+			return nil
+		}, logger); err != nil {
+			logger.Warn("Failed to update LastRestoredSnapshot status", zap.Error(err))
+		}
 	}
 
 	// Clear fromSnapshot to mark restoration as complete
@@ -702,20 +716,21 @@ func (r *EnvironmentReconciler) handleRestoreCompleted(
 
 // forkSnapshotLineage copies the entire snapshot lineage to the forked environment (like git fork)
 // Only the direct lineage of the source snapshot is copied, not other branches
+// Returns the name of the leaf snapshot (the last one in the lineage) for setting as HEAD
 func (r *EnvironmentReconciler) forkSnapshotLineage(
 	ctx context.Context,
 	environment *environmentsv1.Environment,
 	sourceSnapshotName string,
 	logger *zap.Logger,
-) error {
+) (string, error) {
 	// Build the lineage from root to source (walk up, then reverse)
 	lineage, err := r.buildSnapshotLineage(ctx, sourceSnapshotName, logger)
 	if err != nil {
-		return fmt.Errorf("failed to build snapshot lineage: %w", err)
+		return "", fmt.Errorf("failed to build snapshot lineage: %w", err)
 	}
 
 	if len(lineage) == 0 {
-		return fmt.Errorf("no snapshots found in lineage for %s", sourceSnapshotName)
+		return "", fmt.Errorf("no snapshots found in lineage for %s", sourceSnapshotName)
 	}
 
 	logger.Info("Forking snapshot lineage to new environment",
@@ -791,7 +806,7 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 				previousCopyName = forkName
 				continue
 			}
-			return fmt.Errorf("failed to create forked snapshot %s: %w", forkName, err)
+			return "", fmt.Errorf("failed to create forked snapshot %s: %w", forkName, err)
 		}
 
 		logger.Info("Created forked snapshot",
@@ -803,21 +818,12 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 		previousCopyName = forkName
 	}
 
-	// Update environment's LastRestoredSnapshot to point to the last fork (the leaf)
-	if previousCopyName != "" {
-		now := metav1.Now()
-		environment.Status.LastRestoredSnapshot = &environmentsv1.LastRestoredSnapshotInfo{
-			Name:       previousCopyName,
-			RestoredAt: now,
-		}
-	}
-
 	logger.Info("Successfully forked snapshot lineage",
 		zap.String("environment", environment.Name),
 		zap.Int("snapshotsForked", len(lineage)),
 		zap.String("leafSnapshot", previousCopyName))
 
-	return nil
+	return previousCopyName, nil
 }
 
 // buildSnapshotLineage walks up from a snapshot to root and returns lineage from root to leaf
