@@ -54,19 +54,24 @@ func TestCreateWorkspace(t *testing.T) {
 	t.Run("should create workspace", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 
-		// Create test WorkMachine for the user
+		// Create test WorkMachine for the user - OwnedBy should match username
+		// The label is used by GetByOwner query
 		workMachine := &machinesv1.WorkMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-wm",
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": "test-user",
+				},
 			},
 			Spec: machinesv1.WorkMachineSpec{
-				OwnedBy:         "test-user@example.com",
+				OwnedBy:         "test-user",
 				TargetNamespace: "test-wm-ns",
 			},
 		}
 		_ = handlers.wmRepo.Create(context.Background(), workMachine)
 
 		router.POST("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -115,6 +120,7 @@ func TestCreateWorkspace(t *testing.T) {
 	t.Run("should return 400 with invalid JSON", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 		router.POST("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -131,6 +137,7 @@ func TestCreateWorkspace(t *testing.T) {
 	t.Run("should return 404 when user has no WorkMachine", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 		router.POST("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "no-wm-user")
 			c.Set("user_email", "no-wm-user@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -158,7 +165,7 @@ func TestGetWorkspace(t *testing.T) {
 	t.Run("should get workspace", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 
-		// Create test workspace
+		// Create test workspace owned by authenticated user
 		workspace := &workspacesv1.Workspace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-workspace",
@@ -166,11 +173,17 @@ func TestGetWorkspace(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Test Workspace",
+				OwnedBy:     "test-user",
 			},
 		}
 		_ = handlers.wsRepo.Create(context.Background(), workspace)
 
-		router.GET("/namespaces/:namespace/workspaces/:name", handlers.GetWorkspace)
+		router.GET("/namespaces/:namespace/workspaces/:name", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
+			c.Set("user_email", "test-user@example.com")
+			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
+			c.Next()
+		}, handlers.GetWorkspace)
 
 		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces/test-workspace", nil)
 		w := httptest.NewRecorder()
@@ -181,7 +194,12 @@ func TestGetWorkspace(t *testing.T) {
 
 	t.Run("should return 404 for non-existent workspace", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
-		router.GET("/namespaces/:namespace/workspaces/:name", handlers.GetWorkspace)
+		router.GET("/namespaces/:namespace/workspaces/:name", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
+			c.Set("user_email", "test-user@example.com")
+			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
+			c.Next()
+		}, handlers.GetWorkspace)
 
 		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces/nonexistent", nil)
 		w := httptest.NewRecorder()
@@ -195,7 +213,7 @@ func TestListWorkspaces(t *testing.T) {
 	t.Run("should list all workspaces", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 
-		// Create test workspaces
+		// Create test workspaces owned by the authenticated user
 		workspace1 := &workspacesv1.Workspace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "workspace-1",
@@ -203,7 +221,7 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 1",
-				OwnedBy:     "user1@example.com",
+				OwnedBy:     "test-user",
 				Status:      "active",
 			},
 		}
@@ -214,14 +232,19 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 2",
-				OwnedBy:     "user2@example.com",
+				OwnedBy:     "test-user",
 				Status:      "suspended",
 			},
 		}
 		_ = handlers.wsRepo.Create(context.Background(), workspace1)
 		_ = handlers.wsRepo.Create(context.Background(), workspace2)
 
-		router.GET("/namespaces/:namespace/workspaces", handlers.ListWorkspaces)
+		router.GET("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
+			c.Set("user_email", "test-user@example.com")
+			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
+			c.Next()
+		}, handlers.ListWorkspaces)
 
 		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces", nil)
 		w := httptest.NewRecorder()
@@ -237,6 +260,7 @@ func TestListWorkspaces(t *testing.T) {
 	t.Run("should list workspaces by owner", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 
+		// Create workspace owned by the authenticated user
 		workspace1 := &workspacesv1.Workspace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "workspace-1",
@@ -244,15 +268,20 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 1",
-				OwnedBy:     "user1@example.com",
+				OwnedBy:     "test-user",
 				Status:      "active",
 			},
 		}
 		_ = handlers.wsRepo.Create(context.Background(), workspace1)
 
-		router.GET("/namespaces/:namespace/workspaces", handlers.ListWorkspaces)
+		router.GET("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
+			c.Set("user_email", "test-user@example.com")
+			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
+			c.Next()
+		}, handlers.ListWorkspaces)
 
-		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces?owner=user1@example.com", nil)
+		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces?owner=test-user", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -262,20 +291,27 @@ func TestListWorkspaces(t *testing.T) {
 	t.Run("should list workspaces by workMachine", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 
+		// Create workspace owned by authenticated user with WorkMachineName
 		workspace2 := &workspacesv1.Workspace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "workspace-2",
 				Namespace: "test-ns",
 			},
 			Spec: workspacesv1.WorkspaceSpec{
-				DisplayName: "Workspace 2",
-				OwnedBy:     "user2@example.com",
-				Status:      "suspended",
+				DisplayName:     "Workspace 2",
+				OwnedBy:         "test-user",
+				Status:          "suspended",
+				WorkmachineName: "wm-1",
 			},
 		}
 		_ = handlers.wsRepo.Create(context.Background(), workspace2)
 
-		router.GET("/namespaces/:namespace/workspaces", handlers.ListWorkspaces)
+		router.GET("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
+			c.Set("user_email", "test-user@example.com")
+			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
+			c.Next()
+		}, handlers.ListWorkspaces)
 
 		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces?workMachine=wm-1", nil)
 		w := httptest.NewRecorder()
@@ -286,12 +322,15 @@ func TestListWorkspaces(t *testing.T) {
 		var response workspacesv1.WorkspaceList
 		json.Unmarshal(w.Body.Bytes(), &response)
 		assert.Len(t, response.Items, 1)
-		assert.Equal(t, "workspace-2", response.Items[0].Name)
+		if len(response.Items) > 0 {
+			assert.Equal(t, "workspace-2", response.Items[0].Name)
+		}
 	})
 
 	t.Run("should list workspaces by status", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
 
+		// Create workspace owned by authenticated user with active status
 		workspace1 := &workspacesv1.Workspace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "workspace-1",
@@ -299,13 +338,18 @@ func TestListWorkspaces(t *testing.T) {
 			},
 			Spec: workspacesv1.WorkspaceSpec{
 				DisplayName: "Workspace 1",
-				OwnedBy:     "user1@example.com",
+				OwnedBy:     "test-user",
 				Status:      "active",
 			},
 		}
 		_ = handlers.wsRepo.Create(context.Background(), workspace1)
 
-		router.GET("/namespaces/:namespace/workspaces", handlers.ListWorkspaces)
+		router.GET("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
+			c.Set("user_email", "test-user@example.com")
+			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
+			c.Next()
+		}, handlers.ListWorkspaces)
 
 		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces?status=active", nil)
 		w := httptest.NewRecorder()
@@ -316,7 +360,12 @@ func TestListWorkspaces(t *testing.T) {
 
 	t.Run("should return 400 for invalid status", func(t *testing.T) {
 		handlers, router := setupWorkspaceHandlerTest()
-		router.GET("/namespaces/:namespace/workspaces", handlers.ListWorkspaces)
+		router.GET("/namespaces/:namespace/workspaces", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
+			c.Set("user_email", "test-user@example.com")
+			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
+			c.Next()
+		}, handlers.ListWorkspaces)
 
 		req := httptest.NewRequest(http.MethodGet, "/namespaces/test-ns/workspaces?status=invalid", nil)
 		w := httptest.NewRecorder()
