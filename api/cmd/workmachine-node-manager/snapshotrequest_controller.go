@@ -100,6 +100,8 @@ func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile
 		pullResult, opErr = r.pullSnapshot(snapshotReq, logger)
 	case snapshotv1.SnapshotOperationTag:
 		opErr = r.tagSnapshot(snapshotReq, logger)
+	case snapshotv1.SnapshotOperationEnsureSubvolume:
+		opErr = r.ensureSubvolume(snapshotReq, logger)
 	default:
 		opErr = fmt.Errorf("unknown operation: %s", snapshotReq.Spec.Operation)
 	}
@@ -549,6 +551,48 @@ func (r *SnapshotRequestReconciler) tagSnapshot(req *snapshotv1.SnapshotRequest,
 		zap2.String("newTag", req.Spec.RegistryRef.Tag),
 	)
 
+	return nil
+}
+
+// ensureSubvolume ensures a btrfs subvolume exists at the specified path
+// Creates an empty subvolume if it doesn't exist
+func (r *SnapshotRequestReconciler) ensureSubvolume(req *snapshotv1.SnapshotRequest, logger *zap2.Logger) error {
+	subvolPath := req.Spec.SnapshotPath
+
+	// Check if path already exists as a btrfs subvolume
+	checkScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", subvolPath)
+	if _, err := r.CmdExec.Execute(checkScript); err == nil {
+		logger.Info("Btrfs subvolume already exists", zap2.String("path", subvolPath))
+		return nil
+	}
+
+	// Check if path exists as a regular directory
+	checkDirScript := fmt.Sprintf("test -d %s", subvolPath)
+	if _, err := r.CmdExec.Execute(checkDirScript); err == nil {
+		// Path exists as a directory but not a subvolume
+		// This shouldn't happen in normal operation, but we handle it gracefully
+		logger.Warn("Path exists as regular directory, not a btrfs subvolume",
+			zap2.String("path", subvolPath))
+		return fmt.Errorf("path exists as regular directory, not a btrfs subvolume: %s", subvolPath)
+	}
+
+	// Ensure parent directory exists
+	parentDir := filepath.Dir(subvolPath)
+	mkdirScript := fmt.Sprintf("mkdir -p %s", parentDir)
+	if output, err := r.CmdExec.Execute(mkdirScript); err != nil {
+		return fmt.Errorf("failed to create parent directory: %s - %w", string(output), err)
+	}
+
+	// Create the btrfs subvolume
+	createScript := fmt.Sprintf("btrfs subvolume create %s", subvolPath)
+	logger.Info("Creating btrfs subvolume", zap2.String("path", subvolPath))
+
+	output, err := r.CmdExec.Execute(createScript)
+	if err != nil {
+		return fmt.Errorf("failed to create btrfs subvolume: %s - %w", string(output), err)
+	}
+
+	logger.Info("Btrfs subvolume created successfully", zap2.String("path", subvolPath))
 	return nil
 }
 
