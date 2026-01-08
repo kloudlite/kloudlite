@@ -750,10 +750,10 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 			ObjectMeta: metav1.ObjectMeta{
 				Name: forkName,
 				Labels: map[string]string{
-					"snapshots.kloudlite.io/environment":  environment.Name,
-					"kloudlite.io/owned-by":               environment.Spec.OwnedBy,
-					"snapshots.kloudlite.io/forked-from":  originalSnapshot.Name,
-					"snapshots.kloudlite.io/fork-of-env":  originalSnapshot.Labels["snapshots.kloudlite.io/environment"],
+					"snapshots.kloudlite.io/environment": environment.Name,
+					"kloudlite.io/owned-by":              environment.Spec.OwnedBy,
+					"snapshots.kloudlite.io/forked-from": originalSnapshot.Name,
+					"snapshots.kloudlite.io/fork-of-env": originalSnapshot.Labels["snapshots.kloudlite.io/environment"],
 				},
 			},
 			Spec: snapshotv1.SnapshotSpec{

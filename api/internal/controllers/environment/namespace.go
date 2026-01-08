@@ -170,7 +170,7 @@ func (r *EnvironmentReconciler) createNamespaceForForking(ctx context.Context, e
 				"kloudlite.io/environment-uid": string(environment.UID),
 				"kloudlite.io/creation-reason": "auto-created-for-forked-environment",
 				"kloudlite.io/created-by":      environment.Spec.OwnedBy,
-				"kloudlite.io/forked-from":    sourceName,
+				"kloudlite.io/forked-from":     sourceName,
 			},
 		},
 	}
