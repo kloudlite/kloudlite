@@ -41,70 +41,31 @@ func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapsh
 		return r.updateStatusFailed(ctx, snapshot, fmt.Sprintf("Environment not found: %s", envName), logger)
 	}
 
-	// Auto-detect parent snapshot for lineage tracking
-	// Priority:
-	// 1. If environment was restored from a snapshot, use that as parent
-	// 2. Otherwise, find the latest Ready snapshot for this environment
+	// Auto-detect parent snapshot from environment's lastRestoredSnapshot
+	// This enables proper lineage when taking snapshots on cloned environments
 	specUpdated := false
-	if snapshot.Spec.ParentSnapshotRef == nil {
-		var parentSnapshotName string
-		var restoredAt *metav1.Time
-
-		if env.Status.LastRestoredSnapshot != nil {
-			// Environment was restored from a snapshot - use it as parent
-			parentSnapshotName = env.Status.LastRestoredSnapshot.Name
-			restoredAt = &env.Status.LastRestoredSnapshot.RestoredAt
-			logger.Info("Auto-detecting parent from environment's lastRestoredSnapshot",
-				zap.String("parentSnapshot", parentSnapshotName))
-		} else {
-			// Find the latest Ready snapshot for this environment
-			snapshotList := &snapshotv1.SnapshotList{}
-			if err := r.List(ctx, snapshotList, client.MatchingLabels{
-				"snapshots.kloudlite.io/environment": envName,
-			}); err == nil && len(snapshotList.Items) > 0 {
-				// Find the most recent Ready snapshot (excluding current snapshot)
-				var latestSnapshot *snapshotv1.Snapshot
-				var latestTime metav1.Time
-				for i := range snapshotList.Items {
-					s := &snapshotList.Items[i]
-					// Skip current snapshot and non-Ready snapshots
-					if s.Name == snapshot.Name || s.Status.State != snapshotv1.SnapshotStateReady {
-						continue
-					}
-					if s.Status.CreatedAt != nil && (latestSnapshot == nil || s.Status.CreatedAt.After(latestTime.Time)) {
-						latestSnapshot = s
-						latestTime = *s.Status.CreatedAt
-					}
-				}
-				if latestSnapshot != nil {
-					parentSnapshotName = latestSnapshot.Name
-					logger.Info("Auto-detecting parent from latest environment snapshot",
-						zap.String("parentSnapshot", parentSnapshotName))
-				}
-			}
+	if snapshot.Spec.ParentSnapshotRef == nil && env.Status.LastRestoredSnapshot != nil {
+		parentSnapshotName := env.Status.LastRestoredSnapshot.Name
+		logger.Info("Auto-detecting parent snapshot from environment's lastRestoredSnapshot",
+			zap.String("parentSnapshot", parentSnapshotName))
+		restoredAt := env.Status.LastRestoredSnapshot.RestoredAt
+		snapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
+			Name:       parentSnapshotName,
+			RestoredAt: &restoredAt,
 		}
+		specUpdated = true
 
-		if parentSnapshotName != "" {
-			snapshot.Spec.ParentSnapshotRef = &snapshotv1.ParentSnapshotReference{
-				Name: parentSnapshotName,
-			}
-			if restoredAt != nil {
-				snapshot.Spec.ParentSnapshotRef.RestoredAt = restoredAt
-			}
-			specUpdated = true
-
-			// Inherit description from parent snapshot if not set
-			if snapshot.Spec.Description == "" {
-				parentSnapshot := &snapshotv1.Snapshot{}
-				if err := r.Get(ctx, client.ObjectKey{Name: parentSnapshotName}, parentSnapshot); err == nil {
-					if parentSnapshot.Spec.Description != "" {
-						logger.Info("Inheriting description from parent snapshot",
-							zap.String("description", parentSnapshot.Spec.Description))
-						snapshot.Spec.Description = parentSnapshot.Spec.Description
-					}
-				} else {
-					logger.Warn("Failed to fetch parent snapshot for description inheritance", zap.Error(err))
+		// Inherit description from parent snapshot if not set
+		if snapshot.Spec.Description == "" {
+			parentSnapshot := &snapshotv1.Snapshot{}
+			if err := r.Get(ctx, client.ObjectKey{Name: parentSnapshotName}, parentSnapshot); err == nil {
+				if parentSnapshot.Spec.Description != "" {
+					logger.Info("Inheriting description from parent snapshot",
+						zap.String("description", parentSnapshot.Spec.Description))
+					snapshot.Spec.Description = parentSnapshot.Spec.Description
 				}
+			} else {
+				logger.Warn("Failed to fetch parent snapshot for description inheritance", zap.Error(err))
 			}
 		}
 	}
