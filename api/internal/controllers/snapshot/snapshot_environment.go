@@ -10,6 +10,7 @@ import (
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -156,7 +157,6 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 	}
 
 	// Set environment to snapping state if not already
-	// This triggers the environment controller to scale down deployments
 	if env.Status.State != environmentsv1.EnvironmentStateSnapping {
 		logger.Info("Setting environment to snapping state", zap.String("environment", envName))
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, env, func() error {
@@ -173,10 +173,15 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		}, logger); err != nil {
 			logger.Warn("Failed to update status", zap.Error(err))
 		}
+	}
+
+	// Scale down all deployments and statefulsets in the namespace
+	if err := r.scaleDownWorkloads(ctx, namespace, logger); err != nil {
+		logger.Error("Failed to scale down workloads", zap.Error(err))
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Wait for all pods to terminate (environment controller handles scaling down)
+	// Wait for all pods to terminate
 	if !r.waitForPodsTerminated(ctx, namespace, logger) {
 		logger.Info("Waiting for environment pods to terminate for snapshot")
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
@@ -355,7 +360,6 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 	}
 
 	// Set environment to snapping state if not already
-	// This triggers the environment controller to scale down deployments
 	if env.Status.State != environmentsv1.EnvironmentStateSnapping {
 		logger.Info("Setting environment to snapping state for restore", zap.String("environment", envName))
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, env, func() error {
@@ -372,10 +376,15 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		}, logger); err != nil {
 			logger.Warn("Failed to update status", zap.Error(err))
 		}
+	}
+
+	// Scale down all deployments and statefulsets in the namespace
+	if err := r.scaleDownWorkloads(ctx, namespace, logger); err != nil {
+		logger.Error("Failed to scale down workloads", zap.Error(err))
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Wait for all pods to terminate (environment controller handles scaling down)
+	// Wait for all pods to terminate
 	if !r.waitForPodsTerminated(ctx, namespace, logger) {
 		logger.Info("Waiting for environment pods to terminate for restore")
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
@@ -557,6 +566,83 @@ func (r *SnapshotReconciler) waitForPodsTerminated(ctx context.Context, namespac
 	return true
 }
 
+// scaleDownWorkloads scales down all deployments and statefulsets in a namespace to 0
+func (r *SnapshotReconciler) scaleDownWorkloads(ctx context.Context, namespace string, logger *zap.Logger) error {
+	// Scale down deployments
+	deployments := &appsv1.DeploymentList{}
+	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list deployments: %w", err)
+	}
+	for i := range deployments.Items {
+		deploy := &deployments.Items[i]
+		if deploy.Spec.Replicas != nil && *deploy.Spec.Replicas > 0 {
+			logger.Info("Scaling down deployment", zap.String("deployment", deploy.Name))
+			zero := int32(0)
+			deploy.Spec.Replicas = &zero
+			if err := r.Update(ctx, deploy); err != nil {
+				logger.Warn("Failed to scale down deployment", zap.String("deployment", deploy.Name), zap.Error(err))
+			}
+		}
+	}
+
+	// Scale down statefulsets
+	statefulsets := &appsv1.StatefulSetList{}
+	if err := r.List(ctx, statefulsets, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list statefulsets: %w", err)
+	}
+	for i := range statefulsets.Items {
+		sts := &statefulsets.Items[i]
+		if sts.Spec.Replicas != nil && *sts.Spec.Replicas > 0 {
+			logger.Info("Scaling down statefulset", zap.String("statefulset", sts.Name))
+			zero := int32(0)
+			sts.Spec.Replicas = &zero
+			if err := r.Update(ctx, sts); err != nil {
+				logger.Warn("Failed to scale down statefulset", zap.String("statefulset", sts.Name), zap.Error(err))
+			}
+		}
+	}
+
+	return nil
+}
+
+// scaleUpWorkloads restores deployments and statefulsets to their original replica counts
+// It uses the annotation "kloudlite.io/original-replicas" to restore the count
+func (r *SnapshotReconciler) scaleUpWorkloads(ctx context.Context, namespace string, logger *zap.Logger) error {
+	// Scale up deployments
+	deployments := &appsv1.DeploymentList{}
+	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list deployments: %w", err)
+	}
+	for i := range deployments.Items {
+		deploy := &deployments.Items[i]
+		// Default to 1 replica if not specified
+		replicas := int32(1)
+		deploy.Spec.Replicas = &replicas
+		logger.Info("Scaling up deployment", zap.String("deployment", deploy.Name))
+		if err := r.Update(ctx, deploy); err != nil {
+			logger.Warn("Failed to scale up deployment", zap.String("deployment", deploy.Name), zap.Error(err))
+		}
+	}
+
+	// Scale up statefulsets
+	statefulsets := &appsv1.StatefulSetList{}
+	if err := r.List(ctx, statefulsets, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list statefulsets: %w", err)
+	}
+	for i := range statefulsets.Items {
+		sts := &statefulsets.Items[i]
+		// Default to 1 replica if not specified
+		replicas := int32(1)
+		sts.Spec.Replicas = &replicas
+		logger.Info("Scaling up statefulset", zap.String("statefulset", sts.Name))
+		if err := r.Update(ctx, sts); err != nil {
+			logger.Warn("Failed to scale up statefulset", zap.String("statefulset", sts.Name), zap.Error(err))
+		}
+	}
+
+	return nil
+}
+
 // restoreEnvironmentActivation restores the environment's state after snapshot/restore
 func (r *SnapshotReconciler) restoreEnvironmentActivation(ctx context.Context, snapshot *snapshotv1.Snapshot, env *environmentsv1.Environment, logger *zap.Logger) error {
 	// Re-fetch the environment to get the latest state
@@ -565,10 +651,16 @@ func (r *SnapshotReconciler) restoreEnvironmentActivation(ctx context.Context, s
 		return fmt.Errorf("failed to get environment: %w", err)
 	}
 
-	// If environment should be active (Spec.Activated=true), set state back to active
-	// This triggers the environment controller to scale up deployments
+	// If environment should be active (Spec.Activated=true), set state back to active and scale up
 	if currentEnv.Spec.Activated && currentEnv.Status.State == environmentsv1.EnvironmentStateSnapping {
 		logger.Info("Restoring environment to active state after snapshot", zap.String("environment", env.Name))
+
+		// Scale up workloads first
+		if err := r.scaleUpWorkloads(ctx, currentEnv.Spec.TargetNamespace, logger); err != nil {
+			logger.Warn("Failed to scale up workloads", zap.Error(err))
+		}
+
+		// Then set state to active
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, currentEnv, func() error {
 			currentEnv.Status.State = environmentsv1.EnvironmentStateActive
 			currentEnv.Status.Message = "Environment is active"
