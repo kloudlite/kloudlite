@@ -1146,26 +1146,26 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 
 			// Clean up workspace btrfs subvolume
 			workspaceDir := fmt.Sprintf("%s/%s", workspaceStoragePath, workspace.Name)
-			logger.Info("Removing workspace storage", zap2.String("path", workspaceDir))
+			logger.Info("Removing workspace btrfs subvolume", zap2.String("path", workspaceDir))
 
-			// Try btrfs subvolume delete first, fallback to rm -rf
-			// Use nsenter to run on host filesystem
-			deleteScript := fmt.Sprintf("btrfs subvolume delete %s 2>/dev/null || rm -rf %s", workspaceDir, workspaceDir)
+			// Delete btrfs subvolume (will fail if path doesn't exist or is not a subvolume)
+			deleteScript := fmt.Sprintf("btrfs subvolume delete %s", workspaceDir)
 			output, err := r.CmdExec.Execute(deleteScript)
 			if err != nil {
-				logger.Error("Failed to remove workspace storage",
-					zap2.String("path", workspaceDir),
-					zap2.Error(err),
-					zap2.String("output", string(output)))
-				return reconcile.Result{}, fmt.Errorf("failed to remove workspace storage: %w", err)
+				// Check if path exists - if not, nothing to clean up
+				checkExistsScript := fmt.Sprintf("test -e %s", workspaceDir)
+				if _, existsErr := r.CmdExec.Execute(checkExistsScript); existsErr != nil {
+					logger.Info("Workspace subvolume doesn't exist, skipping cleanup", zap2.String("path", workspaceDir))
+				} else {
+					logger.Error("Failed to delete btrfs subvolume",
+						zap2.String("path", workspaceDir),
+						zap2.Error(err),
+						zap2.String("output", string(output)))
+					return reconcile.Result{}, fmt.Errorf("failed to delete btrfs subvolume: %w", err)
+				}
+			} else {
+				logger.Info("Successfully deleted btrfs subvolume", zap2.String("path", workspaceDir))
 			}
-
-			logger.Info("Successfully removed workspace storage", zap2.String("path", workspaceDir))
-
-			// Also clean up old workspace directory path if it exists (migration cleanup)
-			oldWorkspaceDir := fmt.Sprintf("%s/workspaces/%s", workspaceHomePath, workspace.Name)
-			oldCleanupScript := fmt.Sprintf("rm -rf %s 2>/dev/null || true", oldWorkspaceDir)
-			r.CmdExec.Execute(oldCleanupScript)
 
 			// Remove finalizer
 			workspace.Finalizers = removeString(workspace.Finalizers, workspaceCleanupFinalizer)
@@ -1188,35 +1188,6 @@ func (r *WorkspaceCleanupReconciler) Reconcile(ctx context.Context, req reconcil
 	if _, err := r.CmdExec.Execute(checkScript); err == nil {
 		// Subvolume already exists
 		logger.Debug("Workspace btrfs subvolume already exists", zap2.String("path", workspaceDir))
-		return reconcile.Result{}, nil
-	}
-
-	// Check if directory exists but is not a subvolume (needs migration)
-	checkDirScript := fmt.Sprintf("test -d %s", workspaceDir)
-	if _, err := r.CmdExec.Execute(checkDirScript); err == nil {
-		// Directory exists but is not a subvolume - convert it
-		logger.Info("Converting existing directory to btrfs subvolume", zap2.String("path", workspaceDir))
-
-		tempDir := workspaceDir + ".tmp"
-		convertScript := fmt.Sprintf(`
-			mv %s %s &&
-			btrfs subvolume create %s &&
-			cp -a %s/. %s/ 2>/dev/null || true &&
-			rm -rf %s &&
-			chown 1001:1001 %s
-		`, workspaceDir, tempDir, workspaceDir, tempDir, workspaceDir, tempDir, workspaceDir)
-
-		if output, err := r.CmdExec.Execute(convertScript); err != nil {
-			logger.Error("Failed to convert directory to btrfs subvolume",
-				zap2.String("path", workspaceDir),
-				zap2.Error(err),
-				zap2.String("output", string(output)))
-			// Try to restore original directory
-			r.CmdExec.Execute(fmt.Sprintf("rm -rf %s; mv %s %s 2>/dev/null || true", workspaceDir, tempDir, workspaceDir))
-			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
-		}
-
-		logger.Info("Successfully converted directory to btrfs subvolume", zap2.String("path", workspaceDir))
 		return reconcile.Result{}, nil
 	}
 
