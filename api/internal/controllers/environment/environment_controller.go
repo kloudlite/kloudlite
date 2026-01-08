@@ -160,10 +160,39 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		willBeActive := desiredState == environmentsv1.EnvironmentStateActive
 		willBeInactive := desiredState == environmentsv1.EnvironmentStateInactive
 
-		// Handle deactivation transition (includes resuming from Deactivating state)
-		if (wasActive && willBeInactive) || currentState == environmentsv1.EnvironmentStateDeactivating {
+		// Handle snapping state separately - scale down but don't go to inactive
+		// Snapshot controller will set state back to active when done
+		isSnapping := currentState == environmentsv1.EnvironmentStateSnapping
+		if isSnapping {
+			// Scale down all deployments for snapshot
+			logger.Info("Scaling down deployments for snapshot")
+			if err := r.suspendEnvironment(ctx, environment, logger); err != nil {
+				logger.Error("Failed to scale down deployments", zap.Error(err))
+				// Continue - pods may already be scaled down
+			}
+
+			// Wait for all pods to terminate
+			if !r.waitForPodsTerminated(ctx, environment.Spec.TargetNamespace, logger) {
+				logger.Info("Waiting for pods to terminate for snapshot")
+				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateSnapping, "Taking snapshot, waiting for pods to terminate...", logger); err != nil {
+					logger.Warn("Failed to update snapping message", zap.Error(err))
+				}
+				return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+			}
+
+			// Pods terminated - stay in snapping state, snapshot controller will handle the rest
+			logger.Info("All pods terminated, ready for snapshot")
+			if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateSnapping, "Ready for snapshot", logger); err != nil {
+				logger.Warn("Failed to update snapping message", zap.Error(err))
+			}
+			return reconcile.Result{}, nil
+		}
+
+		// Handle deactivation transition
+		isDeactivating := currentState == environmentsv1.EnvironmentStateDeactivating
+		if (wasActive && willBeInactive) || isDeactivating {
 			// Set to deactivating state first
-			if currentState != environmentsv1.EnvironmentStateDeactivating {
+			if !isDeactivating {
 				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateDeactivating, "Environment is being deactivated", logger); err != nil {
 					logger.Error("Failed to update status to deactivating", zap.Error(err))
 				}

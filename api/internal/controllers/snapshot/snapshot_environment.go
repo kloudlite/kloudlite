@@ -155,28 +155,20 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return r.updateStatusFailed(ctx, snapshot, "Environment has no target namespace", logger)
 	}
 
-	// Store previous environment state if not already stored
-	if snapshot.Status.PreviousEnvironmentActivated == nil {
-		wasActivated := env.Spec.Activated
-		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.PreviousEnvironmentActivated = &wasActivated
+	// Set environment to snapping state if not already
+	// This triggers the environment controller to scale down deployments
+	if env.Status.State != environmentsv1.EnvironmentStateSnapping {
+		logger.Info("Setting environment to snapping state", zap.String("environment", envName))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, env, func() error {
+			env.Status.State = environmentsv1.EnvironmentStateSnapping
+			env.Status.Message = "Taking snapshot..."
 			return nil
 		}, logger); err != nil {
-			logger.Warn("Failed to store previous environment state", zap.Error(err))
-		}
-	}
-
-	// Deactivate environment properly using spec.activated field
-	// This triggers the environment controller's proper shutdown sequence
-	if env.Spec.Activated {
-		logger.Info("Deactivating environment for snapshot", zap.String("environment", envName))
-		env.Spec.Activated = false
-		if err := r.Update(ctx, env); err != nil {
-			logger.Error("Failed to deactivate environment", zap.Error(err))
+			logger.Error("Failed to set snapping state", zap.Error(err))
 			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 		}
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = "Deactivating environment..."
+			snapshot.Status.Message = "Snapping environment..."
 			return nil
 		}, logger); err != nil {
 			logger.Warn("Failed to update status", zap.Error(err))
@@ -184,23 +176,9 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Wait for environment to be fully inactive
-	if env.Status.State != environmentsv1.EnvironmentStateInactive {
-		logger.Info("Waiting for environment to become inactive",
-			zap.String("currentState", string(env.Status.State)))
-		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = fmt.Sprintf("Waiting for environment shutdown (state: %s)...", env.Status.State)
-			return nil
-		}, logger); err != nil {
-			logger.Warn("Failed to update status", zap.Error(err))
-		}
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
-	}
-
-	// Wait for all pods to actually terminate (not just replicas=0)
-	// This ensures databases have time to checkpoint and flush WAL
+	// Wait for all pods to terminate (environment controller handles scaling down)
 	if !r.waitForPodsTerminated(ctx, namespace, logger) {
-		logger.Info("Waiting for environment pods to terminate")
+		logger.Info("Waiting for environment pods to terminate for snapshot")
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.Message = "Waiting for pods to terminate..."
 			return nil
@@ -210,7 +188,7 @@ func (r *SnapshotReconciler) handleCreating(ctx context.Context, snapshot *snaps
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	logger.Info("Environment is inactive and all pods terminated, proceeding with snapshot")
+	logger.Info("All pods terminated, proceeding with snapshot")
 
 	// Source path: the entire environment directory (btrfs subvolume)
 	// All PVCs for this environment are stored under this directory
@@ -376,27 +354,20 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return r.updateStatusFailed(ctx, snapshot, "Environment has no target namespace", logger)
 	}
 
-	// Store previous environment state if not already stored
-	if snapshot.Status.PreviousEnvironmentActivated == nil {
-		wasActivated := env.Spec.Activated
-		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.PreviousEnvironmentActivated = &wasActivated
+	// Set environment to snapping state if not already
+	// This triggers the environment controller to scale down deployments
+	if env.Status.State != environmentsv1.EnvironmentStateSnapping {
+		logger.Info("Setting environment to snapping state for restore", zap.String("environment", envName))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, env, func() error {
+			env.Status.State = environmentsv1.EnvironmentStateSnapping
+			env.Status.Message = "Restoring snapshot..."
 			return nil
 		}, logger); err != nil {
-			logger.Warn("Failed to store previous environment state", zap.Error(err))
-		}
-	}
-
-	// Deactivate environment properly using spec.activated field
-	if env.Spec.Activated {
-		logger.Info("Deactivating environment for restore", zap.String("environment", envName))
-		env.Spec.Activated = false
-		if err := r.Update(ctx, env); err != nil {
-			logger.Error("Failed to deactivate environment", zap.Error(err))
+			logger.Error("Failed to set snapping state", zap.Error(err))
 			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 		}
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = "Deactivating environment before restore..."
+			snapshot.Status.Message = "Snapping environment for restore..."
 			return nil
 		}, logger); err != nil {
 			logger.Warn("Failed to update status", zap.Error(err))
@@ -404,22 +375,9 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Wait for environment to be fully inactive
-	if env.Status.State != environmentsv1.EnvironmentStateInactive {
-		logger.Info("Waiting for environment to become inactive before restore",
-			zap.String("currentState", string(env.Status.State)))
-		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
-			snapshot.Status.Message = fmt.Sprintf("Waiting for environment shutdown (state: %s)...", env.Status.State)
-			return nil
-		}, logger); err != nil {
-			logger.Warn("Failed to update status", zap.Error(err))
-		}
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
-	}
-
-	// Wait for all pods to actually terminate before restore
+	// Wait for all pods to terminate (environment controller handles scaling down)
 	if !r.waitForPodsTerminated(ctx, namespace, logger) {
-		logger.Info("Waiting for environment pods to terminate before restore")
+		logger.Info("Waiting for environment pods to terminate for restore")
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
 			snapshot.Status.Message = "Waiting for pods to terminate..."
 			return nil
@@ -429,7 +387,7 @@ func (r *SnapshotReconciler) handleRestoring(ctx context.Context, snapshot *snap
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	logger.Info("Environment is inactive and all pods terminated, proceeding with restore")
+	logger.Info("All pods terminated, proceeding with restore")
 
 	// Source path: the btrfs snapshot containing the environment data
 	snapshotPath := snapshot.Status.SnapshotPath
@@ -599,32 +557,24 @@ func (r *SnapshotReconciler) waitForPodsTerminated(ctx context.Context, namespac
 	return true
 }
 
-// restoreEnvironmentActivation restores the environment's activation state after snapshot/restore
+// restoreEnvironmentActivation restores the environment's state after snapshot/restore
 func (r *SnapshotReconciler) restoreEnvironmentActivation(ctx context.Context, snapshot *snapshotv1.Snapshot, env *environmentsv1.Environment, logger *zap.Logger) error {
-	// Check if we have a stored previous state
-	if snapshot.Status.PreviousEnvironmentActivated == nil {
-		logger.Info("No previous environment activation state stored, skipping reactivation")
-		return nil
-	}
-
-	previousActivated := *snapshot.Status.PreviousEnvironmentActivated
-	if !previousActivated {
-		logger.Info("Environment was not active before snapshot, skipping reactivation")
-		return nil
-	}
-
 	// Re-fetch the environment to get the latest state
 	currentEnv := &environmentsv1.Environment{}
 	if err := r.Get(ctx, client.ObjectKey{Name: env.Name}, currentEnv); err != nil {
 		return fmt.Errorf("failed to get environment: %w", err)
 	}
 
-	// Only reactivate if it's currently inactive
-	if !currentEnv.Spec.Activated {
-		logger.Info("Reactivating environment after snapshot", zap.String("environment", env.Name))
-		currentEnv.Spec.Activated = true
-		if err := r.Update(ctx, currentEnv); err != nil {
-			return fmt.Errorf("failed to reactivate environment: %w", err)
+	// If environment should be active (Spec.Activated=true), set state back to active
+	// This triggers the environment controller to scale up deployments
+	if currentEnv.Spec.Activated && currentEnv.Status.State == environmentsv1.EnvironmentStateSnapping {
+		logger.Info("Restoring environment to active state after snapshot", zap.String("environment", env.Name))
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, currentEnv, func() error {
+			currentEnv.Status.State = environmentsv1.EnvironmentStateActive
+			currentEnv.Status.Message = "Environment is active"
+			return nil
+		}, logger); err != nil {
+			return fmt.Errorf("failed to restore environment state: %w", err)
 		}
 	}
 

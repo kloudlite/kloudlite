@@ -935,7 +935,7 @@ spec:
                 properties:
                   snapshotName:
                     description: |-
-                      SnapshotName is the name of the snapshot resource to clone from
+                      SnapshotName is the name of the snapshot resource to fork from
                       The snapshot must have status.registryStatus.pushed=true
                     type: string
                 required:
@@ -1214,10 +1214,6 @@ spec:
                     description: SnapshotRequestName is the name of the SnapshotRequest
                       created for pulling
                     type: string
-                  dataRestoreRequestName:
-                    description: DataRestoreRequestName is the name of the SnapshotRequest
-                      for restoring environment data
-                    type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being
                       restored from
@@ -1234,6 +1230,7 @@ spec:
                 - inactive
                 - activating
                 - deactivating
+                - snapping
                 - deleting
                 - error
                 type: string
@@ -2380,6 +2377,10 @@ spec:
                   deployments:
                     description: Deployments JSON
                     type: string
+                  pvcs:
+                    description: PVCs JSON - Contains PersistentVolumeClaim specs
+                      for data restoration
+                    type: string
                   secrets:
                     description: Secrets JSON
                     type: string
@@ -2403,6 +2404,7 @@ spec:
                 - restore
                 - push
                 - pull
+                - tag
                 type: string
               parentSnapshotPath:
                 description: ParentSnapshotPath is the path to the parent snapshot
@@ -2417,18 +2419,20 @@ spec:
                 description: RegistryRef contains registry configuration for push/pull
                   operations
                 properties:
-                  parentLayers:
+                  parentImageRef:
                     description: |-
-                      ParentLayers are the layer digests from parent snapshot(s) to include
-                      These layers are referenced but not re-uploaded during push
-                    items:
-                      type: string
-                    type: array
+                      ParentImageRef is the full image reference of the parent snapshot
+                      Used for parent reference in v2 format (stored in config labels)
+                    type: string
                   registryURL:
                     description: RegistryURL is the registry base URL (e.g., "image-registry:5000")
                     type: string
                   repository:
                     description: Repository is the image repository path (e.g., "snapshots/username")
+                    type: string
+                  sourceTag:
+                    description: SourceTag is the source tag for tag operations (copy
+                      from this tag)
                     type: string
                   tag:
                     description: Tag is the image tag
@@ -2486,17 +2490,10 @@ spec:
                 default: Pending
                 description: Phase is the current phase of the request
                 type: string
-              sizeBytes:
-                description: SizeBytes is the size of the snapshot (for create operations)
-                format: int64
-                type: integer
-              startedAt:
-                description: StartedAt is when the operation started
-                format: date-time
-                type: string
               pulledMetadata:
-                description: PulledMetadata contains the K8s resource metadata extracted
-                  from the OCI layer (for pull operations)
+                description: |-
+                  PulledMetadata contains the K8s resource metadata extracted from the OCI layer (for pull operations)
+                  This is used by the environment controller to restore K8s resources without reading files from disk
                 properties:
                   compositions:
                     description: Compositions JSON
@@ -2506,6 +2503,10 @@ spec:
                     type: string
                   deployments:
                     description: Deployments JSON
+                    type: string
+                  pvcs:
+                    description: PVCs JSON - Contains PersistentVolumeClaim specs
+                      for data restoration
                     type: string
                   secrets:
                     description: Secrets JSON
@@ -2518,58 +2519,86 @@ spec:
                     type: string
                 type: object
               pulledSnapshots:
-                description: PulledSnapshots contains metadata for all snapshots pulled
-                  from registry (including parent chain)
-                type: array
+                description: |-
+                  PulledSnapshots contains metadata for all snapshots pulled from registry (including parent chain)
+                  This enables creating Snapshot CRs for the entire parent lineage
                 items:
-                  type: object
+                  description: PulledSnapshotInfo contains metadata about a pulled
+                    snapshot from the registry
                   properties:
+                    environmentName:
+                      description: EnvironmentName for environment snapshots
+                      type: string
                     name:
                       description: Name is the original snapshot name
-                      type: string
-                    path:
-                      description: Path is the local path where this snapshot was extracted
-                      type: string
-                    snapshotType:
-                      description: SnapshotType indicates whether this is an environment or workspace snapshot
-                      type: string
-                    targetName:
-                      description: TargetName is the name of the environment or workspace that was snapshotted
-                      type: string
-                    workspaceName:
-                      description: WorkspaceName for workspace snapshots
-                      type: string
-                    workMachineName:
-                      description: WorkMachineName where the original snapshot was created
                       type: string
                     ownedBy:
                       description: OwnedBy is the owner of the original snapshot
                       type: string
                     parentSnapshotName:
-                      description: ParentSnapshotName is the name of this snapshot's parent
+                      description: ParentSnapshotName is the name of this snapshot's
+                        parent (if any)
                       type: string
-                    environmentName:
-                      description: EnvironmentName for environment snapshots
+                    path:
+                      description: Path is the local path where this snapshot was
+                        extracted
                       type: string
                     resources:
-                      description: Resources contains K8s resource metadata
-                      type: object
+                      description: Resources contains K8s resource metadata (for environment
+                        snapshots)
                       properties:
                         compositions:
+                          description: Compositions JSON
                           type: string
                         configMaps:
+                          description: ConfigMaps JSON
                           type: string
                         deployments:
+                          description: Deployments JSON
+                          type: string
+                        pvcs:
+                          description: PVCs JSON - Contains PersistentVolumeClaim
+                            specs for data restoration
                           type: string
                         secrets:
+                          description: Secrets JSON
                           type: string
                         services:
+                          description: Services JSON
                           type: string
                         statefulSets:
+                          description: StatefulSets JSON
                           type: string
+                      type: object
+                    snapshotType:
+                      description: SnapshotType indicates whether this is an environment
+                        or workspace snapshot
+                      type: string
+                    targetName:
+                      description: TargetName is the name of the environment or workspace
+                        that was snapshotted
+                      type: string
+                    workMachineName:
+                      description: WorkMachineName where the original snapshot was
+                        created
+                      type: string
+                    workspaceName:
+                      description: WorkspaceName for workspace snapshots
+                      type: string
                   required:
-                    - name
-                    - ownedBy
+                  - name
+                  - ownedBy
+                  - path
+                  type: object
+                type: array
+              sizeBytes:
+                description: SizeBytes is the size of the snapshot (for create operations)
+                format: int64
+                type: integer
+              startedAt:
+                description: StartedAt is when the operation started
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
@@ -2749,6 +2778,10 @@ spec:
                   deployments:
                     description: Deployments JSON
                     type: string
+                  pvcs:
+                    description: PVCs JSON - Contains PersistentVolumeClaim specs
+                      for data restoration
+                    type: string
                   secrets:
                     description: Secrets JSON
                     type: string
@@ -2766,13 +2799,15 @@ spec:
               message:
                 description: Message provides human-readable status information
                 type: string
-              metadataPath:
-                description: MetadataPath is the path to stored K8s metadata JSON
-                type: string
               packageRequestsPath:
                 description: PackageRequestsPath is the path to stored PackageRequest
                   JSON (for workspace snapshots)
                 type: string
+              previousEnvironmentActivated:
+                description: |-
+                  PreviousEnvironmentActivated stores the environment's activated state before snapshot
+                  Used to restore the environment after snapshot creation
+                type: boolean
               previousWorkspaceStatus:
                 description: PreviousWorkspaceStatus stores the workspace's status
                   before suspension
@@ -2808,8 +2843,14 @@ spec:
                     format: date-time
                     type: string
                   tag:
-                    description: Tag is the image tag used in the registry
+                    description: Tag is the primary image tag (always snapshot name)
                     type: string
+                  tags:
+                    description: Tags is all tags for this snapshot including user-provided
+                      tags
+                    items:
+                      type: string
+                    type: array
                 type: object
               resourceMetadata:
                 description: ResourceMetadata tracks captured K8s resources (for environment
@@ -2825,6 +2866,10 @@ spec:
                     type: integer
                   deployments:
                     description: Deployments count
+                    format: int32
+                    type: integer
+                  pvcs:
+                    description: PVCs count
                     format: int32
                     type: integer
                   secrets:
@@ -2843,6 +2888,7 @@ spec:
                 - compositions
                 - configMaps
                 - deployments
+                - pvcs
                 - secrets
                 - services
                 - statefulSets
@@ -2860,12 +2906,6 @@ spec:
               snapshotType:
                 description: SnapshotType indicates whether this is an environment
                   or workspace snapshot
-                type: string
-              sourcePath:
-                description: |-
-                  SourcePath is the source directory that was snapshotted
-                  For environments: /var/lib/kloudlite/storage/environments/{namespace}
-                  For workspaces: /var/lib/kloudlite/home/workspaces/{workspace}
                 type: string
               state:
                 default: Pending
@@ -3385,6 +3425,10 @@ spec:
                       or failure)
                     format: date-time
                     type: string
+                  dataRestoreRequestName:
+                    description: DataRestoreRequestName is the name of the SnapshotRequest
+                      for restoring workspace data
+                    type: string
                   errorMessage:
                     description: ErrorMessage if restoration failed
                     type: string
@@ -3401,17 +3445,12 @@ spec:
                     - Pending
                     - Pulling
                     - Restoring
-                    - DataRestoring
                     - Completed
                     - Failed
                     type: string
                   snapshotRequestName:
                     description: SnapshotRequestName is the name of the SnapshotRequest
                       created for pulling
-                    type: string
-                  dataRestoreRequestName:
-                    description: DataRestoreRequestName is the name of the SnapshotRequest
-                      for restoring workspace data
                     type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being

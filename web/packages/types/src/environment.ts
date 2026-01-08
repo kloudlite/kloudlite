@@ -101,7 +101,7 @@ export interface SourceForkingStatus {
 }
 
 export interface EnvironmentStatus {
-  state?: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error'
+  state?: 'active' | 'inactive' | 'activating' | 'deactivating' | 'snapping' | 'deleting' | 'error'
   message?: string
   lastActivatedTime?: string
   lastDeactivatedTime?: string
@@ -267,7 +267,7 @@ export interface EnvironmentUIModel {
   id: string
   name: string
   owner: string
-  status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'forking'
+  status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'snapping' | 'deleting' | 'error' | 'forking'
   created: string
   targetNamespace: string
   services: number
@@ -300,7 +300,7 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
   }
 
   // Determine status: prioritize forking, then deletionTimestamp, then status.state, then spec.activated
-  let status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'deleting' | 'error' | 'forking'
+  let status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'snapping' | 'deleting' | 'error' | 'forking'
 
   // Check if environment is being forked (either as target or source)
   const isForking =
