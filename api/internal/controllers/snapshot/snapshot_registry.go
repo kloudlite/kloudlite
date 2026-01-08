@@ -154,7 +154,7 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 			RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
 				RegistryURL:    "image-registry.kloudlite.svc.cluster.local:5000",
 				Repository:     repository,
-				Tag:            primaryTag,      // Always use snapshot name
+				Tag:            primaryTag,     // Always use snapshot name
 				ParentImageRef: parentImageRef, // For pull to resolve parent chain
 			},
 			Metadata: snapshot.Status.CollectedMetadata,
