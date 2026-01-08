@@ -33,8 +33,14 @@ func (r *CompositionReconciler) deployComposition(ctx context.Context, compositi
 	if environment != nil {
 		environmentActivated = environment.Spec.Activated
 
-		// Check if snapshot restore is in progress
-		// Don't scale up pods until data restoration is complete
+		// Check if environment is in snapping state (snapshot create or restore in progress)
+		if environment.Status.State == compositionsv1.EnvironmentStateSnapping {
+			snapshotRestoreInProgress = true
+			logger.Info("Environment in snapping state, keeping deployments scaled down",
+				zap.String("environment", environment.Name))
+		}
+
+		// Also check SnapshotRestoreStatus for legacy compatibility
 		if environment.Status.SnapshotRestoreStatus != nil {
 			phase := environment.Status.SnapshotRestoreStatus.Phase
 			if phase != "" && phase != compositionsv1.SnapshotRestorePhaseCompleted {
