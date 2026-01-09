@@ -791,7 +791,7 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 				OwnedBy:           environment.Spec.OwnedBy,
 				IncludeMetadata:   originalSnapshot.Spec.IncludeMetadata,
 				// Copy registry ref - forked snapshot uses same image
-				RegistryRef:       registryRef,
+				RegistryRef: registryRef,
 			},
 			Status: snapshotv1.SnapshotStatus{
 				// Copy status from original - these are pre-existing snapshots
@@ -857,10 +857,10 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 					SnapshotPath: originalSnapshot.Status.SnapshotPath,
 					SnapshotRef:  forkName,
 					RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
-						RegistryURL:     "image-registry:5000",
-						Repository:      newRepository,
-						Tag:             newTag,
-						SourceTag:       originalSnapshot.Status.RegistryStatus.Tag,
+						RegistryURL:      "image-registry:5000",
+						Repository:       newRepository,
+						Tag:              newTag,
+						SourceTag:        originalSnapshot.Status.RegistryStatus.Tag,
 						SourceRepository: sourceRepository,
 					},
 				},
