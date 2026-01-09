@@ -46,7 +46,7 @@ func NewSnapshotHandlers(
 
 // CreateSnapshotRequest is the request body for creating a snapshot
 type CreateSnapshotRequest struct {
-	Name        string `json:"name" binding:"required"`
+	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 }
 
@@ -143,7 +143,12 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 	}
 
 	// Build snapshot name: {envName}-{snapshotName}-{timestamp}
-	snapshotName := fmt.Sprintf("%s-%s-%d", envName, req.Name, time.Now().Unix())
+	// If no name provided, use "snapshot" as default
+	namepart := req.Name
+	if namepart == "" {
+		namepart = "snapshot"
+	}
+	snapshotName := fmt.Sprintf("%s-%s-%d", envName, namepart, time.Now().Unix())
 	requestName := fmt.Sprintf("req-%s", snapshotName)
 
 	// Determine parent snapshot from environment's lastRestoredSnapshot
@@ -240,7 +245,12 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 	}
 
 	// Build snapshot name
-	snapshotName := fmt.Sprintf("%s-%s-%s-%d", namespace, workspaceName, req.Name, time.Now().Unix())
+	// If no name provided, use "snapshot" as default
+	namepart := req.Name
+	if namepart == "" {
+		namepart = "snapshot"
+	}
+	snapshotName := fmt.Sprintf("%s-%s-%s-%d", namespace, workspaceName, namepart, time.Now().Unix())
 	requestName := fmt.Sprintf("req-%s", snapshotName)
 
 	// Determine parent snapshot from workspace's lastRestoredSnapshot
