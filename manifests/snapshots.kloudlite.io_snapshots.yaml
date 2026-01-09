@@ -108,10 +108,6 @@ spec:
                 description: RegistryRef configures where to push this snapshot in
                   the registry
                 properties:
-                  autoPush:
-                    description: AutoPush automatically pushes to registry when snapshot
-                      is ready
-                    type: boolean
                   repository:
                     description: Repository is the registry repository path (e.g.,
                       "snapshots/username")
