@@ -831,6 +831,53 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 			// Continue anyway - the snapshot was created
 		}
 
+		// Add a new tag to the existing image for the forked environment
+		// This avoids re-pushing the same data - just copies the manifest to the new repo
+		if originalSnapshot.Status.RegistryStatus != nil && originalSnapshot.Status.RegistryStatus.Pushed {
+			newRepository := fmt.Sprintf("snapshots/%s/env/%s", environment.Spec.OwnedBy, environment.Name)
+			newTag := forkName
+
+			// Get source repository from original snapshot
+			sourceRepository := ""
+			if originalSnapshot.Spec.RegistryRef != nil {
+				sourceRepository = originalSnapshot.Spec.RegistryRef.Repository
+			}
+
+			tagReq := &snapshotv1.SnapshotRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("tag-%s", forkName),
+					Namespace: fmt.Sprintf("wm-%s", environment.Spec.OwnedBy),
+					Labels: map[string]string{
+						"snapshots.kloudlite.io/snapshot":  forkName,
+						"snapshots.kloudlite.io/operation": "tag",
+					},
+				},
+				Spec: snapshotv1.SnapshotRequestSpec{
+					Operation:    snapshotv1.SnapshotOperationTag,
+					SnapshotPath: originalSnapshot.Status.SnapshotPath,
+					SnapshotRef:  forkName,
+					RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
+						RegistryURL:     "image-registry:5000",
+						Repository:      newRepository,
+						Tag:             newTag,
+						SourceTag:       originalSnapshot.Status.RegistryStatus.Tag,
+						SourceRepository: sourceRepository,
+					},
+				},
+			}
+
+			if err := r.Create(ctx, tagReq); err != nil && !apierrors.IsAlreadyExists(err) {
+				logger.Warn("Failed to create tag request for forked snapshot",
+					zap.String("fork", forkName), zap.Error(err))
+			} else {
+				logger.Info("Created tag request for forked snapshot",
+					zap.String("fork", forkName),
+					zap.String("sourceRepository", sourceRepository),
+					zap.String("newRepository", newRepository),
+					zap.String("newTag", newTag))
+			}
+		}
+
 		logger.Info("Created forked snapshot",
 			zap.String("fork", forkName),
 			zap.String("original", originalSnapshot.Name),
