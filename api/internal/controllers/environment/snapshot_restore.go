@@ -761,6 +761,17 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 		}
 
 		// Create the forked snapshot
+		// Copy registry status from original - no need to re-push, data is already in registry
+		var registryStatus *snapshotv1.SnapshotRegistryStatus
+		if originalSnapshot.Status.RegistryStatus != nil {
+			registryStatus = originalSnapshot.Status.RegistryStatus.DeepCopy()
+		}
+
+		var registryRef *snapshotv1.SnapshotRegistryRef
+		if originalSnapshot.Spec.RegistryRef != nil {
+			registryRef = originalSnapshot.Spec.RegistryRef.DeepCopy()
+		}
+
 		forkedSnapshot := &snapshotv1.Snapshot{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: forkName,
@@ -779,19 +790,23 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 				Description:       originalSnapshot.Spec.Description,
 				OwnedBy:           environment.Spec.OwnedBy,
 				IncludeMetadata:   originalSnapshot.Spec.IncludeMetadata,
+				// Copy registry ref - forked snapshot uses same image
+				RegistryRef:       registryRef,
 			},
 			Status: snapshotv1.SnapshotStatus{
 				// Copy status from original - these are pre-existing snapshots
-				State:            snapshotv1.SnapshotStateReady,
-				SnapshotType:     originalSnapshot.Status.SnapshotType,
-				TargetName:       environment.Name,
-				Message:          fmt.Sprintf("Forked from %s", originalSnapshot.Name),
-				SizeBytes:        originalSnapshot.Status.SizeBytes,
-				SizeHuman:        originalSnapshot.Status.SizeHuman,
-				SnapshotPath:     originalSnapshot.Status.SnapshotPath, // Points to same btrfs snapshot
-				CreatedAt:        originalSnapshot.Status.CreatedAt,
-				WorkMachineName:  originalSnapshot.Status.WorkMachineName,
-				ResourceMetadata: originalSnapshot.Status.ResourceMetadata,
+				State:             snapshotv1.SnapshotStateReady,
+				SnapshotType:      originalSnapshot.Status.SnapshotType,
+				TargetName:        environment.Name,
+				Message:           fmt.Sprintf("Forked from %s", originalSnapshot.Name),
+				SizeBytes:         originalSnapshot.Status.SizeBytes,
+				SizeHuman:         originalSnapshot.Status.SizeHuman,
+				SnapshotPath:      originalSnapshot.Status.SnapshotPath, // Points to same btrfs snapshot
+				CreatedAt:         originalSnapshot.Status.CreatedAt,
+				WorkMachineName:   originalSnapshot.Status.WorkMachineName,
+				ResourceMetadata:  originalSnapshot.Status.ResourceMetadata,
+				CollectedMetadata: originalSnapshot.Status.CollectedMetadata,
+				RegistryStatus:    registryStatus, // Copy registry status - already pushed
 			},
 		}
 
