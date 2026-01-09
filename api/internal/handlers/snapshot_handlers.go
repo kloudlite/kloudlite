@@ -44,24 +44,35 @@ func NewSnapshotHandlers(
 	}
 }
 
-// CreateEnvironmentSnapshotRequest is the request body for creating an environment snapshot
-type CreateEnvironmentSnapshotRequest struct {
+// CreateSnapshotRequest is the request body for creating a snapshot
+type CreateSnapshotRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description,omitempty"`
 }
 
 // SnapshotResponse is the API response for a snapshot
 type SnapshotResponse struct {
-	Name        string                        `json:"name"`
-	Description string                        `json:"description,omitempty"`
-	State       snapshotv1.SnapshotState      `json:"state"`
-	SizeHuman   string                        `json:"sizeHuman,omitempty"`
-	SizeBytes   int64                         `json:"sizeBytes,omitempty"`
-	CreatedAt   *metav1.Time                  `json:"createdAt,omitempty"`
+	Name        string                           `json:"name"`
+	Description string                           `json:"description,omitempty"`
+	State       snapshotv1.SnapshotState         `json:"state"`
+	SizeHuman   string                           `json:"sizeHuman,omitempty"`
+	SizeBytes   int64                            `json:"sizeBytes,omitempty"`
+	CreatedAt   *metav1.Time                     `json:"createdAt,omitempty"`
 	Registry    *snapshotv1.SnapshotRegistryInfo `json:"registry,omitempty"`
-	Parent      string                        `json:"parent,omitempty"`
-	RefCount    int32                         `json:"refCount"`
-	Message     string                        `json:"message,omitempty"`
+	Parent      string                           `json:"parent,omitempty"`
+	RefCount    int32                            `json:"refCount"`
+	Message     string                           `json:"message,omitempty"`
+}
+
+// SnapshotRequestResponse is the API response for a snapshot request
+type SnapshotRequestResponse struct {
+	Name            string                          `json:"name"`
+	SnapshotName    string                          `json:"snapshotName"`
+	State           snapshotv1.SnapshotRequestState `json:"state"`
+	Message         string                          `json:"message,omitempty"`
+	StartedAt       *metav1.Time                    `json:"startedAt,omitempty"`
+	CompletedAt     *metav1.Time                    `json:"completedAt,omitempty"`
+	CreatedSnapshot string                          `json:"createdSnapshot,omitempty"`
 }
 
 // getNodeForWorkMachine finds the k8s node for a workmachine by label
@@ -93,13 +104,25 @@ func snapshotToResponse(s *snapshotv1.Snapshot) SnapshotResponse {
 	}
 }
 
-// CreateEnvironmentSnapshot creates a new snapshot for an environment
+func snapshotRequestToResponse(r *snapshotv1.SnapshotRequest) SnapshotRequestResponse {
+	return SnapshotRequestResponse{
+		Name:            r.Name,
+		SnapshotName:    r.Spec.SnapshotName,
+		State:           r.Status.State,
+		Message:         r.Status.Message,
+		StartedAt:       r.Status.StartedAt,
+		CompletedAt:     r.Status.CompletedAt,
+		CreatedSnapshot: r.Status.CreatedSnapshot,
+	}
+}
+
+// CreateEnvironmentSnapshot creates a new snapshot request for an environment
 // POST /api/v1/environments/:name/snapshots
 func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 	envName := c.Param("name")
 	username := c.GetString("username")
 
-	var req CreateEnvironmentSnapshotRequest
+	var req CreateSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -121,6 +144,7 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 
 	// Build snapshot name: {envName}-{snapshotName}-{timestamp}
 	snapshotName := fmt.Sprintf("%s-%s-%d", envName, req.Name, time.Now().Unix())
+	requestName := fmt.Sprintf("req-%s", snapshotName)
 
 	// Determine parent snapshot from environment's lastRestoredSnapshot
 	var parentSnapshot string
@@ -128,39 +152,42 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		parentSnapshot = env.Status.LastRestoredSnapshot.Name
 	}
 
-	// Create the snapshot CR
-	snapshot := &snapshotv1.Snapshot{
+	// Create the SnapshotRequest CR (node-specific operation)
+	snapshotReq := &snapshotv1.SnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: snapshotName,
+			Name:      requestName,
+			Namespace: env.Spec.TargetNamespace,
 			Labels: map[string]string{
-				"kloudlite.io/owned-by":               env.Spec.OwnedBy,
+				"kloudlite.io/owned-by":              env.Spec.OwnedBy,
 				"snapshots.kloudlite.io/environment": envName,
 				"snapshots.kloudlite.io/type":        "environment",
 			},
 		},
-		Spec: snapshotv1.SnapshotSpec{
+		Spec: snapshotv1.SnapshotRequestSpec{
+			SnapshotName:   snapshotName,
 			SourcePath:     fmt.Sprintf("/data/environments/%s", env.Spec.TargetNamespace),
-			ParentSnapshot: parentSnapshot,
-			Store:          "default",
 			NodeName:       env.Spec.NodeName,
+			Store:          "default",
 			Owner:          env.Spec.OwnedBy,
+			ParentSnapshot: parentSnapshot,
 			Description:    req.Description,
 		},
 	}
 
-	if err := h.k8sClient.Create(c.Request.Context(), snapshot); err != nil {
-		h.logger.Error("Failed to create snapshot", zap.String("name", snapshotName), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot: %v", err)})
+	if err := h.k8sClient.Create(c.Request.Context(), snapshotReq); err != nil {
+		h.logger.Error("Failed to create snapshot request", zap.String("name", requestName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot request: %v", err)})
 		return
 	}
 
-	h.logger.Info("Created environment snapshot",
+	h.logger.Info("Created environment snapshot request",
+		zap.String("request", requestName),
 		zap.String("snapshot", snapshotName),
 		zap.String("environment", envName),
 		zap.String("user", username),
 	)
 
-	c.JSON(http.StatusCreated, snapshotToResponse(snapshot))
+	c.JSON(http.StatusCreated, snapshotRequestToResponse(snapshotReq))
 }
 
 // ListEnvironmentSnapshots lists all snapshots for an environment
@@ -183,14 +210,14 @@ func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// CreateWorkspaceSnapshot creates a new snapshot for a workspace
+// CreateWorkspaceSnapshot creates a new snapshot request for a workspace
 // POST /api/v1/namespaces/:namespace/workspaces/:name/snapshots
 func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 	namespace := c.Param("namespace")
 	workspaceName := c.Param("name")
 	username := c.GetString("username")
 
-	var req CreateEnvironmentSnapshotRequest
+	var req CreateSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -214,6 +241,7 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 
 	// Build snapshot name
 	snapshotName := fmt.Sprintf("%s-%s-%s-%d", namespace, workspaceName, req.Name, time.Now().Unix())
+	requestName := fmt.Sprintf("req-%s", snapshotName)
 
 	// Determine parent snapshot from workspace's lastRestoredSnapshot
 	var parentSnapshot string
@@ -221,39 +249,42 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		parentSnapshot = ws.Status.LastRestoredSnapshot.Name
 	}
 
-	// Create the snapshot CR
-	snapshot := &snapshotv1.Snapshot{
+	// Create the SnapshotRequest CR (node-specific operation)
+	snapshotReq := &snapshotv1.SnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: snapshotName,
+			Name:      requestName,
+			Namespace: namespace,
 			Labels: map[string]string{
-				"kloudlite.io/owned-by":             ws.Spec.OwnedBy,
+				"kloudlite.io/owned-by":            ws.Spec.OwnedBy,
 				"snapshots.kloudlite.io/workspace": fmt.Sprintf("%s--%s", namespace, workspaceName),
-				"snapshots.kloudlite.io/type":       "workspace",
+				"snapshots.kloudlite.io/type":      "workspace",
 			},
 		},
-		Spec: snapshotv1.SnapshotSpec{
+		Spec: snapshotv1.SnapshotRequestSpec{
+			SnapshotName:   snapshotName,
 			SourcePath:     fmt.Sprintf("/data/workspaces/%s/%s", namespace, workspaceName),
-			ParentSnapshot: parentSnapshot,
-			Store:          "default",
 			NodeName:       nodeName,
+			Store:          "default",
 			Owner:          ws.Spec.OwnedBy,
+			ParentSnapshot: parentSnapshot,
 			Description:    req.Description,
 		},
 	}
 
-	if err := h.k8sClient.Create(c.Request.Context(), snapshot); err != nil {
-		h.logger.Error("Failed to create snapshot", zap.String("name", snapshotName), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot: %v", err)})
+	if err := h.k8sClient.Create(c.Request.Context(), snapshotReq); err != nil {
+		h.logger.Error("Failed to create snapshot request", zap.String("name", requestName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot request: %v", err)})
 		return
 	}
 
-	h.logger.Info("Created workspace snapshot",
+	h.logger.Info("Created workspace snapshot request",
+		zap.String("request", requestName),
 		zap.String("snapshot", snapshotName),
 		zap.String("workspace", fmt.Sprintf("%s/%s", namespace, workspaceName)),
 		zap.String("user", username),
 	)
 
-	c.JSON(http.StatusCreated, snapshotToResponse(snapshot))
+	c.JSON(http.StatusCreated, snapshotRequestToResponse(snapshotReq))
 }
 
 // ListWorkspaceSnapshots lists all snapshots for a workspace

@@ -34,9 +34,13 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&SnapshotStore{},
 		&SnapshotStoreList{},
 
-		// Generic snapshot
+		// Snapshot metadata (result of SnapshotRequest)
 		&Snapshot{},
 		&SnapshotList{},
+
+		// Snapshot creation requests (node-specific)
+		&SnapshotRequest{},
+		&SnapshotRequestList{},
 
 		// Reference counting
 		&SnapshotRef{},

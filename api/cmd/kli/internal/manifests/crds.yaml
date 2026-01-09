@@ -2392,6 +2392,170 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
+  name: snapshotrequests.snapshots.kloudlite.io
+spec:
+  group: snapshots.kloudlite.io
+  names:
+    kind: SnapshotRequest
+    listKind: SnapshotRequestList
+    plural: snapshotrequests
+    singular: snapshotrequest
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.snapshotName
+      name: Snapshot
+      type: string
+    - jsonPath: .spec.nodeName
+      name: Node
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          SnapshotRequest is a node-specific request to create a snapshot.
+          The node-manager watches these and creates the actual Snapshot after
+          pushing data to the registry.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnapshotRequestSpec defines the snapshot creation request
+            properties:
+              artifacts:
+                description: Artifacts define metadata to store alongside the snapshot
+                items:
+                  description: ArtifactSpec defines a metadata artifact stored with
+                    the snapshot
+                  properties:
+                    data:
+                      description: Data is the artifact content (base64 encoded for
+                        binary safety)
+                      type: string
+                    name:
+                      description: Name identifies this artifact (e.g., "k8s-resources",
+                        "app-config")
+                      type: string
+                    type:
+                      default: raw
+                      description: Type hints at how to handle this artifact during
+                        restore
+                      enum:
+                      - kubernetes-manifests
+                      - json
+                      - yaml
+                      - sql
+                      - raw
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              description:
+                description: Description is a human-readable description
+                type: string
+              nodeName:
+                description: NodeName is the Kubernetes node where the btrfs subvolume
+                  exists
+                type: string
+              owner:
+                description: Owner identifies who owns this snapshot (e.g., username)
+                type: string
+              parentSnapshot:
+                description: ParentSnapshot is the parent snapshot name for incremental
+                  send
+                type: string
+              retentionPolicy:
+                description: RetentionPolicy defines automatic deletion rules for
+                  the created snapshot
+                properties:
+                  expiresAt:
+                    description: ExpiresAt is when this snapshot should be automatically
+                      deleted
+                    format: date-time
+                    type: string
+                  keepForDays:
+                    description: KeepForDays is the number of days to keep the snapshot
+                    format: int32
+                    minimum: 1
+                    type: integer
+                type: object
+              snapshotName:
+                description: SnapshotName is the name of the Snapshot to create
+                type: string
+              sourcePath:
+                description: SourcePath is the btrfs subvolume path to snapshot
+                type: string
+              store:
+                description: Store is the name of the SnapshotStore to use
+                type: string
+            required:
+            - nodeName
+            - owner
+            - snapshotName
+            - sourcePath
+            - store
+            type: object
+          status:
+            description: SnapshotRequestStatus defines the observed state of SnapshotRequest
+            properties:
+              completedAt:
+                description: CompletedAt is when processing completed (success or
+                  failure)
+                format: date-time
+                type: string
+              createdSnapshot:
+                description: CreatedSnapshot is the name of the Snapshot that was
+                  created
+                type: string
+              localSnapshotPath:
+                description: LocalSnapshotPath is the temporary local btrfs snapshot
+                  path
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              startedAt:
+                description: StartedAt is when processing started
+                format: date-time
+                type: string
+              state:
+                default: Pending
+                description: State is the current state of the request
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: snapshotrestores.snapshots.kloudlite.io
 spec:
   group: snapshots.kloudlite.io
@@ -2510,6 +2674,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.owner
+      name: Owner
+      type: string
     - jsonPath: .status.state
       name: State
       type: string
@@ -2523,9 +2690,6 @@ spec:
       name: Parent
       priority: 1
       type: string
-    - jsonPath: .status.createdAt
-      name: Created
-      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -2533,8 +2697,9 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          Snapshot represents a point-in-time snapshot of a btrfs subvolume
-          This is a generic resource - it doesn't know about environments or workspaces
+          Snapshot represents metadata about a snapshot stored in an OCI registry.
+          This is purely metadata - it doesn't know about nodes or local paths.
+          Snapshots are created by SnapshotRequest after data is pushed to registry.
         properties:
           apiVersion:
             description: |-
@@ -2554,14 +2719,12 @@ spec:
           metadata:
             type: object
           spec:
-            description: SnapshotSpec defines the desired state of Snapshot
+            description: SnapshotSpec defines the snapshot metadata
             properties:
               artifacts:
-                description: |-
-                  Artifacts define large metadata to store alongside the snapshot
-                  Each artifact is stored as a layer in the OCI image
+                description: Artifacts define metadata stored alongside the snapshot
                 items:
-                  description: ArtifactSpec defines a metadata artifact to store with
+                  description: ArtifactSpec defines a metadata artifact stored with
                     the snapshot
                   properties:
                     data:
@@ -2590,23 +2753,12 @@ spec:
               description:
                 description: Description is a human-readable description
                 type: string
-              nodeName:
-                description: NodeName is the Kubernetes node where the btrfs subvolume
-                  exists
-                type: string
               owner:
-                description: |-
-                  Owner identifies who owns this snapshot (e.g., username)
-                  Used to organize snapshots in the registry: {prefix}/{owner}/{name}
+                description: Owner identifies who owns this snapshot (e.g., username)
                 type: string
               parentSnapshot:
                 description: ParentSnapshot is the parent snapshot name for incremental
                   storage
-                type: string
-              repository:
-                description: |-
-                  Repository overrides the auto-generated repository path
-                  If not set, uses: {prefix}/{owner}/snapshots
                 type: string
               retentionPolicy:
                 description: RetentionPolicy defines automatic deletion rules
@@ -2622,17 +2774,8 @@ spec:
                     minimum: 1
                     type: integer
                 type: object
-              sourcePath:
-                description: SourcePath is the btrfs subvolume path to snapshot
-                type: string
-              store:
-                description: Store is the name of the SnapshotStore to use
-                type: string
             required:
-            - nodeName
             - owner
-            - sourcePath
-            - store
             type: object
           status:
             description: SnapshotStatus defines the observed state of Snapshot
@@ -2668,10 +2811,6 @@ spec:
                 items:
                   type: string
                 type: array
-              localPath:
-                description: LocalPath is the local btrfs snapshot path (if still
-                  exists)
-                type: string
               message:
                 description: Message provides human-readable status information
                 type: string
@@ -2715,7 +2854,7 @@ spec:
                 description: SizeHuman is the human-readable size (e.g., "1.5 GB")
                 type: string
               state:
-                default: Pending
+                default: Ready
                 description: State is the current state of the snapshot
                 type: string
             required:

@@ -74,7 +74,7 @@ type SnapshotStoreList struct {
 }
 
 // ============================================================================
-// Snapshot - Generic snapshot with artifacts
+// Snapshot - Global metadata about a stored snapshot (result of SnapshotRequest)
 // ============================================================================
 
 // +genclient
@@ -83,15 +83,16 @@ type SnapshotStoreList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="RefCount",type=integer,JSONPath=`.status.refCount`
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.status.sizeHuman`
 // +kubebuilder:printcolumn:name="Parent",type=string,JSONPath=`.spec.parentSnapshot`,priority=1
-// +kubebuilder:printcolumn:name="Created",type=date,JSONPath=`.status.createdAt`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// Snapshot represents a point-in-time snapshot of a btrfs subvolume
-// This is a generic resource - it doesn't know about environments or workspaces
+// Snapshot represents metadata about a snapshot stored in an OCI registry.
+// This is purely metadata - it doesn't know about nodes or local paths.
+// Snapshots are created by SnapshotRequest after data is pushed to registry.
 type Snapshot struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -100,40 +101,21 @@ type Snapshot struct {
 	Status SnapshotStatus `json:"status,omitempty"`
 }
 
-// SnapshotSpec defines the desired state of Snapshot
+// SnapshotSpec defines the snapshot metadata
 type SnapshotSpec struct {
-	// SourcePath is the btrfs subvolume path to snapshot
+	// Owner identifies who owns this snapshot (e.g., username)
 	// +kubebuilder:validation:Required
-	SourcePath string `json:"sourcePath"`
+	Owner string `json:"owner"`
 
 	// ParentSnapshot is the parent snapshot name for incremental storage
 	// +optional
 	ParentSnapshot string `json:"parentSnapshot,omitempty"`
 
-	// Store is the name of the SnapshotStore to use
-	// +kubebuilder:validation:Required
-	Store string `json:"store"`
-
-	// NodeName is the Kubernetes node where the btrfs subvolume exists
-	// +kubebuilder:validation:Required
-	NodeName string `json:"nodeName"`
-
-	// Owner identifies who owns this snapshot (e.g., username)
-	// Used to organize snapshots in the registry: {prefix}/{owner}/{name}
-	// +kubebuilder:validation:Required
-	Owner string `json:"owner"`
-
-	// Repository overrides the auto-generated repository path
-	// If not set, uses: {prefix}/{owner}/snapshots
-	// +optional
-	Repository string `json:"repository,omitempty"`
-
 	// Description is a human-readable description
 	// +optional
 	Description string `json:"description,omitempty"`
 
-	// Artifacts define large metadata to store alongside the snapshot
-	// Each artifact is stored as a layer in the OCI image
+	// Artifacts define metadata stored alongside the snapshot
 	// +optional
 	Artifacts []ArtifactSpec `json:"artifacts,omitempty"`
 
@@ -142,7 +124,7 @@ type SnapshotSpec struct {
 	RetentionPolicy *RetentionPolicy `json:"retentionPolicy,omitempty"`
 }
 
-// ArtifactSpec defines a metadata artifact to store with the snapshot
+// ArtifactSpec defines a metadata artifact stored with the snapshot
 type ArtifactSpec struct {
 	// Name identifies this artifact (e.g., "k8s-resources", "app-config")
 	// +kubebuilder:validation:Required
@@ -185,18 +167,15 @@ type RetentionPolicy struct {
 type SnapshotState string
 
 const (
-	SnapshotStatePending   SnapshotState = "Pending"
-	SnapshotStateCreating  SnapshotState = "Creating"
-	SnapshotStateUploading SnapshotState = "Uploading"
-	SnapshotStateReady     SnapshotState = "Ready"
-	SnapshotStateDeleting  SnapshotState = "Deleting"
-	SnapshotStateFailed    SnapshotState = "Failed"
+	SnapshotStateReady    SnapshotState = "Ready"
+	SnapshotStateDeleting SnapshotState = "Deleting"
+	SnapshotStateFailed   SnapshotState = "Failed"
 )
 
 // SnapshotStatus defines the observed state of Snapshot
 type SnapshotStatus struct {
 	// State is the current state of the snapshot
-	// +kubebuilder:default=Pending
+	// +kubebuilder:default=Ready
 	State SnapshotState `json:"state,omitempty"`
 
 	// Message provides human-readable status information
@@ -231,10 +210,6 @@ type SnapshotStatus struct {
 	// Artifacts lists the stored artifacts
 	// +optional
 	Artifacts []ArtifactStatus `json:"artifacts,omitempty"`
-
-	// LocalPath is the local btrfs snapshot path (if still exists)
-	// +optional
-	LocalPath string `json:"localPath,omitempty"`
 }
 
 // SnapshotRegistryInfo contains OCI registry storage details
@@ -275,6 +250,117 @@ type SnapshotList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Snapshot `json:"items"`
+}
+
+// ============================================================================
+// SnapshotRequest - Node-specific request to create a snapshot
+// ============================================================================
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
+// +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.nodeName`
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+
+// SnapshotRequest is a node-specific request to create a snapshot.
+// The node-manager watches these and creates the actual Snapshot after
+// pushing data to the registry.
+type SnapshotRequest struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   SnapshotRequestSpec   `json:"spec,omitempty"`
+	Status SnapshotRequestStatus `json:"status,omitempty"`
+}
+
+// SnapshotRequestSpec defines the snapshot creation request
+type SnapshotRequestSpec struct {
+	// SnapshotName is the name of the Snapshot to create
+	// +kubebuilder:validation:Required
+	SnapshotName string `json:"snapshotName"`
+
+	// SourcePath is the btrfs subvolume path to snapshot
+	// +kubebuilder:validation:Required
+	SourcePath string `json:"sourcePath"`
+
+	// NodeName is the Kubernetes node where the btrfs subvolume exists
+	// +kubebuilder:validation:Required
+	NodeName string `json:"nodeName"`
+
+	// Store is the name of the SnapshotStore to use
+	// +kubebuilder:validation:Required
+	Store string `json:"store"`
+
+	// Owner identifies who owns this snapshot (e.g., username)
+	// +kubebuilder:validation:Required
+	Owner string `json:"owner"`
+
+	// ParentSnapshot is the parent snapshot name for incremental send
+	// +optional
+	ParentSnapshot string `json:"parentSnapshot,omitempty"`
+
+	// Description is a human-readable description
+	// +optional
+	Description string `json:"description,omitempty"`
+
+	// Artifacts define metadata to store alongside the snapshot
+	// +optional
+	Artifacts []ArtifactSpec `json:"artifacts,omitempty"`
+
+	// RetentionPolicy defines automatic deletion rules for the created snapshot
+	// +optional
+	RetentionPolicy *RetentionPolicy `json:"retentionPolicy,omitempty"`
+}
+
+// SnapshotRequestState represents the current state of a snapshot request
+type SnapshotRequestState string
+
+const (
+	SnapshotRequestStatePending   SnapshotRequestState = "Pending"
+	SnapshotRequestStateCreating  SnapshotRequestState = "Creating"
+	SnapshotRequestStateUploading SnapshotRequestState = "Uploading"
+	SnapshotRequestStateCompleted SnapshotRequestState = "Completed"
+	SnapshotRequestStateFailed    SnapshotRequestState = "Failed"
+)
+
+// SnapshotRequestStatus defines the observed state of SnapshotRequest
+type SnapshotRequestStatus struct {
+	// State is the current state of the request
+	// +kubebuilder:default=Pending
+	State SnapshotRequestState `json:"state,omitempty"`
+
+	// Message provides human-readable status information
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// StartedAt is when processing started
+	// +optional
+	StartedAt *metav1.Time `json:"startedAt,omitempty"`
+
+	// CompletedAt is when processing completed (success or failure)
+	// +optional
+	CompletedAt *metav1.Time `json:"completedAt,omitempty"`
+
+	// CreatedSnapshot is the name of the Snapshot that was created
+	// +optional
+	CreatedSnapshot string `json:"createdSnapshot,omitempty"`
+
+	// LocalSnapshotPath is the temporary local btrfs snapshot path
+	// +optional
+	LocalSnapshotPath string `json:"localSnapshotPath,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// SnapshotRequestList contains a list of SnapshotRequest
+type SnapshotRequestList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []SnapshotRequest `json:"items"`
 }
 
 // ============================================================================
