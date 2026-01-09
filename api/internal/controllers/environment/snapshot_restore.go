@@ -809,6 +809,13 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 			return "", fmt.Errorf("failed to create forked snapshot %s: %w", forkName, err)
 		}
 
+		// Status subresource requires separate update - status is ignored on Create
+		// Must set status to Ready to prevent normal reconciliation from auto-detecting wrong parent
+		if err := r.Status().Update(ctx, forkedSnapshot); err != nil {
+			logger.Warn("Failed to update forked snapshot status", zap.String("fork", forkName), zap.Error(err))
+			// Continue anyway - the snapshot was created
+		}
+
 		logger.Info("Created forked snapshot",
 			zap.String("fork", forkName),
 			zap.String("original", originalSnapshot.Name),
