@@ -24,6 +24,14 @@ import (
 func (r *SnapshotReconciler) handlePending(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) (reconcile.Result, error) {
 	logger.Info("Snapshot is pending, starting creation")
 
+	// Check if this is a forked snapshot - these don't need local btrfs operations
+	// They're created during environment fork and already have registry status copied from original
+	if forkedFrom, ok := snapshot.Labels["snapshots.kloudlite.io/forked-from"]; ok && forkedFrom != "" {
+		logger.Info("Forked snapshot detected, marking as Ready without local operations",
+			zap.String("forkedFrom", forkedFrom))
+		return r.markForkedSnapshotReady(ctx, snapshot, forkedFrom, logger)
+	}
+
 	// Determine snapshot type
 	if snapshot.Spec.WorkspaceRef != nil {
 		return r.handleWorkspacePending(ctx, snapshot, logger)
@@ -766,4 +774,83 @@ func (r *SnapshotReconciler) findLatestSnapshotForEnvironment(
 	}
 
 	return latestSnapshot
+}
+
+// markForkedSnapshotReady marks a forked snapshot as Ready without performing local btrfs operations
+// Forked snapshots are created during environment fork and already have registry status copied from the original
+// They don't need local btrfs operations because they reference existing images in the registry
+func (r *SnapshotReconciler) markForkedSnapshotReady(ctx context.Context, snapshot *snapshotv1.Snapshot, forkedFrom string, logger *zap.Logger) (reconcile.Result, error) {
+	// Get the original snapshot to copy any missing status fields
+	originalSnapshot := &snapshotv1.Snapshot{}
+	if err := r.Get(ctx, client.ObjectKey{Name: forkedFrom}, originalSnapshot); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Original snapshot doesn't exist anymore, but we still have the registry info
+			// Just mark as Ready with what we have
+			logger.Warn("Original snapshot not found, marking forked snapshot Ready with existing status",
+				zap.String("forkedFrom", forkedFrom))
+		} else {
+			logger.Error("Failed to get original snapshot", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+	}
+
+	// Set environment label if not already set
+	if snapshot.Labels == nil {
+		snapshot.Labels = make(map[string]string)
+	}
+	labelsUpdated := false
+	if snapshot.Spec.EnvironmentRef != nil {
+		envName := snapshot.Spec.EnvironmentRef.Name
+		if snapshot.Labels["snapshots.kloudlite.io/environment"] != envName {
+			snapshot.Labels["snapshots.kloudlite.io/environment"] = envName
+			labelsUpdated = true
+		}
+	}
+	if snapshot.Labels["kloudlite.io/owned-by"] != snapshot.Spec.OwnedBy {
+		snapshot.Labels["kloudlite.io/owned-by"] = snapshot.Spec.OwnedBy
+		labelsUpdated = true
+	}
+	if labelsUpdated {
+		if err := r.Update(ctx, snapshot); err != nil {
+			logger.Error("Failed to update snapshot labels", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Update status to Ready
+	now := metav1.Now()
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, snapshot, func() error {
+		snapshot.Status.State = snapshotv1.SnapshotStateReady
+		snapshot.Status.Message = fmt.Sprintf("Forked from %s - references existing registry image", forkedFrom)
+		snapshot.Status.SnapshotType = snapshotv1.SnapshotTypeEnvironment
+
+		// Set created time if not already set
+		if snapshot.Status.CreatedAt == nil {
+			snapshot.Status.CreatedAt = &now
+		}
+
+		// Copy size info from original if available and not already set
+		if originalSnapshot.Name != "" && snapshot.Status.SizeBytes == 0 {
+			snapshot.Status.SizeBytes = originalSnapshot.Status.SizeBytes
+			snapshot.Status.SizeHuman = originalSnapshot.Status.SizeHuman
+		}
+
+		// Ensure target name is set
+		if snapshot.Status.TargetName == "" && snapshot.Spec.EnvironmentRef != nil {
+			snapshot.Status.TargetName = snapshot.Spec.EnvironmentRef.Name
+		}
+
+		return nil
+	}, logger); err != nil {
+		logger.Error("Failed to update forked snapshot status to Ready", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Forked snapshot marked as Ready",
+		zap.String("snapshot", snapshot.Name),
+		zap.String("forkedFrom", forkedFrom),
+		zap.String("imageRef", snapshot.Status.RegistryStatus.ImageRef))
+
+	return reconcile.Result{}, nil
 }
