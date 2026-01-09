@@ -237,8 +237,17 @@ func (r *SnapshotRequestReconciler) deleteSnapshot(req *snapshotv1.SnapshotReque
 	// Check if it's a btrfs subvolume
 	checkSubvolScript := fmt.Sprintf("btrfs subvolume show %s > /dev/null 2>&1", snapshotPath)
 	if _, err := r.CmdExec.Execute(checkSubvolScript); err != nil {
-		// Not a subvolume, use rm -rf
-		logger.Info("Path is not a btrfs subvolume, using rm -rf",
+		// Not a subvolume - check if it's a directory that might contain subvolumes
+		isDirScript := fmt.Sprintf("test -d %s", snapshotPath)
+		if _, dirErr := r.CmdExec.Execute(isDirScript); dirErr == nil {
+			// It's a directory, check for nested subvolumes and delete them first
+			if err := r.deleteNestedSubvolumes(snapshotPath, logger); err != nil {
+				return fmt.Errorf("failed to delete nested subvolumes: %w", err)
+			}
+		}
+
+		// Now use rm -rf to delete the directory
+		logger.Info("Deleting directory with rm -rf",
 			zap2.String("path", snapshotPath))
 		rmScript := fmt.Sprintf("rm -rf %s", snapshotPath)
 		if output, rmErr := r.CmdExec.Execute(rmScript); rmErr != nil {
@@ -257,6 +266,48 @@ func (r *SnapshotRequestReconciler) deleteSnapshot(req *snapshotv1.SnapshotReque
 	}
 
 	logger.Info("Btrfs subvolume deleted successfully")
+	return nil
+}
+
+// deleteNestedSubvolumes finds and deletes all btrfs subvolumes under a directory
+func (r *SnapshotRequestReconciler) deleteNestedSubvolumes(dirPath string, logger *zap2.Logger) error {
+	// List all subvolumes under this directory
+	// Use btrfs subvolume list and filter by path prefix
+	listScript := fmt.Sprintf("btrfs subvolume list -o %s 2>/dev/null | awk '{print $NF}' | sort -r", dirPath)
+	output, err := r.CmdExec.Execute(listScript)
+	if err != nil {
+		// No subvolumes or error listing - continue anyway
+		logger.Info("No nested subvolumes found or error listing",
+			zap2.String("path", dirPath))
+		return nil
+	}
+
+	// Parse output and delete each subvolume (in reverse order to delete children first)
+	subvolumes := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, subvol := range subvolumes {
+		subvol = strings.TrimSpace(subvol)
+		if subvol == "" {
+			continue
+		}
+
+		// The subvolume path from btrfs list is relative to the filesystem root
+		// We need to construct the full path
+		// For subvolumes listed under dirPath, they should start with the relative path
+		fullPath := filepath.Join("/var/lib/kloudlite/storage", subvol)
+
+		logger.Info("Deleting nested subvolume",
+			zap2.String("subvolume", fullPath))
+
+		deleteScript := fmt.Sprintf("btrfs subvolume delete %s", fullPath)
+		if delOutput, delErr := r.CmdExec.Execute(deleteScript); delErr != nil {
+			logger.Warn("Failed to delete nested subvolume",
+				zap2.String("subvolume", fullPath),
+				zap2.String("output", string(delOutput)),
+				zap2.Error(delErr))
+			// Continue trying to delete other subvolumes
+		}
+	}
+
 	return nil
 }
 
