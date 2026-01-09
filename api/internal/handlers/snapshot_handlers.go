@@ -975,6 +975,9 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 
 // ListPushedSnapshots handles GET /api/v1/snapshots/pushed
 // Returns all pushed snapshots available for forking (team-wide access)
+// Query params:
+//   - type: "workspace" or "environment" - filter by snapshot type
+//   - environment: environment name - filter by specific environment
 func (h *SnapshotHandlers) ListPushedSnapshots(c *gin.Context) {
 	// Get authenticated user
 	_, _, _, exists := middleware.GetUserFromContext(c)
@@ -984,7 +987,8 @@ func (h *SnapshotHandlers) ListPushedSnapshots(c *gin.Context) {
 	}
 
 	// Filter by type if provided
-	snapshotType := c.Query("type") // "workspace" or "environment"
+	snapshotType := c.Query("type")           // "workspace" or "environment"
+	environmentName := c.Query("environment") // specific environment name
 
 	// List all snapshots (team-wide access)
 	snapshots, err := h.snapshotRepo.List(c.Request.Context())
@@ -1008,6 +1012,13 @@ func (h *SnapshotHandlers) ListPushedSnapshots(c *gin.Context) {
 				continue
 			}
 			if snapshotType == "environment" && snap.Status.SnapshotType != snapshotv1.SnapshotTypeEnvironment {
+				continue
+			}
+		}
+
+		// Filter by environment if specified
+		if environmentName != "" {
+			if snap.Spec.EnvironmentRef == nil || snap.Spec.EnvironmentRef.Name != environmentName {
 				continue
 			}
 		}
