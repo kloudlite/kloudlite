@@ -222,7 +222,8 @@ type EnvironmentStatus struct {
 	// +optional
 	Subdomain string `json:"subdomain,omitempty"`
 
-	// LastRestoredSnapshot tracks the last snapshot that was restored to this environment
+	// LastRestoredSnapshot tracks the current snapshot for this environment
+	// Updated when a snapshot is restored OR when a new snapshot is created
 	// Used for automatic parent lineage tracking when new snapshots are created
 	// +optional
 	LastRestoredSnapshot *LastRestoredSnapshotInfo `json:"lastRestoredSnapshot,omitempty"`
