@@ -4,32 +4,25 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: snapshots.snapshots.kloudlite.io
+  name: snapshotrequests.snapshots.kloudlite.io
 spec:
   group: snapshots.kloudlite.io
   names:
-    kind: Snapshot
-    listKind: SnapshotList
-    plural: snapshots
-    singular: snapshot
-  scope: Cluster
+    kind: SnapshotRequest
+    listKind: SnapshotRequestList
+    plural: snapshotrequests
+    singular: snapshotrequest
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.owner
-      name: Owner
+    - jsonPath: .spec.snapshotName
+      name: Snapshot
+      type: string
+    - jsonPath: .spec.nodeName
+      name: Node
       type: string
     - jsonPath: .status.state
       name: State
-      type: string
-    - jsonPath: .status.refCount
-      name: RefCount
-      type: integer
-    - jsonPath: .status.sizeHuman
-      name: Size
-      type: string
-    - jsonPath: .spec.parentSnapshot
-      name: Parent
-      priority: 1
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -38,9 +31,9 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          Snapshot represents metadata about a snapshot stored in an OCI registry.
-          This is purely metadata - it doesn't know about nodes or local paths.
-          Snapshots are created by SnapshotRequest after data is pushed to registry.
+          SnapshotRequest is a node-specific request to create a snapshot.
+          The node-manager watches these and creates the actual Snapshot after
+          pushing data to the registry.
         properties:
           apiVersion:
             description: |-
@@ -60,10 +53,10 @@ spec:
           metadata:
             type: object
           spec:
-            description: SnapshotSpec defines the snapshot metadata
+            description: SnapshotRequestSpec defines the snapshot creation request
             properties:
               artifacts:
-                description: Artifacts define metadata stored alongside the snapshot
+                description: Artifacts define metadata to store alongside the snapshot
                 items:
                   description: ArtifactSpec defines a metadata artifact stored with
                     the snapshot
@@ -94,15 +87,20 @@ spec:
               description:
                 description: Description is a human-readable description
                 type: string
+              nodeName:
+                description: NodeName is the Kubernetes node where the btrfs subvolume
+                  exists
+                type: string
               owner:
                 description: Owner identifies who owns this snapshot (e.g., username)
                 type: string
               parentSnapshot:
                 description: ParentSnapshot is the parent snapshot name for incremental
-                  storage
+                  send
                 type: string
               retentionPolicy:
-                description: RetentionPolicy defines automatic deletion rules
+                description: RetentionPolicy defines automatic deletion rules for
+                  the created snapshot
                 properties:
                   expiresAt:
                     description: ExpiresAt is when this snapshot should be automatically
@@ -115,91 +113,49 @@ spec:
                     minimum: 1
                     type: integer
                 type: object
+              snapshotName:
+                description: SnapshotName is the name of the Snapshot to create
+                type: string
+              sourcePath:
+                description: SourcePath is the btrfs subvolume path to snapshot
+                type: string
+              store:
+                description: Store is the name of the SnapshotStore to use
+                type: string
             required:
+            - nodeName
             - owner
+            - snapshotName
+            - sourcePath
+            - store
             type: object
           status:
-            description: SnapshotStatus defines the observed state of Snapshot
+            description: SnapshotRequestStatus defines the observed state of SnapshotRequest
             properties:
-              artifacts:
-                description: Artifacts lists the stored artifacts
-                items:
-                  description: ArtifactStatus tracks a stored artifact
-                  properties:
-                    name:
-                      type: string
-                    sizeBytes:
-                      format: int64
-                      type: integer
-                    stored:
-                      type: boolean
-                    type:
-                      description: ArtifactType represents the type of artifact
-                      type: string
-                  required:
-                  - name
-                  - stored
-                  - type
-                  type: object
-                type: array
-              createdAt:
-                description: CreatedAt is when the snapshot was successfully created
+              completedAt:
+                description: CompletedAt is when processing completed (success or
+                  failure)
                 format: date-time
                 type: string
-              lineage:
-                description: Lineage is the ordered list of parent snapshots (root
-                  first)
-                items:
-                  type: string
-                type: array
+              createdSnapshot:
+                description: CreatedSnapshot is the name of the Snapshot that was
+                  created
+                type: string
+              localSnapshotPath:
+                description: LocalSnapshotPath is the temporary local btrfs snapshot
+                  path
+                type: string
               message:
                 description: Message provides human-readable status information
                 type: string
-              refCount:
-                default: 0
-                description: |-
-                  RefCount is the number of SnapshotRefs pointing to this snapshot
-                  Snapshot cannot be deleted when refCount > 0
-                format: int32
-                type: integer
-              registry:
-                description: Registry contains OCI registry storage information
-                properties:
-                  compressedSize:
-                    description: CompressedSize is the total compressed size in bytes
-                    format: int64
-                    type: integer
-                  digest:
-                    description: Digest is the image manifest digest (sha256:...)
-                    type: string
-                  imageRef:
-                    description: ImageRef is the full image reference (registry/repo:tag)
-                    type: string
-                  parentImageRef:
-                    description: |-
-                      ParentImageRef is the parent snapshot's image reference
-                      Used for incremental restore
-                    type: string
-                  pushedAt:
-                    description: PushedAt is when the snapshot was pushed to registry
-                    format: date-time
-                    type: string
-                required:
-                - imageRef
-                type: object
-              sizeBytes:
-                description: SizeBytes is the snapshot size in bytes
-                format: int64
-                type: integer
-              sizeHuman:
-                description: SizeHuman is the human-readable size (e.g., "1.5 GB")
+              startedAt:
+                description: StartedAt is when processing started
+                format: date-time
                 type: string
               state:
-                default: Ready
-                description: State is the current state of the snapshot
+                default: Pending
+                description: State is the current state of the request
                 type: string
-            required:
-            - refCount
             type: object
         type: object
     served: true

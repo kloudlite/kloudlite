@@ -22,19 +22,28 @@ const (
 // RestoreOperator defines the interface for restore operations
 type RestoreOperator interface {
 	// PullFromRegistry pulls a snapshot and its lineage from the registry
-	PullFromRegistry(ctx context.Context, snapshot *snapshotv1.Snapshot, store *snapshotv1.SnapshotStore, targetPath string) error
+	// Uses the imageRef from the snapshot's registry info
+	PullFromRegistry(ctx context.Context, snapshot *snapshotv1.Snapshot, targetPath string) error
 
 	// RestoreSnapshot restores a btrfs snapshot to the target path
 	RestoreSnapshot(ctx context.Context, snapshotPath, targetPath string) error
 
 	// GetArtifacts retrieves artifacts from the snapshot
 	GetArtifacts(ctx context.Context, snapshot *snapshotv1.Snapshot, artifactNames []string) (map[string]string, error)
+
+	// CleanupTempData cleans up temporary restore data
+	CleanupTempData(ctx context.Context, tempPath string) error
 }
 
 // SnapshotRestoreReconciler reconciles SnapshotRestore resources
+// This controller runs on each node and handles restore operations for that node.
 type SnapshotRestoreReconciler struct {
 	client.Client
 	Logger *zap.Logger
+
+	// NodeName is the name of the node this reconciler runs on
+	// Only restore requests targeting this node will be processed
+	NodeName string
 
 	// RestoreOperator performs actual restore operations
 	RestoreOperator RestoreOperator
@@ -54,6 +63,12 @@ func (r *SnapshotRestoreReconciler) Reconcile(ctx context.Context, req reconcile
 		}
 		logger.Error("Failed to get SnapshotRestore", zap.Error(err))
 		return reconcile.Result{}, err
+	}
+
+	// Only process requests for this node
+	if restore.Spec.NodeName != r.NodeName {
+		// Not our node, skip
+		return reconcile.Result{}, nil
 	}
 
 	// Handle deletion
@@ -119,24 +134,12 @@ func (r *SnapshotRestoreReconciler) handlePending(ctx context.Context, restore *
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// Check if snapshot has local path (no need to download)
-	if snapshot.Status.LocalPath != "" {
-		// Snapshot is available locally, skip downloading
-		now := metav1.Now()
-		restore.Status.State = snapshotv1.SnapshotRestoreStateRestoring
-		restore.Status.Message = "Restoring from local snapshot"
-		restore.Status.StartedAt = &now
-		if err := r.Status().Update(ctx, restore); err != nil {
-			if apierrors.IsConflict(err) {
-				return reconcile.Result{Requeue: true}, nil
-			}
-			logger.Error("Failed to update status", zap.Error(err))
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{Requeue: true}, nil
+	// Ensure snapshot has registry info
+	if snapshot.Status.Registry == nil || snapshot.Status.Registry.ImageRef == "" {
+		return r.setFailed(ctx, restore, "Snapshot has no registry info", logger)
 	}
 
-	// Need to download from registry
+	// Start downloading from registry
 	now := metav1.Now()
 	restore.Status.State = snapshotv1.SnapshotRestoreStateDownloading
 	restore.Status.Message = "Downloading snapshot from registry"
@@ -161,27 +164,11 @@ func (r *SnapshotRestoreReconciler) handleDownloading(ctx context.Context, resto
 		return reconcile.Result{}, err
 	}
 
-	// Get the store
-	store := &snapshotv1.SnapshotStore{}
-	if err := r.Get(ctx, client.ObjectKey{Name: snapshot.Spec.Store}, store); err != nil {
-		if apierrors.IsNotFound(err) {
-			return r.setFailed(ctx, restore, fmt.Sprintf("SnapshotStore %q not found", snapshot.Spec.Store), logger)
-		}
-		logger.Error("Failed to get SnapshotStore", zap.Error(err))
-		return reconcile.Result{}, err
-	}
-
 	// Pull from registry (including lineage)
 	// The target path is a temporary location for the snapshot data
 	tempPath := fmt.Sprintf("/data/.snapshots-restore/%s", restore.Name)
-	if err := r.RestoreOperator.PullFromRegistry(ctx, snapshot, store, tempPath); err != nil {
+	if err := r.RestoreOperator.PullFromRegistry(ctx, snapshot, tempPath); err != nil {
 		return r.setFailed(ctx, restore, fmt.Sprintf("Failed to pull from registry: %v", err), logger)
-	}
-
-	// Update snapshot's local path
-	snapshot.Status.LocalPath = tempPath
-	if err := r.Status().Update(ctx, snapshot); err != nil {
-		logger.Warn("Failed to update snapshot local path", zap.Error(err))
 	}
 
 	// Transition to Restoring
@@ -195,7 +182,7 @@ func (r *SnapshotRestoreReconciler) handleDownloading(ctx context.Context, resto
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("Snapshot downloaded successfully")
+	logger.Info("Snapshot downloaded successfully", zap.String("tempPath", tempPath))
 	return reconcile.Result{Requeue: true}, nil
 }
 
@@ -208,13 +195,11 @@ func (r *SnapshotRestoreReconciler) handleRestoring(ctx context.Context, restore
 		return reconcile.Result{}, err
 	}
 
-	// Restore the snapshot
-	snapshotPath := snapshot.Status.LocalPath
-	if snapshotPath == "" {
-		return r.setFailed(ctx, restore, "Snapshot has no local path", logger)
-	}
+	// The temp path where we downloaded the snapshot
+	tempPath := fmt.Sprintf("/data/.snapshots-restore/%s", restore.Name)
 
-	if err := r.RestoreOperator.RestoreSnapshot(ctx, snapshotPath, restore.Spec.TargetPath); err != nil {
+	// Restore the snapshot to target path
+	if err := r.RestoreOperator.RestoreSnapshot(ctx, tempPath, restore.Spec.TargetPath); err != nil {
 		return r.setFailed(ctx, restore, fmt.Sprintf("Failed to restore snapshot: %v", err), logger)
 	}
 
@@ -237,6 +222,12 @@ func (r *SnapshotRestoreReconciler) handleRestoring(ctx context.Context, restore
 			logger.Warn("Failed to get artifacts", zap.Error(err))
 			// Continue - artifacts are optional
 		}
+	}
+
+	// Clean up temp data
+	if err := r.RestoreOperator.CleanupTempData(ctx, tempPath); err != nil {
+		logger.Warn("Failed to cleanup temp data", zap.Error(err))
+		// Continue - cleanup failure is not critical
 	}
 
 	// Mark as completed
@@ -266,6 +257,13 @@ func (r *SnapshotRestoreReconciler) handleRestoring(ctx context.Context, restore
 func (r *SnapshotRestoreReconciler) handleDeletion(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap.Logger) (reconcile.Result, error) {
 	if !controllerutil.ContainsFinalizer(restore, snapshotRestoreFinalizer) {
 		return reconcile.Result{}, nil
+	}
+
+	// Clean up temp data if it still exists
+	tempPath := fmt.Sprintf("/data/.snapshots-restore/%s", restore.Name)
+	if err := r.RestoreOperator.CleanupTempData(ctx, tempPath); err != nil {
+		logger.Warn("Failed to cleanup temp data on deletion", zap.Error(err))
+		// Continue - cleanup failure is not critical
 	}
 
 	// Note: We don't clean up the restored data at targetPath
