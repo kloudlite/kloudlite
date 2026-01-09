@@ -55,16 +55,26 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	// Namespace is deleted, now clean up the btrfs subvolume
-	logger.Info("Namespace deleted, cleaning up environment btrfs subvolume")
+	// Namespace is deleted, now clean up the btrfs subvolumes
+	logger.Info("Namespace deleted, cleaning up environment btrfs subvolumes")
 
-	// Clean up environment btrfs subvolume
+	// Clean up environment btrfs subvolume (live data)
 	subvolumeDeleted, err := r.cleanupEnvironmentSubvolume(ctx, environment, logger)
 	if err != nil {
 		logger.Error("Failed to cleanup environment subvolume", zap.Error(err))
 		// Continue with finalizer removal even if subvolume cleanup fails
 	} else if !subvolumeDeleted {
 		// Subvolume deletion in progress
+		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	}
+
+	// Clean up pulled snapshots directory (.snapshots/envs/{envName}/)
+	snapshotsDeleted, err := r.cleanupEnvironmentSnapshotDirectory(ctx, environment, logger)
+	if err != nil {
+		logger.Error("Failed to cleanup environment snapshot directory", zap.Error(err))
+		// Continue with finalizer removal even if cleanup fails
+	} else if !snapshotsDeleted {
+		// Snapshot directory deletion in progress
 		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
@@ -242,6 +252,81 @@ func (r *EnvironmentReconciler) cleanupEnvironmentSubvolume(ctx context.Context,
 
 	logger.Info("Creating SnapshotRequest to delete environment subvolume",
 		zap.String("path", subvolumePath),
+		zap.String("request", deleteReqName))
+
+	if err := r.Create(ctx, deleteReq); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			// Race condition, request was just created
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to create delete SnapshotRequest: %w", err)
+	}
+
+	// Request created, wait for completion
+	return false, nil
+}
+
+// cleanupEnvironmentSnapshotDirectory creates a SnapshotRequest to delete the environment's pulled snapshots directory
+// This cleans up .snapshots/envs/{envName}/ which contains pulled snapshots from forks/restores
+// Returns (true, nil) if cleanup is complete, (false, nil) if in progress, (false, err) on error
+func (r *EnvironmentReconciler) cleanupEnvironmentSnapshotDirectory(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (bool, error) {
+	// The pulled snapshots directory path
+	snapshotsDirPath := filepath.Join(envSnapshotsBasePath, environment.Name)
+
+	// SnapshotRequest name and namespace
+	deleteReqName := fmt.Sprintf("%s-delete-snapshots-dir", environment.Name)
+	deleteReqNamespace := fmt.Sprintf("wm-%s", environment.Spec.OwnedBy)
+
+	// Check if delete request already exists
+	existingReq := &snapshotv1.SnapshotRequest{}
+	err := r.Get(ctx, client.ObjectKey{Name: deleteReqName, Namespace: deleteReqNamespace}, existingReq)
+	if err == nil {
+		// Request exists, check its status
+		switch existingReq.Status.Phase {
+		case snapshotv1.SnapshotRequestPhaseCompleted:
+			logger.Info("Environment snapshot directory deleted successfully")
+			// Clean up the completed request
+			if delErr := r.Delete(ctx, existingReq); delErr != nil && !apierrors.IsNotFound(delErr) {
+				logger.Warn("Failed to delete completed SnapshotRequest", zap.Error(delErr))
+			}
+			return true, nil
+		case snapshotv1.SnapshotRequestPhaseFailed:
+			logger.Warn("Environment snapshot directory deletion failed (directory may not exist)",
+				zap.String("message", existingReq.Status.Message))
+			// Clean up the failed request and continue (directory might not exist)
+			if delErr := r.Delete(ctx, existingReq); delErr != nil && !apierrors.IsNotFound(delErr) {
+				logger.Warn("Failed to delete failed SnapshotRequest", zap.Error(delErr))
+			}
+			return true, nil
+		default:
+			// Still in progress
+			logger.Info("Waiting for environment snapshot directory deletion",
+				zap.String("phase", string(existingReq.Status.Phase)))
+			return false, nil
+		}
+	} else if !apierrors.IsNotFound(err) {
+		return false, fmt.Errorf("failed to get SnapshotRequest: %w", err)
+	}
+
+	// Create the delete request
+	deleteReq := &snapshotv1.SnapshotRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deleteReqName,
+			Namespace: deleteReqNamespace,
+			Labels: map[string]string{
+				"environments.kloudlite.io/environment": environment.Name,
+				"snapshots.kloudlite.io/operation":      "delete-snapshots-dir",
+			},
+		},
+		Spec: snapshotv1.SnapshotRequestSpec{
+			Operation:       snapshotv1.SnapshotOperationDelete,
+			SnapshotPath:    snapshotsDirPath,
+			EnvironmentName: environment.Name,
+		},
+	}
+
+	logger.Info("Creating SnapshotRequest to delete environment snapshot directory",
+		zap.String("path", snapshotsDirPath),
 		zap.String("request", deleteReqName))
 
 	if err := r.Create(ctx, deleteReq); err != nil {
