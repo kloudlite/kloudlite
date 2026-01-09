@@ -392,6 +392,16 @@ func (r *SnapshotRequestReconciler) pushSnapshot(req *snapshotv1.SnapshotRequest
 		return nil, fmt.Errorf("snapshot path does not exist: %s", snapshotPath)
 	}
 
+	// Check if parent snapshot path exists - if not, fall back to full send
+	if parentSnapshotPath != "" {
+		checkParentScript := fmt.Sprintf("test -e %s", parentSnapshotPath)
+		if _, err := r.CmdExec.Execute(checkParentScript); err != nil {
+			logger.Warn("Parent snapshot path does not exist, falling back to full send",
+				zap2.String("parentPath", parentSnapshotPath))
+			parentSnapshotPath = ""
+		}
+	}
+
 	// Build metadata from the SnapshotRequest
 	metadata := &oci.SnapshotMetadata{
 		Name: req.Spec.SnapshotRef,
