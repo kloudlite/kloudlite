@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os/exec"
 	"slices"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -125,6 +126,15 @@ func (c *Client) Pull(opts PullOptions) (*PullResult, error) {
 		SnapshotPaths: make(map[string]string),
 	}
 
+	// Track created subvolumes for cleanup on failure
+	var createdSubvolumes []string
+	cleanup := func() {
+		for _, path := range createdSubvolumes {
+			deleteCmd := exec.Command("nsenter", "-t", "1", "-m", "--", "btrfs", "subvolume", "delete", path)
+			_ = deleteCmd.Run() // Best effort cleanup
+		}
+	}
+
 	// Build initial reference
 	currentRef := fmt.Sprintf("%s/%s:%s", opts.RegistryURL, opts.Repository, opts.Tag)
 	var imagesToProcess []string
@@ -135,17 +145,20 @@ func (c *Client) Pull(opts PullOptions) (*PullResult, error) {
 
 		ref, err := c.parseReferenceFromString(currentRef)
 		if err != nil {
+			cleanup()
 			return nil, fmt.Errorf("failed to parse reference %s: %w", currentRef, err)
 		}
 
 		img, err := c.pullImage(ref)
 		if err != nil {
+			cleanup()
 			return nil, fmt.Errorf("failed to pull image %s: %w", currentRef, err)
 		}
 
 		// Check version and get parent reference
 		cfg, err := img.ConfigFile()
 		if err != nil {
+			cleanup()
 			return nil, fmt.Errorf("failed to get config for %s: %w", currentRef, err)
 		}
 
@@ -155,14 +168,17 @@ func (c *Client) Pull(opts PullOptions) (*PullResult, error) {
 			// Extract all layers from this single image
 			layers, err := img.Layers()
 			if err != nil {
+				cleanup()
 				return nil, fmt.Errorf("failed to get layers: %w", err)
 			}
 
 			for i, layer := range layers {
 				metadata, snapshotPath, err := ExtractSnapshotLayer(layer, opts.TargetDir)
 				if err != nil {
+					cleanup()
 					return nil, fmt.Errorf("failed to extract layer %d: %w", i, err)
 				}
+				createdSubvolumes = append(createdSubvolumes, snapshotPath)
 				result.Snapshots = append(result.Snapshots, *metadata)
 				result.SnapshotPaths[metadata.Name] = snapshotPath
 			}
@@ -184,29 +200,35 @@ func (c *Client) Pull(opts PullOptions) (*PullResult, error) {
 	for _, imgRef := range imagesToProcess {
 		ref, err := c.parseReferenceFromString(imgRef)
 		if err != nil {
+			cleanup()
 			return nil, fmt.Errorf("failed to parse reference %s: %w", imgRef, err)
 		}
 
 		img, err := c.pullImage(ref)
 		if err != nil {
+			cleanup()
 			return nil, fmt.Errorf("failed to pull image %s: %w", imgRef, err)
 		}
 
 		layers, err := img.Layers()
 		if err != nil {
+			cleanup()
 			return nil, fmt.Errorf("failed to get layers for %s: %w", imgRef, err)
 		}
 
 		// v2 format: each image has exactly ONE layer
 		if len(layers) != 1 {
+			cleanup()
 			return nil, fmt.Errorf("expected 1 layer in v2 image %s, got %d", imgRef, len(layers))
 		}
 
 		metadata, snapshotPath, err := ExtractSnapshotLayer(layers[0], opts.TargetDir)
 		if err != nil {
+			cleanup()
 			return nil, fmt.Errorf("failed to extract layer from %s: %w", imgRef, err)
 		}
 
+		createdSubvolumes = append(createdSubvolumes, snapshotPath)
 		result.Snapshots = append(result.Snapshots, *metadata)
 		result.SnapshotPaths[metadata.Name] = snapshotPath
 	}
