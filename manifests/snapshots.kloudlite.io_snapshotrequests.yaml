@@ -97,6 +97,7 @@ spec:
                 - push
                 - pull
                 - tag
+                - ensure-subvolume
                 type: string
               parentSnapshotPath:
                 description: ParentSnapshotPath is the path to the parent snapshot
