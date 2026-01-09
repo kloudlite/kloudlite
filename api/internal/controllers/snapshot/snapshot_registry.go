@@ -94,6 +94,14 @@ func (r *SnapshotReconciler) handlePushing(ctx context.Context, snapshot *snapsh
 				if err := r.Delete(ctx, &req); err != nil && !apierrors.IsNotFound(err) {
 					logger.Warn("Failed to delete completed push request", zap.Error(err))
 				}
+
+				// Update environment's current snapshot reference
+				if snapshot.Spec.EnvironmentRef != nil {
+					if err := r.updateEnvironmentLastRestored(ctx, snapshot.Spec.EnvironmentRef.Name, snapshot.Name, logger); err != nil {
+						logger.Warn("Failed to update environment's current snapshot", zap.Error(err))
+					}
+				}
+
 				logger.Info("Snapshot pushed to registry successfully",
 					zap.String("imageRef", snapshot.Status.RegistryStatus.ImageRef),
 					zap.Strings("tags", tags))
