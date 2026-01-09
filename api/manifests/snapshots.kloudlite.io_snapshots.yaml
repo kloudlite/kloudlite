@@ -93,11 +93,32 @@ spec:
                   type: object
                 type: array
               description:
-                description: Description is a human-readable description
+                description: Description is a human-readable description of the snapshot
                 type: string
+              environmentRef:
+                description: EnvironmentRef references the source environment (backward
+                  compat)
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              includeMetadata:
+                description: IncludeMetadata indicates whether to include K8s metadata
+                type: boolean
+              labels:
+                additionalProperties:
+                  type: string
+                description: Labels are user-defined metadata (small, stored in CR)
+                type: object
               nodeName:
                 description: NodeName is the Kubernetes node where the btrfs subvolume
                   exists
+                type: string
+              ownedBy:
+                description: OwnedBy is the username who owns this snapshot (backward
+                  compat)
                 type: string
               owner:
                 description: |-
@@ -108,6 +129,27 @@ spec:
                 description: ParentSnapshot is the parent snapshot name for incremental
                   storage
                 type: string
+              parentSnapshotRef:
+                description: ParentSnapshotRef references the parent snapshot (backward
+                  compat)
+                properties:
+                  name:
+                    type: string
+                  restoredAt:
+                    format: date-time
+                    type: string
+                required:
+                - name
+                type: object
+              registryRef:
+                description: RegistryRef contains registry push configuration (backward
+                  compat)
+                properties:
+                  repository:
+                    type: string
+                  tag:
+                    type: string
+                type: object
               repository:
                 description: |-
                   Repository overrides the auto-generated repository path
@@ -133,11 +175,17 @@ spec:
               store:
                 description: Store is the name of the SnapshotStore to use
                 type: string
-            required:
-            - nodeName
-            - owner
-            - sourcePath
-            - store
+              workspaceRef:
+                description: WorkspaceRef references the source workspace (backward
+                  compat)
+                properties:
+                  name:
+                    type: string
+                  workmachineName:
+                    type: string
+                required:
+                - name
+                type: object
             type: object
           status:
             description: SnapshotStatus defines the observed state of Snapshot
@@ -148,14 +196,17 @@ spec:
                   description: ArtifactStatus tracks a stored artifact
                   properties:
                     name:
+                      description: Name is the artifact identifier
                       type: string
                     sizeBytes:
+                      description: SizeBytes is the artifact size
                       format: int64
                       type: integer
                     stored:
+                      description: Stored indicates if artifact was successfully stored
                       type: boolean
                     type:
-                      description: ArtifactType represents the type of artifact
+                      description: Type is the artifact type
                       type: string
                   required:
                   - name
@@ -163,6 +214,25 @@ spec:
                   - type
                   type: object
                 type: array
+              collectedMetadata:
+                description: CollectedMetadata contains collected K8s metadata (backward
+                  compat)
+                properties:
+                  compositions:
+                    type: string
+                  configMaps:
+                    type: string
+                  deployments:
+                    type: string
+                  pvcs:
+                    type: string
+                  secrets:
+                    type: string
+                  services:
+                    type: string
+                  statefulSets:
+                    type: string
+                type: object
               createdAt:
                 description: CreatedAt is when the snapshot was successfully created
                 format: date-time
@@ -184,7 +254,7 @@ spec:
                 default: 0
                 description: |-
                   RefCount is the number of SnapshotRefs pointing to this snapshot
-                  Snapshot cannot be deleted when refCount > 0
+                  Snapshot is garbage collected when refCount reaches 0
                 format: int32
                 type: integer
               registry:
@@ -212,6 +282,56 @@ spec:
                 required:
                 - imageRef
                 type: object
+              registryStatus:
+                description: RegistryStatus contains registry push status (backward
+                  compat)
+                properties:
+                  compressedSize:
+                    description: CompressedSize is the compressed size in bytes
+                    format: int64
+                    type: integer
+                  digest:
+                    description: Digest is the image manifest digest
+                    type: string
+                  imageRef:
+                    description: ImageRef is the full image reference (registry/repo:tag)
+                    type: string
+                  layerDigests:
+                    description: LayerDigests contains individual layer digests
+                    items:
+                      type: string
+                    type: array
+                  pushed:
+                    description: Pushed indicates if the snapshot has been pushed
+                      to registry
+                    type: boolean
+                  pushedAt:
+                    description: PushedAt is when the snapshot was pushed
+                    format: date-time
+                    type: string
+                  tag:
+                    description: Tag is the image tag
+                    type: string
+                type: object
+              resourceMetadata:
+                description: ResourceMetadata contains resource information (backward
+                  compat)
+                properties:
+                  compositionCount:
+                    type: integer
+                  configMapCount:
+                    type: integer
+                  deploymentCount:
+                    type: integer
+                  pvcCount:
+                    type: integer
+                  secretCount:
+                    type: integer
+                  serviceCount:
+                    type: integer
+                  statefulSetCount:
+                    type: integer
+                type: object
               sizeBytes:
                 description: SizeBytes is the snapshot size in bytes
                 format: int64
@@ -219,9 +339,22 @@ spec:
               sizeHuman:
                 description: SizeHuman is the human-readable size (e.g., "1.5 GB")
                 type: string
+              snapshotPath:
+                description: SnapshotPath is the local btrfs snapshot path (backward
+                  compat, alias for LocalPath)
+                type: string
+              snapshotType:
+                description: SnapshotType is the type of snapshot (backward compat)
+                type: string
               state:
                 default: Pending
                 description: State is the current state of the snapshot
+                type: string
+              targetName:
+                description: TargetName is the target resource name (backward compat)
+                type: string
+              workMachineName:
+                description: WorkMachineName is the work machine name (backward compat)
                 type: string
             required:
             - refCount

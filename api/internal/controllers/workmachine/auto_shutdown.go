@@ -66,18 +66,33 @@ func (r *WorkMachineReconciler) aggregateWorkspaceStates(ctx context.Context, ta
 
 // hasInProgressSnapshots checks if there are any snapshot operations in progress
 func (r *WorkMachineReconciler) hasInProgressSnapshots(ctx context.Context, namespace string) (bool, error) {
-	snapshotReqs := &snapshotv1.SnapshotRequestList{}
-	if err := r.List(ctx, snapshotReqs, client.InNamespace(namespace)); err != nil {
+	// Check for in-progress Snapshot resources (state != Ready && state != Failed)
+	snapshots := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, snapshots); err != nil {
 		return false, err
 	}
 
-	for _, req := range snapshotReqs.Items {
-		// In-progress if phase is not Completed or Failed
-		if req.Status.Phase != snapshotv1.SnapshotRequestPhaseCompleted &&
-			req.Status.Phase != snapshotv1.SnapshotRequestPhaseFailed {
+	for _, snapshot := range snapshots.Items {
+		// In-progress if state is not Ready or Failed
+		if snapshot.Status.State != snapshotv1.SnapshotStateReady &&
+			snapshot.Status.State != snapshotv1.SnapshotStateFailed {
 			return true, nil
 		}
 	}
+
+	// Also check for in-progress SnapshotRestore resources
+	restores := &snapshotv1.SnapshotRestoreList{}
+	if err := r.List(ctx, restores, client.InNamespace(namespace)); err != nil {
+		return false, err
+	}
+
+	for _, restore := range restores.Items {
+		if restore.Status.State != snapshotv1.SnapshotRestoreStateCompleted &&
+			restore.Status.State != snapshotv1.SnapshotRestoreStateFailed {
+			return true, nil
+		}
+	}
+
 	return false, nil
 }
 

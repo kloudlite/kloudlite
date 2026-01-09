@@ -279,7 +279,8 @@ spec:
                 type: string
               lastRestoredSnapshot:
                 description: |-
-                  LastRestoredSnapshot tracks the last snapshot that was restored to this environment
+                  LastRestoredSnapshot tracks the current snapshot for this environment
+                  Updated when a snapshot is restored OR when a new snapshot is created
                   Used for automatic parent lineage tracking when new snapshots are created
                 properties:
                   name:
@@ -352,10 +353,6 @@ spec:
                     - DataRestoring
                     - Completed
                     - Failed
-                    type: string
-                  snapshotRequestName:
-                    description: SnapshotRequestName is the name of the SnapshotRequest
-                      created for pulling
                     type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being

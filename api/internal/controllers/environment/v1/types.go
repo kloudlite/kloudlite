@@ -326,10 +326,6 @@ type SnapshotRestoreStatus struct {
 	// +optional
 	ImageRef string `json:"imageRef,omitempty"`
 
-	// SnapshotRequestName is the name of the SnapshotRequest created for pulling
-	// +optional
-	SnapshotRequestName string `json:"snapshotRequestName,omitempty"`
-
 	// StartTime when restoration started
 	// +optional
 	StartTime *metav1.Time `json:"startTime,omitempty"`
