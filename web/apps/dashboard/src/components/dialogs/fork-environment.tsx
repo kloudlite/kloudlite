@@ -36,6 +36,7 @@ interface ForkEnvironmentDialogProps {
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
   preselectedSnapshot?: Snapshot
+  sourceEnvironment?: string // Filter snapshots by this environment
 }
 
 export function ForkEnvironmentDialog({
@@ -43,6 +44,7 @@ export function ForkEnvironmentDialog({
   onOpenChange,
   onSuccess,
   preselectedSnapshot,
+  sourceEnvironment,
 }: ForkEnvironmentDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +58,9 @@ export function ForkEnvironmentDialog({
   useEffect(() => {
     if (open) {
       setIsLoadingSnapshots(true)
-      listPushedSnapshots('environment').then((result) => {
+      // Filter by sourceEnvironment if provided, otherwise show all environment snapshots
+      const envFilter = sourceEnvironment || preselectedSnapshot?.spec.environmentRef?.name
+      listPushedSnapshots('environment', envFilter).then((result) => {
         if (result.success && result.data) {
           setSnapshots(result.data.snapshots || [])
         }
@@ -74,7 +78,7 @@ export function ForkEnvironmentDialog({
       }
       setError(null)
     }
-  }, [open, preselectedSnapshot])
+  }, [open, preselectedSnapshot, sourceEnvironment])
 
   const validateNamespace = (name: string): string | null => {
     if (!name) {

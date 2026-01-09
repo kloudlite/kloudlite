@@ -178,10 +178,12 @@ export async function pullSnapshot(
 
 /**
  * Server action to list pushed snapshots available for forking
+ * @param type - filter by snapshot type (workspace or environment)
+ * @param environment - filter by specific environment name
  */
-export async function listPushedSnapshots(type?: 'workspace' | 'environment') {
+export async function listPushedSnapshots(type?: 'workspace' | 'environment', environment?: string) {
   try {
-    const result = await snapshotService.listPushed(type)
+    const result = await snapshotService.listPushed(type, environment)
     return { success: true, data: result }
   } catch (err) {
     console.error('List pushed snapshots error:', err)
