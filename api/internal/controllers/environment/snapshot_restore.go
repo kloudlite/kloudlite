@@ -857,7 +857,7 @@ func (r *EnvironmentReconciler) forkSnapshotLineage(
 					SnapshotPath: originalSnapshot.Status.SnapshotPath,
 					SnapshotRef:  forkName,
 					RegistryRef: &snapshotv1.SnapshotRequestRegistryRef{
-						RegistryURL:      "image-registry:5000",
+						RegistryURL:      "image-registry.kloudlite.svc.cluster.local:5000",
 						Repository:       newRepository,
 						Tag:              newTag,
 						SourceTag:        originalSnapshot.Status.RegistryStatus.Tag,
