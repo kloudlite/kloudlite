@@ -156,7 +156,7 @@ spec:
                 properties:
                   snapshotName:
                     description: |-
-                      SnapshotName is the name of the snapshot resource to clone from
+                      SnapshotName is the name of the snapshot resource to fork from
                       The snapshot must have status.registryStatus.pushed=true
                     type: string
                 required:
@@ -489,10 +489,6 @@ spec:
                       or failure)
                     format: date-time
                     type: string
-                  dataRestoreRequestName:
-                    description: DataRestoreRequestName is the name of the SnapshotRequest
-                      for restoring workspace data
-                    type: string
                   errorMessage:
                     description: ErrorMessage if restoration failed
                     type: string
@@ -511,10 +507,6 @@ spec:
                     - Restoring
                     - Completed
                     - Failed
-                    type: string
-                  snapshotRequestName:
-                    description: SnapshotRequestName is the name of the SnapshotRequest
-                      created for pulling
                     type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being

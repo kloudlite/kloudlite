@@ -4,6 +4,8 @@
 // Package v1 contains API Schema definitions for the snapshots v1 API group
 //
 // This package defines types in the snapshots.kloudlite.io API group:
-// - Snapshot: Represents a point-in-time snapshot of an environment's data and metadata
-// - SnapshotRequest: Instructs the node manager to perform btrfs snapshot operations
+// - SnapshotStore: Configures storage backends (S3, etc.) for snapshots
+// - Snapshot: A generic point-in-time snapshot of a btrfs subvolume with artifacts
+// - SnapshotRef: A reference to a Snapshot that manages retention counting
+// - SnapshotRestore: A request to restore a snapshot to a target path
 package v1

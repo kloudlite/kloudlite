@@ -152,14 +152,45 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 	}
 
 	// Setup Snapshot controller
+	// Note: SnapshotOperator is nil for now - it will be implemented
+	// when we migrate to the new generic snapshot system
 	snapshotReconciler := &snapshot.SnapshotReconciler{
 		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
 		Logger: logger.With(zap.String("controller", "snapshot")),
 	}
 
 	if err = snapshotReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create Snapshot controller: %w", err)
+	}
+
+	// Setup SnapshotRef controller
+	snapshotRefReconciler := &snapshot.SnapshotRefReconciler{
+		Client: mgr.GetClient(),
+		Logger: logger.With(zap.String("controller", "snapshotref")),
+	}
+
+	if err = snapshotRefReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create SnapshotRef controller: %w", err)
+	}
+
+	// Setup SnapshotRestore controller
+	snapshotRestoreReconciler := &snapshot.SnapshotRestoreReconciler{
+		Client: mgr.GetClient(),
+		Logger: logger.With(zap.String("controller", "snapshotrestore")),
+	}
+
+	if err = snapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create SnapshotRestore controller: %w", err)
+	}
+
+	// Setup SnapshotStore controller
+	snapshotStoreReconciler := &snapshot.SnapshotStoreReconciler{
+		Client: mgr.GetClient(),
+		Logger: logger.With(zap.String("controller", "snapshotstore")),
+	}
+
+	if err = snapshotStoreReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create SnapshotStore controller: %w", err)
 	}
 
 	logger.Info("Controllers initialized successfully")

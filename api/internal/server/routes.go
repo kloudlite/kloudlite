@@ -103,14 +103,8 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.Auth,
 		logger,
 	)
-	snapshotHandlers := handlers.NewSnapshotHandlers(
-		servicesManager.RepositoryManager.Snapshots,
-		servicesManager.RepositoryManager.Environments,
-		servicesManager.RepositoryManager.Workspaces,
-		servicesManager.RepositoryManager.WorkMachines,
-		servicesManager.RepositoryManager.K8sClient,
-		logger,
-	)
+	// Note: SnapshotHandlers removed - using new generic snapshot system
+	// TODO: Re-implement snapshot REST handlers with new Snapshot/SnapshotRestore CRDs
 
 	// Webhook handlers
 	appLogger := pkglogger.NewZapLogger(logger)
@@ -200,9 +194,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.GET("/:name/status", environmentHandlers.GetEnvironmentStatus)
 				environments.GET("/:name/status-ws", environmentHandlers.GetEnvironmentStatusWebSocket)
 
-				// Snapshot routes (per-environment)
-				environments.POST("/:name/snapshots", snapshotHandlers.CreateSnapshot)
-				environments.GET("/:name/snapshots", snapshotHandlers.ListSnapshots)
+				// Snapshot routes (per-environment) - TODO: Re-implement with new snapshot system
+				// environments.POST("/:name/snapshots", snapshotHandlers.CreateSnapshot)
+				// environments.GET("/:name/snapshots", snapshotHandlers.ListSnapshots)
 
 				// Environment config routes (legacy - keeping for backwards compatibility)
 				environments.PUT("/:name/config", environmentConfigHandlers.SetConfig)
@@ -292,9 +286,9 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.GET("/:name/code-analysis", workspaceHandlers.GetCodeAnalysis)
 				workspaces.POST("/:name/code-analysis", workspaceHandlers.TriggerCodeAnalysis)
 
-				// Workspace snapshots
-				workspaces.POST("/:name/snapshots", snapshotHandlers.CreateWorkspaceSnapshot)
-				workspaces.GET("/:name/snapshots", snapshotHandlers.ListWorkspaceSnapshots)
+				// Workspace snapshots - TODO: Re-implement with new snapshot system
+				// workspaces.POST("/:name/snapshots", snapshotHandlers.CreateWorkspaceSnapshot)
+				// workspaces.GET("/:name/snapshots", snapshotHandlers.ListWorkspaceSnapshots)
 
 				// Status streaming (WebSocket)
 				workspaces.GET("/:name/status-ws", workspaceHandlers.GetWorkspaceStatusWebSocket)
@@ -337,20 +331,21 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			}
 
 			// Snapshot routes (global)
-			snapshots := protected.Group("/snapshots")
-			{
-				snapshots.GET("", snapshotHandlers.ListAllSnapshots)
-				snapshots.GET("/pushed", snapshotHandlers.ListPushedSnapshots) // List pushed snapshots for forking
-				snapshots.GET("/:name", snapshotHandlers.GetSnapshot)
-				snapshots.POST("/:name/restore", snapshotHandlers.RestoreSnapshot)
-				snapshots.POST("/:name/push", snapshotHandlers.PushSnapshot) // Push snapshot to registry
-				snapshots.DELETE("/:name", snapshotHandlers.DeleteSnapshot)
-				snapshots.POST("/pull", snapshotHandlers.PullSnapshot) // Pull snapshot from registry
-			}
+			// Snapshot routes - TODO: Re-implement with new snapshot system
+			// snapshots := protected.Group("/snapshots")
+			// {
+			// 	snapshots.GET("", snapshotHandlers.ListAllSnapshots)
+			// 	snapshots.GET("/pushed", snapshotHandlers.ListPushedSnapshots) // List pushed snapshots for forking
+			// 	snapshots.GET("/:name", snapshotHandlers.GetSnapshot)
+			// 	snapshots.POST("/:name/restore", snapshotHandlers.RestoreSnapshot)
+			// 	snapshots.POST("/:name/push", snapshotHandlers.PushSnapshot) // Push snapshot to registry
+			// 	snapshots.DELETE("/:name", snapshotHandlers.DeleteSnapshot)
+			// 	snapshots.POST("/pull", snapshotHandlers.PullSnapshot) // Pull snapshot from registry
+			// }
 
-			// Create from snapshot routes
-			protected.POST("/workspaces/from-snapshot", snapshotHandlers.CreateWorkspaceFromSnapshot)
-			protected.POST("/environments/from-snapshot", snapshotHandlers.CreateEnvironmentFromSnapshot)
+			// Create from snapshot routes - TODO: Re-implement with new snapshot system
+			// protected.POST("/workspaces/from-snapshot", snapshotHandlers.CreateWorkspaceFromSnapshot)
+			// protected.POST("/environments/from-snapshot", snapshotHandlers.CreateEnvironmentFromSnapshot)
 		}
 
 		// VPN connection endpoints (public - used by kltun CLI)

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
-	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -1493,9 +1492,6 @@ func main() {
 	if err := packagesv1.AddToScheme(scheme); err != nil {
 		zapLogger.Fatal("Failed to add packages v1 scheme", zap2.Error(err))
 	}
-	if err := snapshotv1.AddToScheme(scheme); err != nil {
-		zapLogger.Fatal("Failed to add snapshot v1 scheme", zap2.Error(err))
-	}
 
 	// Get in-cluster config
 	config, err := rest.InClusterConfig()
@@ -1521,14 +1517,8 @@ func main() {
 						workmachineName: {},
 					},
 				},
-				// Watch SnapshotRequests in workmachine namespace
-				&snapshotv1.SnapshotRequest{}: {
-					Namespaces: map[string]cache.Config{
-						workmachineName: {},
-					},
-				},
 			},
-			// Cluster-scoped resources (Nodes, Snapshots) are watched globally by default
+			// Cluster-scoped resources (Nodes) are watched globally by default
 		},
 	})
 	if err != nil {
@@ -1591,17 +1581,6 @@ func main() {
 
 	if err := gpuStatusReconciler.SetupWithManager(mgr); err != nil {
 		zapLogger.Fatal("Failed to setup GPU status controller", zap2.Error(err))
-	}
-
-	// Setup SnapshotRequest reconciler for btrfs snapshot operations
-	snapshotRequestReconciler := &SnapshotRequestReconciler{
-		Client:  mgr.GetClient(),
-		Logger:  zapLogger,
-		CmdExec: &HostCommandExecutor{}, // Use host executor for btrfs commands
-	}
-
-	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup SnapshotRequest controller", zap2.Error(err))
 	}
 
 	zapLogger.Info("All reconcilers configured",

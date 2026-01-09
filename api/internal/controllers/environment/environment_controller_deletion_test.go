@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/testutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -73,32 +72,8 @@ func TestEnvironmentReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing
 		},
 	}
 
-	// Create workmachine namespace for SnapshotRequest
-	wmNamespace := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "wm-test@example.com",
-		},
-	}
-
-	// Create completed SnapshotRequest for subvolume deletion
-	// The env deletion creates a SnapshotRequest to delete the subvolume,
-	// then waits for it to complete before removing the finalizer
-	completedSnapshotReq := &snapshotv1.SnapshotRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "deleting-env-delete-subvolume",
-			Namespace: "wm-test@example.com",
-		},
-		Spec: snapshotv1.SnapshotRequestSpec{
-			Operation:       snapshotv1.SnapshotOperationDelete,
-			SnapshotPath:    "/var/lib/kloudlite/storage/environments/already-deleted-namespace",
-			EnvironmentName: "deleting-env",
-		},
-		Status: snapshotv1.SnapshotRequestStatus{
-			Phase: snapshotv1.SnapshotRequestPhaseCompleted,
-		},
-	}
-
-	k8sClient := testutil.NewFakeClient(scheme, env, wmNamespace, completedSnapshotReq).Build()
+	// Note: No namespace exists - testing deletion when namespace is already gone
+	k8sClient := testutil.NewFakeClient(scheme, env).Build()
 
 	logger, _ := zap.NewDevelopment()
 	reconciler := &EnvironmentReconciler{

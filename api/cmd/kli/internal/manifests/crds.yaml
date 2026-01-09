@@ -1136,7 +1136,8 @@ spec:
                 type: string
               lastRestoredSnapshot:
                 description: |-
-                  LastRestoredSnapshot tracks the last snapshot that was restored to this environment
+                  LastRestoredSnapshot tracks the current snapshot for this environment
+                  Updated when a snapshot is restored OR when a new snapshot is created
                   Used for automatic parent lineage tracking when new snapshots are created
                 properties:
                   name:
@@ -1209,10 +1210,6 @@ spec:
                     - DataRestoring
                     - Completed
                     - Failed
-                    type: string
-                  snapshotRequestName:
-                    description: SnapshotRequestName is the name of the SnapshotRequest
-                      created for pulling
                     type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being
@@ -2312,23 +2309,23 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: snapshotrequests.snapshots.kloudlite.io
+  name: snapshotrefs.snapshots.kloudlite.io
 spec:
   group: snapshots.kloudlite.io
   names:
-    kind: SnapshotRequest
-    listKind: SnapshotRequestList
-    plural: snapshotrequests
-    singular: snapshotrequest
+    kind: SnapshotRef
+    listKind: SnapshotRefList
+    plural: snapshotrefs
+    singular: snapshotref
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.operation
-      name: Operation
+    - jsonPath: .spec.snapshotName
+      name: Snapshot
       type: string
-    - jsonPath: .status.phase
-      name: Phase
-      type: string
+    - jsonPath: .status.bound
+      name: Bound
+      type: boolean
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -2336,8 +2333,9 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          SnapshotRequest is a namespaced resource that instructs the workmachine-node-manager
-          to perform btrfs snapshot operations on the local filesystem
+          SnapshotRef creates a reference to a Snapshot, incrementing its refCount
+          When deleted (manually or via ownerReference), decrements the refCount
+          Use ownerReferences to automatically delete when the owning resource is deleted
         properties:
           apiVersion:
             description: |-
@@ -2357,247 +2355,137 @@ spec:
           metadata:
             type: object
           spec:
-            description: SnapshotRequestSpec defines the desired snapshot operation
+            description: SnapshotRefSpec defines which snapshot this ref points to
             properties:
-              environmentName:
-                description: EnvironmentName is the environment being snapshotted
-                  (for environment snapshots)
+              purpose:
+                description: Purpose describes why this reference exists (for documentation)
                 type: string
-              metadata:
-                description: |-
-                  Metadata contains K8s resource metadata to write to the snapshot directory
-                  This is used for environment snapshots to include ConfigMaps, Secrets, Deployments, etc.
-                properties:
-                  compositions:
-                    description: Compositions JSON
-                    type: string
-                  configMaps:
-                    description: ConfigMaps JSON
-                    type: string
-                  deployments:
-                    description: Deployments JSON
-                    type: string
-                  pvcs:
-                    description: PVCs JSON - Contains PersistentVolumeClaim specs
-                      for data restoration
-                    type: string
-                  secrets:
-                    description: Secrets JSON
-                    type: string
-                  services:
-                    description: Services JSON
-                    type: string
-                  statefulSets:
-                    description: StatefulSets JSON
-                    type: string
-                type: object
-              metadataPath:
-                description: |-
-                  MetadataPath is the base path where metadata should be written
-                  This is separate from SnapshotPath when metadata needs to go to a parent directory
-                type: string
-              operation:
-                description: Operation is the type of operation to perform
-                enum:
-                - create
-                - delete
-                - restore
-                - push
-                - pull
-                - tag
-                type: string
-              parentSnapshotPath:
-                description: ParentSnapshotPath is the path to the parent snapshot
-                  (for incremental push)
-                type: string
-              readOnly:
-                default: true
-                description: ReadOnly indicates whether to create a read-only snapshot
-                  (recommended)
-                type: boolean
-              registryRef:
-                description: RegistryRef contains registry configuration for push/pull
-                  operations
-                properties:
-                  parentImageRef:
-                    description: |-
-                      ParentImageRef is the full image reference of the parent snapshot
-                      Used for parent reference in v2 format (stored in config labels)
-                    type: string
-                  registryURL:
-                    description: RegistryURL is the registry base URL (e.g., "image-registry:5000")
-                    type: string
-                  repository:
-                    description: Repository is the image repository path (e.g., "snapshots/username")
-                    type: string
-                  sourceTag:
-                    description: SourceTag is the source tag for tag operations (copy
-                      from this tag)
-                    type: string
-                  tag:
-                    description: Tag is the image tag
-                    type: string
-                required:
-                - registryURL
-                - repository
-                - tag
-                type: object
-              snapshotPath:
-                description: SnapshotPath is where to create the snapshot or the snapshot
-                  to delete/restore from
-                type: string
-              snapshotRef:
-                description: SnapshotRef references the parent Snapshot resource
-                type: string
-              sourcePath:
-                description: SourcePath is the btrfs subvolume path to snapshot (for
-                  create/restore)
-                type: string
-              workspaceName:
-                description: WorkspaceName is the workspace being snapshotted (for
-                  workspace snapshots)
+              snapshotName:
+                description: SnapshotName is the name of the Snapshot to reference
                 type: string
             required:
-            - operation
-            - readOnly
-            - snapshotPath
+            - snapshotName
             type: object
           status:
-            description: SnapshotRequestStatus defines the observed state of SnapshotRequest
+            description: SnapshotRefStatus tracks the reference status
             properties:
-              compressedSize:
-                description: CompressedSize is the total compressed size in bytes
-                  (for push operations)
-                format: int64
-                type: integer
-              digest:
-                description: Digest is the OCI image manifest digest (for push operations)
-                type: string
-              finishedAt:
-                description: FinishedAt is when the operation finished
+              bound:
+                description: Bound indicates if the refCount has been incremented
+                type: boolean
+              boundAt:
+                description: BoundAt is when the ref was bound to the snapshot
                 format: date-time
                 type: string
-              layerDigests:
-                description: LayerDigests are the digests of all layers pushed (for
-                  push operations)
+              snapshotState:
+                description: SnapshotState is the current state of the referenced
+                  snapshot
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: snapshotrestores.snapshots.kloudlite.io
+spec:
+  group: snapshots.kloudlite.io
+  names:
+    kind: SnapshotRestore
+    listKind: SnapshotRestoreList
+    plural: snapshotrestores
+    singular: snapshotrestore
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.snapshotName
+      name: Snapshot
+      type: string
+    - jsonPath: .spec.targetPath
+      name: Target
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: SnapshotRestore requests restoration of a snapshot to a target
+          path
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnapshotRestoreSpec defines the restore operation
+            properties:
+              includeArtifacts:
+                description: IncludeArtifacts lists which artifacts to include in
+                  response (empty = all)
                 items:
                   type: string
                 type: array
-              message:
-                description: Message provides human-readable status information
+              nodeName:
+                description: NodeName is the node where to perform the restore
                 type: string
-              phase:
-                default: Pending
-                description: Phase is the current phase of the request
+              snapshotName:
+                description: SnapshotName is the snapshot to restore
                 type: string
-              pulledMetadata:
-                description: |-
-                  PulledMetadata contains the K8s resource metadata extracted from the OCI layer (for pull operations)
-                  This is used by the environment controller to restore K8s resources without reading files from disk
-                properties:
-                  compositions:
-                    description: Compositions JSON
-                    type: string
-                  configMaps:
-                    description: ConfigMaps JSON
-                    type: string
-                  deployments:
-                    description: Deployments JSON
-                    type: string
-                  pvcs:
-                    description: PVCs JSON - Contains PersistentVolumeClaim specs
-                      for data restoration
-                    type: string
-                  secrets:
-                    description: Secrets JSON
-                    type: string
-                  services:
-                    description: Services JSON
-                    type: string
-                  statefulSets:
-                    description: StatefulSets JSON
-                    type: string
+              targetPath:
+                description: TargetPath is where to restore the snapshot
+                type: string
+            required:
+            - nodeName
+            - snapshotName
+            - targetPath
+            type: object
+          status:
+            description: SnapshotRestoreStatus defines restore progress
+            properties:
+              artifacts:
+                additionalProperties:
+                  type: string
+                description: Artifacts contains the retrieved artifact data
                 type: object
-              pulledSnapshots:
-                description: |-
-                  PulledSnapshots contains metadata for all snapshots pulled from registry (including parent chain)
-                  This enables creating Snapshot CRs for the entire parent lineage
-                items:
-                  description: PulledSnapshotInfo contains metadata about a pulled
-                    snapshot from the registry
-                  properties:
-                    environmentName:
-                      description: EnvironmentName for environment snapshots
-                      type: string
-                    name:
-                      description: Name is the original snapshot name
-                      type: string
-                    ownedBy:
-                      description: OwnedBy is the owner of the original snapshot
-                      type: string
-                    parentSnapshotName:
-                      description: ParentSnapshotName is the name of this snapshot's
-                        parent (if any)
-                      type: string
-                    path:
-                      description: Path is the local path where this snapshot was
-                        extracted
-                      type: string
-                    resources:
-                      description: Resources contains K8s resource metadata (for environment
-                        snapshots)
-                      properties:
-                        compositions:
-                          description: Compositions JSON
-                          type: string
-                        configMaps:
-                          description: ConfigMaps JSON
-                          type: string
-                        deployments:
-                          description: Deployments JSON
-                          type: string
-                        pvcs:
-                          description: PVCs JSON - Contains PersistentVolumeClaim
-                            specs for data restoration
-                          type: string
-                        secrets:
-                          description: Secrets JSON
-                          type: string
-                        services:
-                          description: Services JSON
-                          type: string
-                        statefulSets:
-                          description: StatefulSets JSON
-                          type: string
-                      type: object
-                    snapshotType:
-                      description: SnapshotType indicates whether this is an environment
-                        or workspace snapshot
-                      type: string
-                    targetName:
-                      description: TargetName is the name of the environment or workspace
-                        that was snapshotted
-                      type: string
-                    workMachineName:
-                      description: WorkMachineName where the original snapshot was
-                        created
-                      type: string
-                    workspaceName:
-                      description: WorkspaceName for workspace snapshots
-                      type: string
-                  required:
-                  - name
-                  - ownedBy
-                  - path
-                  type: object
-                type: array
-              sizeBytes:
-                description: SizeBytes is the size of the snapshot (for create operations)
-                format: int64
-                type: integer
-              startedAt:
-                description: StartedAt is when the operation started
+              completedAt:
+                description: CompletedAt is when the restore completed
                 format: date-time
+                type: string
+              message:
+                description: Message provides status details
+                type: string
+              restoredPath:
+                description: RestoredPath is the actual path where data was restored
+                type: string
+              startedAt:
+                description: StartedAt is when the restore started
+                format: date-time
+                type: string
+              state:
+                default: Pending
+                description: State is the current restore state
                 type: string
             type: object
         type: object
@@ -2622,21 +2510,18 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.snapshotType
-      name: Type
-      type: string
-    - jsonPath: .status.targetName
-      name: Target
-      type: string
-    - jsonPath: .spec.parentSnapshotRef.name
-      name: Parent
-      priority: 1
-      type: string
     - jsonPath: .status.state
       name: State
       type: string
+    - jsonPath: .status.refCount
+      name: RefCount
+      type: integer
     - jsonPath: .status.sizeHuman
       name: Size
+      type: string
+    - jsonPath: .spec.parentSnapshot
+      name: Parent
+      priority: 1
       type: string
     - jsonPath: .status.createdAt
       name: Created
@@ -2647,8 +2532,9 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: Snapshot represents a point-in-time snapshot of an environment's
-          data and metadata
+        description: |-
+          Snapshot represents a point-in-time snapshot of a btrfs subvolume
+          This is a generic resource - it doesn't know about environments or workspaces
         properties:
           apiVersion:
             description: |-
@@ -2668,70 +2554,62 @@ spec:
           metadata:
             type: object
           spec:
-            description: |-
-              SnapshotSpec defines the desired state of Snapshot
-              Only ONE of EnvironmentRef or WorkspaceRef should be set
+            description: SnapshotSpec defines the desired state of Snapshot
             properties:
+              artifacts:
+                description: |-
+                  Artifacts define large metadata to store alongside the snapshot
+                  Each artifact is stored as a layer in the OCI image
+                items:
+                  description: ArtifactSpec defines a metadata artifact to store with
+                    the snapshot
+                  properties:
+                    data:
+                      description: Data is the artifact content (base64 encoded for
+                        binary safety)
+                      type: string
+                    name:
+                      description: Name identifies this artifact (e.g., "k8s-resources",
+                        "app-config")
+                      type: string
+                    type:
+                      default: raw
+                      description: Type hints at how to handle this artifact during
+                        restore
+                      enum:
+                      - kubernetes-manifests
+                      - json
+                      - yaml
+                      - sql
+                      - raw
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               description:
-                description: Description is an optional description for this snapshot
+                description: Description is a human-readable description
                 type: string
-              environmentRef:
-                description: EnvironmentRef references the environment to snapshot
-                properties:
-                  name:
-                    description: Name is the name of the environment
-                    type: string
-                required:
-                - name
-                type: object
-              includeMetadata:
-                default: true
-                description: |-
-                  IncludeMetadata controls whether to include K8s resource metadata
-                  (ConfigMaps, Secrets, Deployments, etc. for environments;
-                  PackageRequests and settings for workspaces)
-                type: boolean
-              ownedBy:
-                description: OwnedBy is the username who created this snapshot
+              nodeName:
+                description: NodeName is the Kubernetes node where the btrfs subvolume
+                  exists
                 type: string
-              parentSnapshotRef:
+              owner:
                 description: |-
-                  ParentSnapshotRef references the parent snapshot this was derived from
-                  This is set automatically when creating a snapshot from an environment/workspace
-                  that was previously restored from another snapshot
-                properties:
-                  name:
-                    description: Name is the name of the parent snapshot
-                    type: string
-                  restoredAt:
-                    description: RestoredAt is when this parent snapshot was restored
-                      to create the current state
-                    format: date-time
-                    type: string
-                required:
-                - name
-                type: object
-              registryRef:
-                description: RegistryRef configures where to push this snapshot in
-                  the registry
-                properties:
-                  autoPush:
-                    description: AutoPush automatically pushes to registry when snapshot
-                      is ready
-                    type: boolean
-                  repository:
-                    description: Repository is the registry repository path (e.g.,
-                      "snapshots/username")
-                    type: string
-                  tag:
-                    description: Tag is the image tag (defaults to snapshot name)
-                    type: string
-                required:
-                - repository
-                type: object
+                  Owner identifies who owns this snapshot (e.g., username)
+                  Used to organize snapshots in the registry: {prefix}/{owner}/{name}
+                type: string
+              parentSnapshot:
+                description: ParentSnapshot is the parent snapshot name for incremental
+                  storage
+                type: string
+              repository:
+                description: |-
+                  Repository overrides the auto-generated repository path
+                  If not set, uses: {prefix}/{owner}/snapshots
+                type: string
               retentionPolicy:
-                description: RetentionPolicy defines when this snapshot should be
-                  deleted
+                description: RetentionPolicy defines automatic deletion rules
                 properties:
                   expiresAt:
                     description: ExpiresAt is when this snapshot should be automatically
@@ -2744,76 +2622,68 @@ spec:
                     minimum: 1
                     type: integer
                 type: object
-              workspaceRef:
-                description: WorkspaceRef references the workspace to snapshot
-                properties:
-                  name:
-                    description: Name is the name of the workspace
-                    type: string
-                  workmachineName:
-                    description: WorkmachineName is the workmachine where the workspace
-                      runs
-                    type: string
-                required:
-                - name
-                - workmachineName
-                type: object
+              sourcePath:
+                description: SourcePath is the btrfs subvolume path to snapshot
+                type: string
+              store:
+                description: Store is the name of the SnapshotStore to use
+                type: string
             required:
-            - includeMetadata
-            - ownedBy
+            - nodeName
+            - owner
+            - sourcePath
+            - store
             type: object
           status:
             description: SnapshotStatus defines the observed state of Snapshot
             properties:
-              collectedMetadata:
-                description: CollectedMetadata stores the collected K8s resource JSON
-                  for push operations
-                properties:
-                  compositions:
-                    description: Compositions JSON
-                    type: string
-                  configMaps:
-                    description: ConfigMaps JSON
-                    type: string
-                  deployments:
-                    description: Deployments JSON
-                    type: string
-                  pvcs:
-                    description: PVCs JSON - Contains PersistentVolumeClaim specs
-                      for data restoration
-                    type: string
-                  secrets:
-                    description: Secrets JSON
-                    type: string
-                  services:
-                    description: Services JSON
-                    type: string
-                  statefulSets:
-                    description: StatefulSets JSON
-                    type: string
-                type: object
+              artifacts:
+                description: Artifacts lists the stored artifacts
+                items:
+                  description: ArtifactStatus tracks a stored artifact
+                  properties:
+                    name:
+                      type: string
+                    sizeBytes:
+                      format: int64
+                      type: integer
+                    stored:
+                      type: boolean
+                    type:
+                      description: ArtifactType represents the type of artifact
+                      type: string
+                  required:
+                  - name
+                  - stored
+                  - type
+                  type: object
+                type: array
               createdAt:
                 description: CreatedAt is when the snapshot was successfully created
                 format: date-time
                 type: string
+              lineage:
+                description: Lineage is the ordered list of parent snapshots (root
+                  first)
+                items:
+                  type: string
+                type: array
+              localPath:
+                description: LocalPath is the local btrfs snapshot path (if still
+                  exists)
+                type: string
               message:
                 description: Message provides human-readable status information
                 type: string
-              packageRequestsPath:
-                description: PackageRequestsPath is the path to stored PackageRequest
-                  JSON (for workspace snapshots)
-                type: string
-              previousEnvironmentActivated:
+              refCount:
+                default: 0
                 description: |-
-                  PreviousEnvironmentActivated stores the environment's activated state before snapshot
-                  Used to restore the environment after snapshot creation
-                type: boolean
-              previousWorkspaceStatus:
-                description: PreviousWorkspaceStatus stores the workspace's status
-                  before suspension
-                type: string
-              registryStatus:
-                description: RegistryStatus tracks the snapshot's registry push status
+                  RefCount is the number of SnapshotRefs pointing to this snapshot
+                  Snapshot cannot be deleted when refCount > 0
+                format: int32
+                type: integer
+              registry:
+                description: Registry contains OCI registry storage information
                 properties:
                   compressedSize:
                     description: CompressedSize is the total compressed size in bytes
@@ -2825,108 +2695,122 @@ spec:
                   imageRef:
                     description: ImageRef is the full image reference (registry/repo:tag)
                     type: string
-                  layerCount:
-                    description: LayerCount is the number of layers in the image
-                    format: int32
-                    type: integer
-                  layerDigests:
-                    description: LayerDigests are the digests of all layers in order
-                    items:
-                      type: string
-                    type: array
-                  pushed:
-                    description: Pushed indicates if the snapshot has been pushed
-                      to registry
-                    type: boolean
+                  parentImageRef:
+                    description: |-
+                      ParentImageRef is the parent snapshot's image reference
+                      Used for incremental restore
+                    type: string
                   pushedAt:
-                    description: PushedAt is when the snapshot was pushed
+                    description: PushedAt is when the snapshot was pushed to registry
                     format: date-time
                     type: string
-                  tag:
-                    description: Tag is the primary image tag (always snapshot name)
-                    type: string
-                  tags:
-                    description: Tags is all tags for this snapshot including user-provided
-                      tags
-                    items:
-                      type: string
-                    type: array
-                type: object
-              resourceMetadata:
-                description: ResourceMetadata tracks captured K8s resources (for environment
-                  snapshots)
-                properties:
-                  compositions:
-                    description: Compositions count
-                    format: int32
-                    type: integer
-                  configMaps:
-                    description: ConfigMaps count
-                    format: int32
-                    type: integer
-                  deployments:
-                    description: Deployments count
-                    format: int32
-                    type: integer
-                  pvcs:
-                    description: PVCs count
-                    format: int32
-                    type: integer
-                  secrets:
-                    description: Secrets count
-                    format: int32
-                    type: integer
-                  services:
-                    description: Services count
-                    format: int32
-                    type: integer
-                  statefulSets:
-                    description: StatefulSets count
-                    format: int32
-                    type: integer
                 required:
-                - compositions
-                - configMaps
-                - deployments
-                - pvcs
-                - secrets
-                - services
-                - statefulSets
+                - imageRef
                 type: object
               sizeBytes:
-                description: SizeBytes is the total size of the snapshot in bytes
+                description: SizeBytes is the snapshot size in bytes
                 format: int64
                 type: integer
               sizeHuman:
                 description: SizeHuman is the human-readable size (e.g., "1.5 GB")
                 type: string
-              snapshotPath:
-                description: SnapshotPath is the btrfs snapshot path on disk
-                type: string
-              snapshotType:
-                description: SnapshotType indicates whether this is an environment
-                  or workspace snapshot
-                type: string
               state:
                 default: Pending
                 description: State is the current state of the snapshot
                 type: string
-              targetName:
-                description: |-
-                  TargetName is the name of the environment or workspace being snapshotted
-                  Used for display in kubectl output
+            required:
+            - refCount
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: snapshotstores.snapshots.kloudlite.io
+spec:
+  group: snapshots.kloudlite.io
+  names:
+    kind: SnapshotStore
+    listKind: SnapshotStoreList
+    plural: snapshotstores
+    singular: snapshotstore
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.registry.endpoint
+      name: Registry
+      type: string
+    - jsonPath: .status.ready
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: SnapshotStore defines an OCI registry for storing snapshots
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnapshotStoreSpec defines the OCI registry configuration
+            properties:
+              registry:
+                description: Registry configures the OCI registry endpoint
+                properties:
+                  endpoint:
+                    description: Endpoint is the registry URL (e.g., "image-registry.kloudlite.svc.cluster.local:5000")
+                    type: string
+                  insecure:
+                    default: true
+                    description: Insecure allows HTTP connections (for internal registries)
+                    type: boolean
+                  repositoryPrefix:
+                    default: snapshots
+                    description: |-
+                      RepositoryPrefix is prepended to all snapshot repositories
+                      e.g., "snapshots" results in "snapshots/{owner}/{name}"
+                    type: string
+                required:
+                - endpoint
+                type: object
+            required:
+            - registry
+            type: object
+          status:
+            description: SnapshotStoreStatus defines the observed state
+            properties:
+              lastChecked:
+                description: LastChecked is when connectivity was last verified
+                format: date-time
                 type: string
-              workMachineName:
-                description: WorkMachineName is the workmachine where the snapshot
-                  is stored
+              message:
+                description: Message provides status details
                 type: string
-              workspaceName:
-                description: WorkspaceName is the name of the snapshotted workspace
-                  (for workspace snapshots)
-                type: string
-              workspaceWasSuspended:
-                description: WorkspaceWasSuspended indicates if the workspace was
-                  suspended during snapshot
+              ready:
+                description: Ready indicates if the registry is accessible
                 type: boolean
             type: object
         type: object
@@ -3092,7 +2976,7 @@ spec:
                 properties:
                   snapshotName:
                     description: |-
-                      SnapshotName is the name of the snapshot resource to clone from
+                      SnapshotName is the name of the snapshot resource to fork from
                       The snapshot must have status.registryStatus.pushed=true
                     type: string
                 required:
@@ -3425,10 +3309,6 @@ spec:
                       or failure)
                     format: date-time
                     type: string
-                  dataRestoreRequestName:
-                    description: DataRestoreRequestName is the name of the SnapshotRequest
-                      for restoring workspace data
-                    type: string
                   errorMessage:
                     description: ErrorMessage if restoration failed
                     type: string
@@ -3447,10 +3327,6 @@ spec:
                     - Restoring
                     - Completed
                     - Failed
-                    type: string
-                  snapshotRequestName:
-                    description: SnapshotRequestName is the name of the SnapshotRequest
-                      created for pulling
                     type: string
                   sourceSnapshot:
                     description: SourceSnapshot is the name of the snapshot being

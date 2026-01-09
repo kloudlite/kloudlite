@@ -49,13 +49,9 @@ type WorkspaceReference struct {
 
 // SnapshotMetadataStatus mirrors relevant fields from SnapshotStatus
 type SnapshotMetadataStatus struct {
-	SnapshotType    string     `json:"snapshotType,omitempty"`
-	TargetName      string     `json:"targetName,omitempty"`
-	SizeBytes       int64      `json:"sizeBytes,omitempty"`
-	SizeHuman       string     `json:"sizeHuman,omitempty"`
-	CreatedAt       *time.Time `json:"createdAt,omitempty"`
-	WorkMachineName string     `json:"workMachineName,omitempty"`
-	WorkspaceName   string     `json:"workspaceName,omitempty"`
+	SizeBytes int64      `json:"sizeBytes,omitempty"`
+	SizeHuman string     `json:"sizeHuman,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
 }
 
 // ResourceMetadata contains K8s resource JSON for environment snapshots

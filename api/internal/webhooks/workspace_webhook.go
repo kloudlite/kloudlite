@@ -458,20 +458,20 @@ func validateWorkspaceSettings(settings *workspacesv1.WorkspaceSettings) error {
 func (w *WorkspaceWebhook) validateSnapshotSource(ctx context.Context, workspace *workspacesv1.Workspace) error {
 	snapshotName := workspace.Spec.FromSnapshot.SnapshotName
 
-	// Fetch the snapshot to validate it exists and is pushed
+	// Fetch the snapshot to validate it exists and is ready
 	var snapshot snapshotv1.Snapshot
 	if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: snapshotName}, &snapshot); err != nil {
 		return fmt.Errorf("snapshot '%s' not found", snapshotName)
 	}
 
-	// Validate snapshot is pushed to registry
-	if snapshot.Status.RegistryStatus == nil || !snapshot.Status.RegistryStatus.Pushed {
-		return fmt.Errorf("snapshot '%s' is not pushed to registry. Only pushed snapshots can be used to create workspaces", snapshotName)
+	// Validate snapshot is ready
+	if snapshot.Status.State != snapshotv1.SnapshotStateReady {
+		return fmt.Errorf("snapshot '%s' is not ready (current state: %s). Only ready snapshots can be used to create workspaces", snapshotName, snapshot.Status.State)
 	}
 
-	// Validate snapshot type is workspace
-	if snapshot.Status.SnapshotType != snapshotv1.SnapshotTypeWorkspace {
-		return fmt.Errorf("snapshot '%s' is not a workspace snapshot", snapshotName)
+	// Validate snapshot is pushed to registry
+	if snapshot.Status.Registry == nil || snapshot.Status.Registry.ImageRef == "" {
+		return fmt.Errorf("snapshot '%s' is not pushed to registry. Only pushed snapshots can be used to create workspaces", snapshotName)
 	}
 
 	return nil

@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // generateHash generates an 8-character hash from the input string
@@ -86,4 +87,20 @@ func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1
 	if !found {
 		environment.Status.Conditions = append(environment.Status.Conditions, newCondition)
 	}
+}
+
+// handleSnapshotRestore handles environment creation from a snapshot
+// TODO: Implement using the new generic Snapshot/SnapshotRestore system
+func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
+	logger.Warn("Snapshot restore not yet implemented with new generic snapshot system",
+		zap.String("snapshot", environment.Spec.FromSnapshot.SnapshotName))
+
+	// For now, clear the fromSnapshot field and proceed with normal environment creation
+	environment.Spec.FromSnapshot = nil
+	if err := r.Update(ctx, environment); err != nil {
+		logger.Error("Failed to clear fromSnapshot", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{Requeue: true}, nil
 }

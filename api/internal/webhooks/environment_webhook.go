@@ -379,22 +379,22 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
-	// Validate snapshot exists and is pushed when fromSnapshot is set
+	// Validate snapshot exists and is ready when fromSnapshot is set
 	if env.Spec.FromSnapshot != nil && operation == admissionv1.Create {
-		// Fetch the snapshot to validate it exists and is pushed
+		// Fetch the snapshot to validate it exists and is ready
 		var snapshot snapshotv1.Snapshot
 		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.FromSnapshot.SnapshotName}, &snapshot); err != nil {
 			return fmt.Errorf("snapshot '%s' not found", env.Spec.FromSnapshot.SnapshotName)
 		}
 
-		// Validate snapshot is pushed to registry
-		if snapshot.Status.RegistryStatus == nil || !snapshot.Status.RegistryStatus.Pushed {
-			return fmt.Errorf("snapshot '%s' is not pushed to registry. Only pushed snapshots can be used to create environments", env.Spec.FromSnapshot.SnapshotName)
+		// Validate snapshot is ready
+		if snapshot.Status.State != snapshotv1.SnapshotStateReady {
+			return fmt.Errorf("snapshot '%s' is not ready (current state: %s). Only ready snapshots can be used to create environments", env.Spec.FromSnapshot.SnapshotName, snapshot.Status.State)
 		}
 
-		// Validate snapshot type is environment
-		if snapshot.Status.SnapshotType != snapshotv1.SnapshotTypeEnvironment {
-			return fmt.Errorf("snapshot '%s' is not an environment snapshot", env.Spec.FromSnapshot.SnapshotName)
+		// Validate snapshot is pushed to registry
+		if snapshot.Status.Registry == nil || snapshot.Status.Registry.ImageRef == "" {
+			return fmt.Errorf("snapshot '%s' is not pushed to registry. Only pushed snapshots can be used to create environments", env.Spec.FromSnapshot.SnapshotName)
 		}
 	}
 

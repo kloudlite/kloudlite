@@ -294,3 +294,19 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 }
+
+// handleSnapshotRestore handles workspace creation from a snapshot
+// TODO: Implement using the new generic Snapshot/SnapshotRestore system
+func (r *WorkspaceReconciler) handleSnapshotRestore(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) (reconcile.Result, error) {
+	logger.Warn("Snapshot restore not yet implemented with new generic snapshot system",
+		zap.String("snapshot", workspace.Spec.FromSnapshot.SnapshotName))
+
+	// For now, clear the fromSnapshot field and proceed with normal workspace creation
+	workspace.Spec.FromSnapshot = nil
+	if err := r.Update(ctx, workspace); err != nil {
+		logger.Error("Failed to clear fromSnapshot", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{Requeue: true}, nil
+}
