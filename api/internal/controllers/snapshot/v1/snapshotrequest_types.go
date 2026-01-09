@@ -151,6 +151,11 @@ type SnapshotRequestRegistryRef struct {
 	// SourceTag is the source tag for tag operations (copy from this tag)
 	// +optional
 	SourceTag string `json:"sourceTag,omitempty"`
+
+	// SourceRepository is the source repository for cross-repository tag/copy operations
+	// If not set, uses Repository as source
+	// +optional
+	SourceRepository string `json:"sourceRepository,omitempty"`
 }
 
 // SnapshotRequestPhase represents the current phase of the request

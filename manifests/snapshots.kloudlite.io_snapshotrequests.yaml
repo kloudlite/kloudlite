@@ -123,6 +123,11 @@ spec:
                   repository:
                     description: Repository is the image repository path (e.g., "snapshots/username")
                     type: string
+                  sourceRepository:
+                    description: |-
+                      SourceRepository is the source repository for cross-repository tag/copy operations
+                      If not set, uses Repository as source
+                    type: string
                   sourceTag:
                     description: SourceTag is the source tag for tag operations (copy
                       from this tag)

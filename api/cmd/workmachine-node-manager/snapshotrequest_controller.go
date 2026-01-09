@@ -526,9 +526,15 @@ func (r *SnapshotRequestReconciler) tagSnapshot(req *snapshotv1.SnapshotRequest,
 		return fmt.Errorf("sourceTag is required for tag operation")
 	}
 
+	// Use SourceRepository if provided, otherwise use same Repository for both
+	sourceRepo := req.Spec.RegistryRef.Repository
+	if req.Spec.RegistryRef.SourceRepository != "" {
+		sourceRepo = req.Spec.RegistryRef.SourceRepository
+	}
+
 	sourceRef := fmt.Sprintf("%s/%s:%s",
 		req.Spec.RegistryRef.RegistryURL,
-		req.Spec.RegistryRef.Repository,
+		sourceRepo,
 		req.Spec.RegistryRef.SourceTag)
 
 	targetRef := fmt.Sprintf("%s/%s:%s",
@@ -541,14 +547,15 @@ func (r *SnapshotRequestReconciler) tagSnapshot(req *snapshotv1.SnapshotRequest,
 		zap2.String("targetRef", targetRef),
 	)
 
-	// Create OCI client and tag
+	// Create OCI client and tag (works for both same-repo tagging and cross-repo copying)
 	client := oci.NewClient(true) // Use insecure for internal registry
 	if err := client.Tag(sourceRef, targetRef); err != nil {
-		return fmt.Errorf("failed to tag image: %w", err)
+		return fmt.Errorf("failed to copy/tag image: %w", err)
 	}
 
-	logger.Info("Image tagged successfully",
+	logger.Info("Image tagged/copied successfully",
 		zap2.String("newTag", req.Spec.RegistryRef.Tag),
+		zap2.String("newRepository", req.Spec.RegistryRef.Repository),
 	)
 
 	return nil
