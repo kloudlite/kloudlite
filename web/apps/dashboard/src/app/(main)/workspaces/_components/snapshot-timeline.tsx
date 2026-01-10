@@ -44,11 +44,13 @@ function getShortHash(name: string): string {
   return name.slice(-6)
 }
 
-function getStateBadge(state: Snapshot['status']['state']) {
+function getStateBadge(state: Snapshot['state']) {
   switch (state) {
     case 'Ready':
+    case 'Completed':
       return null
     case 'Creating':
+    case 'Uploading':
       return (
         <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
           <Loader2 className="h-3 w-3 animate-spin" />
@@ -126,8 +128,8 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): GraphR
 
   // Sort by creation time (newest first)
   const sorted = [...snapshots].sort((a, b) => {
-    const aTime = new Date(a.status.createdAt || a.metadata.creationTimestamp).getTime()
-    const bTime = new Date(b.status.createdAt || b.metadata.creationTimestamp).getTime()
+    const aTime = new Date(a.createdAt || '').getTime()
+    const bTime = new Date(b.createdAt || '').getTime()
     return bTime - aTime
   })
 
@@ -136,11 +138,11 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): GraphR
   const childrenMap = new Map<string, string[]>()
 
   sorted.forEach(s => {
-    snapshotMap.set(s.metadata.name, s)
-    const parentName = s.spec.parentSnapshotRef?.name
+    snapshotMap.set(s.name, s)
+    const parentName = s.parent
     if (parentName) {
       const children = childrenMap.get(parentName) || []
-      children.push(s.metadata.name)
+      children.push(s.name)
       childrenMap.set(parentName, children)
     }
   })
@@ -152,10 +154,10 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): GraphR
   const chronological = [...sorted].reverse()
 
   chronological.forEach(snapshot => {
-    const name = snapshot.metadata.name
+    const name = snapshot.name
     if (laneMap.has(name)) return
 
-    const parentName = snapshot.spec.parentSnapshotRef?.name
+    const parentName = snapshot.parent
 
     if (parentName && laneMap.has(parentName)) {
       const parentLane = laneMap.get(parentName)!
@@ -187,16 +189,16 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): GraphR
 
   for (let i = sorted.length - 1; i >= 0; i--) {
     const snapshot = sorted[i]
-    const lane = laneMap.get(snapshot.metadata.name) || 0
+    const lane = laneMap.get(snapshot.name) || 0
     activeLanes.add(lane)
   }
 
   const currentActiveLanes = new Set(activeLanes)
 
   sorted.forEach((snapshot, idx) => {
-    const name = snapshot.metadata.name
+    const name = snapshot.name
     const lane = laneMap.get(name) || 0
-    const parentName = snapshot.spec.parentSnapshotRef?.name
+    const parentName = snapshot.parent
     const parentLane = parentName && laneMap.has(parentName) ? laneMap.get(parentName)! : null
 
     let branchFrom: { fromLane: number; toLane: number } | null = null
@@ -215,7 +217,7 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): GraphR
       branchFrom,
     })
 
-    const isLastOnLane = !sorted.slice(idx + 1).some(s => laneMap.get(s.metadata.name) === lane)
+    const isLastOnLane = !sorted.slice(idx + 1).some(s => laneMap.get(s.name) === lane)
     if (isLastOnLane) {
       currentActiveLanes.delete(lane)
     }
@@ -242,8 +244,8 @@ interface SnapshotRowProps {
 function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, isFirst, isLast }: SnapshotRowProps) {
   const { item, activeLanes, branchFrom } = row
   const { snapshot, isCurrent } = item
-  const shortHash = getShortHash(snapshot.metadata.name)
-  const isPushed = snapshot.status.registryStatus?.pushed
+  const shortHash = getShortHash(snapshot.name)
+  const isPushed = !!snapshot.registry?.digest
 
   const graphWidth = Math.max(totalLanes, 1) * LANE_WIDTH + 8
   const dotX = item.lane * LANE_WIDTH + LANE_WIDTH / 2
@@ -336,36 +338,38 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
           {isPushed && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-1 bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300">
               <Cloud className="h-3 w-3" />
-              {snapshot.status.registryStatus?.imageRef?.split(':').pop() || 'pushed'}
+              {snapshot.registry?.tag || 'pushed'}
             </Badge>
           )}
 
-          {getStateBadge(snapshot.status.state)}
+          {getStateBadge(snapshot.state)}
 
-          {snapshot.spec.description && (
+          {snapshot.description && (
             <span className="text-sm text-muted-foreground truncate">
-              {snapshot.spec.description}
+              {snapshot.description}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatTimeAgo(snapshot.status.createdAt || snapshot.metadata.creationTimestamp)}
-            </span>
+            {snapshot.createdAt && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatTimeAgo(snapshot.createdAt)}
+              </span>
+            )}
 
-            {snapshot.status.sizeHuman && snapshot.status.sizeHuman !== '0 B' && (
+            {snapshot.sizeHuman && snapshot.sizeHuman !== '0 B' && (
               <span className="flex items-center gap-1">
                 <HardDrive className="h-3 w-3" />
-                {snapshot.status.sizeHuman}
+                {snapshot.sizeHuman}
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {snapshot.status.state === 'Ready' && !isPushed && onPush && (
+            {(snapshot.state === 'Ready' || snapshot.state === 'Completed') && !isPushed && onPush && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -378,7 +382,7 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
                 Push
               </Button>
             )}
-            {snapshot.status.state === 'Ready' && !isCurrent && (
+            {(snapshot.state === 'Ready' || snapshot.state === 'Completed') && !isCurrent && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -390,7 +394,7 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
                 Restore
               </Button>
             )}
-            {(snapshot.status.state === 'Ready' || snapshot.status.state === 'Failed') && (
+            {(snapshot.state === 'Ready' || snapshot.state === 'Completed' || snapshot.state === 'Failed') && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -431,7 +435,7 @@ export function SnapshotTimeline({ snapshots, onRestore, onDelete, onPush, disab
       <div className="space-y-0">
         {rows.map((row, idx) => (
           <SnapshotRow
-            key={row.item.snapshot.metadata.name}
+            key={row.item.snapshot.name}
             row={row}
             totalLanes={totalLanes}
             onRestore={onRestore}
