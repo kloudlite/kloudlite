@@ -2,16 +2,13 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Camera, Check, ArrowLeft, ArrowRight, Calendar, HardDrive, Clock } from 'lucide-react'
+import { Loader2, GitFork, Check, ArrowLeft, ArrowRight, HardDrive, Clock, ChevronRight } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
 } from '@kloudlite/ui'
 import { listReadySnapshots, createEnvironmentFromSnapshot } from '@/app/actions/snapshot.actions'
 import { toast } from 'sonner'
@@ -157,15 +154,6 @@ export function ForkEnvironmentSheet({
     })
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -175,130 +163,127 @@ export function ForkEnvironmentSheet({
     const diffDays = Math.floor(diffHours / 24)
 
     if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return formatDate(dateString)
+    if (diffMins < 60) return `${diffMins} min ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col">
+      <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col gap-0">
         {/* Header */}
-        <SheetHeader className="px-6 py-4 border-b bg-muted/30">
-          <div className="flex items-center gap-3">
-            {step === 2 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={handleBack}
-                disabled={isPending}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            )}
-            <div className="flex-1 min-w-0">
-              <SheetTitle className="text-lg">
-                {step === 1 ? 'Select Snapshot' : 'Create Environment'}
-              </SheetTitle>
-              <SheetDescription className="text-sm mt-0.5">
-                {step === 1
-                  ? `Choose a snapshot from ${sourceEnvironment} to fork`
-                  : 'Configure your new environment'
-                }
-              </SheetDescription>
-            </div>
-            {/* Step indicator */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className={cn(
-                "h-2 w-2 rounded-full transition-colors",
-                step === 1 ? "bg-primary" : "bg-muted-foreground/30"
-              )} />
-              <div className={cn(
-                "h-2 w-2 rounded-full transition-colors",
-                step === 2 ? "bg-primary" : "bg-muted-foreground/30"
-              )} />
+        <div className="border-b">
+          <div className="px-6 py-5">
+            <div className="flex items-center gap-4">
+              {step === 2 && (
+                <button
+                  onClick={handleBack}
+                  disabled={isPending}
+                  className="p-1.5 -ml-1.5 rounded-md hover:bg-muted transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+              )}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <GitFork className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold">Fork Environment</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {step === 1
+                    ? 'Select a snapshot to create a new environment'
+                    : 'Name your new environment'
+                  }
+                </p>
+              </div>
+              {/* Step indicator */}
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium transition-colors",
+                  step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                )}>1</div>
+                <div className="w-4 h-px bg-border" />
+                <div className={cn(
+                  "flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium transition-colors",
+                  step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                )}>2</div>
+              </div>
             </div>
           </div>
-        </SheetHeader>
+          {/* Source environment badge */}
+          <div className="px-6 pb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full text-xs">
+              <span className="text-muted-foreground">Source:</span>
+              <span className="font-medium">{sourceEnvironment}</span>
+            </div>
+          </div>
+        </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {step === 1 ? (
             /* Step 1: Snapshot Selection */
-            <div className="p-4">
+            <div className="p-6">
               {isLoadingSnapshots ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <Loader2 className="h-8 w-8 animate-spin mb-3" />
-                  <p className="text-sm">Loading snapshots...</p>
+                <div className="flex flex-col items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground">Loading snapshots...</p>
                 </div>
               ) : snapshots.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="rounded-full bg-muted p-4 mb-4">
-                    <Camera className="h-8 w-8 text-muted-foreground" />
+                    <GitFork className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="font-medium mb-1">No Snapshots Available</h3>
+                  <h3 className="font-semibold mb-2">No Snapshots Available</h3>
                   <p className="text-sm text-muted-foreground max-w-[280px]">
-                    Create a snapshot of this environment first before you can fork it.
+                    Create a snapshot of this environment first to enable forking.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-4">
+                    Available Snapshots ({snapshots.length})
+                  </p>
                   {snapshots.map((snapshot) => (
                     <button
                       key={snapshot.name}
                       onClick={() => handleSelectSnapshot(snapshot)}
                       className={cn(
-                        "w-full text-left rounded-lg border p-4 transition-all",
-                        "hover:border-primary/50 hover:bg-accent/50",
-                        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                        selectedSnapshot?.name === snapshot.name && "border-primary bg-accent"
+                        "w-full text-left rounded-lg border bg-card p-4 transition-all duration-200",
+                        "hover:shadow-md hover:border-primary/40",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
+                        "group"
                       )}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className={cn(
-                          "rounded-lg p-2 shrink-0",
-                          "bg-primary/10 text-primary"
-                        )}>
-                          <Camera className="h-5 w-5" />
-                        </div>
+                      <div className="flex items-center gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium truncate">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium text-sm truncate">
                               {snapshot.name}
                             </span>
-                            {selectedSnapshot?.name === snapshot.name && (
-                              <Check className="h-4 w-4 text-primary shrink-0" />
-                            )}
                           </div>
                           {snapshot.description && (
-                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                            <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
                               {snapshot.description}
                             </p>
                           )}
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             {snapshot.sizeHuman && (
-                              <span className="flex items-center gap-1">
-                                <HardDrive className="h-3 w-3" />
+                              <span className="flex items-center gap-1.5">
+                                <HardDrive className="h-3.5 w-3.5" />
                                 {snapshot.sizeHuman}
                               </span>
                             )}
                             {snapshot.createdAt && (
-                              <>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {formatDate(snapshot.createdAt)}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {getRelativeTime(snapshot.createdAt)}
-                                </span>
-                              </>
+                              <span className="flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5" />
+                                {getRelativeTime(snapshot.createdAt)}
+                              </span>
                             )}
                           </div>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
                       </div>
                     </button>
                   ))}
@@ -307,30 +292,33 @@ export function ForkEnvironmentSheet({
             </div>
           ) : (
             /* Step 2: Environment Configuration */
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6">
               {/* Selected Snapshot Summary */}
               {selectedSnapshot && (
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-primary/10 p-2">
-                      <Camera className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
-                        Forking from
-                      </p>
-                      <p className="font-medium truncate">{selectedSnapshot.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                <div className="rounded-lg border bg-muted/50 p-4 mb-6">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">
+                    Creating from snapshot
+                  </p>
+                  <p className="font-medium text-sm mb-1">{selectedSnapshot.name}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    {selectedSnapshot.sizeHuman && (
+                      <span className="flex items-center gap-1">
+                        <HardDrive className="h-3 w-3" />
                         {selectedSnapshot.sizeHuman}
-                        {selectedSnapshot.createdAt && ` • ${getRelativeTime(selectedSnapshot.createdAt)}`}
-                      </p>
-                    </div>
+                      </span>
+                    )}
+                    {selectedSnapshot.createdAt && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {getRelativeTime(selectedSnapshot.createdAt)}
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Environment Name Input */}
-              <div className="space-y-3">
+              <div className="space-y-2 mb-6">
                 <Label htmlFor="name" className="text-sm font-medium">
                   Environment Name
                 </Label>
@@ -341,7 +329,7 @@ export function ForkEnvironmentSheet({
                   onChange={(e) => handleNameChange(e.target.value)}
                   disabled={isPending}
                   className={cn(
-                    "font-mono h-11",
+                    "font-mono",
                     nameError && "border-destructive focus-visible:ring-destructive"
                   )}
                   autoFocus
@@ -350,52 +338,29 @@ export function ForkEnvironmentSheet({
                   <p className="text-xs text-destructive">{nameError}</p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Lowercase letters, numbers, and hyphens only. Max 63 characters.
+                    Lowercase letters, numbers, and hyphens only
                   </p>
                 )}
               </div>
 
-              {/* Info Box */}
-              <div className="rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20 p-4">
-                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                  What happens next?
-                </h4>
-                <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5">
-                  <li className="flex items-start gap-2">
-                    <span className="rounded-full bg-blue-200 dark:bg-blue-800 w-1.5 h-1.5 mt-1.5 shrink-0" />
-                    A new environment will be created with all data from the snapshot
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="rounded-full bg-blue-200 dark:bg-blue-800 w-1.5 h-1.5 mt-1.5 shrink-0" />
-                    The environment will be activated automatically
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="rounded-full bg-blue-200 dark:bg-blue-800 w-1.5 h-1.5 mt-1.5 shrink-0" />
-                    This may take a few minutes depending on snapshot size
-                  </li>
-                </ul>
-              </div>
-
               {/* Submit Button */}
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  className="w-full h-11"
-                  disabled={isPending || !name || !!nameError}
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Environment...
-                    </>
-                  ) : (
-                    <>
-                      Create Environment
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isPending || !name || !!nameError}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    Create Environment
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
             </form>
           )}
         </div>
