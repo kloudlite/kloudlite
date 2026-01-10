@@ -1513,6 +1513,23 @@ func (r *SnapshotRequestReconciler) handleCreating(ctx context.Context, req *sna
 	// Generate local snapshot path
 	snapshotPath := fmt.Sprintf("%s/%s", snapshotStoragePath, req.Spec.SnapshotName)
 
+	// Check if snapshot already exists (race condition protection)
+	checkScript := fmt.Sprintf("test -d %s && echo exists", snapshotPath)
+	checkOutput, _ := r.CmdExec.Execute(checkScript)
+	if strings.TrimSpace(string(checkOutput)) == "exists" {
+		logger.Info("Snapshot already exists, transitioning to Uploading", zap2.String("path", snapshotPath))
+		req.Status.LocalSnapshotPath = snapshotPath
+		req.Status.State = snapshotv1.SnapshotRequestStateUploading
+		req.Status.Message = "Uploading to registry"
+		if err := r.Status().Update(ctx, req); err != nil {
+			if apierrors.IsConflict(err) {
+				return reconcile.Result{Requeue: true}, nil
+			}
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	// Ensure snapshot storage directory exists
 	mkdirScript := fmt.Sprintf("mkdir -p %s", snapshotStoragePath)
 	if _, err := r.CmdExec.Execute(mkdirScript); err != nil {
@@ -1575,6 +1592,12 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	// For now, we'll use a simplified approach with tar + oras
 	// In production, use proper btrfs send/receive with incremental support
 	pushScript := fmt.Sprintf(`
+		# Install oras if not available
+		if ! command -v oras &> /dev/null; then
+			curl -sLO "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
+			tar -xzf oras_1.2.0_linux_amd64.tar.gz -C /usr/local/bin oras
+			rm -f oras_1.2.0_linux_amd64.tar.gz
+		fi
 		cd %s && \
 		tar -cf - . | gzip > /tmp/%s.tar.gz && \
 		oras push --insecure %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip && \
