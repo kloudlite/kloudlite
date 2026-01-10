@@ -1877,11 +1877,12 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 	snapshotName := restore.Spec.SnapshotName
 	cachePath := fmt.Sprintf("%s/%s", snapshotStoragePath, snapshotName)
 
-	// Check if snapshot is already cached locally
-	checkCacheScript := fmt.Sprintf("test -d %s && echo 'cached'", cachePath)
-	cacheOutput, _ := r.LocalCmdExec.Execute(checkCacheScript)
-	if strings.Contains(string(cacheOutput), "cached") {
-		logger.Info("Snapshot already cached, skipping download",
+	// Check if snapshot is already cached locally as a btrfs subvolume
+	// We verify it's a subvolume (not just a directory) to ensure btrfs snapshot will work
+	checkCacheScript := fmt.Sprintf("btrfs subvolume show %s >/dev/null 2>&1 && echo 'subvol'", cachePath)
+	cacheOutput, _ := r.HostCmdExec.Execute(checkCacheScript)
+	if strings.Contains(string(cacheOutput), "subvol") {
+		logger.Info("Snapshot already cached as btrfs subvolume, skipping download",
 			zap2.String("snapshotName", snapshotName),
 			zap2.String("cachePath", cachePath))
 
@@ -1896,6 +1897,16 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// If cache exists but is not a subvolume (old format), remove it
+	checkDirScript := fmt.Sprintf("test -d %s && echo 'exists'", cachePath)
+	dirOutput, _ := r.LocalCmdExec.Execute(checkDirScript)
+	if strings.Contains(string(dirOutput), "exists") {
+		logger.Info("Cache exists but is not a btrfs subvolume, removing old cache",
+			zap2.String("cachePath", cachePath))
+		cleanupScript := fmt.Sprintf("rm -rf %s", cachePath)
+		r.HostCmdExec.Execute(cleanupScript)
 	}
 
 	// Get the Snapshot to find the registry info
@@ -1933,13 +1944,14 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 		return reconcile.Result{}, err
 	}
 
-	// Ensure cache directory exists
-	mkdirScript := fmt.Sprintf("mkdir -p %s", cachePath)
+	// Create a temp directory for extraction
+	tempExtractPath := fmt.Sprintf("%s-extracting", cachePath)
+	mkdirScript := fmt.Sprintf("mkdir -p %s", tempExtractPath)
 	if _, err := r.LocalCmdExec.Execute(mkdirScript); err != nil {
-		logger.Warn("Failed to create cache directory", zap2.Error(err))
+		logger.Warn("Failed to create temp extract directory", zap2.Error(err))
 	}
 
-	// Pull snapshot from registry using oras and extract to cache
+	// Pull snapshot from registry using oras and extract to temp directory
 	imageRef := snapshot.Status.Registry.ImageRef
 	pullScript := fmt.Sprintf(`
 		set -e
@@ -1953,7 +1965,7 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 				break
 			fi
 		done
-	`, cachePath, imageRef, cachePath)
+	`, tempExtractPath, imageRef, tempExtractPath)
 
 	output, err := r.LocalCmdExec.Execute(pullScript)
 	if err != nil {
@@ -1961,11 +1973,36 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 			zap2.String("imageRef", imageRef),
 			zap2.Error(err),
 			zap2.String("output", string(output)))
-		// Clean up failed cache directory
-		cleanupScript := fmt.Sprintf("rm -rf %s", cachePath)
+		// Clean up failed temp directory
+		cleanupScript := fmt.Sprintf("rm -rf %s", tempExtractPath)
 		r.LocalCmdExec.Execute(cleanupScript)
 		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Failed to pull from registry: %v", err), logger)
 	}
+
+	// Convert extracted data to a btrfs subvolume for efficient snapshots
+	// 1. Create btrfs subvolume at cache path
+	// 2. Copy data from temp to subvolume
+	// 3. Remove temp directory
+	convertScript := fmt.Sprintf(`
+		set -e
+		btrfs subvolume create %s
+		cp -a %s/. %s/
+		rm -rf %s
+	`, cachePath, tempExtractPath, cachePath, tempExtractPath)
+
+	convertOutput, err := r.HostCmdExec.Execute(convertScript)
+	if err != nil {
+		logger.Error("Failed to convert cache to btrfs subvolume",
+			zap2.String("cachePath", cachePath),
+			zap2.Error(err),
+			zap2.String("output", string(convertOutput)))
+		// Clean up
+		cleanupScript := fmt.Sprintf("rm -rf %s %s", tempExtractPath, cachePath)
+		r.HostCmdExec.Execute(cleanupScript)
+		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Failed to create cache subvolume: %v", err), logger)
+	}
+
+	logger.Info("Created btrfs subvolume cache from extracted data", zap2.String("cachePath", cachePath))
 
 	// Update status to Restoring
 	restore.Status.State = snapshotv1.SnapshotRestoreStateRestoring
