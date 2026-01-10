@@ -27,7 +27,7 @@ import {
 import { CreateEnvironmentDialog } from '@/components/dialogs/create-environment'
 import { EditEnvironmentDialog } from '@/components/dialogs/edit-environment'
 import { DeleteEnvironmentConfirm } from '@/components/dialogs/delete-environment-confirm'
-import { ForkEnvironmentDialog } from '@/components/dialogs/fork-environment'
+import { ForkEnvironmentSheet } from './fork-environment-sheet'
 import { ImportEnvironmentDialog } from '@/components/dialogs/import-environment'
 import { activateEnvironment, deactivateEnvironment, exportEnvironmentConfig } from '@/app/actions/environment.actions'
 import { pinEnvironment, unpinEnvironment } from '@/app/actions/user-preferences.actions'
@@ -116,6 +116,7 @@ export function EnvironmentsList({
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [forkDialogOpen, setForkDialogOpen] = useState(false)
+  const [forkSourceEnvironment, setForkSourceEnvironment] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
@@ -232,7 +233,8 @@ export function EnvironmentsList({
     setDeleteConfirmOpen(true)
   }
 
-  const handleForkClick = () => {
+  const handleForkClick = (envName: string) => {
+    setForkSourceEnvironment(envName)
     setForkDialogOpen(true)
   }
 
@@ -512,7 +514,7 @@ export function EnvironmentsList({
                             {workMachineRunning ? 'Activate' : 'Activate (WorkMachine stopped)'}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => handleForkClick()}>
+                        <DropdownMenuItem onClick={() => handleForkClick(env.name)}>
                           <Copy className="mr-2 h-4 w-4" />
                           Create from Snapshot
                         </DropdownMenuItem>
@@ -579,11 +581,14 @@ export function EnvironmentsList({
         />
       )}
 
-      <ForkEnvironmentDialog
-        open={forkDialogOpen}
-        onOpenChange={setForkDialogOpen}
-        onSuccess={handleForkSuccess}
-      />
+      {forkSourceEnvironment && (
+        <ForkEnvironmentSheet
+          open={forkDialogOpen}
+          onOpenChange={setForkDialogOpen}
+          onSuccess={handleForkSuccess}
+          sourceEnvironment={forkSourceEnvironment}
+        />
+      )}
 
       <ImportEnvironmentDialog
         open={importDialogOpen}

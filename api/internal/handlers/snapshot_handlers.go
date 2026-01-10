@@ -546,6 +546,53 @@ func (h *SnapshotHandlers) ListAllSnapshots(c *gin.Context) {
 	})
 }
 
+// ListReadySnapshots lists all ready snapshots available for forking
+// GET /api/v1/snapshots/ready?type=environment&environment=env-name
+func (h *SnapshotHandlers) ListReadySnapshots(c *gin.Context) {
+	username := c.GetString("username")
+	snapshotType := c.Query("type")       // "environment" or "workspace"
+	environment := c.Query("environment") // filter by specific environment
+
+	snapshots, err := h.snapshotRepo.ListByOwner(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to list snapshots", zap.String("owner", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list snapshots"})
+		return
+	}
+
+	// Filter for Ready snapshots
+	var filtered []SnapshotResponse
+	for _, s := range snapshots.Items {
+		// Only include Ready snapshots
+		if s.Status.State != snapshotv1.SnapshotStateReady {
+			continue
+		}
+
+		// Filter by type if specified
+		if snapshotType != "" {
+			typeLabel := s.Labels["snapshots.kloudlite.io/type"]
+			if typeLabel != snapshotType {
+				continue
+			}
+		}
+
+		// Filter by environment if specified
+		if environment != "" {
+			envLabel := s.Labels["snapshots.kloudlite.io/environment"]
+			if envLabel != environment {
+				continue
+			}
+		}
+
+		filtered = append(filtered, snapshotToResponse(&s))
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"snapshots": filtered,
+		"count":     len(filtered),
+	})
+}
+
 // GetSnapshot gets a snapshot by name
 // GET /api/v1/snapshots/:name
 func (h *SnapshotHandlers) GetSnapshot(c *gin.Context) {
