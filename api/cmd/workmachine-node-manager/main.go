@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -1581,9 +1582,31 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
+	// Resolve registry endpoint to IP (host can't resolve k8s DNS)
+	registryEndpoint := store.Spec.Registry.Endpoint
+	if strings.Contains(registryEndpoint, ".svc.cluster.local") || strings.Contains(registryEndpoint, ".svc") {
+		// Extract host:port
+		parts := strings.SplitN(registryEndpoint, ":", 2)
+		host := parts[0]
+		port := "5000"
+		if len(parts) > 1 {
+			port = parts[1]
+		}
+		// Resolve hostname to IP
+		ips, err := net.LookupIP(host)
+		if err != nil {
+			logger.Error("Failed to resolve registry hostname", zap2.String("host", host), zap2.Error(err))
+			return r.setFailed(ctx, req, fmt.Sprintf("Failed to resolve registry: %v", err), logger)
+		}
+		if len(ips) > 0 {
+			registryEndpoint = fmt.Sprintf("%s:%s", ips[0].String(), port)
+			logger.Info("Resolved registry endpoint", zap2.String("original", store.Spec.Registry.Endpoint), zap2.String("resolved", registryEndpoint))
+		}
+	}
+
 	// Build OCI image reference
 	imageRef := fmt.Sprintf("%s/%s/%s:%s",
-		store.Spec.Registry.Endpoint,
+		registryEndpoint,
 		store.Spec.Registry.RepositoryPrefix,
 		req.Spec.Owner,
 		req.Spec.SnapshotName)
