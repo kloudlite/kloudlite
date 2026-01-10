@@ -13,6 +13,7 @@ import (
 	"time"
 
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
+	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -1433,6 +1434,285 @@ func (s *MetricsServer) collectGPUMetrics() (*GPUMetricsResponse, error) {
 	}, nil
 }
 
+// SnapshotRequestReconciler watches SnapshotRequest resources and processes them on this node
+type SnapshotRequestReconciler struct {
+	client.Client
+	Logger   *zap2.Logger
+	CmdExec  CommandExecutor
+	NodeName string
+}
+
+const snapshotStoragePath = "/var/lib/kloudlite/storage/.snapshots"
+
+func (r *SnapshotRequestReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+	logger := r.Logger.With(
+		zap2.String("snapshotRequest", req.Name),
+		zap2.String("namespace", req.Namespace),
+	)
+
+	// Fetch SnapshotRequest
+	snapshotReq := &snapshotv1.SnapshotRequest{}
+	if err := r.Get(ctx, req.NamespacedName, snapshotReq); err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		logger.Error("Failed to get SnapshotRequest", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Only process requests for this node
+	if snapshotReq.Spec.NodeName != r.NodeName {
+		return reconcile.Result{}, nil
+	}
+
+	// Handle completed or failed requests - no need to reprocess
+	if snapshotReq.Status.State == snapshotv1.SnapshotRequestStateCompleted ||
+		snapshotReq.Status.State == snapshotv1.SnapshotRequestStateFailed {
+		return reconcile.Result{}, nil
+	}
+
+	logger.Info("Processing SnapshotRequest",
+		zap2.String("state", string(snapshotReq.Status.State)),
+		zap2.String("snapshotName", snapshotReq.Spec.SnapshotName))
+
+	// Process based on current state
+	switch snapshotReq.Status.State {
+	case "", snapshotv1.SnapshotRequestStatePending:
+		return r.handlePending(ctx, snapshotReq, logger)
+	case snapshotv1.SnapshotRequestStateCreating:
+		return r.handleCreating(ctx, snapshotReq, logger)
+	case snapshotv1.SnapshotRequestStateUploading:
+		return r.handleUploading(ctx, snapshotReq, logger)
+	default:
+		logger.Warn("Unknown snapshot request state", zap2.String("state", string(snapshotReq.Status.State)))
+		return reconcile.Result{}, nil
+	}
+}
+
+func (r *SnapshotRequestReconciler) handlePending(ctx context.Context, req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (reconcile.Result, error) {
+	logger.Info("Starting snapshot request",
+		zap2.String("sourcePath", req.Spec.SourcePath),
+		zap2.String("owner", req.Spec.Owner))
+
+	now := metav1.Now()
+	req.Status.State = snapshotv1.SnapshotRequestStateCreating
+	req.Status.Message = "Creating btrfs snapshot"
+	req.Status.StartedAt = &now
+	if err := r.Status().Update(ctx, req); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{Requeue: true}, nil
+}
+
+func (r *SnapshotRequestReconciler) handleCreating(ctx context.Context, req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (reconcile.Result, error) {
+	// Generate local snapshot path
+	snapshotPath := fmt.Sprintf("%s/%s", snapshotStoragePath, req.Spec.SnapshotName)
+
+	// Ensure snapshot storage directory exists
+	mkdirScript := fmt.Sprintf("mkdir -p %s", snapshotStoragePath)
+	if _, err := r.CmdExec.Execute(mkdirScript); err != nil {
+		logger.Warn("Failed to create snapshot storage directory", zap2.Error(err))
+	}
+
+	// Create btrfs snapshot
+	snapshotScript := fmt.Sprintf("btrfs subvolume snapshot -r %s %s", req.Spec.SourcePath, snapshotPath)
+	output, err := r.CmdExec.Execute(snapshotScript)
+	if err != nil {
+		logger.Error("Failed to create btrfs snapshot",
+			zap2.String("sourcePath", req.Spec.SourcePath),
+			zap2.String("snapshotPath", snapshotPath),
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		return r.setFailed(ctx, req, fmt.Sprintf("Failed to create btrfs snapshot: %v - %s", err, string(output)), logger)
+	}
+
+	// Update status
+	req.Status.LocalSnapshotPath = snapshotPath
+	req.Status.State = snapshotv1.SnapshotRequestStateUploading
+	req.Status.Message = "Uploading to registry"
+
+	if err := r.Status().Update(ctx, req); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Created btrfs snapshot", zap2.String("path", snapshotPath))
+	return reconcile.Result{Requeue: true}, nil
+}
+
+func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (reconcile.Result, error) {
+	// Get the SnapshotStore
+	store := &snapshotv1.SnapshotStore{}
+	if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.Store}, store); err != nil {
+		if apierrors.IsNotFound(err) {
+			return r.setFailed(ctx, req, fmt.Sprintf("SnapshotStore %q not found", req.Spec.Store), logger)
+		}
+		logger.Error("Failed to get SnapshotStore", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	if !store.Status.Ready {
+		logger.Info("SnapshotStore not ready, waiting", zap2.String("store", store.Name))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	// Build OCI image reference
+	imageRef := fmt.Sprintf("%s/%s/%s:%s",
+		store.Spec.Registry.Endpoint,
+		store.Spec.Registry.RepositoryPrefix,
+		req.Spec.Owner,
+		req.Spec.SnapshotName)
+
+	// Use btrfs send piped to a container image builder
+	// For now, we'll use a simplified approach with tar + oras
+	// In production, use proper btrfs send/receive with incremental support
+	pushScript := fmt.Sprintf(`
+		cd %s && \
+		tar -cf - . | gzip > /tmp/%s.tar.gz && \
+		oras push --insecure %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip && \
+		rm -f /tmp/%s.tar.gz
+	`, req.Status.LocalSnapshotPath, req.Spec.SnapshotName, imageRef, req.Spec.SnapshotName, req.Spec.SnapshotName)
+
+	output, err := r.CmdExec.Execute(pushScript)
+	if err != nil {
+		logger.Error("Failed to push snapshot to registry",
+			zap2.String("imageRef", imageRef),
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		return r.setFailed(ctx, req, fmt.Sprintf("Failed to push to registry: %v", err), logger)
+	}
+
+	// Get snapshot size
+	var sizeBytes int64
+	sizeScript := fmt.Sprintf("du -sb %s | cut -f1", req.Status.LocalSnapshotPath)
+	sizeOutput, err := r.CmdExec.Execute(sizeScript)
+	if err == nil {
+		fmt.Sscanf(strings.TrimSpace(string(sizeOutput)), "%d", &sizeBytes)
+	}
+
+	// Build lineage from parent
+	var lineage []string
+	if req.Spec.ParentSnapshot != "" {
+		parentSnapshot := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.ParentSnapshot}, parentSnapshot); err == nil {
+			lineage = append(parentSnapshot.Status.Lineage, parentSnapshot.Name)
+		}
+	}
+
+	// Create the global Snapshot resource
+	now := metav1.Now()
+	snapshot := &snapshotv1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   req.Spec.SnapshotName,
+			Labels: req.Labels,
+		},
+		Spec: snapshotv1.SnapshotSpec{
+			Owner:           req.Spec.Owner,
+			ParentSnapshot:  req.Spec.ParentSnapshot,
+			Description:     req.Spec.Description,
+			Artifacts:       req.Spec.Artifacts,
+			RetentionPolicy: req.Spec.RetentionPolicy,
+		},
+		Status: snapshotv1.SnapshotStatus{
+			State:     snapshotv1.SnapshotStateReady,
+			Message:   "Snapshot ready",
+			SizeBytes: sizeBytes,
+			SizeHuman: formatSnapshotSize(sizeBytes),
+			CreatedAt: &now,
+			Lineage:   lineage,
+			Registry: &snapshotv1.SnapshotRegistryInfo{
+				ImageRef: imageRef,
+				PushedAt: &now,
+			},
+		},
+	}
+
+	if err := r.Create(ctx, snapshot); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return r.setFailed(ctx, req, fmt.Sprintf("Failed to create Snapshot: %v", err), logger)
+		}
+		logger.Info("Snapshot already exists, updating", zap2.String("name", req.Spec.SnapshotName))
+	}
+
+	// Delete local snapshot to free space
+	deleteScript := fmt.Sprintf("btrfs subvolume delete %s", req.Status.LocalSnapshotPath)
+	if _, err := r.CmdExec.Execute(deleteScript); err != nil {
+		logger.Warn("Failed to delete local snapshot", zap2.Error(err))
+	}
+
+	// Mark request as completed
+	completedNow := metav1.Now()
+	req.Status.State = snapshotv1.SnapshotRequestStateCompleted
+	req.Status.Message = "Snapshot created successfully"
+	req.Status.CompletedAt = &completedNow
+	req.Status.CreatedSnapshot = req.Spec.SnapshotName
+
+	if err := r.Status().Update(ctx, req); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Snapshot created successfully",
+		zap2.String("snapshot", req.Spec.SnapshotName),
+		zap2.String("imageRef", imageRef))
+
+	return reconcile.Result{}, nil
+}
+
+func (r *SnapshotRequestReconciler) setFailed(ctx context.Context, req *snapshotv1.SnapshotRequest, message string, logger *zap2.Logger) (reconcile.Result, error) {
+	logger.Error("Snapshot request failed", zap2.String("message", message))
+
+	now := metav1.Now()
+	req.Status.State = snapshotv1.SnapshotRequestStateFailed
+	req.Status.Message = message
+	req.Status.CompletedAt = &now
+
+	if err := r.Status().Update(ctx, req); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func formatSnapshotSize(bytes int64) string {
+	const (
+		KB = 1024
+		MB = KB * 1024
+		GB = MB * 1024
+	)
+	switch {
+	case bytes >= GB:
+		return fmt.Sprintf("%.2f GB", float64(bytes)/float64(GB))
+	case bytes >= MB:
+		return fmt.Sprintf("%.2f MB", float64(bytes)/float64(MB))
+	case bytes >= KB:
+		return fmt.Sprintf("%.2f KB", float64(bytes)/float64(KB))
+	default:
+		return fmt.Sprintf("%d B", bytes)
+	}
+}
+
+func (r *SnapshotRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&snapshotv1.SnapshotRequest{}).
+		Complete(r)
+}
+
 func main() {
 	// Setup logger using controller-runtime's zap logger
 	opts := zap.Options{
@@ -1492,6 +1772,9 @@ func main() {
 	if err := packagesv1.AddToScheme(scheme); err != nil {
 		zapLogger.Fatal("Failed to add packages v1 scheme", zap2.Error(err))
 	}
+	if err := snapshotv1.AddToScheme(scheme); err != nil {
+		zapLogger.Fatal("Failed to add snapshot v1 scheme", zap2.Error(err))
+	}
 
 	// Get in-cluster config
 	config, err := rest.InClusterConfig()
@@ -1517,6 +1800,12 @@ func main() {
 						workmachineName: {},
 					},
 				},
+				// Watch SnapshotRequests globally (all namespaces) since they can be in any env namespace
+				&snapshotv1.SnapshotRequest{}: {},
+				// Watch Snapshots globally (cluster-scoped)
+				&snapshotv1.Snapshot{}: {},
+				// Watch SnapshotStores globally (cluster-scoped)
+				&snapshotv1.SnapshotStore{}: {},
 			},
 			// Cluster-scoped resources (Nodes) are watched globally by default
 		},
@@ -1581,6 +1870,18 @@ func main() {
 
 	if err := gpuStatusReconciler.SetupWithManager(mgr); err != nil {
 		zapLogger.Fatal("Failed to setup GPU status controller", zap2.Error(err))
+	}
+
+	// Setup snapshot request reconciler (handles btrfs snapshots on this node)
+	snapshotRequestReconciler := &SnapshotRequestReconciler{
+		Client:   mgr.GetClient(),
+		Logger:   zapLogger,
+		CmdExec:  &HostCommandExecutor{}, // Use host executor for btrfs commands
+		NodeName: nodeName,
+	}
+
+	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
+		zapLogger.Fatal("Failed to setup snapshot request controller", zap2.Error(err))
 	}
 
 	zapLogger.Info("All reconcilers configured",
