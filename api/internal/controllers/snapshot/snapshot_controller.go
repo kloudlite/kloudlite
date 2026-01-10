@@ -154,7 +154,7 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 	}
 
 	// Delete from registry if pushed
-	if snapshot.Status.Registry != nil && snapshot.Status.Registry.ImageRef != "" {
+	if snapshot.Status.Registry != nil && snapshot.Status.Registry.ImageRef != "" && r.SnapshotOperator != nil {
 		logger.Info("Deleting from registry", zap.String("imageRef", snapshot.Status.Registry.ImageRef))
 		if err := r.SnapshotOperator.DeleteFromRegistry(ctx, snapshot.Status.Registry.ImageRef); err != nil {
 			logger.Warn("Failed to delete from registry", zap.Error(err))
