@@ -58,9 +58,8 @@ export function ForkEnvironmentDialog({
   useEffect(() => {
     if (open) {
       setIsLoadingSnapshots(true)
-      // Filter by sourceEnvironment if provided, otherwise show all environment snapshots
-      const envFilter = sourceEnvironment || preselectedSnapshot?.spec.environmentRef?.name
-      listPushedSnapshots('environment', envFilter).then((result) => {
+      // Filter by sourceEnvironment if provided
+      listPushedSnapshots('environment', sourceEnvironment).then((result) => {
         if (result.success && result.data) {
           setSnapshots(result.data.snapshots || [])
         }
@@ -70,8 +69,7 @@ export function ForkEnvironmentDialog({
       // Set preselected snapshot if provided
       if (preselectedSnapshot) {
         setSelectedSnapshot(preselectedSnapshot)
-        const sourceName = preselectedSnapshot.spec.environmentRef?.name || preselectedSnapshot.metadata.name
-        setName(`${sourceName}-fork`)
+        setName(`${preselectedSnapshot.name}-fork`)
       } else {
         setSelectedSnapshot(null)
         setName('')
@@ -138,7 +136,7 @@ export function ForkEnvironmentDialog({
     try {
       const result = await createEnvironmentFromSnapshot({
         name,
-        snapshotName: selectedSnapshot.metadata.name,
+        snapshotName: selectedSnapshot.name,
         activated: true,
       })
 
@@ -220,7 +218,7 @@ export function ForkEnvironmentDialog({
                     ) : selectedSnapshot ? (
                       <span className="flex items-center gap-2">
                         <Camera className="h-4 w-4" />
-                        {selectedSnapshot.status.registryStatus?.tag || selectedSnapshot.metadata.name}
+                        {selectedSnapshot.registry?.tag || selectedSnapshot.name}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">Select a snapshot...</span>
@@ -240,34 +238,33 @@ export function ForkEnvironmentDialog({
                       <CommandGroup>
                         {snapshots.map((snapshot) => (
                           <CommandItem
-                            key={snapshot.metadata.name}
-                            value={snapshot.metadata.name}
+                            key={snapshot.name}
+                            value={snapshot.name}
                             onSelect={() => {
                               setSelectedSnapshot(snapshot)
                               setPopoverOpen(false)
-                              // Suggest name based on source environment's spec.name
+                              // Suggest name based on snapshot name
                               if (!name) {
-                                const sourceName = snapshot.spec.environmentRef?.name || snapshot.metadata.name
-                                setName(`${sourceName}-fork`)
+                                setName(`${snapshot.name}-fork`)
                               }
                             }}
                           >
                             <Check
                               className={cn(
                                 'mr-2 h-4 w-4',
-                                selectedSnapshot?.metadata.name === snapshot.metadata.name
+                                selectedSnapshot?.name === snapshot.name
                                   ? 'opacity-100'
                                   : 'opacity-0',
                               )}
                             />
                             <div className="flex flex-col">
                               <span className="font-medium">
-                                {snapshot.status.registryStatus?.tag || snapshot.metadata.name}
+                                {snapshot.registry?.tag || snapshot.name}
                               </span>
                               <span className="text-muted-foreground text-xs">
-                                Source: {snapshot.spec.ownedBy}/{snapshot.status.targetName} | Size: {snapshot.status.sizeHuman || 'N/A'}
-                                {snapshot.status.registryStatus?.pushedAt && (
-                                  <> | Pushed: {formatDate(snapshot.status.registryStatus.pushedAt)}</>
+                                Size: {snapshot.sizeHuman || 'N/A'}
+                                {snapshot.createdAt && (
+                                  <> | Created: {formatDate(snapshot.createdAt)}</>
                                 )}
                               </span>
                             </div>
@@ -285,9 +282,12 @@ export function ForkEnvironmentDialog({
               <div className="bg-muted space-y-2 rounded-lg p-3">
                 <div className="text-sm font-medium">Snapshot Details</div>
                 <div className="text-muted-foreground text-xs space-y-1">
-                  <div>Tag: {selectedSnapshot.status.registryStatus?.tag || 'N/A'}</div>
-                  <div>Source: {selectedSnapshot.spec.ownedBy}/{selectedSnapshot.status.targetName}</div>
-                  <div>Size: {selectedSnapshot.status.sizeHuman || 'N/A'}</div>
+                  <div>Tag: {selectedSnapshot.registry?.tag || 'N/A'}</div>
+                  <div>Name: {selectedSnapshot.name}</div>
+                  <div>Size: {selectedSnapshot.sizeHuman || 'N/A'}</div>
+                  {selectedSnapshot.description && (
+                    <div>Description: {selectedSnapshot.description}</div>
+                  )}
                 </div>
               </div>
             )}
