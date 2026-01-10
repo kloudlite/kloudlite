@@ -1437,10 +1437,10 @@ func (s *MetricsServer) collectGPUMetrics() (*GPUMetricsResponse, error) {
 // SnapshotRequestReconciler watches SnapshotRequest resources and processes them on this node
 type SnapshotRequestReconciler struct {
 	client.Client
-	Logger        *zap2.Logger
-	HostCmdExec   CommandExecutor // For btrfs commands that must run on host
-	LocalCmdExec  CommandExecutor // For tar/oras commands that run in container
-	NodeName      string
+	Logger       *zap2.Logger
+	HostCmdExec  CommandExecutor // For btrfs commands that must run on host
+	LocalCmdExec CommandExecutor // For tar/oras commands that run in container
+	NodeName     string
 }
 
 const snapshotStoragePath = "/var/lib/kloudlite/storage/.snapshots"
