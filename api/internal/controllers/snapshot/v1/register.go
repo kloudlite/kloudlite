@@ -49,6 +49,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		// Restore requests
 		&SnapshotRestore{},
 		&SnapshotRestoreList{},
+
+		// Artifacts storage (K8s resources captured during snapshot)
+		&SnapshotArtifacts{},
+		&SnapshotArtifactsList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

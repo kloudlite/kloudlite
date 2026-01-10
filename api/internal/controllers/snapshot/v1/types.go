@@ -509,3 +509,69 @@ type SnapshotRestoreList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []SnapshotRestore `json:"items"`
 }
+
+// ============================================================================
+// SnapshotArtifacts - Stores K8s resources captured during snapshot creation
+// ============================================================================
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
+// +kubebuilder:printcolumn:name="Compositions",type=integer,JSONPath=`.status.compositionCount`
+// +kubebuilder:printcolumn:name="ConfigMaps",type=integer,JSONPath=`.status.configMapCount`
+// +kubebuilder:printcolumn:name="Secrets",type=integer,JSONPath=`.status.secretCount`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+
+// SnapshotArtifacts stores K8s resources (Compositions, ConfigMaps, Secrets)
+// captured during environment snapshot creation. This is a separate resource
+// to keep the Snapshot CR lightweight.
+type SnapshotArtifacts struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   SnapshotArtifactsSpec   `json:"spec,omitempty"`
+	Status SnapshotArtifactsStatus `json:"status,omitempty"`
+}
+
+// SnapshotArtifactsSpec defines the artifacts data
+type SnapshotArtifactsSpec struct {
+	// SnapshotName is the name of the associated Snapshot
+	// +kubebuilder:validation:Required
+	SnapshotName string `json:"snapshotName"`
+
+	// Compositions contains serialized Composition resources (YAML, base64 encoded)
+	// +optional
+	Compositions string `json:"compositions,omitempty"`
+
+	// ConfigMaps contains serialized ConfigMap resources (YAML, base64 encoded)
+	// +optional
+	ConfigMaps string `json:"configMaps,omitempty"`
+
+	// Secrets contains serialized Secret resources (YAML, base64 encoded)
+	// +optional
+	Secrets string `json:"secrets,omitempty"`
+}
+
+// SnapshotArtifactsStatus tracks counts of stored resources
+type SnapshotArtifactsStatus struct {
+	// CompositionCount is the number of compositions stored
+	CompositionCount int32 `json:"compositionCount,omitempty"`
+
+	// ConfigMapCount is the number of configmaps stored
+	ConfigMapCount int32 `json:"configMapCount,omitempty"`
+
+	// SecretCount is the number of secrets stored
+	SecretCount int32 `json:"secretCount,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// SnapshotArtifactsList contains a list of SnapshotArtifacts
+type SnapshotArtifactsList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []SnapshotArtifacts `json:"items"`
+}

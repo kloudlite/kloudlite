@@ -1,10 +1,13 @@
 package environment
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -15,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -197,8 +201,14 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 			"Restoring snapshot data", logger)
 
 	case snapshotv1.SnapshotRestoreStateCompleted:
-		// Restore completed! Update environment and clear FromSnapshot
+		// Restore completed! Now apply artifacts from SnapshotArtifacts CR
 		logger.Info("Snapshot restore completed successfully", zap.String("snapshot", snapshotName))
+
+		// Apply artifacts (Compositions, ConfigMaps, Secrets) from SnapshotArtifacts CR
+		if err := r.applySnapshotArtifacts(ctx, snapshotName, environment, logger); err != nil {
+			logger.Warn("Failed to apply snapshot artifacts", zap.Error(err))
+			// Don't fail the restore, just log the warning
+		}
 
 		now := metav1.Now()
 
@@ -305,4 +315,213 @@ func (r *EnvironmentReconciler) failSnapshotRestore(ctx context.Context, environ
 	}
 
 	return reconcile.Result{}, nil
+}
+
+// applySnapshotArtifacts reads SnapshotArtifacts CR and applies resources to the target environment
+func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snapshotName string, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	// Get the SnapshotArtifacts CR - it's cluster-scoped, named after the snapshot
+	artifacts := &snapshotv1.SnapshotArtifacts{}
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, artifacts); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("No SnapshotArtifacts found for snapshot", zap.String("snapshot", snapshotName))
+			return nil
+		}
+		return fmt.Errorf("failed to get SnapshotArtifacts: %w", err)
+	}
+
+	targetNamespace := environment.Spec.TargetNamespace
+	logger.Info("Applying snapshot artifacts",
+		zap.String("snapshot", snapshotName),
+		zap.String("targetNamespace", targetNamespace))
+
+	// Apply Compositions
+	if artifacts.Spec.Compositions != "" {
+		count, err := r.applyCompositionsFromYAML(ctx, artifacts.Spec.Compositions, targetNamespace, environment.Name, logger)
+		if err != nil {
+			logger.Warn("Failed to apply compositions", zap.Error(err))
+		} else {
+			logger.Info("Applied compositions from snapshot", zap.Int("count", count))
+		}
+	}
+
+	// Apply ConfigMaps
+	if artifacts.Spec.ConfigMaps != "" {
+		count, err := r.applyConfigMapsFromYAML(ctx, artifacts.Spec.ConfigMaps, targetNamespace, logger)
+		if err != nil {
+			logger.Warn("Failed to apply configmaps", zap.Error(err))
+		} else {
+			logger.Info("Applied configmaps from snapshot", zap.Int("count", count))
+		}
+	}
+
+	// Apply Secrets
+	if artifacts.Spec.Secrets != "" {
+		count, err := r.applySecretsFromYAML(ctx, artifacts.Spec.Secrets, targetNamespace, logger)
+		if err != nil {
+			logger.Warn("Failed to apply secrets", zap.Error(err))
+		} else {
+			logger.Info("Applied secrets from snapshot", zap.Int("count", count))
+		}
+	}
+
+	return nil
+}
+
+// applyCompositionsFromYAML decodes base64 YAML and creates Composition resources
+func (r *EnvironmentReconciler) applyCompositionsFromYAML(ctx context.Context, encodedYAML, targetNamespace, envName string, logger *zap.Logger) (int, error) {
+	yamlData, err := base64.StdEncoding.DecodeString(encodedYAML)
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+	count := 0
+
+	for {
+		comp := &environmentsv1.Composition{}
+		if err := decoder.Decode(comp); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return count, fmt.Errorf("failed to decode composition: %w", err)
+		}
+
+		// Skip empty documents
+		if comp.Name == "" {
+			continue
+		}
+
+		// Create a copy in the target namespace
+		newComp := &environmentsv1.Composition{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        comp.Name,
+				Namespace:   targetNamespace,
+				Labels:      comp.Labels,
+				Annotations: comp.Annotations,
+			},
+			Spec: comp.Spec,
+		}
+
+		// Update labels to reference the new environment
+		if newComp.Labels == nil {
+			newComp.Labels = make(map[string]string)
+		}
+		newComp.Labels["kloudlite.io/environment"] = envName
+
+		if err := r.Create(ctx, newComp); err != nil {
+			if apierrors.IsAlreadyExists(err) {
+				logger.Debug("Composition already exists, skipping", zap.String("name", comp.Name))
+				continue
+			}
+			logger.Warn("Failed to create composition", zap.String("name", comp.Name), zap.Error(err))
+			continue
+		}
+		count++
+		logger.Debug("Created composition from snapshot", zap.String("name", comp.Name))
+	}
+
+	return count, nil
+}
+
+// applyConfigMapsFromYAML decodes base64 YAML and creates ConfigMap resources
+func (r *EnvironmentReconciler) applyConfigMapsFromYAML(ctx context.Context, encodedYAML, targetNamespace string, logger *zap.Logger) (int, error) {
+	yamlData, err := base64.StdEncoding.DecodeString(encodedYAML)
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+	count := 0
+
+	for {
+		cm := &corev1.ConfigMap{}
+		if err := decoder.Decode(cm); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return count, fmt.Errorf("failed to decode configmap: %w", err)
+		}
+
+		// Skip empty documents
+		if cm.Name == "" {
+			continue
+		}
+
+		// Create a copy in the target namespace
+		newCM := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        cm.Name,
+				Namespace:   targetNamespace,
+				Labels:      cm.Labels,
+				Annotations: cm.Annotations,
+			},
+			Data:       cm.Data,
+			BinaryData: cm.BinaryData,
+		}
+
+		if err := r.Create(ctx, newCM); err != nil {
+			if apierrors.IsAlreadyExists(err) {
+				logger.Debug("ConfigMap already exists, skipping", zap.String("name", cm.Name))
+				continue
+			}
+			logger.Warn("Failed to create configmap", zap.String("name", cm.Name), zap.Error(err))
+			continue
+		}
+		count++
+		logger.Debug("Created configmap from snapshot", zap.String("name", cm.Name))
+	}
+
+	return count, nil
+}
+
+// applySecretsFromYAML decodes base64 YAML and creates Secret resources
+func (r *EnvironmentReconciler) applySecretsFromYAML(ctx context.Context, encodedYAML, targetNamespace string, logger *zap.Logger) (int, error) {
+	yamlData, err := base64.StdEncoding.DecodeString(encodedYAML)
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode base64: %w", err)
+	}
+
+	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+	count := 0
+
+	for {
+		secret := &corev1.Secret{}
+		if err := decoder.Decode(secret); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return count, fmt.Errorf("failed to decode secret: %w", err)
+		}
+
+		// Skip empty documents
+		if secret.Name == "" {
+			continue
+		}
+
+		// Create a copy in the target namespace
+		newSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        secret.Name,
+				Namespace:   targetNamespace,
+				Labels:      secret.Labels,
+				Annotations: secret.Annotations,
+			},
+			Type:       secret.Type,
+			Data:       secret.Data,
+			StringData: secret.StringData,
+		}
+
+		if err := r.Create(ctx, newSecret); err != nil {
+			if apierrors.IsAlreadyExists(err) {
+				logger.Debug("Secret already exists, skipping", zap.String("name", secret.Name))
+				continue
+			}
+			logger.Warn("Failed to create secret", zap.String("name", secret.Name), zap.Error(err))
+			continue
+		}
+		count++
+		logger.Debug("Created secret from snapshot", zap.String("name", secret.Name))
+	}
+
+	return count, nil
 }

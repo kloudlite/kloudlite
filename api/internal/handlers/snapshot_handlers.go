@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"time"
@@ -15,6 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 // SnapshotHandlers handles snapshot-related HTTP requests
@@ -213,6 +215,12 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		h.logger.Error("Failed to create snapshot", zap.String("name", snapshotName), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot: %v", err)})
 		return
+	}
+
+	// Capture K8s resources and create SnapshotArtifacts CR
+	if err := h.createSnapshotArtifacts(c.Request.Context(), snapshotName, env.Spec.TargetNamespace); err != nil {
+		h.logger.Warn("Failed to create snapshot artifacts", zap.Error(err))
+		// Continue without artifacts - not a fatal error
 	}
 
 	// Create the SnapshotRequest CR (node-specific operation)
@@ -753,4 +761,148 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		"environment": envName,
 		"snapshot":    req.SnapshotName,
 	})
+}
+
+// createSnapshotArtifacts captures K8s resources and creates a SnapshotArtifacts CR
+func (h *SnapshotHandlers) createSnapshotArtifacts(ctx context.Context, snapshotName, namespace string) error {
+	artifacts := &snapshotv1.SnapshotArtifacts{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: snapshotName, // Same name as the snapshot
+			Labels: map[string]string{
+				"snapshots.kloudlite.io/snapshot": snapshotName,
+			},
+		},
+		Spec: snapshotv1.SnapshotArtifactsSpec{
+			SnapshotName: snapshotName,
+		},
+	}
+
+	var compositionCount, configMapCount, secretCount int32
+
+	// Capture Compositions
+	compositions := &envv1.CompositionList{}
+	if err := h.k8sClient.List(ctx, compositions, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list compositions: %w", err)
+	}
+
+	if len(compositions.Items) > 0 {
+		cleanCompositions := make([]envv1.Composition, len(compositions.Items))
+		for i, comp := range compositions.Items {
+			cleanCompositions[i] = envv1.Composition{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "environments.kloudlite.io/v1",
+					Kind:       "Composition",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        comp.Name,
+					Labels:      comp.Labels,
+					Annotations: comp.Annotations,
+				},
+				Spec: comp.Spec,
+			}
+		}
+
+		data, err := yaml.Marshal(cleanCompositions)
+		if err != nil {
+			return fmt.Errorf("failed to marshal compositions: %w", err)
+		}
+		artifacts.Spec.Compositions = base64.StdEncoding.EncodeToString(data)
+		compositionCount = int32(len(compositions.Items))
+		h.logger.Info("Captured compositions", zap.Int("count", len(compositions.Items)))
+	}
+
+	// Capture ConfigMaps (excluding system ones)
+	configMaps := &corev1.ConfigMapList{}
+	if err := h.k8sClient.List(ctx, configMaps, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list configmaps: %w", err)
+	}
+
+	var userConfigMaps []corev1.ConfigMap
+	for _, cm := range configMaps.Items {
+		if cm.Name == "kube-root-ca.crt" {
+			continue
+		}
+		userConfigMaps = append(userConfigMaps, corev1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "ConfigMap",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        cm.Name,
+				Labels:      cm.Labels,
+				Annotations: cm.Annotations,
+			},
+			Data:       cm.Data,
+			BinaryData: cm.BinaryData,
+		})
+	}
+
+	if len(userConfigMaps) > 0 {
+		data, err := yaml.Marshal(userConfigMaps)
+		if err != nil {
+			return fmt.Errorf("failed to marshal configmaps: %w", err)
+		}
+		artifacts.Spec.ConfigMaps = base64.StdEncoding.EncodeToString(data)
+		configMapCount = int32(len(userConfigMaps))
+		h.logger.Info("Captured configmaps", zap.Int("count", len(userConfigMaps)))
+	}
+
+	// Capture Secrets (excluding service account tokens and system secrets)
+	secrets := &corev1.SecretList{}
+	if err := h.k8sClient.List(ctx, secrets, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list secrets: %w", err)
+	}
+
+	var userSecrets []corev1.Secret
+	for _, secret := range secrets.Items {
+		if secret.Type == corev1.SecretTypeServiceAccountToken {
+			continue
+		}
+		if secret.Name == "default-token" || secret.Name == "builder-dockercfg" {
+			continue
+		}
+		userSecrets = append(userSecrets, corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        secret.Name,
+				Labels:      secret.Labels,
+				Annotations: secret.Annotations,
+			},
+			Data: secret.Data,
+			Type: secret.Type,
+		})
+	}
+
+	if len(userSecrets) > 0 {
+		data, err := yaml.Marshal(userSecrets)
+		if err != nil {
+			return fmt.Errorf("failed to marshal secrets: %w", err)
+		}
+		artifacts.Spec.Secrets = base64.StdEncoding.EncodeToString(data)
+		secretCount = int32(len(userSecrets))
+		h.logger.Info("Captured secrets", zap.Int("count", len(userSecrets)))
+	}
+
+	// Set status counts
+	artifacts.Status = snapshotv1.SnapshotArtifactsStatus{
+		CompositionCount: compositionCount,
+		ConfigMapCount:   configMapCount,
+		SecretCount:      secretCount,
+	}
+
+	// Create the SnapshotArtifacts CR
+	if err := h.k8sClient.Create(ctx, artifacts); err != nil {
+		return fmt.Errorf("failed to create SnapshotArtifacts: %w", err)
+	}
+
+	h.logger.Info("Created SnapshotArtifacts",
+		zap.String("name", snapshotName),
+		zap.Int32("compositions", compositionCount),
+		zap.Int32("configMaps", configMapCount),
+		zap.Int32("secrets", secretCount))
+
+	return nil
 }
