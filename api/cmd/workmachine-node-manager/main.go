@@ -1784,8 +1784,6 @@ type SnapshotRestoreReconciler struct {
 	NodeName     string
 }
 
-const snapshotRestoreTempPath = "/var/lib/kloudlite/storage/.snapshots-restore"
-
 func (r *SnapshotRestoreReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
 		zap2.String("snapshotRestore", req.Name),
@@ -1852,11 +1850,35 @@ func (r *SnapshotRestoreReconciler) handleRestorePending(ctx context.Context, re
 }
 
 func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap2.Logger) (reconcile.Result, error) {
+	snapshotName := restore.Spec.SnapshotName
+	cachePath := fmt.Sprintf("%s/%s", snapshotStoragePath, snapshotName)
+
+	// Check if snapshot is already cached locally
+	checkCacheScript := fmt.Sprintf("test -d %s && echo 'cached'", cachePath)
+	cacheOutput, _ := r.LocalCmdExec.Execute(checkCacheScript)
+	if strings.Contains(string(cacheOutput), "cached") {
+		logger.Info("Snapshot already cached, skipping download",
+			zap2.String("snapshotName", snapshotName),
+			zap2.String("cachePath", cachePath))
+
+		// Skip download, go directly to Restoring state
+		restore.Status.State = snapshotv1.SnapshotRestoreStateRestoring
+		restore.Status.Message = "Using cached snapshot"
+		if err := r.Status().Update(ctx, restore); err != nil {
+			if apierrors.IsConflict(err) {
+				return reconcile.Result{Requeue: true}, nil
+			}
+			logger.Error("Failed to update status", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
 	// Get the Snapshot to find the registry info
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
-			return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Snapshot %q not found", restore.Spec.SnapshotName), logger)
+			return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Snapshot %q not found", snapshotName), logger)
 		}
 		logger.Error("Failed to get Snapshot", zap2.Error(err))
 		return reconcile.Result{}, err
@@ -1887,14 +1909,13 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 		return reconcile.Result{}, err
 	}
 
-	// Ensure temp directory exists
-	tempDir := fmt.Sprintf("%s/%s", snapshotRestoreTempPath, restore.Name)
-	mkdirScript := fmt.Sprintf("mkdir -p %s", tempDir)
+	// Ensure cache directory exists
+	mkdirScript := fmt.Sprintf("mkdir -p %s", cachePath)
 	if _, err := r.LocalCmdExec.Execute(mkdirScript); err != nil {
-		logger.Warn("Failed to create temp directory", zap2.Error(err))
+		logger.Warn("Failed to create cache directory", zap2.Error(err))
 	}
 
-	// Pull snapshot from registry using oras
+	// Pull snapshot from registry using oras and extract to cache
 	imageRef := snapshot.Status.Registry.ImageRef
 	pullScript := fmt.Sprintf(`
 		set -e
@@ -1908,7 +1929,7 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 				break
 			fi
 		done
-	`, tempDir, imageRef, tempDir)
+	`, cachePath, imageRef, cachePath)
 
 	output, err := r.LocalCmdExec.Execute(pullScript)
 	if err != nil {
@@ -1916,6 +1937,9 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 			zap2.String("imageRef", imageRef),
 			zap2.Error(err),
 			zap2.String("output", string(output)))
+		// Clean up failed cache directory
+		cleanupScript := fmt.Sprintf("rm -rf %s", cachePath)
+		r.LocalCmdExec.Execute(cleanupScript)
 		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Failed to pull from registry: %v", err), logger)
 	}
 
@@ -1930,12 +1954,13 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("Downloaded snapshot from registry", zap2.String("imageRef", imageRef))
+	logger.Info("Downloaded snapshot to cache", zap2.String("imageRef", imageRef), zap2.String("cachePath", cachePath))
 	return reconcile.Result{Requeue: true}, nil
 }
 
 func (r *SnapshotRestoreReconciler) handleRestoreRestoring(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap2.Logger) (reconcile.Result, error) {
-	tempDir := fmt.Sprintf("%s/%s", snapshotRestoreTempPath, restore.Name)
+	snapshotName := restore.Spec.SnapshotName
+	cachePath := fmt.Sprintf("%s/%s", snapshotStoragePath, snapshotName)
 	targetPath := restore.Spec.TargetPath
 
 	// Ensure parent directory of target exists
@@ -1967,28 +1992,21 @@ func (r *SnapshotRestoreReconciler) handleRestoreRestoring(ctx context.Context, 
 		}
 	}
 
-	// Create a new btrfs subvolume and copy the data
-	// Since we're restoring from a tar archive (not btrfs send stream), we create a new subvolume
-	restoreScript := fmt.Sprintf(`
-		set -e
-		btrfs subvolume create %s
-		cp -a %s/. %s/
-	`, targetPath, tempDir, targetPath)
+	// Create environment as a btrfs snapshot of the cached snapshot data
+	// This is fast (instant) and space-efficient (copy-on-write)
+	restoreScript := fmt.Sprintf("btrfs subvolume snapshot %s %s", cachePath, targetPath)
 
 	output, err := r.HostCmdExec.Execute(restoreScript)
 	if err != nil {
-		logger.Error("Failed to restore snapshot",
+		logger.Error("Failed to create snapshot from cache",
+			zap2.String("cachePath", cachePath),
 			zap2.String("targetPath", targetPath),
 			zap2.Error(err),
 			zap2.String("output", string(output)))
 		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Failed to restore: %v", err), logger)
 	}
 
-	// Cleanup temp directory
-	cleanupScript := fmt.Sprintf("rm -rf %s", tempDir)
-	if _, err := r.LocalCmdExec.Execute(cleanupScript); err != nil {
-		logger.Warn("Failed to cleanup temp directory", zap2.Error(err))
-	}
+	// Cache is kept for future restores (not cleaned up)
 
 	// Mark as completed
 	now := metav1.Now()
@@ -2005,7 +2023,9 @@ func (r *SnapshotRestoreReconciler) handleRestoreRestoring(ctx context.Context, 
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("Snapshot restored successfully", zap2.String("targetPath", targetPath))
+	logger.Info("Snapshot restored from cache",
+		zap2.String("cachePath", cachePath),
+		zap2.String("targetPath", targetPath))
 	return reconcile.Result{}, nil
 }
 
