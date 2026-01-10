@@ -1,61 +1,22 @@
 import { apiClient } from '../api-client'
 
+// Snapshot as returned by the API (flat structure)
 export interface Snapshot {
-  metadata: {
-    name: string
-    creationTimestamp: string
-    labels?: Record<string, string>
+  name: string
+  description?: string
+  state: 'Pending' | 'Creating' | 'Ready' | 'Uploading' | 'Restoring' | 'Deleting' | 'Pushing' | 'Pulling' | 'Failed' | 'Completed' | ''
+  sizeHuman?: string
+  sizeBytes?: number
+  createdAt?: string
+  registry?: {
+    endpoint?: string
+    repository?: string
+    tag?: string
+    digest?: string
   }
-  spec: {
-    workspaceRef?: {
-      name: string
-      workmachineName: string
-    }
-    environmentRef?: {
-      name: string
-    }
-    parentSnapshotRef?: {
-      name: string
-      restoredAt?: string
-    }
-    description?: string
-    ownedBy: string
-    includeMetadata: boolean
-    retentionPolicy?: {
-      keepForDays?: number
-      expiresAt?: string
-    }
-  }
-  status: {
-    state:
-      | 'Pending'
-      | 'Creating'
-      | 'Ready'
-      | 'Restoring'
-      | 'Deleting'
-      | 'Pushing'
-      | 'Pulling'
-      | 'Failed'
-    snapshotType?: 'Workspace' | 'Environment'
-    targetName?: string
-    message?: string
-    sizeBytes?: number
-    sizeHuman?: string
-    createdAt?: string
-    snapshotPath?: string
-    workMachineName?: string
-    // Registry status for pushed snapshots
-    registryStatus?: {
-      pushed: boolean
-      pushedAt?: string
-      tag?: string
-      imageRef?: string
-      digest?: string
-      layerDigests?: string[]
-      layerCount?: number
-      compressedSize?: number
-    }
-  }
+  parent?: string
+  refCount?: number
+  message?: string
 }
 
 export interface SnapshotListResponse {

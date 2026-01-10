@@ -146,7 +146,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
 
     setIsRestoring(true)
 
-    const result = await restoreSnapshot(selectedSnapshot.metadata.name)
+    const result = await restoreSnapshot(selectedSnapshot.name)
 
     if (result.success) {
       toast.success('Snapshot restore started')
@@ -168,7 +168,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   const handlePushClick = (snapshot: Snapshot) => {
     setSelectedSnapshot(snapshot)
     // Suggest a default tag based on snapshot name or date
-    const shortHash = snapshot.metadata.name.split('-').slice(-1)[0]
+    const shortHash = snapshot.name.split('-').slice(-1)[0]
     setPushTag(`v${shortHash}`)
     setPushDialogOpen(true)
   }
@@ -178,7 +178,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
 
     setIsPushing(true)
 
-    const result = await pushSnapshot(selectedSnapshot.metadata.name, pushTag.trim())
+    const result = await pushSnapshot(selectedSnapshot.name, pushTag.trim())
 
     if (result.success) {
       toast.success('Pushing snapshot to registry')
@@ -197,7 +197,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
 
     setIsDeleting(true)
 
-    const result = await deleteSnapshot(selectedSnapshot.metadata.name)
+    const result = await deleteSnapshot(selectedSnapshot.name)
 
     if (result.success) {
       toast.success('Snapshot deleted')
