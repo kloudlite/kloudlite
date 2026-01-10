@@ -561,7 +561,8 @@ func (h *SnapshotHandlers) GetSnapshot(c *gin.Context) {
 	c.JSON(http.StatusOK, snapshotToResponse(snapshot))
 }
 
-// DeleteSnapshot deletes a snapshot
+// DeleteSnapshot decrements the refCount of a snapshot
+// When refCount reaches 0, the snapshot will be automatically garbage collected
 // DELETE /api/v1/snapshots/:name
 func (h *SnapshotHandlers) DeleteSnapshot(c *gin.Context) {
 	name := c.Param("name")
@@ -574,22 +575,32 @@ func (h *SnapshotHandlers) DeleteSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Check if snapshot has references
-	if snapshot.Status.RefCount > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": fmt.Sprintf("snapshot has %d active references", snapshot.Status.RefCount)})
+	// Decrement refCount (minimum 0)
+	newRefCount := snapshot.Status.RefCount - 1
+	if newRefCount < 0 {
+		newRefCount = 0
+	}
+
+	snapshot.Status.RefCount = newRefCount
+	if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
+		h.logger.Error("Failed to update snapshot refCount", zap.String("name", name), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update snapshot"})
 		return
 	}
 
-	if err := h.snapshotRepo.Delete(c.Request.Context(), name); err != nil {
-		h.logger.Error("Failed to delete snapshot", zap.String("name", name), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete snapshot"})
-		return
-	}
-
-	h.logger.Info("Deleted snapshot",
+	h.logger.Info("Decremented snapshot refCount",
 		zap.String("snapshot", name),
+		zap.Int32("newRefCount", newRefCount),
 		zap.String("user", username),
 	)
 
-	c.JSON(http.StatusOK, gin.H{"message": "snapshot deleted"})
+	message := "snapshot reference removed"
+	if newRefCount == 0 {
+		message = "snapshot marked for deletion (will be garbage collected)"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  message,
+		"refCount": newRefCount,
+	})
 }
