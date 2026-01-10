@@ -136,6 +136,31 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		return
 	}
 
+	// Check for existing in-progress snapshot requests for this environment
+	existingRequests := &snapshotv1.SnapshotRequestList{}
+	if err := h.k8sClient.List(c.Request.Context(), existingRequests,
+		client.InNamespace(env.Spec.TargetNamespace),
+		client.MatchingLabels{"snapshots.kloudlite.io/environment": envName}); err != nil {
+		h.logger.Error("Failed to list existing snapshot requests", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check existing requests"})
+		return
+	}
+
+	// Check if any request is in progress
+	for _, existingReq := range existingRequests.Items {
+		state := existingReq.Status.State
+		if state == "" || state == snapshotv1.SnapshotRequestStatePending ||
+			state == snapshotv1.SnapshotRequestStateCreating ||
+			state == snapshotv1.SnapshotRequestStateUploading {
+			c.JSON(http.StatusConflict, gin.H{
+				"error":   "A snapshot request is already in progress for this environment",
+				"request": existingReq.Name,
+				"state":   string(state),
+			})
+			return
+		}
+	}
+
 	// Get node name from the workmachine
 	if env.Spec.WorkMachineName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "environment has no workmachine assigned"})
@@ -163,16 +188,37 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		parentSnapshot = env.Status.LastRestoredSnapshot.Name
 	}
 
+	labels := map[string]string{
+		"kloudlite.io/owned-by":              env.Spec.OwnedBy,
+		"snapshots.kloudlite.io/environment": envName,
+		"snapshots.kloudlite.io/type":        "environment",
+	}
+
+	// Create the Snapshot object first with Pending state (so UI can see it immediately)
+	snapshot := &snapshotv1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   snapshotName,
+			Labels: labels,
+		},
+		Spec: snapshotv1.SnapshotSpec{
+			Owner:          env.Spec.OwnedBy,
+			ParentSnapshot: parentSnapshot,
+			Description:    req.Description,
+		},
+	}
+
+	if err := h.k8sClient.Create(c.Request.Context(), snapshot); err != nil {
+		h.logger.Error("Failed to create snapshot", zap.String("name", snapshotName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot: %v", err)})
+		return
+	}
+
 	// Create the SnapshotRequest CR (node-specific operation)
 	snapshotReq := &snapshotv1.SnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      requestName,
 			Namespace: env.Spec.TargetNamespace,
-			Labels: map[string]string{
-				"kloudlite.io/owned-by":              env.Spec.OwnedBy,
-				"snapshots.kloudlite.io/environment": envName,
-				"snapshots.kloudlite.io/type":        "environment",
-			},
+			Labels:    labels,
 		},
 		Spec: snapshotv1.SnapshotRequestSpec{
 			SnapshotName:   snapshotName,
@@ -187,6 +233,8 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 
 	if err := h.k8sClient.Create(c.Request.Context(), snapshotReq); err != nil {
 		h.logger.Error("Failed to create snapshot request", zap.String("name", requestName), zap.Error(err))
+		// Clean up the snapshot we just created
+		_ = h.k8sClient.Delete(c.Request.Context(), snapshot)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot request: %v", err)})
 		return
 	}
@@ -200,7 +248,7 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message":  "Snapshot creation started",
-		"snapshot": snapshotRequestToResponse(snapshotReq),
+		"snapshot": snapshotToResponse(snapshot),
 	})
 }
 
@@ -296,6 +344,33 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		return
 	}
 
+	workspaceLabel := fmt.Sprintf("%s--%s", namespace, workspaceName)
+
+	// Check for existing in-progress snapshot requests for this workspace
+	existingRequests := &snapshotv1.SnapshotRequestList{}
+	if err := h.k8sClient.List(c.Request.Context(), existingRequests,
+		client.InNamespace(namespace),
+		client.MatchingLabels{"snapshots.kloudlite.io/workspace": workspaceLabel}); err != nil {
+		h.logger.Error("Failed to list existing snapshot requests", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check existing requests"})
+		return
+	}
+
+	// Check if any request is in progress
+	for _, existingReq := range existingRequests.Items {
+		state := existingReq.Status.State
+		if state == "" || state == snapshotv1.SnapshotRequestStatePending ||
+			state == snapshotv1.SnapshotRequestStateCreating ||
+			state == snapshotv1.SnapshotRequestStateUploading {
+			c.JSON(http.StatusConflict, gin.H{
+				"error":   "A snapshot request is already in progress for this workspace",
+				"request": existingReq.Name,
+				"state":   string(state),
+			})
+			return
+		}
+	}
+
 	// Get node name for the workmachine
 	nodeName, err := h.getNodeForWorkMachine(c.Request.Context(), ws.Spec.WorkmachineName)
 	if err != nil {
@@ -319,16 +394,37 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		parentSnapshot = ws.Status.LastRestoredSnapshot.Name
 	}
 
+	labels := map[string]string{
+		"kloudlite.io/owned-by":            ws.Spec.OwnedBy,
+		"snapshots.kloudlite.io/workspace": workspaceLabel,
+		"snapshots.kloudlite.io/type":      "workspace",
+	}
+
+	// Create the Snapshot object first with Pending state (so UI can see it immediately)
+	snapshot := &snapshotv1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   snapshotName,
+			Labels: labels,
+		},
+		Spec: snapshotv1.SnapshotSpec{
+			Owner:          ws.Spec.OwnedBy,
+			ParentSnapshot: parentSnapshot,
+			Description:    req.Description,
+		},
+	}
+
+	if err := h.k8sClient.Create(c.Request.Context(), snapshot); err != nil {
+		h.logger.Error("Failed to create snapshot", zap.String("name", snapshotName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot: %v", err)})
+		return
+	}
+
 	// Create the SnapshotRequest CR (node-specific operation)
 	snapshotReq := &snapshotv1.SnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      requestName,
 			Namespace: namespace,
-			Labels: map[string]string{
-				"kloudlite.io/owned-by":            ws.Spec.OwnedBy,
-				"snapshots.kloudlite.io/workspace": fmt.Sprintf("%s--%s", namespace, workspaceName),
-				"snapshots.kloudlite.io/type":      "workspace",
-			},
+			Labels:    labels,
 		},
 		Spec: snapshotv1.SnapshotRequestSpec{
 			SnapshotName:   snapshotName,
@@ -343,6 +439,8 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 
 	if err := h.k8sClient.Create(c.Request.Context(), snapshotReq); err != nil {
 		h.logger.Error("Failed to create snapshot request", zap.String("name", requestName), zap.Error(err))
+		// Clean up the snapshot we just created
+		_ = h.k8sClient.Delete(c.Request.Context(), snapshot)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot request: %v", err)})
 		return
 	}
@@ -356,7 +454,7 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message":  "Snapshot creation started",
-		"snapshot": snapshotRequestToResponse(snapshotReq),
+		"snapshot": snapshotToResponse(snapshot),
 	})
 }
 
