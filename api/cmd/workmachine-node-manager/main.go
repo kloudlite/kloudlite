@@ -1597,7 +1597,7 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		set -e
 		cd %s
 		tar -cf - . | gzip > /tmp/%s.tar.gz
-		oras push --insecure --disable-path-validation %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip
+		oras push --plain-http --disable-path-validation %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip
 		rm -f /tmp/%s.tar.gz
 	`, req.Status.LocalSnapshotPath, req.Spec.SnapshotName, imageRef, req.Spec.SnapshotName, req.Spec.SnapshotName)
 
