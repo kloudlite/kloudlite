@@ -701,6 +701,15 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
+	// Use source environment owner if username is not set
+	if username == "" {
+		username = sourceEnv.Spec.OwnedBy
+	}
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to determine owner for new environment"})
+		return
+	}
+
 	// Create new environment name: {username}--{name}
 	envName := fmt.Sprintf("%s--%s", username, req.Name)
 	targetNamespace := envName
