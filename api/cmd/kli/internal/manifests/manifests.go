@@ -37,3 +37,6 @@ var LocalPathProvisionerConfig string
 
 //go:embed local-path-storageclass.yaml
 var LocalPathStorageClass string
+
+//go:embed snapshot-store.yaml
+var SnapshotStore string

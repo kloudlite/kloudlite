@@ -207,6 +207,13 @@ data:
 		}
 		fmt.Printf("✓ Written Local Path Provisioner Config to %s\n", localPathConfigPath)
 
+		// Write SnapshotStore (default OCI registry for snapshots)
+		snapshotStorePath := filepath.Join(manifestsDir, "snapshot-store.yaml")
+		if err := os.WriteFile(snapshotStorePath, []byte(manifests.SnapshotStore), 0644); err != nil {
+			return fmt.Errorf("failed to write SnapshotStore: %w", err)
+		}
+		fmt.Printf("✓ Written SnapshotStore to %s\n", snapshotStorePath)
+
 		fmt.Println("\nKloudlite manifests installed successfully!")
 		fmt.Println("K3s will auto-apply these manifests on startup.")
 

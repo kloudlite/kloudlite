@@ -29,3 +29,13 @@ rules:
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list", "watch"]
+  # Allow managing Snapshots (cluster-scoped resources)
+  - apiGroups: ["snapshots.kloudlite.io"]
+    resources: ["snapshotrequests", "snapshotrequests/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["snapshots.kloudlite.io"]
+    resources: ["snapshots", "snapshots/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["snapshots.kloudlite.io"]
+    resources: ["snapshotstores"]
+    verbs: ["get", "list", "watch"]

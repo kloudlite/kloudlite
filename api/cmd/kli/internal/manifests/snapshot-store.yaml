@@ -1,0 +1,9 @@
+apiVersion: snapshots.kloudlite.io/v1
+kind: SnapshotStore
+metadata:
+  name: default
+spec:
+  registry:
+    endpoint: "image-registry.kloudlite.svc.cluster.local:5000"
+    insecure: true
+    repositoryPrefix: "snapshots"
