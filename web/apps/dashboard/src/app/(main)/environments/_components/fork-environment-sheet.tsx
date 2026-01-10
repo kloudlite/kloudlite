@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, GitFork, Check, ArrowLeft, ArrowRight, HardDrive, Clock, ChevronRight } from 'lucide-react'
+import { Loader2, GitFork, ArrowLeft, ArrowRight, HardDrive, Clock, ChevronRight } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
