@@ -198,7 +198,10 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		zap.String("user", username),
 	)
 
-	c.JSON(http.StatusCreated, snapshotRequestToResponse(snapshotReq))
+	c.JSON(http.StatusCreated, gin.H{
+		"message":  "Snapshot creation started",
+		"snapshot": snapshotRequestToResponse(snapshotReq),
+	})
 }
 
 // ListEnvironmentSnapshots lists all snapshots for an environment
@@ -218,7 +221,10 @@ func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 		response[i] = snapshotToResponse(&s)
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{
+		"snapshots": response,
+		"count":     len(response),
+	})
 }
 
 // CreateWorkspaceSnapshot creates a new snapshot request for a workspace
@@ -300,7 +306,10 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		zap.String("user", username),
 	)
 
-	c.JSON(http.StatusCreated, snapshotRequestToResponse(snapshotReq))
+	c.JSON(http.StatusCreated, gin.H{
+		"message":  "Snapshot creation started",
+		"snapshot": snapshotRequestToResponse(snapshotReq),
+	})
 }
 
 // ListWorkspaceSnapshots lists all snapshots for a workspace
@@ -322,7 +331,10 @@ func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
 		response[i] = snapshotToResponse(&s)
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{
+		"snapshots": response,
+		"count":     len(response),
+	})
 }
 
 // ListAllSnapshots lists all snapshots accessible to the user
@@ -342,7 +354,10 @@ func (h *SnapshotHandlers) ListAllSnapshots(c *gin.Context) {
 		response[i] = snapshotToResponse(&s)
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{
+		"snapshots": response,
+		"count":     len(response),
+	})
 }
 
 // GetSnapshot gets a snapshot by name
