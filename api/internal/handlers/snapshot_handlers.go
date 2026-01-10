@@ -136,9 +136,15 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Get node name from environment spec
-	if env.Spec.NodeName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "environment has no node assigned"})
+	// Get node name from the workmachine
+	if env.Spec.WorkMachineName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "environment has no workmachine assigned"})
+		return
+	}
+	nodeName, err := h.getNodeForWorkMachine(c.Request.Context(), env.Spec.WorkMachineName)
+	if err != nil {
+		h.logger.Error("Failed to get node for workmachine", zap.String("workmachine", env.Spec.WorkMachineName), zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "workmachine is not running"})
 		return
 	}
 
@@ -171,7 +177,7 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		Spec: snapshotv1.SnapshotRequestSpec{
 			SnapshotName:   snapshotName,
 			SourcePath:     fmt.Sprintf("/data/environments/%s", env.Spec.TargetNamespace),
-			NodeName:       env.Spec.NodeName,
+			NodeName:       nodeName,
 			Store:          "default",
 			Owner:          env.Spec.OwnedBy,
 			ParentSnapshot: parentSnapshot,
