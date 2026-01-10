@@ -1537,6 +1537,30 @@ func (r *SnapshotRequestReconciler) handleCreating(ctx context.Context, req *sna
 		logger.Warn("Failed to create snapshot storage directory", zap2.Error(err))
 	}
 
+	// Ensure source path exists as a btrfs subvolume
+	// This handles the case where environment storage hasn't been created yet (no PVCs)
+	checkSourceScript := fmt.Sprintf("test -d %s && echo exists", req.Spec.SourcePath)
+	sourceOutput, _ := r.HostCmdExec.Execute(checkSourceScript)
+	if strings.TrimSpace(string(sourceOutput)) != "exists" {
+		logger.Info("Source path doesn't exist, creating btrfs subvolume", zap2.String("path", req.Spec.SourcePath))
+		// Ensure parent directory exists
+		parentDir := filepath.Dir(req.Spec.SourcePath)
+		mkdirParentScript := fmt.Sprintf("mkdir -p %s", parentDir)
+		if _, err := r.HostCmdExec.Execute(mkdirParentScript); err != nil {
+			logger.Warn("Failed to create parent directory", zap2.Error(err))
+		}
+		// Create btrfs subvolume for the source path
+		createSubvolScript := fmt.Sprintf("btrfs subvolume create %s", req.Spec.SourcePath)
+		if output, err := r.HostCmdExec.Execute(createSubvolScript); err != nil {
+			logger.Error("Failed to create source btrfs subvolume",
+				zap2.String("path", req.Spec.SourcePath),
+				zap2.Error(err),
+				zap2.String("output", string(output)))
+			return r.setFailed(ctx, req, fmt.Sprintf("Failed to create source subvolume: %v - %s", err, string(output)), logger)
+		}
+		logger.Info("Created source btrfs subvolume", zap2.String("path", req.Spec.SourcePath))
+	}
+
 	// Create btrfs snapshot
 	snapshotScript := fmt.Sprintf("btrfs subvolume snapshot -r %s %s", req.Spec.SourcePath, snapshotPath)
 	output, err := r.HostCmdExec.Execute(snapshotScript)
