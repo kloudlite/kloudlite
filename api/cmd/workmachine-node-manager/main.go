@@ -1801,7 +1801,11 @@ func main() {
 					},
 				},
 				// Watch SnapshotRequests globally (all namespaces) since they can be in any env namespace
-				&snapshotv1.SnapshotRequest{}: {},
+				&snapshotv1.SnapshotRequest{}: {
+					Namespaces: map[string]cache.Config{
+						cache.AllNamespaces: {},
+					},
+				},
 				// Watch Snapshots globally (cluster-scoped)
 				&snapshotv1.Snapshot{}: {},
 				// Watch SnapshotStores globally (cluster-scoped)
