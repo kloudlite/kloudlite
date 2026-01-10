@@ -374,23 +374,31 @@ func (r *EnvironmentReconciler) applyCompositionsFromYAML(ctx context.Context, e
 		return 0, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
+	// First try to decode as a List (from kubectl get -o yaml)
+	var compositions []environmentsv1.Composition
+	compList := &environmentsv1.CompositionList{}
 	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-	count := 0
-
-	for {
-		comp := &environmentsv1.Composition{}
-		if err := decoder.Decode(comp); err != nil {
-			if err == io.EOF {
-				break
+	if err := decoder.Decode(compList); err == nil && len(compList.Items) > 0 {
+		compositions = compList.Items
+	} else {
+		// Fall back to decoding individual compositions
+		decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+		for {
+			comp := &environmentsv1.Composition{}
+			if err := decoder.Decode(comp); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return 0, fmt.Errorf("failed to decode composition: %w", err)
 			}
-			return count, fmt.Errorf("failed to decode composition: %w", err)
+			if comp.Name != "" {
+				compositions = append(compositions, *comp)
+			}
 		}
+	}
 
-		// Skip empty documents
-		if comp.Name == "" {
-			continue
-		}
-
+	count := 0
+	for _, comp := range compositions {
 		// Create a copy in the target namespace
 		newComp := &environmentsv1.Composition{
 			ObjectMeta: metav1.ObjectMeta{
@@ -430,23 +438,31 @@ func (r *EnvironmentReconciler) applyConfigMapsFromYAML(ctx context.Context, enc
 		return 0, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
+	// First try to decode as a List (from kubectl get -o yaml)
+	var configMaps []corev1.ConfigMap
+	cmList := &corev1.ConfigMapList{}
 	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-	count := 0
-
-	for {
-		cm := &corev1.ConfigMap{}
-		if err := decoder.Decode(cm); err != nil {
-			if err == io.EOF {
-				break
+	if err := decoder.Decode(cmList); err == nil && len(cmList.Items) > 0 {
+		configMaps = cmList.Items
+	} else {
+		// Fall back to decoding individual configmaps
+		decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+		for {
+			cm := &corev1.ConfigMap{}
+			if err := decoder.Decode(cm); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return 0, fmt.Errorf("failed to decode configmap: %w", err)
 			}
-			return count, fmt.Errorf("failed to decode configmap: %w", err)
+			if cm.Name != "" {
+				configMaps = append(configMaps, *cm)
+			}
 		}
+	}
 
-		// Skip empty documents
-		if cm.Name == "" {
-			continue
-		}
-
+	count := 0
+	for _, cm := range configMaps {
 		// Create a copy in the target namespace
 		newCM := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -481,23 +497,31 @@ func (r *EnvironmentReconciler) applySecretsFromYAML(ctx context.Context, encode
 		return 0, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
+	// First try to decode as a List (from kubectl get -o yaml)
+	var secrets []corev1.Secret
+	secretList := &corev1.SecretList{}
 	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-	count := 0
-
-	for {
-		secret := &corev1.Secret{}
-		if err := decoder.Decode(secret); err != nil {
-			if err == io.EOF {
-				break
+	if err := decoder.Decode(secretList); err == nil && len(secretList.Items) > 0 {
+		secrets = secretList.Items
+	} else {
+		// Fall back to decoding individual secrets
+		decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+		for {
+			secret := &corev1.Secret{}
+			if err := decoder.Decode(secret); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return 0, fmt.Errorf("failed to decode secret: %w", err)
 			}
-			return count, fmt.Errorf("failed to decode secret: %w", err)
+			if secret.Name != "" {
+				secrets = append(secrets, *secret)
+			}
 		}
+	}
 
-		// Skip empty documents
-		if secret.Name == "" {
-			continue
-		}
-
+	count := 0
+	for _, secret := range secrets {
 		// Create a copy in the target namespace
 		newSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
