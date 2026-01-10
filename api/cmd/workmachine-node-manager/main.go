@@ -1592,15 +1592,17 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	// For now, we'll use a simplified approach with tar + oras
 	// In production, use proper btrfs send/receive with incremental support
 	pushScript := fmt.Sprintf(`
+		set -e
 		# Install oras if not available
 		if ! command -v oras &> /dev/null; then
+			cd /tmp
 			curl -sLO "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
 			tar -xzf oras_1.2.0_linux_amd64.tar.gz -C /usr/local/bin oras
 			rm -f oras_1.2.0_linux_amd64.tar.gz
 		fi
-		cd %s && \
-		tar -cf - . | gzip > /tmp/%s.tar.gz && \
-		oras push --insecure %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip && \
+		cd %s
+		tar -cf - . | gzip > /tmp/%s.tar.gz
+		oras push --insecure %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip
 		rm -f /tmp/%s.tar.gz
 	`, req.Status.LocalSnapshotPath, req.Spec.SnapshotName, imageRef, req.Spec.SnapshotName, req.Spec.SnapshotName)
 
