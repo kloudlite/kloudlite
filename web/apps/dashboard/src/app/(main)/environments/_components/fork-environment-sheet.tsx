@@ -166,14 +166,6 @@ export function ForkEnvironmentSheet({
     })
   }
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
