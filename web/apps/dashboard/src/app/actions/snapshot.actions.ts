@@ -177,16 +177,16 @@ export async function pullSnapshot(
 }
 
 /**
- * Server action to list pushed snapshots available for forking
+ * Server action to list ready snapshots available for forking
  * @param type - filter by snapshot type (workspace or environment)
  * @param environment - filter by specific environment name
  */
-export async function listPushedSnapshots(type?: 'workspace' | 'environment', environment?: string) {
+export async function listReadySnapshots(type?: 'workspace' | 'environment', environment?: string) {
   try {
-    const result = await snapshotService.listPushed(type, environment)
+    const result = await snapshotService.listReady(type, environment)
     return { success: true, data: result }
   } catch (err) {
-    console.error('List pushed snapshots error:', err)
+    console.error('List ready snapshots error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
@@ -194,6 +194,9 @@ export async function listPushedSnapshots(type?: 'workspace' | 'environment', en
     }
   }
 }
+
+// Alias for backwards compatibility
+export const listPushedSnapshots = listReadySnapshots
 
 /**
  * Server action to create a workspace from a pushed snapshot

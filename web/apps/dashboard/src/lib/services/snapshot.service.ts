@@ -184,16 +184,16 @@ export class SnapshotService {
     }
   }
 
-  // List pushed snapshots available for forking
+  // List ready snapshots available for forking
   // type: filter by snapshot type (workspace or environment)
   // environment: filter by specific environment name
-  async listPushed(type?: 'workspace' | 'environment', environment?: string): Promise<PushedSnapshotListResponse> {
+  async listReady(type?: 'workspace' | 'environment', environment?: string): Promise<PushedSnapshotListResponse> {
     const queryParams = new URLSearchParams()
     if (type) queryParams.set('type', type)
     if (environment) queryParams.set('environment', environment)
     const params = queryParams.toString() ? `?${queryParams.toString()}` : ''
     return apiClient.get<PushedSnapshotListResponse>(
-      `${this.baseUrl}/snapshots/pushed${params}`,
+      `${this.baseUrl}/snapshots/ready${params}`,
     )
   }
 

@@ -341,6 +341,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			snapshots := protected.Group("/snapshots")
 			{
 				snapshots.GET("", snapshotHandlers.ListAllSnapshots)
+				snapshots.GET("/ready", snapshotHandlers.ListReadySnapshots)
 				snapshots.GET("/:name", snapshotHandlers.GetSnapshot)
 				snapshots.DELETE("/:name", snapshotHandlers.DeleteSnapshot)
 			}
