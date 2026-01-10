@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	sigyaml "sigs.k8s.io/yaml"
 )
 
 // generateHash generates an 8-character hash from the input string
@@ -374,25 +375,30 @@ func (r *EnvironmentReconciler) applyCompositionsFromYAML(ctx context.Context, e
 		return 0, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	// First try to decode as a List (from kubectl get -o yaml)
+	// First try to decode as a YAML array ([]Composition)
 	var compositions []environmentsv1.Composition
-	compList := &environmentsv1.CompositionList{}
-	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-	if err := decoder.Decode(compList); err == nil && len(compList.Items) > 0 {
-		compositions = compList.Items
+	if err := sigyaml.Unmarshal(yamlData, &compositions); err == nil && len(compositions) > 0 {
+		// Successfully decoded as YAML array
 	} else {
-		// Fall back to decoding individual compositions
-		decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-		for {
-			comp := &environmentsv1.Composition{}
-			if err := decoder.Decode(comp); err != nil {
-				if err == io.EOF {
-					break
+		// Try to decode as a Kubernetes List type
+		compList := &environmentsv1.CompositionList{}
+		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+		if err := decoder.Decode(compList); err == nil && len(compList.Items) > 0 {
+			compositions = compList.Items
+		} else {
+			// Fall back to decoding individual compositions (multi-doc YAML)
+			decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+			for {
+				comp := &environmentsv1.Composition{}
+				if err := decoder.Decode(comp); err != nil {
+					if err == io.EOF {
+						break
+					}
+					return 0, fmt.Errorf("failed to decode composition: %w", err)
 				}
-				return 0, fmt.Errorf("failed to decode composition: %w", err)
-			}
-			if comp.Name != "" {
-				compositions = append(compositions, *comp)
+				if comp.Name != "" {
+					compositions = append(compositions, *comp)
+				}
 			}
 		}
 	}
@@ -438,25 +444,30 @@ func (r *EnvironmentReconciler) applyConfigMapsFromYAML(ctx context.Context, enc
 		return 0, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	// First try to decode as a List (from kubectl get -o yaml)
+	// First try to decode as a YAML array ([]ConfigMap)
 	var configMaps []corev1.ConfigMap
-	cmList := &corev1.ConfigMapList{}
-	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-	if err := decoder.Decode(cmList); err == nil && len(cmList.Items) > 0 {
-		configMaps = cmList.Items
+	if err := sigyaml.Unmarshal(yamlData, &configMaps); err == nil && len(configMaps) > 0 {
+		// Successfully decoded as YAML array
 	} else {
-		// Fall back to decoding individual configmaps
-		decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-		for {
-			cm := &corev1.ConfigMap{}
-			if err := decoder.Decode(cm); err != nil {
-				if err == io.EOF {
-					break
+		// Try to decode as a Kubernetes List type
+		cmList := &corev1.ConfigMapList{}
+		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+		if err := decoder.Decode(cmList); err == nil && len(cmList.Items) > 0 {
+			configMaps = cmList.Items
+		} else {
+			// Fall back to decoding individual configmaps (multi-doc YAML)
+			decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+			for {
+				cm := &corev1.ConfigMap{}
+				if err := decoder.Decode(cm); err != nil {
+					if err == io.EOF {
+						break
+					}
+					return 0, fmt.Errorf("failed to decode configmap: %w", err)
 				}
-				return 0, fmt.Errorf("failed to decode configmap: %w", err)
-			}
-			if cm.Name != "" {
-				configMaps = append(configMaps, *cm)
+				if cm.Name != "" {
+					configMaps = append(configMaps, *cm)
+				}
 			}
 		}
 	}
@@ -497,25 +508,30 @@ func (r *EnvironmentReconciler) applySecretsFromYAML(ctx context.Context, encode
 		return 0, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	// First try to decode as a List (from kubectl get -o yaml)
+	// First try to decode as a YAML array ([]Secret)
 	var secrets []corev1.Secret
-	secretList := &corev1.SecretList{}
-	decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-	if err := decoder.Decode(secretList); err == nil && len(secretList.Items) > 0 {
-		secrets = secretList.Items
+	if err := sigyaml.Unmarshal(yamlData, &secrets); err == nil && len(secrets) > 0 {
+		// Successfully decoded as YAML array
 	} else {
-		// Fall back to decoding individual secrets
-		decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-		for {
-			secret := &corev1.Secret{}
-			if err := decoder.Decode(secret); err != nil {
-				if err == io.EOF {
-					break
+		// Try to decode as a Kubernetes List type
+		secretList := &corev1.SecretList{}
+		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+		if err := decoder.Decode(secretList); err == nil && len(secretList.Items) > 0 {
+			secrets = secretList.Items
+		} else {
+			// Fall back to decoding individual secrets (multi-doc YAML)
+			decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
+			for {
+				secret := &corev1.Secret{}
+				if err := decoder.Decode(secret); err != nil {
+					if err == io.EOF {
+						break
+					}
+					return 0, fmt.Errorf("failed to decode secret: %w", err)
 				}
-				return 0, fmt.Errorf("failed to decode secret: %w", err)
-			}
-			if secret.Name != "" {
-				secrets = append(secrets, *secret)
+				if secret.Name != "" {
+					secrets = append(secrets, *secret)
+				}
 			}
 		}
 	}
