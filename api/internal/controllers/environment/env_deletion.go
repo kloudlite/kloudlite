@@ -30,6 +30,12 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 		// Continue with deletion even if cleanup fails
 	}
 
+	// Decrement snapshot refCount if this environment was created from a snapshot
+	if err := r.decrementSnapshotRefCount(ctx, environment, logger); err != nil {
+		logger.Error("Failed to decrement snapshot refCount", zap.Error(err))
+		// Continue with deletion even if decrement fails
+	}
+
 	// Clean up snapshots for this environment
 	if err := r.cleanupEnvironmentSnapshots(ctx, environment, logger); err != nil {
 		logger.Error("Failed to cleanup environment snapshots", zap.Error(err))
@@ -109,6 +115,47 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 		logger.Info("Cleaned up workspace environment connections",
 			zap.Int("count", cleanedCount))
 	}
+
+	return nil
+}
+
+// decrementSnapshotRefCount decrements the refCount of the snapshot this environment was created from
+func (r *EnvironmentReconciler) decrementSnapshotRefCount(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	// Check if environment was created from a snapshot
+	if environment.Spec.FromSnapshot == nil || environment.Spec.FromSnapshot.SnapshotName == "" {
+		return nil
+	}
+
+	snapshotName := environment.Spec.FromSnapshot.SnapshotName
+	logger.Info("Decrementing snapshot refCount",
+		zap.String("snapshot", snapshotName),
+		zap.String("environment", environment.Name))
+
+	// Get the snapshot
+	snapshot := &snapshotv1.Snapshot{}
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
+		if client.IgnoreNotFound(err) != nil {
+			return fmt.Errorf("failed to get snapshot %s: %w", snapshotName, err)
+		}
+		// Snapshot doesn't exist, nothing to decrement
+		logger.Info("Snapshot not found, skipping refCount decrement", zap.String("snapshot", snapshotName))
+		return nil
+	}
+
+	// Decrement refCount (minimum 0)
+	newRefCount := snapshot.Status.RefCount - 1
+	if newRefCount < 0 {
+		newRefCount = 0
+	}
+
+	snapshot.Status.RefCount = newRefCount
+	if err := r.Status().Update(ctx, snapshot); err != nil {
+		return fmt.Errorf("failed to update snapshot refCount: %w", err)
+	}
+
+	logger.Info("Decremented snapshot refCount",
+		zap.String("snapshot", snapshotName),
+		zap.Int32("newRefCount", newRefCount))
 
 	return nil
 }
