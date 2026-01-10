@@ -191,6 +191,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			environments := protected.Group("/environments")
 			{
 				environments.POST("", environmentHandlers.CreateEnvironment)
+				environments.POST("/from-snapshot", snapshotHandlers.CreateEnvironmentFromSnapshot)
 				environments.GET("/:name", environmentHandlers.GetEnvironment)
 				environments.PUT("/:name", environmentHandlers.UpdateEnvironment)
 				environments.PATCH("/:name", environmentHandlers.PatchEnvironment)

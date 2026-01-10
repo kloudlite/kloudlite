@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	envv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
@@ -651,5 +652,100 @@ func (h *SnapshotHandlers) DeleteSnapshot(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":  message,
 		"refCount": newRefCount,
+	})
+}
+
+// CreateEnvironmentFromSnapshotRequest is the request body for creating an environment from a snapshot
+type CreateEnvironmentFromSnapshotRequest struct {
+	Name         string `json:"name" binding:"required"`
+	SnapshotName string `json:"snapshotName" binding:"required"`
+	Activated    bool   `json:"activated"`
+}
+
+// CreateEnvironmentFromSnapshot creates a new environment from a snapshot
+// POST /api/v1/environments/from-snapshot
+func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
+	username := c.GetString("username")
+
+	var req CreateEnvironmentFromSnapshotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get the snapshot to verify it exists and is ready
+	snapshot, err := h.snapshotRepo.Get(c.Request.Context(), req.SnapshotName)
+	if err != nil {
+		h.logger.Error("Failed to get snapshot", zap.String("snapshot", req.SnapshotName), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("snapshot %s not found", req.SnapshotName)})
+		return
+	}
+
+	if snapshot.Status.State != snapshotv1.SnapshotStateReady {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("snapshot %s is not ready (state: %s)", req.SnapshotName, snapshot.Status.State)})
+		return
+	}
+
+	// Get source environment from snapshot labels to find the workmachine
+	sourceEnvName := snapshot.Labels["snapshots.kloudlite.io/environment"]
+	if sourceEnvName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "snapshot does not have environment label"})
+		return
+	}
+
+	// Get source environment to find the workmachine
+	sourceEnv, err := h.environmentRepo.Get(c.Request.Context(), sourceEnvName)
+	if err != nil {
+		h.logger.Error("Failed to get source environment", zap.String("environment", sourceEnvName), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("source environment %s not found", sourceEnvName)})
+		return
+	}
+
+	// Create new environment name: {username}--{name}
+	envName := fmt.Sprintf("%s--%s", username, req.Name)
+	targetNamespace := envName
+
+	// Create new environment
+	newEnv := &envv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: envName,
+			Labels: map[string]string{
+				"kloudlite.io/owned-by": username,
+			},
+		},
+		Spec: envv1.EnvironmentSpec{
+			TargetNamespace: targetNamespace,
+			Name:            req.Name,
+			OwnedBy:         username,
+			WorkMachineName: sourceEnv.Spec.WorkMachineName,
+			Activated:       req.Activated,
+			FromSnapshot: &envv1.FromSnapshotRef{
+				SnapshotName: req.SnapshotName,
+			},
+		},
+	}
+
+	if err := h.k8sClient.Create(c.Request.Context(), newEnv); err != nil {
+		h.logger.Error("Failed to create environment", zap.String("name", envName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create environment: %v", err)})
+		return
+	}
+
+	// Increment snapshot refCount
+	snapshot.Status.RefCount++
+	if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
+		h.logger.Warn("Failed to increment snapshot refCount", zap.String("snapshot", req.SnapshotName), zap.Error(err))
+	}
+
+	h.logger.Info("Created environment from snapshot",
+		zap.String("environment", envName),
+		zap.String("snapshot", req.SnapshotName),
+		zap.String("user", username),
+	)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":     "environment created from snapshot",
+		"environment": envName,
+		"snapshot":    req.SnapshotName,
 	})
 }
