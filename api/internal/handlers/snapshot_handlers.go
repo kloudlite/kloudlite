@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	envv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
+	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -665,7 +666,11 @@ type CreateEnvironmentFromSnapshotRequest struct {
 // CreateEnvironmentFromSnapshot creates a new environment from a snapshot
 // POST /api/v1/environments/from-snapshot
 func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
-	username := c.GetString("username")
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists || username == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		return
+	}
 
 	var req CreateEnvironmentFromSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -698,15 +703,6 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 	if err != nil {
 		h.logger.Error("Failed to get source environment", zap.String("environment", sourceEnvName), zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("source environment %s not found", sourceEnvName)})
-		return
-	}
-
-	// Use source environment owner if username is not set
-	if username == "" {
-		username = sourceEnv.Spec.OwnedBy
-	}
-	if username == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to determine owner for new environment"})
 		return
 	}
 
