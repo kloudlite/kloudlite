@@ -1775,6 +1775,265 @@ func (r *SnapshotRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// SnapshotRestoreReconciler handles snapshot restore operations on this node
+type SnapshotRestoreReconciler struct {
+	client.Client
+	Logger       *zap2.Logger
+	HostCmdExec  CommandExecutor // For btrfs commands that must run on host
+	LocalCmdExec CommandExecutor // For tar/oras commands that run in container
+	NodeName     string
+}
+
+const snapshotRestoreTempPath = "/var/lib/kloudlite/storage/.snapshots-restore"
+
+func (r *SnapshotRestoreReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+	logger := r.Logger.With(
+		zap2.String("snapshotRestore", req.Name),
+		zap2.String("namespace", req.Namespace),
+	)
+
+	// Fetch SnapshotRestore
+	restore := &snapshotv1.SnapshotRestore{}
+	if err := r.Get(ctx, req.NamespacedName, restore); err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		logger.Error("Failed to get SnapshotRestore", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Only process requests for this node
+	if restore.Spec.NodeName != r.NodeName {
+		return reconcile.Result{}, nil
+	}
+
+	// Handle completed or failed requests - no need to reprocess
+	if restore.Status.State == snapshotv1.SnapshotRestoreStateCompleted ||
+		restore.Status.State == snapshotv1.SnapshotRestoreStateFailed {
+		return reconcile.Result{}, nil
+	}
+
+	logger.Info("Processing SnapshotRestore",
+		zap2.String("state", string(restore.Status.State)),
+		zap2.String("snapshotName", restore.Spec.SnapshotName))
+
+	// Process based on current state
+	switch restore.Status.State {
+	case "", snapshotv1.SnapshotRestoreStatePending:
+		return r.handleRestorePending(ctx, restore, logger)
+	case snapshotv1.SnapshotRestoreStateDownloading:
+		return r.handleRestoreDownloading(ctx, restore, logger)
+	case snapshotv1.SnapshotRestoreStateRestoring:
+		return r.handleRestoreRestoring(ctx, restore, logger)
+	default:
+		logger.Warn("Unknown restore state", zap2.String("state", string(restore.Status.State)))
+		return reconcile.Result{}, nil
+	}
+}
+
+func (r *SnapshotRestoreReconciler) handleRestorePending(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap2.Logger) (reconcile.Result, error) {
+	logger.Info("Starting snapshot restore",
+		zap2.String("targetPath", restore.Spec.TargetPath),
+		zap2.String("snapshotName", restore.Spec.SnapshotName))
+
+	now := metav1.Now()
+	restore.Status.State = snapshotv1.SnapshotRestoreStateDownloading
+	restore.Status.Message = "Downloading snapshot from registry"
+	restore.Status.StartedAt = &now
+	if err := r.Status().Update(ctx, restore); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{Requeue: true}, nil
+}
+
+func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap2.Logger) (reconcile.Result, error) {
+	// Get the Snapshot to find the registry info
+	snapshot := &snapshotv1.Snapshot{}
+	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, snapshot); err != nil {
+		if apierrors.IsNotFound(err) {
+			return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Snapshot %q not found", restore.Spec.SnapshotName), logger)
+		}
+		logger.Error("Failed to get Snapshot", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	if snapshot.Status.State != snapshotv1.SnapshotStateReady {
+		logger.Info("Snapshot not ready, waiting", zap2.String("state", string(snapshot.Status.State)))
+		restore.Status.Message = fmt.Sprintf("Waiting for snapshot to be ready (state: %s)", snapshot.Status.State)
+		if err := r.Status().Update(ctx, restore); err != nil {
+			if !apierrors.IsConflict(err) {
+				logger.Error("Failed to update status", zap2.Error(err))
+			}
+		}
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	if snapshot.Status.Registry == nil || snapshot.Status.Registry.ImageRef == "" {
+		return r.setRestoreFailed(ctx, restore, "Snapshot has no registry info", logger)
+	}
+
+	// Get the SnapshotStore for registry config
+	store := &snapshotv1.SnapshotStore{}
+	if err := r.Get(ctx, client.ObjectKey{Name: "default"}, store); err != nil {
+		if apierrors.IsNotFound(err) {
+			return r.setRestoreFailed(ctx, restore, "SnapshotStore 'default' not found", logger)
+		}
+		logger.Error("Failed to get SnapshotStore", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	// Ensure temp directory exists
+	tempDir := fmt.Sprintf("%s/%s", snapshotRestoreTempPath, restore.Name)
+	mkdirScript := fmt.Sprintf("mkdir -p %s", tempDir)
+	if _, err := r.LocalCmdExec.Execute(mkdirScript); err != nil {
+		logger.Warn("Failed to create temp directory", zap2.Error(err))
+	}
+
+	// Pull snapshot from registry using oras
+	imageRef := snapshot.Status.Registry.ImageRef
+	pullScript := fmt.Sprintf(`
+		set -e
+		cd %s
+		oras pull --plain-http %s
+		# Find and extract the tar.gz file
+		for f in *.tar.gz; do
+			if [ -f "$f" ]; then
+				tar -xzf "$f"
+				rm -f "$f"
+				break
+			fi
+		done
+	`, tempDir, imageRef)
+
+	output, err := r.LocalCmdExec.Execute(pullScript)
+	if err != nil {
+		logger.Error("Failed to pull snapshot from registry",
+			zap2.String("imageRef", imageRef),
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Failed to pull from registry: %v", err), logger)
+	}
+
+	// Update status to Restoring
+	restore.Status.State = snapshotv1.SnapshotRestoreStateRestoring
+	restore.Status.Message = "Restoring snapshot data"
+	if err := r.Status().Update(ctx, restore); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Downloaded snapshot from registry", zap2.String("imageRef", imageRef))
+	return reconcile.Result{Requeue: true}, nil
+}
+
+func (r *SnapshotRestoreReconciler) handleRestoreRestoring(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap2.Logger) (reconcile.Result, error) {
+	tempDir := fmt.Sprintf("%s/%s", snapshotRestoreTempPath, restore.Name)
+	targetPath := restore.Spec.TargetPath
+
+	// Ensure parent directory of target exists
+	parentDir := filepath.Dir(targetPath)
+	mkdirScript := fmt.Sprintf("mkdir -p %s", parentDir)
+	if _, err := r.HostCmdExec.Execute(mkdirScript); err != nil {
+		logger.Warn("Failed to create parent directory", zap2.Error(err))
+	}
+
+	// Check if target path exists and is a btrfs subvolume
+	checkScript := fmt.Sprintf("btrfs subvolume show %s 2>/dev/null && echo 'is_subvol'", targetPath)
+	checkOutput, _ := r.HostCmdExec.Execute(checkScript)
+	isSubvolume := strings.Contains(string(checkOutput), "is_subvol")
+
+	if isSubvolume {
+		// Delete existing subvolume
+		logger.Info("Deleting existing subvolume", zap2.String("path", targetPath))
+		deleteScript := fmt.Sprintf("btrfs subvolume delete %s", targetPath)
+		if output, err := r.HostCmdExec.Execute(deleteScript); err != nil {
+			logger.Warn("Failed to delete existing subvolume",
+				zap2.Error(err),
+				zap2.String("output", string(output)))
+		}
+	} else {
+		// Remove existing directory if it exists
+		rmScript := fmt.Sprintf("rm -rf %s", targetPath)
+		if _, err := r.HostCmdExec.Execute(rmScript); err != nil {
+			logger.Warn("Failed to remove existing directory", zap2.Error(err))
+		}
+	}
+
+	// Create a new btrfs subvolume and copy the data
+	// Since we're restoring from a tar archive (not btrfs send stream), we create a new subvolume
+	restoreScript := fmt.Sprintf(`
+		set -e
+		btrfs subvolume create %s
+		cp -a %s/. %s/
+	`, targetPath, tempDir, targetPath)
+
+	output, err := r.HostCmdExec.Execute(restoreScript)
+	if err != nil {
+		logger.Error("Failed to restore snapshot",
+			zap2.String("targetPath", targetPath),
+			zap2.Error(err),
+			zap2.String("output", string(output)))
+		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Failed to restore: %v", err), logger)
+	}
+
+	// Cleanup temp directory
+	cleanupScript := fmt.Sprintf("rm -rf %s", tempDir)
+	if _, err := r.LocalCmdExec.Execute(cleanupScript); err != nil {
+		logger.Warn("Failed to cleanup temp directory", zap2.Error(err))
+	}
+
+	// Mark as completed
+	now := metav1.Now()
+	restore.Status.State = snapshotv1.SnapshotRestoreStateCompleted
+	restore.Status.Message = "Restore completed successfully"
+	restore.Status.CompletedAt = &now
+	restore.Status.RestoredPath = targetPath
+
+	if err := r.Status().Update(ctx, restore); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	logger.Info("Snapshot restored successfully", zap2.String("targetPath", targetPath))
+	return reconcile.Result{}, nil
+}
+
+func (r *SnapshotRestoreReconciler) setRestoreFailed(ctx context.Context, restore *snapshotv1.SnapshotRestore, message string, logger *zap2.Logger) (reconcile.Result, error) {
+	logger.Error("Snapshot restore failed", zap2.String("message", message))
+
+	now := metav1.Now()
+	restore.Status.State = snapshotv1.SnapshotRestoreStateFailed
+	restore.Status.Message = message
+	restore.Status.CompletedAt = &now
+
+	if err := r.Status().Update(ctx, restore); err != nil {
+		if apierrors.IsConflict(err) {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		logger.Error("Failed to update status", zap2.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func (r *SnapshotRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&snapshotv1.SnapshotRestore{}).
+		Complete(r)
+}
+
 func main() {
 	// Setup logger using controller-runtime's zap logger
 	opts := zap.Options{
@@ -1868,6 +2127,12 @@ func main() {
 						cache.AllNamespaces: {},
 					},
 				},
+				// Watch SnapshotRestores globally (all namespaces) since they can be in any env namespace
+				&snapshotv1.SnapshotRestore{}: {
+					Namespaces: map[string]cache.Config{
+						cache.AllNamespaces: {},
+					},
+				},
 				// Watch Snapshots globally (cluster-scoped)
 				&snapshotv1.Snapshot{}: {},
 				// Watch SnapshotStores globally (cluster-scoped)
@@ -1949,6 +2214,19 @@ func main() {
 
 	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
 		zapLogger.Fatal("Failed to setup snapshot request controller", zap2.Error(err))
+	}
+
+	// Setup snapshot restore reconciler (handles btrfs restore on this node)
+	snapshotRestoreReconciler := &SnapshotRestoreReconciler{
+		Client:       mgr.GetClient(),
+		Logger:       zapLogger,
+		HostCmdExec:  &HostCommandExecutor{}, // For btrfs commands on host
+		LocalCmdExec: &RealCommandExecutor{}, // For tar/oras in container
+		NodeName:     nodeName,
+	}
+
+	if err := snapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
+		zapLogger.Fatal("Failed to setup snapshot restore controller", zap2.Error(err))
 	}
 
 	zapLogger.Info("All reconcilers configured",
