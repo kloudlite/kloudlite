@@ -6,11 +6,16 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -90,17 +95,214 @@ func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1
 }
 
 // handleSnapshotRestore handles environment creation from a snapshot
-// TODO: Implement using the new generic Snapshot/SnapshotRestore system
+// This creates a SnapshotRestore resource and waits for it to complete
 func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
-	logger.Warn("Snapshot restore not yet implemented with new generic snapshot system",
-		zap.String("snapshot", environment.Spec.FromSnapshot.SnapshotName))
+	snapshotName := environment.Spec.FromSnapshot.SnapshotName
 
-	// For now, clear the fromSnapshot field and proceed with normal environment creation
+	// Get the snapshot to verify it exists and is ready
+	snapshot := &snapshotv1.Snapshot{}
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Error("Snapshot not found", zap.String("snapshot", snapshotName))
+			return r.failSnapshotRestore(ctx, environment, fmt.Sprintf("Snapshot %s not found", snapshotName), logger)
+		}
+		logger.Error("Failed to get snapshot", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+
+	if snapshot.Status.State != snapshotv1.SnapshotStateReady {
+		logger.Info("Snapshot not ready, waiting", zap.String("state", string(snapshot.Status.State)))
+		return r.updateSnapshotRestoreStatus(ctx, environment, environmentsv1.SnapshotRestorePhasePending,
+			fmt.Sprintf("Waiting for snapshot to be ready (state: %s)", snapshot.Status.State), logger)
+	}
+
+	// Get the node name from the workmachine
+	if environment.Spec.WorkMachineName == "" {
+		return r.failSnapshotRestore(ctx, environment, "Environment has no workmachine assigned", logger)
+	}
+
+	nodeName, err := r.getNodeForWorkMachine(ctx, environment.Spec.WorkMachineName)
+	if err != nil {
+		logger.Warn("WorkMachine not ready, waiting", zap.Error(err))
+		return r.updateSnapshotRestoreStatus(ctx, environment, environmentsv1.SnapshotRestorePhasePending,
+			"Waiting for workmachine to be ready", logger)
+	}
+
+	// Ensure namespace exists for the SnapshotRestore resource
+	namespaceExists, err := r.ensureNamespaceExists(ctx, environment, logger)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if !namespaceExists {
+		// Namespace was just created, requeue to continue
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Define the restore name
+	restoreName := fmt.Sprintf("env-restore-%s", environment.Name)
+
+	// Check if SnapshotRestore already exists
+	restore := &snapshotv1.SnapshotRestore{}
+	err = r.Get(ctx, client.ObjectKey{Name: restoreName, Namespace: environment.Spec.TargetNamespace}, restore)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			logger.Error("Failed to get SnapshotRestore", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		// Create the SnapshotRestore resource
+		logger.Info("Creating SnapshotRestore", zap.String("restore", restoreName), zap.String("snapshot", snapshotName))
+
+		targetPath := fmt.Sprintf("/var/lib/kloudlite/storage/environments/%s", environment.Spec.TargetNamespace)
+
+		restore = &snapshotv1.SnapshotRestore{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      restoreName,
+				Namespace: environment.Spec.TargetNamespace,
+				Labels: map[string]string{
+					"kloudlite.io/owned-by":               environment.Spec.OwnedBy,
+					"snapshots.kloudlite.io/environment":  environment.Name,
+					"snapshots.kloudlite.io/source":       snapshotName,
+				},
+			},
+			Spec: snapshotv1.SnapshotRestoreSpec{
+				SnapshotName: snapshotName,
+				TargetPath:   targetPath,
+				NodeName:     nodeName,
+			},
+		}
+
+		if err := r.Create(ctx, restore); err != nil {
+			logger.Error("Failed to create SnapshotRestore", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		// Update status to show we're starting the restore
+		return r.updateSnapshotRestoreStatus(ctx, environment, environmentsv1.SnapshotRestorePhasePulling,
+			"Downloading snapshot from registry", logger)
+	}
+
+	// SnapshotRestore exists, check its status
+	switch restore.Status.State {
+	case snapshotv1.SnapshotRestoreStatePending:
+		return r.updateSnapshotRestoreStatus(ctx, environment, environmentsv1.SnapshotRestorePhasePending,
+			"Waiting to start restore", logger)
+
+	case snapshotv1.SnapshotRestoreStateDownloading:
+		return r.updateSnapshotRestoreStatus(ctx, environment, environmentsv1.SnapshotRestorePhasePulling,
+			"Downloading snapshot from registry", logger)
+
+	case snapshotv1.SnapshotRestoreStateRestoring:
+		return r.updateSnapshotRestoreStatus(ctx, environment, environmentsv1.SnapshotRestorePhaseDataRestoring,
+			"Restoring snapshot data", logger)
+
+	case snapshotv1.SnapshotRestoreStateCompleted:
+		// Restore completed! Update environment and clear FromSnapshot
+		logger.Info("Snapshot restore completed successfully", zap.String("snapshot", snapshotName))
+
+		now := metav1.Now()
+
+		// Update status with completed restore and LastRestoredSnapshot
+		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+			environment.Status.SnapshotRestoreStatus = &environmentsv1.SnapshotRestoreStatus{
+				Phase:          environmentsv1.SnapshotRestorePhaseCompleted,
+				Message:        "Snapshot restored successfully",
+				SourceSnapshot: snapshotName,
+				CompletionTime: &now,
+			}
+			environment.Status.LastRestoredSnapshot = &environmentsv1.LastRestoredSnapshotInfo{
+				Name:       snapshotName,
+				RestoredAt: now,
+			}
+			return nil
+		}, logger); err != nil {
+			logger.Error("Failed to update status", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		// Clear FromSnapshot to proceed with normal reconciliation
+		environment.Spec.FromSnapshot = nil
+		if err := r.Update(ctx, environment); err != nil {
+			logger.Error("Failed to clear fromSnapshot", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+
+		logger.Info("Cleared fromSnapshot, proceeding with normal environment reconciliation")
+		return reconcile.Result{Requeue: true}, nil
+
+	case snapshotv1.SnapshotRestoreStateFailed:
+		return r.failSnapshotRestore(ctx, environment,
+			fmt.Sprintf("Snapshot restore failed: %s", restore.Status.Message), logger)
+
+	default:
+		logger.Warn("Unknown restore state", zap.String("state", string(restore.Status.State)))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+}
+
+// getNodeForWorkMachine finds the k8s node for a workmachine by label
+func (r *EnvironmentReconciler) getNodeForWorkMachine(ctx context.Context, workmachineName string) (string, error) {
+	var nodes corev1.NodeList
+	if err := r.List(ctx, &nodes, client.MatchingLabels{
+		"kloudlite.io/workmachine": workmachineName,
+	}); err != nil {
+		return "", err
+	}
+	if len(nodes.Items) == 0 {
+		return "", fmt.Errorf("no node found for workmachine %s", workmachineName)
+	}
+	return nodes.Items[0].Name, nil
+}
+
+// updateSnapshotRestoreStatus updates the environment's snapshot restore status
+func (r *EnvironmentReconciler) updateSnapshotRestoreStatus(ctx context.Context, environment *environmentsv1.Environment, phase environmentsv1.SnapshotRestorePhase, message string, logger *zap.Logger) (reconcile.Result, error) {
+	now := metav1.Now()
+
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		if environment.Status.SnapshotRestoreStatus == nil {
+			environment.Status.SnapshotRestoreStatus = &environmentsv1.SnapshotRestoreStatus{
+				StartTime:      &now,
+				SourceSnapshot: environment.Spec.FromSnapshot.SnapshotName,
+			}
+		}
+		environment.Status.SnapshotRestoreStatus.Phase = phase
+		environment.Status.SnapshotRestoreStatus.Message = message
+		return nil
+	}, logger); err != nil {
+		logger.Warn("Failed to update snapshot restore status", zap.Error(err))
+	}
+
+	// Requeue to check progress
+	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+}
+
+// failSnapshotRestore marks the snapshot restore as failed and clears FromSnapshot
+func (r *EnvironmentReconciler) failSnapshotRestore(ctx context.Context, environment *environmentsv1.Environment, errorMessage string, logger *zap.Logger) (reconcile.Result, error) {
+	logger.Error("Snapshot restore failed", zap.String("error", errorMessage))
+
+	now := metav1.Now()
+
+	if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
+		environment.Status.SnapshotRestoreStatus = &environmentsv1.SnapshotRestoreStatus{
+			Phase:          environmentsv1.SnapshotRestorePhaseFailed,
+			Message:        errorMessage,
+			ErrorMessage:   errorMessage,
+			SourceSnapshot: environment.Spec.FromSnapshot.SnapshotName,
+			CompletionTime: &now,
+		}
+		environment.Status.State = environmentsv1.EnvironmentStateError
+		environment.Status.Message = errorMessage
+		return nil
+	}, logger); err != nil {
+		logger.Warn("Failed to update status", zap.Error(err))
+	}
+
+	// Clear FromSnapshot even on failure to avoid infinite loops
 	environment.Spec.FromSnapshot = nil
 	if err := r.Update(ctx, environment); err != nil {
 		logger.Error("Failed to clear fromSnapshot", zap.Error(err))
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{Requeue: true}, nil
+	return reconcile.Result{}, nil
 }
