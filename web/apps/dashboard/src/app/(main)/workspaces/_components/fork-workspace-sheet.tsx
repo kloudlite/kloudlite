@@ -88,7 +88,7 @@ export function ForkWorkspaceSheet({
       if (preselectedSnapshot) {
         setSelectedSnapshot(preselectedSnapshot)
         // Suggest a default name based on snapshot source
-        const sourceName = preselectedSnapshot.status.targetName || preselectedSnapshot.metadata.name
+        const sourceName = preselectedSnapshot.name
         setName(`${sourceName}-fork`)
       } else {
         setSelectedSnapshot(null)
@@ -122,7 +122,7 @@ export function ForkWorkspaceSheet({
       const result = await createWorkspaceFromSnapshot({
         name: normalizedName,
         displayName: name.trim(),
-        snapshotName: selectedSnapshot.metadata.name,
+        snapshotName: selectedSnapshot.name,
       })
 
       if (result.success) {
@@ -200,7 +200,7 @@ export function ForkWorkspaceSheet({
                     ) : selectedSnapshot ? (
                       <span className="flex items-center gap-2">
                         <Camera className="h-4 w-4" />
-                        {selectedSnapshot.status.registryStatus?.tag || selectedSnapshot.metadata.name}
+                        {selectedSnapshot.registry?.tag || selectedSnapshot.name}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">Select a snapshot...</span>
@@ -220,34 +220,33 @@ export function ForkWorkspaceSheet({
                       <CommandGroup>
                         {snapshots.map((snapshot) => (
                           <CommandItem
-                            key={snapshot.metadata.name}
-                            value={snapshot.metadata.name}
+                            key={snapshot.name}
+                            value={snapshot.name}
                             onSelect={() => {
                               setSelectedSnapshot(snapshot)
                               setPopoverOpen(false)
                               // Suggest name based on source
                               if (!name) {
-                                const sourceName = snapshot.status.targetName || snapshot.metadata.name
-                                setName(`${sourceName}-fork`)
+                                setName(`${snapshot.name}-fork`)
                               }
                             }}
                           >
                             <Check
                               className={cn(
                                 'mr-2 h-4 w-4',
-                                selectedSnapshot?.metadata.name === snapshot.metadata.name
+                                selectedSnapshot?.name === snapshot.name
                                   ? 'opacity-100'
                                   : 'opacity-0',
                               )}
                             />
                             <div className="flex flex-col">
                               <span className="font-medium">
-                                {snapshot.status.registryStatus?.tag || snapshot.metadata.name}
+                                {snapshot.registry?.tag || snapshot.name}
                               </span>
                               <span className="text-muted-foreground text-xs">
-                                Source: {snapshot.spec.ownedBy}/{snapshot.status.targetName} | Size: {snapshot.status.sizeHuman || 'N/A'}
-                                {snapshot.status.registryStatus?.pushedAt && (
-                                  <> | Pushed: {formatDate(snapshot.status.registryStatus.pushedAt)}</>
+                                Size: {snapshot.sizeHuman || 'N/A'}
+                                {snapshot.createdAt && (
+                                  <> | Created: {formatDate(snapshot.createdAt)}</>
                                 )}
                               </span>
                             </div>
@@ -265,13 +264,11 @@ export function ForkWorkspaceSheet({
               <div className="bg-muted space-y-2 rounded-lg p-4">
                 <div className="text-sm font-medium">Snapshot Details</div>
                 <div className="text-muted-foreground text-xs space-y-1">
-                  <div>Tag: {selectedSnapshot.status.registryStatus?.tag || 'N/A'}</div>
-                  <div>Source: {selectedSnapshot.spec.ownedBy}/{selectedSnapshot.status.targetName}</div>
-                  <div>Size: {selectedSnapshot.status.sizeHuman || 'N/A'}</div>
-                  {selectedSnapshot.status.registryStatus?.imageRef && (
-                    <div className="font-mono text-xs break-all">
-                      Image: {selectedSnapshot.status.registryStatus.imageRef}
-                    </div>
+                  <div>Tag: {selectedSnapshot.registry?.tag || 'N/A'}</div>
+                  <div>Name: {selectedSnapshot.name}</div>
+                  <div>Size: {selectedSnapshot.sizeHuman || 'N/A'}</div>
+                  {selectedSnapshot.description && (
+                    <div>Description: {selectedSnapshot.description}</div>
                   )}
                 </div>
                 <div className="bg-background mt-2 rounded border p-2 text-xs">

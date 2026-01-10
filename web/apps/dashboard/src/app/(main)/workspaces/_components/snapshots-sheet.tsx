@@ -93,11 +93,12 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
 
     const hasInProgress = snapshots.some(
       (s) =>
-        s.status.state === 'Creating' ||
-        s.status.state === 'Restoring' ||
-        s.status.state === 'Deleting' ||
-        s.status.state === 'Pushing' ||
-        s.status.state === 'Pulling'
+        s.state === 'Creating' ||
+        s.state === 'Uploading' ||
+        s.state === 'Restoring' ||
+        s.state === 'Deleting' ||
+        s.state === 'Pushing' ||
+        s.state === 'Pulling'
     )
 
     if (hasInProgress) {
