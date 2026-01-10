@@ -176,7 +176,7 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		},
 		Spec: snapshotv1.SnapshotRequestSpec{
 			SnapshotName:   snapshotName,
-			SourcePath:     fmt.Sprintf("/data/environments/%s", env.Spec.TargetNamespace),
+			SourcePath:     fmt.Sprintf("/var/lib/kloudlite/storage/environments/%s", env.Spec.TargetNamespace),
 			NodeName:       nodeName,
 			Store:          "default",
 			Owner:          env.Spec.OwnedBy,
@@ -278,7 +278,7 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		},
 		Spec: snapshotv1.SnapshotRequestSpec{
 			SnapshotName:   snapshotName,
-			SourcePath:     fmt.Sprintf("/data/workspaces/%s/%s", namespace, workspaceName),
+			SourcePath:     fmt.Sprintf("/var/lib/kloudlite/storage/workspaces/%s/%s", namespace, workspaceName),
 			NodeName:       nodeName,
 			Store:          "default",
 			Owner:          ws.Spec.OwnedBy,
