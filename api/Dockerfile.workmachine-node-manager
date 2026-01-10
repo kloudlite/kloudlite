@@ -12,6 +12,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   btrfs-progs \
   && rm -rf /var/lib/apt/lists/*
 
+# Install oras for OCI registry operations (snapshot push)
+RUN curl -sL "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz" | \
+  tar -xzf - -C /usr/local/bin oras
+
 # Create /nix directory for Nix installation
 RUN mkdir -m 0755 /nix && chown root /nix
 

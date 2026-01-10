@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -1438,9 +1437,10 @@ func (s *MetricsServer) collectGPUMetrics() (*GPUMetricsResponse, error) {
 // SnapshotRequestReconciler watches SnapshotRequest resources and processes them on this node
 type SnapshotRequestReconciler struct {
 	client.Client
-	Logger   *zap2.Logger
-	CmdExec  CommandExecutor
-	NodeName string
+	Logger        *zap2.Logger
+	HostCmdExec   CommandExecutor // For btrfs commands that must run on host
+	LocalCmdExec  CommandExecutor // For tar/oras commands that run in container
+	NodeName      string
 }
 
 const snapshotStoragePath = "/var/lib/kloudlite/storage/.snapshots"
@@ -1516,7 +1516,7 @@ func (r *SnapshotRequestReconciler) handleCreating(ctx context.Context, req *sna
 
 	// Check if snapshot already exists (race condition protection)
 	checkScript := fmt.Sprintf("test -d %s && echo exists", snapshotPath)
-	checkOutput, _ := r.CmdExec.Execute(checkScript)
+	checkOutput, _ := r.HostCmdExec.Execute(checkScript)
 	if strings.TrimSpace(string(checkOutput)) == "exists" {
 		logger.Info("Snapshot already exists, transitioning to Uploading", zap2.String("path", snapshotPath))
 		req.Status.LocalSnapshotPath = snapshotPath
@@ -1533,13 +1533,13 @@ func (r *SnapshotRequestReconciler) handleCreating(ctx context.Context, req *sna
 
 	// Ensure snapshot storage directory exists
 	mkdirScript := fmt.Sprintf("mkdir -p %s", snapshotStoragePath)
-	if _, err := r.CmdExec.Execute(mkdirScript); err != nil {
+	if _, err := r.HostCmdExec.Execute(mkdirScript); err != nil {
 		logger.Warn("Failed to create snapshot storage directory", zap2.Error(err))
 	}
 
 	// Create btrfs snapshot
 	snapshotScript := fmt.Sprintf("btrfs subvolume snapshot -r %s %s", req.Spec.SourcePath, snapshotPath)
-	output, err := r.CmdExec.Execute(snapshotScript)
+	output, err := r.HostCmdExec.Execute(snapshotScript)
 	if err != nil {
 		logger.Error("Failed to create btrfs snapshot",
 			zap2.String("sourcePath", req.Spec.SourcePath),
@@ -1582,54 +1582,26 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// Resolve registry endpoint to IP (host can't resolve k8s DNS)
-	registryEndpoint := store.Spec.Registry.Endpoint
-	if strings.Contains(registryEndpoint, ".svc.cluster.local") || strings.Contains(registryEndpoint, ".svc") {
-		// Extract host:port
-		parts := strings.SplitN(registryEndpoint, ":", 2)
-		host := parts[0]
-		port := "5000"
-		if len(parts) > 1 {
-			port = parts[1]
-		}
-		// Resolve hostname to IP
-		ips, err := net.LookupIP(host)
-		if err != nil {
-			logger.Error("Failed to resolve registry hostname", zap2.String("host", host), zap2.Error(err))
-			return r.setFailed(ctx, req, fmt.Sprintf("Failed to resolve registry: %v", err), logger)
-		}
-		if len(ips) > 0 {
-			registryEndpoint = fmt.Sprintf("%s:%s", ips[0].String(), port)
-			logger.Info("Resolved registry endpoint", zap2.String("original", store.Spec.Registry.Endpoint), zap2.String("resolved", registryEndpoint))
-		}
-	}
-
 	// Build OCI image reference
+	// No DNS resolution needed since oras runs in container which can resolve K8s DNS
 	imageRef := fmt.Sprintf("%s/%s/%s:%s",
-		registryEndpoint,
+		store.Spec.Registry.Endpoint,
 		store.Spec.Registry.RepositoryPrefix,
 		req.Spec.Owner,
 		req.Spec.SnapshotName)
 
-	// Use btrfs send piped to a container image builder
-	// For now, we'll use a simplified approach with tar + oras
-	// In production, use proper btrfs send/receive with incremental support
+	// Use tar + oras to push snapshot to registry
+	// oras is installed in the container image via Dockerfile
+	// This runs in the container (not via nsenter) since oras is in the container
 	pushScript := fmt.Sprintf(`
 		set -e
-		# Install oras if not available
-		if ! command -v oras &> /dev/null; then
-			cd /tmp
-			curl -sLO "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
-			tar -xzf oras_1.2.0_linux_amd64.tar.gz -C /usr/local/bin oras
-			rm -f oras_1.2.0_linux_amd64.tar.gz
-		fi
 		cd %s
 		tar -cf - . | gzip > /tmp/%s.tar.gz
 		oras push --insecure %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip
 		rm -f /tmp/%s.tar.gz
 	`, req.Status.LocalSnapshotPath, req.Spec.SnapshotName, imageRef, req.Spec.SnapshotName, req.Spec.SnapshotName)
 
-	output, err := r.CmdExec.Execute(pushScript)
+	output, err := r.LocalCmdExec.Execute(pushScript)
 	if err != nil {
 		logger.Error("Failed to push snapshot to registry",
 			zap2.String("imageRef", imageRef),
@@ -1641,7 +1613,7 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	// Get snapshot size
 	var sizeBytes int64
 	sizeScript := fmt.Sprintf("du -sb %s | cut -f1", req.Status.LocalSnapshotPath)
-	sizeOutput, err := r.CmdExec.Execute(sizeScript)
+	sizeOutput, err := r.LocalCmdExec.Execute(sizeScript)
 	if err == nil {
 		fmt.Sscanf(strings.TrimSpace(string(sizeOutput)), "%d", &sizeBytes)
 	}
@@ -1690,9 +1662,9 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		logger.Info("Snapshot already exists, updating", zap2.String("name", req.Spec.SnapshotName))
 	}
 
-	// Delete local snapshot to free space
+	// Delete local snapshot to free space (btrfs operation runs on host)
 	deleteScript := fmt.Sprintf("btrfs subvolume delete %s", req.Status.LocalSnapshotPath)
-	if _, err := r.CmdExec.Execute(deleteScript); err != nil {
+	if _, err := r.HostCmdExec.Execute(deleteScript); err != nil {
 		logger.Warn("Failed to delete local snapshot", zap2.Error(err))
 	}
 
@@ -1926,10 +1898,11 @@ func main() {
 
 	// Setup snapshot request reconciler (handles btrfs snapshots on this node)
 	snapshotRequestReconciler := &SnapshotRequestReconciler{
-		Client:   mgr.GetClient(),
-		Logger:   zapLogger,
-		CmdExec:  &HostCommandExecutor{}, // Use host executor for btrfs commands
-		NodeName: nodeName,
+		Client:       mgr.GetClient(),
+		Logger:       zapLogger,
+		HostCmdExec:  &HostCommandExecutor{}, // For btrfs commands on host
+		LocalCmdExec: &RealCommandExecutor{}, // For tar/oras in container
+		NodeName:     nodeName,
 	}
 
 	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
