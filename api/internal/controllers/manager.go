@@ -151,12 +151,12 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
 	}
 
-	// Setup Snapshot controller
-	// Note: SnapshotOperator is nil for now - it will be implemented
-	// when we migrate to the new generic snapshot system
+	// Setup Snapshot controller with operator for registry operations
+	snapshotOperator := snapshot.NewDefaultSnapshotOperator(logger.With(zap.String("component", "snapshot-operator")))
 	snapshotReconciler := &snapshot.SnapshotReconciler{
-		Client: mgr.GetClient(),
-		Logger: logger.With(zap.String("controller", "snapshot")),
+		Client:           mgr.GetClient(),
+		Logger:           logger.With(zap.String("controller", "snapshot")),
+		SnapshotOperator: snapshotOperator,
 	}
 
 	if err = snapshotReconciler.SetupWithManager(mgr); err != nil {

@@ -182,10 +182,9 @@ func shouldGarbageCollect(snapshot *snapshotv1.Snapshot) bool {
 		}
 	}
 
-	// No retention policy and no references - can be garbage collected
-	// However, we might want to keep snapshots for a grace period
-	// For now, don't auto-delete - require explicit deletion or expiration
-	return false
+	// RefCount is 0 and no retention policy - garbage collect
+	// This handles orphaned snapshots that are no longer referenced
+	return true
 }
 
 func (r *SnapshotReconciler) SetupWithManager(mgr ctrl.Manager) error {
