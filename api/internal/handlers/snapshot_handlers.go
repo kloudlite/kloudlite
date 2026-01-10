@@ -216,9 +216,57 @@ func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 		return
 	}
 
+	// Get environment to find the target namespace for SnapshotRequests
+	env, err := h.environmentRepo.Get(c.Request.Context(), envName)
+	if err != nil {
+		h.logger.Error("Failed to get environment", zap.String("name", envName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get environment"})
+		return
+	}
+
+	// List SnapshotRequests in the environment's namespace to get progress for pending snapshots
+	snapshotRequests := &snapshotv1.SnapshotRequestList{}
+	if err := h.k8sClient.List(c.Request.Context(), snapshotRequests, client.InNamespace(env.Spec.TargetNamespace)); err != nil {
+		h.logger.Warn("Failed to list snapshot requests", zap.Error(err))
+		// Continue without request info
+	}
+
+	// Build a map of snapshot name -> request for quick lookup
+	requestBySnapshot := make(map[string]*snapshotv1.SnapshotRequest)
+	for i := range snapshotRequests.Items {
+		req := &snapshotRequests.Items[i]
+		requestBySnapshot[req.Spec.SnapshotName] = req
+	}
+
 	response := make([]SnapshotResponse, len(snapshots.Items))
 	for i, s := range snapshots.Items {
-		response[i] = snapshotToResponse(&s)
+		resp := snapshotToResponse(&s)
+
+		// If snapshot has no state, check the corresponding SnapshotRequest for progress
+		if resp.State == "" {
+			if req, ok := requestBySnapshot[s.Name]; ok {
+				// Map SnapshotRequest state to a display state
+				switch req.Status.State {
+				case snapshotv1.SnapshotRequestStatePending, "":
+					resp.State = snapshotv1.SnapshotState("Pending")
+					resp.Message = "Waiting to start"
+				case snapshotv1.SnapshotRequestStateCreating:
+					resp.State = snapshotv1.SnapshotState("Creating")
+					resp.Message = req.Status.Message
+				case snapshotv1.SnapshotRequestStateUploading:
+					resp.State = snapshotv1.SnapshotState("Uploading")
+					resp.Message = req.Status.Message
+				case snapshotv1.SnapshotRequestStateFailed:
+					resp.State = snapshotv1.SnapshotStateFailed
+					resp.Message = req.Status.Message
+				}
+			} else {
+				resp.State = snapshotv1.SnapshotState("Pending")
+				resp.Message = "Waiting for snapshot request"
+			}
+		}
+
+		response[i] = resp
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -326,9 +374,49 @@ func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
 		return
 	}
 
+	// List SnapshotRequests in the workspace's namespace to get progress for pending snapshots
+	snapshotRequests := &snapshotv1.SnapshotRequestList{}
+	if err := h.k8sClient.List(c.Request.Context(), snapshotRequests, client.InNamespace(namespace)); err != nil {
+		h.logger.Warn("Failed to list snapshot requests", zap.Error(err))
+		// Continue without request info
+	}
+
+	// Build a map of snapshot name -> request for quick lookup
+	requestBySnapshot := make(map[string]*snapshotv1.SnapshotRequest)
+	for i := range snapshotRequests.Items {
+		req := &snapshotRequests.Items[i]
+		requestBySnapshot[req.Spec.SnapshotName] = req
+	}
+
 	response := make([]SnapshotResponse, len(snapshots.Items))
 	for i, s := range snapshots.Items {
-		response[i] = snapshotToResponse(&s)
+		resp := snapshotToResponse(&s)
+
+		// If snapshot has no state, check the corresponding SnapshotRequest for progress
+		if resp.State == "" {
+			if req, ok := requestBySnapshot[s.Name]; ok {
+				// Map SnapshotRequest state to a display state
+				switch req.Status.State {
+				case snapshotv1.SnapshotRequestStatePending, "":
+					resp.State = snapshotv1.SnapshotState("Pending")
+					resp.Message = "Waiting to start"
+				case snapshotv1.SnapshotRequestStateCreating:
+					resp.State = snapshotv1.SnapshotState("Creating")
+					resp.Message = req.Status.Message
+				case snapshotv1.SnapshotRequestStateUploading:
+					resp.State = snapshotv1.SnapshotState("Uploading")
+					resp.Message = req.Status.Message
+				case snapshotv1.SnapshotRequestStateFailed:
+					resp.State = snapshotv1.SnapshotStateFailed
+					resp.Message = req.Status.Message
+				}
+			} else {
+				resp.State = snapshotv1.SnapshotState("Pending")
+				resp.Message = "Waiting for snapshot request"
+			}
+		}
+
+		response[i] = resp
 	}
 
 	c.JSON(http.StatusOK, gin.H{

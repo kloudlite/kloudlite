@@ -1655,11 +1655,23 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		},
 	}
 
+	snapshotStatus := snapshot.Status // Save status before create (Create ignores status subresource)
+
 	if err := r.Create(ctx, snapshot); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return r.setFailed(ctx, req, fmt.Sprintf("Failed to create Snapshot: %v", err), logger)
 		}
-		logger.Info("Snapshot already exists, updating", zap2.String("name", req.Spec.SnapshotName))
+		logger.Info("Snapshot already exists, updating status", zap2.String("name", req.Spec.SnapshotName))
+	}
+
+	// Update status separately (Create doesn't set status subresource)
+	existing := &snapshotv1.Snapshot{}
+	if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.SnapshotName}, existing); err != nil {
+		return r.setFailed(ctx, req, fmt.Sprintf("Failed to get Snapshot for status update: %v", err), logger)
+	}
+	existing.Status = snapshotStatus
+	if err := r.Status().Update(ctx, existing); err != nil {
+		return r.setFailed(ctx, req, fmt.Sprintf("Failed to update Snapshot status: %v", err), logger)
 	}
 
 	// Delete local snapshot to free space (btrfs operation runs on host)
