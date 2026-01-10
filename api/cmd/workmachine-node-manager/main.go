@@ -1899,16 +1899,16 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 	pullScript := fmt.Sprintf(`
 		set -e
 		cd %s
-		oras pull --plain-http %s
-		# Find and extract the tar.gz file
-		for f in *.tar.gz; do
+		oras pull --plain-http --allow-path-traversal %s
+		# Find and extract the tar.gz file (could be in /tmp or current dir)
+		for f in *.tar.gz /tmp/*.tar.gz; do
 			if [ -f "$f" ]; then
-				tar -xzf "$f"
+				tar -xzf "$f" -C %s
 				rm -f "$f"
 				break
 			fi
 		done
-	`, tempDir, imageRef)
+	`, tempDir, imageRef, tempDir)
 
 	output, err := r.LocalCmdExec.Execute(pullScript)
 	if err != nil {
