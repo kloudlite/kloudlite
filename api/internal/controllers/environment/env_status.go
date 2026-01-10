@@ -160,9 +160,9 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 				Name:      restoreName,
 				Namespace: environment.Spec.TargetNamespace,
 				Labels: map[string]string{
-					"kloudlite.io/owned-by":               environment.Spec.OwnedBy,
-					"snapshots.kloudlite.io/environment":  environment.Name,
-					"snapshots.kloudlite.io/source":       snapshotName,
+					"kloudlite.io/owned-by":              environment.Spec.OwnedBy,
+					"snapshots.kloudlite.io/environment": environment.Name,
+					"snapshots.kloudlite.io/source":      snapshotName,
 				},
 			},
 			Spec: snapshotv1.SnapshotRestoreSpec{
