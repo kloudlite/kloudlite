@@ -1567,6 +1567,35 @@ func (r *SnapshotRequestReconciler) handleCreating(ctx context.Context, req *sna
 }
 
 func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (reconcile.Result, error) {
+	// First, check if the local snapshot still exists
+	// If it was deleted, it means a previous reconcile already completed the upload
+	checkScript := fmt.Sprintf("test -d %s && echo exists", req.Status.LocalSnapshotPath)
+	checkOutput, _ := r.LocalCmdExec.Execute(checkScript)
+	if strings.TrimSpace(string(checkOutput)) != "exists" {
+		// Local snapshot was already deleted - check if Snapshot resource exists
+		existingSnapshot := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.SnapshotName}, existingSnapshot); err == nil {
+			// Snapshot exists, this means the upload already completed successfully
+			// Just update the SnapshotRequest status to Completed
+			logger.Info("Local snapshot already deleted and Snapshot resource exists, marking as completed",
+				zap2.String("snapshot", req.Spec.SnapshotName))
+			completedNow := metav1.Now()
+			req.Status.State = snapshotv1.SnapshotRequestStateCompleted
+			req.Status.Message = "Snapshot created successfully"
+			req.Status.CompletedAt = &completedNow
+			req.Status.CreatedSnapshot = req.Spec.SnapshotName
+			if err := r.Status().Update(ctx, req); err != nil {
+				if apierrors.IsConflict(err) {
+					return reconcile.Result{Requeue: true}, nil
+				}
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{}, nil
+		}
+		// No snapshot exists and local snapshot is gone - this is an error
+		return r.setFailed(ctx, req, "Local snapshot was deleted but Snapshot resource not found", logger)
+	}
+
 	// Get the SnapshotStore
 	store := &snapshotv1.SnapshotStore{}
 	if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.Store}, store); err != nil {
