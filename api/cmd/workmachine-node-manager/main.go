@@ -1677,6 +1677,7 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 			SizeHuman: formatSnapshotSize(sizeBytes),
 			CreatedAt: &now,
 			Lineage:   lineage,
+			RefCount:  1, // Start with refCount=1 so it's not garbage collected immediately
 			Registry: &snapshotv1.SnapshotRegistryInfo{
 				ImageRef: imageRef,
 				PushedAt: &now,
