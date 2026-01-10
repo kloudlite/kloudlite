@@ -34,14 +34,12 @@ export function ForkEnvironmentSheet({
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
   const [step, setStep] = useState<1 | 2>(1)
 
-  // Form fields
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState<string | null>(null)
   const [selectedSnapshot, setSelectedSnapshot] = useState<Snapshot | null>(null)
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Clean up polling interval on unmount
   useEffect(() => {
     return () => {
       if (pollIntervalRef.current) {
@@ -51,7 +49,6 @@ export function ForkEnvironmentSheet({
     }
   }, [])
 
-  // Reset state when sheet opens/closes
   useEffect(() => {
     if (open && sourceEnvironment) {
       setIsLoadingSnapshots(true)
@@ -88,7 +85,6 @@ export function ForkEnvironmentSheet({
 
   const handleSelectSnapshot = (snapshot: Snapshot) => {
     setSelectedSnapshot(snapshot)
-    // Generate suggested name
     const baseName = sourceEnvironment.replace(/--/g, '-')
     setName(`${baseName}-fork`)
     setNameError(null)
@@ -121,8 +117,8 @@ export function ForkEnvironmentSheet({
       })
 
       if (result.success) {
-        toast.success('Environment creation initiated', {
-          description: `Creating "${name}" from snapshot`,
+        toast.success('Environment created', {
+          description: `"${name}" is being provisioned`,
         })
         onOpenChange(false)
         setName('')
@@ -163,207 +159,158 @@ export function ForkEnvironmentSheet({
     const diffDays = Math.floor(diffHours / 24)
 
     if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins} min ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col gap-0">
-        {/* Header */}
-        <div className="border-b">
-          <div className="px-6 py-5">
-            <div className="flex items-center gap-4">
-              {step === 2 && (
-                <button
-                  onClick={handleBack}
-                  disabled={isPending}
-                  className="p-1.5 -ml-1.5 rounded-md hover:bg-muted transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-              )}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <GitFork className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">Fork Environment</h2>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {step === 1
-                    ? 'Select a snapshot to create a new environment'
-                    : 'Name your new environment'
-                  }
-                </p>
-              </div>
-              {/* Step indicator */}
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  "flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium transition-colors",
-                  step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                )}>1</div>
-                <div className="w-4 h-px bg-border" />
-                <div className={cn(
-                  "flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium transition-colors",
-                  step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                )}>2</div>
-              </div>
+      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col gap-0 border-l">
+        {/* Minimal Header */}
+        <div className="flex items-center h-14 px-4 border-b shrink-0">
+          {step === 2 ? (
+            <button
+              onClick={handleBack}
+              disabled={isPending}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <GitFork className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Fork Environment</span>
             </div>
-          </div>
-          {/* Source environment badge */}
-          <div className="px-6 pb-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full text-xs">
-              <span className="text-muted-foreground">Source:</span>
-              <span className="font-medium">{sourceEnvironment}</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {step === 1 ? (
-            /* Step 1: Snapshot Selection */
-            <div className="p-6">
-              {isLoadingSnapshots ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
-                  <p className="text-sm text-muted-foreground">Loading snapshots...</p>
-                </div>
-              ) : snapshots.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="rounded-full bg-muted p-4 mb-4">
-                    <GitFork className="h-8 w-8 text-muted-foreground" />
+            <div className="p-4">
+              {/* Source Info */}
+              <div className="mb-6">
+                <p className="text-xs text-muted-foreground mb-1">Source</p>
+                <p className="text-sm font-mono">{sourceEnvironment}</p>
+              </div>
+
+              {/* Snapshots */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-3">Select snapshot</p>
+
+                {isLoadingSnapshots ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   </div>
-                  <h3 className="font-semibold mb-2">No Snapshots Available</h3>
-                  <p className="text-sm text-muted-foreground max-w-[280px]">
-                    Create a snapshot of this environment first to enable forking.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-4">
-                    Available Snapshots ({snapshots.length})
-                  </p>
-                  {snapshots.map((snapshot) => (
-                    <button
-                      key={snapshot.name}
-                      onClick={() => handleSelectSnapshot(snapshot)}
-                      className={cn(
-                        "w-full text-left rounded-lg border bg-card p-4 transition-all duration-200",
-                        "hover:shadow-md hover:border-primary/40",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                        "group"
-                      )}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-sm truncate">
+                ) : snapshots.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-sm text-muted-foreground mb-1">No snapshots available</p>
+                    <p className="text-xs text-muted-foreground">Create a snapshot first to fork this environment</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {snapshots.map((snapshot) => (
+                      <button
+                        key={snapshot.name}
+                        onClick={() => handleSelectSnapshot(snapshot)}
+                        className={cn(
+                          "w-full text-left px-3 py-3 rounded-md transition-colors",
+                          "hover:bg-muted",
+                          "focus:outline-none focus:bg-muted",
+                          "group"
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate pr-2">
                               {snapshot.name}
-                            </span>
-                          </div>
-                          {snapshot.description && (
-                            <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
-                              {snapshot.description}
                             </p>
-                          )}
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            {snapshot.sizeHuman && (
-                              <span className="flex items-center gap-1.5">
-                                <HardDrive className="h-3.5 w-3.5" />
-                                {snapshot.sizeHuman}
-                              </span>
-                            )}
-                            {snapshot.createdAt && (
-                              <span className="flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5" />
-                                {getRelativeTime(snapshot.createdAt)}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                              {snapshot.sizeHuman && (
+                                <span className="flex items-center gap-1">
+                                  <HardDrive className="h-3 w-3" />
+                                  {snapshot.sizeHuman}
+                                </span>
+                              )}
+                              {snapshot.createdAt && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {getRelativeTime(snapshot.createdAt)}
+                                </span>
+                              )}
+                            </div>
                           </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
-            /* Step 2: Environment Configuration */
-            <form onSubmit={handleSubmit} className="p-6">
-              {/* Selected Snapshot Summary */}
+            <form onSubmit={handleSubmit} className="p-4">
+              {/* Selected Snapshot */}
               {selectedSnapshot && (
-                <div className="rounded-lg border bg-muted/50 p-4 mb-6">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">
-                    Creating from snapshot
-                  </p>
-                  <p className="font-medium text-sm mb-1">{selectedSnapshot.name}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {selectedSnapshot.sizeHuman && (
-                      <span className="flex items-center gap-1">
-                        <HardDrive className="h-3 w-3" />
-                        {selectedSnapshot.sizeHuman}
-                      </span>
-                    )}
+                <div className="mb-6">
+                  <p className="text-xs text-muted-foreground mb-1">From snapshot</p>
+                  <p className="text-sm font-mono truncate">{selectedSnapshot.name}</p>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    {selectedSnapshot.sizeHuman && <span>{selectedSnapshot.sizeHuman}</span>}
                     {selectedSnapshot.createdAt && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {getRelativeTime(selectedSnapshot.createdAt)}
-                      </span>
+                      <span>{getRelativeTime(selectedSnapshot.createdAt)}</span>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Environment Name Input */}
-              <div className="space-y-2 mb-6">
-                <Label htmlFor="name" className="text-sm font-medium">
-                  Environment Name
+              {/* Name Input */}
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-xs text-muted-foreground">
+                  Environment name
                 </Label>
                 <Input
                   id="name"
-                  placeholder="my-new-environment"
+                  placeholder="my-environment"
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   disabled={isPending}
                   className={cn(
-                    "font-mono",
+                    "font-mono text-sm",
                     nameError && "border-destructive focus-visible:ring-destructive"
                   )}
                   autoFocus
                 />
-                {nameError ? (
+                {nameError && (
                   <p className="text-xs text-destructive">{nameError}</p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Lowercase letters, numbers, and hyphens only
-                  </p>
                 )}
               </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isPending || !name || !!nameError}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    Create Environment
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
             </form>
           )}
         </div>
+
+        {/* Footer with action */}
+        {step === 2 && (
+          <div className="p-4 border-t shrink-0">
+            <Button
+              onClick={handleSubmit}
+              className="w-full"
+              disabled={isPending || !name || !!nameError}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Environment'
+              )}
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   )
