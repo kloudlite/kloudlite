@@ -131,7 +131,7 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 		}
 	}
 
-	// Get active service intercepts from Compositions in the connected environment
+	// Get active service intercepts from Environment's ComposeStatus
 	// Format: [{serviceName: "web", portMappings: [{servicePort: 80, workspacePort: 8080}]}, ...]
 	type portMappingInfo struct {
 		ServicePort   int32 `json:"servicePort"`
@@ -142,17 +142,19 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 		PortMappings []portMappingInfo `json:"portMappings"`
 	}
 	intercepts := []interceptInfo{}
-	if workspace.Status.ConnectedEnvironment != nil && workspace.Status.ConnectedEnvironment.TargetNamespace != "" {
-		envTargetNs := workspace.Status.ConnectedEnvironment.TargetNamespace
-		compList := &environmentv1.CompositionList{}
-		if err := r.List(ctx, compList, client.InNamespace(envTargetNs)); err == nil {
-			for _, comp := range compList.Items {
-				for _, activeIntercept := range comp.Status.ActiveIntercepts {
-					// Only include intercepts for this workspace
-					if activeIntercept.WorkspaceName == workspace.Name {
-						// Find port mappings from spec
-						var mappings []portMappingInfo
-						for _, specIntercept := range comp.Spec.Intercepts {
+	if workspace.Spec.EnvironmentConnection != nil {
+		env := &environmentv1.Environment{}
+		err := r.Get(ctx, client.ObjectKey{
+			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+		}, env)
+		if err == nil && env.Status.ComposeStatus != nil {
+			for _, activeIntercept := range env.Status.ComposeStatus.ActiveIntercepts {
+				// Only include intercepts for this workspace
+				if activeIntercept.WorkspaceName == workspace.Name {
+					// Find port mappings from spec
+					var mappings []portMappingInfo
+					if env.Spec.Compose != nil {
+						for _, specIntercept := range env.Spec.Compose.Intercepts {
 							if specIntercept.ServiceName == activeIntercept.ServiceName {
 								for _, pm := range specIntercept.PortMappings {
 									mappings = append(mappings, portMappingInfo{
@@ -163,15 +165,15 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 								break
 							}
 						}
-						intercepts = append(intercepts, interceptInfo{
-							ServiceName:  activeIntercept.ServiceName,
-							PortMappings: mappings,
-						})
 					}
+					intercepts = append(intercepts, interceptInfo{
+						ServiceName:  activeIntercept.ServiceName,
+						PortMappings: mappings,
+					})
 				}
 			}
-		} else {
-			logger.Warn("Failed to list compositions for intercept status", zap.Error(err))
+		} else if err != nil {
+			logger.Warn("Failed to get environment for intercept status", zap.Error(err))
 		}
 	}
 

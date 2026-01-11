@@ -264,15 +264,15 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Verbs:     []string{"get", "list"},
 			},
 			{
-				// Allow updating Composition intercepts (workspace controller manages composition intercepts)
+				// Allow updating Environment intercepts (workspace controller manages intercepts in Environment.Spec.Compose)
 				APIGroups: []string{"environments.kloudlite.io"},
-				Resources: []string{"compositions"},
+				Resources: []string{"environments"},
 				Verbs:     []string{"get", "list", "watch", "update", "patch"},
 			},
 			{
-				// Allow reading Composition status for intercept status
+				// Allow reading Environment status for intercept status
 				APIGroups: []string{"environments.kloudlite.io"},
-				Resources: []string{"compositions/status"},
+				Resources: []string{"environments/status"},
 				Verbs:     []string{"get"},
 			},
 			// Note: PackageRequests are cluster-scoped, so they are granted in the ClusterRole below
@@ -351,10 +351,10 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 				Verbs:     []string{"get", "list"},
 			},
 			{
-				// Allow reading and updating compositions
-				// Needed for kl intercept commands to manage service intercepts
+				// Allow reading and updating environments
+				// Needed for kl intercept commands to manage service intercepts in Environment.Spec.Compose
 				APIGroups: []string{"environments.kloudlite.io"},
-				Resources: []string{"compositions"},
+				Resources: []string{"environments"},
 				Verbs:     []string{"get", "list", "update", "patch"},
 			},
 			{
@@ -437,12 +437,6 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&environmentv1.Environment{},
 			handler.EnqueueRequestsFromMapFunc(r.findWorkspacesForEnvironment),
 		).
-		// Watch Composition status changes for intercept updates
-		// This triggers workspace reconciliation when intercepts targeting a workspace change
-		Watches(
-			&environmentv1.Composition{},
-			handler.EnqueueRequestsFromMapFunc(r.findWorkspacesForComposition),
-		).
 		Complete(r)
 }
 
@@ -486,66 +480,5 @@ func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, 
 	}
 
 	r.Logger.Info("findWorkspacesForEnvironment: returning requests", zap.Int("count", len(requests)))
-	return requests
-}
-
-// findWorkspacesForComposition finds all workspaces that need reconciliation when a composition changes
-// This includes workspaces targeted by active intercepts AND workspaces connected to the environment
-// (to handle when intercepts are removed)
-func (r *WorkspaceReconciler) findWorkspacesForComposition(ctx context.Context, obj client.Object) []reconcile.Request {
-	comp, ok := obj.(*environmentv1.Composition)
-	if !ok {
-		return nil
-	}
-
-	workspaceSet := make(map[types.NamespacedName]struct{})
-
-	// Collect workspaces from active intercepts
-	for _, intercept := range comp.Status.ActiveIntercepts {
-		if intercept.WorkspaceName != "" && intercept.WorkspaceNamespace != "" {
-			workspaceSet[types.NamespacedName{
-				Name:      intercept.WorkspaceName,
-				Namespace: intercept.WorkspaceNamespace,
-			}] = struct{}{}
-		}
-	}
-
-	// Also find workspaces connected to the environment that owns this composition
-	// This ensures we update workspace context when intercepts are removed
-	// Composition lives in the environment's TargetNamespace
-	envTargetNamespace := comp.Namespace
-
-	// Find environment with this target namespace
-	envList := &environmentv1.EnvironmentList{}
-	if err := r.List(ctx, envList); err == nil {
-		for _, env := range envList.Items {
-			if env.Spec.TargetNamespace == envTargetNamespace {
-				// Find workspaces connected to this environment
-				wsList := &workspacev1.WorkspaceList{}
-				if err := r.List(ctx, wsList); err == nil {
-					for _, ws := range wsList.Items {
-						if ws.Spec.EnvironmentConnection != nil &&
-							ws.Spec.EnvironmentConnection.EnvironmentRef.Name == env.Name {
-							workspaceSet[types.NamespacedName{
-								Name:      ws.Name,
-								Namespace: ws.Namespace,
-							}] = struct{}{}
-						}
-					}
-				}
-				break
-			}
-		}
-	}
-
-	var requests []reconcile.Request
-	for wsKey := range workspaceSet {
-		r.Logger.Info("findWorkspacesForComposition: triggering workspace reconciliation",
-			zap.String("workspace", wsKey.Name),
-			zap.String("namespace", wsKey.Namespace),
-			zap.String("composition", comp.Name))
-		requests = append(requests, reconcile.Request{NamespacedName: wsKey})
-	}
-
 	return requests
 }
