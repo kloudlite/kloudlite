@@ -309,6 +309,33 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		return r.setFailed(ctx, req, fmt.Sprintf("Failed to update Snapshot status: %v", err), logger)
 	}
 
+	// Create SnapshotRef to prevent immediate garbage collection
+	// The SnapshotRef is owned by the entity that created the SnapshotRequest
+	snapshotRef := &snapshotv1.SnapshotRef{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-owner", req.Spec.SnapshotName),
+			Namespace: req.Namespace,
+			Labels:    req.Labels, // Inherit labels (including environment ref)
+		},
+		Spec: snapshotv1.SnapshotRefSpec{
+			SnapshotName: req.Spec.SnapshotName,
+			Purpose:      "snapshot-owner",
+		},
+	}
+
+	if err := r.Create(ctx, snapshotRef); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			logger.Warn("Failed to create SnapshotRef, snapshot may be garbage collected",
+				zap2.String("snapshotRef", snapshotRef.Name),
+				zap2.Error(err))
+			// Don't fail the whole operation - snapshot was created successfully
+		}
+	} else {
+		logger.Info("Created SnapshotRef for snapshot",
+			zap2.String("snapshotRef", snapshotRef.Name),
+			zap2.String("snapshot", req.Spec.SnapshotName))
+	}
+
 	// Delete local snapshot to free space (btrfs operation runs on host)
 	deleteScript := fmt.Sprintf("btrfs subvolume delete %s", req.Status.LocalSnapshotPath)
 	if _, err := r.HostCmdExec.Execute(deleteScript); err != nil {
