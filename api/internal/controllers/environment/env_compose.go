@@ -289,13 +289,7 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 			logger.Info("Creating resource",
 				zap.String("name", resource.GetName()),
 				zap.String("namespace", resource.GetNamespace()))
-			if createErr := r.Create(ctx, resource); createErr != nil {
-				logger.Error("Failed to create resource",
-					zap.String("name", resource.GetName()),
-					zap.Error(createErr))
-				return createErr
-			}
-			return nil
+			return r.Create(ctx, resource)
 		}
 		return err
 	}
