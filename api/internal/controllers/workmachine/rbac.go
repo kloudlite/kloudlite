@@ -18,6 +18,7 @@ import (
 // - Snapshots, SnapshotRefs, SnapshotRestores (cluster/namespace scoped) - for snapshot operations
 // - Workspaces (namespace-scoped, but needs cluster-wide access) - to manage SSH configuration
 // - Nodes (cluster-wide) - to update GPU status
+// - Environments (cluster-wide) - for garbage collection of orphaned storage
 // - Secrets (in workmachine namespace) - to manage SSH keys
 func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
 	serviceAccountName := "host-manager"
@@ -97,6 +98,12 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 				APIGroups: []string{""},
 				Resources: []string{"nodes"},
 				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+			},
+			// Environments - for garbage collection of orphaned storage
+			{
+				APIGroups: []string{"environments.kloudlite.io"},
+				Resources: []string{"environments"},
+				Verbs:     []string{"get", "list", "watch"},
 			},
 		}
 
