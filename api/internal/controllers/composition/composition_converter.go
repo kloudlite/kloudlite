@@ -15,6 +15,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// sanitizeK8sName converts a name to a valid Kubernetes resource name
+// Kubernetes names must be lowercase RFC 1123 subdomains: lowercase alphanumeric, '-' or '.'
+func sanitizeK8sName(name string) string {
+	// Replace underscores with dashes
+	name = strings.ReplaceAll(name, "_", "-")
+	// Convert to lowercase
+	name = strings.ToLower(name)
+	return name
+}
+
 // ComposeResources holds all Kubernetes resources converted from docker-compose
 type ComposeResources struct {
 	Deployments  []*appsv1.Deployment
@@ -257,15 +267,17 @@ func convertServiceToDeployment(
 				}
 			} else if vol.Type == "volume" {
 				// Regular PVC volume mount (named volumes only)
+				// Sanitize volume name for Kubernetes
+				k8sVolName := sanitizeK8sName(vol.Source)
 				volumeMounts = append(volumeMounts, corev1.VolumeMount{
-					Name:      vol.Source,
+					Name:      k8sVolName,
 					MountPath: vol.Target,
 				})
 				volumes = append(volumes, corev1.Volume{
-					Name: vol.Source,
+					Name: k8sVolName,
 					VolumeSource: corev1.VolumeSource{
 						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: vol.Source,
+							ClaimName: k8sVolName,
 						},
 					},
 				})
@@ -391,11 +403,14 @@ func convertVolumeToPVC(
 	commonLabels map[string]string,
 	environment *compositionsv1.Environment,
 ) *corev1.PersistentVolumeClaim {
+	// Sanitize volume name for Kubernetes
+	k8sVolumeName := sanitizeK8sName(volumeName)
+
 	labels := make(map[string]string)
 	for k, v := range commonLabels {
 		labels[k] = v
 	}
-	labels["kloudlite.io/volume"] = volumeName
+	labels["kloudlite.io/volume"] = volumeName // Keep original name in label
 
 	// Default size
 	size := resource.MustParse("1Gi")
@@ -411,7 +426,7 @@ func convertVolumeToPVC(
 
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        volumeName,
+			Name:        k8sVolumeName,
 			Namespace:   namespace,
 			Labels:      labels,
 			Annotations: annotations,
