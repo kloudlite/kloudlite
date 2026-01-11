@@ -304,16 +304,21 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	if getErr != nil {
 		return r.setFailed(ctx, req, fmt.Sprintf("Failed to get Snapshot for status update after retries: %v", getErr), logger)
 	}
+	// Add initial reference to prevent GC race condition
+	// The SnapshotRef will be created next, and its controller will verify this reference
+	snapshotRefName := fmt.Sprintf("%s-owner", req.Spec.SnapshotName)
+	snapshotStatus.ReferencedBy = []string{fmt.Sprintf("ref:%s/%s", req.Namespace, snapshotRefName)}
+
 	existing.Status = snapshotStatus
 	if err := r.Status().Update(ctx, existing); err != nil {
 		return r.setFailed(ctx, req, fmt.Sprintf("Failed to update Snapshot status: %v", err), logger)
 	}
 
-	// Create SnapshotRef to prevent immediate garbage collection
-	// The SnapshotRef is owned by the entity that created the SnapshotRequest
+	// Create SnapshotRef to prevent garbage collection
+	// The reference was already added to ReferencedBy above to prevent race condition
 	snapshotRef := &snapshotv1.SnapshotRef{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-owner", req.Spec.SnapshotName),
+			Name:      snapshotRefName,
 			Namespace: req.Namespace,
 			Labels:    req.Labels, // Inherit labels (including environment ref)
 		},
