@@ -202,6 +202,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.GET("/:name/status", environmentHandlers.GetEnvironmentStatus)
 				environments.GET("/:name/status-ws", environmentHandlers.GetEnvironmentStatusWebSocket)
 
+				// Compose routes (Docker Compose content embedded in environment)
+				environments.GET("/:name/compose", environmentHandlers.GetEnvironmentCompose)
+				environments.PUT("/:name/compose", environmentHandlers.UpdateEnvironmentCompose)
+
 				// Snapshot routes (per-environment)
 				environments.POST("/:name/snapshots", snapshotHandlers.CreateEnvironmentSnapshot)
 				environments.GET("/:name/snapshots", snapshotHandlers.ListEnvironmentSnapshots)

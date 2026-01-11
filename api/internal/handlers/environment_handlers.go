@@ -748,6 +748,142 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 	}
 }
 
+// GetEnvironmentCompose handles GET /api/v1/environments/:name/compose
+func (h *EnvironmentHandlers) GetEnvironmentCompose(c *gin.Context) {
+	name := c.Param("name")
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Environment name is required",
+		})
+		return
+	}
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	env, err := h.envRepo.Get(c.Request.Context(), name)
+	if err != nil {
+		h.logger.Error("Failed to get environment",
+			zap.String("name", name),
+			zap.Error(err))
+
+		statusCode := http.StatusInternalServerError
+		if err.Error() == fmt.Sprintf("environment %s not found", name) {
+			statusCode = http.StatusNotFound
+		}
+
+		c.JSON(statusCode, gin.H{
+			"error":   "Failed to get environment",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Check if user has access to this environment
+	if !UserHasAccessToEnvironment(username, env) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You don't have access to this environment",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"name":          env.Name,
+		"compose":       env.Spec.Compose,
+		"composeStatus": env.Status.ComposeStatus,
+	})
+}
+
+// UpdateEnvironmentCompose handles PUT /api/v1/environments/:name/compose
+func (h *EnvironmentHandlers) UpdateEnvironmentCompose(c *gin.Context) {
+	name := c.Param("name")
+	if name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Environment name is required",
+		})
+		return
+	}
+
+	var req struct {
+		Compose *environmentsv1.CompositionSpec `json:"compose"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Failed to parse compose request", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get existing environment
+	env, err := h.envRepo.Get(c.Request.Context(), name)
+	if err != nil {
+		h.logger.Error("Failed to get environment for compose update",
+			zap.String("name", name),
+			zap.Error(err))
+
+		statusCode := http.StatusInternalServerError
+		if err.Error() == fmt.Sprintf("environment %s not found", name) {
+			statusCode = http.StatusNotFound
+		}
+
+		c.JSON(statusCode, gin.H{
+			"error":   "Failed to get environment",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Check if user has access to this environment
+	if !UserHasAccessToEnvironment(username, env) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You don't have access to this environment",
+		})
+		return
+	}
+
+	// Update the compose spec
+	env.Spec.Compose = req.Compose
+
+	// Update the environment
+	if err := h.envRepo.Update(c.Request.Context(), env); err != nil {
+		h.logger.Error("Failed to update environment compose",
+			zap.String("name", name),
+			zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to update compose",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	h.logger.Info("Environment compose updated successfully",
+		zap.String("name", name))
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       "Compose updated successfully",
+		"compose":       env.Spec.Compose,
+		"composeStatus": env.Status.ComposeStatus,
+	})
+}
+
 // GetEnvironmentStatusWebSocket handles WebSocket connections for environment status streaming
 // This endpoint provides real-time status updates via WebSocket (better Cloudflare support than SSE)
 func (h *EnvironmentHandlers) GetEnvironmentStatusWebSocket(c *gin.Context) {

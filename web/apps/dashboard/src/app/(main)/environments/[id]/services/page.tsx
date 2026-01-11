@@ -18,7 +18,7 @@ export default async function ServicesPage({ params }: PageProps) {
 
   const { id } = await params
 
-  // Single API call to get environment, services, and composition
+  // Single API call to get environment, services, and compose
   try {
     const data = await getEnvironmentDetails(id)
 
@@ -26,7 +26,9 @@ export default async function ServicesPage({ params }: PageProps) {
       <ServicesList
         services={data.services}
         namespace={data.namespace}
-        composition={data.composition}
+        environmentName={id}
+        compose={data.compose}
+        composeStatus={data.composeStatus}
         envHash={data.envHash}
         subdomain={data.subdomain}
         isEnvActive={data.isActive}
@@ -38,7 +40,9 @@ export default async function ServicesPage({ params }: PageProps) {
       <ServicesList
         services={[]}
         namespace={id}
-        composition={null}
+        environmentName={id}
+        compose={null}
+        composeStatus={null}
         envHash=""
         subdomain=""
         isEnvActive={false}

@@ -7,7 +7,8 @@ import type {
   Environment,
   UserPreferences,
   K8sService,
-  Composition,
+  CompositionSpec,
+  CompositionStatus,
   PackageRequest,
 } from '@kloudlite/types'
 
@@ -25,7 +26,8 @@ export interface DashboardData {
 export interface EnvironmentDetailsData {
   environment: Environment
   services: K8sService[]
-  composition: Composition | null
+  compose: CompositionSpec | null
+  composeStatus: CompositionStatus | null
   namespace: string
   envHash: string
   subdomain: string

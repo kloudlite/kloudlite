@@ -2,8 +2,7 @@
 
 import { Network, Copy, Check, AlertCircle, AlertTriangle, Terminal } from 'lucide-react'
 import { useState } from 'react'
-import type { K8sService } from '@kloudlite/types'
-import type { Composition } from '@kloudlite/types'
+import type { K8sService, CompositionSpec, CompositionStatus } from '@kloudlite/types'
 import { Alert, AlertDescription, AlertTitle, Badge, Button } from '@kloudlite/ui'
 import { CompositionEditor } from './composition-editor'
 import { ServiceLogsViewer } from './service-logs-viewer'
@@ -11,7 +10,9 @@ import { ServiceLogsViewer } from './service-logs-viewer'
 interface ServicesListProps {
   services: K8sService[]
   namespace: string
-  composition: Composition | null
+  environmentName: string // Environment name for compose updates
+  compose: CompositionSpec | null
+  composeStatus: CompositionStatus | null
   envHash: string // Hash from environment.status.hash
   subdomain: string // Subdomain from environment.status.subdomain
   isEnvActive?: boolean // Whether the environment is active
@@ -20,7 +21,9 @@ interface ServicesListProps {
 export function ServicesList({
   services,
   namespace,
-  composition,
+  environmentName,
+  compose,
+  composeStatus,
   envHash,
   subdomain,
   isEnvActive = true,
@@ -57,29 +60,29 @@ export function ServicesList({
             </p>
           </div>
           <CompositionEditor
-            composition={composition}
-            namespace={namespace}
+            environmentName={environmentName}
+            composeContent={compose?.composeContent || null}
             open={open}
             onOpenChange={setOpen}
           />
         </div>
 
-        {isEnvActive && composition?.status?.state === 'failed' && (
+        {isEnvActive && composeStatus?.state === 'failed' && (
           <Alert variant="destructive" className="mt-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Composition Failed</AlertTitle>
             <AlertDescription>
-              {composition.status.message || 'The composition failed to deploy'}
+              {composeStatus.message || 'The composition failed to deploy'}
             </AlertDescription>
           </Alert>
         )}
 
-        {isEnvActive && composition?.status?.state === 'degraded' && (
+        {isEnvActive && composeStatus?.state === 'degraded' && (
           <Alert variant="destructive" className="mt-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Composition Degraded</AlertTitle>
             <AlertDescription>
-              {composition.status.message || 'Some services are not running properly'}
+              {composeStatus.message || 'Some services are not running properly'}
             </AlertDescription>
           </Alert>
         )}
@@ -105,29 +108,29 @@ export function ServicesList({
           </p>
         </div>
         <CompositionEditor
-          composition={composition}
-          namespace={namespace}
+          environmentName={environmentName}
+          composeContent={compose?.composeContent || null}
           open={open}
           onOpenChange={setOpen}
         />
       </div>
 
-      {isEnvActive && composition?.status?.state === 'failed' && (
+      {isEnvActive && composeStatus?.state === 'failed' && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Composition Failed</AlertTitle>
           <AlertDescription>
-            {composition.status.message || 'The composition failed to deploy'}
+            {composeStatus.message || 'The composition failed to deploy'}
           </AlertDescription>
         </Alert>
       )}
 
-      {isEnvActive && composition?.status?.state === 'degraded' && (
+      {isEnvActive && composeStatus?.state === 'degraded' && (
         <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Composition Degraded</AlertTitle>
           <AlertDescription>
-            {composition.status.message || 'Some services are not running properly'}
+            {composeStatus.message || 'Some services are not running properly'}
           </AlertDescription>
         </Alert>
       )}

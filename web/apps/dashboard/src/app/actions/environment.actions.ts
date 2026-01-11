@@ -408,3 +408,42 @@ export async function updateEnvironmentAccess(
     }
   }
 }
+
+/**
+ * Server action to get environment compose
+ */
+export async function getEnvironmentCompose(name: string) {
+  try {
+    const result = await environmentService.getCompose(name)
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Get environment compose error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to update environment compose
+ */
+export async function updateEnvironmentCompose(
+  name: string,
+  compose: import('@kloudlite/types').CompositionSpec | null,
+) {
+  try {
+    const result = await environmentService.updateCompose(name, compose)
+    revalidatePath('/environments')
+    revalidatePath(`/environments/${name}`)
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Update environment compose error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
