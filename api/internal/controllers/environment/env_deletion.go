@@ -30,6 +30,12 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 		// Continue with deletion even if cleanup fails
 	}
 
+	// Clean up compose resources
+	if err := r.cleanupComposeResources(ctx, environment, logger); err != nil {
+		logger.Error("Failed to cleanup compose resources", zap.Error(err))
+		// Continue with deletion even if cleanup fails
+	}
+
 	// SnapshotRefs are automatically deleted via owner references when the environment is deleted
 	// The SnapshotRef controller will remove entries from snapshot.status.referencedBy
 	// Snapshots with no remaining references will be garbage collected by the snapshot controller

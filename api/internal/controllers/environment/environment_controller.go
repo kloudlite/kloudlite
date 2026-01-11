@@ -8,15 +8,18 @@ import (
 	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -146,8 +149,13 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			// Don't fail reconciliation for network policy errors
 		}
 
+		// Reconcile compose deployment if spec.Compose is set
+		if _, err := r.reconcileCompose(ctx, environment, logger); err != nil {
+			logger.Error("Failed to reconcile compose", zap.Error(err))
+			// Don't fail reconciliation for compose errors - status is updated
+		}
+
 		// Update environment status based on activation state
-		// The actual scaling is handled by the composition controller
 		desiredState := environmentsv1.EnvironmentStateInactive
 		if environment.Spec.Activated {
 			desiredState = environmentsv1.EnvironmentStateActive
@@ -293,9 +301,40 @@ func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&environmentsv1.Environment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Namespace{}).           // Watch Namespaces owned by Environments
 		Owns(&networkingv1.NetworkPolicy{}). // Watch NetworkPolicies owned by Environments
+		Watches(
+			&appsv1.Deployment{},
+			handler.EnqueueRequestsFromMapFunc(r.findEnvironmentForComposeResource),
+		).
+		Watches(
+			&corev1.Pod{},
+			handler.EnqueueRequestsFromMapFunc(r.findEnvironmentForComposeResource),
+		).
 		Complete(r)
 	// Note: We don't watch WorkMachine here because Environment references WorkMachine by name
 	// The Environment controller will handle WorkMachine ownership during reconciliation
+}
+
+// findEnvironmentForComposeResource finds the environment that owns a compose resource
+func (r *EnvironmentReconciler) findEnvironmentForComposeResource(ctx context.Context, obj client.Object) []reconcile.Request {
+	// Check if this resource has the docker-composition label
+	labels := obj.GetLabels()
+	if labels == nil {
+		return nil
+	}
+
+	envName, ok := labels[dockerCompositionLabel]
+	if !ok {
+		return nil
+	}
+
+	// Return a reconcile request for the environment
+	return []reconcile.Request{
+		{
+			NamespacedName: types.NamespacedName{
+				Name: envName,
+			},
+		},
+	}
 }
 
 // waitForPodsTerminated waits for all pods in a namespace to be fully deleted

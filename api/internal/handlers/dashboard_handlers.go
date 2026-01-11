@@ -233,13 +233,14 @@ func (h *DashboardHandlers) GetDashboard(c *gin.Context) {
 
 // EnvironmentDetailsResponse represents the environment details response
 type EnvironmentDetailsResponse struct {
-	Environment *environmentsv1.Environment `json:"environment"`
-	Services    []dto.ServiceInfo           `json:"services"`
-	Composition *environmentsv1.Composition `json:"composition,omitempty"`
-	Namespace   string                      `json:"namespace"`
-	EnvHash     string                      `json:"envHash"`
-	Subdomain   string                      `json:"subdomain"`
-	IsActive    bool                        `json:"isActive"`
+	Environment   *environmentsv1.Environment      `json:"environment"`
+	Services      []dto.ServiceInfo                `json:"services"`
+	Compose       *environmentsv1.CompositionSpec  `json:"compose,omitempty"`
+	ComposeStatus *environmentsv1.CompositionStatus `json:"composeStatus,omitempty"`
+	Namespace     string                           `json:"namespace"`
+	EnvHash       string                           `json:"envHash"`
+	Subdomain     string                           `json:"subdomain"`
+	IsActive      bool                             `json:"isActive"`
 }
 
 // GetEnvironmentDetails handles GET /environments/:name/details
@@ -283,46 +284,19 @@ func (h *DashboardHandlers) GetEnvironmentDetails(c *gin.Context) {
 
 	namespace := env.Spec.TargetNamespace
 	response := EnvironmentDetailsResponse{
-		Environment: env,
-		Services:    []dto.ServiceInfo{}, // Initialize to empty array to avoid null in JSON
-		Namespace:   namespace,
-		EnvHash:     env.Status.Hash,
-		Subdomain:   env.Status.Subdomain,
-		IsActive:    env.Status.State == environmentsv1.EnvironmentStateActive,
+		Environment:   env,
+		Services:      []dto.ServiceInfo{}, // Initialize to empty array to avoid null in JSON
+		Compose:       env.Spec.Compose,
+		ComposeStatus: env.Status.ComposeStatus,
+		Namespace:     namespace,
+		EnvHash:       env.Status.Hash,
+		Subdomain:     env.Status.Subdomain,
+		IsActive:      env.Status.State == environmentsv1.EnvironmentStateActive,
 	}
 
-	// Fetch services and composition in parallel
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+	// Fetch services
+	response.Services = h.listServicesInNamespace(ctx, namespace)
 
-	// Fetch services (deployments with kloudlite.io/managed=true label)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		services := h.listServicesInNamespace(ctx, namespace)
-		mu.Lock()
-		response.Services = services
-		mu.Unlock()
-	}()
-
-	// Fetch main composition
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		comp, err := h.compositionRepo.Get(ctx, namespace, "main-composition")
-		if err != nil {
-			// Composition may not exist yet - that's okay
-			if client.IgnoreNotFound(err) != nil {
-				h.logger.Warn("Failed to fetch composition", zap.Error(err), zap.String("namespace", namespace))
-			}
-			return
-		}
-		mu.Lock()
-		response.Composition = comp
-		mu.Unlock()
-	}()
-
-	wg.Wait()
 	c.JSON(http.StatusOK, response)
 }
 

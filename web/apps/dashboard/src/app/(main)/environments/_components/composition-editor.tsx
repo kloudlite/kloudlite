@@ -15,9 +15,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@kloudlite/ui'
-import { createComposition, updateComposition } from '@/app/actions/composition.actions'
+import { updateEnvironmentCompose } from '@/app/actions/environment.actions'
 import { toast } from 'sonner'
-import type { Composition } from '@kloudlite/types'
 import type { Extension } from '@codemirror/state'
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
@@ -33,8 +32,8 @@ const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
 })
 
 interface CompositionEditorProps {
-  composition: Composition | null
-  namespace: string
+  environmentName: string
+  composeContent: string | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -47,15 +46,15 @@ const defaultComposeContent = `services:
 `
 
 export function CompositionEditor({
-  composition,
-  namespace,
+  environmentName,
+  composeContent: initialComposeContent,
   open,
   onOpenChange,
 }: CompositionEditorProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [composeContent, setComposeContent] = useState(
-    composition?.spec.composeContent || defaultComposeContent,
+    initialComposeContent || defaultComposeContent,
   )
   const [yamlExtension, setYamlExtension] = useState<Extension | null>(null)
 
@@ -70,35 +69,21 @@ export function CompositionEditor({
       })
   }, [])
 
-  // Update compose content when composition changes or sheet opens
+  // Update compose content when prop changes or sheet opens
   useEffect(() => {
-    if (open && composition?.spec.composeContent) {
-      setComposeContent(composition.spec.composeContent)
+    if (open && initialComposeContent) {
+      setComposeContent(initialComposeContent)
     }
-  }, [open, composition])
+  }, [open, initialComposeContent])
 
   const handleSave = async () => {
     startTransition(async () => {
-      // Always try to update first, create if it doesn't exist
-      let result = await updateComposition(namespace, 'main-composition', {
-        spec: {
-          displayName: 'Main Composition',
-          composeContent: composeContent,
-          composeFormat: 'v3.8',
-        },
+      // Update compose content in environment
+      const result = await updateEnvironmentCompose(environmentName, {
+        displayName: 'Main Composition',
+        composeContent: composeContent,
+        composeFormat: 'v3.8',
       })
-
-      // If update failed because composition doesn't exist, create it
-      if (!result.success && !composition) {
-        result = await createComposition(namespace, {
-          name: 'main-composition',
-          spec: {
-            displayName: 'Main Composition',
-            composeContent: composeContent,
-            composeFormat: 'v3.8',
-          },
-        })
-      }
 
       if (result.success) {
         toast.success('Composition saved successfully')

@@ -22,6 +22,8 @@ import type {
   GetEnvVarsResponse,
   SetEnvVarResponse,
   DeleteEnvVarResponse,
+  CompositionSpec,
+  CompositionStatus,
 } from '@kloudlite/types'
 
 export class EnvironmentService {
@@ -155,6 +157,26 @@ export class EnvironmentService {
 
   async deleteFile(name: string, filename: string): Promise<DeleteFileResponse> {
     return apiClient.delete(`${this.baseUrl}/${name}/files/${filename}`)
+  }
+
+  // Compose operations (Docker Compose embedded in environment)
+  async getCompose(name: string): Promise<{
+    name: string
+    compose: CompositionSpec | null
+    composeStatus: CompositionStatus | null
+  }> {
+    return apiClient.get(`${this.baseUrl}/${name}/compose`)
+  }
+
+  async updateCompose(
+    name: string,
+    compose: CompositionSpec | null,
+  ): Promise<{
+    message: string
+    compose: CompositionSpec | null
+    composeStatus: CompositionStatus | null
+  }> {
+    return apiClient.put(`${this.baseUrl}/${name}/compose`, { compose })
   }
 
   /**

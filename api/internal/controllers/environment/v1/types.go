@@ -90,6 +90,10 @@ type EnvironmentSpec struct {
 	// This is set from the WorkMachine's node assignment
 	// +optional
 	NodeName string `json:"nodeName,omitempty"`
+
+	// Compose defines the Docker Compose application for this environment
+	// +optional
+	Compose *CompositionSpec `json:"compose,omitempty"`
 }
 
 // ResourceQuotas defines resource quotas for the environment
@@ -227,6 +231,10 @@ type EnvironmentStatus struct {
 	// Used for automatic parent lineage tracking when new snapshots are created
 	// +optional
 	LastRestoredSnapshot *LastRestoredSnapshotInfo `json:"lastRestoredSnapshot,omitempty"`
+
+	// ComposeStatus tracks the status of the compose deployment
+	// +optional
+	ComposeStatus *CompositionStatus `json:"composeStatus,omitempty"`
 }
 
 // LastRestoredSnapshotInfo tracks the last restored snapshot for lineage
