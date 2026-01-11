@@ -39,3 +39,6 @@ rules:
   - apiGroups: ["snapshots.kloudlite.io"]
     resources: ["snapshotstores"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshots.kloudlite.io"]
+    resources: ["snapshotrefs", "snapshotrefs/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
