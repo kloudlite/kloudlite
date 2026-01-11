@@ -2122,7 +2122,9 @@ func (r *SnapshotRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // StorageGarbageCollector periodically cleans up orphaned storage directories
 type StorageGarbageCollector struct {
-	Client      client.Client
+	// Reader is used to read resources directly from API server (bypasses cache)
+	// This avoids needing watch permissions which would require cache sync
+	Reader      client.Reader
 	Logger      *zap2.Logger
 	HostCmdExec CommandExecutor
 	Interval    time.Duration
@@ -2177,7 +2179,7 @@ func (gc *StorageGarbageCollector) cleanupOrphanedEnvironments(ctx context.Conte
 
 	// Get all existing environments
 	envList := &environmentv1.EnvironmentList{}
-	if err := gc.Client.List(ctx, envList); err != nil {
+	if err := gc.Reader.List(ctx, envList); err != nil {
 		gc.Logger.Error("Failed to list environments", zap2.Error(err))
 		return
 	}
@@ -2236,7 +2238,7 @@ func (gc *StorageGarbageCollector) cleanupOrphanedSnapshotCache(ctx context.Cont
 
 	// Get all existing snapshots
 	snapshotList := &snapshotv1.SnapshotList{}
-	if err := gc.Client.List(ctx, snapshotList); err != nil {
+	if err := gc.Reader.List(ctx, snapshotList); err != nil {
 		gc.Logger.Error("Failed to list snapshots", zap2.Error(err))
 		return
 	}
@@ -2377,8 +2379,8 @@ func main() {
 				&snapshotv1.Snapshot{}: {},
 				// Watch SnapshotStores globally (cluster-scoped)
 				&snapshotv1.SnapshotStore{}: {},
-				// Watch Environments globally (cluster-scoped) for garbage collection
-				&environmentv1.Environment{}: {},
+				// Note: Environments are read via GetAPIReader() to bypass cache
+				// This avoids needing watch/list RBAC permissions for the cache
 			},
 			// Cluster-scoped resources (Nodes) are watched globally by default
 		},
@@ -2478,8 +2480,9 @@ func main() {
 	ctx := ctrl.SetupSignalHandler()
 
 	// Start storage garbage collector in a goroutine
+	// Use GetAPIReader() to bypass cache - avoids needing watch permissions
 	storageGC := &StorageGarbageCollector{
-		Client:      mgr.GetClient(),
+		Reader:      mgr.GetAPIReader(),
 		Logger:      zapLogger,
 		HostCmdExec: &HostCommandExecutor{},
 		Interval:    5 * time.Minute, // Run every 5 minutes
