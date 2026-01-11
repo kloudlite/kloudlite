@@ -233,14 +233,14 @@ func (h *DashboardHandlers) GetDashboard(c *gin.Context) {
 
 // EnvironmentDetailsResponse represents the environment details response
 type EnvironmentDetailsResponse struct {
-	Environment   *environmentsv1.Environment      `json:"environment"`
-	Services      []dto.ServiceInfo                `json:"services"`
-	Compose       *environmentsv1.CompositionSpec  `json:"compose,omitempty"`
+	Environment   *environmentsv1.Environment       `json:"environment"`
+	Services      []dto.ServiceInfo                 `json:"services"`
+	Compose       *environmentsv1.CompositionSpec   `json:"compose,omitempty"`
 	ComposeStatus *environmentsv1.CompositionStatus `json:"composeStatus,omitempty"`
-	Namespace     string                           `json:"namespace"`
-	EnvHash       string                           `json:"envHash"`
-	Subdomain     string                           `json:"subdomain"`
-	IsActive      bool                             `json:"isActive"`
+	Namespace     string                            `json:"namespace"`
+	EnvHash       string                            `json:"envHash"`
+	Subdomain     string                            `json:"subdomain"`
+	IsActive      bool                              `json:"isActive"`
 }
 
 // GetEnvironmentDetails handles GET /environments/:name/details
