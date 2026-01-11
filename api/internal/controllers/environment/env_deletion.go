@@ -120,19 +120,24 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 }
 
 // decrementSnapshotRefCount decrements the refCount of all snapshots in the lineage this environment was created from
+// This function is idempotent - it clears the lineage after decrementing to prevent duplicate decrements
+// on subsequent reconciles during deletion.
 func (r *EnvironmentReconciler) decrementSnapshotRefCount(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	// Get lineage from LastRestoredSnapshot status (preferred) or fallback to spec.fromSnapshot
 	var lineage []string
+	var clearLineageFromStatus bool
 
 	if environment.Status.LastRestoredSnapshot != nil && len(environment.Status.LastRestoredSnapshot.Lineage) > 0 {
 		// Use stored lineage from status
 		lineage = environment.Status.LastRestoredSnapshot.Lineage
+		clearLineageFromStatus = true
 		logger.Info("Using stored snapshot lineage for refCount decrement",
 			zap.Strings("lineage", lineage),
 			zap.String("environment", environment.Name))
 	} else if environment.Status.LastRestoredSnapshot != nil && environment.Status.LastRestoredSnapshot.Name != "" {
 		// Fallback for environments created before lineage tracking was added
 		lineage = []string{environment.Status.LastRestoredSnapshot.Name}
+		clearLineageFromStatus = true
 		logger.Info("Using fallback snapshot name for refCount decrement (no lineage stored)",
 			zap.String("snapshot", environment.Status.LastRestoredSnapshot.Name),
 			zap.String("environment", environment.Name))
@@ -143,7 +148,8 @@ func (r *EnvironmentReconciler) decrementSnapshotRefCount(ctx context.Context, e
 			zap.String("snapshot", environment.Spec.FromSnapshot.SnapshotName),
 			zap.String("environment", environment.Name))
 	} else {
-		// Environment was not created from a snapshot
+		// Environment was not created from a snapshot, or lineage was already cleared
+		logger.Debug("No snapshot lineage to decrement", zap.String("environment", environment.Name))
 		return nil
 	}
 
@@ -173,6 +179,22 @@ func (r *EnvironmentReconciler) decrementSnapshotRefCount(ctx context.Context, e
 		logger.Info("Decremented snapshot refCount",
 			zap.String("snapshot", snapshotName),
 			zap.Int32("newRefCount", newRefCount))
+	}
+
+	// Clear the lineage from status to prevent duplicate decrements on subsequent reconciles
+	// This makes the function idempotent
+	if clearLineageFromStatus && environment.Status.LastRestoredSnapshot != nil {
+		environment.Status.LastRestoredSnapshot.Lineage = nil
+		environment.Status.LastRestoredSnapshot.Name = ""
+		if err := r.Status().Update(ctx, environment); err != nil {
+			logger.Warn("Failed to clear lineage from status after decrement",
+				zap.Error(err),
+				zap.String("environment", environment.Name))
+			// Continue - the decrement already happened, this is just cleanup
+		} else {
+			logger.Info("Cleared snapshot lineage from status after refCount decrement",
+				zap.String("environment", environment.Name))
+		}
 	}
 
 	return nil
