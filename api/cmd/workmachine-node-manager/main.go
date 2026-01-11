@@ -2474,6 +2474,9 @@ func main() {
 	zapLogger.Info("All reconcilers configured",
 		zap2.String("nodeName", nodeName))
 
+	// Setup signal handler once
+	ctx := ctrl.SetupSignalHandler()
+
 	// Start storage garbage collector in a goroutine
 	storageGC := &StorageGarbageCollector{
 		Client:      mgr.GetClient(),
@@ -2481,7 +2484,7 @@ func main() {
 		HostCmdExec: &HostCommandExecutor{},
 		Interval:    5 * time.Minute, // Run every 5 minutes
 	}
-	go storageGC.Run(ctrl.SetupSignalHandler())
+	go storageGC.Run(ctx)
 
 	// Start metrics HTTP server in a goroutine
 	metricsServer := &MetricsServer{
@@ -2495,7 +2498,6 @@ func main() {
 		}
 	}()
 
-	ctx := ctrl.SetupSignalHandler()
 	zapLogger.Info("Starting manager")
 	if err := mgr.Start(ctx); err != nil {
 		zapLogger.Fatal("Failed to start manager", zap2.Error(err))
