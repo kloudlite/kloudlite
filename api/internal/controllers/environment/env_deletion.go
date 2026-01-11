@@ -110,4 +110,3 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 
 	return nil
 }
-
