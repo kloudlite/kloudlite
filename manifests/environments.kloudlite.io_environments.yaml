@@ -283,6 +283,14 @@ spec:
                   Updated when a snapshot is restored OR when a new snapshot is created
                   Used for automatic parent lineage tracking when new snapshots are created
                 properties:
+                  lineage:
+                    description: |-
+                      Lineage is the full chain of snapshot ancestors (root first, immediate parent last)
+                      Includes the restored snapshot itself as the last element
+                      All snapshots in the lineage have their refCount incremented when restored
+                    items:
+                      type: string
+                    type: array
                   name:
                     description: Name is the name of the snapshot that was restored
                     type: string

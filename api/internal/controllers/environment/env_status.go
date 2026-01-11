@@ -217,10 +217,11 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 			zap.Strings("lineage", lineage),
 			zap.Int("count", len(lineage)))
 
-		// Increment refCount for all snapshots in the lineage
+		// Create SnapshotRef CRs for each snapshot in the lineage
 		// This protects parent snapshots from garbage collection while this environment exists
-		if err := r.incrementSnapshotLineageRefCounts(ctx, lineage, logger); err != nil {
-			logger.Error("Failed to increment snapshot lineage refCounts", zap.Error(err))
+		// Owner references ensure automatic cleanup when the environment is deleted
+		if err := r.createSnapshotRefsForLineage(ctx, environment, lineage, logger); err != nil {
+			logger.Error("Failed to create SnapshotRefs for lineage", zap.Error(err))
 			// Continue anyway - the environment is already restored
 		}
 
@@ -580,28 +581,54 @@ func (r *EnvironmentReconciler) applySecretsFromYAML(ctx context.Context, encode
 	return count, nil
 }
 
-// incrementSnapshotLineageRefCounts increments refCount for all snapshots in the lineage
-// This ensures parent snapshots are protected from garbage collection while the forked environment exists
-func (r *EnvironmentReconciler) incrementSnapshotLineageRefCounts(ctx context.Context, lineage []string, logger *zap.Logger) error {
+// createSnapshotRefsForLineage creates SnapshotRef CRs for each snapshot in the lineage
+// The SnapshotRef controller will handle adding to snapshot.status.referencedBy
+// Owner references ensure automatic cleanup when the environment is deleted
+func (r *EnvironmentReconciler) createSnapshotRefsForLineage(ctx context.Context, env *environmentsv1.Environment, lineage []string, logger *zap.Logger) error {
 	for _, snapshotName := range lineage {
-		snapshot := &snapshotv1.Snapshot{}
-		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Warn("Snapshot in lineage not found, skipping refCount increment",
+		refName := fmt.Sprintf("%s--%s", env.Name, snapshotName)
+
+		ref := &snapshotv1.SnapshotRef{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      refName,
+				Namespace: env.Spec.TargetNamespace,
+				Labels: map[string]string{
+					"kloudlite.io/environment":        env.Name,
+					"snapshots.kloudlite.io/snapshot": snapshotName,
+				},
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion: "environments.kloudlite.io/v1",
+					Kind:       "Environment",
+					Name:       env.Name,
+					UID:        env.UID,
+					Controller: ptrBool(true),
+				}},
+			},
+			Spec: snapshotv1.SnapshotRefSpec{
+				SnapshotName: snapshotName,
+				Purpose:      "lineage",
+			},
+		}
+
+		if err := r.Create(ctx, ref); err != nil {
+			if apierrors.IsAlreadyExists(err) {
+				logger.Debug("SnapshotRef already exists, skipping",
+					zap.String("ref", refName),
 					zap.String("snapshot", snapshotName))
 				continue
 			}
-			return fmt.Errorf("failed to get snapshot %s: %w", snapshotName, err)
+			return fmt.Errorf("failed to create SnapshotRef for %s: %w", snapshotName, err)
 		}
 
-		snapshot.Status.RefCount++
-		if err := r.Status().Update(ctx, snapshot); err != nil {
-			return fmt.Errorf("failed to update snapshot %s refCount: %w", snapshotName, err)
-		}
-
-		logger.Info("Incremented snapshot refCount",
+		logger.Info("Created SnapshotRef for lineage snapshot",
+			zap.String("ref", refName),
 			zap.String("snapshot", snapshotName),
-			zap.Int32("newRefCount", snapshot.Status.RefCount))
+			zap.String("environment", env.Name))
 	}
 	return nil
+}
+
+// ptrBool returns a pointer to a bool
+func ptrBool(b bool) *bool {
+	return &b
 }

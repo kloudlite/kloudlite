@@ -21,9 +21,9 @@ spec:
     - jsonPath: .status.state
       name: State
       type: string
-    - jsonPath: .status.refCount
-      name: RefCount
-      type: integer
+    - jsonPath: .status.referencedBy
+      name: References
+      type: string
     - jsonPath: .status.sizeHuman
       name: Size
       type: string
@@ -155,13 +155,13 @@ spec:
               message:
                 description: Message provides human-readable status information
                 type: string
-              refCount:
-                default: 0
+              referencedBy:
                 description: |-
-                  RefCount is the number of SnapshotRefs pointing to this snapshot
-                  Snapshot cannot be deleted when refCount > 0
-                format: int32
-                type: integer
+                  ReferencedBy lists the environment/workspace names that reference this snapshot
+                  Snapshot cannot be garbage collected when this list is non-empty
+                items:
+                  type: string
+                type: array
               registry:
                 description: Registry contains OCI registry storage information
                 properties:
@@ -198,8 +198,6 @@ spec:
                 default: Ready
                 description: State is the current state of the snapshot
                 type: string
-            required:
-            - refCount
             type: object
         type: object
     served: true

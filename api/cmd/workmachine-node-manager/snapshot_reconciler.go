@@ -270,7 +270,7 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 			SizeHuman: formatSnapshotSize(sizeBytes),
 			CreatedAt: &now,
 			Lineage:   lineage,
-			RefCount:  1, // Start with refCount=1 so it's not garbage collected immediately
+			// ReferencedBy will be populated by environment controller when environments fork from this snapshot
 			Registry: &snapshotv1.SnapshotRegistryInfo{
 				ImageRef: imageRef,
 				PushedAt: &now,

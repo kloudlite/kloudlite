@@ -87,11 +87,6 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 				Verbs:     []string{"get", "list", "watch"},
 			},
 			{
-				APIGroups: []string{"domains.kloudlite.io"},
-				Resources: []string{"domainrequests"},
-				Verbs:     []string{"get", "list", "watch"},
-			},
-			{
 				APIGroups: []string{"workspaces.kloudlite.io"},
 				Resources: []string{"workspaces"},
 				Verbs:     []string{"get", "list", "watch"},
