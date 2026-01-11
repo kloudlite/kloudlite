@@ -117,6 +117,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
+	snapshotWebhook := webhooks.NewSnapshotWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 
 	// JWT middleware
 	jwtMiddleware := middleware.JWTMiddleware(servicesManager.Auth, logger, cfg.Auth.SkipAuthentication)
@@ -361,6 +362,8 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/validate/secrets", envVarWebhook.ValidateSecret)
 		webhooksGroup.POST("/mutate/services", serviceMutationWebhook.MutateService)
 		webhooksGroup.POST("/mutate/pods", podMutationWebhook.MutatePod)
+		webhooksGroup.POST("/validate/snapshotrequests", snapshotWebhook.ValidateSnapshotRequest)
+		webhooksGroup.POST("/validate/snapshotrestores", snapshotWebhook.ValidateSnapshotRestore)
 	}
 
 	return router

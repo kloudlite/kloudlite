@@ -213,6 +213,42 @@ webhooks:
     sideEffects: None
     failurePolicy: Fail
 
+  # SnapshotRequest validation (prevent concurrent operations on same subvolume)
+  - name: snapshotrequests.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/snapshotrequests
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: ["snapshots.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["snapshotrequests"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
+  # SnapshotRestore validation (prevent concurrent operations on same subvolume)
+  - name: snapshotrestores.kloudlite.io
+    clientConfig:
+      service:
+        name: api-server
+        namespace: kloudlite
+        path: /webhooks/validate/snapshotrestores
+        port: 443
+      caBundle: ""
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: ["snapshots.kloudlite.io"]
+        apiVersions: ["v1"]
+        resources: ["snapshotrestores"]
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+
 ---
 # Mutating Webhook Configurations
 apiVersion: admissionregistration.k8s.io/v1
