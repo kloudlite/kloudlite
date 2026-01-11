@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function GET(request: NextRequest) {
   // Get the server URL from the request
+  // x-forwarded-host is set by reverse proxies and should take precedence
   const protocol = request.headers.get('x-forwarded-proto') || 'https'
-  const host = request.headers.get('host') || request.nextUrl.host
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host
   const serverUrl = `${protocol}://${host}`
   const downloadBaseUrl = `${serverUrl}/api/download/kltun`
 
