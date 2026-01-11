@@ -1438,10 +1438,9 @@ func (s *MetricsServer) collectGPUMetrics() (*GPUMetricsResponse, error) {
 // SnapshotRequestReconciler watches SnapshotRequest resources and processes them on this node
 type SnapshotRequestReconciler struct {
 	client.Client
-	Logger       *zap2.Logger
-	HostCmdExec  CommandExecutor // For btrfs commands that must run on host
-	LocalCmdExec CommandExecutor // For tar/oras commands that run in container
-	NodeName     string
+	Logger      *zap2.Logger
+	HostCmdExec CommandExecutor // For btrfs commands that must run on host
+	NodeName    string
 }
 
 const snapshotStoragePath = "/var/lib/kloudlite/storage/.snapshots"
@@ -1594,9 +1593,7 @@ func (r *SnapshotRequestReconciler) handleCreating(ctx context.Context, req *sna
 func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *snapshotv1.SnapshotRequest, logger *zap2.Logger) (reconcile.Result, error) {
 	// First, check if the local snapshot still exists
 	// If it was deleted, it means a previous reconcile already completed the upload
-	checkScript := fmt.Sprintf("test -d %s && echo exists", req.Status.LocalSnapshotPath)
-	checkOutput, _ := r.LocalCmdExec.Execute(checkScript)
-	if strings.TrimSpace(string(checkOutput)) != "exists" {
+	if _, err := os.Stat(req.Status.LocalSnapshotPath); os.IsNotExist(err) {
 		// Local snapshot was already deleted - check if Snapshot resource exists
 		existingSnapshot := &snapshotv1.Snapshot{}
 		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.SnapshotName}, existingSnapshot); err == nil {
@@ -1636,41 +1633,30 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// Build OCI image reference
-	// No DNS resolution needed since oras runs in container which can resolve K8s DNS
+	// Build image reference for the registry
 	imageRef := fmt.Sprintf("%s/%s/%s:%s",
 		store.Spec.Registry.Endpoint,
 		store.Spec.Registry.RepositoryPrefix,
 		req.Spec.Owner,
 		req.Spec.SnapshotName)
 
-	// Use tar + oras to push snapshot to registry
-	// oras is installed in the container image via Dockerfile
-	// This runs in the container (not via nsenter) since oras is in the container
-	pushScript := fmt.Sprintf(`
-		set -e
-		cd %s
-		tar -cf - . | gzip > /tmp/%s.tar.gz
-		oras push --plain-http --disable-path-validation %s /tmp/%s.tar.gz:application/vnd.kloudlite.snapshot.v1.tar+gzip
-		rm -f /tmp/%s.tar.gz
-	`, req.Status.LocalSnapshotPath, req.Spec.SnapshotName, imageRef, req.Spec.SnapshotName, req.Spec.SnapshotName)
-
-	output, err := r.LocalCmdExec.Execute(pushScript)
-	if err != nil {
+	// Push snapshot to registry using embedded oras library
+	logger.Info("Pushing snapshot to registry", zap2.String("imageRef", imageRef))
+	if err := orasPushSnapshot(ctx, req.Status.LocalSnapshotPath, imageRef, true /* plainHTTP */); err != nil {
 		logger.Error("Failed to push snapshot to registry",
 			zap2.String("imageRef", imageRef),
-			zap2.Error(err),
-			zap2.String("output", string(output)))
+			zap2.Error(err))
 		return r.setFailed(ctx, req, fmt.Sprintf("Failed to push to registry: %v", err), logger)
 	}
 
 	// Get snapshot size
 	var sizeBytes int64
-	sizeScript := fmt.Sprintf("du -sb %s | cut -f1", req.Status.LocalSnapshotPath)
-	sizeOutput, err := r.LocalCmdExec.Execute(sizeScript)
-	if err == nil {
-		fmt.Sscanf(strings.TrimSpace(string(sizeOutput)), "%d", &sizeBytes)
-	}
+	filepath.Walk(req.Status.LocalSnapshotPath, func(_ string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() {
+			sizeBytes += info.Size()
+		}
+		return nil
+	})
 
 	// Build lineage from parent
 	var lineage []string
@@ -1803,10 +1789,9 @@ func (r *SnapshotRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // SnapshotRestoreReconciler handles snapshot restore operations on this node
 type SnapshotRestoreReconciler struct {
 	client.Client
-	Logger       *zap2.Logger
-	HostCmdExec  CommandExecutor // For btrfs commands that must run on host
-	LocalCmdExec CommandExecutor // For tar/oras commands that run in container
-	NodeName     string
+	Logger      *zap2.Logger
+	HostCmdExec CommandExecutor // For btrfs commands that must run on host
+	NodeName    string
 }
 
 func (r *SnapshotRestoreReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -1901,9 +1886,7 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 	}
 
 	// If cache exists but is not a subvolume (old format), remove it
-	checkDirScript := fmt.Sprintf("test -d %s && echo 'exists'", cachePath)
-	dirOutput, _ := r.LocalCmdExec.Execute(checkDirScript)
-	if strings.Contains(string(dirOutput), "exists") {
+	if info, err := os.Stat(cachePath); err == nil && info.IsDir() {
 		logger.Info("Cache exists but is not a btrfs subvolume, removing old cache",
 			zap2.String("cachePath", cachePath))
 		cleanupScript := fmt.Sprintf("rm -rf %s", cachePath)
@@ -1947,36 +1930,19 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 
 	// Create a temp directory for extraction
 	tempExtractPath := fmt.Sprintf("%s-extracting", cachePath)
-	mkdirScript := fmt.Sprintf("mkdir -p %s", tempExtractPath)
-	if _, err := r.LocalCmdExec.Execute(mkdirScript); err != nil {
+	if err := os.MkdirAll(tempExtractPath, 0755); err != nil {
 		logger.Warn("Failed to create temp extract directory", zap2.Error(err))
 	}
 
-	// Pull snapshot from registry using oras and extract to temp directory
+	// Pull snapshot from registry using embedded oras library
 	imageRef := snapshot.Status.Registry.ImageRef
-	pullScript := fmt.Sprintf(`
-		set -e
-		cd %s
-		oras pull --plain-http --allow-path-traversal %s
-		# Find and extract the tar.gz file (could be in /tmp or current dir)
-		for f in *.tar.gz /tmp/*.tar.gz; do
-			if [ -f "$f" ]; then
-				tar -xzf "$f" -C %s
-				rm -f "$f"
-				break
-			fi
-		done
-	`, tempExtractPath, imageRef, tempExtractPath)
-
-	output, err := r.LocalCmdExec.Execute(pullScript)
-	if err != nil {
+	logger.Info("Pulling snapshot from registry", zap2.String("imageRef", imageRef))
+	if err := orasPullSnapshot(ctx, imageRef, tempExtractPath, true /* plainHTTP */); err != nil {
 		logger.Error("Failed to pull snapshot from registry",
 			zap2.String("imageRef", imageRef),
-			zap2.Error(err),
-			zap2.String("output", string(output)))
+			zap2.Error(err))
 		// Clean up failed temp directory
-		cleanupScript := fmt.Sprintf("rm -rf %s", tempExtractPath)
-		r.LocalCmdExec.Execute(cleanupScript)
+		os.RemoveAll(tempExtractPath)
 		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Failed to pull from registry: %v", err), logger)
 	}
 
@@ -2449,11 +2415,10 @@ func main() {
 
 	// Setup snapshot request reconciler (handles btrfs snapshots on this node)
 	snapshotRequestReconciler := &SnapshotRequestReconciler{
-		Client:       mgr.GetClient(),
-		Logger:       zapLogger,
-		HostCmdExec:  &HostCommandExecutor{}, // For btrfs commands on host
-		LocalCmdExec: &RealCommandExecutor{}, // For tar/oras in container
-		NodeName:     nodeName,
+		Client:      mgr.GetClient(),
+		Logger:      zapLogger,
+		HostCmdExec: &HostCommandExecutor{}, // For btrfs commands on host
+		NodeName:    nodeName,
 	}
 
 	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
@@ -2462,11 +2427,10 @@ func main() {
 
 	// Setup snapshot restore reconciler (handles btrfs restore on this node)
 	snapshotRestoreReconciler := &SnapshotRestoreReconciler{
-		Client:       mgr.GetClient(),
-		Logger:       zapLogger,
-		HostCmdExec:  &HostCommandExecutor{}, // For btrfs commands on host
-		LocalCmdExec: &RealCommandExecutor{}, // For tar/oras in container
-		NodeName:     nodeName,
+		Client:      mgr.GetClient(),
+		Logger:      zapLogger,
+		HostCmdExec: &HostCommandExecutor{}, // For btrfs commands on host
+		NodeName:    nodeName,
 	}
 
 	if err := snapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
