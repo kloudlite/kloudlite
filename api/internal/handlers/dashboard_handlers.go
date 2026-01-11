@@ -30,7 +30,6 @@ type DashboardHandlers struct {
 	userPreferencesRepo repository.UserPreferencesRepository
 	workspaceRepo       repository.WorkspaceRepository
 	environmentRepo     repository.EnvironmentRepository
-	compositionRepo     repository.CompositionRepository
 	k8sClient           client.Client
 	logger              *zap.Logger
 }
@@ -42,7 +41,6 @@ func NewDashboardHandlers(
 	userPreferencesRepo repository.UserPreferencesRepository,
 	workspaceRepo repository.WorkspaceRepository,
 	environmentRepo repository.EnvironmentRepository,
-	compositionRepo repository.CompositionRepository,
 	k8sClient client.Client,
 	logger *zap.Logger,
 ) *DashboardHandlers {
@@ -52,7 +50,6 @@ func NewDashboardHandlers(
 		userPreferencesRepo: userPreferencesRepo,
 		workspaceRepo:       workspaceRepo,
 		environmentRepo:     environmentRepo,
-		compositionRepo:     compositionRepo,
 		k8sClient:           k8sClient,
 		logger:              logger,
 	}

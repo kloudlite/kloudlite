@@ -62,11 +62,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
-	compositionHandlers := handlers.NewCompositionHandlers(
-		servicesManager.RepositoryManager.Compositions,
-		servicesManager.RepositoryManager.K8sClient,
-		logger,
-	)
 	serviceHandlers := handlers.NewServiceHandlers(
 		servicesManager.RepositoryManager.K8sClient,
 		servicesManager.RepositoryManager.Clientset,
@@ -92,7 +87,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		servicesManager.RepositoryManager.UserPreferences,
 		servicesManager.RepositoryManager.Workspaces,
 		servicesManager.RepositoryManager.Environments,
-		servicesManager.RepositoryManager.Compositions,
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)
@@ -120,7 +114,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	machineTypeWebhook := webhooks.NewMachineTypeGinWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	workMachineWebhook := webhooks.NewWorkMachineWebhook(appLogger, servicesManager.RepositoryManager.K8sClient, cfg)
 	workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
-	compositionWebhook := webhooks.NewCompositionWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
 	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, servicesManager.RepositoryManager.K8sClient)
@@ -306,17 +299,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				workspaces.GET("/:name/status-ws", workspaceHandlers.GetWorkspaceStatusWebSocket)
 			}
 
-			// Composition routes (namespaced)
-			compositions := protected.Group("/namespaces/:namespace/compositions")
-			{
-				compositions.POST("", compositionHandlers.CreateComposition)
-				compositions.GET("/:name", compositionHandlers.GetComposition)
-				compositions.PUT("/:name", compositionHandlers.UpdateComposition)
-				compositions.DELETE("/:name", compositionHandlers.DeleteComposition)
-				compositions.GET("", compositionHandlers.ListCompositions)
-				compositions.GET("/:name/status", compositionHandlers.GetCompositionStatus)
-			}
-
 			// Service routes (namespaced, read-only)
 			services := protected.Group("/namespaces/:namespace/services")
 			{
@@ -375,8 +357,6 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/mutate/workmachines", workMachineWebhook.MutateWorkMachine)
 		webhooksGroup.POST("/validate/workspaces", workspaceWebhook.ValidateWorkspace)
 		webhooksGroup.POST("/mutate/workspaces", workspaceWebhook.MutateWorkspace)
-		webhooksGroup.POST("/validate/compositions", compositionWebhook.ValidateComposition)
-		webhooksGroup.POST("/mutate/compositions", compositionWebhook.MutateComposition)
 		webhooksGroup.POST("/validate/configmaps", envVarWebhook.ValidateConfigMap)
 		webhooksGroup.POST("/validate/secrets", envVarWebhook.ValidateSecret)
 		webhooksGroup.POST("/mutate/services", serviceMutationWebhook.MutateService)
