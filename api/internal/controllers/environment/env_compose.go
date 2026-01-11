@@ -287,9 +287,15 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("Creating resource",
-				zap.String("kind", resource.GetObjectKind().GroupVersionKind().Kind),
-				zap.String("name", resource.GetName()))
-			return r.Create(ctx, resource)
+				zap.String("name", resource.GetName()),
+				zap.String("namespace", resource.GetNamespace()))
+			if createErr := r.Create(ctx, resource); createErr != nil {
+				logger.Error("Failed to create resource",
+					zap.String("name", resource.GetName()),
+					zap.Error(createErr))
+				return createErr
+			}
+			return nil
 		}
 		return err
 	}
