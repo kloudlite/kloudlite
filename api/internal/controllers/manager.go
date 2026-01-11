@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-logr/zapr"
 	"github.com/kloudlite/kloudlite/api/internal/config"
-	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/environment"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
@@ -119,17 +118,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 
 	if err := workmachine.Register(mgr); err != nil {
 		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
-	}
-
-	// Setup Composition controller
-	compositionReconciler := &composition.CompositionReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Logger: logger.With(zap.String("controller", "composition")),
-	}
-
-	if err = compositionReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create Composition controller: %w", err)
 	}
 
 	// Setup Workspace controller

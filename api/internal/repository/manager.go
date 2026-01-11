@@ -23,7 +23,6 @@ type Manager struct {
 	MachineTypes    MachineTypeRepository
 	WorkMachines    WorkMachineRepository
 	Workspaces      WorkspaceRepository
-	Compositions    CompositionRepository
 	Snapshots       SnapshotRepository
 }
 
@@ -71,7 +70,6 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 	machineTypes := NewMachineTypeRepository(k8sClient)
 	workMachines := NewWorkMachineRepository(k8sClient)
 	workspaces := NewWorkspaceRepository(k8sClient)
-	compositions := NewCompositionRepository(k8sClient)
 	snapshots := NewSnapshotRepository(k8sClient)
 
 	return &Manager{
@@ -83,7 +81,6 @@ func NewManager(ctx context.Context, opts *ManagerOptions) (*Manager, error) {
 		MachineTypes:    machineTypes,
 		WorkMachines:    workMachines,
 		Workspaces:      workspaces,
-		Compositions:    compositions,
 		Snapshots:       snapshots,
 	}, nil
 }
