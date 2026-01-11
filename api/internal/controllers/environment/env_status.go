@@ -211,9 +211,22 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 			// Don't fail the restore, just log the warning
 		}
 
+		// Build full lineage: snapshot's ancestors + the snapshot itself
+		lineage := append(snapshot.Status.Lineage, snapshotName)
+		logger.Info("Built snapshot lineage for forked environment",
+			zap.Strings("lineage", lineage),
+			zap.Int("count", len(lineage)))
+
+		// Increment refCount for all snapshots in the lineage
+		// This protects parent snapshots from garbage collection while this environment exists
+		if err := r.incrementSnapshotLineageRefCounts(ctx, lineage, logger); err != nil {
+			logger.Error("Failed to increment snapshot lineage refCounts", zap.Error(err))
+			// Continue anyway - the environment is already restored
+		}
+
 		now := metav1.Now()
 
-		// Update status with completed restore and LastRestoredSnapshot
+		// Update status with completed restore, LastRestoredSnapshot, and full lineage
 		if err := statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
 			environment.Status.SnapshotRestoreStatus = &environmentsv1.SnapshotRestoreStatus{
 				Phase:          environmentsv1.SnapshotRestorePhaseCompleted,
@@ -224,6 +237,7 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 			environment.Status.LastRestoredSnapshot = &environmentsv1.LastRestoredSnapshotInfo{
 				Name:       snapshotName,
 				RestoredAt: now,
+				Lineage:    lineage,
 			}
 			return nil
 		}, logger); err != nil {
@@ -564,4 +578,30 @@ func (r *EnvironmentReconciler) applySecretsFromYAML(ctx context.Context, encode
 	}
 
 	return count, nil
+}
+
+// incrementSnapshotLineageRefCounts increments refCount for all snapshots in the lineage
+// This ensures parent snapshots are protected from garbage collection while the forked environment exists
+func (r *EnvironmentReconciler) incrementSnapshotLineageRefCounts(ctx context.Context, lineage []string, logger *zap.Logger) error {
+	for _, snapshotName := range lineage {
+		snapshot := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Warn("Snapshot in lineage not found, skipping refCount increment",
+					zap.String("snapshot", snapshotName))
+				continue
+			}
+			return fmt.Errorf("failed to get snapshot %s: %w", snapshotName, err)
+		}
+
+		snapshot.Status.RefCount++
+		if err := r.Status().Update(ctx, snapshot); err != nil {
+			return fmt.Errorf("failed to update snapshot %s refCount: %w", snapshotName, err)
+		}
+
+		logger.Info("Incremented snapshot refCount",
+			zap.String("snapshot", snapshotName),
+			zap.Int32("newRefCount", snapshot.Status.RefCount))
+	}
+	return nil
 }

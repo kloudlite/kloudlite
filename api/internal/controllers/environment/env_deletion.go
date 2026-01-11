@@ -119,43 +119,61 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 	return nil
 }
 
-// decrementSnapshotRefCount decrements the refCount of the snapshot this environment was created from
+// decrementSnapshotRefCount decrements the refCount of all snapshots in the lineage this environment was created from
 func (r *EnvironmentReconciler) decrementSnapshotRefCount(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
-	// Check if environment was created from a snapshot
-	if environment.Spec.FromSnapshot == nil || environment.Spec.FromSnapshot.SnapshotName == "" {
+	// Get lineage from LastRestoredSnapshot status (preferred) or fallback to spec.fromSnapshot
+	var lineage []string
+
+	if environment.Status.LastRestoredSnapshot != nil && len(environment.Status.LastRestoredSnapshot.Lineage) > 0 {
+		// Use stored lineage from status
+		lineage = environment.Status.LastRestoredSnapshot.Lineage
+		logger.Info("Using stored snapshot lineage for refCount decrement",
+			zap.Strings("lineage", lineage),
+			zap.String("environment", environment.Name))
+	} else if environment.Status.LastRestoredSnapshot != nil && environment.Status.LastRestoredSnapshot.Name != "" {
+		// Fallback for environments created before lineage tracking was added
+		lineage = []string{environment.Status.LastRestoredSnapshot.Name}
+		logger.Info("Using fallback snapshot name for refCount decrement (no lineage stored)",
+			zap.String("snapshot", environment.Status.LastRestoredSnapshot.Name),
+			zap.String("environment", environment.Name))
+	} else if environment.Spec.FromSnapshot != nil && environment.Spec.FromSnapshot.SnapshotName != "" {
+		// Legacy fallback: use spec.fromSnapshot (should rarely happen as it's cleared after restore)
+		lineage = []string{environment.Spec.FromSnapshot.SnapshotName}
+		logger.Info("Using legacy spec.fromSnapshot for refCount decrement",
+			zap.String("snapshot", environment.Spec.FromSnapshot.SnapshotName),
+			zap.String("environment", environment.Name))
+	} else {
+		// Environment was not created from a snapshot
 		return nil
 	}
 
-	snapshotName := environment.Spec.FromSnapshot.SnapshotName
-	logger.Info("Decrementing snapshot refCount",
-		zap.String("snapshot", snapshotName),
-		zap.String("environment", environment.Name))
-
-	// Get the snapshot
-	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			return fmt.Errorf("failed to get snapshot %s: %w", snapshotName, err)
+	// Decrement refCount for all snapshots in lineage
+	for _, snapshotName := range lineage {
+		snapshot := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				return fmt.Errorf("failed to get snapshot %s: %w", snapshotName, err)
+			}
+			// Snapshot doesn't exist, nothing to decrement
+			logger.Info("Snapshot not found, skipping refCount decrement", zap.String("snapshot", snapshotName))
+			continue
 		}
-		// Snapshot doesn't exist, nothing to decrement
-		logger.Info("Snapshot not found, skipping refCount decrement", zap.String("snapshot", snapshotName))
-		return nil
-	}
 
-	// Decrement refCount (minimum 0)
-	newRefCount := snapshot.Status.RefCount - 1
-	if newRefCount < 0 {
-		newRefCount = 0
-	}
+		// Decrement refCount (minimum 0)
+		newRefCount := snapshot.Status.RefCount - 1
+		if newRefCount < 0 {
+			newRefCount = 0
+		}
 
-	snapshot.Status.RefCount = newRefCount
-	if err := r.Status().Update(ctx, snapshot); err != nil {
-		return fmt.Errorf("failed to update snapshot refCount: %w", err)
-	}
+		snapshot.Status.RefCount = newRefCount
+		if err := r.Status().Update(ctx, snapshot); err != nil {
+			return fmt.Errorf("failed to update snapshot %s refCount: %w", snapshotName, err)
+		}
 
-	logger.Info("Decremented snapshot refCount",
-		zap.String("snapshot", snapshotName),
-		zap.Int32("newRefCount", newRefCount))
+		logger.Info("Decremented snapshot refCount",
+			zap.String("snapshot", snapshotName),
+			zap.Int32("newRefCount", newRefCount))
+	}
 
 	return nil
 }

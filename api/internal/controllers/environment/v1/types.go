@@ -238,6 +238,12 @@ type LastRestoredSnapshotInfo struct {
 	// RestoredAt is when the snapshot was restored
 	// +kubebuilder:validation:Required
 	RestoredAt metav1.Time `json:"restoredAt"`
+
+	// Lineage is the full chain of snapshot ancestors (root first, immediate parent last)
+	// Includes the restored snapshot itself as the last element
+	// All snapshots in the lineage have their refCount incremented when restored
+	// +optional
+	Lineage []string `json:"lineage,omitempty"`
 }
 
 // EnvironmentState represents the state of an environment
