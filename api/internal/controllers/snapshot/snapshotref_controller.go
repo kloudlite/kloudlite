@@ -3,6 +3,7 @@ package snapshot
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"go.uber.org/zap"
@@ -55,7 +56,7 @@ func (r *SnapshotRefReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// If not bound, bind to snapshot (increment refCount)
+	// If not bound, bind to snapshot (add to ReferencedBy)
 	if !ref.Status.Bound {
 		return r.bindToSnapshot(ctx, ref, logger)
 	}
@@ -64,7 +65,7 @@ func (r *SnapshotRefReconciler) Reconcile(ctx context.Context, req reconcile.Req
 	return r.updateSnapshotState(ctx, ref, logger)
 }
 
-// bindToSnapshot increments the refCount on the referenced Snapshot
+// bindToSnapshot adds the ref to ReferencedBy on the referenced Snapshot
 func (r *SnapshotRefReconciler) bindToSnapshot(ctx context.Context, ref *snapshotv1.SnapshotRef, logger *zap.Logger) (reconcile.Result, error) {
 	snapshotName := ref.Spec.SnapshotName
 
@@ -85,19 +86,22 @@ func (r *SnapshotRefReconciler) bindToSnapshot(ctx context.Context, ref *snapsho
 		return reconcile.Result{}, err
 	}
 
-	// Increment refCount
-	snapshot.Status.RefCount++
-	if err := r.Status().Update(ctx, snapshot); err != nil {
-		if apierrors.IsConflict(err) {
-			return reconcile.Result{Requeue: true}, nil
+	// Add ref to ReferencedBy (use ref: prefix to distinguish from environment names)
+	refId := fmt.Sprintf("ref:%s/%s", ref.Namespace, ref.Name)
+	if !slices.Contains(snapshot.Status.ReferencedBy, refId) {
+		snapshot.Status.ReferencedBy = append(snapshot.Status.ReferencedBy, refId)
+		if err := r.Status().Update(ctx, snapshot); err != nil {
+			if apierrors.IsConflict(err) {
+				return reconcile.Result{Requeue: true}, nil
+			}
+			logger.Error("Failed to add ref to ReferencedBy", zap.Error(err))
+			return reconcile.Result{}, err
 		}
-		logger.Error("Failed to increment refCount", zap.Error(err))
-		return reconcile.Result{}, err
 	}
 
-	logger.Info("Bound to snapshot, incremented refCount",
+	logger.Info("Bound to snapshot, added to ReferencedBy",
 		zap.String("snapshot", snapshotName),
-		zap.Int32("newRefCount", snapshot.Status.RefCount))
+		zap.Strings("referencedBy", snapshot.Status.ReferencedBy))
 
 	// Update ref status
 	now := metav1.Now()
@@ -117,7 +121,7 @@ func (r *SnapshotRefReconciler) updateSnapshotState(ctx context.Context, ref *sn
 	snapshot := &snapshotv1.Snapshot{}
 	if err := r.Get(ctx, client.ObjectKey{Name: ref.Spec.SnapshotName}, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
-			// Snapshot was deleted - this shouldn't happen if refCount is managed correctly
+			// Snapshot was deleted - this shouldn't happen if references are managed correctly
 			logger.Warn("Snapshot was deleted while ref exists")
 			ref.Status.SnapshotState = ""
 			if err := r.Status().Update(ctx, ref); err != nil {
@@ -143,36 +147,42 @@ func (r *SnapshotRefReconciler) updateSnapshotState(ctx context.Context, ref *sn
 	return reconcile.Result{}, nil
 }
 
-// handleDeletion decrements the refCount on the referenced Snapshot
+// handleDeletion removes the ref from ReferencedBy on the referenced Snapshot
 func (r *SnapshotRefReconciler) handleDeletion(ctx context.Context, ref *snapshotv1.SnapshotRef, logger *zap.Logger) (reconcile.Result, error) {
 	if !controllerutil.ContainsFinalizer(ref, snapshotRefFinalizer) {
 		return reconcile.Result{}, nil
 	}
 
-	// Only decrement if we were bound
+	// Only remove reference if we were bound
 	if ref.Status.Bound {
 		snapshot := &snapshotv1.Snapshot{}
 		if err := r.Get(ctx, client.ObjectKey{Name: ref.Spec.SnapshotName}, snapshot); err != nil {
 			if !apierrors.IsNotFound(err) {
-				logger.Error("Failed to get snapshot for refCount decrement", zap.Error(err))
+				logger.Error("Failed to get snapshot for reference removal", zap.Error(err))
 				return reconcile.Result{}, err
 			}
 			// Snapshot already deleted, just remove finalizer
-			logger.Info("Snapshot already deleted, skipping refCount decrement")
+			logger.Info("Snapshot already deleted, skipping reference removal")
 		} else {
-			// Decrement refCount
-			if snapshot.Status.RefCount > 0 {
-				snapshot.Status.RefCount--
+			// Remove ref from ReferencedBy
+			refId := fmt.Sprintf("ref:%s/%s", ref.Namespace, ref.Name)
+			originalLen := len(snapshot.Status.ReferencedBy)
+			snapshot.Status.ReferencedBy = slices.DeleteFunc(snapshot.Status.ReferencedBy, func(s string) bool {
+				return s == refId
+			})
+
+			// Only update if we actually removed something
+			if len(snapshot.Status.ReferencedBy) < originalLen {
 				if err := r.Status().Update(ctx, snapshot); err != nil {
 					if apierrors.IsConflict(err) {
 						return reconcile.Result{Requeue: true}, nil
 					}
-					logger.Error("Failed to decrement refCount", zap.Error(err))
+					logger.Error("Failed to remove ref from ReferencedBy", zap.Error(err))
 					return reconcile.Result{}, err
 				}
-				logger.Info("Decremented refCount on snapshot",
+				logger.Info("Removed ref from snapshot ReferencedBy",
 					zap.String("snapshot", ref.Spec.SnapshotName),
-					zap.Int32("newRefCount", snapshot.Status.RefCount))
+					zap.Strings("referencedBy", snapshot.Status.ReferencedBy))
 			}
 		}
 	}

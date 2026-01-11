@@ -56,16 +56,17 @@ type CreateSnapshotRequest struct {
 
 // SnapshotResponse is the API response for a snapshot
 type SnapshotResponse struct {
-	Name        string                           `json:"name"`
-	Description string                           `json:"description,omitempty"`
-	State       snapshotv1.SnapshotState         `json:"state"`
-	SizeHuman   string                           `json:"sizeHuman,omitempty"`
-	SizeBytes   int64                            `json:"sizeBytes,omitempty"`
-	CreatedAt   *metav1.Time                     `json:"createdAt,omitempty"`
-	Registry    *snapshotv1.SnapshotRegistryInfo `json:"registry,omitempty"`
-	Parent      string                           `json:"parent,omitempty"`
-	RefCount    int32                            `json:"refCount"`
-	Message     string                           `json:"message,omitempty"`
+	Name         string                           `json:"name"`
+	Description  string                           `json:"description,omitempty"`
+	State        snapshotv1.SnapshotState         `json:"state"`
+	SizeHuman    string                           `json:"sizeHuman,omitempty"`
+	SizeBytes    int64                            `json:"sizeBytes,omitempty"`
+	CreatedAt    *metav1.Time                     `json:"createdAt,omitempty"`
+	Registry     *snapshotv1.SnapshotRegistryInfo `json:"registry,omitempty"`
+	Parent       string                           `json:"parent,omitempty"`
+	ReferencedBy []string                         `json:"referencedBy,omitempty"`
+	Message      string                           `json:"message,omitempty"`
+	IsLineage    bool                             `json:"isLineage,omitempty"`
 }
 
 // SnapshotRequestResponse is the API response for a snapshot request
@@ -95,16 +96,16 @@ func (h *SnapshotHandlers) getNodeForWorkMachine(ctx context.Context, workmachin
 
 func snapshotToResponse(s *snapshotv1.Snapshot) SnapshotResponse {
 	return SnapshotResponse{
-		Name:        s.Name,
-		Description: s.Spec.Description,
-		State:       s.Status.State,
-		SizeHuman:   s.Status.SizeHuman,
-		SizeBytes:   s.Status.SizeBytes,
-		CreatedAt:   s.Status.CreatedAt,
-		Registry:    s.Status.Registry,
-		Parent:      s.Spec.ParentSnapshot,
-		RefCount:    s.Status.RefCount,
-		Message:     s.Status.Message,
+		Name:         s.Name,
+		Description:  s.Spec.Description,
+		State:        s.Status.State,
+		SizeHuman:    s.Status.SizeHuman,
+		SizeBytes:    s.Status.SizeBytes,
+		CreatedAt:    s.Status.CreatedAt,
+		Registry:     s.Status.Registry,
+		Parent:       s.Spec.ParentSnapshot,
+		ReferencedBy: s.Status.ReferencedBy,
+		Message:      s.Status.Message,
 	}
 }
 
@@ -249,6 +250,35 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		return
 	}
 
+	// Create SnapshotRef to track ownership (prevents immediate GC when snapshot is ready)
+	// Owner reference ensures automatic cleanup when environment is deleted
+	snapshotRef := &snapshotv1.SnapshotRef{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s--%s", envName, snapshotName),
+			Namespace: env.Spec.TargetNamespace,
+			Labels: map[string]string{
+				"kloudlite.io/environment":        envName,
+				"snapshots.kloudlite.io/snapshot": snapshotName,
+			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: "environments.kloudlite.io/v1",
+				Kind:       "Environment",
+				Name:       env.Name,
+				UID:        env.UID,
+				Controller: boolPtr(true),
+			}},
+		},
+		Spec: snapshotv1.SnapshotRefSpec{
+			SnapshotName: snapshotName,
+			Purpose:      "owned",
+		},
+	}
+
+	if err := h.k8sClient.Create(c.Request.Context(), snapshotRef); err != nil {
+		h.logger.Warn("Failed to create SnapshotRef for snapshot", zap.String("snapshot", snapshotName), zap.Error(err))
+		// Continue - the snapshot was created, SnapshotRef is for GC protection
+	}
+
 	h.logger.Info("Created environment snapshot request",
 		zap.String("request", requestName),
 		zap.String("snapshot", snapshotName),
@@ -262,24 +292,52 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 	})
 }
 
+// boolPtr returns a pointer to a bool
+func boolPtr(b bool) *bool {
+	return &b
+}
+
 // ListEnvironmentSnapshots lists all snapshots for an environment
+// Queries via SnapshotRef labels - both owned and lineage snapshots are tracked via SnapshotRefs
 // GET /api/v1/environments/:name/snapshots
 func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 	envName := c.Param("name")
 
-	snapshots, err := h.snapshotRepo.ListByEnvironment(c.Request.Context(), envName)
-	if err != nil {
-		h.logger.Error("Failed to list snapshots", zap.String("environment", envName), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list snapshots"})
-		return
-	}
-
-	// Get environment to find the target namespace for SnapshotRequests
+	// Get environment to find the target namespace
 	env, err := h.environmentRepo.Get(c.Request.Context(), envName)
 	if err != nil {
 		h.logger.Error("Failed to get environment", zap.String("name", envName), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get environment"})
 		return
+	}
+
+	// Query ALL SnapshotRefs for this environment (both owned and lineage)
+	snapshotRefs := &snapshotv1.SnapshotRefList{}
+	if err := h.k8sClient.List(c.Request.Context(), snapshotRefs, client.MatchingLabels{
+		"kloudlite.io/environment": envName,
+	}); err != nil {
+		h.logger.Error("Failed to list snapshot refs", zap.String("environment", envName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list snapshot refs"})
+		return
+	}
+
+	// Build a map of unique snapshots from SnapshotRefs
+	snapshotMap := make(map[string]*snapshotv1.Snapshot)
+	purposeMap := make(map[string]string) // Track purpose (owned vs lineage)
+
+	for _, ref := range snapshotRefs.Items {
+		snapshotName := ref.Spec.SnapshotName
+		if _, exists := snapshotMap[snapshotName]; exists {
+			continue
+		}
+
+		snapshot, err := h.snapshotRepo.Get(c.Request.Context(), snapshotName)
+		if err != nil {
+			h.logger.Warn("Failed to get snapshot from ref", zap.String("snapshot", snapshotName), zap.Error(err))
+			continue
+		}
+		snapshotMap[snapshotName] = snapshot
+		purposeMap[snapshotName] = ref.Spec.Purpose
 	}
 
 	// List SnapshotRequests in the environment's namespace to get progress for pending snapshots
@@ -296,9 +354,11 @@ func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 		requestBySnapshot[req.Spec.SnapshotName] = req
 	}
 
-	response := make([]SnapshotResponse, len(snapshots.Items))
-	for i, s := range snapshots.Items {
-		resp := snapshotToResponse(&s)
+	// Convert map to response slice
+	response := make([]SnapshotResponse, 0, len(snapshotMap))
+	for name, s := range snapshotMap {
+		resp := snapshotToResponse(s)
+		resp.IsLineage = purposeMap[name] == "lineage"
 
 		// If snapshot has no state, check the corresponding SnapshotRequest for progress
 		if resp.State == "" {
@@ -324,7 +384,7 @@ func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 			}
 		}
 
-		response[i] = resp
+		response = append(response, resp)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -453,6 +513,36 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 		_ = h.k8sClient.Delete(c.Request.Context(), snapshot)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot request: %v", err)})
 		return
+	}
+
+	// Create SnapshotRef to track ownership (prevents immediate GC when snapshot is ready)
+	// Owner reference ensures automatic cleanup when workspace is deleted
+	snapshotRef := &snapshotv1.SnapshotRef{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s--%s", workspaceLabel, snapshotName),
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kloudlite.io/workspace":           workspaceLabel,
+				"snapshots.kloudlite.io/snapshot":  snapshotName,
+				"snapshots.kloudlite.io/namespace": namespace,
+			},
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: "workspaces.kloudlite.io/v1",
+				Kind:       "Workspace",
+				Name:       ws.Name,
+				UID:        ws.UID,
+				Controller: boolPtr(true),
+			}},
+		},
+		Spec: snapshotv1.SnapshotRefSpec{
+			SnapshotName: snapshotName,
+			Purpose:      "owned",
+		},
+	}
+
+	if err := h.k8sClient.Create(c.Request.Context(), snapshotRef); err != nil {
+		h.logger.Warn("Failed to create SnapshotRef for snapshot", zap.String("snapshot", snapshotName), zap.Error(err))
+		// Continue - the snapshot was created, SnapshotRef is for GC protection
 	}
 
 	h.logger.Info("Created workspace snapshot request",
@@ -620,8 +710,8 @@ func (h *SnapshotHandlers) GetSnapshot(c *gin.Context) {
 	c.JSON(http.StatusOK, snapshotToResponse(snapshot))
 }
 
-// DeleteSnapshot decrements the refCount of a snapshot
-// When refCount reaches 0, the snapshot will be automatically garbage collected
+// DeleteSnapshot removes the user's reference from a snapshot
+// When no references remain, the snapshot will be automatically garbage collected
 // DELETE /api/v1/snapshots/:name
 func (h *SnapshotHandlers) DeleteSnapshot(c *gin.Context) {
 	name := c.Param("name")
@@ -634,33 +724,24 @@ func (h *SnapshotHandlers) DeleteSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Decrement refCount (minimum 0)
-	newRefCount := snapshot.Status.RefCount - 1
-	if newRefCount < 0 {
-		newRefCount = 0
-	}
-
-	snapshot.Status.RefCount = newRefCount
-	if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
-		h.logger.Error("Failed to update snapshot refCount", zap.String("name", name), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update snapshot"})
-		return
-	}
-
-	h.logger.Info("Decremented snapshot refCount",
+	// Return current state - snapshots are garbage collected automatically when no references exist
+	h.logger.Info("Snapshot delete requested",
 		zap.String("snapshot", name),
-		zap.Int32("newRefCount", newRefCount),
+		zap.Strings("referencedBy", snapshot.Status.ReferencedBy),
 		zap.String("user", username),
 	)
 
-	message := "snapshot reference removed"
-	if newRefCount == 0 {
-		message = "snapshot marked for deletion (will be garbage collected)"
+	if len(snapshot.Status.ReferencedBy) > 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "snapshot is still referenced by environments/workspaces",
+			"referencedBy": snapshot.Status.ReferencedBy,
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":  message,
-		"refCount": newRefCount,
+		"message":      "snapshot has no references and will be garbage collected",
+		"referencedBy": snapshot.Status.ReferencedBy,
 	})
 }
 
@@ -744,11 +825,8 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Increment snapshot refCount
-	snapshot.Status.RefCount++
-	if err := h.k8sClient.Status().Update(c.Request.Context(), snapshot); err != nil {
-		h.logger.Warn("Failed to increment snapshot refCount", zap.String("snapshot", req.SnapshotName), zap.Error(err))
-	}
+	// The environment controller will add this environment to the snapshot's ReferencedBy
+	// when it processes the fork/restore operation
 
 	h.logger.Info("Created environment from snapshot",
 		zap.String("environment", envName),

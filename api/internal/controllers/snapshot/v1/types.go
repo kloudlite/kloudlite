@@ -85,7 +85,7 @@ type SnapshotStoreList struct {
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
-// +kubebuilder:printcolumn:name="RefCount",type=integer,JSONPath=`.status.refCount`
+// +kubebuilder:printcolumn:name="References",type=string,JSONPath=`.status.referencedBy`
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.status.sizeHuman`
 // +kubebuilder:printcolumn:name="Parent",type=string,JSONPath=`.spec.parentSnapshot`,priority=1
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
@@ -182,10 +182,10 @@ type SnapshotStatus struct {
 	// +optional
 	Message string `json:"message,omitempty"`
 
-	// RefCount is the number of SnapshotRefs pointing to this snapshot
-	// Snapshot cannot be deleted when refCount > 0
-	// +kubebuilder:default=0
-	RefCount int32 `json:"refCount"`
+	// ReferencedBy lists the environment/workspace names that reference this snapshot
+	// Snapshot cannot be garbage collected when this list is non-empty
+	// +optional
+	ReferencedBy []string `json:"referencedBy,omitempty"`
 
 	// SizeBytes is the snapshot size in bytes
 	// +optional

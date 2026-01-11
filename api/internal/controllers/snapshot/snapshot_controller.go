@@ -68,17 +68,16 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req reconcile.Reques
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Check if snapshot should be garbage collected (refCount == 0 and not protected)
-	if snapshot.Status.RefCount == 0 && snapshot.Status.State == snapshotv1.SnapshotStateReady {
-		// Check retention policy
-		if shouldGarbageCollect(snapshot) {
-			logger.Info("Garbage collecting snapshot with refCount=0")
-			if err := r.Delete(ctx, snapshot); err != nil {
-				logger.Error("Failed to delete snapshot for garbage collection", zap.Error(err))
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{}, nil
+	// Garbage collect snapshots with no references
+	// SnapshotRefs are the source of truth for retention - when all SnapshotRefs are deleted,
+	// the snapshot should be garbage collected
+	if len(snapshot.Status.ReferencedBy) == 0 && snapshot.Status.State == snapshotv1.SnapshotStateReady {
+		logger.Info("Garbage collecting snapshot with no references")
+		if err := r.Delete(ctx, snapshot); err != nil {
+			logger.Error("Failed to delete snapshot for garbage collection", zap.Error(err))
+			return reconcile.Result{}, err
 		}
+		return reconcile.Result{}, nil
 	}
 
 	// Process based on current state
@@ -126,11 +125,11 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 		return reconcile.Result{}, nil
 	}
 
-	// Check if refCount > 0 - cannot delete if still referenced
-	if snapshot.Status.RefCount > 0 {
+	// Check if still referenced - cannot delete if references exist
+	if len(snapshot.Status.ReferencedBy) > 0 {
 		logger.Warn("Cannot delete snapshot with active references",
-			zap.Int32("refCount", snapshot.Status.RefCount))
-		snapshot.Status.Message = fmt.Sprintf("Cannot delete: %d active references", snapshot.Status.RefCount)
+			zap.Strings("referencedBy", snapshot.Status.ReferencedBy))
+		snapshot.Status.Message = fmt.Sprintf("Cannot delete: referenced by %v", snapshot.Status.ReferencedBy)
 		if err := r.Status().Update(ctx, snapshot); err != nil {
 			if !apierrors.IsConflict(err) {
 				logger.Error("Failed to update status", zap.Error(err))
@@ -171,20 +170,6 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 
 	logger.Info("Snapshot deleted successfully")
 	return reconcile.Result{}, nil
-}
-
-// shouldGarbageCollect determines if a snapshot should be garbage collected
-func shouldGarbageCollect(snapshot *snapshotv1.Snapshot) bool {
-	// If snapshot has retention policy with expiration, let that handle it
-	if snapshot.Spec.RetentionPolicy != nil {
-		if snapshot.Spec.RetentionPolicy.ExpiresAt != nil || snapshot.Spec.RetentionPolicy.KeepForDays != nil {
-			return false
-		}
-	}
-
-	// RefCount is 0 and no retention policy - garbage collect
-	// This handles orphaned snapshots that are no longer referenced
-	return true
 }
 
 func (r *SnapshotReconciler) SetupWithManager(mgr ctrl.Manager) error {
