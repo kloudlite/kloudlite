@@ -26,6 +26,9 @@ import (
 
 const (
 	environmentFinalizer = "environments.kloudlite.io/finalizer"
+	// Kind constants for owner references
+	environmentKind = "Environment"
+	workMachineKind = "WorkMachine"
 )
 
 // EnvironmentReconciler reconciles Environment objects and creates namespaces
@@ -97,10 +100,12 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 				// The ownership will be set on next reconciliation
 			} else {
 				// Set WorkMachine as owner for cascading deletion (without blockOwnerDeletion)
+				// Note: TypeMeta isn't populated by controller-runtime's Get method,
+				// so we set them explicitly using the GroupVersion constant
 				blockOwnerDeletion := false
 				ownerRef := metav1.OwnerReference{
-					APIVersion:         workmachine.APIVersion,
-					Kind:               workmachine.Kind,
+					APIVersion:         workmachinevl.GroupVersion.String(),
+					Kind:               workMachineKind,
 					Name:               workmachine.Name,
 					UID:                workmachine.UID,
 					BlockOwnerDeletion: &blockOwnerDeletion,

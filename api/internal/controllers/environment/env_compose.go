@@ -261,10 +261,12 @@ func (r *EnvironmentReconciler) fetchEnvironmentData(ctx context.Context, namesp
 func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resource client.Object, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	// Set environment as owner (cluster-scoped owner for namespaced resources)
 	// We use owner references that don't block deletion
+	// Note: TypeMeta (APIVersion, Kind) isn't populated by controller-runtime's Get method,
+	// so we set them explicitly using the SchemeGroupVersion constant
 	blockOwnerDeletion := false
 	ownerRef := metav1.OwnerReference{
-		APIVersion:         environment.APIVersion,
-		Kind:               environment.Kind,
+		APIVersion:         environmentsv1.SchemeGroupVersion.String(),
+		Kind:               environmentKind,
 		Name:               environment.Name,
 		UID:                environment.UID,
 		BlockOwnerDeletion: &blockOwnerDeletion,
