@@ -101,6 +101,15 @@ export interface RestoreEnvironmentFromSnapshotResponse {
   }
 }
 
+export interface SnapshotOperationStatus {
+  inProgress: boolean
+  operation?: 'creating' | 'restoring'
+  name?: string
+  phase?: string
+  message?: string
+  snapshotName?: string
+}
+
 export interface CreateFromSnapshotResponse {
   message: string
   workspace?: unknown
@@ -247,6 +256,16 @@ export class SnapshotService {
     return apiClient.post<RestoreEnvironmentFromSnapshotResponse>(
       `${this.baseUrl}/environments/${environmentName}/restore`,
       data,
+    )
+  }
+
+  // Get the current snapshot operation status for an environment
+  // Returns whether a snapshot creation or restore is in progress
+  async getEnvironmentSnapshotStatus(
+    environmentName: string,
+  ): Promise<SnapshotOperationStatus> {
+    return apiClient.get<SnapshotOperationStatus>(
+      `${this.baseUrl}/environments/${environmentName}/snapshots/status`,
     )
   }
 }

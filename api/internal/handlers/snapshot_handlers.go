@@ -1108,3 +1108,87 @@ func (h *SnapshotHandlers) createSnapshotArtifacts(ctx context.Context, snapshot
 
 	return nil
 }
+
+// SnapshotOperationStatus represents the current snapshot operation status for an environment
+type SnapshotOperationStatus struct {
+	InProgress   bool   `json:"inProgress"`
+	Operation    string `json:"operation,omitempty"`    // "creating" or "restoring"
+	Name         string `json:"name,omitempty"`         // Name of the request/restore resource
+	Phase        string `json:"phase,omitempty"`        // Current phase
+	Message      string `json:"message,omitempty"`      // Status message
+	SnapshotName string `json:"snapshotName,omitempty"` // Associated snapshot name
+}
+
+// GetEnvironmentSnapshotStatus returns the current snapshot operation status for an environment
+// GET /api/v1/environments/:name/snapshots/status
+func (h *SnapshotHandlers) GetEnvironmentSnapshotStatus(c *gin.Context) {
+	envName := c.Param("name")
+	ctx := c.Request.Context()
+
+	status := SnapshotOperationStatus{
+		InProgress: false,
+	}
+
+	// Check for in-progress EnvironmentSnapshotRequest
+	requests := &envv1.EnvironmentSnapshotRequestList{}
+	if err := h.k8sClient.List(ctx, requests); err != nil {
+		h.logger.Error("Failed to list EnvironmentSnapshotRequests", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check snapshot status"})
+		return
+	}
+
+	for _, req := range requests.Items {
+		if req.Spec.EnvironmentName != envName {
+			continue
+		}
+		phase := req.Status.Phase
+		if phase == "" || phase == envv1.EnvironmentSnapshotRequestPhasePending ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseStoppingWorkloads ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseWaitingForPods ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseCreatingSnapshot ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseUploadingSnapshot ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseRestoringEnvironment {
+			status.InProgress = true
+			status.Operation = "creating"
+			status.Name = req.Name
+			status.Phase = string(phase)
+			status.Message = req.Status.Message
+			status.SnapshotName = req.Spec.SnapshotName
+			break
+		}
+	}
+
+	// If no in-progress request, check for in-progress EnvironmentSnapshotRestore
+	if !status.InProgress {
+		restores := &envv1.EnvironmentSnapshotRestoreList{}
+		if err := h.k8sClient.List(ctx, restores); err != nil {
+			h.logger.Error("Failed to list EnvironmentSnapshotRestores", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check restore status"})
+			return
+		}
+
+		for _, restore := range restores.Items {
+			if restore.Spec.EnvironmentName != envName {
+				continue
+			}
+			phase := restore.Status.Phase
+			if phase == "" || phase == envv1.EnvironmentSnapshotRestorePhasePending ||
+				phase == envv1.EnvironmentSnapshotRestorePhaseStoppingWorkloads ||
+				phase == envv1.EnvironmentSnapshotRestorePhaseWaitingForPods ||
+				phase == envv1.EnvironmentSnapshotRestorePhaseDownloading ||
+				phase == envv1.EnvironmentSnapshotRestorePhaseRestoringData ||
+				phase == envv1.EnvironmentSnapshotRestorePhaseApplyingArtifacts ||
+				phase == envv1.EnvironmentSnapshotRestorePhaseActivating {
+				status.InProgress = true
+				status.Operation = "restoring"
+				status.Name = restore.Name
+				status.Phase = string(phase)
+				status.Message = restore.Status.Message
+				status.SnapshotName = restore.Spec.SnapshotName
+				break
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, status)
+}

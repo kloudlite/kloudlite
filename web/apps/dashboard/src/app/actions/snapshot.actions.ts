@@ -233,3 +233,20 @@ export async function createEnvironmentFromSnapshot(data: CreateEnvironmentFromS
     }
   }
 }
+
+/**
+ * Server action to get the current snapshot operation status for an environment
+ */
+export async function getEnvironmentSnapshotStatus(environmentName: string) {
+  try {
+    const result = await snapshotService.getEnvironmentSnapshotStatus(environmentName)
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Get environment snapshot status error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}

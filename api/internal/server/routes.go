@@ -203,6 +203,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				// Snapshot routes (per-environment)
 				environments.POST("/:name/snapshots", snapshotHandlers.CreateEnvironmentSnapshot)
 				environments.GET("/:name/snapshots", snapshotHandlers.ListEnvironmentSnapshots)
+				environments.GET("/:name/snapshots/status", snapshotHandlers.GetEnvironmentSnapshotStatus)
 				environments.POST("/:name/restore", snapshotHandlers.RestoreEnvironmentFromSnapshot)
 
 				// Environment config routes (legacy - keeping for backwards compatibility)
@@ -365,6 +366,8 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/mutate/pods", podMutationWebhook.MutatePod)
 		webhooksGroup.POST("/validate/snapshotrequests", snapshotWebhook.ValidateSnapshotRequest)
 		webhooksGroup.POST("/validate/snapshotrestores", snapshotWebhook.ValidateSnapshotRestore)
+		webhooksGroup.POST("/validate/environmentsnapshotrequests", snapshotWebhook.ValidateEnvironmentSnapshotRequest)
+		webhooksGroup.POST("/validate/environmentsnapshotrestores", snapshotWebhook.ValidateEnvironmentSnapshotRestore)
 	}
 
 	return router
