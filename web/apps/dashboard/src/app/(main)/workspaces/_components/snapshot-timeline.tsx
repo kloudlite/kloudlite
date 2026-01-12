@@ -246,6 +246,8 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
   const { snapshot, isCurrent } = item
   const shortHash = getShortHash(snapshot.name)
   const isPushed = !!snapshot.registry?.digest
+  const isActionable = snapshot.state === 'Ready' || snapshot.state === 'Completed'
+  const canDelete = isActionable || snapshot.state === 'Failed'
 
   const graphWidth = Math.max(totalLanes, 1) * LANE_WIDTH + 8
   const dotX = item.lane * LANE_WIDTH + LANE_WIDTH / 2
@@ -312,31 +314,33 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
         />
       </div>
 
-      {/* Content */}
+      {/* Content - Grid layout for consistent columns */}
       <div
         className={cn(
-          "group flex-1 flex items-center justify-between gap-3 py-2.5 px-3 rounded-md transition-colors min-h-[44px]",
+          "group flex-1 grid items-center gap-x-3 py-2 px-3 rounded-md transition-colors min-h-[44px]",
           isCurrent
             ? "bg-blue-50 dark:bg-blue-950/30"
             : "hover:bg-muted/50"
         )}
+        style={{ gridTemplateColumns: '1fr auto auto auto' }}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        {/* Column 1: Name, badges, description */}
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <code className={cn(
-            "text-sm font-mono",
+            "text-sm font-mono flex-shrink-0",
             isCurrent ? "text-blue-600 dark:text-blue-400 font-semibold" : "text-foreground"
           )}>
             {shortHash}
           </code>
 
           {isCurrent && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
               HEAD
             </Badge>
           )}
 
           {isPushed && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-1 bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-1 flex-shrink-0 bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300">
               <Cloud className="h-3 w-3" />
               {snapshot.registry?.tag || 'pushed'}
             </Badge>
@@ -345,66 +349,70 @@ function SnapshotRow({ row, totalLanes, onRestore, onDelete, onPush, disabled, i
           {getStateBadge(snapshot.state)}
 
           {snapshot.description && (
-            <span className="text-sm text-muted-foreground truncate">
+            <span className="text-xs text-muted-foreground truncate" title={snapshot.description}>
               {snapshot.description}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {snapshot.createdAt && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatTimeAgo(snapshot.createdAt)}
-              </span>
-            )}
+        {/* Column 2: Time */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground w-[70px] justify-end flex-shrink-0">
+          {snapshot.createdAt && (
+            <>
+              <Clock className="h-3 w-3 flex-shrink-0" />
+              <span className="whitespace-nowrap">{formatTimeAgo(snapshot.createdAt)}</span>
+            </>
+          )}
+        </div>
 
-            {snapshot.sizeHuman && snapshot.sizeHuman !== '0 B' && (
-              <span className="flex items-center gap-1">
-                <HardDrive className="h-3 w-3" />
-                {snapshot.sizeHuman}
-              </span>
-            )}
-          </div>
+        {/* Column 3: Size */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground w-[70px] justify-end flex-shrink-0">
+          {snapshot.sizeHuman && snapshot.sizeHuman !== '0 B' && (
+            <>
+              <HardDrive className="h-3 w-3 flex-shrink-0" />
+              <span className="whitespace-nowrap">{snapshot.sizeHuman}</span>
+            </>
+          )}
+        </div>
 
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {(snapshot.state === 'Ready' || snapshot.state === 'Completed') && !isPushed && onPush && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onPush(snapshot)}
-                disabled={disabled}
-                className="h-6 px-2 text-xs"
-                title="Push to registry"
-              >
-                <CloudUpload className="h-3 w-3 mr-1" />
-                Push
-              </Button>
-            )}
-            {(snapshot.state === 'Ready' || snapshot.state === 'Completed') && !isCurrent && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRestore(snapshot)}
-                disabled={disabled}
-                className="h-6 px-2 text-xs"
-              >
-                <RotateCcw className="h-3 w-3 mr-1" />
-                Restore
-              </Button>
-            )}
-            {(snapshot.state === 'Ready' || snapshot.state === 'Completed' || snapshot.state === 'Failed') && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(snapshot)}
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
+        {/* Column 4: Actions - always visible */}
+        <div className="flex items-center gap-1 justify-end w-[110px] flex-shrink-0">
+          {isActionable && !isPushed && onPush && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onPush(snapshot)}
+              disabled={disabled}
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              title="Push to registry"
+            >
+              <CloudUpload className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {isActionable && !isCurrent && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRestore(snapshot)}
+              disabled={disabled}
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              title="Restore snapshot"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(snapshot)}
+              disabled={disabled}
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+              title="Delete snapshot"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
