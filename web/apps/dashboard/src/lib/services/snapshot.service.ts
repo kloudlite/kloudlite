@@ -32,7 +32,13 @@ export interface CreateSnapshotRequest {
 
 export interface CreateSnapshotResponse {
   message: string
-  snapshot: Snapshot
+  snapshot?: Snapshot
+  request?: {
+    name: string
+    snapshotName: string
+    phase: string
+    message?: string
+  }
 }
 
 export interface RestoreSnapshotResponse {
@@ -78,6 +84,21 @@ export interface CreateEnvironmentFromSnapshotRequest {
   snapshotName: string
   targetNamespace?: string
   activated?: boolean
+}
+
+export interface RestoreEnvironmentFromSnapshotRequest {
+  snapshotName: string
+  activateAfterRestore?: boolean
+}
+
+export interface RestoreEnvironmentFromSnapshotResponse {
+  message: string
+  restore: {
+    name: string
+    snapshotName: string
+    phase: string
+    message?: string
+  }
 }
 
 export interface CreateFromSnapshotResponse {
@@ -213,6 +234,18 @@ export class SnapshotService {
   ): Promise<CreateFromSnapshotResponse> {
     return apiClient.post<CreateFromSnapshotResponse>(
       `${this.baseUrl}/environments/from-snapshot`,
+      data,
+    )
+  }
+
+  // Restore an existing environment from a snapshot
+  // This stops workloads, restores data, applies artifacts, and optionally activates the environment
+  async restoreEnvironmentFromSnapshot(
+    environmentName: string,
+    data: RestoreEnvironmentFromSnapshotRequest,
+  ): Promise<RestoreEnvironmentFromSnapshotResponse> {
+    return apiClient.post<RestoreEnvironmentFromSnapshotResponse>(
+      `${this.baseUrl}/environments/${environmentName}/restore`,
       data,
     )
   }

@@ -796,6 +796,175 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 	})
 }
 
+// RestoreEnvironmentFromSnapshotRequest is the request body for restoring an environment from a snapshot
+type RestoreEnvironmentFromSnapshotRequest struct {
+	SnapshotName         string `json:"snapshotName" binding:"required"`
+	ActivateAfterRestore bool   `json:"activateAfterRestore"`
+}
+
+// EnvironmentSnapshotRestoreResponse is the API response for an environment snapshot restore
+type EnvironmentSnapshotRestoreResponse struct {
+	Name         string `json:"name"`
+	SnapshotName string `json:"snapshotName"`
+	Phase        string `json:"phase"`
+	Message      string `json:"message,omitempty"`
+}
+
+// RestoreEnvironmentFromSnapshot restores an existing environment from a snapshot
+// This creates an EnvironmentSnapshotRestore CR which orchestrates the full restore workflow:
+// 1. Stops workloads (scales down deployments)
+// 2. Waits for pods to terminate
+// 3. Downloads and restores snapshot data
+// 4. Applies K8s artifacts (Compositions, ConfigMaps, Secrets)
+// 5. Optionally activates the environment
+// POST /api/v1/environments/:name/restore
+func (h *SnapshotHandlers) RestoreEnvironmentFromSnapshot(c *gin.Context) {
+	envName := c.Param("name")
+	username := c.GetString("username")
+
+	var req RestoreEnvironmentFromSnapshotRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get environment to verify it exists
+	env, err := h.environmentRepo.Get(c.Request.Context(), envName)
+	if err != nil {
+		h.logger.Error("Failed to get environment", zap.String("name", envName), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("environment %s not found", envName)})
+		return
+	}
+
+	// Get the snapshot to verify it exists and is ready
+	snapshot, err := h.snapshotRepo.Get(c.Request.Context(), req.SnapshotName)
+	if err != nil {
+		h.logger.Error("Failed to get snapshot", zap.String("snapshot", req.SnapshotName), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("snapshot %s not found", req.SnapshotName)})
+		return
+	}
+
+	if snapshot.Status.State != snapshotv1.SnapshotStateReady {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("snapshot %s is not ready (state: %s)", req.SnapshotName, snapshot.Status.State)})
+		return
+	}
+
+	// Check for existing in-progress EnvironmentSnapshotRestore for this environment
+	existingRestores := &envv1.EnvironmentSnapshotRestoreList{}
+	if err := h.k8sClient.List(c.Request.Context(), existingRestores); err != nil {
+		h.logger.Error("Failed to list existing snapshot restores", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check existing restores"})
+		return
+	}
+
+	// Check if any restore is in progress for this environment
+	for _, existingRestore := range existingRestores.Items {
+		if existingRestore.Spec.EnvironmentName != envName {
+			continue
+		}
+		phase := existingRestore.Status.Phase
+		if phase == "" || phase == envv1.EnvironmentSnapshotRestorePhasePending ||
+			phase == envv1.EnvironmentSnapshotRestorePhaseStoppingWorkloads ||
+			phase == envv1.EnvironmentSnapshotRestorePhaseWaitingForPods ||
+			phase == envv1.EnvironmentSnapshotRestorePhaseDownloading ||
+			phase == envv1.EnvironmentSnapshotRestorePhaseRestoringData ||
+			phase == envv1.EnvironmentSnapshotRestorePhaseApplyingArtifacts ||
+			phase == envv1.EnvironmentSnapshotRestorePhaseActivating {
+			c.JSON(http.StatusConflict, gin.H{
+				"error":   "A snapshot restore is already in progress for this environment",
+				"restore": existingRestore.Name,
+				"phase":   string(phase),
+			})
+			return
+		}
+	}
+
+	// Also check for in-progress EnvironmentSnapshotRequest (can't restore while snapshotting)
+	existingRequests := &envv1.EnvironmentSnapshotRequestList{}
+	if err := h.k8sClient.List(c.Request.Context(), existingRequests); err != nil {
+		h.logger.Error("Failed to list existing snapshot requests", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check existing requests"})
+		return
+	}
+
+	for _, existingReq := range existingRequests.Items {
+		if existingReq.Spec.EnvironmentName != envName {
+			continue
+		}
+		phase := existingReq.Status.Phase
+		if phase == "" || phase == envv1.EnvironmentSnapshotRequestPhasePending ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseStoppingWorkloads ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseWaitingForPods ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseCreatingSnapshot ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseUploadingSnapshot ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseRestoringEnvironment {
+			c.JSON(http.StatusConflict, gin.H{
+				"error":   "A snapshot request is in progress for this environment, cannot restore",
+				"request": existingReq.Name,
+				"phase":   string(phase),
+			})
+			return
+		}
+	}
+
+	// Verify workmachine is assigned
+	if env.Spec.WorkMachineName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "environment has no workmachine assigned"})
+		return
+	}
+
+	// Verify workmachine is running
+	_, err = h.getNodeForWorkMachine(c.Request.Context(), env.Spec.WorkMachineName)
+	if err != nil {
+		h.logger.Error("Failed to get node for workmachine", zap.String("workmachine", env.Spec.WorkMachineName), zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "workmachine is not running"})
+		return
+	}
+
+	// Create restore name
+	restoreName := fmt.Sprintf("env-restore-%s-%d", envName, time.Now().Unix())
+
+	// Create the EnvironmentSnapshotRestore CR
+	envRestore := &envv1.EnvironmentSnapshotRestore{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: restoreName,
+			Labels: map[string]string{
+				"kloudlite.io/owned-by":              env.Spec.OwnedBy,
+				"snapshots.kloudlite.io/environment": envName,
+				"snapshots.kloudlite.io/snapshot":    req.SnapshotName,
+			},
+		},
+		Spec: envv1.EnvironmentSnapshotRestoreSpec{
+			EnvironmentName:      envName,
+			SnapshotName:         req.SnapshotName,
+			ActivateAfterRestore: req.ActivateAfterRestore,
+		},
+	}
+
+	if err := h.k8sClient.Create(c.Request.Context(), envRestore); err != nil {
+		h.logger.Error("Failed to create EnvironmentSnapshotRestore", zap.String("name", restoreName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot restore: %v", err)})
+		return
+	}
+
+	h.logger.Info("Created EnvironmentSnapshotRestore",
+		zap.String("restore", restoreName),
+		zap.String("snapshot", req.SnapshotName),
+		zap.String("environment", envName),
+		zap.String("user", username),
+	)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Snapshot restore started",
+		"restore": EnvironmentSnapshotRestoreResponse{
+			Name:         restoreName,
+			SnapshotName: req.SnapshotName,
+			Phase:        string(envv1.EnvironmentSnapshotRestorePhasePending),
+			Message:      "Snapshot restore created, waiting to start...",
+		},
+	})
+}
+
 // createSnapshotArtifacts captures K8s resources and creates a SnapshotArtifacts CR
 func (h *SnapshotHandlers) createSnapshotArtifacts(ctx context.Context, snapshotName, namespace string) error {
 	artifacts := &snapshotv1.SnapshotArtifacts{
