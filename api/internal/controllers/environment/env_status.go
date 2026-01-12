@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -377,6 +378,27 @@ func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snap
 			logger.Warn("Failed to apply secrets", zap.Error(err))
 		} else {
 			logger.Info("Applied secrets from snapshot", zap.Int("count", count))
+		}
+	}
+
+	// Apply ComposeSpec to the target Environment
+	if artifacts.Spec.ComposeSpec != "" {
+		composeData, err := base64.StdEncoding.DecodeString(artifacts.Spec.ComposeSpec)
+		if err != nil {
+			logger.Warn("Failed to decode compose spec", zap.Error(err))
+		} else {
+			var composeSpec environmentsv1.CompositionSpec
+			if err := json.Unmarshal(composeData, &composeSpec); err != nil {
+				logger.Warn("Failed to unmarshal compose spec", zap.Error(err))
+			} else {
+				// Update the environment's compose spec
+				environment.Spec.Compose = &composeSpec
+				if err := r.Update(ctx, environment); err != nil {
+					logger.Warn("Failed to update environment with compose spec", zap.Error(err))
+				} else {
+					logger.Info("Applied compose spec to environment from snapshot")
+				}
+			}
 		}
 	}
 

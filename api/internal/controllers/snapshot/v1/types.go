@@ -559,6 +559,11 @@ type SnapshotArtifactsSpec struct {
 	// Secrets contains serialized Secret resources (YAML, base64 encoded)
 	// +optional
 	Secrets string `json:"secrets,omitempty"`
+
+	// ComposeSpec contains the Environment's inline compose spec (JSON, base64 encoded)
+	// This captures spec.compose from the source Environment
+	// +optional
+	ComposeSpec string `json:"composeSpec,omitempty"`
 }
 
 // SnapshotArtifactsStatus tracks counts of stored resources
