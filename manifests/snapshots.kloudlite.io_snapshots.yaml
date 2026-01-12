@@ -198,6 +198,14 @@ spec:
                 default: Ready
                 description: State is the current state of the snapshot
                 type: string
+              storageRefs:
+                description: |-
+                  StorageRefs lists all registry imageRefs this snapshot needs for restore
+                  Includes own imageRef plus all parent imageRefs in the chain
+                  Used for garbage collection - storage is only deleted when no snapshot references it
+                items:
+                  type: string
+                type: array
             type: object
         type: object
     served: true
