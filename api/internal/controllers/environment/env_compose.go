@@ -227,6 +227,22 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		zap.Int("services", len(deployedServices)),
 		zap.String("state", string(environment.Status.ComposeStatus.State)))
 
+	// Persist ComposeStatus immediately to prevent loss during subsequent status updates
+	// This is necessary because updateEnvironmentStatus may refetch on conflict, overwriting
+	// in-memory ComposeStatus changes
+	composeStatus := environment.Status.ComposeStatus.DeepCopy()
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Refetch to get latest version
+		if err := r.Get(ctx, client.ObjectKeyFromObject(environment), environment); err != nil {
+			return err
+		}
+		environment.Status.ComposeStatus = composeStatus
+		return r.Status().Update(ctx, environment)
+	}); err != nil {
+		logger.Warn("Failed to persist compose status", zap.Error(err))
+		// Don't fail - the status will be updated on next reconcile
+	}
+
 	return true, nil
 }
 
