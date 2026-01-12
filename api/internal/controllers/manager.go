@@ -181,6 +181,26 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to create SnapshotStore controller: %w", err)
 	}
 
+	// Setup EnvironmentSnapshotRequest controller
+	envSnapshotRequestReconciler := &environment.EnvironmentSnapshotRequestReconciler{
+		Client: mgr.GetClient(),
+		Logger: logger.With(zap.String("controller", "environmentsnapshotrequest")),
+	}
+
+	if err = envSnapshotRequestReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create EnvironmentSnapshotRequest controller: %w", err)
+	}
+
+	// Setup EnvironmentSnapshotRestore controller
+	envSnapshotRestoreReconciler := &environment.EnvironmentSnapshotRestoreReconciler{
+		Client: mgr.GetClient(),
+		Logger: logger.With(zap.String("controller", "environmentsnapshotrestore")),
+	}
+
+	if err = envSnapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create EnvironmentSnapshotRestore controller: %w", err)
+	}
+
 	logger.Info("Controllers initialized successfully")
 
 	return &Manager{
