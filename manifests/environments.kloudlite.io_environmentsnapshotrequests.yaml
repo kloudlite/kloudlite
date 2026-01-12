@@ -1,0 +1,113 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: environmentsnapshotrequests.environments.kloudlite.io
+spec:
+  group: environments.kloudlite.io
+  names:
+    kind: EnvironmentSnapshotRequest
+    listKind: EnvironmentSnapshotRequestList
+    plural: environmentsnapshotrequests
+    singular: environmentsnapshotrequest
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.environmentName
+      name: Environment
+      type: string
+    - jsonPath: .spec.snapshotName
+      name: Snapshot
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          EnvironmentSnapshotRequest orchestrates creating a snapshot for an environment.
+          It stops workloads, creates the snapshot, and restores the environment state.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EnvironmentSnapshotRequestSpec defines the snapshot request
+              parameters
+            properties:
+              description:
+                description: Description is a human-readable description of the snapshot
+                type: string
+              environmentName:
+                description: EnvironmentName is the name of the environment to snapshot
+                type: string
+              retentionDays:
+                description: RetentionDays specifies how long to keep the snapshot
+                  (0 = forever)
+                format: int32
+                type: integer
+              snapshotName:
+                description: SnapshotName is the desired name for the snapshot
+                type: string
+            required:
+            - environmentName
+            - snapshotName
+            type: object
+          status:
+            description: EnvironmentSnapshotRequestStatus defines the observed state
+            properties:
+              completionTime:
+                description: CompletionTime is when the request completed (success
+                  or failure)
+                format: date-time
+                type: string
+              createdSnapshotName:
+                description: CreatedSnapshotName is the name of the successfully created
+                  Snapshot
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              phase:
+                default: Pending
+                description: Phase is the current phase of the request
+                type: string
+              previousEnvironmentState:
+                description: |-
+                  PreviousEnvironmentState stores the environment state before snapshotting
+                  Used to restore the environment after snapshot completes
+                type: string
+              snapshotRequestName:
+                description: SnapshotRequestName is the name of the created SnapshotRequest
+                  CR
+                type: string
+              startTime:
+                description: StartTime is when the request started processing
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
