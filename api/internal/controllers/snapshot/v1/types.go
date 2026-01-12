@@ -548,10 +548,6 @@ type SnapshotArtifactsSpec struct {
 	// +kubebuilder:validation:Required
 	SnapshotName string `json:"snapshotName"`
 
-	// Compositions contains serialized Composition resources (YAML, base64 encoded)
-	// +optional
-	Compositions string `json:"compositions,omitempty"`
-
 	// ConfigMaps contains serialized ConfigMap resources (YAML, base64 encoded)
 	// +optional
 	ConfigMaps string `json:"configMaps,omitempty"`
@@ -568,9 +564,6 @@ type SnapshotArtifactsSpec struct {
 
 // SnapshotArtifactsStatus tracks counts of stored resources
 type SnapshotArtifactsStatus struct {
-	// CompositionCount is the number of compositions stored
-	CompositionCount int32 `json:"compositionCount,omitempty"`
-
 	// ConfigMapCount is the number of configmaps stored
 	ConfigMapCount int32 `json:"configMapCount,omitempty"`
 

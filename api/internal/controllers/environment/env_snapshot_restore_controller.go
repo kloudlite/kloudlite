@@ -326,9 +326,8 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleApplyingArtifacts(
 	artifacts := &snapshotv1.SnapshotArtifacts{}
 	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, artifacts); err == nil {
 		restore.Status.RestoredArtifacts = &environmentsv1.RestoredArtifactsInfo{
-			CompositionsRestored: artifacts.Status.CompositionCount,
-			ConfigMapsRestored:   artifacts.Status.ConfigMapCount,
-			SecretsRestored:      artifacts.Status.SecretCount,
+			ConfigMapsRestored: artifacts.Status.ConfigMapCount,
+			SecretsRestored:    artifacts.Status.SecretCount,
 		}
 	}
 

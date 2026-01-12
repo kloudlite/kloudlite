@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -496,7 +495,7 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 		},
 	}
 
-	var compositionCount, configMapCount, secretCount int32
+	var configMapCount, secretCount int32
 
 	// Capture Environment's inline compose spec if present
 	if env != nil && env.Spec.Compose != nil {
@@ -507,42 +506,6 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 			artifacts.Spec.ComposeSpec = base64.StdEncoding.EncodeToString(composeData)
 			logger.Info("Captured environment compose spec")
 		}
-	}
-
-	// Capture Compositions (skip if CRD doesn't exist)
-	compositions := &environmentsv1.CompositionList{}
-	if err := r.List(ctx, compositions, client.InNamespace(namespace)); err != nil {
-		if !meta.IsNoMatchError(err) {
-			return fmt.Errorf("failed to list compositions: %w", err)
-		}
-		// Composition CRD doesn't exist, skip capturing compositions
-		logger.Debug("Composition CRD not found, skipping composition capture")
-	}
-
-	if len(compositions.Items) > 0 {
-		cleanCompositions := make([]environmentsv1.Composition, len(compositions.Items))
-		for i, comp := range compositions.Items {
-			cleanCompositions[i] = environmentsv1.Composition{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "environments.kloudlite.io/v1",
-					Kind:       "Composition",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        comp.Name,
-					Labels:      comp.Labels,
-					Annotations: comp.Annotations,
-				},
-				Spec: comp.Spec,
-			}
-		}
-
-		data, err := yaml.Marshal(cleanCompositions)
-		if err != nil {
-			return fmt.Errorf("failed to marshal compositions: %w", err)
-		}
-		artifacts.Spec.Compositions = base64.StdEncoding.EncodeToString(data)
-		compositionCount = int32(len(compositions.Items))
-		logger.Info("Captured compositions", zap.Int("count", len(compositions.Items)))
 	}
 
 	// Capture ConfigMaps (excluding system ones)
@@ -622,9 +585,8 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 
 	// Set status counts
 	artifacts.Status = snapshotv1.SnapshotArtifactsStatus{
-		CompositionCount: compositionCount,
-		ConfigMapCount:   configMapCount,
-		SecretCount:      secretCount,
+		ConfigMapCount: configMapCount,
+		SecretCount:    secretCount,
 	}
 
 	// Create the SnapshotArtifacts CR
@@ -638,7 +600,6 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 
 	logger.Info("Created SnapshotArtifacts",
 		zap.String("name", snapshotName),
-		zap.Int32("compositions", compositionCount),
 		zap.Int32("configMaps", configMapCount),
 		zap.Int32("secrets", secretCount))
 

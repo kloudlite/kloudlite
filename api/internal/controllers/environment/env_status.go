@@ -351,16 +351,6 @@ func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snap
 		zap.String("snapshot", snapshotName),
 		zap.String("targetNamespace", targetNamespace))
 
-	// Apply Compositions
-	if artifacts.Spec.Compositions != "" {
-		count, err := r.applyCompositionsFromYAML(ctx, artifacts.Spec.Compositions, targetNamespace, environment.Name, logger)
-		if err != nil {
-			logger.Warn("Failed to apply compositions", zap.Error(err))
-		} else {
-			logger.Info("Applied compositions from snapshot", zap.Int("count", count))
-		}
-	}
-
 	// Apply ConfigMaps
 	if artifacts.Spec.ConfigMaps != "" {
 		count, err := r.applyConfigMapsFromYAML(ctx, artifacts.Spec.ConfigMaps, targetNamespace, logger)
@@ -403,75 +393,6 @@ func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snap
 	}
 
 	return nil
-}
-
-// applyCompositionsFromYAML decodes base64 YAML and creates Composition resources
-func (r *EnvironmentReconciler) applyCompositionsFromYAML(ctx context.Context, encodedYAML, targetNamespace, envName string, logger *zap.Logger) (int, error) {
-	yamlData, err := base64.StdEncoding.DecodeString(encodedYAML)
-	if err != nil {
-		return 0, fmt.Errorf("failed to decode base64: %w", err)
-	}
-
-	// First try to decode as a YAML array ([]Composition)
-	var compositions []environmentsv1.Composition
-	if err := sigyaml.Unmarshal(yamlData, &compositions); err == nil && len(compositions) > 0 {
-		// Successfully decoded as YAML array
-	} else {
-		// Try to decode as a Kubernetes List type
-		compList := &environmentsv1.CompositionList{}
-		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-		if err := decoder.Decode(compList); err == nil && len(compList.Items) > 0 {
-			compositions = compList.Items
-		} else {
-			// Fall back to decoding individual compositions (multi-doc YAML)
-			decoder = yaml.NewYAMLOrJSONDecoder(bytes.NewReader(yamlData), 4096)
-			for {
-				comp := &environmentsv1.Composition{}
-				if err := decoder.Decode(comp); err != nil {
-					if err == io.EOF {
-						break
-					}
-					return 0, fmt.Errorf("failed to decode composition: %w", err)
-				}
-				if comp.Name != "" {
-					compositions = append(compositions, *comp)
-				}
-			}
-		}
-	}
-
-	count := 0
-	for _, comp := range compositions {
-		// Create a copy in the target namespace
-		newComp := &environmentsv1.Composition{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        comp.Name,
-				Namespace:   targetNamespace,
-				Labels:      comp.Labels,
-				Annotations: comp.Annotations,
-			},
-			Spec: comp.Spec,
-		}
-
-		// Update labels to reference the new environment
-		if newComp.Labels == nil {
-			newComp.Labels = make(map[string]string)
-		}
-		newComp.Labels["kloudlite.io/environment"] = envName
-
-		if err := r.Create(ctx, newComp); err != nil {
-			if apierrors.IsAlreadyExists(err) {
-				logger.Debug("Composition already exists, skipping", zap.String("name", comp.Name))
-				continue
-			}
-			logger.Warn("Failed to create composition", zap.String("name", comp.Name), zap.Error(err))
-			continue
-		}
-		count++
-		logger.Debug("Created composition from snapshot", zap.String("name", comp.Name))
-	}
-
-	return count, nil
 }
 
 // applyConfigMapsFromYAML decodes base64 YAML and creates ConfigMap resources
