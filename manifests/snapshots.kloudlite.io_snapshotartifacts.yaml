@@ -12,15 +12,12 @@ spec:
     listKind: SnapshotArtifactsList
     plural: snapshotartifacts
     singular: snapshotartifacts
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.snapshotName
       name: Snapshot
       type: string
-    - jsonPath: .status.compositionCount
-      name: Compositions
-      type: integer
     - jsonPath: .status.configMapCount
       name: ConfigMaps
       type: integer
@@ -34,9 +31,8 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          SnapshotArtifacts stores K8s resources (Compositions, ConfigMaps, Secrets)
-          captured during environment snapshot creation. This is a separate resource
-          to keep the Snapshot CR lightweight.
+          SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, ComposeSpec)
+          captured during environment snapshot creation. Namespaced with the snapshot.
         properties:
           apiVersion:
             description: |-
@@ -58,9 +54,10 @@ spec:
           spec:
             description: SnapshotArtifactsSpec defines the artifacts data
             properties:
-              compositions:
-                description: Compositions contains serialized Composition resources
-                  (YAML, base64 encoded)
+              composeSpec:
+                description: |-
+                  ComposeSpec contains the Environment's inline compose spec (JSON, base64 encoded)
+                  This captures spec.compose from the source Environment
                 type: string
               configMaps:
                 description: ConfigMaps contains serialized ConfigMap resources (YAML,
@@ -79,10 +76,6 @@ spec:
           status:
             description: SnapshotArtifactsStatus tracks counts of stored resources
             properties:
-              compositionCount:
-                description: CompositionCount is the number of compositions stored
-                format: int32
-                type: integer
               configMapCount:
                 description: ConfigMapCount is the number of configmaps stored
                 format: int32

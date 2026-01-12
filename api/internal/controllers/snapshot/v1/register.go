@@ -42,10 +42,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&SnapshotRequest{},
 		&SnapshotRequestList{},
 
-		// Reference counting
-		&SnapshotRef{},
-		&SnapshotRefList{},
-
 		// Restore requests
 		&SnapshotRestore{},
 		&SnapshotRestoreList{},

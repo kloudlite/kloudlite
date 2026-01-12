@@ -106,11 +106,11 @@ func (r *EnvironmentSnapshotRestoreReconciler) handlePending(
 ) (reconcile.Result, error) {
 	logger.Info("Starting snapshot restore, validating snapshot")
 
-	// Verify snapshot exists and is ready
+	// Verify snapshot exists and is ready (snapshots are namespaced)
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName, Namespace: restore.Spec.SourceNamespace}, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
-			return r.setFailed(ctx, restore, env, fmt.Sprintf("Snapshot %s not found", restore.Spec.SnapshotName), logger)
+			return r.setFailed(ctx, restore, env, fmt.Sprintf("Snapshot %s not found in namespace %s", restore.Spec.SnapshotName, restore.Spec.SourceNamespace), logger)
 		}
 		return reconcile.Result{}, err
 	}
@@ -307,34 +307,35 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleApplyingArtifacts(
 	logger *zap.Logger,
 ) (reconcile.Result, error) {
 	logger.Info("Applying snapshot artifacts")
+	sourceNamespace := restore.Spec.SourceNamespace
 
-	// Get the Snapshot to retrieve lineage
+	// Get the Snapshot to retrieve lineage (snapshots are namespaced)
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName, Namespace: sourceNamespace}, snapshot); err != nil {
 		logger.Warn("Failed to get snapshot for lineage", zap.Error(err))
 		// Continue anyway
 	}
 
 	// Use the existing apply artifacts logic from environment controller
 	envReconciler := &EnvironmentReconciler{Client: r.Client, Scheme: r.Scheme, Logger: r.Logger}
-	if err := envReconciler.applySnapshotArtifacts(ctx, restore.Spec.SnapshotName, env, logger); err != nil {
+	if err := envReconciler.applySnapshotArtifacts(ctx, restore.Spec.SnapshotName, sourceNamespace, env, logger); err != nil {
 		logger.Warn("Failed to apply snapshot artifacts", zap.Error(err))
 		// Don't fail the restore, just log the warning
 	}
 
 	// Track restored artifacts in status
 	artifacts := &snapshotv1.SnapshotArtifacts{}
-	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, artifacts); err == nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName, Namespace: sourceNamespace}, artifacts); err == nil {
 		restore.Status.RestoredArtifacts = &environmentsv1.RestoredArtifactsInfo{
 			ConfigMapsRestored: artifacts.Status.ConfigMapCount,
 			SecretsRestored:    artifacts.Status.SecretCount,
 		}
 	}
 
-	// Build full lineage and create SnapshotRefs
+	// Build full lineage and clone snapshots to the target environment's namespace
 	lineage := append(snapshot.Status.Lineage, restore.Spec.SnapshotName)
-	if err := envReconciler.createSnapshotRefsForLineage(ctx, env, lineage, logger); err != nil {
-		logger.Error("Failed to create SnapshotRefs for lineage", zap.Error(err))
+	if err := envReconciler.cloneSnapshotsForLineage(ctx, env, sourceNamespace, lineage, logger); err != nil {
+		logger.Error("Failed to clone snapshots for lineage", zap.Error(err))
 		// Continue anyway
 	}
 

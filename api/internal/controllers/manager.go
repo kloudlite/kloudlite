@@ -151,16 +151,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to create Snapshot controller: %w", err)
 	}
 
-	// Setup SnapshotRef controller
-	snapshotRefReconciler := &snapshot.SnapshotRefReconciler{
-		Client: mgr.GetClient(),
-		Logger: logger.With(zap.String("controller", "snapshotref")),
-	}
-
-	if err = snapshotRefReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create SnapshotRef controller: %w", err)
-	}
-
 	// Setup SnapshotRestore controller
 	snapshotRestoreReconciler := &snapshot.SnapshotRestoreReconciler{
 		Client: mgr.GetClient(),

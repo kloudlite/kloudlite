@@ -5,7 +5,6 @@
 //
 // This package defines types in the snapshots.kloudlite.io API group:
 // - SnapshotStore: Configures storage backends (S3, etc.) for snapshots
-// - Snapshot: A generic point-in-time snapshot of a btrfs subvolume with artifacts
-// - SnapshotRef: A reference to a Snapshot that manages retention counting
+// - Snapshot: A namespaced point-in-time snapshot of a btrfs subvolume with artifacts
 // - SnapshotRestore: A request to restore a snapshot to a target path
 package v1

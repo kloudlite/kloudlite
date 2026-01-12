@@ -74,25 +74,23 @@ type SnapshotStoreList struct {
 }
 
 // ============================================================================
-// Snapshot - Global metadata about a stored snapshot (result of SnapshotRequest)
+// Snapshot - Environment-owned metadata about a stored snapshot
 // ============================================================================
 
 // +genclient
-// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
-// +kubebuilder:printcolumn:name="References",type=string,JSONPath=`.status.referencedBy`
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.status.sizeHuman`
 // +kubebuilder:printcolumn:name="Parent",type=string,JSONPath=`.spec.parentSnapshot`,priority=1
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // Snapshot represents metadata about a snapshot stored in an OCI registry.
-// This is purely metadata - it doesn't know about nodes or local paths.
-// Snapshots are created by SnapshotRequest after data is pushed to registry.
+// Snapshots are namespaced and owned by environments.
+// When forking, snapshots are deep-cloned to the new environment's namespace.
 type Snapshot struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -181,11 +179,6 @@ type SnapshotStatus struct {
 	// Message provides human-readable status information
 	// +optional
 	Message string `json:"message,omitempty"`
-
-	// ReferencedBy lists the environment/workspace names that reference this snapshot
-	// Snapshot cannot be garbage collected when this list is non-empty
-	// +optional
-	ReferencedBy []string `json:"referencedBy,omitempty"`
 
 	// SizeBytes is the snapshot size in bytes
 	// +optional
@@ -370,64 +363,6 @@ type SnapshotRequestList struct {
 }
 
 // ============================================================================
-// SnapshotRef - Reference counting mechanism
-// ============================================================================
-
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced
-// +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
-// +kubebuilder:printcolumn:name="Bound",type=boolean,JSONPath=`.status.bound`
-// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
-
-// SnapshotRef creates a reference to a Snapshot, incrementing its refCount
-// When deleted (manually or via ownerReference), decrements the refCount
-// Use ownerReferences to automatically delete when the owning resource is deleted
-type SnapshotRef struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   SnapshotRefSpec   `json:"spec,omitempty"`
-	Status SnapshotRefStatus `json:"status,omitempty"`
-}
-
-// SnapshotRefSpec defines which snapshot this ref points to
-type SnapshotRefSpec struct {
-	// SnapshotName is the name of the Snapshot to reference
-	// +kubebuilder:validation:Required
-	SnapshotName string `json:"snapshotName"`
-
-	// Purpose describes why this reference exists (for documentation)
-	// +optional
-	Purpose string `json:"purpose,omitempty"`
-}
-
-// SnapshotRefStatus tracks the reference status
-type SnapshotRefStatus struct {
-	// Bound indicates if the refCount has been incremented
-	Bound bool `json:"bound,omitempty"`
-
-	// BoundAt is when the ref was bound to the snapshot
-	// +optional
-	BoundAt *metav1.Time `json:"boundAt,omitempty"`
-
-	// SnapshotState is the current state of the referenced snapshot
-	// +optional
-	SnapshotState SnapshotState `json:"snapshotState,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// SnapshotRefList contains a list of SnapshotRef
-type SnapshotRefList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []SnapshotRef `json:"items"`
-}
-
-// ============================================================================
 // SnapshotRestore - Request to restore a snapshot
 // ============================================================================
 
@@ -521,19 +456,16 @@ type SnapshotRestoreList struct {
 // ============================================================================
 
 // +genclient
-// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
-// +kubebuilder:printcolumn:name="Compositions",type=integer,JSONPath=`.status.compositionCount`
 // +kubebuilder:printcolumn:name="ConfigMaps",type=integer,JSONPath=`.status.configMapCount`
 // +kubebuilder:printcolumn:name="Secrets",type=integer,JSONPath=`.status.secretCount`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// SnapshotArtifacts stores K8s resources (Compositions, ConfigMaps, Secrets)
-// captured during environment snapshot creation. This is a separate resource
-// to keep the Snapshot CR lightweight.
+// SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, ComposeSpec)
+// captured during environment snapshot creation. Namespaced with the snapshot.
 type SnapshotArtifacts struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
