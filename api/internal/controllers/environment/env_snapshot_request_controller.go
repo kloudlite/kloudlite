@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -508,10 +509,14 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 		}
 	}
 
-	// Capture Compositions
+	// Capture Compositions (skip if CRD doesn't exist)
 	compositions := &environmentsv1.CompositionList{}
 	if err := r.List(ctx, compositions, client.InNamespace(namespace)); err != nil {
-		return fmt.Errorf("failed to list compositions: %w", err)
+		if !meta.IsNoMatchError(err) {
+			return fmt.Errorf("failed to list compositions: %w", err)
+		}
+		// Composition CRD doesn't exist, skip capturing compositions
+		logger.Debug("Composition CRD not found, skipping composition capture")
 	}
 
 	if len(compositions.Items) > 0 {
