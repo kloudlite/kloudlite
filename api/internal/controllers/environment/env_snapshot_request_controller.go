@@ -3,6 +3,7 @@ package environment
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -213,8 +214,8 @@ func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
 		logger.Info("Created Snapshot", zap.String("name", req.Spec.SnapshotName))
 	}
 
-	// Create SnapshotArtifacts to capture K8s resources
-	if err := r.createSnapshotArtifacts(ctx, req.Spec.SnapshotName, env.Spec.TargetNamespace, logger); err != nil {
+	// Create SnapshotArtifacts to capture K8s resources (including Environment's compose spec)
+	if err := r.createSnapshotArtifacts(ctx, req.Spec.SnapshotName, env.Spec.TargetNamespace, env, logger); err != nil {
 		logger.Warn("Failed to create snapshot artifacts", zap.Error(err))
 		// Continue without artifacts - not a fatal error
 	}
@@ -481,7 +482,7 @@ func (r *EnvironmentSnapshotRequestReconciler) SetupWithManager(mgr ctrl.Manager
 }
 
 // createSnapshotArtifacts captures K8s resources and creates a SnapshotArtifacts CR
-func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx context.Context, snapshotName, namespace string, logger *zap.Logger) error {
+func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx context.Context, snapshotName, namespace string, env *environmentsv1.Environment, logger *zap.Logger) error {
 	artifacts := &snapshotv1.SnapshotArtifacts{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: snapshotName, // Same name as the snapshot
@@ -495,6 +496,17 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 	}
 
 	var compositionCount, configMapCount, secretCount int32
+
+	// Capture Environment's inline compose spec if present
+	if env != nil && env.Spec.Compose != nil {
+		composeData, err := json.Marshal(env.Spec.Compose)
+		if err != nil {
+			logger.Warn("Failed to marshal compose spec", zap.Error(err))
+		} else {
+			artifacts.Spec.ComposeSpec = base64.StdEncoding.EncodeToString(composeData)
+			logger.Info("Captured environment compose spec")
+		}
+	}
 
 	// Capture Compositions
 	compositions := &environmentsv1.CompositionList{}
