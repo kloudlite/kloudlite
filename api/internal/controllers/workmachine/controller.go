@@ -50,6 +50,11 @@ type Env struct {
 
 	// HostedSubdomain is the full subdomain (e.g., "subdomain.khost.dev") used for DNS resolution
 	HostedSubdomain string `env:"HOSTED_SUBDOMAIN" required:"true"`
+
+	// Snapshot registry configuration for the host-manager
+	SnapshotRegistryEndpoint string `env:"SNAPSHOT_REGISTRY_ENDPOINT" default:"image-registry.kloudlite.svc.cluster.local:5000"`
+	SnapshotRegistryPrefix   string `env:"SNAPSHOT_REGISTRY_PREFIX" default:"snapshots"`
+	SnapshotRegistryInsecure string `env:"SNAPSHOT_REGISTRY_INSECURE" default:"true"`
 }
 
 type awsProviderEnv struct {

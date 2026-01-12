@@ -61,6 +61,13 @@ spec:
               value: "ghcr.io/kloudlite/kloudlite/tunnel-server:development"
             - name: CODE_ANALYZER_IMAGE
               value: "ghcr.io/kloudlite/kloudlite/code-analyzer:development"
+            # Snapshot registry configuration (passed to host-manager pods)
+            - name: SNAPSHOT_REGISTRY_ENDPOINT
+              value: "image-registry.kloudlite.svc.cluster.local:5000"
+            - name: SNAPSHOT_REGISTRY_PREFIX
+              value: "snapshots"
+            - name: SNAPSHOT_REGISTRY_INSECURE
+              value: "true"
           volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs
