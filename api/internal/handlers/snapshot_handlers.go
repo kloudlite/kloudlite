@@ -1013,39 +1013,7 @@ func (h *SnapshotHandlers) createSnapshotArtifacts(ctx context.Context, snapshot
 		},
 	}
 
-	var compositionCount, configMapCount, secretCount int32
-
-	// Capture Compositions
-	compositions := &envv1.CompositionList{}
-	if err := h.k8sClient.List(ctx, compositions, client.InNamespace(namespace)); err != nil {
-		return fmt.Errorf("failed to list compositions: %w", err)
-	}
-
-	if len(compositions.Items) > 0 {
-		cleanCompositions := make([]envv1.Composition, len(compositions.Items))
-		for i, comp := range compositions.Items {
-			cleanCompositions[i] = envv1.Composition{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "environments.kloudlite.io/v1",
-					Kind:       "Composition",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        comp.Name,
-					Labels:      comp.Labels,
-					Annotations: comp.Annotations,
-				},
-				Spec: comp.Spec,
-			}
-		}
-
-		data, err := yaml.Marshal(cleanCompositions)
-		if err != nil {
-			return fmt.Errorf("failed to marshal compositions: %w", err)
-		}
-		artifacts.Spec.Compositions = base64.StdEncoding.EncodeToString(data)
-		compositionCount = int32(len(compositions.Items))
-		h.logger.Info("Captured compositions", zap.Int("count", len(compositions.Items)))
-	}
+	var configMapCount, secretCount int32
 
 	// Capture ConfigMaps (excluding system ones)
 	configMaps := &corev1.ConfigMapList{}
@@ -1124,9 +1092,8 @@ func (h *SnapshotHandlers) createSnapshotArtifacts(ctx context.Context, snapshot
 
 	// Set status counts
 	artifacts.Status = snapshotv1.SnapshotArtifactsStatus{
-		CompositionCount: compositionCount,
-		ConfigMapCount:   configMapCount,
-		SecretCount:      secretCount,
+		ConfigMapCount: configMapCount,
+		SecretCount:    secretCount,
 	}
 
 	// Create the SnapshotArtifacts CR
@@ -1136,7 +1103,6 @@ func (h *SnapshotHandlers) createSnapshotArtifacts(ctx context.Context, snapshot
 
 	h.logger.Info("Created SnapshotArtifacts",
 		zap.String("name", snapshotName),
-		zap.Int32("compositions", compositionCount),
 		zap.Int32("configMaps", configMapCount),
 		zap.Int32("secrets", secretCount))
 

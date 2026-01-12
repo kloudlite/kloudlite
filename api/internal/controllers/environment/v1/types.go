@@ -619,9 +619,6 @@ type EnvironmentSnapshotRestoreStatus struct {
 
 // RestoredArtifactsInfo tracks what was restored
 type RestoredArtifactsInfo struct {
-	// CompositionsRestored is the number of compositions restored
-	CompositionsRestored int32 `json:"compositionsRestored,omitempty"`
-
 	// ConfigMapsRestored is the number of configmaps restored
 	ConfigMapsRestored int32 `json:"configMapsRestored,omitempty"`
 
