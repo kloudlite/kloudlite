@@ -383,8 +383,8 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 	if env.Spec.FromSnapshot != nil && operation == admissionv1.Create {
 		// Fetch the snapshot to validate it exists and is ready
 		var snapshot snapshotv1.Snapshot
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.FromSnapshot.SnapshotName}, &snapshot); err != nil {
-			return fmt.Errorf("snapshot '%s' not found", env.Spec.FromSnapshot.SnapshotName)
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.FromSnapshot.SnapshotName, Namespace: env.Spec.FromSnapshot.SourceNamespace}, &snapshot); err != nil {
+			return fmt.Errorf("snapshot '%s' not found in namespace '%s'", env.Spec.FromSnapshot.SnapshotName, env.Spec.FromSnapshot.SourceNamespace)
 		}
 
 		// Validate snapshot is ready
