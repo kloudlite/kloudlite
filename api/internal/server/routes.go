@@ -203,6 +203,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				// Snapshot routes (per-environment)
 				environments.POST("/:name/snapshots", snapshotHandlers.CreateEnvironmentSnapshot)
 				environments.GET("/:name/snapshots", snapshotHandlers.ListEnvironmentSnapshots)
+				environments.POST("/:name/restore", snapshotHandlers.RestoreEnvironmentFromSnapshot)
 
 				// Environment config routes (legacy - keeping for backwards compatibility)
 				environments.PUT("/:name/config", environmentConfigHandlers.SetConfig)
