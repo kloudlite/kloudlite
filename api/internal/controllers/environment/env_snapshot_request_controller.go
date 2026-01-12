@@ -193,10 +193,19 @@ func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
 	}
 
 	// Create the Snapshot object first (so UI can see it immediately)
+	// Snapshots are namespaced and owned by the environment
 	snapshot := &snapshotv1.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   req.Spec.SnapshotName,
-			Labels: labels,
+			Name:      req.Spec.SnapshotName,
+			Namespace: env.Spec.TargetNamespace,
+			Labels:    labels,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: "environments.kloudlite.io/v1",
+				Kind:       "Environment",
+				Name:       env.Name,
+				UID:        env.UID,
+				Controller: boolPtr(true),
+			}},
 		},
 		Spec: snapshotv1.SnapshotSpec{
 			Owner:          env.Spec.OwnedBy,
@@ -211,44 +220,14 @@ func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
 		}
 		logger.Debug("Snapshot already exists", zap.String("name", req.Spec.SnapshotName))
 	} else {
-		logger.Info("Created Snapshot", zap.String("name", req.Spec.SnapshotName))
+		logger.Info("Created Snapshot", zap.String("name", req.Spec.SnapshotName), zap.String("namespace", env.Spec.TargetNamespace))
 	}
 
 	// Create SnapshotArtifacts to capture K8s resources (including Environment's compose spec)
+	// Artifacts are also namespaced with the snapshot
 	if err := r.createSnapshotArtifacts(ctx, req.Spec.SnapshotName, env.Spec.TargetNamespace, env, logger); err != nil {
 		logger.Warn("Failed to create snapshot artifacts", zap.Error(err))
 		// Continue without artifacts - not a fatal error
-	}
-
-	// Create SnapshotRef to track ownership (prevents immediate GC when snapshot is ready)
-	snapshotRef := &snapshotv1.SnapshotRef{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s--%s", env.Name, req.Spec.SnapshotName),
-			Namespace: env.Spec.TargetNamespace,
-			Labels: map[string]string{
-				"kloudlite.io/environment":        env.Name,
-				"snapshots.kloudlite.io/snapshot": req.Spec.SnapshotName,
-			},
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: "environments.kloudlite.io/v1",
-				Kind:       "Environment",
-				Name:       env.Name,
-				UID:        env.UID,
-				Controller: boolPtr(true),
-			}},
-		},
-		Spec: snapshotv1.SnapshotRefSpec{
-			SnapshotName: req.Spec.SnapshotName,
-			Purpose:      "owned",
-		},
-	}
-
-	if err := r.Create(ctx, snapshotRef); err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			logger.Warn("Failed to create SnapshotRef", zap.Error(err))
-		}
-	} else {
-		logger.Info("Created SnapshotRef", zap.String("name", snapshotRef.Name))
 	}
 
 	// Create the SnapshotRequest (node-specific operation)
@@ -485,7 +464,8 @@ func (r *EnvironmentSnapshotRequestReconciler) SetupWithManager(mgr ctrl.Manager
 func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx context.Context, snapshotName, namespace string, env *environmentsv1.Environment, logger *zap.Logger) error {
 	artifacts := &snapshotv1.SnapshotArtifacts{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: snapshotName, // Same name as the snapshot
+			Name:      snapshotName, // Same name as the snapshot
+			Namespace: namespace,    // Same namespace as the snapshot
 			Labels: map[string]string{
 				"snapshots.kloudlite.io/snapshot": snapshotName,
 			},

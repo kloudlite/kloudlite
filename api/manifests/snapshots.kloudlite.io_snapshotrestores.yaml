@@ -1,0 +1,107 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: snapshotrestores.snapshots.kloudlite.io
+spec:
+  group: snapshots.kloudlite.io
+  names:
+    kind: SnapshotRestore
+    listKind: SnapshotRestoreList
+    plural: snapshotrestores
+    singular: snapshotrestore
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.snapshotName
+      name: Snapshot
+      type: string
+    - jsonPath: .spec.targetPath
+      name: Target
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: SnapshotRestore requests restoration of a snapshot to a target
+          path
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SnapshotRestoreSpec defines the restore operation
+            properties:
+              includeArtifacts:
+                description: IncludeArtifacts lists which artifacts to include in
+                  response (empty = all)
+                items:
+                  type: string
+                type: array
+              nodeName:
+                description: NodeName is the node where to perform the restore
+                type: string
+              snapshotName:
+                description: SnapshotName is the snapshot to restore
+                type: string
+              targetPath:
+                description: TargetPath is where to restore the snapshot
+                type: string
+            required:
+            - nodeName
+            - snapshotName
+            - targetPath
+            type: object
+          status:
+            description: SnapshotRestoreStatus defines restore progress
+            properties:
+              artifacts:
+                additionalProperties:
+                  type: string
+                description: Artifacts contains the retrieved artifact data
+                type: object
+              completedAt:
+                description: CompletedAt is when the restore completed
+                format: date-time
+                type: string
+              message:
+                description: Message provides status details
+                type: string
+              restoredPath:
+                description: RestoredPath is the actual path where data was restored
+                type: string
+              startedAt:
+                description: StartedAt is when the restore started
+                format: date-time
+                type: string
+              state:
+                default: Pending
+                description: State is the current restore state
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

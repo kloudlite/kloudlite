@@ -296,6 +296,11 @@ type FromSnapshotRef struct {
 	// The snapshot must have status.registryStatus.pushed=true
 	// +kubebuilder:validation:Required
 	SnapshotName string `json:"snapshotName"`
+
+	// SourceNamespace is the namespace where the source snapshot exists
+	// This is typically the target namespace of the source environment
+	// +kubebuilder:validation:Required
+	SourceNamespace string `json:"sourceNamespace"`
 }
 
 // SnapshotRestorePhase represents the current phase of snapshot restoration
@@ -552,6 +557,11 @@ type EnvironmentSnapshotRestoreSpec struct {
 	// SnapshotName is the name of the snapshot to restore from
 	// +kubebuilder:validation:Required
 	SnapshotName string `json:"snapshotName"`
+
+	// SourceNamespace is the namespace where the source snapshot exists
+	// This is typically the target namespace of the source environment
+	// +kubebuilder:validation:Required
+	SourceNamespace string `json:"sourceNamespace"`
 
 	// ActivateAfterRestore determines whether to activate the environment after restore
 	// +kubebuilder:default=true

@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: environmentsnapshotrestores.environments.kloudlite.io
+  name: environmentsnapshotrequests.environments.kloudlite.io
 spec:
   group: environments.kloudlite.io
   names:
-    kind: EnvironmentSnapshotRestore
-    listKind: EnvironmentSnapshotRestoreList
-    plural: environmentsnapshotrestores
-    singular: environmentsnapshotrestore
+    kind: EnvironmentSnapshotRequest
+    listKind: EnvironmentSnapshotRequestList
+    plural: environmentsnapshotrequests
+    singular: environmentsnapshotrequest
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -31,8 +31,8 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          EnvironmentSnapshotRestore orchestrates restoring an environment from a snapshot.
-          It stops workloads, restores the data, applies artifacts, and activates the environment.
+          EnvironmentSnapshotRequest orchestrates creating a snapshot for an environment.
+          It stops workloads, creates the snapshot, and restores the environment state.
         properties:
           apiVersion:
             description: |-
@@ -52,63 +52,57 @@ spec:
           metadata:
             type: object
           spec:
-            description: EnvironmentSnapshotRestoreSpec defines the restore parameters
+            description: EnvironmentSnapshotRequestSpec defines the snapshot request
+              parameters
             properties:
-              activateAfterRestore:
-                default: true
-                description: ActivateAfterRestore determines whether to activate the
-                  environment after restore
-                type: boolean
+              description:
+                description: Description is a human-readable description of the snapshot
+                type: string
               environmentName:
-                description: EnvironmentName is the name of the environment to restore
-                  to
+                description: EnvironmentName is the name of the environment to snapshot
                 type: string
+              retentionDays:
+                description: RetentionDays specifies how long to keep the snapshot
+                  (0 = forever)
+                format: int32
+                type: integer
               snapshotName:
-                description: SnapshotName is the name of the snapshot to restore from
-                type: string
-              sourceNamespace:
-                description: |-
-                  SourceNamespace is the namespace where the source snapshot exists
-                  This is typically the target namespace of the source environment
+                description: SnapshotName is the desired name for the snapshot
                 type: string
             required:
             - environmentName
             - snapshotName
-            - sourceNamespace
             type: object
           status:
-            description: EnvironmentSnapshotRestoreStatus defines the observed state
+            description: EnvironmentSnapshotRequestStatus defines the observed state
             properties:
               completionTime:
-                description: CompletionTime is when the restore completed (success
+                description: CompletionTime is when the request completed (success
                   or failure)
                 format: date-time
+                type: string
+              createdSnapshotName:
+                description: CreatedSnapshotName is the name of the successfully created
+                  Snapshot
                 type: string
               message:
                 description: Message provides human-readable status information
                 type: string
               phase:
                 default: Pending
-                description: Phase is the current phase of the restore
+                description: Phase is the current phase of the request
                 type: string
-              restoredArtifacts:
-                description: RestoredArtifacts lists the K8s resources that were restored
-                properties:
-                  configMapsRestored:
-                    description: ConfigMapsRestored is the number of configmaps restored
-                    format: int32
-                    type: integer
-                  secretsRestored:
-                    description: SecretsRestored is the number of secrets restored
-                    format: int32
-                    type: integer
-                type: object
-              snapshotRestoreName:
-                description: SnapshotRestoreName is the name of the created SnapshotRestore
+              previousEnvironmentState:
+                description: |-
+                  PreviousEnvironmentState stores the environment state before snapshotting
+                  Used to restore the environment after snapshot completes
+                type: string
+              snapshotRequestName:
+                description: SnapshotRequestName is the name of the created SnapshotRequest
                   CR
                 type: string
               startTime:
-                description: StartTime is when the restore started processing
+                description: StartTime is when the request started processing
                 format: date-time
                 type: string
             type: object

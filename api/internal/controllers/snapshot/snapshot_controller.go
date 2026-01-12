@@ -41,11 +41,12 @@ type SnapshotOperator interface {
 func (r *SnapshotReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
 		zap.String("snapshot", req.Name),
+		zap.String("namespace", req.Namespace),
 	)
 
-	// Fetch Snapshot (cluster-scoped)
+	// Fetch Snapshot (namespaced - owned by environment)
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: req.Name}, snapshot); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
@@ -66,18 +67,6 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req reconcile.Reques
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
-	}
-
-	// Garbage collect snapshots with no references
-	// SnapshotRefs are the source of truth for retention - when all SnapshotRefs are deleted,
-	// the snapshot should be garbage collected
-	if len(snapshot.Status.ReferencedBy) == 0 && snapshot.Status.State == snapshotv1.SnapshotStateReady {
-		logger.Info("Garbage collecting snapshot with no references")
-		if err := r.Delete(ctx, snapshot); err != nil {
-			logger.Error("Failed to delete snapshot for garbage collection", zap.Error(err))
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
 	}
 
 	// Process based on current state
@@ -125,20 +114,6 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 		return reconcile.Result{}, nil
 	}
 
-	// Check if still referenced - cannot delete if references exist
-	if len(snapshot.Status.ReferencedBy) > 0 {
-		logger.Warn("Cannot delete snapshot with active references",
-			zap.Strings("referencedBy", snapshot.Status.ReferencedBy))
-		snapshot.Status.Message = fmt.Sprintf("Cannot delete: referenced by %v", snapshot.Status.ReferencedBy)
-		if err := r.Status().Update(ctx, snapshot); err != nil {
-			if !apierrors.IsConflict(err) {
-				logger.Error("Failed to update status", zap.Error(err))
-			}
-		}
-		// Requeue to check again later
-		return reconcile.Result{RequeueAfter: defaultRequeueAfter}, nil
-	}
-
 	// Update state to Deleting
 	if snapshot.Status.State != snapshotv1.SnapshotStateDeleting {
 		snapshot.Status.State = snapshotv1.SnapshotStateDeleting
@@ -177,9 +152,9 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 
 // reparentChildSnapshots updates child snapshots to point to this snapshot's parent
 func (r *SnapshotReconciler) reparentChildSnapshots(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) error {
-	// Find all snapshots that have this snapshot as their parent
+	// Find all snapshots in the same namespace that have this snapshot as their parent
 	childSnapshots := &snapshotv1.SnapshotList{}
-	if err := r.List(ctx, childSnapshots); err != nil {
+	if err := r.List(ctx, childSnapshots, client.InNamespace(snapshot.Namespace)); err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
 	}
 
@@ -213,7 +188,8 @@ func (r *SnapshotReconciler) cleanupOrphanedStorage(ctx context.Context, snapsho
 		return nil
 	}
 
-	// Get all snapshots to check which storage refs are still in use
+	// Get all snapshots across ALL namespaces to check which storage refs are still in use
+	// Storage is shared across environments (via deep clone), so we need to check globally
 	allSnapshots := &snapshotv1.SnapshotList{}
 	if err := r.List(ctx, allSnapshots); err != nil {
 		return fmt.Errorf("failed to list snapshots: %w", err)
@@ -222,8 +198,9 @@ func (r *SnapshotReconciler) cleanupOrphanedStorage(ctx context.Context, snapsho
 	// Build a set of all imageRefs still in use by other snapshots
 	inUseRefs := make(map[string]bool)
 	for _, s := range allSnapshots.Items {
-		if s.Name == snapshot.Name {
-			continue // Skip the snapshot being deleted
+		// Skip the snapshot being deleted (check both name and namespace)
+		if s.Name == snapshot.Name && s.Namespace == snapshot.Namespace {
+			continue
 		}
 		for _, ref := range s.Status.StorageRefs {
 			inUseRefs[ref] = true

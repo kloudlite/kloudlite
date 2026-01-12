@@ -13,8 +13,7 @@ import (
 )
 
 // handleDeletion handles the deletion of an environment and its child resources
-// Note: SnapshotRef cleanup happens automatically via owner references
-// Note: Snapshot cleanup happens via garbage collection when ReferencedBy becomes empty
+// Note: Snapshots in the environment's namespace are deleted via owner references
 func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
 	// Update status to show deletion in progress
 	if environment.Status.State != environmentsv1.EnvironmentStateDeleting {
@@ -36,9 +35,8 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 		// Continue with deletion even if cleanup fails
 	}
 
-	// SnapshotRefs are automatically deleted via owner references when the environment is deleted
-	// The SnapshotRef controller will remove entries from snapshot.status.referencedBy
-	// Snapshots with no remaining references will be garbage collected by the snapshot controller
+	// Snapshots are automatically deleted via owner references when the namespace is deleted
+	// Storage GC happens via storageRefs - images only deleted when no snapshot references them
 
 	// Delete namespace and wait for completion
 	deleted, err := r.deleteNamespace(ctx, environment, logger)

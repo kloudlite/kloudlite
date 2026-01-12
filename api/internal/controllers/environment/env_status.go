@@ -104,13 +104,14 @@ func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1
 // This creates a SnapshotRestore resource and waits for it to complete
 func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (reconcile.Result, error) {
 	snapshotName := environment.Spec.FromSnapshot.SnapshotName
+	sourceNamespace := environment.Spec.FromSnapshot.SourceNamespace
 
-	// Get the snapshot to verify it exists and is ready
+	// Get the snapshot to verify it exists and is ready (snapshots are namespaced)
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: sourceNamespace}, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Error("Snapshot not found", zap.String("snapshot", snapshotName))
-			return r.failSnapshotRestore(ctx, environment, fmt.Sprintf("Snapshot %s not found", snapshotName), logger)
+			logger.Error("Snapshot not found", zap.String("snapshot", snapshotName), zap.String("namespace", sourceNamespace))
+			return r.failSnapshotRestore(ctx, environment, fmt.Sprintf("Snapshot %s not found in namespace %s", snapshotName, sourceNamespace), logger)
 		}
 		logger.Error("Failed to get snapshot", zap.Error(err))
 		return reconcile.Result{}, err
@@ -207,7 +208,7 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 		logger.Info("Snapshot restore completed successfully", zap.String("snapshot", snapshotName))
 
 		// Apply artifacts (Compositions, ConfigMaps, Secrets) from SnapshotArtifacts CR
-		if err := r.applySnapshotArtifacts(ctx, snapshotName, environment, logger); err != nil {
+		if err := r.applySnapshotArtifacts(ctx, snapshotName, sourceNamespace, environment, logger); err != nil {
 			logger.Warn("Failed to apply snapshot artifacts", zap.Error(err))
 			// Don't fail the restore, just log the warning
 		}
@@ -218,11 +219,10 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 			zap.Strings("lineage", lineage),
 			zap.Int("count", len(lineage)))
 
-		// Create SnapshotRef CRs for each snapshot in the lineage
-		// This protects parent snapshots from garbage collection while this environment exists
-		// Owner references ensure automatic cleanup when the environment is deleted
-		if err := r.createSnapshotRefsForLineage(ctx, environment, lineage, logger); err != nil {
-			logger.Error("Failed to create SnapshotRefs for lineage", zap.Error(err))
+		// Deep clone snapshots from source namespace to this environment's namespace
+		// Each environment owns its own snapshots - this enables independent deletion
+		if err := r.cloneSnapshotsForLineage(ctx, environment, sourceNamespace, lineage, logger); err != nil {
+			logger.Error("Failed to clone snapshots for lineage", zap.Error(err))
 			// Continue anyway - the environment is already restored
 		}
 
@@ -335,12 +335,12 @@ func (r *EnvironmentReconciler) failSnapshotRestore(ctx context.Context, environ
 }
 
 // applySnapshotArtifacts reads SnapshotArtifacts CR and applies resources to the target environment
-func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snapshotName string, environment *environmentsv1.Environment, logger *zap.Logger) error {
-	// Get the SnapshotArtifacts CR - it's cluster-scoped, named after the snapshot
+func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snapshotName, sourceNamespace string, environment *environmentsv1.Environment, logger *zap.Logger) error {
+	// Get the SnapshotArtifacts CR - namespaced in the source environment's namespace
 	artifacts := &snapshotv1.SnapshotArtifacts{}
-	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, artifacts); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: sourceNamespace}, artifacts); err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Info("No SnapshotArtifacts found for snapshot", zap.String("snapshot", snapshotName))
+			logger.Info("No SnapshotArtifacts found for snapshot", zap.String("snapshot", snapshotName), zap.String("namespace", sourceNamespace))
 			return nil
 		}
 		return fmt.Errorf("failed to get SnapshotArtifacts: %w", err)
@@ -524,21 +524,26 @@ func (r *EnvironmentReconciler) applySecretsFromYAML(ctx context.Context, encode
 	return count, nil
 }
 
-// createSnapshotRefsForLineage creates SnapshotRef CRs for each snapshot in the lineage
-// The SnapshotRef controller will handle adding to snapshot.status.referencedBy
-// Owner references ensure automatic cleanup when the environment is deleted
-func (r *EnvironmentReconciler) createSnapshotRefsForLineage(ctx context.Context, env *environmentsv1.Environment, lineage []string, logger *zap.Logger) error {
+// cloneSnapshotsForLineage deep clones snapshots from source namespace to target environment
+// This creates copies of all snapshots in the lineage in the new environment's namespace
+func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, env *environmentsv1.Environment, sourceNamespace string, lineage []string, logger *zap.Logger) error {
 	for _, snapshotName := range lineage {
-		refName := fmt.Sprintf("%s--%s", env.Name, snapshotName)
+		// Get the source snapshot
+		sourceSnapshot := &snapshotv1.Snapshot{}
+		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: sourceNamespace}, sourceSnapshot); err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Warn("Source snapshot not found, skipping", zap.String("snapshot", snapshotName))
+				continue
+			}
+			return fmt.Errorf("failed to get source snapshot %s: %w", snapshotName, err)
+		}
 
-		ref := &snapshotv1.SnapshotRef{
+		// Create a clone in the target namespace
+		clonedSnapshot := &snapshotv1.Snapshot{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      refName,
+				Name:      snapshotName, // Same name
 				Namespace: env.Spec.TargetNamespace,
-				Labels: map[string]string{
-					"kloudlite.io/environment":        env.Name,
-					"snapshots.kloudlite.io/snapshot": snapshotName,
-				},
+				Labels:    sourceSnapshot.Labels,
 				OwnerReferences: []metav1.OwnerReference{{
 					APIVersion: "environments.kloudlite.io/v1",
 					Kind:       "Environment",
@@ -547,26 +552,39 @@ func (r *EnvironmentReconciler) createSnapshotRefsForLineage(ctx context.Context
 					Controller: ptrBool(true),
 				}},
 			},
-			Spec: snapshotv1.SnapshotRefSpec{
-				SnapshotName: snapshotName,
-				Purpose:      "lineage",
-			},
+			Spec:   sourceSnapshot.Spec,
+			Status: sourceSnapshot.Status,
 		}
 
-		if err := r.Create(ctx, ref); err != nil {
+		if err := r.Create(ctx, clonedSnapshot); err != nil {
 			if apierrors.IsAlreadyExists(err) {
-				logger.Debug("SnapshotRef already exists, skipping",
-					zap.String("ref", refName),
-					zap.String("snapshot", snapshotName))
+				logger.Debug("Cloned snapshot already exists, skipping", zap.String("snapshot", snapshotName))
 				continue
 			}
-			return fmt.Errorf("failed to create SnapshotRef for %s: %w", snapshotName, err)
+			return fmt.Errorf("failed to clone snapshot %s: %w", snapshotName, err)
 		}
 
-		logger.Info("Created SnapshotRef for lineage snapshot",
-			zap.String("ref", refName),
+		logger.Info("Cloned snapshot to target environment",
 			zap.String("snapshot", snapshotName),
-			zap.String("environment", env.Name))
+			zap.String("sourceNamespace", sourceNamespace),
+			zap.String("targetNamespace", env.Spec.TargetNamespace))
+
+		// Also clone the SnapshotArtifacts if they exist
+		sourceArtifacts := &snapshotv1.SnapshotArtifacts{}
+		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: sourceNamespace}, sourceArtifacts); err == nil {
+			clonedArtifacts := &snapshotv1.SnapshotArtifacts{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      snapshotName,
+					Namespace: env.Spec.TargetNamespace,
+					Labels:    sourceArtifacts.Labels,
+				},
+				Spec:   sourceArtifacts.Spec,
+				Status: sourceArtifacts.Status,
+			}
+			if err := r.Create(ctx, clonedArtifacts); err != nil && !apierrors.IsAlreadyExists(err) {
+				logger.Warn("Failed to clone snapshot artifacts", zap.String("snapshot", snapshotName), zap.Error(err))
+			}
+		}
 	}
 	return nil
 }

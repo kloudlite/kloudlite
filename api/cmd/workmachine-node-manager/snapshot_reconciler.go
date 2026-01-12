@@ -314,41 +314,10 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	if getErr != nil {
 		return r.setFailed(ctx, req, fmt.Sprintf("Failed to get Snapshot for status update after retries: %v", getErr), logger)
 	}
-	// Add initial reference to prevent GC race condition
-	// The SnapshotRef will be created next, and its controller will verify this reference
-	snapshotRefName := fmt.Sprintf("%s-owner", req.Spec.SnapshotName)
-	snapshotStatus.ReferencedBy = []string{fmt.Sprintf("ref:%s/%s", req.Namespace, snapshotRefName)}
 
 	existing.Status = snapshotStatus
 	if err := r.Status().Update(ctx, existing); err != nil {
 		return r.setFailed(ctx, req, fmt.Sprintf("Failed to update Snapshot status: %v", err), logger)
-	}
-
-	// Create SnapshotRef to prevent garbage collection
-	// The reference was already added to ReferencedBy above to prevent race condition
-	snapshotRef := &snapshotv1.SnapshotRef{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      snapshotRefName,
-			Namespace: req.Namespace,
-			Labels:    req.Labels, // Inherit labels (including environment ref)
-		},
-		Spec: snapshotv1.SnapshotRefSpec{
-			SnapshotName: req.Spec.SnapshotName,
-			Purpose:      "snapshot-owner",
-		},
-	}
-
-	if err := r.Create(ctx, snapshotRef); err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			logger.Warn("Failed to create SnapshotRef, snapshot may be garbage collected",
-				zap2.String("snapshotRef", snapshotRef.Name),
-				zap2.Error(err))
-			// Don't fail the whole operation - snapshot was created successfully
-		}
-	} else {
-		logger.Info("Created SnapshotRef for snapshot",
-			zap2.String("snapshotRef", snapshotRef.Name),
-			zap2.String("snapshot", req.Spec.SnapshotName))
 	}
 
 	// Delete local snapshot to free space (btrfs operation runs on host)
