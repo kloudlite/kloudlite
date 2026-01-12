@@ -178,7 +178,7 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	if _, err := os.Stat(req.Status.LocalSnapshotPath); os.IsNotExist(err) {
 		// Local snapshot was already deleted - check if Snapshot resource exists
 		existingSnapshot := &snapshotv1.Snapshot{}
-		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.SnapshotName}, existingSnapshot); err == nil {
+		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.SnapshotName, Namespace: req.Namespace}, existingSnapshot); err == nil {
 			// Snapshot exists, this means the upload already completed successfully
 			// Just update the SnapshotRequest status to Completed
 			logger.Info("Local snapshot already deleted and Snapshot resource exists, marking as completed",
@@ -245,7 +245,7 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	var storageRefs []string
 	if req.Spec.ParentSnapshot != "" {
 		parentSnapshot := &snapshotv1.Snapshot{}
-		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.ParentSnapshot}, parentSnapshot); err == nil {
+		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.ParentSnapshot, Namespace: req.Namespace}, parentSnapshot); err == nil {
 			lineage = append(parentSnapshot.Status.Lineage, parentSnapshot.Name)
 			// Inherit parent's storage refs and add this snapshot's imageRef
 			storageRefs = append(parentSnapshot.Status.StorageRefs, imageRef)
@@ -258,12 +258,13 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		storageRefs = []string{imageRef}
 	}
 
-	// Create the global Snapshot resource
+	// Create the namespaced Snapshot resource
 	now := metav1.Now()
 	snapshot := &snapshotv1.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   req.Spec.SnapshotName,
-			Labels: req.Labels,
+			Name:      req.Spec.SnapshotName,
+			Namespace: req.Namespace,
+			Labels:    req.Labels,
 		},
 		Spec: snapshotv1.SnapshotSpec{
 			Owner:           req.Spec.Owner,
@@ -302,7 +303,7 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 	existing := &snapshotv1.Snapshot{}
 	var getErr error
 	for i := range 5 {
-		if getErr = r.Get(ctx, client.ObjectKey{Name: req.Spec.SnapshotName}, existing); getErr == nil {
+		if getErr = r.Get(ctx, client.ObjectKey{Name: req.Spec.SnapshotName, Namespace: req.Namespace}, existing); getErr == nil {
 			break
 		}
 		if !apierrors.IsNotFound(getErr) {
