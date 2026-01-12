@@ -113,6 +113,18 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 									Name:  "WORKMACHINE_NAME",
 									Value: obj.Name,
 								},
+								{
+									Name:  "SNAPSHOT_REGISTRY_ENDPOINT",
+									Value: r.env.SnapshotRegistryEndpoint,
+								},
+								{
+									Name:  "SNAPSHOT_REGISTRY_PREFIX",
+									Value: r.env.SnapshotRegistryPrefix,
+								},
+								{
+									Name:  "SNAPSHOT_REGISTRY_INSECURE",
+									Value: r.env.SnapshotRegistryInsecure,
+								},
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: fn.Ptr(true),
