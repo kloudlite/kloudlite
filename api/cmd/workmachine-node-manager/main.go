@@ -134,8 +134,12 @@ func main() {
 						cache.AllNamespaces: {},
 					},
 				},
-				// Watch Snapshots globally (cluster-scoped)
-				&snapshotv1.Snapshot{}: {},
+				// Watch Snapshots globally (all namespaces) since they are now namespaced
+				&snapshotv1.Snapshot{}: {
+					Namespaces: map[string]cache.Config{
+						cache.AllNamespaces: {},
+					},
+				},
 				// Watch SnapshotStores globally (cluster-scoped)
 				&snapshotv1.SnapshotStore{}: {},
 				// Note: Environments are read via GetAPIReader() to bypass cache
