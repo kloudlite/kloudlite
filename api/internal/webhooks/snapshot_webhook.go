@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	envv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	admissionv1 "k8s.io/api/admission/v1"
@@ -203,6 +204,188 @@ func isSnapshotRestoreInProgress(state snapshotv1.SnapshotRestoreState) bool {
 		return false
 	default:
 		// Pending, Downloading, Restoring are all in-progress states
+		return true
+	}
+}
+
+// ValidateEnvironmentSnapshotRequest handles validation webhook for EnvironmentSnapshotRequest CRD
+func (w *SnapshotWebhook) ValidateEnvironmentSnapshotRequest(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		w.logger.Error("Failed to read request body: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var admissionReview admissionv1.AdmissionReview
+	if err := json.Unmarshal(body, &admissionReview); err != nil {
+		w.logger.Error("Failed to unmarshal admission review: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to unmarshal admission review"})
+		return
+	}
+
+	response := w.handleEnvironmentSnapshotRequestValidation(admissionReview.Request)
+	admissionReview.Response = response
+	admissionReview.Response.UID = admissionReview.Request.UID
+
+	c.JSON(http.StatusOK, admissionReview)
+}
+
+// ValidateEnvironmentSnapshotRestore handles validation webhook for EnvironmentSnapshotRestore CRD
+func (w *SnapshotWebhook) ValidateEnvironmentSnapshotRestore(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		w.logger.Error("Failed to read request body: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var admissionReview admissionv1.AdmissionReview
+	if err := json.Unmarshal(body, &admissionReview); err != nil {
+		w.logger.Error("Failed to unmarshal admission review: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to unmarshal admission review"})
+		return
+	}
+
+	response := w.handleEnvironmentSnapshotRestoreValidation(admissionReview.Request)
+	admissionReview.Response = response
+	admissionReview.Response.UID = admissionReview.Request.UID
+
+	c.JSON(http.StatusOK, admissionReview)
+}
+
+func (w *SnapshotWebhook) handleEnvironmentSnapshotRequestValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+	// Only validate CREATE operations
+	if req.Operation != admissionv1.Create {
+		return &admissionv1.AdmissionResponse{Allowed: true}
+	}
+
+	var envSnapReq envv1.EnvironmentSnapshotRequest
+	if err := json.Unmarshal(req.Object.Raw, &envSnapReq); err != nil {
+		w.logger.Error("Failed to unmarshal EnvironmentSnapshotRequest: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: "Failed to unmarshal EnvironmentSnapshotRequest object",
+			},
+		}
+	}
+
+	envName := envSnapReq.Spec.EnvironmentName
+	if err := w.validateNoConflictingEnvironmentOperations(envName, envSnapReq.Name); err != nil {
+		w.logger.Warn("EnvironmentSnapshotRequest validation failed: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	}
+
+	return &admissionv1.AdmissionResponse{Allowed: true}
+}
+
+func (w *SnapshotWebhook) handleEnvironmentSnapshotRestoreValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+	// Only validate CREATE operations
+	if req.Operation != admissionv1.Create {
+		return &admissionv1.AdmissionResponse{Allowed: true}
+	}
+
+	var envSnapRestore envv1.EnvironmentSnapshotRestore
+	if err := json.Unmarshal(req.Object.Raw, &envSnapRestore); err != nil {
+		w.logger.Error("Failed to unmarshal EnvironmentSnapshotRestore: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: "Failed to unmarshal EnvironmentSnapshotRestore object",
+			},
+		}
+	}
+
+	envName := envSnapRestore.Spec.EnvironmentName
+	if err := w.validateNoConflictingEnvironmentOperations(envName, envSnapRestore.Name); err != nil {
+		w.logger.Warn("EnvironmentSnapshotRestore validation failed: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	}
+
+	return &admissionv1.AdmissionResponse{Allowed: true}
+}
+
+// validateNoConflictingEnvironmentOperations checks that no other EnvironmentSnapshotRequest or EnvironmentSnapshotRestore
+// is currently in progress for the same environment
+func (w *SnapshotWebhook) validateNoConflictingEnvironmentOperations(envName string, currentName string) error {
+	ctx := context.Background()
+
+	// Check for in-progress EnvironmentSnapshotRequests for the same environment
+	envSnapRequests := &envv1.EnvironmentSnapshotRequestList{}
+	if err := w.k8sClient.List(ctx, envSnapRequests); err != nil {
+		return fmt.Errorf("failed to list EnvironmentSnapshotRequests: %v", err)
+	}
+
+	for _, req := range envSnapRequests.Items {
+		// Skip the current resource being created
+		if req.Name == currentName {
+			continue
+		}
+
+		// Check if this request targets the same environment
+		if req.Spec.EnvironmentName == envName {
+			// Check if it's in progress (not completed or failed)
+			if isEnvironmentSnapshotRequestInProgress(req.Status.Phase) {
+				return fmt.Errorf("another snapshot operation is already in progress for environment '%s': EnvironmentSnapshotRequest '%s' (phase: %s). Please wait for it to complete",
+					envName, req.Name, req.Status.Phase)
+			}
+		}
+	}
+
+	// Check for in-progress EnvironmentSnapshotRestores for the same environment
+	envSnapRestores := &envv1.EnvironmentSnapshotRestoreList{}
+	if err := w.k8sClient.List(ctx, envSnapRestores); err != nil {
+		return fmt.Errorf("failed to list EnvironmentSnapshotRestores: %v", err)
+	}
+
+	for _, restore := range envSnapRestores.Items {
+		// Skip the current resource being created
+		if restore.Name == currentName {
+			continue
+		}
+
+		// Check if this restore targets the same environment
+		if restore.Spec.EnvironmentName == envName {
+			// Check if it's in progress (not completed or failed)
+			if isEnvironmentSnapshotRestoreInProgress(restore.Status.Phase) {
+				return fmt.Errorf("another snapshot operation is already in progress for environment '%s': EnvironmentSnapshotRestore '%s' (phase: %s). Please wait for it to complete",
+					envName, restore.Name, restore.Status.Phase)
+			}
+		}
+	}
+
+	return nil
+}
+
+// isEnvironmentSnapshotRequestInProgress returns true if the request is still processing
+func isEnvironmentSnapshotRequestInProgress(phase envv1.EnvironmentSnapshotRequestPhase) bool {
+	switch phase {
+	case envv1.EnvironmentSnapshotRequestPhaseCompleted, envv1.EnvironmentSnapshotRequestPhaseFailed:
+		return false
+	default:
+		// Pending, StoppingWorkloads, WaitingForPods, CreatingSnapshot, UploadingSnapshot, RestoringEnvironment are all in-progress
+		return true
+	}
+}
+
+// isEnvironmentSnapshotRestoreInProgress returns true if the restore is still processing
+func isEnvironmentSnapshotRestoreInProgress(phase envv1.EnvironmentSnapshotRestorePhase) bool {
+	switch phase {
+	case envv1.EnvironmentSnapshotRestorePhaseCompleted, envv1.EnvironmentSnapshotRestorePhaseFailed:
+		return false
+	default:
+		// Pending, StoppingWorkloads, WaitingForPods, Downloading, RestoringData, ApplyingArtifacts, Activating are all in-progress
 		return true
 	}
 }

@@ -35,7 +35,9 @@ import {
   restoreSnapshot,
   deleteSnapshot,
   pushSnapshot,
+  getEnvironmentSnapshotStatus,
 } from '@/app/actions/snapshot.actions'
+import type { SnapshotOperationStatus } from '@/lib/services/snapshot.service'
 import {
   Dialog,
   DialogContent,
@@ -61,6 +63,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   const [currentSnapshotName, setCurrentSnapshotName] = useState<string | undefined>()
   const [isCreating, setIsCreating] = useState(false)
   const [description, setDescription] = useState('')
+  const [operationStatus, setOperationStatus] = useState<SnapshotOperationStatus | null>(null)
 
   // Confirmation dialogs
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
@@ -73,10 +76,11 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   const [pushTag, setPushTag] = useState('')
 
   const loadSnapshots = useCallback(async () => {
-    // Fetch snapshots and environment in parallel
-    const [snapshotResult, envResult] = await Promise.all([
+    // Fetch snapshots, environment, and operation status in parallel
+    const [snapshotResult, envResult, statusResult] = await Promise.all([
       listEnvironmentSnapshots(environmentName),
       getEnvironment(environmentName),
+      getEnvironmentSnapshotStatus(environmentName),
     ])
 
     if (snapshotResult.success && snapshotResult.data) {
@@ -88,6 +92,10 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
     } else {
       setCurrentSnapshotName(undefined)
     }
+
+    if (statusResult.success && statusResult.data) {
+      setOperationStatus(statusResult.data)
+    }
   }, [environmentName])
 
   // Load snapshots when sheet opens
@@ -97,11 +105,11 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
     }
   }, [open, loadSnapshots])
 
-  // Auto-refresh when there are in-progress snapshots
+  // Auto-refresh when there are in-progress snapshots or operations
   useEffect(() => {
     if (!open) return undefined
 
-    const hasInProgress = snapshots.some(
+    const hasInProgressSnapshot = snapshots.some(
       (s) =>
         s.state === 'Creating' ||
         s.state === 'Uploading' ||
@@ -111,12 +119,14 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
         s.state === 'Pulling'
     )
 
-    if (hasInProgress) {
+    const hasInProgressOperation = operationStatus?.inProgress === true
+
+    if (hasInProgressSnapshot || hasInProgressOperation) {
       const interval = setInterval(loadSnapshots, 3000)
       return () => clearInterval(interval)
     }
     return undefined
-  }, [open, snapshots, loadSnapshots])
+  }, [open, snapshots, operationStatus, loadSnapshots])
 
   const handleCreate = async () => {
     setIsCreating(true)
@@ -243,7 +253,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
                 />
                 <Button
                   onClick={handleCreate}
-                  disabled={isCreating}
+                  disabled={isCreating || operationStatus?.inProgress}
                   size="sm"
                 >
                   {isCreating ? (
@@ -258,6 +268,24 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
               </div>
             </div>
           </div>
+
+          {/* Operation Status Banner */}
+          {operationStatus?.inProgress && (
+            <div className="border-b bg-blue-50 dark:bg-blue-950/30 px-6 py-3">
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {operationStatus.operation === 'creating' ? 'Creating snapshot...' : 'Restoring snapshot...'}
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    {operationStatus.phase && `Phase: ${operationStatus.phase}`}
+                    {operationStatus.message && ` - ${operationStatus.message}`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Scrollable History Section */}
           <ScrollArea className="flex-1">
