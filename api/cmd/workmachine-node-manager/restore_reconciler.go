@@ -124,11 +124,11 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 		r.HostCmdExec.Execute(cleanupScript)
 	}
 
-	// Get the Snapshot to find the registry info
+	// Get the Snapshot to find the registry info (in the same namespace as the restore)
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: restore.Namespace}, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
-			return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Snapshot %q not found", snapshotName), logger)
+			return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Snapshot %q not found in namespace %s", snapshotName, restore.Namespace), logger)
 		}
 		logger.Error("Failed to get Snapshot", zap2.Error(err))
 		return reconcile.Result{}, err
