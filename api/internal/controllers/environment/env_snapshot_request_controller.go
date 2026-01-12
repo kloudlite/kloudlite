@@ -244,7 +244,6 @@ func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
 			SnapshotName:   req.Spec.SnapshotName,
 			SourcePath:     sourcePath,
 			NodeName:       nodeName,
-			Store:          "default",
 			Owner:          env.Spec.OwnedBy,
 			ParentSnapshot: parentSnapshot,
 			Description:    req.Spec.Description,

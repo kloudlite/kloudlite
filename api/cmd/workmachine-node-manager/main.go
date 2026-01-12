@@ -75,10 +75,26 @@ func main() {
 		zapLogger.Fatal("WORKMACHINE_NAME environment variable not set")
 	}
 
+	// Get snapshot registry configuration from environment
+	registryEndpoint := os.Getenv("SNAPSHOT_REGISTRY_ENDPOINT")
+	if registryEndpoint == "" {
+		registryEndpoint = "image-registry.kloudlite.svc.cluster.local:5000" // Default
+	}
+	registryPrefix := os.Getenv("SNAPSHOT_REGISTRY_PREFIX")
+	if registryPrefix == "" {
+		registryPrefix = "snapshots" // Default
+	}
+	registryInsecure := os.Getenv("SNAPSHOT_REGISTRY_INSECURE")
+	if registryInsecure == "" {
+		registryInsecure = "true" // Default
+	}
+
 	zapLogger.Info("Starting Package Manager",
 		zap2.String("namespace", namespace),
 		zap2.String("workmachineName", workmachineName),
-		zap2.String("nixStorePath", nixStorePath))
+		zap2.String("nixStorePath", nixStorePath),
+		zap2.String("registryEndpoint", registryEndpoint),
+		zap2.String("registryPrefix", registryPrefix))
 
 	// Setup scheme
 	scheme := runtime.NewScheme()
@@ -140,8 +156,6 @@ func main() {
 						cache.AllNamespaces: {},
 					},
 				},
-				// Watch SnapshotStores globally (cluster-scoped)
-				&snapshotv1.SnapshotStore{}: {},
 				// Note: Environments are read via GetAPIReader() to bypass cache
 				// This avoids needing watch/list RBAC permissions for the cache
 			},
@@ -210,12 +224,18 @@ func main() {
 		zapLogger.Fatal("Failed to setup GPU status controller", zap2.Error(err))
 	}
 
+	// Parse registry insecure setting
+	registryInsecureBool := registryInsecure == "true"
+
 	// Setup snapshot request reconciler (handles btrfs snapshots on this node)
 	snapshotRequestReconciler := &SnapshotRequestReconciler{
-		Client:      mgr.GetClient(),
-		Logger:      zapLogger,
-		HostCmdExec: &HostCommandExecutor{}, // For btrfs commands on host
-		NodeName:    nodeName,
+		Client:           mgr.GetClient(),
+		Logger:           zapLogger,
+		HostCmdExec:      &HostCommandExecutor{}, // For btrfs commands on host
+		NodeName:         nodeName,
+		RegistryEndpoint: registryEndpoint,
+		RegistryPrefix:   registryPrefix,
+		RegistryInsecure: registryInsecureBool,
 	}
 
 	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
@@ -224,10 +244,11 @@ func main() {
 
 	// Setup snapshot restore reconciler (handles btrfs restore on this node)
 	snapshotRestoreReconciler := &SnapshotRestoreReconciler{
-		Client:      mgr.GetClient(),
-		Logger:      zapLogger,
-		HostCmdExec: &HostCommandExecutor{}, // For btrfs commands on host
-		NodeName:    nodeName,
+		Client:           mgr.GetClient(),
+		Logger:           zapLogger,
+		HostCmdExec:      &HostCommandExecutor{}, // For btrfs commands on host
+		NodeName:         nodeName,
+		RegistryInsecure: registryInsecureBool,
 	}
 
 	if err := snapshotRestoreReconciler.SetupWithManager(mgr); err != nil {

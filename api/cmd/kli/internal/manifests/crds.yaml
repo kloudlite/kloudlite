@@ -2835,15 +2835,11 @@ spec:
               sourcePath:
                 description: SourcePath is the btrfs subvolume path to snapshot
                 type: string
-              store:
-                description: Store is the name of the SnapshotStore to use
-                type: string
             required:
             - nodeName
             - owner
             - snapshotName
             - sourcePath
-            - store
             type: object
           status:
             description: SnapshotRequestStatus defines the observed state of SnapshotRequest
