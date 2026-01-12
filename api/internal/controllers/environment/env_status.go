@@ -145,6 +145,21 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 		return reconcile.Result{Requeue: true}, nil
 	}
 
+	// Clone snapshots from source namespace to target namespace BEFORE creating the SnapshotRestore
+	// Build full lineage: snapshot's ancestors + the snapshot itself
+	lineage := append(snapshot.Status.Lineage, snapshotName)
+	logger.Info("Cloning snapshot lineage to new environment namespace",
+		zap.Strings("lineage", lineage),
+		zap.Int("count", len(lineage)),
+		zap.String("targetNamespace", environment.Spec.TargetNamespace))
+
+	// Deep clone snapshots from source namespace to this environment's namespace
+	// Each environment owns its own snapshots - this enables independent deletion
+	if err := r.cloneSnapshotsForLineage(ctx, environment, sourceNamespace, lineage, logger); err != nil {
+		logger.Error("Failed to clone snapshots for lineage", zap.Error(err))
+		return r.failSnapshotRestore(ctx, environment, fmt.Sprintf("Failed to clone snapshots: %v", err), logger)
+	}
+
 	// Define the restore name
 	restoreName := fmt.Sprintf("env-restore-%s", environment.Name)
 
@@ -215,16 +230,6 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 
 		// Build full lineage: snapshot's ancestors + the snapshot itself
 		lineage := append(snapshot.Status.Lineage, snapshotName)
-		logger.Info("Built snapshot lineage for forked environment",
-			zap.Strings("lineage", lineage),
-			zap.Int("count", len(lineage)))
-
-		// Deep clone snapshots from source namespace to this environment's namespace
-		// Each environment owns its own snapshots - this enables independent deletion
-		if err := r.cloneSnapshotsForLineage(ctx, environment, sourceNamespace, lineage, logger); err != nil {
-			logger.Error("Failed to clone snapshots for lineage", zap.Error(err))
-			// Continue anyway - the environment is already restored
-		}
 
 		now := metav1.Now()
 
