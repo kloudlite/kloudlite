@@ -177,6 +177,20 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		// Snapshot controller will set state back to active when done
 		isSnapping := currentState == environmentsv1.EnvironmentStateSnapping
 		if isSnapping {
+			// Check if there are any in-progress snapshot requests for this environment
+			// If not, transition back to active state (handles crash/restart scenarios)
+			hasActiveSnapshotOp, err := r.hasActiveSnapshotOperation(ctx, environment.Name)
+			if err != nil {
+				logger.Warn("Failed to check for active snapshot operations", zap.Error(err))
+			} else if !hasActiveSnapshotOp {
+				logger.Info("No active snapshot operations, transitioning back to active state")
+				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateActive, "Ready", logger); err != nil {
+					logger.Error("Failed to update environment state to active", zap.Error(err))
+					return reconcile.Result{}, err
+				}
+				return reconcile.Result{Requeue: true}, nil
+			}
+
 			// Scale down all deployments for snapshot
 			logger.Info("Scaling down deployments for snapshot")
 			if err := r.suspendEnvironment(ctx, environment, logger); err != nil {
@@ -363,4 +377,44 @@ func (r *EnvironmentReconciler) waitForPodsTerminated(ctx context.Context, names
 		return false
 	}
 	return true
+}
+
+// hasActiveSnapshotOperation checks if there are any in-progress snapshot operations
+// (EnvironmentSnapshotRequest or EnvironmentSnapshotRestore) for this environment
+func (r *EnvironmentReconciler) hasActiveSnapshotOperation(ctx context.Context, environmentName string) (bool, error) {
+	// Check for active EnvironmentSnapshotRequests
+	snapshotRequests := &environmentsv1.EnvironmentSnapshotRequestList{}
+	if err := r.List(ctx, snapshotRequests); err != nil {
+		return false, err
+	}
+
+	for _, req := range snapshotRequests.Items {
+		if req.Spec.EnvironmentName != environmentName {
+			continue
+		}
+		// Check if request is in-progress (not completed or failed)
+		if req.Status.Phase != environmentsv1.EnvironmentSnapshotRequestPhaseCompleted &&
+			req.Status.Phase != environmentsv1.EnvironmentSnapshotRequestPhaseFailed {
+			return true, nil
+		}
+	}
+
+	// Check for active EnvironmentSnapshotRestores
+	snapshotRestores := &environmentsv1.EnvironmentSnapshotRestoreList{}
+	if err := r.List(ctx, snapshotRestores); err != nil {
+		return false, err
+	}
+
+	for _, restore := range snapshotRestores.Items {
+		if restore.Spec.EnvironmentName != environmentName {
+			continue
+		}
+		// Check if restore is in-progress (not completed or failed)
+		if restore.Status.Phase != environmentsv1.EnvironmentSnapshotRestorePhaseCompleted &&
+			restore.Status.Phase != environmentsv1.EnvironmentSnapshotRestorePhaseFailed {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

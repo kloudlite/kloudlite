@@ -60,27 +60,9 @@ func (r *EnvironmentSnapshotRequestReconciler) Reconcile(ctx context.Context, re
 	}
 
 	// Skip if already completed or failed
-	// But first check if we need to fix environment state (in case of crash/restart during restore)
+	// Environment controller will handle transitioning out of snapping state
 	if envSnapshotReq.Status.Phase == environmentsv1.EnvironmentSnapshotRequestPhaseCompleted ||
 		envSnapshotReq.Status.Phase == environmentsv1.EnvironmentSnapshotRequestPhaseFailed {
-		// Get environment to check if it's stuck in snapping state
-		env := &environmentsv1.Environment{}
-		if err := r.Get(ctx, client.ObjectKey{Name: envSnapshotReq.Spec.EnvironmentName}, env); err == nil {
-			// If environment is still in snapping state but request is completed, restore it
-			if env.Status.State == environmentsv1.EnvironmentStateSnapping &&
-				envSnapshotReq.Status.Phase == environmentsv1.EnvironmentSnapshotRequestPhaseCompleted {
-				logger.Info("Fixing environment state - request completed but environment still snapping")
-				targetState := envSnapshotReq.Status.PreviousEnvironmentState
-				if targetState == "" || targetState == environmentsv1.EnvironmentStateSnapping {
-					targetState = environmentsv1.EnvironmentStateActive
-				}
-				env.Status.State = targetState
-				env.Status.Message = "Snapshot created successfully"
-				if err := r.Status().Update(ctx, env); err != nil {
-					logger.Warn("Failed to fix environment state", zap.Error(err))
-				}
-			}
-		}
 		return reconcile.Result{}, nil
 	}
 
