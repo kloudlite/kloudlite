@@ -665,38 +665,72 @@ func (h *SnapshotHandlers) GetSnapshot(c *gin.Context) {
 	c.JSON(http.StatusOK, snapshotToResponse(snapshot))
 }
 
-// DeleteSnapshot removes the user's reference from a snapshot
-// When no references remain, the snapshot will be automatically garbage collected
+// DeleteSnapshot deletes a snapshot and its owner reference
 // DELETE /api/v1/snapshots/:name
 func (h *SnapshotHandlers) DeleteSnapshot(c *gin.Context) {
 	name := c.Param("name")
 	username := c.GetString("username")
+	ctx := c.Request.Context()
 
-	snapshot, err := h.snapshotRepo.Get(c.Request.Context(), name)
+	snapshot, err := h.snapshotRepo.Get(ctx, name)
 	if err != nil {
 		h.logger.Error("Failed to get snapshot", zap.String("name", name), zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("snapshot %s not found", name)})
 		return
 	}
 
-	// Return current state - snapshots are garbage collected automatically when no references exist
 	h.logger.Info("Snapshot delete requested",
 		zap.String("snapshot", name),
 		zap.Strings("referencedBy", snapshot.Status.ReferencedBy),
 		zap.String("user", username),
 	)
 
-	if len(snapshot.Status.ReferencedBy) > 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"message":      "snapshot is still referenced by environments/workspaces",
-			"referencedBy": snapshot.Status.ReferencedBy,
-		})
-		return
+	// Determine the namespace from snapshot labels
+	envName := snapshot.Labels["snapshots.kloudlite.io/environment"]
+	if envName == "" {
+		// Try workspace label
+		envName = snapshot.Labels["snapshots.kloudlite.io/workspace"]
 	}
 
+	if envName != "" {
+		// Delete the owner SnapshotRef first - this allows the snapshot to be deleted
+		ownerRefName := fmt.Sprintf("%s-owner", name)
+		namespace := fmt.Sprintf("env-%s", envName)
+
+		ownerRef := &snapshotv1.SnapshotRef{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      ownerRefName,
+				Namespace: namespace,
+			},
+		}
+
+		if err := h.k8sClient.Delete(ctx, ownerRef); err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				h.logger.Warn("Failed to delete owner SnapshotRef",
+					zap.String("ref", ownerRefName),
+					zap.String("namespace", namespace),
+					zap.Error(err))
+			}
+		} else {
+			h.logger.Info("Deleted owner SnapshotRef",
+				zap.String("ref", ownerRefName),
+				zap.String("namespace", namespace))
+		}
+	}
+
+	// Delete the snapshot itself
+	if err := h.k8sClient.Delete(ctx, snapshot); err != nil {
+		if client.IgnoreNotFound(err) != nil {
+			h.logger.Error("Failed to delete snapshot", zap.String("name", name), zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to delete snapshot: %v", err)})
+			return
+		}
+	}
+
+	h.logger.Info("Snapshot deletion initiated", zap.String("snapshot", name))
 	c.JSON(http.StatusOK, gin.H{
-		"message":      "snapshot has no references and will be garbage collected",
-		"referencedBy": snapshot.Status.ReferencedBy,
+		"message": "snapshot deletion initiated",
+		"name":    name,
 	})
 }
 
