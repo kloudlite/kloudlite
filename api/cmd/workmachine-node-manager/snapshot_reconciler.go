@@ -20,9 +20,12 @@ import (
 // SnapshotRequestReconciler watches SnapshotRequest resources and processes them on this node
 type SnapshotRequestReconciler struct {
 	client.Client
-	Logger      *zap2.Logger
-	HostCmdExec CommandExecutor // For btrfs commands that must run on host
-	NodeName    string
+	Logger           *zap2.Logger
+	HostCmdExec      CommandExecutor // For btrfs commands that must run on host
+	NodeName         string
+	RegistryEndpoint string
+	RegistryPrefix   string
+	RegistryInsecure bool
 }
 
 const snapshotStoragePath = "/var/lib/kloudlite/storage/.snapshots"
@@ -200,31 +203,16 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		return r.setFailed(ctx, req, "Local snapshot was deleted but Snapshot resource not found", logger)
 	}
 
-	// Get the SnapshotStore
-	store := &snapshotv1.SnapshotStore{}
-	if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.Store}, store); err != nil {
-		if apierrors.IsNotFound(err) {
-			return r.setFailed(ctx, req, fmt.Sprintf("SnapshotStore %q not found", req.Spec.Store), logger)
-		}
-		logger.Error("Failed to get SnapshotStore", zap2.Error(err))
-		return reconcile.Result{}, err
-	}
-
-	if !store.Status.Ready {
-		logger.Info("SnapshotStore not ready, waiting", zap2.String("store", store.Name))
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
-	}
-
-	// Build image reference for the registry
+	// Build image reference for the registry using configured registry settings
 	imageRef := fmt.Sprintf("%s/%s/%s:%s",
-		store.Spec.Registry.Endpoint,
-		store.Spec.Registry.RepositoryPrefix,
+		r.RegistryEndpoint,
+		r.RegistryPrefix,
 		req.Spec.Owner,
 		req.Spec.SnapshotName)
 
 	// Push snapshot to registry using embedded oras library
 	logger.Info("Pushing snapshot to registry", zap2.String("imageRef", imageRef))
-	if err := orasPushSnapshot(ctx, req.Status.LocalSnapshotPath, imageRef, true /* plainHTTP */); err != nil {
+	if err := orasPushSnapshot(ctx, req.Status.LocalSnapshotPath, imageRef, r.RegistryInsecure); err != nil {
 		logger.Error("Failed to push snapshot to registry",
 			zap2.String("imageRef", imageRef),
 			zap2.Error(err))

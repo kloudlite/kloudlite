@@ -30,10 +30,6 @@ var (
 // Adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		// Storage backend configuration
-		&SnapshotStore{},
-		&SnapshotStoreList{},
-
 		// Snapshot metadata (result of SnapshotRequest)
 		&Snapshot{},
 		&SnapshotList{},

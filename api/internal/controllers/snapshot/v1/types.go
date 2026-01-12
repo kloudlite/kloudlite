@@ -5,75 +5,6 @@ import (
 )
 
 // ============================================================================
-// SnapshotStore - Storage backend configuration (OCI Registry)
-// ============================================================================
-
-// +genclient
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:name="Registry",type=string,JSONPath=`.spec.registry.endpoint`
-// +kubebuilder:printcolumn:name="Ready",type=boolean,JSONPath=`.status.ready`
-// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
-
-// SnapshotStore defines an OCI registry for storing snapshots
-type SnapshotStore struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   SnapshotStoreSpec   `json:"spec,omitempty"`
-	Status SnapshotStoreStatus `json:"status,omitempty"`
-}
-
-// SnapshotStoreSpec defines the OCI registry configuration
-type SnapshotStoreSpec struct {
-	// Registry configures the OCI registry endpoint
-	// +kubebuilder:validation:Required
-	Registry RegistryConfig `json:"registry"`
-}
-
-// RegistryConfig configures OCI registry connection
-type RegistryConfig struct {
-	// Endpoint is the registry URL (e.g., "image-registry.kloudlite.svc.cluster.local:5000")
-	// +kubebuilder:validation:Required
-	Endpoint string `json:"endpoint"`
-
-	// Insecure allows HTTP connections (for internal registries)
-	// +kubebuilder:default=true
-	Insecure bool `json:"insecure,omitempty"`
-
-	// RepositoryPrefix is prepended to all snapshot repositories
-	// e.g., "snapshots" results in "snapshots/{owner}/{name}"
-	// +kubebuilder:default=snapshots
-	RepositoryPrefix string `json:"repositoryPrefix,omitempty"`
-}
-
-// SnapshotStoreStatus defines the observed state
-type SnapshotStoreStatus struct {
-	// Ready indicates if the registry is accessible
-	Ready bool `json:"ready,omitempty"`
-
-	// Message provides status details
-	// +optional
-	Message string `json:"message,omitempty"`
-
-	// LastChecked is when connectivity was last verified
-	// +optional
-	LastChecked *metav1.Time `json:"lastChecked,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// SnapshotStoreList contains a list of SnapshotStore
-type SnapshotStoreList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []SnapshotStore `json:"items"`
-}
-
-// ============================================================================
 // Snapshot - Environment-owned metadata about a stored snapshot
 // ============================================================================
 
@@ -289,10 +220,6 @@ type SnapshotRequestSpec struct {
 	// NodeName is the Kubernetes node where the btrfs subvolume exists
 	// +kubebuilder:validation:Required
 	NodeName string `json:"nodeName"`
-
-	// Store is the name of the SnapshotStore to use
-	// +kubebuilder:validation:Required
-	Store string `json:"store"`
 
 	// Owner identifies who owns this snapshot (e.g., username)
 	// +kubebuilder:validation:Required

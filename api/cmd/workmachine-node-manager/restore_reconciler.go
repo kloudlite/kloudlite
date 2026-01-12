@@ -20,9 +20,10 @@ import (
 // SnapshotRestoreReconciler handles snapshot restore operations on this node
 type SnapshotRestoreReconciler struct {
 	client.Client
-	Logger      *zap2.Logger
-	HostCmdExec CommandExecutor // For btrfs commands that must run on host
-	NodeName    string
+	Logger           *zap2.Logger
+	HostCmdExec      CommandExecutor // For btrfs commands that must run on host
+	NodeName         string
+	RegistryInsecure bool
 }
 
 func (r *SnapshotRestoreReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
@@ -149,16 +150,6 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 		return r.setRestoreFailed(ctx, restore, "Snapshot has no registry info", logger)
 	}
 
-	// Get the SnapshotStore for registry config
-	store := &snapshotv1.SnapshotStore{}
-	if err := r.Get(ctx, client.ObjectKey{Name: "default"}, store); err != nil {
-		if apierrors.IsNotFound(err) {
-			return r.setRestoreFailed(ctx, restore, "SnapshotStore 'default' not found", logger)
-		}
-		logger.Error("Failed to get SnapshotStore", zap2.Error(err))
-		return reconcile.Result{}, err
-	}
-
 	// Create a temp directory for extraction
 	tempExtractPath := fmt.Sprintf("%s-extracting", cachePath)
 	if err := os.MkdirAll(tempExtractPath, 0755); err != nil {
@@ -168,7 +159,7 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 	// Pull snapshot from registry using embedded oras library
 	imageRef := snapshot.Status.Registry.ImageRef
 	logger.Info("Pulling snapshot from registry", zap2.String("imageRef", imageRef))
-	if err := orasPullSnapshot(ctx, imageRef, tempExtractPath, true /* plainHTTP */); err != nil {
+	if err := orasPullSnapshot(ctx, imageRef, tempExtractPath, r.RegistryInsecure); err != nil {
 		logger.Error("Failed to pull snapshot from registry",
 			zap2.String("imageRef", imageRef),
 			zap2.Error(err))

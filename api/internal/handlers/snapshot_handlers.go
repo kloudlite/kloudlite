@@ -447,7 +447,6 @@ func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 			SnapshotName:   snapshotName,
 			SourcePath:     fmt.Sprintf("/var/lib/kloudlite/storage/workspaces/%s/%s", namespace, workspaceName),
 			NodeName:       nodeName,
-			Store:          "default",
 			Owner:          ws.Spec.OwnedBy,
 			ParentSnapshot: parentSnapshot,
 			Description:    req.Description,
