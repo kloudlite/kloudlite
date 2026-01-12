@@ -34,6 +34,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&EnvironmentList{},
 		&Composition{},
 		&CompositionList{},
+		&EnvironmentSnapshotRequest{},
+		&EnvironmentSnapshotRequestList{},
+		&EnvironmentSnapshotRestore{},
+		&EnvironmentSnapshotRestoreList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

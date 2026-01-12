@@ -121,7 +121,21 @@ func snapshotRequestToResponse(r *snapshotv1.SnapshotRequest) SnapshotRequestRes
 	}
 }
 
+// EnvironmentSnapshotRequestResponse is the API response for an environment snapshot request
+type EnvironmentSnapshotRequestResponse struct {
+	Name         string `json:"name"`
+	SnapshotName string `json:"snapshotName"`
+	Phase        string `json:"phase"`
+	Message      string `json:"message,omitempty"`
+}
+
 // CreateEnvironmentSnapshot creates a new snapshot request for an environment
+// This creates an EnvironmentSnapshotRequest CR which orchestrates the full snapshot workflow:
+// 1. Stops workloads (scales down deployments)
+// 2. Waits for pods to terminate
+// 3. Creates Snapshot, SnapshotArtifacts, SnapshotRef CRs
+// 4. Creates SnapshotRequest for the node to process
+// 5. Restores environment state when done
 // POST /api/v1/environments/:name/snapshots
 func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 	envName := c.Param("name")
@@ -141,37 +155,43 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Check for existing in-progress snapshot requests for this environment
-	existingRequests := &snapshotv1.SnapshotRequestList{}
-	if err := h.k8sClient.List(c.Request.Context(), existingRequests,
-		client.InNamespace(env.Spec.TargetNamespace),
-		client.MatchingLabels{"snapshots.kloudlite.io/environment": envName}); err != nil {
+	// Check for existing in-progress EnvironmentSnapshotRequest for this environment
+	existingRequests := &envv1.EnvironmentSnapshotRequestList{}
+	if err := h.k8sClient.List(c.Request.Context(), existingRequests); err != nil {
 		h.logger.Error("Failed to list existing snapshot requests", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check existing requests"})
 		return
 	}
 
-	// Check if any request is in progress
+	// Check if any request is in progress for this environment
 	for _, existingReq := range existingRequests.Items {
-		state := existingReq.Status.State
-		if state == "" || state == snapshotv1.SnapshotRequestStatePending ||
-			state == snapshotv1.SnapshotRequestStateCreating ||
-			state == snapshotv1.SnapshotRequestStateUploading {
+		if existingReq.Spec.EnvironmentName != envName {
+			continue
+		}
+		phase := existingReq.Status.Phase
+		if phase == "" || phase == envv1.EnvironmentSnapshotRequestPhasePending ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseStoppingWorkloads ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseWaitingForPods ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseCreatingSnapshot ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseUploadingSnapshot ||
+			phase == envv1.EnvironmentSnapshotRequestPhaseRestoringEnvironment {
 			c.JSON(http.StatusConflict, gin.H{
 				"error":   "A snapshot request is already in progress for this environment",
 				"request": existingReq.Name,
-				"state":   string(state),
+				"phase":   string(phase),
 			})
 			return
 		}
 	}
 
-	// Get node name from the workmachine
+	// Verify workmachine is assigned
 	if env.Spec.WorkMachineName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "environment has no workmachine assigned"})
 		return
 	}
-	nodeName, err := h.getNodeForWorkMachine(c.Request.Context(), env.Spec.WorkMachineName)
+
+	// Verify workmachine is running
+	_, err = h.getNodeForWorkMachine(c.Request.Context(), env.Spec.WorkMachineName)
 	if err != nil {
 		h.logger.Error("Failed to get node for workmachine", zap.String("workmachine", env.Spec.WorkMachineName), zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "workmachine is not running"})
@@ -185,101 +205,31 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		namepart = "snapshot"
 	}
 	snapshotName := fmt.Sprintf("%s-%s-%d", envName, namepart, time.Now().Unix())
-	requestName := fmt.Sprintf("req-%s", snapshotName)
+	requestName := fmt.Sprintf("env-snap-req-%s", snapshotName)
 
-	// Determine parent snapshot from environment's lastRestoredSnapshot
-	var parentSnapshot string
-	if env.Status.LastRestoredSnapshot != nil {
-		parentSnapshot = env.Status.LastRestoredSnapshot.Name
-	}
-
-	labels := map[string]string{
-		"kloudlite.io/owned-by":              env.Spec.OwnedBy,
-		"snapshots.kloudlite.io/environment": envName,
-		"snapshots.kloudlite.io/type":        "environment",
-	}
-
-	// Create the Snapshot object first with Pending state (so UI can see it immediately)
-	snapshot := &snapshotv1.Snapshot{
+	// Create the EnvironmentSnapshotRequest CR - this orchestrates the full workflow
+	envSnapshotReq := &envv1.EnvironmentSnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   snapshotName,
-			Labels: labels,
+			Name: requestName,
+			Labels: map[string]string{
+				"kloudlite.io/owned-by":              env.Spec.OwnedBy,
+				"snapshots.kloudlite.io/environment": envName,
+			},
 		},
-		Spec: snapshotv1.SnapshotSpec{
-			Owner:          env.Spec.OwnedBy,
-			ParentSnapshot: parentSnapshot,
-			Description:    req.Description,
-		},
-	}
-
-	if err := h.k8sClient.Create(c.Request.Context(), snapshot); err != nil {
-		h.logger.Error("Failed to create snapshot", zap.String("name", snapshotName), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot: %v", err)})
-		return
-	}
-
-	// Capture K8s resources and create SnapshotArtifacts CR
-	if err := h.createSnapshotArtifacts(c.Request.Context(), snapshotName, env.Spec.TargetNamespace); err != nil {
-		h.logger.Warn("Failed to create snapshot artifacts", zap.Error(err))
-		// Continue without artifacts - not a fatal error
-	}
-
-	// Create the SnapshotRequest CR (node-specific operation)
-	snapshotReq := &snapshotv1.SnapshotRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      requestName,
-			Namespace: env.Spec.TargetNamespace,
-			Labels:    labels,
-		},
-		Spec: snapshotv1.SnapshotRequestSpec{
-			SnapshotName:   snapshotName,
-			SourcePath:     fmt.Sprintf("/var/lib/kloudlite/storage/environments/%s", env.Spec.TargetNamespace),
-			NodeName:       nodeName,
-			Store:          "default",
-			Owner:          env.Spec.OwnedBy,
-			ParentSnapshot: parentSnapshot,
-			Description:    req.Description,
+		Spec: envv1.EnvironmentSnapshotRequestSpec{
+			EnvironmentName: envName,
+			SnapshotName:    snapshotName,
+			Description:     req.Description,
 		},
 	}
 
-	if err := h.k8sClient.Create(c.Request.Context(), snapshotReq); err != nil {
-		h.logger.Error("Failed to create snapshot request", zap.String("name", requestName), zap.Error(err))
-		// Clean up the snapshot we just created
-		_ = h.k8sClient.Delete(c.Request.Context(), snapshot)
+	if err := h.k8sClient.Create(c.Request.Context(), envSnapshotReq); err != nil {
+		h.logger.Error("Failed to create EnvironmentSnapshotRequest", zap.String("name", requestName), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create snapshot request: %v", err)})
 		return
 	}
 
-	// Create SnapshotRef to track ownership (prevents immediate GC when snapshot is ready)
-	// Owner reference ensures automatic cleanup when environment is deleted
-	snapshotRef := &snapshotv1.SnapshotRef{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s--%s", envName, snapshotName),
-			Namespace: env.Spec.TargetNamespace,
-			Labels: map[string]string{
-				"kloudlite.io/environment":        envName,
-				"snapshots.kloudlite.io/snapshot": snapshotName,
-			},
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: "environments.kloudlite.io/v1",
-				Kind:       "Environment",
-				Name:       env.Name,
-				UID:        env.UID,
-				Controller: boolPtr(true),
-			}},
-		},
-		Spec: snapshotv1.SnapshotRefSpec{
-			SnapshotName: snapshotName,
-			Purpose:      "owned",
-		},
-	}
-
-	if err := h.k8sClient.Create(c.Request.Context(), snapshotRef); err != nil {
-		h.logger.Warn("Failed to create SnapshotRef for snapshot", zap.String("snapshot", snapshotName), zap.Error(err))
-		// Continue - the snapshot was created, SnapshotRef is for GC protection
-	}
-
-	h.logger.Info("Created environment snapshot request",
+	h.logger.Info("Created EnvironmentSnapshotRequest",
 		zap.String("request", requestName),
 		zap.String("snapshot", snapshotName),
 		zap.String("environment", envName),
@@ -287,8 +237,13 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 	)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":  "Snapshot creation started",
-		"snapshot": snapshotToResponse(snapshot),
+		"message": "Snapshot creation started",
+		"request": EnvironmentSnapshotRequestResponse{
+			Name:         requestName,
+			SnapshotName: snapshotName,
+			Phase:        string(envv1.EnvironmentSnapshotRequestPhasePending),
+			Message:      "Snapshot request created, waiting to start...",
+		},
 	})
 }
 
