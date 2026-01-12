@@ -3,6 +3,7 @@ package environment
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -210,7 +211,13 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleWaitingForPods(
 	}
 
 	// Create the SnapshotRestore CR
-	snapshotRestoreName := fmt.Sprintf("env-restore-%s-%s", env.Name, restore.Spec.SnapshotName[:min(8, len(restore.Spec.SnapshotName))])
+	// Truncate snapshot name and remove trailing hyphens to ensure valid DNS name
+	snapshotSuffix := restore.Spec.SnapshotName
+	if len(snapshotSuffix) > 8 {
+		snapshotSuffix = snapshotSuffix[:8]
+	}
+	snapshotSuffix = strings.TrimRight(snapshotSuffix, "-")
+	snapshotRestoreName := fmt.Sprintf("env-restore-%s-%s", env.Name, snapshotSuffix)
 	targetPath := fmt.Sprintf("/var/lib/kloudlite/storage/environments/%s", env.Spec.TargetNamespace)
 
 	snapshotRestore := &snapshotv1.SnapshotRestore{
