@@ -211,12 +211,13 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleWaitingForPods(
 	}
 
 	// Create the SnapshotRestore CR
-	// Truncate snapshot name and remove trailing hyphens to ensure valid DNS name
+	// Use last 8 chars of snapshot name for uniqueness (e.g., "snap-v1", "snap-v2")
+	// and remove leading/trailing hyphens to ensure valid DNS name
 	snapshotSuffix := restore.Spec.SnapshotName
 	if len(snapshotSuffix) > 8 {
-		snapshotSuffix = snapshotSuffix[:8]
+		snapshotSuffix = snapshotSuffix[len(snapshotSuffix)-8:]
 	}
-	snapshotSuffix = strings.TrimRight(snapshotSuffix, "-")
+	snapshotSuffix = strings.Trim(snapshotSuffix, "-")
 	snapshotRestoreName := fmt.Sprintf("env-restore-%s-%s", env.Name, snapshotSuffix)
 	targetPath := fmt.Sprintf("/var/lib/kloudlite/storage/environments/%s", env.Spec.TargetNamespace)
 
