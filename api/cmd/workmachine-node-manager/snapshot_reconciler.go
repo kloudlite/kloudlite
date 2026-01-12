@@ -240,13 +240,22 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 		return nil
 	})
 
-	// Build lineage from parent
+	// Build lineage and storageRefs from parent
 	var lineage []string
+	var storageRefs []string
 	if req.Spec.ParentSnapshot != "" {
 		parentSnapshot := &snapshotv1.Snapshot{}
 		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.ParentSnapshot}, parentSnapshot); err == nil {
 			lineage = append(parentSnapshot.Status.Lineage, parentSnapshot.Name)
+			// Inherit parent's storage refs and add this snapshot's imageRef
+			storageRefs = append(parentSnapshot.Status.StorageRefs, imageRef)
+		} else {
+			// Parent not found, just use this snapshot's imageRef
+			storageRefs = []string{imageRef}
 		}
+	} else {
+		// No parent, this is a root snapshot
+		storageRefs = []string{imageRef}
 	}
 
 	// Create the global Snapshot resource
@@ -264,12 +273,13 @@ func (r *SnapshotRequestReconciler) handleUploading(ctx context.Context, req *sn
 			RetentionPolicy: req.Spec.RetentionPolicy,
 		},
 		Status: snapshotv1.SnapshotStatus{
-			State:     snapshotv1.SnapshotStateReady,
-			Message:   "Snapshot ready",
-			SizeBytes: sizeBytes,
-			SizeHuman: formatSnapshotSize(sizeBytes),
-			CreatedAt: &now,
-			Lineage:   lineage,
+			State:       snapshotv1.SnapshotStateReady,
+			Message:     "Snapshot ready",
+			SizeBytes:   sizeBytes,
+			SizeHuman:   formatSnapshotSize(sizeBytes),
+			CreatedAt:   &now,
+			Lineage:     lineage,
+			StorageRefs: storageRefs,
 			// ReferencedBy will be populated by environment controller when environments fork from this snapshot
 			Registry: &snapshotv1.SnapshotRegistryInfo{
 				ImageRef: imageRef,

@@ -595,6 +595,11 @@ func (in *SnapshotStatus) DeepCopyInto(out *SnapshotStatus) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.StorageRefs != nil {
+		in, out := &in.StorageRefs, &out.StorageRefs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Registry != nil {
 		in, out := &in.Registry, &out.Registry
 		*out = new(SnapshotRegistryInfo)

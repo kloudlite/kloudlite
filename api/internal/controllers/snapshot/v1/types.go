@@ -203,6 +203,12 @@ type SnapshotStatus struct {
 	// +optional
 	Lineage []string `json:"lineage,omitempty"`
 
+	// StorageRefs lists all registry imageRefs this snapshot needs for restore
+	// Includes own imageRef plus all parent imageRefs in the chain
+	// Used for garbage collection - storage is only deleted when no snapshot references it
+	// +optional
+	StorageRefs []string `json:"storageRefs,omitempty"`
+
 	// Registry contains OCI registry storage information
 	// +optional
 	Registry *SnapshotRegistryInfo `json:"registry,omitempty"`

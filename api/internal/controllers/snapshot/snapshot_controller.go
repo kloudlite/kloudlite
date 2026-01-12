@@ -152,13 +152,16 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 		}
 	}
 
-	// Delete from registry if pushed
-	if snapshot.Status.Registry != nil && snapshot.Status.Registry.ImageRef != "" && r.SnapshotOperator != nil {
-		logger.Info("Deleting from registry", zap.String("imageRef", snapshot.Status.Registry.ImageRef))
-		if err := r.SnapshotOperator.DeleteFromRegistry(ctx, snapshot.Status.Registry.ImageRef); err != nil {
-			logger.Warn("Failed to delete from registry", zap.Error(err))
-			// Continue with deletion anyway
-		}
+	// Find and re-parent child snapshots
+	if err := r.reparentChildSnapshots(ctx, snapshot, logger); err != nil {
+		logger.Error("Failed to re-parent child snapshots", zap.Error(err))
+		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	// Clean up orphaned storage - only delete imageRefs that are no longer referenced
+	if err := r.cleanupOrphanedStorage(ctx, snapshot, logger); err != nil {
+		logger.Warn("Failed to cleanup orphaned storage", zap.Error(err))
+		// Continue with deletion anyway
 	}
 
 	// Remove finalizer
@@ -170,6 +173,80 @@ func (r *SnapshotReconciler) handleDeletion(ctx context.Context, snapshot *snaps
 
 	logger.Info("Snapshot deleted successfully")
 	return reconcile.Result{}, nil
+}
+
+// reparentChildSnapshots updates child snapshots to point to this snapshot's parent
+func (r *SnapshotReconciler) reparentChildSnapshots(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) error {
+	// Find all snapshots that have this snapshot as their parent
+	childSnapshots := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, childSnapshots); err != nil {
+		return fmt.Errorf("failed to list snapshots: %w", err)
+	}
+
+	for i := range childSnapshots.Items {
+		child := &childSnapshots.Items[i]
+		if child.Spec.ParentSnapshot != snapshot.Name {
+			continue
+		}
+
+		logger.Info("Re-parenting child snapshot",
+			zap.String("child", child.Name),
+			zap.String("newParent", snapshot.Spec.ParentSnapshot))
+
+		// Update child's parent to this snapshot's parent (could be empty for root)
+		child.Spec.ParentSnapshot = snapshot.Spec.ParentSnapshot
+		if err := r.Update(ctx, child); err != nil {
+			if apierrors.IsConflict(err) {
+				// Retry on conflict
+				return fmt.Errorf("conflict updating child %s, will retry", child.Name)
+			}
+			return fmt.Errorf("failed to update child snapshot %s: %w", child.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// cleanupOrphanedStorage deletes storage refs that are no longer referenced by any snapshot
+func (r *SnapshotReconciler) cleanupOrphanedStorage(ctx context.Context, snapshot *snapshotv1.Snapshot, logger *zap.Logger) error {
+	if r.SnapshotOperator == nil || len(snapshot.Status.StorageRefs) == 0 {
+		return nil
+	}
+
+	// Get all snapshots to check which storage refs are still in use
+	allSnapshots := &snapshotv1.SnapshotList{}
+	if err := r.List(ctx, allSnapshots); err != nil {
+		return fmt.Errorf("failed to list snapshots: %w", err)
+	}
+
+	// Build a set of all imageRefs still in use by other snapshots
+	inUseRefs := make(map[string]bool)
+	for _, s := range allSnapshots.Items {
+		if s.Name == snapshot.Name {
+			continue // Skip the snapshot being deleted
+		}
+		for _, ref := range s.Status.StorageRefs {
+			inUseRefs[ref] = true
+		}
+	}
+
+	// Delete storage refs that are no longer in use
+	for _, ref := range snapshot.Status.StorageRefs {
+		if inUseRefs[ref] {
+			logger.Info("Storage ref still in use, keeping", zap.String("imageRef", ref))
+			continue
+		}
+
+		logger.Info("Deleting orphaned storage", zap.String("imageRef", ref))
+		if err := r.SnapshotOperator.DeleteFromRegistry(ctx, ref); err != nil {
+			logger.Warn("Failed to delete storage from registry",
+				zap.String("imageRef", ref),
+				zap.Error(err))
+			// Continue with other deletions
+		}
+	}
+
+	return nil
 }
 
 func (r *SnapshotReconciler) SetupWithManager(mgr ctrl.Manager) error {
