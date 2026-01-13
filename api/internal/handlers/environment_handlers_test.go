@@ -520,6 +520,7 @@ func TestDeleteEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						Activated: true,
+						OwnedBy:   "testuser",
 					},
 				}, nil
 			},
@@ -530,6 +531,7 @@ func TestDeleteEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
 
 		req, _ := http.NewRequest("DELETE", "/environments/test-env", nil)
@@ -551,6 +553,7 @@ func TestActivateEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						Activated: false,
+						OwnedBy:   "testuser",
 					},
 				}, nil
 			},
@@ -561,6 +564,7 @@ func TestActivateEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
 		req, _ := http.NewRequest("POST", "/environments/test-env/activate", nil)
@@ -577,6 +581,7 @@ func TestActivateEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						Activated: true,
+						OwnedBy:   "testuser",
 					},
 				}, nil
 			},
@@ -584,6 +589,7 @@ func TestActivateEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
 		req, _ := http.NewRequest("POST", "/environments/test-env/activate", nil)
@@ -603,6 +609,7 @@ func TestActivateEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
 		req, _ := http.NewRequest("POST", "/environments/nonexistent/activate", nil)
@@ -624,6 +631,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						Activated: true,
+						OwnedBy:   "testuser",
 					},
 				}, nil
 			},
@@ -634,6 +642,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
 		req, _ := http.NewRequest("POST", "/environments/test-env/deactivate", nil)
@@ -650,6 +659,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						Activated: false,
+						OwnedBy:   "testuser",
 					},
 				}, nil
 			},
@@ -657,6 +667,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
 		req, _ := http.NewRequest("POST", "/environments/test-env/deactivate", nil)
@@ -676,6 +687,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
 		req, _ := http.NewRequest("POST", "/environments/nonexistent/deactivate", nil)
@@ -698,6 +710,7 @@ func TestGetEnvironmentStatus(t *testing.T) {
 					Spec: environmentsv1.EnvironmentSpec{
 						TargetNamespace: "test-ns",
 						Activated:       true,
+						OwnedBy:         "testuser",
 					},
 					Status: environmentsv1.EnvironmentStatus{},
 				}, nil
@@ -706,6 +719,7 @@ func TestGetEnvironmentStatus(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.GET("/environments/:name/status", handlers.GetEnvironmentStatus)
 
 		req, _ := http.NewRequest("GET", "/environments/test-env/status", nil)
@@ -732,6 +746,7 @@ func TestPatchEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						Activated: false,
+						OwnedBy:   "testuser",
 					},
 				}, nil
 			},
@@ -742,6 +757,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
 		patchBody := map[string]interface{}{
@@ -761,7 +777,7 @@ func TestPatchEnvironment(t *testing.T) {
 			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
-					Spec:       environmentsv1.EnvironmentSpec{},
+					Spec:       environmentsv1.EnvironmentSpec{OwnedBy: "testuser"},
 				}, nil
 			},
 			updateFunc: func(ctx context.Context, env *environmentsv1.Environment) error {
@@ -771,6 +787,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
 		patchBody := map[string]interface{}{
@@ -809,6 +826,7 @@ func TestPatchEnvironment(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{}
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
 		req, _ := http.NewRequest("PATCH", "/environments/test-env", bytes.NewBuffer([]byte("invalid json")))
@@ -828,6 +846,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
 		patchBody := map[string]interface{}{
@@ -847,7 +866,9 @@ func TestPatchEnvironment(t *testing.T) {
 			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
-					Spec:       environmentsv1.EnvironmentSpec{},
+					Spec: environmentsv1.EnvironmentSpec{
+						OwnedBy: "testuser",
+					},
 				}, nil
 			},
 			updateFunc: func(ctx context.Context, env *environmentsv1.Environment) error {
@@ -857,6 +878,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
 		patchBody := map[string]interface{}{

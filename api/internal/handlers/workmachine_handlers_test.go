@@ -61,10 +61,13 @@ func TestGetMyWorkMachine(t *testing.T) {
 	t.Run("should get user's work machine", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
-		// Create test machine
+		// Create test machine with required label for GetByOwner lookup
 		machine := &machinesv1.WorkMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-machine",
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": "test-user",
+				},
 			},
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:     "test-user",
@@ -74,6 +77,7 @@ func TestGetMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
 
 		router.GET("/my-machine", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -105,6 +109,7 @@ func TestGetMyWorkMachine(t *testing.T) {
 	t.Run("should return 404 when user has no machine", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 		router.GET("/my-machine", func(c *gin.Context) {
+			c.Set("user_username", "no-machine-user")
 			c.Set("user_email", "no-machine-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -122,10 +127,13 @@ func TestStartMyWorkMachine(t *testing.T) {
 	t.Run("should start user's work machine", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
-		// Create test machine
+		// Create test machine with required label for GetByOwner lookup
 		machine := &machinesv1.WorkMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-machine-start",
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": "test-user",
+				},
 			},
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:     "test-user",
@@ -136,6 +144,7 @@ func TestStartMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
 
 		router.POST("/start", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -167,6 +176,7 @@ func TestStartMyWorkMachine(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
 		router.POST("/start", func(c *gin.Context) {
+			c.Set("user_username", "no-machine-user")
 			c.Set("user_email", "no-machine-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -184,10 +194,13 @@ func TestStopMyWorkMachine(t *testing.T) {
 	t.Run("should stop user's work machine", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
-		// Create test machine
+		// Create test machine with required label for GetByOwner lookup
 		machine := &machinesv1.WorkMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-machine-stop",
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": "test-user",
+				},
 			},
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:     "test-user",
@@ -198,6 +211,7 @@ func TestStopMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
 
 		router.POST("/stop", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -229,6 +243,7 @@ func TestStopMyWorkMachine(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
 		router.POST("/stop", func(c *gin.Context) {
+			c.Set("user_username", "no-machine-user")
 			c.Set("user_email", "no-machine-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -246,10 +261,13 @@ func TestCreateMyWorkMachine(t *testing.T) {
 	t.Run("should create work machine with default type", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
-		// Create default machine type
+		// Create default machine type with required label for GetDefault lookup
 		defaultMT := &machinesv1.MachineType{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "default-type",
+				Labels: map[string]string{
+					"kloudlite.io/machinetype.default": "true",
+				},
 			},
 			Spec: machinesv1.MachineTypeSpec{
 				DisplayName: "Default Type",
@@ -260,6 +278,7 @@ func TestCreateMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), defaultMT)
 
 		router.POST("/create", func(c *gin.Context) {
+			c.Set("user_username", "new-user")
 			c.Set("user_email", "new-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -311,6 +330,7 @@ func TestCreateMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), defaultMT)
 
 		router.POST("/create", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -327,10 +347,13 @@ func TestCreateMyWorkMachine(t *testing.T) {
 	t.Run("should return 409 when user already has a machine", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
-		// Create existing machine for user
+		// Create existing machine for user with required label
 		existingMachine := &machinesv1.WorkMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "existing-machine",
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": "existing-user",
+				},
 			},
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:     "existing-user",
@@ -340,6 +363,7 @@ func TestCreateMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), existingMachine)
 
 		router.POST("/create", func(c *gin.Context) {
+			c.Set("user_username", "existing-user")
 			c.Set("user_email", "existing-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -364,6 +388,7 @@ func TestCreateMyWorkMachine(t *testing.T) {
 		// Don't create any default machine type
 
 		router.POST("/create", func(c *gin.Context) {
+			c.Set("user_username", "new-user")
 			c.Set("user_email", "new-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -387,10 +412,13 @@ func TestUpdateMyWorkMachine(t *testing.T) {
 	t.Run("should update work machine", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
-		// Create test machine
+		// Create test machine with required label for GetByOwner lookup
 		machine := &machinesv1.WorkMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-machine-update",
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": "test-user",
+				},
 			},
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:     "test-user",
@@ -412,6 +440,7 @@ func TestUpdateMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), newMT)
 
 		router.PUT("/update", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -453,6 +482,7 @@ func TestUpdateMyWorkMachine(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
 		router.PUT("/update", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -470,6 +500,7 @@ func TestUpdateMyWorkMachine(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
 		router.PUT("/update", func(c *gin.Context) {
+			c.Set("user_username", "no-machine-user")
 			c.Set("user_email", "no-machine-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -493,10 +524,13 @@ func TestDeleteMyWorkMachine(t *testing.T) {
 	t.Run("should delete work machine", func(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
-		// Create test machine
+		// Create test machine with required label for GetByOwner lookup
 		machine := &machinesv1.WorkMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-machine-delete",
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": "test-user",
+				},
 			},
 			Spec: machinesv1.WorkMachineSpec{
 				OwnedBy:     "test-user",
@@ -507,6 +541,7 @@ func TestDeleteMyWorkMachine(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
 
 		router.DELETE("/delete", func(c *gin.Context) {
+			c.Set("user_username", "test-user")
 			c.Set("user_email", "test-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -534,6 +569,7 @@ func TestDeleteMyWorkMachine(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
 		router.DELETE("/delete", func(c *gin.Context) {
+			c.Set("user_username", "no-machine-user")
 			c.Set("user_email", "no-machine-user")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -574,6 +610,7 @@ func TestListAllWorkMachines(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine2)
 
 		router.GET("/machines", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -616,6 +653,7 @@ func TestListAllWorkMachines(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine2)
 
 		router.GET("/machines", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -661,6 +699,8 @@ func TestGetWorkMachine(t *testing.T) {
 		_ = handlers.manager.WorkMachineRepository.Create(context.Background(), machine)
 
 		router.GET("/machines/:name", func(c *gin.Context) {
+			c.Set("user_username", "admin")
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -681,6 +721,8 @@ func TestGetWorkMachine(t *testing.T) {
 		handlers, router := setupWorkMachineHandlerTest()
 
 		router.GET("/machines/:name", func(c *gin.Context) {
+			c.Set("user_username", "admin")
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()

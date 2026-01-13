@@ -130,6 +130,7 @@ func TestCreateUser(t *testing.T) {
 
 		// Set super admin context
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "superadmin")
 			c.Set("user_email", "superadmin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleSuperAdmin})
 			c.Next()
@@ -162,6 +163,7 @@ func TestCreateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -187,6 +189,7 @@ func TestCreateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -213,6 +216,7 @@ func TestCreateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "user")
 			c.Set("user_email", "user@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -256,6 +260,7 @@ func TestCreateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -283,6 +288,7 @@ func TestCreateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -314,6 +320,7 @@ func TestCreateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -513,6 +520,7 @@ func TestUpdateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "superadmin")
 			c.Set("user_email", "superadmin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleSuperAdmin})
 			c.Next()
@@ -551,6 +559,7 @@ func TestUpdateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -582,6 +591,7 @@ func TestUpdateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -639,6 +649,7 @@ func TestUpdateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -672,6 +683,7 @@ func TestUpdateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -713,6 +725,7 @@ func TestUpdateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -754,6 +767,7 @@ func TestUpdateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -801,6 +815,7 @@ func TestDeleteUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "superadmin")
 			c.Set("user_email", "superadmin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleSuperAdmin})
 			c.Next()
@@ -833,6 +848,7 @@ func TestDeleteUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "otheradmin")
 			c.Set("user_email", "otheradmin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -865,6 +881,7 @@ func TestDeleteUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "user")
 			c.Set("user_email", "user@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -903,6 +920,7 @@ func TestDeleteUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -938,6 +956,7 @@ func TestDeleteUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -985,6 +1004,7 @@ func TestActivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -1023,6 +1043,7 @@ func TestActivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -1055,6 +1076,7 @@ func TestActivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "user")
 			c.Set("user_email", "user@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -1090,6 +1112,7 @@ func TestActivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -1137,6 +1160,7 @@ func TestDeactivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -1175,6 +1199,7 @@ func TestDeactivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -1207,6 +1232,7 @@ func TestDeactivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "user")
 			c.Set("user_email", "user@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
 			c.Next()
@@ -1242,6 +1268,7 @@ func TestDeactivateUser(t *testing.T) {
 		router := gin.New()
 
 		router.Use(func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
