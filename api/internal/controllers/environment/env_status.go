@@ -551,18 +551,15 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 		}
 		clonedLabels["snapshots.kloudlite.io/environment"] = env.Name
 
+		// Note: We don't set OwnerReferences on cloned snapshots because the Environment
+		// is in a different namespace (workmachine namespace) than the snapshot (target namespace).
+		// Kubernetes doesn't support cross-namespace owner references.
+		// Cleanup is handled by the Environment's finalizer which deletes the target namespace.
 		clonedSnapshot := &snapshotv1.Snapshot{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      snapshotName, // Same name
 				Namespace: env.Spec.TargetNamespace,
 				Labels:    clonedLabels,
-				OwnerReferences: []metav1.OwnerReference{{
-					APIVersion: "environments.kloudlite.io/v1",
-					Kind:       "Environment",
-					Name:       env.Name,
-					UID:        env.UID,
-					Controller: ptrBool(true),
-				}},
 			},
 			Spec:   sourceSnapshot.Spec,
 			Status: sourceSnapshot.Status,
@@ -641,7 +638,3 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 	return nil
 }
 
-// ptrBool returns a pointer to a bool
-func ptrBool(b bool) *bool {
-	return &b
-}
