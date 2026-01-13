@@ -184,7 +184,8 @@ func (r *WorkspaceReconciler) cleanupWorkspaceIntercepts(ctx context.Context, wo
 
 	env := &environmentv1.Environment{}
 	if err := r.Get(ctx, client.ObjectKey{
-		Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+		Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
+		Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 	}, env); err != nil {
 		logger.Warn("Failed to get environment for intercept cleanup", zap.Error(err))
 		return

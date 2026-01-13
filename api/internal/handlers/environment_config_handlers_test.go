@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/machines/v1"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -32,7 +33,9 @@ func setupEnvConfigTest() (*EnvironmentConfigHandlers, client.Client, *gin.Engin
 		environments: make(map[string]*environmentsv1.Environment),
 	}
 
-	handler := NewEnvironmentConfigHandlers(mockRepo, k8sClient, logger)
+	mockWorkmachineRepo := &mockWorkmachineRepository{}
+
+	handler := NewEnvironmentConfigHandlers(mockRepo, mockWorkmachineRepo, k8sClient, logger)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -50,7 +53,7 @@ func (m *mockEnvironmentRepository) Create(ctx context.Context, env *environment
 	return nil
 }
 
-func (m *mockEnvironmentRepository) Get(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepository) Get(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 	if m.getError != nil {
 		return nil, m.getError
 	}
@@ -73,7 +76,7 @@ func (m *mockEnvironmentRepository) Update(ctx context.Context, env *environment
 	return nil
 }
 
-func (m *mockEnvironmentRepository) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepository) Patch(ctx context.Context, namespace, name string, patchData map[string]interface{}) (*environmentsv1.Environment, error) {
 	if env, ok := m.environments[name]; ok {
 		// Simple patch implementation for testing
 		return env, nil
@@ -81,12 +84,12 @@ func (m *mockEnvironmentRepository) Patch(ctx context.Context, name string, patc
 	return nil, nil
 }
 
-func (m *mockEnvironmentRepository) Delete(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepository) Delete(ctx context.Context, namespace, name string) error {
 	delete(m.environments, name)
 	return nil
 }
 
-func (m *mockEnvironmentRepository) List(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepository) List(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
 	list := &environmentsv1.EnvironmentList{}
 	for _, env := range m.environments {
 		list.Items = append(list.Items, *env)
@@ -94,7 +97,7 @@ func (m *mockEnvironmentRepository) List(ctx context.Context, opts ...repository
 	return list, nil
 }
 
-func (m *mockEnvironmentRepository) GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepository) GetByTargetNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
 	for _, env := range m.environments {
 		if env.Spec.TargetNamespace == namespace {
 			return env, nil
@@ -103,7 +106,7 @@ func (m *mockEnvironmentRepository) GetByNamespace(ctx context.Context, namespac
 	return nil, nil
 }
 
-func (m *mockEnvironmentRepository) ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepository) ListActive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	list := &environmentsv1.EnvironmentList{}
 	for _, env := range m.environments {
 		if env.Spec.Activated {
@@ -113,7 +116,7 @@ func (m *mockEnvironmentRepository) ListActive(ctx context.Context) (*environmen
 	return list, nil
 }
 
-func (m *mockEnvironmentRepository) ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepository) ListInactive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	list := &environmentsv1.EnvironmentList{}
 	for _, env := range m.environments {
 		if !env.Spec.Activated {
@@ -123,7 +126,7 @@ func (m *mockEnvironmentRepository) ListInactive(ctx context.Context) (*environm
 	return list, nil
 }
 
-func (m *mockEnvironmentRepository) ActivateEnvironment(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepository) ActivateEnvironment(ctx context.Context, namespace, name string) error {
 	if env, ok := m.environments[name]; ok {
 		env.Spec.Activated = true
 		return nil
@@ -131,7 +134,7 @@ func (m *mockEnvironmentRepository) ActivateEnvironment(ctx context.Context, nam
 	return nil
 }
 
-func (m *mockEnvironmentRepository) DeactivateEnvironment(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepository) DeactivateEnvironment(ctx context.Context, namespace, name string) error {
 	if env, ok := m.environments[name]; ok {
 		env.Spec.Activated = false
 		return nil
@@ -139,11 +142,62 @@ func (m *mockEnvironmentRepository) DeactivateEnvironment(ctx context.Context, n
 	return nil
 }
 
-func (m *mockEnvironmentRepository) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*environmentsv1.Environment], error) {
+func (m *mockEnvironmentRepository) Watch(ctx context.Context, namespace string, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*environmentsv1.Environment], error) {
 	// Simple stub for testing - return empty channel
 	ch := make(chan repository.WatchEvent[*environmentsv1.Environment])
 	close(ch)
 	return ch, nil
+}
+
+// mockWorkmachineRepository is a mock implementation of repository.WorkMachineRepository
+type mockWorkmachineRepository struct{}
+
+func (m *mockWorkmachineRepository) Create(ctx context.Context, wm *machinesv1.WorkMachine) error {
+	return nil
+}
+
+func (m *mockWorkmachineRepository) Get(ctx context.Context, name string) (*machinesv1.WorkMachine, error) {
+	return nil, nil
+}
+
+func (m *mockWorkmachineRepository) GetByOwner(ctx context.Context, owner string) (*machinesv1.WorkMachine, error) {
+	return &machinesv1.WorkMachine{
+		Spec: machinesv1.WorkMachineSpec{
+			TargetNamespace: "test-namespace",
+		},
+	}, nil
+}
+
+func (m *mockWorkmachineRepository) Update(ctx context.Context, wm *machinesv1.WorkMachine) error {
+	return nil
+}
+
+func (m *mockWorkmachineRepository) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*machinesv1.WorkMachine, error) {
+	return nil, nil
+}
+
+func (m *mockWorkmachineRepository) Delete(ctx context.Context, name string) error {
+	return nil
+}
+
+func (m *mockWorkmachineRepository) List(ctx context.Context, opts ...repository.ListOption) (*machinesv1.WorkMachineList, error) {
+	return nil, nil
+}
+
+func (m *mockWorkmachineRepository) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*machinesv1.WorkMachine], error) {
+	return nil, nil
+}
+
+func (m *mockWorkmachineRepository) StartMachine(ctx context.Context, name string) error {
+	return nil
+}
+
+func (m *mockWorkmachineRepository) StopMachine(ctx context.Context, name string) error {
+	return nil
+}
+
+func (m *mockWorkmachineRepository) ListByMachineType(ctx context.Context, machineType string) (*machinesv1.WorkMachineList, error) {
+	return nil, nil
 }
 
 func TestSetConfig(t *testing.T) {

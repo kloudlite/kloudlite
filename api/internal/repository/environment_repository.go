@@ -7,73 +7,74 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// EnvironmentRepository provides operations for Environment resources (cluster-scoped)
+// EnvironmentRepository provides operations for Environment resources (namespace-scoped)
 type EnvironmentRepository interface {
-	ClusterRepository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
+	NamespacedRepository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
 
 	// Domain-specific methods
-	GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error)
-	ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error)
-	ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error)
-	ActivateEnvironment(ctx context.Context, name string) error
-	DeactivateEnvironment(ctx context.Context, name string) error
+	GetByTargetNamespace(ctx context.Context, targetNamespace string) (*environmentsv1.Environment, error)
+	ListActive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error)
+	ListInactive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error)
+	ActivateEnvironment(ctx context.Context, namespace, name string) error
+	DeactivateEnvironment(ctx context.Context, namespace, name string) error
 }
 
 // environmentRepository implements EnvironmentRepository
 type environmentRepository struct {
-	ClusterRepository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
+	NamespacedRepository[*environmentsv1.Environment, *environmentsv1.EnvironmentList]
 	client client.WithWatch
 }
 
 // NewEnvironmentRepository creates a new EnvironmentRepository
 func NewEnvironmentRepository(k8sClient client.WithWatch) EnvironmentRepository {
-	baseRepo := NewK8sClusterRepository(
+	baseRepo := NewK8sNamespacedRepository(
 		k8sClient,
 		func() *environmentsv1.Environment { return &environmentsv1.Environment{} },
 		func() *environmentsv1.EnvironmentList { return &environmentsv1.EnvironmentList{} },
 	)
 
 	return &environmentRepository{
-		ClusterRepository: baseRepo,
-		client:            k8sClient,
+		NamespacedRepository: baseRepo,
+		client:               k8sClient,
 	}
 }
 
-// GetByNamespace retrieves an environment by its target namespace
-func (r *environmentRepository) GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
-	// Use label selector for efficient server-side filtering
-	envs, err := r.List(ctx, WithLabelSelector("kloudlite.io/target-namespace="+namespace))
+// GetByTargetNamespace retrieves an environment by its target namespace
+// This searches across all namespaces since targetNamespace is unique
+func (r *environmentRepository) GetByTargetNamespace(ctx context.Context, targetNamespace string) (*environmentsv1.Environment, error) {
+	// Use label selector for efficient server-side filtering across all namespaces
+	envs, err := r.List(ctx, "", WithLabelSelector("kloudlite.io/target-namespace="+targetNamespace))
 	if err != nil {
 		return nil, err
 	}
 
 	if len(envs.Items) == 0 {
-		return nil, ErrNotFound("environment with target namespace " + namespace + " not found")
+		return nil, ErrNotFound("environment with target namespace " + targetNamespace + " not found")
 	}
 
 	if len(envs.Items) > 1 {
-		return nil, ErrMultipleFound("multiple environments found with target namespace " + namespace)
+		return nil, ErrMultipleFound("multiple environments found with target namespace " + targetNamespace)
 	}
 
 	return &envs.Items[0], nil
 }
 
-// ListActive retrieves all active environments
-func (r *environmentRepository) ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+// ListActive retrieves all active environments in a namespace
+func (r *environmentRepository) ListActive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	// Use label selector for efficient server-side filtering
-	return r.List(ctx, WithLabelSelector("kloudlite.io/activated=true"))
+	return r.List(ctx, namespace, WithLabelSelector("kloudlite.io/activated=true"))
 }
 
-// ListInactive retrieves all inactive environments
-func (r *environmentRepository) ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+// ListInactive retrieves all inactive environments in a namespace
+func (r *environmentRepository) ListInactive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	// Use label selector for efficient server-side filtering
-	return r.List(ctx, WithLabelSelector("kloudlite.io/activated=false"))
+	return r.List(ctx, namespace, WithLabelSelector("kloudlite.io/activated=false"))
 }
 
-// ActivateEnvironment activates an environment by name
-func (r *environmentRepository) ActivateEnvironment(ctx context.Context, name string) error {
-	// Get the environment (cluster-scoped)
-	env, err := r.Get(ctx, name)
+// ActivateEnvironment activates an environment by namespace and name
+func (r *environmentRepository) ActivateEnvironment(ctx context.Context, namespace, name string) error {
+	// Get the environment (namespace-scoped)
+	env, err := r.Get(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
@@ -96,10 +97,10 @@ func (r *environmentRepository) ActivateEnvironment(ctx context.Context, name st
 	return r.client.Status().Update(ctx, env)
 }
 
-// DeactivateEnvironment deactivates an environment by name
-func (r *environmentRepository) DeactivateEnvironment(ctx context.Context, name string) error {
-	// Get the environment (cluster-scoped)
-	env, err := r.Get(ctx, name)
+// DeactivateEnvironment deactivates an environment by namespace and name
+func (r *environmentRepository) DeactivateEnvironment(ctx context.Context, namespace, name string) error {
+	// Get the environment (namespace-scoped)
+	env, err := r.Get(ctx, namespace, name)
 	if err != nil {
 		return err
 	}

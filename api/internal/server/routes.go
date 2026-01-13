@@ -50,6 +50,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 	)
 	environmentConfigHandlers := handlers.NewEnvironmentConfigHandlers(
 		servicesManager.RepositoryManager.Environments,
+		servicesManager.RepositoryManager.WorkMachines,
 		servicesManager.RepositoryManager.K8sClient,
 		logger,
 	)

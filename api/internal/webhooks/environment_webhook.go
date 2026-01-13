@@ -2,9 +2,11 @@ package webhooks
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"regexp"
 	"strings"
@@ -145,38 +147,54 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		w.logger.Info(fmt.Sprintf("Setting activated=true by default for new environment: %s", env.Name))
 	}
 
-	// Use the OwnedBy field from the spec to determine ownership first
-	// This is needed for generating the targetNamespace with username prefix
-	ownedBy := env.Spec.OwnedBy
+	// Derive OwnedBy from namespace label if not provided
+	// Environment is namespaced, so we can look up the namespace to get the owner
 	var userName string
-
-	// Determine if OwnedBy is an email or username
-	if strings.Contains(ownedBy, "@") {
-		// OwnedBy is an email - find the actual username
-		userList := &platformv1alpha1.UserList{}
-		if err := w.k8sClient.List(context.Background(), userList); err == nil {
-			for _, u := range userList.Items {
-				if u.Spec.Email == ownedBy {
-					userName = u.Name
-					break
+	if env.Spec.OwnedBy != "" {
+		ownedBy := env.Spec.OwnedBy
+		// Determine if OwnedBy is an email or username
+		if strings.Contains(ownedBy, "@") {
+			// OwnedBy is an email - find the actual username
+			userList := &platformv1alpha1.UserList{}
+			if err := w.k8sClient.List(context.Background(), userList); err == nil {
+				for _, u := range userList.Items {
+					if u.Spec.Email == ownedBy {
+						userName = u.Name
+						break
+					}
 				}
 			}
-		}
-		// If no user found, use a sanitized version of email as username
-		if userName == "" {
-			userName = strings.ReplaceAll(strings.Split(ownedBy, "@")[0], ".", "-")
+			// If no user found, use a sanitized version of email as username
+			if userName == "" {
+				userName = strings.ReplaceAll(strings.Split(ownedBy, "@")[0], ".", "-")
+			}
+		} else {
+			userName = ownedBy
 		}
 	} else {
-		// OwnedBy is a username
-		userName = ownedBy
+		// Derive owner from namespace label
+		ns := &corev1.Namespace{}
+		if err := w.k8sClient.Get(context.Background(), client.ObjectKey{Name: env.Namespace}, ns); err == nil {
+			if ns.Labels != nil {
+				userName = ns.Labels["kloudlite.io/owned-by"]
+			}
+		}
+		// Set OwnedBy in spec if we derived it
+		if userName != "" {
+			patches = append(patches, map[string]interface{}{
+				"op":    "add",
+				"path":  "/spec/ownedBy",
+				"value": userName,
+			})
+			env.Spec.OwnedBy = userName
+		}
 	}
 
 	// Generate targetNamespace if not provided
-	// Use username prefix to avoid conflicts between users
+	// Format: env-{envName}-{random6} to avoid conflicts
 	if env.Spec.TargetNamespace == "" {
-		// Extract the environment name from the full name (which is {username}--{envname})
-		// The env.Name at this point is already prefixed by the handler
-		targetNamespace := fmt.Sprintf("env-%s", env.Name)
+		suffix := generateRandomSuffix(6)
+		targetNamespace := fmt.Sprintf("env-%s-%s", env.Name, suffix)
 		patches = append(patches, map[string]interface{}{
 			"op":    "add",
 			"path":  "/spec/targetNamespace",
@@ -327,41 +345,45 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment, operation admissionv1.Operation) error {
 	ctx := context.Background()
 
-	// Validate spec.name is required
-	if env.Spec.Name == "" {
-		return fmt.Errorf("spec.name is required. Please provide a name for your environment")
+	// Validate environment name (metadata.name) is unique within the namespace
+	// Since environments are now namespace-scoped, uniqueness is handled by Kubernetes
+	// We just need to validate the name format
+	if env.Name == "" {
+		return fmt.Errorf("environment name is required")
 	}
 
-	// Validate spec.name is unique per owner
-	if operation == admissionv1.Create || operation == admissionv1.Update {
-		envList := &environmentsv1.EnvironmentList{}
-		if err := w.k8sClient.List(ctx, envList); err != nil {
-			return fmt.Errorf("failed to list environments: %v", err)
-		}
-
-		for _, existingEnv := range envList.Items {
-			// Skip the current environment being created/updated
-			if existingEnv.Name == env.Name {
-				continue
-			}
-			// Check if same owner has an environment with the same spec.name
-			if existingEnv.Spec.OwnedBy == env.Spec.OwnedBy && existingEnv.Spec.Name == env.Spec.Name {
-				return fmt.Errorf("environment name '%s' already exists for owner '%s'. Please choose a different name",
-					env.Spec.Name, env.Spec.OwnedBy)
-			}
-		}
-	}
-
-	// Validate that WorkMachine reference exists (only for CREATE operations)
+	// Validate environment namespace is a WorkMachine namespace
 	if operation == admissionv1.Create {
-		if env.Spec.WorkMachineName == "" {
-			return fmt.Errorf("WorkMachineName is required. Environment must be associated with a WorkMachine")
+		// Check that the namespace is a WorkMachine namespace (starts with wm-)
+		if !strings.HasPrefix(env.Namespace, "wm-") {
+			return fmt.Errorf("environments must be created in a WorkMachine namespace (wm-*). Got namespace: %s", env.Namespace)
 		}
 
-		// Check if the referenced WorkMachine exists
-		var workMachine machinesv1.WorkMachine
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.WorkMachineName}, &workMachine); err != nil {
-			return fmt.Errorf("referenced WorkMachine '%s' does not exist. Please create the WorkMachine first or provide a valid WorkMachine reference", env.Spec.WorkMachineName)
+		// Derive WorkMachineName from namespace if not provided
+		if env.Spec.WorkMachineName == "" {
+			// Derive from namespace: wm-{username} namespace belongs to workmachine owned by {username}
+			// The workmachine name is the owner's username
+			ns := &corev1.Namespace{}
+			if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Namespace}, ns); err != nil {
+				return fmt.Errorf("failed to get namespace %s: %v", env.Namespace, err)
+			}
+
+			// Check if namespace is a WorkMachine namespace
+			if ns.Labels == nil || ns.Labels["kloudlite.io/workmachine"] != "true" {
+				return fmt.Errorf("namespace %s is not a WorkMachine namespace", env.Namespace)
+			}
+		} else {
+			// Verify the WorkMachine exists
+			var workMachine machinesv1.WorkMachine
+			if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.WorkMachineName}, &workMachine); err != nil {
+				return fmt.Errorf("referenced WorkMachine '%s' does not exist", env.Spec.WorkMachineName)
+			}
+
+			// Verify the WorkMachine owns this namespace
+			if workMachine.Spec.TargetNamespace != env.Namespace {
+				return fmt.Errorf("environment namespace %s does not match WorkMachine %s's namespace %s",
+					env.Namespace, env.Spec.WorkMachineName, workMachine.Spec.TargetNamespace)
+			}
 		}
 	}
 
@@ -478,9 +500,9 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 
 	// For deletion operations, fetch the current environment to check status
 	if operation == admissionv1.Delete {
-		// Fetch current environment to check restore status
+		// Fetch current environment to check restore status (namespaced lookup)
 		var currentEnv environmentsv1.Environment
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Name}, &currentEnv); err == nil {
+		if err := w.k8sClient.Get(ctx, client.ObjectKey{Namespace: env.Namespace, Name: env.Name}, &currentEnv); err == nil {
 			// Check if environment is being restored from snapshot
 			if currentEnv.Status.SnapshotRestoreStatus != nil {
 				phase := currentEnv.Status.SnapshotRestoreStatus.Phase
@@ -491,18 +513,8 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
-	// Check for conflicting environments with same namespace
-	if operation == admissionv1.Create || operation == admissionv1.Update {
-		ctx := context.Background()
-		envList := &environmentsv1.EnvironmentList{}
-		if err := w.k8sClient.List(ctx, envList); err == nil {
-			for _, existingEnv := range envList.Items {
-				if existingEnv.Name != env.Name && existingEnv.Spec.TargetNamespace == env.Spec.TargetNamespace {
-					return fmt.Errorf("target namespace %s is already used by environment %s", env.Spec.TargetNamespace, existingEnv.Name)
-				}
-			}
-		}
-	}
+	// targetNamespace uniqueness is ensured by the random suffix generation
+	// No need for global uniqueness check since each environment gets a unique random suffix
 
 	return nil
 }
@@ -646,4 +658,20 @@ func parseQuantity(quantity string) (int64, error) {
 	}
 
 	return 0, fmt.Errorf("invalid quantity format: %s", quantity)
+}
+
+// generateRandomSuffix generates a random alphanumeric suffix of the specified length
+func generateRandomSuffix(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			// Fallback to a fixed character if random fails
+			b[i] = 'x'
+		} else {
+			b[i] = charset[n.Int64()]
+		}
+	}
+	return string(b)
 }

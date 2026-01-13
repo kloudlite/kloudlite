@@ -55,6 +55,15 @@ func NewDashboardHandlers(
 	}
 }
 
+// getEnvNamespaceForUser gets the environment namespace for a user from their WorkMachine
+func (h *DashboardHandlers) getEnvNamespaceForUser(ctx context.Context, username string) (string, error) {
+	wm, err := h.workMachineRepo.GetByOwner(ctx, username)
+	if err != nil {
+		return "", fmt.Errorf("failed to get workmachine for user %s: %w", username, err)
+	}
+	return wm.Spec.TargetNamespace, nil
+}
+
 // DashboardResponse represents the dashboard data response
 type DashboardResponse struct {
 	MachineTypes       []machinesv1.MachineType          `json:"machineTypes"`
@@ -197,32 +206,42 @@ func (h *DashboardHandlers) GetDashboard(c *gin.Context) {
 	// Fetch pinned environments in parallel
 	pinnedEnvNames := response.Preferences.Spec.PinnedEnvironments
 	if len(pinnedEnvNames) > 0 {
-		var envWg sync.WaitGroup
-		pinnedEnvironments := make([]environmentsv1.Environment, 0, len(pinnedEnvNames))
-		var envMu sync.Mutex
+		// Get user's namespace for environment lookups
+		userNamespace, err := h.getEnvNamespaceForUser(ctx, username)
+		if err != nil {
+			h.logger.Warn("Failed to get user namespace for pinned environments",
+				zap.Error(err),
+				zap.String("username", username),
+			)
+		} else {
+			var envWg sync.WaitGroup
+			pinnedEnvironments := make([]environmentsv1.Environment, 0, len(pinnedEnvNames))
+			var envMu sync.Mutex
 
-		for _, envName := range pinnedEnvNames {
-			envWg.Add(1)
-			go func(name string) {
-				defer envWg.Done()
-				env, err := h.environmentRepo.Get(ctx, name)
-				if err != nil {
-					// Environment may have been deleted - skip silently
-					if client.IgnoreNotFound(err) != nil {
-						h.logger.Warn("Failed to fetch pinned environment",
-							zap.Error(err),
-							zap.String("name", name),
-						)
+			for _, envName := range pinnedEnvNames {
+				envWg.Add(1)
+				go func(name string) {
+					defer envWg.Done()
+					env, err := h.environmentRepo.Get(ctx, userNamespace, name)
+					if err != nil {
+						// Environment may have been deleted - skip silently
+						if client.IgnoreNotFound(err) != nil {
+							h.logger.Warn("Failed to fetch pinned environment",
+								zap.Error(err),
+								zap.String("namespace", userNamespace),
+								zap.String("name", name),
+							)
+						}
+						return
 					}
-					return
-				}
-				envMu.Lock()
-				pinnedEnvironments = append(pinnedEnvironments, *env)
-				envMu.Unlock()
-			}(envName)
+					envMu.Lock()
+					pinnedEnvironments = append(pinnedEnvironments, *env)
+					envMu.Unlock()
+				}(envName)
+			}
+			envWg.Wait()
+			response.PinnedEnvironments = pinnedEnvironments
 		}
-		envWg.Wait()
-		response.PinnedEnvironments = pinnedEnvironments
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -251,30 +270,43 @@ func (h *DashboardHandlers) GetEnvironmentDetails(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Get user's namespace for environment lookup
+	userNamespace, err := h.getEnvNamespaceForUser(ctx, username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment first to get the namespace
-	env, err := h.environmentRepo.Get(ctx, envName)
+	env, err := h.environmentRepo.Get(ctx, userNamespace, envName)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Environment not found"})
 			return
 		}
-		h.logger.Error("Failed to get environment", zap.Error(err), zap.String("name", envName))
+		h.logger.Error("Failed to get environment", zap.Error(err), zap.String("namespace", userNamespace), zap.String("name", envName))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get environment", "details": err.Error()})
 		return
 	}
 
-	// Populate ownedBy and name from labels if empty
+	// Populate ownedBy from labels if empty
 	// Pattern: kloudlite.io/environment-name: {owner}--{name}
-	if env.Spec.OwnedBy == "" || env.Spec.Name == "" {
+	if env.Spec.OwnedBy == "" {
 		if envLabel, ok := env.Spec.Labels["kloudlite.io/environment-name"]; ok && envLabel != "" {
 			parts := strings.SplitN(envLabel, "--", 2)
 			if len(parts) == 2 {
-				if env.Spec.OwnedBy == "" {
-					env.Spec.OwnedBy = parts[0]
-				}
-				if env.Spec.Name == "" {
-					env.Spec.Name = parts[1]
-				}
+				env.Spec.OwnedBy = parts[0]
 			}
 		}
 	}
@@ -487,6 +519,17 @@ func (h *DashboardHandlers) GetEnvironmentsListFull(c *gin.Context) {
 		return
 	}
 
+	// Get user's namespace for environment listing
+	userNamespace, err := h.getEnvNamespaceForUser(ctx, username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Initialize response with empty slices to avoid null in JSON
 	response := EnvironmentsListResponse{
 		Environments:         []environmentsv1.Environment{},
@@ -499,7 +542,7 @@ func (h *DashboardHandlers) GetEnvironmentsListFull(c *gin.Context) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		envs, err := h.environmentRepo.List(ctx)
+		envs, err := h.environmentRepo.List(ctx, userNamespace)
 		if err != nil {
 			h.logger.Error("Failed to list environments", zap.Error(err))
 			return

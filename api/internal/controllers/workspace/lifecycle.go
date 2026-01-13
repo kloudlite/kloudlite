@@ -34,7 +34,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 
 		// Fetch environment directly (don't use validateEnvironmentConnection as it returns error for deactivated envs)
 		env := &environmentv1.Environment{}
-		if err := r.Get(ctx, client.ObjectKey{Name: envName}, env); err != nil {
+		if err := r.Get(ctx, client.ObjectKey{Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace, Name: envName}, env); err != nil {
 			if apierrors.IsNotFound(err) {
 				// Environment doesn't exist - disconnect workspace
 				logger.Info("Disconnecting workspace from deleted environment", zap.String("environment", envName))
@@ -108,7 +108,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 			// Workspace has environment connection - fetch env to get target namespace
 			envName := workspace.Spec.EnvironmentConnection.EnvironmentRef.Name
 			connEnv := &environmentv1.Environment{}
-			if err := r.Get(ctx, client.ObjectKey{Name: envName}, connEnv); err == nil {
+			if err := r.Get(ctx, client.ObjectKey{Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace, Name: envName}, connEnv); err == nil {
 				expectedTargetNs := connEnv.Spec.TargetNamespace
 				if workspace.Status.ConnectedEnvironment == nil ||
 					workspace.Status.ConnectedEnvironment.TargetNamespace != expectedTargetNs {

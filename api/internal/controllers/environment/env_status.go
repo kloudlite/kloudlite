@@ -34,7 +34,7 @@ func generateHash(input string) string {
 // updateHashAndSubdomain computes and sets the hash and subdomain in environment status
 func (r *EnvironmentReconciler) updateHashAndSubdomain(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	// Compute hash from envName-owner
-	hash := generateHash(fmt.Sprintf("%s-%s", environment.Spec.Name, environment.Spec.OwnedBy))
+	hash := generateHash(fmt.Sprintf("%s-%s", environment.Name, environment.Spec.OwnedBy))
 
 	// Get subdomain from HOSTED_SUBDOMAIN env var (shared across all environments)
 	subdomain := os.Getenv("HOSTED_SUBDOMAIN")
@@ -549,7 +549,7 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 		for k, v := range sourceSnapshot.Labels {
 			clonedLabels[k] = v
 		}
-		clonedLabels["snapshots.kloudlite.io/environment"] = env.Spec.Name
+		clonedLabels["snapshots.kloudlite.io/environment"] = env.Name
 
 		clonedSnapshot := &snapshotv1.Snapshot{
 			ObjectMeta: metav1.ObjectMeta{
@@ -585,15 +585,15 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 			logger.Warn("Failed to re-fetch cloned snapshot for status update", zap.String("snapshot", snapshotName), zap.Error(err))
 		} else {
 			// Update labels if environment label is wrong (for existing snapshots that were cloned with old code)
-			if clonedSnapshot.Labels["snapshots.kloudlite.io/environment"] != env.Spec.Name {
+			if clonedSnapshot.Labels["snapshots.kloudlite.io/environment"] != env.Name {
 				if clonedSnapshot.Labels == nil {
 					clonedSnapshot.Labels = make(map[string]string)
 				}
-				clonedSnapshot.Labels["snapshots.kloudlite.io/environment"] = env.Spec.Name
+				clonedSnapshot.Labels["snapshots.kloudlite.io/environment"] = env.Name
 				if err := r.Update(ctx, clonedSnapshot); err != nil {
 					logger.Warn("Failed to update cloned snapshot labels", zap.String("snapshot", snapshotName), zap.Error(err))
 				} else {
-					logger.Info("Updated cloned snapshot labels", zap.String("snapshot", snapshotName), zap.String("environment", env.Spec.Name))
+					logger.Info("Updated cloned snapshot labels", zap.String("snapshot", snapshotName), zap.String("environment", env.Name))
 					// Re-fetch after update to get new ResourceVersion for status update
 					if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: env.Spec.TargetNamespace}, clonedSnapshot); err != nil {
 						logger.Warn("Failed to re-fetch cloned snapshot after label update", zap.String("snapshot", snapshotName), zap.Error(err))

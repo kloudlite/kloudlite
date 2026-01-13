@@ -48,6 +48,15 @@ func NewSnapshotHandlers(
 	}
 }
 
+// getEnvNamespaceForUser gets the environment namespace for a user from their WorkMachine
+func (h *SnapshotHandlers) getEnvNamespaceForUser(ctx context.Context, username string) (string, error) {
+	wm, err := h.workmachineRepo.GetByOwner(ctx, username)
+	if err != nil {
+		return "", fmt.Errorf("failed to get workmachine for user %s: %w", username, err)
+	}
+	return wm.Spec.TargetNamespace, nil
+}
+
 // CreateSnapshotRequest is the request body for creating a snapshot
 type CreateSnapshotRequest struct {
 	Name        string `json:"name"`
@@ -149,10 +158,21 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Get environment to verify it exists and get details
-	env, err := h.environmentRepo.Get(c.Request.Context(), envName)
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
 	if err != nil {
-		h.logger.Error("Failed to get environment", zap.String("name", envName), zap.Error(err))
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Get environment to verify it exists and get details
+	env, err := h.environmentRepo.Get(c.Request.Context(), namespace, envName)
+	if err != nil {
+		h.logger.Error("Failed to get environment", zap.String("namespace", namespace), zap.String("name", envName), zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("environment %s not found", envName)})
 		return
 	}
@@ -209,19 +229,21 @@ func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 	snapshotName := fmt.Sprintf("%s-%s-%d", envName, namepart, time.Now().Unix())
 	requestName := fmt.Sprintf("env-snap-req-%s", snapshotName)
 
-	// Create the EnvironmentSnapshotRequest CR - this orchestrates the full workflow
+	// Create the EnvironmentSnapshotRequest CR in the environment's target namespace
 	envSnapshotReq := &envv1.EnvironmentSnapshotRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: requestName,
+			Name:      requestName,
+			Namespace: env.Spec.TargetNamespace,
 			Labels: map[string]string{
 				"kloudlite.io/owned-by":              env.Spec.OwnedBy,
 				"snapshots.kloudlite.io/environment": envName,
 			},
 		},
 		Spec: envv1.EnvironmentSnapshotRequestSpec{
-			EnvironmentName: envName,
-			SnapshotName:    snapshotName,
-			Description:     req.Description,
+			EnvironmentName:      envName,
+			EnvironmentNamespace: namespace, // WorkMachine namespace where Environment lives
+			SnapshotName:         snapshotName,
+			Description:          req.Description,
 		},
 	}
 
@@ -260,10 +282,28 @@ func boolPtr(b bool) *bool {
 func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 	envName := c.Param("name")
 
-	// Get environment to find the target namespace
-	env, err := h.environmentRepo.Get(c.Request.Context(), envName)
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
 	if err != nil {
-		h.logger.Error("Failed to get environment", zap.String("name", envName), zap.Error(err))
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Get environment to find the target namespace
+	env, err := h.environmentRepo.Get(c.Request.Context(), namespace, envName)
+	if err != nil {
+		h.logger.Error("Failed to get environment", zap.String("namespace", namespace), zap.String("name", envName), zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get environment"})
 		return
 	}
@@ -714,10 +754,21 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Get source environment to find the workmachine
-	sourceEnv, err := h.environmentRepo.Get(c.Request.Context(), sourceEnvName)
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
 	if err != nil {
-		h.logger.Error("Failed to get source environment", zap.String("environment", sourceEnvName), zap.Error(err))
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Get source environment to find the workmachine
+	sourceEnv, err := h.environmentRepo.Get(c.Request.Context(), namespace, sourceEnvName)
+	if err != nil {
+		h.logger.Error("Failed to get source environment", zap.String("namespace", namespace), zap.String("environment", sourceEnvName), zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("source environment %s not found", sourceEnvName)})
 		return
 	}
@@ -736,7 +787,6 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		},
 		Spec: envv1.EnvironmentSpec{
 			TargetNamespace: targetNamespace,
-			Name:            req.Name,
 			OwnedBy:         username,
 			WorkMachineName: sourceEnv.Spec.WorkMachineName,
 			Activated:       req.Activated,
@@ -802,10 +852,21 @@ func (h *SnapshotHandlers) RestoreEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Get environment to verify it exists
-	env, err := h.environmentRepo.Get(c.Request.Context(), envName)
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
 	if err != nil {
-		h.logger.Error("Failed to get environment", zap.String("name", envName), zap.Error(err))
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Get environment to verify it exists
+	env, err := h.environmentRepo.Get(c.Request.Context(), namespace, envName)
+	if err != nil {
+		h.logger.Error("Failed to get environment", zap.String("namespace", namespace), zap.String("name", envName), zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("environment %s not found", envName)})
 		return
 	}
@@ -898,10 +959,11 @@ func (h *SnapshotHandlers) RestoreEnvironmentFromSnapshot(c *gin.Context) {
 	// Create restore name
 	restoreName := fmt.Sprintf("env-restore-%s-%d", envName, time.Now().Unix())
 
-	// Create the EnvironmentSnapshotRestore CR
+	// Create the EnvironmentSnapshotRestore CR in the environment's target namespace
 	envRestore := &envv1.EnvironmentSnapshotRestore{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: restoreName,
+			Name:      restoreName,
+			Namespace: env.Spec.TargetNamespace,
 			Labels: map[string]string{
 				"kloudlite.io/owned-by":              env.Spec.OwnedBy,
 				"snapshots.kloudlite.io/environment": envName,
@@ -910,6 +972,7 @@ func (h *SnapshotHandlers) RestoreEnvironmentFromSnapshot(c *gin.Context) {
 		},
 		Spec: envv1.EnvironmentSnapshotRestoreSpec{
 			EnvironmentName:      envName,
+			EnvironmentNamespace: namespace, // WorkMachine namespace where Environment lives
 			SnapshotName:         req.SnapshotName,
 			SourceNamespace:      req.SourceNamespace,
 			ActivateAfterRestore: req.ActivateAfterRestore,

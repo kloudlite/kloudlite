@@ -148,14 +148,15 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+			Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 
 		if err == nil && env.Spec.Activated {
 			// Update connected environment status - only if environment spec.activated is true
 			// Check spec.activated instead of status.state to avoid timeout during activation
 			// Use display name format: {owner}/{envName}
-			displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
+			displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Name)
 			workspace.Status.ConnectedEnvironment = &workspacev1.ConnectedEnvironmentInfo{
 				Name:            displayName,
 				TargetNamespace: env.Spec.TargetNamespace,

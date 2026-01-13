@@ -219,7 +219,7 @@ func handleEnvConnect(environmentName string) error {
 
 	// Wait for the environment connection to sync
 	// Use display name format: {owner}/{envName} to match what controller sets in status
-	displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
+	displayName := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Name)
 	if err := waitForEnvironmentSync(displayName, targetNamespace, false); err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
@@ -444,7 +444,7 @@ func selectEnvironmentWithFzf(envs []environmentsv1.Environment) (*environmentsv
 			continue
 		}
 		// Display format: {owner}/{envName}
-		line := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
+		line := fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Name)
 		items = append(items, line)
 		envMap[line] = env
 	}

@@ -67,9 +67,9 @@ func (r *EnvironmentSnapshotRequestReconciler) Reconcile(ctx context.Context, re
 		return reconcile.Result{}, nil
 	}
 
-	// Get the environment
+	// Get the environment (in the WorkMachine namespace specified by EnvironmentNamespace)
 	env := &environmentsv1.Environment{}
-	if err := r.Get(ctx, client.ObjectKey{Name: envSnapshotReq.Spec.EnvironmentName}, env); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Namespace: envSnapshotReq.Spec.EnvironmentNamespace, Name: envSnapshotReq.Spec.EnvironmentName}, env); err != nil {
 		if apierrors.IsNotFound(err) {
 			return r.setFailed(ctx, envSnapshotReq, "Environment not found", logger)
 		}
@@ -380,7 +380,7 @@ func (r *EnvironmentSnapshotRequestReconciler) handleDeletion(
 		req.Status.Phase != environmentsv1.EnvironmentSnapshotRequestPhaseFailed &&
 		req.Status.Phase != "" {
 		env := &environmentsv1.Environment{}
-		if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.EnvironmentName}, env); err == nil {
+		if err := r.Get(ctx, client.ObjectKey{Namespace: req.Spec.EnvironmentNamespace, Name: req.Spec.EnvironmentName}, env); err == nil {
 			if env.Status.State == environmentsv1.EnvironmentStateSnapping {
 				targetState := req.Status.PreviousEnvironmentState
 				if targetState == "" || targetState == environmentsv1.EnvironmentStateSnapping {
@@ -421,7 +421,7 @@ func (r *EnvironmentSnapshotRequestReconciler) setFailed(
 
 	// Try to restore environment state
 	env := &environmentsv1.Environment{}
-	if err := r.Get(ctx, client.ObjectKey{Name: req.Spec.EnvironmentName}, env); err == nil {
+	if err := r.Get(ctx, client.ObjectKey{Namespace: req.Spec.EnvironmentNamespace, Name: req.Spec.EnvironmentName}, env); err == nil {
 		if env.Status.State == environmentsv1.EnvironmentStateSnapping {
 			targetState := req.Status.PreviousEnvironmentState
 			if targetState == "" || targetState == environmentsv1.EnvironmentStateSnapping {
