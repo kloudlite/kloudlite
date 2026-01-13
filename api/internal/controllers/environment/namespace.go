@@ -151,7 +151,8 @@ func (r *EnvironmentReconciler) ensureNamespaceExists(ctx context.Context, envir
 		return false, err
 	}
 
-	return false, nil
+	// Return true since namespace now exists and reconciliation should continue
+	return true, nil
 }
 
 // createNamespaceForForking creates namespace for a forked environment
