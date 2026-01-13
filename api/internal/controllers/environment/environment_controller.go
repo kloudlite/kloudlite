@@ -27,7 +27,6 @@ import (
 const (
 	environmentFinalizer = "environments.kloudlite.io/finalizer"
 	// Kind constants for owner references
-	environmentKind = "Environment"
 	workMachineKind = "WorkMachine"
 )
 
