@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/machines/v1"
+	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"

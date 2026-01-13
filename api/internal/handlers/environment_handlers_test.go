@@ -24,12 +24,12 @@ import (
 // mockEnvironmentRepo implements repository.EnvironmentRepository for testing
 type mockEnvironmentRepo struct {
 	createFunc       func(ctx context.Context, env *environmentsv1.Environment) error
-	getFunc          func(ctx context.Context, name string) (*environmentsv1.Environment, error)
-	listFunc         func(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error)
-	listActiveFunc   func(ctx context.Context) (*environmentsv1.EnvironmentList, error)
-	listInactiveFunc func(ctx context.Context) (*environmentsv1.EnvironmentList, error)
+	getFunc          func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error)
+	listFunc         func(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error)
+	listActiveFunc   func(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error)
+	listInactiveFunc func(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error)
 	updateFunc       func(ctx context.Context, env *environmentsv1.Environment) error
-	deleteFunc       func(ctx context.Context, name string) error
+	deleteFunc       func(ctx context.Context, namespace, name string) error
 }
 
 func (m *mockEnvironmentRepo) Create(ctx context.Context, env *environmentsv1.Environment) error {
@@ -39,30 +39,30 @@ func (m *mockEnvironmentRepo) Create(ctx context.Context, env *environmentsv1.En
 	return nil
 }
 
-func (m *mockEnvironmentRepo) Get(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepo) Get(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 	if m.getFunc != nil {
-		return m.getFunc(ctx, name)
+		return m.getFunc(ctx, namespace, name)
 	}
 	return nil, errors.New("not found")
 }
 
-func (m *mockEnvironmentRepo) List(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepo) List(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
 	if m.listFunc != nil {
-		return m.listFunc(ctx, opts...)
+		return m.listFunc(ctx, namespace, opts...)
 	}
 	return &environmentsv1.EnvironmentList{}, nil
 }
 
-func (m *mockEnvironmentRepo) ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepo) ListActive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	if m.listActiveFunc != nil {
-		return m.listActiveFunc(ctx)
+		return m.listActiveFunc(ctx, namespace)
 	}
 	return &environmentsv1.EnvironmentList{}, nil
 }
 
-func (m *mockEnvironmentRepo) ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepo) ListInactive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	if m.listInactiveFunc != nil {
-		return m.listInactiveFunc(ctx)
+		return m.listInactiveFunc(ctx, namespace)
 	}
 	return &environmentsv1.EnvironmentList{}, nil
 }
@@ -74,30 +74,30 @@ func (m *mockEnvironmentRepo) Update(ctx context.Context, env *environmentsv1.En
 	return nil
 }
 
-func (m *mockEnvironmentRepo) Delete(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepo) Delete(ctx context.Context, namespace, name string) error {
 	if m.deleteFunc != nil {
-		return m.deleteFunc(ctx, name)
+		return m.deleteFunc(ctx, namespace, name)
 	}
 	return nil
 }
 
-func (m *mockEnvironmentRepo) GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepo) GetByTargetNamespace(ctx context.Context, targetNamespace string) (*environmentsv1.Environment, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) ActivateEnvironment(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepo) ActivateEnvironment(ctx context.Context, namespace, name string) error {
 	return errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) DeactivateEnvironment(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepo) DeactivateEnvironment(ctx context.Context, namespace, name string) error {
 	return errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepo) Patch(ctx context.Context, namespace, name string, patchData map[string]interface{}) (*environmentsv1.Environment, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*environmentsv1.Environment], error) {
+func (m *mockEnvironmentRepo) Watch(ctx context.Context, namespace string, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*environmentsv1.Environment], error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -144,9 +144,9 @@ func TestGetEnvironment(t *testing.T) {
 
 	t.Run("should get environment by name", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
-					ObjectMeta: metav1.ObjectMeta{Name: name},
+					ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 					Spec: environmentsv1.EnvironmentSpec{
 						TargetNamespace: "test-namespace",
 						Activated:       true,
@@ -172,7 +172,7 @@ func TestGetEnvironment(t *testing.T) {
 
 	t.Run("should return 404 for non-existent environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return nil, errors.New("environment test-env not found")
 			},
 		}
@@ -207,7 +207,7 @@ func TestListEnvironments(t *testing.T) {
 
 	t.Run("should list all environments", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			listFunc: func(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
+			listFunc: func(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
 				return &environmentsv1.EnvironmentList{
 					Items: []environmentsv1.Environment{
 						{ObjectMeta: metav1.ObjectMeta{Name: "env1"}},
@@ -234,7 +234,7 @@ func TestListEnvironments(t *testing.T) {
 
 	t.Run("should list active environments", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			listActiveFunc: func(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+			listActiveFunc: func(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 				return &environmentsv1.EnvironmentList{
 					Items: []environmentsv1.Environment{
 						{ObjectMeta: metav1.ObjectMeta{Name: "active-env"}},
@@ -256,7 +256,7 @@ func TestListEnvironments(t *testing.T) {
 
 	t.Run("should list inactive environments", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			listInactiveFunc: func(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+			listInactiveFunc: func(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 				return &environmentsv1.EnvironmentList{
 					Items: []environmentsv1.Environment{
 						{ObjectMeta: metav1.ObjectMeta{Name: "inactive-env"}},
@@ -368,7 +368,7 @@ func TestUpdateEnvironment(t *testing.T) {
 
 	t.Run("should update environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -401,7 +401,7 @@ func TestUpdateEnvironment(t *testing.T) {
 
 	t.Run("should return 404 for non-existent environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return nil, errors.New("environment test-env not found")
 			},
 		}
@@ -431,7 +431,7 @@ func TestDeleteEnvironment(t *testing.T) {
 
 	t.Run("should delete deactivated environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -439,7 +439,7 @@ func TestDeleteEnvironment(t *testing.T) {
 					},
 				}, nil
 			},
-			deleteFunc: func(ctx context.Context, name string) error {
+			deleteFunc: func(ctx context.Context, namespace, name string) error {
 				return nil
 			},
 		}
@@ -457,7 +457,7 @@ func TestDeleteEnvironment(t *testing.T) {
 
 	t.Run("should delete activated environment without force", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -465,7 +465,7 @@ func TestDeleteEnvironment(t *testing.T) {
 					},
 				}, nil
 			},
-			deleteFunc: func(ctx context.Context, name string) error {
+			deleteFunc: func(ctx context.Context, namespace, name string) error {
 				return nil
 			},
 		}
@@ -488,7 +488,7 @@ func TestActivateEnvironment(t *testing.T) {
 
 	t.Run("should activate deactivated environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -514,7 +514,7 @@ func TestActivateEnvironment(t *testing.T) {
 
 	t.Run("should reject activation of already activated environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -538,7 +538,7 @@ func TestActivateEnvironment(t *testing.T) {
 
 	t.Run("should return 404 for non-existent environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return nil, fmt.Errorf("environment %s not found", name)
 			},
 		}
@@ -561,7 +561,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 
 	t.Run("should deactivate activated environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -587,7 +587,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 
 	t.Run("should reject deactivation of already deactivated environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -611,7 +611,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 
 	t.Run("should return 404 for non-existent environment", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return nil, fmt.Errorf("environment %s not found", name)
 			},
 		}
@@ -634,7 +634,7 @@ func TestGetEnvironmentStatus(t *testing.T) {
 
 	t.Run("should get environment status", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -669,7 +669,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should patch environment activated field", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
@@ -700,7 +700,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should patch environment labels", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec:       environmentsv1.EnvironmentSpec{},
@@ -763,7 +763,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should return 404 when environment not found", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return nil, errors.New("environment test-env not found")
 			},
 		}
@@ -786,7 +786,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should return 500 when update fails", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{
-			getFunc: func(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+			getFunc: func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 				return &environmentsv1.Environment{
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec:       environmentsv1.EnvironmentSpec{},
