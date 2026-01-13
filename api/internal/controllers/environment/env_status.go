@@ -563,23 +563,33 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 
 		savedStatus := clonedSnapshot.Status // Save status before create
 
+		created := false
 		if err := r.Create(ctx, clonedSnapshot); err != nil {
-			if apierrors.IsAlreadyExists(err) {
-				logger.Debug("Cloned snapshot already exists, skipping", zap.String("snapshot", snapshotName))
-				continue
+			if !apierrors.IsAlreadyExists(err) {
+				return fmt.Errorf("failed to clone snapshot %s: %w", snapshotName, err)
 			}
-			return fmt.Errorf("failed to clone snapshot %s: %w", snapshotName, err)
+			logger.Debug("Cloned snapshot already exists, will update status", zap.String("snapshot", snapshotName))
+		} else {
+			created = true
 		}
 
-		// Re-fetch the created snapshot to get correct ResourceVersion for status update
+		// Re-fetch the snapshot to get correct ResourceVersion for status update
 		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: env.Spec.TargetNamespace}, clonedSnapshot); err != nil {
 			logger.Warn("Failed to re-fetch cloned snapshot for status update", zap.String("snapshot", snapshotName), zap.Error(err))
 		} else {
-			// Update status separately (Create doesn't set status subresource)
-			clonedSnapshot.Status = savedStatus
-			if err := r.Status().Update(ctx, clonedSnapshot); err != nil {
-				logger.Warn("Failed to update cloned snapshot status", zap.String("snapshot", snapshotName), zap.Error(err))
+			// Update status if it's empty (Create doesn't set status subresource, and existing snapshots may have empty status)
+			if clonedSnapshot.Status.State == "" {
+				clonedSnapshot.Status = savedStatus
+				if err := r.Status().Update(ctx, clonedSnapshot); err != nil {
+					logger.Warn("Failed to update cloned snapshot status", zap.String("snapshot", snapshotName), zap.Error(err))
+				} else {
+					logger.Info("Updated cloned snapshot status", zap.String("snapshot", snapshotName), zap.String("state", string(savedStatus.State)))
+				}
 			}
+		}
+
+		if !created {
+			continue // Skip logging "Cloned snapshot" if it already existed
 		}
 
 		logger.Info("Cloned snapshot to target environment",
