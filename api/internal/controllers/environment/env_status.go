@@ -571,11 +571,15 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 			return fmt.Errorf("failed to clone snapshot %s: %w", snapshotName, err)
 		}
 
-		// Update status separately (Create doesn't set status subresource)
-		clonedSnapshot.Status = savedStatus
-		if err := r.Status().Update(ctx, clonedSnapshot); err != nil {
-			logger.Warn("Failed to update cloned snapshot status", zap.String("snapshot", snapshotName), zap.Error(err))
-			// Don't fail the entire clone operation, just log the warning
+		// Re-fetch the created snapshot to get correct ResourceVersion for status update
+		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: env.Spec.TargetNamespace}, clonedSnapshot); err != nil {
+			logger.Warn("Failed to re-fetch cloned snapshot for status update", zap.String("snapshot", snapshotName), zap.Error(err))
+		} else {
+			// Update status separately (Create doesn't set status subresource)
+			clonedSnapshot.Status = savedStatus
+			if err := r.Status().Update(ctx, clonedSnapshot); err != nil {
+				logger.Warn("Failed to update cloned snapshot status", zap.String("snapshot", snapshotName), zap.Error(err))
+			}
 		}
 
 		logger.Info("Cloned snapshot to target environment",
