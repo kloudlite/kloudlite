@@ -190,6 +190,19 @@ func (w *EnvironmentWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		}
 	}
 
+	// Derive WorkMachineName from namespace if not provided
+	// The namespace name is the WorkMachine name (e.g., wm-karthik)
+	if env.Spec.WorkMachineName == "" && strings.HasPrefix(env.Namespace, "wm-") {
+		workMachineName := env.Namespace // namespace IS the workmachine name
+		patches = append(patches, map[string]interface{}{
+			"op":    "add",
+			"path":  "/spec/workmachineName",
+			"value": workMachineName,
+		})
+		env.Spec.WorkMachineName = workMachineName
+		w.logger.Info(fmt.Sprintf("Derived WorkMachineName: %s for environment: %s", workMachineName, env.Name))
+	}
+
 	// Generate targetNamespace if not provided
 	// Format: env-{envName}-{random6} to avoid conflicts
 	if env.Spec.TargetNamespace == "" {
