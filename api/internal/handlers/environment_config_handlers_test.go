@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
+	userv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +21,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+// mockAuthMiddleware sets up authentication context for tests
+func mockAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("user_username", "testuser")
+		c.Set("user_email", "test@example.com")
+		c.Set("user_roles", []userv1alpha1.RoleType{userv1alpha1.RoleUser})
+		c.Next()
+	}
+}
 
 func setupEnvConfigTest() (*EnvironmentConfigHandlers, client.Client, *gin.Engine) {
 	scheme := runtime.NewScheme()
@@ -39,6 +50,7 @@ func setupEnvConfigTest() (*EnvironmentConfigHandlers, client.Client, *gin.Engin
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(mockAuthMiddleware())
 
 	return handler, k8sClient, router
 }

@@ -12,7 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	userv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
+	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -20,6 +21,58 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+// mockAuthMiddlewareEnv sets up authentication context for environment handler tests
+func mockAuthMiddlewareEnv() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("user_username", "testuser")
+		c.Set("user_email", "test@example.com")
+		c.Set("user_roles", []userv1alpha1.RoleType{userv1alpha1.RoleUser})
+		c.Next()
+	}
+}
+
+// mockWorkmachineRepoForEnv implements repository.WorkMachineRepository for environment handler tests
+type mockWorkmachineRepoForEnv struct{}
+
+func (m *mockWorkmachineRepoForEnv) Create(ctx context.Context, wm *workmachinev1.WorkMachine) error {
+	return nil
+}
+func (m *mockWorkmachineRepoForEnv) Get(ctx context.Context, name string) (*workmachinev1.WorkMachine, error) {
+	return nil, errors.New("not found")
+}
+func (m *mockWorkmachineRepoForEnv) GetByOwner(ctx context.Context, owner string) (*workmachinev1.WorkMachine, error) {
+	return &workmachinev1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{Name: "wm-" + owner},
+		Spec: workmachinev1.WorkMachineSpec{
+			TargetNamespace: "wm-" + owner,
+		},
+	}, nil
+}
+func (m *mockWorkmachineRepoForEnv) Update(ctx context.Context, wm *workmachinev1.WorkMachine) error {
+	return nil
+}
+func (m *mockWorkmachineRepoForEnv) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*workmachinev1.WorkMachine, error) {
+	return nil, nil
+}
+func (m *mockWorkmachineRepoForEnv) Delete(ctx context.Context, name string) error {
+	return nil
+}
+func (m *mockWorkmachineRepoForEnv) List(ctx context.Context, opts ...repository.ListOption) (*workmachinev1.WorkMachineList, error) {
+	return nil, nil
+}
+func (m *mockWorkmachineRepoForEnv) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*workmachinev1.WorkMachine], error) {
+	return nil, nil
+}
+func (m *mockWorkmachineRepoForEnv) StartMachine(ctx context.Context, name string) error {
+	return nil
+}
+func (m *mockWorkmachineRepoForEnv) StopMachine(ctx context.Context, name string) error {
+	return nil
+}
+func (m *mockWorkmachineRepoForEnv) ListByMachineType(ctx context.Context, machineType string) (*workmachinev1.WorkMachineList, error) {
+	return nil, nil
+}
 
 // mockEnvironmentRepo implements repository.EnvironmentRepository for testing
 type mockEnvironmentRepo struct {
@@ -104,37 +157,37 @@ func (m *mockEnvironmentRepo) Watch(ctx context.Context, namespace string, opts 
 // mockUserRepo implements repository.UserRepository for testing
 type mockUserRepo struct{}
 
-func (m *mockUserRepo) Create(ctx context.Context, user *platformv1alpha1.User) error {
+func (m *mockUserRepo) Create(ctx context.Context, user *userv1alpha1.User) error {
 	return errors.New("not implemented")
 }
-func (m *mockUserRepo) Get(ctx context.Context, name string) (*platformv1alpha1.User, error) {
+func (m *mockUserRepo) Get(ctx context.Context, name string) (*userv1alpha1.User, error) {
 	return nil, errors.New("not implemented")
 }
-func (m *mockUserRepo) List(ctx context.Context, opts ...repository.ListOption) (*platformv1alpha1.UserList, error) {
+func (m *mockUserRepo) List(ctx context.Context, opts ...repository.ListOption) (*userv1alpha1.UserList, error) {
 	return nil, errors.New("not implemented")
 }
-func (m *mockUserRepo) Update(ctx context.Context, user *platformv1alpha1.User) error {
+func (m *mockUserRepo) Update(ctx context.Context, user *userv1alpha1.User) error {
 	return errors.New("not implemented")
 }
 func (m *mockUserRepo) Delete(ctx context.Context, name string) error {
 	return errors.New("not implemented")
 }
-func (m *mockUserRepo) GetByEmail(ctx context.Context, email string) (*platformv1alpha1.User, error) {
+func (m *mockUserRepo) GetByEmail(ctx context.Context, email string) (*userv1alpha1.User, error) {
 	return nil, errors.New("not implemented")
 }
-func (m *mockUserRepo) GetByUsername(ctx context.Context, username string) (*platformv1alpha1.User, error) {
+func (m *mockUserRepo) GetByUsername(ctx context.Context, username string) (*userv1alpha1.User, error) {
 	return nil, errors.New("not implemented")
 }
-func (m *mockUserRepo) ListActive(ctx context.Context) (*platformv1alpha1.UserList, error) {
+func (m *mockUserRepo) ListActive(ctx context.Context) (*userv1alpha1.UserList, error) {
 	return nil, errors.New("not implemented")
 }
-func (m *mockUserRepo) UpdateStatus(ctx context.Context, user *platformv1alpha1.User) error {
+func (m *mockUserRepo) UpdateStatus(ctx context.Context, user *userv1alpha1.User) error {
 	return errors.New("not implemented")
 }
-func (m *mockUserRepo) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*platformv1alpha1.User, error) {
+func (m *mockUserRepo) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*userv1alpha1.User, error) {
 	return nil, errors.New("not implemented")
 }
-func (m *mockUserRepo) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*platformv1alpha1.User], error) {
+func (m *mockUserRepo) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*userv1alpha1.User], error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -150,13 +203,15 @@ func TestGetEnvironment(t *testing.T) {
 					Spec: environmentsv1.EnvironmentSpec{
 						TargetNamespace: "test-namespace",
 						Activated:       true,
+						OwnedBy:         "testuser", // Must match mockAuthMiddlewareEnv username
 					},
 				}, nil
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.GET("/environments/:name", handlers.GetEnvironment)
 
 		req, _ := http.NewRequest("GET", "/environments/test-env", nil)
@@ -177,8 +232,9 @@ func TestGetEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.GET("/environments/:name", handlers.GetEnvironment)
 
 		req, _ := http.NewRequest("GET", "/environments/test-env", nil)
@@ -189,8 +245,9 @@ func TestGetEnvironment(t *testing.T) {
 	})
 
 	t.Run("should return 400 when name is empty", func(t *testing.T) {
-		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.GET("/environments/:name", handlers.GetEnvironment)
 
 		req, _ := http.NewRequest("GET", "/environments/", nil)
@@ -210,15 +267,16 @@ func TestListEnvironments(t *testing.T) {
 			listFunc: func(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
 				return &environmentsv1.EnvironmentList{
 					Items: []environmentsv1.Environment{
-						{ObjectMeta: metav1.ObjectMeta{Name: "env1"}},
-						{ObjectMeta: metav1.ObjectMeta{Name: "env2"}},
+						{ObjectMeta: metav1.ObjectMeta{Name: "env1"}, Spec: environmentsv1.EnvironmentSpec{OwnedBy: "testuser"}},
+						{ObjectMeta: metav1.ObjectMeta{Name: "env2"}, Spec: environmentsv1.EnvironmentSpec{OwnedBy: "testuser"}},
 					},
 				}, nil
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.GET("/environments", handlers.ListEnvironments)
 
 		req, _ := http.NewRequest("GET", "/environments", nil)
@@ -243,8 +301,9 @@ func TestListEnvironments(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.GET("/environments", handlers.ListEnvironments)
 
 		req, _ := http.NewRequest("GET", "/environments?status=active", nil)
@@ -265,8 +324,9 @@ func TestListEnvironments(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.GET("/environments", handlers.ListEnvironments)
 
 		req, _ := http.NewRequest("GET", "/environments?status=inactive", nil)
@@ -290,26 +350,19 @@ func TestCreateEnvironment(t *testing.T) {
 
 		// Create fake k8s client with a test user
 		scheme := runtime.NewScheme()
-		_ = platformv1alpha1.AddToScheme(scheme)
+		_ = userv1alpha1.AddToScheme(scheme)
 		k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
-			&platformv1alpha1.User{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-user"},
-				Spec: platformv1alpha1.UserSpec{
+			&userv1alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{Name: "testuser"},
+				Spec: userv1alpha1.UserSpec{
 					Email: "test@example.com",
 				},
 			},
 		).Build()
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, k8sClient, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, k8sClient, logger)
 		router := gin.New()
-
-		// Add middleware to set user context
-		router.Use(func(c *gin.Context) {
-			c.Set("user_email", "test@example.com")
-			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleUser})
-			c.Next()
-		})
-
+		router.Use(mockAuthMiddlewareEnv())
 		router.POST("/environments", handlers.CreateEnvironment)
 
 		reqBody := map[string]interface{}{
@@ -328,7 +381,7 @@ func TestCreateEnvironment(t *testing.T) {
 	})
 
 	t.Run("should reject creation without authentication", func(t *testing.T) {
-		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments", handlers.CreateEnvironment)
 
@@ -348,7 +401,7 @@ func TestCreateEnvironment(t *testing.T) {
 	})
 
 	t.Run("should reject invalid request body", func(t *testing.T) {
-		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(&mockEnvironmentRepo{}, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments", handlers.CreateEnvironment)
 
@@ -373,6 +426,7 @@ func TestUpdateEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						TargetNamespace: "old-ns",
+						OwnedBy:         "testuser",
 					},
 				}, nil
 			},
@@ -381,8 +435,9 @@ func TestUpdateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.PUT("/environments/:name", handlers.UpdateEnvironment)
 
 		reqBody := map[string]interface{}{
@@ -406,8 +461,9 @@ func TestUpdateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.PUT("/environments/:name", handlers.UpdateEnvironment)
 
 		reqBody := map[string]interface{}{
@@ -436,6 +492,7 @@ func TestDeleteEnvironment(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{Name: name},
 					Spec: environmentsv1.EnvironmentSpec{
 						Activated: false,
+						OwnedBy:   "testuser",
 					},
 				}, nil
 			},
@@ -444,8 +501,9 @@ func TestDeleteEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
+		router.Use(mockAuthMiddlewareEnv())
 		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
 
 		req, _ := http.NewRequest("DELETE", "/environments/test-env", nil)
@@ -470,7 +528,7 @@ func TestDeleteEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.DELETE("/environments/:name", handlers.DeleteEnvironment)
 
@@ -501,7 +559,7 @@ func TestActivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
@@ -524,7 +582,7 @@ func TestActivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
@@ -543,7 +601,7 @@ func TestActivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/activate", handlers.ActivateEnvironment)
 
@@ -574,7 +632,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
@@ -597,7 +655,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
@@ -616,7 +674,7 @@ func TestDeactivateEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.POST("/environments/:name/deactivate", handlers.DeactivateEnvironment)
 
@@ -646,7 +704,7 @@ func TestGetEnvironmentStatus(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.GET("/environments/:name/status", handlers.GetEnvironmentStatus)
 
@@ -682,7 +740,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -711,7 +769,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -731,7 +789,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should return 400 when name is empty", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{}
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -749,7 +807,7 @@ func TestPatchEnvironment(t *testing.T) {
 
 	t.Run("should return 400 with invalid JSON", func(t *testing.T) {
 		envRepo := &mockEnvironmentRepo{}
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -768,7 +826,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
@@ -797,7 +855,7 @@ func TestPatchEnvironment(t *testing.T) {
 			},
 		}
 
-		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, nil, nil, logger)
+		handlers := NewEnvironmentHandlers(envRepo, &mockUserRepo{}, &mockWorkmachineRepoForEnv{}, nil, logger)
 		router := gin.New()
 		router.PATCH("/environments/:name", handlers.PatchEnvironment)
 
