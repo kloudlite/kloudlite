@@ -19,7 +19,7 @@ export default async function AccessSettingsPage({ params }: PageProps) {
         environmentId={id}
         visibility={env.spec.visibility || 'private'}
         sharedWith={env.spec.sharedWith || []}
-        owner={env.spec.ownedBy}
+        owner={env.spec.ownedBy || 'unknown'}
       />
     )
   } catch (error) {
