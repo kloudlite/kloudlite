@@ -134,9 +134,16 @@ export function ForkEnvironmentDialog({
     setLoading(true)
 
     try {
+      if (!selectedSnapshot.namespace) {
+        setError('Selected snapshot does not have a namespace')
+        setLoading(false)
+        return
+      }
+
       const result = await createEnvironmentFromSnapshot({
         name,
         snapshotName: selectedSnapshot.name,
+        sourceNamespace: selectedSnapshot.namespace,
         activated: true,
       })
 

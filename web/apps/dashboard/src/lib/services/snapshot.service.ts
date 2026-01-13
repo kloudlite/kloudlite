@@ -3,6 +3,7 @@ import { apiClient } from '../api-client'
 // Snapshot as returned by the API (flat structure)
 export interface Snapshot {
   name: string
+  namespace?: string // Namespace where the snapshot lives
   description?: string
   state: 'Pending' | 'Creating' | 'Ready' | 'Uploading' | 'Restoring' | 'Deleting' | 'Pushing' | 'Pulling' | 'Failed' | 'Completed' | ''
   sizeHuman?: string
@@ -82,12 +83,13 @@ export interface CreateWorkspaceFromSnapshotRequest {
 export interface CreateEnvironmentFromSnapshotRequest {
   name: string
   snapshotName: string
-  targetNamespace?: string
+  sourceNamespace: string // Required: namespace where the source snapshot lives
   activated?: boolean
 }
 
 export interface RestoreEnvironmentFromSnapshotRequest {
   snapshotName: string
+  sourceNamespace: string // Required: namespace where the source snapshot lives
   activateAfterRestore?: boolean
 }
 

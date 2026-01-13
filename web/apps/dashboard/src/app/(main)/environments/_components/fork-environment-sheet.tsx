@@ -109,10 +109,16 @@ export function ForkEnvironmentSheet({
       return
     }
 
+    if (!selectedSnapshot.namespace) {
+      toast.error('Selected snapshot does not have a namespace')
+      return
+    }
+
     startTransition(async () => {
       const result = await createEnvironmentFromSnapshot({
         name: name.trim(),
         snapshotName: selectedSnapshot.name,
+        sourceNamespace: selectedSnapshot.namespace,
         activated: true,
       })
 
