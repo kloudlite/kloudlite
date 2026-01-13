@@ -275,19 +275,11 @@ func (r *EnvironmentReconciler) fetchEnvironmentData(ctx context.Context, namesp
 
 // applyComposeResource creates or updates a Kubernetes resource
 func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resource client.Object, environment *environmentsv1.Environment, logger *zap.Logger) error {
-	// Set environment as owner (cluster-scoped owner for namespaced resources)
-	// We use owner references that don't block deletion
-	// Note: TypeMeta (APIVersion, Kind) isn't populated by controller-runtime's Get method,
-	// so we set them explicitly using the SchemeGroupVersion constant
-	blockOwnerDeletion := false
-	ownerRef := metav1.OwnerReference{
-		APIVersion:         environmentsv1.SchemeGroupVersion.String(),
-		Kind:               environmentKind,
-		Name:               environment.Name,
-		UID:                environment.UID,
-		BlockOwnerDeletion: &blockOwnerDeletion,
-	}
-	resource.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+	// Note: We don't set ownerReferences on compose resources because they're in a different
+	// namespace (target namespace) than the Environment (workmachine namespace).
+	// Kubernetes doesn't support cross-namespace owner references.
+	// Instead, we use labels to track ownership and rely on the Environment's finalizer
+	// to clean up the target namespace (which cascades to all resources in it).
 
 	// Ensure the docker-composition label is set
 	labels := resource.GetLabels()
