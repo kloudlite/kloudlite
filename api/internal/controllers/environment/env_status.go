@@ -544,11 +544,18 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 		}
 
 		// Create a clone in the target namespace
+		// Copy labels but update the environment label to point to the new environment
+		clonedLabels := make(map[string]string)
+		for k, v := range sourceSnapshot.Labels {
+			clonedLabels[k] = v
+		}
+		clonedLabels["snapshots.kloudlite.io/environment"] = env.Spec.Name
+
 		clonedSnapshot := &snapshotv1.Snapshot{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      snapshotName, // Same name
 				Namespace: env.Spec.TargetNamespace,
-				Labels:    sourceSnapshot.Labels,
+				Labels:    clonedLabels,
 				OwnerReferences: []metav1.OwnerReference{{
 					APIVersion: "environments.kloudlite.io/v1",
 					Kind:       "Environment",
@@ -573,10 +580,27 @@ func (r *EnvironmentReconciler) cloneSnapshotsForLineage(ctx context.Context, en
 			created = true
 		}
 
-		// Re-fetch the snapshot to get correct ResourceVersion for status update
+		// Re-fetch the snapshot to get correct ResourceVersion for updates
 		if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: env.Spec.TargetNamespace}, clonedSnapshot); err != nil {
 			logger.Warn("Failed to re-fetch cloned snapshot for status update", zap.String("snapshot", snapshotName), zap.Error(err))
 		} else {
+			// Update labels if environment label is wrong (for existing snapshots that were cloned with old code)
+			if clonedSnapshot.Labels["snapshots.kloudlite.io/environment"] != env.Spec.Name {
+				if clonedSnapshot.Labels == nil {
+					clonedSnapshot.Labels = make(map[string]string)
+				}
+				clonedSnapshot.Labels["snapshots.kloudlite.io/environment"] = env.Spec.Name
+				if err := r.Update(ctx, clonedSnapshot); err != nil {
+					logger.Warn("Failed to update cloned snapshot labels", zap.String("snapshot", snapshotName), zap.Error(err))
+				} else {
+					logger.Info("Updated cloned snapshot labels", zap.String("snapshot", snapshotName), zap.String("environment", env.Spec.Name))
+					// Re-fetch after update to get new ResourceVersion for status update
+					if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: env.Spec.TargetNamespace}, clonedSnapshot); err != nil {
+						logger.Warn("Failed to re-fetch cloned snapshot after label update", zap.String("snapshot", snapshotName), zap.Error(err))
+					}
+				}
+			}
+
 			// Update status if it's empty (Create doesn't set status subresource, and existing snapshots may have empty status)
 			if clonedSnapshot.Status.State == "" {
 				clonedSnapshot.Status = savedStatus
