@@ -114,7 +114,7 @@ func (r *SnapshotRestoreReconciler) handlePending(ctx context.Context, restore *
 
 	// Get the snapshot
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName, Namespace: restore.Namespace}, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
 			return r.setFailed(ctx, restore, fmt.Sprintf("Snapshot %q not found", restore.Spec.SnapshotName), logger)
 		}
@@ -159,7 +159,7 @@ func (r *SnapshotRestoreReconciler) handlePending(ctx context.Context, restore *
 func (r *SnapshotRestoreReconciler) handleDownloading(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap.Logger) (reconcile.Result, error) {
 	// Get the snapshot
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName, Namespace: restore.Namespace}, snapshot); err != nil {
 		logger.Error("Failed to get snapshot", zap.Error(err))
 		return reconcile.Result{}, err
 	}
@@ -190,7 +190,7 @@ func (r *SnapshotRestoreReconciler) handleDownloading(ctx context.Context, resto
 func (r *SnapshotRestoreReconciler) handleRestoring(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap.Logger) (reconcile.Result, error) {
 	// Get the snapshot
 	snapshot := &snapshotv1.Snapshot{}
-	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName}, snapshot); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: restore.Spec.SnapshotName, Namespace: restore.Namespace}, snapshot); err != nil {
 		logger.Error("Failed to get snapshot", zap.Error(err))
 		return reconcile.Result{}, err
 	}
