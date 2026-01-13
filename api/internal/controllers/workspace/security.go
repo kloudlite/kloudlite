@@ -142,7 +142,8 @@ func (r *WorkspaceReconciler) validateEnvironmentConnection(ctx context.Context,
 
 	env := &environmentv1.Environment{}
 	err := r.Get(ctx, client.ObjectKey{
-		Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+		Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
+		Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 	}, env)
 
 	if err != nil {

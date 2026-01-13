@@ -354,8 +354,8 @@ func (s *userService) deleteWorkMachineForUser(ctx context.Context, user *platfo
 
 // deleteEnvironmentsForUser deletes all environments created by a user
 func (s *userService) deleteEnvironmentsForUser(ctx context.Context, user *platformv1alpha1.User) error {
-	// List all environments
-	envList, err := s.envRepo.List(ctx)
+	// List all environments across all namespaces (empty namespace = all namespaces)
+	envList, err := s.envRepo.List(ctx, "")
 	if err != nil {
 		return fmt.Errorf("failed to list environments: %w", err)
 	}
@@ -365,9 +365,9 @@ func (s *userService) deleteEnvironmentsForUser(ctx context.Context, user *platf
 	for i := range envList.Items {
 		env := &envList.Items[i]
 		if env.Spec.OwnedBy == user.Name {
-			if err := s.envRepo.Delete(ctx, env.Name); err != nil {
+			if err := s.envRepo.Delete(ctx, env.Namespace, env.Name); err != nil {
 				if !repository.IsNotFound(err) {
-					deletionErrors = append(deletionErrors, fmt.Sprintf("environment %s: %v", env.Name, err))
+					deletionErrors = append(deletionErrors, fmt.Sprintf("environment %s/%s: %v", env.Namespace, env.Name, err))
 				}
 			}
 		}

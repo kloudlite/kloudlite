@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/api/internal/middleware"
 	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -25,18 +26,29 @@ const (
 
 // EnvironmentConfigHandlers handles HTTP requests for environment configs, secrets, and files
 type EnvironmentConfigHandlers struct {
-	envRepo   repository.EnvironmentRepository
-	k8sClient client.Client
-	logger    *zap.Logger
+	envRepo         repository.EnvironmentRepository
+	workmachineRepo repository.WorkMachineRepository
+	k8sClient       client.Client
+	logger          *zap.Logger
 }
 
 // NewEnvironmentConfigHandlers creates a new EnvironmentConfigHandlers
-func NewEnvironmentConfigHandlers(envRepo repository.EnvironmentRepository, k8sClient client.Client, logger *zap.Logger) *EnvironmentConfigHandlers {
+func NewEnvironmentConfigHandlers(envRepo repository.EnvironmentRepository, workmachineRepo repository.WorkMachineRepository, k8sClient client.Client, logger *zap.Logger) *EnvironmentConfigHandlers {
 	return &EnvironmentConfigHandlers{
-		envRepo:   envRepo,
-		k8sClient: k8sClient,
-		logger:    logger,
+		envRepo:         envRepo,
+		workmachineRepo: workmachineRepo,
+		k8sClient:       k8sClient,
+		logger:          logger,
 	}
+}
+
+// getEnvNamespaceForUser gets the environment namespace for a user from their WorkMachine
+func (h *EnvironmentConfigHandlers) getEnvNamespaceForUser(ctx context.Context, username string) (string, error) {
+	wm, err := h.workmachineRepo.GetByOwner(ctx, username)
+	if err != nil {
+		return "", fmt.Errorf("failed to get workmachine for user %s: %w", username, err)
+	}
+	return wm.Spec.TargetNamespace, nil
 }
 
 // SetConfig handles PUT /api/v1/environments/:name/config
@@ -62,11 +74,32 @@ func (h *EnvironmentConfigHandlers) SetConfig(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to verify it exists and get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", envName),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -75,13 +108,13 @@ func (h *EnvironmentConfigHandlers) SetConfig(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// Create or update ConfigMap
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      EnvConfigMapName,
-			Namespace: namespace,
+			Namespace: targetNamespace,
 			Labels: map[string]string{
 				EnvResourceLabelKey:        EnvResourceLabelValue,
 				"kloudlite.io/environment": envName,
@@ -93,7 +126,7 @@ func (h *EnvironmentConfigHandlers) SetConfig(c *gin.Context) {
 	if err := h.createOrUpdateConfigMap(c.Request.Context(), configMap); err != nil {
 		h.logger.Error("Failed to create/update config",
 			zap.String("environment", envName),
-			zap.String("namespace", namespace),
+			zap.String("namespace", targetNamespace),
 			zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to set config",
@@ -104,7 +137,7 @@ func (h *EnvironmentConfigHandlers) SetConfig(c *gin.Context) {
 
 	h.logger.Info("Environment config set successfully",
 		zap.String("environment", envName),
-		zap.String("namespace", namespace))
+		zap.String("namespace", targetNamespace))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Config set successfully",
@@ -122,8 +155,28 @@ func (h *EnvironmentConfigHandlers) GetConfig(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -132,13 +185,13 @@ func (h *EnvironmentConfigHandlers) GetConfig(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// Get ConfigMap
 	configMap := &corev1.ConfigMap{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      EnvConfigMapName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, configMap)
 
 	if err != nil {
@@ -174,8 +227,28 @@ func (h *EnvironmentConfigHandlers) DeleteConfig(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -184,13 +257,13 @@ func (h *EnvironmentConfigHandlers) DeleteConfig(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// Delete ConfigMap
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      EnvConfigMapName,
-			Namespace: namespace,
+			Namespace: targetNamespace,
 		},
 	}
 
@@ -238,8 +311,28 @@ func (h *EnvironmentConfigHandlers) SetSecret(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to verify it exists and get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -248,7 +341,7 @@ func (h *EnvironmentConfigHandlers) SetSecret(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// Convert string data to byte data
 	stringData := req.Data
@@ -257,7 +350,7 @@ func (h *EnvironmentConfigHandlers) SetSecret(c *gin.Context) {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      EnvSecretName,
-			Namespace: namespace,
+			Namespace: targetNamespace,
 			Labels: map[string]string{
 				EnvResourceLabelKey:        EnvResourceLabelValue,
 				"kloudlite.io/environment": envName,
@@ -297,8 +390,28 @@ func (h *EnvironmentConfigHandlers) GetSecret(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -307,13 +420,13 @@ func (h *EnvironmentConfigHandlers) GetSecret(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// Get Secret
 	secret := &corev1.Secret{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      EnvSecretName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, secret)
 
 	if err != nil {
@@ -355,8 +468,28 @@ func (h *EnvironmentConfigHandlers) DeleteSecret(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -365,13 +498,13 @@ func (h *EnvironmentConfigHandlers) DeleteSecret(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// Delete Secret
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      EnvSecretName,
-			Namespace: namespace,
+			Namespace: targetNamespace,
 		},
 	}
 
@@ -429,8 +562,28 @@ func (h *EnvironmentConfigHandlers) SetFile(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to verify it exists and get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -439,14 +592,14 @@ func (h *EnvironmentConfigHandlers) SetFile(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 	configMapName := EnvFileConfigPrefix + filename
 
 	// Create or update ConfigMap for file
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: namespace,
+			Namespace: targetNamespace,
 			Labels: map[string]string{
 				EnvResourceLabelKey:        EnvResourceLabelValue,
 				"kloudlite.io/environment": envName,
@@ -492,8 +645,28 @@ func (h *EnvironmentConfigHandlers) GetFile(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -502,14 +675,14 @@ func (h *EnvironmentConfigHandlers) GetFile(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 	configMapName := EnvFileConfigPrefix + filename
 
 	// Get ConfigMap
 	configMap := &corev1.ConfigMap{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      configMapName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, configMap)
 
 	if err != nil {
@@ -554,8 +727,28 @@ func (h *EnvironmentConfigHandlers) ListFiles(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -564,12 +757,12 @@ func (h *EnvironmentConfigHandlers) ListFiles(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// List all file ConfigMaps
 	configMapList := &corev1.ConfigMapList{}
 	err = h.k8sClient.List(c.Request.Context(), configMapList,
-		client.InNamespace(namespace),
+		client.InNamespace(targetNamespace),
 		client.MatchingLabels{
 			"kloudlite.io/file-type": "environment-file",
 		},
@@ -614,8 +807,28 @@ func (h *EnvironmentConfigHandlers) DeleteFile(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -624,14 +837,14 @@ func (h *EnvironmentConfigHandlers) DeleteFile(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 	configMapName := EnvFileConfigPrefix + filename
 
 	// Delete ConfigMap
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: namespace,
+			Namespace: targetNamespace,
 		},
 	}
 
@@ -726,8 +939,28 @@ func (h *EnvironmentConfigHandlers) GetEnvVars(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -736,14 +969,14 @@ func (h *EnvironmentConfigHandlers) GetEnvVars(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 	envVars := make([]EnvVar, 0)
 
 	// Get configs
 	configMap := &corev1.ConfigMap{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      EnvConfigMapName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, configMap)
 
 	if err == nil {
@@ -764,7 +997,7 @@ func (h *EnvironmentConfigHandlers) GetEnvVars(c *gin.Context) {
 	secret := &corev1.Secret{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      EnvSecretName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, secret)
 
 	if err == nil {
@@ -813,8 +1046,28 @@ func (h *EnvironmentConfigHandlers) CreateEnvVar(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to verify it exists and get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -823,13 +1076,13 @@ func (h *EnvironmentConfigHandlers) CreateEnvVar(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
 	// Check if key already exists in ConfigMap
 	configMap := &corev1.ConfigMap{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      EnvConfigMapName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, configMap)
 	if err == nil && configMap.Data != nil {
 		if _, exists := configMap.Data[req.Key]; exists {
@@ -844,7 +1097,7 @@ func (h *EnvironmentConfigHandlers) CreateEnvVar(c *gin.Context) {
 	secret := &corev1.Secret{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      EnvSecretName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, secret)
 	if err == nil && secret.Data != nil {
 		if _, exists := secret.Data[req.Key]; exists {
@@ -855,7 +1108,7 @@ func (h *EnvironmentConfigHandlers) CreateEnvVar(c *gin.Context) {
 		}
 	}
 
-	h.setEnvVarInternal(c, envName, namespace, req.Key, req.Value, req.Type)
+	h.setEnvVarInternal(c, envName, targetNamespace, req.Key, req.Value, req.Type)
 }
 
 // SetEnvVar handles PUT /api/v1/environments/:name/envvars
@@ -884,8 +1137,28 @@ func (h *EnvironmentConfigHandlers) SetEnvVar(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to verify it exists and get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -894,9 +1167,9 @@ func (h *EnvironmentConfigHandlers) SetEnvVar(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 
-	h.setEnvVarInternal(c, envName, namespace, req.Key, req.Value, req.Type)
+	h.setEnvVarInternal(c, envName, targetNamespace, req.Key, req.Value, req.Type)
 }
 
 // setEnvVarInternal is the internal implementation for creating/updating envvars
@@ -1037,8 +1310,28 @@ func (h *EnvironmentConfigHandlers) DeleteEnvVar(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get environment to get namespace
-	env, err := h.envRepo.Get(c.Request.Context(), envName)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, envName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Environment not found",
@@ -1047,14 +1340,14 @@ func (h *EnvironmentConfigHandlers) DeleteEnvVar(c *gin.Context) {
 		return
 	}
 
-	namespace := env.Spec.TargetNamespace
+	targetNamespace := env.Spec.TargetNamespace
 	deleted := false
 
 	// Try deleting from config
 	configMap := &corev1.ConfigMap{}
 	err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 		Name:      EnvConfigMapName,
-		Namespace: namespace,
+		Namespace: targetNamespace,
 	}, configMap)
 
 	if err == nil && configMap.Data != nil {
@@ -1093,7 +1386,7 @@ func (h *EnvironmentConfigHandlers) DeleteEnvVar(c *gin.Context) {
 		secret := &corev1.Secret{}
 		err = h.k8sClient.Get(c.Request.Context(), client.ObjectKey{
 			Name:      EnvSecretName,
-			Namespace: namespace,
+			Namespace: targetNamespace,
 		}, secret)
 
 		if err == nil && secret.Data != nil {

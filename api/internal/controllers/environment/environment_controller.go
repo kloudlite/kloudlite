@@ -42,13 +42,14 @@ type EnvironmentReconciler struct {
 func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	logger := r.Logger.With(
 		zap.String("environment", req.Name),
+		zap.String("namespace", req.Namespace),
 	)
 
 	logger.Info("Reconciling Environment")
 
-	// Fetch the Environment instance (cluster-scoped)
+	// Fetch the Environment instance (namespace-scoped)
 	environment := &environmentsv1.Environment{}
-	err := r.Get(ctx, client.ObjectKey{Name: req.Name}, environment)
+	err := r.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: req.Name}, environment)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// Environment has been deleted, nothing to do

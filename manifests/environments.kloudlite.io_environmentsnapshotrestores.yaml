@@ -12,7 +12,7 @@ spec:
     listKind: EnvironmentSnapshotRestoreList
     plural: environmentsnapshotrestores
     singular: environmentsnapshotrestore
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.environmentName
@@ -33,6 +33,7 @@ spec:
         description: |-
           EnvironmentSnapshotRestore orchestrates restoring an environment from a snapshot.
           It stops workloads, restores the data, applies artifacts, and activates the environment.
+          Lives in the environment's targetNamespace (e.g., env-{envName}-{random6}).
         properties:
           apiVersion:
             description: |-
@@ -63,6 +64,12 @@ spec:
                 description: EnvironmentName is the name of the environment to restore
                   to
                 type: string
+              environmentNamespace:
+                description: |-
+                  EnvironmentNamespace is the namespace where the Environment resource lives
+                  This is the WorkMachine namespace (e.g., wm-{username})
+                  Required because EnvironmentSnapshotRestore lives in the environment's targetNamespace
+                type: string
               snapshotName:
                 description: SnapshotName is the name of the snapshot to restore from
                 type: string
@@ -73,6 +80,7 @@ spec:
                 type: string
             required:
             - environmentName
+            - environmentNamespace
             - snapshotName
             - sourceNamespace
             type: object

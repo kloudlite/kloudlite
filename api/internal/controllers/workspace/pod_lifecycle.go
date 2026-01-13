@@ -44,7 +44,8 @@ func (r *WorkspaceReconciler) updateDNSConfigInRunningPod(ctx context.Context, w
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+			Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Spec.Activated {
 			// Validate environment namespace for security
@@ -123,11 +124,12 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 		// Fetch environment to validate it exists and is activated
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+			Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Spec.Activated {
 			// Use OwnedBy/Name format for display
-			envName = fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
+			envName = fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Name)
 		}
 	}
 
@@ -145,7 +147,8 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
-			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+			Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Status.ComposeStatus != nil {
 			for _, activeIntercept := range env.Status.ComposeStatus.ActiveIntercepts {

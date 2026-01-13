@@ -355,10 +355,10 @@ func (hc *HostsCache) getServiceHosts(ctx context.Context, subdomain, domain str
 				zap.String("hash", envOwnerHash))
 		} else {
 			// Status.Hash not set yet, compute it
-			envOwnerHash = generateHash(fmt.Sprintf("%s-%s", env.Spec.Name, env.Spec.OwnedBy))
+			envOwnerHash = generateHash(fmt.Sprintf("%s-%s", env.Name, env.Spec.OwnedBy))
 			hc.logger.Info("Environment status.hash empty, computed hash",
 				zap.String("environment", envName),
-				zap.String("specName", env.Spec.Name),
+				zap.String("envName", env.Name),
 				zap.String("specOwnedBy", env.Spec.OwnedBy),
 				zap.String("hash", envOwnerHash))
 		}

@@ -37,6 +37,15 @@ func NewEnvironmentHandlers(envRepo repository.EnvironmentRepository, userRepo r
 	}
 }
 
+// getEnvNamespaceForUser gets the environment namespace for a user from their WorkMachine
+func (h *EnvironmentHandlers) getEnvNamespaceForUser(ctx context.Context, username string) (string, error) {
+	wm, err := h.workmachineRepo.GetByOwner(ctx, username)
+	if err != nil {
+		return "", fmt.Errorf("failed to get workmachine for user %s: %w", username, err)
+	}
+	return wm.Spec.TargetNamespace, nil
+}
+
 // CreateEnvironment handles POST /api/v1/environments
 func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	var req struct {
@@ -114,7 +123,6 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	// Set the OwnedBy field with the username (User's metadata.name) from JWT token
 	// The webhook will handle adding ownership labels and metadata
 	env.Spec.OwnedBy = username
-	env.Spec.Name = req.Name // Store the simple name for display as {username}/{envname}
 	env.Spec.WorkMachineName = wm.Name
 
 	// Extract node name from WorkMachine's NodeLabels
@@ -164,10 +172,22 @@ func (h *EnvironmentHandlers) GetEnvironment(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -209,21 +229,31 @@ func (h *EnvironmentHandlers) ListEnvironments(c *gin.Context) {
 		return
 	}
 
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	var envList *environmentsv1.EnvironmentList
-	var err error
 
 	// Handle status-based filtering
 	switch status {
 	case "active":
-		envList, err = h.envRepo.ListActive(c.Request.Context())
+		envList, err = h.envRepo.ListActive(c.Request.Context(), namespace)
 	case "inactive":
-		envList, err = h.envRepo.ListInactive(c.Request.Context())
+		envList, err = h.envRepo.ListInactive(c.Request.Context(), namespace)
 	default:
-		// List all environments (cluster-scoped, so namespace is empty)
+		// List all environments in user's namespace
 		if labelSelector != "" {
-			envList, err = h.envRepo.List(c.Request.Context(), repository.WithLabelSelector(labelSelector))
+			envList, err = h.envRepo.List(c.Request.Context(), namespace, repository.WithLabelSelector(labelSelector))
 		} else {
-			envList, err = h.envRepo.List(c.Request.Context())
+			envList, err = h.envRepo.List(c.Request.Context(), namespace)
 		}
 	}
 
@@ -277,11 +307,33 @@ func (h *EnvironmentHandlers) UpdateEnvironment(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get existing environment
-	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment for update",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -340,11 +392,33 @@ func (h *EnvironmentHandlers) PatchEnvironment(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get existing environment
-	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment for patch",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -413,11 +487,33 @@ func (h *EnvironmentHandlers) DeleteEnvironment(c *gin.Context) {
 		return
 	}
 
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Verify environment exists before attempting deletion
-	_, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	_, err = h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment for deletion",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -432,9 +528,9 @@ func (h *EnvironmentHandlers) DeleteEnvironment(c *gin.Context) {
 		return
 	}
 
-	// Delete the environment (cluster-scoped)
+	// Delete the environment
 	// Environment can be deleted regardless of activation state
-	if err := h.envRepo.Delete(c.Request.Context(), name); err != nil {
+	if err := h.envRepo.Delete(c.Request.Context(), namespace, name); err != nil {
 		h.logger.Error("Failed to delete environment",
 			zap.String("name", name),
 			zap.Error(err))
@@ -464,10 +560,32 @@ func (h *EnvironmentHandlers) ActivateEnvironment(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -520,10 +638,32 @@ func (h *EnvironmentHandlers) DeactivateEnvironment(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -576,10 +716,32 @@ func (h *EnvironmentHandlers) GetEnvironmentStatus(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name) // cluster-scoped
+	// Get the authenticated user from JWT middleware context
+	username, _, _, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		h.logger.Error("User not authenticated")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -635,8 +797,19 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 		return
 	}
 
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(ctx, username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Verify environment exists and user has access
-	env, err := h.envRepo.Get(ctx, name)
+	env, err := h.envRepo.Get(ctx, namespace, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -691,7 +864,7 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 	sendStatusEvent(env)
 
 	// Start watching for changes
-	watchChan, err := h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+	watchChan, err := h.envRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
 	if err != nil {
 		h.logger.Warn("Watch not available, using polling fallback", zap.Error(err))
 		// Fall back to polling if watch fails
@@ -703,7 +876,7 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				env, err := h.envRepo.Get(ctx, name)
+				env, err := h.envRepo.Get(ctx, namespace, name)
 				if err != nil {
 					continue
 				}
@@ -720,7 +893,7 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusStream(c *gin.Context) {
 		case event, ok := <-watchChan:
 			if !ok {
 				// Watch channel closed, restart it
-				watchChan, err = h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+				watchChan, err = h.envRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
 				if err != nil {
 					h.logger.Error("Failed to restart environment watch", zap.Error(err))
 					return
@@ -767,10 +940,22 @@ func (h *EnvironmentHandlers) GetEnvironmentCompose(c *gin.Context) {
 		return
 	}
 
-	env, err := h.envRepo.Get(c.Request.Context(), name)
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -832,11 +1017,23 @@ func (h *EnvironmentHandlers) UpdateEnvironmentCompose(c *gin.Context) {
 		return
 	}
 
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Get existing environment
-	env, err := h.envRepo.Get(c.Request.Context(), name)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		h.logger.Error("Failed to get environment for compose update",
 			zap.String("name", name),
+			zap.String("namespace", namespace),
 			zap.Error(err))
 
 		statusCode := http.StatusInternalServerError
@@ -901,8 +1098,19 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusWebSocket(c *gin.Context) {
 		return
 	}
 
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// Verify environment exists and user has access
-	env, err := h.envRepo.Get(c.Request.Context(), name)
+	env, err := h.envRepo.Get(c.Request.Context(), namespace, name)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Environment not found"})
@@ -966,7 +1174,7 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusWebSocket(c *gin.Context) {
 	}
 
 	// Start watching for changes
-	watchChan, err := h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+	watchChan, err := h.envRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
 	if err != nil {
 		h.logger.Warn("Watch not available, using polling fallback", zap.Error(err))
 		// Fall back to polling
@@ -978,7 +1186,7 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusWebSocket(c *gin.Context) {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				env, err := h.envRepo.Get(ctx, name)
+				env, err := h.envRepo.Get(ctx, namespace, name)
 				if err != nil {
 					continue
 				}
@@ -996,7 +1204,7 @@ func (h *EnvironmentHandlers) GetEnvironmentStatusWebSocket(c *gin.Context) {
 			return
 		case event, ok := <-watchChan:
 			if !ok {
-				watchChan, err = h.envRepo.Watch(ctx, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
+				watchChan, err = h.envRepo.Watch(ctx, namespace, repository.WithWatchFieldSelector(fmt.Sprintf("metadata.name=%s", name)))
 				if err != nil {
 					h.logger.Error("Failed to restart environment watch", zap.Error(err))
 					return

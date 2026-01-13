@@ -38,11 +38,12 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(context.Background(), client.ObjectKey{
-			Name: workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
+			Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
+			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
 		if err == nil && env.Spec.Activated {
 			envTargetNamespace = env.Spec.TargetNamespace
-			envDisplayName = fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Spec.Name)
+			envDisplayName = fmt.Sprintf("%s/%s", env.Spec.OwnedBy, env.Name)
 			r.Logger.Info("Workspace has environment connection",
 				zap.String("workspace", workspace.Name),
 				zap.String("environment", env.Name),

@@ -12,7 +12,7 @@ spec:
     listKind: EnvironmentSnapshotRequestList
     plural: environmentsnapshotrequests
     singular: environmentsnapshotrequest
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.environmentName
@@ -33,6 +33,7 @@ spec:
         description: |-
           EnvironmentSnapshotRequest orchestrates creating a snapshot for an environment.
           It stops workloads, creates the snapshot, and restores the environment state.
+          Lives in the environment's targetNamespace (e.g., env-{envName}-{random6}).
         properties:
           apiVersion:
             description: |-
@@ -61,6 +62,12 @@ spec:
               environmentName:
                 description: EnvironmentName is the name of the environment to snapshot
                 type: string
+              environmentNamespace:
+                description: |-
+                  EnvironmentNamespace is the namespace where the Environment resource lives
+                  This is the WorkMachine namespace (e.g., wm-{username})
+                  Required because EnvironmentSnapshotRequest lives in the environment's targetNamespace
+                type: string
               retentionDays:
                 description: RetentionDays specifies how long to keep the snapshot
                   (0 = forever)
@@ -71,6 +78,7 @@ spec:
                 type: string
             required:
             - environmentName
+            - environmentNamespace
             - snapshotName
             type: object
           status:
