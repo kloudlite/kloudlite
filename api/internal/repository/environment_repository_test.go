@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -22,38 +21,42 @@ func TestNewEnvironmentRepository(t *testing.T) {
 	assert.NotNil(t, repo)
 }
 
-func TestEnvironmentRepository_GetByNamespace(t *testing.T) {
+func TestEnvironmentRepository_GetByTargetNamespace(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = environmentsv1.AddToScheme(scheme)
 
 	tests := []struct {
-		name         string
-		existingEnvs []*environmentsv1.Environment
-		namespace    string
-		wantErr      bool
-		errContains  string
+		name            string
+		existingEnvs    []*environmentsv1.Environment
+		targetNamespace string
+		wantErr         bool
+		errContains     string
 	}{
 		{
-			name: "environment found by namespace",
+			name: "environment found by target namespace",
 			existingEnvs: []*environmentsv1.Environment{
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-env",
+						Name:      "test-env",
+						Namespace: "wm-test",
+						Labels: map[string]string{
+							"kloudlite.io/target-namespace": "test-namespace",
+						},
 					},
 					Spec: environmentsv1.EnvironmentSpec{
 						TargetNamespace: "test-namespace",
 					},
 				},
 			},
-			namespace: "test-namespace",
-			wantErr:   false,
+			targetNamespace: "test-namespace",
+			wantErr:         false,
 		},
 		{
-			name:         "environment not found",
-			existingEnvs: []*environmentsv1.Environment{},
-			namespace:    "nonexistent-namespace",
-			wantErr:      true,
-			errContains:  "not found",
+			name:            "environment not found",
+			existingEnvs:    []*environmentsv1.Environment{},
+			targetNamespace: "nonexistent-namespace",
+			wantErr:         true,
+			errContains:     "not found",
 		},
 	}
 
@@ -67,14 +70,10 @@ func TestEnvironmentRepository_GetByNamespace(t *testing.T) {
 			k8sClient := fake.NewClientBuilder().
 				WithScheme(scheme).
 				WithRuntimeObjects(objects...).
-				WithIndex(&environmentsv1.Environment{}, "spec.targetNamespace", func(obj client.Object) []string {
-					env := obj.(*environmentsv1.Environment)
-					return []string{env.Spec.TargetNamespace}
-				}).
 				Build()
 			repo := NewEnvironmentRepository(k8sClient)
 
-			env, err := repo.GetByNamespace(context.Background(), tt.namespace)
+			env, err := repo.GetByTargetNamespace(context.Background(), tt.targetNamespace)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -84,7 +83,7 @@ func TestEnvironmentRepository_GetByNamespace(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, env)
-				assert.Equal(t, tt.namespace, env.Spec.TargetNamespace)
+				assert.Equal(t, tt.targetNamespace, env.Spec.TargetNamespace)
 			}
 		})
 	}
@@ -97,7 +96,11 @@ func TestEnvironmentRepository_ListActive(t *testing.T) {
 	existingEnvs := []*environmentsv1.Environment{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "active-env-1",
+				Name:      "active-env-1",
+				Namespace: "wm-test",
+				Labels: map[string]string{
+					"kloudlite.io/activated": "true",
+				},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "active-ns-1",
@@ -106,7 +109,11 @@ func TestEnvironmentRepository_ListActive(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "active-env-2",
+				Name:      "active-env-2",
+				Namespace: "wm-test",
+				Labels: map[string]string{
+					"kloudlite.io/activated": "true",
+				},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "active-ns-2",
@@ -115,7 +122,11 @@ func TestEnvironmentRepository_ListActive(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "inactive-env",
+				Name:      "inactive-env",
+				Namespace: "wm-test",
+				Labels: map[string]string{
+					"kloudlite.io/activated": "false",
+				},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "inactive-ns",
@@ -132,17 +143,10 @@ func TestEnvironmentRepository_ListActive(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithRuntimeObjects(objects...).
-		WithIndex(&environmentsv1.Environment{}, "spec.activated", func(obj client.Object) []string {
-			env := obj.(*environmentsv1.Environment)
-			if env.Spec.Activated {
-				return []string{"true"}
-			}
-			return []string{"false"}
-		}).
 		Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	envs, err := repo.ListActive(context.Background())
+	envs, err := repo.ListActive(context.Background(), "wm-test")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, envs)
@@ -156,7 +160,11 @@ func TestEnvironmentRepository_ListInactive(t *testing.T) {
 	existingEnvs := []*environmentsv1.Environment{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "active-env",
+				Name:      "active-env",
+				Namespace: "wm-test",
+				Labels: map[string]string{
+					"kloudlite.io/activated": "true",
+				},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "active-ns",
@@ -165,7 +173,11 @@ func TestEnvironmentRepository_ListInactive(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "inactive-env-1",
+				Name:      "inactive-env-1",
+				Namespace: "wm-test",
+				Labels: map[string]string{
+					"kloudlite.io/activated": "false",
+				},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "inactive-ns-1",
@@ -174,7 +186,11 @@ func TestEnvironmentRepository_ListInactive(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "inactive-env-2",
+				Name:      "inactive-env-2",
+				Namespace: "wm-test",
+				Labels: map[string]string{
+					"kloudlite.io/activated": "false",
+				},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "inactive-ns-2",
@@ -191,17 +207,10 @@ func TestEnvironmentRepository_ListInactive(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithRuntimeObjects(objects...).
-		WithIndex(&environmentsv1.Environment{}, "spec.activated", func(obj client.Object) []string {
-			env := obj.(*environmentsv1.Environment)
-			if env.Spec.Activated {
-				return []string{"true"}
-			}
-			return []string{"false"}
-		}).
 		Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	envs, err := repo.ListInactive(context.Background())
+	envs, err := repo.ListInactive(context.Background(), "wm-test")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, envs)
@@ -214,7 +223,8 @@ func TestEnvironmentRepository_ActivateEnvironment(t *testing.T) {
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-env",
+			Name:      "test-env",
+			Namespace: "wm-test",
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
@@ -225,7 +235,7 @@ func TestEnvironmentRepository_ActivateEnvironment(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(env).Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	err := repo.ActivateEnvironment(context.Background(), "test-env")
+	err := repo.ActivateEnvironment(context.Background(), "wm-test", "test-env")
 	// Status update may fail with fake client
 	if err != nil {
 		// Expected with fake client
@@ -239,7 +249,8 @@ func TestEnvironmentRepository_DeactivateEnvironment(t *testing.T) {
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-env",
+			Name:      "test-env",
+			Namespace: "wm-test",
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "test-namespace",
@@ -250,7 +261,7 @@ func TestEnvironmentRepository_DeactivateEnvironment(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(env).Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	err := repo.DeactivateEnvironment(context.Background(), "test-env")
+	err := repo.DeactivateEnvironment(context.Background(), "wm-test", "test-env")
 	// Status update may fail with fake client
 	if err != nil {
 		// Expected with fake client
@@ -267,7 +278,8 @@ func TestEnvironmentRepository_Create(t *testing.T) {
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "new-env",
+			Name:      "new-env",
+			Namespace: "wm-test",
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "new-namespace",
@@ -279,7 +291,7 @@ func TestEnvironmentRepository_Create(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify environment was created
-	retrieved, err := repo.Get(context.Background(), "new-env")
+	retrieved, err := repo.Get(context.Background(), "wm-test", "new-env")
 	assert.NoError(t, err)
 	assert.Equal(t, "new-namespace", retrieved.Spec.TargetNamespace)
 }
@@ -290,7 +302,8 @@ func TestEnvironmentRepository_Get(t *testing.T) {
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "existing-env",
+			Name:      "existing-env",
+			Namespace: "wm-test",
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "existing-namespace",
@@ -301,13 +314,13 @@ func TestEnvironmentRepository_Get(t *testing.T) {
 	repo := NewEnvironmentRepository(k8sClient)
 
 	t.Run("get existing environment", func(t *testing.T) {
-		retrieved, err := repo.Get(context.Background(), "existing-env")
+		retrieved, err := repo.Get(context.Background(), "wm-test", "existing-env")
 		assert.NoError(t, err)
 		assert.Equal(t, "existing-namespace", retrieved.Spec.TargetNamespace)
 	})
 
 	t.Run("get non-existent environment", func(t *testing.T) {
-		_, err := repo.Get(context.Background(), "nonexistent")
+		_, err := repo.Get(context.Background(), "wm-test", "nonexistent")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
 	})
@@ -319,7 +332,8 @@ func TestEnvironmentRepository_Update(t *testing.T) {
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "update-env",
+			Name:      "update-env",
+			Namespace: "wm-test",
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "original-namespace",
@@ -335,7 +349,7 @@ func TestEnvironmentRepository_Update(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify update
-	retrieved, err := repo.Get(context.Background(), "update-env")
+	retrieved, err := repo.Get(context.Background(), "wm-test", "update-env")
 	assert.NoError(t, err)
 	assert.Equal(t, "updated-namespace", retrieved.Spec.TargetNamespace)
 }
@@ -346,7 +360,8 @@ func TestEnvironmentRepository_Delete(t *testing.T) {
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "delete-env",
+			Name:      "delete-env",
+			Namespace: "wm-test",
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "delete-namespace",
@@ -356,11 +371,11 @@ func TestEnvironmentRepository_Delete(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(env).Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	err := repo.Delete(context.Background(), "delete-env")
+	err := repo.Delete(context.Background(), "wm-test", "delete-env")
 	assert.NoError(t, err)
 
 	// Verify deletion
-	_, err = repo.Get(context.Background(), "delete-env")
+	_, err = repo.Get(context.Background(), "wm-test", "delete-env")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 }
@@ -372,8 +387,9 @@ func TestEnvironmentRepository_List(t *testing.T) {
 	envs := []*environmentsv1.Environment{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   "env-1",
-				Labels: map[string]string{"team": "engineering"},
+				Name:      "env-1",
+				Namespace: "wm-test",
+				Labels:    map[string]string{"team": "engineering"},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "ns-1",
@@ -381,8 +397,9 @@ func TestEnvironmentRepository_List(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   "env-2",
-				Labels: map[string]string{"team": "sales"},
+				Name:      "env-2",
+				Namespace: "wm-test",
+				Labels:    map[string]string{"team": "sales"},
 			},
 			Spec: environmentsv1.EnvironmentSpec{
 				TargetNamespace: "ns-2",
@@ -398,14 +415,14 @@ func TestEnvironmentRepository_List(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
 	repo := NewEnvironmentRepository(k8sClient)
 
-	t.Run("list all environments", func(t *testing.T) {
-		envList, err := repo.List(context.Background())
+	t.Run("list all environments in namespace", func(t *testing.T) {
+		envList, err := repo.List(context.Background(), "wm-test")
 		assert.NoError(t, err)
 		assert.Len(t, envList.Items, 2)
 	})
 
 	t.Run("list with label selector", func(t *testing.T) {
-		envList, err := repo.List(context.Background(), WithLabelSelector("team=engineering"))
+		envList, err := repo.List(context.Background(), "wm-test", WithLabelSelector("team=engineering"))
 		assert.NoError(t, err)
 		assert.NotNil(t, envList)
 	})
@@ -417,7 +434,8 @@ func TestEnvironmentRepository_Patch(t *testing.T) {
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "patch-env",
+			Name:      "patch-env",
+			Namespace: "wm-test",
 		},
 		Spec: environmentsv1.EnvironmentSpec{
 			TargetNamespace: "original-namespace",
@@ -433,7 +451,7 @@ func TestEnvironmentRepository_Patch(t *testing.T) {
 		},
 	}
 
-	patched, err := repo.Patch(context.Background(), "patch-env", patchData)
+	patched, err := repo.Patch(context.Background(), "wm-test", "patch-env", patchData)
 	assert.NoError(t, err)
 	assert.NotNil(t, patched)
 }

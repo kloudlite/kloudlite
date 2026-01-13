@@ -164,10 +164,10 @@ func (m *mockWorkMachineRepo) ListByMachineType(ctx context.Context, machineType
 // Mock EnvironmentRepository
 type mockEnvironmentRepo struct {
 	createFunc func(ctx context.Context, env *environmentsv1.Environment) error
-	getFunc    func(ctx context.Context, name string) (*environmentsv1.Environment, error)
+	getFunc    func(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error)
 	updateFunc func(ctx context.Context, env *environmentsv1.Environment) error
-	deleteFunc func(ctx context.Context, name string) error
-	listFunc   func(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error)
+	deleteFunc func(ctx context.Context, namespace, name string) error
+	listFunc   func(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error)
 }
 
 func (m *mockEnvironmentRepo) Create(ctx context.Context, env *environmentsv1.Environment) error {
@@ -177,9 +177,9 @@ func (m *mockEnvironmentRepo) Create(ctx context.Context, env *environmentsv1.En
 	return errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) Get(ctx context.Context, name string) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepo) Get(ctx context.Context, namespace, name string) (*environmentsv1.Environment, error) {
 	if m.getFunc != nil {
-		return m.getFunc(ctx, name)
+		return m.getFunc(ctx, namespace, name)
 	}
 	return nil, errors.New("not implemented")
 }
@@ -191,49 +191,45 @@ func (m *mockEnvironmentRepo) Update(ctx context.Context, env *environmentsv1.En
 	return errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) Delete(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepo) Delete(ctx context.Context, namespace, name string) error {
 	if m.deleteFunc != nil {
-		return m.deleteFunc(ctx, name)
+		return m.deleteFunc(ctx, namespace, name)
 	}
 	return errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) List(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepo) List(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
 	if m.listFunc != nil {
-		return m.listFunc(ctx, opts...)
+		return m.listFunc(ctx, namespace, opts...)
 	}
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) Patch(ctx context.Context, name string, patchData map[string]interface{}) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepo) Patch(ctx context.Context, namespace, name string, patchData map[string]interface{}) (*environmentsv1.Environment, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) Watch(ctx context.Context, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*environmentsv1.Environment], error) {
+func (m *mockEnvironmentRepo) Watch(ctx context.Context, namespace string, opts ...repository.WatchOption) (<-chan repository.WatchEvent[*environmentsv1.Environment], error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) GetByNamespace(ctx context.Context, namespace string) (*environmentsv1.Environment, error) {
+func (m *mockEnvironmentRepo) GetByTargetNamespace(ctx context.Context, targetNamespace string) (*environmentsv1.Environment, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) ListActive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepo) ListActive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) ListInactive(ctx context.Context) (*environmentsv1.EnvironmentList, error) {
+func (m *mockEnvironmentRepo) ListInactive(ctx context.Context, namespace string) (*environmentsv1.EnvironmentList, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) ActivateEnvironment(ctx context.Context, name string) error {
+func (m *mockEnvironmentRepo) ActivateEnvironment(ctx context.Context, namespace, name string) error {
 	return errors.New("not implemented")
 }
 
-func (m *mockEnvironmentRepo) DeactivateEnvironment(ctx context.Context, name string) error {
-	return errors.New("not implemented")
-}
-
-func (m *mockEnvironmentRepo) UpdateStatus(ctx context.Context, env *environmentsv1.Environment) error {
+func (m *mockEnvironmentRepo) DeactivateEnvironment(ctx context.Context, namespace, name string) error {
 	return errors.New("not implemented")
 }
 
@@ -700,7 +696,7 @@ func TestDeleteUser(t *testing.T) {
 			},
 		}
 		envRepo := &mockEnvironmentRepo{
-			listFunc: func(ctx context.Context, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
+			listFunc: func(ctx context.Context, namespace string, opts ...repository.ListOption) (*environmentsv1.EnvironmentList, error) {
 				return &environmentsv1.EnvironmentList{}, nil
 			},
 		}
