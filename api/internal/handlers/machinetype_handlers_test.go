@@ -206,6 +206,7 @@ func TestCreateMachineType(t *testing.T) {
 	t.Run("should create machine type with auth", func(t *testing.T) {
 		handlers, router := setupMachineTypeHandlerTest()
 		router.POST("/machine-types", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -251,6 +252,7 @@ func TestCreateMachineType(t *testing.T) {
 	t.Run("should return 400 with invalid JSON", func(t *testing.T) {
 		handlers, router := setupMachineTypeHandlerTest()
 		router.POST("/machine-types", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -283,6 +285,7 @@ func TestUpdateMachineType(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), mt)
 
 		router.PUT("/machine-types/:name", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -353,6 +356,7 @@ func TestDeleteMachineType(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), mt)
 
 		router.DELETE("/machine-types/:name", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -408,6 +412,7 @@ func TestActivateMachineType(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), mt)
 
 		router.POST("/machine-types/:name/activate", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -438,6 +443,7 @@ func TestActivateMachineType(t *testing.T) {
 	t.Run("should return 404 for non-existent machine type", func(t *testing.T) {
 		handlers, router := setupMachineTypeHandlerTest()
 		router.POST("/machine-types/:name/activate", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -468,6 +474,7 @@ func TestDeactivateMachineType(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), mt)
 
 		router.POST("/machine-types/:name/deactivate", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -498,6 +505,7 @@ func TestDeactivateMachineType(t *testing.T) {
 	t.Run("should return 404 for non-existent machine type", func(t *testing.T) {
 		handlers, router := setupMachineTypeHandlerTest()
 		router.POST("/machine-types/:name/deactivate", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -528,6 +536,7 @@ func TestToggleMachineTypeActive(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), mt)
 
 		router.POST("/machine-types/:name/toggle", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -560,6 +569,7 @@ func TestToggleMachineTypeActive(t *testing.T) {
 		_ = handlers.manager.MachineTypeRepository.Create(context.Background(), mt)
 
 		router.POST("/machine-types/:name/toggle", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
@@ -590,6 +600,7 @@ func TestToggleMachineTypeActive(t *testing.T) {
 	t.Run("should return 404 for non-existent machine type", func(t *testing.T) {
 		handlers, router := setupMachineTypeHandlerTest()
 		router.POST("/machine-types/:name/toggle", func(c *gin.Context) {
+			c.Set("user_username", "admin")
 			c.Set("user_email", "admin@example.com")
 			c.Set("user_roles", []platformv1alpha1.RoleType{platformv1alpha1.RoleAdmin})
 			c.Next()
