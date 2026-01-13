@@ -114,7 +114,7 @@ export default async function HomePage() {
   }
   const pinnedEnvironments: PinnedEnvironment[] = dashboardData.pinnedEnvironments.map((env) => ({
     id: env.metadata.name,
-    name: `${env.spec.ownedBy}/${env.spec.name || env.metadata.name}`,
+    name: `${env.spec.ownedBy}/${env.metadata.name}`,
     status: env.status?.state === 'active' ? 'active' : 'idle',
   }))
 

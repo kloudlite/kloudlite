@@ -55,7 +55,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
     environment = {
       id,
       name: env.metadata.name,
-      displayName: `${env.spec.ownedBy || 'unknown'}/${env.spec.name || env.metadata.name}`,
+      displayName: `${env.spec.ownedBy || 'unknown'}/${env.metadata.name}`,
       owner: env.spec.ownedBy || 'unknown',
       status: env.status?.state || 'unknown',
       created: formatTimeAgo(env.metadata.creationTimestamp),

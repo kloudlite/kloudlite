@@ -17,7 +17,7 @@ export default async function DangerSettingsPage({ params }: PageProps) {
     return (
       <DangerSettings
         environmentId={id}
-        environmentName={`${env.spec.ownedBy}/${env.spec.name}`}
+        environmentName={`${env.spec.ownedBy}/${env.metadata.name}`}
       />
     )
   } catch (error) {
