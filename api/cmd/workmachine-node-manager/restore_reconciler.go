@@ -93,39 +93,9 @@ func (r *SnapshotRestoreReconciler) handleRestorePending(ctx context.Context, re
 
 func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap2.Logger) (reconcile.Result, error) {
 	snapshotName := restore.Spec.SnapshotName
-	cachePath := fmt.Sprintf("%s/%s", snapshotStoragePath, snapshotName)
 
-	// Check if snapshot is already cached locally as a btrfs subvolume
-	// We verify it's a subvolume (not just a directory) to ensure btrfs snapshot will work
-	checkCacheScript := fmt.Sprintf("btrfs subvolume show %s >/dev/null 2>&1 && echo 'subvol'", cachePath)
-	cacheOutput, _ := r.HostCmdExec.Execute(checkCacheScript)
-	if strings.Contains(string(cacheOutput), "subvol") {
-		logger.Info("Snapshot already cached as btrfs subvolume, skipping download",
-			zap2.String("snapshotName", snapshotName),
-			zap2.String("cachePath", cachePath))
-
-		// Skip download, go directly to Restoring state
-		restore.Status.State = snapshotv1.SnapshotRestoreStateRestoring
-		restore.Status.Message = "Using cached snapshot"
-		if err := r.Status().Update(ctx, restore); err != nil {
-			if apierrors.IsConflict(err) {
-				return reconcile.Result{Requeue: true}, nil
-			}
-			logger.Error("Failed to update status", zap2.Error(err))
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{Requeue: true}, nil
-	}
-
-	// If cache exists but is not a subvolume (old format), remove it
-	if info, err := os.Stat(cachePath); err == nil && info.IsDir() {
-		logger.Info("Cache exists but is not a btrfs subvolume, removing old cache",
-			zap2.String("cachePath", cachePath))
-		cleanupScript := fmt.Sprintf("rm -rf %s", cachePath)
-		r.HostCmdExec.Execute(cleanupScript)
-	}
-
-	// Get the Snapshot to find the registry info (in the same namespace as the restore)
+	// Get the Snapshot first to find the registry info (storage reference)
+	// The imageRef is the only constant identifier - snapshot name/owner may differ across envs
 	snapshot := &snapshotv1.Snapshot{}
 	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: restore.Namespace}, snapshot); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -150,6 +120,41 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 		return r.setRestoreFailed(ctx, restore, "Snapshot has no registry info", logger)
 	}
 
+	// Use the storage reference (imageRef) for cache lookup
+	// This ensures we find the cached snapshot regardless of name/owner changes
+	imageRef := snapshot.Status.Registry.ImageRef
+	cachePath := cachePathFromImageRef(imageRef)
+
+	// Check if snapshot is already cached locally as a btrfs subvolume
+	// We verify it's a subvolume (not just a directory) to ensure btrfs snapshot will work
+	checkCacheScript := fmt.Sprintf("btrfs subvolume show %s >/dev/null 2>&1 && echo 'subvol'", cachePath)
+	cacheOutput, _ := r.HostCmdExec.Execute(checkCacheScript)
+	if strings.Contains(string(cacheOutput), "subvol") {
+		logger.Info("Snapshot already cached as btrfs subvolume, skipping download",
+			zap2.String("imageRef", imageRef),
+			zap2.String("cachePath", cachePath))
+
+		// Skip download, go directly to Restoring state
+		restore.Status.State = snapshotv1.SnapshotRestoreStateRestoring
+		restore.Status.Message = "Using cached snapshot"
+		if err := r.Status().Update(ctx, restore); err != nil {
+			if apierrors.IsConflict(err) {
+				return reconcile.Result{Requeue: true}, nil
+			}
+			logger.Error("Failed to update status", zap2.Error(err))
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// If cache exists but is not a subvolume (old format), remove it
+	if info, err := os.Stat(cachePath); err == nil && info.IsDir() {
+		logger.Info("Cache exists but is not a btrfs subvolume, removing old cache",
+			zap2.String("cachePath", cachePath))
+		cleanupScript := fmt.Sprintf("rm -rf %s", cachePath)
+		r.HostCmdExec.Execute(cleanupScript)
+	}
+
 	// Create a temp directory for extraction
 	tempExtractPath := fmt.Sprintf("%s-extracting", cachePath)
 	if err := os.MkdirAll(tempExtractPath, 0755); err != nil {
@@ -157,7 +162,6 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 	}
 
 	// Pull snapshot from registry using embedded oras library
-	imageRef := snapshot.Status.Registry.ImageRef
 	logger.Info("Pulling snapshot from registry", zap2.String("imageRef", imageRef))
 	if err := orasPullSnapshot(ctx, imageRef, tempExtractPath, r.RegistryInsecure); err != nil {
 		logger.Error("Failed to pull snapshot from registry",
@@ -210,8 +214,20 @@ func (r *SnapshotRestoreReconciler) handleRestoreDownloading(ctx context.Context
 
 func (r *SnapshotRestoreReconciler) handleRestoreRestoring(ctx context.Context, restore *snapshotv1.SnapshotRestore, logger *zap2.Logger) (reconcile.Result, error) {
 	snapshotName := restore.Spec.SnapshotName
-	cachePath := fmt.Sprintf("%s/%s", snapshotStoragePath, snapshotName)
 	targetPath := restore.Spec.TargetPath
+
+	// Get the Snapshot to find the storage reference (imageRef) for cache lookup
+	snapshot := &snapshotv1.Snapshot{}
+	if err := r.Get(ctx, client.ObjectKey{Name: snapshotName, Namespace: restore.Namespace}, snapshot); err != nil {
+		return r.setRestoreFailed(ctx, restore, fmt.Sprintf("Snapshot %q not found", snapshotName), logger)
+	}
+
+	if snapshot.Status.Registry == nil || snapshot.Status.Registry.ImageRef == "" {
+		return r.setRestoreFailed(ctx, restore, "Snapshot has no registry info", logger)
+	}
+
+	// Use the storage reference for cache path
+	cachePath := cachePathFromImageRef(snapshot.Status.Registry.ImageRef)
 
 	// Ensure parent directory of target exists
 	parentDir := filepath.Dir(targetPath)
