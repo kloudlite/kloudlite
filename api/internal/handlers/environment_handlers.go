@@ -114,7 +114,8 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	// Create Environment object with ownership
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: envName,
+			Name:      envName,
+			Namespace: wm.Namespace,
 		},
 		Spec: req.Spec,
 	}

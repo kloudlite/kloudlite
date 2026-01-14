@@ -719,7 +719,8 @@ type CreateEnvironmentFromSnapshotRequest struct {
 	Activated       bool   `json:"activated"`
 }
 
-// CreateEnvironmentFromSnapshot creates a new environment from a snapshot
+// CreateEnvironmentFromSnapshot creates a new environment from a snapshot by creating an EnvironmentForkRequest
+// The EnvironmentForkRequest controller handles the actual environment creation and snapshot restoration
 // POST /api/v1/environments/from-snapshot
 func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 	username, _, _, exists := middleware.GetUserFromContext(c)
@@ -747,13 +748,6 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Get source environment from snapshot labels to find the workmachine
-	sourceEnvName := snapshot.Labels["snapshots.kloudlite.io/environment"]
-	if sourceEnvName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "snapshot does not have environment label"})
-		return
-	}
-
 	// Get the user's namespace from their WorkMachine
 	namespace, err := h.getEnvNamespaceForUser(c.Request.Context(), username)
 	if err != nil {
@@ -765,57 +759,54 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Get source environment to find the workmachine
-	sourceEnv, err := h.environmentRepo.Get(c.Request.Context(), namespace, sourceEnvName)
-	if err != nil {
-		h.logger.Error("Failed to get source environment", zap.String("namespace", namespace), zap.String("environment", sourceEnvName), zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("source environment %s not found", sourceEnvName)})
-		return
-	}
-
 	// Create new environment name: {username}--{name}
 	envName := fmt.Sprintf("%s--%s", username, req.Name)
-	targetNamespace := envName
 
-	// Create new environment
-	newEnv := &envv1.Environment{
+	// Create EnvironmentForkRequest - the controller will handle the actual environment creation
+	forkRequest := &envv1.EnvironmentForkRequest{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: envName,
+			GenerateName: fmt.Sprintf("fork-%s-", req.Name),
+			Namespace:    namespace,
 			Labels: map[string]string{
-				"kloudlite.io/owned-by": username,
+				"kloudlite.io/owned-by":          username,
+				"kloudlite.io/new-environment":   envName,
+				"kloudlite.io/source-snapshot":   req.SnapshotName,
 			},
 		},
-		Spec: envv1.EnvironmentSpec{
-			TargetNamespace: targetNamespace,
-			OwnedBy:         username,
-			WorkMachineName: sourceEnv.Spec.WorkMachineName,
-			Activated:       req.Activated,
-			FromSnapshot: &envv1.FromSnapshotRef{
+		Spec: envv1.EnvironmentForkRequestSpec{
+			NewEnvironmentName: envName,
+			SourceSnapshot: envv1.SourceSnapshotRef{
 				SnapshotName:    req.SnapshotName,
 				SourceNamespace: req.SourceNamespace,
 			},
+			Overrides: &envv1.EnvironmentSpecOverrides{
+				OwnedBy: username,
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": username,
+				},
+			},
 		},
 	}
 
-	if err := h.k8sClient.Create(c.Request.Context(), newEnv); err != nil {
-		h.logger.Error("Failed to create environment", zap.String("name", envName), zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create environment: %v", err)})
+	if err := h.k8sClient.Create(c.Request.Context(), forkRequest); err != nil {
+		h.logger.Error("Failed to create environment fork request", zap.String("name", envName), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create environment fork request: %v", err)})
 		return
 	}
 
-	// The environment controller will add this environment to the snapshot's ReferencedBy
-	// when it processes the fork/restore operation
-
-	h.logger.Info("Created environment from snapshot",
-		zap.String("environment", envName),
+	h.logger.Info("Created environment fork request",
+		zap.String("forkRequest", forkRequest.Name),
+		zap.String("newEnvironment", envName),
 		zap.String("snapshot", req.SnapshotName),
 		zap.String("user", username),
 	)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":     "environment created from snapshot",
-		"environment": envName,
-		"snapshot":    req.SnapshotName,
+		"message":      "environment fork request created",
+		"forkRequest":  forkRequest.Name,
+		"environment":  envName,
+		"snapshot":     req.SnapshotName,
+		"phase":        "Pending",
 	})
 }
 
