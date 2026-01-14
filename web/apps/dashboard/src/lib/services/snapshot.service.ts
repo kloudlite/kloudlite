@@ -176,8 +176,8 @@ export class SnapshotService {
   }
 
   // Delete a snapshot
-  async delete(snapshotName: string): Promise<void> {
-    return apiClient.delete<void>(`${this.baseUrl}/snapshots/${snapshotName}`)
+  async delete(snapshotName: string, namespace: string): Promise<void> {
+    return apiClient.delete<void>(`${this.baseUrl}/snapshots/${snapshotName}?namespace=${namespace}`)
   }
 
   // Push a snapshot to the registry

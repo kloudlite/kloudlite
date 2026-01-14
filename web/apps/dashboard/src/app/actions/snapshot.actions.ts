@@ -119,10 +119,11 @@ export async function restoreSnapshot(snapshotName: string) {
 /**
  * Server action to delete a snapshot
  */
-export async function deleteSnapshot(snapshotName: string) {
+export async function deleteSnapshot(snapshotName: string, namespace: string) {
   try {
-    await snapshotService.delete(snapshotName)
+    await snapshotService.delete(snapshotName, namespace)
     revalidatePath('/workspaces')
+    revalidatePath('/environments')
     return { success: true }
   } catch (err) {
     console.error('Delete snapshot error:', err)

@@ -185,11 +185,11 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
   }
 
   const handleDeleteConfirm = async () => {
-    if (!selectedSnapshot) return
+    if (!selectedSnapshot || !selectedSnapshot.namespace) return
 
     setIsDeleting(true)
 
-    const result = await deleteSnapshot(selectedSnapshot.name)
+    const result = await deleteSnapshot(selectedSnapshot.name, selectedSnapshot.namespace)
 
     if (result.success) {
       toast.success('Snapshot deleted')
