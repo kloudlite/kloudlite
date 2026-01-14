@@ -150,7 +150,7 @@ type EnvironmentSnapshotRequestResponse struct {
 // POST /api/v1/environments/:name/snapshots
 func (h *SnapshotHandlers) CreateEnvironmentSnapshot(c *gin.Context) {
 	envName := c.Param("name")
-	username := c.GetString("username")
+	username := c.GetString("user_username")
 
 	var req CreateSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -376,7 +376,7 @@ func (h *SnapshotHandlers) ListEnvironmentSnapshots(c *gin.Context) {
 func (h *SnapshotHandlers) CreateWorkspaceSnapshot(c *gin.Context) {
 	namespace := c.Param("namespace")
 	workspaceName := c.Param("name")
-	username := c.GetString("username")
+	username := c.GetString("user_username")
 
 	var req CreateSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -582,7 +582,7 @@ func (h *SnapshotHandlers) ListWorkspaceSnapshots(c *gin.Context) {
 // ListAllSnapshots lists all snapshots accessible to the user
 // GET /api/v1/snapshots
 func (h *SnapshotHandlers) ListAllSnapshots(c *gin.Context) {
-	username := c.GetString("username")
+	username := c.GetString("user_username")
 
 	snapshots, err := h.snapshotRepo.ListByOwner(c.Request.Context(), username)
 	if err != nil {
@@ -616,7 +616,7 @@ func (h *SnapshotHandlers) ListReadySnapshots(c *gin.Context) {
 		snapshots, err = h.snapshotRepo.ListByEnvironment(c.Request.Context(), environment)
 	} else {
 		// Fall back to listing by owner
-		username := c.GetString("username")
+		username := c.GetString("user_username")
 		snapshots, err = h.snapshotRepo.ListByOwner(c.Request.Context(), username)
 	}
 
@@ -672,7 +672,7 @@ func (h *SnapshotHandlers) GetSnapshot(c *gin.Context) {
 func (h *SnapshotHandlers) DeleteSnapshot(c *gin.Context) {
 	name := c.Param("name")
 	namespace := c.Query("namespace")
-	username := c.GetString("username")
+	username := c.GetString("user_username")
 	ctx := c.Request.Context()
 
 	if namespace == "" {
@@ -834,7 +834,7 @@ type EnvironmentSnapshotRestoreResponse struct {
 // POST /api/v1/environments/:name/restore
 func (h *SnapshotHandlers) RestoreEnvironmentFromSnapshot(c *gin.Context) {
 	envName := c.Param("name")
-	username := c.GetString("username")
+	username := c.GetString("user_username")
 
 	var req RestoreEnvironmentFromSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
