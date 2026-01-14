@@ -99,7 +99,7 @@ export async function getSnapshot(snapshotName: string) {
 }
 
 /**
- * Server action to restore a snapshot
+ * Server action to restore a snapshot (workspace snapshots)
  */
 export async function restoreSnapshot(snapshotName: string) {
   try {
@@ -108,6 +108,34 @@ export async function restoreSnapshot(snapshotName: string) {
     return { success: true, data: result }
   } catch (err) {
     console.error('Restore snapshot error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to restore an environment from a snapshot
+ */
+export async function restoreEnvironmentFromSnapshot(
+  environmentName: string,
+  snapshotName: string,
+  sourceNamespace: string,
+  activateAfterRestore?: boolean
+) {
+  try {
+    const result = await snapshotService.restoreEnvironmentFromSnapshot(environmentName, {
+      snapshotName,
+      sourceNamespace,
+      activateAfterRestore,
+    })
+    revalidatePath('/environments')
+    revalidatePath(`/environments/${environmentName}`)
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Restore environment from snapshot error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,

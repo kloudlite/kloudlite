@@ -32,7 +32,7 @@ import type { Snapshot } from '@/lib/services/snapshot.service'
 import {
   listEnvironmentSnapshots,
   createEnvironmentSnapshot,
-  restoreSnapshot,
+  restoreEnvironmentFromSnapshot,
   deleteSnapshot,
   pushSnapshot,
   getEnvironmentSnapshotStatus,
@@ -153,11 +153,15 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   }
 
   const handleRestoreConfirm = async () => {
-    if (!selectedSnapshot) return
+    if (!selectedSnapshot || !selectedSnapshot.namespace) return
 
     setIsRestoring(true)
 
-    const result = await restoreSnapshot(selectedSnapshot.name)
+    const result = await restoreEnvironmentFromSnapshot(
+      environmentName,
+      selectedSnapshot.name,
+      selectedSnapshot.namespace
+    )
 
     if (result.success) {
       toast.success('Snapshot restore started')
