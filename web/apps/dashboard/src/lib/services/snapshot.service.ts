@@ -89,7 +89,7 @@ export interface CreateEnvironmentFromSnapshotRequest {
 
 export interface RestoreEnvironmentFromSnapshotRequest {
   snapshotName: string
-  sourceNamespace: string // Required: namespace where the source snapshot lives
+  sourceNamespace?: string // Optional: defaults to environment's target namespace. Provide for cross-namespace restores (forking)
   activateAfterRestore?: boolean
 }
 

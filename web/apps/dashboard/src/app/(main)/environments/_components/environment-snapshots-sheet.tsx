@@ -153,14 +153,14 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   }
 
   const handleRestoreConfirm = async () => {
-    if (!selectedSnapshot || !selectedSnapshot.namespace) return
+    if (!selectedSnapshot) return
 
     setIsRestoring(true)
 
     const result = await restoreEnvironmentFromSnapshot(
       environmentName,
-      selectedSnapshot.name,
-      selectedSnapshot.namespace
+      selectedSnapshot.name
+      // sourceNamespace is optional - defaults to environment's target namespace
     )
 
     if (result.success) {
