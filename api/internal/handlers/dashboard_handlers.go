@@ -329,19 +329,19 @@ func (h *DashboardHandlers) GetEnvironmentDetails(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// listServicesInNamespace fetches deployments and services in a namespace
+// listServicesInNamespace fetches StatefulSets and services in a namespace
 func (h *DashboardHandlers) listServicesInNamespace(ctx context.Context, namespace string) []dto.ServiceInfo {
-	// List all deployments managed by compositions
-	deploymentList := &appsv1.DeploymentList{}
-	if err := h.k8sClient.List(ctx, deploymentList,
+	// List all StatefulSets managed by compositions
+	stsList := &appsv1.StatefulSetList{}
+	if err := h.k8sClient.List(ctx, stsList,
 		client.InNamespace(namespace),
 		client.MatchingLabels{"kloudlite.io/managed": "true"},
 	); err != nil {
-		h.logger.Warn("Failed to list deployments", zap.String("namespace", namespace), zap.Error(err))
+		h.logger.Warn("Failed to list StatefulSets", zap.String("namespace", namespace), zap.Error(err))
 		return []dto.ServiceInfo{} // Return empty array instead of nil
 	}
 
-	// List all services in the namespace to enrich deployment data
+	// List all services in the namespace to enrich StatefulSet data
 	serviceList := &corev1.ServiceList{}
 	if err := h.k8sClient.List(ctx, serviceList, client.InNamespace(namespace)); err != nil {
 		h.logger.Warn("Failed to list k8s services", zap.String("namespace", namespace), zap.Error(err))
@@ -354,10 +354,10 @@ func (h *DashboardHandlers) listServicesInNamespace(ctx context.Context, namespa
 		serviceMap[svc.Name] = svc
 	}
 
-	// Transform the deployments to service info format
-	services := make([]dto.ServiceInfo, 0, len(deploymentList.Items))
-	for _, deploy := range deploymentList.Items {
-		svc, hasSvc := serviceMap[deploy.Name]
+	// Transform the StatefulSets to service info format
+	services := make([]dto.ServiceInfo, 0, len(stsList.Items))
+	for _, sts := range stsList.Items {
+		svc, hasSvc := serviceMap[sts.Name]
 
 		var ports []dto.ServicePort
 		var clusterIP string
@@ -377,8 +377,8 @@ func (h *DashboardHandlers) listServicesInNamespace(ctx context.Context, namespa
 			svcType = string(svc.Spec.Type)
 		} else {
 			ports = make([]dto.ServicePort, 0)
-			if len(deploy.Spec.Template.Spec.Containers) > 0 {
-				for _, port := range deploy.Spec.Template.Spec.Containers[0].Ports {
+			if len(sts.Spec.Template.Spec.Containers) > 0 {
+				for _, port := range sts.Spec.Template.Spec.Containers[0].Ports {
 					ports = append(ports, dto.ServicePort{
 						Name:       port.Name,
 						Protocol:   string(port.Protocol),
@@ -391,18 +391,18 @@ func (h *DashboardHandlers) listServicesInNamespace(ctx context.Context, namespa
 		}
 
 		image := ""
-		if len(deploy.Spec.Template.Spec.Containers) > 0 {
-			image = deploy.Spec.Template.Spec.Containers[0].Image
+		if len(sts.Spec.Template.Spec.Containers) > 0 {
+			image = sts.Spec.Template.Spec.Containers[0].Image
 		}
 
 		services = append(services, dto.ServiceInfo{
-			Name:      deploy.Name,
-			Namespace: deploy.Namespace,
+			Name:      sts.Name,
+			Namespace: sts.Namespace,
 			Type:      svcType,
 			ClusterIP: clusterIP,
 			Ports:     ports,
-			Selector:  deploy.Spec.Selector.MatchLabels,
-			Replicas:  deploy.Status.ReadyReplicas,
+			Selector:  sts.Spec.Selector.MatchLabels,
+			Replicas:  sts.Status.ReadyReplicas,
 			Image:     image,
 		})
 	}
