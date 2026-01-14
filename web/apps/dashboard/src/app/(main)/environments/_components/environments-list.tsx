@@ -120,7 +120,8 @@ export function EnvironmentsList({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
-  const [deleteEnvironmentName, setDeleteEnvironmentName] = useState<string | null>(null)
+  const [deleteEnvironmentId, setDeleteEnvironmentId] = useState<string | null>(null)
+  const [deleteEnvironmentDisplayName, setDeleteEnvironmentDisplayName] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
   const handlePin = async (envName: string) => {
@@ -228,8 +229,9 @@ export function EnvironmentsList({
     setEditDialogOpen(true)
   }
 
-  const handleDeleteClick = (envName: string) => {
-    setDeleteEnvironmentName(envName)
+  const handleDeleteClick = (envId: string, envDisplayName: string) => {
+    setDeleteEnvironmentId(envId)
+    setDeleteEnvironmentDisplayName(envDisplayName)
     setDeleteConfirmOpen(true)
   }
 
@@ -525,7 +527,7 @@ export function EnvironmentsList({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDeleteClick(env.name)}
+                          onClick={() => handleDeleteClick(env.id, env.name)}
                         >
                           Delete
                         </DropdownMenuItem>
@@ -571,11 +573,12 @@ export function EnvironmentsList({
         />
       )}
 
-      {deleteEnvironmentName && (
+      {deleteEnvironmentId && (
         <DeleteEnvironmentConfirm
           open={deleteConfirmOpen}
           onOpenChange={setDeleteConfirmOpen}
-          environmentName={deleteEnvironmentName}
+          environmentId={deleteEnvironmentId}
+          displayName={deleteEnvironmentDisplayName || undefined}
           onSuccess={handleDeleteSuccess}
           currentUser={currentUser}
         />
