@@ -403,7 +403,7 @@ export function EnvironmentsList({
                     href={`/environments/${env.id}`}
                     className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
                   >
-                    {env.owner}/{env.name}
+                    {env.owner}/{env.name || env.id || 'unnamed'}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 </td>
