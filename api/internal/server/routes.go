@@ -369,6 +369,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 		webhooksGroup.POST("/validate/snapshotrestores", snapshotWebhook.ValidateSnapshotRestore)
 		webhooksGroup.POST("/validate/environmentsnapshotrequests", snapshotWebhook.ValidateEnvironmentSnapshotRequest)
 		webhooksGroup.POST("/validate/environmentsnapshotrestores", snapshotWebhook.ValidateEnvironmentSnapshotRestore)
+		webhooksGroup.POST("/validate/snapshots", snapshotWebhook.ValidateSnapshot)
 	}
 
 	return router
