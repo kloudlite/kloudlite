@@ -767,9 +767,9 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 			GenerateName: fmt.Sprintf("fork-%s-", req.Name),
 			Namespace:    namespace,
 			Labels: map[string]string{
-				"kloudlite.io/owned-by":          username,
-				"kloudlite.io/new-environment":   envName,
-				"kloudlite.io/source-snapshot":   req.SnapshotName,
+				"kloudlite.io/owned-by":        username,
+				"kloudlite.io/new-environment": envName,
+				"kloudlite.io/source-snapshot": req.SnapshotName,
 			},
 		},
 		Spec: envv1.EnvironmentForkRequestSpec{
@@ -801,11 +801,11 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 	)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":      "environment fork request created",
-		"forkRequest":  forkRequest.Name,
-		"environment":  envName,
-		"snapshot":     req.SnapshotName,
-		"phase":        "Pending",
+		"message":     "environment fork request created",
+		"forkRequest": forkRequest.Name,
+		"environment": envName,
+		"snapshot":    req.SnapshotName,
+		"phase":       "Pending",
 	})
 }
 
