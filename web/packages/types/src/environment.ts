@@ -281,7 +281,7 @@ export interface EnvironmentUIModel {
 
 // Converter functions
 export function environmentToUIModel(env: Environment, owner?: string): EnvironmentUIModel {
-  const createdDate = env.metadata.creationTimestamp
+  const createdDate = env.metadata?.creationTimestamp
     ? new Date(env.metadata.creationTimestamp)
     : new Date()
 
@@ -309,7 +309,7 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
 
   if (isForking) {
     status = 'forking'
-  } else if (env.metadata.deletionTimestamp) {
+  } else if (env.metadata?.deletionTimestamp) {
     // If deletionTimestamp is set, the resource is being deleted
     status = 'deleting'
   } else if (env.status?.state) {
@@ -321,9 +321,9 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
   }
 
   return {
-    id: env.metadata.name,
-    name: env.metadata.name,
-    owner: owner || env.spec.labels?.['kloudlite.io/owned-by'] || 'unknown',
+    id: env.metadata?.name || '',
+    name: env.metadata?.name || '',
+    owner: owner || env.spec?.ownedBy || env.spec?.labels?.['kloudlite.io/owned-by'] || 'unknown',
     status,
     created: createdText,
     targetNamespace: env.spec.targetNamespace || '',
