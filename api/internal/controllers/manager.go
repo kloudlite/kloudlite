@@ -181,6 +181,16 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to create EnvironmentSnapshotRestore controller: %w", err)
 	}
 
+	// Setup EnvironmentForkRequest controller
+	envForkRequestReconciler := &environment.EnvironmentForkRequestReconciler{
+		Client: mgr.GetClient(),
+		Logger: logger.With(zap.String("controller", "environmentforkrequest")),
+	}
+
+	if err = envForkRequestReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create EnvironmentForkRequest controller: %w", err)
+	}
+
 	logger.Info("Controllers initialized successfully")
 
 	return &Manager{
