@@ -18,7 +18,8 @@ import { deleteEnvironment } from '@/app/actions/environment.actions'
 interface DeleteEnvironmentConfirmProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  environmentName: string
+  environmentId: string // Full internal name for API (e.g., "karthik--test-db-env-fork")
+  displayName?: string // User-friendly name for display (e.g., "test-db-env-fork")
   onSuccess?: () => void
   currentUser?: string
 }
@@ -26,10 +27,13 @@ interface DeleteEnvironmentConfirmProps {
 export function DeleteEnvironmentConfirm({
   open,
   onOpenChange,
-  environmentName,
+  environmentId,
+  displayName,
   onSuccess,
   currentUser: _currentUser = 'test-user',
 }: DeleteEnvironmentConfirmProps) {
+  // Use displayName if provided, otherwise use environmentId
+  const nameToDisplay = displayName || environmentId
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,7 +88,7 @@ export function DeleteEnvironmentConfirm({
     setLoading(true)
 
     try {
-      const result = await deleteEnvironment(environmentName)
+      const result = await deleteEnvironment(environmentId)
       if (result.success) {
         onOpenChange(false)
         if (onSuccess) {
@@ -108,7 +112,7 @@ export function DeleteEnvironmentConfirm({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Environment</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the environment &quot;{environmentName}&quot;? This
+            Are you sure you want to delete the environment &quot;{nameToDisplay}&quot;? This
             action cannot be undone and will remove all associated resources.
           </AlertDialogDescription>
         </AlertDialogHeader>
