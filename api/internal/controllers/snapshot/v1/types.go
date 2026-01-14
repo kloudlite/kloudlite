@@ -391,7 +391,7 @@ type SnapshotRestoreList struct {
 // +kubebuilder:printcolumn:name="Secrets",type=integer,JSONPath=`.status.secretCount`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, ComposeSpec)
+// SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, EnvironmentSpec)
 // captured during environment snapshot creation. Namespaced with the snapshot.
 type SnapshotArtifacts struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -415,8 +415,16 @@ type SnapshotArtifactsSpec struct {
 	// +optional
 	Secrets string `json:"secrets,omitempty"`
 
+	// EnvironmentSpec contains the full Environment spec (JSON, base64 encoded)
+	// This captures the complete spec from the source Environment including
+	// compose, labels, annotations, resourceQuotas, visibility, etc.
+	// Used by EnvironmentForkRequest to create new environments from snapshots.
+	// +optional
+	EnvironmentSpec string `json:"environmentSpec,omitempty"`
+
 	// ComposeSpec contains the Environment's inline compose spec (JSON, base64 encoded)
-	// This captures spec.compose from the source Environment
+	// Deprecated: Use EnvironmentSpec instead which captures the full environment spec.
+	// Kept for backward compatibility with existing snapshots.
 	// +optional
 	ComposeSpec string `json:"composeSpec,omitempty"`
 }

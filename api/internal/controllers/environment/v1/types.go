@@ -653,3 +653,137 @@ type EnvironmentSnapshotRestoreList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []EnvironmentSnapshotRestore `json:"items"`
 }
+
+// ============================================================================
+// EnvironmentForkRequest - Orchestrates forking an environment from a snapshot
+// ============================================================================
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:printcolumn:name="NewEnv",type=string,JSONPath=`.spec.newEnvironmentName`
+// +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.sourceSnapshot.snapshotName`
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+
+// EnvironmentForkRequest orchestrates creating a new environment from a snapshot.
+// It reads the stored EnvironmentSpec from the snapshot's artifacts and creates
+// a new Environment with that spec. The snapshot data is then restored to the
+// new environment's target namespace.
+// Lives in the WorkMachine namespace (e.g., wm-{username}).
+type EnvironmentForkRequest struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   EnvironmentForkRequestSpec   `json:"spec,omitempty"`
+	Status EnvironmentForkRequestStatus `json:"status,omitempty"`
+}
+
+// EnvironmentForkRequestSpec defines the fork request parameters
+type EnvironmentForkRequestSpec struct {
+	// NewEnvironmentName is the name for the forked environment
+	// The environment will be created in the same namespace as this request
+	// +kubebuilder:validation:Required
+	NewEnvironmentName string `json:"newEnvironmentName"`
+
+	// SourceSnapshot references the snapshot to fork from
+	// +kubebuilder:validation:Required
+	SourceSnapshot SourceSnapshotRef `json:"sourceSnapshot"`
+
+	// Overrides allows overriding specific fields from the stored spec
+	// +optional
+	Overrides *EnvironmentSpecOverrides `json:"overrides,omitempty"`
+}
+
+// SourceSnapshotRef references a snapshot in a specific namespace
+type SourceSnapshotRef struct {
+	// SnapshotName is the name of the snapshot to fork from
+	// +kubebuilder:validation:Required
+	SnapshotName string `json:"snapshotName"`
+
+	// SourceNamespace is the namespace where the source snapshot exists
+	// This is typically the target namespace of the source environment
+	// +kubebuilder:validation:Required
+	SourceNamespace string `json:"sourceNamespace"`
+}
+
+// EnvironmentSpecOverrides allows overriding specific fields when forking
+type EnvironmentSpecOverrides struct {
+	// Visibility overrides the visibility from the stored spec
+	// +kubebuilder:validation:Enum=private;shared;open
+	// +optional
+	Visibility string `json:"visibility,omitempty"`
+
+	// OwnedBy overrides the owner from the stored spec
+	// +optional
+	OwnedBy string `json:"ownedBy,omitempty"`
+
+	// Labels are merged with labels from the stored spec
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Annotations are merged with annotations from the stored spec
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// ResourceQuotas overrides the resource quotas from the stored spec
+	// +optional
+	ResourceQuotas *ResourceQuotas `json:"resourceQuotas,omitempty"`
+}
+
+// EnvironmentForkRequestStatus defines the observed state
+type EnvironmentForkRequestStatus struct {
+	// Phase is the current phase of the fork request
+	// +kubebuilder:default=Pending
+	Phase EnvironmentForkRequestPhase `json:"phase,omitempty"`
+
+	// Message provides human-readable status information
+	// +optional
+	Message string `json:"message,omitempty"`
+
+	// CreatedEnvironment is the name of the environment that was created
+	// +optional
+	CreatedEnvironment string `json:"createdEnvironment,omitempty"`
+
+	// StartTime is when the fork request started processing
+	// +optional
+	StartTime *metav1.Time `json:"startTime,omitempty"`
+
+	// CompletionTime is when the fork request completed (success or failure)
+	// +optional
+	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+}
+
+// EnvironmentForkRequestPhase represents the current phase
+type EnvironmentForkRequestPhase string
+
+const (
+	// EnvironmentForkRequestPhasePending - Request created, waiting to start
+	EnvironmentForkRequestPhasePending EnvironmentForkRequestPhase = "Pending"
+
+	// EnvironmentForkRequestPhaseValidating - Validating snapshot and artifacts exist
+	EnvironmentForkRequestPhaseValidating EnvironmentForkRequestPhase = "Validating"
+
+	// EnvironmentForkRequestPhaseCreatingEnvironment - Creating the new environment
+	EnvironmentForkRequestPhaseCreatingEnvironment EnvironmentForkRequestPhase = "CreatingEnvironment"
+
+	// EnvironmentForkRequestPhaseWaitingForRestore - Waiting for snapshot restore to complete
+	EnvironmentForkRequestPhaseWaitingForRestore EnvironmentForkRequestPhase = "WaitingForRestore"
+
+	// EnvironmentForkRequestPhaseCompleted - Fork completed successfully
+	EnvironmentForkRequestPhaseCompleted EnvironmentForkRequestPhase = "Completed"
+
+	// EnvironmentForkRequestPhaseFailed - Fork failed
+	EnvironmentForkRequestPhaseFailed EnvironmentForkRequestPhase = "Failed"
+)
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// EnvironmentForkRequestList contains a list of EnvironmentForkRequest
+type EnvironmentForkRequestList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []EnvironmentForkRequest `json:"items"`
+}
