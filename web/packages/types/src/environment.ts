@@ -279,19 +279,6 @@ export interface EnvironmentUIModel {
   spec?: EnvironmentSpec
 }
 
-// Helper to parse environment name format "owner--displayName"
-function parseEnvironmentName(fullName: string): { owner: string; displayName: string } {
-  if (!fullName) return { owner: '', displayName: '' }
-  const parts = fullName.split('--')
-  if (parts.length >= 2) {
-    return {
-      owner: parts[0],
-      displayName: parts.slice(1).join('--'),
-    }
-  }
-  return { owner: '', displayName: fullName }
-}
-
 // Converter functions
 export function environmentToUIModel(env: Environment, owner?: string): EnvironmentUIModel {
   const createdDate = env.metadata?.creationTimestamp
@@ -333,15 +320,12 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
     status = env.spec.activated ? 'active' : 'inactive'
   }
 
-  // Parse the environment name to extract owner and display name
-  // Format is "owner--displayName" (e.g., "karthik--test-db-env")
-  const parsed = parseEnvironmentName(env.metadata?.name || '')
-  const resolvedOwner = owner || env.spec?.ownedBy || parsed.owner || env.spec?.labels?.['kloudlite.io/owned-by'] || 'unknown'
-  const displayName = parsed.displayName || env.metadata?.name || ''
+  // Get owner from spec or labels
+  const resolvedOwner = owner || env.spec?.ownedBy || env.spec?.labels?.['kloudlite.io/owned-by'] || 'unknown'
 
   return {
     id: env.metadata?.name || '',
-    name: displayName,
+    name: env.metadata?.name || '',
     owner: resolvedOwner,
     status,
     created: createdText,
