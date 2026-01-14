@@ -45,18 +45,26 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		environment.Status.ComposeStatus = &environmentsv1.CompositionStatus{}
 	}
 
-	// Check if environment is activated
+	// Check if environment should have active workloads
+	// We need to check both spec.activated AND status.state because:
+	// - spec.activated indicates user intent
+	// - status.state indicates current lifecycle state (snapping, deactivating, etc.)
 	environmentActivated := environment.Spec.Activated
 
-	// Check if snapshot restore is in progress
-	snapshotRestoreInProgress := false
-	if environment.Status.State == environmentsv1.EnvironmentStateSnapping {
-		snapshotRestoreInProgress = true
-	}
+	// Environment should be suspended (replicas=0) if:
+	// 1. Not activated (spec.activated=false)
+	// 2. Currently snapping (taking a snapshot)
+	// 3. Currently deactivating (transitioning to inactive)
+	// 4. Snapshot restore is in progress
+	shouldSuspend := !environmentActivated ||
+		environment.Status.State == environmentsv1.EnvironmentStateSnapping ||
+		environment.Status.State == environmentsv1.EnvironmentStateDeactivating
+
+	// Also suspend if snapshot restore is in progress
 	if environment.Status.SnapshotRestoreStatus != nil {
 		phase := environment.Status.SnapshotRestoreStatus.Phase
 		if phase != "" && phase != environmentsv1.SnapshotRestorePhaseCompleted {
-			snapshotRestoreInProgress = true
+			shouldSuspend = true
 		}
 	}
 
@@ -160,8 +168,8 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 			existsInCluster = false
 		}
 
-		// Scale to 0 if environment is inactive or snapshot restore in progress
-		if !environmentActivated || snapshotRestoreInProgress {
+		// Scale to 0 if environment should be suspended
+		if shouldSuspend {
 			if statefulSet.Spec.Replicas != nil && *statefulSet.Spec.Replicas > 0 {
 				if statefulSet.Annotations == nil {
 					statefulSet.Annotations = make(map[string]string)
@@ -173,7 +181,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 				statefulSet.Spec.Replicas = &zero
 			}
 		} else {
-			// Environment is active - restore original replicas from existing StatefulSet annotation
+			// Environment is active and not in transitional state - restore original replicas
 			if existsInCluster && existingSts.Annotations != nil {
 				if originalReplicas, exists := existingSts.Annotations[originalReplicasAnnotation]; exists {
 					if replicas, err := strconv.ParseInt(originalReplicas, 10, 32); err == nil && replicas > 0 {
