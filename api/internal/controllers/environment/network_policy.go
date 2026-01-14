@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
-	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/pkg/utils"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -250,20 +249,6 @@ func (r *EnvironmentReconciler) buildOwnerEnvironmentsIngressRule(ctx context.Co
 			},
 		},
 	}
-}
-
-// getWorkMachineNamespaceForUser looks up the WorkMachine namespace for a user email
-func (r *EnvironmentReconciler) getWorkMachineNamespaceForUser(ctx context.Context, userEmail string) (string, error) {
-	var wmList workmachinevl.WorkMachineList
-	if err := r.List(ctx, &wmList, client.MatchingFields{"spec.ownedBy": userEmail}); err != nil {
-		return "", fmt.Errorf("failed to list workmachines: %w", err)
-	}
-
-	if len(wmList.Items) == 0 {
-		return "", fmt.Errorf("no workmachine found for user %s", userEmail)
-	}
-
-	return wmList.Items[0].Spec.TargetNamespace, nil
 }
 
 // buildCustomIngressRules converts custom ingress rules from spec

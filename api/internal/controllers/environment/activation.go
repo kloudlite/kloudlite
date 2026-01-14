@@ -101,36 +101,3 @@ func (r *EnvironmentReconciler) suspendEnvironment(ctx context.Context, environm
 
 	return nil
 }
-
-// resumeEnvironment scales up deployments to their original replica counts
-func (r *EnvironmentReconciler) resumeEnvironment(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
-	namespace := environment.Spec.TargetNamespace
-	const originalReplicasAnnotation = "kloudlite.io/original-replicas"
-
-	// Scale up deployments
-	deployments := &appsv1.DeploymentList{}
-	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
-		return fmt.Errorf("failed to list deployments: %w", err)
-	}
-
-	for _, dep := range deployments.Items {
-		if dep.Annotations != nil {
-			if originalReplicasStr, exists := dep.Annotations[originalReplicasAnnotation]; exists {
-				var originalReplicas int32
-				if _, err := fmt.Sscanf(originalReplicasStr, "%d", &originalReplicas); err == nil && originalReplicas > 0 {
-					dep.Spec.Replicas = &originalReplicas
-					// Remove the annotation after restoring
-					delete(dep.Annotations, originalReplicasAnnotation)
-
-					if err := r.Update(ctx, &dep); err != nil {
-						logger.Error("Failed to scale up deployment", zap.String("deployment", dep.Name), zap.Error(err))
-					} else {
-						logger.Debug("Scaled up deployment", zap.String("deployment", dep.Name), zap.Int32("replicas", originalReplicas))
-					}
-				}
-			}
-		}
-	}
-
-	return nil
-}
