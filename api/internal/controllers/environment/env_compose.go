@@ -359,7 +359,8 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 			}
 
 			if equality.Semantic.DeepEqual(deploy.Spec, existingDeploy.Spec) &&
-				equality.Semantic.DeepEqual(deploy.Annotations, existingDeploy.Annotations) {
+				equality.Semantic.DeepEqual(deploy.Annotations, existingDeploy.Annotations) &&
+				equality.Semantic.DeepEqual(deploy.Labels, existingDeploy.Labels) {
 				return nil
 			}
 
