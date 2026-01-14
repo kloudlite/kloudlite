@@ -148,6 +148,18 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 			}
 		}
 
+		// Fetch existing StatefulSet to check for original-replicas annotation
+		existingSts := &appsv1.StatefulSet{}
+		existsInCluster := true
+		if err := r.Get(ctx, client.ObjectKey{Name: statefulSet.Name, Namespace: statefulSet.Namespace}, existingSts); err != nil {
+			if !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to fetch existing StatefulSet for replica check",
+					zap.String("name", statefulSet.Name),
+					zap.Error(err))
+			}
+			existsInCluster = false
+		}
+
 		// Scale to 0 if environment is inactive or snapshot restore in progress
 		if !environmentActivated || snapshotRestoreInProgress {
 			if statefulSet.Spec.Replicas != nil && *statefulSet.Spec.Replicas > 0 {
@@ -161,13 +173,19 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 				statefulSet.Spec.Replicas = &zero
 			}
 		} else {
-			// Environment is active - restore original replicas
-			if statefulSet.Annotations != nil {
-				if originalReplicas, exists := statefulSet.Annotations[originalReplicasAnnotation]; exists {
+			// Environment is active - restore original replicas from existing StatefulSet annotation
+			if existsInCluster && existingSts.Annotations != nil {
+				if originalReplicas, exists := existingSts.Annotations[originalReplicasAnnotation]; exists {
 					if replicas, err := strconv.ParseInt(originalReplicas, 10, 32); err == nil && replicas > 0 {
 						r := int32(replicas)
 						statefulSet.Spec.Replicas = &r
-						delete(statefulSet.Annotations, originalReplicasAnnotation)
+						// Mark annotation for deletion by ensuring it's not in the new object
+						// The applyComposeResource function will handle the actual annotation removal
+						if statefulSet.Annotations == nil {
+							statefulSet.Annotations = make(map[string]string)
+						}
+						// Don't copy the original-replicas annotation to the new object
+						// This will cause it to be removed during update
 					}
 				}
 			}
@@ -348,12 +366,17 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 				return err
 			}
 
-			// Preserve existing kloudlite annotations
+			// Preserve existing kloudlite annotations, except for annotations that need to be removed
 			if existingSts.Annotations != nil && sts.Annotations == nil {
 				sts.Annotations = make(map[string]string)
 			}
 			for k, v := range existingSts.Annotations {
 				if _, exists := sts.Annotations[k]; !exists && strings.HasPrefix(k, "kloudlite.io/") {
+					// Skip original-replicas annotation if it's not in the new object
+					// This allows the reconciler to remove it after restoring replicas
+					if k == originalReplicasAnnotation {
+						continue
+					}
 					sts.Annotations[k] = v
 				}
 			}
