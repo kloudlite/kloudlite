@@ -346,11 +346,17 @@ func (r *EnvironmentReconciler) findEnvironmentForComposeResource(ctx context.Co
 		return nil
 	}
 
+	envNamespace, ok := labels[environmentNamespaceLabel]
+	if !ok {
+		return nil
+	}
+
 	// Return a reconcile request for the environment
 	return []reconcile.Request{
 		{
 			NamespacedName: types.NamespacedName{
-				Name: envName,
+				Name:      envName,
+				Namespace: envNamespace,
 			},
 		},
 	}
