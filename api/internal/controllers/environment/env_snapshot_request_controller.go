@@ -356,22 +356,8 @@ func (r *EnvironmentSnapshotRequestReconciler) handleRestoringEnvironment(
 		return reconcile.Result{}, err
 	}
 
-	// Trigger environment reconciliation by updating a spec annotation
-	// This is necessary because the environment controller uses GenerationChangedPredicate
-	// which only triggers on spec changes, not status changes
-	// Without this, workloads won't be scaled back up after the snapshot completes
-	if err := r.Get(ctx, client.ObjectKeyFromObject(env), env); err != nil {
-		logger.Error("Failed to refetch environment for annotation update", zap.Error(err))
-		return reconcile.Result{}, err
-	}
-	if env.Annotations == nil {
-		env.Annotations = make(map[string]string)
-	}
-	env.Annotations["kloudlite.io/reconcile"] = fmt.Sprintf("%d", time.Now().Unix())
-	if err := r.Update(ctx, env); err != nil {
-		logger.Error("Failed to trigger environment reconciliation", zap.Error(err))
-		return reconcile.Result{}, err
-	}
+	// Note: Environment controller will automatically reconcile when the state changes
+	// from "snapping" to "active" due to its custom predicate that watches state transitions
 
 	// Mark request as completed
 	req.Status.Phase = environmentsv1.EnvironmentSnapshotRequestPhaseCompleted

@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -317,7 +318,7 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 // SetupWithManager sets up the controller with the Manager
 func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&environmentsv1.Environment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&environmentsv1.Environment{}, builder.WithPredicates(r.environmentPredicate())).
 		Owns(&corev1.Namespace{}).           // Watch Namespaces owned by Environments
 		Owns(&networkingv1.NetworkPolicy{}). // Watch NetworkPolicies owned by Environments
 		Watches(
@@ -331,6 +332,51 @@ func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 	// Note: We don't watch WorkMachine here because Environment references WorkMachine by name
 	// The Environment controller will handle WorkMachine ownership during reconciliation
+}
+
+// environmentPredicate returns a predicate that reconciles on:
+// 1. Spec changes (generation changes)
+// 2. Status state transitions that require reconciliation
+func (r *EnvironmentReconciler) environmentPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return true // Always reconcile on create
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldEnv, oldOk := e.ObjectOld.(*environmentsv1.Environment)
+			newEnv, newOk := e.ObjectNew.(*environmentsv1.Environment)
+			if !oldOk || !newOk {
+				return true // Reconcile if we can't determine the type
+			}
+
+			// Reconcile on generation change (spec change)
+			if oldEnv.Generation != newEnv.Generation {
+				return true
+			}
+
+			// Reconcile when state transitions from snapping/deactivating to active/inactive
+			// These transitions require scaling workloads up or down
+			oldState := oldEnv.Status.State
+			newState := newEnv.Status.State
+			if oldState != newState {
+				// Reconcile when transitioning OUT of snapping or deactivating
+				if oldState == environmentsv1.EnvironmentStateSnapping ||
+					oldState == environmentsv1.EnvironmentStateDeactivating {
+					return true
+				}
+				// Reconcile when transitioning INTO snapping or deactivating
+				if newState == environmentsv1.EnvironmentStateSnapping ||
+					newState == environmentsv1.EnvironmentStateDeactivating {
+					return true
+				}
+			}
+
+			return false
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return true // Always reconcile on delete
+		},
+	}
 }
 
 // findEnvironmentForComposeResource finds the environment that owns a compose resource
