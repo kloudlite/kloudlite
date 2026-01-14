@@ -107,9 +107,8 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 		return
 	}
 
-	// Prefix environment name with username to avoid conflicts
-	// Format: {username}--{envname}
-	envName := fmt.Sprintf("%s--%s", username, req.Name)
+	// Use the provided name directly - namespace already provides user isolation
+	envName := req.Name
 
 	// Create Environment object with ownership
 	env := &environmentsv1.Environment{

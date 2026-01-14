@@ -758,8 +758,8 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
-	// Create new environment name: {username}--{name}
-	envName := fmt.Sprintf("%s--%s", username, req.Name)
+	// Use the provided name directly - namespace already provides user isolation
+	envName := req.Name
 
 	// Create EnvironmentForkRequest - the controller will handle the actual environment creation
 	forkRequest := &envv1.EnvironmentForkRequest{
