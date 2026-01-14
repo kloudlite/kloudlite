@@ -389,3 +389,82 @@ func isEnvironmentSnapshotRestoreInProgress(phase envv1.EnvironmentSnapshotResto
 		return true
 	}
 }
+
+// ValidateSnapshot handles validation webhook for Snapshot DELETE operations
+func (w *SnapshotWebhook) ValidateSnapshot(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		w.logger.Error("Failed to read request body: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	var admissionReview admissionv1.AdmissionReview
+	if err := json.Unmarshal(body, &admissionReview); err != nil {
+		w.logger.Error("Failed to unmarshal admission review: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to unmarshal admission review"})
+		return
+	}
+
+	response := w.handleSnapshotValidation(admissionReview.Request)
+	admissionReview.Response = response
+	admissionReview.Response.UID = admissionReview.Request.UID
+
+	c.JSON(http.StatusOK, admissionReview)
+}
+
+func (w *SnapshotWebhook) handleSnapshotValidation(req *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+	// Only validate DELETE operations
+	if req.Operation != admissionv1.Delete {
+		return &admissionv1.AdmissionResponse{Allowed: true}
+	}
+
+	var snapshot snapshotv1.Snapshot
+	if err := json.Unmarshal(req.OldObject.Raw, &snapshot); err != nil {
+		w.logger.Error("Failed to unmarshal Snapshot: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: "Failed to unmarshal Snapshot object",
+			},
+		}
+	}
+
+	if err := w.validateSnapshotDelete(&snapshot); err != nil {
+		w.logger.Warn("Snapshot deletion validation failed: " + err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	}
+
+	return &admissionv1.AdmissionResponse{Allowed: true}
+}
+
+func (w *SnapshotWebhook) validateSnapshotDelete(snapshot *snapshotv1.Snapshot) error {
+	ctx := context.Background()
+
+	// Get snapshot's namespace
+	snapshotNamespace := snapshot.Namespace
+
+	// List ALL environments to find the one with targetNamespace == snapshot.namespace
+	environments := &envv1.EnvironmentList{}
+	if err := w.k8sClient.List(ctx, environments); err != nil {
+		return fmt.Errorf("failed to list environments: %v", err)
+	}
+
+	// Find environment that targets this namespace
+	for _, env := range environments.Items {
+		if env.Spec.TargetNamespace == snapshotNamespace {
+			// Check if this snapshot is the current snapshot for the environment
+			if env.Status.LastRestoredSnapshot != nil && env.Status.LastRestoredSnapshot.Name == snapshot.Name {
+				return fmt.Errorf("cannot delete snapshot '%s': it is the current snapshot for environment '%s' in namespace '%s'",
+					snapshot.Name, env.Name, env.Namespace)
+			}
+		}
+	}
+
+	return nil
+}
