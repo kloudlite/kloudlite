@@ -76,7 +76,18 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 				Resources: []string{"snapshots/status", "snapshotstores/status"},
 				Verbs:     []string{"get", "update", "patch"},
 			},
-			// SnapshotRestores - namespace-scoped
+			// SnapshotRequests - for creating snapshots
+			{
+				APIGroups: []string{"snapshots.kloudlite.io"},
+				Resources: []string{"snapshotrequests"},
+				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"snapshots.kloudlite.io"},
+				Resources: []string{"snapshotrequests/status"},
+				Verbs:     []string{"get", "update", "patch"},
+			},
+			// SnapshotRestores - for restoring snapshots
 			{
 				APIGroups: []string{"snapshots.kloudlite.io"},
 				Resources: []string{"snapshotrestores"},
