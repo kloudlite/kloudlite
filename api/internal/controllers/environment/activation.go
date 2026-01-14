@@ -67,34 +67,34 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 	return nil
 }
 
-// suspendEnvironment scales down all deployments in the environment
+// suspendEnvironment scales down all StatefulSets in the environment
 // It stores the original replica count in annotations for later resumption
 func (r *EnvironmentReconciler) suspendEnvironment(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	namespace := environment.Spec.TargetNamespace
 	const originalReplicasAnnotation = "kloudlite.io/original-replicas"
 
-	// Scale down deployments
-	deployments := &appsv1.DeploymentList{}
-	if err := r.List(ctx, deployments, client.InNamespace(namespace)); err != nil {
-		return fmt.Errorf("failed to list deployments: %w", err)
+	// Scale down StatefulSets
+	statefulSets := &appsv1.StatefulSetList{}
+	if err := r.List(ctx, statefulSets, client.InNamespace(namespace)); err != nil {
+		return fmt.Errorf("failed to list StatefulSets: %w", err)
 	}
 
-	for _, dep := range deployments.Items {
-		if dep.Spec.Replicas != nil && *dep.Spec.Replicas > 0 {
+	for _, sts := range statefulSets.Items {
+		if sts.Spec.Replicas != nil && *sts.Spec.Replicas > 0 {
 			// Store original replica count in annotation
-			if dep.Annotations == nil {
-				dep.Annotations = make(map[string]string)
+			if sts.Annotations == nil {
+				sts.Annotations = make(map[string]string)
 			}
-			if _, exists := dep.Annotations[originalReplicasAnnotation]; !exists {
-				dep.Annotations[originalReplicasAnnotation] = fmt.Sprintf("%d", *dep.Spec.Replicas)
+			if _, exists := sts.Annotations[originalReplicasAnnotation]; !exists {
+				sts.Annotations[originalReplicasAnnotation] = fmt.Sprintf("%d", *sts.Spec.Replicas)
 			}
 
 			zero := int32(0)
-			dep.Spec.Replicas = &zero
-			if err := r.Update(ctx, &dep); err != nil {
-				logger.Error("Failed to scale down deployment", zap.String("deployment", dep.Name), zap.Error(err))
+			sts.Spec.Replicas = &zero
+			if err := r.Update(ctx, &sts); err != nil {
+				logger.Error("Failed to scale down StatefulSet", zap.String("statefulset", sts.Name), zap.Error(err))
 			} else {
-				logger.Debug("Scaled down deployment", zap.String("deployment", dep.Name))
+				logger.Debug("Scaled down StatefulSet", zap.String("statefulset", sts.Name))
 			}
 		}
 	}
