@@ -376,8 +376,16 @@ func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snap
 		}
 	}
 
-	// Apply ComposeSpec to the target Environment
-	if artifacts.Spec.ComposeSpec != "" {
+	// Apply Compose spec to the environment
+	// If EnvironmentSpec is present, it means the environment was created via EnvironmentForkRequest
+	// which already applied the full spec - so we skip applying ComposeSpec
+	// If only ComposeSpec is present (legacy), we apply it to the environment
+	if artifacts.Spec.EnvironmentSpec != "" {
+		// Environment was created from EnvironmentSpec via ForkRequest
+		// The spec is already applied, just log it
+		logger.Info("Environment spec was applied during fork creation (EnvironmentSpec present)")
+	} else if artifacts.Spec.ComposeSpec != "" {
+		// Legacy: apply ComposeSpec for backward compatibility
 		composeData, err := base64.StdEncoding.DecodeString(artifacts.Spec.ComposeSpec)
 		if err != nil {
 			logger.Warn("Failed to decode compose spec", zap.Error(err))
@@ -391,7 +399,7 @@ func (r *EnvironmentReconciler) applySnapshotArtifacts(ctx context.Context, snap
 				if err := r.Update(ctx, environment); err != nil {
 					logger.Warn("Failed to update environment with compose spec", zap.Error(err))
 				} else {
-					logger.Info("Applied compose spec to environment from snapshot")
+					logger.Info("Applied compose spec to environment from snapshot (legacy)")
 				}
 			}
 		}
