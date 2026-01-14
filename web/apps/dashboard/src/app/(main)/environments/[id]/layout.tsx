@@ -35,16 +35,6 @@ function formatTimeAgo(timestamp?: string): string {
   return `${months} month${months > 1 ? 's' : ''} ago`
 }
 
-// Parse environment name format "owner--displayName" to extract display name
-function parseEnvironmentDisplayName(fullName: string): string {
-  if (!fullName) return ''
-  const parts = fullName.split('--')
-  if (parts.length >= 2) {
-    return parts.slice(1).join('--')
-  }
-  return fullName
-}
-
 export default async function EnvironmentLayout({ children, params }: LayoutProps) {
   const session = await getSession()
 
@@ -62,11 +52,10 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
     const data = await getEnvironmentDetails(id)
     const env = data.environment
 
-    const displayName = parseEnvironmentDisplayName(env.metadata.name)
     environment = {
       id,
       name: env.metadata.name,
-      displayName: `${env.spec.ownedBy || 'unknown'}/${displayName}`,
+      displayName: `${env.spec.ownedBy || 'unknown'}/${env.metadata.name}`,
       owner: env.spec.ownedBy || 'unknown',
       status: env.status?.state || 'unknown',
       created: formatTimeAgo(env.metadata.creationTimestamp),

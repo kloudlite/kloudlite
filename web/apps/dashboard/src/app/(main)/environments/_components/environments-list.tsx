@@ -63,16 +63,6 @@ function formatForkingPhase(phase: string | undefined): string {
   return phaseMap[phase] || phase
 }
 
-// Format environment name to show just the simple name (e.g., "karthik--sample-test2" -> "sample-test2")
-function formatEnvironmentName(fullName: string): string {
-  if (!fullName) return ''
-  // Environment names are formatted as "owner--name", extract just the name part
-  const parts = fullName.split('--')
-  if (parts.length >= 2) {
-    return parts.slice(1).join('--')
-  }
-  return fullName
-}
 
 // Format backend error messages into user-friendly text
 function formatErrorMessage(error: string): string {
@@ -450,7 +440,7 @@ export function EnvironmentsList({
                       <span className="text-muted-foreground text-xs">
                         {env.sourceForkingStatus ? (
                           <span className="italic">
-                            → {formatEnvironmentName(env.sourceForkingStatus.targetEnvironmentName)}
+                            → {env.sourceForkingStatus.targetEnvironmentName}
                           </span>
                         ) : (
                           <span className="flex items-center gap-2">
