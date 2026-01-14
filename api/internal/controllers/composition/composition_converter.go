@@ -338,7 +338,7 @@ func convertServiceToStatefulSet(
 }
 
 // convertServiceToK8sService converts docker-compose service ports to Kubernetes Service
-// Creates a headless service (ClusterIP: None) for StatefulSet DNS resolution
+// Creates a headless service (ClusterIP: None) if no ports are exposed
 func convertServiceToK8sService(
 	serviceName string,
 	service composego.ServiceConfig,
@@ -372,8 +372,14 @@ func convertServiceToK8sService(
 		ports = append(ports, servicePort)
 	}
 
-	// Always create headless service for StatefulSet DNS resolution
-	// StatefulSets require a headless service for stable pod network identities
+	// Determine ClusterIP based on whether ports are exposed
+	clusterIP := "" // Default: Kubernetes assigns an IP
+
+	// If no ports are exposed, create a headless service for DNS resolution
+	if len(ports) == 0 {
+		clusterIP = "None"
+	}
+
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
@@ -383,7 +389,7 @@ func convertServiceToK8sService(
 		Spec: corev1.ServiceSpec{
 			Selector:  labels,
 			Ports:     ports,
-			ClusterIP: "None", // Headless service required for StatefulSet
+			ClusterIP: clusterIP,
 		},
 	}
 }
