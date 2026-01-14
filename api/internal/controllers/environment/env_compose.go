@@ -22,6 +22,7 @@ import (
 const (
 	// Labels and annotations for compose resources
 	dockerCompositionLabel     = "kloudlite.io/docker-composition"
+	environmentNamespaceLabel  = "kloudlite.io/environment-namespace"
 	originalReplicasAnnotation = "kloudlite.io/original-replicas"
 )
 
@@ -281,12 +282,13 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 	// Instead, we use labels to track ownership and rely on the Environment's finalizer
 	// to clean up the target namespace (which cascades to all resources in it).
 
-	// Ensure the docker-composition label is set
+	// Ensure the docker-composition and environment-namespace labels are set
 	labels := resource.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
 	labels[dockerCompositionLabel] = environment.Name
+	labels[environmentNamespaceLabel] = environment.Namespace
 	resource.SetLabels(labels)
 
 	// Try to get existing resource
