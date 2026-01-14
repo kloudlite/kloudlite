@@ -118,11 +118,12 @@ export async function restoreSnapshot(snapshotName: string) {
 
 /**
  * Server action to restore an environment from a snapshot
+ * sourceNamespace is optional - if not provided, uses environment's own target namespace
  */
 export async function restoreEnvironmentFromSnapshot(
   environmentName: string,
   snapshotName: string,
-  sourceNamespace: string,
+  sourceNamespace?: string,
   activateAfterRestore?: boolean
 ) {
   try {

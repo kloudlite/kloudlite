@@ -812,7 +812,7 @@ func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
 // RestoreEnvironmentFromSnapshotRequest is the request body for restoring an environment from a snapshot
 type RestoreEnvironmentFromSnapshotRequest struct {
 	SnapshotName         string `json:"snapshotName" binding:"required"`
-	SourceNamespace      string `json:"sourceNamespace" binding:"required"`
+	SourceNamespace      string `json:"sourceNamespace"` // Optional: defaults to environment's target namespace
 	ActivateAfterRestore bool   `json:"activateAfterRestore"`
 }
 
@@ -861,11 +861,18 @@ func (h *SnapshotHandlers) RestoreEnvironmentFromSnapshot(c *gin.Context) {
 		return
 	}
 
+	// Use sourceNamespace from request if provided, otherwise use environment's target namespace
+	// This allows restoring from snapshots in different namespaces (for forking scenarios)
+	snapshotNamespace := req.SourceNamespace
+	if snapshotNamespace == "" {
+		snapshotNamespace = env.Spec.TargetNamespace
+	}
+
 	// Get the snapshot to verify it exists and is ready (snapshots are namespaced)
 	snapshot := &snapshotv1.Snapshot{}
-	if err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{Name: req.SnapshotName, Namespace: req.SourceNamespace}, snapshot); err != nil {
-		h.logger.Error("Failed to get snapshot", zap.String("snapshot", req.SnapshotName), zap.String("namespace", req.SourceNamespace), zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("snapshot %s not found in namespace %s", req.SnapshotName, req.SourceNamespace)})
+	if err := h.k8sClient.Get(c.Request.Context(), client.ObjectKey{Name: req.SnapshotName, Namespace: snapshotNamespace}, snapshot); err != nil {
+		h.logger.Error("Failed to get snapshot", zap.String("snapshot", req.SnapshotName), zap.String("namespace", snapshotNamespace), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("snapshot %s not found in namespace %s", req.SnapshotName, snapshotNamespace)})
 		return
 	}
 
