@@ -716,7 +716,6 @@ type CreateEnvironmentFromSnapshotRequest struct {
 	Name            string `json:"name" binding:"required"`
 	SnapshotName    string `json:"snapshotName" binding:"required"`
 	SourceNamespace string `json:"sourceNamespace" binding:"required"`
-	Activated       bool   `json:"activated"`
 }
 
 // CreateEnvironmentFromSnapshot creates a new environment from a snapshot by creating an EnvironmentForkRequest
