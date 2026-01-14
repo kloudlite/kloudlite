@@ -111,10 +111,11 @@ func (h *EnvironmentHandlers) CreateEnvironment(c *gin.Context) {
 	envName := req.Name
 
 	// Create Environment object with ownership
+	// Use wm.Spec.TargetNamespace since WorkMachine is cluster-scoped
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      envName,
-			Namespace: wm.Namespace,
+			Namespace: wm.Spec.TargetNamespace,
 		},
 		Spec: req.Spec,
 	}
