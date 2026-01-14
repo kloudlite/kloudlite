@@ -298,9 +298,9 @@ type ServiceStatus struct {
 
 // DeployedResources tracks Kubernetes resources created for the composition
 type DeployedResources struct {
-	// Deployments created
+	// StatefulSets created
 	// +optional
-	Deployments []string `json:"deployments,omitempty"`
+	StatefulSets []string `json:"statefulsets,omitempty"`
 
 	// Services created
 	// +optional

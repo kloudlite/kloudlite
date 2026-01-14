@@ -109,7 +109,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	}
 
 	logger.Info("Converted to Kubernetes resources",
-		zap.Int("deployments", len(resources.Deployments)),
+		zap.Int("statefulsets", len(resources.StatefulSets)),
 		zap.Int("services", len(resources.Services)),
 		zap.Int("pvcs", len(resources.PVCs)))
 
@@ -122,9 +122,9 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		}
 	}
 
-	// Apply Deployments
-	deployedDeployments := make([]string, 0)
-	for _, deployment := range resources.Deployments {
+	// Apply StatefulSets
+	deployedStatefulSets := make([]string, 0)
+	for _, statefulSet := range resources.StatefulSets {
 		// Apply nodeName from WorkMachine
 		if environment.Spec.WorkMachineName != "" {
 			wm, err := r.getWorkMachine(ctx, environment.Spec.WorkMachineName)
@@ -133,11 +133,11 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 					zap.String("workmachine", environment.Spec.WorkMachineName),
 					zap.Error(err))
 			} else {
-				if deployment.Spec.Template.Spec.NodeSelector == nil {
-					deployment.Spec.Template.Spec.NodeSelector = make(map[string]string)
+				if statefulSet.Spec.Template.Spec.NodeSelector == nil {
+					statefulSet.Spec.Template.Spec.NodeSelector = make(map[string]string)
 				}
-				deployment.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] = wm.Name
-				deployment.Spec.Template.Spec.Tolerations = []corev1.Toleration{
+				statefulSet.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] = wm.Name
+				statefulSet.Spec.Template.Spec.Tolerations = []corev1.Toleration{
 					{
 						Key:      "kloudlite.io/workmachine",
 						Operator: corev1.TolerationOpEqual,
@@ -150,35 +150,35 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 
 		// Scale to 0 if environment is inactive or snapshot restore in progress
 		if !environmentActivated || snapshotRestoreInProgress {
-			if deployment.Spec.Replicas != nil && *deployment.Spec.Replicas > 0 {
-				if deployment.Annotations == nil {
-					deployment.Annotations = make(map[string]string)
+			if statefulSet.Spec.Replicas != nil && *statefulSet.Spec.Replicas > 0 {
+				if statefulSet.Annotations == nil {
+					statefulSet.Annotations = make(map[string]string)
 				}
-				if _, exists := deployment.Annotations[originalReplicasAnnotation]; !exists {
-					deployment.Annotations[originalReplicasAnnotation] = fmt.Sprintf("%d", *deployment.Spec.Replicas)
+				if _, exists := statefulSet.Annotations[originalReplicasAnnotation]; !exists {
+					statefulSet.Annotations[originalReplicasAnnotation] = fmt.Sprintf("%d", *statefulSet.Spec.Replicas)
 				}
 				zero := int32(0)
-				deployment.Spec.Replicas = &zero
+				statefulSet.Spec.Replicas = &zero
 			}
 		} else {
 			// Environment is active - restore original replicas
-			if deployment.Annotations != nil {
-				if originalReplicas, exists := deployment.Annotations[originalReplicasAnnotation]; exists {
+			if statefulSet.Annotations != nil {
+				if originalReplicas, exists := statefulSet.Annotations[originalReplicasAnnotation]; exists {
 					if replicas, err := strconv.ParseInt(originalReplicas, 10, 32); err == nil && replicas > 0 {
 						r := int32(replicas)
-						deployment.Spec.Replicas = &r
-						delete(deployment.Annotations, originalReplicasAnnotation)
+						statefulSet.Spec.Replicas = &r
+						delete(statefulSet.Annotations, originalReplicasAnnotation)
 					}
 				}
 			}
 		}
 
-		if err := r.applyComposeResource(ctx, deployment, environment, logger); err != nil {
+		if err := r.applyComposeResource(ctx, statefulSet, environment, logger); err != nil {
 			environment.Status.ComposeStatus.State = environmentsv1.CompositionStateFailed
-			environment.Status.ComposeStatus.Message = fmt.Sprintf("Failed to apply Deployment %s: %v", deployment.Name, err)
+			environment.Status.ComposeStatus.Message = fmt.Sprintf("Failed to apply StatefulSet %s: %v", statefulSet.Name, err)
 			return true, nil
 		}
-		deployedDeployments = append(deployedDeployments, deployment.Name)
+		deployedStatefulSets = append(deployedStatefulSets, statefulSet.Name)
 	}
 
 	// Apply Services
@@ -199,20 +199,20 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	}
 
 	// Cleanup removed resources
-	if err := r.cleanupRemovedComposeResources(ctx, environment, oldDeployedResources, deployedDeployments, deployedServices, deployedPVCs, logger); err != nil {
+	if err := r.cleanupRemovedComposeResources(ctx, environment, oldDeployedResources, deployedStatefulSets, deployedServices, deployedPVCs, logger); err != nil {
 		logger.Warn("Failed to cleanup removed resources", zap.Error(err))
 	}
 
 	// Update deployed resources in status
 	environment.Status.ComposeStatus.DeployedResources = &environmentsv1.DeployedResources{
-		Deployments: deployedDeployments,
-		Services:    deployedServices,
-		PVCs:        deployedPVCs,
+		StatefulSets: deployedStatefulSets,
+		Services:     deployedServices,
+		PVCs:         deployedPVCs,
 	}
 	environment.Status.ComposeStatus.ServicesCount = int32(len(resources.ServiceNames))
 
-	// Check deployment health
-	healthResult, err := r.checkComposeDeploymentHealth(ctx, environment, logger)
+	// Check StatefulSet health
+	healthResult, err := r.checkComposeStatefulSetHealth(ctx, environment, logger)
 	if err != nil {
 		environment.Status.ComposeStatus.State = environmentsv1.CompositionStateRunning
 		environment.Status.ComposeStatus.Message = "Deployed (health check unavailable)"
@@ -224,7 +224,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	}
 
 	logger.Info("Compose deployment completed",
-		zap.Int("deployments", len(deployedDeployments)),
+		zap.Int("statefulsets", len(deployedStatefulSets)),
 		zap.Int("services", len(deployedServices)),
 		zap.String("state", string(environment.Status.ComposeStatus.State)))
 
@@ -340,32 +340,32 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 		}
 	}
 
-	// Handle Deployment updates with retry
-	if deploy, ok := resource.(*appsv1.Deployment); ok {
+	// Handle StatefulSet updates with retry
+	if sts, ok := resource.(*appsv1.StatefulSet); ok {
 		return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			existingDeploy := &appsv1.Deployment{}
-			if err := r.Get(ctx, client.ObjectKeyFromObject(deploy), existingDeploy); err != nil {
+			existingSts := &appsv1.StatefulSet{}
+			if err := r.Get(ctx, client.ObjectKeyFromObject(sts), existingSts); err != nil {
 				return err
 			}
 
 			// Preserve existing kloudlite annotations
-			if existingDeploy.Annotations != nil && deploy.Annotations == nil {
-				deploy.Annotations = make(map[string]string)
+			if existingSts.Annotations != nil && sts.Annotations == nil {
+				sts.Annotations = make(map[string]string)
 			}
-			for k, v := range existingDeploy.Annotations {
-				if _, exists := deploy.Annotations[k]; !exists && strings.HasPrefix(k, "kloudlite.io/") {
-					deploy.Annotations[k] = v
+			for k, v := range existingSts.Annotations {
+				if _, exists := sts.Annotations[k]; !exists && strings.HasPrefix(k, "kloudlite.io/") {
+					sts.Annotations[k] = v
 				}
 			}
 
-			if equality.Semantic.DeepEqual(deploy.Spec, existingDeploy.Spec) &&
-				equality.Semantic.DeepEqual(deploy.Annotations, existingDeploy.Annotations) &&
-				equality.Semantic.DeepEqual(deploy.Labels, existingDeploy.Labels) {
+			if equality.Semantic.DeepEqual(sts.Spec, existingSts.Spec) &&
+				equality.Semantic.DeepEqual(sts.Annotations, existingSts.Annotations) &&
+				equality.Semantic.DeepEqual(sts.Labels, existingSts.Labels) {
 				return nil
 			}
 
-			deploy.SetResourceVersion(existingDeploy.GetResourceVersion())
-			return r.Update(ctx, deploy)
+			sts.SetResourceVersion(existingSts.GetResourceVersion())
+			return r.Update(ctx, sts)
 		})
 	}
 
@@ -374,21 +374,21 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 }
 
 // cleanupRemovedComposeResources deletes resources that are no longer in the compose file
-func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Context, environment *environmentsv1.Environment, oldResources *environmentsv1.DeployedResources, currentDeployments, currentServices, currentPVCs []string, logger *zap.Logger) error {
+func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Context, environment *environmentsv1.Environment, oldResources *environmentsv1.DeployedResources, currentStatefulSets, currentServices, currentPVCs []string, logger *zap.Logger) error {
 	if oldResources == nil {
 		return nil
 	}
 
 	namespace := environment.Spec.TargetNamespace
-	currentDeploymentSet := makeStringSet(currentDeployments)
+	currentStatefulSetSet := makeStringSet(currentStatefulSets)
 	currentServiceSet := makeStringSet(currentServices)
 	currentPVCSet := makeStringSet(currentPVCs)
 
-	// Delete removed deployments
-	for _, name := range oldResources.Deployments {
-		if !currentDeploymentSet[name] {
-			logger.Info("Deleting removed deployment", zap.String("name", name))
-			if err := r.Delete(ctx, &appsv1.Deployment{
+	// Delete removed StatefulSets
+	for _, name := range oldResources.StatefulSets {
+		if !currentStatefulSetSet[name] {
+			logger.Info("Deleting removed StatefulSet", zap.String("name", name))
+			if err := r.Delete(ctx, &appsv1.StatefulSet{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 			}); err != nil && !apierrors.IsNotFound(err) {
 				return err
@@ -423,32 +423,32 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 	return nil
 }
 
-// checkComposeDeploymentHealth checks the health of compose deployments
-func (r *EnvironmentReconciler) checkComposeDeploymentHealth(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (*ComposeHealthResult, error) {
+// checkComposeStatefulSetHealth checks the health of compose StatefulSets
+func (r *EnvironmentReconciler) checkComposeStatefulSetHealth(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (*ComposeHealthResult, error) {
 	if environment.Status.ComposeStatus == nil ||
 		environment.Status.ComposeStatus.DeployedResources == nil ||
-		len(environment.Status.ComposeStatus.DeployedResources.Deployments) == 0 {
+		len(environment.Status.ComposeStatus.DeployedResources.StatefulSets) == 0 {
 		return &ComposeHealthResult{
 			State:   environmentsv1.CompositionStateRunning,
-			Message: "No deployments to check",
+			Message: "No StatefulSets to check",
 		}, nil
 	}
 
 	result := &ComposeHealthResult{
 		Services:      make([]environmentsv1.ServiceStatus, 0),
-		ServicesCount: int32(len(environment.Status.ComposeStatus.DeployedResources.Deployments)),
+		ServicesCount: int32(len(environment.Status.ComposeStatus.DeployedResources.StatefulSets)),
 	}
 
 	var failedServices []string
 	var degradedServices []string
 	var pendingServices []string
 
-	for _, deploymentName := range environment.Status.ComposeStatus.DeployedResources.Deployments {
-		deployment := &appsv1.Deployment{}
+	for _, stsName := range environment.Status.ComposeStatus.DeployedResources.StatefulSets {
+		sts := &appsv1.StatefulSet{}
 		err := r.Get(ctx, client.ObjectKey{
 			Namespace: environment.Spec.TargetNamespace,
-			Name:      deploymentName,
-		}, deployment)
+			Name:      stsName,
+		}, sts)
 		if err != nil {
 			continue
 		}
@@ -458,14 +458,14 @@ func (r *EnvironmentReconciler) checkComposeDeploymentHealth(ctx context.Context
 		svc := &corev1.Service{}
 		if err := r.Get(ctx, client.ObjectKey{
 			Namespace: environment.Spec.TargetNamespace,
-			Name:      deploymentName,
+			Name:      stsName,
 		}, svc); err == nil {
 			for _, port := range svc.Spec.Ports {
 				servicePorts = append(servicePorts, port.Port)
 			}
 		}
 
-		serviceStatus := r.checkSingleDeploymentHealth(ctx, deployment, servicePorts, logger)
+		serviceStatus := r.checkSingleStatefulSetHealth(ctx, sts, servicePorts, logger)
 		result.Services = append(result.Services, serviceStatus)
 
 		switch serviceStatus.State {
@@ -516,22 +516,22 @@ type ComposeHealthResult struct {
 	ServicesCount int32
 }
 
-// checkSingleDeploymentHealth checks health of a single deployment
-func (r *EnvironmentReconciler) checkSingleDeploymentHealth(ctx context.Context, deployment *appsv1.Deployment, ports []int32, logger *zap.Logger) environmentsv1.ServiceStatus {
+// checkSingleStatefulSetHealth checks health of a single StatefulSet
+func (r *EnvironmentReconciler) checkSingleStatefulSetHealth(ctx context.Context, sts *appsv1.StatefulSet, ports []int32, logger *zap.Logger) environmentsv1.ServiceStatus {
 	status := environmentsv1.ServiceStatus{
-		Name:     deployment.Name,
+		Name:     sts.Name,
 		State:    "pending",
 		Replicas: 0,
 		Ports:    ports,
 	}
 
-	if deployment.Spec.Replicas != nil {
-		status.Replicas = *deployment.Spec.Replicas
+	if sts.Spec.Replicas != nil {
+		status.Replicas = *sts.Spec.Replicas
 	}
-	status.ReadyReplicas = deployment.Status.ReadyReplicas
+	status.ReadyReplicas = sts.Status.ReadyReplicas
 
-	if len(deployment.Spec.Template.Spec.Containers) > 0 {
-		status.Image = deployment.Spec.Template.Spec.Containers[0].Image
+	if len(sts.Spec.Template.Spec.Containers) > 0 {
+		status.Image = sts.Spec.Template.Spec.Containers[0].Image
 	}
 
 	// If replicas is 0, mark as stopped
@@ -541,28 +541,14 @@ func (r *EnvironmentReconciler) checkSingleDeploymentHealth(ctx context.Context,
 		return status
 	}
 
-	// Check deployment conditions
-	for _, condition := range deployment.Status.Conditions {
-		if condition.Type == appsv1.DeploymentProgressing && condition.Reason == "ProgressDeadlineExceeded" {
-			status.State = "failed"
-			status.Message = "Deployment progress deadline exceeded"
-			return status
-		}
-		if condition.Type == appsv1.DeploymentReplicaFailure && condition.Status == corev1.ConditionTrue {
-			status.State = "failed"
-			status.Message = condition.Message
-			return status
-		}
-	}
-
 	// Check pod status
 	podList := &corev1.PodList{}
-	matchLabels := deployment.Spec.Selector.MatchLabels
+	matchLabels := sts.Spec.Selector.MatchLabels
 	if err := r.List(ctx, podList,
-		client.InNamespace(deployment.Namespace),
+		client.InNamespace(sts.Namespace),
 		client.MatchingLabels(matchLabels),
 	); err != nil {
-		if deployment.Status.ReadyReplicas >= status.Replicas && status.Replicas > 0 {
+		if sts.Status.ReadyReplicas >= status.Replicas && status.Replicas > 0 {
 			status.State = "running"
 			status.Message = "All replicas ready"
 			return status
@@ -603,14 +589,14 @@ func (r *EnvironmentReconciler) checkSingleDeploymentHealth(ctx context.Context,
 	}
 
 	// No errors - check if ready
-	if deployment.Status.ReadyReplicas >= status.Replicas && status.Replicas > 0 {
+	if sts.Status.ReadyReplicas >= status.Replicas && status.Replicas > 0 {
 		status.State = "running"
 		status.Message = "All replicas ready"
 		return status
 	}
 
 	status.State = "starting"
-	status.Message = fmt.Sprintf("%d of %d replicas ready", deployment.Status.ReadyReplicas, status.Replicas)
+	status.Message = fmt.Sprintf("%d of %d replicas ready", sts.Status.ReadyReplicas, status.Replicas)
 	return status
 }
 
@@ -653,12 +639,12 @@ func (r *EnvironmentReconciler) cleanupComposeResources(ctx context.Context, env
 	namespace := environment.Spec.TargetNamespace
 	labelSelector := client.MatchingLabels{dockerCompositionLabel: environment.Name}
 
-	// Delete deployments
-	deploymentList := &appsv1.DeploymentList{}
-	if err := r.List(ctx, deploymentList, client.InNamespace(namespace), labelSelector); err == nil {
-		for _, d := range deploymentList.Items {
-			if err := r.Delete(ctx, &d); err != nil && !apierrors.IsNotFound(err) {
-				logger.Warn("Failed to delete deployment", zap.String("name", d.Name), zap.Error(err))
+	// Delete StatefulSets
+	stsList := &appsv1.StatefulSetList{}
+	if err := r.List(ctx, stsList, client.InNamespace(namespace), labelSelector); err == nil {
+		for _, s := range stsList.Items {
+			if err := r.Delete(ctx, &s); err != nil && !apierrors.IsNotFound(err) {
+				logger.Warn("Failed to delete StatefulSet", zap.String("name", s.Name), zap.Error(err))
 			}
 		}
 	}
@@ -673,7 +659,7 @@ func (r *EnvironmentReconciler) cleanupComposeResources(ctx context.Context, env
 		}
 	}
 
-	// Delete PVCs
+	// Delete PVCs (including those created by VolumeClaimTemplates)
 	pvcList := &corev1.PersistentVolumeClaimList{}
 	if err := r.List(ctx, pvcList, client.InNamespace(namespace), labelSelector); err == nil {
 		for _, p := range pvcList.Items {

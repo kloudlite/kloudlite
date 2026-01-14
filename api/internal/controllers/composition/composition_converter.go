@@ -27,7 +27,7 @@ func sanitizeK8sName(name string) string {
 
 // ComposeResources holds all Kubernetes resources converted from docker-compose
 type ComposeResources struct {
-	Deployments  []*appsv1.Deployment
+	StatefulSets []*appsv1.StatefulSet
 	Services     []*corev1.Service
 	ConfigMaps   []*corev1.ConfigMap
 	Secrets      []*corev1.Secret
@@ -54,7 +54,7 @@ func ConvertComposeToK8s(
 	environment *compositionsv1.Environment,
 ) (*ComposeResources, error) {
 	resources := &ComposeResources{
-		Deployments:  make([]*appsv1.Deployment, 0),
+		StatefulSets: make([]*appsv1.StatefulSet, 0),
 		Services:     make([]*corev1.Service, 0),
 		ConfigMaps:   make([]*corev1.ConfigMap, 0),
 		Secrets:      make([]*corev1.Secret, 0),
@@ -68,7 +68,7 @@ func ConvertComposeToK8s(
 		"kloudlite.io/managed":            "true",
 	}
 
-	// Convert volumes first (they need to exist before services)
+	// Convert volumes first (they need to exist before StatefulSets)
 	for volumeName, volume := range project.Volumes {
 		pvc := convertVolumeToPVC(volumeName, volume, composition, namespace, commonLabels, environment)
 		resources.PVCs = append(resources.PVCs, pvc)
@@ -78,8 +78,8 @@ func ConvertComposeToK8s(
 	for serviceName, service := range project.Services {
 		resources.ServiceNames = append(resources.ServiceNames, serviceName)
 
-		// Create Deployment
-		deployment, err := convertServiceToDeployment(
+		// Create StatefulSet
+		statefulSet, err := convertServiceToStatefulSet(
 			serviceName,
 			service,
 			composition,
@@ -91,9 +91,10 @@ func ConvertComposeToK8s(
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert service %s: %w", serviceName, err)
 		}
-		resources.Deployments = append(resources.Deployments, deployment)
+		resources.StatefulSets = append(resources.StatefulSets, statefulSet)
 
-		// Always create a Service (headless if no ports are exposed)
+		// Always create a Service (headless for StatefulSet DNS)
+		// StatefulSets require a headless service for stable network identities
 		k8sService := convertServiceToK8sService(
 			serviceName,
 			service,
@@ -107,8 +108,8 @@ func ConvertComposeToK8s(
 	return resources, nil
 }
 
-// convertServiceToDeployment converts a docker-compose service to a Kubernetes Deployment
-func convertServiceToDeployment(
+// convertServiceToStatefulSet converts a docker-compose service to a Kubernetes StatefulSet
+func convertServiceToStatefulSet(
 	serviceName string,
 	service composego.ServiceConfig,
 	composition *compositionsv1.Composition,
@@ -116,7 +117,7 @@ func convertServiceToDeployment(
 	commonLabels map[string]string,
 	envData *EnvironmentData,
 	environment *compositionsv1.Environment,
-) (*appsv1.Deployment, error) {
+) (*appsv1.StatefulSet, error) {
 	// Service-specific labels
 	labels := make(map[string]string)
 	for k, v := range commonLabels {
@@ -157,7 +158,7 @@ func convertServiceToDeployment(
 	// Variables have already been resolved by the compose parser
 	// IMPORTANT: Sort keys to ensure deterministic ordering - Go maps iterate in random order
 	// Without sorting, every reconciliation could produce different env var order,
-	// causing deployment spec changes and unnecessary pod restarts
+	// causing statefulset spec changes and unnecessary pod restarts
 	envVars := make([]corev1.EnvVar, 0)
 	serviceEnvKeys := make([]string, 0, len(service.Environment))
 	for key := range service.Environment {
@@ -266,7 +267,7 @@ func convertServiceToDeployment(
 					})
 				}
 			} else if vol.Type == "volume" {
-				// Regular PVC volume mount (named volumes only)
+				// Named volume - reference the PVC directly
 				// Sanitize volume name for Kubernetes
 				k8sVolName := sanitizeK8sName(vol.Source)
 				volumeMounts = append(volumeMounts, corev1.VolumeMount{
@@ -311,15 +312,16 @@ func convertServiceToDeployment(
 		}
 	}
 
-	// Create deployment
-	deployment := &appsv1.Deployment{
+	// Create StatefulSet
+	statefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
 			Namespace: namespace,
 			Labels:    labels,
 		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+		Spec: appsv1.StatefulSetSpec{
+			ServiceName: serviceName, // Required: points to headless service for DNS
+			Replicas:    &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
@@ -332,11 +334,11 @@ func convertServiceToDeployment(
 		},
 	}
 
-	return deployment, nil
+	return statefulSet, nil
 }
 
 // convertServiceToK8sService converts docker-compose service ports to Kubernetes Service
-// Creates a headless service (ClusterIP: None) if no ports are exposed
+// Creates a headless service (ClusterIP: None) for StatefulSet DNS resolution
 func convertServiceToK8sService(
 	serviceName string,
 	service composego.ServiceConfig,
@@ -370,15 +372,8 @@ func convertServiceToK8sService(
 		ports = append(ports, servicePort)
 	}
 
-	// Determine service type and ClusterIP based on whether ports are exposed
-	serviceType := corev1.ServiceTypeClusterIP
-	clusterIP := "" // Default: Kubernetes assigns an IP
-
-	// If no ports are exposed, create a headless service for DNS resolution
-	if len(ports) == 0 {
-		clusterIP = "None"
-	}
-
+	// Always create headless service for StatefulSet DNS resolution
+	// StatefulSets require a headless service for stable pod network identities
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
@@ -388,8 +383,7 @@ func convertServiceToK8sService(
 		Spec: corev1.ServiceSpec{
 			Selector:  labels,
 			Ports:     ports,
-			Type:      serviceType,
-			ClusterIP: clusterIP,
+			ClusterIP: "None", // Headless service required for StatefulSet
 		},
 	}
 }
@@ -414,8 +408,6 @@ func convertVolumeToPVC(
 
 	// Default size
 	size := resource.MustParse("1Gi")
-
-	// TODO: Parse size from driver_opts if specified
 
 	// Add selected-node annotation for WaitForFirstConsumer binding
 	// This allows PVCs to be provisioned immediately on the correct node

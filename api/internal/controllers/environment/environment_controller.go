@@ -321,7 +321,7 @@ func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Namespace{}).           // Watch Namespaces owned by Environments
 		Owns(&networkingv1.NetworkPolicy{}). // Watch NetworkPolicies owned by Environments
 		Watches(
-			&appsv1.Deployment{},
+			&appsv1.StatefulSet{},
 			handler.EnqueueRequestsFromMapFunc(r.findEnvironmentForComposeResource),
 		).
 		Watches(
