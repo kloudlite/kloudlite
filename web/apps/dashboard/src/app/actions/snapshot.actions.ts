@@ -280,3 +280,39 @@ export async function getEnvironmentSnapshotStatus(environmentName: string) {
     }
   }
 }
+
+/**
+ * Server action to get fork status for an environment
+ * Returns whether the environment can be forked (has ready snapshots)
+ */
+export async function getForkStatus(environmentName: string) {
+  try {
+    const result = await snapshotService.getForkStatus(environmentName)
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Get fork status error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to fork an environment using its latest ready snapshot
+ */
+export async function forkEnvironment(sourceEnvironmentName: string, newEnvironmentName: string) {
+  try {
+    const result = await snapshotService.forkEnvironment(sourceEnvironmentName, { name: newEnvironmentName })
+    revalidatePath('/environments')
+    return { success: true, data: result }
+  } catch (err) {
+    console.error('Fork environment error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}

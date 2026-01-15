@@ -186,7 +186,7 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 			environments := protected.Group("/environments")
 			{
 				environments.POST("", environmentHandlers.CreateEnvironment)
-				environments.POST("/from-snapshot", snapshotHandlers.CreateEnvironmentFromSnapshot)
+				environments.POST("/from-snapshot", snapshotHandlers.CreateEnvironmentFromSnapshot) // Deprecated: use /:name/fork instead
 				environments.GET("/:name", environmentHandlers.GetEnvironment)
 				environments.PUT("/:name", environmentHandlers.UpdateEnvironment)
 				environments.PATCH("/:name", environmentHandlers.PatchEnvironment)
@@ -206,6 +206,10 @@ func setupRouter(cfg *config.Config, logger *zap.Logger, servicesManager *servic
 				environments.GET("/:name/snapshots", snapshotHandlers.ListEnvironmentSnapshots)
 				environments.GET("/:name/snapshots/status", snapshotHandlers.GetEnvironmentSnapshotStatus)
 				environments.POST("/:name/restore", snapshotHandlers.RestoreEnvironmentFromSnapshot)
+
+				// Fork routes
+				environments.GET("/:name/fork-status", snapshotHandlers.GetForkStatus)
+				environments.POST("/:name/fork", snapshotHandlers.ForkEnvironment)
 
 				// Environment config routes (legacy - keeping for backwards compatibility)
 				environments.PUT("/:name/config", environmentConfigHandlers.SetConfig)

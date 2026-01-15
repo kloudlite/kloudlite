@@ -721,7 +721,13 @@ type CreateEnvironmentFromSnapshotRequest struct {
 // CreateEnvironmentFromSnapshot creates a new environment from a snapshot by creating an EnvironmentForkRequest
 // The EnvironmentForkRequest controller handles the actual environment creation and snapshot restoration
 // POST /api/v1/environments/from-snapshot
+//
+// Deprecated: Use POST /api/v1/environments/:name/fork instead, which auto-selects the latest snapshot.
 func (h *SnapshotHandlers) CreateEnvironmentFromSnapshot(c *gin.Context) {
+	// Add deprecation header
+	c.Header("Deprecation", "true")
+	c.Header("Sunset", "2026-06-01")
+	c.Header("Link", "</api/v1/environments/{name}/fork>; rel=\"successor-version\"")
 	username, _, _, exists := middleware.GetUserFromContext(c)
 	if !exists || username == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
@@ -1192,4 +1198,197 @@ func (h *SnapshotHandlers) GetEnvironmentSnapshotStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, status)
+}
+
+// ForkEnvironmentRequest is the request body for forking an environment
+type ForkEnvironmentRequest struct {
+	Name string `json:"name" binding:"required"` // Name for the new forked environment
+}
+
+// ForkStatusResponse indicates whether an environment can be forked
+type ForkStatusResponse struct {
+	CanFork        bool   `json:"canFork"`
+	LatestSnapshot string `json:"latestSnapshot,omitempty"`
+	Namespace      string `json:"namespace,omitempty"`
+	Message        string `json:"message,omitempty"`
+}
+
+// GetForkStatus checks if an environment can be forked (has ready snapshots)
+// GET /api/v1/environments/:name/fork-status
+func (h *SnapshotHandlers) GetForkStatus(c *gin.Context) {
+	envName := c.Param("name")
+	username := c.GetString("user_username")
+	ctx := c.Request.Context()
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(ctx, username)
+	if err != nil {
+		c.JSON(http.StatusOK, ForkStatusResponse{
+			CanFork: false,
+			Message: "Failed to get user namespace",
+		})
+		return
+	}
+
+	// Get environment to find the target namespace
+	env, err := h.environmentRepo.Get(ctx, namespace, envName)
+	if err != nil {
+		c.JSON(http.StatusOK, ForkStatusResponse{
+			CanFork: false,
+			Message: "Environment not found",
+		})
+		return
+	}
+
+	// Find the latest ready snapshot for this environment
+	latestSnapshot, err := h.findLatestReadySnapshot(ctx, env.Spec.TargetNamespace, envName)
+	if err != nil || latestSnapshot == nil {
+		c.JSON(http.StatusOK, ForkStatusResponse{
+			CanFork: false,
+			Message: "No ready snapshots available. Create a snapshot first to enable forking.",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, ForkStatusResponse{
+		CanFork:        true,
+		LatestSnapshot: latestSnapshot.Name,
+		Namespace:      latestSnapshot.Namespace,
+		Message:        fmt.Sprintf("Ready to fork from snapshot '%s'", latestSnapshot.Name),
+	})
+}
+
+// ForkEnvironment creates a new environment from the latest snapshot of the source environment
+// POST /api/v1/environments/:name/fork
+func (h *SnapshotHandlers) ForkEnvironment(c *gin.Context) {
+	sourceEnvName := c.Param("name")
+	username := c.GetString("user_username")
+	ctx := c.Request.Context()
+
+	var req ForkEnvironmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get the user's namespace from their WorkMachine
+	namespace, err := h.getEnvNamespaceForUser(ctx, username)
+	if err != nil {
+		h.logger.Error("Failed to get namespace for user", zap.String("username", username), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get user namespace",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Get source environment to find the target namespace
+	sourceEnv, err := h.environmentRepo.Get(ctx, namespace, sourceEnvName)
+	if err != nil {
+		h.logger.Error("Failed to get source environment", zap.String("namespace", namespace), zap.String("name", sourceEnvName), zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("environment %s not found", sourceEnvName)})
+		return
+	}
+
+	// Find the latest ready snapshot for this environment
+	latestSnapshot, err := h.findLatestReadySnapshot(ctx, sourceEnv.Spec.TargetNamespace, sourceEnvName)
+	if err != nil {
+		h.logger.Error("Failed to find snapshots", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to find snapshots"})
+		return
+	}
+
+	if latestSnapshot == nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "No ready snapshots available for this environment. Create a snapshot first to enable forking.",
+			"code":  "NO_READY_SNAPSHOTS",
+		})
+		return
+	}
+
+	// Create EnvironmentForkRequest - the controller will handle the actual environment creation
+	forkRequest := &envv1.EnvironmentForkRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: fmt.Sprintf("fork-%s-", req.Name),
+			Namespace:    namespace,
+			Labels: map[string]string{
+				"kloudlite.io/owned-by":           username,
+				"kloudlite.io/new-environment":   req.Name,
+				"kloudlite.io/source-environment": sourceEnvName,
+				"kloudlite.io/source-snapshot":   latestSnapshot.Name,
+			},
+		},
+		Spec: envv1.EnvironmentForkRequestSpec{
+			NewEnvironmentName: req.Name,
+			SourceSnapshot: envv1.SourceSnapshotRef{
+				SnapshotName:    latestSnapshot.Name,
+				SourceNamespace: latestSnapshot.Namespace,
+			},
+			Overrides: &envv1.EnvironmentSpecOverrides{
+				OwnedBy: username,
+				Labels: map[string]string{
+					"kloudlite.io/owned-by": username,
+				},
+			},
+		},
+	}
+
+	if err := h.k8sClient.Create(ctx, forkRequest); err != nil {
+		h.logger.Error("Failed to create environment fork request", zap.String("name", req.Name), zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create fork request: %v", err)})
+		return
+	}
+
+	h.logger.Info("Created environment fork",
+		zap.String("forkRequest", forkRequest.Name),
+		zap.String("sourceEnvironment", sourceEnvName),
+		zap.String("newEnvironment", req.Name),
+		zap.String("snapshot", latestSnapshot.Name),
+		zap.String("user", username),
+	)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":           "Fork started",
+		"forkRequest":       forkRequest.Name,
+		"sourceEnvironment": sourceEnvName,
+		"newEnvironment":    req.Name,
+		"snapshot":          latestSnapshot.Name,
+		"phase":             "Pending",
+	})
+}
+
+// findLatestReadySnapshot finds the most recent ready snapshot for an environment
+func (h *SnapshotHandlers) findLatestReadySnapshot(ctx context.Context, targetNamespace, envName string) (*snapshotv1.Snapshot, error) {
+	// List all snapshots in the environment's namespace
+	snapshots := &snapshotv1.SnapshotList{}
+	if err := h.k8sClient.List(ctx, snapshots, client.InNamespace(targetNamespace)); err != nil {
+		return nil, err
+	}
+
+	var latestSnapshot *snapshotv1.Snapshot
+	var latestTime *metav1.Time
+
+	for i := range snapshots.Items {
+		s := &snapshots.Items[i]
+
+		// Only consider ready snapshots
+		if s.Status.State != snapshotv1.SnapshotStateReady {
+			continue
+		}
+
+		// Only consider snapshots for this environment (not lineage snapshots from other envs)
+		if envLabel := s.Labels["snapshots.kloudlite.io/environment"]; envLabel != envName {
+			continue
+		}
+
+		// Find the most recent one by CreatedAt timestamp
+		if s.Status.CreatedAt != nil {
+			if latestTime == nil || s.Status.CreatedAt.After(latestTime.Time) {
+				latestTime = s.Status.CreatedAt
+				latestSnapshot = s
+			}
+		}
+	}
+
+	return latestSnapshot, nil
 }
