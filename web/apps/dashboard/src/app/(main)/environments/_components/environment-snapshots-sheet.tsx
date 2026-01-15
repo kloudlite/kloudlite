@@ -260,16 +260,14 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
 
           {/* Operation Status Banner */}
           {operationStatus?.inProgress && (
-            <div className="border-b border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 px-6 py-4">
+            <div className="border-b bg-blue-50 dark:bg-blue-950/30 px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
-                </div>
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  <p className="text-sm font-medium text-foreground">
                     {operationStatus.operation === 'creating' ? 'Creating snapshot...' : 'Restoring snapshot...'}
                   </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <p className="text-xs text-muted-foreground">
                     {operationStatus.phase && `${operationStatus.phase}`}
                     {operationStatus.message && ` - ${operationStatus.message}`}
                   </p>
@@ -335,7 +333,6 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
                       onDelete={handleDeleteClick}
                       onPush={handlePushClick}
                       disabled={operationStatus?.inProgress}
-                      showTimeline
                     />
                   )
               )}
