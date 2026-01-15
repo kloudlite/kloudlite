@@ -295,7 +295,6 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
                       onDelete={handleDeleteClick}
                       onPush={handlePushClick}
                       disabled={!workMachineRunning}
-                      showTimeline
                     />
                   )
               )}

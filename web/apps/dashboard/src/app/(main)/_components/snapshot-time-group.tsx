@@ -1,7 +1,26 @@
 'use client'
 
+import {
+  Clock,
+  HardDrive,
+  Loader2,
+  MoreHorizontal,
+  RotateCcw,
+  Trash2,
+  CloudUpload,
+  Cloud,
+  AlertCircle,
+  Star,
+} from 'lucide-react'
+import { Button, Badge } from '@kloudlite/ui'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@kloudlite/ui'
 import type { Snapshot } from '@/lib/services/snapshot.service'
-import { SnapshotCard } from './snapshot-card'
 
 interface SnapshotTimeGroupProps {
   label: string
@@ -11,129 +30,26 @@ interface SnapshotTimeGroupProps {
   onDelete: (snapshot: Snapshot) => void
   onPush?: (snapshot: Snapshot) => void
   disabled?: boolean
-  showTimeline?: boolean
 }
 
-// Build graph data for timeline visualization
-interface SnapshotWithLane {
-  snapshot: Snapshot
-  lane: number
-  isCurrent: boolean
-  parentLane: number | null
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (diffInSeconds < 60) return 'just now'
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+  return date.toLocaleDateString()
 }
 
-interface GraphRow {
-  item: SnapshotWithLane
-  activeLanes: Set<number>
-  branchFrom: { fromLane: number; toLane: number } | null
-}
-
-function buildGraph(
-  snapshots: Snapshot[],
-  currentSnapshotName?: string
-): GraphRow[] {
-  if (snapshots.length === 0) return []
-
-  // Sort by creation time (newest first)
-  const sorted = [...snapshots].sort((a, b) => {
-    const aTime = new Date(a.createdAt || '').getTime()
-    const bTime = new Date(b.createdAt || '').getTime()
-    return bTime - aTime
-  })
-
-  // Build maps
-  const snapshotMap = new Map<string, Snapshot>()
-  const childrenMap = new Map<string, string[]>()
-
-  sorted.forEach((s) => {
-    snapshotMap.set(s.name, s)
-    const parentName = s.parent
-    if (parentName) {
-      const children = childrenMap.get(parentName) || []
-      children.push(s.name)
-      childrenMap.set(parentName, children)
-    }
-  })
-
-  // Assign lanes (max 3 lanes as per design)
-  const laneMap = new Map<string, number>()
-  let maxLane = 0
-  const MAX_LANES = 2 // 0, 1, 2 = 3 lanes total
-
-  const chronological = [...sorted].reverse()
-
-  chronological.forEach((snapshot) => {
-    const name = snapshot.name
-    if (laneMap.has(name)) return
-
-    const parentName = snapshot.parent
-
-    if (parentName && laneMap.has(parentName)) {
-      const parentLane = laneMap.get(parentName)!
-      const siblings = childrenMap.get(parentName) || []
-      const siblingIndex = siblings.indexOf(name)
-
-      if (siblingIndex === 0) {
-        // First child stays in parent's lane
-        laneMap.set(name, parentLane)
-      } else if (maxLane < MAX_LANES) {
-        // Branch to new lane
-        maxLane++
-        laneMap.set(name, maxLane)
-      } else {
-        // Reuse existing lane
-        laneMap.set(name, (maxLane % (MAX_LANES + 1)))
-      }
-    } else {
-      // Root snapshot or orphan
-      if (!laneMap.has(name)) {
-        const usedLanes = new Set(laneMap.values())
-        if (!usedLanes.has(0)) {
-          laneMap.set(name, 0)
-        } else if (maxLane < MAX_LANES) {
-          maxLane++
-          laneMap.set(name, maxLane)
-        } else {
-          laneMap.set(name, 0)
-        }
-      }
-    }
-  })
-
-  // Build graph rows
-  const rows: GraphRow[] = []
-  const activeLanes = new Set<number>()
-
-  // Collect all active lanes
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    const snapshot = sorted[i]
-    const lane = laneMap.get(snapshot.name) || 0
-    activeLanes.add(lane)
+function getShortHash(name: string): string {
+  const parts = name.split('-')
+  if (parts.length >= 2) {
+    return parts.slice(-1)[0]
   }
-
-  const currentActiveLanes = new Set(activeLanes)
-
-  sorted.forEach((snapshot) => {
-    const name = snapshot.name
-    const lane = laneMap.get(name) || 0
-    const isCurrent = name === currentSnapshotName
-
-    const parentName = snapshot.parent
-    const parentLane = parentName ? laneMap.get(parentName) || null : null
-
-    let branchFrom: { fromLane: number; toLane: number } | null = null
-    if (parentLane !== null && parentLane !== lane) {
-      branchFrom = { fromLane: parentLane, toLane: lane }
-    }
-
-    rows.push({
-      item: { snapshot, lane, isCurrent, parentLane },
-      activeLanes: new Set(currentActiveLanes),
-      branchFrom,
-    })
-  })
-
-  return rows
+  return name.slice(-6)
 }
 
 export function SnapshotTimeGroup({
@@ -144,51 +60,188 @@ export function SnapshotTimeGroup({
   onDelete,
   onPush,
   disabled = false,
-  showTimeline = true,
 }: SnapshotTimeGroupProps) {
-  const graphRows = showTimeline ? buildGraph(snapshots, currentSnapshotName) : []
+  // Sort by creation time (newest first)
+  const sorted = [...snapshots].sort((a, b) => {
+    const aTime = new Date(a.createdAt || '').getTime()
+    const bTime = new Date(b.createdAt || '').getTime()
+    return bTime - aTime
+  })
 
   return (
     <div className="space-y-3">
       {/* Time Group Label */}
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground pl-1">
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </h3>
 
-      {/* Snapshots */}
-      <div className="space-y-3">
-        {showTimeline ? (
-          // With timeline graph
-          graphRows.map(({ item, activeLanes, branchFrom }) => (
-            <SnapshotCard
-              key={item.snapshot.name}
-              snapshot={item.snapshot}
-              isCurrent={item.isCurrent}
-              onRestore={() => onRestore(item.snapshot)}
-              onDelete={() => onDelete(item.snapshot)}
-              onPush={onPush ? () => onPush(item.snapshot) : undefined}
-              disabled={disabled}
-              timelineData={{
-                lane: item.lane,
-                activeLanes,
-                branchFrom,
-              }}
-            />
-          ))
-        ) : (
-          // Without timeline graph
-          snapshots.map((snapshot) => (
-            <SnapshotCard
-              key={snapshot.name}
-              snapshot={snapshot}
-              isCurrent={snapshot.name === currentSnapshotName}
-              onRestore={() => onRestore(snapshot)}
-              onDelete={() => onDelete(snapshot)}
-              onPush={onPush ? () => onPush(snapshot) : undefined}
-              disabled={disabled}
-            />
-          ))
-        )}
+      {/* Table */}
+      <div className="bg-card overflow-hidden rounded-lg border">
+        <table className="min-w-full">
+          <thead className="bg-muted/50 border-b">
+            <tr>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                Name
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                Description
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                Created
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                Size
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                Status
+              </th>
+              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {sorted.map((snapshot) => {
+              const shortHash = getShortHash(snapshot.name)
+              const isPushed = !!snapshot.registry?.digest
+              const isCurrent = snapshot.name === currentSnapshotName
+              const isInProgress = [
+                'Creating',
+                'Uploading',
+                'Restoring',
+                'Pushing',
+                'Pulling',
+                'Deleting',
+              ].includes(snapshot.state)
+              const isFailed = snapshot.state === 'Failed'
+              const isActionable =
+                !isInProgress && !isFailed && snapshot.state !== 'Pending'
+
+              return (
+                <tr
+                  key={snapshot.name}
+                  className={isCurrent ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'hover:bg-muted/50'}
+                >
+                  {/* Name/Hash */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm font-mono font-medium">
+                        {shortHash}
+                      </code>
+                      {isCurrent && (
+                        <Badge variant="default" className="gap-1 text-[10px] px-1.5 py-0">
+                          <Star className="h-3 w-3 fill-current" />
+                          Current
+                        </Badge>
+                      )}
+                      {isPushed && (
+                        <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0">
+                          <Cloud className="h-3 w-3" />
+                          {snapshot.registry?.tag || 'pushed'}
+                        </Badge>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Description */}
+                  <td className="px-6 py-4 max-w-xs">
+                    {snapshot.description ? (
+                      <span className="text-sm text-foreground truncate block" title={snapshot.description}>
+                        {snapshot.description}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </td>
+
+                  {/* Created */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {snapshot.createdAt ? (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatTimeAgo(snapshot.createdAt)}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </td>
+
+                  {/* Size */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {snapshot.sizeHuman && snapshot.sizeHuman !== '0 B' ? (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <HardDrive className="h-3 w-3" />
+                        <span>{snapshot.sizeHuman}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {isInProgress ? (
+                      <Badge variant="default" className="gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        {snapshot.state}
+                      </Badge>
+                    ) : isFailed ? (
+                      <Badge variant="destructive" className="gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Failed
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">Ready</Badge>
+                    )}
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
+                    {isInProgress || isFailed ? (
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
+                        <MoreHorizontal className="h-4 w-4 opacity-30" />
+                      </Button>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={disabled}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {isActionable && !isCurrent && (
+                            <DropdownMenuItem onClick={() => onRestore(snapshot)}>
+                              <RotateCcw className="mr-2 h-4 w-4" />
+                              Restore
+                            </DropdownMenuItem>
+                          )}
+                          {isActionable && !isPushed && onPush && (
+                            <DropdownMenuItem onClick={() => onPush(snapshot)}>
+                              <CloudUpload className="mr-2 h-4 w-4" />
+                              Push to Registry
+                            </DropdownMenuItem>
+                          )}
+                          {(isActionable || isFailed) && !isCurrent && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => onDelete(snapshot)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
