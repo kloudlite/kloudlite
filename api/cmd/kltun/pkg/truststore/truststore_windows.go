@@ -3,6 +3,7 @@
 package truststore
 
 import (
+	"bytes"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -61,11 +62,8 @@ func (s *windowsStore) IsInstalled(cert *x509.Certificate) bool {
 
 	found := false
 	store.enumerate(func(storeCert *x509.Certificate) bool {
-		// Compare full certificate (Subject + Issuer + SerialNumber + Raw bytes)
-		// Serial numbers alone can collide between different CAs
-		if storeCert.SerialNumber.Cmp(cert.SerialNumber) == 0 &&
-			storeCert.Subject.String() == cert.Subject.String() &&
-			storeCert.Issuer.String() == cert.Issuer.String() {
+		// Compare raw DER bytes for exact match
+		if bytes.Equal(storeCert.Raw, cert.Raw) {
 			found = true
 			return false // stop enumeration
 		}

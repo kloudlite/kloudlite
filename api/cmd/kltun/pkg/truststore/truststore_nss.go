@@ -1,7 +1,9 @@
 package truststore
 
 import (
+	"bytes"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"os/exec"
@@ -44,15 +46,34 @@ func (s *nssStore) Name() string {
 }
 
 func (s *nssStore) IsInstalled(cert *x509.Certificate) bool {
-	// Check if installed in any profile
+	// Check if installed in any profile by exporting and comparing
 	for _, profile := range s.profiles {
 		dbPrefix := getNSSDBPrefix(profile)
-		cmd := exec.Command(s.certutilPath, "-V",
-			"-d", dbPrefix+profile,
-			"-u", "L",
-			"-n", CAUniqueName)
 
-		if err := cmd.Run(); err == nil {
+		// Export the cert in PEM format
+		cmd := exec.Command(s.certutilPath, "-L",
+			"-d", dbPrefix+profile,
+			"-n", CAUniqueName,
+			"-a") // ASCII (PEM) output
+
+		out, err := ExecCommand(cmd)
+		if err != nil {
+			continue // cert not found in this profile
+		}
+
+		// Parse the exported PEM cert
+		block, _ := pem.Decode(out)
+		if block == nil {
+			continue
+		}
+
+		existingCert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			continue
+		}
+
+		// Compare raw DER bytes
+		if bytes.Equal(existingCert.Raw, cert.Raw) {
 			return true
 		}
 	}
