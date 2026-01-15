@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Camera,
   Plus,
   Loader2,
+  Search,
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import {
@@ -49,7 +51,8 @@ import {
 import { Label } from '@kloudlite/ui'
 import { getEnvironment } from '@/app/actions/environment.actions'
 import { toast } from 'sonner'
-import { SnapshotTimeline } from '@/app/(main)/workspaces/_components/snapshot-timeline'
+import { SnapshotTimeGroup } from '../../_components/snapshot-time-group'
+import { groupSnapshotsByTime } from '@/lib/utils/time-grouping'
 
 interface EnvironmentSnapshotsSheetProps {
   environmentName: string
@@ -63,6 +66,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   const [currentSnapshotName, setCurrentSnapshotName] = useState<string | undefined>()
   const [isCreating, setIsCreating] = useState(false)
   const [description, setDescription] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [operationStatus, setOperationStatus] = useState<SnapshotOperationStatus | null>(null)
 
   // Confirmation dialogs
@@ -225,6 +229,16 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
     setIsDeleting(false)
   }
 
+  // Group snapshots by time with search filtering
+  const groupedSnapshots = useMemo(() => {
+    const filtered = snapshots.filter(
+      (s) =>
+        s.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    return groupSnapshotsByTime(filtered)
+  }, [snapshots, searchQuery])
+
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -236,79 +250,116 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
             </Button>
           )}
         </SheetTrigger>
-        <SheetContent className="flex w-full flex-col p-0 sm:max-w-xl">
-          <SheetHeader className="border-b px-6 py-4">
-            <SheetTitle>Environment Snapshots</SheetTitle>
+        <SheetContent className="flex w-full flex-col p-0 sm:max-w-2xl">
+          <SheetHeader className="border-b px-6 py-5">
+            <SheetTitle className="text-lg">Environment Snapshots</SheetTitle>
             <SheetDescription>
-              Save and restore your environment state
+              Save and restore your environment state at any point in time
             </SheetDescription>
           </SheetHeader>
 
-          {/* Sticky Create Section */}
-          <div className="border-b bg-muted/30 px-6 py-4">
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Snapshot description (optional)"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  disabled={isCreating}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleCreate}
-                  disabled={isCreating || operationStatus?.inProgress}
-                  size="sm"
-                >
-                  {isCreating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Plus className="mr-1 h-4 w-4" />
-                      Create
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
           {/* Operation Status Banner */}
           {operationStatus?.inProgress && (
-            <div className="border-b bg-blue-50 dark:bg-blue-950/30 px-6 py-3">
+            <div className="border-b border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 px-6 py-4">
               <div className="flex items-center gap-3">
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+                <div className="relative">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
+                </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
                     {operationStatus.operation === 'creating' ? 'Creating snapshot...' : 'Restoring snapshot...'}
                   </p>
                   <p className="text-xs text-blue-700 dark:text-blue-300">
-                    {operationStatus.phase && `Phase: ${operationStatus.phase}`}
+                    {operationStatus.phase && `${operationStatus.phase}`}
                     {operationStatus.message && ` - ${operationStatus.message}`}
                   </p>
                 </div>
+                <Button variant="ghost" size="sm" onClick={loadSnapshots}>
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
 
-          {/* Scrollable History Section */}
+          {/* Search + Create Section */}
+          <div className="border-b bg-muted/30 px-6 py-4 space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search snapshots..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Create */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Describe this snapshot (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isCreating || operationStatus?.inProgress}
+                className="flex-1"
+              />
+              <Button
+                onClick={handleCreate}
+                disabled={isCreating || operationStatus?.inProgress}
+                size="sm"
+              >
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Snapshots by Time Group */}
           <ScrollArea className="flex-1">
-            <div className="px-6 py-4">
-              {snapshots.length > 0 ? (
-                <SnapshotTimeline
-                  snapshots={snapshots}
-                  onRestore={handleRestoreClick}
-                  onDelete={handleDeleteClick}
-                  onPush={handlePushClick}
-                  currentSnapshotName={currentSnapshotName}
-                />
-              ) : (
+            <div className="px-6 py-4 space-y-6">
+              {Object.entries(groupedSnapshots).map(
+                ([label, snaps]) =>
+                  snaps.length > 0 && (
+                    <SnapshotTimeGroup
+                      key={label}
+                      label={label}
+                      snapshots={snaps}
+                      currentSnapshotName={currentSnapshotName}
+                      onRestore={handleRestoreClick}
+                      onDelete={handleDeleteClick}
+                      onPush={handlePushClick}
+                      disabled={operationStatus?.inProgress}
+                      showTimeline
+                    />
+                  )
+              )}
+
+              {snapshots.length === 0 && (
                 <div className="text-muted-foreground py-12 text-center">
                   <Camera className="mx-auto mb-3 h-10 w-10 opacity-40" />
                   <p className="text-sm font-medium">No snapshots yet</p>
-                  <p className="text-xs mt-1">Create your first snapshot to save environment state</p>
+                  <p className="text-xs mt-1">
+                    Create your first snapshot to save environment state
+                  </p>
                 </div>
               )}
+
+              {snapshots.length > 0 &&
+                Object.values(groupedSnapshots).every((g) => g.length === 0) && (
+                  <div className="text-muted-foreground py-12 text-center">
+                    <Search className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                    <p className="text-sm font-medium">No snapshots found</p>
+                    <p className="text-xs mt-1">
+                      No snapshots match &quot;{searchQuery}&quot;
+                    </p>
+                  </div>
+                )}
             </div>
           </ScrollArea>
         </SheetContent>
