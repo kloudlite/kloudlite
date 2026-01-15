@@ -971,7 +971,7 @@ func (h *SnapshotHandlers) RestoreEnvironmentFromSnapshot(c *gin.Context) {
 			EnvironmentName:      envName,
 			EnvironmentNamespace: namespace, // WorkMachine namespace where Environment lives
 			SnapshotName:         req.SnapshotName,
-			SourceNamespace:      req.SourceNamespace,
+			SourceNamespace:      snapshotNamespace, // Use resolved namespace (defaults to env.Spec.TargetNamespace)
 			ActivateAfterRestore: req.ActivateAfterRestore,
 		},
 	}
