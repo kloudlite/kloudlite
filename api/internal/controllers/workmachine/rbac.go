@@ -69,7 +69,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 			{
 				APIGroups: []string{"snapshots.kloudlite.io"},
 				Resources: []string{"snapshots", "snapshotstores"},
-				Verbs:     []string{"get", "list", "watch", "update", "patch"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch"},
 			},
 			{
 				APIGroups: []string{"snapshots.kloudlite.io"},
