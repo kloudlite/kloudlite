@@ -3,6 +3,7 @@
 package truststore
 
 import (
+	"bytes"
 	"crypto/x509"
 	"fmt"
 	"log"
@@ -91,7 +92,19 @@ func (s *linuxStore) Name() string {
 
 func (s *linuxStore) IsInstalled(cert *x509.Certificate) bool {
 	certFile := filepath.Join(s.certPath, CAUniqueName+s.certExt)
-	return PathExists(certFile)
+	if !PathExists(certFile) {
+		return false
+	}
+
+	// Load existing cert and compare fingerprints
+	existingCert, err := LoadCertificate(certFile)
+	if err != nil {
+		// Can't read/parse existing cert, treat as not installed
+		return false
+	}
+
+	// Compare raw DER bytes (exact match)
+	return bytes.Equal(existingCert.Raw, cert.Raw)
 }
 
 func (s *linuxStore) Install(certPath string, cert *x509.Certificate) error {
