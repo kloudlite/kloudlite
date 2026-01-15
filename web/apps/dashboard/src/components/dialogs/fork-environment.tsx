@@ -13,84 +13,47 @@ import { Button } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
 import { Alert, AlertDescription } from '@kloudlite/ui'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@kloudlite/ui'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@kloudlite/ui'
-import { Loader2, AlertCircle, Camera, Check, ChevronsUpDown } from 'lucide-react'
-import { listPushedSnapshots, createEnvironmentFromSnapshot } from '@/app/actions/snapshot.actions'
-import type { Snapshot } from '@/lib/services/snapshot.service'
-import { cn } from '@/lib/utils'
+import { Loader2, AlertCircle, GitFork } from 'lucide-react'
+import { forkEnvironment } from '@/app/actions/snapshot.actions'
 
 interface ForkEnvironmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
-  preselectedSnapshot?: Snapshot
-  sourceEnvironment?: string // Filter snapshots by this environment
+  sourceEnvironment: string
 }
 
 export function ForkEnvironmentDialog({
   open,
   onOpenChange,
   onSuccess,
-  preselectedSnapshot,
   sourceEnvironment,
 }: ForkEnvironmentDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false)
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([])
-  const [popoverOpen, setPopoverOpen] = useState(false)
-  const [selectedSnapshot, setSelectedSnapshot] = useState<Snapshot | null>(preselectedSnapshot || null)
   const [name, setName] = useState('')
 
-  // Load pushed snapshots when dialog opens
+  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setIsLoadingSnapshots(true)
-      // Filter by sourceEnvironment if provided
-      listPushedSnapshots('environment', sourceEnvironment).then((result) => {
-        if (result.success && result.data) {
-          setSnapshots(result.data.snapshots || [])
-        }
-        setIsLoadingSnapshots(false)
-      })
-
-      // Set preselected snapshot if provided
-      if (preselectedSnapshot) {
-        setSelectedSnapshot(preselectedSnapshot)
-        setName(`${preselectedSnapshot.name}-fork`)
-      } else {
-        setSelectedSnapshot(null)
-        setName('')
-      }
+      setName(`${sourceEnvironment}-fork`)
       setError(null)
     }
-  }, [open, preselectedSnapshot, sourceEnvironment])
+  }, [open, sourceEnvironment])
 
   const validateNamespace = (name: string): string | null => {
     if (!name) {
-      return 'Namespace name is required'
+      return 'Environment name is required'
     }
     if (name.length > 63) {
-      return 'Namespace name must be no more than 63 characters'
+      return 'Environment name must be no more than 63 characters'
     }
     if (name.includes('--')) {
       return 'Environment name cannot contain "--" (double hyphens)'
     }
     const dnsLabelRegex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/
     if (!dnsLabelRegex.test(name)) {
-      return 'Namespace name must consist of lower case alphanumeric characters or "-", and must start and end with an alphanumeric character'
+      return 'Environment name must consist of lower case alphanumeric characters or "-", and must start and end with an alphanumeric character'
     }
 
     const reservedNamespaces = [
@@ -119,38 +82,21 @@ export function ForkEnvironmentDialog({
     e.preventDefault()
     setError(null)
 
-    if (!selectedSnapshot) {
-      setError('Please select a snapshot')
-      return
-    }
-
     // Validate environment name
     const nameError = validateNamespace(name)
     if (nameError) {
-      setError(`Environment name: ${nameError}`)
-      return
-    }
-
-    const snapshotNamespace = selectedSnapshot.namespace
-    if (!snapshotNamespace) {
-      setError('Selected snapshot does not have a namespace')
+      setError(nameError)
       return
     }
 
     setLoading(true)
 
     try {
-      const result = await createEnvironmentFromSnapshot({
-        name,
-        snapshotName: selectedSnapshot.name,
-        sourceNamespace: snapshotNamespace,
-        activated: true,
-      })
+      const result = await forkEnvironment(sourceEnvironment, name)
 
       if (result.success) {
         // Reset form
         setName('')
-        setSelectedSnapshot(null)
         onOpenChange(false)
 
         // Call success callback
@@ -158,11 +104,11 @@ export function ForkEnvironmentDialog({
           onSuccess()
         }
       } else {
-        setError(result.error || 'Failed to create environment from snapshot. Please try again.')
+        setError(result.error || 'Failed to fork environment. Please try again.')
       }
     } catch (err) {
-      console.error('Failed to create environment from snapshot:', err)
-      const error = err instanceof Error ? err : new Error('Failed to create environment from snapshot')
+      console.error('Failed to fork environment:', err)
+      const error = err instanceof Error ? err : new Error('Failed to fork environment')
       setError(error.message)
     } finally {
       setLoading(false)
@@ -172,136 +118,30 @@ export function ForkEnvironmentDialog({
   const handleClose = () => {
     if (!loading) {
       setName('')
-      setSelectedSnapshot(null)
       setError(null)
       onOpenChange(false)
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Camera className="h-5 w-5" />
-              Create Environment from Snapshot
+              <GitFork className="h-5 w-5" />
+              Fork Environment
             </DialogTitle>
             <DialogDescription>
-              Create a new environment from a pushed snapshot. The snapshot will be pulled from the
-              registry and all resources will be restored.
+              Create a new environment from the latest snapshot of <strong>{sourceEnvironment}</strong>.
+              You can restore to a different snapshot later if needed.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Snapshot Selection */}
-            <div className="space-y-2">
-              <Label>Select Snapshot *</Label>
-              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={popoverOpen}
-                    className="w-full justify-between font-normal"
-                    disabled={loading || isLoadingSnapshots}
-                  >
-                    {isLoadingSnapshots ? (
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading snapshots...
-                      </span>
-                    ) : selectedSnapshot ? (
-                      <span className="flex items-center gap-2">
-                        <Camera className="h-4 w-4" />
-                        {selectedSnapshot.registry?.tag || selectedSnapshot.name}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Select a snapshot...</span>
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Search snapshots..." />
-                    <CommandList>
-                      <CommandEmpty>
-                        {snapshots.length === 0
-                          ? 'No pushed snapshots available. Push a snapshot first to fork from it.'
-                          : 'No matching snapshots found.'}
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {snapshots.map((snapshot) => (
-                          <CommandItem
-                            key={snapshot.name}
-                            value={snapshot.name}
-                            onSelect={() => {
-                              setSelectedSnapshot(snapshot)
-                              setPopoverOpen(false)
-                              // Suggest name based on snapshot name
-                              if (!name) {
-                                setName(`${snapshot.name}-fork`)
-                              }
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                selectedSnapshot?.name === snapshot.name
-                                  ? 'opacity-100'
-                                  : 'opacity-0',
-                              )}
-                            />
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {snapshot.registry?.tag || snapshot.name}
-                              </span>
-                              <span className="text-muted-foreground text-xs">
-                                Size: {snapshot.sizeHuman || 'N/A'}
-                                {snapshot.createdAt && (
-                                  <> | Created: {formatDate(snapshot.createdAt)}</>
-                                )}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Selected Snapshot Info */}
-            {selectedSnapshot && (
-              <div className="bg-muted space-y-2 rounded-lg p-3">
-                <div className="text-sm font-medium">Snapshot Details</div>
-                <div className="text-muted-foreground text-xs space-y-1">
-                  <div>Tag: {selectedSnapshot.registry?.tag || 'N/A'}</div>
-                  <div>Name: {selectedSnapshot.name}</div>
-                  <div>Size: {selectedSnapshot.sizeHuman || 'N/A'}</div>
-                  {selectedSnapshot.description && (
-                    <div>Description: {selectedSnapshot.description}</div>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* New Environment Name */}
             <div className="space-y-2">
-              <Label htmlFor="name">New Environment Name *</Label>
+              <Label htmlFor="name">New Environment Name</Label>
               <Input
                 id="name"
                 placeholder="my-forked-environment"
@@ -309,6 +149,7 @@ export function ForkEnvironmentDialog({
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
                 required
+                autoFocus
               />
               <p className="text-muted-foreground text-xs">
                 Must be lowercase alphanumeric or &quot;-&quot;, max 63 characters
@@ -327,9 +168,9 @@ export function ForkEnvironmentDialog({
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !selectedSnapshot}>
+            <Button type="submit" disabled={loading || !name}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Creating...' : 'Create from Snapshot'}
+              {loading ? 'Forking...' : 'Fork'}
             </Button>
           </DialogFooter>
         </form>

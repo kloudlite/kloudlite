@@ -12,7 +12,7 @@ import {
   PowerOff,
   Edit,
   Loader2,
-  Copy,
+  GitFork,
   Pin,
   PinOff,
 } from 'lucide-react'
@@ -507,8 +507,8 @@ export function EnvironmentsList({
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => handleForkClick(env.name)}>
-                          <Copy className="mr-2 h-4 w-4" />
-                          Create from Snapshot
+                          <GitFork className="mr-2 h-4 w-4" />
+                          Fork
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleExportConfig(env)}>
                           <Download className="mr-2 h-4 w-4" />

@@ -118,6 +118,29 @@ export interface CreateFromSnapshotResponse {
   environment?: unknown
 }
 
+// Fork status response - indicates whether an environment can be forked
+export interface ForkStatusResponse {
+  canFork: boolean
+  latestSnapshot?: string
+  namespace?: string
+  message?: string
+}
+
+// Fork environment request - just needs the new environment name
+export interface ForkEnvironmentRequest {
+  name: string
+}
+
+// Fork environment response
+export interface ForkEnvironmentResponse {
+  message: string
+  forkRequest: string
+  sourceEnvironment: string
+  newEnvironment: string
+  snapshot: string
+  phase: string
+}
+
 export class SnapshotService {
   private baseUrl = '/api/v1'
 
@@ -268,6 +291,26 @@ export class SnapshotService {
   ): Promise<SnapshotOperationStatus> {
     return apiClient.get<SnapshotOperationStatus>(
       `${this.baseUrl}/environments/${environmentName}/snapshots/status`,
+    )
+  }
+
+  // Get fork status for an environment
+  // Returns whether the environment can be forked (has ready snapshots)
+  async getForkStatus(environmentName: string): Promise<ForkStatusResponse> {
+    return apiClient.get<ForkStatusResponse>(
+      `${this.baseUrl}/environments/${environmentName}/fork-status`,
+    )
+  }
+
+  // Fork an environment using the latest ready snapshot
+  // Creates a new environment from the source environment's latest snapshot
+  async forkEnvironment(
+    sourceEnvironmentName: string,
+    data: ForkEnvironmentRequest,
+  ): Promise<ForkEnvironmentResponse> {
+    return apiClient.post<ForkEnvironmentResponse>(
+      `${this.baseUrl}/environments/${sourceEnvironmentName}/fork`,
+      data,
     )
   }
 }
