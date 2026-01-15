@@ -75,173 +75,138 @@ export function SnapshotTimeGroup({
         {label}
       </h3>
 
-      {/* Table */}
-      <div className="bg-card overflow-hidden rounded-lg border">
-        <table className="min-w-full">
-          <thead className="bg-muted/50 border-b">
-            <tr>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                Name
-              </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                Description
-              </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                Created
-              </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                Size
-              </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                Status
-              </th>
-              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {sorted.map((snapshot) => {
-              const shortHash = getShortHash(snapshot.name)
-              const isPushed = !!snapshot.registry?.digest
-              const isCurrent = snapshot.name === currentSnapshotName
-              const isInProgress = [
-                'Creating',
-                'Uploading',
-                'Restoring',
-                'Pushing',
-                'Pulling',
-                'Deleting',
-              ].includes(snapshot.state)
-              const isFailed = snapshot.state === 'Failed'
-              const isActionable =
-                !isInProgress && !isFailed && snapshot.state !== 'Pending'
+      {/* Cards */}
+      <div className="space-y-2">
+        {sorted.map((snapshot) => {
+          const shortHash = getShortHash(snapshot.name)
+          const isPushed = !!snapshot.registry?.digest
+          const isCurrent = snapshot.name === currentSnapshotName
+          const isInProgress = [
+            'Creating',
+            'Uploading',
+            'Restoring',
+            'Pushing',
+            'Pulling',
+            'Deleting',
+          ].includes(snapshot.state)
+          const isFailed = snapshot.state === 'Failed'
+          const isActionable =
+            !isInProgress && !isFailed && snapshot.state !== 'Pending'
 
-              return (
-                <tr
-                  key={snapshot.name}
-                  className={isCurrent ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'hover:bg-muted/50'}
-                >
-                  {/* Name/Hash */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <code className="text-sm font-mono font-medium">
-                        {shortHash}
-                      </code>
-                      {isCurrent && (
-                        <Badge variant="default" className="gap-1 text-[10px] px-1.5 py-0">
-                          <Star className="h-3 w-3 fill-current" />
-                          Current
-                        </Badge>
-                      )}
-                      {isPushed && (
-                        <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0">
-                          <Cloud className="h-3 w-3" />
-                          {snapshot.registry?.tag || 'pushed'}
-                        </Badge>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* Description */}
-                  <td className="px-6 py-4 max-w-xs">
-                    {snapshot.description ? (
-                      <span className="text-sm text-foreground truncate block" title={snapshot.description}>
-                        {snapshot.description}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
+          return (
+            <div
+              key={snapshot.name}
+              className={`bg-card border rounded-lg p-4 ${
+                isCurrent ? 'border-blue-500' : ''
+              } ${!isCurrent && !isInProgress ? 'hover:bg-muted/50' : ''}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                {/* Left: Info */}
+                <div className="flex-1 min-w-0 space-y-2">
+                  {/* Header: Hash + Badges */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <code className="text-sm font-mono font-medium">
+                      {shortHash}
+                    </code>
+                    {isCurrent && (
+                      <Badge variant="default" className="gap-1">
+                        <Star className="h-3 w-3 fill-current" />
+                        Current
+                      </Badge>
                     )}
-                  </td>
-
-                  {/* Created */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {snapshot.createdAt ? (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{formatTimeAgo(snapshot.createdAt)}</span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
+                    {isPushed && (
+                      <Badge variant="secondary" className="gap-1">
+                        <Cloud className="h-3 w-3" />
+                        {snapshot.registry?.tag || 'pushed'}
+                      </Badge>
                     )}
-                  </td>
-
-                  {/* Size */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {snapshot.sizeHuman && snapshot.sizeHuman !== '0 B' ? (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <HardDrive className="h-3 w-3" />
-                        <span>{snapshot.sizeHuman}</span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {isInProgress ? (
+                    {isInProgress && (
                       <Badge variant="default" className="gap-1">
                         <Loader2 className="h-3 w-3 animate-spin" />
                         {snapshot.state}
                       </Badge>
-                    ) : isFailed ? (
+                    )}
+                    {isFailed && (
                       <Badge variant="destructive" className="gap-1">
                         <AlertCircle className="h-3 w-3" />
                         Failed
                       </Badge>
-                    ) : (
+                    )}
+                    {!isInProgress && !isFailed && !isCurrent && (
                       <Badge variant="secondary">Ready</Badge>
                     )}
-                  </td>
+                  </div>
 
-                  {/* Actions */}
-                  <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
-                    {isInProgress || isFailed ? (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
-                        <MoreHorizontal className="h-4 w-4 opacity-30" />
-                      </Button>
-                    ) : (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={disabled}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {isActionable && !isCurrent && (
-                            <DropdownMenuItem onClick={() => onRestore(snapshot)}>
-                              <RotateCcw className="mr-2 h-4 w-4" />
-                              Restore
-                            </DropdownMenuItem>
-                          )}
-                          {isActionable && !isPushed && onPush && (
-                            <DropdownMenuItem onClick={() => onPush(snapshot)}>
-                              <CloudUpload className="mr-2 h-4 w-4" />
-                              Push to Registry
-                            </DropdownMenuItem>
-                          )}
-                          {(isActionable || isFailed) && !isCurrent && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() => onDelete(snapshot)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  {/* Description */}
+                  {snapshot.description && (
+                    <p className="text-sm text-foreground">
+                      {snapshot.description}
+                    </p>
+                  )}
+
+                  {/* Metadata */}
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    {snapshot.createdAt && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatTimeAgo(snapshot.createdAt)}</span>
+                      </div>
                     )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                    {snapshot.sizeHuman && snapshot.sizeHuman !== '0 B' && (
+                      <div className="flex items-center gap-1">
+                        <HardDrive className="h-3 w-3" />
+                        <span>{snapshot.sizeHuman}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: Actions */}
+                <div>
+                  {isInProgress || isFailed ? (
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
+                      <MoreHorizontal className="h-4 w-4 opacity-30" />
+                    </Button>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={disabled}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {isActionable && !isCurrent && (
+                          <DropdownMenuItem onClick={() => onRestore(snapshot)}>
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            Restore
+                          </DropdownMenuItem>
+                        )}
+                        {isActionable && !isPushed && onPush && (
+                          <DropdownMenuItem onClick={() => onPush(snapshot)}>
+                            <CloudUpload className="mr-2 h-4 w-4" />
+                            Push to Registry
+                          </DropdownMenuItem>
+                        )}
+                        {(isActionable || isFailed) && !isCurrent && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => onDelete(snapshot)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
