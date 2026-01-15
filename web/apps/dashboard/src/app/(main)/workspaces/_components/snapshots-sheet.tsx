@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Camera,
   Plus,
   Loader2,
   AlertCircle,
+  Search,
 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import {
@@ -48,7 +49,8 @@ import {
 } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
 import { toast } from 'sonner'
-import { SnapshotTimeline } from './snapshot-timeline'
+import { SnapshotTimeGroup } from '../../_components/snapshot-time-group'
+import { groupSnapshotsByTime } from '@/lib/utils/time-grouping'
 
 interface SnapshotsSheetProps {
   workspace: Workspace
@@ -62,6 +64,7 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [description, setDescription] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Confirmation dialogs
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
@@ -202,6 +205,16 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
     setIsDeleting(false)
   }
 
+  // Group snapshots by time with search filtering
+  const groupedSnapshots = useMemo(() => {
+    const filtered = snapshots.filter(
+      (s) =>
+        s.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    return groupSnapshotsByTime(filtered)
+  }, [snapshots, searchQuery])
+
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -213,68 +226,100 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
             </Button>
           )}
         </SheetTrigger>
-        <SheetContent className="flex w-full flex-col p-0 sm:max-w-xl">
-          <SheetHeader className="border-b px-6 py-4">
-            <SheetTitle>Workspace Snapshots</SheetTitle>
+        <SheetContent className="flex w-full flex-col p-0 sm:max-w-2xl">
+          <SheetHeader className="border-b px-6 py-5">
+            <SheetTitle className="text-lg">Workspace Snapshots</SheetTitle>
             <SheetDescription>
-              Save and restore your workspace state
+              Save and restore your workspace state at any point in time
             </SheetDescription>
           </SheetHeader>
 
-          {/* Sticky Create Section */}
-          <div className="border-b bg-muted/30 px-6 py-4">
-            <div className="space-y-3">
-              {!workMachineRunning && (
-                <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <p className="text-xs">WorkMachine must be running to create snapshots</p>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Snapshot description (optional)"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  disabled={isCreating || !workMachineRunning}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleCreate}
-                  disabled={isCreating || !workMachineRunning}
-                  size="sm"
-                >
-                  {isCreating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Plus className="mr-1 h-4 w-4" />
-                      Create
-                    </>
-                  )}
-                </Button>
+          {/* Search + Create Section */}
+          <div className="border-b bg-muted/30 px-6 py-4 space-y-3">
+            {!workMachineRunning && (
+              <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <p className="text-xs">WorkMachine must be running to create snapshots</p>
               </div>
+            )}
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search snapshots..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Create */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Describe this snapshot (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isCreating || !workMachineRunning}
+                className="flex-1"
+              />
+              <Button
+                onClick={handleCreate}
+                disabled={isCreating || !workMachineRunning}
+                size="sm"
+              >
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
-          {/* Scrollable History Section */}
+          {/* Snapshots by Time Group */}
           <ScrollArea className="flex-1">
-            <div className="px-6 py-4">
-              {snapshots.length > 0 ? (
-                <SnapshotTimeline
-                  snapshots={snapshots}
-                  onRestore={handleRestoreClick}
-                  onDelete={handleDeleteClick}
-                  onPush={handlePushClick}
-                  disabled={!workMachineRunning}
-                  currentSnapshotName={workspace.status?.lastRestoredSnapshot?.name}
-                />
-              ) : (
+            <div className="px-6 py-4 space-y-6">
+              {Object.entries(groupedSnapshots).map(
+                ([label, snaps]) =>
+                  snaps.length > 0 && (
+                    <SnapshotTimeGroup
+                      key={label}
+                      label={label}
+                      snapshots={snaps}
+                      currentSnapshotName={workspace.status?.lastRestoredSnapshot?.name}
+                      onRestore={handleRestoreClick}
+                      onDelete={handleDeleteClick}
+                      onPush={handlePushClick}
+                      disabled={!workMachineRunning}
+                      showTimeline
+                    />
+                  )
+              )}
+
+              {snapshots.length === 0 && (
                 <div className="text-muted-foreground py-12 text-center">
                   <Camera className="mx-auto mb-3 h-10 w-10 opacity-40" />
                   <p className="text-sm font-medium">No snapshots yet</p>
-                  <p className="text-xs mt-1">Create your first snapshot to save workspace state</p>
+                  <p className="text-xs mt-1">
+                    Create your first snapshot to save workspace state
+                  </p>
                 </div>
               )}
+
+              {snapshots.length > 0 &&
+                Object.values(groupedSnapshots).every((g) => g.length === 0) && (
+                  <div className="text-muted-foreground py-12 text-center">
+                    <Search className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                    <p className="text-sm font-medium">No snapshots found</p>
+                    <p className="text-xs mt-1">
+                      No snapshots match &quot;{searchQuery}&quot;
+                    </p>
+                  </div>
+                )}
             </div>
           </ScrollArea>
         </SheetContent>

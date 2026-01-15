@@ -100,14 +100,14 @@ function getStateBadge(state: Snapshot['state']) {
   }
 }
 
-// Metro-style branch colors
+// Muted color palette for more professional look
 const BRANCH_COLORS = [
-  { stroke: '#3b82f6', fill: '#3b82f6' },
-  { stroke: '#10b981', fill: '#10b981' },
-  { stroke: '#8b5cf6', fill: '#8b5cf6' },
-  { stroke: '#f59e0b', fill: '#f59e0b' },
-  { stroke: '#f43f5e', fill: '#f43f5e' },
-  { stroke: '#06b6d4', fill: '#06b6d4' },
+  { stroke: 'rgb(59, 130, 246)', fill: 'rgb(147, 197, 253)' }, // Blue
+  { stroke: 'rgb(34, 197, 94)', fill: 'rgb(134, 239, 172)' }, // Green
+  { stroke: 'rgb(168, 85, 247)', fill: 'rgb(216, 180, 254)' }, // Purple
+  { stroke: 'rgb(249, 115, 22)', fill: 'rgb(253, 186, 116)' }, // Orange
+  { stroke: 'rgb(236, 72, 153)', fill: 'rgb(244, 114, 182)' }, // Pink
+  { stroke: 'rgb(14, 165, 233)', fill: 'rgb(125, 211, 252)' }, // Cyan
 ]
 
 interface SnapshotWithLane {
@@ -226,8 +226,9 @@ function buildGraph(snapshots: Snapshot[], currentSnapshotName?: string): GraphR
   return rows
 }
 
-const LANE_WIDTH = 16
-const DOT_SIZE = 8
+// Improved spacing for better visual hierarchy
+const LANE_WIDTH = 8 // Reduced from 16 for more compact graph
+const DOT_SIZE = 8 // Diameter (4px radius)
 const LINE_WIDTH = 2
 
 interface SnapshotRowProps {
