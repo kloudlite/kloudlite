@@ -49,7 +49,7 @@ export default function WorkmachinesPage() {
                   <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
                     <span className="text-foreground">Workmachines</span>
                   </h1>
-                  <p className="text-foreground/55 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
                     Your secure gateway to workspaces and environments.
                   </p>
                   <div className="mt-10 flex items-center justify-center gap-4">
@@ -67,31 +67,31 @@ export default function WorkmachinesPage() {
               <div className="grid grid-cols-3 -mx-6 lg:-mx-12 border-t border-b border-foreground/10">
                 <div className="p-6 lg:p-8 border-r border-foreground/10 text-center">
                   <p className="text-foreground text-2xl lg:text-3xl font-bold tracking-tight font-mono">16</p>
-                  <p className="text-foreground/40 mt-1 text-xs">vCPUs Max</p>
+                  <p className="text-muted-foreground mt-1 text-xs">vCPUs Max</p>
                 </div>
                 <div className="p-6 lg:p-8 border-r border-foreground/10 text-center">
                   <p className="text-foreground text-2xl lg:text-3xl font-bold tracking-tight font-mono">64GB</p>
-                  <p className="text-foreground/40 mt-1 text-xs">Memory Max</p>
+                  <p className="text-muted-foreground mt-1 text-xs">Memory Max</p>
                 </div>
                 <div className="p-6 lg:p-8 text-center">
                   <p className="text-foreground text-2xl lg:text-3xl font-bold tracking-tight font-mono">500GB</p>
-                  <p className="text-foreground/40 mt-1 text-xs">Storage Max</p>
+                  <p className="text-muted-foreground mt-1 text-xs">Storage Max</p>
                 </div>
               </div>
 
               {/* Core Capabilities */}
               <div className="grid lg:grid-cols-2 -mx-6 lg:-mx-12 border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">01</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">01</p>
                   <h3 className="text-foreground mt-3 text-lg font-bold tracking-[-0.02em]">VPN Gateway</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed">
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                     Secure, encrypted access to your workspaces and environment services from anywhere.
                   </p>
                 </div>
                 <div className="p-8 lg:p-10">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">02</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">02</p>
                   <h3 className="text-foreground mt-3 text-lg font-bold tracking-[-0.02em]">Compute & Storage</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed">
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                     Dedicated resources for your workloads. Persistent storage that survives restarts.
                   </p>
                 </div>
@@ -99,16 +99,16 @@ export default function WorkmachinesPage() {
 
               <div className="grid lg:grid-cols-2 -mx-6 lg:-mx-12 border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">03</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">03</p>
                   <h3 className="text-foreground mt-3 text-lg font-bold tracking-[-0.02em]">Auto Stop</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed">
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                     Idle machines stop automatically. Resume in seconds when you need them.
                   </p>
                 </div>
                 <div className="p-8 lg:p-10">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">04</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">04</p>
                   <h3 className="text-foreground mt-3 text-lg font-bold tracking-[-0.02em]">Multiple Tiers</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed">
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                     Choose the right size for your workload. Scale up or down as needed.
                   </p>
                 </div>
@@ -122,10 +122,10 @@ export default function WorkmachinesPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Learn More</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Learn More</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">Read the Docs</h3>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
 
@@ -135,10 +135,10 @@ export default function WorkmachinesPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Pricing</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Pricing</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">View Plans</h3>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
               </div>

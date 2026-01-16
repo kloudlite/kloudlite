@@ -34,7 +34,7 @@ export function AnimatedArchitectureDiagram() {
               </motion.div>
               <div className="flex flex-col items-center gap-3">
                 <motion.div
-                  className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full p-3 shadow-lg"
+                  className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-none p-3 shadow-lg"
                   animate={shouldAnimate ? {
                     rotate: [0, 5, -5, 0],
                   } : {}}
@@ -152,7 +152,7 @@ export function AnimatedArchitectureDiagram() {
 
               <div className="flex items-center gap-3 mb-8 justify-center">
                 <motion.div
-                  className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-full p-2 shadow-lg"
+                  className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-none p-2 shadow-lg"
                   animate={shouldAnimate ? {
                     rotate: [0, 5, -5, 0],
                   } : {}}
@@ -192,15 +192,15 @@ export function AnimatedArchitectureDiagram() {
               >
                 <div className="flex flex-wrap gap-4 justify-center text-xs text-slate-600 dark:text-slate-400">
                   <motion.div className="flex items-center gap-2" variants={slideInLeftVariants}>
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                    <div className="w-3 h-3 rounded-none bg-gradient-to-r from-blue-500 to-purple-500"></div>
                     <span>Orchestration flow</span>
                   </motion.div>
                   <motion.div className="flex items-center gap-2" variants={slideInLeftVariants}>
-                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    <div className="w-3 h-3 rounded-none bg-emerald-500"></div>
                     <span>Development</span>
                   </motion.div>
                   <motion.div className="flex items-center gap-2" variants={slideInLeftVariants}>
-                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                    <div className="w-3 h-3 rounded-none bg-amber-500"></div>
                     <span>Infrastructure</span>
                   </motion.div>
                 </div>
@@ -235,7 +235,7 @@ function WorkspaceCard({ shouldAnimate }: { shouldAnimate: boolean }) {
       <div className="relative bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 rounded-xl border-2 border-emerald-400 dark:border-emerald-600 p-6 hover:shadow-lg transition-all hover:border-emerald-500">
         <div className="flex flex-col items-center gap-3">
           <motion.div
-            className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-full p-3 shadow-md"
+            className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-none p-3 shadow-md"
             animate={shouldAnimate ? {
               rotate: [0, 5, -5, 0],
             } : {}}
@@ -281,7 +281,7 @@ function EnvironmentCard({ shouldAnimate }: { shouldAnimate: boolean }) {
       <div className="relative bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 rounded-xl border-2 border-amber-400 dark:border-amber-600 p-6 hover:shadow-lg transition-all hover:border-amber-500">
         <div className="flex flex-col items-center gap-3">
           <motion.div
-            className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-full p-3 shadow-md"
+            className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-none p-3 shadow-md"
             animate={shouldAnimate ? {
               rotate: [0, 5, -5, 0],
             } : {}}

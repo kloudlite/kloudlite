@@ -67,7 +67,7 @@ function PricingPage() {
                     <span className="text-foreground">Pricing</span>
                   </h1>
 
-                  <p className="text-foreground/60 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
                     Start free with your own infrastructure, or let us manage everything for you.
                   </p>
 
@@ -79,7 +79,7 @@ function PricingPage() {
                         'relative px-6 py-2.5 text-sm font-medium transition-all duration-200',
                         activeTab === 'byoc'
                           ? 'bg-background text-foreground shadow-sm'
-                          : 'text-foreground/50 hover:text-foreground/70'
+                          : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
                       Self-Hosted
@@ -90,7 +90,7 @@ function PricingPage() {
                         'relative px-6 py-2.5 text-sm font-medium transition-all duration-200',
                         activeTab === 'cloud'
                           ? 'bg-background text-foreground shadow-sm'
-                          : 'text-foreground/50 hover:text-foreground/70'
+                          : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
                       Cloud
@@ -113,7 +113,7 @@ function PricingPage() {
                   <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                     Questions
                   </h2>
-                  <p className="text-foreground/50 mt-3 text-base">
+                  <p className="text-muted-foreground mt-3 text-base">
                     Common questions answered.
                   </p>
                 </div>
@@ -151,16 +151,16 @@ function BYOCPricing() {
     <div className="grid lg:grid-cols-2">
       {/* Free */}
       <div className="p-8 lg:p-10 border-b border-foreground/10 lg:border-r group transition-colors hover:bg-foreground/[0.02]">
-        <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">
+        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Open Source
         </p>
         <h3 className="text-foreground mt-4 text-2xl font-bold tracking-[-0.02em]">Free</h3>
-        <p className="text-foreground/50 mt-3 text-sm leading-relaxed transition-colors group-hover:text-foreground/70">
+        <p className="text-muted-foreground mt-3 text-base leading-relaxed transition-colors group-hover:text-foreground">
           For individuals and small teams
         </p>
         <div className="mt-8">
           <span className="text-foreground text-5xl font-bold tracking-tight">$0</span>
-          <span className="text-foreground/40 ml-2 text-sm">forever</span>
+          <span className="text-muted-foreground ml-2 text-sm">forever</span>
         </div>
         <ul className="mt-10 space-y-4">
           <Li>Deploy on AWS, Azure, or GCP</Li>
@@ -174,11 +174,11 @@ function BYOCPricing() {
 
       {/* Enterprise */}
       <div className="p-8 lg:p-10 border-b border-foreground/10 group transition-colors hover:bg-foreground/[0.02]">
-        <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">
+        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Custom
         </p>
         <h3 className="text-foreground mt-4 text-2xl font-bold tracking-[-0.02em]">Enterprise</h3>
-        <p className="text-foreground/50 mt-3 text-sm leading-relaxed transition-colors group-hover:text-foreground/70">
+        <p className="text-muted-foreground mt-3 text-base leading-relaxed transition-colors group-hover:text-foreground">
           For organizations with advanced needs
         </p>
         <div className="mt-8">
@@ -236,23 +236,23 @@ function CloudPricing() {
           <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
             Cloud Pricing
           </h2>
-          <p className="text-foreground/50 mt-3 text-base">
+          <p className="text-muted-foreground mt-3 text-base">
             Fully managed by us.
           </p>
         </div>
         <div className="lg:col-span-2 p-8 lg:p-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
               Base Fee
             </p>
             <h3 className="text-foreground mt-2 text-xl font-bold tracking-[-0.02em]">Control Plane</h3>
-            <p className="text-foreground/50 mt-1 text-sm">
+            <p className="text-muted-foreground mt-1 text-base">
               Dashboard, user management, billing
             </p>
           </div>
           <div className="text-left sm:text-right">
             <span className="text-foreground text-4xl font-bold tracking-tight">$29</span>
-            <span className="text-foreground/40 text-sm">/mo</span>
+            <span className="text-muted-foreground text-sm">/mo</span>
           </div>
         </div>
       </div>
@@ -290,7 +290,7 @@ function CloudPricing() {
           <h2 className="text-foreground text-xl font-bold tracking-[-0.02em]">
             Estimate
           </h2>
-          <p className="text-foreground/50 mt-2 text-sm">
+          <p className="text-muted-foreground mt-2 text-base">
             Calculate your monthly cost.
           </p>
         </div>
@@ -298,136 +298,136 @@ function CloudPricing() {
           {/* Users Row */}
           <div className="grid sm:grid-cols-3 gap-6">
             <div>
-              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Tier 1 Users</label>
+              <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Tier 1 Users</label>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   onClick={() => setTier1Users(Math.max(0, tier1Users - 1))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   -
                 </button>
                 <span className="text-foreground text-lg font-semibold w-6 text-center">{tier1Users}</span>
                 <button
                   onClick={() => setTier1Users(tier1Users + 1)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   +
                 </button>
               </div>
-              <p className="text-foreground/40 text-xs mt-2">${tier1Price}/user = ${tier1Total}</p>
+              <p className="text-muted-foreground text-xs mt-2">${tier1Price}/user = ${tier1Total}</p>
             </div>
             <div>
-              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Tier 2 Users</label>
+              <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Tier 2 Users</label>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   onClick={() => setTier2Users(Math.max(0, tier2Users - 1))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   -
                 </button>
                 <span className="text-foreground text-lg font-semibold w-6 text-center">{tier2Users}</span>
                 <button
                   onClick={() => setTier2Users(tier2Users + 1)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   +
                 </button>
               </div>
-              <p className="text-foreground/40 text-xs mt-2">${tier2Price}/user = ${tier2Total}</p>
+              <p className="text-muted-foreground text-xs mt-2">${tier2Price}/user = ${tier2Total}</p>
             </div>
             <div>
-              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Tier 3 Users</label>
+              <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Tier 3 Users</label>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   onClick={() => setTier3Users(Math.max(0, tier3Users - 1))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   -
                 </button>
                 <span className="text-foreground text-lg font-semibold w-6 text-center">{tier3Users}</span>
                 <button
                   onClick={() => setTier3Users(tier3Users + 1)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   +
                 </button>
               </div>
-              <p className="text-foreground/40 text-xs mt-2">${tier3Price}/user = ${tier3Total}</p>
+              <p className="text-muted-foreground text-xs mt-2">${tier3Price}/user = ${tier3Total}</p>
             </div>
           </div>
 
           {/* Extra Hours Row */}
           <div className="grid sm:grid-cols-3 gap-6 mt-6 pt-6 border-t border-foreground/10">
             <div>
-              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Extra Hrs (T1)</label>
+              <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Extra Hrs (T1)</label>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   onClick={() => setTier1ExtraHrs(Math.max(0, tier1ExtraHrs - 10))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   -
                 </button>
                 <span className="text-foreground text-lg font-semibold w-8 text-center">{tier1ExtraHrs}</span>
                 <button
                   onClick={() => setTier1ExtraHrs(tier1ExtraHrs + 10)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   +
                 </button>
               </div>
-              <p className="text-foreground/40 text-xs mt-2">${tier1HrRate}/hr = ${tier1ExtraCost.toFixed(2)}</p>
+              <p className="text-muted-foreground text-xs mt-2">${tier1HrRate}/hr = ${tier1ExtraCost.toFixed(2)}</p>
             </div>
             <div>
-              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Extra Hrs (T2)</label>
+              <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Extra Hrs (T2)</label>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   onClick={() => setTier2ExtraHrs(Math.max(0, tier2ExtraHrs - 10))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   -
                 </button>
                 <span className="text-foreground text-lg font-semibold w-8 text-center">{tier2ExtraHrs}</span>
                 <button
                   onClick={() => setTier2ExtraHrs(tier2ExtraHrs + 10)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   +
                 </button>
               </div>
-              <p className="text-foreground/40 text-xs mt-2">${tier2HrRate.toFixed(2)}/hr = ${tier2ExtraCost.toFixed(2)}</p>
+              <p className="text-muted-foreground text-xs mt-2">${tier2HrRate.toFixed(2)}/hr = ${tier2ExtraCost.toFixed(2)}</p>
             </div>
             <div>
-              <label className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Extra Hrs (T3)</label>
+              <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Extra Hrs (T3)</label>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   onClick={() => setTier3ExtraHrs(Math.max(0, tier3ExtraHrs - 10))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   -
                 </button>
                 <span className="text-foreground text-lg font-semibold w-8 text-center">{tier3ExtraHrs}</span>
                 <button
                   onClick={() => setTier3ExtraHrs(tier3ExtraHrs + 10)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-foreground/60 hover:border-foreground/20 hover:text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
                 >
                   +
                 </button>
               </div>
-              <p className="text-foreground/40 text-xs mt-2">${tier3HrRate}/hr = ${tier3ExtraCost.toFixed(2)}</p>
+              <p className="text-muted-foreground text-xs mt-2">${tier3HrRate}/hr = ${tier3ExtraCost.toFixed(2)}</p>
             </div>
           </div>
 
           {/* Total */}
           <div className="mt-6 pt-6 border-t border-foreground/10 flex items-end justify-between">
-            <div className="text-foreground/50 text-sm space-y-1">
+            <div className="text-muted-foreground text-base space-y-1">
               <p>{totalUsers} user{totalUsers !== 1 ? 's' : ''}: ${tier1Total + tier2Total + tier3Total}</p>
               {totalExtraHrs > 0 && <p>Extra hours: ${totalExtraHrs.toFixed(2)}</p>}
               <p>Base fee: ${baseFee}</p>
             </div>
             <div className="text-right">
-              <p className="text-foreground/40 text-xs font-medium uppercase tracking-wider">Estimated Total</p>
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Estimated Total</p>
               <p className="text-foreground text-3xl font-bold tracking-tight mt-1">
-                ${total.toFixed(0)}<span className="text-foreground/40 text-sm font-normal">/mo</span>
+                ${total.toFixed(0)}<span className="text-muted-foreground text-sm font-normal">/mo</span>
               </p>
             </div>
           </div>
@@ -455,22 +455,22 @@ function Tier({
   return (
     <div className={cn('p-8 lg:p-10 group cursor-default transition-colors hover:bg-foreground/[0.02]', className)}>
       <h4 className="text-foreground text-lg font-bold tracking-[-0.02em]">{name}</h4>
-      <p className="text-foreground/50 mt-1 text-sm transition-colors group-hover:text-foreground/70">{description}</p>
+      <p className="text-muted-foreground mt-2 text-base transition-colors group-hover:text-foreground">{description}</p>
       <div className="mt-6">
         <span className="text-foreground text-3xl font-bold tracking-tight">${price}</span>
-        <span className="text-foreground/40 text-sm">/user/mo</span>
+        <span className="text-muted-foreground text-sm">/user/mo</span>
       </div>
       <ul className="mt-6 space-y-3">
         {features.map((f, i) => (
-          <li key={i} className="text-foreground/50 text-sm transition-colors group-hover:text-foreground/60">{f}</li>
+          <li key={i} className="text-muted-foreground text-base transition-colors group-hover:text-foreground">{f}</li>
         ))}
       </ul>
       {extraHourlyRate && (
         <div className="mt-6 pt-6 border-t border-foreground/10">
-          <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Extra Hours</p>
+          <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Extra Hours</p>
           <div className="mt-2">
             <span className="text-foreground text-lg font-bold">${extraHourlyRate.toFixed(2)}</span>
-            <span className="text-foreground/40 text-sm">/hr</span>
+            <span className="text-muted-foreground text-sm">/hr</span>
           </div>
         </div>
       )}
@@ -480,8 +480,8 @@ function Tier({
 
 function Li({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex items-start gap-3 text-foreground/60 text-sm leading-relaxed transition-colors group-hover:text-foreground/80">
-      <Check className="h-4 w-4 text-foreground/40 mt-0.5 shrink-0 transition-colors group-hover:text-foreground/60" />
+    <li className="flex items-start gap-3 text-muted-foreground text-base leading-relaxed transition-colors group-hover:text-foreground">
+      <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0 transition-colors group-hover:text-foreground" />
       <span>{children}</span>
     </li>
   )
@@ -491,7 +491,7 @@ function FAQ({ question, answer }: { question: string; answer: string }) {
   return (
     <div className="p-8 lg:p-10 group cursor-default transition-colors hover:bg-foreground/[0.02]">
       <h3 className="text-foreground text-base font-semibold">{question}</h3>
-      <p className="text-foreground/50 mt-3 text-sm leading-relaxed transition-colors group-hover:text-foreground/60">{answer}</p>
+      <p className="text-muted-foreground mt-3 text-base leading-relaxed transition-colors group-hover:text-foreground">{answer}</p>
     </div>
   )
 }

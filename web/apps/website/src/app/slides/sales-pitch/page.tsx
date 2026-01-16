@@ -1020,17 +1020,17 @@ function AIGitWorktree({ show }: SlideProps) {
           <p className="text-foreground/40 text-xs uppercase tracking-wider mb-4">Active Workspace Forks</p>
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              <div className="w-2 h-2 rounded-none bg-primary"></div>
               <span className="font-mono text-sm">api-main</span>
               <span className="text-foreground/40 text-xs">branch: main</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <div className="w-2 h-2 rounded-none bg-green-500"></div>
               <span className="font-mono text-sm">api-feature-auth</span>
               <span className="text-foreground/40 text-xs">branch: feature/auth</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+              <div className="w-2 h-2 rounded-none bg-yellow-500"></div>
               <span className="font-mono text-sm">api-hotfix</span>
               <span className="text-foreground/40 text-xs">branch: hotfix/bug-123</span>
             </div>
@@ -1126,7 +1126,7 @@ function AICodeScans({ show }: SlideProps) {
                   <span className={`text-xs ${scan.status === 'passed' ? 'text-green-500' : 'text-yellow-500'}`}>
                     {scan.count}
                   </span>
-                  <div className={`w-2 h-2 rounded-full ${scan.status === 'passed' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-none ${scan.status === 'passed' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
                 </div>
               </div>
             ))}
@@ -1438,7 +1438,7 @@ export default function SalesPitchPage() {
                 key={j}
                 onClick={() => navigate(i, j)}
                 className={cn(
-                  'w-2 h-2 rounded-full transition-all duration-300',
+                  'w-2 h-2 rounded-none transition-all duration-300',
                   i === position.x && j === position.y
                     ? 'bg-primary scale-125'
                     : 'bg-foreground/20 hover:bg-foreground/40'

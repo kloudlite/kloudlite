@@ -75,7 +75,7 @@ function SectionHeader({ title, description }: { title: string; description: str
   return (
     <div className="mb-8">
       <h2 className="text-foreground text-xl font-semibold tracking-tight">{title}</h2>
-      <p className="text-foreground/50 mt-1 text-sm">{description}</p>
+      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
     </div>
   )
 }
@@ -94,7 +94,7 @@ export default function BrandingPage() {
                   <h1 className="text-[2.5rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl lg:text-[4rem]">
                     <span className="text-foreground">Brand Guidelines</span>
                   </h1>
-                  <p className="text-foreground/60 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
                     Resources and guidelines for using the Kloudlite brand.
                   </p>
                 </div>
@@ -115,8 +115,8 @@ export default function BrandingPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 text-center border-x border-b border-foreground/10">
-                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">Light Background</p>
-                    <p className="py-3 text-xs text-foreground/40 font-medium">Dark Background</p>
+                    <p className="py-3 text-xs text-muted-foreground font-medium border-r border-foreground/10">Light Background</p>
+                    <p className="py-3 text-xs text-muted-foreground font-medium">Dark Background</p>
                   </div>
                 </div>
 
@@ -138,10 +138,10 @@ export default function BrandingPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-4 text-center border-x border-b border-foreground/10">
-                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">Primary</p>
-                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">Primary</p>
-                    <p className="py-3 text-xs text-foreground/40 font-medium border-r border-foreground/10">White</p>
-                    <p className="py-3 text-xs text-foreground/40 font-medium">Black</p>
+                    <p className="py-3 text-xs text-muted-foreground font-medium border-r border-foreground/10">Primary</p>
+                    <p className="py-3 text-xs text-muted-foreground font-medium border-r border-foreground/10">Primary</p>
+                    <p className="py-3 text-xs text-muted-foreground font-medium border-r border-foreground/10">White</p>
+                    <p className="py-3 text-xs text-muted-foreground font-medium">Black</p>
                   </div>
                 </div>
 
@@ -153,28 +153,28 @@ export default function BrandingPage() {
                       <div className="aspect-[4/3] bg-[#2258E5]" />
                       <div className="p-4 border-t border-foreground/10">
                         <p className="text-foreground text-sm font-medium">Primary</p>
-                        <p className="text-foreground/40 text-xs font-mono mt-1">#2258E5</p>
+                        <p className="text-muted-foreground text-xs font-mono mt-1">#2258E5</p>
                       </div>
                     </div>
                     <div className="flex flex-col border-l border-foreground/10">
                       <div className="aspect-[4/3] bg-[#09090b]" />
                       <div className="p-4 border-t border-foreground/10">
                         <p className="text-foreground text-sm font-medium">Black</p>
-                        <p className="text-foreground/40 text-xs font-mono mt-1">#09090B</p>
+                        <p className="text-muted-foreground text-xs font-mono mt-1">#09090B</p>
                       </div>
                     </div>
                     <div className="flex flex-col border-l border-foreground/10">
                       <div className="aspect-[4/3] bg-white border-b border-foreground/10" />
                       <div className="p-4">
                         <p className="text-foreground text-sm font-medium">White</p>
-                        <p className="text-foreground/40 text-xs font-mono mt-1">#FFFFFF</p>
+                        <p className="text-muted-foreground text-xs font-mono mt-1">#FFFFFF</p>
                       </div>
                     </div>
                     <div className="flex flex-col border-l border-foreground/10">
                       <div className="aspect-[4/3] bg-[#71717a]" />
                       <div className="p-4 border-t border-foreground/10">
                         <p className="text-foreground text-sm font-medium">Gray</p>
-                        <p className="text-foreground/40 text-xs font-mono mt-1">#71717A</p>
+                        <p className="text-muted-foreground text-xs font-mono mt-1">#71717A</p>
                       </div>
                     </div>
                   </div>
@@ -185,14 +185,14 @@ export default function BrandingPage() {
                   <SectionHeader title="Typography" description="The typefaces used across Kloudlite products." />
                   <div className="grid grid-cols-2 border border-foreground/10">
                     <div className="p-8">
-                      <p className="text-foreground/40 text-xs font-medium uppercase tracking-wider mb-4">Primary</p>
+                      <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-4">Primary</p>
                       <p className="text-foreground text-4xl font-semibold tracking-tight">Inter</p>
-                      <p className="text-foreground/50 mt-3 text-sm">Used for headings, body text, and UI elements.</p>
+                      <p className="text-muted-foreground mt-3 text-sm">Used for headings, body text, and UI elements.</p>
                     </div>
                     <div className="p-8 border-l border-foreground/10">
-                      <p className="text-foreground/40 text-xs font-medium uppercase tracking-wider mb-4">Monospace</p>
+                      <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-4">Monospace</p>
                       <p className="text-foreground text-3xl font-mono">JetBrains Mono</p>
-                      <p className="text-foreground/50 mt-3 text-sm">Used for code snippets and technical content.</p>
+                      <p className="text-muted-foreground mt-3 text-sm">Used for code snippets and technical content.</p>
                     </div>
                   </div>
                 </div>
@@ -205,21 +205,21 @@ export default function BrandingPage() {
                       <p className="text-green-600 dark:text-green-500 text-xs font-medium uppercase tracking-wider flex items-center gap-2 mb-6">
                         <Check className="h-4 w-4" /> Do
                       </p>
-                      <ul className="space-y-3 text-foreground/60 text-sm">
+                      <ul className="space-y-3 text-muted-foreground text-sm">
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Use adequate clear space around the logo
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Maintain original proportions when scaling
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Use on high contrast backgrounds
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Use official brand colors only
                         </li>
                       </ul>
@@ -228,21 +228,21 @@ export default function BrandingPage() {
                       <p className="text-red-600 dark:text-red-500 text-xs font-medium uppercase tracking-wider flex items-center gap-2 mb-6">
                         <X className="h-4 w-4" /> Don&apos;t
                       </p>
-                      <ul className="space-y-3 text-foreground/60 text-sm">
+                      <ul className="space-y-3 text-muted-foreground text-sm">
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Stretch or distort the logo
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Change or alter the logo colors
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Add shadows, gradients, or effects
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-foreground/30">—</span>
+                          <span className="text-muted-foreground/50">—</span>
                           Place on busy or low-contrast backgrounds
                         </li>
                       </ul>
@@ -254,7 +254,7 @@ export default function BrandingPage() {
                 <div className="p-8 lg:p-12 flex flex-col sm:flex-row items-center justify-between gap-6">
                   <div>
                     <h3 className="text-foreground text-lg font-semibold">Download Brand Kit</h3>
-                    <p className="text-foreground/50 text-sm mt-1">Get logos and icons in SVG format with usage guidelines.</p>
+                    <p className="text-muted-foreground text-sm mt-1">Get logos and icons in SVG format with usage guidelines.</p>
                   </div>
                   <a
                     href="/kloudlite-brand-kit.zip"

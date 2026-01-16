@@ -177,9 +177,9 @@ export default function ChangelogPage() {
               <div className="py-20 lg:py-24">
                 <div className="text-center">
                   <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
-                    <span className="text-foreground/40">C</span><span className="text-foreground">hangelog</span>
+                    <span className="text-muted-foreground">C</span><span className="text-foreground">hangelog</span>
                   </h1>
-                  <p className="text-foreground/55 mx-auto mt-6 max-w-md text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-md text-lg leading-relaxed">
                     New updates and improvements to Kloudlite.
                   </p>
                   <div className="mt-8 flex items-center justify-center gap-3">
@@ -187,14 +187,14 @@ export default function ChangelogPage() {
                       href="https://github.com/kloudlite/kloudlite/releases"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 text-foreground/60 hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
                     >
                       <Github className="h-4 w-4" />
                       Releases
                     </a>
                     <a
                       href="/changelog/rss"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 text-foreground/60 hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
                     >
                       <Rss className="h-4 w-4" />
                       RSS
@@ -222,13 +222,13 @@ export default function ChangelogPage() {
                       href="https://github.com/kloudlite/kloudlite/tree/development"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-foreground/40 hover:text-foreground text-sm transition-colors"
+                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                     >
                       View development branch →
                     </a>
                   </div>
 
-                  <p className="text-foreground/50 mt-4 text-sm leading-relaxed max-w-2xl">
+                  <p className="text-muted-foreground mt-4 text-sm leading-relaxed max-w-2xl">
                     Features currently in development. These may change before release.
                     Try them out on the nightly build and share your feedback.
                   </p>
@@ -236,58 +236,58 @@ export default function ChangelogPage() {
 
                 <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-foreground/10">
                   <div className="p-8 lg:p-10">
-                    <h3 className="text-foreground/40 text-xs font-semibold uppercase tracking-wider mb-4">
+                    <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-4">
                       Coming Soon
                     </h3>
                     <ul className="space-y-4">
                       <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-none bg-primary mt-2 flex-shrink-0" />
                         <div>
                           <p className="text-foreground font-medium text-sm">GPU-enabled Workspaces</p>
-                          <p className="text-foreground/50 text-sm mt-1">Run ML workloads and AI models directly in your workspace</p>
+                          <p className="text-muted-foreground text-sm mt-1">Run ML workloads and AI models directly in your workspace</p>
                         </div>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-none bg-primary mt-2 flex-shrink-0" />
                         <div>
                           <p className="text-foreground font-medium text-sm">Team Collaboration</p>
-                          <p className="text-foreground/50 text-sm mt-1">Real-time pair programming and workspace sharing</p>
+                          <p className="text-muted-foreground text-sm mt-1">Real-time pair programming and workspace sharing</p>
                         </div>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-none bg-primary mt-2 flex-shrink-0" />
                         <div>
                           <p className="text-foreground font-medium text-sm">Prebuilt Images</p>
-                          <p className="text-foreground/50 text-sm mt-1">One-click workspace templates for popular frameworks</p>
+                          <p className="text-muted-foreground text-sm mt-1">One-click workspace templates for popular frameworks</p>
                         </div>
                       </li>
                     </ul>
                   </div>
 
                   <div className="p-8 lg:p-10">
-                    <h3 className="text-foreground/40 text-xs font-semibold uppercase tracking-wider mb-4">
+                    <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-4">
                       In Development
                     </h3>
                     <ul className="space-y-4">
                       <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-none bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
                         <div>
                           <p className="text-foreground font-medium text-sm">Multi-cluster Support</p>
-                          <p className="text-foreground/50 text-sm mt-1">Connect workspaces across multiple Kubernetes clusters</p>
+                          <p className="text-muted-foreground text-sm mt-1">Connect workspaces across multiple Kubernetes clusters</p>
                         </div>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-none bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
                         <div>
                           <p className="text-foreground font-medium text-sm">Database Snapshots</p>
-                          <p className="text-foreground/50 text-sm mt-1">Instant database cloning for isolated testing</p>
+                          <p className="text-muted-foreground text-sm mt-1">Instant database cloning for isolated testing</p>
                         </div>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-none bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
                         <div>
                           <p className="text-foreground font-medium text-sm">VS Code Desktop Extension</p>
-                          <p className="text-foreground/50 text-sm mt-1">Native VS Code integration with remote workspaces</p>
+                          <p className="text-muted-foreground text-sm mt-1">Native VS Code integration with remote workspaces</p>
                         </div>
                       </li>
                     </ul>
@@ -297,7 +297,7 @@ export default function ChangelogPage() {
 
               {/* Section Divider */}
               <div className="-mx-6 lg:-mx-12 p-6">
-                <p className="text-foreground/30 text-xs font-semibold uppercase tracking-wider text-center">
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider text-center">
                   Released
                 </p>
               </div>
@@ -328,7 +328,7 @@ export default function ChangelogPage() {
                           </div>
                           <h2 className="text-foreground mt-2 text-xl font-semibold">{entry.title}</h2>
                         </div>
-                        <time className="text-foreground/40 text-sm font-mono">{entry.date}</time>
+                        <time className="text-muted-foreground text-sm font-mono">{entry.date}</time>
                       </div>
 
                       {/* Highlights */}
@@ -336,7 +336,7 @@ export default function ChangelogPage() {
                         {entry.highlights.map((highlight, i) => (
                           <span
                             key={i}
-                            className="px-3 py-1.5 bg-foreground/5 text-foreground/70 text-sm"
+                            className="px-3 py-1.5 bg-muted text-muted-foreground text-sm"
                           >
                             {highlight}
                           </span>
@@ -348,13 +348,13 @@ export default function ChangelogPage() {
                     <div className="grid lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-foreground/10">
                       {entry.changes.added && entry.changes.added.length > 0 && (
                         <div className="p-8 lg:p-10">
-                          <h3 className="text-green-600 dark:text-green-400 text-xs font-semibold uppercase tracking-wider mb-4">
+                          <h3 className="text-success text-xs font-semibold uppercase tracking-wider mb-4">
                             Added
                           </h3>
                           <ul className="space-y-3">
                             {entry.changes.added.map((item, i) => (
-                              <li key={i} className="text-foreground/60 text-sm leading-relaxed flex items-start gap-2">
-                                <span className="text-green-600 dark:text-green-400 mt-1.5">+</span>
+                              <li key={i} className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2">
+                                <span className="text-success mt-1.5">+</span>
                                 {item}
                               </li>
                             ))}
@@ -364,13 +364,13 @@ export default function ChangelogPage() {
 
                       {entry.changes.changed && entry.changes.changed.length > 0 && (
                         <div className="p-8 lg:p-10">
-                          <h3 className="text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-4">
+                          <h3 className="text-info text-xs font-semibold uppercase tracking-wider mb-4">
                             Changed
                           </h3>
                           <ul className="space-y-3">
                             {entry.changes.changed.map((item, i) => (
-                              <li key={i} className="text-foreground/60 text-sm leading-relaxed flex items-start gap-2">
-                                <span className="text-blue-600 dark:text-blue-400 mt-1.5">~</span>
+                              <li key={i} className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2">
+                                <span className="text-info mt-1.5">~</span>
                                 {item}
                               </li>
                             ))}
@@ -380,13 +380,13 @@ export default function ChangelogPage() {
 
                       {entry.changes.fixed && entry.changes.fixed.length > 0 && (
                         <div className="p-8 lg:p-10">
-                          <h3 className="text-amber-600 dark:text-amber-400 text-xs font-semibold uppercase tracking-wider mb-4">
+                          <h3 className="text-warning text-xs font-semibold uppercase tracking-wider mb-4">
                             Fixed
                           </h3>
                           <ul className="space-y-3">
                             {entry.changes.fixed.map((item, i) => (
-                              <li key={i} className="text-foreground/60 text-sm leading-relaxed flex items-start gap-2">
-                                <span className="text-amber-600 dark:text-amber-400 mt-1.5">*</span>
+                              <li key={i} className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2">
+                                <span className="text-warning mt-1.5">*</span>
                                 {item}
                               </li>
                             ))}
@@ -408,7 +408,7 @@ export default function ChangelogPage() {
 
               {/* Footer */}
               <div className="p-8 lg:p-10 -mx-6 lg:-mx-12 flex items-center justify-center">
-                <p className="text-foreground/40 text-sm text-center">
+                <p className="text-muted-foreground text-sm text-center">
                   Looking for older releases?{' '}
                   <a
                     href="https://github.com/kloudlite/kloudlite/releases"

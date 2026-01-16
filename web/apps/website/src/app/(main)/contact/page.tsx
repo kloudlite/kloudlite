@@ -48,7 +48,7 @@ export default function ContactPage() {
                     <span className="text-foreground/40">C</span><span className="text-foreground">ontact</span>{' '}
                     <span className="text-foreground/40">U</span><span className="text-foreground">s</span>
                   </h1>
-                  <p className="text-foreground/55 mx-auto mt-6 max-w-md text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-md text-lg leading-relaxed">
                     Questions, feedback, or partnership inquiries.
                     <br />
                     We&apos;re here to help.
@@ -64,13 +64,13 @@ export default function ContactPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Email</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Email</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">General Inquiries</h3>
-                      <p className="text-foreground/50 mt-1 text-sm group-hover:text-foreground/70 transition-colors">
+                      <p className="text-muted-foreground mt-1 text-sm group-hover:text-foreground transition-colors">
                         hello@kloudlite.io
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </a>
 
@@ -80,13 +80,13 @@ export default function ContactPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Support</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Support</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">Technical Help</h3>
-                      <p className="text-foreground/50 mt-1 text-sm group-hover:text-foreground/70 transition-colors">
+                      <p className="text-muted-foreground mt-1 text-sm group-hover:text-foreground transition-colors">
                         support@kloudlite.io
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </a>
 
@@ -98,23 +98,23 @@ export default function ContactPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Open Source</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Open Source</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">GitHub</h3>
-                      <p className="text-foreground/50 mt-1 text-sm group-hover:text-foreground/70 transition-colors">
+                      <p className="text-muted-foreground mt-1 text-sm group-hover:text-foreground transition-colors">
                         Report issues & contribute
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </a>
 
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 border-foreground/10">
                   <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-foreground/40 mt-0.5 flex-shrink-0" />
+                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Office</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Office</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">Headquarters</h3>
-                      <p className="text-foreground/50 mt-1 text-sm leading-relaxed">
+                      <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
                         415, Floor 4, Shaft-1, Tower-B<br />
                         VRR Fortuna, Carmelaram<br />
                         Janatha Colony, Bangalore<br />
@@ -132,20 +132,20 @@ export default function ContactPage() {
                     <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                       Send a Message
                     </h2>
-                    <p className="text-foreground/50 mt-3 text-base">
+                    <p className="text-muted-foreground mt-3 text-base">
                       Have something specific to discuss? Fill out the form and we&apos;ll respond within 24 hours.
                     </p>
                   </div>
 
                   {/* Social Links */}
                   <div className="mt-8 lg:mt-0">
-                    <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider mb-4">Follow Us</p>
+                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-4">Follow Us</p>
                     <div className="flex gap-2">
                       <a
                         href="https://github.com/kloudlite"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2.5 border border-foreground/10 text-foreground/40 hover:text-foreground hover:border-foreground/20 transition-colors"
+                        className="p-2.5 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                       >
                         <Github className="h-4 w-4" />
                       </a>
@@ -153,7 +153,7 @@ export default function ContactPage() {
                         href="https://twitter.com/kloudlite"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2.5 border border-foreground/10 text-foreground/40 hover:text-foreground hover:border-foreground/20 transition-colors"
+                        className="p-2.5 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                       >
                         <Twitter className="h-4 w-4" />
                       </a>
@@ -161,13 +161,13 @@ export default function ContactPage() {
                         href="https://linkedin.com/company/kloudlite"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2.5 border border-foreground/10 text-foreground/40 hover:text-foreground hover:border-foreground/20 transition-colors"
+                        className="p-2.5 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                       >
                         <Linkedin className="h-4 w-4" />
                       </a>
                       <a
                         href="mailto:hello@kloudlite.io"
-                        className="p-2.5 border border-foreground/10 text-foreground/40 hover:text-foreground hover:border-foreground/20 transition-colors"
+                        className="p-2.5 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                       >
                         <Mail className="h-4 w-4" />
                       </a>

@@ -10,9 +10,9 @@ function PreviewFrame({ children, url = 'console.kloudlite.io' }: { children: Re
       {/* Browser chrome */}
       <div className="bg-zinc-800 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-3">
         <div className="flex gap-1.5">
-          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#ff5f57]" />
-          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#febc2e]" />
-          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#28c840]" />
+          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-none bg-[#ff5f57]" />
+          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-none bg-[#febc2e]" />
+          <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-none bg-[#28c840]" />
         </div>
         <div className="flex-1 flex justify-center">
           <div className="bg-zinc-700/50 rounded px-2 sm:px-3 py-1 text-zinc-400 text-[9px] sm:text-[10px] flex items-center gap-1 sm:gap-2">
@@ -60,7 +60,7 @@ function InstallationProgress({ currentStep }: { currentStep: number }) {
     <div className="flex items-center justify-center gap-2 mb-6">
       {steps.map((label, index) => (
         <div key={label} className="flex items-center gap-2">
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-colors ${
+          <div className={`w-6 h-6 rounded-none flex items-center justify-center text-[10px] font-medium transition-colors ${
             index < currentStep
               ? 'bg-primary text-primary-foreground'
               : index === currentStep
@@ -313,14 +313,14 @@ export function CloudProviderPreview() {
               <div className="absolute inset-0 flex items-center justify-center opacity-20">
                 <div className="grid grid-cols-12 gap-1">
                   {Array.from({ length: 48 }).map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground" />
+                    <div key={i} className="w-1.5 h-1.5 rounded-none bg-foreground" />
                   ))}
                 </div>
               </div>
               {/* Active region indicator */}
               <div className="absolute animate-pulse">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-                <div className="absolute inset-0 w-3 h-3 rounded-full bg-primary animate-ping opacity-50" />
+                <div className="w-3 h-3 rounded-none bg-primary" />
+                <div className="absolute inset-0 w-3 h-3 rounded-none bg-primary animate-ping opacity-50" />
               </div>
             </div>
           </div>
@@ -369,9 +369,9 @@ export function InstallCommandPreview() {
       <div className="bg-zinc-800 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#ff5f57]" />
-            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#febc2e]" />
-            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-[#28c840]" />
+            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-none bg-[#ff5f57]" />
+            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-none bg-[#febc2e]" />
+            <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-none bg-[#28c840]" />
           </div>
           <span className="text-zinc-400 ml-2 hidden sm:inline">Terminal</span>
         </div>
@@ -451,7 +451,7 @@ export function InstallationCompletePreview() {
 
         {verifying ? (
           <div className="animate-in fade-in">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-none bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Loader2 className="h-8 w-8 text-primary animate-spin" />
             </div>
             <h2 className="font-semibold text-base mb-2">Verifying Installation</h2>
@@ -475,7 +475,7 @@ export function InstallationCompletePreview() {
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2">
-            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-none bg-green-500/10 flex items-center justify-center mx-auto mb-4">
               <Check className="h-8 w-8 text-green-500" />
             </div>
             <h2 className="font-semibold text-base mb-2">Installation Complete!</h2>
@@ -492,19 +492,19 @@ export function InstallationCompletePreview() {
               <p className="text-[11px] font-medium">What's next?</p>
               <div className="space-y-2 text-[10px]">
                 <div className="flex items-start gap-2">
-                  <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-4 h-4 rounded-none bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-[8px] font-medium text-primary">1</span>
                   </div>
                   <span className="text-muted-foreground">Create users in the admin panel</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-4 h-4 rounded-none bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-[8px] font-medium text-primary">2</span>
                   </div>
                   <span className="text-muted-foreground">Set up environments with your services</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-4 h-4 rounded-none bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-[8px] font-medium text-primary">3</span>
                   </div>
                   <span className="text-muted-foreground">Create workspaces and start coding</span>

@@ -19,7 +19,7 @@ interface StepItemProps {
 export function StepItem({ number, title, children, className }: StepItemProps) {
   return (
     <li className={cn('flex items-start gap-3', className)}>
-      <span className="bg-primary text-primary-foreground mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold">
+      <span className="bg-primary text-primary-foreground mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-none text-sm font-semibold">
         {number}
       </span>
       <div className="flex-1">

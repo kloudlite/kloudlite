@@ -88,7 +88,7 @@ function TypewriterText() {
   }, [currentText, isDeleting, currentRoleIndex])
 
   return (
-    <span className="text-blue-500">
+    <span className="text-primary">
       {currentText}
       <span className="animate-pulse">|</span>
     </span>
@@ -114,9 +114,9 @@ function WorkflowVisualization() {
             <div
               className={cn(
                 'px-5 py-2.5 rounded-none text-sm font-medium transition-all',
-                step.color === 'blue' && 'bg-blue-50 text-blue-600 border-2 border-blue-400',
-                step.color === 'green' && 'bg-emerald-50 text-emerald-600 border-2 border-emerald-400',
-                step.color === 'gray' && 'bg-foreground/[0.04] text-foreground/40 border border-foreground/[0.08] line-through'
+                step.color === 'blue' && 'bg-primary/10 text-primary border-2 border-primary/30',
+                step.color === 'green' && 'bg-success/10 text-success border-2 border-success/30',
+                step.color === 'gray' && 'bg-muted text-muted-foreground border border-border line-through'
               )}
             >
               {step.label}
@@ -129,7 +129,7 @@ function WorkflowVisualization() {
       </div>
 
       {/* Tagline */}
-      <p className="text-foreground/50 text-center mt-10 text-base">
+      <p className="text-muted-foreground text-center mt-10 text-base">
         Designed to reduce development loop
       </p>
     </div>
@@ -147,15 +147,15 @@ function WebsiteLandingPage() {
         <div className="px-6 pt-8 lg:px-8 lg:pt-12">
           <GridContainer className="px-6 lg:px-12">
             {/* Hero Section */}
-            <div className="py-20 lg:py-24">
+            <div className="py-20 lg:py-28">
               <div className="text-center">
                 <h1 className="text-[2.5rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl lg:text-[4rem]">
                   <span className="text-foreground">Cloud Development</span>
                   <br />
-                  <span className="text-foreground/50">Environments</span>
+                  <span className="text-muted-foreground">Environments</span>
                 </h1>
 
-                <p className="text-foreground/60 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
                   Reduce the development loop. No setup, no builds, no deployments.
                 </p>
 
@@ -176,7 +176,7 @@ function WebsiteLandingPage() {
 
               {/* For Developer typewriter - Hidden on mobile */}
               <div className="hidden sm:block mt-16 text-center">
-                <p className="text-foreground/60 text-xl sm:text-2xl">
+                <p className="text-muted-foreground text-xl sm:text-2xl">
                   For <TypewriterText />
                 </p>
               </div>
@@ -187,17 +187,14 @@ function WebsiteLandingPage() {
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-foreground/10 -mx-6 lg:-mx-12" />
-
             {/* Features Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 border-t border-foreground/10 -mx-6 lg:-mx-12">
               {/* Row 1 - Built for developers */}
               <div className="p-8 lg:p-10 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
-                <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
+                <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
                   Built for developers
                 </h2>
-                <p className="text-foreground/50 mt-3 text-base">
+                <p className="text-muted-foreground mt-3 text-base">
                   Focus on code, not ops.
                 </p>
               </div>
@@ -246,10 +243,10 @@ function WebsiteLandingPage() {
               {/* CTA Row - Start building faster */}
               <div className="p-8 lg:p-10 border-b border-foreground/10 sm:col-span-2 lg:col-span-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 lg:h-[180px] bg-foreground/[0.015]">
                 <div>
-                  <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
+                  <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
                     Start building faster
                   </h2>
-                  <p className="text-foreground/50 mt-2 text-sm">
+                  <p className="text-muted-foreground mt-2 text-base">
                     Free with your own infrastructure.
                   </p>
                 </div>
@@ -275,10 +272,10 @@ function WebsiteLandingPage() {
 
               {/* Row - AI Ready Title */}
               <div className="p-6 lg:p-10 border-b border-foreground/10 sm:border-r flex flex-col justify-center lg:h-[180px] bg-foreground/[0.015]">
-                <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
+                <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
                   AI Ready Workspaces
                 </h2>
-                <p className="text-foreground/50 mt-3 text-base">
+                <p className="text-muted-foreground mt-3 text-base">
                   Supports vibecoding sessions.
                 </p>
               </div>
@@ -286,49 +283,49 @@ function WebsiteLandingPage() {
               <div className="sm:hidden col-span-1 grid grid-cols-5 border-b border-foreground/10 bg-foreground/[0.015]">
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
                   <ClaudeCodeIcon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">Claude</span>
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">Claude</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
                   <GeminiIcon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">Gemini</span>
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">Gemini</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
-                  <OpenCodeIcon className="h-5 w-5 text-foreground/70 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">OpenCode</span>
+                  <OpenCodeIcon className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">OpenCode</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
                   <OpenAIIcon className="h-5 w-5 text-[#10A37F] transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">Codex</span>
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">Codex</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
-                  <Plug className="h-5 w-5 text-foreground/70 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">MCP</span>
+                  <Plug className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">MCP</span>
                 </div>
               </div>
               {/* Claude Code */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 sm:border-r lg:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
                 <ClaudeCodeIcon className="h-8 w-8 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">Claude Code</span>
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">Claude Code</span>
               </div>
               {/* Gemini CLI */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
                 <GeminiIcon className="h-8 w-8 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">Gemini CLI</span>
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">Gemini CLI</span>
               </div>
               {/* OpenCode */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 sm:border-r lg:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
-                <OpenCodeIcon className="h-8 w-8 text-foreground/70 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">OpenCode</span>
+                <OpenCodeIcon className="h-8 w-8 text-muted-foreground transition-transform group-hover:scale-110" />
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">OpenCode</span>
               </div>
               {/* Codex */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 lg:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
                 <OpenAIIcon className="h-8 w-8 text-[#10A37F] transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">Codex CLI</span>
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">Codex CLI</span>
               </div>
               {/* MCP Integrated */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 sm:border-r lg:border-r-0 flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
-                <Plug className="h-8 w-8 text-foreground/70 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">MCP Integrated</span>
+                <Plug className="h-8 w-8 text-muted-foreground transition-transform group-hover:scale-110" />
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">MCP Integrated</span>
               </div>
 
               {/* Section Spacer */}
@@ -340,19 +337,19 @@ function WebsiteLandingPage() {
               {/* VS Code */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 sm:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
                 <VSCodeIcon className="h-8 w-8 text-[#007ACC] transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">VS Code</span>
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">VS Code</span>
               </div>
               {/* Cursor */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 sm:border-r lg:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
-                <CursorIcon className="h-8 w-8 text-foreground/70 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">Cursor</span>
+                <CursorIcon className="h-8 w-8 text-muted-foreground transition-transform group-hover:scale-110" />
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">Cursor</span>
               </div>
               {/* Row - IDE Title */}
               <div className="p-6 lg:p-10 border-b border-foreground/10 flex flex-col justify-center lg:h-[180px] bg-foreground/[0.015]">
-                <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
+                <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
                   Access from any IDE
                 </h2>
-                <p className="text-foreground/50 mt-2 lg:mt-3 text-base">
+                <p className="text-muted-foreground mt-2 lg:mt-3 text-base">
                   Use your favorite editor.
                 </p>
               </div>
@@ -360,40 +357,40 @@ function WebsiteLandingPage() {
               <div className="sm:hidden col-span-1 grid grid-cols-5 border-b border-foreground/10 bg-foreground/[0.015]">
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
                   <VSCodeIcon className="h-5 w-5 text-[#007ACC] transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">VS Code</span>
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">VS Code</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
-                  <CursorIcon className="h-5 w-5 text-foreground/70 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">Cursor</span>
+                  <CursorIcon className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">Cursor</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
-                  <JetBrainsIcon className="h-5 w-5 text-foreground/70 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">JetBrains</span>
+                  <JetBrainsIcon className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">JetBrains</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
                   <AntigravityIcon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">Antigravity</span>
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">Antigravity</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
-                  <ZedIcon className="h-5 w-5 text-foreground/70 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">Zed</span>
+                  <ZedIcon className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">Zed</span>
                 </div>
               </div>
               {/* Row 2 - More IDEs */}
               {/* JetBrains */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 sm:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
-                <JetBrainsIcon className="h-8 w-8 text-foreground/70 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">JetBrains</span>
+                <JetBrainsIcon className="h-8 w-8 text-muted-foreground transition-transform group-hover:scale-110" />
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">JetBrains</span>
               </div>
               {/* Antigravity */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 sm:border-r lg:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
                 <AntigravityIcon className="h-8 w-8 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">Antigravity</span>
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">Antigravity</span>
               </div>
               {/* Zed */}
               <div className="hidden sm:flex p-6 lg:p-10 border-b border-foreground/10 flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
-                <ZedIcon className="h-8 w-8 text-foreground/70 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">Zed</span>
+                <ZedIcon className="h-8 w-8 text-muted-foreground transition-transform group-hover:scale-110" />
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">Zed</span>
               </div>
 
               {/* Section Spacer */}
@@ -404,33 +401,33 @@ function WebsiteLandingPage() {
               {/* Access Anywhere Section */}
               {/* Row - Access Title */}
               <div className="p-6 lg:p-10 sm:border-r flex flex-col justify-center lg:h-[180px] bg-foreground/[0.015]">
-                <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
-                  Access your code anywhere
+                <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
+                  Access anywhere
                 </h2>
-                <p className="text-foreground/50 mt-2 lg:mt-3 text-base">
+                <p className="text-muted-foreground mt-2 lg:mt-3 text-base">
                   Work from any device.
                 </p>
               </div>
               {/* Access Icons - Single row on mobile */}
               <div className="sm:hidden col-span-1 grid grid-cols-2 bg-foreground/[0.015]">
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
-                  <Terminal className="h-5 w-5 text-foreground/70 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">Web Terminal</span>
+                  <Terminal className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">Web Terminal</span>
                 </div>
                 <div className="p-3 flex flex-col items-center justify-center gap-1.5 group cursor-default transition-colors hover:bg-foreground/[0.03]">
                   <VSCodeIcon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  <span className="text-foreground/70 text-[9px] font-medium transition-colors group-hover:text-foreground">VS Code Web</span>
+                  <span className="text-muted-foreground text-xs font-medium transition-colors group-hover:text-foreground">VS Code Web</span>
                 </div>
               </div>
               {/* Web Terminal */}
               <div className="hidden sm:flex p-6 lg:p-10 sm:border-r lg:border-r flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
-                <Terminal className="h-8 w-8 text-foreground/70 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">Web Terminal</span>
+                <Terminal className="h-8 w-8 text-muted-foreground transition-transform group-hover:scale-110" />
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">Web Terminal</span>
               </div>
               {/* VS Code Web */}
               <div className="hidden sm:flex p-6 lg:p-10 flex-col items-center justify-center gap-2 lg:gap-3 h-[120px] lg:h-[180px] group cursor-default transition-colors bg-foreground/[0.015] hover:bg-foreground/[0.03]">
                 <VSCodeIcon className="h-8 w-8 transition-transform group-hover:scale-110" />
-                <span className="text-foreground/70 text-sm font-medium transition-colors group-hover:text-foreground">VS Code Web</span>
+                <span className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">VS Code Web</span>
               </div>
             </div>
           </GridContainer>
@@ -446,9 +443,9 @@ function WebsiteLandingPage() {
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="group cursor-default">
-      <div className="text-foreground/50 mb-3 transition-colors group-hover:text-foreground/70">{icon}</div>
-      <h3 className="text-foreground text-sm font-semibold">{title}</h3>
-      <p className="text-foreground/40 mt-1.5 text-sm leading-relaxed transition-colors group-hover:text-foreground/60">{description}</p>
+      <div className="text-muted-foreground mb-3 transition-colors group-hover:text-foreground">{icon}</div>
+      <h3 className="text-foreground text-base font-semibold">{title}</h3>
+      <p className="text-muted-foreground mt-2 text-base leading-relaxed transition-colors group-hover:text-foreground">{description}</p>
     </div>
   )
 }

@@ -9,9 +9,9 @@ function PreviewFrame({ children }: { children: React.ReactNode }) {
       {/* Browser chrome */}
       <div className="bg-zinc-800 px-4 py-2.5 flex items-center gap-3">
         <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-          <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-          <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          <div className="w-3 h-3 rounded-none bg-[#ff5f57]" />
+          <div className="w-3 h-3 rounded-none bg-[#febc2e]" />
+          <div className="w-3 h-3 rounded-none bg-[#28c840]" />
         </div>
         <div className="flex-1 flex justify-center">
           <div className="bg-zinc-700/50 rounded px-3 py-1 text-zinc-400 text-[10px] flex items-center gap-2">
