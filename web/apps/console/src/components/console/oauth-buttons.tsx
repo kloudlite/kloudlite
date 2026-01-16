@@ -2,7 +2,18 @@
 
 import { Button } from '@kloudlite/ui'
 import { SiGithub, SiGoogle } from 'react-icons/si'
-import { Building2 } from 'lucide-react'
+
+// Microsoft logo component
+function MicrosoftIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 23 23" fill="currentColor">
+      <path d="M0 0h11v11H0z" />
+      <path d="M12 0h11v11H12z" />
+      <path d="M0 12h11v11H0z" />
+      <path d="M12 12h11v11H12z" />
+    </svg>
+  )
+}
 
 const providers = [
   {
@@ -18,7 +29,7 @@ const providers = [
   {
     id: 'microsoft-entra-id',
     name: 'Microsoft',
-    icon: Building2,
+    icon: MicrosoftIcon,
   },
 ]
 
@@ -36,7 +47,8 @@ export function OAuthButtons() {
             key={provider.id}
             onClick={() => handleClick(provider.id)}
             variant="outline"
-            className="w-full gap-3"
+            size="lg"
+            className="w-full gap-3 text-base"
           >
             <Icon className="h-5 w-5" />
             <span>Continue with {provider.name}</span>
