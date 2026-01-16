@@ -78,8 +78,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   </>
                 )}
                 <form action={signOutAction}>
-                  <DropdownMenuItem variant="destructive" asChild>
-                    <button type="submit" className="w-full">
+                  <DropdownMenuItem asChild>
+                    <button type="submit" className="w-full text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign out
                     </button>
