@@ -50,7 +50,7 @@ export default function AboutPage() {
                     <br />
                     <span className="text-foreground/40">of Development.</span>
                   </h1>
-                  <p className="text-foreground/55 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
                     We&apos;re on a mission to eliminate the friction
                     <br />
                     between writing code and seeing it run.
@@ -62,19 +62,19 @@ export default function AboutPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 -mx-6 lg:-mx-12 border-t border-b border-foreground/10">
                 <div className="p-6 lg:p-8 border-r border-foreground/10 text-center">
                   <p className="text-foreground text-3xl lg:text-4xl font-bold tracking-tight">2023</p>
-                  <p className="text-foreground/40 mt-1 text-sm">Founded</p>
+                  <p className="text-muted-foreground mt-1 text-sm">Founded</p>
                 </div>
                 <div className="p-6 lg:p-8 lg:border-r border-foreground/10 text-center">
                   <p className="text-foreground text-3xl lg:text-4xl font-bold tracking-tight">100%</p>
-                  <p className="text-foreground/40 mt-1 text-sm">Open Source</p>
+                  <p className="text-muted-foreground mt-1 text-sm">Open Source</p>
                 </div>
                 <div className="p-6 lg:p-8 border-r border-t lg:border-t-0 border-foreground/10 text-center">
                   <p className="text-foreground text-3xl lg:text-4xl font-bold tracking-tight">10x</p>
-                  <p className="text-foreground/40 mt-1 text-sm">Faster Feedback</p>
+                  <p className="text-muted-foreground mt-1 text-sm">Faster Feedback</p>
                 </div>
                 <div className="p-6 lg:p-8 border-t lg:border-t-0 border-foreground/10 text-center">
                   <p className="text-foreground text-3xl lg:text-4xl font-bold tracking-tight">0</p>
-                  <p className="text-foreground/40 mt-1 text-sm">Setup Required</p>
+                  <p className="text-muted-foreground mt-1 text-sm">Setup Required</p>
                 </div>
               </div>
 
@@ -84,15 +84,15 @@ export default function AboutPage() {
                   <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                     Our Mission
                   </h2>
-                  <p className="text-foreground/50 mt-3 text-base">
+                  <p className="text-muted-foreground mt-3 text-base">
                     Why we exist and what drives us.
                   </p>
                 </div>
                 <div className="lg:col-span-2 p-8 lg:p-10">
-                  <p className="text-foreground/70 text-lg leading-relaxed">
+                  <p className="text-foreground text-lg leading-relaxed">
                     Developers spend too much time waiting. Waiting for builds, waiting for deployments, waiting for environments. Every context switch costs productivity and focus.
                   </p>
-                  <p className="text-foreground/70 text-lg leading-relaxed mt-4">
+                  <p className="text-foreground text-lg leading-relaxed mt-4">
                     We&apos;re building Kloudlite to eliminate that friction. Cloud development environments that connect directly to your services, so you can write code and see it work instantly.
                   </p>
                 </div>
@@ -101,23 +101,23 @@ export default function AboutPage() {
               {/* Principles */}
               <div className="grid lg:grid-cols-3 -mx-6 lg:-mx-12 border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Principle 01</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Principle 01</p>
                   <h3 className="text-foreground mt-3 text-lg font-bold tracking-[-0.02em]">Speed Above All</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                     Every millisecond matters. We obsess over reducing latency in every part of the development loop.
                   </p>
                 </div>
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Principle 02</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Principle 02</p>
                   <h3 className="text-foreground mt-3 text-lg font-bold tracking-[-0.02em]">Zero Configuration</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                     Tools should work out of the box. No complex setup, no infrastructure expertise required.
                   </p>
                 </div>
                 <div className="p-8 lg:p-10 group hover:bg-foreground/[0.02] transition-colors">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Principle 03</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Principle 03</p>
                   <h3 className="text-foreground mt-3 text-lg font-bold tracking-[-0.02em]">Open by Default</h3>
-                  <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                     Transparency builds trust. Our core platform is open source and will always remain so.
                   </p>
                 </div>
@@ -133,13 +133,13 @@ export default function AboutPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Open Source</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Open Source</p>
                       <h3 className="text-foreground mt-2 text-xl font-bold tracking-[-0.02em]">View on GitHub</h3>
-                      <p className="text-foreground/50 mt-1 text-sm group-hover:text-foreground/70 transition-colors">
+                      <p className="text-muted-foreground mt-1 text-sm group-hover:text-foreground transition-colors">
                         Explore the code, report issues, contribute
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
 
@@ -149,26 +149,26 @@ export default function AboutPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Get in Touch</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Get in Touch</p>
                       <h3 className="text-foreground mt-2 text-xl font-bold tracking-[-0.02em]">Contact Us</h3>
-                      <p className="text-foreground/50 mt-1 text-sm group-hover:text-foreground/70 transition-colors">
+                      <p className="text-muted-foreground mt-1 text-sm group-hover:text-foreground transition-colors">
                         Questions, partnerships, or just say hello
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
               </div>
 
               {/* Social Links */}
               <div className="p-8 lg:p-10 -mx-6 lg:-mx-12 flex items-center justify-between">
-                <p className="text-foreground/40 text-sm">Follow our journey</p>
+                <p className="text-muted-foreground text-sm">Follow our journey</p>
                 <div className="flex gap-2">
                   <a
                     href="https://github.com/kloudlite"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 border border-foreground/10 text-foreground/40 hover:text-foreground hover:border-foreground/20 transition-colors"
+                    className="p-2.5 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                   >
                     <Github className="h-4 w-4" />
                   </a>
@@ -176,7 +176,7 @@ export default function AboutPage() {
                     href="https://twitter.com/kloudlite"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 border border-foreground/10 text-foreground/40 hover:text-foreground hover:border-foreground/20 transition-colors"
+                    className="p-2.5 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                   >
                     <Twitter className="h-4 w-4" />
                   </a>
@@ -184,7 +184,7 @@ export default function AboutPage() {
                     href="https://linkedin.com/company/kloudlite"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 border border-foreground/10 text-foreground/40 hover:text-foreground hover:border-foreground/20 transition-colors"
+                    className="p-2.5 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                   >
                     <Linkedin className="h-4 w-4" />
                   </a>

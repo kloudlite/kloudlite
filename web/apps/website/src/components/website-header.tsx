@@ -8,13 +8,14 @@ import { cn } from '@kloudlite/lib'
 import { Menu, X } from 'lucide-react'
 
 interface WebsiteHeaderProps {
-  currentPage?: 'home' | 'docs' | 'pricing' | 'about' | 'contact' | 'changelog' | 'workspaces' | 'environments' | 'workmachines' | 'why-kloudlite'
+  currentPage?: 'home' | 'docs' | 'pricing' | 'about' | 'contact' | 'changelog' | 'workspaces' | 'environments' | 'workmachines' | 'why-kloudlite' | 'blog'
   alwaysShowBorder?: boolean
 }
 
 const navLinks = [
   { label: 'Why Kloudlite?', href: '/why-kloudlite', key: 'why-kloudlite' },
   { label: 'Docs', href: '/docs', key: 'docs' },
+  { label: 'Blog', href: '/blog', key: 'blog' },
   { label: 'Pricing', href: '/pricing', key: 'pricing' },
 ]
 

@@ -128,7 +128,7 @@ export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
         <div className="lg:hidden fixed bottom-6 right-6 z-50">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-100 active:translate-y-0.5">
+              <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-14 w-14 items-center justify-center rounded-none shadow-lg transition-all duration-100 active:translate-y-0.5">
                 <Menu className="h-6 w-6" />
               </button>
             </SheetTrigger>

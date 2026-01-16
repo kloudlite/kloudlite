@@ -30,7 +30,7 @@ export default function GettingStartedPage() {
         <div className="space-y-10">
           {/* Step 1 */}
           <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
               1
             </div>
             <div className="flex-1">
@@ -44,7 +44,7 @@ export default function GettingStartedPage() {
 
           {/* Step 2 */}
           <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
               2
             </div>
             <div className="flex-1">
@@ -58,7 +58,7 @@ export default function GettingStartedPage() {
 
           {/* Step 3 */}
           <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
               3
             </div>
             <div className="flex-1">
@@ -72,7 +72,7 @@ export default function GettingStartedPage() {
 
           {/* Step 4 */}
           <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
               4
             </div>
             <div className="flex-1">
@@ -86,7 +86,7 @@ export default function GettingStartedPage() {
 
           {/* Step 5 */}
           <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
               5
             </div>
             <div className="flex-1">
@@ -100,7 +100,7 @@ export default function GettingStartedPage() {
 
           {/* Step 6 */}
           <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
               6
             </div>
             <div className="flex-1">
@@ -116,7 +116,7 @@ export default function GettingStartedPage() {
 
           {/* Step 7 */}
           <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
               7
             </div>
             <div className="flex-1">

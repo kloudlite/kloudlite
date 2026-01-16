@@ -22,7 +22,7 @@ export const GlowingStarsBackgroundCard = ({
         setMouseEnter(false);
       }}
       className={cn(
-        "bg-[linear-gradient(110deg,#333_0.6%,#222)] p-4 max-w-md max-h-[20rem] h-full w-full rounded-xl border border-[#eaeaea] dark:border-neutral-600",
+        "bg-[linear-gradient(110deg,#333_0.6%,#222)] p-4 max-w-md max-h-[20rem] h-full w-full rounded-none border border-[#eaeaea] dark:border-neutral-600",
         className
       )}
     >
@@ -130,7 +130,7 @@ const Star = ({ isGlowing, delay }: { isGlowing: boolean; delay: number }) => {
         ease: "easeInOut",
         delay: delay,
       }}
-      className={cn("bg-[#666] h-[1px] w-[1px] rounded-full relative z-20")}
+      className={cn("bg-[#666] h-[1px] w-[1px] rounded-none relative z-20")}
     ></motion.div>
   );
 };
@@ -152,7 +152,7 @@ const Glow = ({ delay }: { delay: number }) => {
       exit={{
         opacity: 0,
       }}
-      className="absolute  left-1/2 -translate-x-1/2 z-10 h-[4px] w-[4px] rounded-full bg-blue-500 blur-[1px] shadow-2xl shadow-blue-400"
+      className="absolute  left-1/2 -translate-x-1/2 z-10 h-[4px] w-[4px] rounded-none bg-blue-500 blur-[1px] shadow-2xl shadow-blue-400"
     />
   );
 };

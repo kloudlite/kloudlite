@@ -10,9 +10,9 @@ function PreviewFrame({ children, url = 'console.kloudlite.io' }: { children: Re
       {/* Browser chrome */}
       <div className="bg-zinc-800 px-4 py-2.5 flex items-center gap-3">
         <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-          <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-          <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          <div className="w-3 h-3 rounded-none bg-[#ff5f57]" />
+          <div className="w-3 h-3 rounded-none bg-[#febc2e]" />
+          <div className="w-3 h-3 rounded-none bg-[#28c840]" />
         </div>
         <div className="flex-1 flex justify-center">
           <div className="bg-zinc-700/50 rounded px-3 py-1 text-zinc-400 text-[10px] flex items-center gap-2">
@@ -71,7 +71,7 @@ function DashboardHeader({ activeItem }: { activeItem?: string }) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-muted" />
+        <div className="w-6 h-6 rounded-none bg-muted" />
       </div>
     </div>
   )
@@ -262,7 +262,7 @@ export function WorkmachinePreview() {
       <div className="p-6 flex items-center justify-center min-h-[300px]">
         <div className="text-center max-w-md">
           {/* Welcome icon */}
-          <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-primary/10 w-12 h-12 rounded-none flex items-center justify-center mx-auto mb-4">
             <Server className="h-6 w-6 text-primary" />
           </div>
 
@@ -534,9 +534,9 @@ export function ConnectEnvironmentPreview() {
       <div className="bg-zinc-800 px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-            <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-            <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+            <div className="w-3 h-3 rounded-none bg-[#ff5f57]" />
+            <div className="w-3 h-3 rounded-none bg-[#febc2e]" />
+            <div className="w-3 h-3 rounded-none bg-[#28c840]" />
           </div>
           <span className="text-zinc-400 ml-2">Terminal — my-workspace</span>
         </div>
@@ -629,9 +629,9 @@ export function StartCodingPreview() {
       <div className="bg-[#323233] text-zinc-300 px-3 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-            <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-            <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+            <div className="w-3 h-3 rounded-none bg-[#ff5f57]" />
+            <div className="w-3 h-3 rounded-none bg-[#febc2e]" />
+            <div className="w-3 h-3 rounded-none bg-[#28c840]" />
           </div>
           <span className="text-zinc-400 ml-2">my-workspace — VS Code</span>
         </div>

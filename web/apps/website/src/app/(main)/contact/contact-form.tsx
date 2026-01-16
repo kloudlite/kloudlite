@@ -93,13 +93,13 @@ export default function ContactForm() {
   if (isSuccess) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+        <div className="w-12 h-12 rounded-none bg-green-500/10 flex items-center justify-center mb-4">
           <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <h3 className="text-foreground text-lg font-semibold">Message Sent</h3>
-        <p className="text-foreground/50 mt-2 text-sm max-w-sm">
+        <p className="text-muted-foreground mt-2 text-sm max-w-sm">
           Thank you for reaching out. We&apos;ll get back to you within 24 hours.
         </p>
       </div>
@@ -109,7 +109,7 @@ export default function ContactForm() {
   if (!canSubmit) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-foreground/50 text-sm">
+        <p className="text-muted-foreground text-sm">
           You can send another message in <span className="text-foreground font-medium">{timeRemaining}</span> minute{timeRemaining !== 1 ? 's' : ''}.
         </p>
       </div>
@@ -120,7 +120,7 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
-          <label htmlFor="name" className="text-foreground/70 text-sm">
+          <label htmlFor="name" className="text-foreground text-sm">
             Name
           </label>
           <Input
@@ -136,7 +136,7 @@ export default function ContactForm() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="email" className="text-foreground/70 text-sm">
+          <label htmlFor="email" className="text-foreground text-sm">
             Email
           </label>
           <Input
@@ -153,7 +153,7 @@ export default function ContactForm() {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="subject" className="text-foreground/70 text-sm">
+        <label htmlFor="subject" className="text-foreground text-sm">
           Subject
         </label>
         <Input
@@ -169,7 +169,7 @@ export default function ContactForm() {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="message" className="text-foreground/70 text-sm">
+        <label htmlFor="message" className="text-foreground text-sm">
           Message
         </label>
         <Textarea

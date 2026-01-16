@@ -10,9 +10,9 @@ function PreviewFrame({ children, url = 'console.kloudlite.io' }: { children: Re
       {/* Browser chrome */}
       <div className="bg-zinc-800 px-4 py-2.5 flex items-center gap-3">
         <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-          <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-          <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          <div className="w-3 h-3 rounded-none bg-[#ff5f57]" />
+          <div className="w-3 h-3 rounded-none bg-[#febc2e]" />
+          <div className="w-3 h-3 rounded-none bg-[#28c840]" />
         </div>
         <div className="flex-1 flex justify-center">
           <div className="bg-zinc-700/50 rounded px-3 py-1 text-zinc-400 text-[10px] flex items-center gap-2">
@@ -77,7 +77,7 @@ function DashboardHeader({ vpnStatus = 'disconnected', showDropdown = false }: {
             <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
           </button>
         </div>
-        <div className="w-7 h-7 rounded-full bg-muted" />
+        <div className="w-7 h-7 rounded-none bg-muted" />
       </div>
     </div>
   )
@@ -145,9 +145,9 @@ export function VPNConnectionPreview() {
           <div className="m-4 rounded overflow-hidden border border-zinc-700">
             <div className="bg-zinc-800 px-3 py-1.5 flex items-center gap-2">
               <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-zinc-600" />
-                <div className="w-2 h-2 rounded-full bg-zinc-600" />
-                <div className="w-2 h-2 rounded-full bg-zinc-600" />
+                <div className="w-2 h-2 rounded-none bg-zinc-600" />
+                <div className="w-2 h-2 rounded-none bg-zinc-600" />
+                <div className="w-2 h-2 rounded-none bg-zinc-600" />
               </div>
               <span className="text-zinc-500 text-[10px]">Terminal</span>
             </div>

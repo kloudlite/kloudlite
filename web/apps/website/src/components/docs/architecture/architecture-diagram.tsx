@@ -54,9 +54,9 @@ export function ArchitectureDiagram() {
 
             {/* Connection dots on each workmachine */}
             <div className="hidden sm:flex absolute top-1/2 left-0 right-0 -translate-y-1/2 justify-between px-[16.66%]">
-              <div className="w-2 h-2 rounded-full bg-purple-500 ring-2 ring-purple-300 dark:ring-purple-700"></div>
-              <div className="w-2 h-2 rounded-full bg-purple-500 ring-2 ring-purple-300 dark:ring-purple-700"></div>
-              <div className="w-2 h-2 rounded-full bg-purple-500 ring-2 ring-purple-300 dark:ring-purple-700"></div>
+              <div className="w-2 h-2 rounded-none bg-purple-500 ring-2 ring-purple-300 dark:ring-purple-700"></div>
+              <div className="w-2 h-2 rounded-none bg-purple-500 ring-2 ring-purple-300 dark:ring-purple-700"></div>
+              <div className="w-2 h-2 rounded-none bg-purple-500 ring-2 ring-purple-300 dark:ring-purple-700"></div>
             </div>
 
             <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-3 gap-4 relative z-10">
@@ -77,7 +77,7 @@ export function ArchitectureDiagram() {
         <div className="mt-8">
           <div className="flex flex-wrap gap-6 justify-center items-center text-sm">
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              <div className="h-3 w-3 rounded-none bg-gradient-to-r from-blue-500 to-purple-500"></div>
               <span className="text-slate-600 dark:text-slate-400 font-medium">Orchestration Flow</span>
             </div>
             <div className="flex items-center gap-2">
@@ -85,15 +85,15 @@ export function ArchitectureDiagram() {
               <span className="text-slate-600 dark:text-slate-400 font-medium">Workmachine Network</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-purple-500"></div>
+              <div className="h-3 w-3 rounded-none bg-purple-500"></div>
               <span className="text-slate-600 dark:text-slate-400 font-medium">Workmachine</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+              <div className="h-3 w-3 rounded-none bg-emerald-500"></div>
               <span className="text-slate-600 dark:text-slate-400 font-medium">Workspaces</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+              <div className="h-3 w-3 rounded-none bg-amber-500"></div>
               <span className="text-slate-600 dark:text-slate-400 font-medium">Environments</span>
             </div>
           </div>

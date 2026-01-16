@@ -12,11 +12,11 @@ export default function TermsOfServicePage() {
             <h1 className="text-foreground text-4xl font-bold tracking-tight sm:text-5xl">
               Terms of Service
             </h1>
-            <p className="text-foreground/50 mt-4 text-lg">
+            <p className="text-muted-foreground mt-4 text-lg">
               Last updated: December 2024
             </p>
 
-            <div className="mt-12 space-y-10 text-foreground/70">
+            <div className="mt-12 space-y-10 text-foreground">
               <section>
                 <h2 className="text-foreground text-2xl font-semibold mb-4">1. Agreement to Terms</h2>
                 <p className="leading-relaxed">

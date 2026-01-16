@@ -49,7 +49,7 @@ export default function EnvironmentsPage() {
                   <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
                     <span className="text-foreground">Environments</span>
                   </h1>
-                  <p className="text-foreground/55 mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
                     Isolated sets of services your application depends on.
                     Databases, caches, APIs—all running and accessible.
                   </p>
@@ -67,18 +67,18 @@ export default function EnvironmentsPage() {
               {/* Docker Compose Compatible */}
               <div className="grid lg:grid-cols-3 -mx-6 lg:-mx-12 border-t border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 flex flex-col justify-center">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Compatible With</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Compatible With</p>
                   <h2 className="text-foreground mt-3 text-2xl font-bold tracking-[-0.02em]">
                     Docker Compose
                   </h2>
-                  <p className="text-foreground/50 mt-2 text-sm">
+                  <p className="text-muted-foreground mt-2 text-sm">
                     If it runs in Docker, it runs here.
                   </p>
                 </div>
                 <div className="lg:col-span-2 p-8 lg:p-10 bg-foreground/[0.02]">
                   <pre className="text-sm font-mono overflow-x-auto">
-                    <code className="text-foreground/70">
-                      <span className="text-foreground/40"># compose.yaml</span>{'\n'}
+                    <code className="text-foreground">
+                      <span className="text-muted-foreground"># compose.yaml</span>{'\n'}
                       <span className="text-primary">services</span>:{'\n'}
                       {'  '}<span className="text-foreground">api</span>:{'\n'}
                       {'    '}image: my-api:latest{'\n'}
@@ -97,11 +97,11 @@ export default function EnvironmentsPage() {
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors">
                   <div className="flex items-start gap-4">
                     <div className="p-2 border border-foreground/10">
-                      <Lock className="h-5 w-5 text-foreground/40" />
+                      <Lock className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
                       <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Isolated</h3>
-                      <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                         Each environment runs in its own network namespace. No cross-contamination between staging and production.
                       </p>
                     </div>
@@ -110,11 +110,11 @@ export default function EnvironmentsPage() {
                 <div className="p-8 lg:p-10 group hover:bg-foreground/[0.02] transition-colors">
                   <div className="flex items-start gap-4">
                     <div className="p-2 border border-foreground/10">
-                      <Plug className="h-5 w-5 text-foreground/40" />
+                      <Plug className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
                       <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Accessible</h3>
-                      <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                         Connect from any workspace to access services by name. No complex networking setup required.
                       </p>
                     </div>
@@ -126,11 +126,11 @@ export default function EnvironmentsPage() {
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors">
                   <div className="flex items-start gap-4">
                     <div className="p-2 border border-foreground/10">
-                      <Copy className="h-5 w-5 text-foreground/40" />
+                      <Copy className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
                       <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Clonable</h3>
-                      <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                         Fork environments to get your own isolated copy with the same services and data. Perfect for experimentation.
                       </p>
                     </div>
@@ -139,11 +139,11 @@ export default function EnvironmentsPage() {
                 <div className="p-8 lg:p-10 group hover:bg-foreground/[0.02] transition-colors">
                   <div className="flex items-start gap-4">
                     <div className="p-2 border border-foreground/10">
-                      <Route className="h-5 w-5 text-foreground/40" />
+                      <Route className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
                       <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Interceptable</h3>
-                      <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                         Route service traffic to your workspace for debugging. Test with real requests without deploying.
                       </p>
                     </div>
@@ -154,7 +154,7 @@ export default function EnvironmentsPage() {
               {/* Use Cases */}
               <div className="grid lg:grid-cols-3 -mx-6 lg:-mx-12 border-b border-foreground/10">
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 flex flex-col justify-center">
-                  <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Use Cases</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Use Cases</p>
                   <h2 className="text-foreground mt-3 text-2xl font-bold tracking-[-0.02em]">
                     How Teams Use Environments
                   </h2>
@@ -162,31 +162,31 @@ export default function EnvironmentsPage() {
                 <div className="lg:col-span-2 p-8 lg:p-10">
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="flex gap-4">
-                      <div className="text-foreground/10 text-2xl font-bold font-mono">01</div>
+                      <div className="text-muted-foreground/20 text-2xl font-bold font-mono">01</div>
                       <div>
                         <p className="text-foreground font-semibold">Shared Staging</p>
-                        <p className="text-foreground/50 text-sm mt-1">Team-wide environment for integration testing</p>
+                        <p className="text-muted-foreground text-sm mt-1">Team-wide environment for integration testing</p>
                       </div>
                     </div>
                     <div className="flex gap-4">
-                      <div className="text-foreground/10 text-2xl font-bold font-mono">02</div>
+                      <div className="text-muted-foreground/20 text-2xl font-bold font-mono">02</div>
                       <div>
                         <p className="text-foreground font-semibold">Personal Copies</p>
-                        <p className="text-foreground/50 text-sm mt-1">Clone for isolated feature development</p>
+                        <p className="text-muted-foreground text-sm mt-1">Clone for isolated feature development</p>
                       </div>
                     </div>
                     <div className="flex gap-4">
-                      <div className="text-foreground/10 text-2xl font-bold font-mono">03</div>
+                      <div className="text-muted-foreground/20 text-2xl font-bold font-mono">03</div>
                       <div>
                         <p className="text-foreground font-semibold">PR Previews</p>
-                        <p className="text-foreground/50 text-sm mt-1">Spin up environments per pull request</p>
+                        <p className="text-muted-foreground text-sm mt-1">Spin up environments per pull request</p>
                       </div>
                     </div>
                     <div className="flex gap-4">
-                      <div className="text-foreground/10 text-2xl font-bold font-mono">04</div>
+                      <div className="text-muted-foreground/20 text-2xl font-bold font-mono">04</div>
                       <div>
                         <p className="text-foreground font-semibold">Load Testing</p>
-                        <p className="text-foreground/50 text-sm mt-1">Isolated environments for performance tests</p>
+                        <p className="text-muted-foreground text-sm mt-1">Isolated environments for performance tests</p>
                       </div>
                     </div>
                   </div>
@@ -198,11 +198,11 @@ export default function EnvironmentsPage() {
                 <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 group hover:bg-foreground/[0.02] transition-colors">
                   <div className="flex items-start gap-4">
                     <div className="p-2 border border-foreground/10">
-                      <Users className="h-5 w-5 text-foreground/40" />
+                      <Users className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
                       <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Share with Team</h3>
-                      <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                         Make an environment visible to other developers. They can connect their workspaces and access the same services with the same data.
                       </p>
                     </div>
@@ -211,11 +211,11 @@ export default function EnvironmentsPage() {
                 <div className="p-8 lg:p-10 group hover:bg-foreground/[0.02] transition-colors">
                   <div className="flex items-start gap-4">
                     <div className="p-2 border border-foreground/10">
-                      <Copy className="h-5 w-5 text-foreground/40" />
+                      <Copy className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
                       <h3 className="text-foreground text-lg font-bold tracking-[-0.02em]">Fork for Isolation</h3>
-                      <p className="text-foreground/50 mt-2 text-sm leading-relaxed group-hover:text-foreground/60 transition-colors">
+                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed group-hover:text-foreground transition-colors">
                         Fork an environment to get your own copy with the same configuration. Test changes without affecting others.
                       </p>
                     </div>
@@ -231,10 +231,10 @@ export default function EnvironmentsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Learn More</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Learn More</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">Read the Docs</h3>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
 
@@ -244,10 +244,10 @@ export default function EnvironmentsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-foreground/40 text-xs font-semibold uppercase tracking-wider">Next</p>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Next</p>
                       <h3 className="text-foreground mt-2 text-lg font-bold tracking-[-0.02em]">Explore Workspaces</h3>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-foreground/20 group-hover:text-foreground/40 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
               </div>
