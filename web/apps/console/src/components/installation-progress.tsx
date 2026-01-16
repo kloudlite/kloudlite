@@ -39,7 +39,7 @@ export function InstallationProgress({ currentStep }: InstallationProgressProps)
             <div className="flex flex-col items-center">
               <div
                 className={cn(
-                  'flex size-10 items-center justify-center rounded-full border-2 font-medium transition-colors',
+                  'flex size-10 items-center justify-center border-2 font-medium transition-colors',
                   currentStep > step.number
                     ? 'border-primary bg-primary text-primary-foreground'
                     : currentStep === step.number
@@ -50,13 +50,13 @@ export function InstallationProgress({ currentStep }: InstallationProgressProps)
                 {currentStep > step.number ? (
                   <Check className="size-5" />
                 ) : (
-                  <span className="text-sm">{step.number}</span>
+                  <span className="text-base">{step.number}</span>
                 )}
               </div>
               <div className="mt-3 text-center">
                 <p
                   className={cn(
-                    'text-sm font-semibold',
+                    'text-base font-semibold',
                     currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground',
                   )}
                 >

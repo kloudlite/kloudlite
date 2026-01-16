@@ -111,7 +111,7 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-base">
             Generate a temporary login URL that provides instant super admin access to your
             installation dashboard. The URL is valid for 5 minutes.
           </p>
@@ -141,7 +141,7 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
 
         {loginUrl && (
           <div className="space-y-3">
-            <div className="bg-muted rounded-lg border p-4">
+            <div className="bg-muted  border p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-foreground text-sm font-medium">Login URL</span>
                 {timeRemaining !== null && (
@@ -151,7 +151,7 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
                   </div>
                 )}
               </div>
-              <div className="bg-background flex items-center gap-2 rounded border p-2">
+              <div className="bg-background flex items-center gap-2 border p-2">
                 <code className="text-foreground flex-1 overflow-x-auto text-xs">{loginUrl}</code>
                 <Button
                   variant="ghost"

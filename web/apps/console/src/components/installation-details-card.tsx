@@ -49,7 +49,7 @@ export function InstallationDetailsCard({
         <div>
           <label className="text-foreground text-sm font-medium">Installation Key</label>
           <div className="mt-2 flex items-center gap-2">
-            <code className="bg-muted flex-1 rounded-md px-3 py-2 font-mono text-sm">
+            <code className="bg-muted flex-1 px-3 py-2 font-mono text-base">
               {installation.installationKey}
             </code>
             <Button
@@ -60,7 +60,7 @@ export function InstallationDetailsCard({
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-muted-foreground mt-1 text-xs">
+          <p className="text-muted-foreground mt-1 text-sm">
             Use this key during installation deployment
           </p>
         </div>

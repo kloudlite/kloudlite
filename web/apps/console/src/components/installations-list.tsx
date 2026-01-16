@@ -75,10 +75,10 @@ export function InstallationsList({ installations }: InstallationsListProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Status Filter */}
-          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
+          <div className="bg-muted flex items-center gap-1 p-1">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`px-3 py-1 text-base transition-colors ${
                 statusFilter === 'all'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -88,7 +88,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             </button>
             <button
               onClick={() => setStatusFilter('pending')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`px-3 py-1 text-base transition-colors ${
                 statusFilter === 'pending'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -98,7 +98,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             </button>
             <button
               onClick={() => setStatusFilter('installed')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`px-3 py-1 text-base transition-colors ${
                 statusFilter === 'installed'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -123,7 +123,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
 
       {/* Table */}
       {filteredInstallations.length > 0 ? (
-        <div className="bg-card overflow-hidden rounded-lg border">
+        <div className="bg-card overflow-hidden border">
           <table className="min-w-full">
             <thead className="bg-muted/50 border-b">
               <tr>
@@ -182,7 +182,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                        className={`inline-flex px-2 py-0.5 text-sm font-medium ${statusColor}`}
                       >
                         {status}
                       </span>
@@ -228,8 +228,8 @@ export function InstallationsList({ installations }: InstallationsListProps) {
           </table>
         </div>
       ) : (
-        <div className="bg-card rounded-lg border py-12 text-center">
-          <p className="text-muted-foreground text-sm">
+        <div className="bg-card border py-12 text-center">
+          <p className="text-muted-foreground text-base">
             {statusFilter === 'pending'
               ? 'No pending installations found'
               : statusFilter === 'installed'
