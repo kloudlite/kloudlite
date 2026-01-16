@@ -1,6 +1,7 @@
 {
   "name": "kloudlite-web",
   "private": true,
+  "packageManager": "bun@1.2.4",
   "scripts": {
     "build:all": "turbo run build",
     "dev:all": "turbo run dev",
