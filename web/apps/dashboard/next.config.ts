@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
   // Security headers are now set dynamically in middleware.ts
   // to support per-request subdomain-based CSP policies
 
+  // Set Turbopack root for monorepo
+  turbopack: {
+    root: path.join(__dirname, '../../'),
+  },
+
   // Enable experimental features
   experimental: {
     // Optimize package imports

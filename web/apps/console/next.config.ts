@@ -1,14 +1,23 @@
 import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployment
   output: 'standalone',
+
+  // Set the workspace root for file tracing
+  outputFileTracingRoot: path.join(__dirname, '../../'),
 
   // Compress responses
   compress: true,
 
   // Security headers are now set dynamically in middleware.ts
   // to support per-request subdomain-based CSP policies
+
+  // Set Turbopack root for monorepo
+  turbopack: {
+    root: path.join(__dirname, '../../'),
+  },
 
   // Enable experimental features
   experimental: {
