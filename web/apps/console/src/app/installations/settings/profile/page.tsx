@@ -38,8 +38,8 @@ export default async function ProfilePage() {
               <AvatarFallback className="text-2xl">{getInitials(session.user.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-1 pt-2">
-              <label className="text-foreground text-sm font-semibold">Profile Picture</label>
-              <p className="text-muted-foreground text-sm">
+              <label className="text-foreground text-base font-semibold">Profile Picture</label>
+              <p className="text-muted-foreground text-base">
                 Synced from your {session.provider} account
               </p>
             </div>
@@ -53,10 +53,10 @@ export default async function ProfilePage() {
               <User className="text-muted-foreground h-4 w-4" />
               <label className="text-foreground text-sm font-semibold">Name</label>
             </div>
-            <div className="border-border bg-muted/30 rounded-lg border px-4 py-3">
+            <div className="border-border bg-muted/30  border px-4 py-3">
               <p className="text-sm font-medium">{session.user.name}</p>
             </div>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-sm">
               Synced from your {session.provider} account
             </p>
           </div>
@@ -69,10 +69,10 @@ export default async function ProfilePage() {
               <Mail className="text-muted-foreground h-4 w-4" />
               <label className="text-foreground text-sm font-semibold">Email Address</label>
             </div>
-            <div className="border-border bg-muted/30 rounded-lg border px-4 py-3">
+            <div className="border-border bg-muted/30  border px-4 py-3">
               <p className="text-sm font-medium">{session.user.email}</p>
             </div>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-sm">
               Primary email from your {session.provider} account
             </p>
           </div>
@@ -91,7 +91,7 @@ export default async function ProfilePage() {
         <CardContent>
           <div className="space-y-3">
             <label className="text-foreground text-sm font-semibold">OAuth Provider</label>
-            <div className="border-border bg-muted/30 flex items-center gap-3 rounded-lg border px-4 py-3">
+            <div className="border-border bg-muted/30 flex items-center gap-3  border px-4 py-3">
               <Badge variant="outline" className="capitalize">
                 {session.provider}
               </Badge>
@@ -104,9 +104,9 @@ export default async function ProfilePage() {
       </Card>
 
       {/* Info Note - smaller and less prominent */}
-      <div className="bg-muted/50 flex items-start gap-2 rounded-lg p-4">
+      <div className="bg-muted/50 flex items-start gap-2  p-4">
         <Info className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-sm">
           Your profile information is managed by your OAuth provider ({session.provider}). To update
           your name, email, or profile picture, please update them in your {session.provider}{' '}
           account settings.

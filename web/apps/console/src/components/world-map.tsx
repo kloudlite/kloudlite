@@ -128,7 +128,7 @@ export function WorldMap({ selectedRegion, provider, className = '' }: WorldMapP
   const colors = providerColors[provider]
 
   return (
-    <div className={`relative rounded-lg border bg-gradient-to-br ${colors.bg} overflow-hidden ${className}`}>
+    <div className={`relative border bg-gradient-to-br ${colors.bg} overflow-hidden ${className}`}>
       {/* Map */}
       <div
         ref={svgRef}
@@ -140,17 +140,17 @@ export function WorldMap({ selectedRegion, provider, className = '' }: WorldMapP
       {regionInfo && (
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`relative flex h-2.5 w-2.5 rounded-full ${colors.dot}`}>
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${colors.dot} opacity-75`}></span>
+            <span className={`relative flex h-2.5 w-2.5 ${colors.dot}`}>
+              <span className={`animate-ping absolute inline-flex h-full w-full ${colors.dot} opacity-75`}></span>
             </span>
-            <span className={`text-sm font-medium ${colors.text}`}>
+            <span className={`text-base font-medium ${colors.text}`}>
               {regionInfo.name}
               {!selectedRegion && (
-                <span className="ml-1.5 text-xs text-muted-foreground">(default)</span>
+                <span className="ml-1.5 text-sm text-muted-foreground">(default)</span>
               )}
             </span>
           </div>
-          <span className="text-xs text-muted-foreground font-mono">
+          <span className="text-sm text-muted-foreground font-mono">
             {regionInfo.lat.toFixed(2)}°, {regionInfo.lng.toFixed(2)}°
           </span>
         </div>

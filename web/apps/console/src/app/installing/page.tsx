@@ -13,12 +13,12 @@ export default function InstallingPage() {
         </div>
 
         {/* Installation Progress */}
-        <div className="bg-surface-50 dark:bg-surface-900 rounded-2xl p-8 shadow-xl border border-surface-200 dark:border-surface-800">
+        <div className="bg-surface-50 dark:bg-surface-900 p-10 shadow-xl border border-surface-200 dark:border-surface-800">
           {/* Animated Spinner */}
           <div className="flex justify-center mb-6">
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-surface-300 dark:border-surface-700 rounded-full"></div>
-              <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+              <div className="w-16 h-16 border-4 border-surface-300 dark:border-surface-700"></div>
+              <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
             </div>
           </div>
 
@@ -33,34 +33,34 @@ export default function InstallingPage() {
           {/* Progress Steps */}
           <div className="space-y-3 text-left max-w-md mx-auto">
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm text-surface-700 dark:text-surface-300">
+              <div className="w-2 h-2 bg-green-500 animate-pulse"></div>
+              <span className="text-base text-surface-700 dark:text-surface-300">
                 Installing Kubernetes cluster (K3s)
               </span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm text-surface-700 dark:text-surface-300">
+              <div className="w-2 h-2 bg-green-500 animate-pulse"></div>
+              <span className="text-base text-surface-700 dark:text-surface-300">
                 Deploying API server
               </span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm text-surface-700 dark:text-surface-300">
+              <div className="w-2 h-2 bg-green-500 animate-pulse"></div>
+              <span className="text-base text-surface-700 dark:text-surface-300">
                 Configuring networking
               </span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-surface-400 dark:bg-surface-600"></div>
-              <span className="text-sm text-surface-500 dark:text-surface-500">
+              <div className="w-2 h-2 bg-surface-400 dark:bg-surface-600"></div>
+              <span className="text-base text-surface-500 dark:text-surface-500">
                 Setting up web console
               </span>
             </div>
           </div>
 
           {/* Additional Info */}
-          <div className="mt-8 p-4 bg-primary-50 dark:bg-primary-950/30 rounded-lg border border-primary-200 dark:border-primary-800">
-            <p className="text-sm text-primary-700 dark:text-primary-300">
+          <div className="mt-8 p-4 bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800">
+            <p className="text-base text-primary-700 dark:text-primary-300">
               <strong>Note:</strong> This page will automatically redirect once installation is complete.
             </p>
           </div>

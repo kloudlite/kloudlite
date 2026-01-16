@@ -118,7 +118,7 @@ export default async function LoginPage({
 
           <div className="space-y-8">
             {errorMessage && (
-              <div className="border-destructive/50 bg-destructive/10 text-destructive flex items-start gap-3 rounded-lg border p-4 text-sm">
+              <div className="border-destructive/50 bg-destructive/10 text-destructive flex items-start gap-3 border p-4 text-base">
                 <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
                 <div>{errorMessage}</div>
               </div>
