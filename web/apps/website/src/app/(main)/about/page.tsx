@@ -13,7 +13,8 @@ import {
   Terminal,
   Settings,
   GitBranch,
-  Boxes
+  Boxes,
+  ArrowRight
 } from 'lucide-react'
 import Link from 'next/link'
 import { PageHeroTitle } from '@/components/page-hero-title'
@@ -198,30 +199,39 @@ export default function AboutPage() {
                 </div>
 
                 {/* Mission Content - Problem */}
-                <div className="p-8 lg:p-12 border-b border-foreground/10 sm:border-r bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors">
+                <div className="group p-8 lg:p-12 border-b border-foreground/10 sm:border-r bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors">
                   <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-3">The Problem</p>
                   <h3 className="text-foreground text-xl font-bold mb-3">Distributed apps, localhost development</h3>
-                  <p className="text-muted-foreground text-base leading-relaxed">
+                  <p className="text-muted-foreground text-base leading-relaxed mb-4">
                     Modern applications are distributed across microservices, databases, queues, and third-party APIs. But developers still code on localhost, disconnected from reality.
                   </p>
+                  <Link href="/blog/distributed-apps-localhost-problem" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Read more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
 
                 {/* Mission Content - Gap */}
-                <div className="p-8 lg:p-12 border-b border-foreground/10 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors">
+                <div className="group p-8 lg:p-12 border-b border-foreground/10 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors">
                   <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-3">The Gap</p>
                   <h3 className="text-foreground text-xl font-bold mb-3">Mocks don&apos;t match production</h3>
-                  <p className="text-muted-foreground text-base leading-relaxed">
+                  <p className="text-muted-foreground text-base leading-relaxed mb-4">
                     Docker Compose is slow. Mocked services behave differently than real ones. By the time you find bugs in staging, you&apos;ve wasted hours.
                   </p>
+                  <Link href="/blog/mocks-dont-match-production" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Read more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
 
                 {/* Mission Content - Solution (spans full width) */}
-                <div className="sm:col-span-2 p-8 lg:p-12 border-b border-foreground/10 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors">
+                <div className="group sm:col-span-2 p-8 lg:p-12 border-b border-foreground/10 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors">
                   <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-3">Our Solution</p>
                   <h3 className="text-foreground text-xl font-bold mb-3">Cloud dev environments connected to real services</h3>
-                  <p className="text-muted-foreground text-base leading-relaxed max-w-3xl">
+                  <p className="text-muted-foreground text-base leading-relaxed max-w-3xl mb-4">
                     Kloudlite gives you cloud-hosted workspaces that connect directly to your staging, QA, or even production environments. Write code, intercept service traffic, and see real results instantly—no mocks, no waiting.
                   </p>
+                  <Link href="/blog/cloud-dev-environments-solution" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Read more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
 
                 {/* Section Spacer */}
@@ -246,6 +256,9 @@ export default function AboutPage() {
                     title="Speed Above All"
                     description="Every millisecond matters. From workspace startup (<30s) to service intercepts (instant), we obsess over reducing latency at every step."
                   />
+                  <Link href="/blog/speed-above-all" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Read more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </FeatureCardContainer>
 
                 {/* Principle 2 */}
@@ -255,6 +268,9 @@ export default function AboutPage() {
                     title="Zero Configuration"
                     description="Developers shouldn't need a degree in DevOps to write code. Our tools work out of the box—no YAML hell, no infrastructure expertise required."
                   />
+                  <Link href="/blog/zero-configuration" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Read more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </FeatureCardContainer>
 
                 {/* Cross Marker between rows */}
@@ -269,6 +285,9 @@ export default function AboutPage() {
                     title="Open by Default"
                     description="Our core platform is open source and always will be. We build in public, welcome contributions, and believe transparency creates better software."
                   />
+                  <Link href="/blog/open-by-default" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Read more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </FeatureCardContainer>
 
                 {/* Section Spacer */}
@@ -277,7 +296,7 @@ export default function AboutPage() {
                 </div>
 
                 {/* Architecture Section */}
-                <div className="sm:col-span-2 p-8 lg:p-12 border-b border-foreground/10 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors group cursor-default min-h-[400px] flex flex-col lg:flex-row gap-8 items-center">
+                <div className="group sm:col-span-2 p-8 lg:p-12 border-b border-foreground/10 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors cursor-default min-h-[400px] flex flex-col lg:flex-row gap-8 items-center">
                   <div className="flex-1">
                     <div className="text-primary mb-4">
                       <Boxes className="h-8 w-8" />
@@ -288,9 +307,12 @@ export default function AboutPage() {
                     <p className="text-muted-foreground text-base lg:text-lg leading-relaxed max-w-xl mb-4">
                       Built on Kubernetes with custom CRDs and controllers. Your workspaces and environments are declared as resources and reconciled automatically.
                     </p>
-                    <p className="text-muted-foreground text-sm leading-relaxed max-w-xl">
+                    <p className="text-muted-foreground text-sm leading-relaxed max-w-xl mb-4">
                       We don&apos;t hide the infrastructure—we embrace it. Everything from workspace pods to service intercepts is managed through Kubernetes primitives you already know.
                     </p>
+                    <Link href="/blog/kubernetes-native-architecture" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                      Learn about our architecture <ArrowRight className="h-3 w-3" />
+                    </Link>
                   </div>
 
                   <div className="flex-1 w-full">
