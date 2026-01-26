@@ -2,37 +2,11 @@ import { ScrollArea } from '@kloudlite/ui'
 import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
 import { SocialButtons } from '@/components/blog-social-actions'
-import { cn } from '@kloudlite/lib'
+import { getBlogTitle } from '@/components/blog/blog-title-helper'
+import { GridContainer } from '@/components/blog/grid-container'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, ArrowRight } from 'lucide-react'
 import { notFound } from 'next/navigation'
-
-function CrossMarker({ className }: { className?: string }) {
-  return (
-    <div className={cn('absolute', className)}>
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 w-px h-5 bg-foreground/20" />
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 h-px w-5 bg-foreground/20" />
-    </div>
-  )
-}
-
-function GridContainer({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn('relative mx-auto max-w-7xl', className)}>
-      <div className="absolute inset-0 pointer-events-none overflow-visible">
-        <div className="absolute inset-y-0 left-0 w-px bg-foreground/10" />
-        <div className="absolute inset-y-0 right-0 w-px bg-foreground/10" />
-        <div className="absolute inset-x-0 top-0 h-px bg-foreground/10" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-foreground/10" />
-        <CrossMarker className="top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-5 h-5" />
-        <CrossMarker className="top-0 right-0 translate-x-1/2 -translate-y-1/2 w-5 h-5" />
-        <CrossMarker className="bottom-0 left-0 -translate-x-1/2 translate-y-1/2 w-5 h-5" />
-        <CrossMarker className="bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-5 h-5" />
-      </div>
-      <div className="relative">{children}</div>
-    </div>
-  )
-}
 
 // Sample blog posts data (in a real app, this would come from a CMS or markdown files)
 const blogPosts = {
@@ -245,16 +219,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <WebsiteHeader currentPage="blog" />
         <main>
           <div className="px-6 pt-8 lg:px-8 lg:pt-12">
-            <GridContainer className="px-6 lg:px-12">
+            <GridContainer maxWidth="max-w-7xl" className="px-6 lg:px-12">
               {/* Back to Blog */}
-              <div className="py-8 border-b border-foreground/10 -mx-6 lg:-mx-12">
+              <div className="py-8 border-b border-foreground/10 bg-foreground/[0.01] -mx-6 lg:-mx-12">
                 <div className="px-6 lg:px-12">
                   <Link
                     href="/blog"
-                    className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+                    className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors duration-300 text-sm"
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Blog
+                    <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+                    <span className="relative">
+                      Back to Blog
+                      <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                    </span>
                   </Link>
                 </div>
               </div>
@@ -264,14 +241,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <div className="px-6 lg:px-12 max-w-3xl mx-auto">
                   {/* Category */}
                   <div className="mb-6">
-                    <span className="text-primary text-xs font-semibold uppercase tracking-wider">
+                    <span className="inline-flex items-center px-3 py-1.5 bg-foreground/[0.06] border border-foreground/10 rounded-sm text-[11px] font-semibold uppercase tracking-wider text-primary">
                       {post.category}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h1 className="text-[2.5rem] sm:text-[3rem] font-bold text-foreground mb-6 leading-[1.1] tracking-tight">
-                    {post.title}
+                  <h1 className="text-[2.5rem] sm:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-[1.1] tracking-[-0.02em]">
+                    {getBlogTitle(post, 'static')}
                   </h1>
 
                   {/* Subtitle/Excerpt */}
@@ -281,22 +258,28 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
                   {/* Author and Meta */}
                   <div className="flex items-center justify-between py-6 border-t border-foreground/10">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-none bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-primary font-semibold text-sm">{post.author.avatar}</span>
+                    <div className="group flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-sm bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:border-primary/30">
+                        <span className="text-primary font-semibold text-sm transition-colors duration-300">{post.author.avatar}</span>
                       </div>
                       <div>
-                        <div className="font-semibold text-foreground text-sm">{post.author.name}</div>
-                        <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                          <time dateTime={post.date}>
-                            {new Date(post.date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </time>
+                        <div className="font-semibold text-foreground text-sm transition-colors duration-300 group-hover:text-primary">{post.author.name}</div>
+                        <div className="flex items-center gap-3 text-muted-foreground text-xs">
+                          <div className="flex items-center gap-1.5 transition-colors duration-300 group-hover:text-foreground">
+                            <Calendar className="h-3 w-3" />
+                            <time dateTime={post.date}>
+                              {new Date(post.date).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </time>
+                          </div>
                           <span>·</span>
-                          <span>{post.readTime}</span>
+                          <div className="flex items-center gap-1.5 transition-colors duration-300 group-hover:text-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{post.readTime}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -309,30 +292,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 </div>
               </div>
 
-              {/* Three Column Grid Layout */}
-              <div className="grid lg:grid-cols-[1fr_2fr_1fr] -mx-6 lg:-mx-12">
-                {/* Left Sidebar - Author */}
-                <div className="hidden lg:block border-r border-foreground/10 p-8 lg:p-10">
-                  <div className="sticky top-24">
-                    <h3 className="text-xs font-semibold text-muted-foreground mb-6 uppercase tracking-wider">Written by</h3>
-                    <div className="space-y-4">
-                      <div className="w-16 h-16 rounded-none bg-primary/10 flex items-center justify-center">
-                        <span className="text-primary font-semibold text-lg">{post.author.avatar}</span>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-foreground mb-1">{post.author.name}</div>
-                        <div className="text-muted-foreground text-sm mb-3">{post.author.role}</div>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
-                          {post.author.bio}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Center Content */}
+              {/* Two Column Grid Layout */}
+              <div className="grid lg:grid-cols-[3fr_1fr] -mx-6 lg:-mx-12">
+                {/* Content */}
                 <div className="border-r border-foreground/10 p-8 lg:p-10">
-                  <div className="max-w-2xl mx-auto">
                   <div className="prose-article">
                     {post.content.split('\n\n').map((block, index) => {
                       const lines = block.trim().split('\n')
@@ -341,8 +304,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Heading level 1
                       if (firstLine.startsWith('# ')) {
                         return (
-                          <h2 key={index} className="text-[1.75rem] font-bold text-foreground mt-12 mb-6 first:mt-0 leading-[1.3]">
-                            {firstLine.slice(2)}
+                          <h2 key={index} className="group text-[1.75rem] lg:text-3xl font-bold text-foreground mt-12 mb-6 first:mt-0 leading-[1.3] tracking-tight">
+                            <span className="relative inline-block">
+                              {firstLine.slice(2)}
+                              <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                            </span>
                           </h2>
                         )
                       }
@@ -350,7 +316,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Heading level 2
                       if (firstLine.startsWith('## ')) {
                         return (
-                          <h3 key={index} className="text-[1.5rem] font-bold text-foreground mt-10 mb-5 leading-[1.3]">
+                          <h3 key={index} className="text-[1.5rem] lg:text-2xl font-bold text-foreground mt-10 mb-5 leading-[1.3] tracking-tight">
                             {firstLine.slice(3)}
                           </h3>
                         )
@@ -359,7 +325,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Heading level 3
                       if (firstLine.startsWith('### ')) {
                         return (
-                          <h4 key={index} className="text-[1.25rem] font-semibold text-foreground mt-8 mb-4 leading-[1.4]">
+                          <h4 key={index} className="text-[1.25rem] lg:text-xl font-semibold text-foreground mt-8 mb-4 leading-[1.4] tracking-tight">
                             {firstLine.slice(4)}
                           </h4>
                         )
@@ -369,9 +335,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       if (firstLine.startsWith('```')) {
                         const code = lines.slice(1, -1).join('\n')
                         return (
-                          <div key={index} className="my-8">
-                            <pre className="bg-muted p-5 rounded-lg overflow-x-auto border border-foreground/10">
-                              <code className="text-[0.9375rem] font-mono text-foreground leading-[1.6]">{code}</code>
+                          <div key={index} className="group relative my-8">
+                            {/* Top accent line */}
+                            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-center" />
+
+                            <pre className="bg-foreground/[0.04] group-hover:bg-foreground/[0.05] p-5 rounded-sm overflow-x-auto border border-foreground/10 group-hover:border-foreground/20 transition-all duration-300">
+                              <code className="text-[0.9375rem] font-mono text-foreground leading-[1.6] transition-colors duration-300">{code}</code>
                             </pre>
                           </div>
                         )
@@ -380,10 +349,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Unordered list
                       if (firstLine.startsWith('- ') || firstLine.startsWith('* ')) {
                         return (
-                          <ul key={index} className="space-y-2 my-6">
+                          <ul key={index} className="space-y-3 my-6">
                             {lines.map((line, i) => (
-                              <li key={i} className="flex items-start gap-3 text-[1.0625rem] text-foreground leading-[1.7]">
-                                <span className="w-1.5 h-1.5 bg-foreground rounded-none mt-2.5 flex-shrink-0" />
+                              <li key={i} className="group flex items-start gap-3 text-[1.0625rem] text-foreground leading-[1.7]">
+                                <span className="w-1.5 h-1.5 bg-foreground rounded-sm mt-2.5 flex-shrink-0 transition-all duration-300 group-hover:scale-125 group-hover:bg-primary" />
                                 <span>{line.slice(2)}</span>
                               </li>
                             ))}
@@ -431,51 +400,67 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     })}
                   </div>
 
-                    {/* Share Section */}
-                    <div className="mt-16 pt-8 border-t border-foreground/10">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Share this article</span>
-                        <SocialButtons slug={slug} title={post.title} excerpt={post.excerpt} type="share" />
+                  {/* Share Section */}
+                  <div className="mt-16">
+                    <div className="p-6 bg-foreground/[0.015] border border-foreground/10 rounded-sm">
+                      <div className="space-y-3">
+                        <h3 className="text-base font-semibold text-foreground">Enjoyed this article?</h3>
+                        <p className="text-sm text-muted-foreground">Share it with your network</p>
+                        <div className="pt-3">
+                          <SocialButtons slug={slug} title={post.title} excerpt={post.excerpt} type="share" />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Right Sidebar - Related Articles */}
-                <div className="hidden lg:block p-8 lg:p-10">
+                {/* Right Sidebar - Author & Related Articles */}
+                <div className="hidden lg:block">
                   <div className="sticky top-24">
+                    {/* Written by */}
+                    <div className="p-8 lg:p-10 border-b border-foreground/10">
+                      <h3 className="text-xs font-semibold text-muted-foreground mb-6 uppercase tracking-wider">Written by</h3>
+                      <div className="w-24 h-24 border border-foreground/10 bg-foreground/[0.06] flex items-center justify-center mb-4">
+                        <span className="text-primary font-semibold text-xl">{post.author.avatar}</span>
+                      </div>
+                      <div className="font-semibold text-foreground mb-1">{post.author.name}</div>
+                      <div className="text-muted-foreground text-sm mb-3">{post.author.role}</div>
+                      <p className="text-muted-foreground text-sm leading-relaxed">
+                        {post.author.bio}
+                      </p>
+                    </div>
+
+                    {/* Related Articles */}
                     {relatedPosts.length > 0 && (
-                      <div>
+                      <div className="p-8 lg:p-10">
                         <h3 className="text-xs font-semibold text-muted-foreground mb-6 uppercase tracking-wider">Related Articles</h3>
-                        <div className="space-y-8">
-                          {relatedPosts.map((related) => (
+                        <div className="space-y-0">
+                          {relatedPosts.map((related, index) => (
                             <Link
                               key={related.slug}
                               href={`/blog/${related.slug}`}
-                              className="block group"
+                              className="group block border-b border-foreground/10 last:border-b-0 py-6 first:pt-0 hover:bg-foreground/[0.015] -mx-8 lg:-mx-10 px-8 lg:px-10 transition-[background-color] duration-300"
                             >
-                              <div>
-                                <div className="mb-3">
-                                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                                    {related.category}
-                                  </span>
-                                </div>
-                                <h4 className="text-base font-bold text-foreground mb-3 leading-snug group-hover:text-primary transition-colors">
-                                  {related.title}
-                                </h4>
-                                <p className="text-sm text-muted-foreground leading-relaxed mb-3 line-clamp-3">
-                                  {related.excerpt}
-                                </p>
-                                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                                  <time dateTime={related.date}>
-                                    {new Date(related.date).toLocaleDateString('en-US', {
-                                      month: 'short',
-                                      day: 'numeric'
-                                    })}
-                                  </time>
-                                  <span>·</span>
-                                  <span>{related.readTime}</span>
-                                </div>
+                              <div className="mb-3">
+                                <span className="inline-block px-3 py-1 bg-foreground/[0.06] text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">
+                                  {related.category}
+                                </span>
+                              </div>
+                              <h4 className="text-base font-bold text-foreground mb-3 leading-snug">
+                                {getBlogTitle(related)}
+                              </h4>
+                              <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
+                                {related.excerpt}
+                              </p>
+                              <div className="flex items-center gap-3 text-muted-foreground text-xs">
+                                <time dateTime={related.date}>
+                                  {new Date(related.date).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </time>
+                                <span>•</span>
+                                <span>{related.readTime}</span>
                               </div>
                             </Link>
                           ))}
