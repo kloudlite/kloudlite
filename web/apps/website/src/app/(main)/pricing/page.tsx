@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button, ScrollArea } from '@kloudlite/ui'
 import Link from 'next/link'
 import { ArrowRight, Check } from 'lucide-react'
@@ -9,26 +9,7 @@ import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
 import { PageHeroTitle } from '@/components/page-hero-title'
 import { cn } from '@kloudlite/lib'
-import { motion, AnimatePresence } from 'motion/react'
-
-// Hook to detect user's motion preferences
-function useReducedMotion() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mediaQuery.matches)
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches)
-    }
-
-    mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [])
-
-  return prefersReducedMotion
-}
+// Animation handled with CSS transitions
 
 // Cross marker component
 function CrossMarker({ className }: { className?: string }) {
@@ -117,16 +98,32 @@ function GridContainer({ children, className }: { children: React.ReactNode; cla
 
 function PricingPage() {
   const [activeTab, setActiveTab] = useState<'byoc' | 'cloud'>('byoc')
-  const prefersReducedMotion = useReducedMotion()
+  const byocRef = useRef<HTMLButtonElement>(null)
+  const cloudRef = useRef<HTMLButtonElement>(null)
+  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
 
-  // Animation configurations
-  const underlineTransition = prefersReducedMotion
-    ? { duration: 0 }
-    : { type: 'spring' as const, stiffness: 300, damping: 30 }
+  // Update underline position
+  useEffect(() => {
+    const updatePosition = () => {
+      const activeRef = activeTab === 'byoc' ? byocRef : cloudRef
+      if (activeRef.current) {
+        const fullWidth = activeRef.current.offsetWidth
+        const underlineWidth = fullWidth * 0.6 // 60% of button width
+        const leftOffset = activeRef.current.offsetLeft + (fullWidth - underlineWidth) / 2
 
-  const contentTransition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.3, ease: 'easeInOut' as const }
+        setUnderlineStyle({
+          left: leftOffset,
+          width: underlineWidth
+        })
+      }
+    }
+
+    // Small delay to ensure layout is ready
+    setTimeout(updatePosition, 10)
+
+    window.addEventListener('resize', updatePosition)
+    return () => window.removeEventListener('resize', updatePosition)
+  }, [activeTab])
 
   return (
     <div className="bg-background h-screen">
@@ -136,7 +133,7 @@ function PricingPage() {
           <div className="px-6 pt-8 lg:px-8 lg:pt-12">
             <GridContainer className="px-6 lg:px-12">
               {/* Hero Section */}
-              <div className="py-20 lg:py-28">
+              <div className="pt-20 pb-8 lg:pt-28 lg:pb-12">
                 <div className="text-center">
                   <PageHeroTitle accentedWord="pricing.">
                     Simple, transparent
@@ -149,9 +146,11 @@ function PricingPage() {
                   {/* Tab Switcher */}
                   <div className="mt-10 inline-flex gap-1 relative">
                     <button
+                      ref={byocRef}
                       onClick={() => setActiveTab('byoc')}
                       className={cn(
-                        'relative px-6 py-2.5 text-base font-medium transition-colors',
+                        'relative px-6 py-2.5 text-base font-medium transition-all duration-200 cursor-pointer',
+                        'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
                         activeTab === 'byoc'
                           ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
@@ -160,9 +159,11 @@ function PricingPage() {
                       Self-Hosted
                     </button>
                     <button
+                      ref={cloudRef}
                       onClick={() => setActiveTab('cloud')}
                       className={cn(
-                        'relative px-6 py-2.5 text-base font-medium transition-colors',
+                        'relative px-6 py-2.5 text-base font-medium transition-all duration-200 cursor-pointer',
+                        'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
                         activeTab === 'cloud'
                           ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
@@ -170,16 +171,16 @@ function PricingPage() {
                     >
                       Cloud
                     </button>
-                    {/* Animated underline */}
-                    <motion.div
-                      className="absolute bottom-0 h-0.5 bg-primary"
-                      initial={false}
-                      animate={{
-                        left: activeTab === 'byoc' ? '0%' : '50%',
-                        width: '50%'
-                      }}
-                      transition={underlineTransition}
-                    />
+                    {/* Animated underline with CSS transition */}
+                    {underlineStyle.width > 0 && (
+                      <div
+                        className="absolute bottom-1 h-[2px] bg-primary transition-all duration-300 ease-out"
+                        style={{
+                          left: `${underlineStyle.left}px`,
+                          width: `${underlineStyle.width}px`,
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -189,29 +190,18 @@ function PricingPage() {
 
               {/* Pricing Grid */}
               <div className="-mx-6 lg:-mx-12">
-                <AnimatePresence mode="wait" initial={false}>
-                  {activeTab === 'byoc' ? (
-                    <motion.div
-                      key="byoc"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={contentTransition}
-                    >
-                      <BYOCPricing />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="cloud"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={contentTransition}
-                    >
-                      <CloudPricing />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <div className={cn(
+                  'transition-opacity duration-300',
+                  activeTab === 'byoc' ? 'opacity-100' : 'opacity-0 hidden'
+                )}>
+                  <BYOCPricing />
+                </div>
+                <div className={cn(
+                  'transition-opacity duration-300',
+                  activeTab === 'cloud' ? 'opacity-100' : 'opacity-0 hidden'
+                )}>
+                  <CloudPricing />
+                </div>
               </div>
 
               {/* FAQ Section */}
