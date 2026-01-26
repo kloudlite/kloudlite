@@ -1,0 +1,57 @@
+# Kloudlite - Cloud Development Environments Platform
+
+> https://kloudlite.io
+> AI-powered development environments with Kubernetes-native architecture
+
+## About
+Kloudlite provides cloud-hosted development workspaces that connect to real services. Developers get sub-30s startup times, service intercepts for debugging production traffic, and Nix-based package management—all without leaving their IDE.
+
+## Key Features
+- Environment & Workspace Forking: Clone entire environments or workspaces instantly
+- Service Intercepts: Route production traffic to local workspaces for real-time debugging
+- AI-Ready Workspaces: Built-in support for Claude Code, Gemini CLI, OpenCode, Codex CLI
+- Nix Package Management: Reproducible package management across all workspaces
+- Sub-30s Startup: No waiting, no builds—just code
+- VPN Gateway: Secure access to workspaces and services from anywhere
+- Docker Compose Compatible: Use existing compose files with zero modifications
+
+## Core Concepts
+- **Workspaces**: Full-featured cloud development environments with VS Code, terminals, and direct service access
+- **Environments**: Isolated sets of services your application depends on (staging, production, QA)
+- **Workmachines**: Personal development servers with VPN access, persistent storage, and dedicated compute
+- **Service Intercepts**: Route service traffic to workspaces for debugging with real production data
+
+## Problem We Solve
+Modern applications are distributed across microservices, databases, and APIs. But developers still code on localhost, disconnected from reality. Mocks don't match production behavior, and Docker Compose is slow. By the time you find bugs in staging, you've wasted hours.
+
+## Our Solution
+Cloud-hosted workspaces that connect directly to staging, QA, or production environments. Write code, intercept service traffic, and see real results instantly—no mocks, no waiting.
+
+## Documentation
+- Main site: https://kloudlite.io
+- Blog: https://kloudlite.io/blog (41 technical articles)
+- Docs: https://kloudlite.io/docs
+- GitHub: https://github.com/kloudlite/kloudlite
+
+## Blog Categories
+- Feature announcements and deep dives
+- Platform infrastructure and architecture
+- Development workflow improvements
+- Philosophy and design principles
+- Technical architecture (Kubernetes CRDs, controllers, service mesh)
+
+## Contact
+- Email: hello@kloudlite.io
+- Support: support@kloudlite.io
+- GitHub: https://github.com/kloudlite
+
+## Philosophy
+1. Speed Above All: Every millisecond matters—from workspace startup to service intercepts
+2. Zero Configuration: No YAML hell, no DevOps degree required
+3. Open by Default: Core platform is open source and built in public
+
+## Technical Architecture
+- Kubernetes-Native: Built on CRDs and controllers
+- Service Mesh Integration: SOCAT-based traffic forwarding for intercepts
+- Nix-Based: Reproducible package management
+- Docker Compatible: Works with existing Docker Compose files
