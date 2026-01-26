@@ -186,29 +186,6 @@ export default function EnvironmentsPage() {
                   </Link>
                 </FeatureCardContainer>
 
-                {/* Cross Marker - After Row 3 */}
-                <div className="sm:col-span-2 h-0 border-b border-foreground/10 relative">
-                  <CrossMarker className="bottom-0 left-2/3 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden sm:block" />
-                </div>
-
-                {/* Feature 7 */}
-                <FeatureCardContainer className="border-b border-foreground/10 sm:border-r">
-                  <FeatureCard
-                    icon={<Activity className="h-5 w-5" />}
-                    title="Live Monitoring"
-                    description="Monitor service health, logs, and metrics in real-time. Get instant visibility into your environment's status."
-                  />
-                </FeatureCardContainer>
-
-                {/* Feature 8 */}
-                <FeatureCardContainer className="border-b border-foreground/10">
-                  <FeatureCard
-                    icon={<Zap className="h-5 w-5" />}
-                    title="Instant Deployment"
-                    description="Deploy changes instantly without waiting. Push new images and see them running in seconds, not minutes."
-                  />
-                </FeatureCardContainer>
-
                 {/* Section Spacer */}
                 <div className="sm:col-span-2 h-8 sm:h-16 border-b border-foreground/10 relative">
                   <CrossMarker className="bottom-0 left-1/2 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden lg:block" />
