@@ -279,7 +279,7 @@ function WebsiteLandingPage() {
             {/* Features Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 border-t border-foreground/10 -mx-6 lg:-mx-12">
               {/* Row 1 - Built for developers */}
-              <div className="p-8 lg:p-12 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
+              <div className="sm:col-span-2 lg:col-span-1 p-8 lg:p-12 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
                 <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.5rem]">
                   Built for developers
                 </h2>
@@ -287,7 +287,7 @@ function WebsiteLandingPage() {
                   Focus on code, not ops.
                 </p>
               </div>
-              <FeatureCardContainer className="border-b border-foreground/10 lg:border-r">
+              <FeatureCardContainer className="border-b border-foreground/10 sm:border-r lg:border-r">
                 <FeatureCard
                   icon={<Copy className="h-5 w-5" />}
                   title="Environment Forking"
@@ -297,7 +297,7 @@ function WebsiteLandingPage() {
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
-              <FeatureCardContainer className="border-b border-foreground/10 sm:border-r lg:border-r-0">
+              <FeatureCardContainer className="border-b border-foreground/10 lg:border-r-0">
                 <FeatureCard
                   icon={<Layers className="h-5 w-5" />}
                   title="Workspace Forking"
@@ -554,7 +554,7 @@ function WebsiteLandingPage() {
 
 function FeatureCardContainer({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("group relative p-8 lg:p-12 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors overflow-hidden", className)}>
+    <div className={cn("group relative p-6 sm:p-8 lg:p-12 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors overflow-hidden", className)}>
       {/* Vertical highlight line - animated on hover */}
       <div className="absolute left-0 top-0 w-[3px] h-full bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
       {children}
