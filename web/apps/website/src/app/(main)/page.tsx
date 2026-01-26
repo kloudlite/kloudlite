@@ -293,6 +293,9 @@ function WebsiteLandingPage() {
                   title="Environment Forking"
                   description="Fork entire environments with a single command."
                 />
+                <Link href="/blog/environment-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </Link>
               </FeatureCardContainer>
               <FeatureCardContainer className="border-b border-foreground/10 sm:border-r lg:border-r-0">
                 <FeatureCard
@@ -300,6 +303,9 @@ function WebsiteLandingPage() {
                   title="Workspace Forking"
                   description="Fork workspaces instantly for parallel work."
                 />
+                <Link href="/blog/workspace-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </Link>
               </FeatureCardContainer>
               {/* Row 2 */}
               <FeatureCardContainer className="sm:border-r border-b border-foreground/10">
@@ -308,6 +314,9 @@ function WebsiteLandingPage() {
                   title="Environment Switching"
                   description="Switch between environments seamlessly."
                 />
+                <Link href="/blog/environment-switching" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </Link>
               </FeatureCardContainer>
               <FeatureCardContainer className="lg:border-r border-b border-foreground/10">
                 <FeatureCard
@@ -315,6 +324,9 @@ function WebsiteLandingPage() {
                   title="Service Intercepts"
                   description="Route environment service traffic to your workspace."
                 />
+                <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </Link>
               </FeatureCardContainer>
               <FeatureCardContainer className="sm:border-r lg:border-r-0 border-b border-foreground/10">
                 <FeatureCard
@@ -322,6 +334,9 @@ function WebsiteLandingPage() {
                   title="Package Management"
                   description="Nix-based reproducible package management."
                 />
+                <Link href="/blog/nix-package-management" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </Link>
               </FeatureCardContainer>
               {/* Row 3 */}
               <FeatureCardContainer className="sm:border-r border-b border-foreground/10">
@@ -330,6 +345,9 @@ function WebsiteLandingPage() {
                   title="Environment Snapshots"
                   description="Capture and restore complete environment states instantly."
                 />
+                <Link href="/blog/environment-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </Link>
               </FeatureCardContainer>
               <FeatureCardContainer className="lg:border-r border-b border-foreground/10">
                 <FeatureCard
@@ -337,6 +355,9 @@ function WebsiteLandingPage() {
                   title="Workspace Snapshots"
                   description="Save and share workspace configurations effortlessly."
                 />
+                <Link href="/blog/workspace-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </Link>
               </FeatureCardContainer>
               <div className="p-8 lg:p-12 sm:border-r lg:border-r-0 border-b border-foreground/10 bg-foreground/[0.015] flex items-center justify-center hover:bg-foreground/[0.03] transition-colors">
                 <Link
@@ -380,9 +401,12 @@ function WebsiteLandingPage() {
                   <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-4">
                     AI Ready Workspaces
                   </h3>
-                  <p className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-8">
+                  <p className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-4">
                     Built-in support for the next generation of AI coding tools. Supports vibecoding sessions out of the box.
                   </p>
+                  <Link href="/blog/ai-ready-workspaces" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Learn more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
 
                 {/* AI Tool Tags */}
@@ -391,7 +415,6 @@ function WebsiteLandingPage() {
                   <span className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-foreground/5 border border-foreground/10 text-muted-foreground">GEMINI CLI</span>
                   <span className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-foreground/5 border border-foreground/10 text-muted-foreground">OPENCODE</span>
                   <span className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-foreground/5 border border-foreground/10 text-muted-foreground">CODEX CLI</span>
-                  <span className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider bg-foreground/5 border border-foreground/10 text-muted-foreground">MCP INTEGRATED</span>
                 </div>
               </div>
 
@@ -409,9 +432,12 @@ function WebsiteLandingPage() {
                   <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-4">
                     Access from any IDE
                   </h3>
-                  <p className="text-muted-foreground text-base lg:text-lg leading-relaxed">
+                  <p className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-4">
                     Connect your local editor directly to cloud resources. Zero latency, full Intellisense.
                   </p>
+                  <Link href="/blog/ide-integration" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                    Learn more <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
 
                 {/* IDE Grid */}
