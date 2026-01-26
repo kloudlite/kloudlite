@@ -9,7 +9,7 @@ interface FeatureCardProps {
 
 export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
   return (
-    <div className="group relative overflow-hidden bg-foreground/[0.015] border border-foreground/10 hover:bg-foreground/[0.03] hover:border-foreground/20 transition-[background-color,border-color] duration-300 p-6 rounded-sm">
+    <div className="group relative overflow-hidden bg-foreground/[0.015] border border-foreground/10 hover:bg-foreground/[0.03] hover:border-foreground/20 transition-[background-color,border-color] duration-300 p-4 sm:p-6 rounded-sm">
       {/* Animated vertical accent bar */}
       <div className="absolute left-0 top-0 w-[3px] h-full bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
 

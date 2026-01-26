@@ -11,7 +11,7 @@ export function NextLinkCard({ href, title, description }: NextLinkCardProps) {
   return (
     <Link
       href={href}
-      className="group relative block overflow-hidden bg-foreground/[0.015] hover:bg-foreground/[0.03] border border-foreground/10 hover:border-primary/50 transition-[background-color,border-color] duration-300 p-5 rounded-sm no-underline"
+      className="group relative block overflow-hidden bg-foreground/[0.015] hover:bg-foreground/[0.03] border border-foreground/10 hover:border-primary/50 transition-[background-color,border-color] duration-300 p-4 sm:p-5 rounded-sm no-underline"
     >
       {/* Animated vertical accent bar */}
       <div className="absolute left-0 top-0 w-[3px] h-full bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />

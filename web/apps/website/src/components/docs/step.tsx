@@ -9,7 +9,7 @@ interface StepProps {
 
 export function Step({ number, title, description, children }: StepProps) {
   return (
-    <div className="group relative overflow-hidden flex items-start gap-6 p-6 rounded-sm hover:bg-foreground/[0.02] transition-[background-color] duration-300">
+    <div className="group relative overflow-hidden flex items-start gap-4 sm:gap-6 p-4 sm:p-6 rounded-sm hover:bg-foreground/[0.02] transition-[background-color] duration-300">
       {/* Animated vertical accent bar */}
       <div className="absolute left-0 top-0 w-[3px] h-full bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
 
