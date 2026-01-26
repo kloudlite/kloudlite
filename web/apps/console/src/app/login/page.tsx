@@ -158,6 +158,18 @@ export default async function LoginPage({
               </div>
             </div>
           </div>
+
+          {/* Development backdoor */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="border-t border-border pt-6">
+              <a
+                href="/api/dev-login"
+                className="text-muted-foreground hover:text-foreground text-xs text-center block"
+              >
+                [Dev] Quick login as karthik@kloudlite.io
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>

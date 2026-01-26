@@ -70,17 +70,17 @@ export function InstallationsList({ installations }: InstallationsListProps) {
   const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filter and Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Status Filter */}
-          <div className="bg-muted flex items-center gap-1 p-1">
+          <div className="bg-muted flex items-center gap-1 p-1 border">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1 text-base transition-colors ${
+              className={`px-4 py-2 text-base transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background border border-border'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -88,9 +88,9 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             </button>
             <button
               onClick={() => setStatusFilter('pending')}
-              className={`px-3 py-1 text-base transition-colors ${
+              className={`px-4 py-2 text-base transition-colors ${
                 statusFilter === 'pending'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background border border-border'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -98,9 +98,9 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             </button>
             <button
               onClick={() => setStatusFilter('installed')}
-              className={`px-3 py-1 text-base transition-colors ${
+              className={`px-4 py-2 text-base transition-colors ${
                 statusFilter === 'installed'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background border border-border'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -108,12 +108,12 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             </button>
           </div>
 
-          <span className="text-muted-foreground text-sm">
+          <span className="text-muted-foreground text-base">
             {filteredInstallations.length}{' '}
             {filteredInstallations.length === 1 ? 'installation' : 'installations'}
           </span>
         </div>
-        <Button asChild size="sm" className="gap-2">
+        <Button asChild size="lg" className="gap-2">
           <Link href="/installations/new">
             <Plus className="h-4 w-4" />
             New Installation
@@ -123,20 +123,20 @@ export function InstallationsList({ installations }: InstallationsListProps) {
 
       {/* Table */}
       {filteredInstallations.length > 0 ? (
-        <div className="bg-card overflow-hidden border">
+        <div className="overflow-hidden border">
           <table className="min-w-full">
             <thead className="bg-muted/50 border-b">
               <tr>
-                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-sm font-medium tracking-wider uppercase">
                   Name
                 </th>
-                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-sm font-medium tracking-wider uppercase">
                   Domain
                 </th>
-                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-left text-sm font-medium tracking-wider uppercase">
                   Status
                 </th>
-                <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+                <th className="text-muted-foreground px-6 py-3 text-right text-sm font-medium tracking-wider uppercase">
                   Actions
                 </th>
               </tr>
@@ -157,15 +157,15 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                   <tr key={installation.id} className="hover:bg-muted/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-semibold">{installation.name}</div>
+                        <div className="text-base font-semibold">{installation.name}</div>
                         {installation.description && (
-                          <div className="text-muted-foreground mt-0.5 text-xs">
+                          <div className="text-muted-foreground mt-0.5 text-sm">
                             {installation.description}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm whitespace-nowrap">
+                    <td className="px-6 py-4 text-base whitespace-nowrap">
                       {installationUrl ? (
                         <a
                           href={installationUrl}
@@ -177,17 +177,17 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       ) : (
-                        <span className="text-muted-foreground text-xs">Not configured</span>
+                        <span className="text-muted-foreground text-sm">Not configured</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-0.5 text-sm font-medium ${statusColor}`}
+                        className={`inline-flex px-2 py-0.5 text-base font-medium ${statusColor}`}
                       >
                         {status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
+                    <td className="px-6 py-4 text-right text-base whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         {nextStep ? (
                           <Button asChild variant="default" size="sm">
@@ -228,7 +228,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
           </table>
         </div>
       ) : (
-        <div className="bg-card border py-12 text-center">
+        <div className="border py-20 text-center">
           <p className="text-muted-foreground text-base">
             {statusFilter === 'pending'
               ? 'No pending installations found'
@@ -237,7 +237,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                 : 'No installations found'}
           </p>
           {statusFilter === 'all' && (
-            <Button asChild className="mt-4" size="sm">
+            <Button asChild className="mt-6" size="lg">
               <Link href="/installations/new">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Installation

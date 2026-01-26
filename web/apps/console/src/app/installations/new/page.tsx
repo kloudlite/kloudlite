@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Button, Input, Textarea, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kloudlite/ui'
+import { Button, Input, Textarea, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
@@ -112,25 +112,25 @@ export default function NewInstallationPage() {
   return (
     <>
       {/* Header */}
-      <div className="mb-12 text-center">
-        <h1 className="text-foreground mb-3 text-4xl font-bold tracking-tight">
+      <div className="mb-10 text-center">
+        <h1 className="text-foreground mb-3 text-3xl font-bold tracking-tight">
           Create New Installation
         </h1>
-        <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
+        <p className="text-muted-foreground mx-auto max-w-2xl text-base">
           Set up your Kloudlite installation with a name and domain
         </p>
       </div>
 
       <InstallationProgress currentStep={1} />
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-xl">Installation Details</CardTitle>
-          <CardDescription>
+      <div className="mb-6 mt-10">
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold">Installation Details</h2>
+          <p className="text-muted-foreground mt-1 text-base">
             Provide a name and optional description to help you identify this installation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -219,12 +219,12 @@ export default function NewInstallationPage() {
                       </span>
                     </FormDescription>
                     {!checkingSubdomain && subdomainAvailable === false && (
-                      <p className="text-destructive text-sm font-medium">
+                      <p className="text-destructive text-base font-medium">
                         This subdomain is already taken. Please choose another.
                       </p>
                     )}
                     {!checkingSubdomain && subdomainAvailable === true && (
-                      <p className="text-sm font-medium text-green-600">
+                      <p className="text-base font-medium text-green-600">
                         This subdomain is available!
                       </p>
                     )}
@@ -245,8 +245,8 @@ export default function NewInstallationPage() {
               </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </>
   )
 }

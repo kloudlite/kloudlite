@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Separator, Button } from '@kloudlite/ui'
+import { Badge, Separator, Button } from '@kloudlite/ui'
 import { Copy, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Installation } from '@/lib/console/supabase-storage-service'
@@ -28,18 +28,18 @@ export function InstallationDetailsCard({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Installation Details</CardTitle>
-        <CardDescription>View and manage your installation configuration</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold">Installation Details</h2>
+        <p className="text-muted-foreground mt-1 text-base">View and manage your installation configuration</p>
+      </div>
+      <div className="space-y-6">
         {/* Status */}
         <div>
-          <label className="text-foreground text-sm font-medium">Status</label>
+          <label className="text-foreground text-base font-medium">Status</label>
           <div className="mt-2 flex items-center gap-3">
             <Badge className={status.color}>{status.label}</Badge>
-            <span className="text-muted-foreground text-sm">{status.description}</span>
+            <span className="text-muted-foreground text-base">{status.description}</span>
           </div>
         </div>
 
@@ -47,7 +47,7 @@ export function InstallationDetailsCard({
 
         {/* Installation Key */}
         <div>
-          <label className="text-foreground text-sm font-medium">Installation Key</label>
+          <label className="text-foreground text-base font-medium">Installation Key</label>
           <div className="mt-2 flex items-center gap-2">
             <code className="bg-muted flex-1 px-3 py-2 font-mono text-base">
               {installation.installationKey}
@@ -60,7 +60,7 @@ export function InstallationDetailsCard({
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-muted-foreground mt-1 text-base">
             Use this key during installation deployment
           </p>
         </div>
@@ -70,13 +70,13 @@ export function InstallationDetailsCard({
           <>
             <Separator />
             <div>
-              <label className="text-foreground text-sm font-medium">Installation URL</label>
+              <label className="text-foreground text-base font-medium">Installation URL</label>
               <div className="mt-2 flex items-center gap-2">
                 <a
                   href={installationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary flex-1 font-mono text-sm hover:underline"
+                  className="text-primary flex-1 font-mono text-base hover:underline"
                 >
                   {installation.subdomain}.{domain}
                 </a>
@@ -89,7 +89,7 @@ export function InstallationDetailsCard({
                 </Button>
               </div>
               {installation.reservedAt && (
-                <p className="text-muted-foreground mt-1 text-xs">
+                <p className="text-muted-foreground mt-1 text-sm">
                   Reserved on {new Date(installation.reservedAt).toLocaleDateString()}
                 </p>
               )}
@@ -99,7 +99,7 @@ export function InstallationDetailsCard({
 
         {/* Timestamps */}
         <Separator />
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-4 text-base">
           <div>
             <label className="text-foreground font-medium">Created</label>
             <p className="text-muted-foreground mt-1">
@@ -115,7 +115,7 @@ export function InstallationDetailsCard({
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

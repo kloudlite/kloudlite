@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
-import { ArrowRight } from 'lucide-react'
+import { PageTitle } from '@/components/docs/page-title'
+import { SectionTitle } from '@/components/docs/section-title'
+import { NextLinkCard } from '@/components/docs/next-link-card'
 
 const tocItems = [
   { id: 'composition', title: 'Composition' },
@@ -12,19 +14,18 @@ const tocItems = [
 export default function ServicesPage() {
   return (
     <DocsContentLayout tocItems={tocItems}>
-      <h1 className="text-foreground mb-6 text-3xl sm:text-4xl font-bold tracking-tight">Services</h1>
+      <PageTitle>Services</PageTitle>
 
       <p className="text-muted-foreground mb-8 leading-relaxed">
         Define services using Docker Compose syntax. Databases, caches, APIs—anything that runs
         in a container can be deployed to your environment.
       </p>
 
-      {/* Composition */}
-      <section id="composition" className="mb-10">
-        <h2 className="text-foreground text-xl font-bold mb-4">Composition</h2>
+      <section id="composition" className="mb-12">
+        <SectionTitle id="composition">Composition</SectionTitle>
 
-        <div className="bg-zinc-950 border border-zinc-800 overflow-hidden">
-          <div className="bg-zinc-900 px-4 py-2 border-b border-zinc-800">
+        <div className="bg-zinc-950 border border-foreground/10 rounded-sm overflow-hidden">
+          <div className="bg-zinc-900 px-4 py-2 border-b border-foreground/10">
             <span className="text-zinc-400 text-xs font-mono">docker-compose.yml</span>
           </div>
           <pre className="p-4 overflow-x-auto">
@@ -49,21 +50,20 @@ volumes:
         </div>
       </section>
 
-      {/* Images & Ports */}
-      <section id="images-ports" className="mb-10">
-        <h2 className="text-foreground text-xl font-bold mb-4">Images & Ports</h2>
+      <section id="images-ports" className="mb-12">
+        <SectionTitle id="images-ports">Images & Ports</SectionTitle>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="bg-card border p-4">
-            <p className="font-medium text-foreground text-sm mb-2 m-0">Images</p>
-            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground space-y-1">
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div className="bg-foreground/[0.02] border border-foreground/10 rounded-sm p-5">
+            <p className="font-semibold text-foreground text-sm mb-3 m-0">Images</p>
+            <div className="bg-muted/50 p-3 font-mono text-xs text-muted-foreground space-y-1 rounded-sm">
               <div>image: postgres:16</div>
               <div>image: ghcr.io/org/api:latest</div>
             </div>
           </div>
-          <div className="bg-card border p-4">
-            <p className="font-medium text-foreground text-sm mb-2 m-0">Ports</p>
-            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground space-y-1">
+          <div className="bg-foreground/[0.02] border border-foreground/10 rounded-sm p-5">
+            <p className="font-semibold text-foreground text-sm mb-3 m-0">Ports</p>
+            <div className="bg-muted/50 p-3 font-mono text-xs text-muted-foreground space-y-1 rounded-sm">
               <div>- "5432:5432" # host:container</div>
               <div>- "3000:8080" # map 8080 to 3000</div>
             </div>
@@ -71,24 +71,23 @@ volumes:
         </div>
       </section>
 
-      {/* Volumes */}
-      <section id="volumes" className="mb-10">
-        <h2 className="text-foreground text-xl font-bold mb-4">Volumes</h2>
+      <section id="volumes" className="mb-12">
+        <SectionTitle id="volumes">Volumes</SectionTitle>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="bg-card border p-4">
-            <p className="font-medium text-foreground text-sm mb-2 m-0">Named Volumes</p>
-            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div className="bg-foreground/[0.02] border border-foreground/10 rounded-sm p-5">
+            <p className="font-semibold text-foreground text-sm mb-3 m-0">Named Volumes</p>
+            <div className="bg-muted/50 p-3 font-mono text-xs text-muted-foreground rounded-sm">
               - postgres_data:/var/lib/postgresql/data
             </div>
-            <p className="text-muted-foreground text-xs mt-2">Persist data across restarts</p>
+            <p className="text-muted-foreground text-sm mt-3">Persist data across restarts</p>
           </div>
-          <div className="bg-card border p-4">
-            <p className="font-medium text-foreground text-sm mb-2 m-0">Config Files</p>
-            <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
+          <div className="bg-foreground/[0.02] border border-foreground/10 rounded-sm p-5">
+            <p className="font-semibold text-foreground text-sm mb-3 m-0">Config Files</p>
+            <div className="bg-muted/50 p-3 font-mono text-xs text-muted-foreground rounded-sm">
               - /files/nginx.conf:/etc/nginx/nginx.conf
             </div>
-            <p className="text-muted-foreground text-xs mt-2">
+            <p className="text-muted-foreground text-sm mt-3">
               Mount files using{' '}
               <Link href="/docs/environment-internals/configs-secrets#config-files" className="text-primary hover:underline">
                 /files/ prefix
@@ -98,16 +97,15 @@ volumes:
         </div>
       </section>
 
-      {/* Networking */}
-      <section id="networking" className="mb-10">
-        <h2 className="text-foreground text-xl font-bold mb-4">Networking</h2>
+      <section id="networking" className="mb-16">
+        <SectionTitle id="networking">Networking</SectionTitle>
 
-        <p className="text-muted-foreground mb-4 text-sm">
+        <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
           Services communicate using service names as hostnames. DNS resolution is automatic.
         </p>
 
-        <div className="bg-card border p-4">
-          <div className="bg-muted/50 p-2 font-mono text-xs text-muted-foreground space-y-1">
+        <div className="bg-foreground/[0.02] border border-foreground/10 rounded-sm p-5">
+          <div className="bg-muted/50 p-3 font-mono text-xs text-muted-foreground space-y-1 rounded-sm">
             <div>postgres://user:pass@<span className="text-primary">postgres</span>:5432/db</div>
             <div>redis://<span className="text-primary">redis</span>:6379</div>
             <div>http://<span className="text-primary">api</span>:8080/health</div>
@@ -115,18 +113,12 @@ volumes:
         </div>
       </section>
 
-      {/* Next Links */}
-      <div className="border-t pt-8">
-        <Link
+      <div className="border-t border-foreground/10 pt-8">
+        <NextLinkCard
           href="/docs/environment-internals/configs-secrets"
-          className="bg-card border p-4 hover:border-primary transition-colors flex items-center justify-between gap-4 no-underline"
-        >
-          <div>
-            <p className="text-foreground font-medium m-0">Configs & Secrets</p>
-            <p className="text-muted-foreground text-sm m-0">Manage environment variables and config files</p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-muted-foreground" />
-        </Link>
+          title="Configs & Secrets"
+          description="Manage environment variables and config files"
+        />
       </div>
     </DocsContentLayout>
   )

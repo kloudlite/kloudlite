@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kloudlite/ui'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { Separator } from '@kloudlite/ui'
 import { Avatar, AvatarFallback, AvatarImage } from '@kloudlite/ui'
@@ -23,14 +22,15 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Profile Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Profile Information</CardTitle>
-          <CardDescription>Your account details from {session.provider} OAuth</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
+    <div className="space-y-8">
+      {/* Profile Information */}
+      <div className="border p-8">
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold">Profile Information</h2>
+          <p className="text-muted-foreground mt-1 text-base">Your account details from {session.provider} OAuth</p>
+        </div>
+
+        <div className="space-y-8">
           {/* Profile Picture */}
           <div className="flex items-start gap-6">
             <Avatar className="ring-border h-24 w-24 ring-2">
@@ -51,12 +51,12 @@ export default async function ProfilePage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <User className="text-muted-foreground h-4 w-4" />
-              <label className="text-foreground text-sm font-semibold">Name</label>
+              <label className="text-foreground text-base font-semibold">Name</label>
             </div>
-            <div className="border-border bg-muted/30  border px-4 py-3">
-              <p className="text-sm font-medium">{session.user.name}</p>
+            <div className="border-border bg-muted/30 border px-4 py-3">
+              <p className="text-base font-medium">{session.user.name}</p>
             </div>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-base">
               Synced from your {session.provider} account
             </p>
           </div>
@@ -67,46 +67,45 @@ export default async function ProfilePage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Mail className="text-muted-foreground h-4 w-4" />
-              <label className="text-foreground text-sm font-semibold">Email Address</label>
+              <label className="text-foreground text-base font-semibold">Email Address</label>
             </div>
-            <div className="border-border bg-muted/30  border px-4 py-3">
-              <p className="text-sm font-medium">{session.user.email}</p>
+            <div className="border-border bg-muted/30 border px-4 py-3">
+              <p className="text-base font-medium">{session.user.email}</p>
             </div>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-base">
               Primary email from your {session.provider} account
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Authentication Card */}
-      <Card>
-        <CardHeader>
+      {/* Authentication */}
+      <div className="border p-8">
+        <div className="mb-6">
           <div className="flex items-center gap-2">
             <Shield className="text-muted-foreground h-5 w-5" />
-            <CardTitle className="text-xl">Authentication</CardTitle>
+            <h2 className="text-xl font-semibold">Authentication</h2>
           </div>
-          <CardDescription>Your authentication provider information</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <label className="text-foreground text-sm font-semibold">OAuth Provider</label>
-            <div className="border-border bg-muted/30 flex items-center gap-3  border px-4 py-3">
-              <Badge variant="outline" className="capitalize">
-                {session.provider}
-              </Badge>
-              <span className="text-muted-foreground text-sm">
-                You&apos;re signed in with {session.provider}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <p className="text-muted-foreground mt-1 text-base">Your authentication provider information</p>
+        </div>
 
-      {/* Info Note - smaller and less prominent */}
-      <div className="bg-muted/50 flex items-start gap-2  p-4">
+        <div className="space-y-3">
+          <label className="text-foreground text-base font-semibold">OAuth Provider</label>
+          <div className="border-border bg-muted/30 flex items-center gap-3 border px-4 py-3">
+            <Badge variant="outline" className="capitalize">
+              {session.provider}
+            </Badge>
+            <span className="text-muted-foreground text-base">
+              You&apos;re signed in with {session.provider}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Note */}
+      <div className="bg-muted/50 flex items-start gap-2 border p-4">
         <Info className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-base">
           Your profile information is managed by your OAuth provider ({session.provider}). To update
           your name, email, or profile picture, please update them in your {session.provider}{' '}
           account settings.
