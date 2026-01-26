@@ -5,68 +5,11 @@ import { PageHeroTitle } from '@/components/page-hero-title'
 import { FeaturedBlogCard } from '@/components/blog/featured-blog-card'
 import { BlogCard } from '@/components/blog/blog-card'
 import { GridContainer } from '@/components/blog/grid-container'
-
-// Sample blog posts data
-const blogPosts = [
-  {
-    slug: 'introducing-kloudlite',
-    title: 'Introducing Kloudlite: Cloud Development Environments',
-    excerpt: 'Learn how Kloudlite is revolutionizing the way developers build and test applications with cloud-native development environments.',
-    date: '2024-01-15',
-    readTime: '5 min read',
-    category: 'Product',
-    featured: true,
-  },
-  {
-    slug: 'getting-started-with-workspaces',
-    title: 'Getting Started with Kloudlite Workspaces',
-    excerpt: 'A comprehensive guide to setting up your first workspace and connecting to your development environment.',
-    date: '2024-01-10',
-    readTime: '8 min read',
-    category: 'Tutorial',
-    featured: false,
-  },
-  {
-    slug: 'environment-forking-explained',
-    title: 'Environment Forking: Test Changes Without Breaking Production',
-    excerpt: 'Discover how environment forking enables safe testing and experimentation without impacting your production services.',
-    date: '2024-01-05',
-    readTime: '6 min read',
-    category: 'Feature',
-    featured: false,
-  },
-  {
-    slug: 'service-intercepts-deep-dive',
-    title: 'Service Intercepts: Route Production Traffic to Your Workspace',
-    excerpt: 'Learn how service intercepts allow you to debug production issues by routing live traffic to your local development environment.',
-    date: '2023-12-28',
-    readTime: '7 min read',
-    category: 'Technical',
-    featured: false,
-  },
-  {
-    slug: 'nix-package-management',
-    title: 'Why We Chose Nix for Package Management',
-    excerpt: 'Understanding the benefits of Nix-based package management for reproducible development environments.',
-    date: '2023-12-20',
-    readTime: '10 min read',
-    category: 'Architecture',
-    featured: false,
-  },
-  {
-    slug: 'kubernetes-native-development',
-    title: 'Kubernetes-Native Development Made Simple',
-    excerpt: 'How Kloudlite abstracts away Kubernetes complexity while giving you the power of cloud-native infrastructure.',
-    date: '2023-12-15',
-    readTime: '9 min read',
-    category: 'Technical',
-    featured: false,
-  },
-]
+import { blogPostsData } from '@/data/blog-posts'
 
 export default function BlogPage() {
-  const featuredPost = blogPosts.find(post => post.featured)
-  const regularPosts = blogPosts.filter(post => !post.featured)
+  const featuredPost = blogPostsData.find(post => post.featured)
+  const regularPosts = blogPostsData.filter(post => !post.featured)
 
   return (
     <div className="bg-background h-screen">

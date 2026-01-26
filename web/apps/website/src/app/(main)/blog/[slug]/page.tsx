@@ -7,192 +7,7 @@ import { GridContainer } from '@/components/blog/grid-container'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock } from 'lucide-react'
 import { notFound } from 'next/navigation'
-
-// Sample blog posts data (in a real app, this would come from a CMS or markdown files)
-const blogPosts = {
-  'introducing-kloudlite': {
-    slug: 'introducing-kloudlite',
-    title: 'Introducing Kloudlite: Cloud Development Environments',
-    excerpt: 'Learn how Kloudlite is revolutionizing the way developers build and test applications with cloud-native development environments.',
-    date: '2024-01-15',
-    readTime: '5 min read',
-    category: 'Product',
-    author: {
-      name: 'Kloudlite Team',
-      role: 'Engineering',
-      avatar: 'KT',
-      bio: 'Building the future of cloud development environments.'
-    },
-    content: `
-# Introduction
-
-Kloudlite is transforming how developers build and test applications by providing cloud-native development environments that eliminate setup time and configuration headaches.
-
-## The Problem with Traditional Development
-
-Traditional development workflows require developers to:
-- Clone repositories locally
-- Install dependencies
-- Set up databases and services
-- Configure environment variables
-- Mock external services
-- Deploy to test environments
-- Wait for CI/CD pipelines
-
-This process can take hours or even days, especially for complex microservices applications.
-
-## The Kloudlite Solution
-
-With Kloudlite, you can:
-
-1. **Instant Workspaces**: Start coding in seconds with pre-configured cloud environments
-2. **Real Service Connections**: Connect to actual databases and APIs, not mocks
-3. **Environment Forking**: Create isolated copies of entire environments for testing
-4. **Service Intercepts**: Route production traffic to your workspace for debugging
-
-## Key Features
-
-### Workspace Management
-Kloudlite workspaces are fully-featured development environments that run in the cloud. Each workspace includes:
-- VS Code Server for in-browser development
-- Full terminal access via SSH or web
-- Nix-based package management for reproducible environments
-- Persistent storage for your code and data
-
-### Environment Forking
-Fork entire environments with a single command, including all services, databases, and configurations. Test changes in isolation without affecting other developers.
-
-### Service Intercepts
-Route live traffic from production services to your workspace. Debug production issues with real data without deploying changes.
-
-## Getting Started
-
-Getting started with Kloudlite is simple:
-
-\`\`\`bash
-# Install Kloudlite CLI
-curl -fsSL https://get.kloudlite.io | bash
-
-# Create your first workspace
-kl workspace create my-workspace
-
-# Connect to an environment
-kl environment connect dev
-\`\`\`
-
-## What's Next?
-
-In upcoming blog posts, we'll dive deeper into:
-- Setting up your first workspace
-- Using environment forking effectively
-- Debugging with service intercepts
-- Best practices for team collaboration
-
-Stay tuned, and happy coding!
-    `
-  },
-  'getting-started-with-workspaces': {
-    slug: 'getting-started-with-workspaces',
-    title: 'Getting Started with Kloudlite Workspaces',
-    excerpt: 'A comprehensive guide to setting up your first workspace and connecting to your development environment.',
-    date: '2024-01-10',
-    readTime: '8 min read',
-    category: 'Tutorial',
-    author: {
-      name: 'Kloudlite Team',
-      role: 'Engineering',
-      avatar: 'KT',
-      bio: 'Building the future of cloud development environments.'
-    },
-    content: `
-# Getting Started with Kloudlite Workspaces
-
-This guide will walk you through creating and using your first Kloudlite workspace.
-
-## Prerequisites
-
-Before getting started, make sure you have:
-- A Kloudlite account (sign up at kloudlite.io)
-- The Kloudlite CLI installed
-- Access to at least one environment
-
-## Creating Your First Workspace
-
-Creating a workspace is straightforward:
-
-\`\`\`bash
-kl workspace create my-first-workspace --image comprehensive
-\`\`\`
-
-This creates a new workspace with the comprehensive image, which includes:
-- Node.js, Python, Go, and other common languages
-- VS Code Server
-- Git and common development tools
-- Nix package manager
-
-## Accessing Your Workspace
-
-You have multiple ways to access your workspace:
-
-### 1. VS Code in Browser
-The easiest way is through the web UI at dashboard.kloudlite.io
-
-### 2. SSH Access
-\`\`\`bash
-kl workspace connect my-first-workspace
-\`\`\`
-
-### 3. VS Code Remote
-Add your workspace as an SSH remote in VS Code desktop.
-
-## Installing Packages
-
-Kloudlite uses Nix for package management, ensuring reproducible environments:
-
-\`\`\`bash
-# Install packages
-kl pkg add nodejs python3 postgresql
-
-# List installed packages
-kl pkg list
-
-# Remove packages
-kl pkg remove nodejs
-\`\`\`
-
-## Connecting to Environments
-
-Connect your workspace to an environment to access services:
-
-\`\`\`bash
-kl environment connect development
-\`\`\`
-
-Now you can access all services in the development environment from your workspace.
-
-## Next Steps
-
-- Learn about environment forking
-- Set up service intercepts
-- Explore advanced workspace configurations
-    `
-  },
-  'environment-forking-explained': {
-    slug: 'environment-forking-explained',
-    title: 'Environment Forking: Test Changes Without Breaking Production',
-    excerpt: 'Discover how environment forking enables safe testing and experimentation without impacting your production services.',
-    date: '2024-01-05',
-    readTime: '6 min read',
-    category: 'Feature',
-    author: {
-      name: 'Kloudlite Team',
-      role: 'Engineering',
-      avatar: 'KT',
-      bio: 'Building the future of cloud development environments.'
-    },
-    content: `# Environment Forking Explained`
-  }
-}
+import { blogPostsMap, blogPostsData } from '@/data/blog-posts'
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -202,14 +17,14 @@ interface BlogPostPageProps {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params
-  const post = blogPosts[slug as keyof typeof blogPosts]
+  const post = blogPostsMap[slug]
 
   if (!post) {
     notFound()
   }
 
   // Get related posts (all other posts)
-  const relatedPosts = Object.values(blogPosts)
+  const relatedPosts = blogPostsData
     .filter(p => p.slug !== slug)
     .slice(0, 3)
 
@@ -482,7 +297,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
 // Generate static params for known blog posts
 export async function generateStaticParams() {
-  return Object.keys(blogPosts).map((slug) => ({
-    slug,
+  return blogPostsData.map((post) => ({
+    slug: post.slug,
   }))
 }
