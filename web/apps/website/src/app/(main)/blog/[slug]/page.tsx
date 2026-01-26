@@ -232,7 +232,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
                 {/* Right Sidebar - Author & Related Articles */}
                 <div className="hidden lg:block">
-                  <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+                  <div className="sticky top-24">
                     {/* Written by */}
                     <div className="p-8 lg:p-10 border-b border-foreground/10">
                       <h3 className="text-xs font-semibold text-muted-foreground mb-6 uppercase tracking-wider">Written by</h3>
