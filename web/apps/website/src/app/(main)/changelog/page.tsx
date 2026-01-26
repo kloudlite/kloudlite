@@ -1,6 +1,9 @@
+'use client'
+
 import { ScrollArea } from '@kloudlite/ui'
 import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
+import { PageHeroTitle } from '@/components/page-hero-title'
 import { cn } from '@kloudlite/lib'
 import { Github, Rss } from 'lucide-react'
 
@@ -17,11 +20,58 @@ function CrossMarker({ className }: { className?: string }) {
 function GridContainer({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn('relative mx-auto max-w-5xl', className)}>
+      <style jsx>{`
+        @keyframes pulseTopLeftToRight {
+          0% { left: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { left: 100%; opacity: 0; }
+        }
+        @keyframes pulseRightTopToBottom {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        @keyframes pulseBottomRightToLeft {
+          0% { right: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { right: 100%; opacity: 0; }
+        }
+        @keyframes pulseLeftBottomToTop {
+          0% { bottom: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { bottom: 100%; opacity: 0; }
+        }
+        .pulse-top {
+          animation: pulseTopLeftToRight 4s ease-in-out infinite;
+        }
+        .pulse-right {
+          animation: pulseRightTopToBottom 4s ease-in-out infinite 1s;
+        }
+        .pulse-bottom {
+          animation: pulseBottomRightToLeft 4s ease-in-out infinite 2s;
+        }
+        .pulse-left {
+          animation: pulseLeftBottomToTop 4s ease-in-out infinite 3s;
+        }
+      `}</style>
       <div className="absolute inset-0 pointer-events-none overflow-visible">
+        {/* Static border lines */}
         <div className="absolute inset-y-0 left-0 w-px bg-foreground/10" />
         <div className="absolute inset-y-0 right-0 w-px bg-foreground/10" />
         <div className="absolute inset-x-0 top-0 h-px bg-foreground/10" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-foreground/10" />
+
+        {/* Animated pulses */}
+        <div className="pulse-top absolute top-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+        <div className="pulse-right absolute right-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
+        <div className="pulse-bottom absolute bottom-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+        <div className="pulse-left absolute left-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
+
+        {/* Corner markers */}
         <CrossMarker className="top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-5 h-5" />
         <CrossMarker className="top-0 right-0 translate-x-1/2 -translate-y-1/2 w-5 h-5" />
         <CrossMarker className="bottom-0 left-0 -translate-x-1/2 translate-y-1/2 w-5 h-5" />
@@ -42,6 +92,63 @@ interface ChangelogEntry {
     changed?: string[]
     fixed?: string[]
   }
+}
+
+// Feature list item component
+function FeatureListItem({
+  title,
+  description,
+  bulletColor,
+  animated = false,
+}: {
+  title: string
+  description: string
+  bulletColor: string
+  animated?: boolean
+}) {
+  return (
+    <li className="flex items-start gap-3">
+      <span
+        className={cn('w-1.5 h-1.5 rounded-none mt-[0.3rem] flex-shrink-0', bulletColor, animated && 'animate-pulse')}
+      />
+      <div>
+        <p className="text-foreground font-semibold text-sm">{title}</p>
+        <p className="text-muted-foreground text-sm mt-1 leading-relaxed">{description}</p>
+      </div>
+    </li>
+  )
+}
+
+// Change section component
+function ChangeSection({
+  title,
+  items,
+  color,
+  symbol,
+}: {
+  title: string
+  items: string[]
+  color: 'success' | 'info' | 'warning'
+  symbol: string
+}) {
+  return (
+    <div className="p-8 lg:p-10 group cursor-default hover:bg-foreground/[0.015] transition-colors">
+      <h3 className={cn('text-xs font-semibold uppercase tracking-wider mb-4', `text-${color}`)}>
+        {title}
+      </h3>
+      <ul className="space-y-3">
+        {items.map((item, i) => (
+          <li
+            key={i}
+            className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2.5 transition-colors group-hover:text-foreground font-medium"
+          >
+            <span className={cn('mt-[0.2rem] font-bold leading-none', `text-${color}`)}>{symbol}</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 const changelog: ChangelogEntry[] = [
@@ -174,12 +281,12 @@ export default function ChangelogPage() {
           <div className="px-6 pt-8 lg:px-8 lg:pt-12">
             <GridContainer className="px-6 lg:px-12">
               {/* Hero Section */}
-              <div className="py-20 lg:py-24">
+              <div className="pt-20 pb-8 lg:pt-28 lg:pb-12">
                 <div className="text-center">
-                  <h1 className="text-[2.5rem] font-bold leading-[1.08] tracking-[-0.035em] sm:text-5xl md:text-6xl lg:text-[4rem]">
-                    <span className="text-muted-foreground">C</span><span className="text-foreground">hangelog</span>
-                  </h1>
-                  <p className="text-muted-foreground mx-auto mt-6 max-w-md text-lg leading-relaxed">
+                  <PageHeroTitle accentedWord="changelog.">
+                    Release
+                  </PageHeroTitle>
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-base lg:text-lg leading-relaxed">
                     New updates and improvements to Kloudlite.
                   </p>
                   <div className="mt-8 flex items-center justify-center gap-3">
@@ -187,14 +294,14 @@ export default function ChangelogPage() {
                       href="https://github.com/kloudlite/kloudlite/releases"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 rounded-sm text-muted-foreground hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
                     >
                       <Github className="h-4 w-4" />
                       Releases
                     </a>
                     <a
                       href="/changelog/rss"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/10 rounded-sm text-muted-foreground hover:text-foreground hover:border-foreground/20 text-sm transition-colors"
                     >
                       <Rss className="h-4 w-4" />
                       RSS
@@ -209,26 +316,26 @@ export default function ChangelogPage() {
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-4">
-                        <span className="text-foreground text-2xl lg:text-3xl font-bold tracking-tight font-mono">
+                        <span className="text-foreground text-2xl lg:text-3xl font-bold tracking-[-0.02em] font-mono">
                           Nightly
                         </span>
                         <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium animate-pulse">
                           In Progress
                         </span>
                       </div>
-                      <h2 className="text-foreground mt-2 text-xl font-semibold">What&apos;s Cooking</h2>
+                      <h2 className="text-foreground mt-2 text-lg lg:text-xl font-semibold">What&apos;s Cooking</h2>
                     </div>
                     <a
                       href="https://github.com/kloudlite/kloudlite/tree/development"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                      className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                     >
                       View development branch →
                     </a>
                   </div>
 
-                  <p className="text-muted-foreground mt-4 text-sm leading-relaxed max-w-2xl">
+                  <p className="text-muted-foreground mt-4 text-base leading-relaxed max-w-2xl">
                     Features currently in development. These may change before release.
                     Try them out on the nightly build and share your feedback.
                   </p>
@@ -240,27 +347,21 @@ export default function ChangelogPage() {
                       Coming Soon
                     </h3>
                     <ul className="space-y-4">
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-none bg-primary mt-2 flex-shrink-0" />
-                        <div>
-                          <p className="text-foreground font-medium text-sm">GPU-enabled Workspaces</p>
-                          <p className="text-muted-foreground text-sm mt-1">Run ML workloads and AI models directly in your workspace</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-none bg-primary mt-2 flex-shrink-0" />
-                        <div>
-                          <p className="text-foreground font-medium text-sm">Team Collaboration</p>
-                          <p className="text-muted-foreground text-sm mt-1">Real-time pair programming and workspace sharing</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-none bg-primary mt-2 flex-shrink-0" />
-                        <div>
-                          <p className="text-foreground font-medium text-sm">Prebuilt Images</p>
-                          <p className="text-muted-foreground text-sm mt-1">One-click workspace templates for popular frameworks</p>
-                        </div>
-                      </li>
+                      <FeatureListItem
+                        title="GPU-enabled Workspaces"
+                        description="Run ML workloads and AI models directly in your workspace"
+                        bulletColor="bg-primary"
+                      />
+                      <FeatureListItem
+                        title="Team Collaboration"
+                        description="Real-time pair programming and workspace sharing"
+                        bulletColor="bg-primary"
+                      />
+                      <FeatureListItem
+                        title="Prebuilt Images"
+                        description="One-click workspace templates for popular frameworks"
+                        bulletColor="bg-primary"
+                      />
                     </ul>
                   </div>
 
@@ -269,27 +370,24 @@ export default function ChangelogPage() {
                       In Development
                     </h3>
                     <ul className="space-y-4">
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-none bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
-                        <div>
-                          <p className="text-foreground font-medium text-sm">Multi-cluster Support</p>
-                          <p className="text-muted-foreground text-sm mt-1">Connect workspaces across multiple Kubernetes clusters</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-none bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
-                        <div>
-                          <p className="text-foreground font-medium text-sm">Database Snapshots</p>
-                          <p className="text-muted-foreground text-sm mt-1">Instant database cloning for isolated testing</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-none bg-amber-500 mt-2 flex-shrink-0 animate-pulse" />
-                        <div>
-                          <p className="text-foreground font-medium text-sm">VS Code Desktop Extension</p>
-                          <p className="text-muted-foreground text-sm mt-1">Native VS Code integration with remote workspaces</p>
-                        </div>
-                      </li>
+                      <FeatureListItem
+                        title="Multi-cluster Support"
+                        description="Connect workspaces across multiple Kubernetes clusters"
+                        bulletColor="bg-amber-500"
+                        animated
+                      />
+                      <FeatureListItem
+                        title="Database Snapshots"
+                        description="Instant database cloning for isolated testing"
+                        bulletColor="bg-amber-500"
+                        animated
+                      />
+                      <FeatureListItem
+                        title="VS Code Desktop Extension"
+                        description="Native VS Code integration with remote workspaces"
+                        bulletColor="bg-amber-500"
+                        animated
+                      />
                     </ul>
                   </div>
                 </div>
@@ -317,81 +415,47 @@ export default function ChangelogPage() {
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-4">
-                            <span className="text-foreground text-2xl lg:text-3xl font-bold tracking-tight font-mono">
+                            <span className="text-foreground text-2xl lg:text-3xl font-bold tracking-[-0.02em] font-mono">
                               {entry.version}
                             </span>
                             {index === 0 && (
-                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium">
+                              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-semibold">
                                 Latest
                               </span>
                             )}
                           </div>
-                          <h2 className="text-foreground mt-2 text-xl font-semibold">{entry.title}</h2>
+                          <h2 className="text-foreground mt-2 text-lg lg:text-xl font-bold tracking-[-0.02em]">{entry.title}</h2>
                         </div>
                         <time className="text-muted-foreground text-sm font-mono">{entry.date}</time>
                       </div>
 
                       {/* Highlights */}
-                      <div className="mt-6 flex flex-wrap gap-3">
-                        {entry.highlights.map((highlight, i) => (
-                          <span
-                            key={i}
-                            className="px-3 py-1.5 bg-muted text-muted-foreground text-sm"
-                          >
-                            {highlight}
-                          </span>
-                        ))}
-                      </div>
+                      {entry.highlights.length > 0 && (
+                        <div className="mt-6 flex flex-wrap gap-3">
+                          {entry.highlights.map((highlight, i) => (
+                            <span
+                              key={i}
+                              className="px-3 py-1.5 bg-foreground/[0.02] border border-foreground/10 rounded-sm text-muted-foreground text-sm font-medium"
+                            >
+                              {highlight}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Changes Grid */}
                     <div className="grid lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-foreground/10">
                       {entry.changes.added && entry.changes.added.length > 0 && (
-                        <div className="p-8 lg:p-10">
-                          <h3 className="text-success text-xs font-semibold uppercase tracking-wider mb-4">
-                            Added
-                          </h3>
-                          <ul className="space-y-3">
-                            {entry.changes.added.map((item, i) => (
-                              <li key={i} className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2">
-                                <span className="text-success mt-1.5">+</span>
-                                {item}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <ChangeSection title="Added" items={entry.changes.added} color="success" symbol="+" />
                       )}
 
                       {entry.changes.changed && entry.changes.changed.length > 0 && (
-                        <div className="p-8 lg:p-10">
-                          <h3 className="text-info text-xs font-semibold uppercase tracking-wider mb-4">
-                            Changed
-                          </h3>
-                          <ul className="space-y-3">
-                            {entry.changes.changed.map((item, i) => (
-                              <li key={i} className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2">
-                                <span className="text-info mt-1.5">~</span>
-                                {item}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <ChangeSection title="Changed" items={entry.changes.changed} color="info" symbol="~" />
                       )}
 
                       {entry.changes.fixed && entry.changes.fixed.length > 0 && (
-                        <div className="p-8 lg:p-10">
-                          <h3 className="text-warning text-xs font-semibold uppercase tracking-wider mb-4">
-                            Fixed
-                          </h3>
-                          <ul className="space-y-3">
-                            {entry.changes.fixed.map((item, i) => (
-                              <li key={i} className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2">
-                                <span className="text-warning mt-1.5">*</span>
-                                {item}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <ChangeSection title="Fixed" items={entry.changes.fixed} color="warning" symbol="*" />
                       )}
 
                       {/* Fill empty columns for initial release */}
@@ -414,9 +478,10 @@ export default function ChangelogPage() {
                     href="https://github.com/kloudlite/kloudlite/releases"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline"
+                    className="text-primary relative inline-block group/link"
                   >
                     View all releases on GitHub
+                    <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-primary transition-all duration-300 group-hover/link:w-full" />
                   </a>
                 </p>
               </div>
