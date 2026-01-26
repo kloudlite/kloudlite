@@ -13,7 +13,7 @@ interface DocsContentLayoutProps {
 
 export function DocsContentLayout({ children, tocItems = [] }: DocsContentLayoutProps) {
   return (
-    <div className="relative flex gap-16 max-w-[1400px]">
+    <div className="relative flex gap-6 lg:gap-12 xl:gap-16 max-w-full lg:max-w-[1400px]">
       {/* Main content */}
       <div className="flex-1 min-w-0 py-8 pb-24 lg:pb-16">
         <article className="prose prose-neutral dark:prose-invert max-w-none

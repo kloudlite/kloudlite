@@ -126,14 +126,14 @@ export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
     <>
       {/* Mobile Menu Button - only render after mount to avoid hydration mismatch */}
       {mounted && (
-        <div className="lg:hidden fixed bottom-6 right-6 z-50">
+        <div className="lg:hidden fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <button className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-14 w-14 items-center justify-center shadow-lg transition-colors">
                 <Menu className="h-6 w-6" />
               </button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0 border-r border-foreground/10">
+            <SheetContent side="left" className="w-[calc(100vw-2rem)] max-w-80 p-0 border-r border-foreground/10">
               <div className="flex h-full flex-col bg-background">
                 <div className="border-b border-foreground/10 px-6 py-5">
                   <SheetTitle className="text-base font-bold">Documentation</SheetTitle>

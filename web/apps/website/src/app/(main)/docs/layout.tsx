@@ -15,8 +15,8 @@ export default async function DocsLayout({ children }: { children: React.ReactNo
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
-          <div className="mx-auto w-full max-w-[90rem] px-6 lg:px-8">
-            <div className="flex gap-8 lg:gap-12">
+          <div className="mx-auto w-full max-w-[90rem] px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-6 lg:gap-8 xl:gap-12">
               <DocsSidebar initialTheme={theme} />
 
               {/* Main Content */}

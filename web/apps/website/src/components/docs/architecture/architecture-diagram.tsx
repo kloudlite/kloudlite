@@ -3,7 +3,7 @@ import { Server, Boxes, Database, Code2 } from 'lucide-react'
 export function ArchitectureDiagram() {
   return (
     <section className="mb-12 sm:mb-16">
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-900/50 dark:to-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 sm:p-12">
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-900/50 dark:to-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-8 lg:p-12">
         <div className="max-w-5xl mx-auto">
 
           {/* Control Node - Top Level */}
@@ -19,7 +19,7 @@ export function ArchitectureDiagram() {
                     <Server className="h-10 w-10 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">
+                    <h4 className="text-slate-900 dark:text-slate-100 text-xl sm:text-2xl font-bold mb-1">
                       Control Node
                     </h4>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-mono">
@@ -75,7 +75,7 @@ export function ArchitectureDiagram() {
 
         {/* Flow Legend - Outside the main container */}
         <div className="mt-8">
-          <div className="flex flex-wrap gap-6 justify-center items-center text-sm">
+          <div className="flex flex-wrap gap-3 sm:gap-6 justify-center items-center text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-none bg-gradient-to-r from-blue-500 to-purple-500"></div>
               <span className="text-slate-600 dark:text-slate-400 font-medium">Orchestration Flow</span>
