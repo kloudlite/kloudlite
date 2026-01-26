@@ -48,7 +48,7 @@ export function WebsiteFooter() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                      className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                       {...('external' in link && link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     >
                       {link.label}
