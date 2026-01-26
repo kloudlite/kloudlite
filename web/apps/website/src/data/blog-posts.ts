@@ -1,6 +1,8 @@
 // Blog posts data structure
 // This file contains all blog post metadata and content
 
+import { relatedPostsMap } from './related-posts-map'
+
 export interface BlogPost {
   slug: string
   title: string
@@ -16,6 +18,7 @@ export interface BlogPost {
     bio: string
   }
   content: string
+  relatedPosts: string[] // Array of slugs for related posts
 }
 
 export const defaultAuthor = {
@@ -25,7 +28,7 @@ export const defaultAuthor = {
   bio: 'Building the future of cloud development environments.'
 }
 
-export const blogPostsData: BlogPost[] = [
+const blogPostsRaw = [
   // Core Features
   {
     slug: 'environment-forking',
@@ -456,6 +459,12 @@ export const blogPostsData: BlogPost[] = [
     content: '# Service Mesh Integration\n\nContent coming soon...'
   },
 ]
+
+// Add related posts to each blog post
+export const blogPostsData = blogPostsRaw.map(post => ({
+  ...post,
+  relatedPosts: relatedPostsMap[post.slug] || []
+})) as BlogPost[]
 
 // Create a map for easy lookup by slug
 export const blogPostsMap = blogPostsData.reduce((acc, post) => {
