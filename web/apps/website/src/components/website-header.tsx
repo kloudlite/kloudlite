@@ -69,9 +69,10 @@ export function WebsiteHeader({ currentPage, alwaysShowBorder = false }: Website
                 key={link.key}
                 href={link.href}
                 className={cn(
-                  'text-sm transition-colors',
+                  'relative text-sm font-semibold transition-colors pb-1',
+                  'after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full',
                   currentPage === link.key
-                    ? 'text-foreground'
+                    ? 'text-foreground after:w-full'
                     : 'text-foreground/50 hover:text-foreground'
                 )}
               >
@@ -112,7 +113,7 @@ export function WebsiteHeader({ currentPage, alwaysShowBorder = false }: Website
                   key={link.key}
                   href={link.href}
                   className={cn(
-                    'block py-2.5 text-sm transition-colors',
+                    'block py-2.5 text-sm font-semibold transition-colors',
                     currentPage === link.key
                       ? 'text-foreground'
                       : 'text-foreground/50 hover:text-foreground'

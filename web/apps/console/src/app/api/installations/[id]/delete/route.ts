@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getRegistrationSession } from '@/lib/console-auth'
+import { requireOwnerPermission } from '@/lib/console/authorization'
 import {
   getInstallationById,
   deleteInstallation,
@@ -14,25 +14,17 @@ import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
  */
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const session = await getRegistrationSession()
-
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Fetch the installation
-  const installation = await getInstallationById(id)
-
-  if (!installation) {
-    return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
-  }
-
-  // Verify user owns this installation
-  if (installation.userId !== session.user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
 
   try {
+    // Only owner can delete installation
+    await requireOwnerPermission(id)
+
+    // Fetch the installation for DNS cleanup
+    const installation = await getInstallationById(id)
+
+    if (!installation) {
+      return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+    }
     console.log(`Deleting installation: ${id}`)
 
     // Step 1: Get all DNS record IDs and delete IP records from database
@@ -65,6 +57,8 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting installation:', error)
-    return NextResponse.json({ error: 'Failed to delete installation' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Failed to delete installation'
+    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
+    return NextResponse.json({ error: message }, { status })
   }
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } from '@kloudlite/ui'
+import { Button } from '@kloudlite/ui'
 import { ExternalLink, Loader2, Copy, PartyPopper, Clock, AlertCircle } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
@@ -129,30 +129,30 @@ export default function CompletePage() {
   // Render waiting state while installation is not yet active
   const renderWaitingState = () => (
     <div className="w-full">
-      <div className="mb-8 text-center">
+      <div className="mb-10 text-center">
         <div className="mb-4 flex justify-center">
-          <div className="flex size-16 items-center justify-center  bg-blue-100">
-            <Clock className="size-8 text-blue-600 animate-pulse" />
+          <div className="flex size-16 items-center justify-center bg-info/10">
+            <Clock className="size-8 text-info animate-pulse" />
           </div>
         </div>
         <h1 className="text-foreground mb-2 text-3xl font-semibold">Setting Up Your Installation</h1>
-        <p className="text-muted-foreground">Please wait while your installation becomes active</p>
+        <p className="text-muted-foreground text-base">Please wait while your installation becomes active</p>
       </div>
 
       <InstallationProgress currentStep={3} />
 
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
+      <div className="space-y-6 mt-10">
+        <div className="border p-8">
+          <div className="mb-6">
+            <div className="flex items-center gap-2">
               <Loader2 className="size-5 animate-spin" />
-              Waiting for Installation to Become Active
-            </CardTitle>
-            <CardDescription>
+              <h2 className="text-xl font-semibold">Waiting for Installation to Become Active</h2>
+            </div>
+            <p className="text-muted-foreground mt-1 text-base">
               Your installation is being set up. This usually takes 1-3 minutes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="space-y-4">
             <div className="bg-muted  p-4">
               <p className="mb-2 text-sm font-medium">Installation Dashboard URL:</p>
               <div className="flex items-center justify-between gap-3">
@@ -196,8 +196,8 @@ export default function CompletePage() {
                 View All Installations
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -217,18 +217,18 @@ export default function CompletePage() {
 
       <InstallationProgress currentStep={3} />
 
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Your Installation is Ready</CardTitle>
-            <CardDescription>
+      <div className="space-y-6 mt-10">
+        <div className="border p-8">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">Your Installation is Ready</h2>
+            <p className="text-muted-foreground mt-1 text-base">
               Access your Kloudlite installation dashboard at the URL below
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="space-y-4">
             {installationData?.subdomain ? (
               <div className="bg-muted  p-4">
-                <p className="mb-2 text-sm font-medium">Installation Dashboard URL:</p>
+                <p className="mb-2 text-base font-medium">Installation Dashboard URL:</p>
                 <div className="flex items-center justify-between gap-3">
                   <a
                     href={installationData.url}
@@ -252,10 +252,10 @@ export default function CompletePage() {
               </div>
             ) : (
               <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900  p-4">
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">
+                <p className="text-base font-medium text-amber-900 dark:text-amber-200 mb-1">
                   Domain Not Configured
                 </p>
-                <p className="text-sm text-amber-900 dark:text-amber-200">
+                <p className="text-base text-amber-900 dark:text-amber-200">
                   Your installation key was generated, but no subdomain was configured. Please configure a domain for your installation from the installations list.
                 </p>
               </div>
@@ -283,25 +283,25 @@ export default function CompletePage() {
             </div>
 
             <div className="border-t pt-4">
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-base">
                 <strong>What&apos;s next?</strong> You can now access your Kloudlite installation
                 dashboard to create and manage workspaces, environments, and work machines. Your
                 team members can log in using their own credentials at your installation URL.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Need Help?</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div className="border p-8">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">Need Help?</h2>
+          </div>
+          <div className="space-y-2">
             <a
               href="https://docs.kloudlite.io"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary flex items-center gap-2 text-sm hover:underline"
+              className="text-primary flex items-center gap-2 text-base hover:underline"
             >
               <ExternalLink className="size-4" />
               Read the Documentation
@@ -310,13 +310,13 @@ export default function CompletePage() {
               href="https://discord.gg/kloudlite"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary flex items-center gap-2 text-sm hover:underline"
+              className="text-primary flex items-center gap-2 text-base hover:underline"
             >
               <ExternalLink className="size-4" />
               Join our Discord Community
             </a>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

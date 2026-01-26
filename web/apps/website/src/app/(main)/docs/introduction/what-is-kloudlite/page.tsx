@@ -1,6 +1,9 @@
-import Link from 'next/link'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
-import { Database, Code2, Server, Network, ArrowRight } from 'lucide-react'
+import { Database, Code2, Server, Network } from 'lucide-react'
+import { FeatureCard } from '@/components/docs/feature-card'
+import { NextLinkCard } from '@/components/docs/next-link-card'
+import { PageTitle } from '@/components/docs/page-title'
+import { SectionTitle } from '@/components/docs/section-title'
 
 const tocItems = [
   { id: 'overview', title: 'Overview' },
@@ -10,12 +13,10 @@ const tocItems = [
 export default function WhatIsKloudlitePage() {
   return (
     <DocsContentLayout tocItems={tocItems}>
-      <h1 className="text-foreground mb-6 text-3xl sm:text-4xl font-bold tracking-tight">
-        What is Kloudlite?
-      </h1>
+      <PageTitle>What is Kloudlite?</PageTitle>
 
       <section id="overview" className="mb-12">
-        <p className="text-muted-foreground text-lg leading-relaxed mb-4">
+        <p className="text-muted-foreground leading-relaxed mb-4">
           Kloudlite is a Cloud Development Environment platform designed to shorten the
           development loop and increase developer productivity.
         </p>
@@ -25,74 +26,56 @@ export default function WhatIsKloudlitePage() {
         </p>
       </section>
 
-      <section id="core-concepts" className="mb-12">
-        <h2 className="text-foreground mb-6 text-2xl font-bold">Core Concepts</h2>
+      <section id="core-concepts" className="mb-16">
+        <SectionTitle id="core-concepts">Core Concepts</SectionTitle>
 
-        <div className="space-y-6">
-          <div className="bg-card border p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Network className="h-5 w-5 text-primary" />
-              <h3 className="text-card-foreground text-lg font-semibold m-0">Installation</h3>
-            </div>
-            <p className="text-muted-foreground text-sm leading-relaxed m-0">
-              A cluster of workmachines that enables users to collaborate. Your team's
-              dedicated Kloudlite deployment.
-            </p>
-          </div>
+        <div className="space-y-5">
+          <FeatureCard
+            icon={Network}
+            title="Installation"
+            description="A cluster of workmachines that enables users to collaborate. Your team's dedicated Kloudlite deployment."
+          />
 
-          <div className="bg-card border p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Server className="h-5 w-5 text-primary" />
-              <h3 className="text-card-foreground text-lg font-semibold m-0">Workmachines</h3>
-            </div>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-3">
-              VMs designed to run environments and workspaces. Resizable and configurable
-              based on your needs.
-            </p>
-            <ul className="text-muted-foreground text-sm space-y-1">
-              <li>• Auto shutdown when no workspace is active (select cloud providers)</li>
-              <li>• Each workmachine has its own generated SSH key pair</li>
-              <li>• Add authorized keys to access workspaces</li>
-            </ul>
-          </div>
+          <FeatureCard
+            icon={Server}
+            title="Workmachines"
+            description={
+              <>
+                <p className="mb-3">
+                  VMs designed to run environments and workspaces. Resizable and configurable
+                  based on your needs.
+                </p>
+                <ul className="space-y-1.5 text-sm">
+                  <li>• Auto shutdown when no workspace is active (select cloud providers)</li>
+                  <li>• Each workmachine has its own generated SSH key pair</li>
+                  <li>• Add authorized keys to access workspaces</li>
+                </ul>
+              </>
+            }
+          />
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="bg-card border p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <Database className="h-5 w-5 text-primary" />
-                <h3 className="text-card-foreground text-lg font-semibold m-0">Environments</h3>
-              </div>
-              <p className="text-muted-foreground text-sm leading-relaxed m-0">
-                Isolated namespaces containing the services your application depends on—databases,
-                caches, message queues, and other microservices.
-              </p>
-            </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            <FeatureCard
+              icon={Database}
+              title="Environments"
+              description="Isolated namespaces containing the services your application depends on—databases, caches, message queues, and other microservices."
+            />
 
-            <div className="bg-card border p-6">
-              <div className="flex items-center gap-3 mb-3">
-                <Code2 className="h-5 w-5 text-primary" />
-                <h3 className="text-card-foreground text-lg font-semibold m-0">Workspaces</h3>
-              </div>
-              <p className="text-muted-foreground text-sm leading-relaxed m-0">
-                Development containers with your codebase, packages, and IDE. Connect to
-                environments to access services by name.
-              </p>
-            </div>
+            <FeatureCard
+              icon={Code2}
+              title="Workspaces"
+              description="Development containers with your codebase, packages, and IDE. Connect to environments to access services by name."
+            />
           </div>
         </div>
       </section>
 
-      <div className="border-t pt-8">
-        <Link
+      <div className="border-t border-foreground/10 pt-8">
+        <NextLinkCard
           href="/docs/introduction/getting-started"
-          className="bg-card border p-4 hover:border-primary transition-colors flex items-center justify-between gap-4 no-underline"
-        >
-          <div>
-            <p className="text-foreground font-medium m-0">Getting Started</p>
-            <p className="text-muted-foreground text-sm m-0">Create your first environment and workspace</p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-muted-foreground" />
-        </Link>
+          title="Getting Started"
+          description="Create your first environment and workspace"
+        />
       </div>
     </DocsContentLayout>
   )

@@ -3,6 +3,8 @@ import { getValidUserInstallations, type Installation } from '@/lib/console/supa
 import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
+import { GridContainer } from '@/components/grid-container'
+import { PendingInvitationsBanner } from '@/components/pending-invitations-banner'
 
 export default async function InstallationsPage() {
   const session = await getRegistrationSession()
@@ -24,20 +26,23 @@ export default async function InstallationsPage() {
   return (
     <div className="bg-background min-h-screen">
       <InstallationsHeader user={session.user} />
+      <PendingInvitationsBanner />
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Title Section */}
-        <div className="mb-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold">Installations</h1>
-            <p className="text-muted-foreground mt-1.5 text-sm">
+      <main className="mx-auto max-w-7xl px-6 py-16">
+        <GridContainer className="border-t">
+          {/* Title Section */}
+          <div className="border-b px-8 py-10">
+            <h1 className="text-3xl font-bold tracking-tight">Installations</h1>
+            <p className="text-muted-foreground mt-2 text-base">
               Manage your Kloudlite installations
             </p>
           </div>
 
           {/* Installations List with Filter */}
-          <InstallationsList installations={installations} />
-        </div>
+          <div className="px-8 py-10">
+            <InstallationsList installations={installations} />
+          </div>
+        </GridContainer>
       </main>
     </div>
   )

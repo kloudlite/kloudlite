@@ -1,6 +1,7 @@
-import Link from 'next/link'
 import { DocsContentLayout } from '@/components/docs/docs-content-layout'
-import { ArrowRight } from 'lucide-react'
+import { PageTitle } from '@/components/docs/page-title'
+import { Step } from '@/components/docs/step'
+import { NextLinkCard } from '@/components/docs/next-link-card'
 import {
   CreateUserPreview,
   LoginPreview,
@@ -18,140 +19,83 @@ const tocItems = [
 export default function GettingStartedPage() {
   return (
     <DocsContentLayout tocItems={tocItems}>
-      <h1 className="text-foreground mb-6 text-3xl sm:text-4xl font-bold tracking-tight">
-        Getting Started
-      </h1>
+      <PageTitle>Getting Started</PageTitle>
 
-      <section id="steps" className="mb-12">
+      <section id="steps" className="mb-16">
         <p className="text-muted-foreground mb-8 leading-relaxed">
           Set up your first environment and workspace.
         </p>
 
         <div className="space-y-10">
-          {/* Step 1 */}
-          <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
-              1
-            </div>
-            <div className="flex-1">
-              <p className="text-foreground font-medium mb-1">Create a user</p>
-              <p className="text-muted-foreground text-sm mb-4">
-                Login with super admin access and create a new user from the admin panel.
-              </p>
-              <CreateUserPreview />
-            </div>
-          </div>
+          <Step
+            number={1}
+            title="Create a user"
+            description="Login with super admin access and create a new user from the admin panel."
+          >
+            <CreateUserPreview />
+          </Step>
 
-          {/* Step 2 */}
-          <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
-              2
-            </div>
-            <div className="flex-1">
-              <p className="text-foreground font-medium mb-1">Login as the user</p>
-              <p className="text-muted-foreground text-sm mb-4">
-                Sign out and login with the newly created user credentials.
-              </p>
-              <LoginPreview />
-            </div>
-          </div>
+          <Step
+            number={2}
+            title="Login as the user"
+            description="Sign out and login with the newly created user credentials."
+          >
+            <LoginPreview />
+          </Step>
 
-          {/* Step 3 */}
-          <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
-              3
-            </div>
-            <div className="flex-1">
-              <p className="text-foreground font-medium mb-1">Setup a Workmachine</p>
-              <p className="text-muted-foreground text-sm mb-4">
-                Go to Workmachines → Create Workmachine. Select a machine type for your workspaces.
-              </p>
-              <WorkmachinePreview />
-            </div>
-          </div>
+          <Step
+            number={3}
+            title="Setup a Workmachine"
+            description="Go to Workmachines → Create Workmachine. Select a machine type for your workspaces."
+          >
+            <WorkmachinePreview />
+          </Step>
 
-          {/* Step 4 */}
-          <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
-              4
-            </div>
-            <div className="flex-1">
-              <p className="text-foreground font-medium mb-1">Create an Environment</p>
-              <p className="text-muted-foreground text-sm mb-4">
-                Go to Environments → Create Environment. Add your services using Docker Compose.
-              </p>
-              <EnvironmentPreview />
-            </div>
-          </div>
+          <Step
+            number={4}
+            title="Create an Environment"
+            description="Go to Environments → Create Environment. Add your services using Docker Compose."
+          >
+            <EnvironmentPreview />
+          </Step>
 
-          {/* Step 5 */}
-          <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
-              5
-            </div>
-            <div className="flex-1">
-              <p className="text-foreground font-medium mb-1">Create a Workspace</p>
-              <p className="text-muted-foreground text-sm mb-4">
-                Go to Workspaces → Create Workspace. Select your packages and workmachine.
-              </p>
-              <WorkspacePreview />
-            </div>
-          </div>
+          <Step
+            number={5}
+            title="Create a Workspace"
+            description="Go to Workspaces → Create Workspace. Select your packages and workmachine."
+          >
+            <WorkspacePreview />
+          </Step>
 
-          {/* Step 6 */}
-          <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
-              6
-            </div>
-            <div className="flex-1">
-              <p className="text-foreground font-medium mb-1">Connect to Environment</p>
-              <p className="text-muted-foreground text-sm mb-4">
-                From your workspace, run{' '}
-                <code className="bg-muted px-1.5 py-0.5 font-mono text-xs">kl env connect</code>{' '}
-                to access environment services.
-              </p>
-              <ConnectEnvironmentPreview />
-            </div>
-          </div>
+          <Step
+            number={6}
+            title="Connect to Environment"
+            description="From your workspace, run kl env connect to access environment services."
+          >
+            <ConnectEnvironmentPreview />
+          </Step>
 
-          {/* Step 7 */}
-          <div className="flex items-start gap-4">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold">
-              7
-            </div>
-            <div className="flex-1">
-              <p className="text-foreground font-medium mb-1">Start coding</p>
-              <p className="text-muted-foreground text-sm mb-4">
-                Access via VS Code Web, SSH, or terminal. Your services are available by name.
-              </p>
-              <StartCodingPreview />
-            </div>
-          </div>
+          <Step
+            number={7}
+            title="Start coding"
+            description="Access via VS Code Web, SSH, or terminal. Your services are available by name."
+          >
+            <StartCodingPreview />
+          </Step>
         </div>
       </section>
 
-      <div className="border-t pt-8 space-y-4">
-        <Link
+      <div className="border-t border-foreground/10 pt-8 space-y-4">
+        <NextLinkCard
           href="/docs/concepts/environments"
-          className="bg-card border p-4 hover:border-primary transition-colors flex items-center justify-between gap-4 no-underline"
-        >
-          <div>
-            <p className="text-foreground font-medium m-0">Environments</p>
-            <p className="text-muted-foreground text-sm m-0">Learn more about environments and services</p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-muted-foreground" />
-        </Link>
-
-        <Link
+          title="Environments"
+          description="Learn more about environments and services"
+        />
+        <NextLinkCard
           href="/docs/concepts/workspaces"
-          className="bg-card border p-4 hover:border-primary transition-colors flex items-center justify-between gap-4 no-underline"
-        >
-          <div>
-            <p className="text-foreground font-medium m-0">Workspaces</p>
-            <p className="text-muted-foreground text-sm m-0">Learn more about workspaces and packages</p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-muted-foreground" />
-        </Link>
+          title="Workspaces"
+          description="Learn more about workspaces and packages"
+        />
       </div>
     </DocsContentLayout>
   )

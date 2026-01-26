@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, randomBytes } from 'crypto'
-import { getRegistrationSession } from '@/lib/console-auth'
+import { requireInstallationAccess } from '@/lib/console/authorization'
 import { getInstallationById } from '@/lib/console/supabase-storage-service'
 
 // Super admin login token validity (5 minutes)
@@ -20,6 +20,7 @@ interface SuperAdminLoginTokenPayload {
  *
  * This creates a time-limited token that allows one-click super admin login
  * to the installation dashboard. Token is valid for 5 minutes.
+ * Any team member can access super admin login.
  */
 export async function POST(
   _request: NextRequest,
@@ -28,32 +29,18 @@ export async function POST(
   try {
     const { id } = await params
 
-    // Verify user is logged in and has access to this installation
-    const session = await getRegistrationSession()
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - please log in' },
-        { status: 401 }
-      )
-    }
+    // Verify user has access to this installation (any role)
+    await requireInstallationAccess(id)
 
     const installationId = id
 
-    // Verify installation exists and user has access
+    // Fetch installation for secret key
     const installation = await getInstallationById(installationId)
 
     if (!installation) {
       return NextResponse.json(
         { error: 'Installation not found' },
         { status: 404 }
-      )
-    }
-
-    // Verify user owns this installation
-    if (installation.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden - you do not own this installation' },
-        { status: 403 }
       )
     }
 
@@ -108,9 +95,8 @@ export async function POST(
     })
   } catch (error) {
     console.error('Error generating superadmin login token:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const message = error instanceof Error ? error.message : 'Internal server error'
+    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
+    return NextResponse.json({ error: message }, { status })
   }
 }

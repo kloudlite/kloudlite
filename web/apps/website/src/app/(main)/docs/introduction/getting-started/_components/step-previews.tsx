@@ -193,7 +193,7 @@ export function LoginPreview() {
 
   return (
     <PreviewFrame url="auth.kloudlite.io">
-      <div className="text-xs flex min-h-[280px]">
+      <div className="text-xs flex h-[280px]">
         {/* Left branding section */}
         <div className="w-1/3 bg-zinc-900 text-white p-6 flex flex-col justify-center">
           <div className="font-bold text-lg mb-2">Kloudlite</div>
@@ -259,7 +259,7 @@ export function WorkmachinePreview() {
     <PreviewFrame>
       <div className="text-xs">
         <DashboardHeader />
-      <div className="p-6 flex items-center justify-center min-h-[300px]">
+      <div className="p-6 flex items-center justify-center h-[340px] overflow-hidden">
         <div className="text-center max-w-md">
           {/* Welcome icon */}
           <div className="bg-primary/10 w-12 h-12 rounded-none flex items-center justify-center mx-auto mb-4">
@@ -546,7 +546,7 @@ export function ConnectEnvironmentPreview() {
       </div>
 
       {/* Terminal content */}
-      <div className="bg-zinc-900 text-zinc-300 p-4 font-mono text-xs leading-relaxed min-h-[200px]">
+      <div className="bg-zinc-900 text-zinc-300 p-4 font-mono text-xs leading-relaxed h-[340px] overflow-hidden">
         <div className="flex items-center gap-2">
           <span className="text-green-400">kl@my-workspace</span>
           <span className="text-zinc-500">~</span>
@@ -641,7 +641,7 @@ export function StartCodingPreview() {
       </div>
 
       {/* VS Code content */}
-      <div className="flex h-[220px]">
+      <div className="flex h-[240px]">
         {/* Activity bar */}
         <div className="w-10 bg-[#333333] flex flex-col items-center py-2 gap-3">
           <div className="w-6 h-6 flex items-center justify-center text-white bg-white/10">

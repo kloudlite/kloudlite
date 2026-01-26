@@ -5,7 +5,7 @@ import { SocialButtons } from '@/components/blog-social-actions'
 import { getBlogTitle } from '@/components/blog/blog-title-helper'
 import { GridContainer } from '@/components/blog/grid-container'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, ArrowRight } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock } from 'lucide-react'
 import { notFound } from 'next/navigation'
 
 // Sample blog posts data (in a real app, this would come from a CMS or markdown files)
@@ -435,7 +435,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       <div className="p-8 lg:p-10">
                         <h3 className="text-xs font-semibold text-muted-foreground mb-6 uppercase tracking-wider">Related Articles</h3>
                         <div className="space-y-0">
-                          {relatedPosts.map((related, index) => (
+                          {relatedPosts.map((related) => (
                             <Link
                               key={related.slug}
                               href={`/blog/${related.slug}`}

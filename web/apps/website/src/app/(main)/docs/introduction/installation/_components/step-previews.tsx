@@ -108,7 +108,7 @@ export function SignUpPreview() {
 
   return (
     <PreviewFrame url="auth.kloudlite.io">
-      <div className="text-xs flex flex-col sm:flex-row min-h-[280px] sm:min-h-[320px]">
+      <div className="text-xs flex flex-col sm:flex-row h-[280px] sm:h-[320px] overflow-hidden">
         {/* Left branding section - hidden on mobile */}
         <div className="hidden sm:flex w-2/5 bg-zinc-900 text-white p-6 flex-col justify-between">
           <div>
@@ -380,9 +380,9 @@ export function InstallCommandPreview() {
         </div>
       </div>
 
-      <div className="bg-card p-3 sm:p-4 space-y-4">
+      <div className="bg-card p-3 sm:p-4 h-[320px] flex flex-col gap-4 overflow-hidden">
         {/* Command Box */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded">
+        <div className="bg-zinc-900 border border-zinc-700 rounded flex-shrink-0">
           <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-700">
             <span className="text-zinc-400 text-[10px]">Installation Command</span>
             <button className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors ${copied ? 'bg-green-500/20 text-green-400' : 'hover:bg-zinc-800 text-zinc-400'}`}>
@@ -390,7 +390,7 @@ export function InstallCommandPreview() {
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <div className="p-3 font-mono text-[10px] text-zinc-300 overflow-x-auto">
+          <div className="p-3 font-mono text-[10px] text-zinc-300 overflow-x-auto h-[80px] flex items-start">
             {showCommand && (
               <div className="animate-in fade-in">
                 <span className="text-green-400">$</span> curl -sSL https://install.kloudlite.io | \<br />
@@ -402,29 +402,33 @@ export function InstallCommandPreview() {
           </div>
         </div>
 
-        {/* Running output */}
-        {running && (
-          <div className="bg-zinc-900 p-3 font-mono text-[10px] text-zinc-300 space-y-1 animate-in fade-in slide-in-from-bottom-2">
-            <div className="text-green-400">Initializing Kloudlite installation...</div>
-            <div className="text-zinc-400">Checking prerequisites...</div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3 w-3 text-green-400" />
-              <span>AWS credentials verified</span>
+        {/* Running output - reserved space */}
+        <div className="bg-zinc-900 p-3 font-mono text-[10px] text-zinc-300 flex-1 min-h-0">
+          {running ? (
+            <div className="space-y-1 animate-in fade-in slide-in-from-bottom-2">
+              <div className="text-green-400">Initializing Kloudlite installation...</div>
+              <div className="text-zinc-400">Checking prerequisites...</div>
+              <div className="flex items-center gap-2">
+                <Check className="h-3 w-3 text-green-400" />
+                <span>AWS credentials verified</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-3 w-3 text-green-400" />
+                <span>Terraform v1.5.0 found</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-3 w-3 text-green-400" />
+                <span>kubectl v1.28.0 found</span>
+              </div>
+              <div className="flex items-center gap-2 text-cyan-400">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Provisioning infrastructure...</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3 w-3 text-green-400" />
-              <span>Terraform v1.5.0 found</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="h-3 w-3 text-green-400" />
-              <span>kubectl v1.28.0 found</span>
-            </div>
-            <div className="flex items-center gap-2 text-cyan-400">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              <span>Provisioning infrastructure...</span>
-            </div>
-          </div>
-        )}
+          ) : (
+            <div className="opacity-0">&nbsp;</div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -1,13 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button, ScrollArea } from '@kloudlite/ui'
 import Link from 'next/link'
 import { ArrowRight, Check } from 'lucide-react'
 import { GetStartedButton } from '@/components/get-started-button'
 import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
+import { PageHeroTitle } from '@/components/page-hero-title'
 import { cn } from '@kloudlite/lib'
+import { motion, AnimatePresence } from 'motion/react'
+
+// Hook to detect user's motion preferences
+function useReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setPrefersReducedMotion(mediaQuery.matches)
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches)
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+
+  return prefersReducedMotion
+}
 
 // Cross marker component
 function CrossMarker({ className }: { className?: string }) {
@@ -25,6 +46,44 @@ function CrossMarker({ className }: { className?: string }) {
 function GridContainer({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn('relative mx-auto max-w-5xl', className)}>
+      <style jsx>{`
+        @keyframes pulseTopLeftToRight {
+          0% { left: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { left: 100%; opacity: 0; }
+        }
+        @keyframes pulseRightTopToBottom {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        @keyframes pulseBottomRightToLeft {
+          0% { right: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { right: 100%; opacity: 0; }
+        }
+        @keyframes pulseLeftBottomToTop {
+          0% { bottom: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { bottom: 100%; opacity: 0; }
+        }
+        .pulse-top {
+          animation: pulseTopLeftToRight 4s ease-in-out infinite;
+        }
+        .pulse-right {
+          animation: pulseRightTopToBottom 4s ease-in-out infinite 1s;
+        }
+        .pulse-bottom {
+          animation: pulseBottomRightToLeft 4s ease-in-out infinite 2s;
+        }
+        .pulse-left {
+          animation: pulseLeftBottomToTop 4s ease-in-out infinite 3s;
+        }
+      `}</style>
       {/* Grid lines */}
       <div className="absolute inset-0 pointer-events-none overflow-visible">
         {/* Vertical lines */}
@@ -34,6 +93,12 @@ function GridContainer({ children, className }: { children: React.ReactNode; cla
         {/* Horizontal lines */}
         <div className="absolute inset-x-0 top-0 h-px bg-foreground/10" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-foreground/10" />
+
+        {/* Animated pulses */}
+        <div className="pulse-top absolute top-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+        <div className="pulse-right absolute right-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
+        <div className="pulse-bottom absolute bottom-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+        <div className="pulse-left absolute left-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
 
         {/* Corner markers */}
         <CrossMarker className="top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-5 h-5" />
@@ -52,33 +117,43 @@ function GridContainer({ children, className }: { children: React.ReactNode; cla
 
 function PricingPage() {
   const [activeTab, setActiveTab] = useState<'byoc' | 'cloud'>('byoc')
+  const prefersReducedMotion = useReducedMotion()
+
+  // Animation configurations
+  const underlineTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, stiffness: 300, damping: 30 }
+
+  const contentTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.3, ease: 'easeInOut' as const }
 
   return (
     <div className="bg-background h-screen">
       <ScrollArea className="h-full">
-        <WebsiteHeader currentPage="pricing" />
+        <WebsiteHeader currentPage="pricing" alwaysShowBorder />
         <main>
           <div className="px-6 pt-8 lg:px-8 lg:pt-12">
             <GridContainer className="px-6 lg:px-12">
               {/* Hero Section */}
-              <div className="py-20 lg:py-24">
+              <div className="py-20 lg:py-28">
                 <div className="text-center">
-                  <h1 className="text-[2.5rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl lg:text-[4rem]">
-                    <span className="text-foreground">Pricing</span>
-                  </h1>
+                  <PageHeroTitle accentedWord="pricing.">
+                    Simple, transparent
+                  </PageHeroTitle>
 
-                  <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg leading-relaxed">
                     Start free with your own infrastructure, or let us manage everything for you.
                   </p>
 
                   {/* Tab Switcher */}
-                  <div className="mt-10 inline-flex p-1 bg-foreground/5 border border-foreground/10">
+                  <div className="mt-10 inline-flex gap-1 relative">
                     <button
                       onClick={() => setActiveTab('byoc')}
                       className={cn(
-                        'relative px-6 py-2.5 text-sm font-medium transition-all duration-200',
+                        'relative px-6 py-2.5 text-base font-medium transition-colors',
                         activeTab === 'byoc'
-                          ? 'bg-background text-foreground shadow-sm'
+                          ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
@@ -87,14 +162,24 @@ function PricingPage() {
                     <button
                       onClick={() => setActiveTab('cloud')}
                       className={cn(
-                        'relative px-6 py-2.5 text-sm font-medium transition-all duration-200',
+                        'relative px-6 py-2.5 text-base font-medium transition-colors',
                         activeTab === 'cloud'
-                          ? 'bg-background text-foreground shadow-sm'
+                          ? 'text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
                       Cloud
                     </button>
+                    {/* Animated underline */}
+                    <motion.div
+                      className="absolute bottom-0 h-0.5 bg-primary"
+                      initial={false}
+                      animate={{
+                        left: activeTab === 'byoc' ? '0%' : '50%',
+                        width: '50%'
+                      }}
+                      transition={underlineTransition}
+                    />
                   </div>
                 </div>
               </div>
@@ -104,7 +189,29 @@ function PricingPage() {
 
               {/* Pricing Grid */}
               <div className="-mx-6 lg:-mx-12">
-                {activeTab === 'byoc' ? <BYOCPricing /> : <CloudPricing />}
+                <AnimatePresence mode="wait" initial={false}>
+                  {activeTab === 'byoc' ? (
+                    <motion.div
+                      key="byoc"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={contentTransition}
+                    >
+                      <BYOCPricing />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="cloud"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={contentTransition}
+                    >
+                      <CloudPricing />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* FAQ Section */}
@@ -150,17 +257,19 @@ function BYOCPricing() {
   return (
     <div className="grid lg:grid-cols-2">
       {/* Free */}
-      <div className="p-8 lg:p-10 border-b border-foreground/10 lg:border-r group transition-colors hover:bg-foreground/[0.02]">
-        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-          Open Source
-        </p>
-        <h3 className="text-foreground mt-4 text-2xl font-bold tracking-[-0.02em]">Free</h3>
-        <p className="text-muted-foreground mt-3 text-base leading-relaxed transition-colors group-hover:text-foreground">
+      <div className="p-8 lg:p-12 border-b border-foreground/10 lg:border-r group transition-colors hover:bg-foreground/[0.02] bg-foreground/[0.01]">
+        <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-sm">
+          <p className="text-primary text-xs font-semibold uppercase tracking-wider">
+            Open Source
+          </p>
+        </div>
+        <h3 className="text-foreground mt-6 text-3xl font-bold tracking-[-0.02em]">Free</h3>
+        <p className="text-muted-foreground mt-3 text-base leading-relaxed">
           For individuals and small teams
         </p>
         <div className="mt-8">
-          <span className="text-foreground text-5xl font-bold tracking-tight">$0</span>
-          <span className="text-muted-foreground ml-2 text-sm">forever</span>
+          <span className="text-foreground text-6xl font-bold tracking-tight">$0</span>
+          <span className="text-muted-foreground ml-2 text-lg">forever</span>
         </div>
         <ul className="mt-10 space-y-4">
           <Li>Deploy on AWS, Azure, or GCP</Li>
@@ -173,16 +282,18 @@ function BYOCPricing() {
       </div>
 
       {/* Enterprise */}
-      <div className="p-8 lg:p-10 border-b border-foreground/10 group transition-colors hover:bg-foreground/[0.02]">
-        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-          Custom
-        </p>
-        <h3 className="text-foreground mt-4 text-2xl font-bold tracking-[-0.02em]">Enterprise</h3>
-        <p className="text-muted-foreground mt-3 text-base leading-relaxed transition-colors group-hover:text-foreground">
+      <div className="p-8 lg:p-12 border-b border-foreground/10 group transition-colors hover:bg-foreground/[0.02] bg-foreground/[0.01]">
+        <div className="inline-block px-3 py-1 bg-foreground/5 border border-foreground/10 rounded-sm">
+          <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+            Custom
+          </p>
+        </div>
+        <h3 className="text-foreground mt-6 text-3xl font-bold tracking-[-0.02em]">Enterprise</h3>
+        <p className="text-muted-foreground mt-3 text-base leading-relaxed">
           For organizations with advanced needs
         </p>
         <div className="mt-8">
-          <span className="text-foreground text-5xl font-bold tracking-tight">Custom</span>
+          <span className="text-foreground text-6xl font-bold tracking-tight">Custom</span>
         </div>
         <ul className="mt-10 space-y-4">
           <Li>Everything in Free</Li>
@@ -231,8 +342,8 @@ function CloudPricing() {
   return (
     <div>
       {/* Control Plane Row */}
-      <div className="grid lg:grid-cols-3 border-b border-foreground/10">
-        <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 flex flex-col justify-center">
+      <div className="grid lg:grid-cols-3 border-b border-foreground/10 bg-foreground/[0.01]">
+        <div className="p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-foreground/10 flex flex-col justify-center">
           <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
             Cloud Pricing
           </h2>
@@ -240,19 +351,21 @@ function CloudPricing() {
             Fully managed by us.
           </p>
         </div>
-        <div className="lg:col-span-2 p-8 lg:p-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="lg:col-span-2 p-8 lg:p-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-              Base Fee
-            </p>
-            <h3 className="text-foreground mt-2 text-xl font-bold tracking-[-0.02em]">Control Plane</h3>
-            <p className="text-muted-foreground mt-1 text-base">
+            <div className="inline-block px-3 py-1 bg-foreground/5 border border-foreground/10 rounded-sm mb-4">
+              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                Base Fee
+              </p>
+            </div>
+            <h3 className="text-foreground text-xl font-bold tracking-[-0.02em]">Control Plane</h3>
+            <p className="text-muted-foreground mt-2 text-base">
               Dashboard, user management, billing
             </p>
           </div>
           <div className="text-left sm:text-right">
-            <span className="text-foreground text-4xl font-bold tracking-tight">$29</span>
-            <span className="text-muted-foreground text-sm">/mo</span>
+            <span className="text-foreground text-5xl font-bold tracking-tight">$29</span>
+            <span className="text-muted-foreground text-lg">/mo</span>
           </div>
         </div>
       </div>
@@ -274,6 +387,7 @@ function CloudPricing() {
           extraHourlyRate={0.30}
           features={['12 vCPUs, 32GB RAM', '160 hrs/mo', '200GB storage', '30 min suspend']}
           className="border-b lg:border-b-0 lg:border-r border-foreground/10"
+          highlighted
         />
         <Tier
           name="Tier 3"
@@ -285,31 +399,31 @@ function CloudPricing() {
       </div>
 
       {/* Calculator Row */}
-      <div className="grid lg:grid-cols-3 border-b border-foreground/10">
-        <div className="p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-foreground/10 flex flex-col justify-center">
-          <h2 className="text-foreground text-xl font-bold tracking-[-0.02em]">
-            Estimate
+      <div className="grid lg:grid-cols-3 border-b border-foreground/10 bg-foreground/[0.01]">
+        <div className="p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-foreground/10 flex flex-col justify-center">
+          <h2 className="text-foreground text-2xl font-bold tracking-[-0.02em]">
+            Cost Estimate
           </h2>
-          <p className="text-muted-foreground mt-2 text-base">
+          <p className="text-muted-foreground mt-3 text-base">
             Calculate your monthly cost.
           </p>
         </div>
-        <div className="lg:col-span-2 p-8 lg:p-10">
+        <div className="lg:col-span-2 p-8 lg:p-12">
           {/* Users Row */}
           <div className="grid sm:grid-cols-3 gap-6">
             <div>
               <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Tier 1 Users</label>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-2">
                 <button
                   onClick={() => setTier1Users(Math.max(0, tier1Users - 1))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
-                  -
+                  −
                 </button>
-                <span className="text-foreground text-lg font-semibold w-6 text-center">{tier1Users}</span>
+                <span className="text-foreground text-lg font-semibold w-8 text-center">{tier1Users}</span>
                 <button
                   onClick={() => setTier1Users(tier1Users + 1)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
                   +
                 </button>
@@ -318,17 +432,17 @@ function CloudPricing() {
             </div>
             <div>
               <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Tier 2 Users</label>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-2">
                 <button
                   onClick={() => setTier2Users(Math.max(0, tier2Users - 1))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
-                  -
+                  −
                 </button>
-                <span className="text-foreground text-lg font-semibold w-6 text-center">{tier2Users}</span>
+                <span className="text-foreground text-lg font-semibold w-8 text-center">{tier2Users}</span>
                 <button
                   onClick={() => setTier2Users(tier2Users + 1)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
                   +
                 </button>
@@ -337,17 +451,17 @@ function CloudPricing() {
             </div>
             <div>
               <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Tier 3 Users</label>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-2">
                 <button
                   onClick={() => setTier3Users(Math.max(0, tier3Users - 1))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
-                  -
+                  −
                 </button>
-                <span className="text-foreground text-lg font-semibold w-6 text-center">{tier3Users}</span>
+                <span className="text-foreground text-lg font-semibold w-8 text-center">{tier3Users}</span>
                 <button
                   onClick={() => setTier3Users(tier3Users + 1)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
                   +
                 </button>
@@ -360,17 +474,17 @@ function CloudPricing() {
           <div className="grid sm:grid-cols-3 gap-6 mt-6 pt-6 border-t border-foreground/10">
             <div>
               <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Extra Hrs (T1)</label>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-2">
                 <button
                   onClick={() => setTier1ExtraHrs(Math.max(0, tier1ExtraHrs - 10))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
-                  -
+                  −
                 </button>
                 <span className="text-foreground text-lg font-semibold w-8 text-center">{tier1ExtraHrs}</span>
                 <button
                   onClick={() => setTier1ExtraHrs(tier1ExtraHrs + 10)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
                   +
                 </button>
@@ -379,17 +493,17 @@ function CloudPricing() {
             </div>
             <div>
               <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Extra Hrs (T2)</label>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-2">
                 <button
                   onClick={() => setTier2ExtraHrs(Math.max(0, tier2ExtraHrs - 10))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
-                  -
+                  −
                 </button>
                 <span className="text-foreground text-lg font-semibold w-8 text-center">{tier2ExtraHrs}</span>
                 <button
                   onClick={() => setTier2ExtraHrs(tier2ExtraHrs + 10)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
                   +
                 </button>
@@ -398,17 +512,17 @@ function CloudPricing() {
             </div>
             <div>
               <label className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Extra Hrs (T3)</label>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-2">
                 <button
                   onClick={() => setTier3ExtraHrs(Math.max(0, tier3ExtraHrs - 10))}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
-                  -
+                  −
                 </button>
                 <span className="text-foreground text-lg font-semibold w-8 text-center">{tier3ExtraHrs}</span>
                 <button
                   onClick={() => setTier3ExtraHrs(tier3ExtraHrs + 10)}
-                  className="w-8 h-8 flex items-center justify-center border border-foreground/10 text-muted-foreground hover:border-foreground/10 hover:text-foreground transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-foreground/10 bg-foreground/[0.02] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground transition-colors font-medium"
                 >
                   +
                 </button>
@@ -443,7 +557,8 @@ function Tier({
   price,
   extraHourlyRate,
   features,
-  className
+  className,
+  highlighted = false
 }: {
   name: string
   description: string
@@ -451,9 +566,17 @@ function Tier({
   extraHourlyRate?: number
   features: string[]
   className?: string
+  highlighted?: boolean
 }) {
   return (
-    <div className={cn('p-8 lg:p-10 group cursor-default transition-colors hover:bg-foreground/[0.02]', className)}>
+    <div className={cn('p-8 lg:p-10 group cursor-default transition-colors', highlighted ? 'bg-primary/[0.02] hover:bg-primary/[0.03]' : 'hover:bg-foreground/[0.02]', className)}>
+      {highlighted && (
+        <div className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-sm mb-4">
+          <p className="text-primary text-xs font-semibold uppercase tracking-wider">
+            Most Popular
+          </p>
+        </div>
+      )}
       <h4 className="text-foreground text-lg font-bold tracking-[-0.02em]">{name}</h4>
       <p className="text-muted-foreground mt-2 text-base transition-colors group-hover:text-foreground">{description}</p>
       <div className="mt-6">

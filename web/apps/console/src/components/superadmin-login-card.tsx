@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kloudlite/ui'
 import { Button } from '@kloudlite/ui'
 import { Alert, AlertDescription } from '@kloudlite/ui'
 import { Shield, Copy, Check, Loader2, Clock, ExternalLink } from 'lucide-react'
@@ -80,36 +79,34 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
 
   if (!isActive) {
     return (
-      <Card>
-        <CardHeader>
+      <div>
+        <div className="mb-6">
           <div className="flex items-center gap-2">
             <Shield className="text-muted-foreground h-5 w-5" />
-            <CardTitle>Super Admin Access</CardTitle>
+            <h2 className="text-xl font-semibold">Super Admin Access</h2>
           </div>
-          <CardDescription>Quick login URL for super admin access</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertDescription>
-              Super admin login is only available for active installations. Please ensure your
-              installation is fully configured and active.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+          <p className="text-muted-foreground mt-1 text-base">Quick login URL for super admin access</p>
+        </div>
+        <Alert>
+          <AlertDescription>
+            Super admin login is only available for active installations. Please ensure your
+            installation is fully configured and active.
+          </AlertDescription>
+        </Alert>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div>
+      <div className="mb-6">
         <div className="flex items-center gap-2">
           <Shield className="text-primary h-5 w-5" />
-          <CardTitle>Super Admin Access</CardTitle>
+          <h2 className="text-xl font-semibold">Super Admin Access</h2>
         </div>
-        <CardDescription>Generate a one-time login URL for super admin access</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        <p className="text-muted-foreground mt-1 text-base">Generate a one-time login URL for super admin access</p>
+      </div>
+      <div className="space-y-4">
         <div>
           <p className="text-muted-foreground text-base">
             Generate a temporary login URL that provides instant super admin access to your
@@ -141,18 +138,18 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
 
         {loginUrl && (
           <div className="space-y-3">
-            <div className="bg-muted  border p-4">
+            <div className="bg-muted border p-4">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-foreground text-sm font-medium">Login URL</span>
+                <span className="text-foreground text-base font-medium">Login URL</span>
                 {timeRemaining !== null && (
-                  <div className="text-muted-foreground flex items-center gap-1 text-xs">
+                  <div className="text-muted-foreground flex items-center gap-1 text-sm">
                     <Clock className="h-3 w-3" />
                     <span>Expires in {formatTime(timeRemaining)}</span>
                   </div>
                 )}
               </div>
               <div className="bg-background flex items-center gap-2 border p-2">
-                <code className="text-foreground flex-1 overflow-x-auto text-xs">{loginUrl}</code>
+                <code className="text-foreground flex-1 overflow-x-auto text-sm">{loginUrl}</code>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -181,14 +178,14 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
             </div>
 
             <Alert>
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-sm">
                 This URL provides full super admin access. Keep it secure and do not share it with
                 unauthorized users.
               </AlertDescription>
             </Alert>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

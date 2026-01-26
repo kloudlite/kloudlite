@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
 import { Loader2, Copy, CheckCircle2 } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { WorldMap } from '@/components/world-map'
@@ -233,35 +233,35 @@ export default function InstallPage() {
   return (
     <>
       {/* Header */}
-      <div className="mb-12 text-center">
-        <h1 className="text-foreground mb-3 text-4xl font-bold tracking-tight">
+      <div className="mb-10 text-center">
+        <h1 className="text-foreground mb-3 text-3xl font-bold tracking-tight">
           Install Kloudlite in Your Cloud
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-muted-foreground text-base">
           Run the installation command on your cloud provider
         </p>
       </div>
 
       <InstallationProgress currentStep={2} />
 
-      {/* Installation Commands Card */}
-      <Card>
-        <CardHeader className="pb-6">
-          <CardTitle className="text-2xl font-bold">Installation Command</CardTitle>
-          <CardDescription className="text-base">
+      {/* Installation Commands Section */}
+      <div className="mt-10">
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold">Installation Command</h2>
+          <p className="text-muted-foreground mt-1 text-base">
             Choose your cloud provider and run the command in your terminal
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </p>
+        </div>
+        <div className="space-y-6">
           <Tabs value={selectedProvider} onValueChange={setSelectedProvider}>
             <TabsList className="grid w-full grid-cols-3 p-1">
-              <TabsTrigger value="aws" className="text-sm font-semibold">
+              <TabsTrigger value="aws" className="text-base font-semibold">
                 AWS
               </TabsTrigger>
-              <TabsTrigger value="gcp" className="text-sm font-semibold">
+              <TabsTrigger value="gcp" className="text-base font-semibold">
                 GCP
               </TabsTrigger>
-              <TabsTrigger value="azure" className="text-sm font-semibold">
+              <TabsTrigger value="azure" className="text-base font-semibold">
                 Azure
               </TabsTrigger>
             </TabsList>
@@ -272,7 +272,7 @@ export default function InstallPage() {
                   {/* AWS Region Selector */}
                   {key === 'aws' && (
                     <div>
-                      <p className="text-foreground mb-3 text-sm font-semibold">Select AWS Region:</p>
+                      <p className="text-foreground mb-3 text-base font-semibold">Select AWS Region:</p>
                       <Select
                         value={awsRegion || 'default'}
                         onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
@@ -294,7 +294,7 @@ export default function InstallPage() {
                   {/* GCP Region Selector */}
                   {key === 'gcp' && (
                     <div>
-                      <p className="text-foreground mb-3 text-sm font-semibold">Select GCP Region:</p>
+                      <p className="text-foreground mb-3 text-base font-semibold">Select GCP Region:</p>
                       <Select
                         value={gcpRegion}
                         onValueChange={setGcpRegion}
@@ -316,7 +316,7 @@ export default function InstallPage() {
                   {/* Azure Location Selector */}
                   {key === 'azure' && (
                     <div>
-                      <p className="text-foreground mb-3 text-sm font-semibold">Select Azure Location:</p>
+                      <p className="text-foreground mb-3 text-base font-semibold">Select Azure Location:</p>
                       <Select
                         value={azureLocation}
                         onValueChange={setAzureLocation}
@@ -342,7 +342,7 @@ export default function InstallPage() {
                   />
 
                   <div>
-                    <p className="text-foreground mb-3 text-sm font-semibold">Prerequisites:</p>
+                    <p className="text-foreground mb-3 text-base font-semibold">Prerequisites:</p>
                     <ul className="text-muted-foreground space-y-2 text-base leading-relaxed">
                       {config.requirements.map((req, idx) => (
                         <li key={idx} className="flex items-start gap-3">
@@ -354,7 +354,7 @@ export default function InstallPage() {
                   </div>
 
                   <div>
-                    <p className="text-foreground mb-3 text-sm font-semibold">Run this command:</p>
+                    <p className="text-foreground mb-3 text-base font-semibold">Run this command:</p>
                     <div className="space-y-3">
                       {config.commands.map((cmd, idx) => (
                         <div key={idx} className="bg-muted p-4">
@@ -381,11 +381,11 @@ export default function InstallPage() {
               </TabsContent>
             ))}
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Compact Verification Status */}
-      <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+      <div className="mt-6 flex items-center justify-center gap-3 text-base">
         {verificationStatus === 'waiting' && (
           <>
             <Loader2 className="size-4 animate-spin text-blue-600" />

@@ -143,6 +143,55 @@ export type Database = {
           status?: 'reserved' | 'active' | 'cancelled'
         }
       }
+      installation_members: {
+        Row: {
+          id: string
+          installation_id: string
+          user_id: string
+          role: 'owner' | 'admin' | 'member' | 'viewer'
+          added_by: string | null
+          added_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          installation_id: string
+          user_id: string
+          role: 'owner' | 'admin' | 'member' | 'viewer'
+          added_by?: string | null
+          added_at?: string
+        }
+        Update: {
+          role?: 'owner' | 'admin' | 'member' | 'viewer'
+        }
+      }
+      installation_invitations: {
+        Row: {
+          id: string
+          installation_id: string
+          email: string
+          role: 'admin' | 'member' | 'viewer'
+          invited_by: string
+          status: 'pending' | 'accepted' | 'rejected' | 'expired'
+          expires_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          installation_id: string
+          email: string
+          role: 'admin' | 'member' | 'viewer'
+          invited_by: string
+          status?: 'pending' | 'accepted' | 'rejected' | 'expired'
+          expires_at?: string
+        }
+        Update: {
+          status?: 'pending' | 'accepted' | 'rejected' | 'expired'
+          role?: 'admin' | 'member' | 'viewer'
+        }
+      }
     }
   }
 }

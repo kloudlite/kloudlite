@@ -1,10 +1,17 @@
 {
   "name": "kloudlite-web",
   "private": true,
+  "packageManager": "bun@1.2.4",
   "scripts": {
-    "build:all": "turbo run build",
-    "dev:all": "turbo run dev",
-    "lint:all": "turbo run lint",
+    "dev": "turbo run dev",
+    "dev:console": "turbo run dev --filter=console",
+    "dev:dashboard": "turbo run dev --filter=dashboard",
+    "dev:website": "turbo run dev --filter=website",
+    "build": "turbo run build",
+    "build:console": "turbo run build --filter=console",
+    "build:dashboard": "turbo run build --filter=dashboard",
+    "build:website": "turbo run build --filter=website",
+    "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {

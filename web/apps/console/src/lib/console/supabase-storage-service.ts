@@ -14,6 +14,42 @@ type UserRegistrationRow = Database['public']['Tables']['user_registrations']['R
 type InstallationRow = Database['public']['Tables']['installations']['Row']
 type IPRecordRow = Database['public']['Tables']['ip_records']['Row']
 type DomainReservationRow = Database['public']['Tables']['domain_reservations']['Row']
+type InstallationMemberRow = Database['public']['Tables']['installation_members']['Row']
+type InstallationInvitationRow = Database['public']['Tables']['installation_invitations']['Row']
+
+// Team & Member types
+export type MemberRole = 'owner' | 'admin' | 'member' | 'viewer'
+export type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired'
+
+export interface InstallationMember {
+  id: string
+  installationId: string
+  userId: string
+  role: MemberRole
+  addedBy: string | null
+  addedAt: string
+  createdAt: string
+  updatedAt: string
+  // Populated from join
+  userEmail?: string
+  userName?: string
+  userProviders?: string[]
+}
+
+export interface InstallationInvitation {
+  id: string
+  installationId: string
+  email: string
+  role: Exclude<MemberRole, 'owner'> // owner can't be invited
+  invitedBy: string
+  status: InvitationStatus
+  expiresAt: string
+  createdAt: string
+  updatedAt: string
+  // Populated from join
+  inviterName?: string
+  installationName?: string
+}
 
 export interface IPRecord {
   domainRequestName: string
@@ -1070,6 +1106,352 @@ export async function resetInstallation(installationId: string): Promise<void> {
 
   if (error) {
     throw new Error(`Failed to reset installation: ${error.message}`)
+  }
+}
+
+// ============================================================================
+// TEAM MEMBER MANAGEMENT
+// ============================================================================
+
+/**
+ * Get member's role for an installation
+ * Returns null if not a member
+ */
+export async function getMemberRole(
+  installationId: string,
+  userId: string
+): Promise<MemberRole | null> {
+  const { data, error } = await supabase
+    .from('installation_members')
+    .select('role')
+    .eq('installation_id', installationId)
+    .eq('user_id', userId)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') return null // No rows returned
+    console.error('Error getting member role:', error)
+    return null
+  }
+
+  return data.role as MemberRole
+}
+
+/**
+ * Check if user has permission to access installation
+ */
+export async function canAccessInstallation(
+  installationId: string,
+  userId: string
+): Promise<boolean> {
+  const role = await getMemberRole(installationId, userId)
+  return role !== null
+}
+
+/**
+ * Check if user has admin or owner permission
+ */
+export async function canManageInstallation(
+  installationId: string,
+  userId: string
+): Promise<boolean> {
+  const role = await getMemberRole(installationId, userId)
+  return role === 'owner' || role === 'admin'
+}
+
+/**
+ * Get all members for an installation with user details
+ */
+export async function getInstallationMembers(
+  installationId: string
+): Promise<InstallationMember[]> {
+  const { data, error } = await supabase
+    .from('installation_members')
+    .select(`
+      *,
+      user_registrations!inner(email, name, providers)
+    `)
+    .eq('installation_id', installationId)
+    .order('added_at', { ascending: true })
+
+  if (error) {
+    console.error('Error getting installation members:', error)
+    return []
+  }
+
+  return data.map((row: any) => ({
+    id: row.id,
+    installationId: row.installation_id,
+    userId: row.user_id,
+    role: row.role,
+    addedBy: row.added_by,
+    addedAt: row.added_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    userEmail: row.user_registrations.email,
+    userName: row.user_registrations.name,
+    userProviders: row.user_registrations.providers,
+  }))
+}
+
+/**
+ * Add a member to an installation
+ */
+export async function addInstallationMember(
+  installationId: string,
+  userId: string,
+  role: MemberRole,
+  addedBy: string
+): Promise<InstallationMember> {
+  const { data, error } = await supabase
+    .from('installation_members')
+    .insert({
+      installation_id: installationId,
+      user_id: userId,
+      role,
+      added_by: addedBy,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Failed to add member: ${error.message}`)
+  }
+
+  return {
+    id: data.id,
+    installationId: data.installation_id,
+    userId: data.user_id,
+    role: data.role,
+    addedBy: data.added_by,
+    addedAt: data.added_at,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }
+}
+
+/**
+ * Update member role
+ */
+export async function updateMemberRole(
+  memberId: string,
+  newRole: MemberRole
+): Promise<void> {
+  const { error } = await supabase
+    .from('installation_members')
+    .update({ role: newRole })
+    .eq('id', memberId)
+
+  if (error) {
+    throw new Error(`Failed to update member role: ${error.message}`)
+  }
+}
+
+/**
+ * Remove a member from installation
+ */
+export async function removeInstallationMember(memberId: string): Promise<void> {
+  const { error } = await supabase
+    .from('installation_members')
+    .delete()
+    .eq('id', memberId)
+
+  if (error) {
+    throw new Error(`Failed to remove member: ${error.message}`)
+  }
+}
+
+// ============================================================================
+// INVITATION MANAGEMENT
+// ============================================================================
+
+/**
+ * Create invitation for email
+ */
+export async function createInvitation(
+  installationId: string,
+  email: string,
+  role: Exclude<MemberRole, 'owner'>,
+  invitedBy: string
+): Promise<InstallationInvitation> {
+  const emailLower = email.toLowerCase()
+
+  const { data, error} = await supabase
+    .from('installation_invitations')
+    .insert({
+      installation_id: installationId,
+      email: emailLower,
+      role,
+      invited_by: invitedBy,
+      status: 'pending' as const,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .select()
+    .single()
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('User already has a pending invitation')
+    }
+    throw new Error(`Failed to create invitation: ${error.message}`)
+  }
+
+  return {
+    id: data.id,
+    installationId: data.installation_id,
+    email: data.email,
+    role: data.role as Exclude<MemberRole, 'owner'>,
+    invitedBy: data.invited_by,
+    status: data.status,
+    expiresAt: data.expires_at,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  }
+}
+
+/**
+ * Get pending invitations for an installation
+ */
+export async function getInstallationInvitations(
+  installationId: string
+): Promise<InstallationInvitation[]> {
+  const { data, error } = await supabase
+    .from('installation_invitations')
+    .select(`
+      *,
+      user_registrations!installation_invitations_invited_by_fkey(name),
+      installations!inner(name)
+    `)
+    .eq('installation_id', installationId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error getting invitations:', error)
+    return []
+  }
+
+  return data.map((row: any) => ({
+    id: row.id,
+    installationId: row.installation_id,
+    email: row.email,
+    role: row.role,
+    invitedBy: row.invited_by,
+    status: row.status,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    inviterName: row.user_registrations?.name,
+    installationName: row.installations?.name,
+  }))
+}
+
+/**
+ * Get pending invitations for a user's email
+ */
+export async function getUserPendingInvitations(
+  email: string
+): Promise<InstallationInvitation[]> {
+  const emailLower = email.toLowerCase()
+  const now = new Date().toISOString()
+
+  const { data, error } = await supabase
+    .from('installation_invitations')
+    .select(`
+      *,
+      user_registrations!installation_invitations_invited_by_fkey(name),
+      installations!inner(name)
+    `)
+    .eq('email', emailLower)
+    .eq('status', 'pending')
+    .gt('expires_at', now)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error getting user invitations:', error)
+    return []
+  }
+
+  return data.map((row: any) => ({
+    id: row.id,
+    installationId: row.installation_id,
+    email: row.email,
+    role: row.role,
+    invitedBy: row.invited_by,
+    status: row.status,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    inviterName: row.user_registrations?.name,
+    installationName: row.installations?.name,
+  }))
+}
+
+/**
+ * Accept an invitation
+ */
+export async function acceptInvitation(
+  invitationId: string,
+  userId: string
+): Promise<InstallationMember> {
+  // Get invitation details
+  const { data: invitation, error: invError } = await supabase
+    .from('installation_invitations')
+    .select('*')
+    .eq('id', invitationId)
+    .single()
+
+  if (invError || !invitation) {
+    throw new Error('Invitation not found')
+  }
+
+  // Check if expired
+  if (new Date(invitation.expires_at) < new Date()) {
+    throw new Error('Invitation has expired')
+  }
+
+  // Add member
+  const member = await addInstallationMember(
+    invitation.installation_id,
+    userId,
+    invitation.role,
+    invitation.invited_by
+  )
+
+  // Mark invitation as accepted
+  await supabase
+    .from('installation_invitations')
+    .update({ status: 'accepted' })
+    .eq('id', invitationId)
+
+  return member
+}
+
+/**
+ * Reject an invitation
+ */
+export async function rejectInvitation(invitationId: string): Promise<void> {
+  const { error } = await supabase
+    .from('installation_invitations')
+    .update({ status: 'rejected' })
+    .eq('id', invitationId)
+
+  if (error) {
+    throw new Error(`Failed to reject invitation: ${error.message}`)
+  }
+}
+
+/**
+ * Delete/cancel an invitation
+ */
+export async function deleteInvitation(invitationId: string): Promise<void> {
+  const { error } = await supabase
+    .from('installation_invitations')
+    .delete()
+    .eq('id', invitationId)
+
+  if (error) {
+    throw new Error(`Failed to delete invitation: ${error.message}`)
   }
 }
 
