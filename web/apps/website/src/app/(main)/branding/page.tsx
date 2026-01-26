@@ -1,33 +1,94 @@
-import { ScrollArea } from '@kloudlite/ui'
+'use client'
+
+import { ScrollArea, Button } from '@kloudlite/ui'
 import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
+import { PageHeroTitle } from '@/components/page-hero-title'
 import { cn } from '@kloudlite/lib'
 import { Download, Check, X } from 'lucide-react'
+import Link from 'next/link'
 
-// Cross marker component
+// Cross marker component with pulse animation
 function CrossMarker({ className }: { className?: string }) {
   return (
     <div className={cn('absolute', className)}>
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 w-px h-5 bg-foreground/20" />
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 h-px w-5 bg-foreground/20" />
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 w-px h-5 bg-foreground/20 animate-pulse" />
+      <div className="absolute top-1/2 left-0 -translate-y-1/2 h-px w-5 bg-foreground/20 animate-pulse" />
     </div>
   )
 }
 
+// Animated GridContainer with border pulses
 function GridContainer({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn('relative mx-auto max-w-5xl', className)}>
+      <style jsx>{`
+        @keyframes pulseTopLeftToRight {
+          0% { left: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { left: 100%; opacity: 0; }
+        }
+        @keyframes pulseRightTopToBottom {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        @keyframes pulseBottomRightToLeft {
+          0% { right: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { right: 100%; opacity: 0; }
+        }
+        @keyframes pulseLeftBottomToTop {
+          0% { bottom: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { bottom: 100%; opacity: 0; }
+        }
+        .pulse-top {
+          animation: pulseTopLeftToRight 4s ease-in-out infinite;
+        }
+        .pulse-right {
+          animation: pulseRightTopToBottom 4s ease-in-out infinite 1s;
+        }
+        .pulse-bottom {
+          animation: pulseBottomRightToLeft 4s ease-in-out infinite 2s;
+        }
+        .pulse-left {
+          animation: pulseLeftBottomToTop 4s ease-in-out infinite 3s;
+        }
+      `}</style>
       <div className="absolute inset-0 pointer-events-none overflow-visible">
+        {/* Static border lines */}
         <div className="absolute inset-y-0 left-0 w-px bg-foreground/10" />
         <div className="absolute inset-y-0 right-0 w-px bg-foreground/10" />
         <div className="absolute inset-x-0 top-0 h-px bg-foreground/10" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-foreground/10" />
+
+        {/* Animated pulses */}
+        <div className="pulse-top absolute top-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+        <div className="pulse-right absolute right-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
+        <div className="pulse-bottom absolute bottom-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+        <div className="pulse-left absolute left-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
+
+        {/* Corner markers */}
         <CrossMarker className="top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-5 h-5" />
         <CrossMarker className="top-0 right-0 translate-x-1/2 -translate-y-1/2 w-5 h-5" />
         <CrossMarker className="bottom-0 left-0 -translate-x-1/2 translate-y-1/2 w-5 h-5" />
         <CrossMarker className="bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-5 h-5" />
       </div>
       <div className="relative">{children}</div>
+    </div>
+  )
+}
+
+// Feature card container
+function FeatureCardContainer({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("relative p-8 lg:p-12 bg-foreground/[0.015]", className)}>
+      {children}
     </div>
   )
 }
@@ -71,15 +132,6 @@ function FullLogo({ iconFill = '#2258E5', textFill = '#09090b', className }: { i
   )
 }
 
-function SectionHeader({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="mb-8">
-      <h2 className="text-foreground text-xl font-semibold tracking-tight">{title}</h2>
-      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
-    </div>
-  )
-}
-
 export default function BrandingPage() {
   return (
     <div className="bg-background h-screen">
@@ -89,23 +141,42 @@ export default function BrandingPage() {
           <div className="px-6 pt-8 lg:px-8 lg:pt-12">
             <GridContainer className="px-6 lg:px-12">
               {/* Hero Section */}
-              <div className="py-16 lg:py-20">
+              <div className="py-20 lg:py-28">
                 <div className="text-center">
-                  <h1 className="text-[2.5rem] font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl lg:text-[4rem]">
-                    <span className="text-foreground">Brand Guidelines</span>
-                  </h1>
-                  <p className="text-muted-foreground mx-auto mt-6 max-w-lg text-lg leading-relaxed">
-                    Resources and guidelines for using the Kloudlite brand.
+                  <PageHeroTitle accentedWord="Guidelines">
+                    Brand
+                  </PageHeroTitle>
+                  <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg lg:text-xl leading-relaxed">
+                    Resources and guidelines for using the Kloudlite brand assets consistently across all platforms.
                   </p>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="border-t border-foreground/10 -mx-6 lg:-mx-12">
+              <div className="grid sm:grid-cols-2 border-t border-foreground/10 -mx-6 lg:-mx-12">
+
+                {/* Section Spacer */}
+                <div className="sm:col-span-2 h-8 sm:h-16 border-b border-foreground/10 relative">
+                  <CrossMarker className="bottom-0 left-1/4 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden lg:block" />
+                </div>
+
+                {/* Logo Section Header */}
+                <div className="sm:col-span-2 p-8 lg:p-16 border-b border-foreground/10 bg-foreground/[0.015]">
+                  <h2 className="text-foreground text-4xl lg:text-5xl font-bold tracking-tight">
+                    Brand <span className="relative inline-block">
+                      <span className="relative z-10">Assets.</span>
+                      <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary"></span>
+                    </span>
+                  </h2>
+                  <p className="text-muted-foreground mt-4 text-base lg:text-lg max-w-3xl">
+                    Download and use our logo, icon, and color palette to maintain consistency across all brand materials.
+                  </p>
+                </div>
 
                 {/* Logo Section */}
-                <div className="p-8 lg:p-12 border-b border-foreground/10">
-                  <SectionHeader title="Logo" description="The primary Kloudlite wordmark for general use." />
+                <FeatureCardContainer className="sm:col-span-2 border-b border-foreground/10">
+                  <h3 className="text-foreground text-xl font-semibold tracking-tight mb-2">Logo</h3>
+                  <p className="text-muted-foreground text-sm mb-6">The primary Kloudlite wordmark for general use.</p>
                   <div className="grid grid-cols-2 border border-foreground/10">
                     <div className="flex items-center justify-center p-12 bg-white">
                       <FullLogo iconFill="#2258E5" textFill="#09090b" className="h-10" />
@@ -118,11 +189,17 @@ export default function BrandingPage() {
                     <p className="py-3 text-xs text-muted-foreground font-medium border-r border-foreground/10">Light Background</p>
                     <p className="py-3 text-xs text-muted-foreground font-medium">Dark Background</p>
                   </div>
+                </FeatureCardContainer>
+
+                {/* Spacer */}
+                <div className="sm:col-span-2 h-0 border-b border-foreground/10 relative">
+                  <CrossMarker className="bottom-0 left-1/2 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden sm:block" />
                 </div>
 
                 {/* Icon Section */}
-                <div className="p-8 lg:p-12 border-b border-foreground/10">
-                  <SectionHeader title="Icon" description="The logomark for favicons, app icons, and compact spaces." />
+                <FeatureCardContainer className="sm:col-span-2 border-b border-foreground/10">
+                  <h3 className="text-foreground text-xl font-semibold tracking-tight mb-2">Icon</h3>
+                  <p className="text-muted-foreground text-sm mb-6">The logomark for favicons, app icons, and compact spaces.</p>
                   <div className="grid grid-cols-4 border border-foreground/10">
                     <div className="flex items-center justify-center p-8 aspect-square bg-white">
                       <LogoIcon fill="#2258E5" />
@@ -143,11 +220,17 @@ export default function BrandingPage() {
                     <p className="py-3 text-xs text-muted-foreground font-medium border-r border-foreground/10">White</p>
                     <p className="py-3 text-xs text-muted-foreground font-medium">Black</p>
                   </div>
+                </FeatureCardContainer>
+
+                {/* Spacer */}
+                <div className="sm:col-span-2 h-0 border-b border-foreground/10 relative">
+                  <CrossMarker className="bottom-0 left-3/4 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden lg:block" />
                 </div>
 
                 {/* Colors Section */}
-                <div className="p-8 lg:p-12 border-b border-foreground/10">
-                  <SectionHeader title="Colors" description="The official brand color palette." />
+                <FeatureCardContainer className="sm:col-span-2 border-b border-foreground/10">
+                  <h3 className="text-foreground text-xl font-semibold tracking-tight mb-2">Colors</h3>
+                  <p className="text-muted-foreground text-sm mb-6">The official brand color palette.</p>
                   <div className="grid grid-cols-4 border border-foreground/10">
                     <div className="flex flex-col">
                       <div className="aspect-[4/3] bg-[#2258E5]" />
@@ -178,11 +261,17 @@ export default function BrandingPage() {
                       </div>
                     </div>
                   </div>
+                </FeatureCardContainer>
+
+                {/* Spacer */}
+                <div className="sm:col-span-2 h-0 border-b border-foreground/10 relative">
+                  <CrossMarker className="bottom-0 left-1/4 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden lg:block" />
                 </div>
 
                 {/* Typography Section */}
-                <div className="p-8 lg:p-12 border-b border-foreground/10">
-                  <SectionHeader title="Typography" description="The typefaces used across Kloudlite products." />
+                <FeatureCardContainer className="sm:col-span-2 border-b border-foreground/10">
+                  <h3 className="text-foreground text-xl font-semibold tracking-tight mb-2">Typography</h3>
+                  <p className="text-muted-foreground text-sm mb-6">The typefaces used across Kloudlite products.</p>
                   <div className="grid grid-cols-2 border border-foreground/10">
                     <div className="p-8">
                       <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-4">Primary</p>
@@ -195,11 +284,17 @@ export default function BrandingPage() {
                       <p className="text-muted-foreground mt-3 text-sm">Used for code snippets and technical content.</p>
                     </div>
                   </div>
+                </FeatureCardContainer>
+
+                {/* Spacer */}
+                <div className="sm:col-span-2 h-0 border-b border-foreground/10 relative">
+                  <CrossMarker className="bottom-0 left-1/2 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden sm:block" />
                 </div>
 
                 {/* Usage Guidelines */}
-                <div className="p-8 lg:p-12 border-b border-foreground/10">
-                  <SectionHeader title="Usage Guidelines" description="Best practices for using the Kloudlite brand." />
+                <FeatureCardContainer className="sm:col-span-2 border-b border-foreground/10">
+                  <h3 className="text-foreground text-xl font-semibold tracking-tight mb-2">Usage Guidelines</h3>
+                  <p className="text-muted-foreground text-sm mb-6">Best practices for using the Kloudlite brand.</p>
                   <div className="grid grid-cols-2 border border-foreground/10">
                     <div className="p-8">
                       <p className="text-green-600 dark:text-green-500 text-xs font-medium uppercase tracking-wider flex items-center gap-2 mb-6">
@@ -248,22 +343,34 @@ export default function BrandingPage() {
                       </ul>
                     </div>
                   </div>
+                </FeatureCardContainer>
+
+                {/* Section Spacer */}
+                <div className="sm:col-span-2 h-8 sm:h-16 border-b border-foreground/10 relative">
+                  <CrossMarker className="bottom-0 left-3/4 translate-y-1/2 -translate-x-1/2 w-5 h-5 hidden lg:block" />
                 </div>
 
                 {/* Download CTA */}
-                <div className="p-8 lg:p-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="sm:col-span-2 p-8 lg:p-16 border-b border-foreground/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bg-foreground/[0.015]">
                   <div>
-                    <h3 className="text-foreground text-lg font-semibold">Download Brand Kit</h3>
-                    <p className="text-muted-foreground text-sm mt-1">Get logos and icons in SVG format with usage guidelines.</p>
+                    <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
+                      Download Brand Kit
+                    </h2>
+                    <p className="text-muted-foreground mt-2 text-base lg:text-lg">
+                      Get logos and icons in SVG format with complete usage guidelines.
+                    </p>
                   </div>
-                  <a
-                    href="/kloudlite-brand-kit.zip"
-                    download
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download Brand Kit
-                  </a>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <Button size="lg" asChild>
+                      <a href="/kloudlite-brand-kit.zip" download>
+                        <Download className="h-4 w-4" />
+                        Download Brand Kit
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="lg" asChild>
+                      <Link href="/contact">Contact Us</Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </GridContainer>

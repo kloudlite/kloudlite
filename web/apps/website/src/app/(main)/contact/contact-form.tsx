@@ -1,8 +1,6 @@
 'use client'
 
-import { Button } from '@kloudlite/ui'
-import { Input } from '@kloudlite/ui'
-import { Textarea } from '@kloudlite/ui'
+import { Button, Input, Textarea, Label } from '@kloudlite/ui'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { ArrowRight } from 'lucide-react'
@@ -93,7 +91,7 @@ export default function ContactForm() {
   if (isSuccess) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-12 h-12 rounded-none bg-green-500/10 flex items-center justify-center mb-4">
+        <div className="w-12 h-12 rounded-none bg-foreground/[0.03] border border-foreground/10 flex items-center justify-center mb-4">
           <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
@@ -120,9 +118,9 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
-          <label htmlFor="name" className="text-foreground text-sm">
+          <Label htmlFor="name">
             Name
-          </label>
+          </Label>
           <Input
             id="name"
             name="name"
@@ -131,14 +129,14 @@ export default function ContactForm() {
             value={formData.name}
             onChange={handleChange}
             required
-            className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 h-11"
+            className="h-10"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="email" className="text-foreground text-sm">
+          <Label htmlFor="email">
             Email
-          </label>
+          </Label>
           <Input
             id="email"
             name="email"
@@ -147,15 +145,15 @@ export default function ContactForm() {
             value={formData.email}
             onChange={handleChange}
             required
-            className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 h-11"
+            className="h-10"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="subject" className="text-foreground text-sm">
+        <Label htmlFor="subject">
           Subject
-        </label>
+        </Label>
         <Input
           id="subject"
           name="subject"
@@ -164,14 +162,14 @@ export default function ContactForm() {
           value={formData.subject}
           onChange={handleChange}
           required
-          className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 h-11"
+          className="h-10"
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="message" className="text-foreground text-sm">
+        <Label htmlFor="message">
           Message
-        </label>
+        </Label>
         <Textarea
           id="message"
           name="message"
@@ -180,13 +178,13 @@ export default function ContactForm() {
           value={formData.message}
           onChange={handleChange}
           required
-          className="rounded-none border-foreground/10 bg-transparent focus:border-foreground/30 resize-none"
+          className="h-32 resize-none"
         />
       </div>
 
       <Button
         type="submit"
-        className="rounded-none h-11 px-6"
+        size="lg"
         disabled={isSubmitting}
       >
         {isSubmitting ? 'Sending...' : 'Send Message'}
