@@ -161,7 +161,7 @@ export default function WorkspacesPage() {
                     title="Service Intercepts"
                     description="Route traffic from any environment service directly to your workspace. Debug with real production data."
                   />
-                  <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -173,7 +173,7 @@ export default function WorkspacesPage() {
                     title="Workspace Forking"
                     description="Clone your workspace for parallel development. Run multiple experiments or AI agents simultaneously."
                   />
-                  <Link href="/blog/workspace-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/workspace-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -185,7 +185,7 @@ export default function WorkspacesPage() {
                     title="Nix Package Management"
                     description="Reproducible package management with Nix. Install any tool or dependency with a single command."
                   />
-                  <Link href="/blog/nix-package-management" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/nix-package-management" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -197,7 +197,7 @@ export default function WorkspacesPage() {
                     title="Private Network Access"
                     description="Secure VPN connection to your environments. Access internal services as if you were on the same network."
                   />
-                  <Link href="/blog/private-network-access" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/private-network-access" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -209,7 +209,7 @@ export default function WorkspacesPage() {
                     title="Sub-30s Startup"
                     description="Workspace environments ready in under 30 seconds. No waiting, no builds, just code."
                   />
-                  <Link href="/blog/sub-30s-startup" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/sub-30s-startup" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -221,7 +221,7 @@ export default function WorkspacesPage() {
                     title="Flexible Resources"
                     description="Scale from 1 vCPU to 16 vCPU and up to 64GB RAM. Choose the right size for your workload."
                   />
-                  <Link href="/blog/flexible-resources" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/flexible-resources" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
