@@ -23,9 +23,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound()
   }
 
-  // Get related posts (all other posts)
-  const relatedPosts = blogPostsData
-    .filter(p => p.slug !== slug)
+  // Get related posts from the post's relatedPosts array
+  const relatedPosts = post.relatedPosts
+    .map(relatedSlug => blogPostsMap[relatedSlug])
+    .filter(Boolean)
     .slice(0, 3)
 
   return (
