@@ -111,7 +111,7 @@ export default function EnvironmentsPage() {
                     title="Docker Compose Compatible"
                     description="Use your existing compose files. If it runs in Docker, it runs here with zero modifications."
                   />
-                  <Link href="/blog/docker-compose-compatible" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/docker-compose-compatible" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -123,7 +123,7 @@ export default function EnvironmentsPage() {
                     title="Network Isolation"
                     description="Each environment runs in its own network namespace. No cross-contamination between staging and production."
                   />
-                  <Link href="/blog/network-isolation" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/network-isolation" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -140,7 +140,7 @@ export default function EnvironmentsPage() {
                     title="Connect from Workspaces"
                     description="Connect any workspace to access services by name. DNS resolution and routing handled automatically."
                   />
-                  <Link href="/blog/workspace-environment-connections" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/workspace-environment-connections" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -152,7 +152,7 @@ export default function EnvironmentsPage() {
                     title="Clone & Fork"
                     description="Create copies of environments for isolated testing. Fork production to debug without affecting users."
                   />
-                  <Link href="/blog/clone-fork-environments" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/clone-fork-environments" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -169,7 +169,7 @@ export default function EnvironmentsPage() {
                     title="Service Intercepts"
                     description="Route traffic from any service to your workspace. Debug with real requests without redeploying."
                   />
-                  <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -181,7 +181,7 @@ export default function EnvironmentsPage() {
                     title="Team Collaboration"
                     description="Share environments with your team. Multiple developers can connect and work with the same services."
                   />
-                  <Link href="/blog/team-collaboration" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/team-collaboration" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>

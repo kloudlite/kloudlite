@@ -293,7 +293,7 @@ function WebsiteLandingPage() {
                   title="Environment Forking"
                   description="Fork entire environments with a single command."
                 />
-                <Link href="/blog/environment-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                <Link href="/blog/environment-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
@@ -303,7 +303,7 @@ function WebsiteLandingPage() {
                   title="Workspace Forking"
                   description="Fork workspaces instantly for parallel work."
                 />
-                <Link href="/blog/workspace-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                <Link href="/blog/workspace-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
@@ -314,7 +314,7 @@ function WebsiteLandingPage() {
                   title="Environment Switching"
                   description="Switch between environments seamlessly."
                 />
-                <Link href="/blog/environment-switching" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                <Link href="/blog/environment-switching" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
@@ -324,7 +324,7 @@ function WebsiteLandingPage() {
                   title="Service Intercepts"
                   description="Route environment service traffic to your workspace."
                 />
-                <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
@@ -334,7 +334,7 @@ function WebsiteLandingPage() {
                   title="Package Management"
                   description="Nix-based reproducible package management."
                 />
-                <Link href="/blog/nix-package-management" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                <Link href="/blog/nix-package-management" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
@@ -345,7 +345,7 @@ function WebsiteLandingPage() {
                   title="Environment Snapshots"
                   description="Capture and restore complete environment states instantly."
                 />
-                <Link href="/blog/environment-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                <Link href="/blog/environment-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
@@ -355,7 +355,7 @@ function WebsiteLandingPage() {
                   title="Workspace Snapshots"
                   description="Save and share workspace configurations effortlessly."
                 />
-                <Link href="/blog/workspace-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                <Link href="/blog/workspace-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                   Learn more <ArrowRight className="h-3 w-3" />
                 </Link>
               </FeatureCardContainer>
@@ -404,7 +404,7 @@ function WebsiteLandingPage() {
                   <p className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-4">
                     Built-in support for the next generation of AI coding tools. Supports vibecoding sessions out of the box.
                   </p>
-                  <Link href="/blog/ai-ready-workspaces" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/ai-ready-workspaces" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
@@ -435,7 +435,7 @@ function WebsiteLandingPage() {
                   <p className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-4">
                     Connect your local editor directly to cloud resources. Zero latency, full Intellisense.
                   </p>
-                  <Link href="/blog/ide-integration" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/ide-integration" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>

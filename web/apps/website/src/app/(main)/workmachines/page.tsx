@@ -133,7 +133,7 @@ export default function WorkmachinesPage() {
                     title="VPN Gateway"
                     description="Secure, encrypted access to your workspaces and environment services from anywhere. No public endpoints needed."
                   />
-                  <Link href="/blog/vpn-gateway" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/vpn-gateway" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -145,7 +145,7 @@ export default function WorkmachinesPage() {
                     title="Compute & Storage"
                     description="Dedicated CPU and memory for your workloads. Persistent storage that survives restarts and keeps your data safe."
                   />
-                  <Link href="/blog/compute-storage" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/compute-storage" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -162,7 +162,7 @@ export default function WorkmachinesPage() {
                     title="Auto Stop"
                     description="Idle machines stop automatically to save resources. Resume in seconds when you need them—no cold starts."
                   />
-                  <Link href="/blog/auto-stop" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/auto-stop" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -174,7 +174,7 @@ export default function WorkmachinesPage() {
                     title="Flexible Tiers"
                     description="Choose from multiple machine sizes. Start small and scale up as your needs grow—from 1 vCPU to 16 vCPUs."
                   />
-                  <Link href="/blog/flexible-resources" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/flexible-resources" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -191,7 +191,7 @@ export default function WorkmachinesPage() {
                     title="GPU Enabled"
                     description="Accelerate AI/ML workloads with GPU-enabled nodes. Perfect for training models, running inference, and data processing."
                   />
-                  <Link href="/blog/gpu-enabled" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/gpu-enabled" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -203,7 +203,7 @@ export default function WorkmachinesPage() {
                     title="Network Isolation"
                     description="Complete network isolation between workspaces. Private networking ensures your data stays secure and separate."
                   />
-                  <Link href="/blog/network-isolation" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/network-isolation" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -220,7 +220,7 @@ export default function WorkmachinesPage() {
                     title="Performance Monitoring"
                     description="Real-time metrics and monitoring for CPU, memory, and network usage. Track your machine performance at a glance."
                   />
-                  <Link href="/blog/performance-monitoring" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/performance-monitoring" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
@@ -232,7 +232,7 @@ export default function WorkmachinesPage() {
                     title="High Availability"
                     description="Built on reliable infrastructure with automatic failover. Your machines stay available when you need them most."
                   />
-                  <Link href="/blog/high-availability" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-0 group-hover:opacity-100">
+                  <Link href="/blog/high-availability" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                     Learn more <ArrowRight className="h-3 w-3" />
                   </Link>
                 </FeatureCardContainer>
