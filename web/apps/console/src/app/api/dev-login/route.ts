@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
+import { saveUserRegistration, getUserByEmail } from '@/lib/console/supabase-storage-service'
+
+export const runtime = 'nodejs'
 
 /**
  * Development-only backdoor login
@@ -12,13 +15,46 @@ export async function GET() {
     return NextResponse.json({ error: 'Not available in production' }, { status: 403 })
   }
 
+  const devUser = {
+    userId: 'dev-user-id',
+    email: 'karthik@kloudlite.io',
+    name: 'Karthik',
+  }
+
+  // Ensure dev user exists in user_registrations table
+  const existingUser = await getUserByEmail(devUser.email)
+  console.log('Dev login - existing user:', existingUser)
+
+  if (existingUser) {
+    // User exists - use their existing userId instead
+    console.log('Using existing user with userId:', existingUser.userId)
+    devUser.userId = existingUser.userId
+  } else {
+    // Create new user
+    console.log('Creating new dev user with userId:', devUser.userId)
+    try {
+      await saveUserRegistration({
+        userId: devUser.userId,
+        email: devUser.email,
+        name: devUser.name,
+        providers: ['github'],
+        registeredAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      console.log('Dev user created successfully')
+    } catch (error) {
+      console.error('Failed to create dev user:', error)
+    }
+  }
+
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
 
   // Create JWT token for karthik@kloudlite.io
   const token = await new SignJWT({
-    userId: 'dev-user-id',
-    email: 'karthik@kloudlite.io',
-    name: 'Karthik',
+    userId: devUser.userId,
+    email: devUser.email,
+    name: devUser.name,
     image: undefined,
     provider: 'development',
     installationKey: undefined,

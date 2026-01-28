@@ -30,7 +30,7 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
   }
 
   return (
-    <header className="bg-background border-b border-border/80 sticky top-0 z-50 backdrop-blur-sm bg-background/95">
+    <header className="bg-background border-b border-foreground/10 sticky top-0 z-50 backdrop-blur-sm bg-background/95">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link href="/installations" className="flex items-center gap-2 transition-opacity hover:opacity-80">
@@ -41,7 +41,7 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 gap-2 px-2 hover:bg-muted/50 transition-colors">
-              <Avatar className="h-8 w-8 ring-2 ring-border/50">
+              <Avatar className="h-8 w-8 ring-2 ring-foreground/10">
                 <AvatarImage src={user.image} alt={user.name} />
                 <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">{getInitials(user.name)}</AvatarFallback>
               </Avatar>

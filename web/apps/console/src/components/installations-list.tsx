@@ -170,11 +170,11 @@ export function InstallationsList({ installations }: InstallationsListProps) {
 
       {/* Table */}
       {filteredInstallations.length > 0 ? (
-        <div className="overflow-hidden border border-border shadow-sm">
+        <div className="overflow-hidden border border-foreground/10 shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="border-b border-border bg-muted/50">
+                <tr className="border-b border-foreground/10 bg-muted/50">
                   <th className="text-muted-foreground px-6 py-3 text-left text-[11px] font-medium uppercase tracking-wider">
                     Name
                   </th>
@@ -189,7 +189,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-background divide-y divide-border">
+              <tbody className="bg-background divide-y divide-foreground/10">
                 {filteredInstallations.map((installation) => {
                   const { status, statusColor, nextStep } = getInstallationStatus(installation)
                   // Validate subdomain before constructing URL
@@ -298,9 +298,9 @@ export function InstallationsList({ installations }: InstallationsListProps) {
           </div>
         </div>
       ) : (
-        <div className="border border-border shadow-sm py-16 text-center bg-muted/20">
+        <div className="border border-foreground/10 shadow-sm py-16 text-center bg-muted/20">
           <div className="mx-auto max-w-md px-4">
-            <div className="mx-auto w-12 h-12 bg-muted border border-border flex items-center justify-center mb-4">
+            <div className="mx-auto w-12 h-12 bg-muted border border-foreground/10 flex items-center justify-center mb-4">
               <Plus className="h-5 w-5 text-muted-foreground" />
             </div>
             <h3 className="text-foreground text-base font-semibold mb-1">
