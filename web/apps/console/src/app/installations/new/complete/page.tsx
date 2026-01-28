@@ -131,30 +131,30 @@ export default function CompletePage() {
     <div className="w-full">
       <div className="mb-10 text-center">
         <div className="mb-4 flex justify-center">
-          <div className="flex size-16 items-center justify-center bg-info/10">
+          <div className="flex size-16 items-center justify-center bg-info/10 rounded-full">
             <Clock className="size-8 text-info animate-pulse" />
           </div>
         </div>
-        <h1 className="text-foreground mb-2 text-3xl font-semibold">Setting Up Your Installation</h1>
-        <p className="text-muted-foreground text-base">Please wait while your installation becomes active</p>
+        <h1 className="text-foreground mb-2 text-3xl font-semibold tracking-tight">Setting Up Your Installation</h1>
+        <p className="text-muted-foreground text-sm">Please wait while your installation becomes active</p>
       </div>
 
       <InstallationProgress currentStep={3} />
 
       <div className="space-y-6 mt-10">
-        <div className="border p-8">
+        <div className="border border-border/80 p-8 rounded-sm">
           <div className="mb-6">
             <div className="flex items-center gap-2">
               <Loader2 className="size-5 animate-spin" />
-              <h2 className="text-xl font-semibold">Waiting for Installation to Become Active</h2>
+              <h2 className="text-xl font-semibold text-foreground">Waiting for Installation to Become Active</h2>
             </div>
-            <p className="text-muted-foreground mt-1 text-base">
+            <p className="text-muted-foreground mt-1 text-sm">
               Your installation is being set up. This usually takes 1-3 minutes.
             </p>
           </div>
           <div className="space-y-4">
-            <div className="bg-muted  p-4">
-              <p className="mb-2 text-sm font-medium">Installation Dashboard URL:</p>
+            <div className="bg-foreground/[0.02] p-4 rounded-sm border border-border/60">
+              <p className="mb-2 text-sm font-medium text-foreground">Installation Dashboard URL:</p>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground font-mono text-lg">
                   {installationData?.subdomain}.
@@ -171,14 +171,14 @@ export default function CompletePage() {
               </div>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900  p-4">
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 p-4 rounded-sm">
               <div className="flex items-start gap-3">
                 <AlertCircle className="size-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
                     Installation in Progress
                   </p>
-                  <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <p className="text-xs text-blue-800 dark:text-blue-300">
                     We&apos;re checking if your installation is ready. Checked {checkCount} time{checkCount !== 1 ? 's' : ''}.
                     The page will automatically update when your installation is active.
                   </p>
@@ -207,28 +207,28 @@ export default function CompletePage() {
     <div className="w-full">
       <div className="mb-8 text-center">
         <div className="mb-4 flex justify-center">
-          <div className="flex size-16 items-center justify-center  bg-green-100">
+          <div className="flex size-16 items-center justify-center bg-green-100 rounded-full">
             <PartyPopper className="size-8 text-green-600" />
           </div>
         </div>
-        <h1 className="text-foreground mb-2 text-3xl font-semibold">Installation Complete!</h1>
-        <p className="text-muted-foreground">Your Kloudlite installation is ready to use</p>
+        <h1 className="text-foreground mb-2 text-3xl font-semibold tracking-tight">Installation Complete!</h1>
+        <p className="text-muted-foreground text-sm">Your Kloudlite installation is ready to use</p>
       </div>
 
       <InstallationProgress currentStep={3} />
 
       <div className="space-y-6 mt-10">
-        <div className="border p-8">
+        <div className="border border-border/80 p-8 rounded-sm">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold">Your Installation is Ready</h2>
-            <p className="text-muted-foreground mt-1 text-base">
+            <h2 className="text-xl font-semibold text-foreground">Your Installation is Ready</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
               Access your Kloudlite installation dashboard at the URL below
             </p>
           </div>
           <div className="space-y-4">
             {installationData?.subdomain ? (
-              <div className="bg-muted  p-4">
-                <p className="mb-2 text-base font-medium">Installation Dashboard URL:</p>
+              <div className="bg-foreground/[0.02] p-4 rounded-sm border border-border/60">
+                <p className="mb-2 text-sm font-medium text-foreground">Installation Dashboard URL:</p>
                 <div className="flex items-center justify-between gap-3">
                   <a
                     href={installationData.url}
@@ -251,11 +251,11 @@ export default function CompletePage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900  p-4">
-                <p className="text-base font-medium text-amber-900 dark:text-amber-200 mb-1">
+              <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 p-4 rounded-sm">
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">
                   Domain Not Configured
                 </p>
-                <p className="text-base text-amber-900 dark:text-amber-200">
+                <p className="text-xs text-amber-900 dark:text-amber-200">
                   Your installation key was generated, but no subdomain was configured. Please configure a domain for your installation from the installations list.
                 </p>
               </div>
@@ -282,8 +282,8 @@ export default function CompletePage() {
               </Button>
             </div>
 
-            <div className="border-t pt-4">
-              <p className="text-muted-foreground text-base">
+            <div className="border-t border-border/60 pt-4">
+              <p className="text-muted-foreground text-sm">
                 <strong>What&apos;s next?</strong> You can now access your Kloudlite installation
                 dashboard to create and manage workspaces, environments, and work machines. Your
                 team members can log in using their own credentials at your installation URL.
@@ -292,16 +292,16 @@ export default function CompletePage() {
           </div>
         </div>
 
-        <div className="border p-8">
+        <div className="border border-border/80 p-8 rounded-sm">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold">Need Help?</h2>
+            <h2 className="text-xl font-semibold text-foreground">Need Help?</h2>
           </div>
           <div className="space-y-2">
             <a
               href="https://docs.kloudlite.io"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary flex items-center gap-2 text-base hover:underline"
+              className="text-primary flex items-center gap-2 text-sm hover:underline"
             >
               <ExternalLink className="size-4" />
               Read the Documentation
@@ -310,7 +310,7 @@ export default function CompletePage() {
               href="https://discord.gg/kloudlite"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary flex items-center gap-2 text-base hover:underline"
+              className="text-primary flex items-center gap-2 text-sm hover:underline"
             >
               <ExternalLink className="size-4" />
               Join our Discord Community

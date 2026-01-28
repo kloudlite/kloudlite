@@ -237,7 +237,7 @@ export default function InstallPage() {
         <h1 className="text-foreground mb-3 text-3xl font-bold tracking-tight">
           Install Kloudlite in Your Cloud
         </h1>
-        <p className="text-muted-foreground text-base">
+        <p className="text-muted-foreground text-sm">
           Run the installation command on your cloud provider
         </p>
       </div>
@@ -247,21 +247,21 @@ export default function InstallPage() {
       {/* Installation Commands Section */}
       <div className="mt-10">
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold">Installation Command</h2>
-          <p className="text-muted-foreground mt-1 text-base">
+          <h2 className="text-xl font-semibold text-foreground">Installation Command</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
             Choose your cloud provider and run the command in your terminal
           </p>
         </div>
         <div className="space-y-6">
           <Tabs value={selectedProvider} onValueChange={setSelectedProvider}>
-            <TabsList className="grid w-full grid-cols-3 p-1">
-              <TabsTrigger value="aws" className="text-base font-semibold">
+            <TabsList className="grid w-full grid-cols-3 p-1 rounded-sm">
+              <TabsTrigger value="aws" className="text-sm font-medium rounded-sm">
                 AWS
               </TabsTrigger>
-              <TabsTrigger value="gcp" className="text-base font-semibold">
+              <TabsTrigger value="gcp" className="text-sm font-medium rounded-sm">
                 GCP
               </TabsTrigger>
-              <TabsTrigger value="azure" className="text-base font-semibold">
+              <TabsTrigger value="azure" className="text-sm font-medium rounded-sm">
                 Azure
               </TabsTrigger>
             </TabsList>
@@ -272,12 +272,12 @@ export default function InstallPage() {
                   {/* AWS Region Selector */}
                   {key === 'aws' && (
                     <div>
-                      <p className="text-foreground mb-3 text-base font-semibold">Select AWS Region:</p>
+                      <p className="text-foreground mb-3 text-sm font-medium">Select AWS Region:</p>
                       <Select
                         value={awsRegion || 'default'}
                         onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
                       >
-                        <SelectTrigger className="w-full md:w-80">
+                        <SelectTrigger className="w-full md:w-80 rounded-sm border-border/80">
                           <SelectValue placeholder="Select a region" />
                         </SelectTrigger>
                         <SelectContent>
@@ -294,12 +294,12 @@ export default function InstallPage() {
                   {/* GCP Region Selector */}
                   {key === 'gcp' && (
                     <div>
-                      <p className="text-foreground mb-3 text-base font-semibold">Select GCP Region:</p>
+                      <p className="text-foreground mb-3 text-sm font-medium">Select GCP Region:</p>
                       <Select
                         value={gcpRegion}
                         onValueChange={setGcpRegion}
                       >
-                        <SelectTrigger className="w-full md:w-80">
+                        <SelectTrigger className="w-full md:w-80 rounded-sm border-border/80">
                           <SelectValue placeholder="Select a region" />
                         </SelectTrigger>
                         <SelectContent>
@@ -316,12 +316,12 @@ export default function InstallPage() {
                   {/* Azure Location Selector */}
                   {key === 'azure' && (
                     <div>
-                      <p className="text-foreground mb-3 text-base font-semibold">Select Azure Location:</p>
+                      <p className="text-foreground mb-3 text-sm font-medium">Select Azure Location:</p>
                       <Select
                         value={azureLocation}
                         onValueChange={setAzureLocation}
                       >
-                        <SelectTrigger className="w-full md:w-80">
+                        <SelectTrigger className="w-full md:w-80 rounded-sm border-border/80">
                           <SelectValue placeholder="Select a location" />
                         </SelectTrigger>
                         <SelectContent>

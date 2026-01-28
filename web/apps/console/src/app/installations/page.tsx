@@ -28,21 +28,21 @@ export default async function InstallationsPage() {
       <InstallationsHeader user={session.user} />
       <PendingInvitationsBanner />
 
-      <main className="mx-auto max-w-7xl px-6 py-16">
-        <GridContainer className="border-t">
+      <main className="mx-auto max-w-7xl px-6 lg:px-12 py-16">
+        <div className="border border-border shadow-sm">
           {/* Title Section */}
-          <div className="border-b px-8 py-10">
-            <h1 className="text-3xl font-bold tracking-tight">Installations</h1>
-            <p className="text-muted-foreground mt-2 text-base">
-              Manage your Kloudlite installations
+          <div className="border-b border-border px-6 lg:px-12 py-12">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">Installations</h1>
+            <p className="text-muted-foreground mt-3 text-[1.0625rem] leading-relaxed">
+              Manage and monitor your cloud deployments
             </p>
           </div>
 
           {/* Installations List with Filter */}
-          <div className="px-8 py-10">
+          <div className="px-6 lg:px-12 py-8">
             <InstallationsList installations={installations} />
           </div>
-        </GridContainer>
+        </div>
       </main>
     </div>
   )
