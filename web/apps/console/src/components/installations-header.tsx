@@ -30,22 +30,22 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
   }
 
   return (
-    <header className="bg-background border-b">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+    <header className="bg-background border-b border-border/80 sticky top-0 z-50 backdrop-blur-sm bg-background/95">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
-        <Link href="/installations" className="flex items-center gap-2">
-          <KloudliteLogo className="h-8" linkToHome={false} />
+        <Link href="/installations" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <KloudliteLogo className="h-7 sm:h-8" linkToHome={false} />
         </Link>
 
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 gap-2 px-2">
-              <Avatar className="h-8 w-8">
+            <Button variant="ghost" className="relative h-10 gap-2 px-2 hover:bg-muted/50 transition-colors">
+              <Avatar className="h-8 w-8 ring-2 ring-border/50">
                 <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
+                <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">{getInitials(user.name)}</AvatarFallback>
               </Avatar>
-              <div className="flex flex-col items-start text-left">
+              <div className="hidden sm:flex flex-col items-start text-left">
                 <span className="text-sm font-medium">{user.name}</span>
                 <span className="text-muted-foreground text-xs">{user.email}</span>
               </div>
@@ -54,19 +54,19 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm leading-none font-medium">{user.name}</p>
+                <p className="text-sm leading-none font-semibold">{user.name}</p>
                 <p className="text-muted-foreground text-xs leading-none">{user.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="cursor-pointer">
               <Link href="/installations/settings">
                 <Settings className="mr-2 h-4 w-4" />
                 Account Settings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400 cursor-pointer focus:text-red-600 dark:focus:text-red-400">
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </DropdownMenuItem>

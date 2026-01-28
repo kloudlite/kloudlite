@@ -111,25 +111,20 @@ export default function NewInstallationPage() {
 
   return (
     <>
-      {/* Header */}
-      <div className="mb-10 text-center">
-        <h1 className="text-foreground mb-3 text-3xl font-bold tracking-tight">
-          Create New Installation
+      {/* Header - Subtle */}
+      <div className="mb-6">
+        <h1 className="text-foreground text-lg font-semibold">
+          Create Installation
         </h1>
-        <p className="text-muted-foreground mx-auto max-w-2xl text-base">
-          Set up your Kloudlite installation with a name and domain
+        <p className="text-muted-foreground/60 mt-1 text-sm">
+          Deploy Kloudlite in your cloud account
         </p>
       </div>
 
       <InstallationProgress currentStep={1} />
 
       <div className="mb-6 mt-10">
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold">Installation Details</h2>
-          <p className="text-muted-foreground mt-1 text-base">
-            Provide a name and optional description to help you identify this installation
-          </p>
-        </div>
+        {/* Removed section heading - form fields speak for themselves */}
         <div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -138,16 +133,18 @@ export default function NewInstallationPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Installation Name</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Production Environment"
+                        placeholder="e.g., Production"
                         {...field}
                         disabled={creating}
-                        className="h-11 px-4 text-base"
+                        className="h-10"
                       />
                     </FormControl>
-                    <FormDescription>A friendly name to identify this installation</FormDescription>
+                    <FormDescription>
+                      A friendly name for this installation
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -158,17 +155,20 @@ export default function NewInstallationPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormLabel>
+                      Description <span className="text-muted-foreground font-normal">(optional)</span>
+                    </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Main production deployment for our platform..."
+                        placeholder="Production deployment for our platform"
                         {...field}
                         disabled={creating}
-                        className="min-h-[100px] resize-none px-4 py-3 text-base"
+                        rows={4}
+                        className="resize-none"
                       />
                     </FormControl>
                     <FormDescription>
-                      A brief description of this installation&apos;s purpose
+                      Optional context about this installation
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -180,14 +180,14 @@ export default function NewInstallationPage() {
                 name="subdomain"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Installation Domain</FormLabel>
+                    <FormLabel>Domain</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           placeholder="your-company"
                           {...field}
                           disabled={creating}
-                          className="h-11 px-4 pr-10 text-base"
+                          className="h-10 font-mono"
                           onChange={(e) => {
                             const value = e.target.value.toLowerCase()
                             field.onChange(value)
@@ -201,31 +201,29 @@ export default function NewInstallationPage() {
                         )}
                         {!checkingSubdomain && subdomainAvailable === true && (
                           <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                            <CheckCircle2 className="size-5 text-green-600" />
+                            <CheckCircle2 className="size-4 text-green-600" />
                           </div>
                         )}
                         {!checkingSubdomain && subdomainAvailable === false && (
                           <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                            <AlertCircle className="text-destructive size-5" />
+                            <AlertCircle className="text-destructive size-4" />
                           </div>
                         )}
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Your installation will be available at{' '}
-                      <span className="font-mono font-medium">
-                        {field.value || 'your-subdomain'}.
-                        {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
+                      <span className="font-mono">
+                        {field.value || 'your-subdomain'}.{process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
                       </span>
                     </FormDescription>
                     {!checkingSubdomain && subdomainAvailable === false && (
-                      <p className="text-destructive text-base font-medium">
-                        This subdomain is already taken. Please choose another.
+                      <p className="text-[0.8rem] font-medium text-destructive">
+                        This domain is already taken
                       </p>
                     )}
                     {!checkingSubdomain && subdomainAvailable === true && (
-                      <p className="text-base font-medium text-green-600">
-                        This subdomain is available!
+                      <p className="text-[0.8rem] font-medium text-green-600 dark:text-green-500">
+                        Domain is available
                       </p>
                     )}
                     <FormMessage />
@@ -233,11 +231,16 @@ export default function NewInstallationPage() {
                 )}
               />
 
-              <Button type="submit" className="w-full" size="lg" disabled={creating || subdomainAvailable !== true}>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={creating || subdomainAvailable !== true}
+              >
                 {creating ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
-                    Creating installation...
+                    Creating...
                   </>
                 ) : (
                   'Continue to Installation'
