@@ -10,6 +10,7 @@ go.work.sum
 .idea
 *.log
 node_modules
+bun.lockb
 .DS_Store
 
 .direnv

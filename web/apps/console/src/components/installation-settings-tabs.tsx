@@ -24,7 +24,7 @@ export function InstallationSettingsTabs() {
   ]
 
   return (
-    <div className="border-b">
+    <div className="border-b border-foreground/10">
       <nav className="-mb-px flex gap-6">
         {tabs.map((tab) => {
           const Icon = tab.icon

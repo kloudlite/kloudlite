@@ -15,9 +15,9 @@ export default function InstallationLayout({ children }: InstallationLayoutProps
   return (
     <div className="bg-background min-h-screen px-6 lg:px-12 py-16">
       <div className="mx-auto w-full max-w-4xl">
-        <div className="border border-border shadow-sm">
+        <div className="border border-foreground/10 shadow-sm">
           {/* Back button */}
-          <div className="border-b border-border px-6 lg:px-12 py-6 bg-muted/20">
+          <div className="border-b border-foreground/10 px-6 lg:px-12 py-6 bg-muted/20">
             <Button
               variant="ghost"
               onClick={() => router.push('/installations')}

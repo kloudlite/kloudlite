@@ -429,7 +429,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
   // Render Step 1: Create Installation Form
   const renderStep1 = () => (
     <>
-      <div className="border-b border-border">
+      <div className="border-b border-foreground/10">
         <DialogHeader className="px-12 pt-10 pb-6">
           <div className="flex flex-col items-center gap-6">
             <InstallationProgress currentStep={1} />
@@ -558,7 +558,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
         </div>
       </div>
 
-      <div className="border-t border-border">
+      <div className="border-t border-foreground/10">
         <div className="px-12 py-6">
           <div className="max-w-2xl mx-auto flex justify-end gap-3">
             <Button
@@ -599,7 +599,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
 
     return (
       <>
-        <div className="border-b border-border">
+        <div className="border-b border-foreground/10">
           <DialogHeader className="px-12 pt-10 pb-6">
             <div className="flex flex-col items-center gap-6">
               <InstallationProgress currentStep={2} />
@@ -642,7 +642,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                             value={awsRegion || 'default'}
                             onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
                           >
-                            <SelectTrigger className="max-w-md rounded-sm border-border h-11">
+                            <SelectTrigger className="max-w-md rounded-sm border-foreground/10 h-11">
                               <SelectValue placeholder="Select a region" />
                             </SelectTrigger>
                             <SelectContent>
@@ -661,7 +661,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                         <div>
                           <p className="text-foreground mb-3 text-base font-semibold">Region</p>
                           <Select value={gcpRegion} onValueChange={setGcpRegion}>
-                            <SelectTrigger className="max-w-md rounded-sm border-border h-11">
+                            <SelectTrigger className="max-w-md rounded-sm border-foreground/10 h-11">
                               <SelectValue placeholder="Select a region" />
                             </SelectTrigger>
                             <SelectContent>
@@ -680,7 +680,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                         <div>
                           <p className="text-foreground mb-3 text-base font-semibold">Location</p>
                           <Select value={azureLocation} onValueChange={setAzureLocation}>
-                            <SelectTrigger className="max-w-md rounded-sm border-border h-11">
+                            <SelectTrigger className="max-w-md rounded-sm border-foreground/10 h-11">
                               <SelectValue placeholder="Select a location" />
                             </SelectTrigger>
                             <SelectContent>
@@ -702,7 +702,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                         />
                       </div>
 
-                      <div className="border-t border-border pt-8">
+                      <div className="border-t border-foreground/10 pt-8">
                         <h4 className="text-foreground mb-4 text-base font-semibold">Prerequisites</h4>
                         <ul className="text-muted-foreground space-y-3 text-base leading-relaxed">
                           {config.requirements.map((req, idx) => (
@@ -714,11 +714,11 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                         </ul>
                       </div>
 
-                      <div className="border-t border-border pt-8">
+                      <div className="border-t border-foreground/10 pt-8">
                         <h4 className="text-foreground mb-4 text-base font-semibold">Installation Command</h4>
                         <div className="space-y-3">
                           {config.commands.map((cmd, idx) => (
-                            <div key={idx} className="bg-muted/50 border border-border p-5 rounded-sm">
+                            <div key={idx} className="bg-muted/50 border border-foreground/10 p-5 rounded-sm">
                               <div className="flex items-start justify-between gap-4">
                                 <code className="flex-1 font-mono text-sm leading-relaxed break-all text-foreground">
                                   {cmd}
@@ -744,7 +744,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
             </div>
 
             {/* Verification Status */}
-            <div className="border-t border-border pt-8">
+            <div className="border-t border-foreground/10 pt-8">
               <div className="flex items-center justify-center gap-3 text-base py-4 bg-muted/30 rounded-sm">
                 {verificationStatus === 'waiting' && (
                   <>
@@ -783,7 +783,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
       // Active state
       return (
         <>
-          <div className="border-b border-border">
+          <div className="border-b border-foreground/10">
             <DialogHeader className="px-12 pt-10 pb-8">
               <div className="flex flex-col items-center gap-6">
                 <InstallationProgress currentStep={3} />
@@ -810,7 +810,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                 </p>
               </div>
 
-              <div className="bg-muted/30 border border-border p-8 rounded-sm">
+              <div className="bg-muted/30 border border-foreground/10 p-8 rounded-sm">
                 <p className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">Installation URL</p>
                 <div className="flex items-center gap-4 mb-6">
                   <a
@@ -844,7 +844,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                 </div>
               </div>
 
-              <div className="border-t border-border pt-8">
+              <div className="border-t border-foreground/10 pt-8">
                 <h4 className="text-base font-semibold text-foreground mb-3">What's Next?</h4>
                 <p className="text-muted-foreground text-base leading-relaxed">
                   Access your installation dashboard to create and manage workspaces, environments, and work machines.
@@ -872,7 +872,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
     // Waiting state
     return (
       <>
-        <div className="border-b border-border">
+        <div className="border-b border-foreground/10">
           <DialogHeader className="px-12 pt-10 pb-8">
             <div className="flex flex-col items-center gap-6">
               <InstallationProgress currentStep={3} />
@@ -892,7 +892,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
         <div className="px-12 pb-10 pt-8">
           <div className="max-w-3xl mx-auto">
             <div className="space-y-8">
-            <div className="bg-muted/30 border border-border p-8 rounded-sm">
+            <div className="bg-muted/30 border border-foreground/10 p-8 rounded-sm">
               <div className="flex items-center gap-3 mb-6">
                 <Loader2 className="size-5 animate-spin text-primary" />
                 <h3 className="text-lg font-semibold text-foreground">Activating Installation</h3>
@@ -902,7 +902,7 @@ export function NewInstallationDialog({ open, onOpenChange }: NewInstallationDia
                 The page will automatically update once your installation is ready.
               </p>
 
-              <div className="bg-background border border-border p-6 rounded-sm">
+              <div className="bg-background border border-foreground/10 p-6 rounded-sm">
                 <p className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">Installation URL</p>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-foreground font-mono text-lg">
