@@ -13,7 +13,7 @@ import { setThemeCookie, type Theme } from '@/lib/theme'
 type ThemeOption = Theme | 'system'
 
 interface ThemeSwitcherProps {
-  initialTheme?: Theme
+  initialTheme?: ThemeOption
 }
 
 export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
@@ -28,8 +28,8 @@ export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
     setTheme(newTheme)
 
     if (newTheme === 'system') {
-      // Remove theme cookie to use system preference
-      document.cookie = 'theme=; path=/; max-age=0'
+      // Store 'system' preference in cookie
+      document.cookie = 'theme=system; path=/; max-age=31536000; SameSite=Lax'
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       document.documentElement.classList.toggle('dark', prefersDark)
     } else {
