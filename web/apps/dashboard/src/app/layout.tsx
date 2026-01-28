@@ -30,7 +30,21 @@ export default async function RootLayout({
   const theme = await getTheme()
 
   return (
-    <html lang="en" className={theme === 'dark' ? 'dark' : ''}>
+    <html lang="en" className={theme === 'dark' ? 'dark' : ''} suppressHydrationWarning>
+      <head>
+        {/* Only apply system preference on client if theme is 'system' */}
+        {theme === 'system' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                  document.documentElement.classList.add('dark');
+                }
+              `,
+            }}
+          />
+        )}
+      </head>
       <body className={`${openSans.variable} ${ibmPlexMono.variable} font-sans`}>
         <Providers>{children}</Providers>
         <Toaster />
