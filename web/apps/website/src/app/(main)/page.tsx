@@ -25,7 +25,7 @@ function CrossMarker({ className }: { className?: string }) {
 // Grid container like Vercel
 function GridContainer({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('relative mx-auto max-w-5xl', className)}>
+    <div className={cn('relative mx-auto max-w-7xl', className)}>
       <style jsx>{`
         @keyframes pulseTopLeftToRight {
           0% { left: 0%; opacity: 0; }
@@ -244,7 +244,7 @@ function WebsiteLandingPage() {
                   Cloud Development
                 </PageHeroTitle>
 
-                <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg lg:text-xl leading-relaxed">
+                <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-base lg:text-lg leading-relaxed">
                   Reduce the development loop. No setup, no builds, no deployments.
                 </p>
 
@@ -265,7 +265,7 @@ function WebsiteLandingPage() {
 
               {/* For Developer typewriter - Hidden on mobile */}
               <div className="hidden sm:block mt-20 text-center">
-                <p className="text-muted-foreground text-xl sm:text-2xl font-medium">
+                <p className="text-muted-foreground text-lg sm:text-xl font-medium">
                   For <TypewriterText />
                 </p>
               </div>
@@ -280,10 +280,10 @@ function WebsiteLandingPage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 border-t border-foreground/10 -mx-6 lg:-mx-12">
               {/* Row 1 - Built for developers */}
               <div className="sm:col-span-2 lg:col-span-1 p-8 lg:p-12 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
-                <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.5rem]">
+                <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
                   Built for developers
                 </h2>
-                <p className="text-muted-foreground mt-4 text-base lg:text-lg">
+                <p className="text-muted-foreground mt-4 text-base">
                   Focus on code, not ops.
                 </p>
               </div>
@@ -376,7 +376,7 @@ function WebsiteLandingPage() {
 
               {/* Toolchain Section Header */}
               <div className="sm:col-span-2 lg:col-span-3 p-8 lg:p-16 border-b border-foreground/10 bg-foreground/[0.015]">
-                <h2 className="text-foreground text-4xl lg:text-5xl font-bold tracking-tight">
+                <h2 className="text-foreground text-4xl lg:text-4xl xl:text-5xl font-bold tracking-tight">
                   Your entire toolchain, <span className="relative inline-block">
                     <span className="relative z-10">connected.</span>
                     <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary"></span>
@@ -398,10 +398,10 @@ function WebsiteLandingPage() {
                   <div className="text-primary mb-4">
                     <Sparkles className="h-8 w-8" />
                   </div>
-                  <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-4">
+                  <h3 className="text-foreground text-2xl font-bold mb-4">
                     AI Ready Workspaces
                   </h3>
-                  <p className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-4">
+                  <p className="text-muted-foreground text-base leading-relaxed mb-4">
                     Built-in support for the next generation of AI coding tools. Supports vibecoding sessions out of the box.
                   </p>
                   <Link href="/blog/ai-ready-workspaces" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
@@ -429,10 +429,10 @@ function WebsiteLandingPage() {
                   <div className="text-primary mb-4">
                     <Code2 className="h-8 w-8" />
                   </div>
-                  <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-4">
+                  <h3 className="text-foreground text-2xl font-bold mb-4">
                     Access from any IDE
                   </h3>
-                  <p className="text-muted-foreground text-base lg:text-lg leading-relaxed mb-4">
+                  <p className="text-muted-foreground text-base leading-relaxed mb-4">
                     Connect your local editor directly to cloud resources. Zero latency, full Intellisense.
                   </p>
                   <Link href="/blog/ide-integration" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
@@ -476,10 +476,10 @@ function WebsiteLandingPage() {
 
               {/* Testimonials Section Header */}
               <div className="sm:col-span-2 lg:col-span-3 p-8 lg:p-16 border-b border-foreground/10 bg-foreground/[0.015]">
-                <h2 className="text-foreground text-4xl lg:text-5xl font-bold tracking-tight">
+                <h2 className="text-foreground text-4xl lg:text-4xl xl:text-5xl font-bold tracking-tight">
                   Trusted by developers
                 </h2>
-                <p className="text-muted-foreground mt-4 text-base lg:text-lg max-w-2xl">
+                <p className="text-muted-foreground mt-4 text-base lg:text-base xl:text-lg max-w-2xl">
                   Teams around the world are building faster with Kloudlite.
                 </p>
               </div>
@@ -496,7 +496,7 @@ function WebsiteLandingPage() {
                   )}
                 >
                   <div className="mb-8 min-h-[140px] flex items-center">
-                    <p className="text-foreground text-base lg:text-lg leading-relaxed">
+                    <p className="text-foreground text-base leading-relaxed">
                       "{testimonial.quote}"
                     </p>
                   </div>
@@ -520,10 +520,10 @@ function WebsiteLandingPage() {
               {/* CTA Row - Start building faster */}
               <div className="p-8 lg:p-16 border-b border-foreground/10 sm:col-span-2 lg:col-span-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bg-foreground/[0.015]">
                 <div>
-                  <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl">
+                  <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-3xl xl:text-4xl">
                     Start building faster
                   </h2>
-                  <p className="text-muted-foreground mt-2 text-base lg:text-lg">
+                  <p className="text-muted-foreground mt-2 text-base">
                     Free with your own infrastructure.
                   </p>
                 </div>

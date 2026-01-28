@@ -4,24 +4,20 @@ import { cn } from '@kloudlite/lib'
 interface Step {
   number: number
   title: string
-  description: string
 }
 
 const steps: Step[] = [
   {
     number: 1,
-    title: 'Create',
-    description: 'Name and configure domain',
+    title: 'Details',
   },
   {
     number: 2,
-    title: 'Install',
-    description: 'Run installation in your cloud',
+    title: 'Deploy',
   },
   {
     number: 3,
     title: 'Complete',
-    description: 'Access your installation',
   },
 ]
 
@@ -31,52 +27,40 @@ interface InstallationProgressProps {
 
 export function InstallationProgress({ currentStep }: InstallationProgressProps) {
   return (
-    <div className="mb-8">
-      <div className="flex items-start justify-center gap-4">
-        {steps.map((step, index) => (
-          <div key={step.number} className="flex items-center gap-4">
-            {/* Step with Label */}
-            <div className="flex flex-col items-center">
-              <div
-                className={cn(
-                  'flex size-10 items-center justify-center border-2 font-medium transition-colors',
-                  currentStep > step.number
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : currentStep === step.number
-                      ? 'border-primary bg-background text-primary'
-                      : 'border-muted-foreground/30 bg-background text-muted-foreground',
-                )}
-              >
-                {currentStep > step.number ? (
-                  <Check className="size-5" />
-                ) : (
-                  <span className="text-base">{step.number}</span>
-                )}
-              </div>
-              <div className="mt-3 text-center">
-                <p
-                  className={cn(
-                    'text-base font-semibold',
-                    currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  {step.title}
-                </p>
-              </div>
+    <div className="flex items-center gap-2">
+      {steps.map((step, index) => (
+        <div key={step.number} className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                'flex size-6 items-center justify-center text-xs font-semibold transition-all duration-300 border rounded-full',
+                currentStep > step.number
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : currentStep === step.number
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background border-border text-muted-foreground',
+              )}
+            >
+              {currentStep > step.number ? (
+                <Check className="size-3 stroke-[3]" />
+              ) : (
+                <span className="text-[11px]">{step.number}</span>
+              )}
             </div>
-
-            {/* Connector Line */}
-            {index < steps.length - 1 && (
-              <div
-                className={cn(
-                  'mb-auto h-0.5 w-24 translate-y-5 transition-colors',
-                  currentStep > step.number ? 'bg-primary' : 'bg-muted-foreground/30',
-                )}
-              />
-            )}
+            <span
+              className={cn(
+                'text-sm font-medium',
+                currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground',
+              )}
+            >
+              {step.title}
+            </span>
           </div>
-        ))}
-      </div>
+          {index < steps.length - 1 && (
+            <div className="w-8 h-px bg-border mx-1" />
+          )}
+        </div>
+      ))}
     </div>
   )
 }
