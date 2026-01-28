@@ -279,7 +279,7 @@ function WebsiteLandingPage() {
             {/* Features Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 border-t border-foreground/10 -mx-6 lg:-mx-12">
               {/* Row 1 - Built for developers */}
-              <div className="sm:col-span-2 lg:col-span-1 p-8 lg:p-12 border-b border-foreground/10 sm:border-r flex flex-col justify-center bg-foreground/[0.015]">
+              <div className="sm:col-span-2 lg:col-span-1 p-8 lg:p-12 border-l border-b border-foreground/10 lg:border-r flex flex-col justify-center bg-foreground/[0.015]">
                 <h2 className="text-foreground text-3xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
                   Built for developers
                 </h2>
@@ -287,85 +287,97 @@ function WebsiteLandingPage() {
                   Focus on code, not ops.
                 </p>
               </div>
-              <FeatureCardContainer className="border-b border-foreground/10 sm:border-r lg:border-r">
+              <FeatureCardContainer className="border-l border-b border-foreground/10 sm:border-r lg:border-r" href="/blog/environment-forking">
                 <FeatureCard
                   icon={<Copy className="h-5 w-5" />}
                   title="Environment Forking"
                   description="Fork entire environments with a single command."
                 />
-                <Link href="/blog/environment-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                  Learn more <ArrowRight className="h-3 w-3" />
-                </Link>
+                <span className="text-muted-foreground group-hover:text-primary text-sm font-medium inline-flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 mt-6">
+                  Learn more <ArrowRight className="h-4 w-4" />
+                </span>
               </FeatureCardContainer>
-              <FeatureCardContainer className="border-b border-foreground/10 lg:border-r-0">
+              <FeatureCardContainer className="border-l border-b border-foreground/10 sm:border-r" href="/blog/workspace-forking">
                 <FeatureCard
                   icon={<Layers className="h-5 w-5" />}
                   title="Workspace Forking"
                   description="Fork workspaces instantly for parallel work."
                 />
-                <Link href="/blog/workspace-forking" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                  Learn more <ArrowRight className="h-3 w-3" />
-                </Link>
+                <span className="text-muted-foreground group-hover:text-primary text-sm font-medium inline-flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 mt-6">
+                  Learn more <ArrowRight className="h-4 w-4" />
+                </span>
               </FeatureCardContainer>
               {/* Row 2 */}
-              <FeatureCardContainer className="sm:border-r border-b border-foreground/10">
+              <FeatureCardContainer className="border-l sm:border-r lg:border-r border-b border-foreground/10" href="/blog/environment-switching">
                 <FeatureCard
                   icon={<ArrowLeftRight className="h-5 w-5" />}
                   title="Environment Switching"
                   description="Switch between environments seamlessly."
                 />
-                <Link href="/blog/environment-switching" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                  Learn more <ArrowRight className="h-3 w-3" />
-                </Link>
+                <span className="text-muted-foreground group-hover:text-primary text-sm font-medium inline-flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 mt-6">
+                  Learn more <ArrowRight className="h-4 w-4" />
+                </span>
               </FeatureCardContainer>
-              <FeatureCardContainer className="lg:border-r border-b border-foreground/10">
+              <FeatureCardContainer className="border-l sm:border-r lg:border-r border-b border-foreground/10" href="/blog/service-intercepts">
                 <FeatureCard
                   icon={<Route className="h-5 w-5" />}
                   title="Service Intercepts"
                   description="Route environment service traffic to your workspace."
                 />
-                <Link href="/blog/service-intercepts" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                  Learn more <ArrowRight className="h-3 w-3" />
-                </Link>
+                <span className="text-muted-foreground group-hover:text-primary text-sm font-medium inline-flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 mt-6">
+                  Learn more <ArrowRight className="h-4 w-4" />
+                </span>
               </FeatureCardContainer>
-              <FeatureCardContainer className="sm:border-r lg:border-r-0 border-b border-foreground/10">
+              <FeatureCardContainer className="border-l sm:border-r border-b border-foreground/10" href="/blog/nix-package-management">
                 <FeatureCard
                   icon={<Package className="h-5 w-5" />}
                   title="Package Management"
                   description="Nix-based reproducible package management."
                 />
-                <Link href="/blog/nix-package-management" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                  Learn more <ArrowRight className="h-3 w-3" />
-                </Link>
+                <span className="text-muted-foreground group-hover:text-primary text-sm font-medium inline-flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 mt-6">
+                  Learn more <ArrowRight className="h-4 w-4" />
+                </span>
               </FeatureCardContainer>
               {/* Row 3 */}
-              <FeatureCardContainer className="sm:border-r border-b border-foreground/10">
+              <FeatureCardContainer className="border-l sm:border-r lg:border-r border-b border-foreground/10" href="/blog/environment-snapshots">
                 <FeatureCard
                   icon={<Camera className="h-5 w-5" />}
                   title="Environment Snapshots"
                   description="Capture and restore complete environment states instantly."
                 />
-                <Link href="/blog/environment-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                  Learn more <ArrowRight className="h-3 w-3" />
-                </Link>
+                <span className="text-muted-foreground group-hover:text-primary text-sm font-medium inline-flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 mt-6">
+                  Learn more <ArrowRight className="h-4 w-4" />
+                </span>
               </FeatureCardContainer>
-              <FeatureCardContainer className="lg:border-r border-b border-foreground/10">
+              <FeatureCardContainer className="border-l sm:border-r lg:border-r border-b border-foreground/10" href="/blog/workspace-snapshots">
                 <FeatureCard
                   icon={<Camera className="h-5 w-5" />}
                   title="Workspace Snapshots"
                   description="Save and share workspace configurations effortlessly."
                 />
-                <Link href="/blog/workspace-snapshots" className="text-primary text-sm font-medium inline-flex items-center gap-1 mt-4 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                  Learn more <ArrowRight className="h-3 w-3" />
-                </Link>
+                <span className="text-muted-foreground group-hover:text-primary text-sm font-medium inline-flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 mt-6">
+                  Learn more <ArrowRight className="h-4 w-4" />
+                </span>
               </FeatureCardContainer>
-              <div className="p-8 lg:p-12 sm:border-r lg:border-r-0 border-b border-foreground/10 bg-foreground/[0.015] flex items-center justify-center hover:bg-foreground/[0.03] transition-colors">
+              <div className="group relative p-10 lg:p-14 bg-background hover:bg-foreground/[0.02] transition-all duration-500 overflow-hidden border-l border-b border-foreground/10 sm:border-r flex items-center justify-center min-h-[180px]">
+                {/* Subtle bottom accent line */}
+                <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-primary group-hover:w-full transition-all duration-700 ease-out" />
+
                 <Link
                   href="/docs"
-                  className="group flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                  className="flex flex-col items-center gap-5 text-center"
                 >
-                  <span className="text-base font-bold">Explore All Features</span>
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  <div className="text-muted-foreground group-hover:text-primary transition-colors duration-500">
+                    <ArrowRight className="h-8 w-8 opacity-60 group-hover:opacity-100 transition-all duration-500 group-hover:translate-x-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="block text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-500">
+                      Explore All Features
+                    </span>
+                    <span className="block text-sm text-muted-foreground">
+                      Discover the complete platform
+                    </span>
+                  </div>
                 </Link>
               </div>
 
@@ -405,7 +417,7 @@ function WebsiteLandingPage() {
                     Built-in support for the next generation of AI coding tools. Supports vibecoding sessions out of the box.
                   </p>
                   <Link href="/blog/ai-ready-workspaces" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                    Learn more <ArrowRight className="h-3 w-3" />
+                    Learn more <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
 
@@ -436,7 +448,7 @@ function WebsiteLandingPage() {
                     Connect your local editor directly to cloud resources. Zero latency, full Intellisense.
                   </p>
                   <Link href="/blog/ide-integration" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                    Learn more <ArrowRight className="h-3 w-3" />
+                    Learn more <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
 
@@ -552,22 +564,53 @@ function WebsiteLandingPage() {
   )
 }
 
-function FeatureCardContainer({ children, className }: { children: React.ReactNode; className?: string }) {
+function FeatureCardContainer({ children, className, href }: { children: React.ReactNode; className?: string; href?: string }) {
+  const content = (
+    <>
+      {/* Subtle bottom accent line */}
+      <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-primary group-hover:w-full transition-all duration-700 ease-out" />
+
+      <div className="relative flex flex-col min-h-[180px]">
+        {children}
+      </div>
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={cn("group relative p-10 lg:p-14 bg-background hover:bg-foreground/[0.02] transition-all duration-500 overflow-hidden border-b border-foreground/10 cursor-pointer", className)}>
+        {content}
+      </Link>
+    )
+  }
+
   return (
-    <div className={cn("group relative p-6 sm:p-8 lg:p-12 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-colors overflow-hidden", className)}>
-      {/* Vertical highlight line - animated on hover */}
-      <div className="absolute left-0 top-0 w-[3px] h-full bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top" />
-      {children}
+    <div className={cn("group relative p-10 lg:p-14 bg-background hover:bg-foreground/[0.02] transition-all duration-500 overflow-hidden border-b border-foreground/10", className)}>
+      {content}
     </div>
   )
 }
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="cursor-default">
-      <div className="text-muted-foreground mb-4 transition-colors group-hover:text-primary">{icon}</div>
-      <h3 className="text-foreground text-lg font-bold">{title}</h3>
-      <p className="text-muted-foreground mt-3 text-base leading-relaxed transition-colors group-hover:text-foreground">{description}</p>
+    <div className="flex flex-col h-full space-y-6">
+      {/* Icon - minimal, just the icon */}
+      <div className="text-muted-foreground group-hover:text-primary transition-colors duration-500">
+        <div className="w-8 h-8 opacity-60 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110">
+          {icon}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 space-y-4">
+        <h3 className="text-foreground font-bold text-lg tracking-tight leading-tight group-hover:text-primary transition-colors duration-500">
+          {title}
+        </h3>
+
+        <p className="text-muted-foreground text-base leading-relaxed">
+          {description}
+        </p>
+      </div>
     </div>
   )
 }
