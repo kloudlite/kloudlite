@@ -111,23 +111,22 @@ export default function NewInstallationPage() {
 
   return (
     <>
-      {/* Header - Subtle */}
+      {/* Header */}
       <div className="mb-6">
-        <h1 className="text-foreground text-lg font-semibold">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           Create Installation
         </h1>
-        <p className="text-muted-foreground/60 mt-1 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           Deploy Kloudlite in your cloud account
         </p>
       </div>
 
       <InstallationProgress currentStep={1} />
 
-      <div className="mb-6 mt-10">
-        {/* Removed section heading - form fields speak for themselves */}
+      <div className="mt-6">
         <div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField
                 control={form.control}
                 name="name"
@@ -139,7 +138,6 @@ export default function NewInstallationPage() {
                         placeholder="e.g., Production"
                         {...field}
                         disabled={creating}
-                        className="h-10"
                       />
                     </FormControl>
                     <FormDescription>
@@ -187,7 +185,7 @@ export default function NewInstallationPage() {
                           placeholder="your-company"
                           {...field}
                           disabled={creating}
-                          className="h-10 font-mono"
+                          className="font-mono"
                           onChange={(e) => {
                             const value = e.target.value.toLowerCase()
                             field.onChange(value)
@@ -231,21 +229,22 @@ export default function NewInstallationPage() {
                 )}
               />
 
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full"
-                disabled={creating || subdomainAvailable !== true}
-              >
-                {creating ? (
-                  <>
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Continue to Installation'
-                )}
-              </Button>
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="submit"
+                  size="default"
+                  disabled={creating || subdomainAvailable !== true}
+                >
+                  {creating ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Continue to Installation'
+                  )}
+                </Button>
+              </div>
             </form>
           </Form>
         </div>
