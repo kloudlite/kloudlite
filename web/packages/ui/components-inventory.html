@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Components Inventory</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; background: #fafafa; }
+    h1 { margin-bottom: 8px; }
+    .subtitle { color: #666; margin-bottom: 32px; }
+    .legend { display: flex; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+    .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+    .radix { background: #7c3aed; }
+    .lucide { background: #f59e0b; }
+    .cva { background: #10b981; }
+    .other { background: #3b82f6; }
+    .internal { background: #6b7280; }
+    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f9fafb; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; }
+    td { font-size: 14px; }
+    .component-name { font-weight: 500; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px; color: white; }
+    .summary { margin-top: 32px; padding: 20px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .summary h3 { margin-bottom: 16px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .summary-item { padding: 16px; background: #f9fafb; border-radius: 8px; }
+    .summary-item strong { font-size: 24px; display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <h1>UI Components Inventory</h1>
+  <p class="subtitle">Overview of @kloudlite/ui package components and their dependencies</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-color radix"></div> Radix UI</div>
+    <div class="legend-item"><div class="legend-color lucide"></div> Lucide Icons</div>
+    <div class="legend-item"><div class="legend-color cva"></div> CVA (class-variance-authority)</div>
+    <div class="legend-item"><div class="legend-color other"></div> Other External</div>
+    <div class="legend-item"><div class="legend-color internal"></div> Internal</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Dependencies</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="component-name">Accordion</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-accordion</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Alert</td>
+        <td>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom</td>
+      </tr>
+      <tr>
+        <td class="component-name">AlertDialog</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-alert-dialog</span>
+          <span class="tag internal">cn</span>
+          <span class="tag internal">buttonVariants</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">AspectRatio</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-aspect-ratio</span>
+        </td>
+        <td>Radix Re-export</td>
+      </tr>
+      <tr>
+        <td class="component-name">Avatar</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-avatar</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Badge</td>
+        <td>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom</td>
+      </tr>
+      <tr>
+        <td class="component-name">Breadcrumb</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-slot</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom</td>
+      </tr>
+      <tr>
+        <td class="component-name">Button</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-slot</span>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom</td>
+      </tr>
+      <tr>
+        <td class="component-name">ButtonGroup</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-slot</span>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag internal">cn</span>
+          <span class="tag internal">Separator</span>
+        </td>
+        <td>Custom</td>
+      </tr>
+      <tr>
+        <td class="component-name">Calendar</td>
+        <td>
+          <span class="tag other">react-day-picker</span>
+          <span class="tag internal">cn</span>
+          <span class="tag internal">Button</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">Card</td>
+        <td>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom (Pure)</td>
+      </tr>
+      <tr>
+        <td class="component-name">Carousel</td>
+        <td>
+          <span class="tag other">embla-carousel-react</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+          <span class="tag internal">Button</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">Chart</td>
+        <td>
+          <span class="tag other">recharts</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">Checkbox</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-checkbox</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Collapsible</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-collapsible</span>
+        </td>
+        <td>Radix Re-export</td>
+      </tr>
+      <tr>
+        <td class="component-name">Command</td>
+        <td>
+          <span class="tag other">cmdk</span>
+          <span class="tag radix">@radix-ui/react-dialog</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+          <span class="tag internal">Dialog</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">ContextMenu</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-context-menu</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Dialog</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-dialog</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Drawer</td>
+        <td>
+          <span class="tag other">vaul</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">DropdownMenu</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-dropdown-menu</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Form</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-label</span>
+          <span class="tag radix">@radix-ui/react-slot</span>
+          <span class="tag other">react-hook-form</span>
+          <span class="tag internal">cn</span>
+          <span class="tag internal">Label</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">HoverCard</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-hover-card</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Input</td>
+        <td>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom (Pure)</td>
+      </tr>
+      <tr>
+        <td class="component-name">InputOTP</td>
+        <td>
+          <span class="tag other">input-otp</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">Label</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-label</span>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Menubar</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-menubar</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">NavigationMenu</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-navigation-menu</span>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Pagination</td>
+        <td>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+          <span class="tag internal">buttonVariants</span>
+        </td>
+        <td>Custom</td>
+      </tr>
+      <tr>
+        <td class="component-name">Popover</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-popover</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Progress</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-progress</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">RadioGroup</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-radio-group</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Resizable</td>
+        <td>
+          <span class="tag other">react-resizable-panels</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">ScrollArea</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-scroll-area</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Select</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-select</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Separator</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-separator</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Sheet</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-dialog</span>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag lucide">lucide-react</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Skeleton</td>
+        <td>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom (Pure)</td>
+      </tr>
+      <tr>
+        <td class="component-name">Slider</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-slider</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Sonner (Toast)</td>
+        <td>
+          <span class="tag other">sonner</span>
+          <span class="tag other">next-themes</span>
+        </td>
+        <td>Wrapper</td>
+      </tr>
+      <tr>
+        <td class="component-name">Switch</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-switch</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Table</td>
+        <td>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom (Pure)</td>
+      </tr>
+      <tr>
+        <td class="component-name">Tabs</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-tabs</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Textarea</td>
+        <td>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Custom (Pure)</td>
+      </tr>
+      <tr>
+        <td class="component-name">Toggle</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-toggle</span>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">ToggleGroup</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-toggle-group</span>
+          <span class="tag cva">class-variance-authority</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+      <tr>
+        <td class="component-name">Tooltip</td>
+        <td>
+          <span class="tag radix">@radix-ui/react-tooltip</span>
+          <span class="tag internal">cn</span>
+        </td>
+        <td>Radix Primitive</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="summary">
+    <h3>Summary</h3>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <strong>25</strong>
+        <span>Radix UI Primitives</span>
+      </div>
+      <div class="summary-item">
+        <strong>8</strong>
+        <span>External Wrappers</span>
+      </div>
+      <div class="summary-item">
+        <strong>5</strong>
+        <span>Pure Custom Components</span>
+      </div>
+      <div class="summary-item">
+        <strong>15+</strong>
+        <span>Components using Lucide Icons</span>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 24px;">External Libraries Used</h3>
+    <table style="margin-top: 16px;">
+      <thead>
+        <tr>
+          <th>Library</th>
+          <th>Purpose</th>
+          <th>Used By</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>@radix-ui/*</td>
+          <td>Accessible UI primitives</td>
+          <td>25+ components</td>
+        </tr>
+        <tr>
+          <td>lucide-react</td>
+          <td>Icon library</td>
+          <td>15+ components</td>
+        </tr>
+        <tr>
+          <td>class-variance-authority</td>
+          <td>Variant styling</td>
+          <td>Button, Badge, Alert, Toggle, etc.</td>
+        </tr>
+        <tr>
+          <td>cmdk</td>
+          <td>Command palette</td>
+          <td>Command</td>
+        </tr>
+        <tr>
+          <td>vaul</td>
+          <td>Drawer component</td>
+          <td>Drawer</td>
+        </tr>
+        <tr>
+          <td>sonner</td>
+          <td>Toast notifications</td>
+          <td>Sonner</td>
+        </tr>
+        <tr>
+          <td>react-day-picker</td>
+          <td>Date picker</td>
+          <td>Calendar</td>
+        </tr>
+        <tr>
+          <td>embla-carousel-react</td>
+          <td>Carousel/slider</td>
+          <td>Carousel</td>
+        </tr>
+        <tr>
+          <td>recharts</td>
+          <td>Charts</td>
+          <td>Chart</td>
+        </tr>
+        <tr>
+          <td>react-resizable-panels</td>
+          <td>Resizable panels</td>
+          <td>Resizable</td>
+        </tr>
+        <tr>
+          <td>input-otp</td>
+          <td>OTP input</td>
+          <td>InputOTP</td>
+        </tr>
+        <tr>
+          <td>react-hook-form</td>
+          <td>Form handling</td>
+          <td>Form</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

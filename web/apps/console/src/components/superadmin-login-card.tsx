@@ -138,7 +138,7 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
 
         {loginUrl && (
           <div className="space-y-3">
-            <div className="bg-muted border p-4">
+            <div className="bg-muted border border-foreground/10 p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-foreground text-base font-medium">Login URL</span>
                 {timeRemaining !== null && (
@@ -148,7 +148,7 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
                   </div>
                 )}
               </div>
-              <div className="bg-background flex items-center gap-2 border p-2">
+              <div className="bg-background flex items-center gap-2 border border-foreground/10 p-2">
                 <code className="text-foreground flex-1 overflow-x-auto text-sm">{loginUrl}</code>
                 <Button
                   variant="ghost"

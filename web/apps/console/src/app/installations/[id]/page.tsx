@@ -4,12 +4,13 @@ import { getRegistrationSession } from '@/lib/console-auth'
 import { getInstallationById, checkInstallationDomainStatus, getMemberRole } from '@/lib/console/supabase-storage-service'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
+import { InstallationDetailsTabs } from '@/components/installation-details-tabs'
 import { InstallationsHeader } from '@/components/installations-header'
 import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
 import { GridContainer } from '@/components/grid-container'
 import { Button } from '@kloudlite/ui'
 import Link from 'next/link'
-import { ArrowLeft, AlertTriangle, Users } from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -88,15 +89,19 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
 
       {/* Content */}
       <main className="mx-auto max-w-5xl px-6 py-16">
-        <GridContainer className="border-t">
-          {/* Back Button and Title */}
-          <div className="border-b px-8 py-10">
-            <Button asChild variant="ghost" size="sm" className="mb-6">
+        <GridContainer>
+          {/* Back Button */}
+          <div className="px-4 pt-6 pb-4">
+            <Button asChild variant="ghost" size="sm">
               <Link href="/installations">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Installations
               </Link>
             </Button>
+          </div>
+
+          {/* Title */}
+          <div className="border-b border-foreground/10 px-8 pt-4 pb-10">
             <h1 className="text-3xl font-bold tracking-tight">{installation.name}</h1>
             {installation.description && (
               <p className="text-muted-foreground mt-2 text-base">{installation.description}</p>
@@ -104,26 +109,12 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
           </div>
 
           {/* Tabs */}
-          <div className="border-b px-8">
-            <nav className="-mb-px flex gap-6">
-              <Link
-                href={`/installations/${id}`}
-                className="border-b-2 border-primary px-1 py-3 text-base font-medium"
-              >
-                Overview
-              </Link>
-              <Link
-                href={`/installations/${id}/team`}
-                className="text-muted-foreground hover:text-foreground border-b-2 border-transparent px-1 py-3 text-base font-medium transition-colors flex items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                Team
-              </Link>
-            </nav>
+          <div className="px-8">
+            <InstallationDetailsTabs installationId={id} />
           </div>
 
           {/* Status & Details Card */}
-          <div className="border-b px-8 py-10">
+          <div className="border-b border-foreground/10 px-8 py-10">
             <InstallationDetailsCard
               installation={installation}
               status={status}
@@ -134,7 +125,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
 
           {/* Super Admin Login Card */}
           {installation.secretKey && installation.subdomain && (
-            <div className="border-b px-8 py-10">
+            <div className="border-b border-foreground/10 px-8 py-10">
               <SuperAdminLoginCard
                 installationId={installation.id}
                 isActive={status.label === 'Active'}

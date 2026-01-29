@@ -20,11 +20,11 @@ export default async function SettingsLayout({ children }: LayoutProps) {
       <InstallationsHeader user={session.user} />
 
       <ScrollArea className="flex-1">
-        <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-6 lg:px-12 py-10">
           {/* Title Section */}
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold">Account Settings</h1>
-            <p className="text-muted-foreground mt-1.5 text-sm">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">Account Settings</h1>
+            <p className="text-muted-foreground mt-2 text-[1.0625rem] leading-relaxed">
               Manage your account information and preferences
             </p>
           </div>

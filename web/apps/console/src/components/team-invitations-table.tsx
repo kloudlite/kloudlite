@@ -41,9 +41,9 @@ export function TeamInvitationsTable({
   }
 
   return (
-    <div className="overflow-hidden border">
+    <div className="overflow-hidden border border-foreground/10">
       <table className="min-w-full">
-        <thead className="bg-muted/50 border-b">
+        <thead className="bg-muted/50 border-b border-foreground/10">
           <tr>
             <th className="text-muted-foreground px-6 py-3 text-left text-sm font-medium uppercase">
               Email
@@ -62,7 +62,7 @@ export function TeamInvitationsTable({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody className="divide-y divide-foreground/10">
           {invitations.map((invitation) => (
             <tr key={invitation.id} className="hover:bg-muted/50">
               <td className="px-6 py-4 text-base whitespace-nowrap">

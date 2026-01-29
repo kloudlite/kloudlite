@@ -29,20 +29,16 @@ export default async function InstallationsPage() {
       <PendingInvitationsBanner />
 
       <main className="mx-auto max-w-7xl px-6 lg:px-12 py-16">
-        <div className="border border-foreground/10 shadow-sm">
-          {/* Title Section */}
-          <div className="border-b border-foreground/10 px-6 lg:px-12 py-12">
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">Installations</h1>
-            <p className="text-muted-foreground mt-3 text-[1.0625rem] leading-relaxed">
-              Manage and monitor your cloud deployments
-            </p>
-          </div>
-
-          {/* Installations List with Filter */}
-          <div className="px-6 lg:px-12 py-8">
-            <InstallationsList installations={installations} />
-          </div>
+        {/* Title Section */}
+        <div className="mb-10">
+          <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">Installations</h1>
+          <p className="text-muted-foreground mt-3 text-[1.0625rem] leading-relaxed">
+            Manage and monitor your cloud deployments
+          </p>
         </div>
+
+        {/* Installations List with Filter */}
+        <InstallationsList installations={installations} />
       </main>
     </div>
   )

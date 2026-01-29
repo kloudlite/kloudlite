@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge, Separator, Button } from '@kloudlite/ui'
+import { Badge, Button } from '@kloudlite/ui'
 import { Copy, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Installation } from '@/lib/console/supabase-storage-service'
@@ -43,7 +43,7 @@ export function InstallationDetailsCard({
           </div>
         </div>
 
-        <Separator />
+        <div className="h-px bg-foreground/10" />
 
         {/* Installation Key */}
         <div>
@@ -68,7 +68,7 @@ export function InstallationDetailsCard({
         {/* Domain */}
         {installation.subdomain && installationUrl && (
           <>
-            <Separator />
+            <div className="h-px bg-foreground/10" />
             <div>
               <label className="text-foreground text-base font-medium">Installation URL</label>
               <div className="mt-2 flex items-center gap-2">
@@ -98,7 +98,7 @@ export function InstallationDetailsCard({
         )}
 
         {/* Timestamps */}
-        <Separator />
+        <div className="h-px bg-foreground/10" />
         <div className="grid grid-cols-2 gap-4 text-base">
           <div>
             <label className="text-foreground font-medium">Created</label>
