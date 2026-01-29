@@ -7,6 +7,7 @@ import {
   getMemberRole,
 } from '@/lib/console/supabase-storage-service'
 import { InstallationsHeader } from '@/components/installations-header'
+import { InstallationDetailsTabs } from '@/components/installation-details-tabs'
 import { GridContainer } from '@/components/grid-container'
 import { TeamMembersTable } from '@/components/team-members-table'
 import { TeamInvitationsTable } from '@/components/team-invitations-table'
@@ -49,30 +50,37 @@ export default async function TeamManagementPage({ params }: PageProps) {
     <div className="bg-background min-h-screen">
       <InstallationsHeader user={session.user} />
 
-      <main className="mx-auto max-w-6xl px-6 py-16">
-        <GridContainer className="border-t">
-          {/* Header */}
-          <div className="border-b px-8 py-10">
-            <Button asChild variant="ghost" size="sm" className="mb-6">
-              <Link href={`/installations/${id}`}>
+      <main className="mx-auto max-w-5xl px-6 py-16">
+        <GridContainer>
+          {/* Back Button */}
+          <div className="px-4 pt-6 pb-4">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/installations">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Installation
+                Back to Installations
               </Link>
             </Button>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
-                <p className="text-muted-foreground mt-2 text-base">
-                  Manage team access to {installation.name}
-                </p>
-              </div>
-              {canManage && <InviteMemberButton installationId={id} />}
-            </div>
+          </div>
+
+          {/* Title */}
+          <div className="border-b border-foreground/10 px-8 pt-4 pb-10">
+            <h1 className="text-3xl font-bold tracking-tight">{installation.name}</h1>
+            {installation.description && (
+              <p className="text-muted-foreground mt-2 text-base">{installation.description}</p>
+            )}
+          </div>
+
+          {/* Tabs */}
+          <div className="px-8">
+            <InstallationDetailsTabs installationId={id} />
           </div>
 
           {/* Members Table */}
-          <div className="border-b px-8 py-10">
-            <h2 className="mb-6 text-xl font-semibold">Members</h2>
+          <div className="border-b border-foreground/10 px-8 py-10">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Members</h2>
+              {canManage && <InviteMemberButton installationId={id} />}
+            </div>
             <TeamMembersTable
               members={members}
               currentUserId={session.user.id}

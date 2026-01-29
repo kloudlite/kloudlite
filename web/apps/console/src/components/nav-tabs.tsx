@@ -4,18 +4,27 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@kloudlite/lib'
+import type { LucideIcon } from 'lucide-react'
 
-const tabs = [
-  { id: 'profile', label: 'Profile', href: '/installations/settings/profile' },
-  { id: 'billing', label: 'Billing', href: '/installations/settings/billing' },
-]
+export interface NavTab {
+  id: string
+  label: string
+  href: string
+  icon?: LucideIcon
+}
 
-export function InstallationSettingsTabs() {
+interface NavTabsProps {
+  tabs: NavTab[]
+  className?: string
+}
+
+export function NavTabs({ tabs, className }: NavTabsProps) {
   const pathname = usePathname()
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
   const tabRefs = useRef<Map<string, HTMLAnchorElement>>(new Map())
 
-  const activeTab = tabs.find((tab) => pathname === tab.href)?.id || 'profile'
+  // Find the active tab based on pathname
+  const activeTab = tabs.find((tab) => pathname === tab.href)?.id || tabs[0]?.id
 
   // Update underline position
   useEffect(() => {
@@ -28,7 +37,7 @@ export function InstallationSettingsTabs() {
 
         setUnderlineStyle({
           left: leftOffset,
-          width: underlineWidth,
+          width: underlineWidth
         })
       }
     }
@@ -41,25 +50,30 @@ export function InstallationSettingsTabs() {
   }, [activeTab])
 
   return (
-    <div className="inline-flex gap-1 relative">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.id}
-          ref={(el) => {
-            if (el) tabRefs.current.set(tab.id, el)
-          }}
-          href={tab.href}
-          className={cn(
-            'relative px-6 py-2.5 text-base font-medium transition-all duration-200 cursor-pointer',
-            'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
-            activeTab === tab.id
-              ? 'text-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
+    <div className={cn('inline-flex gap-1 relative', className)}>
+      {tabs.map((tab) => {
+        const Icon = tab.icon
+        const isActive = pathname === tab.href
+        return (
+          <Link
+            key={tab.id}
+            ref={(el) => {
+              if (el) tabRefs.current.set(tab.id, el)
+            }}
+            href={tab.href}
+            className={cn(
+              'relative px-6 py-2.5 text-base font-medium transition-all duration-200 cursor-pointer flex items-center gap-2',
+              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
+              isActive
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {Icon && <Icon className="h-4 w-4" />}
+            {tab.label}
+          </Link>
+        )
+      })}
 
       {/* Animated underline with CSS transition */}
       {underlineStyle.width > 0 && (

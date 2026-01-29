@@ -1165,33 +1165,56 @@ export async function canManageInstallation(
 export async function getInstallationMembers(
   installationId: string
 ): Promise<InstallationMember[]> {
-  const { data, error } = await supabase
+  // First get the members
+  const { data: membersData, error: membersError } = await supabase
     .from('installation_members')
-    .select(`
-      *,
-      user_registrations!inner(email, name, providers)
-    `)
+    .select('*')
     .eq('installation_id', installationId)
     .order('added_at', { ascending: true })
 
-  if (error) {
-    console.error('Error getting installation members:', error)
+  if (membersError) {
+    console.error('Error getting installation members:', membersError)
     return []
   }
 
-  return data.map((row: any) => ({
-    id: row.id,
-    installationId: row.installation_id,
-    userId: row.user_id,
-    role: row.role,
-    addedBy: row.added_by,
-    addedAt: row.added_at,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    userEmail: row.user_registrations.email,
-    userName: row.user_registrations.name,
-    userProviders: row.user_registrations.providers,
-  }))
+  if (!membersData || membersData.length === 0) {
+    return []
+  }
+
+  // Get unique user IDs
+  const userIds = [...new Set(membersData.map((m: any) => m.user_id))]
+
+  // Fetch user details
+  const { data: usersData, error: usersError } = await supabase
+    .from('user_registrations')
+    .select('user_id, email, name, providers')
+    .in('user_id', userIds)
+
+  if (usersError) {
+    console.error('Error getting user details:', usersError)
+  }
+
+  // Create a map of user details
+  const userMap = new Map(
+    (usersData || []).map((u: any) => [u.user_id, u])
+  )
+
+  return membersData.map((row: any) => {
+    const user = userMap.get(row.user_id) || {}
+    return {
+      id: row.id,
+      installationId: row.installation_id,
+      userId: row.user_id,
+      role: row.role,
+      addedBy: row.added_by,
+      addedAt: row.added_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      userEmail: user.email || 'Unknown',
+      userName: user.name || 'Unknown User',
+      userProviders: user.providers || [],
+    }
+  })
 }
 
 /**

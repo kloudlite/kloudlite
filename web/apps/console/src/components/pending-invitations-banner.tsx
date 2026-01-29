@@ -72,7 +72,7 @@ export function PendingInvitationsBanner() {
               {visibleInvitations.map((invitation) => (
                 <div
                   key={invitation.id}
-                  className="bg-white dark:bg-gray-900 flex items-center justify-between gap-4 border p-3"
+                  className="bg-white dark:bg-gray-900 flex items-center justify-between gap-4 border border-foreground/10 p-3"
                 >
                   <div className="flex-1">
                     <p className="text-base">

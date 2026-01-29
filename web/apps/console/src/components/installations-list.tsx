@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@kloudlite/ui'
 import { Plus, MoreHorizontal, ExternalLink, Settings } from 'lucide-react'
@@ -13,27 +14,30 @@ import {
 import { cn } from '@kloudlite/lib'
 import type { Installation } from '@/lib/console/supabase-storage-service'
 import { NewInstallationDialog } from './new-installation-dialog'
+import { ContinueInstallationDialog } from './continue-installation-dialog'
 
 interface InstallationsListProps {
   installations: Installation[]
 }
 
 export function InstallationsList({ installations }: InstallationsListProps) {
+  const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'installed'>('all')
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
   const [showNewDialog, setShowNewDialog] = useState(false)
+  const [showContinueDialog, setShowContinueDialog] = useState(false)
+  const [continueInstallation, setContinueInstallation] = useState<Installation | null>(null)
 
   const allRef = useRef<HTMLButtonElement>(null)
   const pendingRef = useRef<HTMLButtonElement>(null)
   const installedRef = useRef<HTMLButtonElement>(null)
 
-  // Helper function to get installation status and next step
+  // Helper function to get installation status
   const getInstallationStatus = (installation: Installation) => {
     if (!installation.secretKey) {
       return {
         status: 'NOT INSTALLED',
         statusColor: 'bg-foreground/[0.06] text-foreground border border-foreground/10',
-        nextStep: `/api/installations/${installation.id}/continue`,
         isPending: true,
       }
     }
@@ -41,7 +45,6 @@ export function InstallationsList({ installations }: InstallationsListProps) {
       return {
         status: 'PENDING',
         statusColor: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
-        nextStep: `/api/installations/${installation.id}/continue`,
         isPending: true,
       }
     }
@@ -49,14 +52,12 @@ export function InstallationsList({ installations }: InstallationsListProps) {
       return {
         status: 'CONFIGURING',
         statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
-        nextStep: `/api/installations/${installation.id}/continue`,
         isPending: true,
       }
     }
     return {
       status: 'ACTIVE',
       statusColor: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
-      nextStep: null,
       isPending: false,
     }
   }
@@ -75,25 +76,31 @@ export function InstallationsList({ installations }: InstallationsListProps) {
     })
   }
 
-  // Calculate underline position and width
+  // Update underline position
   useEffect(() => {
-    const updateUnderline = () => {
+    const updatePosition = () => {
       let activeRef: HTMLButtonElement | null = null
       if (statusFilter === 'all') activeRef = allRef.current
       else if (statusFilter === 'pending') activeRef = pendingRef.current
       else if (statusFilter === 'installed') activeRef = installedRef.current
 
       if (activeRef) {
-        const { offsetLeft, offsetWidth } = activeRef
-        const underlineWidth = offsetWidth * 0.6
-        const underlineLeft = offsetLeft + (offsetWidth - underlineWidth) / 2
-        setUnderlineStyle({ left: underlineLeft, width: underlineWidth })
+        const fullWidth = activeRef.offsetWidth
+        const underlineWidth = fullWidth * 0.6 // 60% of button width
+        const leftOffset = activeRef.offsetLeft + (fullWidth - underlineWidth) / 2
+
+        setUnderlineStyle({
+          left: leftOffset,
+          width: underlineWidth
+        })
       }
     }
 
-    updateUnderline()
-    window.addEventListener('resize', updateUnderline)
-    return () => window.removeEventListener('resize', updateUnderline)
+    // Small delay to ensure layout is ready
+    setTimeout(updatePosition, 10)
+
+    window.addEventListener('resize', updatePosition)
+    return () => window.removeEventListener('resize', updatePosition)
   }, [statusFilter])
 
   const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
@@ -145,20 +152,17 @@ export function InstallationsList({ installations }: InstallationsListProps) {
               Installed
             </button>
 
-            {/* Animated underline */}
-            <div
-              className="absolute bottom-1 h-[2px] bg-primary transition-all duration-300 ease-out"
-              style={{
-                left: `${underlineStyle.left}px`,
-                width: `${underlineStyle.width}px`,
-              }}
-            />
+            {/* Animated underline with CSS transition */}
+            {underlineStyle.width > 0 && (
+              <div
+                className="absolute bottom-1 h-[2px] bg-primary transition-all duration-300 ease-out"
+                style={{
+                  left: `${underlineStyle.left}px`,
+                  width: `${underlineStyle.width}px`,
+                }}
+              />
+            )}
           </div>
-
-          <span className="text-muted-foreground text-sm font-medium">
-            {filteredInstallations.length}{' '}
-            {filteredInstallations.length === 1 ? 'installation' : 'installations'}
-          </span>
         </div>
         <Button size="lg" className="w-full sm:w-auto" onClick={() => setShowNewDialog(true)}>
           <Plus className="h-4 w-4" />
@@ -167,6 +171,11 @@ export function InstallationsList({ installations }: InstallationsListProps) {
       </div>
 
       <NewInstallationDialog open={showNewDialog} onOpenChange={setShowNewDialog} />
+      <ContinueInstallationDialog
+        open={showContinueDialog}
+        onOpenChange={setShowContinueDialog}
+        installation={continueInstallation}
+      />
 
       {/* Table */}
       {filteredInstallations.length > 0 ? (
@@ -191,7 +200,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
               </thead>
               <tbody className="bg-background divide-y divide-foreground/10">
                 {filteredInstallations.map((installation) => {
-                  const { status, statusColor, nextStep } = getInstallationStatus(installation)
+                  const { status, statusColor, isPending } = getInstallationStatus(installation)
                   // Validate subdomain before constructing URL
                   const isValidSubdomain =
                     installation.subdomain &&
@@ -258,9 +267,16 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {nextStep ? (
-                            <Button asChild variant="default" size="sm">
-                              <a href={nextStep}>Continue</a>
+                          {isPending ? (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => {
+                                setContinueInstallation(installation)
+                                setShowContinueDialog(true)
+                              }}
+                            >
+                              Continue
                             </Button>
                           ) : installationUrl ? (
                             <Button asChild variant="default" size="sm">
@@ -280,11 +296,11 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <Link href={`/installations/${installation.id}`}>
-                                  <Settings className="mr-2 h-4 w-4" />
-                                  Settings
-                                </Link>
+                              <DropdownMenuItem
+                                onSelect={() => router.push(`/installations/${installation.id}`)}
+                              >
+                                <Settings className="mr-2 h-4 w-4" />
+                                Settings
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

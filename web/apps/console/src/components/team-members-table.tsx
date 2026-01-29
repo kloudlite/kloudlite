@@ -86,9 +86,9 @@ export function TeamMembersTable({
   }
 
   return (
-    <div className="overflow-hidden border">
+    <div className="overflow-hidden border border-foreground/10">
       <table className="min-w-full">
-        <thead className="bg-muted/50 border-b">
+        <thead className="bg-muted/50 border-b border-foreground/10">
           <tr>
             <th className="text-muted-foreground px-6 py-3 text-left text-sm font-medium uppercase">
               Member
@@ -109,7 +109,7 @@ export function TeamMembersTable({
             )}
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody className="divide-y divide-foreground/10">
           {members.map((member) => {
             const RoleIcon = roleIcons[member.role]
             const isCurrentUser = member.userId === currentUserId

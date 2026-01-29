@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { Separator } from '@kloudlite/ui'
 import { Avatar, AvatarFallback, AvatarImage } from '@kloudlite/ui'
 import { Badge } from '@kloudlite/ui'
 import { User, Mail, Shield, Info } from 'lucide-react'
@@ -22,90 +21,85 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Profile Information */}
-      <div className="border border-foreground/10 p-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold">Profile Information</h2>
+    <div className="space-y-6">
+      {/* Profile Information Section */}
+      <div>
+        <div className="mb-5">
+          <h2 className="text-xl font-semibold">Profile Information</h2>
           <p className="text-muted-foreground mt-1 text-base">Your account details from {session.provider} OAuth</p>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-5">
           {/* Profile Picture */}
           <div className="flex items-start gap-6">
-            <Avatar className="ring-foreground/10 h-24 w-24 ring-2">
+            <Avatar className="ring-foreground/10 h-24 w-24 ring-1">
               <AvatarImage src={session.user.image} alt={session.user.name} />
               <AvatarFallback className="text-2xl">{getInitials(session.user.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-1 pt-2">
-              <label className="text-foreground text-base font-semibold">Profile Picture</label>
+              <label className="text-foreground text-base font-medium">Profile Picture</label>
               <p className="text-muted-foreground text-base">
                 Synced from your {session.provider} account
               </p>
             </div>
           </div>
 
-          <Separator />
+          <div className="h-px bg-foreground/10" />
 
           {/* Name */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <User className="text-muted-foreground h-4 w-4" />
-              <label className="text-foreground text-base font-semibold">Name</label>
+              <label className="text-foreground text-base font-medium">Name</label>
             </div>
             <div className="border-foreground/10 bg-muted/30 border px-4 py-3">
-              <p className="text-base font-medium">{session.user.name}</p>
+              <p className="text-base">{session.user.name}</p>
             </div>
-            <p className="text-muted-foreground text-base">
+            <p className="text-muted-foreground text-sm">
               Synced from your {session.provider} account
             </p>
           </div>
 
-          <Separator />
+          <div className="h-px bg-foreground/10" />
 
           {/* Email */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Mail className="text-muted-foreground h-4 w-4" />
-              <label className="text-foreground text-base font-semibold">Email Address</label>
+              <label className="text-foreground text-base font-medium">Email Address</label>
             </div>
             <div className="border-foreground/10 bg-muted/30 border px-4 py-3">
-              <p className="text-base font-medium">{session.user.email}</p>
+              <p className="text-base">{session.user.email}</p>
             </div>
-            <p className="text-muted-foreground text-base">
+            <p className="text-muted-foreground text-sm">
               Primary email from your {session.provider} account
             </p>
           </div>
-        </div>
-      </div>
 
-      {/* Authentication */}
-      <div className="border border-foreground/10 p-8">
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <Shield className="text-muted-foreground h-5 w-5" />
-            <h2 className="text-xl font-semibold">Authentication</h2>
-          </div>
-          <p className="text-muted-foreground mt-1 text-base">Your authentication provider information</p>
-        </div>
+          <div className="h-px bg-foreground/10" />
 
-        <div className="space-y-3">
-          <label className="text-foreground text-base font-semibold">OAuth Provider</label>
-          <div className="border-foreground/10 bg-muted/30 flex items-center gap-3 border px-4 py-3">
-            <Badge variant="outline" className="capitalize">
-              {session.provider}
-            </Badge>
-            <span className="text-muted-foreground text-base">
-              You&apos;re signed in with {session.provider}
-            </span>
+          {/* Authentication */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Shield className="text-muted-foreground h-4 w-4" />
+              <label className="text-foreground text-base font-medium">Authentication Provider</label>
+            </div>
+            <div className="border-foreground/10 bg-muted/30 flex items-center gap-3 border px-4 py-3">
+              <Badge variant="outline" className="capitalize">
+                {session.provider}
+              </Badge>
+              <span className="text-muted-foreground text-base">
+                You&apos;re signed in with {session.provider}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Info Note */}
-      <div className="bg-muted/50 flex items-start gap-2 border border-foreground/10 p-4">
+      <div className="bg-muted/30 flex items-start gap-3 border border-foreground/10 p-4">
         <Info className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
-        <p className="text-muted-foreground text-base">
+        <p className="text-muted-foreground text-sm">
           Your profile information is managed by your OAuth provider ({session.provider}). To update
           your name, email, or profile picture, please update them in your {session.provider}{' '}
           account settings.
