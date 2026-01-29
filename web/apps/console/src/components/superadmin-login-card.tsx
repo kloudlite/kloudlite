@@ -83,12 +83,12 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
         <div className="mb-6">
           <div className="flex items-center gap-2">
             <Shield className="text-muted-foreground h-5 w-5" />
-            <h2 className="text-xl font-semibold">Super Admin Access</h2>
+            <h2 className="text-lg font-semibold">Super Admin Access</h2>
           </div>
-          <p className="text-muted-foreground mt-1 text-base">Quick login URL for super admin access</p>
+          <p className="text-muted-foreground mt-1 text-sm">Quick login URL for super admin access</p>
         </div>
         <Alert>
-          <AlertDescription>
+          <AlertDescription className="text-sm">
             Super admin login is only available for active installations. Please ensure your
             installation is fully configured and active.
           </AlertDescription>
@@ -102,13 +102,13 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
       <div className="mb-6">
         <div className="flex items-center gap-2">
           <Shield className="text-primary h-5 w-5" />
-          <h2 className="text-xl font-semibold">Super Admin Access</h2>
+          <h2 className="text-lg font-semibold">Super Admin Access</h2>
         </div>
-        <p className="text-muted-foreground mt-1 text-base">Generate a one-time login URL for super admin access</p>
+        <p className="text-muted-foreground mt-1 text-sm">Generate a one-time login URL for super admin access</p>
       </div>
       <div className="space-y-4">
         <div>
-          <p className="text-muted-foreground text-base">
+          <p className="text-muted-foreground text-sm">
             Generate a temporary login URL that provides instant super admin access to your
             installation dashboard. The URL is valid for 5 minutes.
           </p>
@@ -116,12 +116,12 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription className="text-sm">{error}</AlertDescription>
           </Alert>
         )}
 
         {!loginUrl && (
-          <Button onClick={generateLoginUrl} disabled={loading} className="w-full sm:w-auto">
+          <Button onClick={generateLoginUrl} disabled={loading} size="default">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -138,18 +138,18 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
 
         {loginUrl && (
           <div className="space-y-3">
-            <div className="bg-muted border border-foreground/10 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-foreground text-base font-medium">Login URL</span>
+            <div className="bg-muted border border-foreground/10 rounded-lg p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-foreground text-sm font-medium">Login URL</span>
                 {timeRemaining !== null && (
-                  <div className="text-muted-foreground flex items-center gap-1 text-sm">
-                    <Clock className="h-3 w-3" />
+                  <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                    <Clock className="h-3.5 w-3.5" />
                     <span>Expires in {formatTime(timeRemaining)}</span>
                   </div>
                 )}
               </div>
-              <div className="bg-background flex items-center gap-2 border border-foreground/10 p-2">
-                <code className="text-foreground flex-1 overflow-x-auto text-sm">{loginUrl}</code>
+              <div className="bg-background flex items-center gap-2 border border-foreground/10 rounded-md p-3">
+                <code className="text-foreground flex-1 overflow-x-auto text-xs">{loginUrl}</code>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -177,8 +177,8 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
               </Button>
             </div>
 
-            <Alert>
-              <AlertDescription className="text-sm">
+            <Alert className="bg-blue-500/5 border-blue-500/20">
+              <AlertDescription className="text-xs text-muted-foreground">
                 This URL provides full super admin access. Keep it secure and do not share it with
                 unauthorized users.
               </AlertDescription>

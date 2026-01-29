@@ -17,7 +17,7 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Kloudlite',
+  title: 'kloudlite . console',
   description: 'Development environments platform',
 }
 
@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${openSans.variable} ${ibmPlexMono.variable} font-sans`}>
         <Providers>{children}</Providers>
-        <Toaster position="top-center" richColors />
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   )

@@ -11,9 +11,11 @@ interface InstallationsHeaderProps {
     email: string
     image?: string
   }
+  installationName?: string
+  installationDomain?: string
 }
 
-export function InstallationsHeader({ user }: InstallationsHeaderProps) {
+export function InstallationsHeader({ user, installationName, installationDomain }: InstallationsHeaderProps) {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -33,9 +35,15 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
     <header className="bg-background border-b border-foreground/10 sticky top-0 z-50 backdrop-blur-sm bg-background/95">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
-        <Link href="/installations" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <KloudliteLogo className="h-7 sm:h-8" linkToHome={false} />
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/installations" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+            <KloudliteLogo className="h-7 sm:h-8" linkToHome={false} />
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground text-sm font-light">·</span>
+              <span className="text-foreground text-sm font-bold tracking-wide">console</span>
+            </div>
+          </Link>
+        </div>
 
         {/* User Menu */}
         <DropdownMenu>
@@ -66,7 +74,10 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400 cursor-pointer focus:text-red-600 dark:focus:text-red-400">
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-600 dark:text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-600 dark:focus:text-red-400 hover:bg-red-500/10"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </DropdownMenuItem>

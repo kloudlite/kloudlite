@@ -2,11 +2,26 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kloudlite/ui'
-import { Loader2, Copy, CheckCircle2 } from 'lucide-react'
+import {
+  Button,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem
+} from '@kloudlite/ui'
+import { Loader2, Copy, CheckCircle2, ChevronsUpDown, Check } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
-import { WorldMap } from '@/components/world-map'
 import { toast } from 'sonner'
+import { cn } from '@kloudlite/lib'
 
 interface SessionData {
   user: {
@@ -132,6 +147,9 @@ export default function InstallPage() {
   const [awsRegion, setAwsRegion] = useState('')
   const [gcpRegion, setGcpRegion] = useState('us-central1')
   const [azureLocation, setAzureLocation] = useState('eastus')
+  const [awsOpen, setAwsOpen] = useState(false)
+  const [gcpOpen, setGcpOpen] = useState(false)
+  const [azureOpen, setAzureOpen] = useState(false)
   const [session, setSession] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [verificationStatus, setVerificationStatus] = useState<'waiting' | 'verified' | 'dns_pending' | 'complete' | 'error'>(
@@ -231,30 +249,90 @@ export default function InstallPage() {
   const CLOUD_PROVIDERS = getCloudProviderCommands(session.installationKey, awsRegion, gcpRegion, azureLocation)
 
   return (
-    <>
-      {/* Header */}
-      <div className="mb-10 text-center">
-        <h1 className="text-foreground mb-3 text-3xl font-bold tracking-tight">
-          Install Kloudlite in Your Cloud
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Run the installation command on your cloud provider
-        </p>
+    <div className="lg:flex lg:gap-12">
+      {/* Left Column - Information */}
+      <div className="hidden lg:block lg:w-[400px] lg:flex-shrink-0">
+        <div className="sticky top-6 space-y-6">
+          {/* Background Icon */}
+          <div className="absolute -top-4 -right-4 -z-10 opacity-5">
+            <svg width="300" height="300" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+
+          {/* What's Next Card */}
+          <div className="border border-foreground/10 rounded-lg p-6 bg-muted/20">
+            <h3 className="text-sm font-semibold text-foreground mb-3">What happens next?</h3>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">✓</div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Create installation</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Set up your installation details</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">2</div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Deploy to cloud</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Install Kloudlite in your infrastructure</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-semibold">3</div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Verify & complete</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Confirm your installation is ready</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Tips Card */}
+          <div className="border border-foreground/10 rounded-lg p-6 bg-background">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Quick Tips</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                <span>Make sure your cloud provider CLI is configured</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                <span>The installation takes approximately 10-15 minutes</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                <span>Keep this window open while the deployment runs</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-      <InstallationProgress currentStep={2} />
-
-      {/* Installation Commands Section */}
-      <div className="mt-10">
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-foreground">Installation Command</h2>
+      {/* Right Column - Main Content */}
+      <div className="space-y-6 lg:flex-1 lg:min-w-0">
+        {/* Header */}
+        <div>
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+            Install Kloudlite in Your Cloud
+          </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Choose your cloud provider and run the command in your terminal
+            Run the installation command on your cloud provider
           </p>
         </div>
-        <div className="space-y-6">
+
+        {/* Installation Commands Card */}
+        <div className="border border-foreground/10 rounded-lg bg-background">
+          <div className="p-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground">Installation Command</h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Choose your cloud provider and run the command in your terminal
+              </p>
+            </div>
+            <div className="space-y-6">
           <Tabs value={selectedProvider} onValueChange={setSelectedProvider}>
-            <TabsList className="grid w-full grid-cols-3 p-1 rounded-sm">
+            <TabsList className="p-1 rounded-sm">
               <TabsTrigger value="aws" className="text-sm font-medium rounded-sm">
                 AWS
               </TabsTrigger>
@@ -273,21 +351,49 @@ export default function InstallPage() {
                   {key === 'aws' && (
                     <div>
                       <p className="text-foreground mb-3 text-sm font-medium">Select AWS Region:</p>
-                      <Select
-                        value={awsRegion || 'default'}
-                        onValueChange={(val) => setAwsRegion(val === 'default' ? '' : val)}
-                      >
-                        <SelectTrigger className="w-full md:w-80 rounded-sm border-border/80">
-                          <SelectValue placeholder="Select a region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AWS_REGIONS.map((region) => (
-                            <SelectItem key={region.value || 'default'} value={region.value || 'default'}>
-                              {region.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={awsOpen} onOpenChange={setAwsOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={awsOpen}
+                            className="w-full md:w-80 justify-between rounded-sm"
+                          >
+                            {awsRegion
+                              ? AWS_REGIONS.find((region) => region.value === awsRegion)?.label
+                              : "Use AWS CLI default region"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full md:w-80 p-0">
+                          <Command>
+                            <CommandInput placeholder="Search regions..." />
+                            <CommandList>
+                              <CommandEmpty>No region found.</CommandEmpty>
+                              <CommandGroup>
+                                {AWS_REGIONS.map((region) => (
+                                  <CommandItem
+                                    key={region.value || 'default'}
+                                    value={region.label}
+                                    onSelect={() => {
+                                      setAwsRegion(region.value || '')
+                                      setAwsOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        awsRegion === region.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {region.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   )}
 
@@ -295,21 +401,49 @@ export default function InstallPage() {
                   {key === 'gcp' && (
                     <div>
                       <p className="text-foreground mb-3 text-sm font-medium">Select GCP Region:</p>
-                      <Select
-                        value={gcpRegion}
-                        onValueChange={setGcpRegion}
-                      >
-                        <SelectTrigger className="w-full md:w-80 rounded-sm border-border/80">
-                          <SelectValue placeholder="Select a region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {GCP_REGIONS.map((region) => (
-                            <SelectItem key={region.value} value={region.value}>
-                              {region.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={gcpOpen} onOpenChange={setGcpOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={gcpOpen}
+                            className="w-full md:w-80 justify-between rounded-sm"
+                          >
+                            {gcpRegion
+                              ? GCP_REGIONS.find((region) => region.value === gcpRegion)?.label
+                              : "Select a region"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full md:w-80 p-0">
+                          <Command>
+                            <CommandInput placeholder="Search regions..." />
+                            <CommandList>
+                              <CommandEmpty>No region found.</CommandEmpty>
+                              <CommandGroup>
+                                {GCP_REGIONS.map((region) => (
+                                  <CommandItem
+                                    key={region.value}
+                                    value={region.label}
+                                    onSelect={() => {
+                                      setGcpRegion(region.value)
+                                      setGcpOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        gcpRegion === region.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {region.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   )}
 
@@ -317,29 +451,51 @@ export default function InstallPage() {
                   {key === 'azure' && (
                     <div>
                       <p className="text-foreground mb-3 text-sm font-medium">Select Azure Location:</p>
-                      <Select
-                        value={azureLocation}
-                        onValueChange={setAzureLocation}
-                      >
-                        <SelectTrigger className="w-full md:w-80 rounded-sm border-border/80">
-                          <SelectValue placeholder="Select a location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AZURE_LOCATIONS.map((location) => (
-                            <SelectItem key={location.value} value={location.value}>
-                              {location.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={azureOpen} onOpenChange={setAzureOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={azureOpen}
+                            className="w-full md:w-80 justify-between rounded-sm"
+                          >
+                            {azureLocation
+                              ? AZURE_LOCATIONS.find((location) => location.value === azureLocation)?.label
+                              : "Select a location"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full md:w-80 p-0">
+                          <Command>
+                            <CommandInput placeholder="Search locations..." />
+                            <CommandList>
+                              <CommandEmpty>No location found.</CommandEmpty>
+                              <CommandGroup>
+                                {AZURE_LOCATIONS.map((location) => (
+                                  <CommandItem
+                                    key={location.value}
+                                    value={location.label}
+                                    onSelect={() => {
+                                      setAzureLocation(location.value)
+                                      setAzureOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        azureLocation === location.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {location.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   )}
-
-                  {/* World Map showing selected region */}
-                  <WorldMap
-                    selectedRegion={key === 'aws' ? awsRegion : key === 'gcp' ? gcpRegion : azureLocation}
-                    provider={key as 'aws' | 'gcp' | 'azure'}
-                  />
 
                   <div>
                     <p className="text-foreground mb-3 text-base font-semibold">Prerequisites:</p>
@@ -381,30 +537,32 @@ export default function InstallPage() {
               </TabsContent>
             ))}
           </Tabs>
+            </div>
+          </div>
+        </div>
+
+        {/* Verification Status */}
+        <div className="flex items-center justify-center gap-3 text-base">
+          {verificationStatus === 'waiting' && (
+            <>
+              <Loader2 className="size-4 animate-spin text-blue-600" />
+              <span className="text-muted-foreground">Waiting for deployment...</span>
+            </>
+          )}
+          {verificationStatus === 'dns_pending' && (
+            <>
+              <Loader2 className="size-4 animate-spin text-yellow-600" />
+              <span className="text-yellow-600">Deployment verified. Configuring DNS...</span>
+            </>
+          )}
+          {verificationStatus === 'complete' && (
+            <>
+              <CheckCircle2 className="size-4 text-green-600" />
+              <span className="text-green-600 font-medium">Installation complete! Redirecting...</span>
+            </>
+          )}
         </div>
       </div>
-
-      {/* Compact Verification Status */}
-      <div className="mt-6 flex items-center justify-center gap-3 text-base">
-        {verificationStatus === 'waiting' && (
-          <>
-            <Loader2 className="size-4 animate-spin text-blue-600" />
-            <span className="text-muted-foreground">Waiting for deployment...</span>
-          </>
-        )}
-        {verificationStatus === 'dns_pending' && (
-          <>
-            <Loader2 className="size-4 animate-spin text-yellow-600" />
-            <span className="text-yellow-600">Deployment verified. Configuring DNS...</span>
-          </>
-        )}
-        {verificationStatus === 'complete' && (
-          <>
-            <CheckCircle2 className="size-4 text-green-600" />
-            <span className="text-green-600 font-medium">Installation complete! Redirecting...</span>
-          </>
-        )}
-      </div>
-    </>
+    </div>
   )
 }
