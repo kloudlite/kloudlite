@@ -236,6 +236,8 @@ export async function getInstallationById(installationId: string): Promise<Insta
   return {
     id: data.id,
     userId: data.user_id,
+    name: data.name || undefined,
+    description: data.description || undefined,
     installationKey: data.installation_key,
     secretKey: data.secret_key || undefined,
     hasCompletedInstallation: data.has_completed_installation,

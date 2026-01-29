@@ -1,16 +1,10 @@
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kloudlite/ui'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getInstallationById, checkInstallationDomainStatus, getMemberRole } from '@/lib/console/supabase-storage-service'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
-import { InstallationDetailsTabs } from '@/components/installation-details-tabs'
-import { InstallationsHeader } from '@/components/installations-header'
 import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
-import { GridContainer } from '@/components/grid-container'
-import { Button } from '@kloudlite/ui'
-import Link from 'next/link'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -51,28 +45,28 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
   const getStatus = () => {
     if (!installation.secretKey) {
       return {
-        label: 'Not Installed',
-        color: 'bg-gray-500/10 text-gray-600',
+        label: 'NOT INSTALLED',
+        color: 'bg-foreground/[0.06] text-foreground border border-foreground/10',
         description: 'Installation has not been deployed yet',
       }
     }
     if (!installation.subdomain) {
       return {
-        label: 'Pending Domain',
-        color: 'bg-yellow-500/10 text-yellow-600',
+        label: 'PENDING',
+        color: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
         description: 'Domain configuration is pending',
       }
     }
     if (!installation.deploymentReady) {
       return {
-        label: 'Configuring',
-        color: 'bg-blue-500/10 text-blue-600',
+        label: 'CONFIGURING',
+        color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
         description: 'Installation is being configured',
       }
     }
     return {
-      label: 'Active',
-      color: 'bg-green-500/10 text-green-600',
+      label: 'ACTIVE',
+      color: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
       description: 'Installation is active and running',
     }
   }
@@ -84,101 +78,70 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
     : null
 
   return (
-    <div className="bg-background min-h-screen">
-      <InstallationsHeader user={session.user} />
+    <div className="space-y-6">
+      {/* Status & Details Card */}
+      <div className="border border-foreground/10 rounded-lg p-6 bg-background">
+        <InstallationDetailsCard
+          installation={installation}
+          status={status}
+          domain={domain}
+          installationUrl={installationUrl}
+        />
+      </div>
 
-      {/* Content */}
-      <main className="mx-auto max-w-5xl px-6 py-16">
-        <GridContainer>
-          {/* Back Button */}
-          <div className="px-4 pt-6 pb-4">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/installations">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Installations
-              </Link>
-            </Button>
+      {/* Super Admin Login Card */}
+      {installation.secretKey && installation.subdomain && (
+        <div className="border border-foreground/10 rounded-lg p-6 bg-background">
+          <SuperAdminLoginCard
+            installationId={installation.id}
+            isActive={status.label === 'Active'}
+          />
+        </div>
+      )}
+
+      {/* Danger Zone - Only for Owner */}
+      {userRole === 'owner' && (
+        <div className="border border-red-500/20 rounded-lg p-6 bg-red-500/5">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="text-red-600 dark:text-red-400 h-5 w-5" />
+              <h2 className="text-red-600 dark:text-red-400 text-xl font-semibold">Danger Zone</h2>
+            </div>
+            <p className="text-muted-foreground text-sm">Irreversible actions that affect your installation</p>
           </div>
 
-          {/* Title */}
-          <div className="border-b border-foreground/10 px-8 pt-4 pb-10">
-            <h1 className="text-3xl font-bold tracking-tight">{installation.name}</h1>
-            {installation.description && (
-              <p className="text-muted-foreground mt-2 text-base">{installation.description}</p>
-            )}
-          </div>
-
-          {/* Tabs */}
-          <div className="px-8">
-            <InstallationDetailsTabs installationId={id} />
-          </div>
-
-          {/* Status & Details Card */}
-          <div className="border-b border-foreground/10 px-8 py-10">
-            <InstallationDetailsCard
-              installation={installation}
-              status={status}
-              domain={domain}
-              installationUrl={installationUrl}
-            />
-          </div>
-
-          {/* Super Admin Login Card */}
-          {installation.secretKey && installation.subdomain && (
-            <div className="border-b border-foreground/10 px-8 py-10">
-              <SuperAdminLoginCard
-                installationId={installation.id}
-                isActive={status.label === 'Active'}
-              />
+          {installation.secretKey && (
+            <div className="border border-amber-500/20 bg-amber-500/10 rounded-lg p-4 mb-6">
+              <p className="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                Warning: Destructive Action
+              </p>
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                Force deleting this installation will immediately remove it from our system and
+                attempt to uninstall Kloudlite from your cluster. For a cleaner uninstallation,
+                it&apos;s recommended to uninstall from your installation&apos;s dashboard
+                settings first, then delete the record here.
+              </p>
             </div>
           )}
 
-          {/* Danger Zone - Only for Owner */}
-          {userRole === 'owner' && (
-            <div className="px-8 py-10">
-              <Card className="border-destructive">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="text-destructive h-5 w-5" />
-                    <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                  </div>
-                  <CardDescription>Irreversible actions that affect your installation</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                {installation.secretKey && (
-                  <div className="border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
-                    <p className="mb-2 text-base font-semibold text-amber-900 dark:text-amber-200">
-                      Warning: Destructive Action
-                    </p>
-                    <p className="text-base text-amber-900 dark:text-amber-200">
-                      Force deleting this installation will immediately remove it from our system and
-                      attempt to uninstall Kloudlite from your cluster. For a cleaner uninstallation,
-                      it&apos;s recommended to uninstall from your installation&apos;s dashboard
-                      settings first, then delete the record here.
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-foreground text-base font-semibold">Force Delete Installation</p>
-                  <p className="text-muted-foreground mt-1 text-base">
-                    {installation.secretKey
-                      ? 'Forcefully delete this installation and uninstall Kloudlite from your cluster. This action cannot be undone.'
-                      : 'Permanently delete this installation record. This action cannot be undone.'}
-                  </p>
-                </div>
-                <DeleteInstallationButton
-                  installationId={installation.id}
-                  installationName={installation.name}
-                  hasSecretKey={!!installation.secretKey}
-                  variant="button"
-                />
-              </CardContent>
-            </Card>
+          <div className="space-y-4">
+            <div>
+              <p className="text-foreground text-sm font-semibold">Force Delete Installation</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {installation.secretKey
+                  ? 'Forcefully delete this installation and uninstall Kloudlite from your cluster. This action cannot be undone.'
+                  : 'Permanently delete this installation record. This action cannot be undone.'}
+              </p>
+            </div>
+            <DeleteInstallationButton
+              installationId={installation.id}
+              installationName={installation.name}
+              hasSecretKey={!!installation.secretKey}
+              variant="button"
+            />
           </div>
-          )}
-        </GridContainer>
-      </main>
+        </div>
+      )}
     </div>
   )
 }

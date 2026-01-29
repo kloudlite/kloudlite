@@ -30,16 +30,18 @@ export function InstallationDetailsCard({
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-xl font-semibold">Installation Details</h2>
-        <p className="text-muted-foreground mt-1 text-base">View and manage your installation configuration</p>
+        <h2 className="text-lg font-semibold text-foreground">Installation Details</h2>
+        <p className="text-muted-foreground mt-1 text-sm">View and manage your installation configuration</p>
       </div>
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Status */}
         <div>
-          <label className="text-foreground text-base font-medium">Status</label>
+          <label className="text-foreground text-sm font-medium">Status</label>
           <div className="mt-2 flex items-center gap-3">
-            <Badge className={status.color}>{status.label}</Badge>
-            <span className="text-muted-foreground text-base">{status.description}</span>
+            <span className={`inline-flex px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-md border ${status.color}`}>
+              {status.label}
+            </span>
+            <span className="text-muted-foreground text-sm">{status.description}</span>
           </div>
         </div>
 
@@ -47,9 +49,9 @@ export function InstallationDetailsCard({
 
         {/* Installation Key */}
         <div>
-          <label className="text-foreground text-base font-medium">Installation Key</label>
+          <label className="text-foreground text-sm font-medium">Installation Key</label>
           <div className="mt-2 flex items-center gap-2">
-            <code className="bg-muted flex-1 px-3 py-2 font-mono text-base">
+            <code className="bg-muted border border-foreground/10 flex-1 px-3 py-2 rounded-md font-mono text-sm">
               {installation.installationKey}
             </code>
             <Button
@@ -60,7 +62,7 @@ export function InstallationDetailsCard({
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-muted-foreground mt-1 text-base">
+          <p className="text-muted-foreground mt-2 text-xs">
             Use this key during installation deployment
           </p>
         </div>
@@ -70,13 +72,13 @@ export function InstallationDetailsCard({
           <>
             <div className="h-px bg-foreground/10" />
             <div>
-              <label className="text-foreground text-base font-medium">Installation URL</label>
+              <label className="text-foreground text-sm font-medium">Installation URL</label>
               <div className="mt-2 flex items-center gap-2">
                 <a
                   href={installationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary flex-1 font-mono text-base hover:underline"
+                  className="text-primary flex-1 font-mono text-sm hover:underline"
                 >
                   {installation.subdomain}.{domain}
                 </a>
@@ -89,7 +91,7 @@ export function InstallationDetailsCard({
                 </Button>
               </div>
               {installation.reservedAt && (
-                <p className="text-muted-foreground mt-1 text-sm">
+                <p className="text-muted-foreground mt-2 text-xs">
                   Reserved on {new Date(installation.reservedAt).toLocaleDateString()}
                 </p>
               )}
@@ -99,17 +101,17 @@ export function InstallationDetailsCard({
 
         {/* Timestamps */}
         <div className="h-px bg-foreground/10" />
-        <div className="grid grid-cols-2 gap-4 text-base">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-foreground font-medium">Created</label>
-            <p className="text-muted-foreground mt-1">
+            <label className="text-foreground text-sm font-medium">Created</label>
+            <p className="text-muted-foreground mt-2 text-sm">
               {new Date(installation.createdAt).toLocaleString()}
             </p>
           </div>
           {installation.lastHealthCheck && (
             <div>
-              <label className="text-foreground font-medium">Last Health Check</label>
-              <p className="text-muted-foreground mt-1">
+              <label className="text-foreground text-sm font-medium">Last Health Check</label>
+              <p className="text-muted-foreground mt-2 text-sm">
                 {new Date(installation.lastHealthCheck).toLocaleString()}
               </p>
             </div>

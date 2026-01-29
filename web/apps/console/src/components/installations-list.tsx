@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@kloudlite/ui'
-import { Plus, MoreHorizontal, ExternalLink, Settings } from 'lucide-react'
+import { Button, Input } from '@kloudlite/ui'
+import { MoreHorizontal, ExternalLink, Settings, Search } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,7 @@ interface InstallationsListProps {
 export function InstallationsList({ installations }: InstallationsListProps) {
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'installed'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
 
   const allRef = useRef<HTMLButtonElement>(null)
@@ -68,6 +69,18 @@ export function InstallationsList({ installations }: InstallationsListProps) {
     filteredInstallations = filteredInstallations.filter((install) => {
       const { isPending } = getInstallationStatus(install)
       return !isPending
+    })
+  }
+
+  // Apply search filter
+  if (searchQuery.trim()) {
+    filteredInstallations = filteredInstallations.filter((install) => {
+      const query = searchQuery.toLowerCase()
+      return (
+        install.name.toLowerCase().includes(query) ||
+        install.description?.toLowerCase().includes(query) ||
+        install.subdomain?.toLowerCase().includes(query)
+      )
     })
   }
 
@@ -159,10 +172,16 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             )}
           </div>
         </div>
-        <Button size="default" className="w-full sm:w-auto" onClick={() => router.push('/installations/new')}>
-          <Plus className="h-4 w-4" />
-          New Installation
-        </Button>
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search installations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
       </div>
 
       {/* Table */}
@@ -172,16 +191,16 @@ export function InstallationsList({ installations }: InstallationsListProps) {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-foreground/10 bg-muted/30">
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
+                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[35%]">
                     Name
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide hidden md:table-cell">
+                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[35%] hidden md:table-cell">
                     Domain
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
+                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[15%]">
                     Status
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-right text-xs font-semibold tracking-wide">
+                  <th className="text-muted-foreground px-6 py-3.5 text-right text-xs font-semibold tracking-wide w-[15%]">
                     Actions
                   </th>
                 </tr>
@@ -201,18 +220,16 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                   return (
                     <tr key={installation.id} className="group hover:bg-muted/20 transition-colors relative">
                       <td className="px-6 py-3.5 relative">
-                        {/* Left accent bar */}
-                        <div className="absolute left-0 top-0 w-[2px] h-full bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top" />
-
                         <div className="relative z-10">
-                          <div className="text-sm font-medium text-foreground group-hover:text-foreground transition-colors">
+                          <Link
+                            href={`/installations/${installation.id}`}
+                            className="text-sm font-medium text-foreground group-hover:text-primary transition-colors cursor-pointer hover:cursor-pointer"
+                          >
                             {installation.name}
+                          </Link>
+                          <div className="text-muted-foreground/60 mt-0.5 text-xs line-clamp-1 leading-relaxed">
+                            {installation.description || installation.name}
                           </div>
-                          {installation.description && (
-                            <div className="text-muted-foreground/60 mt-0.5 text-xs line-clamp-1 leading-relaxed">
-                              {installation.description}
-                            </div>
-                          )}
                           {/* Show domain on mobile */}
                           <div className="md:hidden mt-1">
                             {installationUrl ? (
@@ -255,23 +272,25 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                       </td>
                       <td className="px-6 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {isPending ? (
+                          {isPending && (
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={() => router.push(`/installations/${installation.id}`)}
+                              onClick={() => {
+                                // Route to appropriate installation step
+                                if (!installation.secretKey || !installation.deploymentReady) {
+                                  // Not installed or still deploying → go to install step
+                                  router.push('/installations/new/install')
+                                } else if (!installation.subdomain) {
+                                  // No subdomain → go to details step
+                                  router.push('/installations/new')
+                                } else {
+                                  // Fallback to installation details
+                                  router.push(`/installations/${installation.id}`)
+                                }
+                              }}
                             >
                               Continue
-                            </Button>
-                          ) : installationUrl ? (
-                            <Button asChild variant="default" size="sm">
-                              <a href={installationUrl} target="_blank" rel="noopener noreferrer">
-                                Open
-                              </a>
-                            </Button>
-                          ) : (
-                            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-                              <Link href={`/installations/${installation.id}`}>Details</Link>
                             </Button>
                           )}
                           <DropdownMenu>
@@ -281,6 +300,14 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              {installationUrl && (
+                                <DropdownMenuItem asChild>
+                                  <a href={installationUrl} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    Open
+                                  </a>
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
                                 onSelect={() => router.push(`/installations/${installation.id}`)}
                               >
@@ -302,26 +329,24 @@ export function InstallationsList({ installations }: InstallationsListProps) {
         <div className="border border-foreground/10 rounded-lg py-12 text-center bg-muted/10">
           <div className="mx-auto max-w-md px-4">
             <div className="mx-auto w-10 h-10 bg-muted rounded-lg border border-foreground/10 flex items-center justify-center mb-3">
-              <Plus className="h-4 w-4 text-muted-foreground" />
+              <Search className="h-4 w-4 text-muted-foreground" />
             </div>
             <h3 className="text-foreground text-sm font-semibold mb-1">
-              {statusFilter === 'pending'
-                ? 'No pending installations'
-                : statusFilter === 'installed'
-                  ? 'No active installations'
-                  : 'No installations'}
+              {searchQuery.trim()
+                ? 'No installations found'
+                : statusFilter === 'pending'
+                  ? 'No pending installations'
+                  : statusFilter === 'installed'
+                    ? 'No active installations'
+                    : 'No installations'}
             </h3>
             <p className="text-muted-foreground text-sm mb-5 leading-relaxed">
-              {statusFilter === 'all'
-                ? 'Create your first installation to get started'
-                : 'Adjust filters to see more results'}
+              {searchQuery.trim()
+                ? 'Try adjusting your search query or filters'
+                : statusFilter === 'all'
+                  ? 'Create your first installation to get started'
+                  : 'Adjust filters to see more results'}
             </p>
-            {statusFilter === 'all' && (
-              <Button size="default" onClick={() => router.push('/installations/new')}>
-                <Plus className="h-4 w-4" />
-                New Installation
-              </Button>
-            )}
           </div>
         </div>
       )}

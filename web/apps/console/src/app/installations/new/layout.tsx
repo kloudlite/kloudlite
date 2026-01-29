@@ -10,10 +10,10 @@ interface InstallationLayoutProps {
 
 export default function InstallationLayout({ children }: InstallationLayoutProps) {
   return (
-    <div className="bg-background min-h-screen border-x border-foreground/10 mx-auto max-w-3xl">
-      <div className="px-8 py-6">
+    <div className="bg-background min-h-screen">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8">
         {/* Back button */}
-        <div className="mb-6">
+        <div className="mb-8">
           <Link
             href="/installations"
             className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors duration-300 text-sm"
