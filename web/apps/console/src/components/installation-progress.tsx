@@ -27,24 +27,24 @@ interface InstallationProgressProps {
 
 export function InstallationProgress({ currentStep }: InstallationProgressProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       {steps.map((step, index) => (
-        <div key={step.number} className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
+        <div key={step.number} className="flex items-center gap-1">
+          <div className="flex items-center gap-2.5">
             <div
               className={cn(
-                'flex size-6 items-center justify-center text-xs font-semibold transition-all duration-300 border rounded-full',
+                'flex size-7 items-center justify-center text-xs font-semibold transition-all rounded-full',
                 currentStep > step.number
-                  ? 'bg-primary text-primary-foreground border-primary'
+                  ? 'bg-primary text-primary-foreground'
                   : currentStep === step.number
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background border-border text-muted-foreground',
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground',
               )}
             >
               {currentStep > step.number ? (
-                <Check className="size-3 stroke-[3]" />
+                <Check className="size-3.5 stroke-[2.5]" />
               ) : (
-                <span className="text-[11px]">{step.number}</span>
+                <span>{step.number}</span>
               )}
             </div>
             <span
@@ -57,7 +57,7 @@ export function InstallationProgress({ currentStep }: InstallationProgressProps)
             </span>
           </div>
           {index < steps.length - 1 && (
-            <div className="w-8 h-px bg-border mx-1" />
+            <div className="w-6 h-px bg-foreground/10 mx-2" />
           )}
         </div>
       ))}
