@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${openSans.variable} ${ibmPlexMono.variable} font-sans`}>
+      <body className={`${openSans.variable} ${ibmPlexMono.variable} font-sans h-screen overflow-hidden`}>
         <Providers>{children}</Providers>
         <Toaster position="bottom-right" richColors />
       </body>
