@@ -6,7 +6,7 @@ import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
 import { GridContainer } from '@/components/grid-container'
 import { PendingInvitationsBanner } from '@/components/pending-invitations-banner'
-import { Button } from '@kloudlite/ui'
+import { Button, ScrollArea } from '@kloudlite/ui'
 import { Plus } from 'lucide-react'
 
 export default async function InstallationsPage() {
@@ -27,30 +27,32 @@ export default async function InstallationsPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background h-screen flex flex-col">
       <InstallationsHeader user={session.user} />
       <PendingInvitationsBanner />
 
-      <main className="mx-auto max-w-7xl px-6 lg:px-12 py-8">
-        {/* Page Header */}
-        <div className="flex items-center justify-between border-b border-foreground/10 pb-6 mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Installations</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Manage and monitor your cloud deployments
-            </p>
+      <ScrollArea className="flex-1">
+        <main className="mx-auto max-w-7xl px-6 lg:px-12 py-8">
+          {/* Page Header */}
+          <div className="flex items-center justify-between border-b border-foreground/10 pb-6 mb-6">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">Installations</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Manage and monitor your cloud deployments
+              </p>
+            </div>
+            <Link href="/installations/new">
+              <Button size="default">
+                <Plus className="h-4 w-4" />
+                New Installation
+              </Button>
+            </Link>
           </div>
-          <Link href="/installations/new">
-            <Button size="default">
-              <Plus className="h-4 w-4" />
-              New Installation
-            </Button>
-          </Link>
-        </div>
 
-        {/* Installations List with Filter */}
-        <InstallationsList installations={installations} />
-      </main>
+          {/* Installations List with Filter */}
+          <InstallationsList installations={installations} />
+        </main>
+      </ScrollArea>
     </div>
   )
 }
