@@ -136,6 +136,7 @@ import {
   User,
 } from "lucide-react"
 import { useState } from "react"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 
 function ComponentSection({
   title,
@@ -160,6 +161,12 @@ export default function ComponentsPage() {
 
   return (
     <TooltipProvider>
+      <div className="fixed top-4 right-4 z-50 bg-background/80 backdrop-blur-sm border border-foreground/10 rounded-lg p-3 shadow-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Theme:</span>
+          <ThemeSwitcher />
+        </div>
+      </div>
       <div className="container mx-auto py-10 px-4 max-w-6xl">
         <div className="mb-10">
           <h1 className="text-4xl font-bold mb-2">Component Library</h1>
