@@ -28,7 +28,13 @@ export default async function InstallationLayout({ children, params }: LayoutPro
   }
 
   // Check if user has access to this installation
-  const userRole = await getMemberRole(id, session.user.id)
+  // First check installation_members table, then fallback to checking if user is the owner
+  let userRole = await getMemberRole(id, session.user.id)
+
+  // If not found in members table, check if user is the installation owner (legacy support)
+  if (!userRole && installation.userId === session.user.id) {
+    userRole = 'owner'
+  }
 
   if (!userRole) {
     redirect('/installations')

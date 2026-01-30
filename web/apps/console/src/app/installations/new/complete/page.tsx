@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
-import { ExternalLink, Loader2, Copy, PartyPopper, Clock, AlertCircle } from 'lucide-react'
-import { InstallationProgress } from '@/components/installation-progress'
+import { ExternalLink, Loader2, Copy, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface InstallationData {
@@ -126,205 +125,236 @@ export default function CompletePage() {
     return null
   }
 
-  // Render waiting state while installation is not yet active
-  const renderWaitingState = () => (
-    <div className="w-full">
-      <div className="mb-10 text-center">
-        <div className="mb-4 flex justify-center">
-          <div className="flex size-16 items-center justify-center bg-info/10 rounded-full">
-            <Clock className="size-8 text-info animate-pulse" />
-          </div>
-        </div>
-        <h1 className="text-foreground mb-2 text-3xl font-semibold tracking-tight">Setting Up Your Installation</h1>
-        <p className="text-muted-foreground text-sm">Please wait while your installation becomes active</p>
-      </div>
+  const isActive = activeStatus === 'active'
 
-      <InstallationProgress currentStep={3} />
-
-      <div className="space-y-6 mt-10">
-        <div className="border border-border/80 p-8 rounded-sm">
-          <div className="mb-6">
-            <div className="flex items-center gap-2">
-              <Loader2 className="size-5 animate-spin" />
-              <h2 className="text-xl font-semibold text-foreground">Waiting for Installation to Become Active</h2>
-            </div>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Your installation is being set up. This usually takes 1-3 minutes.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <div className="bg-foreground/[0.02] p-4 rounded-sm border border-border/60">
-              <p className="mb-2 text-sm font-medium text-foreground">Installation Dashboard URL:</p>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground font-mono text-lg">
-                  {installationData?.subdomain}.
-                  {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => installationData && copyToClipboard(installationData.url, 'URL')}
-                >
-                  <Copy className="mr-2 size-3" />
-                  Copy
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 p-4 rounded-sm">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="size-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+  return (
+    <div className="lg:flex lg:gap-12">
+      {/* Left Column - Information */}
+      <div className="hidden lg:block lg:w-[400px] lg:flex-shrink-0">
+        <div className="sticky top-6 space-y-6">
+          {/* What's Next Card */}
+          <div className="border border-foreground/10 rounded-lg p-6 bg-muted/20">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Installation Progress</h3>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                  <CheckCircle2 className="w-3 h-3" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
-                    Installation in Progress
-                  </p>
-                  <p className="text-xs text-blue-800 dark:text-blue-300">
-                    We&apos;re checking if your installation is ready. Checked {checkCount} time{checkCount !== 1 ? 's' : ''}.
-                    The page will automatically update when your installation is active.
-                  </p>
+                  <p className="text-sm font-medium text-foreground">Create installation</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Set up your installation details</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                  <CheckCircle2 className="w-3 h-3" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Deploy to cloud</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Install Kloudlite in your infrastructure</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold ${isActive ? 'bg-primary/10 text-primary' : 'bg-primary text-primary-foreground'}`}>
+                  {isActive ? <CheckCircle2 className="w-3 h-3" /> : '3'}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Complete</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Your installation is ready</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                className="flex-1"
-                onClick={() => router.push('/installations')}
+          {/* Help Card */}
+          <div className="border border-foreground/10 rounded-lg p-6 bg-background">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Need Help?</h3>
+            <div className="space-y-2">
+              <a
+                href="https://docs.kloudlite.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary flex items-center gap-2 text-sm hover:underline"
               >
-                View All Installations
-              </Button>
+                <ExternalLink className="size-4" />
+                Read the Documentation
+              </a>
+              <a
+                href="https://discord.gg/kloudlite"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary flex items-center gap-2 text-sm hover:underline"
+              >
+                <ExternalLink className="size-4" />
+                Join our Discord Community
+              </a>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  )
 
-  // Render active/ready state
-  const renderActiveState = () => (
-    <div className="w-full">
-      <div className="mb-8 text-center">
-        <div className="mb-4 flex justify-center">
-          <div className="flex size-16 items-center justify-center bg-green-100 rounded-full">
-            <PartyPopper className="size-8 text-green-600" />
-          </div>
+      {/* Right Column - Main Content */}
+      <div className="space-y-6 lg:flex-1 lg:min-w-0">
+        {/* Header */}
+        <div>
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+            {isActive ? 'Installation Complete!' : 'Setting Up Your Installation'}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {isActive
+              ? 'Your Kloudlite installation is ready to use'
+              : 'Please wait while your installation becomes active'}
+          </p>
         </div>
-        <h1 className="text-foreground mb-2 text-3xl font-semibold tracking-tight">Installation Complete!</h1>
-        <p className="text-muted-foreground text-sm">Your Kloudlite installation is ready to use</p>
-      </div>
 
-      <InstallationProgress currentStep={3} />
-
-      <div className="space-y-6 mt-10">
-        <div className="border border-border/80 p-8 rounded-sm">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-foreground">Your Installation is Ready</h2>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Access your Kloudlite installation dashboard at the URL below
-            </p>
-          </div>
-          <div className="space-y-4">
-            {installationData?.subdomain ? (
-              <div className="bg-foreground/[0.02] p-4 rounded-sm border border-border/60">
-                <p className="mb-2 text-sm font-medium text-foreground">Installation Dashboard URL:</p>
-                <div className="flex items-center justify-between gap-3">
-                  <a
-                    href={installationData.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary flex items-center gap-2 font-mono text-lg hover:underline"
-                  >
-                    {installationData.subdomain}.
-                    {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
-                    <ExternalLink className="size-4" />
-                  </a>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(installationData.url, 'URL')}
-                  >
-                    <Copy className="mr-2 size-3" />
-                    Copy
-                  </Button>
+        {/* Main Content Card */}
+        <div className="border border-foreground/10 rounded-lg bg-background">
+          <div className="p-8">
+            {isActive ? (
+              <>
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex size-10 items-center justify-center bg-green-100 dark:bg-green-900/30 rounded-full">
+                      <CheckCircle2 className="size-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-foreground">Your Installation is Ready</h2>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Access your Kloudlite installation dashboard at the URL below
+                  </p>
                 </div>
-              </div>
+
+                <div className="space-y-4">
+                  <div className="bg-foreground/[0.02] p-4 rounded-sm border border-border/60">
+                    <p className="mb-2 text-sm font-medium text-foreground">Installation Dashboard URL:</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <a
+                        href={installationData.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary flex items-center gap-2 font-mono text-lg hover:underline"
+                      >
+                        {installationData.subdomain}.
+                        {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
+                        <ExternalLink className="size-4" />
+                      </a>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(installationData.url, 'URL')}
+                      >
+                        <Copy className="mr-2 size-3" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      className="flex-1"
+                      size="lg"
+                      onClick={() => router.push(`/installations/${installationData.installationId}`)}
+                    >
+                      Open Installation Settings
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="flex-1"
+                      onClick={() => router.push('/installations')}
+                    >
+                      View All Installations
+                    </Button>
+                  </div>
+
+                  <div className="border-t border-border/60 pt-4">
+                    <p className="text-muted-foreground text-sm">
+                      <strong>What&apos;s next?</strong> Go to Installation Settings to manage your team by adding admins and members.
+                      To administrate your installation&apos;s dashboard, generate a Super Admin Login from the settings page.
+                    </p>
+                  </div>
+                </div>
+              </>
             ) : (
-              <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 p-4 rounded-sm">
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">
-                  Domain Not Configured
-                </p>
-                <p className="text-xs text-amber-900 dark:text-amber-200">
-                  Your installation key was generated, but no subdomain was configured. Please configure a domain for your installation from the installations list.
-                </p>
-              </div>
+              <>
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex size-10 items-center justify-center bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                      <Clock className="size-5 text-blue-600 dark:text-blue-400 animate-pulse" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-foreground">Waiting for Installation to Become Active</h2>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Your installation is being set up. This usually takes 1-3 minutes.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-foreground/[0.02] p-4 rounded-sm border border-border/60">
+                    <p className="mb-2 text-sm font-medium text-foreground">Installation Dashboard URL:</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground font-mono text-lg">
+                        {installationData.subdomain}.
+                        {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(installationData.url, 'URL')}
+                      >
+                        <Copy className="mr-2 size-3" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 p-4 rounded-sm">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="size-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
+                          Installation in Progress
+                        </p>
+                        <p className="text-xs text-blue-800 dark:text-blue-300">
+                          We&apos;re checking if your installation is ready. Checked {checkCount} time{checkCount !== 1 ? 's' : ''}.
+                          The page will automatically update when your installation is active.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="flex-1"
+                      onClick={() => router.push('/installations')}
+                    >
+                      View All Installations
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
-
-            <div className="flex gap-3">
-              {installationData?.subdomain ? (
-                <Button
-                  className="flex-1"
-                  size="lg"
-                  onClick={() => window.open(installationData.url, '_blank')}
-                >
-                  <ExternalLink className="mr-2 size-4" />
-                  Open Installation Dashboard
-                </Button>
-              ) : null}
-              <Button
-                variant={installationData?.subdomain ? 'outline' : 'default'}
-                size="lg"
-                className="flex-1"
-                onClick={() => router.push('/installations')}
-              >
-                View All Installations
-              </Button>
-            </div>
-
-            <div className="border-t border-border/60 pt-4">
-              <p className="text-muted-foreground text-sm">
-                <strong>What&apos;s next?</strong> You can now access your Kloudlite installation
-                dashboard to create and manage workspaces, environments, and work machines. Your
-                team members can log in using their own credentials at your installation URL.
-              </p>
-            </div>
           </div>
         </div>
 
-        <div className="border border-border/80 p-8 rounded-sm">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-foreground">Need Help?</h2>
-          </div>
-          <div className="space-y-2">
-            <a
-              href="https://docs.kloudlite.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary flex items-center gap-2 text-sm hover:underline"
-            >
-              <ExternalLink className="size-4" />
-              Read the Documentation
-            </a>
-            <a
-              href="https://discord.gg/kloudlite"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary flex items-center gap-2 text-sm hover:underline"
-            >
-              <ExternalLink className="size-4" />
-              Join our Discord Community
-            </a>
-          </div>
+        {/* Status indicator */}
+        <div className="flex items-center justify-center gap-3 text-base">
+          {!isActive && (
+            <>
+              <Loader2 className="size-4 animate-spin text-blue-600" />
+              <span className="text-muted-foreground">Waiting for installation to become active...</span>
+            </>
+          )}
+          {isActive && (
+            <>
+              <CheckCircle2 className="size-4 text-green-600" />
+              <span className="text-green-600 font-medium">Installation is active and ready!</span>
+            </>
+          )}
         </div>
       </div>
     </div>
   )
-
-  // Conditionally render based on active status
-  if (activeStatus === 'active') {
-    return renderActiveState()
-  }
-
-  return renderWaitingState()
 }
