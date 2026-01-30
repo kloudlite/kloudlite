@@ -17,7 +17,7 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'kloudlite . console',
+  title: 'kloudlite / console',
   description: 'Development environments platform',
 }
 
