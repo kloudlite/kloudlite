@@ -19,7 +19,6 @@ import {
   CommandItem
 } from '@kloudlite/ui'
 import { Loader2, Copy, CheckCircle2, ChevronsUpDown, Check } from 'lucide-react'
-import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
 import { cn } from '@kloudlite/lib'
 

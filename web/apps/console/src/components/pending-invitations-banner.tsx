@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@kloudlite/ui'
 import { Mail, X } from 'lucide-react'
-import type { InstallationInvitation } from '@/lib/console/supabase-storage-service'
+import type { InstallationInvitation } from '@/lib/console/storage'
 
 export function PendingInvitationsBanner() {
   const [invitations, setInvitations] = useState<InstallationInvitation[]>([])

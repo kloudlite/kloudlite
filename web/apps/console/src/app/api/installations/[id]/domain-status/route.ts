@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, checkInstallationDomainStatus } from '@/lib/console/supabase-storage-service'
+import { getInstallationById, checkInstallationDomainStatus } from '@/lib/console/storage'
 
 /**
  * Check if an installation's domain has expired and been claimed by another user

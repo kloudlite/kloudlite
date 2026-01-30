@@ -3,7 +3,7 @@ import {
   getInstallationByKey,
   updateInstallationRootDns,
   markDeploymentReady,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 import {
   CLOUDFLARE_DNS_DOMAIN,
   createCnameRecord,

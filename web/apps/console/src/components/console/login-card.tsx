@@ -1,6 +1,6 @@
 'use client'
 
-import { KloudliteLogo } from '@/components/kloudlite-logo'
+import { KloudliteLogo } from '@kloudlite/ui'
 import { OAuthButtons } from '@/components/console/oauth-buttons'
 import { AlertCircle } from 'lucide-react'
 import { cn } from '@kloudlite/lib'

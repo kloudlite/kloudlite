@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Button, Avatar, AvatarFallback, AvatarImage, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@kloudlite/ui'
+import { Button, Avatar, AvatarFallback, AvatarImage, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, KloudliteLogo } from '@kloudlite/ui'
 import { Settings, LogOut } from 'lucide-react'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
 
 interface InstallationsHeaderProps {
   user: {
@@ -15,7 +14,7 @@ interface InstallationsHeaderProps {
   installationDomain?: string
 }
 
-export function InstallationsHeader({ user, installationName, installationDomain }: InstallationsHeaderProps) {
+export function InstallationsHeader({ user }: InstallationsHeaderProps) {
   const getInitials = (name: string) => {
     return name
       .split(' ')

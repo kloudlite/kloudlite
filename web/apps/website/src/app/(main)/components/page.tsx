@@ -72,6 +72,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
@@ -136,7 +141,7 @@ import {
   User,
 } from "lucide-react"
 import { useState } from "react"
-import { ThemeSwitcher } from "@/components/theme-switcher"
+import { ThemeSwitcher } from "@kloudlite/ui"
 
 function ComponentSection({
   title,
@@ -486,12 +491,17 @@ export default function ComponentsPage() {
 
           {/* Empty */}
           <ComponentSection title="Empty State">
-            <Empty
-              icon={<Inbox className="h-12 w-12" />}
-              title="No items found"
-              description="Get started by creating a new item."
-            >
-              <Button>Create Item</Button>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Inbox className="h-6 w-6" />
+                </EmptyMedia>
+                <EmptyTitle>No items found</EmptyTitle>
+                <EmptyDescription>Get started by creating a new item.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button>Create Item</Button>
+              </EmptyContent>
             </Empty>
           </ComponentSection>
 
@@ -684,9 +694,9 @@ export default function ComponentsPage() {
           {/* Spinner */}
           <ComponentSection title="Spinner">
             <div className="flex gap-4 items-center">
-              <Spinner size="sm" />
+              <Spinner className="size-3" />
               <Spinner />
-              <Spinner size="lg" />
+              <Spinner className="size-6" />
             </div>
           </ComponentSection>
 

@@ -1,6 +1,6 @@
 import { SignInForm } from './signin-form'
 import { unauthenticatedApiClient } from '@/lib/api-client'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
+import { KloudliteLogo } from '@kloudlite/ui'
 
 // Force dynamic rendering - this page fetches providers from API
 export const dynamic = 'force-dynamic'

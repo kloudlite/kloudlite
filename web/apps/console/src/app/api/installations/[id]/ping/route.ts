@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById } from '@/lib/console/supabase-storage-service'
+import { getInstallationById } from '@/lib/console/storage'
 
 export const runtime = 'nodejs'
 

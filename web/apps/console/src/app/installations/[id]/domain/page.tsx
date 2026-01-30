@@ -20,9 +20,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  KloudliteLogo,
 } from '@kloudlite/ui'
 import { CheckCircle2, Loader2, AlertCircle, ArrowLeft, AlertTriangle } from 'lucide-react'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { toast } from 'sonner'
 
 const subdomainSchema = z.object({

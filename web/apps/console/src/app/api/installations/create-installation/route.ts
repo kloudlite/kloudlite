@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { createInstallation, cleanupExpiredInstallations } from '@/lib/console/supabase-storage-service'
+import { createInstallation, cleanupExpiredInstallations } from '@/lib/console/storage'
 import { SignJWT } from 'jose'
 import crypto from 'crypto'
 

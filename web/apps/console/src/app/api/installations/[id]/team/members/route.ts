@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireInstallationAccess } from '@/lib/console/authorization'
-import { getInstallationMembers } from '@/lib/console/supabase-storage-service'
+import { getInstallationMembers } from '@/lib/console/storage'
 
 /**
  * GET /api/installations/[id]/team/members

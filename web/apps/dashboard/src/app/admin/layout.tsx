@@ -9,10 +9,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  KloudliteLogo,
 } from '@kloudlite/ui'
 import { ChevronDown, User, LogOut, Home } from 'lucide-react'
 import { AdminNavigation } from './_components/admin-navigation'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { isSystemReady, SystemSetupPage } from '@/lib/system-check'
 
 // Admin layout - middleware ensures only users with admin/super-admin roles (and no 'user' role) can access this

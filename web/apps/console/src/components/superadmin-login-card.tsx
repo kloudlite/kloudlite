@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@kloudlite/ui'
+import { Button, ScrollArea } from '@kloudlite/ui'
 import { Alert, AlertDescription } from '@kloudlite/ui'
 import { Shield, Copy, Check, Loader2, Clock, ExternalLink } from 'lucide-react'
 
@@ -149,7 +149,9 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
                 )}
               </div>
               <div className="bg-background flex items-center gap-2 border border-foreground/10 rounded-md p-3">
-                <code className="text-foreground flex-1 overflow-x-auto text-xs">{loginUrl}</code>
+                <ScrollArea className="flex-1 max-w-[calc(100%-3rem)]">
+                  <code className="text-foreground text-xs whitespace-nowrap">{loginUrl}</code>
+                </ScrollArea>
                 <Button
                   variant="ghost"
                   size="sm"

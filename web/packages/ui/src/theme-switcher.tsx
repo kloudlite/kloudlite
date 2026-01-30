@@ -7,13 +7,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@kloudlite/ui'
-import { setThemeCookie, type Theme } from '@/lib/theme'
+} from './dropdown-menu'
 
+type Theme = 'light' | 'dark'
 type ThemeOption = Theme | 'system'
 
 interface ThemeSwitcherProps {
   initialTheme?: ThemeOption
+}
+
+function setThemeCookie(theme: Theme | 'system') {
+  document.cookie = `theme=${theme}; path=/; max-age=31536000; SameSite=Lax`
 }
 
 export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
@@ -28,8 +32,7 @@ export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
     setTheme(newTheme)
 
     if (newTheme === 'system') {
-      // Store 'system' preference in cookie
-      document.cookie = 'theme=system; path=/; max-age=31536000; SameSite=Lax'
+      setThemeCookie('system')
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       document.documentElement.classList.toggle('dark', prefersDark)
     } else {
@@ -45,19 +48,10 @@ export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
     return <Monitor className="h-4 w-4" />
   }
 
-  // Avoid hydration mismatch by not rendering dropdown until mounted
-  if (!mounted) {
-    return (
-      <button className="text-muted-foreground hover:text-foreground transition-all duration-100 active:translate-y-0.5">
-        <Monitor className="h-4 w-4" />
-      </button>
-    )
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="text-muted-foreground hover:text-foreground transition-all duration-100 active:translate-y-0.5">
+        <button className="text-muted-foreground hover:text-foreground transition-colors">
           {getIcon()}
         </button>
       </DropdownMenuTrigger>

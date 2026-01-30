@@ -5,7 +5,7 @@ import {
   validateSubdomain,
   reserveSubdomain,
   getUserById,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 import { CLOUDFLARE_DNS_DOMAIN } from '@/lib/console/cloudflare-dns'
 
 // Use Node.js runtime for Supabase

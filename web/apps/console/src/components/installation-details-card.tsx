@@ -1,9 +1,9 @@
 'use client'
 
-import { Badge, Button } from '@kloudlite/ui'
+import { Button } from '@kloudlite/ui'
 import { Copy, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Installation } from '@/lib/console/supabase-storage-service'
+import type { Installation } from '@/lib/console/storage'
 
 interface InstallationDetailsCardProps {
   installation: Installation

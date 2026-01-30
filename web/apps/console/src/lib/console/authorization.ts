@@ -3,7 +3,7 @@
  */
 
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getMemberRole, type MemberRole } from '@/lib/console/supabase-storage-service'
+import { getMemberRole, type MemberRole } from '@/lib/console/storage'
 
 export interface AuthContext {
   userId: string
