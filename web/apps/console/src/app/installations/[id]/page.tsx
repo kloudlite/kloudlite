@@ -4,6 +4,7 @@ import { getInstallationById, checkInstallationDomainStatus, getMemberRole } fro
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
+import { UninstallScriptCard } from '@/components/uninstall-script-card'
 import { AlertTriangle } from 'lucide-react'
 
 interface PageProps {
@@ -117,17 +118,24 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
           </div>
 
           {installation.secretKey && (
-            <div className="border border-amber-500/20 bg-amber-500/10 rounded-lg p-4 mb-6">
-              <p className="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
-                Warning: Destructive Action
-              </p>
-              <p className="text-sm text-amber-900 dark:text-amber-200">
-                Force deleting this installation will immediately remove it from our system and
-                attempt to uninstall Kloudlite from your cluster. For a cleaner uninstallation,
-                it&apos;s recommended to uninstall from your installation&apos;s dashboard
-                settings first, then delete the record here.
-              </p>
-            </div>
+            <>
+              <div className="border border-red-500/20 bg-red-500/5 rounded-lg p-4 mb-6">
+                <UninstallScriptCard secretKey={installation.secretKey} />
+              </div>
+
+              <div className="border-t border-red-500/20 my-6" />
+
+              <div className="border border-amber-500/20 bg-amber-500/10 rounded-lg p-4 mb-6">
+                <p className="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  Warning: Destructive Action
+                </p>
+                <p className="text-sm text-amber-900 dark:text-amber-200">
+                  Force deleting this installation will immediately remove it from our system.
+                  For a cleaner uninstallation, run the uninstall script above first,
+                  then delete the record here.
+                </p>
+              </div>
+            </>
           )}
 
           <div className="space-y-4">
@@ -135,7 +143,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
               <p className="text-foreground text-sm font-semibold">Force Delete Installation</p>
               <p className="text-muted-foreground mt-1 text-sm">
                 {installation.secretKey
-                  ? 'Forcefully delete this installation and uninstall Kloudlite from your cluster. This action cannot be undone.'
+                  ? 'Forcefully delete this installation record. Run the uninstall script above first if you want to clean up cloud resources.'
                   : 'Permanently delete this installation record. This action cannot be undone.'}
               </p>
             </div>
