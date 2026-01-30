@@ -38,7 +38,7 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
           <Link href="/installations" className="flex items-center gap-3 transition-opacity hover:opacity-80">
             <KloudliteLogo className="h-7 sm:h-8" linkToHome={false} />
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm font-light">·</span>
+              <span className="text-muted-foreground text-sm font-light">/</span>
               <span className="text-foreground text-sm font-bold tracking-wide">console</span>
             </div>
           </Link>
