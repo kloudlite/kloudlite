@@ -1,6 +1,7 @@
 import { LoginCard } from '@/components/console/login-card'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { redirect } from 'next/navigation'
+import { ThemeSwitcher } from '@kloudlite/ui'
 
 const ERROR_MESSAGES: Record<string, string> = {
   missing_params: 'Missing required parameters. Please try again.',
@@ -10,6 +11,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   no_email:
     'No email address was found in your account. Please ensure your account has a verified email.',
   access_denied: 'Access was denied. Please try again.',
+  link_expired: 'This magic link has expired. Please request a new one.',
+  link_used: 'This magic link has already been used. Please request a new one.',
+  invalid_link: 'This magic link is invalid. Please request a new one.',
+  server_error: 'An error occurred during sign in. Please try again.',
 }
 
 export default async function LoginPage({
@@ -33,6 +38,11 @@ export default async function LoginPage({
   // Not authenticated - show login page
   return (
     <div className="bg-background min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      {/* Theme switcher */}
+      <div className="absolute top-6 right-6 z-10">
+        <ThemeSwitcher />
+      </div>
+
       {/* Grid pattern background */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Vertical lines */}

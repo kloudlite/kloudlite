@@ -17,6 +17,12 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
+  --color-github: var(--github);
+  --color-github-foreground: var(--github-foreground);
+  --color-google: var(--google);
+  --color-google-foreground: var(--google-foreground);
+  --color-microsoft: var(--microsoft);
+  --color-microsoft-foreground: var(--microsoft-foreground);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
@@ -112,6 +118,12 @@
   --sidebar-accent-foreground: oklch(0.25 0.015 235);
   --sidebar-border: oklch(0.92 0.005 235);
   --sidebar-ring: oklch(0.548 0.204 251.6);
+  --github: oklch(0.18 0 0);
+  --github-foreground: oklch(1 0 0);
+  --google: oklch(0.55 0.22 264);
+  --google-foreground: oklch(1 0 0);
+  --microsoft: oklch(0.52 0.17 235);
+  --microsoft-foreground: oklch(1 0 0);
 }
 
 .dark {
@@ -153,6 +165,12 @@
   --sidebar-accent-foreground: oklch(0.95 0.01 235);
   --sidebar-border: oklch(1 0.01 235 / 12%);
   --sidebar-ring: oklch(0.65 0.19 251.6);
+  --github: oklch(0.2 0 0);
+  --github-foreground: oklch(1 0 0);
+  --google: oklch(0.58 0.2 264);
+  --google-foreground: oklch(1 0 0);
+  --microsoft: oklch(0.55 0.16 235);
+  --microsoft-foreground: oklch(1 0 0);
 }
 
 @layer base {

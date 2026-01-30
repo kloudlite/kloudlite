@@ -76,10 +76,21 @@ export interface UserRegistration {
   userId: string
   email: string
   name: string
-  providers: ('github' | 'google' | 'azure-ad')[]
+  providers: ('github' | 'google' | 'azure-ad' | 'email')[]
   registeredAt: string
   createdAt: string
   updatedAt: string
+}
+
+export interface MagicLinkToken {
+  id: string
+  email: string
+  token: string
+  expiresAt: string
+  usedAt: string | null
+  createdAt: string
+  ipAddress: string | null
+  userAgent: string | null
 }
 
 export interface DomainReservation {
