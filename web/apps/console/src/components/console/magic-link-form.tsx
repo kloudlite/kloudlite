@@ -18,10 +18,11 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface MagicLinkFormProps {
+  siteKey: string
   onSuccess?: () => void
 }
 
-export function MagicLinkForm({ onSuccess }: MagicLinkFormProps) {
+export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -37,7 +38,7 @@ export function MagicLinkForm({ onSuccess }: MagicLinkFormProps) {
     resolver: zodResolver(formSchema),
   })
 
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  const isDevelopment = process.env.NODE_ENV === 'development'
 
   if (!siteKey) {
     return (

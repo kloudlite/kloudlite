@@ -35,6 +35,9 @@ export default async function LoginPage({
     ? ERROR_MESSAGES[error] || 'An unexpected error occurred. Please try again.'
     : null
 
+  // Get Turnstile site key from server-side environment
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
+
   // Not authenticated - show login page
   return (
     <div className="bg-background min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
@@ -64,7 +67,7 @@ export default async function LoginPage({
       </div>
 
       {/* Login card */}
-      <LoginCard errorMessage={errorMessage} />
+      <LoginCard errorMessage={errorMessage} turnstileSiteKey={turnstileSiteKey} />
 
       {/* Bottom branding */}
       <div className="absolute bottom-6 left-0 right-0 text-center">
