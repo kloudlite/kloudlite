@@ -102,25 +102,62 @@ export async function getInstallationBySecretKey(secretKey: string): Promise<Ins
 }
 
 /**
- * Get all installations for a user
+ * Get all installations for a user (owned + member of)
  */
 export async function getUserInstallations(userId: string): Promise<Installation[]> {
-  const result = await supabase
+  // Get installations owned by the user
+  const ownedResult = await supabase
     .from('installations')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
-  if (result.error) {
-    console.error('Error getting user installations:', result.error)
-    return []
+  if (ownedResult.error) {
+    console.error('Error getting owned installations:', ownedResult.error)
   }
 
-  const installations = (result.data || []) as InstallationRow[]
+  const ownedInstallations = (ownedResult.data || []) as InstallationRow[]
+
+  // Get installation IDs where the user is a member
+  const memberResult = await supabase
+    .from('installation_members')
+    .select('installation_id')
+    .eq('user_id', userId)
+
+  if (memberResult.error) {
+    console.error('Error getting member installations:', memberResult.error)
+  }
+
+  const memberInstallationIds = (memberResult.data || []).map((m: any) => m.installation_id)
+
+  // Get owned installation IDs
+  const ownedIds = new Set(ownedInstallations.map((i) => i.id))
+
+  // Filter to only IDs not already owned
+  const additionalIds = memberInstallationIds.filter((id: string) => !ownedIds.has(id))
+
+  // Fetch additional installations where user is a member but not owner
+  let memberInstallations: InstallationRow[] = []
+  if (additionalIds.length > 0) {
+    const additionalResult = await supabase
+      .from('installations')
+      .select('*')
+      .in('id', additionalIds)
+      .order('created_at', { ascending: false })
+
+    if (additionalResult.error) {
+      console.error('Error getting additional installations:', additionalResult.error)
+    } else {
+      memberInstallations = (additionalResult.data || []) as InstallationRow[]
+    }
+  }
+
+  // Combine owned and member installations
+  const allInstallations = [...ownedInstallations, ...memberInstallations]
 
   // Fetch IP records for all installations in parallel
   const installationsWithIpRecords = await Promise.all(
-    installations.map(async (inst) => {
+    allInstallations.map(async (inst) => {
       const ipResult = await supabase.from('ip_records').select('*').eq('installation_id', inst.id)
 
       return {
