@@ -25,10 +25,10 @@ const OAUTH_CONFIGS = {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
   },
   'microsoft-entra-id': {
-    tokenUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/token`,
+    tokenUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/token`,
     userUrl: 'https://graph.microsoft.com/v1.0/me',
-    clientId: process.env.MICROSOFT_ENTRA_CLIENT_ID!,
-    clientSecret: process.env.MICROSOFT_ENTRA_CLIENT_SECRET!,
+    clientId: process.env.MICROSOFT_CLIENT_ID!,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
   },
 }
 

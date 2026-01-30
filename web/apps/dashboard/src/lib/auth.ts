@@ -126,9 +126,9 @@ export const authConfig: NextAuthConfig = {
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
     MicrosoftEntraId({
-      clientId: process.env.MICROSOFT_ENTRA_CLIENT_ID!,
-      clientSecret: process.env.MICROSOFT_ENTRA_CLIENT_SECRET!,
-      issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/v2.0`,
+      clientId: process.env.MICROSOFT_CLIENT_ID!,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+      issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/v2.0`,
     }),
   ],
   pages: {

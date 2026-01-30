@@ -13,8 +13,8 @@ const OAUTH_CONFIGS = {
     scope: 'openid email profile',
   },
   'microsoft-entra-id': {
-    authUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/authorize`,
-    clientId: process.env.MICROSOFT_ENTRA_CLIENT_ID!,
+    authUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize`,
+    clientId: process.env.MICROSOFT_CLIENT_ID!,
     scope: 'openid email profile User.Read',
   },
 }

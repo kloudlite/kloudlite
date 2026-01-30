@@ -8,15 +8,15 @@ const AzureAD: Provider = {
   id: 'azure-ad',
   name: 'Microsoft',
   type: 'oidc',
-  issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/v2.0`,
+  issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/v2.0`,
   authorization: {
-    url: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/authorize`,
+    url: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize`,
     params: { scope: 'openid email profile' },
   },
-  token: `https://login.microsoftonline.com/${process.env.MICROSOFT_ENTRA_TENANT_ID}/oauth2/v2.0/token`,
+  token: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/token`,
   userinfo: `https://graph.microsoft.com/oidc/userinfo`,
-  clientId: process.env.MICROSOFT_ENTRA_CLIENT_ID,
-  clientSecret: process.env.MICROSOFT_ENTRA_CLIENT_SECRET,
+  clientId: process.env.MICROSOFT_CLIENT_ID,
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
   profile(profile) {
     return {
       id: profile.sub,
