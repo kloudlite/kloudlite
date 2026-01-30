@@ -38,8 +38,6 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
     resolver: zodResolver(formSchema),
   })
 
-  const isDevelopment = process.env.NODE_ENV === 'development'
-
   if (!siteKey) {
     return (
       <div className="border-destructive bg-destructive/10 text-destructive rounded-lg border p-4 text-sm">
