@@ -9,7 +9,7 @@
     "lint": "echo 'Linting skipped - Next.js 16 + ESLint 9 compatibility issue'"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.9.0",
+    "@hookform/resolvers": "^5.2.2",
     "@kloudlite/lib": "workspace:*",
     "@kloudlite/types": "workspace:*",
     "@kloudlite/ui": "workspace:*",
@@ -27,6 +27,7 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.71.1",
     "react-icons": "^5.5.0",
+    "react-turnstile": "^1.1.4",
     "sonner": "^1.7.3",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^4.0.0",

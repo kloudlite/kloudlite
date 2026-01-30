@@ -10,7 +10,7 @@ export type Database = {
           user_id: string
           email: string
           name: string
-          providers: ('github' | 'google' | 'azure-ad')[]
+          providers: ('github' | 'google' | 'azure-ad' | 'email')[]
           registered_at: string
           created_at: string
           updated_at: string
@@ -19,14 +19,39 @@ export type Database = {
           user_id: string
           email: string
           name: string
-          providers?: ('github' | 'google' | 'azure-ad')[]
+          providers?: ('github' | 'google' | 'azure-ad' | 'email')[]
           registered_at?: string
         }
         Update: {
           email?: string
           name?: string
-          providers?: ('github' | 'google' | 'azure-ad')[]
+          providers?: ('github' | 'google' | 'azure-ad' | 'email')[]
           registered_at?: string
+        }
+      }
+      magic_link_tokens: {
+        Row: {
+          id: string
+          email: string
+          token: string
+          expires_at: string
+          used_at: string | null
+          created_at: string
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          token: string
+          expires_at: string
+          used_at?: string | null
+          created_at?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          used_at?: string | null
         }
       }
       installations: {

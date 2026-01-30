@@ -1,7 +1,8 @@
 'use client'
 
-import { KloudliteLogo } from '@kloudlite/ui'
+import { KloudliteLogo, Tabs, TabsList, TabsTrigger, TabsContent } from '@kloudlite/ui'
 import { OAuthButtons } from '@/components/console/oauth-buttons'
+import { MagicLinkForm } from '@/components/console/magic-link-form'
 import { AlertCircle } from 'lucide-react'
 import { cn } from '@kloudlite/lib'
 
@@ -100,10 +101,21 @@ export function LoginCard({ errorMessage }: { errorMessage: string | null }) {
             </div>
           )}
 
-          {/* OAuth buttons */}
-          <div className="space-y-3">
-            <OAuthButtons />
-          </div>
+          {/* Login tabs */}
+          <Tabs defaultValue="oauth" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="oauth">OpenID</TabsTrigger>
+              <TabsTrigger value="email">Email</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="oauth" className="space-y-3 min-h-[200px]">
+              <OAuthButtons />
+            </TabsContent>
+
+            <TabsContent value="email" className="min-h-[200px]">
+              <MagicLinkForm />
+            </TabsContent>
+          </Tabs>
 
           {/* Divider */}
           <div className="relative py-2">

@@ -20,16 +20,19 @@ const providers = [
     id: 'github',
     name: 'GitHub',
     icon: SiGithub,
+    colorClass: 'bg-github text-github-foreground hover:bg-github/90 border-github',
   },
   {
     id: 'google',
     name: 'Google',
     icon: SiGoogle,
+    colorClass: 'bg-google text-google-foreground hover:bg-google/90 border-google',
   },
   {
     id: 'microsoft-entra-id',
     name: 'Microsoft',
     icon: MicrosoftIcon,
+    colorClass: 'bg-microsoft text-microsoft-foreground hover:bg-microsoft/90 border-microsoft',
   },
 ]
 
@@ -46,14 +49,13 @@ export function OAuthButtons() {
           <Button
             key={provider.id}
             onClick={() => handleClick(provider.id)}
-            variant="outline"
             size="lg"
-            className="w-full gap-3 text-base font-medium hover:bg-foreground/[0.03] hover:border-foreground/20 transition-all duration-200 hover:shadow-sm group"
+            className={`w-full gap-3 text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md group ${provider.colorClass}`}
           >
             <Icon className="h-5 w-5 transition-transform group-hover:scale-110" />
             <span className="flex-1 text-left">Continue with {provider.name}</span>
             <svg
-              className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100"
+              className="h-4 w-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
