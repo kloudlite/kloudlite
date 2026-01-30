@@ -16,7 +16,13 @@ function CrossMarker({ className }: { className?: string }) {
   )
 }
 
-export function LoginCard({ errorMessage }: { errorMessage: string | null }) {
+export function LoginCard({
+  errorMessage,
+  turnstileSiteKey
+}: {
+  errorMessage: string | null
+  turnstileSiteKey: string
+}) {
   return (
     <>
       <style jsx>{`
@@ -113,7 +119,7 @@ export function LoginCard({ errorMessage }: { errorMessage: string | null }) {
             </TabsContent>
 
             <TabsContent value="email" className="min-h-[200px]">
-              <MagicLinkForm />
+              <MagicLinkForm siteKey={turnstileSiteKey} />
             </TabsContent>
           </Tabs>
 
