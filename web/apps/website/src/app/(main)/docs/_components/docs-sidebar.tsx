@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { ThemeSwitcher } from '@/components/theme-switcher'
+import { ThemeSwitcher } from '@kloudlite/ui'
 import type { Theme } from '@/lib/theme'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@kloudlite/ui'
 import { Menu } from 'lucide-react'

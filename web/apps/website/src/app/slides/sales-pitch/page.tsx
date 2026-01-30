@@ -8,7 +8,7 @@ import {
   ChevronUp,
   ChevronDown,
 } from 'lucide-react'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
+import { KloudliteLogo } from '@kloudlite/ui'
 
 // Cross marker component
 function CrossMarker({ className }: { className?: string }) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getInstallationByKey } from '@/lib/console/supabase-storage-service'
+import { getInstallationByKey } from '@/lib/console/storage'
 import { createCnameRecord } from '@/lib/console/cloudflare-dns'
 
 // Use Node.js runtime for Supabase

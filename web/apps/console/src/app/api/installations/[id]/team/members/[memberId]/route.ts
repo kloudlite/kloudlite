@@ -4,7 +4,7 @@ import {
   removeInstallationMember,
   updateMemberRole,
   type MemberRole,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 
 /**
  * PATCH /api/installations/[id]/team/members/[memberId]

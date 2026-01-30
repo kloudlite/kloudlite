@@ -22,7 +22,7 @@ import { MoreHorizontal, Shield, User, Eye } from 'lucide-react'
 import type {
   InstallationMember,
   MemberRole,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 
 interface TeamMembersTableProps {
   members: InstallationMember[]
@@ -186,7 +186,7 @@ export function TeamMembersTable({
                               </>
                             )}
                             <DropdownMenuItem
-                              onClick={() => setMemberToRemove({ id: member.id, name: member.userName })}
+                              onClick={() => setMemberToRemove({ id: member.id, name: member.userName || '' })}
                               className="text-red-600 dark:text-red-400 focus:bg-red-500/10 focus:text-red-600 dark:focus:text-red-400"
                               disabled={removingMember === member.id}
                             >

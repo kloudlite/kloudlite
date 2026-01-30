@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from '@kloudlite/ui'
 import { X } from 'lucide-react'
-import type { InstallationInvitation } from '@/lib/console/supabase-storage-service'
+import type { InstallationInvitation } from '@/lib/console/storage'
 
 interface TeamInvitationsTableProps {
   invitations: InstallationInvitation[]

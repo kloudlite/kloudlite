@@ -13,8 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
 import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Package } from 'lucide-react'
-import { KloudliteLogo } from './kloudlite-logo'
-import { ThemeSwitcher } from './theme-switcher'
+import { ThemeSwitcher, KloudliteLogo } from '@kloudlite/ui'
 import { VPNStatusIndicator } from './vpn-status-indicator'
 
 interface NavigationProps {

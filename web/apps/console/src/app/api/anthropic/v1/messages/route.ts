@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { getInstallationBySecretKey } from '@/lib/console/supabase-storage-service'
+import { getInstallationBySecretKey } from '@/lib/console/storage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

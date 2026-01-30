@@ -5,7 +5,7 @@ import {
   getInstallationMembers,
   getInstallationInvitations,
   getMemberRole,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 import { TeamMembersTable } from '@/components/team-members-table'
 import { TeamInvitationsTable } from '@/components/team-invitations-table'
 import { InviteMemberButton } from '@/components/invite-member-button'

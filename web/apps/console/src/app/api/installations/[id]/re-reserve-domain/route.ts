@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, reReserveSubdomain } from '@/lib/console/supabase-storage-service'
+import { getInstallationById, reReserveSubdomain } from '@/lib/console/storage'
 
 /**
  * Re-reserve a new subdomain for an installation whose previous domain expired

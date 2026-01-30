@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { rejectInvitation } from '@/lib/console/supabase-storage-service'
+import { rejectInvitation } from '@/lib/console/storage'
 
 /**
  * POST /api/invitations/[invitationId]/reject

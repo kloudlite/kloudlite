@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireManagePermission } from '@/lib/console/authorization'
-import { deleteInvitation } from '@/lib/console/supabase-storage-service'
+import { deleteInvitation } from '@/lib/console/storage'
 
 /**
  * DELETE /api/installations/[id]/team/invitations/[invitationId]

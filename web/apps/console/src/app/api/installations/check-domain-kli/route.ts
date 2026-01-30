@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isSubdomainAvailable, validateSubdomain } from '@/lib/console/supabase-storage-service'
+import { isSubdomainAvailable, validateSubdomain } from '@/lib/console/storage'
 
 // Use Node.js runtime for Supabase
 export const runtime = 'nodejs'

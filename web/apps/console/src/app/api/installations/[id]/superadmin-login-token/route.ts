@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, randomBytes } from 'crypto'
 import { requireInstallationAccess } from '@/lib/console/authorization'
-import { getInstallationById } from '@/lib/console/supabase-storage-service'
+import { getInstallationById } from '@/lib/console/storage'
 
 // Super admin login token validity (5 minutes)
 const TOKEN_VALIDITY_MS = 5 * 60 * 1000

@@ -8,7 +8,7 @@ import {
   getInstallationInvitations,
   getUserByEmail,
   type MemberRole,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 
 /**
  * GET /api/installations/[id]/team/invitations
@@ -50,13 +50,6 @@ export async function POST(
     if (!email || !role) {
       return NextResponse.json(
         { error: 'Email and role are required' },
-        { status: 400 }
-      )
-    }
-
-    if (role === 'owner') {
-      return NextResponse.json(
-        { error: 'Cannot invite as owner. Use transfer ownership instead.' },
         { status: 400 }
       )
     }

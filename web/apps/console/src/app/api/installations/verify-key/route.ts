@@ -3,7 +3,7 @@ import {
   getInstallationByKey,
   markInstallationComplete,
   updateHealthCheck,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
 export const runtime = 'nodejs'

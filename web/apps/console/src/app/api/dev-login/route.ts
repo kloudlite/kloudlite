@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
-import { saveUserRegistration, getUserByEmail } from '@/lib/console/supabase-storage-service'
+import { saveUserRegistration, getUserByEmail } from '@/lib/console/storage'
 
 export const runtime = 'nodejs'
 
@@ -68,7 +68,7 @@ export async function GET() {
   const cookieStore = await cookies()
   cookieStore.set('registration_session', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 30, // 30 days
     path: '/',

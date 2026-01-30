@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button, Input, Textarea, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
-import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
 
 const installationSchema = z.object({

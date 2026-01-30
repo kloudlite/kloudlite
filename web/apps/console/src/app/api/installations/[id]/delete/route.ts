@@ -5,7 +5,7 @@ import {
   deleteInstallation,
   deleteIpRecords,
   deleteDomainReservation,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 
 /**

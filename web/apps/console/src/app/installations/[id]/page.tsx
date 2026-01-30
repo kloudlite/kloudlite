@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, checkInstallationDomainStatus, getMemberRole } from '@/lib/console/supabase-storage-service'
+import { getInstallationById, checkInstallationDomainStatus, getMemberRole } from '@/lib/console/storage'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
@@ -94,7 +94,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
         <div className="border border-foreground/10 rounded-lg p-6 bg-background">
           <SuperAdminLoginCard
             installationId={installation.id}
-            isActive={status.label === 'Active'}
+            isActive={status.label === 'ACTIVE'}
           />
         </div>
       )}

@@ -4,7 +4,7 @@ import {
   deleteIpRecords,
   deleteDomainReservation,
   resetInstallation,
-} from '@/lib/console/supabase-storage-service'
+} from '@/lib/console/storage'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)

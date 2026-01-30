@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
-import type { Installation } from '@/lib/console/supabase-storage-service'
+import type { Installation } from '@/lib/console/storage'
 
 interface InstallationsListProps {
   installations: Installation[]
@@ -77,7 +77,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
     filteredInstallations = filteredInstallations.filter((install) => {
       const query = searchQuery.toLowerCase()
       return (
-        install.name.toLowerCase().includes(query) ||
+        install.name?.toLowerCase().includes(query) ||
         install.description?.toLowerCase().includes(query) ||
         install.subdomain?.toLowerCase().includes(query)
       )

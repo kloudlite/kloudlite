@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
-import { ThemeSwitcher } from '@/components/theme-switcher'
+import { ThemeSwitcher, KloudliteLogo } from '@kloudlite/ui'
 import { Github, Twitter } from 'lucide-react'
 
 const footerLinks = {

@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { KloudliteLogo } from '@/components/kloudlite-logo'
 import { GetStartedButton } from '@/components/get-started-button'
-import { ThemeSwitcher } from '@/components/theme-switcher'
+import { ThemeSwitcher, KloudliteLogo } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
 import { Menu, X } from 'lucide-react'
 

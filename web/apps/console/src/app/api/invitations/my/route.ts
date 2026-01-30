@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getUserPendingInvitations } from '@/lib/console/supabase-storage-service'
+import { getUserPendingInvitations } from '@/lib/console/storage'
 
 /**
  * GET /api/invitations/my
