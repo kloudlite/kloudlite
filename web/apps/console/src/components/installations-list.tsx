@@ -308,12 +308,14 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                                   </a>
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem
-                                onSelect={() => router.push(`/installations/${installation.id}`)}
-                              >
-                                <Settings className="mr-2 h-4 w-4" />
-                                Settings
-                              </DropdownMenuItem>
+                              {!isPending && (
+                                <DropdownMenuItem
+                                  onSelect={() => router.push(`/installations/${installation.id}`)}
+                                >
+                                  <Settings className="mr-2 h-4 w-4" />
+                                  Settings
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
