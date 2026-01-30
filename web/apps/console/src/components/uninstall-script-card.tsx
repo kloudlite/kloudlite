@@ -12,7 +12,7 @@ interface UninstallScriptCardProps {
 export function UninstallScriptCard({ secretKey }: UninstallScriptCardProps) {
   const [copied, setCopied] = useState(false)
 
-  const uninstallCommand = `curl -fsSL https://get.khost.dev/uninstall | bash -s -- --key ${secretKey}`
+  const uninstallCommand = `curl -fsSL https://get.khost.dev/uninstall/aws | bash -s -- --key ${secretKey}`
 
   const copyCommand = () => {
     navigator.clipboard.writeText(uninstallCommand)
