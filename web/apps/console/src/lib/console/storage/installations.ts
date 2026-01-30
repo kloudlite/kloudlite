@@ -281,6 +281,21 @@ export async function createInstallation(
 
   const data = result.data as InstallationRow
 
+  // Add the creator as owner in installation_members
+  const memberResult = await (supabase as any)
+    .from('installation_members')
+    .insert({
+      installation_id: data.id,
+      user_id: userId,
+      role: 'owner',
+      added_by: userId,
+    })
+
+  if (memberResult.error) {
+    console.error('Error adding owner to installation_members:', memberResult.error)
+    // Don't throw - the installation is created, member just failed to be added
+  }
+
   return {
     id: data.id,
     userId: data.user_id,
