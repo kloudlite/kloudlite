@@ -35,7 +35,6 @@ function addSecurityHeaders(response: NextResponse, req: NextRequest): NextRespo
     'Content-Security-Policy',
     `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com; connect-src ${connectSrc} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com;`,
   )
-  response.headers.set('Permissions-Policy', 'interest-cohort=()')
 
   return response
 }
