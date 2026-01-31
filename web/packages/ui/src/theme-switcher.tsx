@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTheme } from 'next-themes'
 import { Moon, Sun, Monitor } from 'lucide-react'
 import {
   DropdownMenu,
@@ -9,37 +10,22 @@ import {
   DropdownMenuTrigger,
 } from './dropdown-menu'
 
-type Theme = 'light' | 'dark'
-type ThemeOption = Theme | 'system'
-
-interface ThemeSwitcherProps {
-  initialTheme?: ThemeOption
-}
-
-function setThemeCookie(theme: Theme | 'system') {
-  document.cookie = `theme=${theme}; path=/; max-age=31536000; SameSite=Lax`
-}
-
-export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
-  const [theme, setTheme] = useState<ThemeOption>(initialTheme)
+export function ThemeSwitcher() {
+  const { theme, resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const applyTheme = (newTheme: ThemeOption) => {
-    setTheme(newTheme)
-
-    if (newTheme === 'system') {
-      setThemeCookie('system')
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      document.documentElement.classList.toggle('dark', prefersDark)
-    } else {
-      setThemeCookie(newTheme)
-      document.documentElement.classList.toggle('dark', newTheme === 'dark')
+  // Sync theme to cookie for SSR
+  useEffect(() => {
+    if (theme && theme !== 'system') {
+      document.cookie = `theme=${theme}; path=/; max-age=31536000; SameSite=Lax`
+    } else if (theme === 'system' && resolvedTheme) {
+      document.cookie = `theme=${resolvedTheme}; path=/; max-age=31536000; SameSite=Lax`
     }
-  }
+  }, [theme, resolvedTheme])
 
   const getIcon = () => {
     if (!mounted) return <Monitor className="h-4 w-4" />
@@ -56,15 +42,15 @@ export function ThemeSwitcher({ initialTheme = 'light' }: ThemeSwitcherProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => applyTheme('light')}>
+        <DropdownMenuItem onClick={() => setTheme('light')}>
           <Sun className="mr-2 h-4 w-4" />
           <span>Light</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => applyTheme('dark')}>
+        <DropdownMenuItem onClick={() => setTheme('dark')}>
           <Moon className="mr-2 h-4 w-4" />
           <span>Dark</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => applyTheme('system')}>
+        <DropdownMenuItem onClick={() => setTheme('system')}>
           <Monitor className="mr-2 h-4 w-4" />
           <span>System</span>
         </DropdownMenuItem>

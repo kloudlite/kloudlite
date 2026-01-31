@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeSwitcher } from '@kloudlite/ui'
-import type { Theme } from '@/lib/theme'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@kloudlite/ui'
 import { Menu } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -13,10 +12,6 @@ interface NavItem {
   title: string
   href: string
   items?: NavItem[]
-}
-
-interface DocsSidebarProps {
-  initialTheme?: Theme
 }
 
 const navigation: NavItem[] = [
@@ -113,7 +108,7 @@ function NavigationContent({ pathname, onLinkClick }: { pathname: string; onLink
   )
 }
 
-export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
+export function DocsSidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -144,7 +139,7 @@ export function DocsSidebar({ initialTheme = 'light' }: DocsSidebarProps) {
                 <div className="border-t border-foreground/10 px-6 py-4 bg-foreground/[0.01]">
                   <div className="flex items-center justify-between">
                     <p className="text-muted-foreground text-xs font-medium">© 2026 Kloudlite</p>
-                    <ThemeSwitcher initialTheme={initialTheme} />
+                    <ThemeSwitcher />
                   </div>
                 </div>
               </div>
