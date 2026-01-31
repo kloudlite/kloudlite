@@ -556,11 +556,6 @@ spec:
                         items:
                           type: string
                         type: array
-                      deployments:
-                        description: Deployments created
-                        items:
-                          type: string
-                        type: array
                       networkPolicies:
                         description: NetworkPolicies created
                         items:
@@ -578,6 +573,11 @@ spec:
                         type: array
                       services:
                         description: Services created
+                        items:
+                          type: string
+                        type: array
+                      statefulsets:
+                        description: StatefulSets created
                         items:
                           type: string
                         type: array

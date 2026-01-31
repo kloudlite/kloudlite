@@ -373,11 +373,6 @@ spec:
                     items:
                       type: string
                     type: array
-                  deployments:
-                    description: Deployments created
-                    items:
-                      type: string
-                    type: array
                   networkPolicies:
                     description: NetworkPolicies created
                     items:
@@ -395,6 +390,11 @@ spec:
                     type: array
                   services:
                     description: Services created
+                    items:
+                      type: string
+                    type: array
+                  statefulsets:
+                    description: StatefulSets created
                     items:
                       type: string
                     type: array
@@ -482,6 +482,172 @@ spec:
                 - stopped
                 - failed
                 - deleting
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: environmentforkrequests.environments.kloudlite.io
+spec:
+  group: environments.kloudlite.io
+  names:
+    kind: EnvironmentForkRequest
+    listKind: EnvironmentForkRequestList
+    plural: environmentforkrequests
+    singular: environmentforkrequest
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.newEnvironmentName
+      name: NewEnv
+      type: string
+    - jsonPath: .spec.sourceSnapshot.snapshotName
+      name: Snapshot
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          EnvironmentForkRequest orchestrates creating a new environment from a snapshot.
+          It reads the stored EnvironmentSpec from the snapshot's artifacts and creates
+          a new Environment with that spec. The snapshot data is then restored to the
+          new environment's target namespace.
+          Lives in the WorkMachine namespace (e.g., wm-{username}).
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EnvironmentForkRequestSpec defines the fork request parameters
+            properties:
+              newEnvironmentName:
+                description: |-
+                  NewEnvironmentName is the name for the forked environment
+                  The environment will be created in the same namespace as this request
+                type: string
+              overrides:
+                description: Overrides allows overriding specific fields from the
+                  stored spec
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations are merged with annotations from the
+                      stored spec
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels are merged with labels from the stored spec
+                    type: object
+                  ownedBy:
+                    description: OwnedBy overrides the owner from the stored spec
+                    type: string
+                  resourceQuotas:
+                    description: ResourceQuotas overrides the resource quotas from
+                      the stored spec
+                    properties:
+                      limits.cpu:
+                        description: Maximum CPU limit for all pods in namespace
+                        type: string
+                      limits.memory:
+                        description: Maximum memory limit for all pods in namespace
+                        type: string
+                      persistentvolumeclaims:
+                        description: Maximum number of PVCs
+                        type: string
+                      requests.cpu:
+                        description: Maximum CPU requests for all pods in namespace
+                        type: string
+                      requests.memory:
+                        description: Maximum memory requests for all pods in namespace
+                        type: string
+                      services.loadbalancers:
+                        description: Maximum number of LoadBalancer services
+                        type: string
+                      services.nodeports:
+                        description: Maximum number of NodePort services
+                        type: string
+                    type: object
+                  visibility:
+                    description: Visibility overrides the visibility from the stored
+                      spec
+                    enum:
+                    - private
+                    - shared
+                    - open
+                    type: string
+                type: object
+              sourceSnapshot:
+                description: SourceSnapshot references the snapshot to fork from
+                properties:
+                  snapshotName:
+                    description: SnapshotName is the name of the snapshot to fork
+                      from
+                    type: string
+                  sourceNamespace:
+                    description: |-
+                      SourceNamespace is the namespace where the source snapshot exists
+                      This is typically the target namespace of the source environment
+                    type: string
+                required:
+                - snapshotName
+                - sourceNamespace
+                type: object
+            required:
+            - newEnvironmentName
+            - sourceSnapshot
+            type: object
+          status:
+            description: EnvironmentForkRequestStatus defines the observed state
+            properties:
+              completionTime:
+                description: CompletionTime is when the fork request completed (success
+                  or failure)
+                format: date-time
+                type: string
+              createdEnvironment:
+                description: CreatedEnvironment is the name of the environment that
+                  was created
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              phase:
+                default: Pending
+                description: Phase is the current phase of the fork request
+                type: string
+              startTime:
+                description: StartTime is when the fork request started processing
+                format: date-time
                 type: string
             type: object
         type: object
@@ -1047,11 +1213,6 @@ spec:
                         items:
                           type: string
                         type: array
-                      deployments:
-                        description: Deployments created
-                        items:
-                          type: string
-                        type: array
                       networkPolicies:
                         description: NetworkPolicies created
                         items:
@@ -1069,6 +1230,11 @@ spec:
                         type: array
                       services:
                         description: Services created
+                        items:
+                          type: string
+                        type: array
+                      statefulsets:
+                        description: StatefulSets created
                         items:
                           type: string
                         type: array
@@ -2666,7 +2832,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, ComposeSpec)
+          SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, EnvironmentSpec)
           captured during environment snapshot creation. Namespaced with the snapshot.
         properties:
           apiVersion:
@@ -2692,11 +2858,19 @@ spec:
               composeSpec:
                 description: |-
                   ComposeSpec contains the Environment's inline compose spec (JSON, base64 encoded)
-                  This captures spec.compose from the source Environment
+                  Deprecated: Use EnvironmentSpec instead which captures the full environment spec.
+                  Kept for backward compatibility with existing snapshots.
                 type: string
               configMaps:
                 description: ConfigMaps contains serialized ConfigMap resources (YAML,
                   base64 encoded)
+                type: string
+              environmentSpec:
+                description: |-
+                  EnvironmentSpec contains the full Environment spec (JSON, base64 encoded)
+                  This captures the complete spec from the source Environment including
+                  compose, labels, annotations, resourceQuotas, visibility, etc.
+                  Used by EnvironmentForkRequest to create new environments from snapshots.
                 type: string
               secrets:
                 description: Secrets contains serialized Secret resources (YAML, base64
