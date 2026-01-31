@@ -24,13 +24,30 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # Build Console App
-  build-console:
-    name: Build Console
+  # Build all apps using matrix strategy
+  build-and-push:
+    name: Build ${{ matrix.app }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [console, dashboard, website]
+        include:
+          - app: console
+            base_url_secret: REGISTER_BASE_URL
+            base_url_default: 'https://console.kloudlite.io'
+            api_url_secret: API_URL
+            api_url_default: 'https://api.kloudlite.io'
+          - app: dashboard
+            base_url_secret: REGISTER_BASE_URL
+            base_url_default: 'https://register.kloudlite.io'
+          - app: website
+            base_url_secret: ''
+            base_url_default: 'https://kloudlite.io'
 
     defaults:
       run:
@@ -60,7 +77,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Create environment file
+      - name: Create environment file for console
+        if: matrix.app == 'console'
         run: |
           cat > apps/console/.env.local << EOF
           # Base URL
@@ -101,110 +119,8 @@ jobs:
           NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
           EOF
 
-      - name: Cache Next.js build (console)
-        uses: actions/cache@v4
-        with:
-          path: |
-            web/apps/console/.next/cache
-          key: ${{ runner.os }}-nextjs-console-${{ hashFiles('web/bun.lock') }}-${{ hashFiles('web/apps/console/**/*.js', 'web/apps/console/**/*.jsx', 'web/apps/console/**/*.ts', 'web/apps/console/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-console-${{ hashFiles('web/bun.lock') }}-
-
-      - name: Build Console app
-        run: bun run --filter console build
-        env:
-          NODE_ENV: production
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/web-console
-          flavor: |
-            latest=false
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-
-      - name: Build and push Console image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./web/apps/console
-          file: ./web/apps/console/Dockerfile.runtime
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=console
-          cache-to: type=gha,mode=max,scope=console,ignore-error=true
-
-      - name: Build summary
-        run: |
-          echo "### Console Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **App**: Console" >> $GITHUB_STEP_SUMMARY
-          echo "- **Runtime**: Bun" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Docker Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-  # Build Dashboard App
-  build-dashboard:
-    name: Build Dashboard
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    defaults:
-      run:
-        working-directory: web
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            web/node_modules
-            web/apps/*/node_modules
-            web/packages/*/node_modules
-            ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-v3-${{ hashFiles('web/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-v3-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Create environment file
+      - name: Create environment file for dashboard
+        if: matrix.app == 'dashboard'
         run: |
           cat > apps/dashboard/.env.local << EOF
           # Base URL
@@ -243,110 +159,8 @@ jobs:
           CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}
           EOF
 
-      - name: Cache Next.js build (dashboard)
-        uses: actions/cache@v4
-        with:
-          path: |
-            web/apps/dashboard/.next/cache
-          key: ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/bun.lock') }}-${{ hashFiles('web/apps/dashboard/**/*.js', 'web/apps/dashboard/**/*.jsx', 'web/apps/dashboard/**/*.ts', 'web/apps/dashboard/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-dashboard-${{ hashFiles('web/bun.lock') }}-
-
-      - name: Build Dashboard app
-        run: bun run --filter dashboard build
-        env:
-          NODE_ENV: production
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/web-dashboard
-          flavor: |
-            latest=false
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-
-      - name: Build and push Dashboard image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./web/apps/dashboard
-          file: ./web/apps/dashboard/Dockerfile.runtime
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=dashboard
-          cache-to: type=gha,mode=max,scope=dashboard,ignore-error=true
-
-      - name: Build summary
-        run: |
-          echo "### Dashboard Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **App**: Dashboard" >> $GITHUB_STEP_SUMMARY
-          echo "- **Runtime**: Bun" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Docker Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-  # Build Website App
-  build-website:
-    name: Build Website
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    defaults:
-      run:
-        working-directory: web
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            web/node_modules
-            web/apps/*/node_modules
-            web/packages/*/node_modules
-            ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-v3-${{ hashFiles('web/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-v3-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Create environment file
+      - name: Create environment file for website
+        if: matrix.app == 'website'
         run: |
           cat > apps/website/.env.local << EOF
           # Base URL
@@ -357,17 +171,17 @@ jobs:
           NEXTAUTH_URL=https://kloudlite.io
           EOF
 
-      - name: Cache Next.js build (website)
+      - name: Cache Next.js build
         uses: actions/cache@v4
         with:
           path: |
-            web/apps/website/.next/cache
-          key: ${{ runner.os }}-nextjs-website-${{ hashFiles('web/bun.lock') }}-${{ hashFiles('web/apps/website/**/*.js', 'web/apps/website/**/*.jsx', 'web/apps/website/**/*.ts', 'web/apps/website/**/*.tsx') }}
+            web/apps/${{ matrix.app }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ matrix.app }}-${{ hashFiles('web/bun.lock') }}-${{ hashFiles(format('web/apps/{0}/**/*.js', matrix.app), format('web/apps/{0}/**/*.jsx', matrix.app), format('web/apps/{0}/**/*.ts', matrix.app), format('web/apps/{0}/**/*.tsx', matrix.app)) }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-website-${{ hashFiles('web/bun.lock') }}-
+            ${{ runner.os }}-nextjs-${{ matrix.app }}-${{ hashFiles('web/bun.lock') }}-
 
-      - name: Build Website app
-        run: bun run --filter website build
+      - name: Build app
+        run: bun run --filter ${{ matrix.app }} build
         env:
           NODE_ENV: production
 
@@ -386,7 +200,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/web-website
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/web-${{ matrix.app }}
           flavor: |
             latest=false
           tags: |
@@ -398,23 +212,23 @@ jobs:
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
-      - name: Build and push Website image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./web/apps/website
-          file: ./web/apps/website/Dockerfile.runtime
+          context: ./web/apps/${{ matrix.app }}
+          file: ./web/apps/${{ matrix.app }}/Dockerfile.runtime
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=website
-          cache-to: type=gha,mode=max,scope=website,ignore-error=true
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }},ignore-error=true
 
       - name: Build summary
         run: |
-          echo "### Website Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### ${{ matrix.app }} Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **App**: Website" >> $GITHUB_STEP_SUMMARY
+          echo "- **App**: ${{ matrix.app }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Runtime**: Bun" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
@@ -465,7 +279,7 @@ jobs:
   deploy-website:
     name: Deploy Website to Azure
     runs-on: ubuntu-latest
-    needs: build-website
+    needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     permissions:
       contents: read
@@ -504,7 +318,7 @@ jobs:
   deploy-console:
     name: Deploy Console to Azure
     runs-on: ubuntu-latest
-    needs: build-console
+    needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     permissions:
       contents: read
