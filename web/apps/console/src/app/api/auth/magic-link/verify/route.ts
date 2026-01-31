@@ -48,13 +48,15 @@ function getDefaultName(email: string): string {
 }
 
 export async function GET(request: NextRequest) {
+  const baseUrl = process.env.NEXT_PUBLIC_CONSOLE_URL || 'http://localhost:3002'
+
   try {
     const { searchParams } = request.nextUrl
     const token = searchParams.get('token')
 
     if (!token) {
       return NextResponse.redirect(
-        new URL('/login?error=invalid_link', request.url)
+        new URL('/login?error=invalid_link', baseUrl)
       )
     }
 
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
       // Token expired, used, or doesn't exist
       // Don't reveal which specific error for security
       return NextResponse.redirect(
-        new URL('/login?error=invalid_link', request.url)
+        new URL('/login?error=invalid_link', baseUrl)
       )
     }
 
@@ -104,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     // Create response with redirect
     const response = NextResponse.redirect(
-      new URL('/installations', request.url)
+      new URL('/installations', baseUrl)
     )
 
     // Set session cookie
@@ -120,7 +122,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Magic link verification error:', error)
     return NextResponse.redirect(
-      new URL('/login?error=server_error', request.url)
+      new URL('/login?error=server_error', baseUrl)
     )
   }
 }
