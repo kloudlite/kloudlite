@@ -294,50 +294,106 @@ jobs:
           echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
   deploy-dashboard:
-    name: Deploy Dashboard
-    needs: [prepare, sync-dashboard-env]
-    if: |
-      always() &&
-      needs.prepare.outputs.deploy-dashboard == 'true' &&
-      (needs.sync-dashboard-env.result == 'success' || needs.sync-dashboard-env.result == 'skipped')
+    name: Deploy Dashboard to K3s
+    needs: [prepare]
+    if: needs.prepare.outputs.deploy-dashboard == 'true'
     runs-on: ubuntu-latest
     environment: production
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy image to Azure Container App
+      - name: Deploy Dashboard to K3s and Restart Frontend
+        env:
+          RESOURCE_GROUP: kl-f615f505-00a6-40b9-b462-400e48c7d224-rg
+          VM_NAME: kl-f615f505-00a6-40b9-b462-400e48c7d224-vm
+          NAMESPACE: kloudlite
+          IMAGE_TAG: ${{ needs.prepare.outputs.image-tag }}
         run: |
-          IMAGE="ghcr.io/${{ github.repository }}/web-dashboard:${{ needs.prepare.outputs.image-tag }}"
+          IMAGE="ghcr.io/${{ github.repository }}/web-dashboard:${IMAGE_TAG}"
 
-          echo "Deploying Dashboard..."
+          echo "================================================"
+          echo "Deploying Dashboard to K3s Cluster"
+          echo "================================================"
           echo "Image: $IMAGE"
-          echo "Note: Using existing environment variables (not updating)"
+          echo "VM: $VM_NAME"
+          echo "Namespace: $NAMESPACE"
+          echo "================================================"
+          echo ""
 
-          # Only update the image, environment variables already set
-          az containerapp update \
-            --name ca-kloudlite-dashboard \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image "$IMAGE" \
-            --output none
+          # Get kubeconfig from VM
+          echo "📥 Fetching kubeconfig from VM..."
+          KUBECONFIG_CONTENT=$(az vm run-command invoke \
+            --name "$VM_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --command-id RunShellScript \
+            --scripts "sudo cat /etc/rancher/k3s/k3s.yaml" \
+            --query 'value[0].message' \
+            --output tsv | grep -A 100 "apiVersion: v1")
 
-          echo "✓ Image deployment completed"
+          # Get VM public IP
+          VM_IP=$(az vm show \
+            --name "$VM_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --show-details \
+            --query publicIps \
+            --output tsv)
+
+          echo "✓ VM IP: $VM_IP"
+
+          # Create kubeconfig
+          TEMP_KUBECONFIG=$(mktemp)
+          echo "$KUBECONFIG_CONTENT" | sed "s|https://127.0.0.1:6443|https://$VM_IP:6443|g" > "$TEMP_KUBECONFIG"
+          export KUBECONFIG="$TEMP_KUBECONFIG"
+
+          # Update dashboard deployment image
+          echo ""
+          echo "🚀 Updating dashboard deployment..."
+          kubectl set image deployment/dashboard dashboard="$IMAGE" -n "$NAMESPACE"
+
+          # Wait for dashboard rollout
+          echo "⏳ Waiting for dashboard rollout..."
+          kubectl rollout status deployment/dashboard -n "$NAMESPACE" --timeout=5m
+
+          echo "✓ Dashboard deployed successfully"
+
+          # Restart frontend deployment
+          echo ""
+          echo "🔄 Restarting frontend deployment..."
+          kubectl rollout restart deployment/frontend -n "$NAMESPACE"
+
+          # Wait for frontend rollout
+          echo "⏳ Waiting for frontend rollout..."
+          kubectl rollout status deployment/frontend -n "$NAMESPACE" --timeout=5m
+
+          echo "✓ Frontend restarted successfully"
+
+          # Cleanup
+          rm -f "$TEMP_KUBECONFIG"
+
+          echo ""
+          echo "================================================"
+          echo "✅ Deployment Complete"
+          echo "================================================"
 
       - name: Deployment Summary
         run: |
-          echo "## Deployment Summary: Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Summary: Dashboard (K3s)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Status** | ✓ Deployed |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Container App** | ca-kloudlite-dashboard |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✓ Deployed to K3s |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Platform** | K3s Cluster on Azure VM |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Namespace** | kloudlite |" >> $GITHUB_STEP_SUMMARY
           echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Public URL** | https://dashboard.kloudlite.io |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Env Vars Synced** | ${{ needs.prepare.outputs.sync-env-vars == 'true' && 'Yes' || 'Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Dashboard** | ✓ Updated |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend** | ✓ Restarted |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
