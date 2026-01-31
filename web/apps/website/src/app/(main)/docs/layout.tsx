@@ -1,10 +1,8 @@
 import { DocsSidebar } from './_components/docs-sidebar'
-import { getTheme } from '@/lib/theme-server'
 import { WebsiteHeader } from '@/components/website-header'
 import { ScrollArea } from '@kloudlite/ui'
 
-export default async function DocsLayout({ children }: { children: React.ReactNode }) {
-  const theme = await getTheme()
+export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-background h-screen flex flex-col">
       {/* Fixed Header */}
@@ -17,7 +15,7 @@ export default async function DocsLayout({ children }: { children: React.ReactNo
         <ScrollArea className="h-full">
           <div className="mx-auto w-full max-w-[90rem] px-4 sm:px-6 lg:px-8">
             <div className="flex gap-6 lg:gap-8 xl:gap-12">
-              <DocsSidebar initialTheme={theme} />
+              <DocsSidebar />
 
               {/* Main Content */}
               <div className="flex-1 min-w-0 py-8 lg:py-12">
