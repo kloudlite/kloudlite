@@ -443,8 +443,21 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 					ManagedDisk: &armcompute.ManagedDiskParameters{
 						StorageAccountType: to.Ptr(osDiskType),
 					},
-					DiskSizeGB:   to.Ptr(volumeSize),
+					DiskSizeGB:   to.Ptr(int32(50)), // Fixed OS disk size
 					DeleteOption: to.Ptr(armcompute.DiskDeleteOptionTypesDelete),
+				},
+				DataDisks: []*armcompute.DataDisk{
+					{
+						Name:         to.Ptr(vmName + "-datadisk"),
+						Lun:          to.Ptr(int32(0)),
+						DiskSizeGB:   to.Ptr(volumeSize), // User-specified storage size
+						CreateOption: to.Ptr(armcompute.DiskCreateOptionTypesEmpty),
+						ManagedDisk: &armcompute.ManagedDiskParameters{
+							StorageAccountType: to.Ptr(osDiskType),
+						},
+						Caching:      to.Ptr(armcompute.CachingTypesNone),
+						DeleteOption: to.Ptr(armcompute.DiskDeleteOptionTypesDelete),
+					},
 				},
 			},
 			OSProfile: &armcompute.OSProfile{
