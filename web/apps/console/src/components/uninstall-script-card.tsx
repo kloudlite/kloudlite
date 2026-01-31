@@ -6,12 +6,12 @@ import { Copy, Check, Terminal } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface UninstallScriptCardProps {
-  secretKey: string
+  installationKey: string
   provider?: 'aws' | 'gcp' | 'azure'
   region?: string
 }
 
-export function UninstallScriptCard({ secretKey, provider = 'aws', region }: UninstallScriptCardProps) {
+export function UninstallScriptCard({ installationKey, provider = 'aws', region }: UninstallScriptCardProps) {
   const [copied, setCopied] = useState(false)
 
   // Azure uses --location, AWS and GCP use --region
@@ -21,7 +21,7 @@ export function UninstallScriptCard({ secretKey, provider = 'aws', region }: Uni
       : ` --region ${region}`
     : ''
 
-  const uninstallCommand = `curl -fsSL https://get.khost.dev/uninstall/${provider} | bash -s -- --key ${secretKey}${regionFlag}`
+  const uninstallCommand = `curl -fsSL https://get.khost.dev/uninstall/${provider} | bash -s -- --key ${installationKey}${regionFlag}`
 
   const copyCommand = () => {
     navigator.clipboard.writeText(uninstallCommand)
