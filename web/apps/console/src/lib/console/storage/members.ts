@@ -31,13 +31,13 @@ export async function getMemberRole(
   }
 
   // Fallback: check if user is the installation owner
-  const { data: installationData } = await supabase
+  const { data: installationData } = await (supabase as any)
     .from('installations')
     .select('user_id')
     .eq('id', installationId)
     .single()
 
-  if (installationData && installationData.user_id === userId) {
+  if (installationData && (installationData as { user_id: string }).user_id === userId) {
     return 'owner'
   }
 
@@ -87,29 +87,31 @@ export async function getInstallationMembers(
   const members = (membersData || []) as any[]
 
   // Get the installation to check owner (fallback for when owner not in installation_members)
-  const { data: installationData } = await supabase
+  const { data: installationData } = await (supabase as any)
     .from('installations')
     .select('user_id, created_at')
     .eq('id', installationId)
     .single()
 
+  const installation = installationData as { user_id: string; created_at: string } | null
+
   // Check if owner is already in members list
   const ownerInMembers = members.some(
-    (m: any) => m.user_id === installationData?.user_id
+    (m: any) => m.user_id === installation?.user_id
   )
 
   // If owner is not in members table, add them as a synthetic member
   const allMembers = [...members]
-  if (installationData && !ownerInMembers) {
+  if (installation && !ownerInMembers) {
     allMembers.unshift({
       id: `owner-${installationId}`, // Synthetic ID for the owner
       installation_id: installationId,
-      user_id: installationData.user_id,
+      user_id: installation.user_id,
       role: 'owner',
       added_by: null,
-      added_at: installationData.created_at,
-      created_at: installationData.created_at,
-      updated_at: installationData.created_at,
+      added_at: installation.created_at,
+      created_at: installation.created_at,
+      updated_at: installation.created_at,
     })
   }
 
