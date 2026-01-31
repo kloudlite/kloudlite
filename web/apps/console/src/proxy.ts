@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Console middleware
+ * Console proxy
  * Handles security headers for installation registration app
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   return addSecurityHeaders(NextResponse.next(), req)
 }
 
