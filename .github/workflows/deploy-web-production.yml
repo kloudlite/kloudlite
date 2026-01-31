@@ -17,6 +17,11 @@ on:
         required: false
         type: string
         default: 'dev'
+      sync-env-vars:
+        description: 'Sync environment variables before deployment'
+        required: false
+        type: boolean
+        default: true
   workflow_run:
     workflows: ["Build, Push and Deploy Web"]
     types: [completed]
@@ -41,6 +46,7 @@ jobs:
       deploy-console: ${{ steps.apps.outputs.deploy-console }}
       deploy-website: ${{ steps.apps.outputs.deploy-website }}
       deploy-dashboard: ${{ steps.apps.outputs.deploy-dashboard }}
+      sync-env-vars: ${{ steps.apps.outputs.sync-env-vars }}
       image-tag: ${{ steps.tag.outputs.image-tag }}
 
     steps:
@@ -67,11 +73,14 @@ jobs:
             else
               echo "deploy-dashboard=false" >> $GITHUB_OUTPUT
             fi
+
+            echo "sync-env-vars=${{ github.event.inputs.sync-env-vars }}" >> $GITHUB_OUTPUT
           else
             # Auto-deploy all apps after successful build
             echo "deploy-console=true" >> $GITHUB_OUTPUT
             echo "deploy-website=true" >> $GITHUB_OUTPUT
-            echo "deploy-dashboard=false" >> $GITHUB_OUTPUT  # Dashboard not auto-deployed yet
+            echo "deploy-dashboard=false" >> $GITHUB_OUTPUT
+            echo "sync-env-vars=true" >> $GITHUB_OUTPUT  # Always sync on auto-deploy
           fi
 
       - name: Determine image tag
@@ -86,10 +95,11 @@ jobs:
             echo "image-tag=sha-${SHORT_SHA}" >> $GITHUB_OUTPUT
           fi
 
-  deploy-console:
-    name: Deploy Console
+  # Sync environment variables before deployment
+  sync-console-env:
+    name: Sync Console Environment Variables
     needs: prepare
-    if: needs.prepare.outputs.deploy-console == 'true'
+    if: needs.prepare.outputs.deploy-console == 'true' && needs.prepare.outputs.sync-env-vars == 'true'
     runs-on: ubuntu-latest
     environment: production
 
@@ -99,17 +109,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Azure Container App
+      - name: Sync environment variables
         run: |
-          IMAGE="ghcr.io/${{ github.repository }}/web-console:${{ needs.prepare.outputs.image-tag }}"
-
-          echo "Deploying Console to Azure..."
-          echo "Image: $IMAGE"
+          echo "Syncing environment variables for Console..."
 
           az containerapp update \
             --name ca-kloudlite-registration \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image "$IMAGE" \
             --set-env-vars \
               "NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}" \
               "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.kloudlite.io' }}" \
@@ -132,7 +138,97 @@ jobs:
               "NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
             --output none
 
-          echo "✓ Deployment completed successfully"
+          echo "✓ Environment variables synced (19 variables)"
+
+  sync-website-env:
+    name: Sync Website Environment Variables
+    needs: prepare
+    if: needs.prepare.outputs.deploy-website == 'true' && needs.prepare.outputs.sync-env-vars == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Sync environment variables
+        run: |
+          echo "Syncing environment variables for Website..."
+
+          az containerapp update \
+            --name ca-kloudlite-website \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --set-env-vars \
+              "NEXT_PUBLIC_BASE_URL=https://kloudlite.io" \
+              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "NEXTAUTH_URL=https://kloudlite.io" \
+            --output none
+
+          echo "✓ Environment variables synced (3 variables)"
+
+  sync-dashboard-env:
+    name: Sync Dashboard Environment Variables
+    needs: prepare
+    if: needs.prepare.outputs.deploy-dashboard == 'true' && needs.prepare.outputs.sync-env-vars == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Sync environment variables
+        run: |
+          echo "Syncing environment variables for Dashboard..."
+
+          az containerapp update \
+            --name ca-kloudlite-dashboard \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --set-env-vars \
+              "NEXT_PUBLIC_BASE_URL=https://dashboard.kloudlite.io" \
+              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "NEXTAUTH_URL=https://dashboard.kloudlite.io" \
+            --output none
+
+          echo "✓ Environment variables synced (3 variables)"
+
+  # Deploy applications (only updates image)
+  deploy-console:
+    name: Deploy Console
+    needs: [prepare, sync-console-env]
+    if: |
+      always() &&
+      needs.prepare.outputs.deploy-console == 'true' &&
+      (needs.sync-console-env.result == 'success' || needs.sync-console-env.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy image to Azure Container App
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/web-console:${{ needs.prepare.outputs.image-tag }}"
+
+          echo "Deploying Console..."
+          echo "Image: $IMAGE"
+          echo "Note: Using existing environment variables (not updating)"
+
+          # Only update the image, environment variables already set
+          az containerapp update \
+            --name ca-kloudlite-registration \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "$IMAGE" \
+            --output none
+
+          echo "✓ Image deployment completed"
 
       - name: Deployment Summary
         run: |
@@ -145,14 +241,17 @@ jobs:
           echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Public URL** | https://console.kloudlite.io |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Environment Variables** | 19 updated |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Env Vars Synced** | ${{ needs.prepare.outputs.sync-env-vars == 'true' && 'Yes' || 'Skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment completed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
   deploy-website:
     name: Deploy Website
-    needs: prepare
-    if: needs.prepare.outputs.deploy-website == 'true'
+    needs: [prepare, sync-website-env]
+    if: |
+      always() &&
+      needs.prepare.outputs.deploy-website == 'true' &&
+      (needs.sync-website-env.result == 'success' || needs.sync-website-env.result == 'skipped')
     runs-on: ubuntu-latest
     environment: production
 
@@ -162,24 +261,22 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Azure Container App
+      - name: Deploy image to Azure Container App
         run: |
           IMAGE="ghcr.io/${{ github.repository }}/web-website:${{ needs.prepare.outputs.image-tag }}"
 
-          echo "Deploying Website to Azure..."
+          echo "Deploying Website..."
           echo "Image: $IMAGE"
+          echo "Note: Using existing environment variables (not updating)"
 
+          # Only update the image, environment variables already set
           az containerapp update \
             --name ca-kloudlite-website \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image "$IMAGE" \
-            --set-env-vars \
-              "NEXT_PUBLIC_BASE_URL=https://kloudlite.io" \
-              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
-              "NEXTAUTH_URL=https://kloudlite.io" \
             --output none
 
-          echo "✓ Deployment completed successfully"
+          echo "✓ Image deployment completed"
 
       - name: Deployment Summary
         run: |
@@ -192,14 +289,17 @@ jobs:
           echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Public URL** | https://kloudlite.io |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Environment Variables** | 3 updated |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Env Vars Synced** | ${{ needs.prepare.outputs.sync-env-vars == 'true' && 'Yes' || 'Skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment completed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
   deploy-dashboard:
     name: Deploy Dashboard
-    needs: prepare
-    if: needs.prepare.outputs.deploy-dashboard == 'true'
+    needs: [prepare, sync-dashboard-env]
+    if: |
+      always() &&
+      needs.prepare.outputs.deploy-dashboard == 'true' &&
+      (needs.sync-dashboard-env.result == 'success' || needs.sync-dashboard-env.result == 'skipped')
     runs-on: ubuntu-latest
     environment: production
 
@@ -209,24 +309,22 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Azure Container App
+      - name: Deploy image to Azure Container App
         run: |
           IMAGE="ghcr.io/${{ github.repository }}/web-dashboard:${{ needs.prepare.outputs.image-tag }}"
 
-          echo "Deploying Dashboard to Azure..."
+          echo "Deploying Dashboard..."
           echo "Image: $IMAGE"
+          echo "Note: Using existing environment variables (not updating)"
 
+          # Only update the image, environment variables already set
           az containerapp update \
             --name ca-kloudlite-dashboard \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image "$IMAGE" \
-            --set-env-vars \
-              "NEXT_PUBLIC_BASE_URL=https://dashboard.kloudlite.io" \
-              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
-              "NEXTAUTH_URL=https://dashboard.kloudlite.io" \
             --output none
 
-          echo "✓ Deployment completed successfully"
+          echo "✓ Image deployment completed"
 
       - name: Deployment Summary
         run: |
@@ -239,9 +337,9 @@ jobs:
           echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Public URL** | https://dashboard.kloudlite.io |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Environment Variables** | 3 updated |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Env Vars Synced** | ${{ needs.prepare.outputs.sync-env-vars == 'true' && 'Yes' || 'Skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment completed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
   notify:
     name: Deployment Notification
@@ -256,6 +354,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Image Tag:** \`${{ needs.prepare.outputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Env Vars Synced:** ${{ needs.prepare.outputs.sync-env-vars }}" >> $GITHUB_STEP_SUMMARY
           echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
