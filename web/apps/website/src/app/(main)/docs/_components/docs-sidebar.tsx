@@ -159,7 +159,7 @@ export function DocsSidebar() {
           <div className="border-t border-foreground/10 px-6 py-4 bg-foreground/[0.01]">
             <div className="flex items-center justify-between">
               <p className="text-muted-foreground text-xs font-medium">© 2026 Kloudlite</p>
-              <ThemeSwitcher initialTheme={initialTheme} />
+              <ThemeSwitcher />
             </div>
           </div>
         </div>
