@@ -90,74 +90,158 @@ jobs:
     name: Deploy Console
     needs: prepare
     if: needs.prepare.outputs.deploy-console == 'true'
-    uses: ./.github/workflows/_deploy-azure-containerapp.yml
-    with:
-      app-name: ca-kloudlite-registration
-      resource-group: rg-kloudlite-registration
-      image: ghcr.io/${{ github.repository }}/web-console:${{ needs.prepare.outputs.image-tag }}
-      public-url: https://console.kloudlite.io
-      environment-variables: |
-        {
-          "NEXT_PUBLIC_BASE_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}",
-          "NEXT_PUBLIC_API_URL": "${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.kloudlite.io' }}",
-          "GITHUB_CLIENT_ID": "${{ secrets.GH_CLIENT_ID }}",
-          "GITHUB_CLIENT_SECRET": "${{ secrets.GH_CLIENT_SECRET }}",
-          "GOOGLE_CLIENT_ID": "${{ secrets.GOOGLE_CLIENT_ID }}",
-          "GOOGLE_CLIENT_SECRET": "${{ secrets.GOOGLE_CLIENT_SECRET }}",
-          "MICROSOFT_ENTRA_CLIENT_ID": "${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}",
-          "MICROSOFT_ENTRA_CLIENT_SECRET": "${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}",
-          "MICROSOFT_ENTRA_TENANT_ID": "${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}",
-          "AUTH_SECRET": "${{ secrets.AUTH_SECRET }}",
-          "NEXTAUTH_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}",
-          "NEXT_PUBLIC_SUPABASE_URL": "${{ secrets.SUPABASE_URL }}",
-          "NEXT_PUBLIC_SUPABASE_ANON_KEY": "${{ secrets.SUPABASE_ANON_KEY }}",
-          "SUPABASE_SERVICE_ROLE_KEY": "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}",
-          "CLOUDFLARE_API_TOKEN": "${{ secrets.CLOUDFLARE_API_TOKEN }}",
-          "CLOUDFLARE_ZONE_ID": "${{ secrets.CLOUDFLARE_ZONE_ID }}",
-          "CLOUDFLARE_DNS_DOMAIN": "${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}",
-          "CLOUDFLARE_ORIGIN_CA_KEY": "${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}",
-          "NEXT_PUBLIC_INSTALLATION_DOMAIN": "${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}"
-        }
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Container App
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/web-console:${{ needs.prepare.outputs.image-tag }}"
+
+          echo "Deploying Console to Azure..."
+          echo "Image: $IMAGE"
+
+          az containerapp update \
+            --name ca-kloudlite-registration \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "$IMAGE" \
+            --set-env-vars \
+              "NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}" \
+              "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.kloudlite.io' }}" \
+              "GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}" \
+              "GITHUB_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}" \
+              "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" \
+              "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              "MICROSOFT_ENTRA_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}" \
+              "MICROSOFT_ENTRA_CLIENT_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}" \
+              "MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}" \
+              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "NEXTAUTH_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}" \
+              "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+              "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+              "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              "CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}" \
+              "CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
+              "CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}" \
+              "NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
+            --output none
+
+          echo "✓ Deployment completed successfully"
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary: Console" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✓ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Container App** | ca-kloudlite-registration |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Public URL** | https://console.kloudlite.io |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment Variables** | 19 updated |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment completed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
   deploy-website:
     name: Deploy Website
     needs: prepare
     if: needs.prepare.outputs.deploy-website == 'true'
-    uses: ./.github/workflows/_deploy-azure-containerapp.yml
-    with:
-      app-name: ca-kloudlite-website
-      resource-group: rg-kloudlite-registration
-      image: ghcr.io/${{ github.repository }}/web-website:${{ needs.prepare.outputs.image-tag }}
-      public-url: https://kloudlite.io
-      environment-variables: |
-        {
-          "NEXT_PUBLIC_BASE_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://kloudlite.io' }}",
-          "AUTH_SECRET": "${{ secrets.AUTH_SECRET }}",
-          "NEXTAUTH_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://kloudlite.io' }}"
-        }
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Container App
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/web-website:${{ needs.prepare.outputs.image-tag }}"
+
+          echo "Deploying Website to Azure..."
+          echo "Image: $IMAGE"
+
+          az containerapp update \
+            --name ca-kloudlite-website \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "$IMAGE" \
+            --set-env-vars \
+              "NEXT_PUBLIC_BASE_URL=https://kloudlite.io" \
+              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "NEXTAUTH_URL=https://kloudlite.io" \
+            --output none
+
+          echo "✓ Deployment completed successfully"
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary: Website" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✓ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Container App** | ca-kloudlite-website |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Public URL** | https://kloudlite.io |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment Variables** | 3 updated |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment completed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
   deploy-dashboard:
     name: Deploy Dashboard
     needs: prepare
     if: needs.prepare.outputs.deploy-dashboard == 'true'
-    uses: ./.github/workflows/_deploy-azure-containerapp.yml
-    with:
-      app-name: ca-kloudlite-dashboard
-      resource-group: rg-kloudlite-registration
-      image: ghcr.io/${{ github.repository }}/web-dashboard:${{ needs.prepare.outputs.image-tag }}
-      public-url: https://dashboard.kloudlite.io
-      environment-variables: |
-        {
-          "NEXT_PUBLIC_BASE_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://dashboard.kloudlite.io' }}",
-          "AUTH_SECRET": "${{ secrets.AUTH_SECRET }}",
-          "NEXTAUTH_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://dashboard.kloudlite.io' }}"
-        }
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Container App
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/web-dashboard:${{ needs.prepare.outputs.image-tag }}"
+
+          echo "Deploying Dashboard to Azure..."
+          echo "Image: $IMAGE"
+
+          az containerapp update \
+            --name ca-kloudlite-dashboard \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "$IMAGE" \
+            --set-env-vars \
+              "NEXT_PUBLIC_BASE_URL=https://dashboard.kloudlite.io" \
+              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "NEXTAUTH_URL=https://dashboard.kloudlite.io" \
+            --output none
+
+          echo "✓ Deployment completed successfully"
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary: Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✓ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Container App** | ca-kloudlite-dashboard |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Public URL** | https://dashboard.kloudlite.io |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment Variables** | 3 updated |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment completed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
   notify:
     name: Deployment Notification
