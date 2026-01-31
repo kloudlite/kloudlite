@@ -1,0 +1,151 @@
+name: API Lint and Test
+
+on:
+  push:
+    branches:
+      - master
+      - development
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-lint-and-test.yml'
+  pull_request:
+    branches:
+      - master
+      - development
+    paths:
+      - 'api/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-vet:
+    name: Go Vet
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run go vet
+        run: go vet ./...
+
+  go-fmt:
+    name: Go Format Check
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      - name: Run go fmt check
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "The following files need formatting:"
+            gofmt -s -l .
+            exit 1
+          fi
+
+  test:
+    name: Tests (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - ./cmd/server/...
+          - ./cmd/kl/...
+          - ./cmd/workmachine-node-manager/...
+          - ./cmd/tunnel-server/...
+          - ./cmd/wm-ingress-controller/...
+          - ./cmd/code-analyzer/...
+          - ./internal/controllers/...
+          - ./internal/handlers/...
+          - ./internal/middleware/...
+          - ./internal/repository/...
+          - ./internal/services/...
+          - ./internal/webhooks/...
+          - ./pkg/...
+
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v -coverprofile=coverage-${{ strategy.job-index }}.out -timeout=2m ${{ matrix.package }}
+        continue-on-error: true
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: github.event_name == 'push'
+        with:
+          files: ./api/coverage-${{ strategy.job-index }}.out
+          flags: api-${{ strategy.job-index }}
+        continue-on-error: true
+
+  race-test:
+    name: Race Detection
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run race detector on critical packages
+        run: go test -race -timeout=5m ./internal/controllers/... ./internal/services/...
+        continue-on-error: true
