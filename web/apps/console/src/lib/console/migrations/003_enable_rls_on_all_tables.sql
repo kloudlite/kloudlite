@@ -33,17 +33,21 @@ CREATE POLICY "Service role can manage user_registrations"
 -- 3. Enable RLS on installations
 ALTER TABLE installations ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can read installations they own
+-- Policy: Users can read installations they own or are members of
 CREATE POLICY "Users can read own installations"
   ON installations
   FOR SELECT
   TO authenticated
   USING (
-    owner_email = auth.jwt() ->> 'email'
+    user_id IN (
+      SELECT user_id FROM user_registrations WHERE email = auth.jwt() ->> 'email'
+    )
     OR id IN (
       SELECT installation_id
       FROM installation_members
-      WHERE user_email = auth.jwt() ->> 'email'
+      WHERE user_id IN (
+        SELECT user_id FROM user_registrations WHERE email = auth.jwt() ->> 'email'
+      )
     )
   );
 
@@ -58,17 +62,20 @@ CREATE POLICY "Service role can manage installations"
 -- 4. Enable RLS on installation_members
 ALTER TABLE installation_members ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can read members of installations they belong to
+-- Policy: Users can read members of installations they own or belong to
 CREATE POLICY "Users can read installation members"
   ON installation_members
   FOR SELECT
   TO authenticated
   USING (
     installation_id IN (
-      SELECT id FROM installations WHERE owner_email = auth.jwt() ->> 'email'
+      SELECT id FROM installations
+      WHERE user_id IN (
+        SELECT user_id FROM user_registrations WHERE email = auth.jwt() ->> 'email'
+      )
     )
-    OR installation_id IN (
-      SELECT installation_id FROM installation_members WHERE user_email = auth.jwt() ->> 'email'
+    OR user_id IN (
+      SELECT user_id FROM user_registrations WHERE email = auth.jwt() ->> 'email'
     )
   );
 
@@ -83,7 +90,7 @@ CREATE POLICY "Service role can manage installation_members"
 -- 5. Enable RLS on installation_invitations
 ALTER TABLE installation_invitations ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can read invitations sent to them or from their installations
+-- Policy: Users can read invitations sent to them or from installations they own
 CREATE POLICY "Users can read installation invitations"
   ON installation_invitations
   FOR SELECT
@@ -91,7 +98,10 @@ CREATE POLICY "Users can read installation invitations"
   USING (
     email = auth.jwt() ->> 'email'
     OR installation_id IN (
-      SELECT id FROM installations WHERE owner_email = auth.jwt() ->> 'email'
+      SELECT id FROM installations
+      WHERE user_id IN (
+        SELECT user_id FROM user_registrations WHERE email = auth.jwt() ->> 'email'
+      )
     )
   );
 
