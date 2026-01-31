@@ -1,0 +1,121 @@
+name: Deploy to Azure Container App (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: 'Azure Container App name'
+        required: true
+        type: string
+      resource-group:
+        description: 'Azure resource group name'
+        required: true
+        type: string
+      image:
+        description: 'Docker image with tag'
+        required: true
+        type: string
+      environment-variables:
+        description: 'JSON string of environment variables'
+        required: false
+        type: string
+        default: '{}'
+      public-url:
+        description: 'Public URL for deployment summary'
+        required: false
+        type: string
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.app-name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Parse environment variables
+        id: parse-env
+        run: |
+          # Convert JSON object to Azure CLI --set-env-vars format
+          ENV_VARS=$(echo '${{ inputs.environment-variables }}' | jq -r 'to_entries | map("\(.key)=\(.value)") | join(" ")')
+
+          # Store for next step
+          echo "env-vars=${ENV_VARS}" >> $GITHUB_OUTPUT
+
+          # Count variables
+          VAR_COUNT=$(echo '${{ inputs.environment-variables }}' | jq 'length')
+          echo "var-count=${VAR_COUNT}" >> $GITHUB_OUTPUT
+
+      - name: Update Container App (with env vars)
+        if: steps.parse-env.outputs.var-count != '0'
+        run: |
+          echo "Deploying ${{ inputs.app-name }} with ${{ steps.parse-env.outputs.var-count }} environment variables..."
+          echo "Image: ${{ inputs.image }}"
+
+          # Update with image and environment variables
+          IFS=' ' read -ra ENV_ARRAY <<< "${{ steps.parse-env.outputs.env-vars }}"
+
+          az containerapp update \
+            --name ${{ inputs.app-name }} \
+            --resource-group ${{ inputs.resource-group }} \
+            --image ${{ inputs.image }} \
+            --set-env-vars "${ENV_ARRAY[@]}" \
+            --output none
+
+          echo "✓ Deployment completed successfully"
+
+      - name: Update Container App (image only)
+        if: steps.parse-env.outputs.var-count == '0'
+        run: |
+          echo "Deploying ${{ inputs.app-name }} (image only)..."
+          echo "Image: ${{ inputs.image }}"
+
+          az containerapp update \
+            --name ${{ inputs.app-name }} \
+            --resource-group ${{ inputs.resource-group }} \
+            --image ${{ inputs.image }} \
+            --output none
+
+          echo "✓ Deployment completed successfully"
+
+      - name: Get Container App status
+        id: status
+        run: |
+          STATUS=$(az containerapp show \
+            --name ${{ inputs.app-name }} \
+            --resource-group ${{ inputs.resource-group }} \
+            --query "properties.runningStatus" -o tsv)
+
+          echo "status=${STATUS}" >> $GITHUB_OUTPUT
+
+      - name: Deployment Summary
+        run: |
+          IMAGE_TAG="${{ inputs.image }}"
+          IMAGE_TAG="${IMAGE_TAG##*:}"  # Extract tag from image
+
+          echo "## Deployment Summary: ${{ inputs.app-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✓ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Container App** | \`${{ inputs.app-name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Resource Group** | \`${{ inputs.resource-group }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Image Tag** | \`${IMAGE_TAG}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Running Status** | \`${{ steps.status.outputs.status }}\` |" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ inputs.public-url }}" ]; then
+            echo "| **Public URL** | ${{ inputs.public-url }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.parse-env.outputs.var-count }}" != "0" ]; then
+            echo "| **Environment Variables** | ${{ steps.parse-env.outputs.var-count }} updated |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment completed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

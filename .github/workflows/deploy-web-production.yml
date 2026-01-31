@@ -1,0 +1,211 @@
+name: Deploy Web to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Application to deploy'
+        required: true
+        type: choice
+        options:
+          - console
+          - website
+          - dashboard
+          - all
+      image-tag:
+        description: 'Image tag to deploy (e.g., sha-abc123, latest, dev)'
+        required: false
+        type: string
+        default: 'dev'
+  workflow_run:
+    workflows: ["Build, Push and Deploy Web"]
+    types: [completed]
+    branches: [development]
+
+concurrency:
+  group: deploy-web-production-${{ github.event.inputs.app || 'auto' }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  RESOURCE_GROUP: rg-kloudlite-registration
+
+jobs:
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    outputs:
+      deploy-console: ${{ steps.apps.outputs.deploy-console }}
+      deploy-website: ${{ steps.apps.outputs.deploy-website }}
+      deploy-dashboard: ${{ steps.apps.outputs.deploy-dashboard }}
+      image-tag: ${{ steps.tag.outputs.image-tag }}
+
+    steps:
+      - name: Determine apps to deploy
+        id: apps
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            APP="${{ github.event.inputs.app }}"
+
+            if [ "$APP" = "all" ] || [ "$APP" = "console" ]; then
+              echo "deploy-console=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy-console=false" >> $GITHUB_OUTPUT
+            fi
+
+            if [ "$APP" = "all" ] || [ "$APP" = "website" ]; then
+              echo "deploy-website=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy-website=false" >> $GITHUB_OUTPUT
+            fi
+
+            if [ "$APP" = "all" ] || [ "$APP" = "dashboard" ]; then
+              echo "deploy-dashboard=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy-dashboard=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Auto-deploy all apps after successful build
+            echo "deploy-console=true" >> $GITHUB_OUTPUT
+            echo "deploy-website=true" >> $GITHUB_OUTPUT
+            echo "deploy-dashboard=false" >> $GITHUB_OUTPUT  # Dashboard not auto-deployed yet
+          fi
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "image-tag=${{ github.event.inputs.image-tag }}" >> $GITHUB_OUTPUT
+          else
+            # Use short SHA from the triggering workflow
+            SHORT_SHA="${{ github.event.workflow_run.head_sha }}"
+            SHORT_SHA="${SHORT_SHA:0:7}"
+            echo "image-tag=sha-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-console:
+    name: Deploy Console
+    needs: prepare
+    if: needs.prepare.outputs.deploy-console == 'true'
+    uses: ./.github/workflows/_deploy-azure-containerapp.yml
+    with:
+      app-name: ca-kloudlite-registration
+      resource-group: rg-kloudlite-registration
+      image: ghcr.io/${{ github.repository }}/web-console:${{ needs.prepare.outputs.image-tag }}
+      public-url: https://console.kloudlite.io
+      environment-variables: |
+        {
+          "NEXT_PUBLIC_BASE_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}",
+          "NEXT_PUBLIC_API_URL": "${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.kloudlite.io' }}",
+          "GITHUB_CLIENT_ID": "${{ secrets.GITHUB_CLIENT_ID }}",
+          "GITHUB_CLIENT_SECRET": "${{ secrets.GITHUB_CLIENT_SECRET }}",
+          "GOOGLE_CLIENT_ID": "${{ secrets.GOOGLE_CLIENT_ID }}",
+          "GOOGLE_CLIENT_SECRET": "${{ secrets.GOOGLE_CLIENT_SECRET }}",
+          "MICROSOFT_ENTRA_CLIENT_ID": "${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}",
+          "MICROSOFT_ENTRA_CLIENT_SECRET": "${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}",
+          "MICROSOFT_ENTRA_TENANT_ID": "${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}",
+          "AUTH_SECRET": "${{ secrets.AUTH_SECRET }}",
+          "NEXTAUTH_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}",
+          "NEXT_PUBLIC_SUPABASE_URL": "${{ secrets.SUPABASE_URL }}",
+          "NEXT_PUBLIC_SUPABASE_ANON_KEY": "${{ secrets.SUPABASE_ANON_KEY }}",
+          "SUPABASE_SERVICE_ROLE_KEY": "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}",
+          "CLOUDFLARE_API_TOKEN": "${{ secrets.CLOUDFLARE_API_TOKEN }}",
+          "CLOUDFLARE_ZONE_ID": "${{ secrets.CLOUDFLARE_ZONE_ID }}",
+          "CLOUDFLARE_DNS_DOMAIN": "${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}",
+          "CLOUDFLARE_ORIGIN_CA_KEY": "${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}",
+          "NEXT_PUBLIC_INSTALLATION_DOMAIN": "${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}"
+        }
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+  deploy-website:
+    name: Deploy Website
+    needs: prepare
+    if: needs.prepare.outputs.deploy-website == 'true'
+    uses: ./.github/workflows/_deploy-azure-containerapp.yml
+    with:
+      app-name: ca-kloudlite-website
+      resource-group: rg-kloudlite-registration
+      image: ghcr.io/${{ github.repository }}/web-website:${{ needs.prepare.outputs.image-tag }}
+      public-url: https://kloudlite.io
+      environment-variables: |
+        {
+          "NEXT_PUBLIC_BASE_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://kloudlite.io' }}",
+          "AUTH_SECRET": "${{ secrets.AUTH_SECRET }}",
+          "NEXTAUTH_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://kloudlite.io' }}"
+        }
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+  deploy-dashboard:
+    name: Deploy Dashboard
+    needs: prepare
+    if: needs.prepare.outputs.deploy-dashboard == 'true'
+    uses: ./.github/workflows/_deploy-azure-containerapp.yml
+    with:
+      app-name: ca-kloudlite-dashboard
+      resource-group: rg-kloudlite-registration
+      image: ghcr.io/${{ github.repository }}/web-dashboard:${{ needs.prepare.outputs.image-tag }}
+      public-url: https://dashboard.kloudlite.io
+      environment-variables: |
+        {
+          "NEXT_PUBLIC_BASE_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://dashboard.kloudlite.io' }}",
+          "AUTH_SECRET": "${{ secrets.AUTH_SECRET }}",
+          "NEXTAUTH_URL": "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://dashboard.kloudlite.io' }}"
+        }
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-console, deploy-website, deploy-dashboard]
+    if: always()
+
+    steps:
+      - name: Generate deployment report
+        run: |
+          echo "# Production Deployment Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** \`${{ needs.prepare.outputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Console status
+          if [ "${{ needs.prepare.outputs.deploy-console }}" = "true" ]; then
+            if [ "${{ needs.deploy-console.result }}" = "success" ]; then
+              echo "- ✅ **Console**: Deployed successfully to https://console.kloudlite.io" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ **Console**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ **Console**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Website status
+          if [ "${{ needs.prepare.outputs.deploy-website }}" = "true" ]; then
+            if [ "${{ needs.deploy-website.result }}" = "success" ]; then
+              echo "- ✅ **Website**: Deployed successfully to https://kloudlite.io" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ **Website**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ **Website**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Dashboard status
+          if [ "${{ needs.prepare.outputs.deploy-dashboard }}" = "true" ]; then
+            if [ "${{ needs.deploy-dashboard.result }}" = "success" ]; then
+              echo "- ✅ **Dashboard**: Deployed successfully to https://dashboard.kloudlite.io" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ **Dashboard**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ **Dashboard**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
