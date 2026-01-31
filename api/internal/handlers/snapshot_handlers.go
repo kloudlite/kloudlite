@@ -1313,9 +1313,9 @@ func (h *SnapshotHandlers) ForkEnvironment(c *gin.Context) {
 			Namespace:    namespace,
 			Labels: map[string]string{
 				"kloudlite.io/owned-by":           username,
-				"kloudlite.io/new-environment":   req.Name,
+				"kloudlite.io/new-environment":    req.Name,
 				"kloudlite.io/source-environment": sourceEnvName,
-				"kloudlite.io/source-snapshot":   latestSnapshot.Name,
+				"kloudlite.io/source-snapshot":    latestSnapshot.Name,
 			},
 		},
 		Spec: envv1.EnvironmentForkRequestSpec{
