@@ -328,7 +328,7 @@ jobs:
           echo ""
 
           # Execute deployment commands on VM via Azure Run Command
-          echo "🚀 Deploying dashboard and restarting frontend on VM..."
+          echo "🚀 Updating frontend deployment with new dashboard image on VM..."
 
           az vm run-command invoke \
             --name "$VM_NAME" \
@@ -339,49 +339,43 @@ jobs:
               IMAGE='$IMAGE'
               NAMESPACE='$NAMESPACE'
 
-              echo '🚀 Updating dashboard deployment...'
-              sudo kubectl set image deployment/dashboard dashboard=\"\$IMAGE\" -n \"\$NAMESPACE\"
-
-              echo '⏳ Waiting for dashboard rollout...'
-              sudo kubectl rollout status deployment/dashboard -n \"\$NAMESPACE\" --timeout=5m
-
-              echo '✓ Dashboard deployed successfully'
-              echo ''
-
-              echo '🔄 Restarting frontend deployment...'
-              sudo kubectl rollout restart deployment/frontend -n \"\$NAMESPACE\"
+              echo '🚀 Updating frontend deployment with dashboard image...'
+              sudo kubectl set image deployment/frontend frontend=\"\$IMAGE\" -n \"\$NAMESPACE\"
 
               echo '⏳ Waiting for frontend rollout...'
               sudo kubectl rollout status deployment/frontend -n \"\$NAMESPACE\" --timeout=5m
 
-              echo '✓ Frontend restarted successfully'
+              echo '✓ Frontend deployment updated successfully'
               echo ''
 
               echo '================================================'
               echo '✅ Deployment Complete'
               echo '================================================'
               echo ''
-              echo 'Current deployments:'
-              sudo kubectl get deployments -n \"\$NAMESPACE\"
+              echo 'Current deployment status:'
+              sudo kubectl get deployment frontend -n \"\$NAMESPACE\"
+              echo ''
+              echo 'Recent pods:'
+              sudo kubectl get pods -n \"\$NAMESPACE\" -l app=frontend --sort-by=.metadata.creationTimestamp | tail -5
             " \
             --query 'value[0].message' \
             --output tsv
 
           echo ""
-          echo "✅ Dashboard and Frontend deployment completed successfully!"
+          echo "✅ Frontend deployment updated with dashboard image successfully!"
 
       - name: Deployment Summary
         run: |
-          echo "## Deployment Summary: Dashboard (K3s)" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Summary: Dashboard to K3s Frontend" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| **Status** | ✓ Deployed to K3s |" >> $GITHUB_STEP_SUMMARY
           echo "| **Platform** | K3s Cluster on Azure VM |" >> $GITHUB_STEP_SUMMARY
           echo "| **Namespace** | kloudlite |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Image Tag** | ${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Dashboard** | ✓ Updated |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Frontend** | ✓ Restarted |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Deployment** | frontend |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Image** | web-dashboard:${{ needs.prepare.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend** | ✓ Updated with dashboard image |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
