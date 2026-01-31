@@ -104,14 +104,13 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	}
 
 	// Render user data script
-	userData, err := templates.K3sAgentSetup.Render(templates.K3sAgentSetupArgs{
+	userData, err := templates.K3sAgentSetupGCP.Render(templates.K3sAgentSetupArgs{
 		K3sVersion:      p.K3sVersion,
 		K3sURL:          p.K3sURL,
 		K3sAgentToken:   p.K3sToken,
 		MachineName:     wm.Name,
 		MachineOwner:    fn.LabelValueEncoder(wm.Spec.OwnedBy),
 		HostedSubdomain: p.HostedSubdomain,
-		BtrfsDevice:     "/dev/sdb", // GCP additional disk appears as /dev/sdb
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)

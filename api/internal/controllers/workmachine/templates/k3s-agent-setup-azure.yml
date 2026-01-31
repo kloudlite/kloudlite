@@ -1,0 +1,54 @@
+#cloud-config
+
+# Disable swap
+swap:
+  filename: /swapfile
+  size: 0
+
+# Setup BTRFS storage disk
+# Azure data disk at LUN 0 appears as /dev/disk/azure/scsi1/lun0
+disk_setup:
+  /dev/disk/azure/scsi1/lun0:
+    table_type: gpt
+    layout: false
+    overwrite: true
+
+fs_setup:
+  - label: kloudlite-storage
+    device: /dev/disk/azure/scsi1/lun0
+    filesystem: btrfs
+    overwrite: true
+
+mounts:
+  - ["/dev/disk/azure/scsi1/lun0", "/var/lib/kloudlite/storage", "btrfs", "noatime,compress=zstd", "0", "0"]
+
+# Create directory structure and install k3s
+runcmd:
+  - mkdir -p /var/lib/kloudlite/storage/{environments,workspaces,.snapshots}
+  - swapoff -a || true
+  - sed -i '/ swap / s/^/#/' /etc/fstab || true
+  - mkdir -p /etc/rancher/k3s
+  - |
+    cat > /etc/rancher/k3s/registries.yaml <<'EOF'
+    mirrors:
+      "cr.{{.HostedSubdomain}}":
+        endpoint:
+          - "http://localhost:30500"
+    EOF
+  - |
+    export K3S_URL="{{.K3sURL}}"
+    export K3S_TOKEN="{{.K3sAgentToken}}"
+    export INSTALL_K3S_VERSION="{{.K3sVersion}}"
+    export INSTALL_K3S_EXEC="agent \
+      --node-name={{.MachineName}} \
+      --node-label=kloudlite.io/workmachine={{.MachineName}} \
+      --node-label=kloudlite.io/owner={{.MachineOwner}} \
+      --node-taint=kloudlite.io/workmachine={{.MachineName}}:NoSchedule \
+      --kubelet-arg=system-reserved=cpu=100m,memory=256Mi \
+      --kubelet-arg=kube-reserved=cpu=100m,memory=256Mi \
+      --kubelet-arg=eviction-hard=memory.available<200Mi,nodefs.available<5% \
+      --kubelet-arg=eviction-soft=memory.available<300Mi,nodefs.available<10% \
+      --kubelet-arg=eviction-soft-grace-period=memory.available=1m,nodefs.available=2m \
+      --kubelet-arg=cgroup-driver=systemd \
+      --kubelet-arg=fail-swap-on=false"
+    curl -sfL https://get.k3s.io | sh -

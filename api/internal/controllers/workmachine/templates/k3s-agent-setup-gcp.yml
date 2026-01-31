@@ -6,21 +6,21 @@ swap:
   size: 0
 
 # Setup BTRFS storage disk
-# Device path is provider-specific: AWS=/dev/xvdf, Azure=/dev/disk/azure/scsi1/lun0, GCP=/dev/sdb
+# GCP additional disk appears as /dev/sdb
 disk_setup:
-  {{.BtrfsDevice}}:
+  /dev/sdb:
     table_type: gpt
     layout: false
     overwrite: true
 
 fs_setup:
   - label: kloudlite-storage
-    device: {{.BtrfsDevice}}
+    device: /dev/sdb
     filesystem: btrfs
     overwrite: true
 
 mounts:
-  - ["{{.BtrfsDevice}}", "/var/lib/kloudlite/storage", "btrfs", "noatime,compress=zstd", "0", "0"]
+  - ["/dev/sdb", "/var/lib/kloudlite/storage", "btrfs", "noatime,compress=zstd", "0", "0"]
 
 # Create directory structure and install k3s
 runcmd:

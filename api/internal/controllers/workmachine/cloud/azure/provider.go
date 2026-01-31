@@ -325,14 +325,13 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 	}
 
 	// Prepare user data (cloud-init script)
-	userData, err := templates.K3sAgentSetup.Render(templates.K3sAgentSetupArgs{
+	userData, err := templates.K3sAgentSetupAzure.Render(templates.K3sAgentSetupArgs{
 		K3sVersion:      p.K3sVersion,
 		K3sURL:          p.K3sURL,
 		K3sAgentToken:   p.K3sToken,
 		MachineName:     wm.Name,
 		MachineOwner:    fn.LabelValueEncoder(wm.Spec.OwnedBy),
 		HostedSubdomain: p.HostedSubdomain,
-		BtrfsDevice:     "/dev/disk/azure/scsi1/lun0", // Azure data disk at LUN 0
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)

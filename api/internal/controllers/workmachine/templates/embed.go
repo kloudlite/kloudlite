@@ -27,8 +27,9 @@ const (
 
 	WorkMachineHostManagerPod templateFile = "workmachine-host-manager-pod.yaml.tpl"
 
-	K3sAgentSetup    templateFile = "k3s-agent-setup.yml"     // Cloud-init format for Azure/GCP
-	K3sAgentSetupAWS templateFile = "k3s-agent-setup-aws.yml" // Bash script for AWS (handles NVMe device detection)
+	K3sAgentSetupAWS   templateFile = "k3s-agent-setup-aws.yml"   // Bash script for AWS (handles NVMe device detection)
+	K3sAgentSetupAzure templateFile = "k3s-agent-setup-azure.yml" // Cloud-init for Azure
+	K3sAgentSetupGCP   templateFile = "k3s-agent-setup-gcp.yml"   // Cloud-init for GCP
 )
 
 type K3sAgentSetupArgs struct {
@@ -38,7 +39,6 @@ type K3sAgentSetupArgs struct {
 	MachineName     string
 	MachineOwner    string
 	HostedSubdomain string // e.g., "mega.khost.dev" - used for registry mirror config
-	BtrfsDevice     string // Device path for BTRFS storage (e.g., /dev/xvdf for AWS, /dev/disk/azure/scsi1/lun0 for Azure)
 }
 
 type WorkspaceHostManagerValues struct {
