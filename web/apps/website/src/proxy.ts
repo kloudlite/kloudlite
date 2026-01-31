@@ -31,7 +31,6 @@ export async function proxy(req: NextRequest) {
     'Content-Security-Policy',
     `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com; connect-src ${connectSrc} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com;`
   )
-  response.headers.set('Permissions-Policy', 'interest-cohort=()')
 
   return response
 }
