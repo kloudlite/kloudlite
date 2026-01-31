@@ -28,6 +28,7 @@ jobs:
   build-and-push:
     name: Build ${{ matrix.app }}
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -82,14 +83,14 @@ jobs:
         run: |
           cat > apps/console/.env.local << EOF
           # Base URL
-          NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://console.kloudlite.io' }}
+          NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}
 
           # API URL
-          NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'https://api.kloudlite.io' }}
+          NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.kloudlite.io' }}
 
           # OAuth Configuration (GitHub)
-          GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }}
-          GITHUB_CLIENT_SECRET=${{ secrets.GITHUB_CLIENT_SECRET }}
+          GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
 
           # OAuth Configuration (Google)
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
@@ -101,8 +102,8 @@ jobs:
           MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
 
           # NextAuth Configuration
-          AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
-          NEXTAUTH_URL=${{ secrets.REGISTER_BASE_URL || 'https://console.kloudlite.io' }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          NEXTAUTH_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}
 
           # Supabase Configuration
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
@@ -124,12 +125,12 @@ jobs:
         run: |
           cat > apps/dashboard/.env.local << EOF
           # Base URL
-          NEXT_PUBLIC_BASE_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
+          NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://register.kloudlite.io' }}
 
           # OAuth Configuration (GitHub)
-          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }}
-          AUTH_GITHUB_ID=${{ secrets.GITHUB_CLIENT_ID }}
-          AUTH_GITHUB_SECRET=${{ secrets.GITHUB_CLIENT_SECRET }}
+          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+          AUTH_GITHUB_ID=${{ secrets.GH_CLIENT_ID }}
+          AUTH_GITHUB_SECRET=${{ secrets.GH_CLIENT_SECRET }}
 
           # OAuth Configuration (Google)
           NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
@@ -144,8 +145,8 @@ jobs:
           AUTH_MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
 
           # NextAuth Configuration
-          AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
-          NEXTAUTH_URL=${{ secrets.REGISTER_BASE_URL || 'https://register.kloudlite.io' }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          NEXTAUTH_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://register.kloudlite.io' }}
 
           # Supabase Configuration
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
