@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RESOURCE_GROUP: rg-kloudlite-registration
+  RESOURCE_GROUP: rg-kloudlite
 
 jobs:
   sync-console:
