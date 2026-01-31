@@ -31,7 +31,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: |-
-          SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, ComposeSpec)
+          SnapshotArtifacts stores K8s resources (ConfigMaps, Secrets, EnvironmentSpec)
           captured during environment snapshot creation. Namespaced with the snapshot.
         properties:
           apiVersion:
@@ -57,11 +57,19 @@ spec:
               composeSpec:
                 description: |-
                   ComposeSpec contains the Environment's inline compose spec (JSON, base64 encoded)
-                  This captures spec.compose from the source Environment
+                  Deprecated: Use EnvironmentSpec instead which captures the full environment spec.
+                  Kept for backward compatibility with existing snapshots.
                 type: string
               configMaps:
                 description: ConfigMaps contains serialized ConfigMap resources (YAML,
                   base64 encoded)
+                type: string
+              environmentSpec:
+                description: |-
+                  EnvironmentSpec contains the full Environment spec (JSON, base64 encoded)
+                  This captures the complete spec from the source Environment including
+                  compose, labels, annotations, resourceQuotas, visibility, etc.
+                  Used by EnvironmentForkRequest to create new environments from snapshots.
                 type: string
               secrets:
                 description: Secrets contains serialized Secret resources (YAML, base64
