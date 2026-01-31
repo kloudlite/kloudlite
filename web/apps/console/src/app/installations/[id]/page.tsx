@@ -121,7 +121,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
             <>
               <div className="border border-red-500/20 bg-red-500/5 rounded-lg p-4 mb-6">
                 <UninstallScriptCard
-                  secretKey={installation.secretKey}
+                  installationKey={installation.installationKey}
                   provider={installation.cloudProvider}
                   region={installation.cloudLocation}
                 />
