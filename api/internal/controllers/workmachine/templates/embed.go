@@ -27,7 +27,8 @@ const (
 
 	WorkMachineHostManagerPod templateFile = "workmachine-host-manager-pod.yaml.tpl"
 
-	K3sAgentSetup templateFile = "k3s-agent-setup.yml"
+	K3sAgentSetup    templateFile = "k3s-agent-setup.yml"     // Cloud-init format for Azure/GCP
+	K3sAgentSetupAWS templateFile = "k3s-agent-setup-aws.yml" // Bash script for AWS (handles NVMe device detection)
 )
 
 type K3sAgentSetupArgs struct {

@@ -253,14 +253,13 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		return nil, errors.Wrap("failed to get AMI info", err)
 	}
 
-	userData, err := templates.K3sAgentSetup.Render(templates.K3sAgentSetupArgs{
+	userData, err := templates.K3sAgentSetupAWS.Render(templates.K3sAgentSetupArgs{
 		K3sVersion:      p.K3sVersion,
 		K3sURL:          p.K3sURL,
 		K3sAgentToken:   p.K3sToken,
 		MachineName:     wm.Name,
 		MachineOwner:    fn.LabelValueEncoder(wm.Spec.OwnedBy),
 		HostedSubdomain: p.HostedSubdomain,
-		BtrfsDevice:     "/dev/xvdf", // AWS EBS volume attached as /dev/sdf appears as /dev/xvdf
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)
