@@ -4,7 +4,7 @@
  * Magic Link Login Form with Cloudflare Turnstile Captcha (Invisible Mode)
  */
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -27,7 +27,7 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const turnstileRef = useRef<any>(null)
+  const [turnstileKey, setTurnstileKey] = useState(0)
 
   const {
     register,
@@ -82,9 +82,7 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
       // Reset captcha on error
       setCaptchaToken(null)
-      if (turnstileRef.current) {
-        turnstileRef.current.reset()
-      }
+      setTurnstileKey(prev => prev + 1)
     } finally {
       setIsLoading(false)
     }
@@ -125,9 +123,7 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
           onClick={() => {
             setSuccess(false)
             setCaptchaToken(null)
-            if (turnstileRef.current) {
-              turnstileRef.current.reset()
-            }
+            setTurnstileKey(prev => prev + 1)
           }}
           className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
         >
@@ -160,10 +156,10 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
         )}
       </div>
 
-      {/* Invisible Turnstile widget */}
+      {/* Invisible Turnstile widget - auto-executes on render */}
       {process.env.NODE_ENV !== 'development' && (
         <Turnstile
-          ref={turnstileRef}
+          key={turnstileKey}
           sitekey={siteKey}
           onVerify={(token) => {
             setCaptchaToken(token)
