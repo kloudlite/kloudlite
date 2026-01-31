@@ -72,6 +72,27 @@ log "Found btrfs volume at $BTRFS_DEV"
 # Format as btrfs if not already formatted
 if ! blkid "$BTRFS_DEV" 2>/dev/null | grep -q btrfs; then
   log "Formatting $BTRFS_DEV as btrfs..."
+
+  # Azure cloud-init may auto-partition and mount data disks
+  # Unmount any existing partitions on this device
+  for part in $(lsblk -ln -o NAME "$BTRFS_DEV" 2>/dev/null | tail -n +2); do
+    if mountpoint -q "/dev/$part" 2>/dev/null || mount | grep -q "/dev/$part"; then
+      log "Unmounting /dev/$part..."
+      umount -f "/dev/$part" 2>/dev/null || true
+    fi
+  done
+
+  # Also unmount /mnt if it's using our device (Azure default mount point)
+  if mount | grep -q "$BTRFS_DEV"; then
+    log "Unmounting $BTRFS_DEV from /mnt..."
+    umount -f /mnt 2>/dev/null || true
+  fi
+
+  # Wipe existing partition table and filesystem signatures
+  log "Wiping existing partition table on $BTRFS_DEV..."
+  wipefs -a "$BTRFS_DEV" 2>/dev/null || true
+
+  # Format as btrfs
   mkfs.btrfs -f "$BTRFS_DEV"
 fi
 
