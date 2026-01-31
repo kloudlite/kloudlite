@@ -37,6 +37,7 @@ type K3sAgentSetupArgs struct {
 	MachineName     string
 	MachineOwner    string
 	HostedSubdomain string // e.g., "mega.khost.dev" - used for registry mirror config
+	BtrfsDevice     string // Device path for BTRFS storage (e.g., /dev/xvdf for AWS, /dev/disk/azure/scsi1/lun0 for Azure)
 }
 
 type WorkspaceHostManagerValues struct {

@@ -111,6 +111,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		MachineName:     wm.Name,
 		MachineOwner:    fn.LabelValueEncoder(wm.Spec.OwnedBy),
 		HostedSubdomain: p.HostedSubdomain,
+		BtrfsDevice:     "/dev/sdb", // GCP additional disk appears as /dev/sdb
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)

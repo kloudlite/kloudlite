@@ -1,149 +1,54 @@
-#!/usr/bin/env bash
-set -x
+#cloud-config
 
-# Log to both console and file
-exec > >(tee /var/log/user-data.log)
-exec 2>&1
+# Disable swap
+swap:
+  filename: /swapfile
+  size: 0
 
-function log() {
-  echo "[$(date -Iseconds)] $*"
-}
+# Setup BTRFS storage disk
+# Device path is provider-specific: AWS=/dev/xvdf, Azure=/dev/disk/azure/scsi1/lun0, GCP=/dev/sdb
+disk_setup:
+  {{.BtrfsDevice}}:
+    table_type: gpt
+    layout: false
+    overwrite: true
 
-# # --- Install and start SSM Agent for remote access ---
-# log "Setting up AWS SSM Agent..."
-#
-# # Ubuntu 24.04 comes with snap-based SSM agent, but we'll use the deb package for better compatibility
-# snap remove amazon-ssm-agent || true
-#
-# # Install SSM agent via snap (recommended for Ubuntu 24.04)
-# snap install amazon-ssm-agent --classic || true
-#
-# # Start and enable SSM agent
-# systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service || true
-# systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+fs_setup:
+  - label: kloudlite-storage
+    device: {{.BtrfsDevice}}
+    filesystem: btrfs
+    overwrite: true
 
-# log "SSM Agent installation completed"
+mounts:
+  - ["{{.BtrfsDevice}}", "/var/lib/kloudlite/storage", "btrfs", "noatime,compress=zstd", "0", "0"]
 
-# --- System tuning ---
-log "Disabling swap and preparing system..."
-
-swapoff -a || true
-sed -i '/ swap / s/^/#/' /etc/fstab || true
-
-# --- BTRFS Storage Setup ---
-log "Setting up btrfs storage volume..."
-
-# Wait for btrfs volume to attach
-# Device paths by cloud provider:
-# AWS: /dev/nvme1n1 (Nitro instances), /dev/xvdf (older instances)
-# Azure: /dev/sdc (first data disk), /dev/disk/azure/scsi1/lun0 (symlink)
-# GCP: /dev/sdb (first attached disk)
-for i in {1..60}; do
-  # AWS paths
-  if [ -b /dev/nvme1n1 ]; then
-    BTRFS_DEV=/dev/nvme1n1
-    break
-  elif [ -b /dev/xvdf ]; then
-    BTRFS_DEV=/dev/xvdf
-    break
-  # Azure paths
-  elif [ -b /dev/sdc ]; then
-    BTRFS_DEV=/dev/sdc
-    break
-  elif [ -L /dev/disk/azure/scsi1/lun0 ]; then
-    BTRFS_DEV=$(readlink -f /dev/disk/azure/scsi1/lun0)
-    break
-  # GCP paths
-  elif [ -b /dev/sdb ]; then
-    BTRFS_DEV=/dev/sdb
-    break
-  fi
-  log "Waiting for storage volume to attach... ($i/60)"
-  sleep 2
-done
-
-if [ -z "${BTRFS_DEV:-}" ]; then
-  log "ERROR: BTRFS volume not found after 120 seconds"
-  exit 1
-fi
-
-log "Found btrfs volume at $BTRFS_DEV"
-
-# Format as btrfs if not already formatted
-if ! blkid "$BTRFS_DEV" 2>/dev/null | grep -q btrfs; then
-  log "Formatting $BTRFS_DEV as btrfs..."
-
-  # Azure cloud-init may auto-partition and mount data disks
-  # Unmount any existing partitions on this device
-  for part in $(lsblk -ln -o NAME "$BTRFS_DEV" 2>/dev/null | tail -n +2); do
-    if mountpoint -q "/dev/$part" 2>/dev/null || mount | grep -q "/dev/$part"; then
-      log "Unmounting /dev/$part..."
-      umount -f "/dev/$part" 2>/dev/null || true
-    fi
-  done
-
-  # Also unmount /mnt if it's using our device (Azure default mount point)
-  if mount | grep -q "$BTRFS_DEV"; then
-    log "Unmounting $BTRFS_DEV from /mnt..."
-    umount -f /mnt 2>/dev/null || true
-  fi
-
-  # Wipe existing partition table and filesystem signatures
-  log "Wiping existing partition table on $BTRFS_DEV..."
-  wipefs -a "$BTRFS_DEV" 2>/dev/null || true
-
-  # Format as btrfs
-  mkfs.btrfs -f "$BTRFS_DEV"
-fi
-
-# Create mount point and mount with compression
-mkdir -p /var/lib/kloudlite/storage
-mount -o noatime,compress=zstd "$BTRFS_DEV" /var/lib/kloudlite/storage
-
-# Add to fstab for persistence across reboots
-if ! grep -q "/var/lib/kloudlite/storage" /etc/fstab; then
-  echo "$BTRFS_DEV /var/lib/kloudlite/storage btrfs noatime,compress=zstd 0 0" >> /etc/fstab
-fi
-
-# Create directory structure for environments and snapshots
-mkdir -p /var/lib/kloudlite/storage/{environments,workspaces,.snapshots}
-
-log "BTRFS storage ready at /var/lib/kloudlite/storage"
-
-log "Starting K3s agent setup..."
-
-export K3S_VERSION={{.K3sVersion}}
-export K3S_URL="{{.K3sURL}}"
-export K3S_TOKEN="{{.K3sAgentToken}}"
-
-export MACHINE_NAME="{{.MachineName}}"
-export MACHINE_OWNER="{{.MachineOwner}}"
-
-# Configure K3s registry mirror for Kloudlite image registry
-# This allows pods to pull images from cr.{subdomain} via local NodePort
-log "Configuring K3s registry mirror for cr.{{.HostedSubdomain}}..."
-mkdir -p /etc/rancher/k3s
-cat > /etc/rancher/k3s/registries.yaml <<'REGISTRIES_EOF'
-mirrors:
-  "cr.{{.HostedSubdomain}}":
-    endpoint:
-      - "http://localhost:30500"
-REGISTRIES_EOF
-log "Registry mirror configured"
-
-export INSTALL_K3S_EXEC="agent \
-  --node-name=${MACHINE_NAME} \
-  --node-label=kloudlite.io/workmachine=${MACHINE_NAME} \
-  --node-label=kloudlite.io/owner=${MACHINE_OWNER} \
-  --node-taint=kloudlite.io/workmachine=${MACHINE_NAME}:NoSchedule \
-  --kubelet-arg=system-reserved=cpu=100m,memory=256Mi \
-  --kubelet-arg=kube-reserved=cpu=100m,memory=256Mi \
-  --kubelet-arg=eviction-hard=memory.available<200Mi,nodefs.available<5% \
-  --kubelet-arg=eviction-soft=memory.available<300Mi,nodefs.available<10% \
-  --kubelet-arg=eviction-soft-grace-period=memory.available=1m,nodefs.available=2m \
-  --kubelet-arg=cgroup-driver=systemd \
-  --kubelet-arg=fail-swap-on=false"
-
-curl -sfL https://get.k3s.io | sh -
-
-log "k3s agent ($MACHINE_NAME) installed, node will join cluster soon ..."
+# Create directory structure and install k3s
+runcmd:
+  - mkdir -p /var/lib/kloudlite/storage/{environments,workspaces,.snapshots}
+  - swapoff -a || true
+  - sed -i '/ swap / s/^/#/' /etc/fstab || true
+  - mkdir -p /etc/rancher/k3s
+  - |
+    cat > /etc/rancher/k3s/registries.yaml <<'EOF'
+    mirrors:
+      "cr.{{.HostedSubdomain}}":
+        endpoint:
+          - "http://localhost:30500"
+    EOF
+  - |
+    export K3S_URL="{{.K3sURL}}"
+    export K3S_TOKEN="{{.K3sAgentToken}}"
+    export INSTALL_K3S_VERSION="{{.K3sVersion}}"
+    export INSTALL_K3S_EXEC="agent \
+      --node-name={{.MachineName}} \
+      --node-label=kloudlite.io/workmachine={{.MachineName}} \
+      --node-label=kloudlite.io/owner={{.MachineOwner}} \
+      --node-taint=kloudlite.io/workmachine={{.MachineName}}:NoSchedule \
+      --kubelet-arg=system-reserved=cpu=100m,memory=256Mi \
+      --kubelet-arg=kube-reserved=cpu=100m,memory=256Mi \
+      --kubelet-arg=eviction-hard=memory.available<200Mi,nodefs.available<5% \
+      --kubelet-arg=eviction-soft=memory.available<300Mi,nodefs.available<10% \
+      --kubelet-arg=eviction-soft-grace-period=memory.available=1m,nodefs.available=2m \
+      --kubelet-arg=cgroup-driver=systemd \
+      --kubelet-arg=fail-swap-on=false"
+    curl -sfL https://get.k3s.io | sh -

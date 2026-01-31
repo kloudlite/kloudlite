@@ -260,6 +260,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		MachineName:     wm.Name,
 		MachineOwner:    fn.LabelValueEncoder(wm.Spec.OwnedBy),
 		HostedSubdomain: p.HostedSubdomain,
+		BtrfsDevice:     "/dev/xvdf", // AWS EBS volume attached as /dev/sdf appears as /dev/xvdf
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)
