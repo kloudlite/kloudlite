@@ -1,12 +1,5 @@
 #cloud-config
 
-# Disable swap
-swap:
-  filename: /swapfile
-  size: 0
-
-# Setup BTRFS storage disk
-# Azure data disk at LUN 0 appears as /dev/disk/azure/scsi1/lun0
 disk_setup:
   /dev/disk/azure/scsi1/lun0:
     table_type: gpt
@@ -22,11 +15,10 @@ fs_setup:
 mounts:
   - ["/dev/disk/azure/scsi1/lun0", "/var/lib/kloudlite/storage", "btrfs", "noatime,compress=zstd", "0", "0"]
 
-# Create directory structure and install k3s
 runcmd:
   - mkdir -p /var/lib/kloudlite/storage/{environments,workspaces,.snapshots}
-  - swapoff -a || true
-  - sed -i '/ swap / s/^/#/' /etc/fstab || true
+  - swapoff -a
+  - sed -i '/ swap / s/^/#/' /etc/fstab
   - mkdir -p /etc/rancher/k3s
   - |
     cat > /etc/rancher/k3s/registries.yaml <<'EOF'

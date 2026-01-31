@@ -1,90 +1,48 @@
 #!/usr/bin/env bash
-set -x
+set -ex
 
-# Log to both console and file
 exec > >(tee /var/log/user-data.log)
 exec 2>&1
 
-function log() {
-  echo "[$(date -Iseconds)] $*"
-}
+# Disable swap
+swapoff -a
+sed -i '/ swap / s/^/#/' /etc/fstab
 
-# --- System tuning ---
-log "Disabling swap and preparing system..."
-
-swapoff -a || true
-sed -i '/ swap / s/^/#/' /etc/fstab || true
-
-# --- BTRFS Storage Setup ---
-log "Setting up btrfs storage volume..."
-
-# Wait for btrfs volume to attach
-# AWS device paths: /dev/nvme1n1 (Nitro instances), /dev/xvdf (older instances)
+# Wait for storage volume to attach (Nitro: /dev/nvme1n1, older: /dev/xvdf)
 for i in {1..60}; do
-  if [ -b /dev/nvme1n1 ]; then
-    BTRFS_DEV=/dev/nvme1n1
-    break
-  elif [ -b /dev/xvdf ]; then
-    BTRFS_DEV=/dev/xvdf
-    break
-  fi
-  log "Waiting for storage volume to attach... ($i/60)"
+  [ -b /dev/nvme1n1 ] && BTRFS_DEV=/dev/nvme1n1 && break
+  [ -b /dev/xvdf ] && BTRFS_DEV=/dev/xvdf && break
+  echo "Waiting for storage volume... ($i/60)"
   sleep 2
 done
 
-if [ -z "${BTRFS_DEV:-}" ]; then
-  log "ERROR: BTRFS volume not found after 120 seconds"
-  exit 1
-fi
+[ -z "$BTRFS_DEV" ] && echo "ERROR: Storage volume not found" && exit 1
 
-log "Found btrfs volume at $BTRFS_DEV"
-
-# Format as btrfs if not already formatted
-if ! blkid "$BTRFS_DEV" 2>/dev/null | grep -q btrfs; then
-  log "Formatting $BTRFS_DEV as btrfs..."
-  mkfs.btrfs -f "$BTRFS_DEV"
-fi
-
-# Create mount point and mount with compression
+# Format and mount BTRFS
+mkfs.btrfs -f "$BTRFS_DEV"
 mkdir -p /var/lib/kloudlite/storage
 mount -o noatime,compress=zstd "$BTRFS_DEV" /var/lib/kloudlite/storage
-
-# Add to fstab for persistence across reboots
-if ! grep -q "/var/lib/kloudlite/storage" /etc/fstab; then
-  echo "$BTRFS_DEV /var/lib/kloudlite/storage btrfs noatime,compress=zstd 0 0" >> /etc/fstab
-fi
-
-# Create directory structure for environments and snapshots
+echo "$BTRFS_DEV /var/lib/kloudlite/storage btrfs noatime,compress=zstd 0 0" >> /etc/fstab
 mkdir -p /var/lib/kloudlite/storage/{environments,workspaces,.snapshots}
 
-log "BTRFS storage ready at /var/lib/kloudlite/storage"
-
-log "Starting K3s agent setup..."
-
-export K3S_VERSION={{.K3sVersion}}
-export K3S_URL="{{.K3sURL}}"
-export K3S_TOKEN="{{.K3sAgentToken}}"
-
-export MACHINE_NAME="{{.MachineName}}"
-export MACHINE_OWNER="{{.MachineOwner}}"
-
-# Configure K3s registry mirror for Kloudlite image registry
-# This allows pods to pull images from cr.{subdomain} via local NodePort
-log "Configuring K3s registry mirror for cr.{{.HostedSubdomain}}..."
+# Configure K3s registry mirror
 mkdir -p /etc/rancher/k3s
-cat > /etc/rancher/k3s/registries.yaml <<'REGISTRIES_EOF'
+cat > /etc/rancher/k3s/registries.yaml <<'EOF'
 mirrors:
   "cr.{{.HostedSubdomain}}":
     endpoint:
       - "http://localhost:30500"
-REGISTRIES_EOF
-log "Registry mirror configured"
+EOF
 
+# Install K3s agent
+export K3S_URL="{{.K3sURL}}"
+export K3S_TOKEN="{{.K3sAgentToken}}"
+export INSTALL_K3S_VERSION="{{.K3sVersion}}"
 export INSTALL_K3S_EXEC="agent \
-  --node-name=${MACHINE_NAME} \
-  --node-label=kloudlite.io/workmachine=${MACHINE_NAME} \
-  --node-label=kloudlite.io/owner=${MACHINE_OWNER} \
-  --node-taint=kloudlite.io/workmachine=${MACHINE_NAME}:NoSchedule \
+  --node-name={{.MachineName}} \
+  --node-label=kloudlite.io/workmachine={{.MachineName}} \
+  --node-label=kloudlite.io/owner={{.MachineOwner}} \
+  --node-taint=kloudlite.io/workmachine={{.MachineName}}:NoSchedule \
   --kubelet-arg=system-reserved=cpu=100m,memory=256Mi \
   --kubelet-arg=kube-reserved=cpu=100m,memory=256Mi \
   --kubelet-arg=eviction-hard=memory.available<200Mi,nodefs.available<5% \
@@ -94,5 +52,3 @@ export INSTALL_K3S_EXEC="agent \
   --kubelet-arg=fail-swap-on=false"
 
 curl -sfL https://get.k3s.io | sh -
-
-log "k3s agent ($MACHINE_NAME) installed, node will join cluster soon ..."
