@@ -33,16 +33,32 @@ sed -i '/ swap / s/^/#/' /etc/fstab || true
 # --- BTRFS Storage Setup ---
 log "Setting up btrfs storage volume..."
 
-# Wait for btrfs volume to attach (appears as nvme1n1 on Nitro instances or xvdf on others)
+# Wait for btrfs volume to attach
+# Device paths by cloud provider:
+# AWS: /dev/nvme1n1 (Nitro instances), /dev/xvdf (older instances)
+# Azure: /dev/sdc (first data disk), /dev/disk/azure/scsi1/lun0 (symlink)
+# GCP: /dev/sdb (first attached disk)
 for i in {1..60}; do
+  # AWS paths
   if [ -b /dev/nvme1n1 ]; then
     BTRFS_DEV=/dev/nvme1n1
     break
   elif [ -b /dev/xvdf ]; then
     BTRFS_DEV=/dev/xvdf
     break
+  # Azure paths
+  elif [ -b /dev/sdc ]; then
+    BTRFS_DEV=/dev/sdc
+    break
+  elif [ -L /dev/disk/azure/scsi1/lun0 ]; then
+    BTRFS_DEV=$(readlink -f /dev/disk/azure/scsi1/lun0)
+    break
+  # GCP paths
+  elif [ -b /dev/sdb ]; then
+    BTRFS_DEV=/dev/sdb
+    break
   fi
-  log "Waiting for btrfs volume to attach... ($i/60)"
+  log "Waiting for storage volume to attach... ($i/60)"
   sleep 2
 done
 
