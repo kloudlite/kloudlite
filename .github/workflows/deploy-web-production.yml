@@ -327,63 +327,48 @@ jobs:
           echo "================================================"
           echo ""
 
-          # Get kubeconfig from VM
-          echo "📥 Fetching kubeconfig from VM..."
+          # Execute deployment commands on VM via Azure Run Command
+          echo "🚀 Deploying dashboard and restarting frontend on VM..."
+
           az vm run-command invoke \
             --name "$VM_NAME" \
             --resource-group "$RESOURCE_GROUP" \
             --command-id RunShellScript \
-            --scripts "sudo cat /etc/rancher/k3s/k3s.yaml" \
+            --scripts "
+              export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+              IMAGE='$IMAGE'
+              NAMESPACE='$NAMESPACE'
+
+              echo '🚀 Updating dashboard deployment...'
+              sudo kubectl set image deployment/dashboard dashboard=\"\$IMAGE\" -n \"\$NAMESPACE\"
+
+              echo '⏳ Waiting for dashboard rollout...'
+              sudo kubectl rollout status deployment/dashboard -n \"\$NAMESPACE\" --timeout=5m
+
+              echo '✓ Dashboard deployed successfully'
+              echo ''
+
+              echo '🔄 Restarting frontend deployment...'
+              sudo kubectl rollout restart deployment/frontend -n \"\$NAMESPACE\"
+
+              echo '⏳ Waiting for frontend rollout...'
+              sudo kubectl rollout status deployment/frontend -n \"\$NAMESPACE\" --timeout=5m
+
+              echo '✓ Frontend restarted successfully'
+              echo ''
+
+              echo '================================================'
+              echo '✅ Deployment Complete'
+              echo '================================================'
+              echo ''
+              echo 'Current deployments:'
+              sudo kubectl get deployments -n \"\$NAMESPACE\"
+            " \
             --query 'value[0].message' \
-            --output tsv > /tmp/kubeconfig_raw.txt
-
-          # Extract only the YAML content (between [stdout] and [stderr])
-          KUBECONFIG_CONTENT=$(sed -n '/^\[stdout\]/,/^\[stderr\]/p' /tmp/kubeconfig_raw.txt | grep -v '^\[stdout\]' | grep -v '^\[stderr\]' | sed '/^$/d')
-
-          # Get VM public IP
-          VM_IP=$(az vm show \
-            --name "$VM_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --show-details \
-            --query publicIps \
-            --output tsv)
-
-          echo "✓ VM IP: $VM_IP"
-
-          # Create kubeconfig
-          TEMP_KUBECONFIG=$(mktemp)
-          echo "$KUBECONFIG_CONTENT" | sed "s|https://127.0.0.1:6443|https://$VM_IP:6443|g" > "$TEMP_KUBECONFIG"
-          export KUBECONFIG="$TEMP_KUBECONFIG"
-
-          # Update dashboard deployment image
-          echo ""
-          echo "🚀 Updating dashboard deployment..."
-          kubectl set image deployment/dashboard dashboard="$IMAGE" -n "$NAMESPACE"
-
-          # Wait for dashboard rollout
-          echo "⏳ Waiting for dashboard rollout..."
-          kubectl rollout status deployment/dashboard -n "$NAMESPACE" --timeout=5m
-
-          echo "✓ Dashboard deployed successfully"
-
-          # Restart frontend deployment
-          echo ""
-          echo "🔄 Restarting frontend deployment..."
-          kubectl rollout restart deployment/frontend -n "$NAMESPACE"
-
-          # Wait for frontend rollout
-          echo "⏳ Waiting for frontend rollout..."
-          kubectl rollout status deployment/frontend -n "$NAMESPACE" --timeout=5m
-
-          echo "✓ Frontend restarted successfully"
-
-          # Cleanup
-          rm -f "$TEMP_KUBECONFIG"
+            --output tsv
 
           echo ""
-          echo "================================================"
-          echo "✅ Deployment Complete"
-          echo "================================================"
+          echo "✅ Dashboard and Frontend deployment completed successfully!"
 
       - name: Deployment Summary
         run: |
