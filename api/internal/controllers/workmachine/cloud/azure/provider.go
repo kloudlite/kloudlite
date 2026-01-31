@@ -332,6 +332,7 @@ func (p *provider) CreateMachine(ctx context.Context, wm *v1.WorkMachine) (*v1.M
 		MachineName:     wm.Name,
 		MachineOwner:    fn.LabelValueEncoder(wm.Spec.OwnedBy),
 		HostedSubdomain: p.HostedSubdomain,
+		BtrfsDevice:     "/dev/disk/azure/scsi1/lun0", // Azure data disk at LUN 0
 	})
 	if err != nil {
 		return nil, errors.Wrap("failed to render k3s user data script", err)
