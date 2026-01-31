@@ -2,6 +2,8 @@ package webhooks
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -12,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
+	"golang.org/x/crypto/bcrypt"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -282,8 +285,57 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 		})
 	}
 
-	// Note: Password hashing is now handled by the User controller
-	// Controller will hash spec.passwordString and store it in spec.password
+	// Handle password hashing with change detection
+	if user.Spec.PasswordString != "" {
+		// Calculate hash of the new password string for comparison
+		newPasswordHash := sha256.Sum256([]byte(user.Spec.PasswordString))
+		newPasswordHashStr := base64.StdEncoding.EncodeToString(newPasswordHash[:])
+
+		// Get old object to check if password has changed
+		var oldPasswordHash string
+		if req.OldObject.Raw != nil {
+			var oldUser platformv1alpha1.User
+			if err := json.Unmarshal(req.OldObject.Raw, &oldUser); err == nil {
+				oldPasswordHash = oldUser.Status.PasswordHash
+			}
+		}
+
+		// Only hash if password has actually changed
+		if oldPasswordHash != newPasswordHashStr {
+			// Hash password with bcrypt
+			bcryptHash, err := bcrypt.GenerateFromPassword([]byte(user.Spec.PasswordString), bcrypt.DefaultCost)
+			if err != nil {
+				w.logger.Error("Failed to hash password: " + err.Error())
+				return &admissionv1.AdmissionResponse{
+					Allowed: false,
+					Result: &metav1.Status{
+						Message: fmt.Sprintf("Failed to hash password: %v", err),
+					},
+				}
+			}
+
+			// Add patch to set the hashed password
+			patches = append(patches, patchOperation{
+				Op:    "replace",
+				Path:  "/spec/password",
+				Value: base64.StdEncoding.EncodeToString(bcryptHash),
+			})
+
+			// Clear the plain text password
+			patches = append(patches, patchOperation{
+				Op:    "replace",
+				Path:  "/spec/passwordString",
+				Value: "",
+			})
+
+			// Update status with password hash for change detection
+			patches = append(patches, patchOperation{
+				Op:    "replace",
+				Path:  "/status/passwordHash",
+				Value: newPasswordHashStr,
+			})
+		}
+	}
 
 	// Create patch response
 	patchBytes, err := json.Marshal(patches)
