@@ -1,10 +1,10 @@
 'use client'
 
 /**
- * Magic Link Login Form with Cloudflare Turnstile Captcha
+ * Magic Link Login Form with Cloudflare Turnstile Captcha (Invisible Mode)
  */
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -27,7 +27,7 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const [showCaptcha, setShowCaptcha] = useState(false)
+  const turnstileRef = useRef<any>(null)
 
   const {
     register,
@@ -49,9 +49,9 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
   const onSubmit = async (data: FormData) => {
     const isDevelopment = process.env.NODE_ENV === 'development'
 
-    // Skip captcha in development mode
+    // In production, require captcha token
     if (!isDevelopment && !captchaToken) {
-      setShowCaptcha(true)
+      setError('Please wait for security verification to complete.')
       return
     }
 
@@ -82,7 +82,9 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
       // Reset captcha on error
       setCaptchaToken(null)
-      setShowCaptcha(false)
+      if (turnstileRef.current) {
+        turnstileRef.current.reset()
+      }
     } finally {
       setIsLoading(false)
     }
@@ -123,7 +125,9 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
           onClick={() => {
             setSuccess(false)
             setCaptchaToken(null)
-            setShowCaptcha(false)
+            if (turnstileRef.current) {
+              turnstileRef.current.reset()
+            }
           }}
           className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
         >
@@ -156,24 +160,22 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
         )}
       </div>
 
-      {showCaptcha && process.env.NODE_ENV !== 'development' && (
-        <div className="flex justify-center py-2">
-          <Turnstile
-            sitekey={siteKey}
-            onVerify={(token) => {
-              setCaptchaToken(token)
-              setShowCaptcha(false)
-            }}
-            onError={() => {
-              setError('Captcha verification failed. Please try again.')
-              setShowCaptcha(false)
-            }}
-            onExpire={() => {
-              setCaptchaToken(null)
-            }}
-            theme="light"
-          />
-        </div>
+      {/* Invisible Turnstile widget */}
+      {process.env.NODE_ENV !== 'development' && (
+        <Turnstile
+          ref={turnstileRef}
+          sitekey={siteKey}
+          onVerify={(token) => {
+            setCaptchaToken(token)
+          }}
+          onError={() => {
+            setError('Captcha verification failed. Please try again.')
+          }}
+          onExpire={() => {
+            setCaptchaToken(null)
+          }}
+          size="invisible"
+        />
       )}
 
       {error && (
