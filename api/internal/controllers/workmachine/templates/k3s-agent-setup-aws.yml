@@ -19,7 +19,7 @@ done
 [ -z "$BTRFS_DEV" ] && echo "ERROR: Storage volume not found" && exit 1
 
 # Format and mount BTRFS
-mkfs.btrfs -f "$BTRFS_DEV"
+mkfs.btrfs -f -L kloudlite-storage "$BTRFS_DEV"
 mkdir -p /var/lib/kloudlite/storage
 mount -o noatime,compress=zstd "$BTRFS_DEV" /var/lib/kloudlite/storage
 echo "$BTRFS_DEV /var/lib/kloudlite/storage btrfs noatime,compress=zstd 0 0" >> /etc/fstab
