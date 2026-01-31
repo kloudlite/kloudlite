@@ -2,15 +2,12 @@ package user
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 
 	userv1alpha1 "github.com/kloudlite/kloudlite/api/internal/controllers/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -64,71 +61,9 @@ func (r *UserReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 		return r.handleUserDeletion(ctx, user, logger)
 	}
 
-	// Handle password updates with change detection
-	if user.Spec.PasswordString != "" {
-		// Calculate hash of the new password string for comparison
-		newPasswordHash := sha256.Sum256([]byte(user.Spec.PasswordString))
-		newPasswordHashStr := base64.StdEncoding.EncodeToString(newPasswordHash[:])
-
-		// Only update if password has actually changed
-		if user.Status.PasswordHash != newPasswordHashStr {
-			logger.Info("Updating user password")
-
-			b, err := bcrypt.GenerateFromPassword([]byte(user.Spec.PasswordString), bcrypt.DefaultCost)
-			if err != nil {
-				logger.Error("Failed to hash password", zap.Error(err))
-				return ctrl.Result{}, err
-			}
-
-			user.Spec.Password = base64.StdEncoding.EncodeToString(b)
-			user.Spec.PasswordString = ""
-
-			// Update status to track the password hash
-			user.Status.PasswordHash = newPasswordHashStr
-
-			// Initialize status if needed
-			if user.Status.Conditions == nil {
-				user.Status.Conditions = []metav1.Condition{}
-			}
-
-			// Add or update password condition
-			now := metav1.Now()
-			passwordCondition := metav1.Condition{
-				Type:               "PasswordSet",
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: now,
-				Reason:             "PasswordUpdated",
-				Message:            "User password has been successfully updated",
-			}
-
-			// Update existing condition or add new one
-			conditionUpdated := false
-			for i, condition := range user.Status.Conditions {
-				if condition.Type == "PasswordSet" {
-					user.Status.Conditions[i] = passwordCondition
-					conditionUpdated = true
-					break
-				}
-			}
-			if !conditionUpdated {
-				user.Status.Conditions = append(user.Status.Conditions, passwordCondition)
-			}
-
-			if err := r.Update(ctx, user); err != nil {
-				logger.Error("Failed to update user with new password", zap.Error(err))
-				return reconcile.Result{}, err
-			}
-
-			logger.Info("Successfully updated user password")
-			return reconcile.Result{Requeue: true}, nil
-		} else {
-			// Password hasn't changed and hash matches
-			// The PasswordString field should have been cleared by webhook or client
-			// Don't trigger an unnecessary update here - just log and continue
-			logger.Debug("PasswordString set but hash matches existing password, skipping update")
-			// Continue with normal reconciliation
-		}
-	}
+	// Note: Password hashing is now handled by the mutation webhook
+	// Webhook will hash spec.passwordString and store it in spec.password
+	// Controller no longer needs to handle password updates
 
 	// Add finalizer if not present
 	if !controllerutil.ContainsFinalizer(user, UserFinalizerName) {
