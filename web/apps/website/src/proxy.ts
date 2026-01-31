@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Website middleware
+ * Website proxy
  * The website is public and doesn't require authentication
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const response = NextResponse.next()
 
   // Add CSP headers for security
