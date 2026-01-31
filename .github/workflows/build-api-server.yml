@@ -114,3 +114,44 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Deploy to K3s Cluster
+        if: github.ref == 'refs/heads/development' && github.event_name == 'push'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Restart API Server StatefulSet
+        if: github.ref == 'refs/heads/development' && github.event_name == 'push'
+        env:
+          RESOURCE_GROUP: kl-f615f505-00a6-40b9-b462-400e48c7d224-rg
+          VM_NAME: kl-f615f505-00a6-40b9-b462-400e48c7d224-vm
+          NAMESPACE: kloudlite
+        run: |
+          echo "🔄 Restarting API Server in K3s cluster..."
+
+          az vm run-command invoke \
+            --name "$VM_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --command-id RunShellScript \
+            --scripts "
+              export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+              NAMESPACE='$NAMESPACE'
+
+              echo '🔄 Restarting api-server statefulset...'
+              sudo kubectl rollout restart statefulset/api-server -n \"\$NAMESPACE\"
+
+              echo '⏳ Waiting for api-server rollout...'
+              sudo kubectl rollout status statefulset/api-server -n \"\$NAMESPACE\" --timeout=5m
+
+              echo '✓ API Server restarted successfully'
+              echo ''
+              echo 'Current statefulset status:'
+              sudo kubectl get statefulset api-server -n \"\$NAMESPACE\"
+            " \
+            --query 'value[0].message' \
+            --output tsv
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "**K3s Deployment:** ✓ API Server restarted in kloudlite namespace" >> $GITHUB_STEP_SUMMARY
