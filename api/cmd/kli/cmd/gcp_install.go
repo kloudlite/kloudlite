@@ -169,7 +169,10 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 	bold.Println("----------------------")
 
 	fmt.Printf("  o Verifying installation key with registration API...")
-	verifyResult, err := k8sinternal.VerifyInstallation(ctx, gcpInstallationKey)
+	verifyResult, err := k8sinternal.VerifyInstallation(ctx, gcpInstallationKey, &k8sinternal.VerifyInstallationOptions{
+		Provider: "gcp",
+		Region:   cfg.Region,
+	})
 	if err != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)

@@ -12,6 +12,8 @@ import (
 
 type VerifyInstallationRequest struct {
 	InstallationKey string `json:"installationKey"`
+	Provider        string `json:"provider,omitempty"`
+	Region          string `json:"region,omitempty"`
 }
 
 type VerifyInstallationResponse struct {
@@ -27,13 +29,23 @@ type VerifyInstallationResult struct {
 	Subdomain string
 }
 
-func VerifyInstallation(ctx context.Context, installationKey string) (*VerifyInstallationResult, error) {
+// VerifyInstallationOptions contains optional parameters for verification
+type VerifyInstallationOptions struct {
+	Provider string // aws, gcp, azure
+	Region   string // cloud region/location
+}
+
+func VerifyInstallation(ctx context.Context, installationKey string, opts *VerifyInstallationOptions) (*VerifyInstallationResult, error) {
 	// TODO: Make this configurable via flag or environment variable
 	registrationAPIURL := "https://console.kloudlite.io/api/installations/verify-key"
 
 	// Create request payload
 	reqPayload := VerifyInstallationRequest{
 		InstallationKey: installationKey,
+	}
+	if opts != nil {
+		reqPayload.Provider = opts.Provider
+		reqPayload.Region = opts.Region
 	}
 	reqBody, err := json.Marshal(reqPayload)
 	if err != nil {

@@ -3,6 +3,7 @@ import {
   getInstallationByKey,
   markInstallationComplete,
   updateHealthCheck,
+  updateInstallation,
 } from '@/lib/console/storage'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
@@ -15,7 +16,7 @@ export const runtime = 'nodejs'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { installationKey } = body
+    const { installationKey, provider, region } = body
 
     if (!installationKey) {
       return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
@@ -40,6 +41,20 @@ export async function POST(request: NextRequest) {
       updatedInstallation = await markInstallationComplete(installation.id, secretKey)
 
       console.log('Secret key generated and installation marked as complete')
+    }
+
+    // Update cloud provider and location if provided (from kli install)
+    if (provider || region) {
+      const updates: { cloudProvider?: 'aws' | 'gcp' | 'azure'; cloudLocation?: string } = {}
+      if (provider && ['aws', 'gcp', 'azure'].includes(provider)) {
+        updates.cloudProvider = provider as 'aws' | 'gcp' | 'azure'
+      }
+      if (region) {
+        updates.cloudLocation = region
+      }
+      if (Object.keys(updates).length > 0) {
+        updatedInstallation = await updateInstallation(installation.id, updates)
+      }
     }
 
     // Atomically update last health check timestamp (deployment is polling)

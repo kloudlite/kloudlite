@@ -191,7 +191,10 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	bold.Println("----------------------")
 
 	fmt.Printf("  o Verifying installation key with registration API...")
-	verifyResult, err := k8sinternal.VerifyInstallation(ctx, installationKey)
+	verifyResult, err := k8sinternal.VerifyInstallation(ctx, installationKey, &k8sinternal.VerifyInstallationOptions{
+		Provider: "aws",
+		Region:   cfg.Region,
+	})
 	if err != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)

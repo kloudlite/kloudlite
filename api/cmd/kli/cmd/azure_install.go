@@ -201,7 +201,10 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	bold.Println("----------------------")
 
 	fmt.Printf("  o Verifying installation key with registration API...")
-	verifyResult, err := k8sinternal.VerifyInstallation(ctx, azureInstallationKey)
+	verifyResult, err := k8sinternal.VerifyInstallation(ctx, azureInstallationKey, &k8sinternal.VerifyInstallationOptions{
+		Provider: "azure",
+		Region:   cfg.Location,
+	})
 	if err != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
