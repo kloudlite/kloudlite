@@ -281,27 +281,47 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    environment: production
     permissions:
       contents: read
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Update Container App
+      - name: Prepare environment variables
+        id: env-vars
+        run: |
+          # Build JSON with all environment variables
+          ENV_JSON=$(jq -n \
+            --arg base_url "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://kloudlite.io' }}" \
+            --arg auth_secret "${{ secrets.AUTH_SECRET }}" \
+            '{
+              "NEXT_PUBLIC_BASE_URL": $base_url,
+              "AUTH_SECRET": $auth_secret,
+              "NEXTAUTH_URL": $base_url
+            }')
+
+          echo "env-json<<EOF" >> $GITHUB_OUTPUT
+          echo "$ENV_JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Azure Container App
         run: |
           IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
           IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web-website:${IMAGE_TAG}"
 
-          echo "Deploying Website image: $IMAGE"
-
-          az containerapp update \
-            --name ca-kloudlite-website \
-            --resource-group rg-kloudlite-registration \
-            --image $IMAGE \
-            --query "properties.provisioningState" -o tsv
+          chmod +x scripts/deploy/deploy-to-azure.sh
+          ./scripts/deploy/deploy-to-azure.sh \
+            "ca-kloudlite-website" \
+            "rg-kloudlite-registration" \
+            "$IMAGE" \
+            '${{ steps.env-vars.outputs.env-json }}'
 
       - name: Deployment Summary
         run: |
@@ -309,10 +329,11 @@ jobs:
 
           echo "### Azure Deployment Summary (Website)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production (Azure Container Apps - Central India)" >> $GITHUB_STEP_SUMMARY
           echo "- **Container App**: ca-kloudlite-website" >> $GITHUB_STEP_SUMMARY
           echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
           echo "- **Public URL**: https://kloudlite.io" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment Variables**: Updated from GitHub secrets" >> $GITHUB_STEP_SUMMARY
 
   # Deploy Console to Azure (registration app)
   deploy-console:
@@ -320,27 +341,78 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    environment: production
     permissions:
       contents: read
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Update Container App
+      - name: Prepare environment variables
+        id: env-vars
+        run: |
+          # Build JSON with all environment variables
+          ENV_JSON=$(jq -n \
+            --arg base_url "${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}" \
+            --arg api_url "${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.kloudlite.io' }}" \
+            --arg github_client_id "${{ secrets.GITHUB_CLIENT_ID }}" \
+            --arg github_client_secret "${{ secrets.GITHUB_CLIENT_SECRET }}" \
+            --arg google_client_id "${{ secrets.GOOGLE_CLIENT_ID }}" \
+            --arg google_client_secret "${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            --arg ms_client_id "${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}" \
+            --arg ms_client_secret "${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}" \
+            --arg ms_tenant_id "${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}" \
+            --arg auth_secret "${{ secrets.AUTH_SECRET }}" \
+            --arg supabase_url "${{ secrets.SUPABASE_URL }}" \
+            --arg supabase_anon_key "${{ secrets.SUPABASE_ANON_KEY }}" \
+            --arg supabase_service_key "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            --arg cf_api_token "${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            --arg cf_zone_id "${{ secrets.CLOUDFLARE_ZONE_ID }}" \
+            --arg cf_dns_domain "${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
+            --arg cf_origin_ca_key "${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}" \
+            '{
+              "NEXT_PUBLIC_BASE_URL": $base_url,
+              "NEXT_PUBLIC_API_URL": $api_url,
+              "GITHUB_CLIENT_ID": $github_client_id,
+              "GITHUB_CLIENT_SECRET": $github_client_secret,
+              "GOOGLE_CLIENT_ID": $google_client_id,
+              "GOOGLE_CLIENT_SECRET": $google_client_secret,
+              "MICROSOFT_ENTRA_CLIENT_ID": $ms_client_id,
+              "MICROSOFT_ENTRA_CLIENT_SECRET": $ms_client_secret,
+              "MICROSOFT_ENTRA_TENANT_ID": $ms_tenant_id,
+              "AUTH_SECRET": $auth_secret,
+              "NEXTAUTH_URL": $base_url,
+              "NEXT_PUBLIC_SUPABASE_URL": $supabase_url,
+              "NEXT_PUBLIC_SUPABASE_ANON_KEY": $supabase_anon_key,
+              "SUPABASE_SERVICE_ROLE_KEY": $supabase_service_key,
+              "CLOUDFLARE_API_TOKEN": $cf_api_token,
+              "CLOUDFLARE_ZONE_ID": $cf_zone_id,
+              "CLOUDFLARE_DNS_DOMAIN": $cf_dns_domain,
+              "CLOUDFLARE_ORIGIN_CA_KEY": $cf_origin_ca_key,
+              "NEXT_PUBLIC_INSTALLATION_DOMAIN": $cf_dns_domain
+            }')
+
+          echo "env-json<<EOF" >> $GITHUB_OUTPUT
+          echo "$ENV_JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Azure Container App
         run: |
           IMAGE_TAG="sha-${GITHUB_SHA:0:7}"
           IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/web-console:${IMAGE_TAG}"
 
-          echo "Deploying Console image: $IMAGE"
-
-          az containerapp update \
-            --name ca-kloudlite-registration \
-            --resource-group rg-kloudlite-registration \
-            --image $IMAGE \
-            --query "properties.provisioningState" -o tsv
+          chmod +x scripts/deploy/deploy-to-azure.sh
+          ./scripts/deploy/deploy-to-azure.sh \
+            "ca-kloudlite-registration" \
+            "rg-kloudlite-registration" \
+            "$IMAGE" \
+            '${{ steps.env-vars.outputs.env-json }}'
 
       - name: Deployment Summary
         run: |
@@ -348,7 +420,8 @@ jobs:
 
           echo "### Azure Deployment Summary (Console)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: Azure Container Apps (Central India)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production (Azure Container Apps - Central India)" >> $GITHUB_STEP_SUMMARY
           echo "- **Container App**: ca-kloudlite-registration" >> $GITHUB_STEP_SUMMARY
           echo "- **Image Tag**: ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
           echo "- **Public URL**: https://console.kloudlite.io" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment Variables**: Updated from GitHub secrets" >> $GITHUB_STEP_SUMMARY
