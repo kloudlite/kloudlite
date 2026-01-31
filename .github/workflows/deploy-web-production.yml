@@ -33,7 +33,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  RESOURCE_GROUP: rg-kloudlite-registration
+  RESOURCE_GROUP: rg-kloudlite
 
 jobs:
   prepare:
