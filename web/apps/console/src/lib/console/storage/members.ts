@@ -8,11 +8,13 @@ import type { MemberRole, InstallationMember } from './types'
 /**
  * Get member's role for an installation
  * Returns null if not a member
+ * Includes fallback to check if user is the installation owner
  */
 export async function getMemberRole(
   installationId: string,
   userId: string
 ): Promise<MemberRole | null> {
+  // First check installation_members table
   const { data, error } = await (supabase as any)
     .from('installation_members')
     .select('role')
@@ -20,15 +22,26 @@ export async function getMemberRole(
     .eq('user_id', userId)
     .single()
 
-  if (error) {
-    if (error.code === 'PGRST116') return null // No rows returned
-    console.error('Error getting member role:', error)
-    return null
+  if (data) {
+    return (data as { role: string }).role as MemberRole
   }
 
-  if (!data) return null
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error getting member role:', error)
+  }
 
-  return (data as { role: string }).role as MemberRole
+  // Fallback: check if user is the installation owner
+  const { data: installationData } = await supabase
+    .from('installations')
+    .select('user_id')
+    .eq('id', installationId)
+    .single()
+
+  if (installationData && installationData.user_id === userId) {
+    return 'owner'
+  }
+
+  return null
 }
 
 /**
@@ -55,11 +68,12 @@ export async function canManageInstallation(
 
 /**
  * Get all members for an installation with user details
+ * Includes fallback to show installation owner even if not in installation_members table
  */
 export async function getInstallationMembers(
   installationId: string
 ): Promise<InstallationMember[]> {
-  // First get the members
+  // First get the members from installation_members table
   const { data: membersData, error: membersError } = await supabase
     .from('installation_members')
     .select('*')
@@ -68,15 +82,43 @@ export async function getInstallationMembers(
 
   if (membersError) {
     console.error('Error getting installation members:', membersError)
-    return []
   }
 
-  if (!membersData || membersData.length === 0) {
+  const members = (membersData || []) as any[]
+
+  // Get the installation to check owner (fallback for when owner not in installation_members)
+  const { data: installationData } = await supabase
+    .from('installations')
+    .select('user_id, created_at')
+    .eq('id', installationId)
+    .single()
+
+  // Check if owner is already in members list
+  const ownerInMembers = members.some(
+    (m: any) => m.user_id === installationData?.user_id
+  )
+
+  // If owner is not in members table, add them as a synthetic member
+  const allMembers = [...members]
+  if (installationData && !ownerInMembers) {
+    allMembers.unshift({
+      id: `owner-${installationId}`, // Synthetic ID for the owner
+      installation_id: installationId,
+      user_id: installationData.user_id,
+      role: 'owner',
+      added_by: null,
+      added_at: installationData.created_at,
+      created_at: installationData.created_at,
+      updated_at: installationData.created_at,
+    })
+  }
+
+  if (allMembers.length === 0) {
     return []
   }
 
   // Get unique user IDs
-  const userIds = [...new Set(membersData.map((m: any) => m.user_id))]
+  const userIds = [...new Set(allMembers.map((m: any) => m.user_id))]
 
   // Fetch user details
   const { data: usersData, error: usersError } = await supabase
@@ -93,7 +135,7 @@ export async function getInstallationMembers(
     (usersData || []).map((u: any) => [u.user_id, u])
   )
 
-  return membersData.map((row: any) => {
+  return allMembers.map((row: any) => {
     const user = userMap.get(row.user_id) || {}
     return {
       id: row.id,
