@@ -7,12 +7,21 @@ import { toast } from 'sonner'
 
 interface UninstallScriptCardProps {
   secretKey: string
+  provider?: 'aws' | 'gcp' | 'azure'
+  region?: string
 }
 
-export function UninstallScriptCard({ secretKey }: UninstallScriptCardProps) {
+export function UninstallScriptCard({ secretKey, provider = 'aws', region }: UninstallScriptCardProps) {
   const [copied, setCopied] = useState(false)
 
-  const uninstallCommand = `curl -fsSL https://get.khost.dev/uninstall/aws | bash -s -- --key ${secretKey}`
+  // Azure uses --location, AWS and GCP use --region
+  const regionFlag = region
+    ? provider === 'azure'
+      ? ` --location ${region}`
+      : ` --region ${region}`
+    : ''
+
+  const uninstallCommand = `curl -fsSL https://get.khost.dev/uninstall/${provider} | bash -s -- --key ${secretKey}${regionFlag}`
 
   const copyCommand = () => {
     navigator.clipboard.writeText(uninstallCommand)
