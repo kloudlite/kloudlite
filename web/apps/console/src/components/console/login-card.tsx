@@ -1,6 +1,6 @@
 'use client'
 
-import { KloudliteLogo, Tabs, TabsList, TabsTrigger, TabsContent } from '@kloudlite/ui'
+import { KloudliteLogo } from '@kloudlite/ui'
 import { OAuthButtons } from '@/components/console/oauth-buttons'
 import { MagicLinkForm } from '@/components/console/magic-link-form'
 import { AlertCircle } from 'lucide-react'
@@ -107,21 +107,27 @@ export function LoginCard({
             </div>
           )}
 
-          {/* Login tabs */}
-          <Tabs defaultValue="oauth" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="oauth">OpenID</TabsTrigger>
-              <TabsTrigger value="email">Email</TabsTrigger>
-            </TabsList>
+          {/* OAuth login */}
+          <div className="space-y-3">
+            <OAuthButtons />
+          </div>
 
-            <TabsContent value="oauth" className="space-y-3 min-h-[200px]">
-              <OAuthButtons />
-            </TabsContent>
+          {/* Divider */}
+          <div className="relative py-1">
+            <div className="absolute inset-0 flex items-center">
+              <span className="border-border/50 w-full border-t" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-background text-muted-foreground/70 px-4 text-xs font-medium uppercase tracking-wider">
+                Or continue with email
+              </span>
+            </div>
+          </div>
 
-            <TabsContent value="email" className="min-h-[200px]">
-              <MagicLinkForm siteKey={turnstileSiteKey} />
-            </TabsContent>
-          </Tabs>
+          {/* Email login */}
+          <div>
+            <MagicLinkForm siteKey={turnstileSiteKey} />
+          </div>
 
           {/* Divider */}
           <div className="relative py-2">
