@@ -29,9 +29,9 @@ export async function middleware(req: NextRequest) {
 
   response.headers.set(
     'Content-Security-Policy',
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; connect-src ${connectSrc} https://challenges.cloudflare.com;`
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com; connect-src ${connectSrc} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com;`
   )
-  response.headers.set('Permissions-Policy', 'interest-cohort=(), browsing-topics=()')
+  response.headers.set('Permissions-Policy', 'interest-cohort=()')
 
   return response
 }
