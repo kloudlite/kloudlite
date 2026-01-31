@@ -329,13 +329,16 @@ jobs:
 
           # Get kubeconfig from VM
           echo "📥 Fetching kubeconfig from VM..."
-          KUBECONFIG_CONTENT=$(az vm run-command invoke \
+          az vm run-command invoke \
             --name "$VM_NAME" \
             --resource-group "$RESOURCE_GROUP" \
             --command-id RunShellScript \
             --scripts "sudo cat /etc/rancher/k3s/k3s.yaml" \
             --query 'value[0].message' \
-            --output tsv | grep -A 100 "apiVersion: v1")
+            --output tsv > /tmp/kubeconfig_raw.txt
+
+          # Extract only the YAML content (between [stdout] and [stderr])
+          KUBECONFIG_CONTENT=$(sed -n '/^\[stdout\]/,/^\[stderr\]/p' /tmp/kubeconfig_raw.txt | grep -v '^\[stdout\]' | grep -v '^\[stderr\]' | sed '/^$/d')
 
           # Get VM public IP
           VM_IP=$(az vm show \
