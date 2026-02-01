@@ -1,8 +1,7 @@
-import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { decode } from 'next-auth/jwt'
 import type { Session } from 'next-auth'
+import { auth } from '@/lib/auth'
 
 /**
  * Console middleware
@@ -45,7 +44,7 @@ export async function middleware(req: NextRequest) {
         // Use NextAuth's decode function to match how the token was encoded
         const payload = await decode({
           token,
-          secret: process.env.JWT_SECRET!,
+          secret: process.env.NEXTAUTH_SECRET!,
           salt: cookieName,
         })
 
@@ -151,7 +150,7 @@ function addSecurityHeaders(response: NextResponse, req: NextRequest): NextRespo
     'Content-Security-Policy',
     `script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src ${connectSrc};`,
   )
-  response.headers.set('Permissions-Policy', 'interest-cohort=(), browsing-topics=()')
+  // Removed deprecated Permissions-Policy features (interest-cohort, browsing-topics)
 
   return response
 }

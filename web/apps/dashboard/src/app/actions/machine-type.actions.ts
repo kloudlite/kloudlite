@@ -1,7 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { machineTypeService } from '@/lib/services/machine-type.service'
+import { machineTypeRepository } from '@kloudlite/lib/k8s'
+import type { MachineType } from '@kloudlite/lib/k8s'
 import type { MachineTypeCreateRequest, MachineTypeUpdateRequest } from '@kloudlite/types'
 
 /**
@@ -9,8 +10,8 @@ import type { MachineTypeCreateRequest, MachineTypeUpdateRequest } from '@kloudl
  */
 export async function listMachineTypes() {
   try {
-    const result = await machineTypeService.listMachineTypes()
-    return { success: true, data: result }
+    const result = await machineTypeRepository.list('')
+    return { success: true, data: result.items }
   } catch (err) {
     console.error('List machine types error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -26,7 +27,7 @@ export async function listMachineTypes() {
  */
 export async function getMachineType(name: string) {
   try {
-    const result = await machineTypeService.getMachineType(name)
+    const result = await machineTypeRepository.get('', name)
     return { success: true, data: result }
   } catch (err) {
     console.error('Get machine type error:', err)
@@ -43,7 +44,18 @@ export async function getMachineType(name: string) {
  */
 export async function createMachineType(data: MachineTypeCreateRequest) {
   try {
-    const result = await machineTypeService.createMachineType(data)
+    const machineType: MachineType = {
+      apiVersion: 'machines.kloudlite.io/v1',
+      kind: 'MachineType',
+      metadata: {
+        name: data.name,
+      },
+      spec: {
+        ...data.spec,
+      },
+    }
+
+    const result = await machineTypeRepository.create('', machineType)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -61,7 +73,10 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
  */
 export async function updateMachineType(name: string, data: MachineTypeUpdateRequest) {
   try {
-    const result = await machineTypeService.updateMachineType(name, data)
+    // Use patch for partial updates
+    const result = await machineTypeRepository.patch('', name, {
+      spec: data.spec,
+    })
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -79,9 +94,9 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
  */
 export async function deleteMachineType(name: string) {
   try {
-    const result = await machineTypeService.deleteMachineType(name)
+    await machineTypeRepository.delete('', name)
     revalidatePath('/admin/machine-configs')
-    return { success: true, data: result }
+    return { success: true }
   } catch (err) {
     console.error('Delete machine type error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -97,7 +112,7 @@ export async function deleteMachineType(name: string) {
  */
 export async function activateMachineType(name: string) {
   try {
-    const result = await machineTypeService.activateMachineType(name)
+    const result = await machineTypeRepository.activate('', name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -115,7 +130,7 @@ export async function activateMachineType(name: string) {
  */
 export async function deactivateMachineType(name: string) {
   try {
-    const result = await machineTypeService.deactivateMachineType(name)
+    const result = await machineTypeRepository.deactivate('', name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -133,7 +148,7 @@ export async function deactivateMachineType(name: string) {
  */
 export async function setMachineTypeAsDefault(name: string) {
   try {
-    const result = await machineTypeService.setMachineTypeAsDefault(name)
+    const result = await machineTypeRepository.setAsDefault('', name)
     revalidatePath('/admin/machine-configs')
     revalidatePath('/')
     return { success: true, data: result }

@@ -1,0 +1,14 @@
+apiVersion: platform.kloudlite.io/v1alpha1
+kind: User
+metadata:
+  name: karthik
+spec:
+  active: true
+  displayName: Karthik
+  email: karthik@kloudlite.io
+  passwordString: karthik001
+  roles:
+    - user
+  metadata:
+    email: karthik@kloudlite.io
+    name: karthik

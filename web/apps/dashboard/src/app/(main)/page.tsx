@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { WorkMachinesContent } from './workspaces/_components/work-machines-content'
-import { getDashboardData } from '@/lib/services/dashboard.service'
+import { listMachineTypes } from '@/app/actions/machine-type.actions'
+import { getMyWorkMachine } from '@/app/actions/work-machine.actions'
+import { getMyPreferences } from '@/app/actions/user-preferences.actions'
 import type { WorkMachine } from '@kloudlite/types'
 
 // Helper to map work machine CR to display format
@@ -72,57 +74,48 @@ export default async function HomePage() {
   }
 
   const currentUser = session.user?.email || 'user@example.com'
+  const username = session.user?.username || currentUser.split('@')[0]
 
-  // Single API call to get all dashboard data
-  const dashboardData = await getDashboardData()
+  // Fetch data directly from Kubernetes
+  const [machineTypesResult, myWorkMachineResult, preferencesResult] = await Promise.all([
+    listMachineTypes(),
+    getMyWorkMachine(),
+    getMyPreferences(),
+  ])
 
   // Transform machine types for the component
-  const availableMachineTypes = dashboardData.machineTypes
-    .filter((mt) => mt.spec.active !== false)
-    .map((mt) => ({
-      id: mt.metadata.name,
-      name: mt.spec.displayName || mt.metadata.name,
-      description: mt.spec.description || '',
-      category: mt.spec.category || 'general',
-      cpu: mt.spec.resources?.cpu || '',
-      memory: mt.spec.resources?.memory || '',
-      gpu: mt.spec.resources?.gpu,
-    }))
+  const availableMachineTypes = machineTypesResult.success && machineTypesResult.data
+    ? machineTypesResult.data
+        .filter((mt) => mt.spec.active !== false)
+        .map((mt) => ({
+          id: mt.metadata.name,
+          name: mt.spec.displayName || mt.metadata.name,
+          description: mt.spec.description || '',
+          category: mt.spec.category || 'general',
+          cpu: mt.spec.resources?.cpu || '',
+          memory: mt.spec.resources?.memory || '',
+          gpu: mt.spec.resources?.gpu,
+        }))
+    : []
 
-  // Transform work machines
-  const workMachines = dashboardData.workMachines.map(transformWorkMachine)
+  // Transform work machine (single machine for current user)
+  const workMachines = myWorkMachineResult.success && myWorkMachineResult.data
+    ? [transformWorkMachine(myWorkMachineResult.data)]
+    : []
 
-  // Transform pinned workspaces
-  interface PinnedWorkspace {
-    id: string
-    name: string
-    environment: string
-    status: 'active' | 'idle'
-  }
-  const pinnedWorkspaces: PinnedWorkspace[] = dashboardData.pinnedWorkspaces.map((ws) => ({
-    id: `${ws.metadata.namespace}/${ws.metadata.name}`,
-    name: `${ws.spec.ownedBy}/${ws.spec.displayName || ws.metadata.name}`,
-    environment: ws.status?.connectedEnvironment?.name || '-',
-    status: ws.status?.phase === 'Running' ? 'active' : 'idle',
-  }))
+  // Pinned items from preferences (TODO: implement fetching pinned workspaces/environments)
+  const pinnedWorkspaces: Array<{id: string; name: string; environment: string; status: 'active' | 'idle'}> = []
+  const pinnedEnvironments: Array<{id: string; name: string; status: 'active' | 'idle'}> = []
 
-  // Transform pinned environments
-  interface PinnedEnvironment {
-    id: string
-    name: string
-    status: 'active' | 'idle'
-  }
-  const pinnedEnvironments: PinnedEnvironment[] = dashboardData.pinnedEnvironments.map((env) => ({
-    id: env.metadata.name,
-    name: `${env.spec.ownedBy}/${env.metadata.name}`,
-    status: env.status?.state === 'active' ? 'active' : 'idle',
-  }))
+  // Check if user is admin
+  const userRoles = session.user?.roles || []
+  const isAdmin = userRoles.includes('admin') || userRoles.includes('super-admin')
 
   return (
     <WorkMachinesContent
       initialMachines={workMachines}
       currentUser={currentUser}
-      isAdmin={dashboardData.isAdmin}
+      isAdmin={isAdmin}
       availableMachineTypes={availableMachineTypes}
       pinnedWorkspaces={pinnedWorkspaces}
       pinnedEnvironments={pinnedEnvironments}

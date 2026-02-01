@@ -1,15 +1,35 @@
 'use server'
 
-import { workMachineService } from '@/lib/services/work-machine.service'
+import { workMachineRepository } from '@kloudlite/lib/k8s'
+import type { WorkMachine } from '@kloudlite/lib/k8s'
+import { getSession } from '@/lib/get-session'
+
+/**
+ * Get the current authenticated username
+ */
+async function getCurrentUsername(): Promise<string> {
+  const session = await getSession()
+  if (!session?.user?.username) {
+    throw new Error('Not authenticated')
+  }
+  return session.user.username
+}
 
 export async function getMyWorkMachine() {
   try {
-    const data = await workMachineService.getMyWorkMachine()
+    const username = await getCurrentUsername()
+    const data = await workMachineRepository.getByOwner(username)
+    if (!data) {
+      return {
+        success: false,
+        error: 'No work machine found',
+      }
+    }
     return { success: true, data }
   } catch (err) {
     const error = err instanceof Error ? err : new Error('Unknown error')
     // Don't log error if user simply doesn't have a work machine yet
-    if (!error.message.includes('No work machine found')) {
+    if (!error.message.includes('not found') && !error.message.includes('No work machine found')) {
       console.error('Get my work machine error:', err)
     }
     return {
@@ -21,8 +41,8 @@ export async function getMyWorkMachine() {
 
 export async function listAllWorkMachines() {
   try {
-    const data = await workMachineService.listAllWorkMachines()
-    return { success: true, data }
+    const result = await workMachineRepository.list('')
+    return { success: true, data: result.items }
   } catch (err) {
     console.error('List work machines error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -35,7 +55,15 @@ export async function listAllWorkMachines() {
 
 export async function startMyWorkMachine() {
   try {
-    const data = await workMachineService.startMyWorkMachine()
+    const username = await getCurrentUsername()
+    const workMachine = await workMachineRepository.getByOwner(username)
+    if (!workMachine) {
+      return {
+        success: false,
+        error: 'No work machine found',
+      }
+    }
+    const data = await workMachineRepository.start('', workMachine.metadata!.name!)
     return { success: true, data }
   } catch (err) {
     console.error('Start work machine error:', err)
@@ -49,7 +77,15 @@ export async function startMyWorkMachine() {
 
 export async function stopMyWorkMachine() {
   try {
-    const data = await workMachineService.stopMyWorkMachine()
+    const username = await getCurrentUsername()
+    const workMachine = await workMachineRepository.getByOwner(username)
+    if (!workMachine) {
+      return {
+        success: false,
+        error: 'No work machine found',
+      }
+    }
+    const data = await workMachineRepository.stop('', workMachine.metadata!.name!)
     return { success: true, data }
   } catch (err) {
     console.error('Stop work machine error:', err)
@@ -63,7 +99,28 @@ export async function stopMyWorkMachine() {
 
 export async function createMyWorkMachine(machineType: string, volumeSize?: number) {
   try {
-    const data = await workMachineService.createMyWorkMachine(machineType, volumeSize)
+    const username = await getCurrentUsername()
+
+    const workMachine: WorkMachine = {
+      apiVersion: 'machines.kloudlite.io/v1',
+      kind: 'WorkMachine',
+      metadata: {
+        name: `wm-${username}`,
+      },
+      spec: {
+        owner: username,
+        machineType,
+        volumeSize: volumeSize || 20,
+        targetNamespace: `user-${username}`,
+        sshPublicKeys: [],
+        autoShutdown: {
+          enabled: true,
+          idleThresholdMinutes: 30,
+        },
+      },
+    }
+
+    const data = await workMachineRepository.create('', workMachine)
     return { success: true, data }
   } catch (err) {
     console.error('Create work machine error:', err)
@@ -84,7 +141,19 @@ export async function updateMyWorkMachine(updateData: {
   }
 }) {
   try {
-    const data = await workMachineService.updateMyWorkMachine(updateData)
+    const username = await getCurrentUsername()
+    const workMachine = await workMachineRepository.getByOwner(username)
+    if (!workMachine) {
+      return {
+        success: false,
+        error: 'No work machine found',
+      }
+    }
+
+    // Use patch for partial updates
+    const data = await workMachineRepository.patch('', workMachine.metadata!.name!, {
+      spec: updateData,
+    })
     return { success: true, data }
   } catch (err) {
     console.error('Update work machine error:', err)
