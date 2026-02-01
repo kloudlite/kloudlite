@@ -1,6 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { snapshotRepository } from '@kloudlite/lib/k8s'
+import type { Snapshot } from '@kloudlite/lib/k8s'
 import { snapshotService } from '@/lib/services/snapshot.service'
 import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateEnvironmentFromSnapshotRequest } from '@/lib/services/snapshot.service'
 
@@ -9,8 +11,8 @@ import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateE
  */
 export async function listSnapshots(workspaceName: string, namespace: string) {
   try {
-    const result = await snapshotService.listWorkspaceSnapshots(workspaceName, namespace)
-    return { success: true, data: result }
+    const result = await snapshotRepository.listByWorkspace(namespace, workspaceName)
+    return { success: true, data: result.items }
   } catch (err) {
     console.error('List snapshots error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -30,7 +32,23 @@ export async function createSnapshot(
   data?: CreateSnapshotRequest,
 ) {
   try {
-    const result = await snapshotService.createWorkspaceSnapshot(workspaceName, namespace, data)
+    const snapshot: Snapshot = {
+      apiVersion: 'snapshots.kloudlite.io/v1',
+      kind: 'Snapshot',
+      metadata: {
+        name: data?.name || `${workspaceName}-snapshot-${Date.now()}`,
+        namespace,
+        labels: {
+          'snapshots.kloudlite.io/workspace': workspaceName,
+        },
+      },
+      spec: {
+        workspaceRef: workspaceName,
+        retentionPolicy: data?.retentionPolicy,
+      },
+    }
+
+    const result = await snapshotRepository.create(namespace, snapshot)
     revalidatePath(`/workspaces/${namespace}/${workspaceName}`)
     return { success: true, data: result }
   } catch (err) {
@@ -46,10 +64,10 @@ export async function createSnapshot(
 /**
  * Server action to list snapshots for an environment
  */
-export async function listEnvironmentSnapshots(environmentName: string) {
+export async function listEnvironmentSnapshots(environmentName: string, namespace: string) {
   try {
-    const result = await snapshotService.listEnvironmentSnapshots(environmentName)
-    return { success: true, data: result }
+    const result = await snapshotRepository.listByEnvironment(namespace, environmentName)
+    return { success: true, data: result.items }
   } catch (err) {
     console.error('List environment snapshots error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -150,7 +168,7 @@ export async function restoreEnvironmentFromSnapshot(
  */
 export async function deleteSnapshot(snapshotName: string, namespace: string) {
   try {
-    await snapshotService.delete(snapshotName, namespace)
+    await snapshotRepository.delete(namespace, snapshotName)
     revalidatePath('/workspaces')
     revalidatePath('/environments')
     return { success: true }

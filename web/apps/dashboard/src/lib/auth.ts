@@ -7,17 +7,7 @@ import type { NextAuthConfig } from 'next-auth'
 import { authenticateUser } from '@/lib/actions/user-actions'
 import { unauthenticatedApiClient } from '@/lib/api-client'
 import { env } from '@kloudlite/lib'
-
-interface LoginResponse {
-  user: {
-    username: string
-    email: string
-    name: string
-    displayName?: string
-    isActive: boolean
-  }
-  roles: string[]
-}
+import bcrypt from 'bcryptjs'
 
 interface UserInfoResponse {
   user: {
@@ -93,24 +83,54 @@ export const authConfig: NextAuthConfig = {
         }
 
         try {
-          // Call backend API to validate credentials and get user info
-          const response = (await unauthenticatedApiClient.post('/api/v1/auth/login', {
-            email: credentials.email,
-            password: credentials.password,
-          })) as LoginResponse
+          // Dynamic import K8s client (only loads in Node.js/Bun runtime, not Edge Runtime)
+          const { userRepository } = await import('@kloudlite/lib/k8s')
 
-          if (response.user) {
-            // Return user object - NextAuth will generate JWT with shared secret
-            return {
-              id: response.user.email,
-              email: response.user.email,
-              name: response.user.name || response.user.displayName || response.user.email,
-              username: response.user.username,
-              roles: response.roles,
-              isActive: response.user.isActive,
-            }
+          // Get user from Kubernetes by email
+          let user
+          try {
+            user = await userRepository.getByEmail(credentials.email as string)
+          } catch (error) {
+            console.error('User lookup failed for:', credentials.email, error)
+            return null
           }
-          return null
+
+          // Check if user is active
+          if (!user.spec.active) {
+            console.error('User is not active:', credentials.email)
+            return null
+          }
+
+          // Verify password hash
+          const passwordHash = user.spec.password
+          if (!passwordHash) {
+            console.error('User has no password set:', credentials.email)
+            return null
+          }
+
+          // Decode base64 password hash
+          const passwordHashBuffer = Buffer.from(passwordHash, 'base64')
+          const passwordHashString = passwordHashBuffer.toString('utf-8')
+
+          // Compare password with bcrypt hash
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password as string,
+            passwordHashString
+          )
+
+          if (!isPasswordValid) {
+            return null
+          }
+
+          // Return user object - NextAuth will generate JWT
+          return {
+            id: user.spec.email,
+            email: user.spec.email,
+            name: user.spec.displayName || user.metadata!.name || user.spec.email,
+            username: user.metadata!.name!,
+            roles: user.spec.roles || ['user'],
+            isActive: user.spec.active,
+          }
         } catch (error) {
           console.error('Login error:', error)
           return null
@@ -138,7 +158,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        // Store user info in JWT (NextAuth will sign with JWT_SECRET)
+        // Store user info in JWT
         if ('username' in user) {
           token.username = user.username
         }
@@ -234,10 +254,18 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours (match backend token expiry)
+    maxAge: 24 * 60 * 60, // 24 hours
   },
-  // Let NextAuth manage cookies with its defaults (authjs.* prefix)
-  secret: process.env.JWT_SECRET, // Shared secret for JWT signing/verification (same as backend)
+  secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
+  pages: {
+    signIn: '/auth/signin',
+  },
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth(authConfig)
+const nextAuth = NextAuth(authConfig)
+
+export const { handlers, signIn, signOut, auth } = nextAuth
+
+// Export default for middleware (Edge Runtime compatible)
+export default nextAuth.auth

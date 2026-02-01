@@ -18,7 +18,7 @@ async function getEnabledProviders() {
     const providers = Object.values(data || {})
     return providers.filter((p) => p.enabled)
   } catch (error) {
-    console.error('Error fetching providers:', error)
+    // External provider API not available - return empty array (OAuth providers configured in auth.ts)
     return []
   }
 }

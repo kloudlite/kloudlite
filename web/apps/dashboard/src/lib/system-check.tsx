@@ -9,7 +9,7 @@ export async function isSystemReady(): Promise<boolean> {
   const machineTypesResult = await listMachineTypes()
   return (
     (machineTypesResult.success &&
-      machineTypesResult.data?.items.some((mt) => mt.spec.active !== false)) ||
+      machineTypesResult.data?.some((mt) => mt.spec.active !== false)) ||
     false
   )
 }

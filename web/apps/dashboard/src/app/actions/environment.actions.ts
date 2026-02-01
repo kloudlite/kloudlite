@@ -1,8 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { environmentService } from '@/lib/services/environment.service'
+import { environmentRepository, workMachineRepository } from '@kloudlite/lib/k8s'
+import type { Environment } from '@kloudlite/lib/k8s'
 import { compositionService } from '@/lib/services/composition.service'
+import { getSession } from '@/lib/get-session'
 import {
   environmentCreateSchema,
   environmentUpdateSchema,
@@ -10,6 +12,23 @@ import {
   forkEnvironmentSchema,
   importEnvironmentConfigSchema,
 } from '@/lib/validations'
+
+/**
+ * Get the current user's namespace from their WorkMachine
+ */
+async function getUserNamespace(): Promise<string> {
+  const session = await getSession()
+  if (!session?.user?.username) {
+    throw new Error('Not authenticated')
+  }
+
+  const workMachine = await workMachineRepository.getByOwner(session.user.username)
+  if (!workMachine) {
+    throw new Error(`No WorkMachine found for user ${session.user.username}`)
+  }
+
+  return workMachine.spec.targetNamespace
+}
 
 /**
  * Server action to create an environment
@@ -25,7 +44,23 @@ export async function createEnvironment(data: unknown) {
   }
 
   try {
-    const result = await environmentService.createEnvironment(validated.data)
+    const namespace = await getUserNamespace()
+    const createData = validated.data as import('@kloudlite/types').EnvironmentCreateRequest
+
+    // Build Environment CRD object
+    const environment: Environment = {
+      apiVersion: 'environments.kloudlite.io/v1',
+      kind: 'Environment',
+      metadata: {
+        name: createData.name,
+        namespace,
+      },
+      spec: {
+        ...createData.spec,
+      },
+    }
+
+    const result = await environmentRepository.create(namespace, environment)
     revalidatePath('/environments')
     return { success: true, data: result }
   } catch (err) {
@@ -61,11 +96,13 @@ export async function updateEnvironment(name: string, data: unknown) {
   }
 
   try {
-    // Cast to EnvironmentUpdateRequest - backend handles partial updates
-    const result = await environmentService.updateEnvironment(
-      name,
-      validated.data as import('@kloudlite/types').EnvironmentUpdateRequest
-    )
+    const namespace = await getUserNamespace()
+    const updateData = validated.data as import('@kloudlite/types').EnvironmentUpdateRequest
+
+    // Use patch for partial updates
+    const result = await environmentRepository.patch(namespace, name, {
+      spec: updateData.spec,
+    })
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -84,9 +121,10 @@ export async function updateEnvironment(name: string, data: unknown) {
  */
 export async function deleteEnvironment(name: string) {
   try {
-    const result = await environmentService.deleteEnvironment(name)
+    const namespace = await getUserNamespace()
+    await environmentRepository.delete(namespace, name)
     revalidatePath('/environments')
-    return { success: true, data: result }
+    return { success: true }
   } catch (err) {
     console.error('Delete environment error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -102,7 +140,8 @@ export async function deleteEnvironment(name: string) {
  */
 export async function activateEnvironment(name: string) {
   try {
-    const result = await environmentService.activateEnvironment(name)
+    const namespace = await getUserNamespace()
+    const result = await environmentRepository.activate(namespace, name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -121,7 +160,8 @@ export async function activateEnvironment(name: string) {
  */
 export async function deactivateEnvironment(name: string) {
   try {
-    const result = await environmentService.deactivateEnvironment(name)
+    const namespace = await getUserNamespace()
+    const result = await environmentRepository.deactivate(namespace, name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -140,8 +180,9 @@ export async function deactivateEnvironment(name: string) {
  */
 export async function getEnvironmentStatus(name: string) {
   try {
-    const result = await environmentService.getEnvironmentStatus(name)
-    return { success: true, data: result }
+    const namespace = await getUserNamespace()
+    const environment = await environmentRepository.get(namespace, name)
+    return { success: true, data: environment.status }
   } catch (err) {
     console.error('Get environment status error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -157,7 +198,8 @@ export async function getEnvironmentStatus(name: string) {
  */
 export async function getEnvironment(name: string) {
   try {
-    const result = await environmentService.getEnvironment(name)
+    const namespace = await getUserNamespace()
+    const result = await environmentRepository.get(namespace, name)
     return { success: true, data: result }
   } catch (err) {
     console.error('Get environment error:', err)

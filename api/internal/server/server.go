@@ -10,20 +10,15 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/config"
 	"github.com/kloudlite/kloudlite/api/internal/controllers"
 	"github.com/kloudlite/kloudlite/api/internal/k8s"
-	"github.com/kloudlite/kloudlite/api/internal/repository"
 	"github.com/kloudlite/kloudlite/api/internal/services"
 	"go.uber.org/zap"
-	"k8s.io/client-go/kubernetes"
 )
 
 type Server struct {
-	httpServer          *http.Server
 	httpsServer         *http.Server
 	logger              *zap.Logger
 	config              *config.Config
 	k8sClient           *k8s.Client
-	repositoryManager   *repository.Manager
-	servicesManager     *services.Manager
 	controllerManager   *controllers.Manager
 	controllerCtx       context.Context
 	controllerCtxCancel context.CancelFunc
@@ -44,43 +39,19 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		logger.Fatal("Failed to create Kubernetes client", zap.Error(err))
 	}
 
-	// Initialize repository manager
-	clientset, _ := k8sClient.Clientset.(*kubernetes.Clientset)
-	repoManager, err := repository.NewManager(ctx, &repository.ManagerOptions{
-		K8sClient: k8sClient.RuntimeClient,
-		Clientset: clientset,
-	})
-	if err != nil {
-		logger.Fatal("Failed to create repository manager", zap.Error(err))
-	}
-
-	// Initialize services manager
-	servicesManager, err := services.NewManager(ctx, &services.ManagerOptions{
-		RepositoryManager: repoManager,
-		Config:            cfg,
-		Logger:            logger,
-	})
-	if err != nil {
-		logger.Fatal("Failed to create services manager", zap.Error(err))
-	}
-
 	// Initialize controller manager
 	controllerManager, err := controllers.NewManager(k8sClient.Config, &cfg.Installation, &cfg.Auth, logger)
 	if err != nil {
 		logger.Fatal("Failed to create controller manager", zap.Error(err))
 	}
 
-	// Setup router with dependencies
-	router := setupRouter(cfg, logger, servicesManager)
+	// Setup minimal router for webhooks and VPN only
+	router := setupWebhookRouter(cfg, logger, k8sClient)
 
 	// Create cancellable context for controller manager
 	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
 
 	return &Server{
-		httpServer: &http.Server{
-			Addr:    ":8080",
-			Handler: router,
-		},
 		httpsServer: &http.Server{
 			Addr:    ":8443",
 			Handler: router,
@@ -88,8 +59,6 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		logger:              logger,
 		config:              cfg,
 		k8sClient:           k8sClient,
-		repositoryManager:   repoManager,
-		servicesManager:     servicesManager,
 		controllerManager:   controllerManager,
 		controllerCtx:       controllerCtx,
 		controllerCtxCancel: controllerCtxCancel,
@@ -97,41 +66,9 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 }
 
 func (s *Server) Start() error {
-	// Start HTTPS webhook server first (needed for webhooks during subdomain setup)
-	go func() {
-		s.logger.Info("Starting HTTPS webhook server", zap.String("addr", s.httpsServer.Addr))
-		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
-			s.logger.Error("HTTPS server stopped with error", zap.Error(err))
-		}
-	}()
+	s.logger.Info("Starting Kloudlite API server (controllers + webhooks only)")
 
-	// Start HTTP server in background
-	go func() {
-		s.logger.Info("Starting HTTP server", zap.String("addr", s.httpServer.Addr))
-		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			s.logger.Error("HTTP server stopped with error", zap.Error(err))
-		}
-	}()
-
-	// Give servers a moment to start listening
-	time.Sleep(2 * time.Second)
-
-	// Install webhook configurations now that the server is ready
-	s.logger.Info("Installing webhook configurations...")
-	caBundle, err := os.ReadFile(s.config.TLS.CertFile)
-	if err != nil {
-		s.logger.Error("Failed to read webhook CA certificate", zap.Error(err))
-		return fmt.Errorf("failed to read webhook CA certificate: %w", err)
-	}
-
-	webhookInstaller := services.NewWebhookInstaller(s.k8sClient.RuntimeClient, s.logger, caBundle)
-	if err := webhookInstaller.InstallWebhooks(context.Background()); err != nil {
-		s.logger.Error("Failed to install webhook configurations", zap.Error(err))
-		// Don't fail startup, just log the error
-		s.logger.Warn("Continuing without webhook configurations")
-	}
-
-	// Start controller manager first so webhook handlers are registered
+	// Start controller manager first
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -149,6 +86,35 @@ func (s *Server) Start() error {
 		}
 	}()
 
+	// Start HTTPS webhook server
+	go func() {
+		s.logger.Info("Starting HTTPS webhook server", zap.String("addr", s.httpsServer.Addr))
+		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
+			s.logger.Error("HTTPS server stopped with error", zap.Error(err))
+		}
+	}()
+
+	// Give webhook server a moment to start listening
+	time.Sleep(2 * time.Second)
+
+	// Install webhook configurations now that the server is ready
+	s.logger.Info("Installing webhook configurations...")
+	caBundle, err := os.ReadFile(s.config.TLS.CertFile)
+	if err != nil {
+		s.logger.Error("Failed to read webhook CA certificate", zap.Error(err))
+		return fmt.Errorf("failed to read webhook CA certificate: %w", err)
+	}
+
+	webhookInstaller := services.NewWebhookInstaller(s.k8sClient.RuntimeClient, s.logger, caBundle)
+	if err := webhookInstaller.InstallWebhooks(context.Background()); err != nil {
+		s.logger.Error("Failed to install webhook configurations", zap.Error(err))
+		s.logger.Warn("Continuing without webhook configurations")
+	}
+
+	s.logger.Info("API server started successfully",
+		zap.String("mode", "controllers+webhooks"),
+		zap.String("webhook_addr", s.httpsServer.Addr))
+
 	// Keep the main goroutine alive
 	select {}
 }
@@ -161,20 +127,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	if err := s.httpServer.Shutdown(shutdownCtx); err != nil {
-		s.logger.Error("Failed to shutdown HTTP server", zap.Error(err))
-	}
-
 	if err := s.httpsServer.Shutdown(shutdownCtx); err != nil {
 		s.logger.Error("Failed to shutdown HTTPS server", zap.Error(err))
-	}
-
-	if err := s.servicesManager.Close(); err != nil {
-		s.logger.Error("Failed to close services manager", zap.Error(err))
-	}
-
-	if err := s.repositoryManager.Close(); err != nil {
-		s.logger.Error("Failed to close repository manager", zap.Error(err))
 	}
 
 	s.logger.Info("Server shutdown complete")

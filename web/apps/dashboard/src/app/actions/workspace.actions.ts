@@ -1,22 +1,22 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { workspaceService } from '@/lib/services/workspace.service'
+import { workspaceRepository, packageRequestRepository } from '@kloudlite/lib/k8s'
+import type { Workspace } from '@kloudlite/lib/k8s'
 import {
   workspaceCreateSchema,
   workspaceUpdateSchema,
   workspaceNameSchema,
   packageUpdateSchema,
 } from '@/lib/validations'
-import type { WorkspaceListParams } from '@kloudlite/types'
 
 /**
  * Server action to list workspaces
  */
-export async function listWorkspaces(namespace: string = 'default', params?: WorkspaceListParams) {
+export async function listWorkspaces(namespace: string = 'default') {
   try {
-    const result = await workspaceService.list(namespace, params)
-    return { success: true, data: result }
+    const result = await workspaceRepository.list(namespace)
+    return { success: true, data: { items: result.items, metadata: result.metadata } }
   } catch (err) {
     console.error('List workspaces error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -32,7 +32,7 @@ export async function listWorkspaces(namespace: string = 'default', params?: Wor
  */
 export async function getWorkspace(name: string, namespace: string = 'default') {
   try {
-    const result = await workspaceService.get(name, namespace)
+    const result = await workspaceRepository.get(namespace, name)
     return { success: true, data: result }
   } catch (err) {
     console.error('Get workspace error:', err)
@@ -58,11 +58,22 @@ export async function createWorkspace(namespace: string, data: unknown) {
   }
 
   try {
-    // Cast to WorkspaceCreateRequest - workmachine is auto-populated by webhook from namespace
-    const result = await workspaceService.create(
-      validated.data as import('@kloudlite/types').WorkspaceCreateRequest,
-      namespace
-    )
+    const createData = validated.data as import('@kloudlite/types').WorkspaceCreateRequest
+
+    // Build Workspace CRD object
+    const workspace: Workspace = {
+      apiVersion: 'workspaces.kloudlite.io/v1',
+      kind: 'Workspace',
+      metadata: {
+        name: createData.name,
+        namespace,
+      },
+      spec: {
+        ...createData.spec,
+      },
+    }
+
+    const result = await workspaceRepository.create(namespace, workspace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -98,12 +109,12 @@ export async function updateWorkspace(name: string, namespace: string, data: unk
   }
 
   try {
-    // Cast to WorkspaceUpdateRequest - backend handles partial updates
-    const result = await workspaceService.update(
-      name,
-      validated.data as import('@kloudlite/types').WorkspaceUpdateRequest,
-      namespace
-    )
+    const updateData = validated.data as import('@kloudlite/types').WorkspaceUpdateRequest
+
+    // Use patch for partial updates
+    const result = await workspaceRepository.patch(namespace, name, {
+      spec: updateData.spec,
+    })
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -121,7 +132,7 @@ export async function updateWorkspace(name: string, namespace: string, data: unk
  */
 export async function deleteWorkspace(name: string, namespace: string = 'default') {
   try {
-    await workspaceService.delete(name, namespace)
+    await workspaceRepository.delete(namespace, name)
     revalidatePath('/workspaces')
     return { success: true }
   } catch (err) {
@@ -139,7 +150,7 @@ export async function deleteWorkspace(name: string, namespace: string = 'default
  */
 export async function suspendWorkspace(name: string, namespace: string = 'default') {
   try {
-    const result = await workspaceService.suspend(name, namespace)
+    const result = await workspaceRepository.suspend(namespace, name)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -157,7 +168,7 @@ export async function suspendWorkspace(name: string, namespace: string = 'defaul
  */
 export async function activateWorkspace(name: string, namespace: string = 'default') {
   try {
-    const result = await workspaceService.activate(name, namespace)
+    const result = await workspaceRepository.activate(namespace, name)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -175,7 +186,7 @@ export async function activateWorkspace(name: string, namespace: string = 'defau
  */
 export async function archiveWorkspace(name: string, namespace: string = 'default') {
   try {
-    const result = await workspaceService.archive(name, namespace)
+    const result = await workspaceRepository.archive(namespace, name)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -307,38 +318,39 @@ export async function updatePackageRequest(
   }
 
   try {
-    const { env } = await import('@/lib/env')
-    const { getAuthToken } = await import('@/lib/get-session')
+    // Try to get existing PackageRequest by workspace label
+    const existingPkgReq = await packageRequestRepository.getByWorkspace(namespace, workspaceName)
 
-    const token = await getAuthToken()
-    if (!token) {
-      return {
-        success: false,
-        error: 'Not authenticated',
+    if (existingPkgReq) {
+      // Update existing PackageRequest
+      const result = await packageRequestRepository.updatePackages(
+        namespace,
+        existingPkgReq.metadata!.name!,
+        validated.data.packages as import('@kloudlite/lib/k8s').PackageSpec[]
+      )
+      revalidatePath('/workspaces')
+      return { success: true, data: result }
+    } else {
+      // Create new PackageRequest
+      const packageRequest: import('@kloudlite/lib/k8s').PackageRequest = {
+        apiVersion: 'packages.kloudlite.io/v1',
+        kind: 'PackageRequest',
+        metadata: {
+          name: `${workspaceName}-packages`,
+          namespace,
+          labels: {
+            'kloudlite.io/workspace': workspaceName,
+          },
+        },
+        spec: {
+          packages: validated.data.packages as import('@kloudlite/lib/k8s').PackageSpec[],
+        },
       }
+
+      const result = await packageRequestRepository.create(namespace, packageRequest)
+      revalidatePath('/workspaces')
+      return { success: true, data: result }
     }
-
-    const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/packages`
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ packages: validated.data.packages }),
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      return {
-        success: false,
-        error: errorText || 'Failed to update packages',
-      }
-    }
-
-    const data = await response.json()
-    revalidatePath('/workspaces')
-    return { success: true, data }
   } catch (err) {
     console.error('Update package request error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -355,42 +367,14 @@ export async function updatePackageRequest(
  */
 export async function getPackageRequest(workspaceName: string, namespace: string = 'default') {
   try {
-    // Import required modules dynamically to ensure this only runs on server
-    const { env } = await import('@/lib/env')
-    const { getAuthToken } = await import('@/lib/get-session')
+    const packageRequest = await packageRequestRepository.getByWorkspace(namespace, workspaceName)
 
-    const token = await getAuthToken()
-    if (!token) {
-      return {
-        success: false,
-        error: 'Not authenticated',
-      }
+    if (!packageRequest) {
+      // PackageRequest doesn't exist yet (workspace has no packages configured)
+      return { success: true, data: null }
     }
 
-    // Use the workspace packages endpoint
-    const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/packages`
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        // PackageRequest doesn't exist yet (workspace has no packages configured)
-        return { success: true, data: null }
-      }
-      const errorText = await response.text()
-      return {
-        success: false,
-        error: errorText || 'Failed to get package request',
-      }
-    }
-
-    const data = await response.json()
-    return { success: true, data }
+    return { success: true, data: packageRequest }
   } catch (err) {
     console.error('Get package request error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')

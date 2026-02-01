@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun --bun next dev --port 3001",
+    "dev": "next dev --port 3001",
     "build": "next build",
-    "start": "bun server.js",
+    "start": "node server.js",
     "start:next": "next start",
     "lint": "echo 'Linting skipped - Next.js 16 + ESLint 9 compatibility issue'"
   },
@@ -26,6 +26,7 @@
     "@tanstack/react-query": "^5.90.10",
     "@uiw/react-codemirror": "^4.25.3",
     "asn1js": "^3.0.7",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.0",
@@ -48,6 +49,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/pg": "^8.15.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
