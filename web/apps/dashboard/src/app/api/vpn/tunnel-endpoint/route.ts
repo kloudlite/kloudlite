@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify, SignJWT } from 'jose'
+import { jwtVerify } from 'jose'
+import { getTunnelEndpoint } from '@/app/actions/vpn.actions'
 
 /**
  * Tunnel Endpoint API Route
@@ -21,10 +22,10 @@ export async function GET(request: NextRequest) {
     // Extract token from Bearer header
     const token = authHeader.replace('Bearer ', '')
 
-    // Get JWT_SECRET (shared with backend Go API)
-    const jwtSecret = process.env.JWT_SECRET
+    // Get JWT_SECRET
+    const jwtSecret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET
     if (!jwtSecret) {
-      console.error('JWT_SECRET environment variable not set')
+      console.error('JWT_SECRET/NEXTAUTH_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
@@ -56,40 +57,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token type' }, { status: 401 })
     }
 
-    // Generate a backend token from the VPN token claims
-    const secret = new TextEncoder().encode(jwtSecret)
-    const backendToken = await new SignJWT({
-      sub: claims.sub,
-      email: claims.email,
-      name: claims.name,
-      username: claims.username,
-      roles: claims.roles,
-      isActive: claims.isActive,
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('5m')
-      .sign(secret)
+    // Get username from claims
+    const username = claims.username
+    if (!username) {
+      return NextResponse.json({ error: 'Username not found in token' }, { status: 401 })
+    }
 
-    // Get the backend API URL from environment
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+    // Get tunnel endpoint using Server Action
+    const result = await getTunnelEndpoint(username)
 
-    // Forward the request to the backend Go API
-    const backendResponse = await fetch(`${backendUrl}/api/v1/vpn/tunnel-endpoint`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${backendToken}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    if (!result.success) {
+      // Determine appropriate status code based on error
+      let statusCode = 500
+      if (result.error?.includes('not found')) {
+        statusCode = 404
+      } else if (result.error?.includes('not running') || result.error?.includes('not ready')) {
+        statusCode = 503
+      }
 
-    // Get the response data
-    const data = await backendResponse.json()
+      return NextResponse.json({ error: result.error }, { status: statusCode })
+    }
 
-    // Return the backend response with the same status code
-    return NextResponse.json(data, { status: backendResponse.status })
+    return NextResponse.json(result.data, { status: 200 })
   } catch (error) {
-    console.error('Tunnel endpoint proxy error:', error)
+    console.error('Tunnel endpoint error:', error)
     return NextResponse.json(
       { error: 'Failed to get tunnel endpoint' },
       { status: 500 }

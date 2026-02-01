@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - please sign in' }, { status: 401 })
     }
 
-    // Use JWT_SECRET (shared with backend Go API for JWT validation)
-    const jwtSecret = process.env.JWT_SECRET
+    // Use JWT_SECRET or NEXTAUTH_SECRET for JWT signing
+    const jwtSecret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET
     if (!jwtSecret) {
-      console.error('JWT_SECRET environment variable not set')
+      console.error('JWT_SECRET/NEXTAUTH_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
