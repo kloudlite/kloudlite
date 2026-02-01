@@ -26,8 +26,6 @@ func main() {
 	}
 	defer appLogger.Sync()
 
-	appLogger.Info("🚀 API Server starting - Build: 2026-01-31-TEST-DEPLOYMENT")
-
 	// Create and start server
 	srv := server.New(cfg, appLogger)
 
