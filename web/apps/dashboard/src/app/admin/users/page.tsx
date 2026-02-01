@@ -1,5 +1,5 @@
 import { UserManagementList } from '../_components/user-management-list'
-import { getAllUsers } from '@/lib/actions/user-actions'
+import { listUsers } from '@/app/actions/user.actions'
 import { UserDisplay } from '@/types/user'
 import { AlertCircle } from 'lucide-react'
 import { getSession } from '@/lib/get-session'
@@ -41,7 +41,7 @@ export default async function UsersPage() {
   }
 
   try {
-    const result = await getAllUsers()
+    const result = await listUsers()
 
     if (!result.success) {
       return <UsersError error={result.error || 'Unknown error occurred'} />

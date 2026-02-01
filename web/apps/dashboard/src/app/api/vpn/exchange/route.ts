@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Temporary token required' }, { status: 400 })
     }
 
-    // Get JWT_SECRET (shared with backend Go API)
-    const jwtSecret = process.env.JWT_SECRET
+    // Get JWT_SECRET or NEXTAUTH_SECRET for JWT verification
+    const jwtSecret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET
     if (!jwtSecret) {
-      console.error('[VPN Exchange] JWT_SECRET environment variable not set')
+      console.error('[VPN Exchange] JWT_SECRET/NEXTAUTH_SECRET environment variable not set')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
