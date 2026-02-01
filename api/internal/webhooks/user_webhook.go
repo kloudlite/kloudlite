@@ -328,12 +328,8 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 				Value: "",
 			})
 
-			// Update status with password hash for change detection
-			patches = append(patches, patchOperation{
-				Op:    "replace",
-				Path:  "/status/passwordHash",
-				Value: newPasswordHashStr,
-			})
+			// Note: passwordHash in status is now handled by the controller
+			// after the resource is created, not in the mutation webhook
 		}
 	}
 
