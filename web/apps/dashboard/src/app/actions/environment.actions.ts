@@ -540,7 +540,15 @@ export async function getEnvironmentByHash(hashOrName: string) {
     // Try to find by hash using label selector (efficient)
     let environment = await environmentRepository.getByHash(namespace, hashOrName)
 
-    // Fallback: try direct name lookup if hash not found
+    // Fallback 1: search by status.hash for environments without the label yet
+    if (!environment) {
+      const environmentsList = await environmentRepository.list(namespace)
+      environment = environmentsList.items?.find(
+        (env) => env.status?.hash === hashOrName
+      ) || null
+    }
+
+    // Fallback 2: try direct name lookup
     if (!environment) {
       try {
         environment = await environmentRepository.get(namespace, hashOrName)
