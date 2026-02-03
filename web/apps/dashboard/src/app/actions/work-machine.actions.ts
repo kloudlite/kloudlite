@@ -161,10 +161,24 @@ export async function updateMyWorkMachine(updateData: {
       }
     }
 
-    // Use patch for partial updates
-    const data = await workMachineRepository.patch(workMachine.metadata!.name!, {
-      spec: updateData,
-    })
+    // Use read-modify-write pattern for updates
+    // Merge the update data into the existing spec
+    const updatedMachine = {
+      ...workMachine,
+      spec: {
+        ...workMachine.spec,
+        ...updateData,
+        // Deep merge autoShutdown if provided
+        ...(updateData.autoShutdown && {
+          autoShutdown: {
+            ...workMachine.spec?.autoShutdown,
+            ...updateData.autoShutdown,
+          },
+        }),
+      },
+    }
+
+    const data = await workMachineRepository.update(workMachine.metadata!.name!, updatedMachine)
     return { success: true, data }
   } catch (err) {
     console.error('Update work machine error:', err)
