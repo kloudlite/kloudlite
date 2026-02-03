@@ -1,5 +1,5 @@
 import { DangerSettings } from '../../../_components/danger-settings'
-import { getEnvironmentDetails } from '@/lib/services/dashboard.service'
+import { getEnvironmentDetails } from '@/app/actions/environment.actions'
 
 interface PageProps {
   params: Promise<{
@@ -10,23 +10,24 @@ interface PageProps {
 export default async function DangerSettingsPage({ params }: PageProps) {
   const { id } = await params
 
-  try {
-    const data = await getEnvironmentDetails(id)
-    const env = data.environment
+  const result = await getEnvironmentDetails(id)
+
+  if (result.success && result.data) {
+    const env = result.data.environment
 
     return (
       <DangerSettings
         environmentId={id}
-        environmentName={`${env.spec.ownedBy}/${env.metadata.name}`}
-      />
-    )
-  } catch (error) {
-    console.error('Failed to fetch environment:', error)
-    return (
-      <DangerSettings
-        environmentId={id}
-        environmentName={id}
+        environmentName={`${env.spec?.ownedBy}/${env.metadata?.name}`}
       />
     )
   }
+
+  // Fallback if fetching fails
+  return (
+    <DangerSettings
+      environmentId={id}
+      environmentName={id}
+    />
+  )
 }
