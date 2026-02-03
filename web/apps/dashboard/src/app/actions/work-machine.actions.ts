@@ -178,7 +178,8 @@ export async function updateMyWorkMachine(updateData: {
       },
     }
 
-    const data = await workMachineRepository.update(workMachine.metadata!.name!, updatedMachine)
+    // Cast to any to handle type differences between lib and types packages
+    const data = await workMachineRepository.update(workMachine.metadata!.name!, updatedMachine as any)
     return { success: true, data }
   } catch (err) {
     console.error('Update work machine error:', err)

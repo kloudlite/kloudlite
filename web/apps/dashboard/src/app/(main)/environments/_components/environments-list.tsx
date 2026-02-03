@@ -394,7 +394,7 @@ export function EnvironmentsList({
               <tr key={env.id} className="transition-colors hover:bg-muted/30">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
-                    href={`/environments/${env.id}`}
+                    href={`/environments/${env.hash}`}
                     className="hover:text-primary flex items-center gap-1.5 text-sm font-semibold transition-colors"
                   >
                     {env.owner}/{env.name || env.id || 'unnamed'}
@@ -475,7 +475,7 @@ export function EnvironmentsList({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/environments/${env.id}`}>View Details</Link>
+                          <Link href={`/environments/${env.hash}`}>View Details</Link>
                         </DropdownMenuItem>
                         {pinnedSet.has(env.name) ? (
                           <DropdownMenuItem onClick={() => handleUnpin(env.name)}>

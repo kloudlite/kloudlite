@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
-import { getEnvironmentDetails } from '@/app/actions/environment.actions'
+import { getEnvironmentByHash } from '@/app/actions/environment.actions'
+import type { CompositionSpec, CompositionStatus } from '@kloudlite/types'
 
 interface PageProps {
   params: Promise<{
@@ -16,21 +17,23 @@ export default async function ServicesPage({ params }: PageProps) {
     redirect('/auth/signin')
   }
 
-  const { id } = await params
+  // id is now the environment hash
+  const { id: hash } = await params
 
   // Fetch environment details using server action
-  const result = await getEnvironmentDetails(id)
+  const result = await getEnvironmentByHash(hash)
 
   if (result.success && result.data) {
     const data = result.data
+    const environmentName = data.environment.metadata?.name || ''
 
     return (
       <ServicesList
         services={data.services}
         namespace={data.namespace}
-        environmentName={id}
-        compose={data.compose}
-        composeStatus={data.composeStatus}
+        environmentName={environmentName}
+        compose={data.compose as CompositionSpec | null}
+        composeStatus={data.composeStatus as CompositionStatus | null}
         envHash={data.envHash || ''}
         subdomain={data.subdomain || ''}
         isEnvActive={data.isActive}
@@ -42,8 +45,8 @@ export default async function ServicesPage({ params }: PageProps) {
   return (
     <ServicesList
       services={[]}
-      namespace={id}
-      environmentName={id}
+      namespace=""
+      environmentName=""
       compose={null}
       composeStatus={null}
       envHash=""

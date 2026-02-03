@@ -4,7 +4,6 @@ import { Network, Copy, Check, AlertCircle, AlertTriangle, Terminal } from 'luci
 import { useState } from 'react'
 import type { K8sService, CompositionSpec, CompositionStatus } from '@kloudlite/types'
 import { Alert, AlertDescription, AlertTitle, Badge, Button } from '@kloudlite/ui'
-import { CompositionEditor } from './composition-editor'
 import { ServiceLogsViewer } from './service-logs-viewer'
 
 interface ServicesListProps {
@@ -21,14 +20,13 @@ interface ServicesListProps {
 export function ServicesList({
   services,
   namespace,
-  environmentName,
-  compose,
+  environmentName: _environmentName,
+  compose: _compose,
   composeStatus,
   envHash,
   subdomain,
   isEnvActive = true,
 }: ServicesListProps) {
-  const [open, setOpen] = useState(false)
   const [copiedDns, setCopiedDns] = useState<string | null>(null)
   const [logsService, setLogsService] = useState<string | null>(null)
 
@@ -51,24 +49,9 @@ export function ServicesList({
   }
   if (services.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium">Services</h3>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Manage and view services in this environment
-            </p>
-          </div>
-          <CompositionEditor
-            environmentName={environmentName}
-            composeContent={compose?.composeContent || null}
-            open={open}
-            onOpenChange={setOpen}
-          />
-        </div>
-
+      <>
         {isEnvActive && composeStatus?.state === 'failed' && (
-          <Alert variant="destructive" className="mt-4">
+          <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Composition Failed</AlertTitle>
             <AlertDescription>
@@ -78,7 +61,7 @@ export function ServicesList({
         )}
 
         {isEnvActive && composeStatus?.state === 'degraded' && (
-          <Alert variant="destructive" className="mt-4">
+          <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Composition Degraded</AlertTitle>
             <AlertDescription>
@@ -87,34 +70,19 @@ export function ServicesList({
           </Alert>
         )}
 
-        <div className="bg-muted/50 mt-8 rounded-lg border py-12 text-center">
+        <div className="bg-muted/50 rounded-lg border py-12 text-center">
           <Network className="text-muted-foreground mx-auto h-12 w-12" />
           <h3 className="mt-2 text-sm font-medium">No services found</h3>
           <p className="text-muted-foreground mt-1 text-sm">
             No services exist in this environment yet.
           </p>
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Services</h3>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Manage and view services in this environment
-          </p>
-        </div>
-        <CompositionEditor
-          environmentName={environmentName}
-          composeContent={compose?.composeContent || null}
-          open={open}
-          onOpenChange={setOpen}
-        />
-      </div>
-
+    <>
       {isEnvActive && composeStatus?.state === 'failed' && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
@@ -246,6 +214,6 @@ export function ServicesList({
         isOpen={!!logsService}
         onClose={() => setLogsService(null)}
       />
-    </div>
+    </>
   )
 }

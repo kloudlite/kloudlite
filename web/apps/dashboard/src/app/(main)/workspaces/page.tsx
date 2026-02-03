@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { WorkspacesList } from './_components/workspaces-list'
 import { getWorkspacesListFull } from '@/app/actions/workspace.actions'
+import type { Workspace } from '@kloudlite/types'
 
 export default async function WorkspacesPage() {
   const session = await getSession()
@@ -32,7 +33,7 @@ export default async function WorkspacesPage() {
 
       {/* Workspaces List with Filter */}
       <WorkspacesList
-        workspaces={data.workspaces || []}
+        workspaces={(data.workspaces || []) as Workspace[]}
         currentUser={currentUser}
         namespace={namespace}
         workMachineRunning={data.workMachineRunning}

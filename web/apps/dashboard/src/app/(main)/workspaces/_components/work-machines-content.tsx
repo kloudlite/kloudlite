@@ -94,6 +94,7 @@ interface PinnedWorkspace {
 interface PinnedEnvironment {
   id: string
   name: string
+  hash: string
   status: 'active' | 'idle'
 }
 

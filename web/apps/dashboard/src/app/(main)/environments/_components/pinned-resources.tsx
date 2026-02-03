@@ -15,6 +15,7 @@ interface PinnedWorkspace {
 interface PinnedEnvironment {
   id: string
   name: string
+  hash: string
   status: 'active' | 'idle'
 }
 
@@ -141,7 +142,7 @@ export function PinnedResources({
                 onMouseLeave={() => setHoveredEnvironment(null)}
               >
                 <div className="flex items-center justify-between">
-                  <Link href={`/environments/${env.id}`} className="min-w-0 flex-1">
+                  <Link href={`/environments/${env.hash}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
                       <div className="bg-success/10 dark:bg-success/20 rounded-lg p-2">
                         <Server className="text-success h-4 w-4" />
@@ -173,7 +174,7 @@ export function PinnedResources({
                         <PinOff className="h-3 w-3" />
                       </Button>
                     )}
-                    <Link href={`/environments/${env.id}`}>
+                    <Link href={`/environments/${env.hash}`}>
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                         <ExternalLink className="h-3 w-3" />
                       </Button>

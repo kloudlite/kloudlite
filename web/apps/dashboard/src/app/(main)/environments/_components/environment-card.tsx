@@ -13,6 +13,7 @@ import {
 interface Environment {
   id: string
   name: string
+  hash: string
   owner: string
   status: 'active' | 'inactive'
   created: string
@@ -29,7 +30,7 @@ interface EnvironmentCardProps {
 
 export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
   return (
-    <Link href={`/environments/${env.id}`} className="group block">
+    <Link href={`/environments/${env.hash}`} className="group block">
       <div className="bg-card hover:border-border cursor-pointer overflow-hidden rounded-lg border transition-all">
         {/* Card Header */}
         <div className="border-b px-6 py-4">
