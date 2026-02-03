@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Middleware for security headers only
+ * Proxy for security headers only
  * Auth checks are handled in layouts (Server Components with Node.js runtime)
  */
-export async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   return addSecurityHeaders(NextResponse.next(), req)
 }
 
