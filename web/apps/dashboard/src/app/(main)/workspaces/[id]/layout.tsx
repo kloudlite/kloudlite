@@ -1,0 +1,120 @@
+import { redirect, notFound } from 'next/navigation'
+import { getSession } from '@/lib/get-session'
+import { Breadcrumb } from '@/components/breadcrumb'
+import { WorkspaceNav } from '../_components/workspace-nav'
+import { WorkspaceActions } from '../_components/workspace-actions'
+import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
+import { SnapshotsSheet } from '../_components/snapshots-sheet'
+import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
+import { Camera } from 'lucide-react'
+import { Button } from '@kloudlite/ui'
+
+interface LayoutProps {
+  children: React.ReactNode
+  params: Promise<{
+    id: string
+  }>
+}
+
+function formatTimeAgo(timestamp?: string): string {
+  if (!timestamp) return 'Unknown'
+
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7)
+    return `${weeks} week${weeks > 1 ? 's' : ''} ago`
+  }
+  const months = Math.floor(diffDays / 30)
+  return `${months} month${months > 1 ? 's' : ''} ago`
+}
+
+export default async function WorkspaceLayout({ children, params }: LayoutProps) {
+  const session = await getSession()
+
+  if (!session) {
+    redirect('/auth/signin')
+  }
+
+  // id is now the workspace hash
+  const { id: hash } = await params
+
+  // Fetch workspace data using server action
+  const result = await getWorkspaceByHash(hash)
+
+  if (!result.success || !result.data) {
+    notFound()
+  }
+
+  const { workspace, workMachineRunning } = result.data
+
+  const workspaceData = {
+    hash,
+    name: workspace.metadata?.name || '',
+    namespace: workspace.metadata?.namespace || 'default',
+    displayName: `${workspace.spec?.ownedBy || 'unknown'}/${workspace.spec?.displayName || workspace.metadata?.name}`,
+    owner: workspace.spec?.ownedBy || 'unknown',
+    phase: workspace.status?.phase || 'Pending',
+    created: formatTimeAgo(workspace.metadata?.creationTimestamp),
+  }
+
+  const breadcrumbItems = [
+    { label: 'Workspaces', href: '/workspaces' },
+    { label: workspaceData.displayName },
+  ]
+
+  return (
+    <>
+      {/* Breadcrumb */}
+      <div className="mb-3">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
+
+      {/* Workspace Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <h1 className="text-2xl font-semibold tracking-tight truncate">{workspaceData.displayName}</h1>
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <SnapshotsSheet
+              workspace={workspace as any}
+              workMachineRunning={workMachineRunning}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Snapshots
+                </Button>
+              }
+            />
+            <WorkspaceActions workspace={workspace as any} workMachineRunning={workMachineRunning} />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>{workspaceData.owner}</span>
+          <span>•</span>
+          <span>{workspaceData.created}</span>
+          <span>•</span>
+          <WorkspaceStatusIndicator
+            namespace={workspaceData.namespace}
+            workspaceName={workspaceData.name}
+            initialPhase={workspaceData.phase}
+          />
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <WorkspaceNav workspaceId={hash} />
+
+      {/* Page Content */}
+      <div className="flex-1">{children}</div>
+    </>
+  )
+}
