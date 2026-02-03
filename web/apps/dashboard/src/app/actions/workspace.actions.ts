@@ -69,10 +69,11 @@ export async function getWorkspacesListFull() {
 }
 
 /**
- * Server action to get a workspace by its hash
- * The hash is a unique 8-char hex identifier derived from owner-workspaceName
+ * Server action to get a workspace by its hash or name
+ * Uses label selector for efficient lookup by hash (kloudlite.io/hash label)
+ * Falls back to direct name lookup if hash not found
  */
-export async function getWorkspaceByHash(hash: string) {
+export async function getWorkspaceByHash(hashOrName: string) {
   try {
     const session = await getSession()
     const username = session?.user?.username || session?.user?.email || ''
@@ -88,11 +89,17 @@ export async function getWorkspaceByHash(hash: string) {
 
     const namespace = workMachine.spec?.targetNamespace || 'default'
 
-    // List all workspaces and find by hash
-    const workspacesList = await workspaceRepository.list(namespace)
-    const workspace = workspacesList.items?.find(
-      (ws) => ws.status?.hash === hash
-    )
+    // Try to find by hash using label selector (efficient)
+    let workspace = await workspaceRepository.getByHash(namespace, hashOrName)
+
+    // Fallback: try direct name lookup if hash not found
+    if (!workspace) {
+      try {
+        workspace = await workspaceRepository.get(namespace, hashOrName)
+      } catch {
+        // Not found by name either
+      }
+    }
 
     if (!workspace) {
       return {

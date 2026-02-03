@@ -2,6 +2,7 @@ package environment
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
@@ -66,12 +67,31 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 		return r.handleDeletion(ctx, environment, logger)
 	}
 
-	// Add finalizer if not present
+	// Add finalizer and hash label if not present
+	needsUpdate := false
+
 	if !controllerutil.ContainsFinalizer(environment, environmentFinalizer) {
 		logger.Info("Adding finalizer to environment")
 		controllerutil.AddFinalizer(environment, environmentFinalizer)
+		needsUpdate = true
+	}
+
+	// Ensure hash label is set on the environment resource for efficient lookups
+	envHash := generateHash(fmt.Sprintf("%s-%s", environment.Name, environment.Spec.OwnedBy))
+	labels := environment.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	if labels["kloudlite.io/hash"] != envHash {
+		labels["kloudlite.io/hash"] = envHash
+		environment.Labels = labels
+		needsUpdate = true
+		logger.Info("Adding hash label to environment", zap.String("hash", envHash))
+	}
+
+	if needsUpdate {
 		if err := r.Update(ctx, environment); err != nil {
-			logger.Error("Failed to add finalizer", zap.Error(err))
+			logger.Error("Failed to update environment", zap.Error(err))
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil

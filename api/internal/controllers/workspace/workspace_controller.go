@@ -70,8 +70,10 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		return r.handleDeletion(ctx, workspace, logger)
 	}
 
-	// Add finalizers if not present
+	// Add finalizers and hash label if not present
 	finalizersAdded := false
+	labelsUpdated := false
+
 	if !controllerutil.ContainsFinalizer(workspace, workspaceFinalizer) {
 		logger.Info("Adding workspace finalizer")
 		controllerutil.AddFinalizer(workspace, workspaceFinalizer)
@@ -82,9 +84,23 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		controllerutil.AddFinalizer(workspace, workspaceCleanupFinalizer)
 		finalizersAdded = true
 	}
-	if finalizersAdded {
+
+	// Ensure hash label is set on the workspace resource for efficient lookups
+	wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
+	labels := workspace.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	if labels["kloudlite.io/hash"] != wsHash {
+		labels["kloudlite.io/hash"] = wsHash
+		workspace.Labels = labels
+		labelsUpdated = true
+		logger.Info("Adding hash label to workspace", zap.String("hash", wsHash))
+	}
+
+	if finalizersAdded || labelsUpdated {
 		if err := r.Update(ctx, workspace); err != nil {
-			logger.Error("Failed to add finalizers", zap.Error(err))
+			logger.Error("Failed to update workspace", zap.Error(err))
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{Requeue: true}, nil
