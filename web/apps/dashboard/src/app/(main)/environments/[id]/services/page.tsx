@@ -31,8 +31,8 @@ export default async function ServicesPage({ params }: PageProps) {
         environmentName={id}
         compose={data.compose}
         composeStatus={data.composeStatus}
-        envHash=""
-        subdomain=""
+        envHash={data.envHash || ''}
+        subdomain={data.subdomain || ''}
         isEnvActive={data.isActive}
       />
     )

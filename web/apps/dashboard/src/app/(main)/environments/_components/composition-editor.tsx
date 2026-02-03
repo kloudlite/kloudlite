@@ -103,17 +103,26 @@ export function CompositionEditor({
           Composition
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-2xl">
-        <div className="flex h-full flex-col">
-          <SheetHeader>
-            <SheetTitle>Edit Composition</SheetTitle>
-            <SheetDescription>Define your services using Docker Compose format</SheetDescription>
-          </SheetHeader>
+      <SheetContent side="right" className="w-full sm:max-w-3xl flex flex-col p-0">
+        {/* Header */}
+        <div className="border-b px-6 py-5">
+          <SheetTitle className="text-xl font-semibold">Environment Composition</SheetTitle>
+          <SheetDescription className="text-muted-foreground mt-1.5">
+            Define your services using Docker Compose format
+          </SheetDescription>
+        </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
-            <div className="space-y-2">
-              <Label htmlFor="compose-content">Docker Compose YAML</Label>
-              <div className="rounded-md border">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="space-y-6">
+            {/* Composition Section */}
+            <div>
+              <h3 className="text-base font-medium mb-1">Docker Compose YAML</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Configure services, networks, and volumes for your environment
+              </p>
+
+              <div className="rounded-lg border bg-muted/30 overflow-hidden">
                 {yamlExtension ? (
                   <CodeMirror
                     value={composeContent}
@@ -124,36 +133,37 @@ export function CompositionEditor({
                   />
                 ) : (
                   <div className="text-muted-foreground flex h-[500px] items-center justify-center">
-                    Loading editor...
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="text-sm">Loading editor...</span>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
           </div>
+        </div>
 
-          <SheetFooter className="mt-auto">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </SheetFooter>
+        {/* Footer */}
+        <div className="border-t px-6 py-4 flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Composition'
+            )}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

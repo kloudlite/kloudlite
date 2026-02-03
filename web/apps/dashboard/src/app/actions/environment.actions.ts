@@ -558,6 +558,8 @@ export async function getEnvironmentDetails(name: string) {
         composeStatus: environment.status?.composeStatus || null,
         namespace: targetNamespace || '',
         isActive: environment.status?.state === 'active',
+        envHash: environment.status?.hash || '',
+        subdomain: environment.status?.subdomain || '',
       },
     }
   } catch (err) {
