@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { WorkMachineMetrics } from './work-machine-metrics'
 import { PinnedResources } from '../../environments/_components/pinned-resources'
 import { WorkMachineControls } from './work-machine-controls'
-import { WorkMachineSetup } from './work-machine-setup'
 import {
   updateMyWorkMachine,
   startMyWorkMachine,
@@ -13,7 +12,7 @@ import {
 } from '@/app/actions/work-machine.actions'
 import { unpinWorkspace, unpinEnvironment } from '@/app/actions/user-preferences.actions'
 import { toast } from 'sonner'
-import { Server, Loader2 } from 'lucide-react'
+import { Server, Loader2, Activity, Clock, User, Cpu } from 'lucide-react'
 
 interface WorkMachine {
   id: string
@@ -40,12 +39,21 @@ function getStateDisplay(currentState: string, desiredState: string) {
   const isTransitioning = currentState !== desiredState
 
   const stateColors: Record<string, string> = {
-    running: 'text-success',
+    running: 'text-emerald-600 dark:text-emerald-400',
     stopped: 'text-muted-foreground',
-    starting: 'text-info',
-    stopping: 'text-destructive',
+    starting: 'text-blue-600 dark:text-blue-400',
+    stopping: 'text-amber-600 dark:text-amber-400',
     disabled: 'text-destructive',
     errored: 'text-destructive',
+  }
+
+  const stateBgColors: Record<string, string> = {
+    running: 'bg-emerald-500/10',
+    stopped: 'bg-muted',
+    starting: 'bg-blue-500/10',
+    stopping: 'bg-amber-500/10',
+    disabled: 'bg-destructive/10',
+    errored: 'bg-destructive/10',
   }
 
   const stateLabels: Record<string, string> = {
@@ -59,6 +67,7 @@ function getStateDisplay(currentState: string, desiredState: string) {
 
   return {
     color: stateColors[currentState] || 'text-muted-foreground',
+    bgColor: stateBgColors[currentState] || 'bg-muted',
     label: stateLabels[currentState] || currentState,
     isTransitioning,
     desiredLabel: stateLabels[desiredState] || desiredState,
@@ -89,7 +98,7 @@ interface PinnedEnvironment {
 }
 
 interface WorkMachinesContentProps {
-  initialMachines: WorkMachine[]
+  machine: WorkMachine
   currentUser: string
   isAdmin: boolean
   availableMachineTypes: MachineType[]
@@ -98,32 +107,37 @@ interface WorkMachinesContentProps {
 }
 
 export function WorkMachinesContent({
-  initialMachines,
-  currentUser: _currentUser,
-  isAdmin: _isAdmin,
+  machine: initialMachine,
+  currentUser,
+  isAdmin,
   availableMachineTypes,
   pinnedWorkspaces,
   pinnedEnvironments,
 }: WorkMachinesContentProps) {
   const router = useRouter()
   const [_isPending, startTransition] = useTransition()
-  const [workMachines, setWorkMachines] = useState(initialMachines)
-  const [selectedMachineId, _setSelectedMachineId] = useState(workMachines[0]?.id)
+  const [machine, setMachine] = useState(initialMachine)
   const [isLoading, setIsLoading] = useState(false)
-
-  const selectedMachine = workMachines.find((m) => m.id === selectedMachineId) || workMachines[0]
+  const [optimisticState, setOptimisticState] = useState<string | null>(null)
 
   // Sync local state with prop changes when page refreshes
   useEffect(() => {
-    setWorkMachines(initialMachines)
-  }, [initialMachines])
+    setMachine(initialMachine)
+  }, [initialMachine])
+
+  // Determine the current display state (optimistic or actual)
+  const displayState = optimisticState || machine.currentState
+  const isTransitioning = displayState !== machine.desiredState || optimisticState !== null
+
+  // Clear optimistic state when actual state matches desired state
+  useEffect(() => {
+    if (optimisticState && machine.currentState === machine.desiredState) {
+      setOptimisticState(null)
+    }
+  }, [machine.currentState, machine.desiredState, optimisticState])
 
   // Auto-refresh when machine is transitioning
   useEffect(() => {
-    if (!selectedMachine) return
-
-    const isTransitioning = selectedMachine.currentState !== selectedMachine.desiredState
-
     if (isTransitioning) {
       // Poll every 1 second during transitions
       const interval = setInterval(() => {
@@ -132,17 +146,13 @@ export function WorkMachinesContent({
 
       return () => clearInterval(interval)
     }
-
-    return undefined
-  }, [selectedMachine, router])
-
-  // Handle case where user has no work machine
-  if (!selectedMachine) {
-    return <WorkMachineSetup availableMachineTypes={availableMachineTypes} />
-  }
+  }, [machine.currentState, machine.desiredState, router, isTransitioning])
 
   const handleStart = async () => {
+    // Optimistically update UI immediately
+    setOptimisticState('starting')
     setIsLoading(true)
+
     try {
       const result = await startMyWorkMachine()
       if (result.success) {
@@ -152,16 +162,21 @@ export function WorkMachinesContent({
         })
       } else {
         toast.error(result.error || 'Failed to start work machine')
+        setOptimisticState(null)
       }
     } catch (_error) {
       toast.error('An error occurred')
+      setOptimisticState(null)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleStop = async () => {
+    // Optimistically update UI immediately
+    setOptimisticState('stopping')
     setIsLoading(true)
+
     try {
       const result = await stopMyWorkMachine()
       if (result.success) {
@@ -171,9 +186,11 @@ export function WorkMachinesContent({
         })
       } else {
         toast.error(result.error || 'Failed to stop work machine')
+        setOptimisticState(null)
       }
     } catch (_error) {
       toast.error('An error occurred')
+      setOptimisticState(null)
     } finally {
       setIsLoading(false)
     }
@@ -220,44 +237,50 @@ export function WorkMachinesContent({
     }
   }
 
-  return (
-    <main className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-muted-foreground mt-1.5 text-sm">
-            Monitor and manage your development environment
-          </p>
-        </div>
+  const stateDisplay = getStateDisplay(displayState, machine.desiredState)
 
-        {/* Machine Info Card */}
-        <div className="bg-card mb-6 border p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary flex h-10 w-10 items-center justify-center">
-                <Server className="text-primary-foreground h-5 w-5" />
+  return (
+    <>
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight mb-2">Workmachine</h1>
+        <p className="text-muted-foreground text-sm">
+          Monitor and control your development workmachine
+        </p>
+      </div>
+
+      {/* Machine Info Card - Modern Design */}
+      <div className="group relative overflow-hidden rounded-xl border bg-card transition-all duration-300 mb-8">
+        {/* Gradient decoration */}
+        <div className="absolute top-0 right-0 h-32 w-32 bg-gradient-to-br from-primary/20 to-primary/5 blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+        <div className="relative p-6 sm:p-8 space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                <Server className="h-7 w-7 text-primary" />
               </div>
               <div>
-                <h2 className="text-base font-semibold">
-                  {selectedMachine.owner}&apos;s WorkMachine
+                <h2 className="text-xl font-semibold tracking-tight">
+                  {machine.owner}&apos;s WorkMachine
                 </h2>
-                <p className="text-muted-foreground text-xs">{selectedMachine.type}</p>
+                <p className="text-muted-foreground text-sm mt-0.5">{machine.type}</p>
               </div>
             </div>
 
             {/* Machine Controls */}
             <WorkMachineControls
-              machineId={selectedMachine.id}
-              machineName={selectedMachine.name}
-              status={selectedMachine.status}
-              currentState={selectedMachine.currentState}
-              desiredState={selectedMachine.desiredState}
-              currentType={selectedMachine.type}
+              machineId={machine.id}
+              machineName={machine.name}
+              status={machine.status}
+              currentState={displayState}
+              desiredState={machine.desiredState}
+              currentType={machine.type}
               availableMachineTypes={availableMachineTypes}
-              sshPublicKey={selectedMachine.sshPublicKey}
-              sshAuthorizedKeys={selectedMachine.sshAuthorizedKeys}
-              autoShutdown={selectedMachine.autoShutdown}
+              sshPublicKey={machine.sshPublicKey}
+              sshAuthorizedKeys={machine.sshAuthorizedKeys}
+              autoShutdown={machine.autoShutdown}
               onStart={handleStart}
               onStop={handleStop}
               onTypeChange={handleTypeChange}
@@ -265,83 +288,103 @@ export function WorkMachinesContent({
             />
           </div>
 
-          {/* Machine Stats */}
-          <div className="grid grid-cols-4 gap-6 border-t pt-6">
-            <div>
-              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                Status
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                {(selectedMachine.currentState === 'starting' || selectedMachine.currentState === 'stopping') && (
-                  <Loader2
-                    className={`h-4 w-4 animate-spin ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}
-                  />
-                )}
-                <p
-                  className={`text-sm font-medium ${getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState).color}`}
-                >
-                  {
-                    getStateDisplay(selectedMachine.currentState, selectedMachine.desiredState)
-                      .label
-                  }
+          {/* Machine Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t">
+            {/* Status */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Status
                 </p>
               </div>
+              <div className="flex items-center gap-2">
+                {(displayState === 'starting' || displayState === 'stopping') && (
+                  <Loader2 className={`h-4 w-4 animate-spin ${stateDisplay.color}`} />
+                )}
+                <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg ${stateDisplay.bgColor} ${stateDisplay.color} text-sm font-semibold`}>
+                  {stateDisplay.label}
+                </span>
+              </div>
             </div>
-            <div>
-              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                {selectedMachine.currentState === 'running' ? 'Uptime' : 'Status'}
-              </p>
-              <p className="mt-2 text-sm font-medium">
-                {selectedMachine.currentState === 'running'
-                  ? selectedMachine.uptime
-                  : selectedMachine.currentState === 'stopped'
+
+            {/* Uptime/Status Message */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {displayState === 'running' ? 'Uptime' : 'Status'}
+                </p>
+              </div>
+              <p className="text-sm font-semibold">
+                {displayState === 'running'
+                  ? machine.uptime
+                  : displayState === 'stopped'
                     ? 'Not consuming resources'
-                    : selectedMachine.currentState === 'starting'
+                    : displayState === 'starting'
                       ? 'Starting up...'
-                      : selectedMachine.currentState === 'stopping'
+                      : displayState === 'stopping'
                         ? 'Shutting down...'
                         : 'Transitioning...'}
               </p>
             </div>
-            <div>
-              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                Owner
-              </p>
-              <p className="mt-2 text-sm font-medium">{selectedMachine.owner}</p>
+
+            {/* Owner */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Owner
+                </p>
+              </div>
+              <p className="text-sm font-semibold">{machine.owner}</p>
             </div>
-            <div>
-              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                Type
-              </p>
-              <p className="mt-2 text-sm font-medium">{selectedMachine.type}</p>
+
+            {/* Type */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Cpu className="h-4 w-4 text-muted-foreground" />
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Type
+                </p>
+              </div>
+              <p className="text-sm font-semibold">{machine.type}</p>
             </div>
           </div>
-        </div>
-
-
-
-        {/* Metrics Section - Only show when machine is running */}
-        {selectedMachine.currentState === 'running' && (
-          <div className="mb-6">
-            <h2 className="mb-4 text-base font-semibold">Resource Usage</h2>
-            <WorkMachineMetrics
-              workMachineName={selectedMachine.name}
-              machineState={selectedMachine.currentState}
-            />
-          </div>
-        )}
-
-        {/* Pinned Resources Section */}
-        <div>
-          <h2 className="mb-4 text-base font-semibold">Quick Access</h2>
-          <PinnedResources
-            workspaces={pinnedWorkspaces}
-            environments={pinnedEnvironments}
-            onUnpinWorkspace={handleUnpinWorkspace}
-            onUnpinEnvironment={handleUnpinEnvironment}
-          />
         </div>
       </div>
-    </main>
+
+      {/* Metrics Section - Only show when machine is running */}
+      {displayState === 'running' && (
+        <div className="space-y-4 mb-8">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Resource Usage</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Real-time monitoring of your work machine resources
+            </p>
+          </div>
+          <WorkMachineMetrics
+            workMachineName={machine.name}
+            machineState={displayState}
+          />
+        </div>
+      )}
+
+      {/* Pinned Resources Section */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Quick Access</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Your pinned workspaces and environments for quick access
+          </p>
+        </div>
+        <PinnedResources
+          workspaces={pinnedWorkspaces}
+          environments={pinnedEnvironments}
+          onUnpinWorkspace={handleUnpinWorkspace}
+          onUnpinEnvironment={handleUnpinEnvironment}
+        />
+      </div>
+    </>
   )
 }

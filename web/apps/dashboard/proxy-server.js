@@ -1,16 +1,115 @@
 // Proxy server that handles WebSocket and forwards HTTP to Next.js standalone
 const http = require('http')
+const https = require('https')
 const { WebSocket, WebSocketServer } = require('ws')
 
 const port = parseInt(process.env.PORT || '3000', 10)
 const nextPort = 3002 // Next.js runs on this port internally
-const apiUrl = process.env.API_URL || 'http://api-server.kloudlite.svc.cluster.local'
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:8080'
 
 // Parse API URL for WebSocket proxy
 const apiUrlParsed = new URL(apiUrl)
 const wsTargetBase = apiUrlParsed.protocol === 'https:'
   ? `wss://${apiUrlParsed.host}`
   : `ws://${apiUrlParsed.host}`
+
+// Helper functions for Kubernetes metrics
+function parseCPU(cpuString) {
+  if (cpuString.endsWith('n')) {
+    return parseInt(cpuString.slice(0, -1)) / 1_000_000_000
+  }
+  if (cpuString.endsWith('u')) {
+    return parseInt(cpuString.slice(0, -1)) / 1_000_000
+  }
+  if (cpuString.endsWith('m')) {
+    return parseInt(cpuString.slice(0, -1))
+  }
+  return parseFloat(cpuString) * 1000
+}
+
+function parseMemory(memoryString) {
+  const units = {
+    Ki: 1024,
+    Mi: 1024 * 1024,
+    Gi: 1024 * 1024 * 1024,
+    Ti: 1024 * 1024 * 1024 * 1024,
+    K: 1000,
+    M: 1000 * 1000,
+    G: 1000 * 1000 * 1000,
+    T: 1000 * 1000 * 1000 * 1000,
+  }
+
+  for (const [unit, multiplier] of Object.entries(units)) {
+    if (memoryString.endsWith(unit)) {
+      return parseInt(memoryString.slice(0, -unit.length)) * multiplier
+    }
+  }
+
+  return parseInt(memoryString)
+}
+
+async function fetchNodeMetrics(nodeName) {
+  try {
+    const httpModule = apiUrlParsed.protocol === 'https:' ? https : http
+
+    // Fetch node metrics
+    const metricsData = await new Promise((resolve, reject) => {
+      const req = httpModule.get(
+        `${apiUrl}/apis/metrics.k8s.io/v1beta1/nodes/${nodeName}`,
+        { rejectUnauthorized: false },
+        (res) => {
+          let data = ''
+          res.on('data', chunk => data += chunk)
+          res.on('end', () => {
+            if (res.statusCode === 200) {
+              resolve(JSON.parse(data))
+            } else {
+              reject(new Error(`Failed to fetch metrics: ${res.statusCode}`))
+            }
+          })
+        }
+      )
+      req.on('error', reject)
+    })
+
+    // Fetch node details
+    const nodeData = await new Promise((resolve, reject) => {
+      const req = httpModule.get(
+        `${apiUrl}/api/v1/nodes/${nodeName}`,
+        { rejectUnauthorized: false },
+        (res) => {
+          let data = ''
+          res.on('data', chunk => data += chunk)
+          res.on('end', () => {
+            if (res.statusCode === 200) {
+              resolve(JSON.parse(data))
+            } else {
+              reject(new Error(`Failed to fetch node: ${res.statusCode}`))
+            }
+          })
+        }
+      )
+      req.on('error', reject)
+    })
+
+    return {
+      cpu: {
+        usage: parseCPU(metricsData.usage.cpu),
+        capacity: parseCPU(nodeData.status.capacity.cpu),
+        allocatable: parseCPU(nodeData.status.allocatable.cpu),
+      },
+      memory: {
+        usage: parseMemory(metricsData.usage.memory),
+        capacity: parseMemory(nodeData.status.capacity.memory),
+        allocatable: parseMemory(nodeData.status.allocatable.memory),
+      },
+      timestamp: metricsData.timestamp,
+    }
+  } catch (error) {
+    console.error('Error fetching node metrics:', error.message)
+    return null
+  }
+}
 
 // WebSocket paths that should be proxied
 const wsPathPatterns = [
@@ -88,46 +187,84 @@ server.on('upgrade', (req, socket, head) => {
   const pathname = req.url.split('?')[0]
 
   if (isWebSocketPath(pathname)) {
-    wss.handleUpgrade(req, socket, head, (clientWs) => {
-      const targetUrl = `${wsTargetBase}${req.url}`
-      console.log(`WebSocket proxy: ${req.url} -> ${targetUrl}`)
+    // Check if this is a metrics WebSocket request
+    const metricsMatch = pathname.match(/^\/api\/v1\/work-machines\/([^/]+)\/metrics-ws/)
 
-      const backendWs = new WebSocket(targetUrl)
+    if (metricsMatch) {
+      const nodeName = metricsMatch[1]
+      console.log(`Metrics WebSocket: ${pathname} -> Kubernetes API for node ${nodeName}`)
 
-      backendWs.on('open', () => {
-        console.log('Backend WebSocket connected')
-      })
+      wss.handleUpgrade(req, socket, head, (clientWs) => {
+        let interval = null
 
-      backendWs.on('message', (data, isBinary) => {
-        if (clientWs.readyState === WebSocket.OPEN) {
-          clientWs.send(data, { binary: isBinary })
+        const sendMetrics = async () => {
+          const metrics = await fetchNodeMetrics(nodeName)
+          if (metrics && clientWs.readyState === WebSocket.OPEN) {
+            clientWs.send(JSON.stringify({
+              type: 'metrics',
+              nodeMetrics: metrics,
+            }))
+          }
         }
-      })
 
-      backendWs.on('close', (code, reason) => {
-        clientWs.close(code, reason)
-      })
+        // Send initial metrics
+        sendMetrics()
 
-      backendWs.on('error', (err) => {
-        console.error('Backend WebSocket error:', err.message)
-        clientWs.close(1011, 'Backend error')
-      })
+        // Send metrics every 2 seconds
+        interval = setInterval(sendMetrics, 2000)
 
-      clientWs.on('message', (data, isBinary) => {
-        if (backendWs.readyState === WebSocket.OPEN) {
-          backendWs.send(data, { binary: isBinary })
-        }
-      })
+        clientWs.on('close', () => {
+          if (interval) clearInterval(interval)
+        })
 
-      clientWs.on('close', () => {
-        backendWs.close()
+        clientWs.on('error', (err) => {
+          console.error('Client WebSocket error:', err.message)
+          if (interval) clearInterval(interval)
+        })
       })
+    } else {
+      // Forward other WebSocket requests to backend
+      wss.handleUpgrade(req, socket, head, (clientWs) => {
+        const targetUrl = `${wsTargetBase}${req.url}`
+        console.log(`WebSocket proxy: ${req.url} -> ${targetUrl}`)
 
-      clientWs.on('error', (err) => {
-        console.error('Client WebSocket error:', err.message)
-        backendWs.close()
+        const backendWs = new WebSocket(targetUrl)
+
+        backendWs.on('open', () => {
+          console.log('Backend WebSocket connected')
+        })
+
+        backendWs.on('message', (data, isBinary) => {
+          if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.send(data, { binary: isBinary })
+          }
+        })
+
+        backendWs.on('close', (code, reason) => {
+          clientWs.close(code, reason)
+        })
+
+        backendWs.on('error', (err) => {
+          console.error('Backend WebSocket error:', err.message)
+          clientWs.close(1011, 'Backend error')
+        })
+
+        clientWs.on('message', (data, isBinary) => {
+          if (backendWs.readyState === WebSocket.OPEN) {
+            backendWs.send(data, { binary: isBinary })
+          }
+        })
+
+        clientWs.on('close', () => {
+          backendWs.close()
+        })
+
+        clientWs.on('error', (err) => {
+          console.error('Client WebSocket error:', err.message)
+          backendWs.close()
+        })
       })
-    })
+    }
   } else {
     // For non-API WebSocket (like HMR), just close
     socket.destroy()

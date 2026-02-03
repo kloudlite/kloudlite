@@ -14,6 +14,8 @@ import (
 	"github.com/kloudlite/kloudlite/api/pkg/logger"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	admissionv1 "k8s.io/api/admission/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -156,9 +158,10 @@ func (w *WorkMachineWebhook) handleMutation(
 		})
 	}
 
-	// Set targetNamespace if not provided - use machine name (which already has wm- prefix)
+	// Set targetNamespace if not provided - format: wm-{workmachine-name}
+	// For now, workmachine name follows convention of being the username
 	if machine.Spec.TargetNamespace == "" {
-		targetNS := machine.Name
+		targetNS := fmt.Sprintf("wm-%s", machine.Name)
 		patches = append(patches, map[string]interface{}{
 			"op":    "add",
 			"path":  "/spec/targetNamespace",
@@ -180,6 +183,49 @@ func (w *WorkMachineWebhook) handleMutation(
 	owner := machine.Spec.OwnedBy
 	// For simplicity, assume ownedBy is already a username
 	userName := owner
+
+	// Create target namespace if it doesn't exist (only on CREATE operation)
+	if req.Operation == admissionv1.Create {
+		targetNS := machine.Spec.TargetNamespace
+		namespace := &corev1.Namespace{}
+		err := w.k8sClient.Get(ctx, client.ObjectKey{Name: targetNS}, namespace)
+
+		if apierrors.IsNotFound(err) {
+			// Namespace doesn't exist, create it
+			newNamespace := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: targetNS,
+					Labels: map[string]string{
+						"kloudlite.io/workmachine":      machine.Name,
+						"kloudlite.io/owned-by":         userName,
+						"kloudlite.io/namespace-type":   "workmachine",
+					},
+				},
+			}
+
+			if err := w.k8sClient.Create(ctx, newNamespace); err != nil {
+				w.logger.Error(fmt.Sprintf("Failed to create target namespace '%s': %v", targetNS, err))
+				return &admissionv1.AdmissionResponse{
+					Allowed: false,
+					Result: &metav1.Status{
+						Message: fmt.Sprintf("Failed to create target namespace '%s': %v", targetNS, err),
+					},
+				}
+			}
+
+			w.logger.Info(fmt.Sprintf("Created target namespace '%s' for WorkMachine '%s'", targetNS, machine.Name))
+		} else if err != nil {
+			// Error checking namespace existence
+			w.logger.Error(fmt.Sprintf("Failed to check namespace '%s': %v", targetNS, err))
+			return &admissionv1.AdmissionResponse{
+				Allowed: false,
+				Result: &metav1.Status{
+					Message: fmt.Sprintf("Failed to check target namespace '%s': %v", targetNS, err),
+				},
+			}
+		}
+		// If namespace exists, continue without error
+	}
 
 	// Add created-by label with username
 	createdByLabelPatch := map[string]interface{}{

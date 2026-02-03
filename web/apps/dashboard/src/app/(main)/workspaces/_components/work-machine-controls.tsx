@@ -441,84 +441,94 @@ export function WorkMachineControls({
 
       {/* Settings Sheet */}
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl">
+        <SheetContent side="right" className="w-full sm:max-w-2xl">
           <div className="flex h-full flex-col">
-            <SheetHeader>
-              <SheetTitle>Work Machine Settings</SheetTitle>
-              <SheetDescription>
+            <SheetHeader className="space-y-1 pb-8">
+              <SheetTitle className="text-xl font-semibold">Work Machine Settings</SheetTitle>
+              <SheetDescription className="text-sm">
                 Configure automatic behaviors and startup scripts for {machineName}
               </SheetDescription>
             </SheetHeader>
 
-            <div className="flex-1 space-y-8 overflow-y-auto p-4">
-              {/* Idle Timeout Settings */}
+            <div className="flex-1 space-y-6 overflow-y-auto pb-6">
+              {/* Auto-stop Section */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label className="text-base font-medium">Auto-stop</Label>
-                    <p className="text-muted-foreground text-sm">
-                      Automatically stop the WorkMachine when all workspaces are idle.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={autoShutdownEnabled}
-                    onCheckedChange={setAutoShutdownEnabled}
-                  />
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">Auto-stop</h3>
+                  <p className="text-muted-foreground text-xs">
+                    Automatically stop the WorkMachine when all workspaces are idle
+                  </p>
                 </div>
 
-                {autoShutdownEnabled && (
-                  <div className="ml-0 space-y-2 rounded-md border p-4">
-                    <p className="text-muted-foreground text-sm">
-                      WorkMachine will automatically stop after {idleTimeout} minutes of idle time to save resources.
-                      It is considered idle when all workspaces in it have no active connections.
-                    </p>
-                    <div className="flex items-center gap-2 pt-2">
-                      <Label htmlFor="idle-timeout" className="text-sm font-medium">
-                        Idle timeout
-                      </Label>
-                      <Input
-                        id="idle-timeout"
-                        type="number"
-                        min="5"
-                        max="1440"
-                        value={idleTimeout}
-                        onChange={(e) => setIdleTimeout(e.target.value)}
-                        className="w-24"
-                      />
-                      <span className="text-muted-foreground text-sm">minutes</span>
+                <div className="rounded-lg border bg-card">
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium mb-0.5">Enable auto-stop</p>
+                      <p className="text-muted-foreground text-xs">
+                        WorkMachine stops when idle to save resources
+                      </p>
                     </div>
+                    <Switch
+                      checked={autoShutdownEnabled}
+                      onCheckedChange={setAutoShutdownEnabled}
+                    />
                   </div>
-                )}
+
+                  {autoShutdownEnabled && (
+                    <div className="border-t bg-muted/20 p-4">
+                      <div className="space-y-3">
+                        <p className="text-muted-foreground text-xs leading-relaxed">
+                          WorkMachine will automatically stop after {idleTimeout} minutes of idle time.
+                          It is considered idle when all workspaces have no active connections.
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <Label htmlFor="idle-timeout" className="text-sm font-medium min-w-fit">
+                            Idle timeout
+                          </Label>
+                          <Input
+                            id="idle-timeout"
+                            type="number"
+                            min="5"
+                            max="1440"
+                            value={idleTimeout}
+                            onChange={(e) => setIdleTimeout(e.target.value)}
+                            className="w-28"
+                          />
+                          <span className="text-muted-foreground text-sm">minutes</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* SSH Keys */}
-              <div className="space-y-4 border-t pt-6">
+              {/* SSH Configuration Section */}
+              <div className="space-y-4">
                 <div>
-                  <Label className="text-base font-medium">SSH Configuration</Label>
-                  <p className="text-muted-foreground mt-1 text-sm">
+                  <h3 className="text-sm font-semibold mb-1">SSH Configuration</h3>
+                  <p className="text-muted-foreground text-xs">
                     Manage SSH keys for workspace access
                   </p>
                 </div>
 
-                {/* SSH Public Key */}
-                {sshPublicKey ? (
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-sm font-medium">WorkMachine SSH Public Key</Label>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        This SSH public key is shared across all workspaces in this WorkMachine. Use
-                        it to authorize access to external systems.
-                      </p>
-                    </div>
-                    <div className="bg-muted/50 relative rounded-lg border p-4">
-                      <pre className="text-muted-foreground overflow-x-auto font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
+                {/* WorkMachine SSH Public Key */}
+                <div className="rounded-lg border bg-card p-4 space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium">WorkMachine SSH Public Key</Label>
+                    <p className="text-muted-foreground text-xs mt-1">
+                      Shared across all workspaces to authorize external systems
+                    </p>
+                  </div>
+                  {sshPublicKey ? (
+                    <div className="bg-muted/50 relative rounded-md border p-3">
+                      <pre className="text-muted-foreground overflow-x-auto font-mono text-xs whitespace-pre-wrap break-all pr-16">
                         {sshPublicKey}
                       </pre>
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => handleCopySSHKey(sshPublicKey)}
-                        className="absolute right-2 top-2"
+                        className="absolute right-2 top-2 h-7"
                       >
                         {copiedSSHKey ? (
                           <>
@@ -533,67 +543,70 @@ export function WorkMachineControls({
                         )}
                       </Button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="rounded-md border border-dashed py-4 text-center">
-                    <p className="text-muted-foreground text-xs">
-                      SSH public key is being generated
-                    </p>
-                  </div>
-                )}
-
-                {/* Authorized Keys */}
-                <div className="space-y-3 pt-3">
-                  <div className="flex items-start justify-between">
-                    <Label className="text-base font-medium">Authorized Keys</Label>
-                    {sshAuthorizedKeys.length > 0 && (
-                      <span className="text-muted-foreground text-xs">
-                        {sshAuthorizedKeys.length} {sshAuthorizedKeys.length === 1 ? 'key' : 'keys'}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    Add SSH public keys to authorize external access to all workspaces in this
-                    WorkMachine
-                  </p>
-
-                  {/* List of authorized keys */}
-                  {sshAuthorizedKeys.length > 0 ? (
-                    <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border">
-                      {sshAuthorizedKeys.map((key, index) => (
-                        <div
-                          key={index}
-                          className="hover:bg-muted/50 group flex items-center justify-between px-3 py-2 transition-colors"
-                        >
-                          <code className="text-muted-foreground font-mono text-xs">
-                            {parseSSHKey(key)}
-                          </code>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={async () => {
-                              await handleRemoveSSHKey(key)
-                            }}
-                            disabled={isDeletingKey === key}
-                            className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                          >
-                            {isDeletingKey === key ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
                   ) : (
                     <div className="rounded-md border border-dashed py-6 text-center">
-                      <p className="text-muted-foreground text-sm">No authorized keys</p>
+                      <p className="text-muted-foreground text-xs">
+                        SSH public key is being generated
+                      </p>
                     </div>
                   )}
+                </div>
 
-                  {/* Add new key */}
-                  <div className="space-y-2 pt-2">
+                {/* Authorized Keys */}
+                <div className="rounded-lg border bg-card">
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label className="text-sm font-medium">Authorized Keys</Label>
+                        {sshAuthorizedKeys.length > 0 && (
+                          <span className="text-muted-foreground text-xs">
+                            {sshAuthorizedKeys.length} {sshAuthorizedKeys.length === 1 ? 'key' : 'keys'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-xs">
+                        Authorize external access to all workspaces
+                      </p>
+                    </div>
+
+                    {/* List */}
+                    {sshAuthorizedKeys.length > 0 ? (
+                      <div className="rounded-md border overflow-hidden">
+                        {sshAuthorizedKeys.map((key, index) => (
+                          <div
+                            key={index}
+                            className="hover:bg-muted/30 group flex items-center justify-between gap-2 px-3 py-2.5 transition-colors border-b last:border-b-0"
+                          >
+                            <code className="text-muted-foreground font-mono text-xs flex-1 truncate">
+                              {parseSSHKey(key)}
+                            </code>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={async () => {
+                                await handleRemoveSSHKey(key)
+                              }}
+                              disabled={isDeletingKey === key}
+                              className="h-7 w-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                            >
+                              {isDeletingKey === key ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-md border border-dashed py-6 text-center">
+                        <p className="text-muted-foreground text-xs">No authorized keys</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add New Key */}
+                  <div className="border-t bg-muted/20 p-4 space-y-3">
                     <Label htmlFor="new-ssh-key" className="text-sm font-medium">
                       Add New Key
                     </Label>
@@ -609,19 +622,19 @@ export function WorkMachineControls({
                             handleAddSSHKey()
                           }
                         }}
-                        className="flex-1 font-mono text-xs"
+                        className="flex-1 font-mono text-xs h-9"
                         disabled={isAddingKey}
                       />
                       <Button
                         size="sm"
                         onClick={handleAddSSHKey}
                         disabled={isAddingKey || !newSSHKey.trim()}
-                        className="flex-shrink-0"
+                        className="h-9 px-4"
                       >
                         {isAddingKey ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Adding...
+                            Adding
                           </>
                         ) : (
                           <>
@@ -639,15 +652,24 @@ export function WorkMachineControls({
               </div>
             </div>
 
-            <SheetFooter className="p-4">
-              <Button variant="outline" onClick={() => setSettingsOpen(false)} disabled={isSavingSettings}>
+            <SheetFooter className="border-t pt-4 flex-row gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setSettingsOpen(false)}
+                disabled={isSavingSettings}
+                className="min-w-24"
+              >
                 Cancel
               </Button>
-              <Button onClick={saveSettings} disabled={isSavingSettings}>
+              <Button
+                onClick={saveSettings}
+                disabled={isSavingSettings}
+                className="min-w-24"
+              >
                 {isSavingSettings ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    Saving
                   </>
                 ) : (
                   'Save Settings'

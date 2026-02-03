@@ -30,20 +30,38 @@ export default async function RootLayout({
   const theme = await getTheme()
 
   return (
-    <html lang="en" className={theme === 'dark' ? 'dark' : ''} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Only apply system preference on client if theme is 'system' */}
-        {theme === 'system' && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                  document.documentElement.classList.add('dark');
+        {/* Handle theme before React hydration to prevent flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const theme = '${theme}';
+                const html = document.documentElement;
+
+                // Apply theme class based on cookie value
+                if (theme === 'dark') {
+                  html.classList.remove('light');
+                  html.classList.add('dark');
+                } else if (theme === 'system') {
+                  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  html.classList.remove('light', 'dark');
+                  html.classList.add(isDark ? 'dark' : 'light');
+
+                  // Watch for system theme changes
+                  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                    html.classList.remove('light', 'dark');
+                    html.classList.add(e.matches ? 'dark' : 'light');
+                  });
+                } else {
+                  html.classList.remove('dark');
+                  html.classList.add('light');
                 }
-              `,
-            }}
-          />
-        )}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className={`${openSans.variable} ${ibmPlexMono.variable} font-sans`}>
         <Providers>{children}</Providers>

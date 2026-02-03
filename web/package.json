@@ -1,7 +1,7 @@
 {
   "name": "kloudlite-web",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "bun@1.1.40",
   "scripts": {
     "dev": "turbo run dev",
     "dev:console": "turbo run dev --filter=console",

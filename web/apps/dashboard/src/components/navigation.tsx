@@ -1,20 +1,15 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { signOutAction } from '@/app/actions/auth'
-import { Button } from '@kloudlite/ui'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  ThemeSwitcher,
+  KloudliteLogo,
 } from '@kloudlite/ui'
-import { ChevronDown, User, LogOut, Shield, Home, Cloud, Monitor, Package } from 'lucide-react'
-import { ThemeSwitcher, KloudliteLogo } from '@kloudlite/ui'
+import { LayoutDashboard, Server, Cloud, Monitor, Package } from 'lucide-react'
 import { VPNStatusIndicator } from './vpn-status-indicator'
+import { UserProfileDropdown } from './user-profile-dropdown'
 
 interface NavigationProps {
   email?: string
@@ -24,6 +19,7 @@ interface NavigationProps {
   userRoles?: string[]
   hasWorkMachine?: boolean
   isWorkMachineRunning?: boolean
+  setThemeCookie?: (theme: 'light' | 'dark' | 'system') => Promise<void>
 }
 
 export function Navigation({
@@ -34,46 +30,50 @@ export function Navigation({
   userRoles: _userRoles = [],
   hasWorkMachine = false,
   isWorkMachineRunning = false,
+  setThemeCookie,
 }: NavigationProps) {
   const pathname = usePathname()
+  const [mounted, setMounted] = useState(false)
+
+  // Only render dropdown components after mounting to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const navItems = [
-    { href: '/', label: 'Home', icon: Home },
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/', label: 'Workmachine', icon: Server },
     { href: '/environments', label: 'Environments', icon: Cloud, requiresWorkMachine: true },
     { href: '/workspaces', label: 'Workspaces', icon: Monitor, requiresWorkMachine: true },
     { href: '/artifacts', label: 'Artifacts', icon: Package },
   ]
 
   return (
-    <header className="bg-background border-b">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-foreground/10 transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo / Brand */}
           <div className="flex items-center gap-8">
-            <KloudliteLogo className="text-lg font-medium" />
+            <KloudliteLogo className="text-lg font-semibold" />
 
             {/* Main Navigation */}
-            <nav className="hidden items-center gap-1 md:flex">
+            <nav className="hidden items-center gap-8 md:flex">
               {navItems.map((item) => {
                 // Check if current path is the item's path or a sub-path
-                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-                const Icon = item.icon
+                // Special handling for root "/" to avoid matching all paths
+                const isActive = item.href === '/'
+                  ? pathname === '/'
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`)
                 const isDisabled = item.requiresWorkMachine && !hasWorkMachine
-
-                const content = (
-                  <>
-                    <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span className="whitespace-nowrap">{item.label}</span>
-                  </>
-                )
 
                 if (isDisabled) {
                   return (
                     <div
                       key={item.label}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground cursor-not-allowed opacity-60"
+                      className="text-sm font-semibold text-foreground/30 cursor-not-allowed pb-1"
+                      title="Create a work machine first"
                     >
-                      {content}
+                      {item.label}
                     </div>
                   )
                 }
@@ -82,60 +82,43 @@ export function Navigation({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors whitespace-nowrap ${
+                    className={`relative text-sm font-semibold transition-colors pb-1 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full ${
                       isActive
-                        ? 'bg-accent text-accent-foreground font-semibold'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                        ? 'text-foreground after:w-full'
+                        : 'text-foreground/50 hover:text-foreground'
                     }`}
                   >
-                    {content}
+                    {item.label}
                   </Link>
                 )
               })}
             </nav>
           </div>
 
-          {/* VPN Status, User Dropdown & Theme Switcher */}
+          {/* VPN Status, Theme Switcher & User Dropdown */}
           <div className="flex items-center gap-2">
-            <VPNStatusIndicator isWorkMachineRunning={isWorkMachineRunning} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1">
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">{displayName || 'User'}</span>
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-semibold">{displayName || 'User'}</p>
-                    <p className="text-muted-foreground text-xs">{email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {(isAdmin || isSuperAdmin) && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin" className="cursor-pointer">
-                        <Shield className="mr-2 h-4 w-4" />
-                        Administration
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <form action={signOutAction}>
-                  <DropdownMenuItem asChild>
-                    <button type="submit" className="w-full text-destructive focus:text-destructive">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
-                    </button>
-                  </DropdownMenuItem>
-                </form>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <ThemeSwitcher />
+            {mounted && (
+              <>
+                {/* VPN Status with enhanced styling */}
+                <div className="hidden sm:block">
+                  <VPNStatusIndicator isWorkMachineRunning={isWorkMachineRunning} />
+                </div>
+
+                {/* Theme Switcher */}
+                <ThemeSwitcher setThemeCookie={setThemeCookie} />
+
+                {/* Divider */}
+                <div className="h-6 w-px bg-border/60" />
+
+                {/* User Profile */}
+                <UserProfileDropdown
+                  email={email}
+                  displayName={displayName}
+                  isAdmin={isAdmin}
+                  isSuperAdmin={isSuperAdmin}
+                />
+              </>
+            )}
           </div>
         </div>
       </div>

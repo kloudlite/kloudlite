@@ -14,8 +14,8 @@ export default async function WorkspacesPage() {
   const currentUser = session.user?.username || session.user?.email || 'user@example.com'
 
   // Single API call to get workspaces, work machine, and preferences
-  const data = await getWorkspacesListFull().catch((err) => {
-    console.error('Failed to fetch workspaces list:', err)
+  const data = await getWorkspacesListFull().catch(() => {
+    // Silently handle error when resources don't exist yet
     return {
       workspaces: [],
       workMachine: null,
@@ -29,25 +29,23 @@ export default async function WorkspacesPage() {
   const namespace = data.workMachine?.spec?.targetNamespace || 'default'
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-8">
-      {/* Title and Filter Section */}
+    <>
+      {/* Page Header */}
       <div className="mb-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">Workspaces</h1>
-          <p className="text-muted-foreground mt-1.5 text-sm">
-            Manage your development workspaces and collaborate with your team
-          </p>
-        </div>
-
-        {/* Workspaces List with Filter */}
-        <WorkspacesList
-          workspaces={data.workspaces || []}
-          currentUser={currentUser}
-          namespace={namespace}
-          workMachineRunning={data.workMachineRunning}
-          pinnedWorkspaceIds={data.pinnedWorkspaceIds || []}
-        />
+        <h1 className="text-2xl font-semibold tracking-tight mb-2">Workspaces</h1>
+        <p className="text-muted-foreground text-sm">
+          Manage your development workspaces and collaborate with your team
+        </p>
       </div>
-    </main>
+
+      {/* Workspaces List with Filter */}
+      <WorkspacesList
+        workspaces={data.workspaces || []}
+        currentUser={currentUser}
+        namespace={namespace}
+        workMachineRunning={data.workMachineRunning}
+        pinnedWorkspaceIds={data.pinnedWorkspaceIds || []}
+      />
+    </>
   )
 }

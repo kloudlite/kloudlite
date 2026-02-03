@@ -452,7 +452,7 @@ export default function CodeAnalysisPage() {
                     onClick={() => setTypeFilter(type)}
                     className={`rounded px-3 py-1 text-sm transition-colors ${
                       typeFilter === type
-                        ? 'bg-background text-foreground shadow-sm'
+                        ? 'bg-background text-foreground
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -469,7 +469,7 @@ export default function CodeAnalysisPage() {
                     onClick={() => setSeverityFilter(severity)}
                     className={`rounded px-3 py-1 text-sm transition-colors ${
                       severityFilter === severity
-                        ? 'bg-background text-foreground shadow-sm'
+                        ? 'bg-background text-foreground
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >

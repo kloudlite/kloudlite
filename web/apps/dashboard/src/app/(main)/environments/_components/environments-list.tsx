@@ -283,15 +283,15 @@ export function EnvironmentsList({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Filter and Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="space-y-6">
+      {/* Filters and Actions */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
           {/* Scope Filter */}
-          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
+          <div className="bg-muted flex items-center gap-1 rounded-lg p-1">
             <button
               onClick={() => setScope('all')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 scopeFilter === 'all'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -301,7 +301,7 @@ export function EnvironmentsList({
             </button>
             <button
               onClick={() => setScope('mine')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 scopeFilter === 'mine'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -312,10 +312,10 @@ export function EnvironmentsList({
           </div>
 
           {/* Status Filter */}
-          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
+          <div className="bg-muted flex items-center gap-1 rounded-lg p-1">
             <button
               onClick={() => setStatus('all')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === 'all'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -325,7 +325,7 @@ export function EnvironmentsList({
             </button>
             <button
               onClick={() => setStatus('active')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === 'active'
                   ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -335,7 +335,9 @@ export function EnvironmentsList({
             </button>
           </div>
 
-          <span className="text-muted-foreground text-sm">
+          <div className="h-6 w-px bg-border" />
+
+          <span className="text-muted-foreground text-sm font-medium">
             {filteredEnvironments.length}{' '}
             {filteredEnvironments.length === 1 ? 'environment' : 'environments'}
           </span>
@@ -360,72 +362,74 @@ export function EnvironmentsList({
             title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
           >
             <Plus className="h-4 w-4" />
-            {workMachineRunning ? 'New Environment' : 'New Environment (WorkMachine stopped)'}
+            New Environment
           </Button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-card overflow-hidden rounded-lg border">
+      <div className="bg-card overflow-hidden rounded-xl border">
         <table className="min-w-full">
-          <thead className="bg-muted/50 border-b">
+          <thead className="bg-muted/30 border-b">
             <tr>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Name
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Owner
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-center text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-center text-xs font-semibold tracking-wider uppercase">
                 Visibility
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Status
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-right text-xs font-semibold tracking-wider uppercase">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border/50">
             {filteredEnvironments.map((env) => (
-              <tr key={env.id} className="hover:bg-muted/50">
+              <tr key={env.id} className="transition-colors hover:bg-muted/30">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     href={`/environments/${env.id}`}
-                    className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
+                    className="hover:text-primary flex items-center gap-1.5 text-sm font-semibold transition-colors"
                   >
                     {env.owner}/{env.name || env.id || 'unnamed'}
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-3.5 w-3.5 opacity-60" />
                   </Link>
                 </td>
-                <td className="px-6 py-4 text-sm whitespace-nowrap">
+                <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
                   {env.owner.includes('@') ? env.owner.split('@')[0] : env.owner}
                 </td>
                 <td className="px-6 py-4 text-center whitespace-nowrap">
-                  <VisibilityBadge visibility={env.spec?.visibility} />
+                  <div className="flex justify-center">
+                    <VisibilityBadge visibility={env.spec?.visibility} />
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold shrink-0 ${
                         env.status === 'active'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                           : env.status === 'inactive'
-                            ? 'bg-secondary text-secondary-foreground'
+                            ? 'bg-muted text-muted-foreground'
                             : env.status === 'activating'
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
                               : env.status === 'deactivating'
-                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                                 : env.status === 'snapping'
-                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+                                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
                                   : env.status === 'deleting'
-                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400'
                                     : env.status === 'error'
-                                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                      ? 'bg-red-500/10 text-red-600 dark:text-red-400'
                                       : env.status === 'forking'
-                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                        : 'bg-secondary text-secondary-foreground'
+                                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                        : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {(env.status === 'deleting' ||
@@ -532,16 +536,23 @@ export function EnvironmentsList({
       </div>
 
       {filteredEnvironments.length === 0 && (
-        <div className="bg-card rounded-lg border py-12 text-center">
-          <p className="text-muted-foreground text-sm">
-            {scopeFilter === 'mine' && statusFilter === 'active'
-              ? "You don't have any active environments"
-              : scopeFilter === 'mine'
-                ? "You don't have any environments yet"
-                : statusFilter === 'active'
-                  ? 'No active environments found'
-                  : 'No environments found'}
-          </p>
+        <div className="bg-card rounded-xl border py-16 text-center">
+          <div className="mx-auto max-w-md space-y-3">
+            <p className="text-muted-foreground text-sm font-medium">
+              {scopeFilter === 'mine' && statusFilter === 'active'
+                ? "You don't have any active environments"
+                : scopeFilter === 'mine'
+                  ? "You don't have any environments yet"
+                  : statusFilter === 'active'
+                    ? 'No active environments found'
+                    : 'No environments found'}
+            </p>
+            {environments.length === 0 && (
+              <p className="text-muted-foreground/60 text-xs">
+                Create a new environment to get started with your development workflow
+              </p>
+            )}
+          </div>
         </div>
       )}
 

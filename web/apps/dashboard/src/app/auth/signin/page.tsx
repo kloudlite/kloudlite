@@ -1,6 +1,9 @@
 import { SignInForm } from './signin-form'
 import { unauthenticatedApiClient } from '@/lib/api-client'
-import { KloudliteLogo } from '@kloudlite/ui'
+import { ThemeSwitcher } from '@kloudlite/ui'
+import { redirect } from 'next/navigation'
+import { getSession } from '@/lib/get-session'
+import { setThemeCookie } from '@/app/actions/theme'
 
 // Force dynamic rendering - this page fetches providers from API
 export const dynamic = 'force-dynamic'
@@ -24,38 +27,51 @@ async function getEnabledProviders() {
 }
 
 export default async function SignInPage() {
+  // Check if user is already authenticated
+  const session = await getSession()
+
+  // If authenticated, redirect to home
+  if (session?.user) {
+    redirect('/')
+  }
+
   const enabledProviders = await getEnabledProviders()
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left side - Branding */}
-      <div className="hidden flex-col justify-between bg-gray-900 p-12 text-white lg:flex">
-        <div>
-          <KloudliteLogo className="h-8" variant="white" linkToHome={false} />
-        </div>
-        <div>
-          <h2 className="mb-4 text-2xl font-light">Cloud Development Environments</h2>
-          <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-            Designed to reduce the development loop
-          </p>
-        </div>
+    <div className="bg-background min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      {/* Theme switcher */}
+      <div className="absolute top-6 right-6 z-10">
+        <ThemeSwitcher setThemeCookie={setThemeCookie} />
       </div>
 
-      {/* Right side - Form */}
-      <div className="bg-card flex items-center justify-center p-8">
-        <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <div className="mb-8 lg:hidden">
-            <KloudliteLogo className="h-8" linkToHome={false} />
-          </div>
+      {/* Grid pattern background */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Vertical lines */}
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={`v-${i}`}
+            className="absolute inset-y-0 w-px bg-foreground/5"
+            style={{ left: `${(i + 1) * 12.5}%` }}
+          />
+        ))}
+        {/* Horizontal lines */}
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={`h-${i}`}
+            className="absolute inset-x-0 h-px bg-foreground/5"
+            style={{ top: `${(i + 1) * 12.5}%` }}
+          />
+        ))}
+      </div>
 
-          <div className="mb-8">
-            <h1 className="text-foreground text-lg font-medium">Sign in</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Access your workspace</p>
-          </div>
+      {/* Login card */}
+      <SignInForm enabledProviders={enabledProviders} />
 
-          <SignInForm enabledProviders={enabledProviders} />
-        </div>
+      {/* Bottom branding */}
+      <div className="absolute bottom-6 left-0 right-0 text-center">
+        <p className="text-muted-foreground/40 text-xs">
+          Powered by Kloudlite · Cloud Development Environments
+        </p>
       </div>
     </div>
   )

@@ -30,7 +30,7 @@ interface EnvironmentCardProps {
 export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
   return (
     <Link href={`/environments/${env.id}`} className="group block">
-      <div className="bg-card hover:border-border cursor-pointer overflow-hidden rounded-lg border transition-all hover:shadow-md">
+      <div className="bg-card hover:border-border cursor-pointer overflow-hidden rounded-lg border transition-all
         {/* Card Header */}
         <div className="border-b px-6 py-4">
           <div className="flex items-start justify-between">

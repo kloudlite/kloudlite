@@ -14,9 +14,10 @@ import {
 } from '@/lib/validations'
 
 /**
- * Get the current user's namespace from their WorkMachine
+ * Get the WorkMachine's namespace where environments should be created
+ * Environments must be created in the WorkMachine namespace (wm-*)
  */
-async function getUserNamespace(): Promise<string> {
+async function getWorkMachineNamespace(): Promise<string> {
   const session = await getSession()
   if (!session?.user?.username) {
     throw new Error('Not authenticated')
@@ -27,7 +28,8 @@ async function getUserNamespace(): Promise<string> {
     throw new Error(`No WorkMachine found for user ${session.user.username}`)
   }
 
-  return workMachine.spec.targetNamespace
+  // Return the WorkMachine's own namespace (wm-*), not the targetNamespace
+  return workMachine.metadata.namespace || `wm-${session.user.username}`
 }
 
 /**
@@ -44,7 +46,7 @@ export async function createEnvironment(data: unknown) {
   }
 
   try {
-    const namespace = await getUserNamespace()
+    const namespace = await getWorkMachineNamespace()
     const createData = validated.data as import('@kloudlite/types').EnvironmentCreateRequest
 
     // Build Environment CRD object
@@ -96,7 +98,7 @@ export async function updateEnvironment(name: string, data: unknown) {
   }
 
   try {
-    const namespace = await getUserNamespace()
+    const namespace = await getWorkMachineNamespace()
     const updateData = validated.data as import('@kloudlite/types').EnvironmentUpdateRequest
 
     // Use patch for partial updates
@@ -121,7 +123,7 @@ export async function updateEnvironment(name: string, data: unknown) {
  */
 export async function deleteEnvironment(name: string) {
   try {
-    const namespace = await getUserNamespace()
+    const namespace = await getWorkMachineNamespace()
     await environmentRepository.delete(namespace, name)
     revalidatePath('/environments')
     return { success: true }
@@ -140,7 +142,7 @@ export async function deleteEnvironment(name: string) {
  */
 export async function activateEnvironment(name: string) {
   try {
-    const namespace = await getUserNamespace()
+    const namespace = await getWorkMachineNamespace()
     const result = await environmentRepository.activate(namespace, name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
@@ -160,7 +162,7 @@ export async function activateEnvironment(name: string) {
  */
 export async function deactivateEnvironment(name: string) {
   try {
-    const namespace = await getUserNamespace()
+    const namespace = await getWorkMachineNamespace()
     const result = await environmentRepository.deactivate(namespace, name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
@@ -180,7 +182,7 @@ export async function deactivateEnvironment(name: string) {
  */
 export async function getEnvironmentStatus(name: string) {
   try {
-    const namespace = await getUserNamespace()
+    const namespace = await getWorkMachineNamespace()
     const environment = await environmentRepository.get(namespace, name)
     return { success: true, data: environment.status }
   } catch (err) {
@@ -198,7 +200,7 @@ export async function getEnvironmentStatus(name: string) {
  */
 export async function getEnvironment(name: string) {
   try {
-    const namespace = await getUserNamespace()
+    const namespace = await getWorkMachineNamespace()
     const result = await environmentRepository.get(namespace, name)
     return { success: true, data: result }
   } catch (err) {
@@ -207,6 +209,26 @@ export async function getEnvironment(name: string) {
     return {
       success: false,
       error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to list all environments in the user's namespace
+ */
+export async function listEnvironments() {
+  try {
+    const namespace = await getWorkMachineNamespace()
+    const result = await environmentRepository.list(namespace)
+    // Kubernetes list returns { items: [...] }
+    return { success: true, data: result.items || [] }
+  } catch (err) {
+    console.error('List environments error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+      data: [],
     }
   }
 }

@@ -1,105 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { Session } from 'next-auth'
-import { auth } from '@/lib/auth'
 
 /**
- * Console middleware
- * Handles tenant workspace management authentication and role-based access
- * This is for users inside their Kloudlite installation managing workspaces/workmachines
+ * Middleware for security headers only
+ * Auth checks are handled in layouts (Server Components with Node.js runtime)
  */
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl
-
-  // Skip auth checks for auth pages, installation scripts, superadmin login, kltun install, and public assets
-  if (
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/install') ||
-    pathname.startsWith('/uninstall') ||
-    pathname.startsWith('/kltun') ||
-    pathname.startsWith('/superadmin-login') ||
-    pathname.startsWith('/_next') ||
-    pathname.includes('.')
-  ) {
-    return addSecurityHeaders(NextResponse.next(), req)
-  }
-
-  // Try to get session from NextAuth
-  let session = await auth()
-  let userRoles: string[] = []
-
-  // If no NextAuth session, check for superadmin JWT token
-  // NextAuth v5 uses 'authjs' prefix by default
-  if (!session) {
-    const cookieName =
-      process.env.NODE_ENV === 'production'
-        ? '__Secure-authjs.session-token'
-        : 'authjs.session-token'
-
-    const token = req.cookies.get(cookieName)?.value
-
-    if (token) {
-      try {
-        // Use NextAuth's decode function to match how the token was encoded
-        const payload = await decode({
-          token,
-          secret: process.env.NEXTAUTH_SECRET!,
-          salt: cookieName,
-        })
-
-        // Check if this is a superadmin token
-        if (payload?.provider === 'superadmin-login' && payload?.roles) {
-          // Create a mock session for superadmin
-          userRoles = payload.roles as string[]
-          session = {
-            user: {
-              email: payload.email as string,
-              name: payload.name as string,
-              roles: userRoles,
-            },
-            expires: new Date((payload.exp as number) * 1000).toISOString(),
-          } as Session
-        }
-      } catch (error) {
-        console.error('Failed to verify superadmin token:', error)
-      }
-    }
-  }
-
-  // Redirect to login if not authenticated
-  if (!session) {
-    return NextResponse.redirect(new URL('/auth/signin', req.url))
-  }
-
-  // Get user roles and provider
-  userRoles = session?.user?.roles || []
-  const sessionProvider = (session?.user as { provider?: string })?.provider
-  const hasUserRole = userRoles.includes('user')
-  const hasAdminRole = userRoles.includes('admin') || userRoles.includes('super-admin')
-  const isSuperAdminLogin = sessionProvider === 'superadmin-login' || userRoles.includes('super-admin')
-
-  // Role-based routing logic
-  if (pathname.startsWith('/admin')) {
-    // Admin section - only allow admin/super-admin access
-    if (!hasAdminRole) {
-      return NextResponse.redirect(new URL('/', req.url))
-    }
-  } else if (pathname === '/' || pathname.startsWith('/(main)')) {
-    // Super-admin logins should always go to admin section
-    if (isSuperAdminLogin && hasAdminRole) {
-      return NextResponse.redirect(new URL('/admin', req.url))
-    }
-    // Main dashboard section - redirect admin-only users to admin
-    if (!hasUserRole && hasAdminRole) {
-      return NextResponse.redirect(new URL('/admin', req.url))
-    }
-    // Require user role for main section
-    if (!hasUserRole && !hasAdminRole) {
-      return NextResponse.redirect(new URL('/auth/signin', req.url))
-    }
-  }
-
   return addSecurityHeaders(NextResponse.next(), req)
 }
 

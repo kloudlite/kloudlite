@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Cpu, MemoryStick, Zap } from 'lucide-react'
-import { useWebSocket } from '@/lib/hooks/use-websocket'
 
 interface NodeMetrics {
   cpu: {
@@ -33,11 +32,6 @@ interface GPUMetrics {
   powerLimit?: number
 }
 
-interface MetricsEvent {
-  nodeMetrics?: NodeMetrics
-  gpuMetrics?: GPUMetrics
-}
-
 interface WorkMachineMetricsProps {
   workMachineName: string
   machineState?: string
@@ -51,38 +45,28 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
 
+async function fetchMetrics(workMachineName: string): Promise<NodeMetrics> {
+  const response = await fetch(`/api/v1/work-machines/${workMachineName}/metrics`)
+  if (!response.ok) {
+    throw new Error('Failed to fetch metrics')
+  }
+  return response.json()
+}
+
 export function WorkMachineMetrics({
   workMachineName,
   machineState,
 }: WorkMachineMetricsProps) {
-  const [metrics, setMetrics] = useState<NodeMetrics | null>(null)
-  const [gpuMetrics, setGpuMetrics] = useState<GPUMetrics | null>(null)
-
-  const url = useMemo(() => {
-    if (machineState === 'stopped' || !workMachineName) return null
-    return `/api/v1/work-machines/${workMachineName}/metrics-ws`
-  }, [workMachineName, machineState])
-
-  const handleMetrics = useCallback((data: MetricsEvent) => {
-    if (data.nodeMetrics) {
-      setMetrics(data.nodeMetrics)
-    }
-    if (data.gpuMetrics) {
-      setGpuMetrics(data.gpuMetrics)
-    }
-  }, [])
-
-  const eventHandlers = useMemo(
-    () => ({
-      metrics: handleMetrics,
-    }),
-    [handleMetrics]
-  )
-
-  const { error } = useWebSocket<MetricsEvent>(url, {
-    enabled: machineState !== 'stopped' && !!workMachineName,
-    eventHandlers,
+  const { data: metrics, error } = useQuery({
+    queryKey: ['work-machine-metrics', workMachineName],
+    queryFn: () => fetchMetrics(workMachineName),
+    enabled: machineState === 'running' && !!workMachineName,
+    refetchInterval: 2000, // Poll every 2 seconds
+    refetchIntervalInBackground: true,
   })
+
+  // GPU metrics placeholder - can be extended later
+  const gpuMetrics: GPUMetrics | null = null
 
   // Don't show metrics when machine is stopped
   if (machineState === 'stopped') {
