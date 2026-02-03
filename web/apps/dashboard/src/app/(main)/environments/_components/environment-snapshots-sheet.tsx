@@ -251,7 +251,7 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
+        <SheetTrigger asChild suppressHydrationWarning>
           {trigger || (
             <Button variant="outline" size="sm">
               <Camera className="mr-1 h-4 w-4" />
