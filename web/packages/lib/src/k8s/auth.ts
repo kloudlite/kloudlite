@@ -58,15 +58,16 @@ export function isInCluster(): boolean {
 
 /**
  * Get Kubernetes API server URL from environment or default
+ * Always uses kube-proxy sidecar when in-cluster (bun can't handle mTLS)
  */
 export function getK8sApiUrl(): string {
-  // In-cluster default
+  // In-cluster: always use kube-proxy sidecar at localhost:8001
   if (isInCluster()) {
-    return process.env.KUBERNETES_SERVICE_HOST && process.env.KUBERNETES_SERVICE_PORT
-      ? `https://${process.env.KUBERNETES_SERVICE_HOST}:${process.env.KUBERNETES_SERVICE_PORT}`
-      : 'https://kubernetes.default.svc';
+    const host = process.env.KUBERNETES_SERVICE_HOST || '127.0.0.1';
+    const port = process.env.KUBERNETES_SERVICE_PORT || '8001';
+    return `http://${host}:${port}`;
   }
 
-  // Out-of-cluster (development)
-  return process.env.K8S_API_URL || 'https://localhost:6443';
+  // Out-of-cluster (development): use kubectl proxy
+  return process.env.KUBECTL_PROXY_URL || 'http://localhost:8080';
 }
