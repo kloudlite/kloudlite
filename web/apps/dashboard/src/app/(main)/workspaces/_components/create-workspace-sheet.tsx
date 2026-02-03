@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Loader2, GitBranch } from 'lucide-react'
+import { Plus, Loader2, GitBranch, Code2 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { Input } from '@kloudlite/ui'
 import { Label } from '@kloudlite/ui'
@@ -111,6 +111,15 @@ export function CreateWorkspaceSheet({ namespace, user, workMachineRunning = fal
     })
   }
 
+  const handleCancel = () => {
+    setOpen(false)
+    setName('')
+    setVisibility('private')
+    setSharedWith([])
+    setGitRepoUrl('')
+    setGitBranch('')
+  }
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -126,94 +135,139 @@ export function CreateWorkspaceSheet({ namespace, user, workMachineRunning = fal
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-2xl">
         <form onSubmit={handleSubmit} className="flex h-full flex-col">
-          <SheetHeader>
-            <SheetTitle>Create Workspace</SheetTitle>
-            <SheetDescription>
-              Create a new development workspace
+          <SheetHeader className="space-y-1 pb-8">
+            <SheetTitle className="text-xl font-semibold">Create Workspace</SheetTitle>
+            <SheetDescription className="text-sm">
+              Create a new development workspace for your project
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 space-y-6 overflow-y-auto p-4">
-            {/* Basic Information */}
+          <div className="flex-1 space-y-6 overflow-y-auto pb-6">
+            {/* Basic Information Section */}
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Workspace Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="my-workspace"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isPending}
-                  className="font-mono text-sm"
-                />
+              <div>
+                <h3 className="mb-1 text-sm font-semibold">Basic Information</h3>
                 <p className="text-muted-foreground text-xs">
-                  Lowercase letters, numbers, and hyphens only
+                  Configure the workspace name and access settings
                 </p>
               </div>
 
-              {/* Visibility */}
-              <VisibilitySelector
-                visibility={visibility}
-                sharedWith={sharedWith}
-                onVisibilityChange={setVisibility}
-                onSharedWithChange={setSharedWith}
-                disabled={isPending}
-              />
-            </div>
-
-            {/* Git Repository Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4" />
-                <Label>Git Repository (Optional)</Label>
-              </div>
-              <p className="text-muted-foreground text-sm">
-                Clone a git repository when workspace starts. SSH keys from your WorkMachine will be used for authentication.
-              </p>
-
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="gitRepoUrl">Repository URL</Label>
+              <div className="bg-card rounded-lg border">
+                {/* Workspace Name */}
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Workspace Name
+                    </Label>
+                  </div>
                   <Input
-                    id="gitRepoUrl"
-                    placeholder="https://github.com/user/repo.git or git@github.com:user/repo.git"
-                    value={gitRepoUrl}
-                    onChange={(e) => setGitRepoUrl(e.target.value)}
-                    disabled={isPending}
-                    className="font-mono text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="gitBranch">Branch (Optional)</Label>
-                  <Input
-                    id="gitBranch"
-                    placeholder="main"
-                    value={gitBranch}
-                    onChange={(e) => setGitBranch(e.target.value)}
+                    id="name"
+                    placeholder="my-workspace"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     disabled={isPending}
                     className="font-mono text-sm"
                   />
                   <p className="text-muted-foreground text-xs">
-                    Leave empty to use repository&apos;s default branch
+                    Lowercase letters, numbers, and hyphens only
                   </p>
                 </div>
+
+                {/* Visibility */}
+                <div className="bg-muted/20 border-t p-4">
+                  <VisibilitySelector
+                    visibility={visibility}
+                    sharedWith={sharedWith}
+                    onVisibilityChange={setVisibility}
+                    onSharedWithChange={setSharedWith}
+                    disabled={isPending}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Git Repository Section */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="mb-1 text-sm font-semibold">Git Repository</h3>
+                <p className="text-muted-foreground text-xs">
+                  Clone a repository when the workspace starts (optional)
+                </p>
+              </div>
+
+              <div className="bg-card rounded-lg border">
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Repository Configuration</Label>
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    SSH keys from your WorkMachine will be used for authentication
+                  </p>
+
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="gitRepoUrl" className="text-xs text-muted-foreground">
+                        Repository URL
+                      </Label>
+                      <Input
+                        id="gitRepoUrl"
+                        placeholder="git@github.com:user/repo.git"
+                        value={gitRepoUrl}
+                        onChange={(e) => setGitRepoUrl(e.target.value)}
+                        disabled={isPending}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="gitBranch" className="text-xs text-muted-foreground">
+                        Branch
+                      </Label>
+                      <Input
+                        id="gitBranch"
+                        placeholder="main (optional)"
+                        value={gitBranch}
+                        onChange={(e) => setGitBranch(e.target.value)}
+                        disabled={isPending}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {gitRepoUrl && (
+                  <div className="bg-muted/20 border-t p-4">
+                    <p className="text-muted-foreground text-xs">
+                      The repository will be cloned to <code className="bg-muted px-1 rounded">/workspace</code> when the workspace starts.
+                      {gitBranch ? ` Branch: ${gitBranch}` : ' Using default branch.'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <SheetFooter className="p-4">
+          <SheetFooter className="flex-row justify-end gap-2 border-t pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={handleCancel}
               disabled={isPending}
+              className="min-w-24"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Workspace
+            <Button type="submit" disabled={isPending || !name.trim()} className="min-w-24">
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating
+                </>
+              ) : (
+                'Create Workspace'
+              )}
             </Button>
           </SheetFooter>
         </form>
