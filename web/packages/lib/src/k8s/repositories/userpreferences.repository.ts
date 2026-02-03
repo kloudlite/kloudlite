@@ -1,6 +1,6 @@
-import { BaseRepository } from './base';
-import type { UserPreferences, ResourceReference } from '../types/user';
-import { parseK8sError, NotFoundError } from '../errors';
+import { BaseRepository } from "./base";
+import type { UserPreferences, ResourceReference } from "../types/user";
+import { parseK8sError, NotFoundError, ConflictError } from "../errors";
 
 /**
  * UserPreferences repository for managing UserPreferences custom resources
@@ -9,7 +9,7 @@ import { parseK8sError, NotFoundError } from '../errors';
  */
 export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   constructor() {
-    super('platform.kloudlite.io', 'v1alpha1', 'userpreferences', false); // false = cluster-scoped
+    super("platform.kloudlite.io", "v1alpha1", "userpreferences", false); // false = cluster-scoped
   }
 
   /**
@@ -32,7 +32,9 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
     } catch (err) {
       if (err instanceof NotFoundError) {
         // Create new empty preferences
-        const newPrefs: Partial<UserPreferences> = {
+        const newPrefs: UserPreferences = {
+          apiVersion: "platform.kloudlite.io/v1alpha1",
+          kind: "UserPreferences",
           metadata: {
             name: username,
           },
@@ -42,7 +44,16 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
           },
         };
 
-        return await this.create(newPrefs as UserPreferences);
+        try {
+          return await this.create(newPrefs);
+        } catch (createErr) {
+          // Handle race condition: if another request created the resource
+          // between our get and create, just fetch the existing one
+          if (createErr instanceof ConflictError) {
+            return await this.get(username);
+          }
+          throw createErr;
+        }
       }
       throw parseK8sError(err);
     }
@@ -51,7 +62,10 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Add a workspace to pinned list
    */
-  async addPinnedWorkspace(username: string, wsRef: ResourceReference): Promise<UserPreferences> {
+  async addPinnedWorkspace(
+    username: string,
+    wsRef: ResourceReference,
+  ): Promise<UserPreferences> {
     try {
       const prefs = await this.getOrCreate(username);
 
@@ -61,7 +75,7 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
 
       // Check if already pinned
       const alreadyPinned = prefs.spec!.pinnedWorkspaces.some(
-        pw => pw.name === wsRef.name && pw.namespace === wsRef.namespace
+        (pw) => pw.name === wsRef.name && pw.namespace === wsRef.namespace,
       );
 
       if (!alreadyPinned) {
@@ -83,13 +97,16 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Remove a workspace from pinned list
    */
-  async removePinnedWorkspace(username: string, wsRef: ResourceReference): Promise<UserPreferences> {
+  async removePinnedWorkspace(
+    username: string,
+    wsRef: ResourceReference,
+  ): Promise<UserPreferences> {
     try {
       const prefs = await this.getByUser(username);
 
       if (prefs.spec!.pinnedWorkspaces) {
         prefs.spec!.pinnedWorkspaces = prefs.spec!.pinnedWorkspaces.filter(
-          pw => !(pw.name === wsRef.name && pw.namespace === wsRef.namespace)
+          (pw) => !(pw.name === wsRef.name && pw.namespace === wsRef.namespace),
         );
 
         // Update status
@@ -114,7 +131,10 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Add an environment to pinned list
    */
-  async addPinnedEnvironment(username: string, envName: string): Promise<UserPreferences> {
+  async addPinnedEnvironment(
+    username: string,
+    envName: string,
+  ): Promise<UserPreferences> {
     try {
       const prefs = await this.getOrCreate(username);
 
@@ -142,13 +162,16 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Remove an environment from pinned list
    */
-  async removePinnedEnvironment(username: string, envName: string): Promise<UserPreferences> {
+  async removePinnedEnvironment(
+    username: string,
+    envName: string,
+  ): Promise<UserPreferences> {
     try {
       const prefs = await this.getByUser(username);
 
       if (prefs.spec!.pinnedEnvironments) {
         prefs.spec!.pinnedEnvironments = prefs.spec!.pinnedEnvironments.filter(
-          pe => pe !== envName
+          (pe) => pe !== envName,
         );
 
         // Update status
@@ -203,12 +226,17 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Check if a workspace is pinned
    */
-  async isWorkspacePinned(username: string, wsRef: ResourceReference): Promise<boolean> {
+  async isWorkspacePinned(
+    username: string,
+    wsRef: ResourceReference,
+  ): Promise<boolean> {
     try {
       const prefs = await this.getByUser(username);
-      return prefs.spec?.pinnedWorkspaces?.some(
-        pw => pw.name === wsRef.name && pw.namespace === wsRef.namespace
-      ) ?? false;
+      return (
+        prefs.spec?.pinnedWorkspaces?.some(
+          (pw) => pw.name === wsRef.name && pw.namespace === wsRef.namespace,
+        ) ?? false
+      );
     } catch (err) {
       if (err instanceof NotFoundError) {
         return false;
@@ -220,7 +248,10 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Check if an environment is pinned
    */
-  async isEnvironmentPinned(username: string, envName: string): Promise<boolean> {
+  async isEnvironmentPinned(
+    username: string,
+    envName: string,
+  ): Promise<boolean> {
     try {
       const prefs = await this.getByUser(username);
       return prefs.spec?.pinnedEnvironments?.includes(envName) ?? false;
@@ -283,7 +314,10 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Set pinned workspaces (replaces existing list)
    */
-  async setPinnedWorkspaces(username: string, workspaces: ResourceReference[]): Promise<UserPreferences> {
+  async setPinnedWorkspaces(
+    username: string,
+    workspaces: ResourceReference[],
+  ): Promise<UserPreferences> {
     try {
       const prefs = await this.getOrCreate(username);
 
@@ -304,7 +338,10 @@ export class UserPreferencesRepository extends BaseRepository<UserPreferences> {
   /**
    * Set pinned environments (replaces existing list)
    */
-  async setPinnedEnvironments(username: string, environments: string[]): Promise<UserPreferences> {
+  async setPinnedEnvironments(
+    username: string,
+    environments: string[],
+  ): Promise<UserPreferences> {
     try {
       const prefs = await this.getOrCreate(username);
 

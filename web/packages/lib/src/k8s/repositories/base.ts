@@ -1,7 +1,7 @@
-import type { V1DeleteOptions, V1Status } from '@kubernetes/client-node';
-import { getK8sClient } from '../client';
-import { parseK8sError, NotFoundError } from '../errors';
-import type { K8sResource, K8sList } from '../types/common';
+import type { V1DeleteOptions, V1Status } from "@kubernetes/client-node";
+import { getK8sClient } from "../client";
+import { parseK8sError, NotFoundError } from "../errors";
+import type { K8sResource, K8sList } from "../types/common";
 
 /**
  * Options for list operations
@@ -19,7 +19,7 @@ export interface ListOptions {
  */
 export interface DeleteOptions {
   gracePeriodSeconds?: number;
-  propagationPolicy?: 'Orphan' | 'Background' | 'Foreground';
+  propagationPolicy?: "Orphan" | "Background" | "Foreground";
   dryRun?: string[];
 }
 
@@ -36,9 +36,9 @@ export interface PatchOptions {
  * Patch types
  */
 export type PatchType =
-  | 'application/json-patch+json'
-  | 'application/merge-patch+json'
-  | 'application/strategic-merge-patch+json';
+  | "application/json-patch+json"
+  | "application/merge-patch+json"
+  | "application/strategic-merge-patch+json";
 
 /**
  * Base repository for Kubernetes resources
@@ -51,10 +51,8 @@ export abstract class BaseRepository<T extends K8sResource> {
     protected readonly group: string,
     protected readonly version: string,
     protected readonly plural: string,
-    protected readonly namespaced: boolean = true
-  ) {
-    console.log('BaseRepository constructor:', { group, version, plural, namespaced })
-  }
+    protected readonly namespaced: boolean = true,
+  ) {}
 
   /**
    * Get a single resource by name
@@ -95,13 +93,13 @@ export abstract class BaseRepository<T extends K8sResource> {
   async list(options?: ListOptions): Promise<K8sList<T>>;
   async list(
     namespaceOrOptions?: string | ListOptions,
-    options?: ListOptions
+    options?: ListOptions,
   ): Promise<K8sList<T>> {
     try {
       let namespace: string | undefined;
       let opts: ListOptions | undefined;
 
-      if (typeof namespaceOrOptions === 'string') {
+      if (typeof namespaceOrOptions === "string") {
         namespace = namespaceOrOptions;
         opts = options;
       } else {
@@ -148,9 +146,16 @@ export abstract class BaseRepository<T extends K8sResource> {
    */
   async create(namespace: string, resource: Partial<T>): Promise<T>;
   async create(resource: Partial<T>): Promise<T>;
-  async create(namespaceOrResource: string | Partial<T>, resource?: Partial<T>): Promise<T> {
+  async create(
+    namespaceOrResource: string | Partial<T>,
+    resource?: Partial<T>,
+  ): Promise<T> {
     try {
-      if (this.namespaced && typeof namespaceOrResource === 'string' && resource) {
+      if (
+        this.namespaced &&
+        typeof namespaceOrResource === "string" &&
+        resource
+      ) {
         // Namespaced resource - use object parameters API
         const response = await this.client.custom.createNamespacedCustomObject({
           group: this.group,
@@ -160,7 +165,7 @@ export abstract class BaseRepository<T extends K8sResource> {
           body: resource as object,
         });
         return response as unknown as T;
-      } else if (!this.namespaced && typeof namespaceOrResource === 'object') {
+      } else if (!this.namespaced && typeof namespaceOrResource === "object") {
         // Cluster-scoped resource
         const response = await this.client.custom.createClusterCustomObject({
           group: this.group,
@@ -170,7 +175,7 @@ export abstract class BaseRepository<T extends K8sResource> {
         });
         return response as unknown as T;
       } else {
-        throw new Error('Invalid arguments for create operation');
+        throw new Error("Invalid arguments for create operation");
       }
     } catch (err) {
       throw parseK8sError(err);
@@ -180,26 +185,32 @@ export abstract class BaseRepository<T extends K8sResource> {
   /**
    * Update an existing resource (replaces entire resource)
    */
-  async update(namespace: string, name: string, resource: Partial<T>): Promise<T>;
+  async update(
+    namespace: string,
+    name: string,
+    resource: Partial<T>,
+  ): Promise<T>;
   async update(name: string, resource: Partial<T>): Promise<T>;
   async update(
     namespaceOrName: string,
     nameOrResource: string | Partial<T>,
-    resource?: Partial<T>
+    resource?: Partial<T>,
   ): Promise<T> {
     try {
-      if (this.namespaced && typeof nameOrResource === 'string' && resource) {
+      if (this.namespaced && typeof nameOrResource === "string" && resource) {
         // Namespaced resource - use object parameters API
-        const response = await this.client.custom.replaceNamespacedCustomObject({
-          group: this.group,
-          version: this.version,
-          namespace: namespaceOrName,
-          plural: this.plural,
-          name: nameOrResource,
-          body: resource as object,
-        });
+        const response = await this.client.custom.replaceNamespacedCustomObject(
+          {
+            group: this.group,
+            version: this.version,
+            namespace: namespaceOrName,
+            plural: this.plural,
+            name: nameOrResource,
+            body: resource as object,
+          },
+        );
         return response as unknown as T;
-      } else if (!this.namespaced && typeof nameOrResource === 'object') {
+      } else if (!this.namespaced && typeof nameOrResource === "object") {
         // Cluster-scoped resource
         const response = await this.client.custom.replaceClusterCustomObject({
           group: this.group,
@@ -210,7 +221,7 @@ export abstract class BaseRepository<T extends K8sResource> {
         });
         return response as unknown as T;
       } else {
-        throw new Error('Invalid arguments for update operation');
+        throw new Error("Invalid arguments for update operation");
       }
     } catch (err) {
       throw parseK8sError(err);
@@ -225,23 +236,23 @@ export abstract class BaseRepository<T extends K8sResource> {
     name: string,
     patch: object,
     patchType?: PatchType,
-    options?: PatchOptions
+    options?: PatchOptions,
   ): Promise<T>;
   async patch(
     name: string,
     patch: object,
     patchType?: PatchType,
-    options?: PatchOptions
+    options?: PatchOptions,
   ): Promise<T>;
   async patch(
     namespaceOrName: string,
     nameOrPatch: string | object,
     patchOrType?: object | PatchType,
     _patchTypeOrOptions?: PatchType | PatchOptions,
-    _options?: PatchOptions
+    _options?: PatchOptions,
   ): Promise<T> {
     try {
-      if (this.namespaced && typeof nameOrPatch === 'string') {
+      if (this.namespaced && typeof nameOrPatch === "string") {
         // Namespaced resource - use object parameters API
         const patch = patchOrType as object;
 
@@ -254,7 +265,7 @@ export abstract class BaseRepository<T extends K8sResource> {
           body: patch,
         });
         return response as unknown as T;
-      } else if (!this.namespaced && typeof nameOrPatch === 'object') {
+      } else if (!this.namespaced && typeof nameOrPatch === "object") {
         // Cluster-scoped resource
         const patch = nameOrPatch;
 
@@ -267,7 +278,7 @@ export abstract class BaseRepository<T extends K8sResource> {
         });
         return response as unknown as T;
       } else {
-        throw new Error('Invalid arguments for patch operation');
+        throw new Error("Invalid arguments for patch operation");
       }
     } catch (err) {
       throw parseK8sError(err);
@@ -277,37 +288,43 @@ export abstract class BaseRepository<T extends K8sResource> {
   /**
    * Update resource status subresource
    */
-  async updateStatus(namespace: string, name: string, resource: Partial<T>): Promise<T>;
+  async updateStatus(
+    namespace: string,
+    name: string,
+    resource: Partial<T>,
+  ): Promise<T>;
   async updateStatus(name: string, resource: Partial<T>): Promise<T>;
   async updateStatus(
     namespaceOrName: string,
     nameOrResource: string | Partial<T>,
-    resource?: Partial<T>
+    resource?: Partial<T>,
   ): Promise<T> {
     try {
-      if (this.namespaced && typeof nameOrResource === 'string' && resource) {
+      if (this.namespaced && typeof nameOrResource === "string" && resource) {
         // Namespaced resource - use object parameters API
-        const response = await this.client.custom.patchNamespacedCustomObjectStatus({
-          group: this.group,
-          version: this.version,
-          namespace: namespaceOrName,
-          plural: this.plural,
-          name: nameOrResource,
-          body: resource as object,
-        });
+        const response =
+          await this.client.custom.patchNamespacedCustomObjectStatus({
+            group: this.group,
+            version: this.version,
+            namespace: namespaceOrName,
+            plural: this.plural,
+            name: nameOrResource,
+            body: resource as object,
+          });
         return response as unknown as T;
-      } else if (!this.namespaced && typeof nameOrResource === 'object') {
+      } else if (!this.namespaced && typeof nameOrResource === "object") {
         // Cluster-scoped resource
-        const response = await this.client.custom.patchClusterCustomObjectStatus({
-          group: this.group,
-          version: this.version,
-          plural: this.plural,
-          name: namespaceOrName,
-          body: nameOrResource as object,
-        });
+        const response =
+          await this.client.custom.patchClusterCustomObjectStatus({
+            group: this.group,
+            version: this.version,
+            plural: this.plural,
+            name: namespaceOrName,
+            body: nameOrResource as object,
+          });
         return response as unknown as T;
       } else {
-        throw new Error('Invalid arguments for updateStatus operation');
+        throw new Error("Invalid arguments for updateStatus operation");
       }
     } catch (err) {
       throw parseK8sError(err);
@@ -317,15 +334,19 @@ export abstract class BaseRepository<T extends K8sResource> {
   /**
    * Delete a resource
    */
-  async delete(namespace: string, name: string, options?: DeleteOptions): Promise<V1Status>;
+  async delete(
+    namespace: string,
+    name: string,
+    options?: DeleteOptions,
+  ): Promise<V1Status>;
   async delete(name: string, options?: DeleteOptions): Promise<V1Status>;
   async delete(
     namespaceOrName: string,
     nameOrOptions?: string | DeleteOptions,
-    options?: DeleteOptions
+    options?: DeleteOptions,
   ): Promise<V1Status> {
     try {
-      if (this.namespaced && typeof nameOrOptions === 'string') {
+      if (this.namespaced && typeof nameOrOptions === "string") {
         // Namespaced resource - use object parameters API
         const deleteOptions: V1DeleteOptions = {
           gracePeriodSeconds: options?.gracePeriodSeconds,
@@ -389,15 +410,19 @@ export abstract class BaseRepository<T extends K8sResource> {
   /**
    * Create or update a resource (upsert)
    */
-  async createOrUpdate(namespace: string, name: string, resource: Partial<T>): Promise<T>;
+  async createOrUpdate(
+    namespace: string,
+    name: string,
+    resource: Partial<T>,
+  ): Promise<T>;
   async createOrUpdate(name: string, resource: Partial<T>): Promise<T>;
   async createOrUpdate(
     namespaceOrName: string,
     nameOrResource: string | Partial<T>,
-    resource?: Partial<T>
+    resource?: Partial<T>,
   ): Promise<T> {
     try {
-      if (this.namespaced && typeof nameOrResource === 'string' && resource) {
+      if (this.namespaced && typeof nameOrResource === "string" && resource) {
         // Namespaced resource
         const exists = await this.exists(namespaceOrName, nameOrResource);
         if (exists) {
@@ -405,7 +430,7 @@ export abstract class BaseRepository<T extends K8sResource> {
         } else {
           return await this.create(namespaceOrName, resource);
         }
-      } else if (!this.namespaced && typeof nameOrResource === 'object') {
+      } else if (!this.namespaced && typeof nameOrResource === "object") {
         // Cluster-scoped resource
         const exists = await this.exists(namespaceOrName);
         if (exists) {
@@ -414,7 +439,7 @@ export abstract class BaseRepository<T extends K8sResource> {
           return await this.create(nameOrResource);
         }
       } else {
-        throw new Error('Invalid arguments for createOrUpdate operation');
+        throw new Error("Invalid arguments for createOrUpdate operation");
       }
     } catch (err) {
       throw parseK8sError(err);
