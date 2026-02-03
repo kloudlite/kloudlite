@@ -69,6 +69,69 @@ export async function getWorkspacesListFull() {
 }
 
 /**
+ * Server action to get a workspace by its hash
+ * The hash is a unique 8-char hex identifier derived from owner-workspaceName
+ */
+export async function getWorkspaceByHash(hash: string) {
+  try {
+    const session = await getSession()
+    const username = session?.user?.username || session?.user?.email || ''
+
+    // Get work machine to find the namespace
+    const workMachine = await workMachineRepository.getByOwner(username)
+    if (!workMachine) {
+      return {
+        success: false,
+        error: 'No work machine found',
+      }
+    }
+
+    const namespace = workMachine.spec?.targetNamespace || 'default'
+
+    // List all workspaces and find by hash
+    const workspacesList = await workspaceRepository.list(namespace)
+    const workspace = workspacesList.items?.find(
+      (ws) => ws.status?.hash === hash
+    )
+
+    if (!workspace) {
+      return {
+        success: false,
+        error: 'Workspace not found',
+      }
+    }
+
+    // Get package request for this workspace
+    let packageRequest = null
+    try {
+      packageRequest = await packageRequestRepository.getByWorkspace(namespace, workspace.metadata!.name!)
+    } catch {
+      // PackageRequest may not exist
+    }
+
+    // Check if work machine is running
+    const workMachineRunning = workMachine.status?.state === 'running' &&
+      workMachine.status?.isReady === true
+
+    return {
+      success: true,
+      data: {
+        workspace,
+        packageRequest,
+        workMachineRunning,
+      },
+    }
+  } catch (err) {
+    console.error('Get workspace by hash error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
  * Server action to list workspaces
  */
 export async function listWorkspaces(namespace: string = 'default') {

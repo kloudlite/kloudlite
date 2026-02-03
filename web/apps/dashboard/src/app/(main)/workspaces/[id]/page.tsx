@@ -11,11 +11,11 @@ import { SnapshotsSheet } from '../_components/snapshots-sheet'
 import { WorkspaceMetrics } from '../_components/workspace-metrics'
 import { CodeAnalysisCard } from '../_components/code-analysis-card'
 import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
-import { getWorkspaceDetails } from '@/lib/services/dashboard.service'
+import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
 
 interface PageProps {
   params: Promise<{
-    id: string[]
+    id: string
   }>
 }
 
@@ -26,26 +26,22 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     redirect('/auth/signin')
   }
 
-  // Parse ID array to extract namespace and name
-  // Format: ["namespace", "name"] or ["name"]
-  const { id } = await params
-  const namespace = id.length === 2 ? id[0] : 'default'
-  const name = id.length === 2 ? id[1] : id[0]
+  // id is now the workspace hash
+  const { id: hash } = await params
 
-  // Single API call to get workspace, work machine, and package request
-  let data
-  try {
-    data = await getWorkspaceDetails(namespace, name)
-  } catch (err) {
-    console.error('Failed to fetch workspace details:', err)
+  // Fetch workspace by hash
+  const result = await getWorkspaceByHash(hash)
+
+  if (!result.success || !result.data) {
+    console.error('Failed to fetch workspace details:', result.error)
     notFound()
   }
 
-  const { workspace, workMachineRunning, packageRequest } = data
+  const { workspace, workMachineRunning, packageRequest } = result.data
 
-  if (!workspace) {
-    notFound()
-  }
+  // Extract namespace and name from the workspace for components that need them
+  const namespace = workspace.metadata?.namespace || 'default'
+  const name = workspace.metadata?.name || ''
 
   // Extract package status from package request
   let packageStatus: {
@@ -62,7 +58,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     }
   }
 
-  const displayName = `${workspace.spec.ownedBy || 'unknown'}/${workspace.spec.displayName || workspace.metadata.name}`
+  const displayName = `${workspace.spec?.ownedBy || 'unknown'}/${workspace.spec?.displayName || workspace.metadata?.name}`
 
   const breadcrumbItems = [
     { label: 'Workspaces', href: '/workspaces' },
@@ -103,7 +99,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                   )}
                 </div>
               </div>
-              <WorkspaceActions workspace={workspace} workMachineRunning={workMachineRunning} />
+              <WorkspaceActions workspace={workspace as any} workMachineRunning={workMachineRunning} />
             </div>
           </div>
         </div>
@@ -115,15 +111,15 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
           {/* Connection Options and Code Analysis - Takes 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
             <WorkspaceConnectOptions
-              workspaceId={`${workspace.metadata.namespace}/${workspace.metadata.name}`}
-              workspace={workspace}
+              workspaceId={`${namespace}/${name}`}
+              workspace={workspace as any}
             />
 
             {/* Code Analysis - Only visible when WorkMachine is running */}
             {workMachineRunning && (
               <CodeAnalysisCard
-                workspaceName={workspace.metadata.name}
-                namespace={workspace.metadata.namespace}
+                workspaceName={name}
+                namespace={namespace}
               />
             )}
           </div>
@@ -181,7 +177,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 )}
                 {/* Manage Packages Button */}
                 <PackagesSheet
-                  workspace={workspace}
+                  workspace={workspace as any}
                   trigger={
                     <Button variant="outline" className="w-full justify-between">
                       <span className="flex items-center gap-2">
@@ -212,7 +208,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
               </div>
               <div className="p-4">
                 <SnapshotsSheet
-                  workspace={workspace}
+                  workspace={workspace as any}
                   workMachineRunning={workMachineRunning}
                   trigger={
                     <Button variant="outline" className="w-full justify-between">
@@ -229,8 +225,8 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
 
             {/* Real-time Metrics */}
             <WorkspaceMetrics
-              workspaceName={workspace.metadata.name}
-              namespace={workspace.metadata.namespace}
+              workspaceName={name}
+              namespace={namespace}
             />
 
             {/* Exposed Routes */}
@@ -286,7 +282,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
             <div className="bg-card rounded-lg border p-6">
               <h3 className="mb-4 text-sm font-medium">Information</h3>
               <div className="space-y-3">
-                {workspace.metadata.creationTimestamp && (
+                {workspace.metadata?.creationTimestamp && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Created</span>
                     <span>
@@ -298,10 +294,10 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                     </span>
                   </div>
                 )}
-                {workspace.status?.lastActivity && (
+                {workspace.status?.lastActivityTime && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Last Activity</span>
-                    <span>{workspace.status.lastActivity}</span>
+                    <LocalTime date={workspace.status.lastActivityTime} />
                   </div>
                 )}
                 {workspace.status?.idleState && (
@@ -336,7 +332,7 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Owner</span>
-                  <span>{workspace.spec.ownedBy || 'unknown'}</span>
+                  <span>{workspace.spec?.ownedBy || 'unknown'}</span>
                 </div>
               </div>
             </div>
