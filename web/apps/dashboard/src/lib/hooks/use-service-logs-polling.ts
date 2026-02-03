@@ -29,7 +29,7 @@ export function useServiceLogsPolling(
   const [logs, setLogs] = useState<ServiceLogs | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   useEffect(() => {
     if (!enabled || !namespace || !serviceName) {

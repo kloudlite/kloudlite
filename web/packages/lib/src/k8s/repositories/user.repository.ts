@@ -1,5 +1,5 @@
 import { BaseRepository, type ListOptions } from './base';
-import type { User, UserList } from '../types/user';
+import type { User, UserList, RoleType, ProviderAccount } from '../types/user';
 import { buildLabelSelector } from '../utils';
 import { parseK8sError, NotFoundError } from '../errors';
 
@@ -73,7 +73,7 @@ export class UserRepository extends BaseRepository<User> {
       return {
         ...all,
         items: filtered,
-      };
+      } as UserList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -82,7 +82,7 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * List users by role
    */
-  async listByRole(role: User['spec']['roles'][0], options?: ListOptions): Promise<UserList> {
+  async listByRole(role: RoleType, options?: ListOptions): Promise<UserList> {
     try {
       const all = await this.list(options);
 
@@ -92,7 +92,7 @@ export class UserRepository extends BaseRepository<User> {
       return {
         ...all,
         items: filtered,
-      };
+      } as UserList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -113,7 +113,7 @@ export class UserRepository extends BaseRepository<User> {
       return {
         ...all,
         items: filtered,
-      };
+      } as UserList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -267,7 +267,7 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Add OAuth provider account
    */
-  async addProvider(name: string, provider: User['spec']['providers'][0]): Promise<User> {
+  async addProvider(name: string, provider: ProviderAccount): Promise<User> {
     try {
       const user = await this.get(name);
 

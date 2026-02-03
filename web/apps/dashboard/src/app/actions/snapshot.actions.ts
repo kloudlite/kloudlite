@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { snapshotRepository } from '@kloudlite/lib/k8s'
 import type { Snapshot } from '@kloudlite/lib/k8s'
 import { snapshotService } from '@/lib/services/snapshot.service'
+import { getSession } from '@/lib/get-session'
 import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateEnvironmentFromSnapshotRequest } from '@/lib/services/snapshot.service'
 
 /**
@@ -32,19 +33,30 @@ export async function createSnapshot(
   data?: CreateSnapshotRequest,
 ) {
   try {
+    const session = await getSession()
+    if (!session?.user?.username) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
     const snapshot: Snapshot = {
       apiVersion: 'snapshots.kloudlite.io/v1',
       kind: 'Snapshot',
       metadata: {
-        name: data?.name || `${workspaceName}-snapshot-${Date.now()}`,
+        name: `${workspaceName}-snapshot-${Date.now()}`,
         namespace,
         labels: {
           'snapshots.kloudlite.io/workspace': workspaceName,
         },
       },
       spec: {
-        workspaceRef: workspaceName,
-        retentionPolicy: data?.retentionPolicy,
+        owner: session.user.username,
+        description: data?.description,
+        retentionPolicy: data?.keepForDays
+          ? { keepForDays: data.keepForDays }
+          : undefined,
       },
     }
 

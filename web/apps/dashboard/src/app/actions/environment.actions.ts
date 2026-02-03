@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { environmentRepository, workMachineRepository } from '@kloudlite/lib/k8s'
 import type { Environment } from '@kloudlite/lib/k8s'
 import { compositionService } from '@/lib/services/composition.service'
+import { environmentService } from '@/lib/services/environment.service'
 import { getSession } from '@/lib/get-session'
 import {
   environmentCreateSchema,

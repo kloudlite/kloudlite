@@ -2,9 +2,6 @@ import { BaseRepository, type ListOptions } from './base';
 import type {
   Workspace,
   WorkspaceList,
-  WorkspaceGroup,
-  WorkspaceVersion,
-  WorkspacePlural,
   WorkspacePhase,
 } from '../types/workspace';
 import { buildLabelSelector } from '../utils';
@@ -27,17 +24,17 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
     return this.list(namespace, {
       ...options,
       labelSelector,
-    });
+    }) as Promise<WorkspaceList>;
   }
 
   /**
    * Get all workspaces in a WorkMachine's namespace
    * Note: With 1:1 namespace-to-WorkMachine relationship, this returns all workspaces in the namespace
    */
-  async getByWorkMachine(namespace: string, workmachineName: string, options?: ListOptions): Promise<WorkspaceList> {
+  async getByWorkMachine(namespace: string, _workmachineName: string, options?: ListOptions): Promise<WorkspaceList> {
     // Since there's 1:1 relationship between namespace and WorkMachine,
     // all workspaces in the namespace belong to the same WorkMachine
-    return this.list(namespace, options);
+    return this.list(namespace, options) as Promise<WorkspaceList>;
   }
 
   /**
@@ -45,7 +42,7 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
    */
   async listAll(options?: ListOptions): Promise<WorkspaceList> {
     // Empty namespace means list across all namespaces
-    return this.list('', options);
+    return this.list('', options) as Promise<WorkspaceList>;
   }
 
   /**
@@ -55,7 +52,7 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
     return this.list(namespace, {
       ...options,
       fieldSelector: 'spec.status=active',
-    });
+    }) as Promise<WorkspaceList>;
   }
 
   /**
@@ -65,7 +62,7 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
     return this.list(namespace, {
       ...options,
       fieldSelector: 'spec.status=suspended',
-    });
+    }) as Promise<WorkspaceList>;
   }
 
   /**
@@ -75,7 +72,7 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
     return this.list(namespace, {
       ...options,
       fieldSelector: 'spec.status=archived',
-    });
+    }) as Promise<WorkspaceList>;
   }
 
   /**
@@ -261,7 +258,7 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
     return this.list(namespace, {
       ...options,
       fieldSelector: `spec.visibility=${visibility}`,
-    });
+    }) as Promise<WorkspaceList>;
   }
 
   /**
@@ -279,7 +276,7 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
     return {
       ...allWorkspaces,
       items: filteredItems,
-    };
+    } as WorkspaceList;
   }
 
   /**

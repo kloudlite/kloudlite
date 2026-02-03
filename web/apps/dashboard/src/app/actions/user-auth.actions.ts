@@ -1,7 +1,6 @@
 'use server'
 
 import { userRepository } from '@kloudlite/lib/k8s'
-import type { User } from '@kloudlite/lib/k8s/types'
 
 export interface ProviderAccount {
   provider: string
@@ -27,7 +26,7 @@ export interface UserData {
 export async function authenticateUser(userData: UserData) {
   try {
     // Get user by email
-    let user: User
+    let user
     try {
       user = await userRepository.getByEmail(userData.email)
     } catch (err) {

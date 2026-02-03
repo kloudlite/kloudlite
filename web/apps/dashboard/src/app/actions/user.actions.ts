@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { userRepository } from '@kloudlite/lib/k8s'
-import type { User } from '@kloudlite/lib/k8s/types'
 import bcrypt from 'bcryptjs'
 
 export interface ProviderAccount {
@@ -60,8 +59,6 @@ export async function updateUserLastLogin(username: string) {
  */
 export async function resetUserPassword(username: string, newPassword: string) {
   try {
-    const user = await userRepository.get(username)
-
     // Hash the new password
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(newPassword, salt)
@@ -175,7 +172,7 @@ export async function createUser(userData: {
     const hashedPassword = await bcrypt.hash(userData.password, salt)
     const passwordHashBase64 = Buffer.from(hashedPassword).toString('base64')
 
-    const user: User = {
+    const user = {
       apiVersion: 'platform.kloudlite.io/v1alpha1',
       kind: 'User',
       metadata: {
@@ -190,7 +187,7 @@ export async function createUser(userData: {
       },
     }
 
-    const created = await userRepository.create(user)
+    const created = await userRepository.create(user as any)
     revalidatePath('/admin/users')
     return { success: true, data: created }
   } catch (err) {

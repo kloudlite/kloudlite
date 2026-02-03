@@ -1,5 +1,5 @@
 import { BaseRepository, type ListOptions } from './base';
-import type { Snapshot, SnapshotList } from '../types/snapshot';
+import type { Snapshot, SnapshotList, SnapshotState } from '../types/snapshot';
 import { buildLabelSelector } from '../utils';
 import { parseK8sError } from '../errors';
 
@@ -19,7 +19,7 @@ export class SnapshotRepository extends BaseRepository<Snapshot> {
     return this.list(namespace, {
       ...options,
       labelSelector: buildLabelSelector({ 'snapshots.kloudlite.io/environment': envName }),
-    });
+    }) as Promise<SnapshotList>;
   }
 
   /**
@@ -29,7 +29,7 @@ export class SnapshotRepository extends BaseRepository<Snapshot> {
     return this.list(namespace, {
       ...options,
       labelSelector: buildLabelSelector({ 'snapshots.kloudlite.io/workspace': workspaceName }),
-    });
+    }) as Promise<SnapshotList>;
   }
 
   /**
@@ -39,20 +39,20 @@ export class SnapshotRepository extends BaseRepository<Snapshot> {
     return this.list(namespace, {
       ...options,
       labelSelector: buildLabelSelector({ 'kloudlite.io/owned-by': owner }),
-    });
+    }) as Promise<SnapshotList>;
   }
 
   /**
    * List all snapshots across all namespaces
    */
   async listAll(options?: ListOptions): Promise<SnapshotList> {
-    return this.list('', options);
+    return this.list('', options) as Promise<SnapshotList>;
   }
 
   /**
    * List snapshots by state
    */
-  async listByState(namespace: string, state: Snapshot['status']['state'], options?: ListOptions): Promise<SnapshotList> {
+  async listByState(namespace: string, state: SnapshotState, options?: ListOptions): Promise<SnapshotList> {
     try {
       const all = await this.list(namespace, options);
 
@@ -62,7 +62,7 @@ export class SnapshotRepository extends BaseRepository<Snapshot> {
       return {
         ...all,
         items: filtered,
-      };
+      } as SnapshotList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -127,7 +127,7 @@ export class SnapshotRepository extends BaseRepository<Snapshot> {
       return {
         ...all,
         items: children,
-      };
+      } as SnapshotList;
     } catch (err) {
       throw parseK8sError(err);
     }

@@ -25,7 +25,7 @@ export class MachineTypeRepository extends BaseRepository<MachineType> {
       return {
         ...all,
         items: filtered,
-      };
+      } as MachineTypeList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -44,7 +44,7 @@ export class MachineTypeRepository extends BaseRepository<MachineType> {
       return {
         ...all,
         items: filtered,
-      };
+      } as MachineTypeList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -86,7 +86,7 @@ export class MachineTypeRepository extends BaseRepository<MachineType> {
       return {
         ...activeList,
         items: sorted,
-      };
+      } as MachineTypeList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -109,7 +109,7 @@ export class MachineTypeRepository extends BaseRepository<MachineType> {
       return {
         ...categoryList,
         items: sorted,
-      };
+      } as MachineTypeList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -230,7 +230,7 @@ export class MachineTypeRepository extends BaseRepository<MachineType> {
       return {
         ...all,
         items: filtered,
-      };
+      } as MachineTypeList;
     } catch (err) {
       throw parseK8sError(err);
     }

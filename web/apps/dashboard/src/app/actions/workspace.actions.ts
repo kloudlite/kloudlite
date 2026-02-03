@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { workspaceRepository, packageRequestRepository } from '@kloudlite/lib/k8s'
 import type { Workspace } from '@kloudlite/lib/k8s'
+import { workspaceService } from '@/lib/services/workspace.service'
 import {
   workspaceCreateSchema,
   workspaceUpdateSchema,
@@ -343,6 +344,8 @@ export async function updatePackageRequest(
           },
         },
         spec: {
+          workspaceRef: workspaceName,
+          profileName: `${workspaceName}-packages`,
           packages: validated.data.packages as import('@kloudlite/lib/k8s').PackageSpec[],
         },
       }

@@ -13,17 +13,15 @@ export async function getEnvironmentStatus(name: string) {
     return {
       success: true,
       data: {
-        name: environment.metadata!.name,
-        phase: environment.status?.phase || 'Unknown',
-        state: environment.spec.state,
-        isReady: environment.status?.isReady ?? false,
+        name: environment.metadata.name,
+        state: environment.status?.state || 'Unknown',
+        activated: environment.spec.activated,
         message: environment.status?.message,
-        namespace: environment.status?.namespace,
         conditions: environment.status?.conditions || [],
         resourceCount: {
           deployments: environment.status?.resourceCount?.deployments || 0,
           services: environment.status?.resourceCount?.services || 0,
-          configMaps: environment.status?.resourceCount?.configMaps || 0,
+          configmaps: environment.status?.resourceCount?.configmaps || 0,
           secrets: environment.status?.resourceCount?.secrets || 0,
         },
         lastUpdated: new Date().toISOString(),

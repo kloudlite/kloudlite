@@ -93,7 +93,6 @@ export interface ReconcilerStatus {
 export interface WorkMachineStatus extends MachineInfo {
   status?: ReconcilerStatus;
   isReady?: boolean;
-  message?: Record<string, string>;
   checkList?: string[];
   lastReconcileTime?: string;
   startedAt?: string;

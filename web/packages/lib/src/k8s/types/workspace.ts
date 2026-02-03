@@ -53,7 +53,7 @@ export interface ResourceQuota {
   gpus?: number;
 }
 
-export interface FromSnapshotRef {
+export interface WorkspaceFromSnapshotRef {
   snapshotName: string;
 }
 
@@ -71,7 +71,7 @@ export interface WorkspaceSpec {
   resourceQuota?: ResourceQuota;
   vscodeVersion?: string;
   status?: 'active' | 'suspended' | 'archived';
-  fromSnapshot?: FromSnapshotRef;
+  fromSnapshot?: WorkspaceFromSnapshotRef;
   expose?: ExposedPort[];
 }
 
@@ -82,7 +82,7 @@ export interface ConnectedEnvironmentInfo {
   availableServices?: string[];
 }
 
-export interface ResourceUsage {
+export interface WorkspaceResourceUsage {
   cpu?: string;
   memory?: string;
   storage?: string;
@@ -94,15 +94,15 @@ export interface WorkspaceLastRestoredSnapshotInfo {
   restoredAt: string;
 }
 
-export type SnapshotRestorePhase =
+export type WorkspaceSnapshotRestorePhase =
   | 'Pending'
   | 'Pulling'
   | 'Restoring'
   | 'Completed'
   | 'Failed';
 
-export interface SnapshotRestoreStatus {
-  phase?: SnapshotRestorePhase;
+export interface WorkspaceSnapshotRestoreStatus {
+  phase?: WorkspaceSnapshotRestorePhase;
   message?: string;
   sourceSnapshot?: string;
   imageRef?: string;
@@ -129,7 +129,7 @@ export interface WorkspaceStatus {
   stopTime?: string;
   accessUrl?: string; // deprecated
   accessUrls?: Record<string, string>;
-  resourceUsage?: ResourceUsage;
+  resourceUsage?: WorkspaceResourceUsage;
   totalRuntime?: number;
   podName?: string;
   podIP?: string;
@@ -138,7 +138,7 @@ export interface WorkspaceStatus {
   idleState?: 'active' | 'idle';
   idleSince?: string;
   connectedEnvironment?: ConnectedEnvironmentInfo;
-  snapshotRestoreStatus?: SnapshotRestoreStatus;
+  snapshotRestoreStatus?: WorkspaceSnapshotRestoreStatus;
   hash?: string;
   subdomain?: string;
   exposedRoutes?: Record<string, string>;

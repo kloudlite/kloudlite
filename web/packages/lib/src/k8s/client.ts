@@ -140,8 +140,3 @@ class K8sClient {
 export function getK8sClient(): K8sClient {
   return K8sClient.getInstance();
 }
-
-/**
- * Export k8s types for convenience
- */
-export * from '@kubernetes/client-node';

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { getWorkspace } from '@/app/actions/workspace.actions'
-import type { Workspace } from '@kloudlite/types'
+import type { Workspace } from '@kloudlite/lib/k8s'
 
 interface UseWorkspaceStatusOptions {
   pollInterval?: number

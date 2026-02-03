@@ -3,7 +3,7 @@
  * Based on: api/internal/controllers/environment/v1/types.go
  */
 
-import type { K8sResource, K8sList, Condition } from './common';
+import type { K8sResource, K8sList, Condition, LabelSelector } from './common';
 
 export const EnvironmentGroup = 'environments.kloudlite.io';
 export const EnvironmentVersion = 'v1';
@@ -18,10 +18,6 @@ export interface ResourceQuotas {
   persistentvolumeclaims?: string;
   'services.nodeports'?: string;
   'services.loadbalancers'?: string;
-}
-
-export interface LabelSelector {
-  matchLabels?: Record<string, string>;
 }
 
 export interface NetworkPolicyPeer {
@@ -45,7 +41,7 @@ export interface NetworkPolicies {
   ingressRules?: IngressRule[];
 }
 
-export interface FromSnapshotRef {
+export interface EnvironmentFromSnapshotRef {
   snapshotName: string;
   sourceNamespace: string;
 }
@@ -67,7 +63,7 @@ export interface EnvironmentSpec {
   networkPolicies?: NetworkPolicies;
   labels?: Record<string, string>;
   annotations?: Record<string, string>;
-  fromSnapshot?: FromSnapshotRef;
+  fromSnapshot?: EnvironmentFromSnapshotRef;
   nodeName?: string;
   compose?: CompositionSpec;
 }
@@ -91,7 +87,7 @@ export interface ResourceCount {
   pvcs?: number;
 }
 
-export type SnapshotRestorePhase =
+export type EnvironmentSnapshotStatusPhase =
   | 'Pending'
   | 'Pulling'
   | 'Restoring'
@@ -99,8 +95,8 @@ export type SnapshotRestorePhase =
   | 'Completed'
   | 'Failed';
 
-export interface SnapshotRestoreStatus {
-  phase?: SnapshotRestorePhase;
+export interface EnvironmentInlineSnapshotRestoreStatus {
+  phase?: EnvironmentSnapshotStatusPhase;
   message?: string;
   sourceSnapshot?: string;
   imageRef?: string;
@@ -140,7 +136,7 @@ export interface EnvironmentStatus {
   resourceCount?: ResourceCount;
   conditions?: EnvironmentCondition[];
   observedGeneration?: number;
-  snapshotRestoreStatus?: SnapshotRestoreStatus;
+  snapshotRestoreStatus?: EnvironmentInlineSnapshotRestoreStatus;
   hash?: string;
   subdomain?: string;
   lastRestoredSnapshot?: LastRestoredSnapshotInfo;

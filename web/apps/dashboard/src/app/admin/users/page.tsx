@@ -1,6 +1,6 @@
 import { UserManagementList } from '../_components/user-management-list'
 import { listUsers } from '@/app/actions/user.actions'
-import { UserDisplay } from '@/types/user'
+import { UserDisplay, userToDisplay } from '@/types/user'
 import { AlertCircle } from 'lucide-react'
 import { getSession } from '@/lib/get-session'
 import { redirect } from 'next/navigation'
@@ -47,7 +47,7 @@ export default async function UsersPage() {
       return <UsersError error={result.error || 'Unknown error occurred'} />
     }
 
-    const users: UserDisplay[] = result.users || []
+    const users: UserDisplay[] = (result.data || []).map(userToDisplay)
 
     return (
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">

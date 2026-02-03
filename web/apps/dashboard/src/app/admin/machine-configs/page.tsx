@@ -53,7 +53,7 @@ export default async function MachineConfigsPage() {
   // Fetch machine types from the API
   const result = await listMachineTypes()
 
-  const machineTypes = result.success && result.data ? result.data.items || [] : []
+  const machineTypes = result.success && result.data ? result.data : []
 
   const transformedConfigs = transformMachineTypes(machineTypes)
 

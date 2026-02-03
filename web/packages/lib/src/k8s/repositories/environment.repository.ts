@@ -3,6 +3,7 @@ import type {
   Environment,
   EnvironmentList,
   EnvironmentState,
+  ResourceCount,
 } from '../types/environment';
 import { buildLabelSelector } from '../utils';
 import { parseK8sError, NotFoundError } from '../errors';
@@ -50,7 +51,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
     return this.list(namespace, {
       ...options,
       labelSelector: buildLabelSelector({ 'kloudlite.io/activated': 'true' }),
-    });
+    }) as Promise<EnvironmentList>;
   }
 
   /**
@@ -60,7 +61,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
     return this.list(namespace, {
       ...options,
       labelSelector: buildLabelSelector({ 'kloudlite.io/activated': 'false' }),
-    });
+    }) as Promise<EnvironmentList>;
   }
 
   /**
@@ -158,7 +159,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
     return this.list(namespace, {
       ...options,
       labelSelector: buildLabelSelector({ 'kloudlite.io/owned-by': owner }),
-    });
+    }) as Promise<EnvironmentList>;
   }
 
   /**
@@ -172,7 +173,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
     return this.list(namespace, {
       ...options,
       fieldSelector: `spec.visibility=${visibility}`,
-    });
+    }) as Promise<EnvironmentList>;
   }
 
   /**
@@ -190,7 +191,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
     return {
       ...allEnvironments,
       items: filteredItems,
-    };
+    } as EnvironmentList;
   }
 
   /**
@@ -328,7 +329,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
   /**
    * Get resource count for an environment
    */
-  async getResourceCount(namespace: string, name: string): Promise<Environment['status']['resourceCount'] | null> {
+  async getResourceCount(namespace: string, name: string): Promise<ResourceCount | null> {
     try {
       const environment = await this.get(namespace, name);
       return environment.status?.resourceCount || null;
@@ -342,7 +343,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
    */
   async listAll(options?: ListOptions): Promise<EnvironmentList> {
     // Empty namespace means list across all namespaces
-    return this.list('', options);
+    return this.list('', options) as Promise<EnvironmentList>;
   }
 
   /**
@@ -364,7 +365,7 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
     return {
       ...allEnvironments,
       items: filteredItems,
-    };
+    } as EnvironmentList;
   }
 
   /**
