@@ -139,6 +139,13 @@ data:
 			fmt.Printf("✓ Written Webhooks to %s\n", webhooksPath)
 		}
 
+		// Write Frontend RBAC
+		frontendRBACPath := filepath.Join(manifestsDir, "frontend-rbac.yaml")
+		if err := os.WriteFile(frontendRBACPath, []byte(manifests.FrontendRBAC), 0644); err != nil {
+			return fmt.Errorf("failed to write Frontend RBAC: %w", err)
+		}
+		fmt.Printf("✓ Written Frontend RBAC to %s\n", frontendRBACPath)
+
 		// Write Frontend (substitute environment variables)
 		frontendManifest := manifests.Frontend
 		// AUTH_COOKIE_DOMAIN is the subdomain.baseDomain (e.g., beanbag.khost.dev)

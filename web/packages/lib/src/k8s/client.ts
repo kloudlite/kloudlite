@@ -1,8 +1,6 @@
 import * as k8s from '@kubernetes/client-node';
 import {
   isInCluster,
-  loadServiceAccountToken,
-  loadServiceAccountCACert,
   getK8sApiUrl,
 } from './auth';
 
@@ -36,44 +34,33 @@ class K8sClient {
   }
 
   private configureInCluster() {
-    const token = loadServiceAccountToken();
-    const caCert = loadServiceAccountCACert();
+    // Always use kube-proxy sidecar (bun can't handle mTLS)
     const apiUrl = getK8sApiUrl();
 
-    if (!token) {
-      throw new Error('ServiceAccount token not found. Ensure the pod has a ServiceAccount mounted.');
-    }
-
-    // Create cluster configuration
     const cluster: k8s.Cluster = {
-      name: 'in-cluster',
+      name: 'kube-proxy',
       server: apiUrl,
-      skipTLSVerify: false,
-      caData: caCert ? Buffer.from(caCert).toString('base64') : undefined,
+      skipTLSVerify: true, // kube-proxy doesn't use TLS
     };
 
-    // Create user configuration with token auth
     const user: k8s.User = {
-      name: 'serviceaccount',
-      token,
+      name: 'kube-proxy-user',
     };
 
-    // Create context
     const context: k8s.Context = {
-      name: 'in-cluster',
-      cluster: 'in-cluster',
-      user: 'serviceaccount',
+      name: 'kube-proxy',
+      cluster: 'kube-proxy',
+      user: 'kube-proxy-user',
     };
 
-    // Apply configuration
     this.kc.loadFromOptions({
       clusters: [cluster],
       users: [user],
       contexts: [context],
-      currentContext: 'in-cluster',
+      currentContext: 'kube-proxy',
     });
 
-    console.log('✓ Kubernetes client configured for in-cluster access');
+    console.log(`✓ Kubernetes client configured to use kube-proxy sidecar at ${apiUrl}`);
   }
 
   private configureOutOfCluster() {

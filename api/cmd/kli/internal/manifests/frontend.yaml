@@ -27,6 +27,7 @@ spec:
       labels:
         app: frontend
     spec:
+      serviceAccountName: frontend
       containers:
         - name: frontend
           image: ghcr.io/kloudlite/kloudlite/web-dashboard:development
@@ -35,6 +36,10 @@ spec:
             - containerPort: 3000
               name: http
           env:
+            - name: KUBERNETES_SERVICE_HOST
+              value: "127.0.0.1"
+            - name: KUBERNETES_SERVICE_PORT
+              value: "8001"
             - name: NEXT_PUBLIC_API_URL
               value: "http://api-server.kloudlite.svc.cluster.local"
             - name: PORT
@@ -88,3 +93,30 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 3
+        - name: kube-proxy
+          image: bitnami/kubectl:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              kubectl proxy --address=0.0.0.0 --port=8001 --accept-hosts='^localhost$,^127\.0\.0\.1$,^::1$'
+          ports:
+            - containerPort: 8001
+              name: kube-proxy
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
