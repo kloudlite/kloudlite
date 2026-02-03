@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { userRepository } from '@kloudlite/lib/k8s'
 import type { User } from '@kloudlite/lib/k8s/types'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 export interface ProviderAccount {
   provider: string

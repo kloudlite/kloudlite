@@ -80,15 +80,24 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
   const [pushTag, setPushTag] = useState('')
 
   const loadSnapshots = useCallback(async () => {
-    // Fetch snapshots, environment, and operation status in parallel
-    const [snapshotResult, envResult, statusResult] = await Promise.all([
-      listEnvironmentSnapshots(environmentName),
-      getEnvironment(environmentName),
+    // First get environment to extract namespace
+    const envResult = await getEnvironment(environmentName)
+
+    if (!envResult.success || !envResult.data?.metadata?.namespace) {
+      console.error('Failed to get environment or namespace')
+      return
+    }
+
+    const namespace = envResult.data.metadata.namespace
+
+    // Fetch snapshots and operation status in parallel
+    const [snapshotResult, statusResult] = await Promise.all([
+      listEnvironmentSnapshots(environmentName, namespace),
       getEnvironmentSnapshotStatus(environmentName),
     ])
 
     if (snapshotResult.success && snapshotResult.data) {
-      setSnapshots(snapshotResult.data.snapshots || [])
+      setSnapshots(snapshotResult.data as unknown as Snapshot[])
     }
 
     if (envResult.success && envResult.data?.status?.lastRestoredSnapshot) {

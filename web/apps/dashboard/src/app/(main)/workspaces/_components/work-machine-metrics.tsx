@@ -66,7 +66,7 @@ export function WorkMachineMetrics({
   })
 
   // GPU metrics placeholder - can be extended later
-  const gpuMetrics: GPUMetrics | null = null
+  const gpuMetrics = null as GPUMetrics | null
 
   // Don't show metrics when machine is stopped
   if (machineState === 'stopped') {

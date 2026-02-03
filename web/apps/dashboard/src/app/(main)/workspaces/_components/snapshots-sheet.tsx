@@ -79,7 +79,7 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
   const loadSnapshots = useCallback(async () => {
     const result = await listSnapshots(workspace.metadata.name, workspace.metadata.namespace)
     if (result.success && result.data) {
-      setSnapshots(result.data.snapshots || [])
+      setSnapshots(result.data as unknown as Snapshot[])
     }
   }, [workspace.metadata.name, workspace.metadata.namespace])
 

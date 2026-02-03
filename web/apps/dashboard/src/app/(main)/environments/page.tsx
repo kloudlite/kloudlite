@@ -38,7 +38,7 @@ export default async function EnvironmentsPage() {
     : false
 
   // Get pinned environment IDs from preferences
-  const pinnedEnvironmentIds = preferences?.pinnedEnvironments || []
+  const pinnedEnvironmentIds = preferences?.spec.pinnedEnvironments || []
 
   const allEnvironments: EnvironmentUIModel[] = environments.map((env) => {
     const owner = env.spec?.ownedBy || 'unknown'

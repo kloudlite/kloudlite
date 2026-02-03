@@ -78,7 +78,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
       const loadPackageStatus = async () => {
         // Fetch package request - this is now the source of truth for packages
         const pkgReqResult = await getPackageRequest(workspace.metadata.name, workspace.metadata.namespace)
-        const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
+        const pkgReq: PackageRequest | null | undefined = pkgReqResult.success ? (pkgReqResult.data as unknown as PackageRequest) : null
 
         // Get status phase from PackageRequest
         const statusPhase = pkgReq?.status?.phase || 'Pending'

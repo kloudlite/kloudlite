@@ -108,8 +108,8 @@ interface WorkMachinesContentProps {
 
 export function WorkMachinesContent({
   machine: initialMachine,
-  currentUser,
-  isAdmin,
+  currentUser: _currentUser,
+  isAdmin: _isAdmin,
   availableMachineTypes,
   pinnedWorkspaces,
   pinnedEnvironments,
@@ -146,6 +146,7 @@ export function WorkMachinesContent({
 
       return () => clearInterval(interval)
     }
+    return undefined
   }, [machine.currentState, machine.desiredState, router, isTransitioning])
 
   const handleStart = async () => {
