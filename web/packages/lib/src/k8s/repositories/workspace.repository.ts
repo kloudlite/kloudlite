@@ -17,6 +17,16 @@ export class WorkspaceRepository extends BaseRepository<Workspace> {
   }
 
   /**
+   * Get a workspace by its hash (efficient lookup using label selector)
+   * The hash is an 8-char identifier stored in the kloudlite.io/hash label
+   */
+  async getByHash(namespace: string, hash: string): Promise<Workspace | null> {
+    const labelSelector = buildLabelSelector({ 'kloudlite.io/hash': hash });
+    const result = await this.list(namespace, { labelSelector }) as WorkspaceList;
+    return result.items?.[0] || null;
+  }
+
+  /**
    * Get all workspaces owned by a specific user
    */
   async getByOwner(namespace: string, owner: string, options?: ListOptions): Promise<WorkspaceList> {

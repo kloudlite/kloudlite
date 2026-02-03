@@ -18,6 +18,16 @@ export class EnvironmentRepository extends BaseRepository<Environment> {
   }
 
   /**
+   * Get an environment by its hash (efficient lookup using label selector)
+   * The hash is an 8-char identifier stored in the kloudlite.io/hash label
+   */
+  async getByHash(namespace: string, hash: string): Promise<Environment | null> {
+    const labelSelector = buildLabelSelector({ 'kloudlite.io/hash': hash });
+    const result = await this.list(namespace, { labelSelector }) as EnvironmentList;
+    return result.items?.[0] || null;
+  }
+
+  /**
    * Get environment by target namespace
    * Searches across all namespaces since targetNamespace is unique
    */

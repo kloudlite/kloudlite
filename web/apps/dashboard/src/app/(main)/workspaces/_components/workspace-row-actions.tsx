@@ -120,7 +120,7 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
-            <Link href={`/workspaces/${workspace.metadata.namespace}/${workspace.metadata.name}`}>
+            <Link href={`/workspaces/${workspace.status?.hash || workspace.metadata.name}`}>
               Open Workspace
             </Link>
           </DropdownMenuItem>

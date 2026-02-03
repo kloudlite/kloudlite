@@ -529,16 +529,25 @@ export async function updateEnvironmentAccess(
 }
 
 /**
- * Server action to get an environment by its hash
- * The hash is a unique 8-char hex identifier generated from envName-owner
+ * Server action to get an environment by its hash or name
+ * Uses label selector for efficient lookup by hash (kloudlite.io/hash label)
+ * Falls back to direct name lookup if hash not found
  */
-export async function getEnvironmentByHash(hash: string) {
+export async function getEnvironmentByHash(hashOrName: string) {
   try {
     const namespace = await getWorkMachineNamespace()
-    const environmentsList = await environmentRepository.list(namespace)
-    const environment = environmentsList.items?.find(
-      (env) => env.status?.hash === hash
-    )
+
+    // Try to find by hash using label selector (efficient)
+    let environment = await environmentRepository.getByHash(namespace, hashOrName)
+
+    // Fallback: try direct name lookup if hash not found
+    if (!environment) {
+      try {
+        environment = await environmentRepository.get(namespace, hashOrName)
+      } catch {
+        // Not found by name either
+      }
+    }
 
     if (!environment) {
       return {
