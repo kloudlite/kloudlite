@@ -1,17 +1,14 @@
-import { BaseRepository, type ListOptions } from './base';
-import type { User, UserList, RoleType, ProviderAccount } from '../types/user';
-import { buildLabelSelector } from '../utils';
-import { parseK8sError, NotFoundError } from '../errors';
+import { BaseRepository, type ListOptions } from "./base";
+import type { User, UserList, RoleType, ProviderAccount } from "../types/user";
+import { buildLabelSelector } from "../utils";
+import { parseK8sError, NotFoundError } from "../errors";
 
 /**
  * Utility function to sanitize email for use in Kubernetes labels
  * Converts: user@kloudlite.io -> user-at-kloudlite-dot-io
  */
 function sanitizeEmailForLabel(email: string): string {
-  return email
-    .replace(/@/g, '-at-')
-    .replace(/\./g, '-dot-')
-    .toLowerCase();
+  return email.replace(/@/g, "-at-").replace(/\./g, "-dot-").toLowerCase();
 }
 
 /**
@@ -20,8 +17,7 @@ function sanitizeEmailForLabel(email: string): string {
  */
 export class UserRepository extends BaseRepository<User> {
   constructor() {
-    super('platform.kloudlite.io', 'v1alpha1', 'users', false); // false = cluster-scoped
-    console.log('UserRepository initialized with group:', 'platform.kloudlite.io')
+    super("platform.kloudlite.io", "v1alpha1", "users", false); // false = cluster-scoped
   }
 
   /**
@@ -32,11 +28,13 @@ export class UserRepository extends BaseRepository<User> {
       // Convert email to sanitized label format
       const emailLabel = sanitizeEmailForLabel(email);
       const result = await this.list({
-        labelSelector: buildLabelSelector({ 'kloudlite.io/user-email': emailLabel }),
+        labelSelector: buildLabelSelector({
+          "kloudlite.io/user-email": emailLabel,
+        }),
       });
 
       if (result.items.length === 0) {
-        throw new NotFoundError('User', `with email ${email}`);
+        throw new NotFoundError("User", `with email ${email}`);
       }
 
       if (result.items.length > 1) {
@@ -68,7 +66,7 @@ export class UserRepository extends BaseRepository<User> {
       const all = await this.list(options);
 
       // Filter for active users (spec.active = true or undefined defaults to true)
-      const filtered = all.items.filter(user => user.spec?.active !== false);
+      const filtered = all.items.filter((user) => user.spec?.active !== false);
 
       return {
         ...all,
@@ -87,7 +85,9 @@ export class UserRepository extends BaseRepository<User> {
       const all = await this.list(options);
 
       // Filter by role (client-side since roles is an array in spec)
-      const filtered = all.items.filter(user => user.spec?.roles?.includes(role));
+      const filtered = all.items.filter((user) =>
+        user.spec?.roles?.includes(role),
+      );
 
       return {
         ...all,
@@ -101,13 +101,16 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * List users by provider (google, github, etc.)
    */
-  async listByProvider(provider: string, options?: ListOptions): Promise<UserList> {
+  async listByProvider(
+    provider: string,
+    options?: ListOptions,
+  ): Promise<UserList> {
     try {
       const all = await this.list(options);
 
       // Filter by provider (client-side since providers is an array in spec)
-      const filtered = all.items.filter(user =>
-        user.spec?.providers?.some(p => p.provider === provider)
+      const filtered = all.items.filter((user) =>
+        user.spec?.providers?.some((p) => p.provider === provider),
       );
 
       return {
@@ -122,7 +125,10 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Update user status (for controller use)
    */
-  async updateUserStatus(name: string, status: Partial<User['status']>): Promise<User> {
+  async updateUserStatus(
+    name: string,
+    status: Partial<User["status"]>,
+  ): Promise<User> {
     try {
       const user = await this.get(name);
 
@@ -176,7 +182,7 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Add role to user
    */
-  async addRole(name: string, role: User['spec']['roles'][0]): Promise<User> {
+  async addRole(name: string, role: User["spec"]["roles"][0]): Promise<User> {
     try {
       const user = await this.get(name);
 
@@ -193,15 +199,18 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Remove role from user
    */
-  async removeRole(name: string, role: User['spec']['roles'][0]): Promise<User> {
+  async removeRole(
+    name: string,
+    role: User["spec"]["roles"][0],
+  ): Promise<User> {
     try {
       const user = await this.get(name);
 
-      user.spec!.roles = user.spec!.roles.filter(r => r !== role);
+      user.spec!.roles = user.spec!.roles.filter((r) => r !== role);
 
       // Ensure at least one role remains
       if (user.spec!.roles.length === 0) {
-        user.spec!.roles = ['user'];
+        user.spec!.roles = ["user"];
       }
 
       return await this.update(name, user);
@@ -277,7 +286,9 @@ export class UserRepository extends BaseRepository<User> {
 
       // Check if provider already exists
       const exists = user.spec!.providers.some(
-        p => p.provider === provider.provider && p.providerId === provider.providerId
+        (p) =>
+          p.provider === provider.provider &&
+          p.providerId === provider.providerId,
       );
 
       if (!exists) {
@@ -293,13 +304,17 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Remove OAuth provider account
    */
-  async removeProvider(name: string, provider: string, providerId: string): Promise<User> {
+  async removeProvider(
+    name: string,
+    provider: string,
+    providerId: string,
+  ): Promise<User> {
     try {
       const user = await this.get(name);
 
       if (user.spec!.providers) {
         user.spec!.providers = user.spec!.providers.filter(
-          p => !(p.provider === provider && p.providerId === providerId)
+          (p) => !(p.provider === provider && p.providerId === providerId),
         );
       }
 
@@ -312,7 +327,10 @@ export class UserRepository extends BaseRepository<User> {
   /**
    * Check if user has a specific role
    */
-  async hasRole(name: string, role: User['spec']['roles'][0]): Promise<boolean> {
+  async hasRole(
+    name: string,
+    role: User["spec"]["roles"][0],
+  ): Promise<boolean> {
     try {
       const user = await this.get(name);
       return user.spec?.roles?.includes(role) ?? false;

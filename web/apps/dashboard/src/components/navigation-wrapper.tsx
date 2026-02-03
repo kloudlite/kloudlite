@@ -1,15 +1,46 @@
+import { Suspense } from 'react'
 import { auth } from '@/lib/auth'
 import { Navigation } from './navigation'
 import { getMyWorkMachine } from '@/app/actions/work-machine.actions'
 import { setThemeCookie } from '@/app/actions/theme'
 
-export async function NavigationWrapper() {
-  const session = await auth()
-  const userRoles = session?.user?.roles || []
-  const isSuperAdmin = userRoles.includes('super-admin')
-  const isAdmin = userRoles.includes('admin') || userRoles.includes('super-admin')
+/**
+ * Fetches work machine status - separated to allow independent loading
+ */
+async function WorkMachineStatusProvider({
+  children,
+}: {
+  children: (props: { hasWorkMachine: boolean; isWorkMachineRunning: boolean }) => React.ReactNode
+}) {
+  const workMachineResult = await getMyWorkMachine()
+  const hasWorkMachine = workMachineResult.success && !!workMachineResult.data
 
-  // Check if user has a work machine and if it's running
+  let isWorkMachineRunning = false
+  if (hasWorkMachine && workMachineResult.data) {
+    const state = workMachineResult.data.status?.state || workMachineResult.data.spec.state
+    const isReady = workMachineResult.data.status?.isReady ?? false
+    isWorkMachineRunning = state === 'running' && isReady
+  }
+
+  return <>{children({ hasWorkMachine, isWorkMachineRunning })}</>
+}
+
+/**
+ * Inner navigation that receives work machine status
+ */
+async function NavigationWithWorkMachineStatus({
+  email,
+  displayName,
+  isSuperAdmin,
+  isAdmin,
+  userRoles,
+}: {
+  email?: string
+  displayName?: string
+  isSuperAdmin: boolean
+  isAdmin: boolean
+  userRoles: string[]
+}) {
   const workMachineResult = await getMyWorkMachine()
   const hasWorkMachine = workMachineResult.success && !!workMachineResult.data
 
@@ -21,15 +52,14 @@ export async function NavigationWrapper() {
   }
 
   // Don't show navigation if user doesn't have a work machine
-  // They need to complete initial setup first
   if (!hasWorkMachine) {
     return null
   }
 
   return (
     <Navigation
-      email={session?.user?.email}
-      displayName={session?.user?.name}
+      email={email}
+      displayName={displayName}
       isSuperAdmin={isSuperAdmin}
       isAdmin={isAdmin}
       userRoles={userRoles}
@@ -37,5 +67,67 @@ export async function NavigationWrapper() {
       isWorkMachineRunning={isWorkMachineRunning}
       setThemeCookie={setThemeCookie}
     />
+  )
+}
+
+/**
+ * Skeleton for navigation while loading
+ */
+function NavigationSkeleton({
+  email,
+  displayName,
+  isSuperAdmin,
+  isAdmin,
+  userRoles,
+}: {
+  email?: string
+  displayName?: string
+  isSuperAdmin: boolean
+  isAdmin: boolean
+  userRoles: string[]
+}) {
+  return (
+    <Navigation
+      email={email}
+      displayName={displayName}
+      isSuperAdmin={isSuperAdmin}
+      isAdmin={isAdmin}
+      userRoles={userRoles}
+      hasWorkMachine={true} // Assume true for skeleton to show full nav
+      isWorkMachineRunning={false}
+      setThemeCookie={setThemeCookie}
+    />
+  )
+}
+
+export async function NavigationWrapper() {
+  // Session data loads quickly - this is the critical path for user profile
+  const session = await auth()
+  const userRoles = session?.user?.roles || []
+  const isSuperAdmin = userRoles.includes('super-admin')
+  const isAdmin = userRoles.includes('admin') || userRoles.includes('super-admin')
+  const email = session?.user?.email
+  const displayName = session?.user?.name
+
+  return (
+    <Suspense
+      fallback={
+        <NavigationSkeleton
+          email={email}
+          displayName={displayName}
+          isSuperAdmin={isSuperAdmin}
+          isAdmin={isAdmin}
+          userRoles={userRoles}
+        />
+      }
+    >
+      <NavigationWithWorkMachineStatus
+        email={email}
+        displayName={displayName}
+        isSuperAdmin={isSuperAdmin}
+        isAdmin={isAdmin}
+        userRoles={userRoles}
+      />
+    </Suspense>
   )
 }

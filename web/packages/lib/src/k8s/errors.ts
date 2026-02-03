@@ -67,12 +67,33 @@ export function parseK8sError(err: unknown): K8sError {
   if (err && typeof err === 'object') {
     const error = err as any;
 
-    // Handle @kubernetes/client-node errors
-    if (error.response?.statusCode || error.statusCode) {
-      const statusCode = error.response?.statusCode || error.statusCode;
-      const body = error.response?.body || error.body;
-      const message = body?.message || error.message || 'Unknown error';
+    // Try to extract status code from various error formats
+    let statusCode: number | undefined;
+    let body: any;
+    let message: string;
 
+    // Check for statusCode in response or directly on error
+    if (error.response?.statusCode || error.statusCode) {
+      statusCode = error.response?.statusCode || error.statusCode;
+      body = error.response?.body || error.body;
+      message = body?.message || error.message || 'Unknown error';
+    }
+    // Check for Kubernetes Status response format (code in body)
+    else if (error.body) {
+      try {
+        const parsedBody = typeof error.body === 'string' ? JSON.parse(error.body) : error.body;
+        if (parsedBody.code) {
+          statusCode = parsedBody.code;
+          body = parsedBody;
+          message = parsedBody.message || error.message || 'Unknown error';
+        }
+      } catch (e) {
+        // Body is not valid JSON, continue with fallback
+      }
+    }
+
+    // If we found a status code, return appropriate error
+    if (statusCode) {
       switch (statusCode) {
         case 404:
           return new NotFoundError('Resource', message);
