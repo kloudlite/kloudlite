@@ -21,12 +21,10 @@ import type { Visibility } from '@kloudlite/types'
 import { VisibilitySelector } from '@/components/visibility-selector'
 
 interface CreateWorkspaceSheetProps {
-  namespace: string
-  user: string
   workMachineRunning?: boolean
 }
 
-export function CreateWorkspaceSheet({ namespace, user, workMachineRunning = false }: CreateWorkspaceSheetProps) {
+export function CreateWorkspaceSheet({ workMachineRunning = false }: CreateWorkspaceSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -66,12 +64,10 @@ export function CreateWorkspaceSheet({ namespace, user, workMachineRunning = fal
         .toLowerCase()
         .replace(/[^a-z0-9-]/g, '-')
 
-      const result = await createWorkspace(namespace, {
+      const result = await createWorkspace({
         name: workspaceName,
         spec: {
           displayName: name.trim(),
-          ownedBy: user,
-          workmachine: `wm-${user}`,
           visibility,
           sharedWith: visibility === 'shared' ? sharedWith : undefined,
           gitRepository,

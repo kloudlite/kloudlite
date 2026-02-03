@@ -117,7 +117,7 @@ export function WorkspacesList({
             {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
           </span>
         </div>
-        <CreateWorkspaceSheet namespace={namespace} user={currentUser} workMachineRunning={workMachineRunning} />
+        <CreateWorkspaceSheet workMachineRunning={workMachineRunning} />
       </div>
 
       {/* Table */}
