@@ -9,6 +9,8 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
+  SheetHeader,
   SheetTitle,
 } from '@kloudlite/ui'
 import { updateEnvironmentCompose } from '@/app/actions/environment.actions'
@@ -93,26 +95,26 @@ export function CompositionEditor({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-3xl flex flex-col p-0">
-        {/* Header */}
-        <div className="border-b px-6 py-5">
-          <SheetTitle className="text-xl font-semibold">Environment Composition</SheetTitle>
-          <SheetDescription className="text-muted-foreground mt-1.5">
-            Define your services using Docker Compose format
-          </SheetDescription>
-        </div>
+      <SheetContent side="right" className="w-full sm:max-w-3xl">
+        <div className="flex h-full flex-col">
+          <SheetHeader className="space-y-1 pb-8">
+            <SheetTitle className="text-xl font-semibold">Environment Composition</SheetTitle>
+            <SheetDescription className="text-sm">
+              Define your services using Docker Compose format
+            </SheetDescription>
+          </SheetHeader>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          <div className="space-y-6">
+          <div className="flex-1 space-y-6 overflow-y-auto pb-6">
             {/* Composition Section */}
-            <div>
-              <h3 className="text-base font-medium mb-1">Docker Compose YAML</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Configure services, networks, and volumes for your environment
-              </p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="mb-1 text-sm font-semibold">Docker Compose YAML</h3>
+                <p className="text-muted-foreground text-xs">
+                  Configure services, networks, and volumes for your environment
+                </p>
+              </div>
 
-              <div className="rounded-lg border bg-muted/30 overflow-hidden">
+              <div className="bg-card rounded-lg border overflow-hidden">
                 {yamlExtension ? (
                   <CodeMirror
                     value={composeContent}
@@ -132,28 +134,28 @@ export function CompositionEditor({
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="border-t px-6 py-4 flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isPending}>
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save Composition'
-            )}
-          </Button>
+          <SheetFooter className="flex-row justify-end gap-2 border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+              className="min-w-24"
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isPending} className="min-w-24">
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Composition'
+              )}
+            </Button>
+          </SheetFooter>
         </div>
       </SheetContent>
     </Sheet>
