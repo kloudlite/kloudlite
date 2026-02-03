@@ -8,6 +8,7 @@ import { Button } from '@kloudlite/ui'
 interface PinnedWorkspace {
   id: string
   name: string
+  hash: string
   environment: string
   status: 'active' | 'idle'
 }
@@ -59,7 +60,7 @@ export function PinnedResources({
                 onMouseLeave={() => setHoveredWorkspace(null)}
               >
                 <div className="flex items-center justify-between">
-                  <Link href={`/workspaces/${workspace.id}`} className="min-w-0 flex-1">
+                  <Link href={`/workspaces/${workspace.hash}`} className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
                       <div className="bg-info/10 dark:bg-info/20 rounded-lg p-2">
                         <Code2 className="text-info h-4 w-4" />
@@ -97,7 +98,7 @@ export function PinnedResources({
                         <PinOff className="h-3 w-3" />
                       </Button>
                     )}
-                    <Link href={`/workspaces/${workspace.id}`}>
+                    <Link href={`/workspaces/${workspace.hash}`}>
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                         <ExternalLink className="h-3 w-3" />
                       </Button>

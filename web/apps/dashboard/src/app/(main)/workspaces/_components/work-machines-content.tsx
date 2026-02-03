@@ -87,6 +87,7 @@ interface MachineType {
 interface PinnedWorkspace {
   id: string
   name: string
+  hash: string
   environment: string
   status: 'active' | 'idle'
 }
