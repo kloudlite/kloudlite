@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { environmentRepository, workMachineRepository } from '@kloudlite/lib/k8s'
+import { environmentRepository, workMachineRepository, userPreferencesRepository, serviceRepository } from '@kloudlite/lib/k8s'
 import type { Environment } from '@kloudlite/lib/k8s'
 import { compositionService } from '@/lib/services/composition.service'
 import { environmentService } from '@/lib/services/environment.service'
@@ -31,6 +31,60 @@ async function getWorkMachineNamespace(): Promise<string> {
 
   // Return the WorkMachine's own namespace (wm-*), not the targetNamespace
   return workMachine.metadata.namespace || `wm-${session.user.username}`
+}
+
+/**
+ * Server action to get full environments list with work machine and preferences
+ */
+export async function getEnvironmentsListFull() {
+  try {
+    const session = await getSession()
+    const username = session?.user?.username || session?.user?.email || ''
+
+    // Fetch work machine and preferences in parallel
+    const [workMachineResult, preferencesResult] = await Promise.all([
+      workMachineRepository.getByOwner(username).catch(() => null),
+      userPreferencesRepository.getByUser(username).catch(() => null),
+    ])
+
+    // Get namespace from work machine
+    const namespace = workMachineResult?.metadata?.namespace || `wm-${username}`
+
+    // Fetch environments
+    const environmentsResult = await environmentRepository.list(namespace).catch(() => ({ items: [] }))
+
+    // Get pinned environment names from preferences
+    const pinnedEnvironmentIds = preferencesResult?.spec?.pinnedEnvironments || []
+
+    // Check if work machine is running
+    const workMachineRunning = workMachineResult?.status?.state === 'running' &&
+      workMachineResult?.status?.isReady === true
+
+    return {
+      success: true,
+      data: {
+        environments: environmentsResult.items || [],
+        workMachine: workMachineResult,
+        preferences: preferencesResult,
+        pinnedEnvironmentIds,
+        workMachineRunning,
+      },
+    }
+  } catch (err) {
+    console.error('Get environments list full error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+      data: {
+        environments: [],
+        workMachine: null,
+        preferences: null,
+        pinnedEnvironmentIds: [],
+        workMachineRunning: false,
+      },
+    }
+  }
 }
 
 /**
@@ -466,6 +520,51 @@ export async function updateEnvironmentAccess(
     return result
   } catch (err) {
     console.error('Update environment access error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
+ * Server action to get environment details (environment + services + composition)
+ */
+export async function getEnvironmentDetails(name: string) {
+  try {
+    const namespace = await getWorkMachineNamespace()
+
+    // Fetch environment and compose in parallel
+    const [environment, composeResult] = await Promise.all([
+      environmentRepository.get(namespace, name),
+      environmentService.getCompose(name).catch(() => ({ compose: null, composeStatus: null })),
+    ])
+
+    // Get services from the target namespace if environment is active
+    let services: import('@kloudlite/types').K8sService[] = []
+    const targetNamespace = environment.spec?.targetNamespace
+    if (targetNamespace && environment.status?.state === 'active') {
+      try {
+        services = await serviceRepository.list(targetNamespace)
+      } catch (err) {
+        console.error('Failed to fetch services:', err)
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        environment,
+        services,
+        compose: composeResult.compose,
+        composeStatus: composeResult.composeStatus,
+        namespace: targetNamespace || '',
+        isActive: environment.status?.state === 'active',
+      },
+    }
+  } catch (err) {
+    console.error('Get environment details error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,

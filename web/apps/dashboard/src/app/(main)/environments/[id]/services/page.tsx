@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
-import { getEnvironmentDetails } from '@/lib/services/dashboard.service'
+import { getEnvironmentDetails } from '@/app/actions/environment.actions'
 
 interface PageProps {
   params: Promise<{
@@ -18,9 +18,11 @@ export default async function ServicesPage({ params }: PageProps) {
 
   const { id } = await params
 
-  // Single API call to get environment, services, and compose
-  try {
-    const data = await getEnvironmentDetails(id)
+  // Fetch environment details using server action
+  const result = await getEnvironmentDetails(id)
+
+  if (result.success && result.data) {
+    const data = result.data
 
     return (
       <ServicesList
@@ -29,24 +31,24 @@ export default async function ServicesPage({ params }: PageProps) {
         environmentName={id}
         compose={data.compose}
         composeStatus={data.composeStatus}
-        envHash={data.envHash}
-        subdomain={data.subdomain}
+        envHash=""
+        subdomain=""
         isEnvActive={data.isActive}
       />
     )
-  } catch (error) {
-    console.error('Failed to fetch environment details:', error)
-    return (
-      <ServicesList
-        services={[]}
-        namespace={id}
-        environmentName={id}
-        compose={null}
-        composeStatus={null}
-        envHash=""
-        subdomain=""
-        isEnvActive={false}
-      />
-    )
   }
+
+  // Fallback if fetching fails
+  return (
+    <ServicesList
+      services={[]}
+      namespace={id}
+      environmentName={id}
+      compose={null}
+      composeStatus={null}
+      envHash=""
+      subdomain=""
+      isEnvActive={false}
+    />
+  )
 }

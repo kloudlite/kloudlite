@@ -1,15 +1,72 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { workspaceRepository, packageRequestRepository } from '@kloudlite/lib/k8s'
+import { workspaceRepository, packageRequestRepository, workMachineRepository, userPreferencesRepository } from '@kloudlite/lib/k8s'
 import type { Workspace } from '@kloudlite/lib/k8s'
 import { workspaceService } from '@/lib/services/workspace.service'
+import { getSession } from '@/lib/get-session'
 import {
   workspaceCreateSchema,
   workspaceUpdateSchema,
   workspaceNameSchema,
   packageUpdateSchema,
 } from '@/lib/validations'
+
+/**
+ * Server action to get full workspaces list with work machine and preferences
+ */
+export async function getWorkspacesListFull() {
+  try {
+    const session = await getSession()
+    const username = session?.user?.username || session?.user?.email || ''
+
+    // Fetch work machine and preferences in parallel
+    const [workMachineResult, preferencesResult] = await Promise.all([
+      workMachineRepository.getByOwner(username).catch(() => null),
+      userPreferencesRepository.getByUser(username).catch(() => null),
+    ])
+
+    // Get namespace from work machine
+    const namespace = workMachineResult?.spec?.targetNamespace || 'default'
+
+    // Fetch workspaces
+    const workspacesResult = await workspaceRepository.list(namespace).catch(() => ({ items: [] }))
+
+    // Get pinned workspace IDs from preferences
+    const pinnedWorkspaceIds = preferencesResult?.spec?.pinnedWorkspaces?.map(
+      (ws) => `${ws.namespace}/${ws.name}`
+    ) || []
+
+    // Check if work machine is running
+    const workMachineRunning = workMachineResult?.status?.state === 'running' &&
+      workMachineResult?.status?.isReady === true
+
+    return {
+      success: true,
+      data: {
+        workspaces: workspacesResult.items || [],
+        workMachine: workMachineResult,
+        preferences: preferencesResult,
+        pinnedWorkspaceIds,
+        workMachineRunning,
+      },
+    }
+  } catch (err) {
+    console.error('Get workspaces list full error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+      data: {
+        workspaces: [],
+        workMachine: null,
+        preferences: null,
+        pinnedWorkspaceIds: [],
+        workMachineRunning: false,
+      },
+    }
+  }
+}
 
 /**
  * Server action to list workspaces
