@@ -84,9 +84,22 @@ export async function getEnvVars(environmentName: string): Promise<GetEnvVarsRes
       secretRepository.list(targetNamespace).catch(() => []),
     ])
 
+    // Filter to only environment-specific ConfigMaps (with kloudlite.io/resource-type: config label)
+    const envConfigMaps = configMaps.filter(
+      (cm) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'config'
+    )
+
+    // Filter to only environment-specific Secrets (with kloudlite.io/resource-type: secret label)
+    // Exclude system secrets like service account tokens
+    const envSecrets = secrets.filter(
+      (secret) =>
+        secret.metadata?.labels?.['kloudlite.io/resource-type'] === 'secret' &&
+        secret.type !== 'kubernetes.io/service-account-token'
+    )
+
     // Convert ConfigMaps to EnvVars with type 'config'
     const configEnvVars: EnvVar[] = []
-    for (const cm of configMaps) {
+    for (const cm of envConfigMaps) {
       const data = cm.data || {}
       for (const [key, value] of Object.entries(data)) {
         configEnvVars.push({
@@ -99,7 +112,7 @@ export async function getEnvVars(environmentName: string): Promise<GetEnvVarsRes
 
     // Convert Secrets to EnvVars with type 'secret'
     const secretEnvVars: EnvVar[] = []
-    for (const secret of secrets) {
+    for (const secret of envSecrets) {
       const data = secret.data || {}
       for (const [key, value] of Object.entries(data)) {
         // Secrets are base64 encoded in Kubernetes
