@@ -20,10 +20,36 @@ const namespaceSchema = z
     'Namespace must be a valid Kubernetes namespace name'
   )
 
+// Git URL validation - accepts both HTTPS and SSH formats
+const gitUrlSchema = z.string().refine(
+  (url) => {
+    if (!url) return true
+    // Accept HTTPS URLs
+    if (url.startsWith('https://') || url.startsWith('http://')) {
+      try {
+        new URL(url)
+        return true
+      } catch {
+        return false
+      }
+    }
+    // Accept SSH format: git@host:user/repo.git
+    if (/^git@[\w.-]+:[\w./-]+\.git$/.test(url)) {
+      return true
+    }
+    // Accept SSH format without .git suffix
+    if (/^git@[\w.-]+:[\w./-]+$/.test(url)) {
+      return true
+    }
+    return false
+  },
+  { message: 'Git URL must be a valid HTTPS or SSH URL' }
+)
+
 // Git repository schema
 const gitRepositorySchema = z
   .object({
-    url: z.string().url('Git URL must be a valid URL'),
+    url: gitUrlSchema,
     branch: z.string().optional(),
   })
   .optional()
