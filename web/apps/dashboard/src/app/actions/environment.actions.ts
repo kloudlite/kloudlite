@@ -606,12 +606,20 @@ export async function updateEnvironmentCompose(
   try {
     const namespace = await getWorkMachineNamespace()
 
-    // Use patch to update only the compose field
-    const result = await environmentRepository.patch(namespace, name, {
+    // Read-modify-write pattern: get environment, update compose, then save
+    const environment = await environmentRepository.get(namespace, name)
+
+    // Update the compose field
+    const updatedEnvironment = {
+      ...environment,
       spec: {
+        ...environment.spec,
         compose,
       },
-    })
+    }
+
+    // Save back using update (full replace)
+    const result = await environmentRepository.update(namespace, name, updatedEnvironment)
 
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
