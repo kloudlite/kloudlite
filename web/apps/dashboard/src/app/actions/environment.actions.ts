@@ -535,11 +535,8 @@ export async function getEnvironmentDetails(name: string) {
   try {
     const namespace = await getWorkMachineNamespace()
 
-    // Fetch environment and compose in parallel
-    const [environment, composeResult] = await Promise.all([
-      environmentRepository.get(namespace, name),
-      environmentService.getCompose(name).catch(() => ({ compose: null, composeStatus: null })),
-    ])
+    // Fetch environment
+    const environment = await environmentRepository.get(namespace, name)
 
     // Get services from the target namespace if environment is active
     let services: import('@kloudlite/types').K8sService[] = []
@@ -557,8 +554,8 @@ export async function getEnvironmentDetails(name: string) {
       data: {
         environment,
         services,
-        compose: composeResult.compose,
-        composeStatus: composeResult.composeStatus,
+        compose: environment.spec?.compose || null,
+        composeStatus: environment.status?.composeStatus || null,
         namespace: targetNamespace || '',
         isActive: environment.status?.state === 'active',
       },
@@ -578,8 +575,17 @@ export async function getEnvironmentDetails(name: string) {
  */
 export async function getEnvironmentCompose(name: string) {
   try {
-    const result = await environmentService.getCompose(name)
-    return { success: true, data: result }
+    const namespace = await getWorkMachineNamespace()
+    const environment = await environmentRepository.get(namespace, name)
+
+    return {
+      success: true,
+      data: {
+        name,
+        compose: environment.spec?.compose || null,
+        composeStatus: environment.status?.composeStatus || null,
+      },
+    }
   } catch (err) {
     console.error('Get environment compose error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -598,10 +604,26 @@ export async function updateEnvironmentCompose(
   compose: import('@kloudlite/types').CompositionSpec | null,
 ) {
   try {
-    const result = await environmentService.updateCompose(name, compose)
+    const namespace = await getWorkMachineNamespace()
+
+    // Use patch to update only the compose field
+    const result = await environmentRepository.patch(namespace, name, {
+      spec: {
+        compose,
+      },
+    })
+
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
-    return { success: true, data: result }
+
+    return {
+      success: true,
+      data: {
+        message: 'Composition updated successfully',
+        compose: result.spec?.compose || null,
+        composeStatus: result.status?.composeStatus || null,
+      },
+    }
   } catch (err) {
     console.error('Update environment compose error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
