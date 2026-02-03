@@ -92,7 +92,15 @@ export async function getWorkspaceByHash(hashOrName: string) {
     // Try to find by hash using label selector (efficient)
     let workspace = await workspaceRepository.getByHash(namespace, hashOrName)
 
-    // Fallback: try direct name lookup if hash not found
+    // Fallback 1: search by status.hash for workspaces without the label yet
+    if (!workspace) {
+      const workspacesList = await workspaceRepository.list(namespace)
+      workspace = workspacesList.items?.find(
+        (ws) => ws.status?.hash === hashOrName
+      ) || null
+    }
+
+    // Fallback 2: try direct name lookup
     if (!workspace) {
       try {
         workspace = await workspaceRepository.get(namespace, hashOrName)
