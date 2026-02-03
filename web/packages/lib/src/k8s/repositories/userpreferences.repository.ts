@@ -1,5 +1,5 @@
-import { BaseRepository, type ListOptions } from './base';
-import type { UserPreferences, UserPreferencesList, ResourceReference } from '../types/user';
+import { BaseRepository } from './base';
+import type { UserPreferences, ResourceReference } from '../types/user';
 import { parseK8sError, NotFoundError } from '../errors';
 
 /**

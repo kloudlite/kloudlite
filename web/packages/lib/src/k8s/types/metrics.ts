@@ -2,7 +2,7 @@
  * Kubernetes metrics types (from metrics-server)
  */
 
-import type { K8sResource, K8sList, ObjectMeta } from './common';
+import type { K8sResource, K8sList } from './common';
 
 export interface PodMetrics extends K8sResource<never, never> {
   kind: 'PodMetrics';

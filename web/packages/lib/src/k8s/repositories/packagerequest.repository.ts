@@ -1,5 +1,5 @@
 import { BaseRepository, type ListOptions } from './base';
-import type { PackageRequest, PackageRequestList, PackageSpec } from '../types/packages';
+import type { PackageRequest, PackageRequestList, PackageSpec, PackageRequestPhase } from '../types/packages';
 import { buildLabelSelector } from '../utils';
 import { parseK8sError } from '../errors';
 
@@ -36,7 +36,7 @@ export class PackageRequestRepository extends BaseRepository<PackageRequest> {
    */
   async listByPhase(
     namespace: string,
-    phase: PackageRequest['status']['phase'],
+    phase: PackageRequestPhase,
     options?: ListOptions
   ): Promise<PackageRequestList> {
     try {
@@ -48,7 +48,7 @@ export class PackageRequestRepository extends BaseRepository<PackageRequest> {
       return {
         ...all,
         items: filtered,
-      };
+      } as PackageRequestList;
     } catch (err) {
       throw parseK8sError(err);
     }

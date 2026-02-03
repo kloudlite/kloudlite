@@ -1,7 +1,7 @@
-import type { KubernetesObject, V1DeleteOptions, V1Status } from '@kubernetes/client-node';
+import type { V1DeleteOptions, V1Status } from '@kubernetes/client-node';
 import { getK8sClient } from '../client';
-import { parseK8sError, NotFoundError, ConflictError } from '../errors';
-import type { K8sResource, K8sList, ObjectMeta } from '../types/common';
+import { parseK8sError, NotFoundError } from '../errors';
+import type { K8sResource, K8sList } from '../types/common';
 
 /**
  * Options for list operations
@@ -118,7 +118,7 @@ export abstract class BaseRepository<T extends K8sResource> {
           labelSelector: opts?.labelSelector,
           fieldSelector: opts?.fieldSelector,
           limit: opts?.limit,
-          continue: opts?.continue,
+          _continue: opts?.continue,
           timeoutSeconds: opts?.timeoutSeconds,
         });
         return response as unknown as K8sList<T>;
@@ -132,7 +132,7 @@ export abstract class BaseRepository<T extends K8sResource> {
           labelSelector: opts?.labelSelector,
           fieldSelector: opts?.fieldSelector,
           limit: opts?.limit,
-          continue: opts?.continue,
+          _continue: opts?.continue,
           timeoutSeconds: opts?.timeoutSeconds,
         });
 
@@ -237,14 +237,13 @@ export abstract class BaseRepository<T extends K8sResource> {
     namespaceOrName: string,
     nameOrPatch: string | object,
     patchOrType?: object | PatchType,
-    patchTypeOrOptions?: PatchType | PatchOptions,
-    options?: PatchOptions
+    _patchTypeOrOptions?: PatchType | PatchOptions,
+    _options?: PatchOptions
   ): Promise<T> {
     try {
       if (this.namespaced && typeof nameOrPatch === 'string') {
         // Namespaced resource - use object parameters API
         const patch = patchOrType as object;
-        const patchType = (patchTypeOrOptions as PatchType) || 'application/merge-patch+json';
 
         const response = await this.client.custom.patchNamespacedCustomObject({
           group: this.group,
@@ -253,15 +252,11 @@ export abstract class BaseRepository<T extends K8sResource> {
           plural: this.plural,
           name: nameOrPatch,
           body: patch,
-          options: {
-            headers: { 'Content-Type': patchType },
-          },
         });
         return response as unknown as T;
       } else if (!this.namespaced && typeof nameOrPatch === 'object') {
         // Cluster-scoped resource
         const patch = nameOrPatch;
-        const patchType = (patchOrType as PatchType) || 'application/merge-patch+json';
 
         const response = await this.client.custom.patchClusterCustomObject({
           group: this.group,
@@ -269,9 +264,6 @@ export abstract class BaseRepository<T extends K8sResource> {
           plural: this.plural,
           name: namespaceOrName,
           body: patch,
-          options: {
-            headers: { 'Content-Type': patchType },
-          },
         });
         return response as unknown as T;
       } else {
@@ -302,9 +294,6 @@ export abstract class BaseRepository<T extends K8sResource> {
           plural: this.plural,
           name: nameOrResource,
           body: resource as object,
-          options: {
-            headers: { 'Content-Type': 'application/merge-patch+json' },
-          },
         });
         return response as unknown as T;
       } else if (!this.namespaced && typeof nameOrResource === 'object') {
@@ -315,9 +304,6 @@ export abstract class BaseRepository<T extends K8sResource> {
           plural: this.plural,
           name: namespaceOrName,
           body: nameOrResource as object,
-          options: {
-            headers: { 'Content-Type': 'application/merge-patch+json' },
-          },
         });
         return response as unknown as T;
       } else {

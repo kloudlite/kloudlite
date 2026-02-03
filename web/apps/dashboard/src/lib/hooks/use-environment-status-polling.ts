@@ -5,11 +5,9 @@ import { getEnvironmentStatus } from '@/app/actions/environment-status.actions'
 
 export interface EnvironmentStatus {
   name: string
-  phase: string
   state: string
-  isReady: boolean
+  activated: boolean
   message?: string
-  namespace?: string
   conditions: Array<{
     type: string
     status: string
@@ -18,7 +16,7 @@ export interface EnvironmentStatus {
   resourceCount: {
     deployments: number
     services: number
-    configMaps: number
+    configmaps: number
     secrets: number
   }
   lastUpdated: string
@@ -42,7 +40,7 @@ export function useEnvironmentStatusPolling(
   const [status, setStatus] = useState<EnvironmentStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   useEffect(() => {
     if (!enabled || !envName) {
@@ -54,7 +52,7 @@ export function useEnvironmentStatusPolling(
         const result = await getEnvironmentStatus(envName)
 
         if (result.success && result.data) {
-          setStatus(result.data as EnvironmentStatus)
+          setStatus(result.data)
           setError(null)
         } else {
           setError(result.error || 'Failed to fetch environment status')

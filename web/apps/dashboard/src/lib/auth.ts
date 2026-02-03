@@ -257,10 +257,6 @@ export const authConfig: NextAuthConfig = {
     maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
-  trustHost: true,
-  pages: {
-    signIn: '/auth/signin',
-  },
 }
 
 const nextAuth = NextAuth(authConfig)

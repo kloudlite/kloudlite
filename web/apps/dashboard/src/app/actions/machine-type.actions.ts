@@ -10,7 +10,7 @@ import type { MachineTypeCreateRequest, MachineTypeUpdateRequest } from '@kloudl
  */
 export async function listMachineTypes() {
   try {
-    const result = await machineTypeRepository.list('')
+    const result = await machineTypeRepository.list()
     return { success: true, data: result.items }
   } catch (err) {
     console.error('List machine types error:', err)
@@ -27,7 +27,7 @@ export async function listMachineTypes() {
  */
 export async function getMachineType(name: string) {
   try {
-    const result = await machineTypeRepository.get('', name)
+    const result = await machineTypeRepository.get(name)
     return { success: true, data: result }
   } catch (err) {
     console.error('Get machine type error:', err)
@@ -44,18 +44,28 @@ export async function getMachineType(name: string) {
  */
 export async function createMachineType(data: MachineTypeCreateRequest) {
   try {
+    const { name, ...specData } = data
     const machineType: MachineType = {
       apiVersion: 'machines.kloudlite.io/v1',
       kind: 'MachineType',
       metadata: {
-        name: data.name,
+        name,
       },
       spec: {
-        ...data.spec,
+        displayName: specData.displayName || name,
+        description: specData.description,
+        category: specData.category,
+        resources: {
+          cpu: `${specData.cpu}`,
+          memory: `${specData.memory}`,
+          gpu: specData.gpu ? `${specData.gpu}` : undefined,
+        },
+        active: specData.active ?? true,
+        isDefault: false,
       },
     }
 
-    const result = await machineTypeRepository.create('', machineType)
+    const result = await machineTypeRepository.create(machineType)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -73,9 +83,22 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
  */
 export async function updateMachineType(name: string, data: MachineTypeUpdateRequest) {
   try {
+    // Convert update request to spec format
+    const specUpdate: any = {}
+    if (data.displayName !== undefined) specUpdate.displayName = data.displayName
+    if (data.description !== undefined) specUpdate.description = data.description
+    if (data.category !== undefined) specUpdate.category = data.category
+    if (data.active !== undefined) specUpdate.active = data.active
+    if (data.cpu !== undefined || data.memory !== undefined || data.gpu !== undefined) {
+      specUpdate.resources = {}
+      if (data.cpu !== undefined) specUpdate.resources.cpu = `${data.cpu}`
+      if (data.memory !== undefined) specUpdate.resources.memory = `${data.memory}`
+      if (data.gpu !== undefined) specUpdate.resources.gpu = `${data.gpu}`
+    }
+
     // Use patch for partial updates
-    const result = await machineTypeRepository.patch('', name, {
-      spec: data.spec,
+    const result = await machineTypeRepository.patch(name, {
+      spec: specUpdate,
     })
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
@@ -94,7 +117,7 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
  */
 export async function deleteMachineType(name: string) {
   try {
-    await machineTypeRepository.delete('', name)
+    await machineTypeRepository.delete(name)
     revalidatePath('/admin/machine-configs')
     return { success: true }
   } catch (err) {
@@ -112,7 +135,7 @@ export async function deleteMachineType(name: string) {
  */
 export async function activateMachineType(name: string) {
   try {
-    const result = await machineTypeRepository.activate('', name)
+    const result = await machineTypeRepository.activate(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -130,7 +153,7 @@ export async function activateMachineType(name: string) {
  */
 export async function deactivateMachineType(name: string) {
   try {
-    const result = await machineTypeRepository.deactivate('', name)
+    const result = await machineTypeRepository.deactivate(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -148,7 +171,7 @@ export async function deactivateMachineType(name: string) {
  */
 export async function setMachineTypeAsDefault(name: string) {
   try {
-    const result = await machineTypeRepository.setAsDefault('', name)
+    const result = await machineTypeRepository.setDefault(name)
     revalidatePath('/admin/machine-configs')
     revalidatePath('/')
     return { success: true, data: result }

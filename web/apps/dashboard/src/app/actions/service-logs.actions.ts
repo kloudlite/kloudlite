@@ -19,7 +19,7 @@ export async function getServiceLogs(
     const client = getK8sClient()
 
     // Get pods for the service
-    const { body: podList } = await client.core.listNamespacedPod({
+    const podList = await client.core.listNamespacedPod({
       namespace,
       labelSelector: `app=${serviceName}`,
     })
@@ -35,7 +35,7 @@ export async function getServiceLogs(
     const pod = podList.items[0]
     const podName = pod.metadata!.name!
 
-    const { body: logs } = await client.core.readNamespacedPodLog({
+    const logs = await client.core.readNamespacedPodLog({
       name: podName,
       namespace,
       tailLines: options?.tailLines || 100,

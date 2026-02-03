@@ -145,8 +145,8 @@ export function UserManagementList({
       if (result.success) {
         setUsernameStatus({
           checking: false,
-          available: result.available ?? null,
-          suggested: result.suggested ?? null,
+          available: result.data?.available ?? null,
+          suggested: null,
         })
       } else {
         setUsernameStatus({
@@ -238,8 +238,8 @@ export function UserManagementList({
         if (editingUser) {
           // Update existing user
           const result = await updateUser(editingUser.id, formData)
-          if (result.success && result.user) {
-            setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? result.user! : u)))
+          if (result.success && result.data) {
+            setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? result.data as any : u)))
             toast.success('User updated successfully')
             resetForm()
           } else {
@@ -248,9 +248,9 @@ export function UserManagementList({
           }
         } else {
           // Create new user
-          const result = await createUser(formData)
-          if (result.success && result.user) {
-            setUsers((prev) => [...prev, result.user!])
+          const result = await createUser(formData as any)
+          if (result.success && result.data) {
+            setUsers((prev) => [...prev, result.data as any])
             toast.success('User created successfully')
             resetForm()
           } else {

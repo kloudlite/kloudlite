@@ -111,7 +111,7 @@ export class WorkMachineRepository extends BaseRepository<WorkMachine> {
       return {
         ...all,
         items: filtered,
-      };
+      } as WorkMachineList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -130,7 +130,7 @@ export class WorkMachineRepository extends BaseRepository<WorkMachine> {
       return {
         ...all,
         items: filtered,
-      };
+      } as WorkMachineList;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -241,10 +241,10 @@ export class WorkMachineRepository extends BaseRepository<WorkMachine> {
    * Get machine metrics (CPU, memory, GPU usage)
    * Returns the resource allocation information
    */
-  async getMetrics(name: string): Promise<WorkMachine['status']['allocatedResources'] | null> {
+  async getMetrics(name: string): Promise<any> {
     try {
       const machine = await this.get(name);
-      return machine.status?.allocatedResources || null;
+      return (machine.status as any)?.allocatedResources || null;
     } catch (err) {
       throw parseK8sError(err);
     }

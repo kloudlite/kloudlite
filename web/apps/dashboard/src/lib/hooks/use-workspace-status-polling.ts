@@ -39,7 +39,7 @@ export function useWorkspaceStatusPolling(
   const [status, setStatus] = useState<WorkspaceStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   useEffect(() => {
     if (!enabled || !namespace || !workspaceName) {
