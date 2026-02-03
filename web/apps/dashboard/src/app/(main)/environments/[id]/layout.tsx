@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
-import { getEnvironmentDetails } from '@/lib/services/dashboard.service'
+import { getEnvironmentDetails } from '@/app/actions/environment.actions'
 import { EnvironmentStatusIndicator } from '@/components/environment-status-indicator'
 import { EnvironmentSnapshotsSheet } from '../_components/environment-snapshots-sheet'
 
@@ -45,24 +45,23 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   // Await params (required in Next.js 15)
   const { id } = await params
 
-  // Fetch real environment data using the cached getEnvironmentDetails
-  // This allows child pages (like services) to share the same cached call
+  // Fetch real environment data using server action
   let environment
-  try {
-    const data = await getEnvironmentDetails(id)
-    const env = data.environment
+  const result = await getEnvironmentDetails(id)
+
+  if (result.success && result.data) {
+    const env = result.data.environment
 
     environment = {
       id,
-      name: env.metadata.name,
-      displayName: `${env.spec.ownedBy || 'unknown'}/${env.metadata.name}`,
-      owner: env.spec.ownedBy || 'unknown',
+      name: env.metadata!.name!,
+      displayName: `${env.spec!.ownedBy || 'unknown'}/${env.metadata!.name}`,
+      owner: env.spec!.ownedBy || 'unknown',
       status: env.status?.state || 'unknown',
-      created: formatTimeAgo(env.metadata.creationTimestamp),
+      created: formatTimeAgo(env.metadata!.creationTimestamp),
     }
-  } catch (error) {
-    console.error('Failed to fetch environment:', error)
-    // Fallback to basic data if API fails
+  } else {
+    // Fallback to basic data if fetching fails
     environment = {
       id,
       name: id,
