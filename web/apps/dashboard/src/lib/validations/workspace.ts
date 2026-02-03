@@ -87,10 +87,11 @@ const environmentConnectionSchema = z
 const visibilitySchema = z.enum(['private', 'shared', 'open']).optional()
 
 // Workspace spec schema - only fields used by controller
+// Note: ownedBy and workmachine are set securely by the server action from the session
 export const workspaceSpecSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name too long'),
-  ownedBy: z.string().min(1, 'Owner is required'),
-  workmachine: z.string().optional(), // Auto-populated from namespace by webhook
+  ownedBy: z.string().optional(), // Set by server from authenticated session
+  workmachine: z.string().optional(), // Set by server from authenticated session
   visibility: visibilitySchema,
   sharedWith: z.array(z.string()).optional(),
   environmentConnection: environmentConnectionSchema,

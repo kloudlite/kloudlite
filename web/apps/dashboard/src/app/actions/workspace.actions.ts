@@ -167,8 +167,27 @@ export async function getWorkspace(name: string, namespace: string = 'default') 
 
 /**
  * Server action to create a workspace
+ * Security: ownedBy and workmachine are derived from the authenticated session,
+ * not from frontend input, to prevent privilege escalation
  */
-export async function createWorkspace(namespace: string, data: unknown) {
+export async function createWorkspace(data: unknown) {
+  // Get authenticated session
+  const session = await getSession()
+  if (!session?.user) {
+    return {
+      success: false,
+      error: 'Not authenticated',
+    }
+  }
+
+  const username = session.user.username || session.user.email || ''
+  if (!username) {
+    return {
+      success: false,
+      error: 'Unable to determine username',
+    }
+  }
+
   // Validate input
   const validated = workspaceCreateSchema.safeParse(data)
   if (!validated.success) {
@@ -179,9 +198,21 @@ export async function createWorkspace(namespace: string, data: unknown) {
   }
 
   try {
+    // Get the user's work machine to determine namespace
+    const workMachine = await workMachineRepository.getByOwner(username)
+    if (!workMachine) {
+      return {
+        success: false,
+        error: 'No work machine found. Please set up your work machine first.',
+      }
+    }
+
+    const namespace = workMachine.spec?.targetNamespace || 'default'
+    const workmachineName = workMachine.metadata?.name || `wm-${username}`
+
     const createData = validated.data as import('@kloudlite/types').WorkspaceCreateRequest
 
-    // Build Workspace CRD object
+    // Build Workspace CRD object with secure values from session
     const workspace: Workspace = {
       apiVersion: 'workspaces.kloudlite.io/v1',
       kind: 'Workspace',
@@ -191,6 +222,9 @@ export async function createWorkspace(namespace: string, data: unknown) {
       },
       spec: {
         ...createData.spec,
+        // Override with secure values from session - don't trust frontend
+        ownedBy: username,
+        workmachine: workmachineName,
       },
     }
 
