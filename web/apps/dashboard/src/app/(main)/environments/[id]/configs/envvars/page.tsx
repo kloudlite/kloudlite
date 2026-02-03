@@ -1,5 +1,6 @@
 import { EnvVarsList } from '../../../_components/envvars-list'
 import { getEnvVars } from '@/app/actions/environment-config'
+import { getEnvironmentByHash } from '@/app/actions/environment.actions'
 import { AlertCircle } from 'lucide-react'
 
 interface PageProps {
@@ -22,12 +23,20 @@ function EnvVarsError({ error }: { error: string }) {
 }
 
 export default async function EnvVarsPage({ params }: PageProps) {
-  const { id } = await params
+  // id is now the environment hash
+  const { id: hash } = await params
   try {
-    const result = await getEnvVars(id)
+    // First get the environment name from the hash
+    const envResult = await getEnvironmentByHash(hash)
+    if (!envResult.success || !envResult.data) {
+      return <EnvVarsError error="Environment not found" />
+    }
+    const environmentName = envResult.data.environment.metadata?.name || ''
+
+    const result = await getEnvVars(environmentName)
     const envVars = result.envVars || []
 
-    return <EnvVarsList environmentId={id} envVars={envVars} />
+    return <EnvVarsList environmentId={environmentName} envVars={envVars} />
   } catch (error) {
     return (
       <EnvVarsError

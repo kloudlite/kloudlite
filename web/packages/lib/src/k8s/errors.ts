@@ -70,7 +70,7 @@ export function parseK8sError(err: unknown): K8sError {
     // Try to extract status code from various error formats
     let statusCode: number | undefined;
     let body: any;
-    let message: string;
+    let message: string = 'Unknown error';
 
     // Check for statusCode in response or directly on error
     if (error.response?.statusCode || error.statusCode) {

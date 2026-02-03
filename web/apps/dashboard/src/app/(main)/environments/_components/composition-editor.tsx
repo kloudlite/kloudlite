@@ -3,17 +3,13 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { Loader2, Save, Pencil } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
-import { Label } from '@kloudlite/ui'
 import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
-  SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@kloudlite/ui'
 import { updateEnvironmentCompose } from '@/app/actions/environment.actions'
 import { toast } from 'sonner'
@@ -97,12 +93,6 @@ export function CompositionEditor({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-2">
-          <Pencil className="h-4 w-4" />
-          Composition
-        </Button>
-      </SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-3xl flex flex-col p-0">
         {/* Header */}
         <div className="border-b px-6 py-5">

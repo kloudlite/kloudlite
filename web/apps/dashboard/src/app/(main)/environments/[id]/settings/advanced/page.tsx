@@ -1,4 +1,4 @@
-import { AccessSettings } from '../../../_components/access-settings'
+import { AdvancedSettings } from '../../../_components/advanced-settings'
 import { getEnvironmentByHash } from '@/app/actions/environment.actions'
 
 interface PageProps {
@@ -7,7 +7,7 @@ interface PageProps {
   }>
 }
 
-export default async function AccessSettingsPage({ params }: PageProps) {
+export default async function AdvancedSettingsPage({ params }: PageProps) {
   // id is now the environment hash
   const { id: hash } = await params
 
@@ -18,22 +18,21 @@ export default async function AccessSettingsPage({ params }: PageProps) {
     const environmentName = env.metadata?.name || ''
 
     return (
-      <AccessSettings
+      <AdvancedSettings
         environmentId={environmentName}
-        visibility={env.spec?.visibility || 'private'}
-        sharedWith={env.spec?.sharedWith || []}
-        owner={env.spec?.ownedBy || 'unknown'}
+        resourceLimits={{
+          cpu: env.spec?.resourceQuotas?.['limits.cpu'] || '',
+          memory: env.spec?.resourceQuotas?.['limits.memory'] || '',
+        }}
       />
     )
   }
 
   // Fallback if fetching fails
   return (
-    <AccessSettings
+    <AdvancedSettings
       environmentId=""
-      visibility="private"
-      sharedWith={[]}
-      owner="unknown"
+      resourceLimits={{ cpu: '', memory: '' }}
     />
   )
 }

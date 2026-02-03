@@ -1,5 +1,5 @@
 import { DangerSettings } from '../../../_components/danger-settings'
-import { getEnvironmentDetails } from '@/app/actions/environment.actions'
+import { getEnvironmentByHash } from '@/app/actions/environment.actions'
 
 interface PageProps {
   params: Promise<{
@@ -8,17 +8,19 @@ interface PageProps {
 }
 
 export default async function DangerSettingsPage({ params }: PageProps) {
-  const { id } = await params
+  // id is now the environment hash
+  const { id: hash } = await params
 
-  const result = await getEnvironmentDetails(id)
+  const result = await getEnvironmentByHash(hash)
 
   if (result.success && result.data) {
     const env = result.data.environment
+    const environmentName = env.metadata?.name || ''
 
     return (
       <DangerSettings
-        environmentId={id}
-        environmentName={`${env.spec?.ownedBy}/${env.metadata?.name}`}
+        environmentId={environmentName}
+        environmentName={`${env.spec?.ownedBy}/${environmentName}`}
       />
     )
   }
@@ -26,8 +28,8 @@ export default async function DangerSettingsPage({ params }: PageProps) {
   // Fallback if fetching fails
   return (
     <DangerSettings
-      environmentId={id}
-      environmentName={id}
+      environmentId=""
+      environmentName=""
     />
   )
 }

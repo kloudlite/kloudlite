@@ -265,6 +265,7 @@ export interface DeleteFileResponse {
 export interface EnvironmentUIModel {
   id: string
   name: string
+  hash: string
   owner: string
   status: 'active' | 'inactive' | 'activating' | 'deactivating' | 'snapping' | 'deleting' | 'error' | 'forking'
   created: string
@@ -326,6 +327,7 @@ export function environmentToUIModel(env: Environment, owner?: string): Environm
   return {
     id: env.metadata?.name || '',
     name: env.metadata?.name || '',
+    hash: env.status?.hash || '',
     owner: resolvedOwner,
     status,
     created: createdText,

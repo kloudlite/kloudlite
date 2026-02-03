@@ -5,27 +5,6 @@ import { getMyWorkMachine } from '@/app/actions/work-machine.actions'
 import { setThemeCookie } from '@/app/actions/theme'
 
 /**
- * Fetches work machine status - separated to allow independent loading
- */
-async function WorkMachineStatusProvider({
-  children,
-}: {
-  children: (props: { hasWorkMachine: boolean; isWorkMachineRunning: boolean }) => React.ReactNode
-}) {
-  const workMachineResult = await getMyWorkMachine()
-  const hasWorkMachine = workMachineResult.success && !!workMachineResult.data
-
-  let isWorkMachineRunning = false
-  if (hasWorkMachine && workMachineResult.data) {
-    const state = workMachineResult.data.status?.state || workMachineResult.data.spec.state
-    const isReady = workMachineResult.data.status?.isReady ?? false
-    isWorkMachineRunning = state === 'running' && isReady
-  }
-
-  return <>{children({ hasWorkMachine, isWorkMachineRunning })}</>
-}
-
-/**
  * Inner navigation that receives work machine status
  */
 async function NavigationWithWorkMachineStatus({

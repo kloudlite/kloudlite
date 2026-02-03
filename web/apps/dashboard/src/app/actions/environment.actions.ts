@@ -529,6 +529,59 @@ export async function updateEnvironmentAccess(
 }
 
 /**
+ * Server action to get an environment by its hash
+ * The hash is a unique 8-char hex identifier generated from envName-owner
+ */
+export async function getEnvironmentByHash(hash: string) {
+  try {
+    const namespace = await getWorkMachineNamespace()
+    const environmentsList = await environmentRepository.list(namespace)
+    const environment = environmentsList.items?.find(
+      (env) => env.status?.hash === hash
+    )
+
+    if (!environment) {
+      return {
+        success: false,
+        error: 'Environment not found',
+      }
+    }
+
+    // Get services from the target namespace if environment is active
+    let services: import('@kloudlite/types').K8sService[] = []
+    const targetNamespace = environment.spec?.targetNamespace
+    if (targetNamespace && environment.status?.state === 'active') {
+      try {
+        services = await serviceRepository.list(targetNamespace)
+      } catch (err) {
+        console.error('Failed to fetch services:', err)
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        environment,
+        services,
+        compose: environment.spec?.compose || null,
+        composeStatus: environment.status?.composeStatus || null,
+        namespace: targetNamespace || '',
+        isActive: environment.status?.state === 'active',
+        envHash: environment.status?.hash || '',
+        subdomain: environment.status?.subdomain || '',
+      },
+    }
+  } catch (err) {
+    console.error('Get environment by hash error:', err)
+    const error = err instanceof Error ? err : new Error('Unknown error')
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+/**
  * Server action to get environment details (environment + services + composition)
  */
 export async function getEnvironmentDetails(name: string) {
@@ -611,12 +664,12 @@ export async function updateEnvironmentCompose(
     // Read-modify-write pattern: get environment, update compose, then save
     const environment = await environmentRepository.get(namespace, name)
 
-    // Update the compose field
+    // Update the compose field (convert null to undefined for type compatibility)
     const updatedEnvironment = {
       ...environment,
       spec: {
         ...environment.spec,
-        compose,
+        compose: compose ?? undefined,
       },
     }
 

@@ -201,15 +201,14 @@ export async function listFiles(environmentName: string): Promise<ListFilesRespo
       (cm) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'file'
     )
 
-    // Convert ConfigMaps to File objects
+    // Convert ConfigMaps to FileInfo objects
     const files = fileConfigMaps.map((cm) => {
-      const data = cm.data || {}
       const filename = cm.metadata?.labels?.['kloudlite.io/filename'] || cm.metadata?.name || 'unknown'
-      const content = data.content || ''
+      const configMapName = cm.metadata?.name || 'unknown'
 
       return {
         name: filename,
-        content,
+        configMapName,
       }
     })
 

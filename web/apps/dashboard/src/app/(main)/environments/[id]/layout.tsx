@@ -2,9 +2,10 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { Breadcrumb } from '@/components/breadcrumb'
 import { EnvironmentNav } from '../_components/environment-nav'
-import { getEnvironmentDetails } from '@/app/actions/environment.actions'
+import { getEnvironmentByHash } from '@/app/actions/environment.actions'
 import { EnvironmentStatusIndicator } from '@/components/environment-status-indicator'
 import { EnvironmentSnapshotsSheet } from '../_components/environment-snapshots-sheet'
+import { EnvironmentCompositionButton } from '../_components/environment-composition-button'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -43,17 +44,18 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   }
 
   // Await params (required in Next.js 15)
-  const { id } = await params
+  // id is now the environment hash (8-char hex)
+  const { id: hash } = await params
 
   // Fetch real environment data using server action
   let environment
-  const result = await getEnvironmentDetails(id)
+  const result = await getEnvironmentByHash(hash)
 
   if (result.success && result.data) {
     const env = result.data.environment
 
     environment = {
-      id,
+      hash,
       name: env.metadata!.name!,
       displayName: `${env.spec!.ownedBy || 'unknown'}/${env.metadata!.name}`,
       owner: env.spec!.ownedBy || 'unknown',
@@ -63,9 +65,9 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
   } else {
     // Fallback to basic data if fetching fails
     environment = {
-      id,
-      name: id,
-      displayName: id,
+      hash,
+      name: hash,
+      displayName: hash,
       owner: session.user?.email || 'unknown',
       status: 'unknown',
       created: 'Unknown',
@@ -79,38 +81,34 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
 
   return (
     <>
-      {/* Environment Header with Info */}
-      <div className="bg-background border-b">
-        <div className="mx-auto max-w-7xl px-6">
-          {/* Breadcrumb */}
-          <div className="py-4">
-            <Breadcrumb items={breadcrumbItems} />
-          </div>
+      {/* Breadcrumb */}
+      <div className="mb-3">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
 
-          {/* Environment Header */}
-          <div className="pb-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold">{environment.displayName}</h1>
-                <div className="text-muted-foreground mt-1.5 flex items-center gap-4 text-sm">
-                  <span>Owner: {environment.owner}</span>
-                  <span>•</span>
-                  <span>Created: {environment.created}</span>
-                  <span>•</span>
-                  <EnvironmentStatusIndicator
-                    environmentName={environment.name}
-                    initialState={environment.status}
-                  />
-                </div>
-              </div>
-              <EnvironmentSnapshotsSheet environmentName={environment.name} />
-            </div>
+      {/* Environment Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <h1 className="text-2xl font-semibold tracking-tight truncate">{environment.displayName}</h1>
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <EnvironmentCompositionButton environmentName={environment.name} />
+            <EnvironmentSnapshotsSheet environmentName={environment.name} />
           </div>
+        </div>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>{environment.owner}</span>
+          <span>•</span>
+          <span>{environment.created}</span>
+          <span>•</span>
+          <EnvironmentStatusIndicator
+            environmentName={environment.name}
+            initialState={environment.status}
+          />
         </div>
       </div>
 
       {/* Navigation */}
-      <EnvironmentNav environmentId={id} />
+      <EnvironmentNav environmentId={hash} />
 
       {/* Page Content */}
       <div className="flex-1">{children}</div>
