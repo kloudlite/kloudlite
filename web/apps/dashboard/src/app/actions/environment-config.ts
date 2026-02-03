@@ -176,7 +176,38 @@ export async function deleteEnvVar(
 
 // File actions
 export async function listFiles(environmentName: string): Promise<ListFilesResponse> {
-  return environmentService.listFiles(environmentName)
+  try {
+    const targetNamespace = await getEnvironmentNamespace(environmentName)
+
+    // Fetch ConfigMaps that contain files
+    // Files are stored in ConfigMaps with label 'kloudlite.io/resource-type: file'
+    const configMaps = await configMapRepository.list(targetNamespace).catch(() => [])
+
+    // Filter ConfigMaps that are files (have specific label or naming pattern)
+    const fileConfigMaps = configMaps.filter(
+      (cm) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'file'
+    )
+
+    // Convert ConfigMaps to File objects
+    const files = fileConfigMaps.map((cm) => {
+      const data = cm.data || {}
+      const filename = cm.metadata?.labels?.['kloudlite.io/filename'] || cm.metadata?.name || 'unknown'
+      const content = data.content || ''
+
+      return {
+        name: filename,
+        content,
+      }
+    })
+
+    return {
+      files,
+      count: files.length,
+    }
+  } catch (error) {
+    console.error('List files error:', error)
+    throw error
+  }
 }
 
 export async function getFile(environmentName: string, filename: string): Promise<GetFileResponse> {
