@@ -71,6 +71,7 @@ export function CreateWorkspaceSheet({ namespace, user, workMachineRunning = fal
         spec: {
           displayName: name.trim(),
           ownedBy: user,
+          workmachine: `wm-${user}`,
           visibility,
           sharedWith: visibility === 'shared' ? sharedWith : undefined,
           gitRepository,
