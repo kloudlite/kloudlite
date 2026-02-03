@@ -55,18 +55,23 @@ export async function listAllWorkMachines() {
 
 export async function startMyWorkMachine() {
   try {
+    console.log('[startMyWorkMachine] Starting...')
     const username = await getCurrentUsername()
+    console.log('[startMyWorkMachine] Username:', username)
     const workMachine = await workMachineRepository.getByOwner(username)
+    console.log('[startMyWorkMachine] Work machine found:', workMachine?.metadata?.name)
     if (!workMachine) {
       return {
         success: false,
         error: 'No work machine found',
       }
     }
-    const data = await workMachineRepository.start('', workMachine.metadata!.name!)
+    console.log('[startMyWorkMachine] Calling repository.start()...')
+    const data = await workMachineRepository.start(workMachine.metadata!.name!)
+    console.log('[startMyWorkMachine] Success!')
     return { success: true, data }
   } catch (err) {
-    console.error('Start work machine error:', err)
+    console.error('[startMyWorkMachine] Error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
@@ -85,7 +90,7 @@ export async function stopMyWorkMachine() {
         error: 'No work machine found',
       }
     }
-    const data = await workMachineRepository.stop('', workMachine.metadata!.name!)
+    const data = await workMachineRepository.stop(workMachine.metadata!.name!)
     return { success: true, data }
   } catch (err) {
     console.error('Stop work machine error:', err)
@@ -106,21 +111,27 @@ export async function createMyWorkMachine(machineType: string, volumeSize?: numb
       kind: 'WorkMachine',
       metadata: {
         name: `wm-${username}`,
+        labels: {
+          'kloudlite.io/owned-by': username,
+        },
       },
       spec: {
-        owner: username,
+        displayName: `${username}'s Work Machine`,
+        ownedBy: username,
         machineType,
-        volumeSize: volumeSize || 20,
+        state: 'running',
+        volumeSize: volumeSize || 50,
         targetNamespace: `user-${username}`,
         sshPublicKeys: [],
         autoShutdown: {
           enabled: true,
           idleThresholdMinutes: 30,
+          checkIntervalMinutes: 5,
         },
       },
     }
 
-    const data = await workMachineRepository.create('', workMachine)
+    const data = await workMachineRepository.create(workMachine)
     return { success: true, data }
   } catch (err) {
     console.error('Create work machine error:', err)
@@ -151,7 +162,7 @@ export async function updateMyWorkMachine(updateData: {
     }
 
     // Use patch for partial updates
-    const data = await workMachineRepository.patch('', workMachine.metadata!.name!, {
+    const data = await workMachineRepository.patch(workMachine.metadata!.name!, {
       spec: updateData,
     })
     return { success: true, data }

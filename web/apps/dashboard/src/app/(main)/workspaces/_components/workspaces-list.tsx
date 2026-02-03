@@ -50,7 +50,7 @@ export function WorkspacesList({
               onClick={() => setScope('all')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 scopeFilter === 'all'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -60,7 +60,7 @@ export function WorkspacesList({
               onClick={() => setScope('mine')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 scopeFilter === 'mine'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -74,7 +74,7 @@ export function WorkspacesList({
               onClick={() => setStatus('all')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -84,7 +84,7 @@ export function WorkspacesList({
               onClick={() => setStatus('active')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'active'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -94,7 +94,7 @@ export function WorkspacesList({
               onClick={() => setStatus('suspended')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'suspended'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -104,7 +104,7 @@ export function WorkspacesList({
               onClick={() => setStatus('archived')}
               className={`rounded px-3 py-1 text-sm transition-colors ${
                 statusFilter === 'archived'
-                  ? 'bg-background shadow-sm'
+                  ? 'bg-background'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >

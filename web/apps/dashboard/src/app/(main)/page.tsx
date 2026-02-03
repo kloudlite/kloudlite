@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
-import { WorkMachinesContent } from './workspaces/_components/work-machines-content'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import { getMyWorkMachine } from '@/app/actions/work-machine.actions'
 import { getMyPreferences } from '@/app/actions/user-preferences.actions'
 import type { WorkMachine } from '@kloudlite/types'
+import { WorkMachineCard } from './workspaces/_components/work-machine-card'
+import { WorkMachineMetrics } from './workspaces/_components/work-machine-metrics'
 
 // Helper to map work machine CR to display format
 function transformWorkMachine(wm: WorkMachine) {
@@ -12,12 +13,16 @@ function transformWorkMachine(wm: WorkMachine) {
   let state = wm.status?.state || wm.spec.state
   const desiredState = wm.spec.state
 
-  // Handle transitional states when machine is not ready
+  // Handle transitional states
   const isReady = wm.status?.isReady ?? false
-  if (!isReady && state === 'running') {
-    // If desired state is 'stopped', show as 'stopping' (user clicked stop)
-    // Otherwise show as 'starting' (machine still initializing)
-    state = desiredState === 'stopped' ? 'stopping' : 'starting'
+
+  // Machine is starting if desired is 'running' but current is not running or not ready
+  if (desiredState === 'running' && (state !== 'running' || !isReady)) {
+    state = 'starting'
+  }
+  // Machine is stopping if desired is 'stopped' but current is still 'running'
+  else if (desiredState === 'stopped' && state === 'running') {
+    state = 'stopping'
   }
 
   // Calculate uptime from startedAt timestamp
@@ -65,7 +70,8 @@ function transformWorkMachine(wm: WorkMachine) {
   }
 }
 
-// Main dashboard page
+// Main dashboard page - THIS PAGE IS ONLY SHOWN WHEN USER HAS A WORK MACHINE
+// The layout.tsx handles showing WorkMachineSetup when user doesn't have one
 export default async function HomePage() {
   const session = await getSession()
 
@@ -99,26 +105,53 @@ export default async function HomePage() {
     : []
 
   // Transform work machine (single machine for current user)
-  const workMachines = myWorkMachineResult.success && myWorkMachineResult.data
-    ? [transformWorkMachine(myWorkMachineResult.data)]
-    : []
+  const workMachine = myWorkMachineResult.success && myWorkMachineResult.data
+    ? transformWorkMachine(myWorkMachineResult.data)
+    : null
 
-  // Pinned items from preferences (TODO: implement fetching pinned workspaces/environments)
-  const pinnedWorkspaces: Array<{id: string; name: string; environment: string; status: 'active' | 'idle'}> = []
-  const pinnedEnvironments: Array<{id: string; name: string; status: 'active' | 'idle'}> = []
+  // If no work machine, the layout.tsx will handle showing the setup page
+  // This should not happen as layout redirects users without work machines
+  if (!workMachine) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-muted-foreground">Loading work machine...</p>
+      </div>
+    )
+  }
 
-  // Check if user is admin
-  const userRoles = session.user?.roles || []
-  const isAdmin = userRoles.includes('admin') || userRoles.includes('super-admin')
 
   return (
-    <WorkMachinesContent
-      initialMachines={workMachines}
-      currentUser={currentUser}
-      isAdmin={isAdmin}
-      availableMachineTypes={availableMachineTypes}
-      pinnedWorkspaces={pinnedWorkspaces}
-      pinnedEnvironments={pinnedEnvironments}
-    />
+    <>
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight mb-2">Workmachine</h1>
+        <p className="text-muted-foreground text-sm">
+          Monitor and control your development workmachine
+        </p>
+      </div>
+
+      {/* Machine Card - Client Component for Interactivity */}
+      <WorkMachineCard
+        machine={workMachine}
+        availableMachineTypes={availableMachineTypes}
+      />
+
+      {/* Monitoring Section - Only show when machine is running */}
+      {workMachine.currentState === 'running' && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Monitoring</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Real-time metrics and system health monitoring
+            </p>
+          </div>
+
+          <WorkMachineMetrics
+            workMachineName={workMachine.name}
+            machineState={workMachine.currentState}
+          />
+        </div>
+      )}
+    </>
   )
 }

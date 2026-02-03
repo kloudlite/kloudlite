@@ -78,20 +78,40 @@ class K8sClient {
 
   private configureOutOfCluster() {
     try {
-      // Try to load from default kubeconfig location
-      const kubeconfigPath = process.env.KUBECONFIG ||
-        (process.env.HOME ? `${process.env.HOME}/.kube/config` : undefined);
+      // Use kubectl proxy for local development
+      const proxyUrl = process.env.KUBECTL_PROXY_URL || 'http://localhost:8080';
 
-      if (kubeconfigPath) {
-        this.kc.loadFromFile(kubeconfigPath);
-      } else {
-        // Fallback to default config
-        this.kc.loadFromDefault();
-        console.log('✓ Kubernetes client configured from default kubeconfig');
-      }
+      // Create cluster configuration for kubectl proxy
+      const cluster: k8s.Cluster = {
+        name: 'kubectl-proxy',
+        server: proxyUrl,
+        skipTLSVerify: true, // kubectl proxy doesn't use TLS
+      };
+
+      // Create user configuration (no auth needed for kubectl proxy)
+      const user: k8s.User = {
+        name: 'kubectl-proxy-user',
+      };
+
+      // Create context
+      const context: k8s.Context = {
+        name: 'kubectl-proxy',
+        cluster: 'kubectl-proxy',
+        user: 'kubectl-proxy-user',
+      };
+
+      // Apply configuration
+      this.kc.loadFromOptions({
+        clusters: [cluster],
+        users: [user],
+        contexts: [context],
+        currentContext: 'kubectl-proxy',
+      });
+
+      console.log(`✓ Kubernetes client configured to use kubectl proxy at ${proxyUrl}`);
     } catch (err) {
       console.error('Failed to configure Kubernetes client:', err);
-      throw new Error('Failed to configure Kubernetes client. Ensure KUBECONFIG is set or running in-cluster.');
+      throw new Error('Failed to configure Kubernetes client. Ensure kubectl proxy is running on port 8080.');
     }
   }
 

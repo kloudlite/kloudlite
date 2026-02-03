@@ -266,7 +266,7 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
                 />
               </div>
               {searchResults.length > 0 && newPackageName.length >= 2 && (
-                <div className="bg-background max-h-40 overflow-y-auto rounded-md border shadow-lg">
+                <div className="bg-background max-h-40 overflow-y-auto rounded-md border
                   {searchResults.map((pkgName) => (
                     <button
                       key={pkgName}

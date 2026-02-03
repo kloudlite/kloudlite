@@ -151,23 +151,23 @@ export abstract class BaseRepository<T extends K8sResource> {
   async create(namespaceOrResource: string | Partial<T>, resource?: Partial<T>): Promise<T> {
     try {
       if (this.namespaced && typeof namespaceOrResource === 'string' && resource) {
-        // Namespaced resource
-        const response = await this.client.custom.createNamespacedCustomObject(
-          this.group,
-          this.version,
-          namespaceOrResource,
-          this.plural,
-          resource as object
-        );
+        // Namespaced resource - use object parameters API
+        const response = await this.client.custom.createNamespacedCustomObject({
+          group: this.group,
+          version: this.version,
+          namespace: namespaceOrResource,
+          plural: this.plural,
+          body: resource as object,
+        });
         return response as unknown as T;
       } else if (!this.namespaced && typeof namespaceOrResource === 'object') {
         // Cluster-scoped resource
-        const response = await this.client.custom.createClusterCustomObject(
-          this.group,
-          this.version,
-          this.plural,
-          namespaceOrResource as object
-        );
+        const response = await this.client.custom.createClusterCustomObject({
+          group: this.group,
+          version: this.version,
+          plural: this.plural,
+          body: namespaceOrResource as object,
+        });
         return response as unknown as T;
       } else {
         throw new Error('Invalid arguments for create operation');
@@ -189,25 +189,25 @@ export abstract class BaseRepository<T extends K8sResource> {
   ): Promise<T> {
     try {
       if (this.namespaced && typeof nameOrResource === 'string' && resource) {
-        // Namespaced resource
-        const response = await this.client.custom.replaceNamespacedCustomObject(
-          this.group,
-          this.version,
-          namespaceOrName,
-          this.plural,
-          nameOrResource,
-          resource as object
-        );
+        // Namespaced resource - use object parameters API
+        const response = await this.client.custom.replaceNamespacedCustomObject({
+          group: this.group,
+          version: this.version,
+          namespace: namespaceOrName,
+          plural: this.plural,
+          name: nameOrResource,
+          body: resource as object,
+        });
         return response as unknown as T;
       } else if (!this.namespaced && typeof nameOrResource === 'object') {
         // Cluster-scoped resource
-        const response = await this.client.custom.replaceClusterCustomObject(
-          this.group,
-          this.version,
-          this.plural,
-          namespaceOrName,
-          nameOrResource as object
-        );
+        const response = await this.client.custom.replaceClusterCustomObject({
+          group: this.group,
+          version: this.version,
+          plural: this.plural,
+          name: namespaceOrName,
+          body: nameOrResource as object,
+        });
         return response as unknown as T;
       } else {
         throw new Error('Invalid arguments for update operation');
@@ -242,43 +242,37 @@ export abstract class BaseRepository<T extends K8sResource> {
   ): Promise<T> {
     try {
       if (this.namespaced && typeof nameOrPatch === 'string') {
-        // Namespaced resource
+        // Namespaced resource - use object parameters API
         const patch = patchOrType as object;
         const patchType = (patchTypeOrOptions as PatchType) || 'application/merge-patch+json';
 
-        const response = await this.client.custom.patchNamespacedCustomObject(
-          this.group,
-          this.version,
-          namespaceOrName,
-          this.plural,
-          nameOrPatch,
-          patch,
-          undefined, // dryRun
-          undefined, // fieldManager
-          undefined, // force
-          {
+        const response = await this.client.custom.patchNamespacedCustomObject({
+          group: this.group,
+          version: this.version,
+          namespace: namespaceOrName,
+          plural: this.plural,
+          name: nameOrPatch,
+          body: patch,
+          options: {
             headers: { 'Content-Type': patchType },
-          }
-        );
+          },
+        });
         return response as unknown as T;
       } else if (!this.namespaced && typeof nameOrPatch === 'object') {
         // Cluster-scoped resource
         const patch = nameOrPatch;
         const patchType = (patchOrType as PatchType) || 'application/merge-patch+json';
 
-        const response = await this.client.custom.patchClusterCustomObject(
-          this.group,
-          this.version,
-          this.plural,
-          namespaceOrName,
-          patch,
-          undefined, // dryRun
-          undefined, // fieldManager
-          undefined, // force
-          {
+        const response = await this.client.custom.patchClusterCustomObject({
+          group: this.group,
+          version: this.version,
+          plural: this.plural,
+          name: namespaceOrName,
+          body: patch,
+          options: {
             headers: { 'Content-Type': patchType },
-          }
-        );
+          },
+        });
         return response as unknown as T;
       } else {
         throw new Error('Invalid arguments for patch operation');
@@ -300,37 +294,31 @@ export abstract class BaseRepository<T extends K8sResource> {
   ): Promise<T> {
     try {
       if (this.namespaced && typeof nameOrResource === 'string' && resource) {
-        // Namespaced resource
-        const response = await this.client.custom.patchNamespacedCustomObjectStatus(
-          this.group,
-          this.version,
-          namespaceOrName,
-          this.plural,
-          nameOrResource,
-          resource as object,
-          undefined, // dryRun
-          undefined, // fieldManager
-          undefined, // force
-          {
+        // Namespaced resource - use object parameters API
+        const response = await this.client.custom.patchNamespacedCustomObjectStatus({
+          group: this.group,
+          version: this.version,
+          namespace: namespaceOrName,
+          plural: this.plural,
+          name: nameOrResource,
+          body: resource as object,
+          options: {
             headers: { 'Content-Type': 'application/merge-patch+json' },
-          }
-        );
+          },
+        });
         return response as unknown as T;
       } else if (!this.namespaced && typeof nameOrResource === 'object') {
         // Cluster-scoped resource
-        const response = await this.client.custom.patchClusterCustomObjectStatus(
-          this.group,
-          this.version,
-          this.plural,
-          namespaceOrName,
-          nameOrResource as object,
-          undefined, // dryRun
-          undefined, // fieldManager
-          undefined, // force
-          {
+        const response = await this.client.custom.patchClusterCustomObjectStatus({
+          group: this.group,
+          version: this.version,
+          plural: this.plural,
+          name: namespaceOrName,
+          body: nameOrResource as object,
+          options: {
             headers: { 'Content-Type': 'application/merge-patch+json' },
-          }
-        );
+          },
+        });
         return response as unknown as T;
       } else {
         throw new Error('Invalid arguments for updateStatus operation');
@@ -352,25 +340,21 @@ export abstract class BaseRepository<T extends K8sResource> {
   ): Promise<V1Status> {
     try {
       if (this.namespaced && typeof nameOrOptions === 'string') {
-        // Namespaced resource
+        // Namespaced resource - use object parameters API
         const deleteOptions: V1DeleteOptions = {
           gracePeriodSeconds: options?.gracePeriodSeconds,
           propagationPolicy: options?.propagationPolicy,
           dryRun: options?.dryRun,
         };
 
-        const response = await this.client.custom.deleteNamespacedCustomObject(
-          this.group,
-          this.version,
-          namespaceOrName,
-          this.plural,
-          nameOrOptions,
-          undefined, // gracePeriodSeconds
-          undefined, // orphanDependents
-          options?.propagationPolicy,
-          undefined, // dryRun
-          deleteOptions
-        );
+        const response = await this.client.custom.deleteNamespacedCustomObject({
+          group: this.group,
+          version: this.version,
+          namespace: namespaceOrName,
+          plural: this.plural,
+          name: nameOrOptions,
+          body: deleteOptions,
+        });
         return response.body as V1Status;
       } else {
         // Cluster-scoped resource
@@ -381,17 +365,13 @@ export abstract class BaseRepository<T extends K8sResource> {
           dryRun: opts.dryRun,
         };
 
-        const response = await this.client.custom.deleteClusterCustomObject(
-          this.group,
-          this.version,
-          this.plural,
-          namespaceOrName,
-          undefined, // gracePeriodSeconds
-          undefined, // orphanDependents
-          opts.propagationPolicy,
-          undefined, // dryRun
-          deleteOptions
-        );
+        const response = await this.client.custom.deleteClusterCustomObject({
+          group: this.group,
+          version: this.version,
+          plural: this.plural,
+          name: namespaceOrName,
+          body: deleteOptions,
+        });
         return response.body as V1Status;
       }
     } catch (err) {
