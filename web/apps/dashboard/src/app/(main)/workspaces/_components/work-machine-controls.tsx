@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Play,
@@ -454,16 +454,16 @@ export function WorkMachineControls({
               {/* Auto-stop Section */}
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-semibold mb-1">Auto-stop</h3>
+                  <h3 className="mb-1 text-sm font-semibold">Auto-stop</h3>
                   <p className="text-muted-foreground text-xs">
                     Automatically stop the WorkMachine when all workspaces are idle
                   </p>
                 </div>
 
-                <div className="rounded-lg border bg-card">
+                <div className="bg-card rounded-lg border">
                   <div className="flex items-center justify-between p-4">
                     <div className="flex-1">
-                      <p className="text-sm font-medium mb-0.5">Enable auto-stop</p>
+                      <p className="mb-0.5 text-sm font-medium">Enable auto-stop</p>
                       <p className="text-muted-foreground text-xs">
                         WorkMachine stops when idle to save resources
                       </p>
@@ -475,14 +475,15 @@ export function WorkMachineControls({
                   </div>
 
                   {autoShutdownEnabled && (
-                    <div className="border-t bg-muted/20 p-4">
+                    <div className="bg-muted/20 border-t p-4">
                       <div className="space-y-3">
                         <p className="text-muted-foreground text-xs leading-relaxed">
-                          WorkMachine will automatically stop after {idleTimeout} minutes of idle time.
-                          It is considered idle when all workspaces have no active connections.
+                          WorkMachine will automatically stop after {idleTimeout} minutes of idle
+                          time. It is considered idle when all workspaces have no active
+                          connections.
                         </p>
                         <div className="flex items-center gap-3">
-                          <Label htmlFor="idle-timeout" className="text-sm font-medium min-w-fit">
+                          <Label htmlFor="idle-timeout" className="min-w-fit text-sm font-medium">
                             Idle timeout
                           </Label>
                           <Input
@@ -505,30 +506,30 @@ export function WorkMachineControls({
               {/* SSH Configuration Section */}
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-semibold mb-1">SSH Configuration</h3>
+                  <h3 className="mb-1 text-sm font-semibold">SSH Configuration</h3>
                   <p className="text-muted-foreground text-xs">
                     Manage SSH keys for workspace access
                   </p>
                 </div>
 
                 {/* WorkMachine SSH Public Key */}
-                <div className="rounded-lg border bg-card p-4 space-y-3">
+                <div className="bg-card space-y-3 rounded-lg border p-4">
                   <div>
                     <Label className="text-sm font-medium">WorkMachine SSH Public Key</Label>
-                    <p className="text-muted-foreground text-xs mt-1">
+                    <p className="text-muted-foreground mt-1 text-xs">
                       Shared across all workspaces to authorize external systems
                     </p>
                   </div>
                   {sshPublicKey ? (
                     <div className="bg-muted/50 relative rounded-md border p-3">
-                      <pre className="text-muted-foreground overflow-x-auto font-mono text-xs whitespace-pre-wrap break-all pr-16">
+                      <pre className="text-muted-foreground overflow-x-auto pr-16 font-mono text-xs break-all whitespace-pre-wrap">
                         {sshPublicKey}
                       </pre>
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => handleCopySSHKey(sshPublicKey)}
-                        className="absolute right-2 top-2 h-7"
+                        className="absolute top-2 right-2 h-7"
                       >
                         {copiedSSHKey ? (
                           <>
@@ -553,14 +554,15 @@ export function WorkMachineControls({
                 </div>
 
                 {/* Authorized Keys */}
-                <div className="rounded-lg border bg-card">
-                  <div className="p-4 space-y-3">
+                <div className="bg-card rounded-lg border">
+                  <div className="space-y-3 p-4">
                     <div>
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="mb-1 flex items-center justify-between">
                         <Label className="text-sm font-medium">Authorized Keys</Label>
                         {sshAuthorizedKeys.length > 0 && (
                           <span className="text-muted-foreground text-xs">
-                            {sshAuthorizedKeys.length} {sshAuthorizedKeys.length === 1 ? 'key' : 'keys'}
+                            {sshAuthorizedKeys.length}{' '}
+                            {sshAuthorizedKeys.length === 1 ? 'key' : 'keys'}
                           </span>
                         )}
                       </div>
@@ -571,13 +573,13 @@ export function WorkMachineControls({
 
                     {/* List */}
                     {sshAuthorizedKeys.length > 0 ? (
-                      <div className="rounded-md border overflow-hidden">
+                      <div className="overflow-hidden rounded-md border">
                         {sshAuthorizedKeys.map((key, index) => (
                           <div
                             key={index}
-                            className="hover:bg-muted/30 group flex items-center justify-between gap-2 px-3 py-2.5 transition-colors border-b last:border-b-0"
+                            className="hover:bg-muted/30 group flex items-center justify-between gap-2 border-b px-3 py-2.5 transition-colors last:border-b-0"
                           >
-                            <code className="text-muted-foreground font-mono text-xs flex-1 truncate">
+                            <code className="text-muted-foreground flex-1 truncate font-mono text-xs">
                               {parseSSHKey(key)}
                             </code>
                             <Button
@@ -606,7 +608,7 @@ export function WorkMachineControls({
                   </div>
 
                   {/* Add New Key */}
-                  <div className="border-t bg-muted/20 p-4 space-y-3">
+                  <div className="bg-muted/20 space-y-3 border-t p-4">
                     <Label htmlFor="new-ssh-key" className="text-sm font-medium">
                       Add New Key
                     </Label>
@@ -622,7 +624,7 @@ export function WorkMachineControls({
                             handleAddSSHKey()
                           }
                         }}
-                        className="flex-1 font-mono text-xs h-9"
+                        className="h-9 flex-1 font-mono text-xs"
                         disabled={isAddingKey}
                       />
                       <Button
@@ -652,7 +654,7 @@ export function WorkMachineControls({
               </div>
             </div>
 
-            <SheetFooter className="border-t pt-4 flex-row gap-2 justify-end">
+            <SheetFooter className="flex-row justify-end gap-2 border-t pt-4">
               <Button
                 variant="outline"
                 onClick={() => setSettingsOpen(false)}
@@ -661,11 +663,7 @@ export function WorkMachineControls({
               >
                 Cancel
               </Button>
-              <Button
-                onClick={saveSettings}
-                disabled={isSavingSettings}
-                className="min-w-24"
-              >
+              <Button onClick={saveSettings} disabled={isSavingSettings} className="min-w-24">
                 {isSavingSettings ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -686,8 +684,8 @@ export function WorkMachineControls({
           <DialogHeader>
             <DialogTitle>Start WorkMachine?</DialogTitle>
             <DialogDescription>
-              This will start the WorkMachine &quot;{machineName}&quot;. The machine will begin consuming resources
-              and you will be charged according to your plan.
+              This will start the WorkMachine &quot;{machineName}&quot;. The machine will begin
+              consuming resources and you will be charged according to your plan.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -705,9 +703,9 @@ export function WorkMachineControls({
           <DialogHeader>
             <DialogTitle>Stop WorkMachine?</DialogTitle>
             <DialogDescription>
-              This will stop the WorkMachine &quot;{machineName}&quot;. All workspaces and environments will be
-              suspended. Your disk storage will be preserved, but the machine will stop consuming compute
-              resources.
+              This will stop the WorkMachine &quot;{machineName}&quot;. All workspaces and
+              environments will be suspended. Your disk storage will be preserved, but the machine
+              will stop consuming compute resources.
             </DialogDescription>
           </DialogHeader>
           <Alert className="border-warning bg-warning/10">
