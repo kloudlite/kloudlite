@@ -112,6 +112,7 @@ export function WorkMachineCard({ machine, availableMachineTypes }: WorkMachineC
 
       return () => clearInterval(interval)
     }
+    return undefined
   }, [machine.currentState, machine.desiredState, router, isTransitioning])
 
   const handleStart = async () => {
@@ -168,7 +169,7 @@ export function WorkMachineCard({ machine, availableMachineTypes }: WorkMachineC
     }
   }
 
-  const handleTypeChange = async (typeId: string) => {
+  const handleTypeChange = async (_typeId: string) => {
     // Type change not implemented yet
     toast.info('Machine type change coming soon')
   }

@@ -3,7 +3,7 @@
  */
 
 export interface ObjectMeta {
-  name?: string;
+  name: string;
   namespace?: string;
   labels?: Record<string, string>;
   annotations?: Record<string, string>;
@@ -40,7 +40,7 @@ export interface K8sResource<TSpec = any, TStatus = any> {
   apiVersion: string;
   kind: string;
   metadata: ObjectMeta;
-  spec?: TSpec;
+  spec: TSpec;
   status?: TStatus;
 }
 

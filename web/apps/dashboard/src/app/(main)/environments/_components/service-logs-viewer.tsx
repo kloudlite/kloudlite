@@ -406,7 +406,7 @@ export function ServiceLogsViewer({
   const isConnecting = !isConnected && !error
 
   return (
-    <div className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[40vh] min-h-[300px] flex-col border-t
+    <div className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[40vh] min-h-[300px] flex-col border-t">
       {/* Header */}
       <div className="bg-muted/50 flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-3">

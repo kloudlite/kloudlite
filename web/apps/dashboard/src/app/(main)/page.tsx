@@ -79,11 +79,8 @@ export default async function HomePage() {
     redirect('/auth/signin')
   }
 
-  const currentUser = session.user?.email || 'user@example.com'
-  const username = session.user?.username || currentUser.split('@')[0]
-
   // Fetch data directly from Kubernetes
-  const [machineTypesResult, myWorkMachineResult, preferencesResult] = await Promise.all([
+  const [machineTypesResult, myWorkMachineResult, _preferencesResult] = await Promise.all([
     listMachineTypes(),
     getMyWorkMachine(),
     getMyPreferences(),

@@ -54,7 +54,7 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
     if (open) {
       const loadPackages = async () => {
         const pkgReqResult = await getPackageRequest(workspace.metadata.name, workspace.metadata.namespace)
-        const pkgReq: PackageRequest | null = pkgReqResult.success ? pkgReqResult.data : null
+        const pkgReq: PackageRequest | null | undefined = pkgReqResult.success ? (pkgReqResult.data as unknown as PackageRequest) : null
 
         const existingPackages: PackageWithVersion[] = (pkgReq?.spec?.packages || []).map((pkg) => ({
           ...pkg,
@@ -266,7 +266,7 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
                 />
               </div>
               {searchResults.length > 0 && newPackageName.length >= 2 && (
-                <div className="bg-background max-h-40 overflow-y-auto rounded-md border
+                <div className="bg-background max-h-40 overflow-y-auto rounded-md border">
                   {searchResults.map((pkgName) => (
                     <button
                       key={pkgName}
