@@ -175,41 +175,65 @@ export function EnvironmentsList({
   }
 
   const handleActivate = async (envName: string) => {
+    // Optimistic update - immediately show activating state
+    setEnvironments((prev) =>
+      prev.map((env) =>
+        env.name === envName ? { ...env, status: 'activating' as const } : env
+      )
+    )
+
     try {
       const result = await activateEnvironment(envName)
       if (result.success) {
-        toast.success('Environment activated')
-        startTransition(() => {
-          router.refresh()
-        })
+        toast.success('Environment activating')
       } else {
         toast.error('Failed to activate environment', {
           description: formatErrorMessage(result.error || 'An error occurred'),
         })
       }
+      // Always refresh from backend to get actual state
+      startTransition(() => {
+        router.refresh()
+      })
     } catch (error: unknown) {
       toast.error('Failed to activate environment', {
         description: formatErrorMessage(error instanceof Error ? error.message : 'An error occurred'),
+      })
+      // Refresh from backend to get actual state
+      startTransition(() => {
+        router.refresh()
       })
     }
   }
 
   const handleDeactivate = async (envName: string) => {
+    // Optimistic update - immediately show deactivating state
+    setEnvironments((prev) =>
+      prev.map((env) =>
+        env.name === envName ? { ...env, status: 'deactivating' as const } : env
+      )
+    )
+
     try {
       const result = await deactivateEnvironment(envName)
       if (result.success) {
-        toast.success('Environment deactivated')
-        startTransition(() => {
-          router.refresh()
-        })
+        toast.success('Environment deactivating')
       } else {
         toast.error('Failed to deactivate environment', {
           description: formatErrorMessage(result.error || 'An error occurred'),
         })
       }
+      // Always refresh from backend to get actual state
+      startTransition(() => {
+        router.refresh()
+      })
     } catch (error: unknown) {
       toast.error('Failed to deactivate environment', {
         description: formatErrorMessage(error instanceof Error ? error.message : 'An error occurred'),
+      })
+      // Refresh from backend to get actual state
+      startTransition(() => {
+        router.refresh()
       })
     }
   }
@@ -381,10 +405,10 @@ export function EnvironmentsList({
               <th className="text-muted-foreground px-6 py-3.5 text-center text-xs font-semibold tracking-wider uppercase">
                 Visibility
               </th>
-              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase w-40">
                 Status
               </th>
-              <th className="text-muted-foreground px-6 py-3.5 text-right text-xs font-semibold tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-right text-xs font-semibold tracking-wider uppercase w-20">
                 Actions
               </th>
             </tr>
@@ -409,10 +433,10 @@ export function EnvironmentsList({
                     <VisibilityBadge visibility={env.spec?.visibility} />
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap w-40">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold shrink-0 ${
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold min-w-[90px] ${
                         env.status === 'active'
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                           : env.status === 'inactive'

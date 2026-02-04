@@ -7,6 +7,10 @@ on:
       - development
     paths:
       - 'api/cmd/workmachine-node-manager/**'
+      - 'api/internal/controllers/workspace/**'
+      - 'api/internal/controllers/environment/**'
+      - 'api/internal/controllers/packages/**'
+      - 'api/internal/controllers/snapshot/**'
       - 'api/Dockerfile.workmachine-node-manager'
       - 'api/go.mod'
       - 'api/go.sum'
@@ -17,6 +21,10 @@ on:
       - development
     paths:
       - 'api/cmd/workmachine-node-manager/**'
+      - 'api/internal/controllers/workspace/**'
+      - 'api/internal/controllers/environment/**'
+      - 'api/internal/controllers/packages/**'
+      - 'api/internal/controllers/snapshot/**'
       - 'api/Dockerfile.workmachine-node-manager'
       - 'api/go.mod'
       - 'api/go.sum'

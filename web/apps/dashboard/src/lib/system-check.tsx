@@ -1,18 +1,20 @@
+import { cache } from 'react'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import { signOutAction } from '@/app/actions/auth'
 import { Button } from '@kloudlite/ui'
 
 /**
  * Check if the system is ready (has machine types configured)
+ * Cached per-request to avoid duplicate calls
  */
-export async function isSystemReady(): Promise<boolean> {
+export const isSystemReady = cache(async (): Promise<boolean> => {
   const machineTypesResult = await listMachineTypes()
   return (
     (machineTypesResult.success &&
       machineTypesResult.data?.some((mt) => mt.spec.active !== false)) ||
     false
   )
-}
+})
 
 /**
  * Render the system setup in progress page

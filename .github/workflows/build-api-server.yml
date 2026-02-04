@@ -7,6 +7,7 @@ on:
       - development
     paths:
       - 'api/cmd/server/**'
+      - 'api/internal/**'
       - 'api/Dockerfile'
       - 'api/go.mod'
       - 'api/go.sum'
@@ -17,6 +18,7 @@ on:
       - development
     paths:
       - 'api/cmd/server/**'
+      - 'api/internal/**'
       - 'api/Dockerfile'
       - 'api/go.mod'
       - 'api/go.sum'

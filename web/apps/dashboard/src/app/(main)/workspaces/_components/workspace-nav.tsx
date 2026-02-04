@@ -10,7 +10,7 @@ interface WorkspaceNavProps {
 }
 
 const tabs = [
-  { id: 'connect', label: 'Connect', href: (id: string) => `/workspaces/${id}/connect` },
+  { id: 'overview', label: 'Overview', href: (id: string) => `/workspaces/${id}/overview` },
   { id: 'packages', label: 'Packages', href: (id: string) => `/workspaces/${id}/packages` },
   { id: 'settings', label: 'Settings', href: (id: string) => `/workspaces/${id}/settings` },
 ]
@@ -20,7 +20,7 @@ export function WorkspaceNav({ workspaceId }: WorkspaceNavProps) {
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
   const tabRefs = useRef<Map<string, HTMLAnchorElement>>(new Map())
 
-  const activeTab = tabs.find((tab) => pathname.startsWith(tab.href(workspaceId)))?.id || 'connect'
+  const activeTab = tabs.find((tab) => pathname.startsWith(tab.href(workspaceId)))?.id || 'overview'
 
   // Update underline position
   useEffect(() => {

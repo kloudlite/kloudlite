@@ -60,6 +60,7 @@ interface SnapshotsSheetProps {
 
 export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false }: SnapshotsSheetProps) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
   const [isCreating, setIsCreating] = useState(false)
@@ -75,6 +76,11 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
   const [isDeleting, setIsDeleting] = useState(false)
   const [isPushing, setIsPushing] = useState(false)
   const [pushTag, setPushTag] = useState('')
+
+  // Wait for hydration to complete before rendering dialogs
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const loadSnapshots = useCallback(async () => {
     const result = await listSnapshots(workspace.metadata.name, workspace.metadata.namespace)
@@ -214,6 +220,16 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
     )
     return groupSnapshotsByTime(filtered)
   }, [snapshots, searchQuery])
+
+  // Render placeholder button until hydrated to avoid Radix ID mismatch
+  if (!mounted) {
+    return trigger || (
+      <Button variant="outline" size="sm">
+        <Camera className="mr-1 h-4 w-4" />
+        Snapshots
+      </Button>
+    )
+  }
 
   return (
     <>

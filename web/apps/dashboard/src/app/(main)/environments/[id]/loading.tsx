@@ -1,17 +1,17 @@
 export default function EnvironmentDetailLoading() {
   return (
     <>
+      {/* Back button skeleton */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2">
+          <div className="bg-muted h-4 w-4 animate-pulse rounded" />
+          <div className="bg-muted h-4 w-36 animate-pulse rounded" />
+        </div>
+      </div>
+
       {/* Header skeleton */}
       <div className="bg-background border-b">
         <div className="mx-auto max-w-7xl px-6">
-          {/* Breadcrumb skeleton */}
-          <div className="py-4">
-            <div className="flex items-center gap-2">
-              <div className="bg-muted h-4 w-28 animate-pulse rounded" />
-              <div className="bg-muted h-4 w-4 animate-pulse rounded" />
-              <div className="bg-muted h-4 w-36 animate-pulse rounded" />
-            </div>
-          </div>
 
           {/* Title skeleton */}
           <div className="pb-4">

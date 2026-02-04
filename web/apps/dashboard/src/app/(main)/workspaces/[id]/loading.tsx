@@ -1,10 +1,9 @@
 export default function WorkspaceLoading() {
   return (
     <>
-      {/* Breadcrumb skeleton */}
-      <div className="mb-3">
+      {/* Back button skeleton */}
+      <div className="mb-8">
         <div className="flex items-center gap-2">
-          <div className="bg-muted h-4 w-24 animate-pulse rounded" />
           <div className="bg-muted h-4 w-4 animate-pulse rounded" />
           <div className="bg-muted h-4 w-32 animate-pulse rounded" />
         </div>
@@ -31,6 +30,8 @@ export default function WorkspaceLoading() {
       {/* Nav skeleton */}
       <div className="mb-5 pb-0 border-b">
         <div className="inline-flex gap-1">
+          <div className="bg-muted h-9 w-20 animate-pulse rounded" />
+          <div className="bg-muted h-9 w-20 animate-pulse rounded" />
           <div className="bg-muted h-9 w-20 animate-pulse rounded" />
           <div className="bg-muted h-9 w-24 animate-pulse rounded" />
           <div className="bg-muted h-9 w-20 animate-pulse rounded" />

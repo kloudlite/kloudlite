@@ -10,7 +10,7 @@ export function LocalTime({ date, format = 'short' }: LocalTimeProps) {
 
   if (format === 'long') {
     return (
-      <span>
+      <span suppressHydrationWarning>
         {d.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
@@ -21,7 +21,7 @@ export function LocalTime({ date, format = 'short' }: LocalTimeProps) {
   }
 
   return (
-    <span>
+    <span suppressHydrationWarning>
       {d.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
