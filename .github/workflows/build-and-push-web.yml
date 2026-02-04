@@ -273,6 +273,6 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run ESLint
-        run: bun run lint:all
+        run: bun run lint
         continue-on-error: true
 
