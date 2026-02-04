@@ -11,23 +11,18 @@ import { useMounted } from "./hooks/use-mounted"
  * Dialog wrapper that prevents hydration mismatches by only rendering
  * after the component has mounted on the client.
  */
-const Dialog = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
->(({ children, ...props }, ref) => {
+function Dialog({
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
   const mounted = useMounted()
 
   if (!mounted) {
     return null
   }
 
-  return (
-    <DialogPrimitive.Root ref={ref} {...props}>
-      {children}
-    </DialogPrimitive.Root>
-  )
-})
-Dialog.displayName = "Dialog"
+  return <DialogPrimitive.Root {...props}>{children}</DialogPrimitive.Root>
+}
 
 const DialogTrigger = DialogPrimitive.Trigger
 

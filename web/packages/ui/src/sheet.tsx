@@ -12,23 +12,18 @@ import { useMounted } from "./hooks/use-mounted"
  * Sheet wrapper that prevents hydration mismatches by only rendering
  * after the component has mounted on the client.
  */
-const Sheet = React.forwardRef<
-  React.ElementRef<typeof SheetPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Root>
->(({ children, ...props }, ref) => {
+function Sheet({
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof SheetPrimitive.Root>) {
   const mounted = useMounted()
 
   if (!mounted) {
     return null
   }
 
-  return (
-    <SheetPrimitive.Root ref={ref} {...props}>
-      {children}
-    </SheetPrimitive.Root>
-  )
-})
-Sheet.displayName = "Sheet"
+  return <SheetPrimitive.Root {...props}>{children}</SheetPrimitive.Root>
+}
 
 const SheetTrigger = SheetPrimitive.Trigger
 
