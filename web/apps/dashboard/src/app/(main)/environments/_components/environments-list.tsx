@@ -7,7 +7,6 @@ import { Button } from '@kloudlite/ui'
 import {
   Plus,
   MoreHorizontal,
-  ExternalLink,
   Power,
   PowerOff,
   Edit,
@@ -425,10 +424,9 @@ export function EnvironmentsList({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     href={`/environments/${env.hash}`}
-                    className="hover:text-primary flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                    className="hover:text-primary text-sm font-semibold transition-colors"
                   >
                     {env.owner}/{env.name || env.id || 'unnamed'}
-                    <ExternalLink className="h-3.5 w-3.5 opacity-60" />
                   </Link>
                 </td>
                 <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">

@@ -24,10 +24,10 @@ export async function getCACert() {
     const client = getK8sClient()
 
     // Fetch CA certificate from kloudlite namespace
-    const { body: caSecret } = await client.core.readNamespacedSecret({
+    const caSecret = await client.core.readNamespacedSecret({
       name: 'kloudlite-wildcard-cert-tls',
       namespace: 'kloudlite',
-    }) as { body: V1Secret }
+    }) as V1Secret
 
     const caCert = caSecret.data?.['ca.crt']
     if (!caCert) {
@@ -81,19 +81,19 @@ export async function getHosts(username: string) {
     const hosts: HostEntry[] = []
 
     // Get all ingresses to build host entries
-    const { body: ingressList } = await client.custom.listClusterCustomObject({
+    const ingressList = await client.custom.listClusterCustomObject({
       group: 'networking.k8s.io',
       version: 'v1',
       plural: 'ingresses',
-    }) as { body: { items: V1Ingress[] } }
+    }) as { items: V1Ingress[] }
 
     // Get the ingress controller service IP (wm-ingress-controller)
     let routerIP = ''
     try {
-      const { body: routerSvc } = await client.core.readNamespacedService({
+      const routerSvc = await client.core.readNamespacedService({
         name: 'wm-ingress-controller',
         namespace: targetNamespace,
-      }) as { body: V1Service }
+      }) as V1Service
 
       routerIP = routerSvc.spec?.clusterIP || ''
     } catch (err) {
@@ -224,10 +224,10 @@ async function checkTunnelServerReady(namespace: string): Promise<boolean> {
     const client = getK8sClient()
 
     // Get tunnel-server pod (StatefulSet creates pod with name: tunnel-server-0)
-    const { body: pod } = await client.core.readNamespacedPod({
+    const pod = await client.core.readNamespacedPod({
       name: 'tunnel-server-0',
       namespace,
-    }) as { body: V1Pod }
+    }) as V1Pod
 
     // Check if pod is ready
     if (pod.status?.conditions) {

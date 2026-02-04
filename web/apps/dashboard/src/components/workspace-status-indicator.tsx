@@ -3,7 +3,7 @@
 import { useWorkspaceStatusStream } from '@/lib/hooks/use-workspace-status-stream'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useEffect } from 'react'
+import { useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface WorkspaceStatusIndicatorProps {
@@ -48,26 +48,35 @@ export function WorkspaceStatusIndicator({
   onReady,
 }: WorkspaceStatusIndicatorProps) {
   const router = useRouter()
+  const hasRefreshedRef = useRef(false)
+  const previousStablePhaseRef = useRef<string | null>(null)
+
+  // Only refresh once when transitioning from a transitional phase to a stable state
+  const handlePhaseChange = useCallback((newPhase: string) => {
+    const isNewStablePhase = !isTransitionalPhase(newPhase)
+    const wasInTransitionalPhase = previousStablePhaseRef.current === null ||
+      isTransitionalPhase(previousStablePhaseRef.current)
+
+    // Only refresh when transitioning from transitional -> stable and haven't refreshed yet
+    if (isNewStablePhase && wasInTransitionalPhase && !hasRefreshedRef.current) {
+      hasRefreshedRef.current = true
+      router.refresh()
+    }
+
+    // Track the phase for next comparison
+    if (isNewStablePhase) {
+      previousStablePhaseRef.current = newPhase
+    }
+  }, [router])
+
   const { phase, isConnected } = useWorkspaceStatusStream(namespace, workspaceName, {
     enabled: true,
-    onPhaseChange: (newPhase) => {
-      // Refresh the page when transitioning to a stable state
-      if (!isTransitionalPhase(newPhase)) {
-        router.refresh()
-      }
-    },
+    onPhaseChange: handlePhaseChange,
     onReady,
   })
 
-  // Use SSE phase if connected, otherwise fall back to initial phase
+  // Use WebSocket phase if connected, otherwise fall back to initial phase
   const displayPhase = isConnected && phase ? phase : initialPhase
-
-  // Refresh page data when phase changes to ensure consistency
-  useEffect(() => {
-    if (isConnected && phase && phase !== initialPhase) {
-      router.refresh()
-    }
-  }, [isConnected, phase, initialPhase, router])
 
   return (
     <span
