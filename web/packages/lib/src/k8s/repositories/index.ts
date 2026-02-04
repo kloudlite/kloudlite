@@ -14,6 +14,7 @@ export * from './packagerequest.repository';
 export * from './service.repository';
 export * from './configmap.repository';
 export * from './secret.repository';
+export * from './metrics.repository';
 
 // Export singleton instances
 export { workspaceRepository } from './workspace.repository';
@@ -27,3 +28,4 @@ export { packageRequestRepository } from './packagerequest.repository';
 export { serviceRepository } from './service.repository';
 export { configMapRepository } from './configmap.repository';
 export { secretRepository } from './secret.repository';
+export { metricsRepository } from './metrics.repository';

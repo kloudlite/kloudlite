@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { WorkspacesList } from './_components/workspaces-list'
 import { getWorkspacesListFull } from '@/app/actions/workspace.actions'
+import { WorkMachineStoppedAlert } from '@/components/work-machine-stopped-alert'
 import type { Workspace } from '@kloudlite/types'
 
 export default async function WorkspacesPage() {
@@ -30,6 +31,9 @@ export default async function WorkspacesPage() {
           Manage your development workspaces and collaborate with your team
         </p>
       </div>
+
+      {/* WorkMachine Status Banner */}
+      {!data.workMachineRunning && <WorkMachineStoppedAlert />}
 
       {/* Workspaces List with Filter */}
       <WorkspacesList

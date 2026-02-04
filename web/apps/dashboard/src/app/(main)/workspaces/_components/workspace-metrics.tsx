@@ -3,11 +3,16 @@
 import { useState, useEffect } from 'react'
 import { Cpu, MemoryStick } from 'lucide-react'
 import { getWorkspaceMetrics } from '@/app/actions/workspace.actions'
-import type { WorkspaceMetrics } from '@kloudlite/types'
 
 interface WorkspaceMetricsProps {
   workspaceName: string
   namespace: string
+}
+
+interface MetricsData {
+  cpu: { usage: number }
+  memory: { usage: number; usagePercent: number }
+  timestamp: string
 }
 
 function formatBytes(bytes: number): string {
@@ -19,7 +24,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsProps) {
-  const [metrics, setMetrics] = useState<WorkspaceMetrics | null>(null)
+  const [metrics, setMetrics] = useState<MetricsData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -27,7 +32,7 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
       try {
         const result = await getWorkspaceMetrics(workspaceName, namespace)
         if (result.success && result.data) {
-          setMetrics(result.data)
+          setMetrics(result.data as MetricsData)
           setError(null)
         } else {
           setError(result.error || 'Failed to load metrics')
@@ -51,60 +56,80 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
 
   if (error) {
     return (
-      <div className="bg-card rounded-lg border p-6">
-        <h3 className="mb-4 text-sm font-medium">Resource Usage</h3>
-        <p className="text-muted-foreground text-sm">Metrics unavailable</p>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Real-time metrics will be available once the backend endpoint is configured
-        </p>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="bg-card rounded-lg border p-6">
+          <p className="text-muted-foreground text-sm">Metrics unavailable</p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Real-time metrics will be available once the workspace is running
+          </p>
+        </div>
       </div>
     )
   }
 
   if (!metrics) {
-    return (
-      <div className="bg-card rounded-lg border p-6">
-        <h3 className="mb-4 text-sm font-medium">Resource Usage</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between animate-pulse">
-            <div className="flex items-center gap-2">
-              <div className="bg-muted h-4 w-4 rounded"></div>
-              <div className="bg-muted h-5 w-8 rounded"></div>
+    const SkeletonCard = () => (
+      <div className="bg-card animate-pulse rounded-lg border p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-muted h-9 w-9 rounded-lg"></div>
+            <div className="space-y-1">
+              <div className="bg-muted h-4 w-[70px] rounded"></div>
+              <div className="bg-muted h-3 w-[100px] rounded"></div>
             </div>
-            <div className="bg-muted h-5 w-20 rounded"></div>
           </div>
-          <div className="flex items-center justify-between animate-pulse">
-            <div className="flex items-center gap-2">
-              <div className="bg-muted h-4 w-4 rounded"></div>
-              <div className="bg-muted h-5 w-14 rounded"></div>
-            </div>
-            <div className="bg-muted h-5 w-16 rounded"></div>
-          </div>
+          <div className="bg-muted h-8 w-20 rounded"></div>
         </div>
+      </div>
+    )
+
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     )
   }
 
-  return (
-    <div className="bg-card rounded-lg border p-6">
-      <h3 className="mb-4 text-sm font-medium">Resource Usage</h3>
-      <div className="space-y-3">
-        {/* CPU */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Cpu className="text-muted-foreground h-4 w-4" />
-            <span className="text-sm font-medium">CPU</span>
-          </div>
-          <span className="font-mono text-sm">{(metrics.cpu.usage / 1000).toFixed(3)} vCPU</span>
-        </div>
+  const cpuValue = (metrics.cpu.usage / 1000).toFixed(3)
+  const memoryValue = formatBytes(metrics.memory.usage)
 
-        {/* Memory */}
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {/* CPU Usage */}
+      <div className="bg-card rounded-lg border p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MemoryStick className="text-muted-foreground h-4 w-4" />
-            <span className="text-sm font-medium">Memory</span>
+          <div className="flex items-center gap-3">
+            <div className="bg-info/10 rounded-lg p-2">
+              <Cpu className="text-info h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">CPU Usage</h3>
+              <p className="text-muted-foreground text-xs">Processing power</p>
+            </div>
           </div>
-          <span className="font-mono text-sm">{formatBytes(metrics.memory.usage)}</span>
+          <span className="text-2xl font-medium tabular-nums">
+            {cpuValue}
+            <span className="text-muted-foreground ml-1 text-sm font-normal">vCPU</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Memory Usage */}
+      <div className="bg-card rounded-lg border p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-accent/10 rounded-lg p-2">
+              <MemoryStick className="text-accent-foreground h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">Memory Usage</h3>
+              <p className="text-muted-foreground text-xs">RAM utilization</p>
+            </div>
+          </div>
+          <span className="text-2xl font-medium tabular-nums">
+            {memoryValue}
+          </span>
         </div>
       </div>
     </div>

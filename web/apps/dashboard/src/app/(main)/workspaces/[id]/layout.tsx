@@ -1,12 +1,12 @@
 import { redirect, notFound } from 'next/navigation'
+import Link from 'next/link'
 import { getSession } from '@/lib/get-session'
-import { Breadcrumb } from '@/components/breadcrumb'
 import { WorkspaceNav } from '../_components/workspace-nav'
 import { WorkspaceActions } from '../_components/workspace-actions'
 import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
 import { SnapshotsSheet } from '../_components/snapshots-sheet'
 import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
-import { Camera } from 'lucide-react'
+import { ArrowLeft, Camera } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 
 interface LayoutProps {
@@ -39,7 +39,11 @@ function formatTimeAgo(timestamp?: string): string {
 }
 
 export default async function WorkspaceLayout({ children, params }: LayoutProps) {
+  const layoutStart = performance.now()
+
+  const sessionStart = performance.now()
   const session = await getSession()
+  console.log(`[PERF] getSession: ${(performance.now() - sessionStart).toFixed(2)}ms`)
 
   if (!session) {
     redirect('/auth/signin')
@@ -49,13 +53,16 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
   const { id: hash } = await params
 
   // Fetch workspace data using server action
+  const apiStart = performance.now()
   const result = await getWorkspaceByHash(hash)
+  console.log(`[PERF] getWorkspaceByHash: ${(performance.now() - apiStart).toFixed(2)}ms`)
 
   if (!result.success || !result.data) {
     notFound()
   }
 
   const { workspace, workMachineRunning } = result.data
+  console.log(`[PERF] Layout total (before render): ${(performance.now() - layoutStart).toFixed(2)}ms`)
 
   const workspaceData = {
     hash,
@@ -67,16 +74,20 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
     created: formatTimeAgo(workspace.metadata?.creationTimestamp),
   }
 
-  const breadcrumbItems = [
-    { label: 'Workspaces', href: '/workspaces' },
-    { label: workspaceData.displayName },
-  ]
-
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="mb-3">
-        <Breadcrumb items={breadcrumbItems} />
+      {/* Back button */}
+      <div className="mb-8">
+        <Link
+          href="/workspaces"
+          className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors duration-300 text-sm"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+          <span className="relative">
+            Back to Workspaces
+            <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+          </span>
+        </Link>
       </div>
 
       {/* Workspace Header */}

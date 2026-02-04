@@ -1,8 +1,10 @@
 'use server'
 
+import { cache } from 'react'
 import { workMachineRepository } from '@kloudlite/lib/k8s'
 import type { WorkMachine } from '@kloudlite/lib/k8s'
 import { getSession } from '@/lib/get-session'
+import { cachedFetch, CacheTTL, invalidateCache } from '@/lib/cache'
 
 /**
  * Get the current authenticated username
@@ -15,10 +17,22 @@ async function getCurrentUsername(): Promise<string> {
   return session.user.username
 }
 
+/**
+ * Cached work machine fetch - React cache for request deduplication + LRU for cross-request
+ * Uses SHORT TTL (30s) because status (running/stopped) can change
+ */
+const getCachedWorkMachine = cache(async (username: string) => {
+  return cachedFetch(
+    `workMachine:${username}`,
+    () => workMachineRepository.getByOwner(username),
+    CacheTTL.SHORT // 30 seconds - status changes
+  )
+})
+
 export async function getMyWorkMachine() {
   try {
     const username = await getCurrentUsername()
-    const data = await workMachineRepository.getByOwner(username)
+    const data = await getCachedWorkMachine(username)
     if (!data) {
       return {
         success: false,
@@ -68,6 +82,7 @@ export async function startMyWorkMachine() {
     }
     console.log('[startMyWorkMachine] Calling repository.start()...')
     const data = await workMachineRepository.start(workMachine.metadata!.name!)
+    invalidateCache(`workMachine:${username}*`)
     console.log('[startMyWorkMachine] Success!')
     return { success: true, data }
   } catch (err) {
@@ -91,6 +106,7 @@ export async function stopMyWorkMachine() {
       }
     }
     const data = await workMachineRepository.stop(workMachine.metadata!.name!)
+    invalidateCache(`workMachine:${username}*`)
     return { success: true, data }
   } catch (err) {
     console.error('Stop work machine error:', err)
@@ -132,6 +148,7 @@ export async function createMyWorkMachine(machineType: string, volumeSize?: numb
     }
 
     const data = await workMachineRepository.create(workMachine)
+    invalidateCache(`workMachine:${username}*`)
     return { success: true, data }
   } catch (err) {
     console.error('Create work machine error:', err)
@@ -180,6 +197,7 @@ export async function updateMyWorkMachine(updateData: {
 
     // Cast to any to handle type differences between lib and types packages
     const data = await workMachineRepository.update(workMachine.metadata!.name!, updatedMachine as any)
+    invalidateCache(`workMachine:${username}*`)
     return { success: true, data }
   } catch (err) {
     console.error('Update work machine error:', err)

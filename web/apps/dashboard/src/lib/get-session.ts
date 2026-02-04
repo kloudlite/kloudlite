@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { auth } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import { jwtVerify, SignJWT } from 'jose'
@@ -6,8 +7,10 @@ import type { Session } from 'next-auth'
 /**
  * Get session from either NextAuth or superadmin JWT token
  * This function checks both regular NextAuth sessions and custom superadmin JWT tokens
+ *
+ * Wrapped with React cache() to deduplicate calls within the same request
  */
-export async function getSession(): Promise<Session | null> {
+export const getSession = cache(async (): Promise<Session | null> => {
   // Try NextAuth session first
   const session = await auth()
   if (session) {
@@ -49,7 +52,7 @@ export async function getSession(): Promise<Session | null> {
   }
 
   return null
-}
+})
 
 /**
  * Get JWT token for backend API authentication

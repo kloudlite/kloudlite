@@ -1,66 +1,82 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileCode2, Settings, Key } from 'lucide-react'
-
-interface TabItem {
-  id: string
-  label: string
-  icon: React.ReactNode
-  href: string
-}
+import { cn } from '@kloudlite/lib'
 
 interface EnvironmentNavProps {
   environmentId: string
 }
 
+const tabs = [
+  { id: 'services', label: 'Services', href: (id: string) => `/environments/${id}/services` },
+  { id: 'configs', label: 'Config Management', href: (id: string) => `/environments/${id}/configs` },
+  { id: 'settings', label: 'Settings', href: (id: string) => `/environments/${id}/settings` },
+]
+
 export function EnvironmentNav({ environmentId }: EnvironmentNavProps) {
   const pathname = usePathname()
+  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
+  const tabRefs = useRef<Map<string, HTMLAnchorElement>>(new Map())
 
-  const tabs: TabItem[] = [
-    {
-      id: 'services',
-      label: 'Services',
-      icon: <FileCode2 className="h-4 w-4" />,
-      href: `/environments/${environmentId}/services`,
-    },
-    {
-      id: 'configs',
-      label: 'Config Management',
-      icon: <Key className="h-4 w-4" />,
-      href: `/environments/${environmentId}/configs`,
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: <Settings className="h-4 w-4" />,
-      href: `/environments/${environmentId}/settings`,
-    },
-  ]
+  const activeTab = tabs.find((tab) => pathname.startsWith(tab.href(environmentId)))?.id || 'services'
+
+  // Update underline position
+  useEffect(() => {
+    const updatePosition = () => {
+      const activeRef = tabRefs.current.get(activeTab)
+      if (activeRef) {
+        const fullWidth = activeRef.offsetWidth
+        const underlineWidth = fullWidth * 0.6 // 60% of tab width
+        const leftOffset = activeRef.offsetLeft + (fullWidth - underlineWidth) / 2
+
+        setUnderlineStyle({
+          left: leftOffset,
+          width: underlineWidth,
+        })
+      }
+    }
+
+    // Small delay to ensure layout is ready
+    setTimeout(updatePosition, 10)
+
+    window.addEventListener('resize', updatePosition)
+    return () => window.removeEventListener('resize', updatePosition)
+  }, [activeTab])
 
   return (
-    <div className="bg-background border-b">
-      <div className="mx-auto max-w-7xl px-6">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {tabs.map((tab) => {
-            const isActive = pathname.startsWith(tab.href)
-            return (
-              <Link
-                key={tab.id}
-                href={tab.href}
-                className={`flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'border-primary text-primary'
-                    : 'text-muted-foreground hover:border-border hover:text-foreground border-transparent'
-                } `}
-              >
-                {tab.icon}
-                {tab.label}
-              </Link>
-            )
-          })}
-        </nav>
+    <div className="mb-5 pb-0 border-b">
+      <div className="inline-flex gap-1 relative">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.id}
+            ref={(el) => {
+              if (el) tabRefs.current.set(tab.id, el)
+            }}
+            href={tab.href(environmentId)}
+            className={cn(
+              'relative px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
+              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
+              activeTab === tab.id
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {tab.label}
+          </Link>
+        ))}
+
+        {/* Animated underline with CSS transition */}
+        {underlineStyle.width > 0 && (
+          <div
+            className="absolute bottom-0 h-[2px] bg-primary transition-all duration-300 ease-out"
+            style={{
+              left: `${underlineStyle.left}px`,
+              width: `${underlineStyle.width}px`,
+            }}
+          />
+        )}
       </div>
     </div>
   )

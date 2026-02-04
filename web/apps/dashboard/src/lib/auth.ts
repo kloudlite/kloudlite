@@ -192,6 +192,21 @@ export const authConfig: NextAuthConfig = {
             console.error('Failed to get user info for OAuth user:', error)
           }
         }
+
+        // Fetch and cache work machine namespace (only on initial login)
+        const username = token.username as string
+        if (username && !token.namespace) {
+          try {
+            const { workMachineRepository } = await import('@kloudlite/lib/k8s')
+            const workMachine = await workMachineRepository.getByOwner(username)
+            if (workMachine) {
+              token.namespace = workMachine.spec?.targetNamespace || 'default'
+              token.workMachineName = workMachine.metadata?.name
+            }
+          } catch (error) {
+            console.error('Failed to fetch work machine for session:', error)
+          }
+        }
       }
       return token
     },
@@ -207,6 +222,13 @@ export const authConfig: NextAuthConfig = {
         }
         if (token.isActive !== undefined) {
           session.user.isActive = token.isActive as boolean
+        }
+        // Add cached work machine data
+        if (token.namespace) {
+          session.user.namespace = token.namespace as string
+        }
+        if (token.workMachineName) {
+          session.user.workMachineName = token.workMachineName as string
         }
       }
       return session

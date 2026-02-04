@@ -4,13 +4,19 @@ import { revalidatePath } from 'next/cache'
 import { machineTypeRepository } from '@kloudlite/lib/k8s'
 import type { MachineType } from '@kloudlite/lib/k8s'
 import type { MachineTypeCreateRequest, MachineTypeUpdateRequest } from '@kloudlite/types'
+import { cachedFetch, CacheTTL, invalidateCache } from '@/lib/cache'
 
 /**
  * Server action to list all machine types
+ * Cached since machine types rarely change and this is called on every page load
  */
 export async function listMachineTypes() {
   try {
-    const result = await machineTypeRepository.list()
+    const result = await cachedFetch(
+      'machineTypes:all',
+      () => machineTypeRepository.list(),
+      CacheTTL.STATIC // 5 minutes - machine types rarely change
+    )
     return { success: true, data: result.items }
   } catch (err) {
     console.error('List machine types error:', err)
@@ -66,6 +72,7 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
     }
 
     const result = await machineTypeRepository.create(machineType)
+    invalidateCache('machineTypes:*')
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -100,6 +107,7 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
     const result = await machineTypeRepository.patch(name, {
       spec: specUpdate,
     })
+    invalidateCache('machineTypes:*')
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -118,6 +126,7 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
 export async function deleteMachineType(name: string) {
   try {
     await machineTypeRepository.delete(name)
+    invalidateCache('machineTypes:*')
     revalidatePath('/admin/machine-configs')
     return { success: true }
   } catch (err) {
@@ -136,6 +145,7 @@ export async function deleteMachineType(name: string) {
 export async function activateMachineType(name: string) {
   try {
     const result = await machineTypeRepository.activate(name)
+    invalidateCache('machineTypes:*')
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -154,6 +164,7 @@ export async function activateMachineType(name: string) {
 export async function deactivateMachineType(name: string) {
   try {
     const result = await machineTypeRepository.deactivate(name)
+    invalidateCache('machineTypes:*')
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -172,6 +183,7 @@ export async function deactivateMachineType(name: string) {
 export async function setMachineTypeAsDefault(name: string) {
   try {
     const result = await machineTypeRepository.setDefault(name)
+    invalidateCache('machineTypes:*')
     revalidatePath('/admin/machine-configs')
     revalidatePath('/')
     return { success: true, data: result }

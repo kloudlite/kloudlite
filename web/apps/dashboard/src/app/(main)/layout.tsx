@@ -36,8 +36,11 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     redirect('/auth/signin')
   }
 
-  // Check if system is configured
-  const systemReady = await isSystemReady()
+  // Fetch system ready status and work machine in parallel (both independent after session)
+  const [systemReady, workMachineResult] = await Promise.all([
+    isSystemReady(),
+    getMyWorkMachine(),
+  ])
 
   // If system not ready
   if (!systemReady) {
@@ -50,8 +53,6 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     return <SystemSetupPage />
   }
 
-  // Check if user has a work machine
-  const workMachineResult = await getMyWorkMachine()
   const hasWorkMachine = workMachineResult.success && !!workMachineResult.data
 
   // If no work machine, render children full-screen without navigation

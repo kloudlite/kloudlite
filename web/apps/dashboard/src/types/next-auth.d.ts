@@ -11,6 +11,8 @@ declare module 'next-auth' {
       provider?: string
       roles?: string[]
       isActive?: boolean
+      namespace?: string
+      workMachineName?: string
     } & DefaultSession['user']
   }
 
@@ -28,5 +30,7 @@ declare module 'next-auth/jwt' {
     providerId?: string
     roles?: string[]
     isActive?: boolean
+    namespace?: string
+    workMachineName?: string
   }
 }
