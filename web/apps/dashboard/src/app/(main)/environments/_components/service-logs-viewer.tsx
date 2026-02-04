@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Terminal, X, Loader2, Download, Trash2, Pause, Play, Search, ChevronDown, ChevronRight, Filter, RefreshCw } from 'lucide-react'
+import { Terminal, X, Loader2, Download, Trash2, Pause, Play, Search, ChevronDown, ChevronRight, Filter, RefreshCw, ArrowDownToLine, ChevronsDown } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
 
@@ -253,9 +253,12 @@ export function ServiceLogsViewer({
   const [searchTerm, setSearchTerm] = useState('')
   const [levelFilter, setLevelFilter] = useState<LogLevel | 'all'>('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [stickyScroll, setStickyScroll] = useState(true)
+  const [isAtBottom, setIsAtBottom] = useState(true)
   const logsContainerRef = useRef<HTMLDivElement>(null)
   const pausedLogsRef = useRef<LogEntry[]>([])
   const idCounterRef = useRef(0)
+  const userScrolledRef = useRef(false)
 
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -263,20 +266,60 @@ export function ServiceLogsViewer({
   const [isReconnecting, setIsReconnecting] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const isPausedRef = useRef(isPaused)
+  const stickyScrollRef = useRef(stickyScroll)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const maxReconnectAttempts = 10
   const baseReconnectDelay = 1000 // 1 second
 
-  // Keep ref in sync with state
+  // Keep refs in sync with state
   useEffect(() => {
     isPausedRef.current = isPaused
   }, [isPaused])
 
-  const scrollToBottom = useCallback(() => {
-    if (logsContainerRef.current && !isPausedRef.current) {
+  useEffect(() => {
+    stickyScrollRef.current = stickyScroll
+  }, [stickyScroll])
+
+  const scrollToBottom = useCallback((force: boolean = false) => {
+    if (logsContainerRef.current && (force || (stickyScrollRef.current && !isPausedRef.current))) {
       logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight
+      setIsAtBottom(true)
     }
   }, [])
+
+  // Check if scrolled to bottom (with small threshold for rounding errors)
+  const checkIfAtBottom = useCallback(() => {
+    if (!logsContainerRef.current) return true
+    const { scrollTop, scrollHeight, clientHeight } = logsContainerRef.current
+    return scrollHeight - scrollTop - clientHeight < 20
+  }, [])
+
+  // Handle scroll events to detect manual scrolling
+  const handleScroll = useCallback(() => {
+    if (!logsContainerRef.current) return
+
+    const atBottom = checkIfAtBottom()
+    setIsAtBottom(atBottom)
+
+    // If user scrolled up manually, disable sticky scroll
+    if (!atBottom && !userScrolledRef.current) {
+      userScrolledRef.current = true
+      setStickyScroll(false)
+    }
+
+    // If user scrolled back to bottom manually, re-enable sticky scroll
+    if (atBottom && userScrolledRef.current) {
+      userScrolledRef.current = false
+      setStickyScroll(true)
+    }
+  }, [checkIfAtBottom])
+
+  // Jump to bottom and re-enable sticky scroll
+  const jumpToBottom = useCallback(() => {
+    setStickyScroll(true)
+    userScrolledRef.current = false
+    scrollToBottom(true)
+  }, [scrollToBottom])
 
   const handleLog = useCallback(
     (data: string) => {
@@ -535,6 +578,21 @@ export function ServiceLogsViewer({
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => {
+              setStickyScroll(!stickyScroll)
+              if (!stickyScroll) {
+                // If enabling sticky scroll, jump to bottom
+                scrollToBottom(true)
+              }
+            }}
+            title={stickyScroll ? 'Disable auto-scroll' : 'Enable auto-scroll'}
+            className={cn(stickyScroll && 'bg-muted text-green-500')}
+          >
+            <ArrowDownToLine className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setIsPaused(!isPaused)}
             title={isPaused ? 'Resume' : 'Pause'}
           >
@@ -628,24 +686,38 @@ export function ServiceLogsViewer({
       )}
 
       {/* Logs content */}
-      <div
-        ref={logsContainerRef}
-        className="flex-1 overflow-auto bg-zinc-950 font-mono text-xs"
-      >
-        {filteredLogs.length === 0 ? (
-          <div className="text-muted-foreground flex h-full items-center justify-center">
-            {logs.length === 0
-              ? isConnecting
-                ? 'Connecting to log stream...'
-                : 'Waiting for logs...'
-              : 'No logs match the current filters'}
-          </div>
-        ) : (
-          <div>
-            {filteredLogs.map((entry) => (
-              <LogEntryRow key={entry.id} entry={entry} searchTerm={searchTerm} />
-            ))}
-          </div>
+      <div className="relative flex-1">
+        <div
+          ref={logsContainerRef}
+          onScroll={handleScroll}
+          className="absolute inset-0 overflow-auto bg-zinc-950 font-mono text-xs"
+        >
+          {filteredLogs.length === 0 ? (
+            <div className="text-muted-foreground flex h-full items-center justify-center">
+              {logs.length === 0
+                ? isConnecting
+                  ? 'Connecting to log stream...'
+                  : 'Waiting for logs...'
+                : 'No logs match the current filters'}
+            </div>
+          ) : (
+            <div>
+              {filteredLogs.map((entry) => (
+                <LogEntryRow key={entry.id} entry={entry} searchTerm={searchTerm} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Jump to bottom button - shows when not at bottom and logs exist */}
+        {!isAtBottom && logs.length > 0 && (
+          <button
+            onClick={jumpToBottom}
+            className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 shadow-lg transition-all hover:bg-zinc-700 hover:text-white border border-zinc-700"
+          >
+            <ChevronsDown className="h-3.5 w-3.5" />
+            Jump to latest
+          </button>
         )}
       </div>
     </div>
