@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -7,6 +9,8 @@ interface WorkspaceStatusIndicatorProps {
   phase?: string
   className?: string
   showLoader?: boolean
+  /** Enable polling to refresh page when in transitional state */
+  enablePolling?: boolean
 }
 
 function getPhaseStyles(phase: string | undefined) {
@@ -37,7 +41,23 @@ export function WorkspaceStatusIndicator({
   phase,
   className,
   showLoader = true,
+  enablePolling = false,
 }: WorkspaceStatusIndicatorProps) {
+  const router = useRouter()
+
+  // Poll for status changes when in transitional state
+  useEffect(() => {
+    if (!enablePolling || !isTransitionalPhase(phase)) {
+      return
+    }
+
+    const intervalId = setInterval(() => {
+      router.refresh()
+    }, 3000) // Poll every 3 seconds
+
+    return () => clearInterval(intervalId)
+  }, [enablePolling, phase, router])
+
   return (
     <span
       className={cn(
