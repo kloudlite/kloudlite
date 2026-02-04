@@ -41,7 +41,6 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
     if (!result.success) {
       setError(result.error || 'Failed to activate workspace')
     }
-    // Status updates are handled by WorkspaceStatusIndicator via WebSocket
 
     setIsLoading(false)
   }
