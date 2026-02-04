@@ -1,24 +1,15 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Terminal, X, Loader2, Download, Trash2, Pause, Play, Search, ChevronDown, ChevronRight, Filter } from 'lucide-react'
+import { Terminal, X, Loader2, Download, Trash2, Pause, Play, Search, ChevronDown, ChevronRight, Filter, RefreshCw } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
-import { useWebSocket } from '@/lib/hooks/use-websocket'
 
 interface ServiceLogsViewerProps {
   serviceName: string
   namespace: string
   isOpen: boolean
   onClose: () => void
-}
-
-interface LogMessage {
-  type: string
-  data?: string
-  pod?: string
-  container?: string
-  error?: string
 }
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'unknown'
@@ -266,57 +257,153 @@ export function ServiceLogsViewer({
   const pausedLogsRef = useRef<LogEntry[]>([])
   const idCounterRef = useRef(0)
 
-  const scrollToBottom = useCallback(() => {
-    if (logsContainerRef.current && !isPaused) {
-      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight
-    }
+  const [isConnected, setIsConnected] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [reconnectAttempt, setReconnectAttempt] = useState(0)
+  const [isReconnecting, setIsReconnecting] = useState(false)
+  const eventSourceRef = useRef<EventSource | null>(null)
+  const isPausedRef = useRef(isPaused)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const maxReconnectAttempts = 10
+  const baseReconnectDelay = 1000 // 1 second
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    isPausedRef.current = isPaused
   }, [isPaused])
 
-  const url = useMemo(() => {
-    if (!isOpen) return null
-    return `/api/v1/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(serviceName)}/logs-ws?tailLines=200`
-  }, [isOpen, namespace, serviceName])
+  const scrollToBottom = useCallback(() => {
+    if (logsContainerRef.current && !isPausedRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight
+    }
+  }, [])
 
   const handleLog = useCallback(
     (data: string) => {
       const entry = parseLogLine(data, idCounterRef.current++)
 
-      if (isPaused) {
+      if (isPausedRef.current) {
         pausedLogsRef.current.push(entry)
       } else {
         setLogs((prev) => [...prev, entry])
         setTimeout(scrollToBottom, 0)
       }
     },
-    [isPaused, scrollToBottom]
+    [scrollToBottom]
   )
 
-  const eventHandlers = useMemo(
-    () => ({
-      log: (data: string | LogMessage) => {
-        if (typeof data === 'string') {
-          handleLog(data)
-        } else if (data?.data) {
-          handleLog(data.data)
-        }
-      },
-      connected: () => {
-        // Connection confirmed
-      },
-      error: (data: string | { error?: string }) => {
-        const errorMsg = typeof data === 'string' ? data : data?.error || 'Unknown error'
-        console.error('Log stream error:', errorMsg)
-      },
-    }),
-    [handleLog]
-  )
+  // Function to create and manage SSE connection
+  const createConnection = useCallback((clearLogs: boolean = false) => {
+    if (!serviceName || !namespace) return
 
-  const { isConnected, error } = useWebSocket<LogMessage>(url, {
-    enabled: isOpen,
-    eventHandlers,
-  })
+    // Close existing connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
+    }
 
-  // Handle pause/resume
+    // Clear reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+
+    if (clearLogs) {
+      setLogs([])
+      pausedLogsRef.current = []
+      idCounterRef.current = 0
+    }
+    setError(null)
+    setIsReconnecting(false)
+
+    const url = `/api/v1/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(serviceName)}/logs?tailLines=200&follow=true`
+    const eventSource = new EventSource(url)
+    eventSourceRef.current = eventSource
+
+    eventSource.onopen = () => {
+      setIsConnected(true)
+      setError(null)
+      setReconnectAttempt(0)
+      setIsReconnecting(false)
+    }
+
+    eventSource.onmessage = (event) => {
+      if (event.data) {
+        handleLog(event.data)
+      }
+    }
+
+    eventSource.onerror = () => {
+      setIsConnected(false)
+
+      // Check if connection is closed (not just temporarily errored)
+      if (eventSource.readyState === EventSource.CLOSED) {
+        // Attempt reconnect with exponential backoff
+        setReconnectAttempt((prev) => {
+          const newAttempt = prev + 1
+
+          if (newAttempt <= maxReconnectAttempts) {
+            setIsReconnecting(true)
+            setError(`Reconnecting... (attempt ${newAttempt}/${maxReconnectAttempts})`)
+
+            // Exponential backoff: 1s, 2s, 4s, 8s, max 30s
+            const delay = Math.min(baseReconnectDelay * Math.pow(2, newAttempt - 1), 30000)
+
+            reconnectTimeoutRef.current = setTimeout(() => {
+              createConnection(false) // Don't clear logs on reconnect
+            }, delay)
+          } else {
+            setIsReconnecting(false)
+            setError('Connection lost. Click reconnect to try again.')
+          }
+
+          return newAttempt
+        })
+      }
+    }
+  }, [serviceName, namespace, handleLog])
+
+  // Manual reconnect function
+  const handleReconnect = useCallback(() => {
+    setReconnectAttempt(0)
+    createConnection(false)
+  }, [createConnection])
+
+  // SSE connection effect
+  useEffect(() => {
+    if (!isOpen || !serviceName || !namespace) {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+      setIsConnected(false)
+      setIsReconnecting(false)
+      setReconnectAttempt(0)
+      return
+    }
+
+    // Create initial connection and clear logs
+    createConnection(true)
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+      setIsConnected(false)
+      setIsReconnecting(false)
+    }
+  }, [isOpen, serviceName, namespace, createConnection])
+
+  // Handle pause/resume - flush paused logs when resuming
   useEffect(() => {
     if (!isPaused && pausedLogsRef.current.length > 0) {
       setLogs((prev) => [...prev, ...pausedLogsRef.current])
@@ -324,22 +411,6 @@ export function ServiceLogsViewer({
       setTimeout(scrollToBottom, 0)
     }
   }, [isPaused, scrollToBottom])
-
-  // Clear logs when closed or when service changes
-  useEffect(() => {
-    if (!isOpen) {
-      setLogs([])
-      pausedLogsRef.current = []
-      idCounterRef.current = 0
-    }
-  }, [isOpen])
-
-  // Clear logs when service or namespace changes
-  useEffect(() => {
-    setLogs([])
-    pausedLogsRef.current = []
-    idCounterRef.current = 0
-  }, [serviceName, namespace])
 
   // Filter logs
   const filteredLogs = useMemo(() => {
@@ -403,7 +474,7 @@ export function ServiceLogsViewer({
 
   if (!isOpen) return null
 
-  const isConnecting = !isConnected && !error
+  const isConnecting = !isConnected && !error && !isReconnecting
 
   return (
     <div className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[40vh] min-h-[300px] flex-col border-t">
@@ -424,7 +495,24 @@ export function ServiceLogsViewer({
               Live
             </span>
           )}
-          {error && <span className="text-xs text-red-500">{error}</span>}
+          {isReconnecting && (
+            <span className="flex items-center gap-1 text-xs text-yellow-500">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {error || 'Reconnecting...'}
+            </span>
+          )}
+          {error && !isReconnecting && (
+            <span className="flex items-center gap-2 text-xs text-red-500">
+              {error}
+              <button
+                onClick={handleReconnect}
+                className="flex items-center gap-1 rounded bg-red-500/20 px-2 py-0.5 hover:bg-red-500/30 transition-colors"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Reconnect
+              </button>
+            </span>
+          )}
           {isPaused && (
             <span className="text-muted-foreground text-xs">
               (Paused - {pausedLogsRef.current.length} new)

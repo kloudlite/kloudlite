@@ -108,19 +108,19 @@ export function ServicesList({
           <table className="w-full">
             <thead>
               <tr className="bg-muted/50 border-b">
-                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <th className="text-muted-foreground w-48 px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Name
                 </th>
                 <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   DNS
                 </th>
-                <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                <th className="text-muted-foreground w-36 px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   IP
                 </th>
                 <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                   Ports
                 </th>
-                <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+                <th className="text-muted-foreground w-24 px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                   Actions
                 </th>
               </tr>
@@ -130,7 +130,7 @@ export function ServicesList({
                 const isHeadless = service.clusterIP === 'None'
                 return (
                   <tr key={`${service.namespace}-${service.name}`} className="hover:bg-muted/50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="w-48 px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Network className="text-muted-foreground h-5 w-5" />
                         <span className="text-sm font-medium">{service.name}</span>
@@ -159,7 +159,7 @@ export function ServicesList({
                         </button>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="w-36 px-6 py-4 whitespace-nowrap">
                       <span className="font-mono text-sm">
                         {isHeadless ? (
                           <span className="text-muted-foreground italic">None (Headless)</span>
@@ -187,7 +187,7 @@ export function ServicesList({
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="w-24 px-6 py-4 text-right">
                       <Button
                         variant="ghost"
                         size="sm"

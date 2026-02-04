@@ -40,17 +40,17 @@ export function WorkspacesList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filter and Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Scope Filter - Available to all users */}
-          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {/* Scope Filter */}
+          <div className="bg-muted flex items-center gap-1 rounded-lg p-1">
             <button
               onClick={() => setScope('all')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 scopeFilter === 'all'
-                  ? 'bg-background'
+                  ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -58,9 +58,9 @@ export function WorkspacesList({
             </button>
             <button
               onClick={() => setScope('mine')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 scopeFilter === 'mine'
-                  ? 'bg-background'
+                  ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -69,12 +69,12 @@ export function WorkspacesList({
           </div>
 
           {/* Status Filter */}
-          <div className="bg-muted flex items-center gap-1 rounded-md p-1">
+          <div className="bg-muted flex items-center gap-1 rounded-lg p-1">
             <button
               onClick={() => setStatus('all')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-background'
+                  ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -82,9 +82,9 @@ export function WorkspacesList({
             </button>
             <button
               onClick={() => setStatus('active')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === 'active'
-                  ? 'bg-background'
+                  ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -92,9 +92,9 @@ export function WorkspacesList({
             </button>
             <button
               onClick={() => setStatus('suspended')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === 'suspended'
-                  ? 'bg-background'
+                  ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -102,9 +102,9 @@ export function WorkspacesList({
             </button>
             <button
               onClick={() => setStatus('archived')}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === 'archived'
-                  ? 'bg-background'
+                  ? 'bg-background shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -112,7 +112,9 @@ export function WorkspacesList({
             </button>
           </div>
 
-          <span className="text-muted-foreground text-sm">
+          <div className="h-6 w-px bg-border" />
+
+          <span className="text-muted-foreground text-sm font-medium">
             {filteredWorkspaces.length}{' '}
             {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
           </span>
@@ -121,31 +123,31 @@ export function WorkspacesList({
       </div>
 
       {/* Table */}
-      <div className="bg-card overflow-hidden rounded-lg border">
+      <div className="bg-card overflow-hidden rounded-xl border">
         <table className="min-w-full">
-          <thead className="bg-muted/50 border-b">
+          <thead className="bg-muted/30 border-b">
             <tr>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Name
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Owner
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground w-32 px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Status
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Environment
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground w-32 px-6 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                 Created
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground w-20 px-6 py-3.5 text-right text-xs font-semibold tracking-wider uppercase">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border/50">
             {filteredWorkspaces.map((workspace) => {
               // Use runtime phase for display instead of desired spec.status
               const phase = workspace.status?.phase || 'Pending'
@@ -165,7 +167,7 @@ export function WorkspacesList({
               return (
                 <tr
                   key={workspace.metadata.uid || workspace.metadata.name}
-                  className="hover:bg-muted/50"
+                  className="transition-colors hover:bg-muted/30"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
@@ -179,10 +181,10 @@ export function WorkspacesList({
                   <td className="px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.spec.ownedBy || 'unknown'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="w-32 px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                        className={`inline-flex min-w-[70px] items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
                       >
                         {phase}
                       </span>
@@ -206,7 +208,7 @@ export function WorkspacesList({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </td>
-                  <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
+                  <td className="text-muted-foreground w-32 px-6 py-4 text-sm whitespace-nowrap">
                     {workspace.metadata.creationTimestamp
                       ? new Date(workspace.metadata.creationTimestamp).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -215,7 +217,7 @@ export function WorkspacesList({
                         })
                       : '-'}
                   </td>
-                  <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
+                  <td className="w-20 px-6 py-4 text-right text-sm whitespace-nowrap">
                     <WorkspaceRowActions
                       workspace={workspace}
                       workMachineRunning={workMachineRunning}
@@ -230,7 +232,7 @@ export function WorkspacesList({
       </div>
 
       {filteredWorkspaces.length === 0 && (
-        <div className="bg-card rounded-lg border py-12 text-center">
+        <div className="bg-card rounded-xl border py-16 text-center">
           <p className="text-muted-foreground text-sm">
             {scopeFilter === 'all' && statusFilter === 'active'
               ? 'No active workspaces found'

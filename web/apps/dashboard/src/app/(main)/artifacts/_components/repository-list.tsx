@@ -173,10 +173,10 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
               <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Owner
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground w-28 px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
                 Tags
               </th>
-              <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+              <th className="text-muted-foreground w-20 px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
                 Actions
               </th>
             </tr>
@@ -216,7 +216,7 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
                         {namespace}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="w-28 px-6 py-4 whitespace-nowrap">
                       {isExpanded ? (
                         tagsState.loading ? (
                           <span className="text-sm text-muted-foreground">Loading...</span>
@@ -237,7 +237,7 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
                         </button>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                    <td className="w-20 px-6 py-4 text-right whitespace-nowrap">
                       {isDeleting ? (
                         <span className="text-muted-foreground text-xs flex items-center justify-end gap-2">
                           <Loader2 className="h-3 w-3 animate-spin" />

@@ -220,10 +220,10 @@ export function MachineConfigsList({
           <thead>
             <tr className="bg-muted border-b">
               <th className="text-foreground p-4 text-left text-sm font-medium">Configuration</th>
-              <th className="text-foreground p-4 text-left text-sm font-medium">Resources</th>
-              <th className="text-foreground p-4 text-left text-sm font-medium">Status</th>
+              <th className="text-foreground w-36 p-4 text-left text-sm font-medium">Resources</th>
+              <th className="text-foreground w-24 p-4 text-left text-sm font-medium">Status</th>
               {!isReadOnly && (
-                <th className="text-foreground p-4 text-left text-sm font-medium">Actions</th>
+                <th className="text-foreground w-20 p-4 text-left text-sm font-medium">Actions</th>
               )}
             </tr>
           </thead>
@@ -250,7 +250,7 @@ export function MachineConfigsList({
                     </Badge>
                   </div>
                 </td>
-                <td className="p-4">
+                <td className="w-36 p-4">
                   <div className="space-y-1.5 text-sm">
                     <div className="flex items-center gap-2">
                       <Cpu className="text-muted-foreground h-3.5 w-3.5" />
@@ -268,7 +268,7 @@ export function MachineConfigsList({
                     )}
                   </div>
                 </td>
-                <td className="p-4">
+                <td className="w-24 p-4">
                   <div className="flex items-center gap-1.5">
                     {config.active ? (
                       <>
@@ -284,7 +284,7 @@ export function MachineConfigsList({
                   </div>
                 </td>
                 {!isReadOnly && (
-                  <td className="p-4">
+                  <td className="w-20 p-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
