@@ -4,21 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Code2, Globe, PinOff, ExternalLink, Plus, Folder, Server } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
-
-interface PinnedWorkspace {
-  id: string
-  name: string
-  hash: string
-  environment: string
-  status: 'active' | 'idle'
-}
-
-interface PinnedEnvironment {
-  id: string
-  name: string
-  hash: string
-  status: 'active' | 'idle'
-}
+import type { PinnedWorkspace, PinnedEnvironment } from '@/types/shared'
 
 interface PinnedResourcesProps {
   workspaces: PinnedWorkspace[]

@@ -13,6 +13,7 @@ import {
 import { unpinWorkspace, unpinEnvironment } from '@/app/actions/user-preferences.actions'
 import { toast } from 'sonner'
 import { Server, Loader2, Activity, Clock, User, Cpu } from 'lucide-react'
+import type { PinnedWorkspace, PinnedEnvironment } from '@/types/shared'
 
 interface WorkMachine {
   id: string
@@ -84,20 +85,6 @@ interface MachineType {
   gpu?: string
 }
 
-interface PinnedWorkspace {
-  id: string
-  name: string
-  hash: string
-  environment: string
-  status: 'active' | 'idle'
-}
-
-interface PinnedEnvironment {
-  id: string
-  name: string
-  hash: string
-  status: 'active' | 'idle'
-}
 
 interface WorkMachinesContentProps {
   machine: WorkMachine

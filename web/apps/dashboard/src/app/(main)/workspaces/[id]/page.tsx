@@ -1,13 +1,8 @@
 import { redirect } from 'next/navigation'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import type { PageProps } from '@/types/shared'
 
 export default async function WorkspaceDetailPage({ params }: PageProps) {
-  // Redirect to connect tab by default
+  // Redirect to overview tab by default
   const { id } = await params
-  redirect(`/workspaces/${id}/connect`)
+  redirect(`/workspaces/${id}/overview`)
 }

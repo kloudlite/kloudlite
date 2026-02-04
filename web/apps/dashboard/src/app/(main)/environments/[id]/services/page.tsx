@@ -3,12 +3,7 @@ import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
 import { getEnvironmentByHash } from '@/app/actions/environment.actions'
 import type { CompositionSpec, CompositionStatus } from '@kloudlite/types'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import type { PageProps } from '@/types/shared'
 
 export default async function ServicesPage({ params }: PageProps) {
   const session = await getSession()

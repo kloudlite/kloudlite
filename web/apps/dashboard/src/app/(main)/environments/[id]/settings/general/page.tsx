@@ -1,11 +1,6 @@
 import { GeneralSettings } from '../../../_components/general-settings'
 import { getEnvironmentByHash } from '@/app/actions/environment.actions'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import type { PageProps } from '@/types/shared'
 
 export default async function GeneralSettingsPage({ params }: PageProps) {
   // id is now the environment hash

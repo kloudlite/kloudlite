@@ -1,13 +1,8 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { getWorkspaceByHash, getPackageRequest } from '@/app/actions/workspace.actions'
-import { PackagesManager } from '../../_components/packages-manager'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import { PackagesList } from '../../_components/packages-list'
+import type { PageProps } from '@/types/shared'
 
 export default async function PackagesPage({ params }: PageProps) {
   const session = await getSession()
@@ -33,7 +28,7 @@ export default async function PackagesPage({ params }: PageProps) {
   const packageRequest = pkgResult.success ? pkgResult.data : null
 
   return (
-    <PackagesManager
+    <PackagesList
       workspace={workspace as any}
       initialPackageRequest={packageRequest as any}
     />

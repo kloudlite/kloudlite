@@ -1,10 +1,5 @@
 import { redirect } from 'next/navigation'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import type { PageProps } from '@/types/shared'
 
 export default async function ConfigsPage({ params }: PageProps) {
   const { id } = await params
