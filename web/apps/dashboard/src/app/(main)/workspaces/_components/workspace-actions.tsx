@@ -38,7 +38,9 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
 
     const result = await activateWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
-    if (!result.success) {
+    if (result.success) {
+      router.refresh()
+    } else {
       setError(result.error || 'Failed to activate workspace')
     }
 
