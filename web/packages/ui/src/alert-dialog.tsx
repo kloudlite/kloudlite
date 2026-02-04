@@ -11,10 +11,10 @@ import { useMounted } from "./hooks/use-mounted";
  * AlertDialog wrapper that prevents hydration mismatches by only rendering
  * after the component has mounted on the client.
  */
-const AlertDialog = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>
->(({ children, ...props }, ref) => {
+function AlertDialog({
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>) {
   const mounted = useMounted();
 
   if (!mounted) {
@@ -22,12 +22,9 @@ const AlertDialog = React.forwardRef<
   }
 
   return (
-    <AlertDialogPrimitive.Root ref={ref} {...props}>
-      {children}
-    </AlertDialogPrimitive.Root>
+    <AlertDialogPrimitive.Root {...props}>{children}</AlertDialogPrimitive.Root>
   );
-});
-AlertDialog.displayName = "AlertDialog";
+}
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 

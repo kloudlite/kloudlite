@@ -37,7 +37,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   }
 
   // Fetch system ready status and work machine in parallel (both independent after session)
-  const [systemReady, workMachineResult] = await Promise.all([
+  // Work machine is fetched to warm the cache for child pages
+  const [systemReady] = await Promise.all([
     isSystemReady(),
     getMyWorkMachine(),
   ])
@@ -55,8 +56,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
   // Always show navigation for authenticated users
   // Pages handle work machine state (stopped, missing, etc.) gracefully with appropriate UI
-  // Work machine result is fetched to warm the cache for child pages
-  const _hasWorkMachine = workMachineResult.success && !!workMachineResult.data
+  // Work machine result is fetched above to warm the cache for child pages
 
   // Normal layout with navigation - always show for authenticated users
   return (
