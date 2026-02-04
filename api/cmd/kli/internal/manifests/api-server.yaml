@@ -82,13 +82,15 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 8443
+              scheme: HTTPS
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 8443
+              scheme: HTTPS
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
