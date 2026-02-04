@@ -19,7 +19,7 @@ interface WorkspacesListProps {
 export function WorkspacesList({
   workspaces,
   currentUser,
-  namespace = 'default',
+  namespace: _namespace = 'default',
   workMachineRunning = false,
   pinnedWorkspaceIds = [],
 }: WorkspacesListProps) {
