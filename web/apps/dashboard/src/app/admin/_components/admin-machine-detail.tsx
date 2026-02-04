@@ -201,7 +201,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                       </span>
                     </div>
                     <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      className={`rounded-md px-2 py-1 text-xs font-medium ${
                         workspace.status === 'running'
                           ? 'bg-success/10 text-success'
                           : 'bg-muted text-muted-foreground'
@@ -250,7 +250,7 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
                       </span>
                     </div>
                     <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      className={`rounded-md px-2 py-1 text-xs font-medium ${
                         environment.status === 'running'
                           ? 'bg-success/10 text-success'
                           : 'bg-muted text-muted-foreground'

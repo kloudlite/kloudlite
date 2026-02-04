@@ -183,13 +183,13 @@ export function WorkspacesList({
                   <td className="w-32 px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`inline-flex min-w-[70px] items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                        className={`inline-flex min-w-[70px] items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium ${statusColor}`}
                       >
                         {phase}
                       </span>
                       {phase === 'Running' && workspace.status?.idleState === 'idle' && (
                         <span
-                          className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          className="inline-flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
                           title={workspace.status?.idleSince ? `Idle since ${new Date(workspace.status.idleSince).toLocaleString()}` : 'Idle'}
                         >
                           <Activity className="h-3 w-3" />

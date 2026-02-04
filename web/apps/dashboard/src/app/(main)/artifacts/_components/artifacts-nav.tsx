@@ -43,7 +43,7 @@ export function ArtifactsNav() {
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">Coming Soon</span>
+                <span className="rounded-md bg-muted px-2 py-0.5 text-xs">Coming Soon</span>
               </div>
             )
           }

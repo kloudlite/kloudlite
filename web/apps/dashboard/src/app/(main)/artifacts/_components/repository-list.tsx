@@ -223,7 +223,7 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
                         ) : tagsState.error ? (
                           <span className="text-sm text-destructive">Error</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium">
                             <Tag className="h-3 w-3" />
                             {tagsState.tags.length}
                           </span>
