@@ -5,12 +5,7 @@ import { LocalTime } from '@/components/local-time'
 import { WorkspaceMetrics } from '../../_components/workspace-metrics'
 import { WorkspaceConnectOptions } from '../../_components/workspace-connect-options'
 import { Activity, GitBranch, Globe, ExternalLink, Layers } from 'lucide-react'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import type { PageProps } from '@/types/shared'
 
 export default async function OverviewPage({ params }: PageProps) {
   const session = await getSession()

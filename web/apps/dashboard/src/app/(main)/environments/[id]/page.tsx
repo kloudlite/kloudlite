@@ -1,10 +1,5 @@
 import { redirect } from 'next/navigation'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import type { PageProps } from '@/types/shared'
 
 export default async function EnvironmentDetailPage({ params }: PageProps) {
   // Redirect to services tab by default

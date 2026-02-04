@@ -4,12 +4,7 @@ import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
 import { WorkspaceDescriptionForm } from '../../_components/workspace-description-form'
 import { WorkspaceDangerZone } from '../../_components/workspace-danger-zone'
 import { Info, User, Server } from 'lucide-react'
-
-interface PageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+import type { PageProps } from '@/types/shared'
 
 export default async function SettingsPage({ params }: PageProps) {
   const session = await getSession()
