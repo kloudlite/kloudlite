@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useCallback, startTransition } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import { Pause, Play, Loader2 } from 'lucide-react'
 import { suspendWorkspace, activateWorkspace } from '@/app/actions/workspace.actions'
-import { useWorkspaceStatus } from '@/lib/hooks/use-workspace-status'
 import type { Workspace } from '@kloudlite/types'
 
 interface WorkspaceActionsProps {
@@ -17,22 +16,6 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Callback when workspace becomes ready
-  const handleWorkspaceReady = useCallback(() => {
-    startTransition(() => {
-      router.refresh()
-    })
-  }, [router])
-
-  const { phase, isPolling, startPolling } = useWorkspaceStatus(
-    workspace.metadata.name,
-    workspace.metadata.namespace,
-    {
-      stopOnPhase: ['Running', 'Failed', 'Stopped'],
-      onReady: handleWorkspaceReady
-    }
-  )
 
   const handleSuspend = async () => {
     setIsLoading(true)
@@ -55,55 +38,54 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
 
     const result = await activateWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
-    if (result.success) {
-      // Start polling for status updates
-      startPolling()
-    } else {
+    if (!result.success) {
       setError(result.error || 'Failed to activate workspace')
     }
+    // Status updates are handled by WorkspaceStatusIndicator via WebSocket
 
     setIsLoading(false)
   }
 
-  // Show polling state
-  const isActivating = isPolling || (workspace.status?.phase === 'Creating' || workspace.status?.phase === 'Pending')
-  const showActivatingState = isActivating && workspace.spec.status === 'active'
+  // Workspace is in a transitional state (activating)
+  const isTransitioning = workspace.status?.phase === 'Creating' || workspace.status?.phase === 'Pending'
+  const isActive = workspace.spec.status === 'active'
+  const isSuspended = workspace.spec.status === 'suspended'
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        {workspace.spec.status === 'active' && !showActivatingState && (
-          <Button variant="outline" size="sm" onClick={handleSuspend} disabled={isLoading}>
-            <Pause className="mr-1 h-4 w-4" />
-            {isLoading ? 'Suspending...' : 'Suspend'}
-          </Button>
-        )}
-        {showActivatingState && (
-          <Button variant="outline" size="sm" disabled>
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            Activating...
-          </Button>
-        )}
-        {workspace.spec.status === 'suspended' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleActivate}
-            disabled={isLoading || !workMachineRunning}
-            title={!workMachineRunning ? 'WorkMachine is stopped' : undefined}
-          >
-            <Play className="mr-1 h-4 w-4" />
-            {isLoading ? 'Activating...' : !workMachineRunning ? 'Activate (VM stopped)' : 'Activate'}
-          </Button>
-        )}
-      </div>
-      {phase && isPolling && (
-        <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Status: {phase}</span>
-        </div>
+    <div className="flex items-center gap-2">
+      {/* Show Suspend button when workspace is running */}
+      {isActive && !isTransitioning && (
+        <Button variant="outline" size="sm" onClick={handleSuspend} disabled={isLoading}>
+          {isLoading ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Pause className="mr-1.5 h-4 w-4" />
+          )}
+          {isLoading ? 'Suspending...' : 'Suspend'}
+        </Button>
       )}
-      {error && <div className="text-destructive text-xs">{error}</div>}
+
+      {/* Show Activate button when workspace is suspended */}
+      {isSuspended && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleActivate}
+          disabled={isLoading || !workMachineRunning}
+          title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
+        >
+          {isLoading ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Play className="mr-1.5 h-4 w-4" />
+          )}
+          {isLoading ? 'Activating...' : !workMachineRunning ? 'Activate (VM stopped)' : 'Activate'}
+        </Button>
+      )}
+
+      {/* No button when transitioning - status badge shows the state */}
+
+      {error && <span className="text-destructive text-xs">{error}</span>}
     </div>
   )
 }
