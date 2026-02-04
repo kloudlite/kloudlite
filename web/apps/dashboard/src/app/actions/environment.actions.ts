@@ -1,11 +1,13 @@
 'use server'
 
+import { cache } from 'react'
 import { revalidatePath } from 'next/cache'
 import { environmentRepository, workMachineRepository, userPreferencesRepository, serviceRepository } from '@kloudlite/lib/k8s'
 import type { Environment } from '@kloudlite/lib/k8s'
 import { compositionService } from '@/lib/services/composition.service'
 import { environmentService } from '@/lib/services/environment.service'
 import { getSession } from '@/lib/get-session'
+import { cachedFetch, CacheTTL, invalidateCache } from '@/lib/cache'
 import {
   environmentCreateSchema,
   environmentUpdateSchema,
@@ -15,8 +17,21 @@ import {
 } from '@/lib/validations'
 
 /**
+ * Cached work machine fetch - deduplicates within the same request
+ * Also uses LRU cache for cross-request caching
+ */
+const getCachedWorkMachine = cache(async (username: string) => {
+  return cachedFetch(
+    `workMachine:${username}`,
+    () => workMachineRepository.getByOwner(username).catch(() => null),
+    CacheTTL.SHORT // 30 seconds
+  )
+})
+
+/**
  * Get the WorkMachine's namespace where environments should be created
  * Environments must be created in the WorkMachine namespace (wm-*)
+ * Uses cached work machine fetch
  */
 async function getWorkMachineNamespace(): Promise<string> {
   const session = await getSession()
@@ -24,7 +39,7 @@ async function getWorkMachineNamespace(): Promise<string> {
     throw new Error('Not authenticated')
   }
 
-  const workMachine = await workMachineRepository.getByOwner(session.user.username)
+  const workMachine = await getCachedWorkMachine(session.user.username)
   if (!workMachine) {
     throw new Error(`No WorkMachine found for user ${session.user.username}`)
   }
@@ -35,23 +50,32 @@ async function getWorkMachineNamespace(): Promise<string> {
 
 /**
  * Server action to get full environments list with work machine and preferences
+ * Uses caching for better performance
  */
 export async function getEnvironmentsListFull() {
   try {
     const session = await getSession()
     const username = session?.user?.username || session?.user?.email || ''
 
-    // Fetch work machine and preferences in parallel
+    // Fetch work machine and preferences in parallel (with caching)
     const [workMachineResult, preferencesResult] = await Promise.all([
-      workMachineRepository.getByOwner(username).catch(() => null),
-      userPreferencesRepository.getByUser(username).catch(() => null),
+      getCachedWorkMachine(username),
+      cachedFetch(
+        `preferences:${username}`,
+        () => userPreferencesRepository.getByUser(username).catch(() => null),
+        CacheTTL.NORMAL // 1 minute
+      ),
     ])
 
     // Get namespace from work machine
     const namespace = workMachineResult?.metadata?.namespace || `wm-${username}`
 
-    // Fetch environments
-    const environmentsResult = await environmentRepository.list(namespace).catch(() => ({ items: [] }))
+    // Fetch environments (with caching)
+    const environmentsResult = await cachedFetch(
+      `environments:${namespace}`,
+      () => environmentRepository.list(namespace).catch(() => ({ items: [] })),
+      CacheTTL.NORMAL // 1 minute
+    )
 
     // Get pinned environment names from preferences
     const pinnedEnvironmentIds = preferencesResult?.spec?.pinnedEnvironments || []
@@ -118,6 +142,7 @@ export async function createEnvironment(data: unknown) {
     }
 
     const result = await environmentRepository.create(namespace, environment)
+    invalidateCache(`environments:${namespace}*`)
     revalidatePath('/environments')
     return { success: true, data: result }
   } catch (err) {
@@ -160,6 +185,7 @@ export async function updateEnvironment(name: string, data: unknown) {
     const result = await environmentRepository.patch(namespace, name, {
       spec: updateData.spec,
     })
+    invalidateCache(`environments:${namespace}*`)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -180,6 +206,7 @@ export async function deleteEnvironment(name: string) {
   try {
     const namespace = await getWorkMachineNamespace()
     await environmentRepository.delete(namespace, name)
+    invalidateCache(`environments:${namespace}*`)
     revalidatePath('/environments')
     return { success: true }
   } catch (err) {
@@ -199,6 +226,7 @@ export async function activateEnvironment(name: string) {
   try {
     const namespace = await getWorkMachineNamespace()
     const result = await environmentRepository.activate(namespace, name)
+    invalidateCache(`environments:${namespace}*`)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -219,6 +247,7 @@ export async function deactivateEnvironment(name: string) {
   try {
     const namespace = await getWorkMachineNamespace()
     const result = await environmentRepository.deactivate(namespace, name)
+    invalidateCache(`environments:${namespace}*`)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
     return { success: true, data: result }
@@ -564,10 +593,10 @@ export async function getEnvironmentByHash(hashOrName: string) {
       }
     }
 
-    // Get services from the target namespace if environment is active
+    // Get services from the target namespace (services exist even when environment is inactive)
     let services: import('@kloudlite/types').K8sService[] = []
     const targetNamespace = environment.spec?.targetNamespace
-    if (targetNamespace && environment.status?.state === 'active') {
+    if (targetNamespace) {
       try {
         services = await serviceRepository.list(targetNamespace)
       } catch (err) {
@@ -608,10 +637,10 @@ export async function getEnvironmentDetails(name: string) {
     // Fetch environment
     const environment = await environmentRepository.get(namespace, name)
 
-    // Get services from the target namespace if environment is active
+    // Get services from the target namespace (services exist even when environment is inactive)
     let services: import('@kloudlite/types').K8sService[] = []
     const targetNamespace = environment.spec?.targetNamespace
-    if (targetNamespace && environment.status?.state === 'active') {
+    if (targetNamespace) {
       try {
         services = await serviceRepository.list(targetNamespace)
       } catch (err) {
@@ -693,6 +722,7 @@ export async function updateEnvironmentCompose(
     // Save back using update (full replace)
     const result = await environmentRepository.update(namespace, name, updatedEnvironment)
 
+    invalidateCache(`environments:${namespace}*`)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
 
