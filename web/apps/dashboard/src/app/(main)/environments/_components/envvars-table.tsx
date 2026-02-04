@@ -19,10 +19,10 @@ export function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
             <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
               Value
             </th>
-            <th className="text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+            <th className="text-muted-foreground w-24 px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
               Type
             </th>
-            <th className="text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
+            <th className="text-muted-foreground w-20 px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">
               Actions
             </th>
           </tr>
@@ -43,18 +43,18 @@ export function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
                   <span className="block max-w-xs truncate">{envVar.value}</span>
                 )}
               </td>
-              <td className="px-6 py-4 text-sm whitespace-nowrap">
+              <td className="w-24 px-6 py-4 text-sm whitespace-nowrap">
                 {envVar.type === 'config' ? (
-                  <span className="bg-info/10 text-info dark:bg-info/20 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                  <span className="bg-info/10 text-info dark:bg-info/20 inline-flex min-w-[60px] items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                     Config
                   </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                  <span className="inline-flex min-w-[60px] items-center justify-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
                     Secret
                   </span>
                 )}
               </td>
-              <td className="space-x-1 px-6 py-4 text-right text-sm whitespace-nowrap">
+              <td className="w-20 space-x-1 px-6 py-4 text-right text-sm whitespace-nowrap">
                 <EnvVarActions envVar={envVar} environmentId={environmentId} />
               </td>
             </tr>

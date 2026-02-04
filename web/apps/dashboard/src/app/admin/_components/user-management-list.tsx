@@ -440,11 +440,11 @@ export function UserManagementList({
           <thead>
             <tr className="border-b">
               <th className="text-foreground p-4 text-left text-sm font-medium">User</th>
-              <th className="text-foreground p-4 text-left text-sm font-medium">Role</th>
-              <th className="text-foreground p-4 text-left text-sm font-medium">Status</th>
-              <th className="text-foreground p-4 text-left text-sm font-medium">Last Login</th>
-              <th className="text-foreground p-4 text-left text-sm font-medium">Created</th>
-              <th className="text-foreground p-4 text-left text-sm font-medium">Actions</th>
+              <th className="text-foreground w-40 p-4 text-left text-sm font-medium">Role</th>
+              <th className="text-foreground w-28 p-4 text-left text-sm font-medium">Status</th>
+              <th className="text-foreground w-32 p-4 text-left text-sm font-medium">Last Login</th>
+              <th className="text-foreground w-32 p-4 text-left text-sm font-medium">Created</th>
+              <th className="text-foreground w-20 p-4 text-left text-sm font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -456,7 +456,7 @@ export function UserManagementList({
                     <div className="text-muted-foreground text-sm">{user.email}</div>
                   </div>
                 </td>
-                <td className="p-4">
+                <td className="w-40 p-4">
                   <div className="flex flex-wrap gap-1">
                     {user.role.split(', ').map((role, index) => (
                       <span
@@ -474,9 +474,9 @@ export function UserManagementList({
                     ))}
                   </div>
                 </td>
-                <td className="p-4">
+                <td className="w-28 p-4">
                   <span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                    className={`inline-flex min-w-[70px] justify-center rounded-full px-2 py-1 text-xs font-medium ${
                       user.status === 'active'
                         ? 'bg-success/10 text-success'
                         : user.status === 'suspended'
@@ -487,13 +487,13 @@ export function UserManagementList({
                     {user.status}
                   </span>
                 </td>
-                <td className="p-4">
+                <td className="w-32 p-4">
                   <span className="text-muted-foreground text-sm">{user.lastLogin}</span>
                 </td>
-                <td className="p-4">
+                <td className="w-32 p-4">
                   <span className="text-muted-foreground text-sm">{user.created}</span>
                 </td>
-                <td className="p-4">
+                <td className="w-20 p-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm">
