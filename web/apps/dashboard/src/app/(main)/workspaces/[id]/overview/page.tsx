@@ -30,7 +30,7 @@ export default async function OverviewPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       {/* Real-time Metrics */}
-      <WorkspaceMetrics workspaceName={name} namespace={namespace} />
+      <WorkspaceMetrics workspaceName={name} namespace={namespace} isRunning={phase === 'Running'} />
 
       {/* Connect to Workspace */}
       <WorkspaceConnectOptions

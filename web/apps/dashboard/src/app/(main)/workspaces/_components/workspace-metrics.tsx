@@ -7,6 +7,7 @@ import { getWorkspaceMetrics } from '@/app/actions/workspace.actions'
 interface WorkspaceMetricsProps {
   workspaceName: string
   namespace: string
+  isRunning?: boolean
 }
 
 interface MetricsData {
@@ -23,11 +24,17 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
 
-export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsProps) {
+export function WorkspaceMetrics({ workspaceName, namespace, isRunning = false }: WorkspaceMetricsProps) {
   const [metrics, setMetrics] = useState<MetricsData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Don't fetch metrics if workspace is not running
+    if (!isRunning) {
+      setError('Workspace not running')
+      return
+    }
+
     const fetchMetrics = async () => {
       try {
         const result = await getWorkspaceMetrics(workspaceName, namespace)
@@ -46,13 +53,13 @@ export function WorkspaceMetrics({ workspaceName, namespace }: WorkspaceMetricsP
     // Initial fetch
     fetchMetrics()
 
-    // Poll every 3 seconds
-    const intervalId = setInterval(fetchMetrics, 3000)
+    // Poll every 5 seconds (reduced frequency)
+    const intervalId = setInterval(fetchMetrics, 5000)
 
     return () => {
       clearInterval(intervalId)
     }
-  }, [workspaceName, namespace])
+  }, [workspaceName, namespace, isRunning])
 
   if (error) {
     return (
