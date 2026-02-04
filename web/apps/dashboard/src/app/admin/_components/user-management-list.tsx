@@ -461,7 +461,7 @@ export function UserManagementList({
                     {user.role.split(', ').map((role, index) => (
                       <span
                         key={index}
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                        className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                           role === 'super-admin'
                             ? 'bg-purple-100 text-purple-700'
                             : role === 'admin'
@@ -476,7 +476,7 @@ export function UserManagementList({
                 </td>
                 <td className="w-28 p-4">
                   <span
-                    className={`inline-flex min-w-[70px] justify-center rounded-full px-2 py-1 text-xs font-medium ${
+                    className={`inline-flex min-w-[70px] justify-center rounded-md px-2 py-1 text-xs font-medium ${
                       user.status === 'active'
                         ? 'bg-success/10 text-success'
                         : user.status === 'suspended'

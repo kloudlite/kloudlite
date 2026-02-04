@@ -55,7 +55,7 @@ export function PinnedResources({
                         <div className="flex items-center gap-2">
                           <h4 className="truncate text-sm font-medium">{workspace.name}</h4>
                           <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
                               workspace.status === 'active'
                                 ? 'bg-success/10 text-success dark:bg-success/20'
                                 : 'bg-secondary text-secondary-foreground'
@@ -138,7 +138,7 @@ export function PinnedResources({
                         <div className="flex items-center gap-2">
                           <h4 className="truncate text-sm font-medium">{env.name}</h4>
                           <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
                               env.status === 'active'
                                 ? 'bg-success/10 text-success dark:bg-success/20'
                                 : 'bg-secondary text-secondary-foreground'

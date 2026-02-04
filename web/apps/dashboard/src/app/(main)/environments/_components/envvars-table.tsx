@@ -45,11 +45,11 @@ export function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
               </td>
               <td className="w-24 px-6 py-4 text-sm whitespace-nowrap">
                 {envVar.type === 'config' ? (
-                  <span className="bg-info/10 text-info dark:bg-info/20 inline-flex min-w-[60px] items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                  <span className="bg-info/10 text-info dark:bg-info/20 inline-flex min-w-[60px] items-center justify-center rounded-md px-2.5 py-0.5 text-xs font-medium">
                     Config
                   </span>
                 ) : (
-                  <span className="inline-flex min-w-[60px] items-center justify-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                  <span className="inline-flex min-w-[60px] items-center justify-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
                     Secret
                   </span>
                 )}

@@ -102,11 +102,11 @@ export function EditEnvVarSheet({
               <div className="bg-muted rounded-lg border p-3">
                 <div className="flex items-center gap-2">
                   {envVar.type === 'config' ? (
-                    <span className="bg-info/10 text-info dark:bg-info/20 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    <span className="bg-info/10 text-info dark:bg-info/20 inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium">
                       Config
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                    <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
                       Secret
                     </span>
                   )}

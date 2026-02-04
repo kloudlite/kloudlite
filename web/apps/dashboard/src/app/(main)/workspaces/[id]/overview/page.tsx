@@ -53,7 +53,7 @@ export default async function OverviewPage({ params }: PageProps) {
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Status</p>
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${
                     phase === 'Running'
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                       : phase === 'Creating' || phase === 'Pending'
