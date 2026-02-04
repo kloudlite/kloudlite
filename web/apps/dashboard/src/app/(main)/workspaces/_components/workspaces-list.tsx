@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ExternalLink, Activity } from 'lucide-react'
+import { Activity } from 'lucide-react'
 import type { Workspace } from '@kloudlite/types'
 import { WorkspaceRowActions } from './workspace-row-actions'
 import { CreateWorkspaceSheet } from './create-workspace-sheet'
@@ -172,10 +172,9 @@ export function WorkspacesList({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link
                       href={`/workspaces/${workspace.status?.hash || workspace.metadata.name}`}
-                      className="hover:text-primary flex items-center gap-1 text-sm font-semibold"
+                      className="hover:text-primary text-sm font-semibold"
                     >
                       {formatWorkspaceName(workspace.spec.ownedBy, workspace.metadata.name)}
-                      <ExternalLink className="h-3 w-3" />
                     </Link>
                   </td>
                   <td className="px-6 py-4 text-sm whitespace-nowrap">

@@ -113,11 +113,7 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
           <span>•</span>
           <span>{workspaceData.created}</span>
           <span>•</span>
-          <WorkspaceStatusIndicator
-            namespace={workspaceData.namespace}
-            workspaceName={workspaceData.name}
-            initialPhase={workspaceData.phase}
-          />
+          <WorkspaceStatusIndicator phase={workspaceData.phase} />
         </div>
       </div>
 
