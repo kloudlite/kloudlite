@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { MoreHorizontal, Loader2, AlertCircle, Pin, PinOff } from 'lucide-react'
@@ -41,10 +41,16 @@ interface WorkspaceRowActionsProps {
 
 export function WorkspaceRowActions({ workspace, workMachineRunning = false, isPinned = false }: WorkspaceRowActionsProps) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showForkSheet, setShowForkSheet] = useState(false)
+
+  // Prevent hydration mismatch with Radix UI components
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handlePin = async () => {
     const result = await pinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
@@ -104,6 +110,19 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
       console.error(`Failed to ${action} workspace:`, error)
       alert(error instanceof Error ? error.message : `Failed to ${action} workspace`)
     }
+  }
+
+  // Show placeholder button during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isDeleting}>
+        {isDeleting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <MoreHorizontal className="h-4 w-4" />
+        )}
+      </Button>
+    )
   }
 
   return (

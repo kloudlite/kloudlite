@@ -101,6 +101,7 @@ export function EnvironmentsList({
   pinnedEnvironmentIds = [],
 }: EnvironmentsListProps) {
   const pinnedSet = new Set(pinnedEnvironmentIds)
+  const [mounted, setMounted] = useState(false)
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active'>('all')
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -135,6 +136,11 @@ export function EnvironmentsList({
   }
   const [environments, setEnvironments] = useState<EnvironmentUIModel[]>(initialEnvironments)
   const router = useRouter()
+
+  // Prevent hydration mismatch with Radix UI components
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Poll for environment updates every 3 seconds
   useEffect(() => {
@@ -486,9 +492,9 @@ export function EnvironmentsList({
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right text-sm whitespace-nowrap">
-                  {env.status === 'deleting' || env.status === 'forking' || env.status === 'snapping' ? (
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
-                      <MoreHorizontal className="h-4 w-4 opacity-30" />
+                  {env.status === 'deleting' || env.status === 'forking' || env.status === 'snapping' || !mounted ? (
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={env.status === 'deleting' || env.status === 'forking' || env.status === 'snapping'}>
+                      <MoreHorizontal className={`h-4 w-4 ${(env.status === 'deleting' || env.status === 'forking' || env.status === 'snapping') ? 'opacity-30' : ''}`} />
                     </Button>
                   ) : (
                     <DropdownMenu>
