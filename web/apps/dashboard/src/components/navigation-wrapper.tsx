@@ -30,11 +30,7 @@ async function NavigationWithWorkMachineStatus({
     isWorkMachineRunning = state === 'running' && isReady
   }
 
-  // Don't show navigation if user doesn't have a work machine
-  if (!hasWorkMachine) {
-    return null
-  }
-
+  // Always show navigation - pages handle missing work machine gracefully
   return (
     <Navigation
       email={email}

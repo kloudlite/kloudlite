@@ -53,18 +53,12 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     return <SystemSetupPage />
   }
 
-  const hasWorkMachine = workMachineResult.success && !!workMachineResult.data
+  // Always show navigation for authenticated users
+  // Pages handle work machine state (stopped, missing, etc.) gracefully with appropriate UI
+  // Work machine result is fetched to warm the cache for child pages
+  const _hasWorkMachine = workMachineResult.success && !!workMachineResult.data
 
-  // If no work machine, render children full-screen without navigation
-  if (!hasWorkMachine) {
-    return (
-      <div className="bg-background flex h-screen flex-col">
-        {children}
-      </div>
-    )
-  }
-
-  // Normal layout with navigation for users with work machines
+  // Normal layout with navigation - always show for authenticated users
   return (
     <div className="bg-background flex h-screen flex-col">
       <NavigationWrapper />

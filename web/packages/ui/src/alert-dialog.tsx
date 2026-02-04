@@ -5,8 +5,29 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "./lib/utils";
 import { buttonVariants } from "./button";
+import { useMounted } from "./hooks/use-mounted";
 
-const AlertDialog = AlertDialogPrimitive.Root;
+/**
+ * AlertDialog wrapper that prevents hydration mismatches by only rendering
+ * after the component has mounted on the client.
+ */
+const AlertDialog = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>
+>(({ children, ...props }, ref) => {
+  const mounted = useMounted();
+
+  if (!mounted) {
+    return null;
+  }
+
+  return (
+    <AlertDialogPrimitive.Root ref={ref} {...props}>
+      {children}
+    </AlertDialogPrimitive.Root>
+  );
+});
+AlertDialog.displayName = "AlertDialog";
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 

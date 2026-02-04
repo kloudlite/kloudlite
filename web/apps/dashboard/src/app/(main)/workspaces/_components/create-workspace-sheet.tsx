@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Loader2, GitBranch, Code2 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
@@ -26,8 +26,14 @@ interface CreateWorkspaceSheetProps {
 
 export function CreateWorkspaceSheet({ workMachineRunning = false }: CreateWorkspaceSheetProps) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  // Prevent hydration mismatch with Radix UI components
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Basic fields
   const [name, setName] = useState('')
@@ -115,6 +121,21 @@ export function CreateWorkspaceSheet({ workMachineRunning = false }: CreateWorks
     setSharedWith([])
     setGitRepoUrl('')
     setGitBranch('')
+  }
+
+  // Show placeholder button during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <Button
+        size="sm"
+        className="gap-2"
+        disabled={!workMachineRunning}
+        title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
+      >
+        <Plus className="h-4 w-4" />
+        {workMachineRunning ? 'New Workspace' : 'New Workspace (WorkMachine stopped)'}
+      </Button>
+    )
   }
 
   return (

@@ -57,3 +57,4 @@ export * from "./tooltip"
 
 // Hooks
 export * from "./hooks/use-mobile"
+export * from "./hooks/use-mounted"
