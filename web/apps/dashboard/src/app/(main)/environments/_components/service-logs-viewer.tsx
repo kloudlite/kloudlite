@@ -262,7 +262,7 @@ export function ServiceLogsViewer({
 
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [reconnectAttempt, setReconnectAttempt] = useState(0)
+  const [, setReconnectAttempt] = useState(0)
   const [isReconnecting, setIsReconnecting] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const isPausedRef = useRef(isPaused)
