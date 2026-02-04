@@ -124,9 +124,52 @@ export async function getWorkspacesListFull() {
 }
 
 /**
+ * Internal cached workspace fetch - uses LRU cache with 5s TTL for request deduplication
+ */
+async function getCachedWorkspaceByHash(hashOrName: string, namespace: string, username: string) {
+  return cachedFetch(
+    `workspace:${namespace}:${hashOrName}`,
+    async () => {
+      // Parallel fetch: workspace + work machine status
+      const [workspaceResult, workMachine] = await Promise.all([
+        workspaceRepository.getByHash(namespace, hashOrName),
+        getCachedWorkMachine(username),
+      ])
+
+      let workspace = workspaceResult
+
+      // Fallback 1: search by status.hash
+      if (!workspace) {
+        const workspacesList = await workspaceRepository.list(namespace)
+        workspace = workspacesList.items?.find((ws) => ws.status?.hash === hashOrName) || null
+      }
+
+      // Fallback 2: direct name lookup
+      if (!workspace) {
+        try {
+          workspace = await workspaceRepository.get(namespace, hashOrName)
+        } catch { /* not found */ }
+      }
+
+      if (!workspace) {
+        return null
+      }
+
+      // Fetch package request (needs workspace name)
+      const packageRequest = await packageRequestRepository.getByWorkspace(namespace, workspace.metadata!.name!).catch(() => null)
+      const workMachineRunning = workMachine?.status?.state === 'running' && workMachine?.status?.isReady === true
+
+      return { workspace, packageRequest, workMachineRunning }
+    },
+    5000 // 5 second TTL for request deduplication
+  )
+}
+
+/**
  * Server action to get a workspace by its hash or name
  * Uses label selector for efficient lookup by hash (kloudlite.io/hash label)
  * Falls back to direct name lookup if hash not found
+ * NOTE: Uses React cache() internally to deduplicate calls within the same request
  */
 export async function getWorkspaceByHash(hashOrName: string) {
   try {
@@ -163,43 +206,14 @@ export async function getWorkspaceByHash(hashOrName: string) {
       return { success: true, data: { workspace, packageRequest, workMachineRunning } }
     }
 
-    // OPTIMIZED PATH: namespace is cached in session
-    const namespace = cachedNamespace
+    // OPTIMIZED PATH: namespace is cached in session - use cached fetch
+    const result = await getCachedWorkspaceByHash(hashOrName, cachedNamespace, username)
 
-    // Parallel fetch: workspace + work machine status (both only need session data)
-    const [workspaceResult, workMachine] = await Promise.all([
-      workspaceRepository.getByHash(namespace, hashOrName),
-      getCachedWorkMachine(username),
-    ])
-
-    let workspace = workspaceResult
-
-    // Fallback 1: search by status.hash
-    if (!workspace) {
-      const workspacesList = await workspaceRepository.list(namespace)
-      workspace = workspacesList.items?.find((ws) => ws.status?.hash === hashOrName) || null
-    }
-
-    // Fallback 2: direct name lookup
-    if (!workspace) {
-      try {
-        workspace = await workspaceRepository.get(namespace, hashOrName)
-      } catch { /* not found */ }
-    }
-
-    if (!workspace) {
+    if (!result) {
       return { success: false, error: 'Workspace not found' }
     }
 
-    // Fetch package request (needs workspace name)
-    const packageRequest = await packageRequestRepository.getByWorkspace(namespace, workspace.metadata!.name!).catch(() => null)
-
-    const workMachineRunning = workMachine?.status?.state === 'running' && workMachine?.status?.isReady === true
-
-    return {
-      success: true,
-      data: { workspace, packageRequest, workMachineRunning },
-    }
+    return { success: true, data: result }
   } catch (err) {
     console.error('Get workspace by hash error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
