@@ -6,8 +6,8 @@ import Credentials from 'next-auth/providers/credentials'
 import type { NextAuthConfig } from 'next-auth'
 import { authenticateUser } from '@/app/actions/user-auth.actions'
 import { unauthenticatedApiClient } from '@/lib/api-client'
-import { env } from '@kloudlite/lib'
 import bcrypt from 'bcryptjs'
+import { createHmac } from 'crypto'
 
 interface UserInfoResponse {
   user: {
@@ -20,14 +20,13 @@ interface UserInfoResponse {
   roles: string[]
 }
 
-interface SuperAdminValidateResponse {
-  valid: boolean
-  user: {
-    email: string
-    displayName?: string
-    name?: string
-  }
-  roles: string[]
+interface SuperAdminTokenPayload {
+  type: 'superadmin-login'
+  installationId: string
+  installationKey: string
+  timestamp: number
+  nonce: string
+  expiresAt: number
 }
 
 export const authConfig: NextAuthConfig = {
@@ -44,30 +43,54 @@ export const authConfig: NextAuthConfig = {
         // Handle super-admin token login
         if (credentials?.superadminToken) {
           try {
-            const response = await fetch(`${env.apiUrl}/api/v1/superadmin-login/validate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: credentials.superadminToken }),
-            })
+            const token = credentials.superadminToken as string
+            const installationSecret = process.env.INSTALLATION_SECRET
 
-            if (!response.ok) {
-              console.error('Super-admin token validation failed:', response.status)
+            if (!installationSecret) {
+              console.error('INSTALLATION_SECRET env var is not set')
               return null
             }
 
-            const data = (await response.json()) as SuperAdminValidateResponse
+            // Parse token: base64url(payload).base64url(signature)
+            const parts = token.split('.')
+            if (parts.length !== 2) {
+              console.error('Invalid super-admin token format')
+              return null
+            }
 
-            if (!data.valid || !data.user) {
+            const [payloadB64, signatureB64] = parts
+            const payloadString = Buffer.from(payloadB64, 'base64url').toString('utf-8')
+
+            // Verify HMAC signature
+            const expectedSignature = createHmac('sha256', installationSecret)
+              .update(payloadString)
+              .digest('base64url')
+
+            if (expectedSignature !== signatureB64) {
+              console.error('Super-admin token signature verification failed')
+              return null
+            }
+
+            // Parse and validate payload
+            const payload = JSON.parse(payloadString) as SuperAdminTokenPayload
+
+            if (payload.type !== 'superadmin-login') {
+              console.error('Invalid super-admin token type:', payload.type)
+              return null
+            }
+
+            if (payload.expiresAt < Date.now()) {
+              console.error('Super-admin token has expired')
               return null
             }
 
             // Return user object with super-admin provider marker
             return {
-              id: data.user.email,
-              email: data.user.email,
-              name: data.user.displayName || data.user.name || data.user.email,
-              username: data.user.email, // Use email as username for super-admin
-              roles: data.roles,
+              id: payload.installationId,
+              email: `admin@${payload.installationId}`,
+              name: 'Super Admin',
+              username: 'superadmin',
+              roles: ['admin', 'superadmin'],
               isActive: true,
               provider: 'superadmin-login',
             }
