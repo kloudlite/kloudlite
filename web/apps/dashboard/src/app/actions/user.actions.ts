@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { userRepository } from '@kloudlite/lib/k8s'
+import type { User } from '@kloudlite/lib/k8s'
 import bcrypt from 'bcryptjs'
+import { resourceStore } from '@/lib/resource-store'
 
 export interface ProviderAccount {
   provider: string
@@ -22,11 +24,16 @@ export interface UserData {
 }
 
 /**
- * Get user by email
+ * Get user by email (scan through store since there's no email label)
  */
 export async function getUserByEmail(email: string) {
   try {
-    const user = await userRepository.getByEmail(email)
+    await resourceStore.waitForReady('users')
+    const users = resourceStore.listCluster<User>('users')
+    const user = users.find((u) => u.spec?.email === email) || null
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
     return { success: true, data: user }
   } catch (err) {
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -90,24 +97,13 @@ export async function resetUserPassword(username: string, newPassword: string) {
  */
 export async function checkUsernameAvailability(username: string) {
   try {
-    // Try to get user by name
-    try {
-      await userRepository.get(username)
-      // User exists, username not available
-      return {
-        success: true,
-        data: {
-          available: false,
-        },
-      }
-    } catch (err) {
-      // User not found, username available
-      return {
-        success: true,
-        data: {
-          available: true,
-        },
-      }
+    await resourceStore.waitForReady('users')
+    const user = resourceStore.getCluster<User>('users', username)
+    return {
+      success: true,
+      data: {
+        available: !user,
+      },
     }
   } catch (err) {
     console.error('Check username availability error:', err)
@@ -124,8 +120,9 @@ export async function checkUsernameAvailability(username: string) {
  */
 export async function listUsers() {
   try {
-    const result = await userRepository.list()
-    return { success: true, data: result.items }
+    await resourceStore.waitForReady('users')
+    const items = resourceStore.listCluster<User>('users')
+    return { success: true, data: items }
   } catch (err) {
     console.error('List users error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -144,7 +141,11 @@ export const getAllUsers = listUsers
  */
 export async function getUser(username: string) {
   try {
-    const user = await userRepository.get(username)
+    await resourceStore.waitForReady('users')
+    const user = resourceStore.getCluster<User>('users', username)
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
     return { success: true, data: user }
   } catch (err) {
     const error = err instanceof Error ? err : new Error('Unknown error')

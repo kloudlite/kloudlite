@@ -1,13 +1,22 @@
 'use server'
 
-import { workMachineRepository } from '@kloudlite/lib/k8s'
+import type { WorkMachine } from '@kloudlite/lib/k8s'
+import { resourceStore } from '@/lib/resource-store'
 
 /**
  * Get WorkMachine status
  */
 export async function getWorkMachineStatus(name: string) {
   try {
-    const workMachine = await workMachineRepository.get(name)
+    await resourceStore.waitForReady('workmachines')
+    const workMachine = resourceStore.getCluster<WorkMachine>('workmachines', name)
+
+    if (!workMachine) {
+      return {
+        success: false,
+        error: 'WorkMachine not found',
+      }
+    }
 
     return {
       success: true,

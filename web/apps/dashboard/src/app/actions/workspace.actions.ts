@@ -1,12 +1,12 @@
 'use server'
 
-import { cache } from 'react'
 import { revalidatePath } from 'next/cache'
-import { workspaceRepository, packageRequestRepository, workMachineRepository, userPreferencesRepository } from '@kloudlite/lib/k8s'
-import type { Workspace } from '@kloudlite/lib/k8s'
+import { workspaceRepository, packageRequestRepository } from '@kloudlite/lib/k8s'
+import type { Workspace, WorkMachine, PackageRequest } from '@kloudlite/lib/k8s'
 import { workspaceService } from '@/lib/services/workspace.service'
 import { getSession } from '@/lib/get-session'
-import { cachedFetch, CacheTTL, invalidateCache } from '@/lib/cache'
+import { resourceStore } from '@/lib/resource-store'
+import { watchNamespace } from '@/lib/k8s-watcher'
 import {
   workspaceCreateSchema,
   workspaceUpdateSchema,
@@ -15,17 +15,12 @@ import {
 } from '@/lib/validations'
 
 /**
- * Cached work machine fetch - deduplicates within the same request (React cache)
- * Also uses LRU cache for cross-request caching
- * Uses SHORT TTL (30s) because status (running/stopped) can change
+ * Get work machine for a user from the in-memory store
  */
-const getCachedWorkMachine = cache(async (username: string) => {
-  return cachedFetch(
-    `workMachine:${username}`,
-    () => workMachineRepository.getByOwner(username).catch(() => null),
-    CacheTTL.SHORT // 30 seconds - status changes (running/stopped)
-  )
-})
+function getWorkMachineForUser(username: string): WorkMachine | null {
+  const machines = resourceStore.listClusterByLabel<WorkMachine>('workmachines', 'kloudlite.io/owned-by', username)
+  return machines[0] || null
+}
 
 /**
  * Server action to get full workspaces list with work machine and preferences
@@ -36,61 +31,23 @@ export async function getWorkspacesListFull() {
     const username = session?.user?.username || session?.user?.email || ''
     const cachedNamespace = session?.user?.namespace
 
-    // If we have cached namespace, we can parallelize ALL fetches
-    if (cachedNamespace) {
-      const [workMachineResult, preferencesResult, workspacesResult] = await Promise.all([
-        getCachedWorkMachine(username),
-        cachedFetch(
-          `preferences:${username}`,
-          () => userPreferencesRepository.getByUser(username).catch(() => null),
-          CacheTTL.NORMAL // 1 minute
-        ),
-        cachedFetch(
-          `workspaces:${cachedNamespace}`,
-          () => workspaceRepository.list(cachedNamespace).catch(() => ({ items: [] })),
-          CacheTTL.SHORT // 30 seconds - workspaces change more often
-        ),
-      ])
+    // Ensure cluster-scoped stores are ready
+    await resourceStore.waitForReady('workmachines')
+    await resourceStore.waitForReady('userpreferences')
 
-      const pinnedWorkspaceIds = preferencesResult?.spec?.pinnedWorkspaces?.map(
-        (ws) => `${ws.namespace}/${ws.name}`
-      ) || []
+    const workMachineResult = getWorkMachineForUser(username)
+    const preferencesResult = resourceStore.getCluster('userpreferences', username)
 
-      const workMachineRunning = workMachineResult?.status?.state === 'running' &&
-        workMachineResult?.status?.isReady === true
+    // Determine namespace from session cache or work machine
+    const namespace = cachedNamespace || workMachineResult?.spec?.targetNamespace || 'default'
 
-      return {
-        success: true,
-        data: {
-          workspaces: workspacesResult.items || [],
-          workMachine: workMachineResult,
-          preferences: preferencesResult,
-          pinnedWorkspaceIds,
-          workMachineRunning,
-        },
-      }
-    }
+    // Ensure namespace watches are running and ready
+    await watchNamespace(namespace)
 
-    // Fallback: No cached namespace - need to fetch work machine first
-    const [workMachineResult, preferencesResult] = await Promise.all([
-      getCachedWorkMachine(username),
-      cachedFetch(
-        `preferences:${username}`,
-        () => userPreferencesRepository.getByUser(username).catch(() => null),
-        CacheTTL.NORMAL
-      ),
-    ])
-
-    const namespace = workMachineResult?.spec?.targetNamespace || 'default'
-
-    const workspacesResult = await cachedFetch(
-      `workspaces:${namespace}`,
-      () => workspaceRepository.list(namespace).catch(() => ({ items: [] })),
-      CacheTTL.SHORT
-    )
+    const workspaces = resourceStore.list<Workspace>('workspaces', namespace)
 
     const pinnedWorkspaceIds = preferencesResult?.spec?.pinnedWorkspaces?.map(
-      (ws) => `${ws.namespace}/${ws.name}`
+      (ws: any) => `${ws.namespace}/${ws.name}`
     ) || []
 
     const workMachineRunning = workMachineResult?.status?.state === 'running' &&
@@ -99,7 +56,7 @@ export async function getWorkspacesListFull() {
     return {
       success: true,
       data: {
-        workspaces: workspacesResult.items || [],
+        workspaces,
         workMachine: workMachineResult,
         preferences: preferencesResult,
         pinnedWorkspaceIds,
@@ -124,52 +81,8 @@ export async function getWorkspacesListFull() {
 }
 
 /**
- * Internal cached workspace fetch - uses LRU cache with 5s TTL for request deduplication
- */
-async function getCachedWorkspaceByHash(hashOrName: string, namespace: string, username: string) {
-  return cachedFetch(
-    `workspace:${namespace}:${hashOrName}`,
-    async () => {
-      // Parallel fetch: workspace + work machine status
-      const [workspaceResult, workMachine] = await Promise.all([
-        workspaceRepository.getByHash(namespace, hashOrName),
-        getCachedWorkMachine(username),
-      ])
-
-      let workspace = workspaceResult
-
-      // Fallback 1: search by status.hash
-      if (!workspace) {
-        const workspacesList = await workspaceRepository.list(namespace)
-        workspace = workspacesList.items?.find((ws) => ws.status?.hash === hashOrName) || null
-      }
-
-      // Fallback 2: direct name lookup
-      if (!workspace) {
-        try {
-          workspace = await workspaceRepository.get(namespace, hashOrName)
-        } catch { /* not found */ }
-      }
-
-      if (!workspace) {
-        return null
-      }
-
-      // Fetch package request (needs workspace name)
-      const packageRequest = await packageRequestRepository.getByWorkspace(namespace, workspace.metadata!.name!).catch(() => null)
-      const workMachineRunning = workMachine?.status?.state === 'running' && workMachine?.status?.isReady === true
-
-      return { workspace, packageRequest, workMachineRunning }
-    },
-    5000 // 5 second TTL for request deduplication
-  )
-}
-
-/**
  * Server action to get a workspace by its hash or name
- * Uses label selector for efficient lookup by hash (kloudlite.io/hash label)
- * Falls back to direct name lookup if hash not found
- * NOTE: Uses React cache() internally to deduplicate calls within the same request
+ * Looks up from the in-memory store with multiple fallback strategies
  */
 export async function getWorkspaceByHash(hashOrName: string) {
   try {
@@ -177,43 +90,39 @@ export async function getWorkspaceByHash(hashOrName: string) {
     const username = session?.user?.username || session?.user?.email || ''
     const cachedNamespace = session?.user?.namespace
 
-    // If no cached namespace, fetch work machine first (required)
-    if (!cachedNamespace) {
-      const workMachine = await getCachedWorkMachine(username)
+    await resourceStore.waitForReady('workmachines')
 
-      if (!workMachine) {
-        return { success: false, error: 'No work machine found' }
-      }
+    const workMachine = getWorkMachineForUser(username)
+    const namespace = cachedNamespace || workMachine?.spec?.targetNamespace || 'default'
 
-      const namespace = workMachine.spec?.targetNamespace || 'default'
+    // Ensure namespace watches are running
+    await watchNamespace(namespace)
 
-      // Now fetch workspace and package request in sequence (no parallelization possible without namespace)
-      let workspace = await workspaceRepository.getByHash(namespace, hashOrName)
-      if (!workspace) {
-        const workspacesList = await workspaceRepository.list(namespace)
-        workspace = workspacesList.items?.find((ws) => ws.status?.hash === hashOrName) || null
-      }
-      if (!workspace) {
-        try { workspace = await workspaceRepository.get(namespace, hashOrName) } catch { /* not found */ }
-      }
-      if (!workspace) {
-        return { success: false, error: 'Workspace not found' }
-      }
+    // Try to find by hash label (most common)
+    let workspace = resourceStore.getByHash<Workspace>('workspaces', namespace, hashOrName)
 
-      const packageRequest = await packageRequestRepository.getByWorkspace(namespace, workspace.metadata!.name!).catch(() => null)
-      const workMachineRunning = workMachine.status?.state === 'running' && workMachine.status?.isReady === true
-
-      return { success: true, data: { workspace, packageRequest, workMachineRunning } }
+    // Fallback 1: search by status.hash
+    if (!workspace) {
+      workspace = resourceStore.findByStatusField<Workspace>('workspaces', namespace, 'status.hash', hashOrName)
     }
 
-    // OPTIMIZED PATH: namespace is cached in session - use cached fetch
-    const result = await getCachedWorkspaceByHash(hashOrName, cachedNamespace, username)
+    // Fallback 2: direct name lookup
+    if (!workspace) {
+      workspace = resourceStore.get<Workspace>('workspaces', namespace, hashOrName)
+    }
 
-    if (!result) {
+    if (!workspace) {
       return { success: false, error: 'Workspace not found' }
     }
 
-    return { success: true, data: result }
+    // Get package request from store
+    const packageRequest = resourceStore.listByLabel<PackageRequest>(
+      'packagerequests', namespace, 'kloudlite.io/workspace', workspace.metadata!.name!
+    )[0] || null
+
+    const workMachineRunning = workMachine?.status?.state === 'running' && workMachine?.status?.isReady === true
+
+    return { success: true, data: { workspace, packageRequest, workMachineRunning } }
   } catch (err) {
     console.error('Get workspace by hash error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -226,8 +135,9 @@ export async function getWorkspaceByHash(hashOrName: string) {
  */
 export async function listWorkspaces(namespace: string = 'default') {
   try {
-    const result = await workspaceRepository.list(namespace)
-    return { success: true, data: { items: result.items, metadata: result.metadata } }
+    await watchNamespace(namespace)
+    const items = resourceStore.list<Workspace>('workspaces', namespace)
+    return { success: true, data: { items, metadata: {} } }
   } catch (err) {
     console.error('List workspaces error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -243,7 +153,11 @@ export async function listWorkspaces(namespace: string = 'default') {
  */
 export async function getWorkspace(name: string, namespace: string = 'default') {
   try {
-    const result = await workspaceRepository.get(namespace, name)
+    await watchNamespace(namespace)
+    const result = resourceStore.get<Workspace>('workspaces', namespace, name)
+    if (!result) {
+      return { success: false, error: 'Workspace not found' }
+    }
     return { success: true, data: result }
   } catch (err) {
     console.error('Get workspace error:', err)
@@ -289,7 +203,8 @@ export async function createWorkspace(data: unknown) {
 
   try {
     // Get the user's work machine to determine namespace
-    const workMachine = await workMachineRepository.getByOwner(username)
+    await resourceStore.waitForReady('workmachines')
+    const workMachine = getWorkMachineForUser(username)
     if (!workMachine) {
       return {
         success: false,
@@ -319,7 +234,6 @@ export async function createWorkspace(data: unknown) {
     }
 
     const result = await workspaceRepository.create(namespace, workspace)
-    invalidateCache(`workspaces:${namespace}*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -361,7 +275,6 @@ export async function updateWorkspace(name: string, namespace: string, data: unk
     const result = await workspaceRepository.patch(namespace, name, {
       spec: updateData.spec,
     })
-    invalidateCache(`workspaces:${namespace}*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -380,7 +293,6 @@ export async function updateWorkspace(name: string, namespace: string, data: unk
 export async function deleteWorkspace(name: string, namespace: string = 'default') {
   try {
     await workspaceRepository.delete(namespace, name)
-    invalidateCache(`workspaces:${namespace}*`)
     revalidatePath('/workspaces')
     return { success: true }
   } catch (err) {
@@ -399,9 +311,6 @@ export async function deleteWorkspace(name: string, namespace: string = 'default
 export async function suspendWorkspace(name: string, namespace: string = 'default') {
   try {
     const result = await workspaceRepository.suspend(namespace, name)
-    // Invalidate both list cache and individual workspace cache
-    invalidateCache(`workspaces:${namespace}*`)
-    invalidateCache(`workspace:${namespace}:*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -420,9 +329,6 @@ export async function suspendWorkspace(name: string, namespace: string = 'defaul
 export async function activateWorkspace(name: string, namespace: string = 'default') {
   try {
     const result = await workspaceRepository.activate(namespace, name)
-    // Invalidate both list cache and individual workspace cache
-    invalidateCache(`workspaces:${namespace}*`)
-    invalidateCache(`workspace:${namespace}:*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -441,9 +347,6 @@ export async function activateWorkspace(name: string, namespace: string = 'defau
 export async function archiveWorkspace(name: string, namespace: string = 'default') {
   try {
     const result = await workspaceRepository.archive(namespace, name)
-    // Invalidate both list cache and individual workspace cache
-    invalidateCache(`workspaces:${namespace}*`)
-    invalidateCache(`workspace:${namespace}:*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -598,8 +501,11 @@ export async function updatePackageRequest(
   }
 
   try {
-    // Try to get existing PackageRequest by workspace label
-    const existingPkgReq = await packageRequestRepository.getByWorkspace(namespace, workspaceName)
+    // Try to get existing PackageRequest by workspace label from store
+    await watchNamespace(namespace)
+    const existingPkgReq = resourceStore.listByLabel<PackageRequest>(
+      'packagerequests', namespace, 'kloudlite.io/workspace', workspaceName
+    )[0] || null
 
     if (existingPkgReq) {
       // Update existing PackageRequest
@@ -649,7 +555,10 @@ export async function updatePackageRequest(
  */
 export async function getPackageRequest(workspaceName: string, namespace: string = 'default') {
   try {
-    const packageRequest = await packageRequestRepository.getByWorkspace(namespace, workspaceName)
+    await watchNamespace(namespace)
+    const packageRequest = resourceStore.listByLabel<PackageRequest>(
+      'packagerequests', namespace, 'kloudlite.io/workspace', workspaceName
+    )[0] || null
 
     if (!packageRequest) {
       // PackageRequest doesn't exist yet (workspace has no packages configured)

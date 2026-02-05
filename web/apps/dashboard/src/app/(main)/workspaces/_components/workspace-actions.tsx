@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import { Pause, Play, Loader2 } from 'lucide-react'
@@ -16,6 +16,32 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Poll for phase transition after an action (activate/suspend)
+  // K8s may not process the change immediately, so we refresh periodically
+  const startPostActionPolling = useCallback(() => {
+    // Clear any existing poll timer
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current)
+    }
+
+    // Refresh immediately
+    router.refresh()
+
+    // Then refresh every 2 seconds for 15 seconds
+    let elapsed = 0
+    pollTimerRef.current = setInterval(() => {
+      elapsed += 2000
+      router.refresh()
+      if (elapsed >= 15000) {
+        if (pollTimerRef.current) {
+          clearInterval(pollTimerRef.current)
+          pollTimerRef.current = null
+        }
+      }
+    }, 2000)
+  }, [router])
 
   const handleSuspend = async () => {
     setIsLoading(true)
@@ -24,7 +50,7 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
     const result = await suspendWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
     if (result.success) {
-      router.refresh()
+      startPostActionPolling()
     } else {
       setError(result.error || 'Failed to suspend workspace')
     }
@@ -39,7 +65,7 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
     const result = await activateWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
     if (result.success) {
-      router.refresh()
+      startPostActionPolling()
     } else {
       setError(result.error || 'Failed to activate workspace')
     }

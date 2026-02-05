@@ -1,8 +1,9 @@
 'use server'
 
 import { getK8sClient } from '@kloudlite/lib/k8s'
-import { workMachineRepository } from '@kloudlite/lib/k8s'
+import type { WorkMachine } from '@kloudlite/lib/k8s'
 import type { V1Secret, V1Service, V1Ingress, V1Pod } from '@kubernetes/client-node'
+import { resourceStore } from '@/lib/resource-store'
 
 export interface HostEntry {
   hostname: string
@@ -60,8 +61,9 @@ export async function getCACert() {
  */
 export async function getHosts(username: string) {
   try {
-    // Find user's WorkMachine to get target namespace
-    const workMachine = await workMachineRepository.getByOwner(username)
+    await resourceStore.waitForReady('workmachines')
+    const machines = resourceStore.listClusterByLabel<WorkMachine>('workmachines', 'kloudlite.io/owned-by', username)
+    const workMachine = machines[0] || null
     if (!workMachine) {
       return {
         success: false,
@@ -137,8 +139,9 @@ export async function getHosts(username: string) {
  */
 export async function getTunnelEndpoint(username: string) {
   try {
-    // Find user's WorkMachine
-    const workMachine = await workMachineRepository.getByOwner(username)
+    await resourceStore.waitForReady('workmachines')
+    const machines = resourceStore.listClusterByLabel<WorkMachine>('workmachines', 'kloudlite.io/owned-by', username)
+    const workMachine = machines[0] || null
     if (!workMachine) {
       return {
         success: false,

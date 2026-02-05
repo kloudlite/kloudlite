@@ -5,6 +5,8 @@ import { snapshotRepository } from '@kloudlite/lib/k8s'
 import type { Snapshot } from '@kloudlite/lib/k8s'
 import { snapshotService } from '@/lib/services/snapshot.service'
 import { getSession } from '@/lib/get-session'
+import { resourceStore } from '@/lib/resource-store'
+import { watchNamespace } from '@/lib/k8s-watcher'
 import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateEnvironmentFromSnapshotRequest } from '@/lib/services/snapshot.service'
 
 /**
@@ -12,8 +14,14 @@ import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateE
  */
 export async function listSnapshots(workspaceName: string, namespace: string) {
   try {
-    const result = await snapshotRepository.listByWorkspace(namespace, workspaceName)
-    return { success: true, data: result.items }
+    await watchNamespace(namespace)
+    const snapshots = resourceStore.listByLabel<Snapshot>(
+      'snapshots',
+      namespace,
+      'snapshots.kloudlite.io/workspace',
+      workspaceName,
+    )
+    return { success: true, data: snapshots }
   } catch (err) {
     console.error('List snapshots error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -78,8 +86,14 @@ export async function createSnapshot(
  */
 export async function listEnvironmentSnapshots(environmentName: string, namespace: string) {
   try {
-    const result = await snapshotRepository.listByEnvironment(namespace, environmentName)
-    return { success: true, data: result.items }
+    await watchNamespace(namespace)
+    const snapshots = resourceStore.listByLabel<Snapshot>(
+      'snapshots',
+      namespace,
+      'snapshots.kloudlite.io/environment',
+      environmentName,
+    )
+    return { success: true, data: snapshots }
   } catch (err) {
     console.error('List environment snapshots error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')

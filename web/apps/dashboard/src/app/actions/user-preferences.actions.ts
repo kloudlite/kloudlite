@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { userPreferencesRepository } from '@kloudlite/lib/k8s'
+import type { UserPreferences } from '@kloudlite/lib/k8s'
 import { getSession } from '@/lib/get-session'
+import { resourceStore } from '@/lib/resource-store'
 
 /**
  * Get the current authenticated username
@@ -18,6 +20,15 @@ async function getCurrentUsername(): Promise<string> {
 export async function getMyPreferences() {
   try {
     const username = await getCurrentUsername()
+
+    // Try store first
+    await resourceStore.waitForReady('userpreferences')
+    const prefs = resourceStore.getCluster<UserPreferences>('userpreferences', username)
+    if (prefs) {
+      return { success: true, data: prefs }
+    }
+
+    // Fall back to getOrCreate (creates the resource if it doesn't exist)
     const result = await userPreferencesRepository.getOrCreate(username)
     return { success: true, data: result }
   } catch (err) {

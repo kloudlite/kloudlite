@@ -1,9 +1,11 @@
 'use server'
 
-import { environmentRepository, configMapRepository, secretRepository } from '@kloudlite/lib/k8s'
+import type { Environment } from '@kloudlite/lib/k8s'
 import { environmentService } from '@/lib/services/environment.service'
 import { environmentNameSchema, envVarSchema, fileSchema } from '@/lib/validations'
 import { getSession } from '@/lib/get-session'
+import { resourceStore } from '@/lib/resource-store'
+import { watchNamespace, watchResourceInNamespace } from '@/lib/k8s-watcher'
 import type {
   ConfigData,
   SetConfigResponse,
@@ -35,8 +37,14 @@ async function getEnvironmentNamespace(environmentName: string): Promise<string>
   // Get the work machine namespace
   const namespace = `wm-${session.user.username}`
 
-  // Get the environment to find its target namespace
-  const environment = await environmentRepository.get(namespace, environmentName)
+  // Ensure namespace watches are running
+  await watchNamespace(namespace)
+
+  // Get the environment from the store
+  const environment = resourceStore.get<Environment>('environments', namespace, environmentName)
+  if (!environment) {
+    throw new Error(`Environment ${environmentName} not found`)
+  }
 
   return environment.spec?.targetNamespace || namespace
 }
@@ -78,21 +86,25 @@ export async function getEnvVars(environmentName: string): Promise<GetEnvVarsRes
   try {
     const targetNamespace = await getEnvironmentNamespace(environmentName)
 
-    // Fetch ConfigMaps and Secrets in parallel from the target namespace
-    const [configMaps, secrets] = await Promise.all([
-      configMapRepository.list(targetNamespace).catch(() => []),
-      secretRepository.list(targetNamespace).catch(() => []),
+    // Ensure watches for configmaps and secrets in the target namespace
+    await Promise.all([
+      watchResourceInNamespace('configmaps', targetNamespace),
+      watchResourceInNamespace('secrets', targetNamespace),
     ])
+
+    // Read from store
+    const configMaps = resourceStore.list<any>('configmaps', targetNamespace)
+    const secrets = resourceStore.list<any>('secrets', targetNamespace)
 
     // Filter to only environment-specific ConfigMaps (with kloudlite.io/resource-type: config label)
     const envConfigMaps = configMaps.filter(
-      (cm) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'config'
+      (cm: any) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'config'
     )
 
     // Filter to only environment-specific Secrets (with kloudlite.io/resource-type: secret label)
     // Exclude system secrets like service account tokens
     const envSecrets = secrets.filter(
-      (secret) =>
+      (secret: any) =>
         secret.metadata?.labels?.['kloudlite.io/resource-type'] === 'secret' &&
         secret.type !== 'kubernetes.io/service-account-token'
     )
@@ -192,17 +204,19 @@ export async function listFiles(environmentName: string): Promise<ListFilesRespo
   try {
     const targetNamespace = await getEnvironmentNamespace(environmentName)
 
-    // Fetch ConfigMaps that contain files
-    // Files are stored in ConfigMaps with label 'kloudlite.io/resource-type: file'
-    const configMaps = await configMapRepository.list(targetNamespace).catch(() => [])
+    // Ensure watch for configmaps in the target namespace
+    await watchResourceInNamespace('configmaps', targetNamespace)
 
-    // Filter ConfigMaps that are files (have specific label or naming pattern)
+    // Read from store
+    const configMaps = resourceStore.list<any>('configmaps', targetNamespace)
+
+    // Filter ConfigMaps that are files (have specific label)
     const fileConfigMaps = configMaps.filter(
-      (cm) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'file'
+      (cm: any) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'file'
     )
 
     // Convert ConfigMaps to FileInfo objects
-    const files = fileConfigMaps.map((cm) => {
+    const files = fileConfigMaps.map((cm: any) => {
       const filename = cm.metadata?.labels?.['kloudlite.io/filename'] || cm.metadata?.name || 'unknown'
       const configMapName = cm.metadata?.name || 'unknown'
 
