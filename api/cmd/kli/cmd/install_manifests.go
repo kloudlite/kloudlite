@@ -207,6 +207,13 @@ data:
 		}
 		fmt.Printf("✓ Written Local Path StorageClass to %s\n", localPathStorageClassPath)
 
+		// Write Local Path Simple StorageClass (simple mkdir-based storage for docker-dind etc.)
+		localPathSimpleStorageClassPath := filepath.Join(manifestsDir, "local-path-simple-storageclass.yaml")
+		if err := os.WriteFile(localPathSimpleStorageClassPath, []byte(manifests.LocalPathSimpleStorageClass), 0644); err != nil {
+			return fmt.Errorf("failed to write Local Path Simple StorageClass: %w", err)
+		}
+		fmt.Printf("✓ Written Local Path Simple StorageClass to %s\n", localPathSimpleStorageClassPath)
+
 		// Write Local Path Provisioner Config (btrfs subvolume setup for snapshots)
 		localPathConfigPath := filepath.Join(manifestsDir, "local-path-provisioner-config.yaml")
 		if err := os.WriteFile(localPathConfigPath, []byte(manifests.LocalPathProvisionerConfig), 0644); err != nil {
