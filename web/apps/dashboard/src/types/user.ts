@@ -21,6 +21,7 @@ export interface CreateUserFormData {
   username: string
   email: string
   displayName?: string
+  password?: string
   roles: string[]
 }
 

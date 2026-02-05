@@ -79,6 +79,7 @@ export function UserManagementList({
     username: '',
     email: '',
     displayName: '',
+    password: '',
     roles: [],
   })
 
