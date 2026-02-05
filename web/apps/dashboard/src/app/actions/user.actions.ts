@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache'
 import { userRepository } from '@kloudlite/lib/k8s'
 import type { User } from '@kloudlite/lib/k8s'
-import bcrypt from 'bcryptjs'
 import { resourceStore } from '@/lib/resource-store'
 
 export interface ProviderAccount {
@@ -68,17 +67,11 @@ export async function updateUserLastLogin(username: string) {
  */
 export async function resetUserPassword(username: string, newPassword: string) {
   try {
-    // Hash the new password
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(newPassword, salt)
-
-    // Encode to base64 for storage
-    const passwordHashBase64 = Buffer.from(hashedPassword).toString('base64')
-
-    // Update user with new password hash
+    // Set passwordString - the mutation webhook will hash it with bcrypt
+    // and store the result in spec.password
     const updated = await userRepository.patch(username, {
       spec: {
-        passwordHash: passwordHashBase64,
+        passwordString: newPassword,
       },
     })
 
@@ -167,6 +160,7 @@ export async function createUser(userData: {
   username: string
   email: string
   displayName?: string
+  password?: string
   roles: string[]
   isActive?: boolean
 }) {
@@ -182,6 +176,7 @@ export async function createUser(userData: {
         displayName: userData.displayName || userData.username,
         roles: userData.roles,
         active: userData.isActive ?? true,
+        ...(userData.password ? { passwordString: userData.password } : {}),
       },
     }
 
