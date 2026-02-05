@@ -90,7 +90,7 @@ export const authConfig: NextAuthConfig = {
               email: `admin@${payload.installationId}`,
               name: 'Super Admin',
               username: 'superadmin',
-              roles: ['admin', 'superadmin'],
+              roles: ['admin', 'super-admin'],
               isActive: true,
               provider: 'superadmin-login',
             }
