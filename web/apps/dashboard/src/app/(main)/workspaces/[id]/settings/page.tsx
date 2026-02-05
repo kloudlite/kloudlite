@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
-import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
+import { getWorkspaceData } from '../workspace-data'
 import { WorkspaceDescriptionForm } from '../../_components/workspace-description-form'
 import { WorkspaceDangerZone } from '../../_components/workspace-danger-zone'
 import { Info, User, Server } from 'lucide-react'
@@ -15,7 +15,7 @@ export default async function SettingsPage({ params }: PageProps) {
 
   const { id: hash } = await params
 
-  const result = await getWorkspaceByHash(hash)
+  const result = await getWorkspaceData(hash)
 
   if (!result.success || !result.data) {
     notFound()

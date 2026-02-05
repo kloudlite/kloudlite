@@ -8,6 +8,7 @@ import { environmentService } from '@/lib/services/environment.service'
 import { getSession } from '@/lib/get-session'
 import { resourceStore } from '@/lib/resource-store'
 import { watchNamespace, watchResourceInNamespace } from '@/lib/k8s-watcher'
+import type { K8sService } from '@kloudlite/types'
 import {
   environmentCreateSchema,
   environmentUpdateSchema,
@@ -15,6 +16,27 @@ import {
   forkEnvironmentSchema,
   importEnvironmentConfigSchema,
 } from '@/lib/validations'
+
+/**
+ * Map a raw K8s Service object to the flattened K8sService type
+ */
+function mapRawService(svc: any): K8sService {
+  return {
+    name: svc.metadata?.name || '',
+    namespace: svc.metadata?.namespace || '',
+    type: svc.spec?.type || 'ClusterIP',
+    clusterIP: svc.spec?.clusterIP || '',
+    ports: (svc.spec?.ports || []).map((p: any) => ({
+      name: p.name || '',
+      protocol: p.protocol || 'TCP',
+      port: p.port || 0,
+      targetPort: String(p.targetPort || ''),
+    })),
+    selector: svc.spec?.selector || {},
+    replicas: 0,
+    image: undefined,
+  }
+}
 
 /**
  * Get work machine for a user from the in-memory store
@@ -49,6 +71,7 @@ async function getWorkMachineNamespace(): Promise<string> {
  */
 export async function getEnvironmentsListFull() {
   try {
+    console.log('[STORE] getEnvironmentsListFull: environments, workmachines, userpreferences')
     const session = await getSession()
     const username = session?.user?.username || session?.user?.email || ''
 
@@ -131,6 +154,7 @@ export async function createEnvironment(data: unknown) {
       },
     }
 
+    console.log('[K8S-API] createEnvironment:', environment.metadata?.name)
     const result = await environmentRepository.create(namespace, environment)
     revalidatePath('/environments')
     return { success: true, data: result }
@@ -171,6 +195,7 @@ export async function updateEnvironment(name: string, data: unknown) {
     const updateData = validated.data as import('@kloudlite/types').EnvironmentUpdateRequest
 
     // Use patch for partial updates
+    console.log('[K8S-API] updateEnvironment:', name)
     const result = await environmentRepository.patch(namespace, name, {
       spec: updateData.spec,
     })
@@ -193,6 +218,7 @@ export async function updateEnvironment(name: string, data: unknown) {
 export async function deleteEnvironment(name: string) {
   try {
     const namespace = await getWorkMachineNamespace()
+    console.log('[K8S-API] deleteEnvironment:', name)
     await environmentRepository.delete(namespace, name)
     revalidatePath('/environments')
     return { success: true }
@@ -212,6 +238,7 @@ export async function deleteEnvironment(name: string) {
 export async function activateEnvironment(name: string) {
   try {
     const namespace = await getWorkMachineNamespace()
+    console.log('[K8S-API] activateEnvironment:', name)
     const result = await environmentRepository.activate(namespace, name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
@@ -232,6 +259,7 @@ export async function activateEnvironment(name: string) {
 export async function deactivateEnvironment(name: string) {
   try {
     const namespace = await getWorkMachineNamespace()
+    console.log('[K8S-API] deactivateEnvironment:', name)
     const result = await environmentRepository.deactivate(namespace, name)
     revalidatePath('/environments')
     revalidatePath(`/environments/${name}`)
@@ -251,6 +279,7 @@ export async function deactivateEnvironment(name: string) {
  */
 export async function getEnvironmentStatus(name: string) {
   try {
+    console.log('[STORE] getEnvironmentStatus:', name)
     const namespace = await getWorkMachineNamespace()
     await watchNamespace(namespace)
     const environment = resourceStore.get<Environment>('environments', namespace, name)
@@ -273,6 +302,7 @@ export async function getEnvironmentStatus(name: string) {
  */
 export async function getEnvironment(name: string) {
   try {
+    console.log('[STORE] getEnvironment:', name)
     const namespace = await getWorkMachineNamespace()
     await watchNamespace(namespace)
     const result = resourceStore.get<Environment>('environments', namespace, name)
@@ -295,6 +325,7 @@ export async function getEnvironment(name: string) {
  */
 export async function listEnvironments() {
   try {
+    console.log('[STORE] listEnvironments')
     const namespace = await getWorkMachineNamespace()
     await watchNamespace(namespace)
     const items = resourceStore.list<Environment>('environments', namespace)
@@ -556,6 +587,7 @@ export async function updateEnvironmentAccess(
  */
 export async function getEnvironmentByHash(hashOrName: string) {
   try {
+    console.log('[STORE] getEnvironmentByHash:', hashOrName)
     const namespace = await getWorkMachineNamespace()
 
     // Ensure namespace watches are running
@@ -583,12 +615,12 @@ export async function getEnvironmentByHash(hashOrName: string) {
 
     // Get services from the target namespace
     // Only watch 'services' in targetNamespace to avoid connection accumulation (Issue 3)
-    let services: import('@kloudlite/types').K8sService[] = []
+    let services: K8sService[] = []
     const targetNs = environment.spec?.targetNamespace
     if (targetNs) {
       try {
         await watchResourceInNamespace('services', targetNs)
-        services = resourceStore.list('services', targetNs)
+        services = resourceStore.list('services', targetNs).map(mapRawService)
       } catch (err) {
         console.error('Failed to fetch services:', err)
       }
@@ -622,6 +654,7 @@ export async function getEnvironmentByHash(hashOrName: string) {
  */
 export async function getEnvironmentDetails(name: string) {
   try {
+    console.log('[STORE] getEnvironmentDetails:', name)
     const namespace = await getWorkMachineNamespace()
     await watchNamespace(namespace)
 
@@ -631,12 +664,12 @@ export async function getEnvironmentDetails(name: string) {
     }
 
     // Get services from the target namespace
-    let services: import('@kloudlite/types').K8sService[] = []
+    let services: K8sService[] = []
     const targetNs = environment.spec?.targetNamespace
     if (targetNs) {
       try {
         await watchResourceInNamespace('services', targetNs)
-        services = resourceStore.list('services', targetNs)
+        services = resourceStore.list('services', targetNs).map(mapRawService)
       } catch (err) {
         console.error('Failed to fetch services:', err)
       }
@@ -670,6 +703,7 @@ export async function getEnvironmentDetails(name: string) {
  */
 export async function getEnvironmentCompose(name: string) {
   try {
+    console.log('[STORE] getEnvironmentCompose:', name)
     const namespace = await getWorkMachineNamespace()
     await watchNamespace(namespace)
     const environment = resourceStore.get<Environment>('environments', namespace, name)
@@ -705,6 +739,7 @@ export async function updateEnvironmentCompose(
   try {
     const namespace = await getWorkMachineNamespace()
 
+    console.log('[K8S-API] updateEnvironmentCompose:', name)
     const result = await environmentRepository.patch(namespace, name, {
       spec: {
         compose: compose ?? undefined,

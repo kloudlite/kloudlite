@@ -27,6 +27,7 @@ function getWorkMachineForUser(username: string): WorkMachine | null {
  */
 export async function getWorkspacesListFull() {
   try {
+    console.log('[STORE] getWorkspacesListFull: workspaces, workmachines, userpreferences')
     const session = await getSession()
     const username = session?.user?.username || session?.user?.email || ''
     const cachedNamespace = session?.user?.namespace
@@ -86,6 +87,7 @@ export async function getWorkspacesListFull() {
  */
 export async function getWorkspaceByHash(hashOrName: string) {
   try {
+    console.log('[STORE] getWorkspaceByHash:', hashOrName)
     const session = await getSession()
     const username = session?.user?.username || session?.user?.email || ''
     const cachedNamespace = session?.user?.namespace
@@ -135,6 +137,7 @@ export async function getWorkspaceByHash(hashOrName: string) {
  */
 export async function listWorkspaces(namespace: string = 'default') {
   try {
+    console.log('[STORE] listWorkspaces:', namespace)
     await watchNamespace(namespace)
     const items = resourceStore.list<Workspace>('workspaces', namespace)
     return { success: true, data: { items, metadata: {} } }
@@ -153,6 +156,7 @@ export async function listWorkspaces(namespace: string = 'default') {
  */
 export async function getWorkspace(name: string, namespace: string = 'default') {
   try {
+    console.log('[STORE] getWorkspace:', name)
     await watchNamespace(namespace)
     const result = resourceStore.get<Workspace>('workspaces', namespace, name)
     if (!result) {
@@ -233,6 +237,7 @@ export async function createWorkspace(data: unknown) {
       },
     }
 
+    console.log('[K8S-API] createWorkspace:', workspace.metadata?.name)
     const result = await workspaceRepository.create(namespace, workspace)
     revalidatePath('/workspaces')
     return { success: true, data: result }
@@ -272,6 +277,7 @@ export async function updateWorkspace(name: string, namespace: string, data: unk
     const updateData = validated.data as import('@kloudlite/types').WorkspaceUpdateRequest
 
     // Use patch for partial updates
+    console.log('[K8S-API] updateWorkspace:', name)
     const result = await workspaceRepository.patch(namespace, name, {
       spec: updateData.spec,
     })
@@ -292,6 +298,7 @@ export async function updateWorkspace(name: string, namespace: string, data: unk
  */
 export async function deleteWorkspace(name: string, namespace: string = 'default') {
   try {
+    console.log('[K8S-API] deleteWorkspace:', name)
     await workspaceRepository.delete(namespace, name)
     revalidatePath('/workspaces')
     return { success: true }
@@ -310,6 +317,7 @@ export async function deleteWorkspace(name: string, namespace: string = 'default
  */
 export async function suspendWorkspace(name: string, namespace: string = 'default') {
   try {
+    console.log('[K8S-API] suspendWorkspace:', name)
     const result = await workspaceRepository.suspend(namespace, name)
     revalidatePath('/workspaces')
     return { success: true, data: result }
@@ -328,6 +336,7 @@ export async function suspendWorkspace(name: string, namespace: string = 'defaul
  */
 export async function activateWorkspace(name: string, namespace: string = 'default') {
   try {
+    console.log('[K8S-API] activateWorkspace:', name)
     const result = await workspaceRepository.activate(namespace, name)
     revalidatePath('/workspaces')
     return { success: true, data: result }
@@ -346,6 +355,7 @@ export async function activateWorkspace(name: string, namespace: string = 'defau
  */
 export async function archiveWorkspace(name: string, namespace: string = 'default') {
   try {
+    console.log('[K8S-API] archiveWorkspace:', name)
     const result = await workspaceRepository.archive(namespace, name)
     revalidatePath('/workspaces')
     return { success: true, data: result }
@@ -369,6 +379,7 @@ export async function getWorkspaceMetrics(name: string, namespace: string = 'def
     // Workspace pod name follows the pattern: ws-{workspaceName}
     const podName = `ws-${name}`
 
+    console.log('[K8S-API] getWorkspaceMetrics:', podName)
     const podMetrics = await metricsRepository.getPodMetrics(namespace, podName)
 
     // Parse CPU (format: "123456789n" for nanocores or "123m" for millicores)
@@ -502,6 +513,7 @@ export async function updatePackageRequest(
 
   try {
     // Try to get existing PackageRequest by workspace label from store
+    console.log('[STORE] updatePackageRequest: checking existing for', workspaceName)
     await watchNamespace(namespace)
     const existingPkgReq = resourceStore.listByLabel<PackageRequest>(
       'packagerequests', namespace, 'kloudlite.io/workspace', workspaceName
@@ -509,6 +521,7 @@ export async function updatePackageRequest(
 
     if (existingPkgReq) {
       // Update existing PackageRequest
+      console.log('[K8S-API] updatePackageRequest: updating', existingPkgReq.metadata!.name!)
       const result = await packageRequestRepository.updatePackages(
         namespace,
         existingPkgReq.metadata!.name!,
@@ -535,6 +548,7 @@ export async function updatePackageRequest(
         },
       }
 
+      console.log('[K8S-API] updatePackageRequest: creating', packageRequest.metadata?.name)
       const result = await packageRequestRepository.create(namespace, packageRequest)
       revalidatePath('/workspaces')
       return { success: true, data: result }
@@ -555,6 +569,7 @@ export async function updatePackageRequest(
  */
 export async function getPackageRequest(workspaceName: string, namespace: string = 'default') {
   try {
+    console.log('[STORE] getPackageRequest:', workspaceName)
     await watchNamespace(namespace)
     const packageRequest = resourceStore.listByLabel<PackageRequest>(
       'packagerequests', namespace, 'kloudlite.io/workspace', workspaceName

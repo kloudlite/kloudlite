@@ -11,9 +11,12 @@
         "lint": "echo 'No lint configured for @kloudlite/lib'"
     },
     "dependencies": {
+        "@kloudlite/types": "workspace:*",
         "@kubernetes/client-node": "^1.4.0",
+        "@supabase/supabase-js": "^2.47.10",
         "clsx": "^2.1.1",
         "date-fns": "^3.0.0",
+        "jose": "^5.0.0",
         "tailwind-merge": "^3.3.1"
     },
     "devDependencies": {

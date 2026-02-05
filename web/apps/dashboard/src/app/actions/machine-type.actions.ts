@@ -12,6 +12,7 @@ import { resourceStore } from '@/lib/resource-store'
  */
 export async function listMachineTypes() {
   try {
+    console.log('[STORE] listMachineTypes')
     await resourceStore.waitForReady('machinetypes')
     const items = resourceStore.listCluster<MachineType>('machinetypes')
     return { success: true, data: items }
@@ -30,6 +31,7 @@ export async function listMachineTypes() {
  */
 export async function getMachineType(name: string) {
   try {
+    console.log('[STORE] getMachineType:', name)
     await resourceStore.waitForReady('machinetypes')
     const result = resourceStore.getCluster<MachineType>('machinetypes', name)
     if (!result) {
@@ -72,6 +74,7 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
       },
     }
 
+    console.log('[K8S-API] createMachineType:', name)
     const result = await machineTypeRepository.create(machineType)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
@@ -104,6 +107,7 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
     }
 
     // Use patch for partial updates
+    console.log('[K8S-API] updateMachineType:', name)
     const result = await machineTypeRepository.patch(name, {
       spec: specUpdate,
     })
@@ -124,6 +128,7 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
  */
 export async function deleteMachineType(name: string) {
   try {
+    console.log('[K8S-API] deleteMachineType:', name)
     await machineTypeRepository.delete(name)
     revalidatePath('/admin/machine-configs')
     return { success: true }
@@ -142,6 +147,7 @@ export async function deleteMachineType(name: string) {
  */
 export async function activateMachineType(name: string) {
   try {
+    console.log('[K8S-API] activateMachineType:', name)
     const result = await machineTypeRepository.activate(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
@@ -160,6 +166,7 @@ export async function activateMachineType(name: string) {
  */
 export async function deactivateMachineType(name: string) {
   try {
+    console.log('[K8S-API] deactivateMachineType:', name)
     const result = await machineTypeRepository.deactivate(name)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
@@ -178,6 +185,7 @@ export async function deactivateMachineType(name: string) {
  */
 export async function setMachineTypeAsDefault(name: string) {
   try {
+    console.log('[K8S-API] setMachineTypeAsDefault:', name)
     const result = await machineTypeRepository.setDefault(name)
     revalidatePath('/admin/machine-configs')
     revalidatePath('/')

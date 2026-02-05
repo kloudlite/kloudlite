@@ -28,6 +28,7 @@ export interface UserData {
  */
 export async function getUserByEmail(email: string) {
   try {
+    console.log('[STORE] getUserByEmail:', email)
     await resourceStore.waitForReady('users')
     const users = resourceStore.listCluster<User>('users')
     const user = users.find((u) => u.spec?.email === email) || null
@@ -49,6 +50,7 @@ export async function getUserByEmail(email: string) {
  */
 export async function updateUserLastLogin(username: string) {
   try {
+    console.log('[K8S-API] updateUserLastLogin:', username)
     const updated = await userRepository.updateLastLogin(username)
     return { success: true, data: updated }
   } catch (err) {
@@ -120,6 +122,7 @@ export async function checkUsernameAvailability(username: string) {
  */
 export async function listUsers() {
   try {
+    console.log('[STORE] listUsers')
     await resourceStore.waitForReady('users')
     const items = resourceStore.listCluster<User>('users')
     return { success: true, data: items }
@@ -141,6 +144,7 @@ export const getAllUsers = listUsers
  */
 export async function getUser(username: string) {
   try {
+    console.log('[STORE] getUser:', username)
     await resourceStore.waitForReady('users')
     const user = resourceStore.getCluster<User>('users', username)
     if (!user) {
@@ -188,6 +192,7 @@ export async function createUser(userData: {
       },
     }
 
+    console.log('[K8S-API] createUser:', userData.username)
     const created = await userRepository.create(user as any)
     revalidatePath('/admin/users')
     return { success: true, data: created }
@@ -214,6 +219,7 @@ export async function updateUser(
   }
 ) {
   try {
+    console.log('[K8S-API] updateUser:', username)
     const updated = await userRepository.patch(username, {
       spec: {
         email: updates.email,
@@ -240,6 +246,7 @@ export async function updateUser(
  */
 export async function deleteUser(username: string) {
   try {
+    console.log('[K8S-API] deleteUser:', username)
     await userRepository.delete(username)
     revalidatePath('/admin/users')
     return { success: true }
@@ -258,6 +265,7 @@ export async function deleteUser(username: string) {
  */
 export async function activateUser(username: string) {
   try {
+    console.log('[K8S-API] activateUser:', username)
     const updated = await userRepository.activate(username)
     revalidatePath('/admin/users')
     return { success: true, data: updated }
@@ -276,6 +284,7 @@ export async function activateUser(username: string) {
  */
 export async function deactivateUser(username: string) {
   try {
+    console.log('[K8S-API] deactivateUser:', username)
     const updated = await userRepository.deactivate(username)
     revalidatePath('/admin/users')
     return { success: true, data: updated }

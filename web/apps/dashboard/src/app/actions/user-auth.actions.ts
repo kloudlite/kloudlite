@@ -28,6 +28,7 @@ export interface UserData {
 export async function authenticateUser(userData: UserData) {
   try {
     // Try store first, fall back to direct API call for reliability during auth
+    console.log('[STORE] authenticateUser: looking up', userData.email)
     await resourceStore.waitForReady('users', undefined, 5000)
     const users = resourceStore.listCluster<User>('users')
     let user = users.find((u) => u.spec?.email === userData.email) || null
@@ -35,6 +36,7 @@ export async function authenticateUser(userData: UserData) {
     if (!user) {
       // Fallback to direct API if store is empty or user not found
       try {
+        console.log('[K8S-API] authenticateUser: fallback getByEmail', userData.email)
         user = await userRepository.getByEmail(userData.email)
       } catch (err) {
         console.log(`Authentication failed: User with email ${userData.email} not found`)
@@ -70,6 +72,7 @@ export async function authenticateUser(userData: UserData) {
     }
 
     // Update user with latest provider info
+    console.log('[K8S-API] authenticateUser: patch providers for', user.metadata!.name!)
     const updatedUser = await userRepository.patch(user.metadata!.name!, {
       spec: {
         providers: updatedProviders,

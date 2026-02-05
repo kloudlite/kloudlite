@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
-import { getWorkspaceByHash, getPackageRequest } from '@/app/actions/workspace.actions'
+import { getPackageRequest } from '@/app/actions/workspace.actions'
+import { getWorkspaceData } from '../workspace-data'
 import { PackagesList } from '../../_components/packages-list'
 import type { PageProps } from '@/types/shared'
 
@@ -13,7 +14,7 @@ export default async function PackagesPage({ params }: PageProps) {
 
   const { id: hash } = await params
 
-  const result = await getWorkspaceByHash(hash)
+  const result = await getWorkspaceData(hash)
 
   if (!result.success || !result.data) {
     notFound()

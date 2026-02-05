@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { MoreHorizontal, Loader2, AlertCircle, Pin, PinOff } from 'lucide-react'
@@ -46,11 +46,32 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showForkSheet, setShowForkSheet] = useState(false)
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Prevent hydration mismatch with Radix UI components
   useEffect(() => {
     setMounted(true)
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+    }
   }, [])
+
+  // Poll for status updates after an action (activate/suspend/archive)
+  const startPostActionPolling = useCallback(() => {
+    if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+    router.refresh()
+    let elapsed = 0
+    pollTimerRef.current = setInterval(() => {
+      elapsed += 2000
+      router.refresh()
+      if (elapsed >= 15000) {
+        if (pollTimerRef.current) {
+          clearInterval(pollTimerRef.current)
+          pollTimerRef.current = null
+        }
+      }
+    }, 2000)
+  }, [router])
 
   const handlePin = async () => {
     const result = await pinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
@@ -82,7 +103,7 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
         return
       }
       setShowDeleteDialog(false)
-      router.refresh()
+      startPostActionPolling()
     } catch (error) {
       console.error('Failed to delete workspace:', error)
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete workspace')
@@ -105,7 +126,7 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
       if (result && !result.success) {
         throw new Error(result.error)
       }
-      router.refresh()
+      startPostActionPolling()
     } catch (error) {
       console.error(`Failed to ${action} workspace:`, error)
       alert(error instanceof Error ? error.message : `Failed to ${action} workspace`)

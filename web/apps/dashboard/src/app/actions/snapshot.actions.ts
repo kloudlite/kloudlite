@@ -14,6 +14,7 @@ import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateE
  */
 export async function listSnapshots(workspaceName: string, namespace: string) {
   try {
+    console.log('[STORE] listSnapshots:', workspaceName)
     await watchNamespace(namespace)
     const snapshots = resourceStore.listByLabel<Snapshot>(
       'snapshots',
@@ -68,6 +69,7 @@ export async function createSnapshot(
       },
     }
 
+    console.log('[K8S-API] createSnapshot:', snapshot.metadata?.name)
     const result = await snapshotRepository.create(namespace, snapshot)
     revalidatePath(`/workspaces/${namespace}/${workspaceName}`)
     return { success: true, data: result }
@@ -86,6 +88,7 @@ export async function createSnapshot(
  */
 export async function listEnvironmentSnapshots(environmentName: string, namespace: string) {
   try {
+    console.log('[STORE] listEnvironmentSnapshots:', environmentName)
     await watchNamespace(namespace)
     const snapshots = resourceStore.listByLabel<Snapshot>(
       'snapshots',
@@ -194,6 +197,7 @@ export async function restoreEnvironmentFromSnapshot(
  */
 export async function deleteSnapshot(snapshotName: string, namespace: string) {
   try {
+    console.log('[K8S-API] deleteSnapshot:', snapshotName)
     await snapshotRepository.delete(namespace, snapshotName)
     revalidatePath('/workspaces')
     revalidatePath('/environments')
