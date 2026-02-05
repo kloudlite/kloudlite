@@ -1,5 +1,6 @@
 import type { V1DeleteOptions, V1Status } from "@kubernetes/client-node";
 import { getK8sClient } from "../client";
+import { getK8sApiUrl } from "../auth";
 import { parseK8sError, NotFoundError } from "../errors";
 import type { K8sResource, K8sList } from "../types/common";
 
@@ -252,34 +253,52 @@ export abstract class BaseRepository<T extends K8sResource> {
     _options?: PatchOptions,
   ): Promise<T> {
     try {
+      const baseUrl = getK8sApiUrl();
+      let url: string;
+      let patchBody: object;
+      let contentType: string;
+
       if (this.namespaced && typeof nameOrPatch === "string") {
-        // Namespaced resource - use object parameters API
         const patch = patchOrType as object;
-
-        const response = await this.client.custom.patchNamespacedCustomObject({
-          group: this.group,
-          version: this.version,
-          namespace: namespaceOrName,
-          plural: this.plural,
-          name: nameOrPatch,
-          body: patch,
-        });
-        return response as unknown as T;
+        const patchType =
+          (typeof _patchTypeOrOptions === "string"
+            ? _patchTypeOrOptions
+            : undefined) || "application/merge-patch+json";
+        url = `${baseUrl}/apis/${this.group}/${this.version}/namespaces/${namespaceOrName}/${this.plural}/${nameOrPatch}`;
+        patchBody = patch;
+        contentType = patchType;
       } else if (!this.namespaced && typeof nameOrPatch === "object") {
-        // Cluster-scoped resource
         const patch = nameOrPatch;
-
-        const response = await this.client.custom.patchClusterCustomObject({
-          group: this.group,
-          version: this.version,
-          plural: this.plural,
-          name: namespaceOrName,
-          body: patch,
-        });
-        return response as unknown as T;
+        const patchType =
+          (typeof patchOrType === "string" ? patchOrType : undefined) ||
+          "application/merge-patch+json";
+        url = `${baseUrl}/apis/${this.group}/${this.version}/${this.plural}/${namespaceOrName}`;
+        patchBody = patch;
+        contentType = patchType;
       } else {
         throw new Error("Invalid arguments for patch operation");
       }
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": contentType,
+          Accept: "application/json",
+        },
+        body: JSON.stringify(patchBody),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const err = new Error(
+          errorBody.message || `K8s PATCH failed with status ${response.status}`,
+        );
+        (err as any).statusCode = response.status;
+        (err as any).body = errorBody;
+        throw err;
+      }
+
+      return (await response.json()) as T;
     } catch (err) {
       throw parseK8sError(err);
     }
@@ -300,32 +319,40 @@ export abstract class BaseRepository<T extends K8sResource> {
     resource?: Partial<T>,
   ): Promise<T> {
     try {
+      const baseUrl = getK8sApiUrl();
+      let url: string;
+      let patchBody: object;
+
       if (this.namespaced && typeof nameOrResource === "string" && resource) {
-        // Namespaced resource - use object parameters API
-        const response =
-          await this.client.custom.patchNamespacedCustomObjectStatus({
-            group: this.group,
-            version: this.version,
-            namespace: namespaceOrName,
-            plural: this.plural,
-            name: nameOrResource,
-            body: resource as object,
-          });
-        return response as unknown as T;
+        url = `${baseUrl}/apis/${this.group}/${this.version}/namespaces/${namespaceOrName}/${this.plural}/${nameOrResource}/status`;
+        patchBody = resource as object;
       } else if (!this.namespaced && typeof nameOrResource === "object") {
-        // Cluster-scoped resource
-        const response =
-          await this.client.custom.patchClusterCustomObjectStatus({
-            group: this.group,
-            version: this.version,
-            plural: this.plural,
-            name: namespaceOrName,
-            body: nameOrResource as object,
-          });
-        return response as unknown as T;
+        url = `${baseUrl}/apis/${this.group}/${this.version}/${this.plural}/${namespaceOrName}/status`;
+        patchBody = nameOrResource as object;
       } else {
         throw new Error("Invalid arguments for updateStatus operation");
       }
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/merge-patch+json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(patchBody),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const err = new Error(
+          errorBody.message || `K8s PATCH status failed with status ${response.status}`,
+        );
+        (err as any).statusCode = response.status;
+        (err as any).body = errorBody;
+        throw err;
+      }
+
+      return (await response.json()) as T;
     } catch (err) {
       throw parseK8sError(err);
     }
