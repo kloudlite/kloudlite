@@ -142,6 +142,7 @@ metadata:
 type: Opaque
 stringData:
   jwt-secret: "%s"
+  installation-secret: "%s"
 EOF
 
 # Save ConfigMap to manifests folder for auto-apply
@@ -342,7 +343,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, vpcID, workerSgID, region, amiID, fullDomain, fullDomain, region, bucketName, fullDomain, fullDomain, manifests.AWSMachineTypes, bucketName, region)
+`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, secretKey, installationKey, vpcID, workerSgID, region, amiID, fullDomain, fullDomain, region, bucketName, fullDomain, fullDomain, manifests.AWSMachineTypes, bucketName, region)
 
 	// Base64 encode the user data
 	userDataEncoded := base64.StdEncoding.EncodeToString([]byte(userData))
