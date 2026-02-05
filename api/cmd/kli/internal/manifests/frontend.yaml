@@ -60,6 +60,11 @@ spec:
                 secretKeyRef:
                   name: frontend-secrets
                   key: jwt-secret
+            - name: INSTALLATION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: api-server-secret
+                  key: INSTALLATION_SECRET
             - name: NEXT_PUBLIC_AUTH_COOKIE_DOMAIN
               value: "${AUTH_COOKIE_DOMAIN}"
             - name: CLOUDFLARE_DNS_DOMAIN
