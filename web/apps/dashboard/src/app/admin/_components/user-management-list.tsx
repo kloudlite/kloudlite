@@ -39,7 +39,7 @@ import {
   checkUsernameAvailability,
 } from '@/app/actions/user.actions'
 import { generateUsernameFromEmail } from '@/lib/utils/username'
-import { UserDisplay, CreateUserFormData } from '@/types/user'
+import { UserDisplay, CreateUserFormData, userToDisplay } from '@/types/user'
 import { toast } from 'sonner'
 
 // Helper function to get available roles based on current user's role
@@ -239,7 +239,7 @@ export function UserManagementList({
           // Update existing user
           const result = await updateUser(editingUser.id, formData)
           if (result.success && result.data) {
-            setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? result.data as any : u)))
+            setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? userToDisplay(result.data as any) : u)))
             toast.success('User updated successfully')
             resetForm()
           } else {
@@ -250,7 +250,7 @@ export function UserManagementList({
           // Create new user
           const result = await createUser(formData as any)
           if (result.success && result.data) {
-            setUsers((prev) => [...prev, result.data as any])
+            setUsers((prev) => [...prev, userToDisplay(result.data as any)])
             toast.success('User created successfully')
             resetForm()
           } else {

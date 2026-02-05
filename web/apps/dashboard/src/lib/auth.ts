@@ -44,6 +44,21 @@ export const authConfig: NextAuthConfig = {
         if (credentials?.superadminToken) {
           try {
             const token = credentials.superadminToken as string
+
+            // Dev mode backdoor: skip HMAC validation for local testing
+            if (process.env.NODE_ENV === 'development' && token === 'dev-superadmin') {
+              console.warn('[AUTH] Dev mode super-admin login bypass')
+              return {
+                id: 'dev-installation',
+                email: 'admin@dev-installation',
+                name: 'Super Admin (Dev)',
+                username: 'superadmin',
+                roles: ['admin', 'super-admin'],
+                isActive: true,
+                provider: 'superadmin-login',
+              }
+            }
+
             const installationSecret = process.env.INSTALLATION_SECRET
 
             if (!installationSecret) {
