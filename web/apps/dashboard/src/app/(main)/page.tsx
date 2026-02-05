@@ -6,6 +6,7 @@ import { getMyPreferences } from '@/app/actions/user-preferences.actions'
 import type { WorkMachine } from '@kloudlite/types'
 import { WorkMachineCard } from './workspaces/_components/work-machine-card'
 import { WorkMachineMetrics } from './workspaces/_components/work-machine-metrics'
+import { WorkMachineSetup } from './workspaces/_components/work-machine-setup'
 
 // Helper to map work machine CR to display format
 function transformWorkMachine(wm: WorkMachine) {
@@ -106,13 +107,17 @@ export default async function HomePage() {
     ? transformWorkMachine(myWorkMachineResult.data)
     : null
 
-  // If no work machine, the layout.tsx will handle showing the setup page
-  // This should not happen as layout redirects users without work machines
+  // If no work machine, show the setup page
   if (!workMachine) {
+    const userRoles = session.user?.roles || []
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Loading work machine...</p>
-      </div>
+      <WorkMachineSetup
+        availableMachineTypes={availableMachineTypes}
+        userEmail={session.user?.email || undefined}
+        displayName={session.user?.name || undefined}
+        isAdmin={userRoles.includes('admin')}
+        isSuperAdmin={userRoles.includes('super-admin')}
+      />
     )
   }
 
