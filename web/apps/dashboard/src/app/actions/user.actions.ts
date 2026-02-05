@@ -168,15 +168,9 @@ export async function createUser(userData: {
   email: string
   displayName?: string
   roles: string[]
-  password: string
   isActive?: boolean
 }) {
   try {
-    // Hash password
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(userData.password, salt)
-    const passwordHashBase64 = Buffer.from(hashedPassword).toString('base64')
-
     const user = {
       apiVersion: 'platform.kloudlite.io/v1alpha1',
       kind: 'User',
@@ -188,7 +182,6 @@ export async function createUser(userData: {
         displayName: userData.displayName || userData.username,
         roles: userData.roles,
         active: userData.isActive ?? true,
-        passwordHash: passwordHashBase64,
       },
     }
 
