@@ -627,7 +627,7 @@ export function UserManagementList({
                   required
                   disabled={!!editingUser}
                   className={editingUser ? 'bg-muted cursor-not-allowed pr-10' : 'pr-10'}
-                  pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+                  pattern="^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
                   minLength={3}
                   maxLength={63}
                 />
