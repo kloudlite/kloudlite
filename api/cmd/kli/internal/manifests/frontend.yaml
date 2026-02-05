@@ -64,6 +64,8 @@ spec:
               value: "${AUTH_COOKIE_DOMAIN}"
             - name: CLOUDFLARE_DNS_DOMAIN
               value: "${CLOUDFLARE_DNS_DOMAIN}"
+            - name: HOSTED_SUBDOMAIN
+              value: "${AUTH_COOKIE_DOMAIN}"
           resources:
             requests:
               memory: "512Mi"
