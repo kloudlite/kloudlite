@@ -399,7 +399,9 @@ export async function deleteWorkspace(name: string, namespace: string = 'default
 export async function suspendWorkspace(name: string, namespace: string = 'default') {
   try {
     const result = await workspaceRepository.suspend(namespace, name)
+    // Invalidate both list cache and individual workspace cache
     invalidateCache(`workspaces:${namespace}*`)
+    invalidateCache(`workspace:${namespace}:*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -418,7 +420,9 @@ export async function suspendWorkspace(name: string, namespace: string = 'defaul
 export async function activateWorkspace(name: string, namespace: string = 'default') {
   try {
     const result = await workspaceRepository.activate(namespace, name)
+    // Invalidate both list cache and individual workspace cache
     invalidateCache(`workspaces:${namespace}*`)
+    invalidateCache(`workspace:${namespace}:*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
@@ -437,7 +441,9 @@ export async function activateWorkspace(name: string, namespace: string = 'defau
 export async function archiveWorkspace(name: string, namespace: string = 'default') {
   try {
     const result = await workspaceRepository.archive(namespace, name)
+    // Invalidate both list cache and individual workspace cache
     invalidateCache(`workspaces:${namespace}*`)
+    invalidateCache(`workspace:${namespace}:*`)
     revalidatePath('/workspaces')
     return { success: true, data: result }
   } catch (err) {
