@@ -1,6 +1,8 @@
 'use server'
 
 import { userRepository } from '@kloudlite/lib/k8s'
+import type { User } from '@kloudlite/lib/k8s'
+import { resourceStore } from '@/lib/resource-store'
 
 export interface ProviderAccount {
   provider: string
@@ -25,15 +27,21 @@ export interface UserData {
  */
 export async function authenticateUser(userData: UserData) {
   try {
-    // Get user by email
-    let user
-    try {
-      user = await userRepository.getByEmail(userData.email)
-    } catch (err) {
-      console.log(`Authentication failed: User with email ${userData.email} not found`)
-      return {
-        success: false,
-        error: `You are not registered. Please contact your administrator to create an account for ${userData.email}.`,
+    // Try store first, fall back to direct API call for reliability during auth
+    await resourceStore.waitForReady('users', undefined, 5000)
+    const users = resourceStore.listCluster<User>('users')
+    let user = users.find((u) => u.spec?.email === userData.email) || null
+
+    if (!user) {
+      // Fallback to direct API if store is empty or user not found
+      try {
+        user = await userRepository.getByEmail(userData.email)
+      } catch (err) {
+        console.log(`Authentication failed: User with email ${userData.email} not found`)
+        return {
+          success: false,
+          error: `You are not registered. Please contact your administrator to create an account for ${userData.email}.`,
+        }
       }
     }
 

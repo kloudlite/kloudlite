@@ -2,7 +2,7 @@
  * Next.js Instrumentation
  *
  * This file runs once when the Next.js server starts.
- * Used to initialize K8s watchers for real-time cache invalidation.
+ * Used to initialize K8s watchers that populate the in-memory resource store.
  */
 
 export async function register() {
@@ -18,7 +18,6 @@ export async function register() {
     } catch (err) {
       console.error('[INSTRUMENTATION] Failed to initialize K8s watchers:', err)
       // Don't throw - allow server to start even if watchers fail
-      // The LRU cache will still work with TTL-based expiration
     }
   }
 }

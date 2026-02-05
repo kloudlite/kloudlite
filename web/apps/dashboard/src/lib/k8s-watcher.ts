@@ -1,106 +1,130 @@
 import { getK8sClient } from '@kloudlite/lib/k8s'
-import { invalidateCache } from './cache'
+import { resourceStore } from './resource-store'
 
 /**
- * K8s Resource Watcher
+ * K8s Resource Watcher — List-Then-Watch Pattern
  *
- * Watches for changes in K8s resources and invalidates the LRU cache
- * when changes occur. This keeps the cache fresh without polling.
+ * Populates the in-memory ResourceStore by:
+ * 1. LIST all resources -> populate store -> markReady()
+ * 2. WATCH from LIST's resourceVersion -> applyResource/removeResource on events
+ * 3. On disconnect: re-LIST + re-WATCH (handles 410 Gone)
  *
- * Flow:
- * 1. Start watch on K8s resources
- * 2. When resource changes (ADDED/MODIFIED/DELETED), invalidate cache
- * 3. Next read triggers fresh fetch from K8s API
- * 4. LRU cache stores the fresh data
+ * Reads never hit the K8s API — they go straight to the ResourceStore.
  */
 
 interface WatchConfig {
   group: string
   version: string
   plural: string
-  cacheKeyPrefix: string
   namespace?: string
 }
 
-const activeWatches = new Map<string, boolean>()
-let watchInitialized = false
+// Survive HMR via globalThis
+const g = globalThis as typeof globalThis & {
+  __activeWatches?: Map<string, boolean>
+  __watchInitialized?: boolean
+  __namespaceWatchTimers?: Map<string, ReturnType<typeof setTimeout>>
+}
+const activeWatches = g.__activeWatches ??= new Map<string, boolean>()
+let watchInitialized = g.__watchInitialized ?? false
+
+// Track idle timers for namespace watches (5 min idle -> stop watches)
+const NAMESPACE_IDLE_TIMEOUT = 5 * 60 * 1000
+const namespaceWatchTimers = g.__namespaceWatchTimers ??= new Map<string, ReturnType<typeof setTimeout>>()
 
 // Cluster-scoped resources to watch globally
 const CLUSTER_WATCH_CONFIGS: WatchConfig[] = [
-  {
-    group: 'machines.kloudlite.io',
-    version: 'v1',
-    plural: 'machinetypes',
-    cacheKeyPrefix: 'machineTypes',
-  },
-  {
-    group: 'machines.kloudlite.io',
-    version: 'v1',
-    plural: 'workmachines',
-    cacheKeyPrefix: 'workMachine',
-  },
-  {
-    group: 'platform.kloudlite.io',
-    version: 'v1alpha1',
-    plural: 'users',
-    cacheKeyPrefix: 'user',
-  },
-  {
-    group: 'platform.kloudlite.io',
-    version: 'v1alpha1',
-    plural: 'userpreferences',
-    cacheKeyPrefix: 'preferences',
-  },
+  { group: 'machines.kloudlite.io', version: 'v1', plural: 'machinetypes' },
+  { group: 'machines.kloudlite.io', version: 'v1', plural: 'workmachines' },
+  { group: 'platform.kloudlite.io', version: 'v1alpha1', plural: 'users' },
+  { group: 'platform.kloudlite.io', version: 'v1alpha1', plural: 'userpreferences' },
 ]
 
-// Namespace-scoped resources to watch per namespace
+// All namespace-scoped resource types
 const NAMESPACE_WATCH_CONFIGS: Omit<WatchConfig, 'namespace'>[] = [
-  {
-    group: 'workspaces.kloudlite.io',
-    version: 'v1',
-    plural: 'workspaces',
-    cacheKeyPrefix: 'workspaces',
-  },
-  {
-    group: 'environments.kloudlite.io',
-    version: 'v1',
-    plural: 'environments',
-    cacheKeyPrefix: 'environments',
-  },
-  {
-    group: 'snapshots.kloudlite.io',
-    version: 'v1',
-    plural: 'snapshots',
-    cacheKeyPrefix: 'snapshots',
-  },
-  {
-    group: 'packages.kloudlite.io',
-    version: 'v1',
-    plural: 'packagerequests',
-    cacheKeyPrefix: 'packageRequests',
-  },
-  {
-    group: '', // core API
-    version: 'v1',
-    plural: 'services',
-    cacheKeyPrefix: 'services',
-  },
-  {
-    group: '', // core API
-    version: 'v1',
-    plural: 'configmaps',
-    cacheKeyPrefix: 'configmaps',
-  },
-  {
-    group: '', // core API
-    version: 'v1',
-    plural: 'secrets',
-    cacheKeyPrefix: 'secrets',
-  },
+  { group: 'workspaces.kloudlite.io', version: 'v1', plural: 'workspaces' },
+  { group: 'environments.kloudlite.io', version: 'v1', plural: 'environments' },
+  { group: 'snapshots.kloudlite.io', version: 'v1', plural: 'snapshots' },
+  { group: 'packages.kloudlite.io', version: 'v1', plural: 'packagerequests' },
+  { group: '', version: 'v1', plural: 'services' },
+  { group: '', version: 'v1', plural: 'configmaps' },
+  { group: '', version: 'v1', plural: 'secrets' },
 ]
 
 /**
- * Start a watch for a specific resource type
+ * Build the API watch/list path for a resource type
+ */
+function buildPath(config: WatchConfig): string {
+  if (config.group) {
+    return config.namespace
+      ? `/apis/${config.group}/${config.version}/namespaces/${config.namespace}/${config.plural}`
+      : `/apis/${config.group}/${config.version}/${config.plural}`
+  }
+  return config.namespace
+    ? `/api/${config.version}/namespaces/${config.namespace}/${config.plural}`
+    : `/api/${config.version}/${config.plural}`
+}
+
+/**
+ * Perform an initial LIST to populate the store, returns resourceVersion for watch.
+ */
+async function performInitialList(config: WatchConfig): Promise<string> {
+  const client = getK8sClient()
+  let response: any
+
+  if (config.group) {
+    // CRD resources
+    if (config.namespace) {
+      response = await client.custom.listNamespacedCustomObject({
+        group: config.group,
+        version: config.version,
+        namespace: config.namespace,
+        plural: config.plural,
+      })
+    } else {
+      response = await client.custom.listClusterCustomObject({
+        group: config.group,
+        version: config.version,
+        plural: config.plural,
+      })
+    }
+  } else {
+    // Core API resources
+    if (config.namespace) {
+      switch (config.plural) {
+        case 'services':
+          response = await client.core.listNamespacedService({ namespace: config.namespace })
+          break
+        case 'configmaps':
+          response = await client.core.listNamespacedConfigMap({ namespace: config.namespace })
+          break
+        case 'secrets':
+          response = await client.core.listNamespacedSecret({ namespace: config.namespace })
+          break
+        default:
+          throw new Error(`Unknown core resource: ${config.plural}`)
+      }
+    } else {
+      throw new Error(`Cluster-scoped core resources not supported: ${config.plural}`)
+    }
+  }
+
+  // Clear existing store data for this type+namespace before repopulating
+  resourceStore.clearNamespace(config.plural, config.namespace)
+
+  // Populate the store
+  const items = response?.items || []
+  for (const item of items) {
+    resourceStore.applyResource(config.plural, item)
+  }
+
+  // Return resourceVersion for watch continuation
+  const rv = response?.metadata?.resourceVersion || ''
+  return rv
+}
+
+/**
+ * Start a list-then-watch for a specific resource type.
  */
 async function startWatch(config: WatchConfig): Promise<void> {
   const watchKey = `${config.group || 'core'}/${config.plural}/${config.namespace || 'cluster'}`
@@ -109,133 +133,61 @@ async function startWatch(config: WatchConfig): Promise<void> {
     return // Already watching
   }
 
-  const client = getK8sClient()
-  const k8sWatch = client.createWatch()
-
-  // Build the watch path - core API vs custom resources
-  let path: string
-  if (config.group) {
-    // Custom resource (e.g., /apis/workspaces.kloudlite.io/v1/...)
-    path = config.namespace
-      ? `/apis/${config.group}/${config.version}/namespaces/${config.namespace}/${config.plural}`
-      : `/apis/${config.group}/${config.version}/${config.plural}`
-  } else {
-    // Core API (e.g., /api/v1/...)
-    path = config.namespace
-      ? `/api/${config.version}/namespaces/${config.namespace}/${config.plural}`
-      : `/api/${config.version}/${config.plural}`
-  }
-
-  console.log(`[K8S-WATCHER] Starting watch: ${watchKey}`)
+  console.log(`[K8S-WATCHER] Starting list-then-watch: ${watchKey}`)
   activeWatches.set(watchKey, true)
 
   try {
+    // Phase 1: Initial LIST
+    const resourceVersion = await performInitialList(config)
+    resourceStore.markReady(config.plural, config.namespace)
+    console.log(`[K8S-WATCHER] LIST complete for ${watchKey} (rv=${resourceVersion}, ${resourceStore.list(config.plural, config.namespace || '__cluster__').length} items)`)
+
+    // Phase 2: WATCH from resourceVersion
+    const client = getK8sClient()
+    const k8sWatch = client.createWatch()
+    const path = buildPath(config)
+
     await k8sWatch.watch(
       path,
-      {},
+      { resourceVersion },
       (type: string, obj: any) => {
-        const name = obj.metadata?.name
-        const namespace = obj.metadata?.namespace
-        const owner = obj.spec?.ownedBy
+        const name = obj?.metadata?.name
+        const namespace = obj?.metadata?.namespace
+
+        if (type === 'ADDED' || type === 'MODIFIED') {
+          resourceStore.applyResource(config.plural, obj)
+        } else if (type === 'DELETED') {
+          resourceStore.removeResource(config.plural, namespace || '__cluster__', name)
+        }
 
         console.log(`[K8S-WATCHER] ${config.plural} ${type}: ${name}`)
-
-        // Invalidate relevant cache entries based on resource type
-        invalidateCacheForResource(config.plural, { name, namespace, owner })
       },
       (err: any) => {
         console.error(`[K8S-WATCHER] Watch error for ${watchKey}:`, err?.message || err)
         activeWatches.set(watchKey, false)
+        resourceStore.markStale(config.plural, config.namespace)
 
-        // Restart watch after delay
+        // Restart with full re-LIST after delay (handles 410 Gone)
         setTimeout(() => {
-          console.log(`[K8S-WATCHER] Restarting watch: ${watchKey}`)
+          console.log(`[K8S-WATCHER] Restarting: ${watchKey}`)
           startWatch(config).catch(console.error)
         }, 5000)
-      }
+      },
     )
   } catch (err) {
-    console.error(`[K8S-WATCHER] Failed to start watch ${watchKey}:`, err)
+    console.error(`[K8S-WATCHER] Failed to start ${watchKey}:`, err)
     activeWatches.set(watchKey, false)
+
+    // Retry after delay
+    setTimeout(() => {
+      startWatch(config).catch(console.error)
+    }, 5000)
   }
 }
 
 /**
- * Invalidate cache entries for a specific resource type
- */
-function invalidateCacheForResource(
-  plural: string,
-  meta: { name?: string; namespace?: string; owner?: string }
-) {
-  const { name, namespace, owner } = meta
-
-  switch (plural) {
-    // Cluster-scoped resources
-    case 'machinetypes':
-      invalidateCache('machineTypes:*')
-      break
-    case 'workmachines':
-      if (owner) {
-        invalidateCache(`workMachine:${owner}*`)
-      }
-      invalidateCache('workMachine:*')
-      break
-    case 'users':
-      if (name) {
-        invalidateCache(`user:${name}*`)
-      }
-      invalidateCache('users:*')
-      break
-    case 'userpreferences':
-      if (name) {
-        invalidateCache(`preferences:${name}*`)
-      }
-      break
-
-    // Namespace-scoped resources
-    case 'workspaces':
-      if (namespace) {
-        invalidateCache(`workspaces:${namespace}*`)
-      }
-      invalidateCache('workspaces:*')
-      break
-    case 'environments':
-      if (namespace) {
-        invalidateCache(`environments:${namespace}*`)
-      }
-      invalidateCache('environments:*')
-      break
-    case 'snapshots':
-      if (namespace) {
-        invalidateCache(`snapshots:${namespace}*`)
-      }
-      break
-    case 'packagerequests':
-      if (namespace) {
-        invalidateCache(`packageRequests:${namespace}*`)
-      }
-      break
-    case 'services':
-      if (namespace) {
-        invalidateCache(`services:${namespace}*`)
-      }
-      break
-    case 'configmaps':
-      if (namespace) {
-        invalidateCache(`configmaps:${namespace}*`)
-      }
-      break
-    case 'secrets':
-      if (namespace) {
-        invalidateCache(`secrets:${namespace}*`)
-      }
-      break
-  }
-}
-
-/**
- * Initialize watches for cluster-scoped resources
- * Call this once when the server starts
+ * Initialize watches for cluster-scoped resources.
+ * Called once when the server starts (from instrumentation.ts).
  */
 export async function initializeWatchers(): Promise<void> {
   if (watchInitialized) {
@@ -244,52 +196,76 @@ export async function initializeWatchers(): Promise<void> {
 
   console.log('[K8S-WATCHER] Initializing watchers...')
   watchInitialized = true
+  g.__watchInitialized = true
 
-  // Start watches for cluster-scoped resources
   for (const config of CLUSTER_WATCH_CONFIGS) {
     startWatch(config).catch(console.error)
   }
 }
 
 /**
- * Add watches for all resources in a specific namespace
- * Call this when a user accesses a namespace
+ * Ensure watches are running for all resource types in a namespace.
+ * Starts watches if not already running. Returns a promise that resolves
+ * when the initial LIST for all types is complete.
  */
 export async function watchNamespace(namespace: string): Promise<void> {
-  console.log(`[K8S-WATCHER] Starting namespace watches for: ${namespace}`)
+  // Reset idle timer
+  const existingTimer = namespaceWatchTimers.get(namespace)
+  if (existingTimer) clearTimeout(existingTimer)
+  namespaceWatchTimers.set(namespace, setTimeout(() => {
+    stopNamespaceWatches(namespace)
+  }, NAMESPACE_IDLE_TIMEOUT))
+
+  const promises: Promise<void>[] = []
 
   for (const config of NAMESPACE_WATCH_CONFIGS) {
-    startWatch({
-      ...config,
-      namespace,
-    }).catch(console.error)
+    const watchKey = `${config.group || 'core'}/${config.plural}/${namespace}`
+    if (!activeWatches.get(watchKey)) {
+      startWatch({ ...config, namespace }).catch(console.error)
+    }
+    promises.push(resourceStore.waitForReady(config.plural, namespace))
   }
+
+  await Promise.all(promises)
 }
 
 /**
- * Add a watch for workspaces in a specific namespace (convenience function)
+ * Ensure a single resource type watch is running in a namespace.
+ * Useful for watching only 'services' in environment targetNamespaces
+ * to avoid connection accumulation (Issue 3).
  */
-export async function watchNamespaceWorkspaces(namespace: string): Promise<void> {
-  await startWatch({
-    group: 'workspaces.kloudlite.io',
-    version: 'v1',
-    plural: 'workspaces',
-    cacheKeyPrefix: 'workspaces',
-    namespace,
-  })
+export async function watchResourceInNamespace(plural: string, namespace: string): Promise<void> {
+  // Reset idle timer for this namespace
+  const existingTimer = namespaceWatchTimers.get(namespace)
+  if (existingTimer) clearTimeout(existingTimer)
+  namespaceWatchTimers.set(namespace, setTimeout(() => {
+    stopNamespaceWatches(namespace)
+  }, NAMESPACE_IDLE_TIMEOUT))
+
+  const config = NAMESPACE_WATCH_CONFIGS.find((c) => c.plural === plural)
+  if (!config) {
+    console.warn(`[K8S-WATCHER] Unknown resource type: ${plural}`)
+    return
+  }
+
+  const watchKey = `${config.group || 'core'}/${plural}/${namespace}`
+  if (!activeWatches.get(watchKey)) {
+    startWatch({ ...config, namespace }).catch(console.error)
+  }
+
+  await resourceStore.waitForReady(plural, namespace)
 }
 
 /**
- * Add a watch for environments in a specific namespace
+ * Stop all watches for a namespace (called on idle timeout).
  */
-export async function watchNamespaceEnvironments(namespace: string): Promise<void> {
-  await startWatch({
-    group: 'environments.kloudlite.io',
-    version: 'v1',
-    plural: 'environments',
-    cacheKeyPrefix: 'environments',
-    namespace,
-  })
+function stopNamespaceWatches(namespace: string): void {
+  console.log(`[K8S-WATCHER] Stopping idle watches for namespace: ${namespace}`)
+  for (const config of NAMESPACE_WATCH_CONFIGS) {
+    const watchKey = `${config.group || 'core'}/${config.plural}/${namespace}`
+    activeWatches.set(watchKey, false)
+  }
+  namespaceWatchTimers.delete(namespace)
 }
 
 /**
@@ -309,5 +285,6 @@ export function getWatcherStatus() {
       key,
       active,
     })),
+    storeStats: resourceStore.getStats(),
   }
 }

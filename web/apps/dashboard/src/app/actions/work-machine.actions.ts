@@ -1,10 +1,9 @@
 'use server'
 
-import { cache } from 'react'
 import { workMachineRepository } from '@kloudlite/lib/k8s'
 import type { WorkMachine } from '@kloudlite/lib/k8s'
 import { getSession } from '@/lib/get-session'
-import { cachedFetch, CacheTTL, invalidateCache } from '@/lib/cache'
+import { resourceStore } from '@/lib/resource-store'
 
 /**
  * Get the current authenticated username
@@ -18,21 +17,18 @@ async function getCurrentUsername(): Promise<string> {
 }
 
 /**
- * Cached work machine fetch - React cache for request deduplication + LRU for cross-request
- * Uses SHORT TTL (30s) because status (running/stopped) can change
+ * Get work machine for a user from the in-memory store
  */
-const getCachedWorkMachine = cache(async (username: string) => {
-  return cachedFetch(
-    `workMachine:${username}`,
-    () => workMachineRepository.getByOwner(username),
-    CacheTTL.SHORT // 30 seconds - status changes
-  )
-})
+function getWorkMachineForUser(username: string): WorkMachine | null {
+  const machines = resourceStore.listClusterByLabel<WorkMachine>('workmachines', 'kloudlite.io/owned-by', username)
+  return machines[0] || null
+}
 
 export async function getMyWorkMachine() {
   try {
     const username = await getCurrentUsername()
-    const data = await getCachedWorkMachine(username)
+    await resourceStore.waitForReady('workmachines')
+    const data = getWorkMachineForUser(username)
     if (!data) {
       return {
         success: false,
@@ -55,8 +51,9 @@ export async function getMyWorkMachine() {
 
 export async function listAllWorkMachines() {
   try {
-    const result = await workMachineRepository.list('')
-    return { success: true, data: result.items }
+    await resourceStore.waitForReady('workmachines')
+    const items = resourceStore.listCluster<WorkMachine>('workmachines')
+    return { success: true, data: items }
   } catch (err) {
     console.error('List work machines error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
@@ -72,7 +69,8 @@ export async function startMyWorkMachine() {
     console.log('[startMyWorkMachine] Starting...')
     const username = await getCurrentUsername()
     console.log('[startMyWorkMachine] Username:', username)
-    const workMachine = await workMachineRepository.getByOwner(username)
+    await resourceStore.waitForReady('workmachines')
+    const workMachine = getWorkMachineForUser(username)
     console.log('[startMyWorkMachine] Work machine found:', workMachine?.metadata?.name)
     if (!workMachine) {
       return {
@@ -82,7 +80,6 @@ export async function startMyWorkMachine() {
     }
     console.log('[startMyWorkMachine] Calling repository.start()...')
     const data = await workMachineRepository.start(workMachine.metadata!.name!)
-    invalidateCache(`workMachine:${username}*`)
     console.log('[startMyWorkMachine] Success!')
     return { success: true, data }
   } catch (err) {
@@ -98,7 +95,8 @@ export async function startMyWorkMachine() {
 export async function stopMyWorkMachine() {
   try {
     const username = await getCurrentUsername()
-    const workMachine = await workMachineRepository.getByOwner(username)
+    await resourceStore.waitForReady('workmachines')
+    const workMachine = getWorkMachineForUser(username)
     if (!workMachine) {
       return {
         success: false,
@@ -106,7 +104,6 @@ export async function stopMyWorkMachine() {
       }
     }
     const data = await workMachineRepository.stop(workMachine.metadata!.name!)
-    invalidateCache(`workMachine:${username}*`)
     return { success: true, data }
   } catch (err) {
     console.error('Stop work machine error:', err)
@@ -148,7 +145,6 @@ export async function createMyWorkMachine(machineType: string, volumeSize?: numb
     }
 
     const data = await workMachineRepository.create(workMachine)
-    invalidateCache(`workMachine:${username}*`)
     return { success: true, data }
   } catch (err) {
     console.error('Create work machine error:', err)
@@ -170,7 +166,8 @@ export async function updateMyWorkMachine(updateData: {
 }) {
   try {
     const username = await getCurrentUsername()
-    const workMachine = await workMachineRepository.getByOwner(username)
+    await resourceStore.waitForReady('workmachines')
+    const workMachine = getWorkMachineForUser(username)
     if (!workMachine) {
       return {
         success: false,
@@ -178,26 +175,9 @@ export async function updateMyWorkMachine(updateData: {
       }
     }
 
-    // Use read-modify-write pattern for updates
-    // Merge the update data into the existing spec
-    const updatedMachine = {
-      ...workMachine,
-      spec: {
-        ...workMachine.spec,
-        ...updateData,
-        // Deep merge autoShutdown if provided
-        ...(updateData.autoShutdown && {
-          autoShutdown: {
-            ...workMachine.spec?.autoShutdown,
-            ...updateData.autoShutdown,
-          },
-        }),
-      },
-    }
-
-    // Cast to any to handle type differences between lib and types packages
-    const data = await workMachineRepository.update(workMachine.metadata!.name!, updatedMachine as any)
-    invalidateCache(`workMachine:${username}*`)
+    const data = await workMachineRepository.patch(workMachine.metadata!.name!, {
+      spec: updateData,
+    })
     return { success: true, data }
   } catch (err) {
     console.error('Update work machine error:', err)
