@@ -40,3 +40,6 @@ var LocalPathProvisionerConfig string
 
 //go:embed local-path-storageclass.yaml
 var LocalPathStorageClass string
+
+//go:embed local-path-simple-storageclass.yaml
+var LocalPathSimpleStorageClass string

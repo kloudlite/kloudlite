@@ -242,6 +242,7 @@ echo "CA certificate installed for %s"
 						Name: "docker-storage",
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
+						StorageClassName: fn.Ptr("local-path-simple"),
 						AccessModes: []corev1.PersistentVolumeAccessMode{
 							corev1.ReadWriteOnce,
 						},

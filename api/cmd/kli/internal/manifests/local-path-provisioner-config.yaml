@@ -11,54 +11,80 @@ data:
           "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
           "paths": ["/var/lib/kloudlite/storage/environments"]
         }
-      ]
+      ],
+      "storageClassConfig": {
+        "local-path-simple": {
+          "nodePath": "/var/lib/kloudlite/storage/general",
+          "pathPattern": "{{ .PVC.Namespace }}/{{ .PVC.Name }}"
+        }
+      }
     }
   setup: |
     #!/bin/sh
     set -eu
 
-    # VOL_DIR format with pathPattern: /var/lib/kloudlite/storage/environments/{namespace}/{claim-name}
-    # Extract namespace (first directory after base path)
-    NAMESPACE=$(echo "$VOL_DIR" | sed "s|/var/lib/kloudlite/storage/environments/||" | cut -d'/' -f1)
-    BASE_DIR="/var/lib/kloudlite/storage/environments"
-    NS_SUBVOL="${BASE_DIR}/${NAMESPACE}"
+    # Branch based on storage path
+    case "$VOL_DIR" in
+      /var/lib/kloudlite/storage/environments/*)
+        # BTRFS path for environment snapshots (requires nsenter for host btrfs binary)
+        NAMESPACE=$(echo "$VOL_DIR" | sed "s|/var/lib/kloudlite/storage/environments/||" | cut -d'/' -f1)
+        BASE_DIR="/var/lib/kloudlite/storage/environments"
+        NS_SUBVOL="${BASE_DIR}/${NAMESPACE}"
 
-    # Run all operations on HOST via nsenter with a shell script
-    # This ensures the btrfs binary is found in the host's filesystem
-    nsenter -t 1 -m -- /bin/sh -c "
-      set -eu
-      NS_SUBVOL='$NS_SUBVOL'
-      VOL_DIR='$VOL_DIR'
-      NAMESPACE='$NAMESPACE'
+        nsenter -t 1 -m -- /bin/sh -c "
+          set -eu
+          NS_SUBVOL='$NS_SUBVOL'
+          VOL_DIR='$VOL_DIR'
+          NAMESPACE='$NAMESPACE'
 
-      # Check if namespace directory is a btrfs subvolume
-      if ! /usr/bin/btrfs subvolume show \"\$NS_SUBVOL\" >/dev/null 2>&1; then
-        if [ -d \"\$NS_SUBVOL\" ]; then
-          # Convert existing directory to btrfs subvolume
-          echo \"Converting existing directory to btrfs subvolume for namespace: \$NAMESPACE\"
-          TEMP_DIR=\"\${NS_SUBVOL}.tmp.\$\$\"
-          mv \"\$NS_SUBVOL\" \"\$TEMP_DIR\"
-          /usr/bin/btrfs subvolume create \"\$NS_SUBVOL\"
-          # Move contents back if any exist
-          if ls -A \"\$TEMP_DIR\" 2>/dev/null | head -1 | grep -q .; then
-            cp -a \"\$TEMP_DIR\"/. \"\$NS_SUBVOL\"/
+          # Check if namespace directory is a btrfs subvolume
+          if ! /usr/bin/btrfs subvolume show \"\$NS_SUBVOL\" >/dev/null 2>&1; then
+            if [ -d \"\$NS_SUBVOL\" ]; then
+              # Convert existing directory to btrfs subvolume
+              echo \"Converting existing directory to btrfs subvolume for namespace: \$NAMESPACE\"
+              TEMP_DIR=\"\${NS_SUBVOL}.tmp.\$\$\"
+              mv \"\$NS_SUBVOL\" \"\$TEMP_DIR\"
+              /usr/bin/btrfs subvolume create \"\$NS_SUBVOL\"
+              # Move contents back if any exist
+              if ls -A \"\$TEMP_DIR\" 2>/dev/null | head -1 | grep -q .; then
+                cp -a \"\$TEMP_DIR\"/. \"\$NS_SUBVOL\"/
+              fi
+              rm -rf \"\$TEMP_DIR\"
+            else
+              # Directory doesn't exist - create btrfs subvolume directly
+              echo \"Creating btrfs subvolume for namespace: \$NAMESPACE\"
+              /usr/bin/btrfs subvolume create \"\$NS_SUBVOL\"
+            fi
           fi
-          rm -rf \"\$TEMP_DIR\"
-        else
-          # Directory doesn't exist - create btrfs subvolume directly
-          echo \"Creating btrfs subvolume for namespace: \$NAMESPACE\"
-          /usr/bin/btrfs subvolume create \"\$NS_SUBVOL\"
-        fi
-      fi
 
-      # Create the PVC directory inside the subvolume
-      mkdir -m 0777 -p \"\$VOL_DIR\"
-    "
+          # Create the PVC directory inside the subvolume
+          mkdir -m 0777 -p \"\$VOL_DIR\"
+        "
+        ;;
+      /var/lib/kloudlite/storage/general/*)
+        # Simple path — create directory via hostPath mount (no nsenter needed)
+        HOST_VOL_DIR="/host-storage/general/$(echo "$VOL_DIR" | sed 's|/var/lib/kloudlite/storage/general/||')"
+        mkdir -m 0777 -p "$HOST_VOL_DIR"
+        ;;
+      *)
+        # Fallback — try simple mkdir via hostPath
+        mkdir -m 0777 -p "/host-storage/$(basename "$VOL_DIR")"
+        ;;
+    esac
     echo "PVC storage ready at $VOL_DIR"
   teardown: |
     #!/bin/sh
     set -eu
-    nsenter -t 1 -m -- /bin/sh -c "rm -rf '$VOL_DIR'"
+
+    case "$VOL_DIR" in
+      /var/lib/kloudlite/storage/environments/*)
+        nsenter -t 1 -m -- /bin/sh -c "rm -rf '$VOL_DIR'"
+        ;;
+      /var/lib/kloudlite/storage/general/*)
+        HOST_VOL_DIR="/host-storage/general/$(echo "$VOL_DIR" | sed 's|/var/lib/kloudlite/storage/general/||')"
+        rm -rf "$HOST_VOL_DIR"
+        ;;
+    esac
   helperPod.yaml: |
     apiVersion: v1
     kind: Pod
@@ -75,3 +101,11 @@ data:
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
+          volumeMounts:
+            - name: host-storage
+              mountPath: /host-storage
+      volumes:
+        - name: host-storage
+          hostPath:
+            path: /var/lib/kloudlite/storage
+            type: DirectoryOrCreate
