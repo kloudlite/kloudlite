@@ -45,7 +45,7 @@ import { toast } from 'sonner'
 // Helper function to get available roles based on current user's role
 function getAvailableRoles(currentUserRole: 'super-admin' | 'admin'): string[] {
   if (currentUserRole === 'super-admin') {
-    return ['user', 'admin', 'super-admin']
+    return ['user', 'admin']
   } else {
     // Admin can only create regular users
     return ['user']
