@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { ServicesList } from '../../_components/services-list'
-import { getEnvironmentByHash } from '@/app/actions/environment.actions'
+import { getEnvironmentData } from '../environment-data'
 import type { CompositionSpec, CompositionStatus } from '@kloudlite/types'
 import type { PageProps } from '@/types/shared'
 
@@ -16,7 +16,7 @@ export default async function ServicesPage({ params }: PageProps) {
   const { id: hash } = await params
 
   // Fetch environment details using server action
-  const result = await getEnvironmentByHash(hash)
+  const result = await getEnvironmentData(hash)
 
   if (result.success && result.data) {
     const data = result.data

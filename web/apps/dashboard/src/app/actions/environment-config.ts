@@ -93,6 +93,7 @@ export async function getEnvVars(environmentName: string): Promise<GetEnvVarsRes
     ])
 
     // Read from store
+    console.log('[STORE] getEnvVars: configmaps + secrets from', targetNamespace)
     const configMaps = resourceStore.list<any>('configmaps', targetNamespace)
     const secrets = resourceStore.list<any>('secrets', targetNamespace)
 
@@ -208,6 +209,7 @@ export async function listFiles(environmentName: string): Promise<ListFilesRespo
     await watchResourceInNamespace('configmaps', targetNamespace)
 
     // Read from store
+    console.log('[STORE] listFiles: configmaps from', targetNamespace)
     const configMaps = resourceStore.list<any>('configmaps', targetNamespace)
 
     // Filter ConfigMaps that are files (have specific label)

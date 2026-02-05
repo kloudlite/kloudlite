@@ -8,6 +8,7 @@ import { resourceStore } from '@/lib/resource-store'
  */
 export async function getWorkMachineStatus(name: string) {
   try {
+    console.log('[STORE] getWorkMachineStatus:', name)
     await resourceStore.waitForReady('workmachines')
     const workMachine = resourceStore.getCluster<WorkMachine>('workmachines', name)
 

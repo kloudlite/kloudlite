@@ -5,7 +5,7 @@ import { WorkspaceNav } from '../_components/workspace-nav'
 import { WorkspaceActions } from '../_components/workspace-actions'
 import { WorkspaceStatusIndicator } from '@/components/workspace-status-indicator'
 import { SnapshotsSheet } from '../_components/snapshots-sheet'
-import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
+import { getWorkspaceData } from './workspace-data'
 import { ArrowLeft, Camera } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
 
@@ -54,7 +54,7 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
 
   // Fetch workspace data using server action
   const apiStart = performance.now()
-  const result = await getWorkspaceByHash(hash)
+  const result = await getWorkspaceData(hash)
   console.log(`[PERF] getWorkspaceByHash: ${(performance.now() - apiStart).toFixed(2)}ms`)
 
   if (!result.success || !result.data) {

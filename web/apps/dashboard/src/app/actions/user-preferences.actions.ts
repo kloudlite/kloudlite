@@ -22,6 +22,7 @@ export async function getMyPreferences() {
     const username = await getCurrentUsername()
 
     // Try store first
+    console.log('[STORE] getMyPreferences:', username)
     await resourceStore.waitForReady('userpreferences')
     const prefs = resourceStore.getCluster<UserPreferences>('userpreferences', username)
     if (prefs) {
@@ -29,6 +30,7 @@ export async function getMyPreferences() {
     }
 
     // Fall back to getOrCreate (creates the resource if it doesn't exist)
+    console.log('[K8S-API] getMyPreferences: fallback getOrCreate', username)
     const result = await userPreferencesRepository.getOrCreate(username)
     return { success: true, data: result }
   } catch (err) {
@@ -40,6 +42,7 @@ export async function getMyPreferences() {
 export async function pinWorkspace(name: string, namespace: string) {
   try {
     const username = await getCurrentUsername()
+    console.log('[K8S-API] pinWorkspace:', name)
     await userPreferencesRepository.addPinnedWorkspace(username, { name, namespace })
     revalidatePath('/') // Revalidate dashboard
     revalidatePath('/workspaces')
@@ -53,6 +56,7 @@ export async function pinWorkspace(name: string, namespace: string) {
 export async function unpinWorkspace(name: string, namespace: string) {
   try {
     const username = await getCurrentUsername()
+    console.log('[K8S-API] unpinWorkspace:', name)
     await userPreferencesRepository.removePinnedWorkspace(username, { name, namespace })
     revalidatePath('/')
     revalidatePath('/workspaces')
@@ -66,6 +70,7 @@ export async function unpinWorkspace(name: string, namespace: string) {
 export async function pinEnvironment(name: string) {
   try {
     const username = await getCurrentUsername()
+    console.log('[K8S-API] pinEnvironment:', name)
     await userPreferencesRepository.addPinnedEnvironment(username, name)
     revalidatePath('/')
     revalidatePath('/environments')
@@ -79,6 +84,7 @@ export async function pinEnvironment(name: string) {
 export async function unpinEnvironment(name: string) {
   try {
     const username = await getCurrentUsername()
+    console.log('[K8S-API] unpinEnvironment:', name)
     await userPreferencesRepository.removePinnedEnvironment(username, name)
     revalidatePath('/')
     revalidatePath('/environments')

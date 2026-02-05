@@ -1,12 +1,12 @@
 import { GeneralSettings } from '../../../_components/general-settings'
-import { getEnvironmentByHash } from '@/app/actions/environment.actions'
+import { getEnvironmentData } from '../../environment-data'
 import type { PageProps } from '@/types/shared'
 
 export default async function GeneralSettingsPage({ params }: PageProps) {
   // id is now the environment hash
   const { id: hash } = await params
 
-  const result = await getEnvironmentByHash(hash)
+  const result = await getEnvironmentData(hash)
 
   if (result.success && result.data) {
     const env = result.data.environment

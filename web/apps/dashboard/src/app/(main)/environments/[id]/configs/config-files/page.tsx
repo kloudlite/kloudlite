@@ -1,6 +1,6 @@
 import { FilesList } from '../../../_components/files-list'
 import { listFiles } from '@/app/actions/environment-config'
-import { getEnvironmentByHash } from '@/app/actions/environment.actions'
+import { getEnvironmentData } from '../../environment-data'
 import { AlertCircle } from 'lucide-react'
 
 interface FilesPageProps {
@@ -27,7 +27,7 @@ export default async function FilesPage({ params }: FilesPageProps) {
   const { id: hash } = await params
   try {
     // First get the environment name from the hash
-    const envResult = await getEnvironmentByHash(hash)
+    const envResult = await getEnvironmentData(hash)
     if (!envResult.success || !envResult.data) {
       return <FilesError error="Environment not found" />
     }

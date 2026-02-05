@@ -1,5 +1,5 @@
 import { AdvancedSettings } from '../../../_components/advanced-settings'
-import { getEnvironmentByHash } from '@/app/actions/environment.actions'
+import { getEnvironmentData } from '../../environment-data'
 
 interface PageProps {
   params: Promise<{
@@ -11,7 +11,7 @@ export default async function AdvancedSettingsPage({ params }: PageProps) {
   // id is now the environment hash
   const { id: hash } = await params
 
-  const result = await getEnvironmentByHash(hash)
+  const result = await getEnvironmentData(hash)
 
   if (result.success && result.data) {
     const env = result.data.environment

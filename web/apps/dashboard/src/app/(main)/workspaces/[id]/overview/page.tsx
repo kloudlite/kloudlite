@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
-import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
+import { getWorkspaceData } from '../workspace-data'
 import { LocalTime } from '@/components/local-time'
 import { WorkspaceMetrics } from '../../_components/workspace-metrics'
 import { WorkspaceConnectOptions } from '../../_components/workspace-connect-options'
@@ -16,7 +16,7 @@ export default async function OverviewPage({ params }: PageProps) {
 
   const { id: hash } = await params
 
-  const result = await getWorkspaceByHash(hash)
+  const result = await getWorkspaceData(hash)
 
   if (!result.success || !result.data) {
     notFound()

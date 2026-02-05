@@ -26,6 +26,7 @@ function getWorkMachineForUser(username: string): WorkMachine | null {
 
 export async function getMyWorkMachine() {
   try {
+    console.log('[STORE] getMyWorkMachine')
     const username = await getCurrentUsername()
     await resourceStore.waitForReady('workmachines')
     const data = getWorkMachineForUser(username)
@@ -51,6 +52,7 @@ export async function getMyWorkMachine() {
 
 export async function listAllWorkMachines() {
   try {
+    console.log('[STORE] listAllWorkMachines')
     await resourceStore.waitForReady('workmachines')
     const items = resourceStore.listCluster<WorkMachine>('workmachines')
     return { success: true, data: items }
@@ -66,24 +68,20 @@ export async function listAllWorkMachines() {
 
 export async function startMyWorkMachine() {
   try {
-    console.log('[startMyWorkMachine] Starting...')
     const username = await getCurrentUsername()
-    console.log('[startMyWorkMachine] Username:', username)
     await resourceStore.waitForReady('workmachines')
     const workMachine = getWorkMachineForUser(username)
-    console.log('[startMyWorkMachine] Work machine found:', workMachine?.metadata?.name)
     if (!workMachine) {
       return {
         success: false,
         error: 'No work machine found',
       }
     }
-    console.log('[startMyWorkMachine] Calling repository.start()...')
+    console.log('[K8S-API] startMyWorkMachine:', workMachine.metadata!.name!)
     const data = await workMachineRepository.start(workMachine.metadata!.name!)
-    console.log('[startMyWorkMachine] Success!')
     return { success: true, data }
   } catch (err) {
-    console.error('[startMyWorkMachine] Error:', err)
+    console.error('Start work machine error:', err)
     const error = err instanceof Error ? err : new Error('Unknown error')
     return {
       success: false,
@@ -103,6 +101,7 @@ export async function stopMyWorkMachine() {
         error: 'No work machine found',
       }
     }
+    console.log('[K8S-API] stopMyWorkMachine:', workMachine.metadata!.name!)
     const data = await workMachineRepository.stop(workMachine.metadata!.name!)
     return { success: true, data }
   } catch (err) {
@@ -144,6 +143,7 @@ export async function createMyWorkMachine(machineType: string, volumeSize?: numb
       },
     }
 
+    console.log('[K8S-API] createMyWorkMachine:', workMachine.metadata?.name)
     const data = await workMachineRepository.create(workMachine)
     return { success: true, data }
   } catch (err) {
@@ -175,6 +175,7 @@ export async function updateMyWorkMachine(updateData: {
       }
     }
 
+    console.log('[K8S-API] updateMyWorkMachine:', workMachine.metadata!.name!)
     const data = await workMachineRepository.patch(workMachine.metadata!.name!, {
       spec: updateData,
     })

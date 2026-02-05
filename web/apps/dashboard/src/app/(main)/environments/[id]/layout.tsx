@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/get-session'
 import { EnvironmentNav } from '../_components/environment-nav'
-import { getEnvironmentByHash } from '@/app/actions/environment.actions'
+import { getEnvironmentData } from './environment-data'
 import { EnvironmentStatusIndicator } from '@/components/environment-status-indicator'
 import { EnvironmentSnapshotsSheet } from '../_components/environment-snapshots-sheet'
 import { EnvironmentCompositionButton } from '../_components/environment-composition-button'
@@ -50,7 +50,7 @@ export default async function EnvironmentLayout({ children, params }: LayoutProp
 
   // Fetch real environment data using server action
   let environment
-  const result = await getEnvironmentByHash(hash)
+  const result = await getEnvironmentData(hash)
 
   if (result.success && result.data) {
     const env = result.data.environment

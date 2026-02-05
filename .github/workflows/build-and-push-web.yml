@@ -76,7 +76,7 @@ jobs:
             ${{ runner.os }}-bun-v3-
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Create environment file for console
         if: matrix.app == 'console'
@@ -270,7 +270,7 @@ jobs:
             ${{ runner.os }}-bun-v3-
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Run ESLint
         run: bun run lint

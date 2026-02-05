@@ -25,6 +25,7 @@ export async function getCACert() {
     const client = getK8sClient()
 
     // Fetch CA certificate from kloudlite namespace
+    console.log('[K8S-API] getCACert: reading kloudlite-wildcard-cert-tls')
     const caSecret = await client.core.readNamespacedSecret({
       name: 'kloudlite-wildcard-cert-tls',
       namespace: 'kloudlite',
@@ -83,6 +84,7 @@ export async function getHosts(username: string) {
     const hosts: HostEntry[] = []
 
     // Get all ingresses to build host entries
+    console.log('[K8S-API] getHosts: listing ingresses')
     const ingressList = await client.custom.listClusterCustomObject({
       group: 'networking.k8s.io',
       version: 'v1',
@@ -92,6 +94,7 @@ export async function getHosts(username: string) {
     // Get the ingress controller service IP (wm-ingress-controller)
     let routerIP = ''
     try {
+      console.log('[K8S-API] getHosts: reading wm-ingress-controller service')
       const routerSvc = await client.core.readNamespacedService({
         name: 'wm-ingress-controller',
         namespace: targetNamespace,
@@ -227,6 +230,7 @@ async function checkTunnelServerReady(namespace: string): Promise<boolean> {
     const client = getK8sClient()
 
     // Get tunnel-server pod (StatefulSet creates pod with name: tunnel-server-0)
+    console.log('[K8S-API] checkTunnelServerReady: reading tunnel-server-0 pod')
     const pod = await client.core.readNamespacedPod({
       name: 'tunnel-server-0',
       namespace,

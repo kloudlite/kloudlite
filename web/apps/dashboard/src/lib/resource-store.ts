@@ -209,8 +209,9 @@ class ResourceStore {
       this.removeFromIndexes(nsStore, name, existing)
     }
 
-    // Store the resource
-    nsStore.resources.set(name, resource)
+    // Store as plain object (K8s client returns objects with non-plain prototypes
+    // which can't be passed from Server Components to Client Components)
+    nsStore.resources.set(name, JSON.parse(JSON.stringify(resource)))
 
     // Update indexes
     this.addToIndexes(nsStore, name, resource)
