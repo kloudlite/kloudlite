@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { userRepository } from '@kloudlite/lib/k8s'
+import { userRepository, workMachineRepository } from '@kloudlite/lib/k8s'
 import type { User } from '@kloudlite/lib/k8s'
 import { resourceStore } from '@/lib/resource-store'
 
@@ -235,6 +235,19 @@ export async function updateUser(
 export async function deleteUser(username: string) {
   try {
     console.log('[K8S-API] deleteUser:', username)
+
+    // Delete user's work machine if it exists
+    try {
+      const workMachine = await workMachineRepository.getByOwner(username)
+      if (workMachine?.metadata?.name) {
+        console.log('[K8S-API] deleting work machine:', workMachine.metadata.name)
+        await workMachineRepository.delete(workMachine.metadata.name)
+      }
+    } catch (err) {
+      // Work machine may not exist for this user, that's fine
+      console.log('[K8S-API] no work machine found for user:', username)
+    }
+
     await userRepository.delete(username)
     revalidatePath('/admin/users')
     return { success: true }
