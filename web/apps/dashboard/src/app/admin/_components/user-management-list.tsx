@@ -203,7 +203,7 @@ export function UserManagementList({
 
     if (currentUserRole === 'admin') {
       // Admin can only edit regular users, not other admins or super-admins
-      const targetRoles = targetUser.role.split(', ')
+      const targetRoles = (targetUser.role || '').split(', ')
       return !targetRoles.includes('admin') && !targetRoles.includes('super-admin')
     }
 
@@ -458,7 +458,7 @@ export function UserManagementList({
                 </td>
                 <td className="w-40 p-4">
                   <div className="flex flex-wrap gap-1">
-                    {user.role.split(', ').map((role, index) => (
+                    {(user.role || '').split(', ').filter(Boolean).map((role, index) => (
                       <span
                         key={index}
                         className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
