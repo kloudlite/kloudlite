@@ -363,6 +363,7 @@ metadata:
 type: Opaque
 stringData:
   jwt-secret: "%s"
+  installation-secret: "%s"
 EOF
 
 # Save ConfigMap to manifests folder for auto-apply
@@ -558,7 +559,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret,
+`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, secretKey,
 		installationKey, cfg.Project, cfg.Region, cfg.Zone, fullDomain, fullDomain,
 		cfg.Project, cfg.Region, bucketName, fullDomain, fullDomain,
 		manifests.GCPMachineTypes,

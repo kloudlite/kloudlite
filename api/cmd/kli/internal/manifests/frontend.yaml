@@ -18,7 +18,7 @@ metadata:
   name: frontend
   namespace: kloudlite
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -63,8 +63,8 @@ spec:
             - name: INSTALLATION_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: api-server-secret
-                  key: INSTALLATION_SECRET
+                  name: frontend-secrets
+                  key: installation-secret
             - name: NEXT_PUBLIC_AUTH_COOKIE_DOMAIN
               value: "${AUTH_COOKIE_DOMAIN}"
             - name: CLOUDFLARE_DNS_DOMAIN

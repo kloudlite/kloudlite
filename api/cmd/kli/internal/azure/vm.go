@@ -391,6 +391,7 @@ metadata:
 type: Opaque
 stringData:
   jwt-secret: "%s"
+  installation-secret: "%s"
 EOF
 
 # Save ConfigMap to manifests folder for auto-apply
@@ -590,7 +591,7 @@ BACKUP_EOF
 echo "K3s backup manifests created successfully"
 
 echo "Kloudlite installation completed successfully at $(date)!"
-`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, subnetID, nsgID, storageAccountName, fullDomain, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
+`, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, secretKey, installationKey, cfg.SubscriptionID, cfg.ResourceGroup, cfg.Location, subnetID, nsgID, storageAccountName, fullDomain, fullDomain, storageAccountName, fullDomain, fullDomain, manifests.AzureMachineTypes, storageAccountName)
 }
 
 // WaitForVM waits for the VM to be in running state and returns its IPs
