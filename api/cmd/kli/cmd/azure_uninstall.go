@@ -22,6 +22,7 @@ var azureUninstallCmd = &cobra.Command{
 This command will delete:
   - Application Gateway (if exists)
   - Azure VM and associated disks
+  - Workmachine VMs, NICs, and Public IPs
   - Network Interface
   - Public IP addresses
   - Network Security Groups
@@ -149,6 +150,20 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 	}
 
 	// Wait for VM deletion to complete
+	time.Sleep(5 * time.Second)
+
+	// Delete Workmachine VMs, NICs, and PIPs
+	fmt.Printf("  o Deleting Workmachine resources...")
+	wmCount, wmErr := azureinternal.DeleteWorkmachineResources(ctx, cfg)
+	if wmErr != nil {
+		yellow.Printf(" (warning: %v)\n", wmErr)
+		deletionErrors = append(deletionErrors, wmErr)
+	} else if wmCount > 0 {
+		green.Printf(" + (%d resources)\n", wmCount)
+	} else {
+		green.Printf(" + (none found)\n")
+	}
+
 	time.Sleep(5 * time.Second)
 
 	// Delete Network Interface (may already be deleted with VM)

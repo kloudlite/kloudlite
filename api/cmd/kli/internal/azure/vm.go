@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
@@ -799,6 +800,112 @@ func extractInstallationKey(resourceName string) string {
 		}
 	}
 	return resourceName
+}
+
+const workmachinePrefix = "kl-workmachine-"
+
+// DeleteWorkmachineResources deletes all workmachine VMs, orphaned NICs, and orphaned PIPs
+// in the resource group. VMs with names starting with "kl-workmachine-" are targeted.
+// Returns the total count of deleted resources.
+func DeleteWorkmachineResources(ctx context.Context, cfg *AzureConfig) (int, error) {
+	vmClient, err := armcompute.NewVirtualMachinesClient(cfg.SubscriptionID, cfg.Credential, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create VM client: %w", err)
+	}
+
+	nicClient, err := armnetwork.NewInterfacesClient(cfg.SubscriptionID, cfg.Credential, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create NIC client: %w", err)
+	}
+
+	pipClient, err := armnetwork.NewPublicIPAddressesClient(cfg.SubscriptionID, cfg.Credential, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create PIP client: %w", err)
+	}
+
+	deleted := 0
+	var errs []string
+
+	// 1. Delete all workmachine VMs (NIC auto-deletes due to DeleteOption on the VM)
+	vmPager := vmClient.NewListPager(cfg.ResourceGroup, nil)
+	for vmPager.More() {
+		page, err := vmPager.NextPage(ctx)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("listing VMs: %v", err))
+			break
+		}
+		for _, vm := range page.Value {
+			if vm.Name == nil || !strings.HasPrefix(*vm.Name, workmachinePrefix) {
+				continue
+			}
+			poller, err := vmClient.BeginDelete(ctx, cfg.ResourceGroup, *vm.Name, nil)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("deleting VM %s: %v", *vm.Name, err))
+				continue
+			}
+			if _, err := poller.PollUntilDone(ctx, nil); err != nil {
+				errs = append(errs, fmt.Sprintf("waiting for VM %s deletion: %v", *vm.Name, err))
+				continue
+			}
+			deleted++
+		}
+	}
+
+	// 2. Clean up orphaned NICs (in case DeleteOption didn't apply)
+	nicPager := nicClient.NewListPager(cfg.ResourceGroup, nil)
+	for nicPager.More() {
+		page, err := nicPager.NextPage(ctx)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("listing NICs: %v", err))
+			break
+		}
+		for _, nic := range page.Value {
+			if nic.Name == nil || !strings.HasPrefix(*nic.Name, workmachinePrefix) {
+				continue
+			}
+			poller, err := nicClient.BeginDelete(ctx, cfg.ResourceGroup, *nic.Name, nil)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("deleting NIC %s: %v", *nic.Name, err))
+				continue
+			}
+			if _, err := poller.PollUntilDone(ctx, nil); err != nil {
+				errs = append(errs, fmt.Sprintf("waiting for NIC %s deletion: %v", *nic.Name, err))
+				continue
+			}
+			deleted++
+		}
+	}
+
+	// 3. Clean up orphaned PIPs (workmachine PIPs don't have DeleteOption)
+	pipPager := pipClient.NewListPager(cfg.ResourceGroup, nil)
+	for pipPager.More() {
+		page, err := pipPager.NextPage(ctx)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("listing PIPs: %v", err))
+			break
+		}
+		for _, pip := range page.Value {
+			if pip.Name == nil || !strings.HasPrefix(*pip.Name, workmachinePrefix) {
+				continue
+			}
+			poller, err := pipClient.BeginDelete(ctx, cfg.ResourceGroup, *pip.Name, nil)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("deleting PIP %s: %v", *pip.Name, err))
+				continue
+			}
+			if _, err := poller.PollUntilDone(ctx, nil); err != nil {
+				errs = append(errs, fmt.Sprintf("waiting for PIP %s deletion: %v", *pip.Name, err))
+				continue
+			}
+			deleted++
+		}
+	}
+
+	if len(errs) > 0 {
+		return deleted, fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
+
+	return deleted, nil
 }
 
 // Helper functions for creating typed pointers
