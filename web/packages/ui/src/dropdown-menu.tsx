@@ -5,27 +5,8 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "./lib/utils"
-import { useMounted } from "./hooks/use-mounted"
 
-/**
- * DropdownMenu wrapper that prevents hydration mismatches by only rendering
- * after the component has mounted on the client. This is necessary because
- * Radix UI generates different IDs on server vs client.
- */
-function DropdownMenu({
-  children,
-  ...props
-}: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>) {
-  const mounted = useMounted()
-
-  if (!mounted) {
-    return null
-  }
-
-  return (
-    <DropdownMenuPrimitive.Root {...props}>{children}</DropdownMenuPrimitive.Root>
-  )
-}
+const DropdownMenu = DropdownMenuPrimitive.Root
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 

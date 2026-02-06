@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Loader2, GitBranch, Code2 } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
@@ -46,8 +46,6 @@ export function CreateWorkspaceSheet({ workMachineRunning = false }: CreateWorks
   const [gitRepoUrl, setGitRepoUrl] = useState('')
   const [gitBranch, setGitBranch] = useState('')
 
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -90,24 +88,7 @@ export function CreateWorkspaceSheet({ workMachineRunning = false }: CreateWorks
         setGitRepoUrl('')
         setGitBranch('')
 
-        // Immediately refresh and then poll for a few seconds to catch state changes
         router.refresh()
-
-        // Clear any existing interval before starting a new one
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
-        }
-
-        // Poll every second for 10 seconds to catch the workspace state updates
-        let pollCount = 0
-        pollIntervalRef.current = setInterval(() => {
-          router.refresh()
-          pollCount++
-          if (pollCount >= 10 && pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current)
-            pollIntervalRef.current = null
-          }
-        }, 1000)
       } else {
         toast.error(result.error || 'Failed to create workspace')
       }

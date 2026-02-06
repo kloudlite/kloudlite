@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@kloudlite/ui'
@@ -33,6 +33,7 @@ import { pinEnvironment, unpinEnvironment } from '@/app/actions/user-preferences
 import { Download, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import type { EnvironmentUIModel } from '@kloudlite/types'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface EnvironmentsListProps {
   environments: EnvironmentUIModel[]
@@ -135,53 +136,13 @@ export function EnvironmentsList({
   }
   const [environments, setEnvironments] = useState<EnvironmentUIModel[]>(initialEnvironments)
   const router = useRouter()
-  const pollTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useResourceWatch('environments')
 
   // Prevent hydration mismatch with Radix UI components
   useEffect(() => {
     setMounted(true)
-    return () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-    }
   }, [])
-
-  // Poll for status updates after an action (activate/deactivate/delete/fork)
-  const startPostActionPolling = useCallback(() => {
-    if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-    router.refresh()
-    let elapsed = 0
-    pollTimerRef.current = setInterval(() => {
-      elapsed += 2000
-      router.refresh()
-      if (elapsed >= 15000) {
-        if (pollTimerRef.current) {
-          clearInterval(pollTimerRef.current)
-          pollTimerRef.current = null
-        }
-      }
-    }, 2000)
-  }, [router])
-
-  // Poll for environment updates every 3 seconds
-  useEffect(() => {
-    const pollInterval = setInterval(() => {
-      // Check if any environment is in a transitional state
-      const hasTransitionalEnv = environments.some(
-        (env) =>
-          env.status === 'deleting' ||
-          env.status === 'activating' ||
-          env.status === 'deactivating' ||
-          env.status === 'snapping' ||
-          env.status === 'forking',
-      )
-
-      if (hasTransitionalEnv) {
-        router.refresh()
-      }
-    }, 3000)
-
-    return () => clearInterval(pollInterval)
-  }, [environments, router])
 
   // Update local state when server data changes
   useEffect(() => {
@@ -212,7 +173,7 @@ export function EnvironmentsList({
       const result = await activateEnvironment(envName)
       if (result.success) {
         toast.success('Environment activating')
-        startPostActionPolling()
+        router.refresh()
       } else {
         toast.error('Failed to activate environment', {
           description: formatErrorMessage(result.error || 'An error occurred'),
@@ -239,7 +200,7 @@ export function EnvironmentsList({
       const result = await deactivateEnvironment(envName)
       if (result.success) {
         toast.success('Environment deactivating')
-        startPostActionPolling()
+        router.refresh()
       } else {
         toast.error('Failed to deactivate environment', {
           description: formatErrorMessage(result.error || 'An error occurred'),
@@ -274,14 +235,14 @@ export function EnvironmentsList({
     toast.success('Environment created', {
       description: 'Your new environment has been created successfully.',
     })
-    startPostActionPolling()
+    router.refresh()
   }
 
   const handleForkSuccess = () => {
     toast.success('Environment forked', {
       description: 'The environment has been forked successfully.',
     })
-    startPostActionPolling()
+    router.refresh()
   }
 
   const handleExportConfig = async (env: EnvironmentUIModel) => {
@@ -313,7 +274,7 @@ export function EnvironmentsList({
     toast.success('Environment deleted', {
       description: 'The environment has been deleted successfully.',
     })
-    startPostActionPolling()
+    router.refresh()
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, GitFork } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
@@ -36,17 +36,6 @@ export function ForkEnvironmentSheet({
 
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState<string | null>(null)
-
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-        pollIntervalRef.current = null
-      }
-    }
-  }, [])
 
   useEffect(() => {
     if (open && sourceEnvironment) {
@@ -116,20 +105,6 @@ export function ForkEnvironmentSheet({
         }
 
         router.refresh()
-
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
-        }
-
-        let pollCount = 0
-        pollIntervalRef.current = setInterval(() => {
-          router.refresh()
-          pollCount++
-          if (pollCount >= 10 && pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current)
-            pollIntervalRef.current = null
-          }
-        }, 1000)
       } else {
         toast.error(result.error || 'Failed to fork environment')
       }

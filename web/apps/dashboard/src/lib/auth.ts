@@ -231,9 +231,9 @@ export const authConfig: NextAuthConfig = {
           }
         }
 
-        // Fetch and cache work machine namespace (only on initial login)
+        // Fetch and cache work machine namespace (only on initial login, skip for superadmin)
         const username = token.username as string
-        if (username && !token.namespace) {
+        if (username && !token.namespace && token.provider !== 'superadmin-login') {
           try {
             const { workMachineRepository } = await import('@kloudlite/lib/k8s')
             const workMachine = await workMachineRepository.getByOwner(username)

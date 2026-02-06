@@ -14,6 +14,7 @@ import { unpinWorkspace, unpinEnvironment } from '@/app/actions/user-preferences
 import { toast } from 'sonner'
 import { Server, Loader2, Activity, Clock, User, Cpu } from 'lucide-react'
 import type { PinnedWorkspace, PinnedEnvironment } from '@/types/shared'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface WorkMachine {
   id: string
@@ -109,6 +110,8 @@ export function WorkMachinesContent({
   const [isLoading, setIsLoading] = useState(false)
   const [optimisticState, setOptimisticState] = useState<string | null>(null)
 
+  useResourceWatch('workmachines')
+
   // Sync local state with prop changes when page refreshes
   useEffect(() => {
     setMachine(initialMachine)
@@ -116,7 +119,6 @@ export function WorkMachinesContent({
 
   // Determine the current display state (optimistic or actual)
   const displayState = optimisticState || machine.currentState
-  const isTransitioning = displayState !== machine.desiredState || optimisticState !== null
 
   // Clear optimistic state when actual state matches desired state
   useEffect(() => {
@@ -124,19 +126,6 @@ export function WorkMachinesContent({
       setOptimisticState(null)
     }
   }, [machine.currentState, machine.desiredState, optimisticState])
-
-  // Auto-refresh when machine is transitioning
-  useEffect(() => {
-    if (isTransitioning) {
-      // Poll every 1 second during transitions
-      const interval = setInterval(() => {
-        router.refresh()
-      }, 1000)
-
-      return () => clearInterval(interval)
-    }
-    return undefined
-  }, [machine.currentState, machine.desiredState, router, isTransitioning])
 
   const handleStart = async () => {
     // Optimistically update UI immediately

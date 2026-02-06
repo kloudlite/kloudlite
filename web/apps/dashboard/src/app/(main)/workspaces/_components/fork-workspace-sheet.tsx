@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Camera, Check, ChevronsUpDown } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
@@ -61,18 +61,6 @@ export function ForkWorkspaceSheet({
   const [name, setName] = useState('')
   const [selectedSnapshot, setSelectedSnapshot] = useState<Snapshot | null>(preselectedSnapshot || null)
 
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Clean up polling interval on unmount
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-        pollIntervalRef.current = null
-      }
-    }
-  }, [])
-
   // Load pushed snapshots when sheet opens
   useEffect(() => {
     if (open) {
@@ -131,24 +119,7 @@ export function ForkWorkspaceSheet({
         setName('')
         setSelectedSnapshot(null)
 
-        // Immediately refresh and then poll for a few seconds to catch state changes
         router.refresh()
-
-        // Clear any existing interval before starting a new one
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
-        }
-
-        // Poll every second for 10 seconds to catch the workspace state updates
-        let pollCount = 0
-        pollIntervalRef.current = setInterval(() => {
-          router.refresh()
-          pollCount++
-          if (pollCount >= 10 && pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current)
-            pollIntervalRef.current = null
-          }
-        }, 1000)
       } else {
         toast.error(result.error || 'Failed to create workspace from snapshot')
       }

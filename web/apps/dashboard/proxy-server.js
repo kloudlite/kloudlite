@@ -117,6 +117,7 @@ const wsPathPatterns = [
   /^\/api\/v1\/namespaces\/[^/]+\/workspaces\/[^/]+\/status-ws/,
   /^\/api\/v1\/work-machines\/[^/]+\/metrics-ws/,
   /^\/api\/v1\/namespaces\/[^/]+\/services\/[^/]+\/logs-ws/,
+  /^\/api\/v1\/resource-events-ws/,
 ]
 
 function isWebSocketPath(pathname) {
@@ -190,7 +191,74 @@ server.on('upgrade', (req, socket, head) => {
     // Check if this is a metrics WebSocket request
     const metricsMatch = pathname.match(/^\/api\/v1\/work-machines\/([^/]+)\/metrics-ws/)
 
-    if (metricsMatch) {
+    // Resource events: bridge Next.js SSE endpoint → WebSocket
+    const isResourceEvents = pathname === '/api/v1/resource-events-ws'
+
+    if (isResourceEvents) {
+      wss.handleUpgrade(req, socket, head, (clientWs) => {
+        // Forward cookies to Next.js so getSession() works
+        const headers = {}
+        if (req.headers.cookie) headers['Cookie'] = req.headers.cookie
+
+        const sseReq = http.get(
+          `http://127.0.0.1:${nextPort}/api/resource-events`,
+          { headers },
+          (sseRes) => {
+            if (sseRes.statusCode !== 200) {
+              clientWs.close(1008, 'Upstream auth failed')
+              sseRes.resume()
+              return
+            }
+
+            let buffer = ''
+
+            sseRes.on('data', (chunk) => {
+              buffer += chunk.toString()
+              // SSE format: "data: {...}\n\n"
+              let idx
+              while ((idx = buffer.indexOf('\n\n')) !== -1) {
+                const frame = buffer.slice(0, idx)
+                buffer = buffer.slice(idx + 2)
+                for (const line of frame.split('\n')) {
+                  if (line.startsWith('data: ')) {
+                    const json = line.slice(6)
+                    if (clientWs.readyState === WebSocket.OPEN) {
+                      clientWs.send(json)
+                    }
+                  }
+                }
+              }
+            })
+
+            sseRes.on('end', () => {
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.close(1001, 'Upstream closed')
+              }
+            })
+
+            sseRes.on('error', (err) => {
+              console.error('SSE bridge error:', err.message)
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.close(1011, 'Upstream error')
+              }
+            })
+          }
+        )
+
+        sseReq.on('error', (err) => {
+          console.error('SSE bridge request error:', err.message)
+          clientWs.close(1011, 'Connection failed')
+        })
+
+        clientWs.on('close', () => {
+          sseReq.destroy()
+        })
+
+        clientWs.on('error', () => {
+          sseReq.destroy()
+        })
+      })
+    } else if (metricsMatch) {
       const nodeName = metricsMatch[1]
       console.log(`Metrics WebSocket: ${pathname} -> Kubernetes API for node ${nodeName}`)
 
