@@ -19,14 +19,13 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   const hasUserRole = userRoles.includes('user')
   const hasAdminRole = userRoles.includes('admin') || userRoles.includes('super-admin')
   const isSuperAdmin = userRoles.includes('super-admin')
-  const isSuperAdminLogin = sessionProvider === 'superadmin-login' || isSuperAdmin
 
-  // Super-admin logins should always go to admin section
-  if (isSuperAdminLogin && hasAdminRole) {
+  // Super-admin HMAC token login → always admin section
+  if (sessionProvider === 'superadmin-login') {
     redirect('/admin')
   }
 
-  // Main dashboard section - redirect admin-only users to admin
+  // Admin-only users (no user role) → admin section
   if (!hasUserRole && hasAdminRole) {
     redirect('/admin')
   }
