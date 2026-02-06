@@ -365,13 +365,7 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		return fmt.Errorf("environment name is required")
 	}
 
-	// Validate environment namespace is a WorkMachine namespace
 	if operation == admissionv1.Create {
-		// Check that the namespace is a WorkMachine namespace (starts with wm-)
-		if !strings.HasPrefix(env.Namespace, "wm-") {
-			return fmt.Errorf("environments must be created in a WorkMachine namespace (wm-*). Got namespace: %s", env.Namespace)
-		}
-
 		// Derive WorkMachineName from namespace if not provided
 		if env.Spec.WorkMachineName == "" {
 			// Derive from namespace: wm-{username} namespace belongs to workmachine owned by {username}
