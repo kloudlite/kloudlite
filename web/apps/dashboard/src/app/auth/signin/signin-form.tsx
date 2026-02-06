@@ -10,8 +10,6 @@ import { cn } from '@kloudlite/lib'
 interface Provider {
   type: string
   enabled: boolean
-  clientId: string
-  clientSecret?: string
 }
 
 interface SignInFormProps {
@@ -33,12 +31,14 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loadingAction, setLoadingAction] = useState<string | null>(null)
+
+  const loading = loadingAction !== null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
+    setLoadingAction('credentials')
 
     try {
       const result = await signIn('credentials', {
@@ -49,7 +49,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
 
       if (result?.error) {
         setError('Invalid email or password')
-        setLoading(false)
+        setLoadingAction(null)
         return
       }
 
@@ -60,18 +60,18 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
     } catch (err) {
       console.error('Sign in error:', err)
       setError('An error occurred. Please try again.')
-      setLoading(false)
+      setLoadingAction(null)
     }
   }
 
   const handleOAuthLogin = async (provider: string) => {
-    setLoading(true)
+    setLoadingAction(provider)
     try {
       await signIn(provider, { callbackUrl: '/' })
     } catch (error) {
       console.error(`OAuth login error with ${provider}:`, error)
       setError(`Failed to sign in with ${provider}`)
-      setLoading(false)
+      setLoadingAction(null)
     }
   }
 
@@ -164,7 +164,9 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
           {/* OAuth providers */}
           {hasEnabledProviders && (
             <div className="space-y-3">
-              {enabledProviders.map((provider) => (
+              {enabledProviders.map((provider) => {
+                const isProviderLoading = loadingAction === provider.type
+                return (
                 <Button
                   key={provider.type}
                   type="button"
@@ -174,6 +176,31 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
                   disabled={loading}
                   onClick={() => handleOAuthLogin(provider.type)}
                 >
+                  {isProviderLoading ? (
+                    <>
+                      <svg
+                        className="animate-spin h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      <span className="flex-1 text-left">Redirecting...</span>
+                    </>
+                  ) : (
+                    <>
                   {provider.type === 'google' && (
                     <>
                       <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
@@ -195,14 +222,6 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
                         />
                       </svg>
                       <span className="flex-1 text-left">Continue with Google</span>
-                      <svg
-                        className="h-4 w-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
                     </>
                   )}
                   {provider.type === 'github' && (
@@ -215,14 +234,6 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
                         />
                       </svg>
                       <span className="flex-1 text-left">Continue with GitHub</span>
-                      <svg
-                        className="h-4 w-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
                     </>
                   )}
                   {provider.type === 'microsoft' && (
@@ -234,6 +245,8 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
                         <path fill="#ffb900" d="M11 11h10v10H11z" />
                       </svg>
                       <span className="flex-1 text-left">Continue with Microsoft</span>
+                    </>
+                  )}
                       <svg
                         className="h-4 w-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
                         fill="none"
@@ -245,7 +258,8 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
                     </>
                   )}
                 </Button>
-              ))}
+                )
+              })}
             </div>
           )}
 
@@ -299,7 +313,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
               disabled={loading}
               className="w-full gap-3 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 border-primary transition-all duration-200 group"
             >
-              {loading ? (
+              {loadingAction === 'credentials' ? (
                 <>
                   <svg
                     className="animate-spin h-5 w-5"

@@ -46,16 +46,15 @@ export class ApiClient {
     if (!response.ok) {
       const errorText = await response.text().catch(() => response.statusText)
 
-      // Try to parse JSON error response
+      // Try to parse JSON error response for a cleaner message
+      let message = errorText || `Request failed with status ${response.status}`
       try {
         const errorJson = JSON.parse(errorText)
-        // Extract the most relevant error message
-        const message = errorJson.error || errorJson.message || errorText
-        throw new Error(message)
-      } catch (_parseError) {
-        // If not JSON, use the raw error text
-        throw new Error(errorText || `Request failed with status ${response.status}`)
+        message = errorJson.error || errorJson.message || errorText
+      } catch {
+        // Not JSON, use raw error text
       }
+      throw new Error(message)
     }
 
     // Handle empty responses (like 204 No Content)
@@ -129,16 +128,15 @@ export class UnauthenticatedApiClient {
     if (!response.ok) {
       const errorText = await response.text().catch(() => response.statusText)
 
-      // Try to parse JSON error response
+      // Try to parse JSON error response for a cleaner message
+      let message = errorText || `Request failed with status ${response.status}`
       try {
         const errorJson = JSON.parse(errorText)
-        // Extract the most relevant error message
-        const message = errorJson.error || errorJson.message || errorText
-        throw new Error(message)
-      } catch (_parseError) {
-        // If not JSON, use the raw error text
-        throw new Error(errorText || `Request failed with status ${response.status}`)
+        message = errorJson.error || errorJson.message || errorText
+      } catch {
+        // Not JSON, use raw error text
       }
+      throw new Error(message)
     }
 
     // Handle empty responses (like 204 No Content)

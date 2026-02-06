@@ -19,5 +19,14 @@ export async function register() {
       console.error('[INSTRUMENTATION] Failed to initialize K8s watchers:', err)
       // Don't throw - allow server to start even if watchers fail
     }
+
+    try {
+      const { loadOAuthConfig } = await import('./lib/oauth-config')
+      await loadOAuthConfig()
+      console.log('[INSTRUMENTATION] OAuth config loaded')
+    } catch (err) {
+      console.error('[INSTRUMENTATION] Failed to load OAuth config (will use env vars):', err)
+      // Non-fatal: auth falls back to env vars
+    }
   }
 }
