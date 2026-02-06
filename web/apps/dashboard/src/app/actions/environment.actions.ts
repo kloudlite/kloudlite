@@ -84,6 +84,19 @@ export async function getEnvironmentsListFull() {
 
     // Get namespace from work machine's targetNamespace
     const namespace = workMachineResult?.spec?.targetNamespace
+    if (!namespace) {
+      return {
+        success: false,
+        error: 'No WorkMachine found',
+        data: {
+          environments: [],
+          workMachine: null,
+          preferences: null,
+          pinnedEnvironmentIds: [],
+          workMachineRunning: false,
+        },
+      }
+    }
 
     // Ensure namespace watches are running and wait only for environments
     watchNamespace(namespace)
