@@ -62,8 +62,8 @@ async function getWorkMachineNamespace(): Promise<string> {
     throw new Error(`No WorkMachine found for user ${session.user.username}`)
   }
 
-  // Return the WorkMachine's own namespace (wm-*), not the targetNamespace
-  return workMachine.metadata.namespace || `wm-${session.user.username}`
+  // Environments are created in the WorkMachine's targetNamespace
+  return workMachine.spec.targetNamespace
 }
 
 /**
@@ -82,11 +82,12 @@ export async function getEnvironmentsListFull() {
     const workMachineResult = getWorkMachineForUser(username)
     const preferencesResult = resourceStore.getCluster('userpreferences', username)
 
-    // Get namespace from work machine
-    const namespace = workMachineResult?.metadata?.namespace || `wm-${username}`
+    // Get namespace from work machine's targetNamespace
+    const namespace = workMachineResult?.spec?.targetNamespace
 
-    // Ensure namespace watches are running and ready
-    await watchNamespace(namespace)
+    // Ensure namespace watches are running and wait only for environments
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('environments', namespace)
 
     const environments = resourceStore.list<Environment>('environments', namespace)
 
@@ -281,7 +282,8 @@ export async function getEnvironmentStatus(name: string) {
   try {
     console.log('[STORE] getEnvironmentStatus:', name)
     const namespace = await getWorkMachineNamespace()
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('environments', namespace)
     const environment = resourceStore.get<Environment>('environments', namespace, name)
     if (!environment) {
       return { success: false, error: 'Environment not found' }
@@ -304,7 +306,8 @@ export async function getEnvironment(name: string) {
   try {
     console.log('[STORE] getEnvironment:', name)
     const namespace = await getWorkMachineNamespace()
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('environments', namespace)
     const result = resourceStore.get<Environment>('environments', namespace, name)
     if (!result) {
       return { success: false, error: 'Environment not found' }
@@ -327,7 +330,8 @@ export async function listEnvironments() {
   try {
     console.log('[STORE] listEnvironments')
     const namespace = await getWorkMachineNamespace()
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('environments', namespace)
     const items = resourceStore.list<Environment>('environments', namespace)
     return { success: true, data: items }
   } catch (err) {
@@ -590,8 +594,9 @@ export async function getEnvironmentByHash(hashOrName: string) {
     console.log('[STORE] getEnvironmentByHash:', hashOrName)
     const namespace = await getWorkMachineNamespace()
 
-    // Ensure namespace watches are running
-    await watchNamespace(namespace)
+    // Ensure namespace watches are running and wait only for environments
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('environments', namespace)
 
     // Try to find by hash using label index (efficient)
     let environment = resourceStore.getByHash<Environment>('environments', namespace, hashOrName)
@@ -656,7 +661,8 @@ export async function getEnvironmentDetails(name: string) {
   try {
     console.log('[STORE] getEnvironmentDetails:', name)
     const namespace = await getWorkMachineNamespace()
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('environments', namespace)
 
     const environment = resourceStore.get<Environment>('environments', namespace, name)
     if (!environment) {
@@ -705,7 +711,8 @@ export async function getEnvironmentCompose(name: string) {
   try {
     console.log('[STORE] getEnvironmentCompose:', name)
     const namespace = await getWorkMachineNamespace()
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('environments', namespace)
     const environment = resourceStore.get<Environment>('environments', namespace, name)
     if (!environment) {
       return { success: false, error: 'Environment not found' }
