@@ -10,8 +10,10 @@ import {
   Check,
   ExternalLink,
 } from 'lucide-react'
+import { Badge } from '@kloudlite/ui'
 import type { Workspace, PackageRequest } from '@kloudlite/types'
 import { getPackageRequest } from '@/app/actions/workspace.actions'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface PackageWithStatus {
   name: string
@@ -27,6 +29,8 @@ interface PackagesListProps {
 }
 
 export function PackagesList({ workspace, initialPackageRequest }: PackagesListProps) {
+  useResourceWatch('packagerequests')
+
   const [packages, setPackages] = useState<PackageWithStatus[]>([])
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
 
@@ -93,22 +97,22 @@ export function PackagesList({ workspace, initialPackageRequest }: PackagesListP
             {packages.length > 0 && (
               <div className="flex items-center gap-2">
                 {installedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-green-100 dark:bg-green-900/30 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+                  <Badge variant="success" className="gap-1.5">
                     <CheckCircle2 className="h-3 w-3" />
                     {installedCount} installed
-                  </span>
+                  </Badge>
                 )}
                 {pendingCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-1 text-xs font-medium text-yellow-700 dark:text-yellow-400">
+                  <Badge variant="warning" className="gap-1.5">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     {pendingCount} pending
-                  </span>
+                  </Badge>
                 )}
                 {failedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-red-100 dark:bg-red-900/30 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-400">
+                  <Badge variant="destructive" className="gap-1.5">
                     <XCircle className="h-3 w-3" />
                     {failedCount} failed
-                  </span>
+                  </Badge>
                 )}
               </div>
             )}

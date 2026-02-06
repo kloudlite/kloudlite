@@ -5,6 +5,7 @@ import { Key } from 'lucide-react'
 import type { EnvVar } from '@kloudlite/types'
 import { AddEnvVarSheet } from './add-envvar-sheet'
 import { EnvVarsTable } from './envvars-table'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface EnvVarsListProps {
   environmentId: string
@@ -13,6 +14,7 @@ interface EnvVarsListProps {
 
 export function EnvVarsList({ environmentId, envVars }: EnvVarsListProps) {
   const router = useRouter()
+  useResourceWatch('configmaps')
 
   return (
     <div className="space-y-4">

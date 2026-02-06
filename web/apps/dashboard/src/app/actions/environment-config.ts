@@ -34,8 +34,14 @@ async function getEnvironmentNamespace(environmentName: string): Promise<string>
     throw new Error('Not authenticated')
   }
 
-  // Get the work machine namespace
-  const namespace = `wm-${session.user.username}`
+  // Get the WorkMachine's namespace (same approach as environment.actions.ts)
+  await resourceStore.waitForReady('workmachines')
+  const machines = resourceStore.listClusterByLabel<any>('workmachines', 'kloudlite.io/owned-by', session.user.username)
+  const workMachine = machines[0] || null
+  if (!workMachine) {
+    throw new Error(`No WorkMachine found for user ${session.user.username}`)
+  }
+  const namespace = workMachine.spec.targetNamespace
 
   // Ensure namespace watches are running and wait only for environments
   watchNamespace(namespace)

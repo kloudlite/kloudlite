@@ -1,4 +1,5 @@
 import { Key } from 'lucide-react'
+import { Badge } from '@kloudlite/ui'
 import type { EnvVar } from '@kloudlite/types'
 import { EnvVarActions } from './envvar-actions'
 
@@ -45,13 +46,13 @@ export function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
               </td>
               <td className="w-24 px-6 py-4 text-sm whitespace-nowrap">
                 {envVar.type === 'config' ? (
-                  <span className="bg-info/10 text-info dark:bg-info/20 inline-flex min-w-[60px] items-center justify-center rounded-md px-2.5 py-0.5 text-xs font-medium">
+                  <Badge variant="info" className="min-w-[60px] justify-center">
                     Config
-                  </span>
+                  </Badge>
                 ) : (
-                  <span className="inline-flex min-w-[60px] items-center justify-center rounded-md bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                  <Badge variant="secondary" className="min-w-[60px] justify-center bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
                     Secret
-                  </span>
+                  </Badge>
                 )}
               </td>
               <td className="w-20 space-x-1 px-6 py-4 text-right text-sm whitespace-nowrap">

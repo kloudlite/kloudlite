@@ -1,7 +1,10 @@
+'use client'
+
 import { File } from 'lucide-react'
 import type { FileInfo } from '@kloudlite/types'
 import { AddFileSheet } from './add-file-sheet'
 import { FilesTable } from './files-table'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface FilesListProps {
   environmentId: string
@@ -9,6 +12,8 @@ interface FilesListProps {
 }
 
 export function FilesList({ environmentId, files }: FilesListProps) {
+  useResourceWatch('configmaps')
+
   return (
     <div className="space-y-4">
       <div className="mb-4 flex items-center justify-between">

@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
+import { Badge, type BadgeProps } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
@@ -10,23 +11,22 @@ interface WorkspaceStatusIndicatorProps {
   showLoader?: boolean
 }
 
-function getPhaseStyles(phase: string | undefined) {
+function getPhaseVariant(phase: string | undefined): BadgeProps['variant'] {
   switch (phase) {
     case 'Running':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      return 'success'
     case 'Stopped':
-      return 'bg-secondary text-secondary-foreground'
+      return 'secondary'
     case 'Pending':
     case 'Creating':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+      return 'info'
     case 'Stopping':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+      return 'warning'
     case 'Terminating':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
     case 'Failed':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+      return 'destructive'
     default:
-      return 'bg-secondary text-secondary-foreground'
+      return 'secondary'
   }
 }
 
@@ -42,17 +42,14 @@ export function WorkspaceStatusIndicator({
   useResourceWatch('workspaces')
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium',
-        getPhaseStyles(phase),
-        className
-      )}
+    <Badge
+      variant={getPhaseVariant(phase)}
+      className={cn('gap-1', className)}
     >
       {showLoader && isTransitionalPhase(phase) && (
         <Loader2 className="h-3 w-3 animate-spin" />
       )}
       {phase || 'Unknown'}
-    </span>
+    </Badge>
   )
 }

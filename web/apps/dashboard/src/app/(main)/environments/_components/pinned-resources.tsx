@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Code2, Globe, PinOff, ExternalLink, Plus, Folder, Server } from 'lucide-react'
-import { Button } from '@kloudlite/ui'
+import { Badge, Button } from '@kloudlite/ui'
 import type { PinnedWorkspace, PinnedEnvironment } from '@/types/shared'
 
 interface PinnedResourcesProps {
@@ -54,15 +54,9 @@ export function PinnedResources({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="truncate text-sm font-medium">{workspace.name}</h4>
-                          <span
-                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                              workspace.status === 'active'
-                                ? 'bg-success/10 text-success dark:bg-success/20'
-                                : 'bg-secondary text-secondary-foreground'
-                            }`}
-                          >
+                          <Badge variant={workspace.status === 'active' ? 'success' : 'secondary'}>
                             {workspace.status}
-                          </span>
+                          </Badge>
                         </div>
                         {workspace.environment !== '-' && (
                           <span className="text-muted-foreground flex items-center gap-1 text-xs mt-1">
@@ -137,15 +131,9 @@ export function PinnedResources({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="truncate text-sm font-medium">{env.name}</h4>
-                          <span
-                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                              env.status === 'active'
-                                ? 'bg-success/10 text-success dark:bg-success/20'
-                                : 'bg-secondary text-secondary-foreground'
-                            }`}
-                          >
+                          <Badge variant={env.status === 'active' ? 'success' : 'secondary'}>
                             {env.status}
-                          </span>
+                          </Badge>
                         </div>
                       </div>
                     </div>

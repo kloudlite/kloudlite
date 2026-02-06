@@ -4,7 +4,7 @@ const https = require('https')
 const { WebSocket, WebSocketServer } = require('ws')
 
 const port = parseInt(process.env.PORT || '3000', 10)
-const nextPort = 3002 // Next.js runs on this port internally
+const nextPort = parseInt(process.env.NEXT_PORT || '3002', 10)
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:8080'
 
 // Parse API URL for WebSocket proxy
@@ -334,8 +334,26 @@ server.on('upgrade', (req, socket, head) => {
       })
     }
   } else {
-    // For non-API WebSocket (like HMR), just close
-    socket.destroy()
+    // Forward non-API WebSocket connections (HMR, etc.) to Next.js
+    const target = `ws://127.0.0.1:${nextPort}${req.url}`
+    const backendWs = new WebSocket(target, { headers: req.headers })
+
+    backendWs.on('open', () => {
+      wss.handleUpgrade(req, socket, head, (clientWs) => {
+        backendWs.on('message', (data, isBinary) => {
+          if (clientWs.readyState === WebSocket.OPEN) clientWs.send(data, { binary: isBinary })
+        })
+        clientWs.on('message', (data, isBinary) => {
+          if (backendWs.readyState === WebSocket.OPEN) backendWs.send(data, { binary: isBinary })
+        })
+        backendWs.on('close', (code, reason) => clientWs.close(code, reason))
+        clientWs.on('close', () => backendWs.close())
+        backendWs.on('error', () => clientWs.close())
+        clientWs.on('error', () => backendWs.close())
+      })
+    })
+
+    backendWs.on('error', () => socket.destroy())
   }
 })
 

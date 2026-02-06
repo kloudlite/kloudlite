@@ -10,7 +10,6 @@ import {
 } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useWebSocket } from '@/lib/hooks/use-websocket'
 
 interface Subscription {
   plural: string
@@ -53,35 +52,54 @@ export function ResourceWatchProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Only connect when authenticated
-  const wsUrl = sessionStatus === 'authenticated' ? '/api/v1/resource-events-ws' : null
+  const handleMessage = useCallback((data: any) => {
+    // Skip control messages
+    if (data?.type === 'connected' || data?.type === 'heartbeat') return
 
-  useWebSocket(wsUrl, {
-    onMessage: (data: any) => {
-      // Skip control messages
-      if (data?.type === 'connected' || data?.type === 'heartbeat') return
+    const { plural, namespace } = data
 
-      const { plural, namespace } = data
-
-      for (const [id, sub] of subsRef.current.entries()) {
-        if (sub.plural === plural && (!sub.namespace || sub.namespace === namespace)) {
-          pendingIdsRef.current.add(id)
-        }
+    for (const [id, sub] of subsRef.current.entries()) {
+      if (sub.plural === plural && (!sub.namespace || sub.namespace === namespace)) {
+        pendingIdsRef.current.add(id)
       }
+    }
 
-      if (pendingIdsRef.current.size > 0) {
-        if (debounceRef.current) clearTimeout(debounceRef.current)
-        debounceRef.current = setTimeout(flush, DEBOUNCE_MS)
-      }
-    },
-    onOpen: () => {
-      // On reconnect (not first connect), refresh to catch events we missed
+    if (pendingIdsRef.current.size > 0) {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(flush, DEBOUNCE_MS)
+    }
+  }, [flush])
+
+  // SSE connection — connects directly to the Next.js route handler
+  useEffect(() => {
+    if (sessionStatus !== 'authenticated') return
+
+    const eventSource = new EventSource('/api/resource-events')
+
+    eventSource.onopen = () => {
       if (connectedOnceRef.current) {
         routerRef.current.refresh()
       }
       connectedOnceRef.current = true
-    },
-  })
+    }
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        handleMessage(data)
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    eventSource.onerror = () => {
+      // EventSource reconnects automatically
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [sessionStatus, handleMessage])
 
   // Clean up debounce timer on unmount
   useEffect(() => {

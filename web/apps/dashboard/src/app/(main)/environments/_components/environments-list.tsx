@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@kloudlite/ui'
+import { Badge, type BadgeProps, Button } from '@kloudlite/ui'
 import {
   Plus,
   MoreHorizontal,
@@ -27,10 +27,9 @@ import { CreateEnvironmentDialog } from '@/components/dialogs/create-environment
 import { EditEnvironmentDialog } from '@/components/dialogs/edit-environment'
 import { DeleteEnvironmentConfirm } from '@/components/dialogs/delete-environment-confirm'
 import { ForkEnvironmentSheet } from './fork-environment-sheet'
-import { ImportEnvironmentDialog } from '@/components/dialogs/import-environment'
 import { activateEnvironment, deactivateEnvironment, exportEnvironmentConfig } from '@/app/actions/environment.actions'
 import { pinEnvironment, unpinEnvironment } from '@/app/actions/user-preferences.actions'
-import { Download, Upload } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { toast } from 'sonner'
 import type { EnvironmentUIModel } from '@kloudlite/types'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
@@ -109,7 +108,6 @@ export function EnvironmentsList({
   const [forkDialogOpen, setForkDialogOpen] = useState(false)
   const [forkSourceEnvironment, setForkSourceEnvironment] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentUIModel | null>(null)
   const [deleteEnvironmentId, setDeleteEnvironmentId] = useState<string | null>(null)
   const [deleteEnvironmentDisplayName, setDeleteEnvironmentDisplayName] = useState<string | null>(null)
@@ -340,17 +338,6 @@ export function EnvironmentsList({
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            variant="outline"
-            className="gap-2"
-            onClick={() => setImportDialogOpen(true)}
-            disabled={!workMachineRunning}
-            title={!workMachineRunning ? 'Start your WorkMachine first' : undefined}
-          >
-            <Upload className="h-4 w-4" />
-            Import
-          </Button>
-          <Button
-            size="sm"
             className="gap-2"
             onClick={() => setCreateDialogOpen(true)}
             disabled={!workMachineRunning}
@@ -405,26 +392,21 @@ export function EnvironmentsList({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap w-40">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold min-w-[90px] ${
-                        env.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : env.status === 'inactive'
-                            ? 'bg-muted text-muted-foreground'
-                            : env.status === 'activating'
-                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                              : env.status === 'deactivating'
-                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                : env.status === 'snapping'
-                                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                                  : env.status === 'deleting'
-                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                    : env.status === 'error'
-                                      ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                      : env.status === 'forking'
-                                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                        : 'bg-muted text-muted-foreground'
-                      }`}
+                    <Badge
+                      variant={((): BadgeProps['variant'] => {
+                        switch (env.status) {
+                          case 'active': return 'success'
+                          case 'inactive': return 'secondary'
+                          case 'activating':
+                          case 'forking': return 'info'
+                          case 'deactivating':
+                          case 'snapping': return 'warning'
+                          case 'deleting':
+                          case 'error': return 'destructive'
+                          default: return 'secondary'
+                        }
+                      })()}
+                      className="min-w-[90px] justify-center gap-1.5"
                     >
                       {(env.status === 'deleting' ||
                         env.status === 'activating' ||
@@ -432,7 +414,7 @@ export function EnvironmentsList({
                         env.status === 'snapping' ||
                         env.status === 'forking') && <Loader2 className="h-3 w-3 animate-spin" />}
                       {env.status}
-                    </span>
+                    </Badge>
                     {/* Show forking progress inline */}
                     {env.status === 'forking' && env.forkingStatus && (
                       <span className="text-muted-foreground text-xs">
@@ -588,12 +570,6 @@ export function EnvironmentsList({
         />
       )}
 
-      <ImportEnvironmentDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-        onSuccess={handleCreateSuccess}
-        currentUser={currentUser}
-      />
     </div>
   )
 }

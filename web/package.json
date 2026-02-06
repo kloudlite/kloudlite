@@ -7,10 +7,12 @@
     "dev:console": "turbo run dev --filter=console",
     "dev:dashboard": "turbo run dev --filter=dashboard",
     "dev:website": "turbo run dev --filter=website",
+    "dev:tests": "turbo run dev --filter=tests",
     "build": "turbo run build",
     "build:console": "turbo run build --filter=console",
     "build:dashboard": "turbo run build --filter=dashboard",
     "build:website": "turbo run build --filter=website",
+    "build:tests": "turbo run build --filter=tests",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
