@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Activity } from 'lucide-react'
+import { Badge, type BadgeProps } from '@kloudlite/ui'
 import type { Workspace } from '@kloudlite/types'
 import { WorkspaceRowActions } from './workspace-row-actions'
 import { CreateWorkspaceSheet } from './create-workspace-sheet'
 import { formatWorkspaceName } from '@kloudlite/lib'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface WorkspacesListProps {
   workspaces: Workspace[]
@@ -23,6 +25,8 @@ export function WorkspacesList({
   workMachineRunning = false,
   pinnedWorkspaceIds = [],
 }: WorkspacesListProps) {
+  useResourceWatch('workspaces')
+
   const pinnedSet = new Set(pinnedWorkspaceIds)
   const [scopeFilter, setScope] = useState<'all' | 'mine'>('all')
   const [statusFilter, setStatus] = useState<'all' | 'active' | 'suspended' | 'archived'>('all')
@@ -151,18 +155,16 @@ export function WorkspacesList({
             {filteredWorkspaces.map((workspace) => {
               // Use runtime phase for display instead of desired spec.status
               const phase = workspace.status?.phase || 'Pending'
-              const statusColor =
+              const phaseVariant: BadgeProps['variant'] =
                 phase === 'Running'
-                  ? 'bg-success/10 text-success'
+                  ? 'success'
                   : phase === 'Creating' || phase === 'Pending'
-                    ? 'bg-info/10 text-info'
+                    ? 'info'
                     : phase === 'Failed'
-                      ? 'bg-destructive/10 text-destructive'
+                      ? 'destructive'
                       : phase === 'Terminating'
-                        ? 'bg-warning/10 text-warning'
-                        : phase === 'Stopped'
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'bg-secondary text-secondary-foreground'
+                        ? 'warning'
+                        : 'secondary'
 
               return (
                 <tr
@@ -182,19 +184,18 @@ export function WorkspacesList({
                   </td>
                   <td className="w-32 px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex min-w-[70px] items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium ${statusColor}`}
-                      >
+                      <Badge variant={phaseVariant} className="min-w-[70px] justify-center">
                         {phase}
-                      </span>
+                      </Badge>
                       {phase === 'Running' && workspace.status?.idleState === 'idle' && (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        <Badge
+                          variant="warning"
+                          className="gap-1"
                           title={workspace.status?.idleSince ? `Idle since ${new Date(workspace.status.idleSince).toLocaleString()}` : 'Idle'}
                         >
                           <Activity className="h-3 w-3" />
                           Idle
-                        </span>
+                        </Badge>
                       )}
                     </div>
                   </td>

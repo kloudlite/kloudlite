@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@kloudlite/ui'
+import { Badge, Button } from '@kloudlite/ui'
 import { MoreHorizontal, Box, FileCode, Lock } from 'lucide-react'
 import {
   DropdownMenu,
@@ -40,15 +40,9 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
                 <h3 className="group-hover:text-info text-lg font-medium transition-colors">
                   {env.name}
                 </h3>
-                <span
-                  className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                    env.status === 'active'
-                      ? 'bg-success/10 text-success dark:bg-success/20'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
+                <Badge variant={env.status === 'active' ? 'success' : 'secondary'}>
                   {env.status}
-                </span>
+                </Badge>
               </div>
               <div className="mt-1 flex flex-col gap-0.5">
                 <p className="text-muted-foreground text-sm">

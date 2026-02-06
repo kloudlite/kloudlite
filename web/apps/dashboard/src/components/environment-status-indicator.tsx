@@ -2,6 +2,7 @@
 
 import { useEnvironmentStatus } from '@/lib/hooks/use-environment-status'
 import { Loader2 } from 'lucide-react'
+import { Badge, type BadgeProps } from '@kloudlite/ui'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -13,22 +14,21 @@ interface EnvironmentStatusIndicatorProps {
   showLoader?: boolean
 }
 
-function getStatusStyles(state: string | undefined) {
+function getStatusVariant(state: string | undefined): BadgeProps['variant'] {
   switch (state) {
     case 'active':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      return 'success'
     case 'inactive':
-      return 'bg-secondary text-secondary-foreground'
+      return 'secondary'
     case 'activating':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+      return 'info'
     case 'deactivating':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+      return 'warning'
     case 'deleting':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
     case 'error':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+      return 'destructive'
     default:
-      return 'bg-secondary text-secondary-foreground'
+      return 'secondary'
   }
 }
 
@@ -64,17 +64,14 @@ export function EnvironmentStatusIndicator({
   }, [isConnected, state, initialState, router])
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium',
-        getStatusStyles(displayState),
-        className
-      )}
+    <Badge
+      variant={getStatusVariant(displayState)}
+      className={cn('gap-1', className)}
     >
       {showLoader && isTransitionalState(displayState) && (
         <Loader2 className="h-3 w-3 animate-spin" />
       )}
       {displayState || 'unknown'}
-    </span>
+    </Badge>
   )
 }

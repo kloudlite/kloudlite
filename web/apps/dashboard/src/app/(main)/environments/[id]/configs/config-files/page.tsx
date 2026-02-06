@@ -2,6 +2,7 @@ import { FilesList } from '../../../_components/files-list'
 import { listFiles } from '@/app/actions/environment-config'
 import { getEnvironmentData } from '../../environment-data'
 import { AlertCircle } from 'lucide-react'
+import { Alert, AlertTitle, AlertDescription } from '@kloudlite/ui'
 
 interface FilesPageProps {
   params: Promise<{
@@ -12,13 +13,11 @@ interface FilesPageProps {
 // Error component
 function FilesError({ error }: { error: string }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-      <div className="flex items-center gap-2 text-red-800">
-        <AlertCircle className="h-5 w-5" />
-        <span className="font-medium">Error loading files</span>
-      </div>
-      <p className="mt-2 text-sm text-red-700">{error}</p>
-    </div>
+    <Alert variant="destructive">
+      <AlertCircle className="h-5 w-5" />
+      <AlertTitle>Error loading files</AlertTitle>
+      <AlertDescription>{error}</AlertDescription>
+    </Alert>
   )
 }
 

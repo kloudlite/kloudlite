@@ -227,21 +227,16 @@ function buildAuthConfig(): NextAuthConfig {
             token.provider = account.provider
             token.providerId = account.providerAccountId
 
-            console.log('[AUTH JWT] OAuth login for:', user.email, 'provider:', account.provider)
             try {
               const { userRepository } = await import('@kloudlite/lib/k8s')
-              console.log('[AUTH JWT] K8s import succeeded, calling getByEmail...')
               const k8sUser = await userRepository.getByEmail(user.email)
-              console.log('[AUTH JWT] K8s user found:', k8sUser.metadata?.name, 'roles:', k8sUser.spec?.roles)
               token.username = k8sUser.metadata?.name || user.email
               token.roles = k8sUser.spec?.roles || ['user']
               token.isActive = k8sUser.spec?.active ?? true
             } catch (error) {
-              console.error('[AUTH JWT] Failed to get user from K8s:', error)
+              console.error('Failed to get user from K8s:', error)
             }
           }
-
-          console.log('[AUTH JWT] Final token - username:', token.username, 'roles:', token.roles, 'provider:', token.provider)
 
           // Fetch and cache work machine namespace (only on initial login, skip for superadmin)
           const username = token.username as string

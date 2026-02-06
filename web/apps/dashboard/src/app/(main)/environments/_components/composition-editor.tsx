@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
@@ -36,6 +36,18 @@ interface CompositionEditorProps {
   onOpenChange: (open: boolean) => void
 }
 
+function useIsDark() {
+  return useSyncExternalStore(
+    (cb) => {
+      const obs = new MutationObserver(cb)
+      obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+      return () => obs.disconnect()
+    },
+    () => document.documentElement.classList.contains('dark'),
+    () => false,
+  )
+}
+
 const defaultComposeContent = `services:
   web:
     image: nginx:latest
@@ -55,6 +67,7 @@ export function CompositionEditor({
     initialComposeContent || defaultComposeContent,
   )
   const [yamlExtension, setYamlExtension] = useState<Extension | null>(null)
+  const isDark = useIsDark()
 
   useEffect(() => {
     import('@codemirror/lang-yaml')
@@ -119,6 +132,7 @@ export function CompositionEditor({
                   <CodeMirror
                     value={composeContent}
                     height="500px"
+                    theme={isDark ? 'dark' : 'light'}
                     extensions={[yamlExtension]}
                     onChange={(value) => setComposeContent(value)}
                     className="text-sm"

@@ -3,6 +3,9 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
+  Alert,
+  AlertDescription,
+  Badge,
   Button,
   Input,
   Label,
@@ -124,13 +127,9 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <h3 className="text-foreground text-base font-medium">{name}</h3>
-                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                      isConfigured
-                        ? 'bg-success/10 text-success'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
+                    <Badge variant={isConfigured ? 'success' : 'secondary'}>
                       {isConfigured ? 'Configured' : 'Not configured'}
-                    </span>
+                    </Badge>
                   </div>
                   <p className="text-muted-foreground text-sm">{description}</p>
                 </div>
@@ -187,9 +186,9 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
 
           <div className="space-y-4 py-4">
             {formError && (
-              <div className="bg-destructive/10 border-destructive/20 rounded-md border p-3">
-                <p className="text-destructive text-sm">{formError}</p>
-              </div>
+              <Alert variant="destructive">
+                <AlertDescription>{formError}</AlertDescription>
+              </Alert>
             )}
 
             <div className="space-y-2">

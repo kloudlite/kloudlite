@@ -5,6 +5,7 @@ import { useState } from 'react'
 import type { K8sService, CompositionSpec, CompositionStatus } from '@kloudlite/types'
 import { Alert, AlertDescription, AlertTitle, Badge, Button } from '@kloudlite/ui'
 import { ServiceLogsViewer } from './service-logs-viewer'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface ServicesListProps {
   services: K8sService[]
@@ -29,6 +30,9 @@ export function ServicesList({
 }: ServicesListProps) {
   const [copiedDns, setCopiedDns] = useState<string | null>(null)
   const [logsService, setLogsService] = useState<string | null>(null)
+
+  // Watch for service changes in this environment's namespace
+  useResourceWatch('services', namespace)
 
   // Generate VPN-accessible DNS hostname: {service}-{hash}.{subdomain}
   const getDnsHostname = (serviceName: string) => {

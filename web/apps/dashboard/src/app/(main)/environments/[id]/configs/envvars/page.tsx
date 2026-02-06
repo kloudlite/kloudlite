@@ -2,6 +2,7 @@ import { EnvVarsList } from '../../../_components/envvars-list'
 import { getEnvVars } from '@/app/actions/environment-config'
 import { getEnvironmentData } from '../../environment-data'
 import { AlertCircle } from 'lucide-react'
+import { Alert, AlertTitle, AlertDescription } from '@kloudlite/ui'
 
 interface PageProps {
   params: Promise<{
@@ -12,13 +13,11 @@ interface PageProps {
 // Error component
 function EnvVarsError({ error }: { error: string }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-      <div className="flex items-center gap-2 text-red-800">
-        <AlertCircle className="h-5 w-5" />
-        <span className="font-medium">Error loading envvars</span>
-      </div>
-      <p className="mt-2 text-sm text-red-700">{error}</p>
-    </div>
+    <Alert variant="destructive">
+      <AlertCircle className="h-5 w-5" />
+      <AlertTitle>Error loading envvars</AlertTitle>
+      <AlertDescription>{error}</AlertDescription>
+    </Alert>
   )
 }
 
