@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Shield, ShieldOff, Loader2, Copy, Check, AlertTriangle } from 'lucide-react'
 import {
   DropdownMenu,
@@ -93,7 +93,11 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
     return 'VPN Not Connected'
   }
 
-  const serverUrl = typeof window !== 'undefined' ? window.location.origin : ''
+  const [serverUrl, setServerUrl] = useState('')
+
+  useEffect(() => {
+    setServerUrl(window.location.origin)
+  }, [])
 
   const curlCommand = `curl -fsSL "${serverUrl}/kltun" | sh -s -- --token ${token || 'GENERATING...'}`
   const wgetCommand = `wget -qO- "${serverUrl}/kltun" | sh -s -- --token ${token || 'GENERATING...'}`

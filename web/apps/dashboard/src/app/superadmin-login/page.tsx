@@ -37,10 +37,8 @@ export default function SuperAdminLoginPage() {
       // Success - NextAuth has set the session cookie
       setStatus('success')
 
-      // Redirect to admin dashboard after short delay using full page navigation
-      setTimeout(() => {
-        window.location.href = '/admin'
-      }, 1500)
+      // Redirect to admin dashboard immediately
+      window.location.href = '/admin'
     } catch (error) {
       console.error('Token validation error:', error)
       setStatus('error')

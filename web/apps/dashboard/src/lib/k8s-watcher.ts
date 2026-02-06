@@ -178,6 +178,10 @@ async function startWatch(config: WatchConfig): Promise<void> {
     console.error(`[K8S-WATCHER] Failed to start ${watchKey}:`, err)
     activeWatches.set(watchKey, false)
 
+    // Unblock any readers waiting on this resource type — they'll get
+    // empty data, but the page renders instead of hanging forever
+    resourceStore.markReady(config.plural, config.namespace)
+
     // Retry after delay
     setTimeout(() => {
       startWatch(config).catch(console.error)
@@ -205,10 +209,11 @@ export async function initializeWatchers(): Promise<void> {
 
 /**
  * Ensure watches are running for all resource types in a namespace.
- * Starts watches if not already running. Returns a promise that resolves
- * when the initial LIST for all types is complete.
+ * Starts watches if not already running. Does NOT block — watches
+ * populate the store in the background. Callers should use
+ * resourceStore.waitForReady() for the specific type(s) they need.
  */
-export async function watchNamespace(namespace: string): Promise<void> {
+export function watchNamespace(namespace: string): void {
   // Reset idle timer
   const existingTimer = namespaceWatchTimers.get(namespace)
   if (existingTimer) clearTimeout(existingTimer)
@@ -216,17 +221,12 @@ export async function watchNamespace(namespace: string): Promise<void> {
     stopNamespaceWatches(namespace)
   }, NAMESPACE_IDLE_TIMEOUT))
 
-  const promises: Promise<void>[] = []
-
   for (const config of NAMESPACE_WATCH_CONFIGS) {
     const watchKey = `${config.group || 'core'}/${config.plural}/${namespace}`
     if (!activeWatches.get(watchKey)) {
       startWatch({ ...config, namespace }).catch(console.error)
     }
-    promises.push(resourceStore.waitForReady(config.plural, namespace))
   }
-
-  await Promise.all(promises)
 }
 
 /**

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useId } from 'react'
 import { useRouter } from 'next/navigation'
+import { useResourceWatchContext } from '@/components/resource-watch-provider'
 import {
   Camera,
   Plus,
@@ -118,28 +119,21 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
     }
   }, [open, loadSnapshots])
 
-  // Auto-refresh when there are in-progress snapshots or operations
+  // Re-fetch snapshots when SSE reports a snapshot change (while sheet is open)
+  const watchCtx = useResourceWatchContext()
+  const watchId = useId()
+
   useEffect(() => {
-    if (!open) return undefined
+    if (!open || !watchCtx) return
 
-    const hasInProgressSnapshot = snapshots.some(
-      (s) =>
-        s.state === 'Creating' ||
-        s.state === 'Uploading' ||
-        s.state === 'Restoring' ||
-        s.state === 'Deleting' ||
-        s.state === 'Pushing' ||
-        s.state === 'Pulling'
-    )
+    watchCtx.subscribe(watchId, { plural: 'snapshots' }, () => {
+      loadSnapshots()
+    })
 
-    const hasInProgressOperation = operationStatus?.inProgress === true
-
-    if (hasInProgressSnapshot || hasInProgressOperation) {
-      const interval = setInterval(loadSnapshots, 3000)
-      return () => clearInterval(interval)
+    return () => {
+      watchCtx.unsubscribe(watchId)
     }
-    return undefined
-  }, [open, snapshots, operationStatus, loadSnapshots])
+  }, [open, watchCtx, watchId, loadSnapshots])
 
   const handleCreate = async () => {
     setIsCreating(true)

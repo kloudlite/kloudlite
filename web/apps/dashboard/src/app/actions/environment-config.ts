@@ -37,8 +37,9 @@ async function getEnvironmentNamespace(environmentName: string): Promise<string>
   // Get the work machine namespace
   const namespace = `wm-${session.user.username}`
 
-  // Ensure namespace watches are running
-  await watchNamespace(namespace)
+  // Ensure namespace watches are running and wait only for environments
+  watchNamespace(namespace)
+  await resourceStore.waitForReady('environments', namespace)
 
   // Get the environment from the store
   const environment = resourceStore.get<Environment>('environments', namespace, environmentName)

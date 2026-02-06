@@ -42,8 +42,9 @@ export async function getWorkspacesListFull() {
     // Determine namespace from session cache or work machine
     const namespace = cachedNamespace || workMachineResult?.spec?.targetNamespace || 'default'
 
-    // Ensure namespace watches are running and ready
-    await watchNamespace(namespace)
+    // Ensure namespace watches are running and wait only for workspaces
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('workspaces', namespace)
 
     const workspaces = resourceStore.list<Workspace>('workspaces', namespace)
 
@@ -97,8 +98,9 @@ export async function getWorkspaceByHash(hashOrName: string) {
     const workMachine = getWorkMachineForUser(username)
     const namespace = cachedNamespace || workMachine?.spec?.targetNamespace || 'default'
 
-    // Ensure namespace watches are running
-    await watchNamespace(namespace)
+    // Ensure namespace watches are running and wait for workspaces + packagerequests
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('workspaces', namespace)
 
     // Try to find by hash label (most common)
     let workspace = resourceStore.getByHash<Workspace>('workspaces', namespace, hashOrName)
@@ -138,7 +140,8 @@ export async function getWorkspaceByHash(hashOrName: string) {
 export async function listWorkspaces(namespace: string = 'default') {
   try {
     console.log('[STORE] listWorkspaces:', namespace)
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('workspaces', namespace)
     const items = resourceStore.list<Workspace>('workspaces', namespace)
     return { success: true, data: { items, metadata: {} } }
   } catch (err) {
@@ -157,7 +160,8 @@ export async function listWorkspaces(namespace: string = 'default') {
 export async function getWorkspace(name: string, namespace: string = 'default') {
   try {
     console.log('[STORE] getWorkspace:', name)
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('workspaces', namespace)
     const result = resourceStore.get<Workspace>('workspaces', namespace, name)
     if (!result) {
       return { success: false, error: 'Workspace not found' }
@@ -514,7 +518,8 @@ export async function updatePackageRequest(
   try {
     // Try to get existing PackageRequest by workspace label from store
     console.log('[STORE] updatePackageRequest: checking existing for', workspaceName)
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('packagerequests', namespace)
     const existingPkgReq = resourceStore.listByLabel<PackageRequest>(
       'packagerequests', namespace, 'kloudlite.io/workspace', workspaceName
     )[0] || null
@@ -570,7 +575,8 @@ export async function updatePackageRequest(
 export async function getPackageRequest(workspaceName: string, namespace: string = 'default') {
   try {
     console.log('[STORE] getPackageRequest:', workspaceName)
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('packagerequests', namespace)
     const packageRequest = resourceStore.listByLabel<PackageRequest>(
       'packagerequests', namespace, 'kloudlite.io/workspace', workspaceName
     )[0] || null

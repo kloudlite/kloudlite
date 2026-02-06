@@ -6,24 +6,8 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
 import { cn } from "./lib/utils"
-import { useMounted } from "./hooks/use-mounted"
 
-/**
- * Sheet wrapper that prevents hydration mismatches by only rendering
- * after the component has mounted on the client.
- */
-function Sheet({
-  children,
-  ...props
-}: React.ComponentPropsWithoutRef<typeof SheetPrimitive.Root>) {
-  const mounted = useMounted()
-
-  if (!mounted) {
-    return null
-  }
-
-  return <SheetPrimitive.Root {...props}>{children}</SheetPrimitive.Root>
-}
+const Sheet = SheetPrimitive.Root
 
 const SheetTrigger = SheetPrimitive.Trigger
 

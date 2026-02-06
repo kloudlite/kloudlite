@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -33,12 +32,6 @@ export function Navigation({
   setThemeCookie,
 }: NavigationProps) {
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
-
-  // Only render dropdown components after mounting to avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const navItems = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -97,28 +90,26 @@ export function Navigation({
 
           {/* VPN Status, Theme Switcher & User Dropdown */}
           <div className="flex items-center gap-2">
-            {mounted && (
-              <>
-                {/* VPN Status with enhanced styling */}
-                <div className="hidden sm:block">
-                  <VPNStatusIndicator isWorkMachineRunning={isWorkMachineRunning} />
-                </div>
+            {/* VPN Status */}
+            <div className="hidden sm:block">
+              <VPNStatusIndicator isWorkMachineRunning={isWorkMachineRunning} />
+            </div>
 
-                {/* Theme Switcher */}
-                <ThemeSwitcher setThemeCookie={setThemeCookie} />
+            {/* Theme Switcher - suppress hydration warning since it reads from cookie/localStorage */}
+            <div suppressHydrationWarning>
+              <ThemeSwitcher setThemeCookie={setThemeCookie} />
+            </div>
 
-                {/* Divider */}
-                <div className="h-6 w-px bg-border/60" />
+            {/* Divider */}
+            <div className="h-6 w-px bg-border/60" />
 
-                {/* User Profile */}
-                <UserProfileDropdown
-                  email={email}
-                  displayName={displayName}
-                  isAdmin={isAdmin}
-                  isSuperAdmin={isSuperAdmin}
-                />
-              </>
-            )}
+            {/* User Profile */}
+            <UserProfileDropdown
+              email={email}
+              displayName={displayName}
+              isAdmin={isAdmin}
+              isSuperAdmin={isSuperAdmin}
+            />
           </div>
         </div>
       </div>

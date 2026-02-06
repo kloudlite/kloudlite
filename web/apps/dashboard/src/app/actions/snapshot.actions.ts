@@ -15,7 +15,8 @@ import type { CreateSnapshotRequest, CreateWorkspaceFromSnapshotRequest, CreateE
 export async function listSnapshots(workspaceName: string, namespace: string) {
   try {
     console.log('[STORE] listSnapshots:', workspaceName)
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('snapshots', namespace)
     const snapshots = resourceStore.listByLabel<Snapshot>(
       'snapshots',
       namespace,
@@ -89,7 +90,8 @@ export async function createSnapshot(
 export async function listEnvironmentSnapshots(environmentName: string, namespace: string) {
   try {
     console.log('[STORE] listEnvironmentSnapshots:', environmentName)
-    await watchNamespace(namespace)
+    watchNamespace(namespace)
+    await resourceStore.waitForReady('snapshots', namespace)
     const snapshots = resourceStore.listByLabel<Snapshot>(
       'snapshots',
       namespace,

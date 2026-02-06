@@ -13,7 +13,16 @@
  *   Write -> K8s API -> watch event updates store -> next read returns fresh data
  */
 
+import { EventEmitter } from 'events'
+
 // --- Types ---
+
+export interface ResourceChangeEvent {
+  plural: string
+  namespace?: string
+  name?: string
+  action: 'apply' | 'remove' | 'clear'
+}
 
 interface ResourceTypeConfig {
   group: string // e.g., 'workspaces.kloudlite.io' or '' for core
@@ -40,6 +49,12 @@ class ResourceStore {
   private readyState = new Map<string, WatchState>() // key: "plural:namespace"
   private readyResolvers = new Map<string, () => void>()
   private readyPromises = new Map<string, Promise<void>>()
+  readonly emitter = new EventEmitter()
+
+  constructor() {
+    // Avoid memory leak warnings — many SSE clients may subscribe
+    this.emitter.setMaxListeners(100)
+  }
 
   // --- Registration ---
 
@@ -100,10 +115,12 @@ class ResourceStore {
     const promise = new Promise<void>((resolve) => {
       this.readyResolvers.set(key, resolve)
 
-      // Ensure we don't wait forever
+      // Ensure we don't wait forever — mark as ready on timeout so
+      // subsequent calls return immediately instead of re-blocking
       setTimeout(() => {
         if (this.readyState.get(key) !== 'ready') {
-          console.warn(`[RESOURCE-STORE] Timeout waiting for ${key} to be ready`)
+          console.warn(`[RESOURCE-STORE] Timeout waiting for ${key} to be ready, unblocking readers`)
+          this.readyState.set(key, 'ready')
           resolve()
           this.readyResolvers.delete(key)
           this.readyPromises.delete(key)
@@ -215,6 +232,13 @@ class ResourceStore {
 
     // Update indexes
     this.addToIndexes(nsStore, name, resource)
+
+    this.emitter.emit('change', {
+      plural,
+      namespace: namespace !== CLUSTER_KEY ? namespace : undefined,
+      name,
+      action: 'apply',
+    } satisfies ResourceChangeEvent)
   }
 
   /**
@@ -233,6 +257,13 @@ class ResourceStore {
     if (existing) {
       this.removeFromIndexes(nsStore, name, existing)
       nsStore.resources.delete(name)
+
+      this.emitter.emit('change', {
+        plural,
+        namespace: nsKey !== CLUSTER_KEY ? nsKey : undefined,
+        name,
+        action: 'remove',
+      } satisfies ResourceChangeEvent)
     }
   }
 
@@ -246,6 +277,12 @@ class ResourceStore {
     if (!typeStore) return
 
     typeStore.delete(nsKey)
+
+    this.emitter.emit('change', {
+      plural,
+      namespace: nsKey !== CLUSTER_KEY ? nsKey : undefined,
+      action: 'clear',
+    } satisfies ResourceChangeEvent)
   }
 
   // --- Read Methods (synchronous, from memory) ---

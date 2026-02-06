@@ -37,11 +37,18 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   }
 
   // Fetch system ready status and work machine in parallel (both independent after session)
-  // Work machine is fetched to warm the cache for child pages
-  const [systemReady] = await Promise.all([
+  const [systemReady, workMachineResult] = await Promise.all([
     isSystemReady(),
     getMyWorkMachine(),
   ])
+  const hasWorkMachine = workMachineResult.success && !!workMachineResult.data
+
+  let isWorkMachineRunning = false
+  if (hasWorkMachine && workMachineResult.data) {
+    const state = workMachineResult.data.status?.state || workMachineResult.data.spec.state
+    const isReady = workMachineResult.data.status?.isReady ?? false
+    isWorkMachineRunning = state === 'running' && isReady
+  }
 
   // If system not ready
   if (!systemReady) {
@@ -54,19 +61,27 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     return <SystemSetupPage />
   }
 
-  // Always show navigation for authenticated users
-  // Pages handle work machine state (stopped, missing, etc.) gracefully with appropriate UI
-  // Work machine result is fetched above to warm the cache for child pages
+  // No work machine — render full-screen setup page without navigation chrome
+  if (!hasWorkMachine) {
+    return <>{children}</>
+  }
 
-  // Normal layout with navigation - always show for authenticated users
+  // Normal layout with navigation
   return (
     <div className="bg-background flex h-screen flex-col">
-      <NavigationWrapper />
+      <NavigationWrapper
+        email={session.user?.email ?? undefined}
+        displayName={session.user?.name ?? undefined}
+        isSuperAdmin={isSuperAdmin}
+        isAdmin={hasAdminRole}
+        userRoles={userRoles}
+        hasWorkMachine={hasWorkMachine}
+        isWorkMachineRunning={isWorkMachineRunning}
+      />
       <ScrollArea className="flex-1">
         <main className="mx-auto max-w-7xl px-6 lg:px-8 py-10">
           {children}
         </main>
-        {/* Footer spacer for better visual balance */}
         <div className="h-16" />
       </ScrollArea>
     </div>

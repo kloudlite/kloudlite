@@ -5,24 +5,8 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "./lib/utils"
-import { useMounted } from "./hooks/use-mounted"
 
-/**
- * Dialog wrapper that prevents hydration mismatches by only rendering
- * after the component has mounted on the client.
- */
-function Dialog({
-  children,
-  ...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
-  const mounted = useMounted()
-
-  if (!mounted) {
-    return null
-  }
-
-  return <DialogPrimitive.Root {...props}>{children}</DialogPrimitive.Root>
-}
+const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
 
