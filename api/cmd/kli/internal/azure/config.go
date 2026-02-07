@@ -259,6 +259,14 @@ func DeleteResourceGroup(ctx context.Context, cfg *AzureConfig, rgName string) e
 	return nil
 }
 
+// shortKey returns the first 8 characters of an installation key for resource naming
+func shortKey(installationKey string) string {
+	if len(installationKey) > 8 {
+		return installationKey[:8]
+	}
+	return installationKey
+}
+
 // strPtr returns a pointer to a string
 func strPtr(s string) *string {
 	return &s

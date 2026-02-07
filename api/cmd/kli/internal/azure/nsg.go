@@ -144,14 +144,14 @@ func EnsureNetworkSecurityGroup(ctx context.Context, cfg *AzureConfig, vpcCIDR, 
 	return *result.ID, nil
 }
 
-// CreateAppGatewayNSG creates a Network Security Group for the Application Gateway
-func CreateAppGatewayNSG(ctx context.Context, cfg *AzureConfig, installationKey string) (string, error) {
+// EnsureMasterNSG creates a Network Security Group for the master node
+func EnsureMasterNSG(ctx context.Context, cfg *AzureConfig, vpcCIDR, installationKey string) (string, error) {
 	client, err := armnetwork.NewSecurityGroupsClient(cfg.SubscriptionID, cfg.Credential, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create NSG client: %w", err)
 	}
 
-	nsgName := fmt.Sprintf("kl-%s-appgw-nsg", installationKey)
+	nsgName := fmt.Sprintf("kl-%s-master-nsg", installationKey)
 
 	// Check if NSG already exists
 	existing, err := client.Get(ctx, cfg.ResourceGroup, nsgName, nil)
@@ -159,18 +159,33 @@ func CreateAppGatewayNSG(ctx context.Context, cfg *AzureConfig, installationKey 
 		return *existing.ID, nil
 	}
 
-	// Create NSG with security rules for Application Gateway
+	// Create NSG with security rules
 	tags := map[string]*string{
 		"Name":                      &nsgName,
 		"ManagedBy":                 strPtr("kloudlite"),
 		"Project":                   strPtr("kloudlite"),
-		"Purpose":                   strPtr("kloudlite-installation-appgw"),
+		"Purpose":                   strPtr("kloudlite-installation-master"),
 		"kloudlite-installation-id": &installationKey,
 	}
 
-	// Define security rules for Application Gateway
+	// Define security rules for master node
 	securityRules := []*armnetwork.SecurityRule{
-		// HTTP from anywhere
+		// Allow Azure Load Balancer health probes
+		{
+			Name: strPtr("Allow-LB-HealthProbe"),
+			Properties: &armnetwork.SecurityRulePropertiesFormat{
+				Protocol:                 toProtocol("Tcp"),
+				SourceAddressPrefix:      strPtr("AzureLoadBalancer"),
+				SourcePortRange:          strPtr("*"),
+				DestinationAddressPrefix: strPtr("*"),
+				DestinationPortRange:     strPtr("80"),
+				Access:                   toAccess("Allow"),
+				Direction:                toDirection("Inbound"),
+				Priority:                 int32Ptr(95),
+				Description:              strPtr("Azure LB health probes"),
+			},
+		},
+		// HTTP from anywhere (Cloudflare → LB → VM)
 		{
 			Name: strPtr("Allow-HTTP"),
 			Properties: &armnetwork.SecurityRulePropertiesFormat{
@@ -198,113 +213,6 @@ func CreateAppGatewayNSG(ctx context.Context, cfg *AzureConfig, installationKey 
 				Direction:                toDirection("Inbound"),
 				Priority:                 int32Ptr(110),
 				Description:              strPtr("HTTPS from anywhere"),
-			},
-		},
-		// Application Gateway management (required for health probes)
-		{
-			Name: strPtr("Allow-AppGw-Management"),
-			Properties: &armnetwork.SecurityRulePropertiesFormat{
-				Protocol:                 toProtocol("Tcp"),
-				SourceAddressPrefix:      strPtr("GatewayManager"),
-				SourcePortRange:          strPtr("*"),
-				DestinationAddressPrefix: strPtr("*"),
-				DestinationPortRange:     strPtr("65200-65535"),
-				Access:                   toAccess("Allow"),
-				Direction:                toDirection("Inbound"),
-				Priority:                 int32Ptr(120),
-				Description:              strPtr("Application Gateway management"),
-			},
-		},
-		// Allow all outbound
-		{
-			Name: strPtr("Allow-All-Outbound"),
-			Properties: &armnetwork.SecurityRulePropertiesFormat{
-				Protocol:                 toProtocol("*"),
-				SourceAddressPrefix:      strPtr("*"),
-				SourcePortRange:          strPtr("*"),
-				DestinationAddressPrefix: strPtr("*"),
-				DestinationPortRange:     strPtr("*"),
-				Access:                   toAccess("Allow"),
-				Direction:                toDirection("Outbound"),
-				Priority:                 int32Ptr(100),
-				Description:              strPtr("Allow all outbound traffic"),
-			},
-		},
-	}
-
-	poller, err := client.BeginCreateOrUpdate(ctx, cfg.ResourceGroup, nsgName, armnetwork.SecurityGroup{
-		Location: &cfg.Location,
-		Tags:     tags,
-		Properties: &armnetwork.SecurityGroupPropertiesFormat{
-			SecurityRules: securityRules,
-		},
-	}, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create App Gateway NSG: %w", err)
-	}
-
-	result, err := poller.PollUntilDone(ctx, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to wait for App Gateway NSG creation: %w", err)
-	}
-
-	return *result.ID, nil
-}
-
-// EnsureMasterNSG creates a Network Security Group for the master node (only accepts traffic from App Gateway)
-func EnsureMasterNSG(ctx context.Context, cfg *AzureConfig, vpcCIDR, appGwSubnetCIDR, installationKey string) (string, error) {
-	client, err := armnetwork.NewSecurityGroupsClient(cfg.SubscriptionID, cfg.Credential, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create NSG client: %w", err)
-	}
-
-	nsgName := fmt.Sprintf("kl-%s-master-nsg", installationKey)
-
-	// Check if NSG already exists
-	existing, err := client.Get(ctx, cfg.ResourceGroup, nsgName, nil)
-	if err == nil {
-		return *existing.ID, nil
-	}
-
-	// Create NSG with security rules
-	tags := map[string]*string{
-		"Name":                      &nsgName,
-		"ManagedBy":                 strPtr("kloudlite"),
-		"Project":                   strPtr("kloudlite"),
-		"Purpose":                   strPtr("kloudlite-installation-master"),
-		"kloudlite-installation-id": &installationKey,
-	}
-
-	// Define security rules for master node
-	securityRules := []*armnetwork.SecurityRule{
-		// HTTP from App Gateway subnet only
-		{
-			Name: strPtr("Allow-HTTP-AppGw"),
-			Properties: &armnetwork.SecurityRulePropertiesFormat{
-				Protocol:                 toProtocol("Tcp"),
-				SourceAddressPrefix:      strPtr(appGwSubnetCIDR),
-				SourcePortRange:          strPtr("*"),
-				DestinationAddressPrefix: strPtr("*"),
-				DestinationPortRange:     strPtr("80"),
-				Access:                   toAccess("Allow"),
-				Direction:                toDirection("Inbound"),
-				Priority:                 int32Ptr(100),
-				Description:              strPtr("HTTP from App Gateway only"),
-			},
-		},
-		// HTTPS from App Gateway subnet only
-		{
-			Name: strPtr("Allow-HTTPS-AppGw"),
-			Properties: &armnetwork.SecurityRulePropertiesFormat{
-				Protocol:                 toProtocol("Tcp"),
-				SourceAddressPrefix:      strPtr(appGwSubnetCIDR),
-				SourcePortRange:          strPtr("*"),
-				DestinationAddressPrefix: strPtr("*"),
-				DestinationPortRange:     strPtr("443"),
-				Access:                   toAccess("Allow"),
-				Direction:                toDirection("Inbound"),
-				Priority:                 int32Ptr(110),
-				Description:              strPtr("HTTPS from App Gateway only"),
 			},
 		},
 		// K3s API from VNet CIDR
@@ -461,16 +369,17 @@ func DeleteNSGByName(ctx context.Context, cfg *AzureConfig, nsgName string) erro
 
 // FindNSGByInstallationKey finds a Network Security Group by installation key
 func FindNSGByInstallationKey(ctx context.Context, cfg *AzureConfig, installationKey string, isLoadBalancer bool) (string, error) {
+	if isLoadBalancer {
+		// Standard LB has no separate NSG
+		return "", nil
+	}
+
 	client, err := armnetwork.NewSecurityGroupsClient(cfg.SubscriptionID, cfg.Credential, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create NSG client: %w", err)
 	}
 
-	suffix := "-nsg"
-	if isLoadBalancer {
-		suffix = "-appgw-nsg"
-	}
-	nsgName := fmt.Sprintf("kl-%s%s", installationKey, suffix)
+	nsgName := fmt.Sprintf("kl-%s-nsg", installationKey)
 
 	result, err := client.Get(ctx, cfg.ResourceGroup, nsgName, nil)
 	if err != nil {
