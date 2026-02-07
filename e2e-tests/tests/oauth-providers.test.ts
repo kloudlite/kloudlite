@@ -63,3 +63,76 @@ test.describe('OAuth Providers', () => {
     }
   })
 })
+
+// --- Login screen integration ---
+
+const OAUTH_PROVIDERS = [
+  { name: 'Google', buttonText: 'Continue with Google' },
+  { name: 'GitHub', buttonText: 'Continue with GitHub' },
+  { name: 'Microsoft', buttonText: 'Continue with Microsoft' },
+] as const
+
+test.describe('OAuth providers on login screen', () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+  test.describe.configure({ timeout: 60_000 })
+
+  test('all configured OAuth providers are visible on signin page', async ({ page }) => {
+    // Login as superadmin and go to OAuth Providers page
+    await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
+    await page.waitForURL('**/admin/**', { timeout: 15_000 })
+    await page.getByRole('link', { name: 'OAuth Providers' }).click()
+    await expect(page.getByRole('heading', { name: 'OAuth Provider Configuration' })).toBeVisible()
+
+    // Record which providers were originally disabled, and enable all configured ones
+    const originallyDisabled: string[] = []
+
+    for (const { name } of OAUTH_PROVIDERS) {
+      const card = page.locator('.rounded-lg.border').filter({ hasText: name })
+      const badge = card.getByText('Configured')
+      const toggle = card.getByRole('switch')
+
+      // Only enable providers that have credentials configured
+      if (await badge.isVisible()) {
+        if (!(await toggle.isChecked())) {
+          originallyDisabled.push(name)
+          await toggle.click()
+          await expect(toggle).toBeChecked({ timeout: 10_000 })
+        }
+      }
+    }
+
+    // Sign out to reach the signin page
+    await page.getByRole('button', { name: 'Super Admin (Dev)' }).click()
+    await page.getByRole('menuitem', { name: 'Sign out' }).click()
+    await page.waitForURL('**/auth/signin**', { timeout: 15_000 })
+
+    // Verify all three OAuth provider buttons are visible
+    for (const { buttonText } of OAUTH_PROVIDERS) {
+      await expect(
+        page.getByRole('button', { name: buttonText }),
+      ).toBeVisible()
+    }
+
+    // Verify the "Or continue with email" divider and credentials form
+    await expect(page.getByText('Or continue with email')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Email address' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
+
+    // Restore original state — disable providers that were not originally enabled
+    if (originallyDisabled.length > 0) {
+      await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
+      await page.waitForURL('**/admin/**', { timeout: 15_000 })
+      await page.getByRole('link', { name: 'OAuth Providers' }).click()
+      await expect(page.getByRole('heading', { name: 'OAuth Provider Configuration' })).toBeVisible()
+
+      for (const name of originallyDisabled) {
+        const card = page.locator('.rounded-lg.border').filter({ hasText: name })
+        const toggle = card.getByRole('switch')
+        if (await toggle.isChecked()) {
+          await toggle.click()
+          await expect(toggle).not.toBeChecked({ timeout: 10_000 })
+        }
+      }
+    }
+  })
+})
