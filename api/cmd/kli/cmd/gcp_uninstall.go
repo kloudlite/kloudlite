@@ -112,26 +112,35 @@ func runGCPUninstall(cmd *cobra.Command, args []string) {
 
 	startTime := time.Now()
 
-	// Phase 1: Delete Load Balancer components (must be done first in reverse order)
-	fmt.Printf("    [%s] Starting: Load Balancer cleanup\n", time.Now().Format("15:04:05"))
-	err = gcpinternal.DeleteLoadBalancer(ctx, cfg, gcpUninstallInstallationKey)
-	if err != nil {
-		fmt.Printf("    [%s] Warning: Load Balancer cleanup - %v\n", time.Now().Format("15:04:05"), err)
-	} else {
-		fmt.Printf("    [%s] Completed: Load Balancer cleanup\n", time.Now().Format("15:04:05"))
-	}
-
-	// Phase 2: Delete Instance
-	fmt.Printf("    [%s] Starting: VM instance deletion\n", time.Now().Format("15:04:05"))
+	// Phase 1: Delete LB and VM in parallel (they are independent resources)
+	var instanceErr error
 	instanceName := gcpinternal.GetInstanceName(gcpUninstallInstallationKey)
-	instanceErr := gcpinternal.DeleteInstance(ctx, cfg, instanceName)
-	if instanceErr != nil {
-		fmt.Printf("    [%s] Warning: VM instance - %v\n", time.Now().Format("15:04:05"), instanceErr)
-	} else {
-		fmt.Printf("    [%s] Completed: VM instance deleted\n", time.Now().Format("15:04:05"))
-	}
 
-	// Phase 3: Parallel cleanup of remaining resources
+	var phase1Wg sync.WaitGroup
+	phase1Wg.Add(2)
+	go func() {
+		defer phase1Wg.Done()
+		fmt.Printf("    [%s] Starting: Load Balancer cleanup\n", time.Now().Format("15:04:05"))
+		lbErr := gcpinternal.DeleteLoadBalancer(ctx, cfg, gcpUninstallInstallationKey)
+		if lbErr != nil {
+			fmt.Printf("    [%s] Warning: Load Balancer cleanup - %v\n", time.Now().Format("15:04:05"), lbErr)
+		} else {
+			fmt.Printf("    [%s] Completed: Load Balancer cleanup\n", time.Now().Format("15:04:05"))
+		}
+	}()
+	go func() {
+		defer phase1Wg.Done()
+		fmt.Printf("    [%s] Starting: VM instance deletion\n", time.Now().Format("15:04:05"))
+		instanceErr = gcpinternal.DeleteInstance(ctx, cfg, instanceName)
+		if instanceErr != nil {
+			fmt.Printf("    [%s] Warning: VM instance - %v\n", time.Now().Format("15:04:05"), instanceErr)
+		} else {
+			fmt.Printf("    [%s] Completed: VM instance deleted\n", time.Now().Format("15:04:05"))
+		}
+	}()
+	phase1Wg.Wait()
+
+	// Phase 2: Parallel cleanup of remaining resources
 	var wg sync.WaitGroup
 	var firewallErr, saErr, storageErr error
 

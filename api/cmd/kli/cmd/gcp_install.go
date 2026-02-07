@@ -386,38 +386,47 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 		bold.Println("\nLoad Balancer Setup")
 		bold.Println("-------------------")
 
-		// Reserve External IP
-		fmt.Printf("  o Reserving external IP address...")
-		lbIP, err = gcpinternal.ReserveExternalIP(ctx, cfg, gcpInstallationKey)
-		if err != nil {
+		// Create IP, health check, and instance group in parallel (no dependencies between them)
+		fmt.Printf("  o Creating LB prerequisites in parallel...")
+		var lbIPResult string
+		var hcURL, igURL string
+		var ipErr, hcErr, igErr error
+		var lbWg sync.WaitGroup
+		lbWg.Add(3)
+		go func() {
+			defer lbWg.Done()
+			lbIPResult, ipErr = gcpinternal.ReserveExternalIP(ctx, cfg, gcpInstallationKey)
+		}()
+		go func() {
+			defer lbWg.Done()
+			hcURL, hcErr = gcpinternal.CreateHealthCheck(ctx, cfg, gcpInstallationKey)
+		}()
+		go func() {
+			defer lbWg.Done()
+			igURL, igErr = gcpinternal.CreateUnmanagedInstanceGroup(ctx, cfg, instanceName, gcpInstallationKey)
+		}()
+		lbWg.Wait()
+
+		if ipErr != nil {
 			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
+			yellow.Printf("    Error reserving IP: %v\n\n", ipErr)
 			os.Exit(1)
 		}
+		if hcErr != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error creating health check: %v\n\n", hcErr)
+			os.Exit(1)
+		}
+		if igErr != nil {
+			red.Printf(" x\n")
+			yellow.Printf("    Error creating instance group: %v\n\n", igErr)
+			os.Exit(1)
+		}
+		lbIP = lbIPResult
 		green.Printf(" +\n")
 		fmt.Printf("    IP: %s\n", lbIP)
 
-		// Create Health Check
-		fmt.Printf("  o Creating health check...")
-		hcURL, err := gcpinternal.CreateHealthCheck(ctx, cfg, gcpInstallationKey)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		green.Printf(" +\n")
-
-		// Create Instance Group
-		fmt.Printf("  o Creating instance group...")
-		igURL, err := gcpinternal.CreateUnmanagedInstanceGroup(ctx, cfg, instanceName, gcpInstallationKey)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		green.Printf(" +\n")
-
-		// Create Backend Service
+		// Create Backend Service (depends on health check + instance group)
 		fmt.Printf("  o Creating backend service...")
 		bsURL, err := gcpinternal.CreateBackendService(ctx, cfg, igURL, hcURL, gcpInstallationKey)
 		if err != nil {
