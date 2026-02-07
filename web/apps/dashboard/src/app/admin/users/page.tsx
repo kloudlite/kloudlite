@@ -10,14 +10,14 @@ function UsersError({ error }: { error: string }) {
   return (
     <main className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-        <p className="mt-1.5 text-sm text-gray-600">Manage user accounts, roles, and permissions</p>
+        <h1 className="text-foreground text-2xl font-semibold">User Management</h1>
+        <p className="mt-1.5 text-muted-foreground text-sm">Manage user accounts, roles, and permissions</p>
       </div>
       <div className="flex h-64 items-center justify-center">
         <div className="max-w-md text-center">
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h3 className="mb-2 text-lg font-medium text-gray-900">Failed to load users</h3>
-          <p className="text-sm text-gray-600">{error}</p>
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
+          <h3 className="mb-2 text-foreground text-lg font-medium">Failed to load users</h3>
+          <p className="text-muted-foreground text-sm">{error}</p>
         </div>
       </div>
     </main>
@@ -53,8 +53,8 @@ export default async function UsersPage() {
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-          <p className="mt-1.5 text-sm text-gray-600">
+          <h1 className="text-foreground text-2xl font-semibold">User Management</h1>
+          <p className="mt-1.5 text-muted-foreground text-sm">
             Manage user accounts, roles, and permissions
           </p>
         </div>
