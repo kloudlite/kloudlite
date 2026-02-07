@@ -26,12 +26,12 @@ This command will:
   - Find Ubuntu 24.04 LTS image in the region
   - Create Resource Group (if not specified)
   - Create VNet and Subnets
-  - Create Network Security Groups for VM and Application Gateway
+  - Create Network Security Groups for VM
   - Create User-Assigned Managed Identity with required permissions
   - Create Storage Account for K3s database backups
   - Launch Azure VM with 100GB Premium SSD
   - Setup automated K3s backup to Azure Blob Storage every 30 minutes
-  - Create Application Gateway (HTTP listener)
+  - Create Standard Load Balancer (TCP port 80)
   - Configure DNS with Cloudflare proxy mode (TLS termination at Cloudflare edge)
 
 NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
@@ -49,8 +49,8 @@ has been configured for the installation key.`,
   # Install with custom VM size
   kli azure install --installation-key prod --vm-size Standard_D4s_v3
 
-  # Install without Application Gateway (direct VM access only)
-  kli azure install --installation-key dev --skip-appgw`,
+  # Install without Load Balancer (direct VM access only)
+  kli azure install --installation-key dev --skip-lb`,
 	Run: runAzureInstall,
 }
 
@@ -60,7 +60,7 @@ var (
 	azureInstallationKey             string
 	azureVMSize                      string
 	azureEnableTerminationProtection bool
-	azureSkipAppGw                   bool
+	azureSkipLB                      bool
 )
 
 func init() {
@@ -69,7 +69,7 @@ func init() {
 	azureInstallCmd.Flags().StringVar(&azureInstallationKey, "installation-key", "", "Installation key to identify this installation (required)")
 	azureInstallCmd.Flags().StringVar(&azureVMSize, "vm-size", "Standard_B2ms", "Azure VM size (default: Standard_B2ms)")
 	azureInstallCmd.Flags().BoolVar(&azureEnableTerminationProtection, "enable-delete-protection", true, "Enable VM delete protection (default: true)")
-	azureInstallCmd.Flags().BoolVar(&azureSkipAppGw, "skip-appgw", false, "Skip Application Gateway setup (direct VM access only)")
+	azureInstallCmd.Flags().BoolVar(&azureSkipLB, "skip-lb", false, "Skip Load Balancer setup (direct VM access only)")
 	azureInstallCmd.MarkFlagRequired("installation-key")
 }
 
@@ -101,14 +101,13 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		subnetID           string
 		nsgID              string
 		masterNsgID        string
-		appGwNsgID         string
 		identityID         string
 		storageAccountID   string
 		storageAccountName string
 		publicIPID         string
 		nicID              string
 		vmID               string
-		appGwID            string
+		lbID               string
 	}
 
 	go func() {
@@ -127,9 +126,9 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		cleanupCtx := context.Background()
 
 		// Cleanup in reverse order
-		if createdResources.appGwID != "" {
-			fmt.Printf("  Deleting Application Gateway...\n")
-			azureinternal.DeleteApplicationGateway(cleanupCtx, cfg, azureInstallationKey)
+		if createdResources.lbID != "" {
+			fmt.Printf("  Deleting Load Balancer...\n")
+			azureinternal.DeleteLoadBalancer(cleanupCtx, cfg, azureInstallationKey)
 		}
 		if createdResources.vmID != "" {
 			fmt.Printf("  Terminating VM...\n")
@@ -146,10 +145,6 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		if createdResources.masterNsgID != "" {
 			fmt.Printf("  Deleting master NSG...\n")
 			azureinternal.DeleteNSGByName(cleanupCtx, cfg, fmt.Sprintf("kl-%s-master-nsg", azureInstallationKey))
-		}
-		if createdResources.appGwNsgID != "" {
-			fmt.Printf("  Deleting App Gateway NSG...\n")
-			azureinternal.DeleteNSGByName(cleanupCtx, cfg, fmt.Sprintf("kl-%s-appgw-nsg", azureInstallationKey))
 		}
 		if createdResources.nsgID != "" {
 			fmt.Printf("  Deleting NSG...\n")
@@ -216,8 +211,8 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	secretKey := verifyResult.SecretKey
 	var fullDomain string
 
-	// Check if subdomain was configured in console (required for App Gateway)
-	if !azureSkipAppGw {
+	// Check if subdomain was configured in console (required for LB)
+	if !azureSkipLB {
 		if verifyResult.Subdomain == "" {
 			red.Printf("\n  Error: No subdomain configured for this installation.\n")
 			yellow.Printf("  Please configure a subdomain in the console (console.kloudlite.io)\n")
@@ -298,8 +293,8 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("  o Creating resources in parallel...\n")
 
 	var wg sync.WaitGroup
-	var nsgID, appGwNsgID, identityID, principalID, storageAccountID, storageAccountName string
-	var nsgErr, appGwNsgErr, identityErr, storageErr error
+	var nsgID, identityID, principalID, storageAccountID, storageAccountName string
+	var nsgErr, identityErr, storageErr error
 
 	startTime := time.Now()
 
@@ -318,24 +313,6 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 			fmt.Printf("    [%s] Completed: NSG\n", time.Now().Format("15:04:05"))
 		}
 	}()
-
-	// App Gateway NSG (parallel, only if not skipping App Gateway)
-	if !azureSkipAppGw {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fmt.Printf("    [%s] Starting: App Gateway NSG creation\n", time.Now().Format("15:04:05"))
-			appGwNsgID, appGwNsgErr = azureinternal.CreateAppGatewayNSG(ctx, cfg, azureInstallationKey)
-			if appGwNsgErr != nil {
-				fmt.Printf("    [%s] Failed: App Gateway NSG - %v\n", time.Now().Format("15:04:05"), appGwNsgErr)
-			} else {
-				createdResources.Lock()
-				createdResources.appGwNsgID = appGwNsgID
-				createdResources.Unlock()
-				fmt.Printf("    [%s] Completed: App Gateway NSG\n", time.Now().Format("15:04:05"))
-			}
-		}()
-	}
 
 	// Managed Identity (parallel)
 	wg.Add(1)
@@ -380,11 +357,6 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		yellow.Printf("    NSG Error: %v\n\n", nsgErr)
 		os.Exit(1)
 	}
-	if !azureSkipAppGw && appGwNsgErr != nil {
-		red.Printf(" x\n")
-		yellow.Printf("    App Gateway NSG Error: %v\n\n", appGwNsgErr)
-		os.Exit(1)
-	}
 	if identityErr != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Managed Identity Error: %v\n\n", identityErr)
@@ -398,9 +370,6 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 
 	green.Printf(" +\n")
 	fmt.Printf("    NSG: kl-%s-nsg\n", azureInstallationKey)
-	if !azureSkipAppGw {
-		fmt.Printf("    App Gateway NSG: kl-%s-appgw-nsg\n", azureInstallationKey)
-	}
 	fmt.Printf("    Managed Identity: kl-%s-identity\n", azureInstallationKey)
 	fmt.Printf("    Storage Account: %s\n", storageAccountName)
 
@@ -446,22 +415,19 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		green.Printf(" +\n")
 	}
 
-	// Create master NSG (depends on App Gateway NSG)
-	var masterNsgID string
-	if !azureSkipAppGw {
-		fmt.Printf("  o Creating master NSG...")
-		masterNsgID, err = azureinternal.EnsureMasterNSG(ctx, cfg, vnetCIDR, azureinternal.AppGatewaySubnetCIDR, azureInstallationKey)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		createdResources.Lock()
-		createdResources.masterNsgID = masterNsgID
-		createdResources.Unlock()
-		green.Printf(" +\n")
-		fmt.Printf("    Master NSG: kl-%s-master-nsg\n", azureInstallationKey)
+	// Create master NSG
+	fmt.Printf("  o Creating master NSG...")
+	masterNsgID, err := azureinternal.EnsureMasterNSG(ctx, cfg, vnetCIDR, azureInstallationKey)
+	if err != nil {
+		red.Printf(" x\n")
+		yellow.Printf("    Error: %v\n\n", err)
+		os.Exit(1)
 	}
+	createdResources.Lock()
+	createdResources.masterNsgID = masterNsgID
+	createdResources.Unlock()
+	green.Printf(" +\n")
+	fmt.Printf("    Master NSG: kl-%s-master-nsg\n", azureInstallationKey)
 
 	// Instance Deployment
 	bold.Println("\nInstance Deployment")
@@ -488,15 +454,9 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	createdResources.Unlock()
 	green.Printf(" +\n")
 
-	// Use master NSG for VM when App Gateway is enabled
-	instanceNsgID := nsgID
-	if !azureSkipAppGw && masterNsgID != "" {
-		instanceNsgID = masterNsgID
-	}
-
-	// Create network interface
+	// Create network interface with master NSG
 	fmt.Printf("  o Creating network interface...")
-	nicID, err := azureinternal.CreateNetworkInterface(ctx, cfg, subnetID, instanceNsgID, publicIPID, azureInstallationKey)
+	nicID, err := azureinternal.CreateNetworkInterface(ctx, cfg, subnetID, masterNsgID, publicIPID, azureInstallationKey)
 	if err != nil {
 		red.Printf(" x\n")
 		yellow.Printf("    Error: %v\n\n", err)
@@ -544,30 +504,30 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    Public IP: %s\n", publicIP)
 	fmt.Printf("    Private IP: %s\n", privateIP)
 
-	// Application Gateway Setup (unless skipping)
-	var appGwPublicIP string
-	if !azureSkipAppGw {
-		bold.Println("\nApplication Gateway Setup")
-		bold.Println("-------------------------")
+	// Load Balancer Setup (unless skipping)
+	var lbPublicIP string
+	if !azureSkipLB {
+		bold.Println("\nLoad Balancer Setup")
+		bold.Println("-------------------")
 
-		// Create Application Gateway
-		fmt.Printf("  o Creating Application Gateway...")
-		appGwInfo, err := azureinternal.CreateApplicationGateway(ctx, cfg, azureInstallationKey, vnetID, []string{subnetID})
+		// Create Load Balancer
+		fmt.Printf("  o Creating Load Balancer...")
+		lbInfo, err := azureinternal.CreateLoadBalancer(ctx, cfg, azureInstallationKey)
 		if err != nil {
 			red.Printf(" x\n")
 			yellow.Printf("    Error: %v\n\n", err)
 			os.Exit(1)
 		}
 		createdResources.Lock()
-		createdResources.appGwID = appGwInfo.ID
+		createdResources.lbID = lbInfo.ID
 		createdResources.Unlock()
-		appGwPublicIP = appGwInfo.PublicIP
+		lbPublicIP = lbInfo.PublicIP
 		green.Printf(" +\n")
-		fmt.Printf("    App Gateway IP: %s\n", appGwPublicIP)
+		fmt.Printf("    LB IP: %s\n", lbPublicIP)
 
-		// Wait for Application Gateway to be active
-		fmt.Printf("  o Waiting for Application Gateway to become active...")
-		err = azureinternal.WaitForAppGatewayActive(ctx, cfg, appGwInfo.ID)
+		// Add VM NIC to backend pool
+		fmt.Printf("  o Adding VM to backend pool...")
+		err = azureinternal.AddNICToBackendPool(ctx, cfg, azureInstallationKey, nicID)
 		if err != nil {
 			red.Printf(" x\n")
 			yellow.Printf("    Error: %v\n\n", err)
@@ -575,22 +535,11 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		}
 		green.Printf(" +\n")
 
-		// Register VM with backend pool
-		fmt.Printf("  o Registering VM with backend pool...")
-		backendPoolID, _ := azureinternal.CreateBackendPool(ctx, cfg, azureInstallationKey)
-		err = azureinternal.RegisterBackendTargets(ctx, cfg, backendPoolID, vmID)
-		if err != nil {
-			red.Printf(" x\n")
-			yellow.Printf("    Error: %v\n\n", err)
-			os.Exit(1)
-		}
-		green.Printf(" +\n")
-
-		// Register App Gateway IP with console for DNS (proxied for Cloudflare TLS)
+		// Configure DNS with LB public IP
 		bold.Println("\nDNS Configuration")
 		bold.Println("-----------------")
 		fmt.Printf("  o Configuring DNS for %s (Cloudflare proxied)...", fullDomain)
-		_, err = consoleClient.ConfigureRootDNS(ctx, azureInstallationKey, secretKey, appGwPublicIP, "a", true)
+		_, err = consoleClient.ConfigureRootDNS(ctx, azureInstallationKey, secretKey, lbPublicIP, "a", true)
 		if err != nil {
 			yellow.Printf(" !\n")
 			yellow.Printf("    Warning: Automatic DNS configuration failed: %v\n", err)
@@ -599,7 +548,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 			fmt.Printf("    Create an A record in your DNS provider:\n")
 			fmt.Printf("      Name:    %s\n", verifyResult.Subdomain)
 			fmt.Printf("      Type:    A\n")
-			fmt.Printf("      Value:   %s\n", appGwPublicIP)
+			fmt.Printf("      Value:   %s\n", lbPublicIP)
 			fmt.Printf("      Proxied: Yes (if using Cloudflare)\n")
 			fmt.Println()
 		} else {
@@ -622,11 +571,11 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("  Location:       %s\n", cfg.Location)
 	fmt.Printf("  Resource Group: %s\n", cfg.ResourceGroup)
 
-	if !azureSkipAppGw {
+	if !azureSkipLB {
 		fmt.Println()
-		bold.Println("Application Gateway Details")
-		bold.Println("---------------------------")
-		fmt.Printf("  App Gateway IP: %s\n", appGwPublicIP)
+		bold.Println("Load Balancer Details")
+		bold.Println("---------------------")
+		fmt.Printf("  LB IP:          %s\n", lbPublicIP)
 		fmt.Printf("  Custom Domain:  https://%s\n", fullDomain)
 		fmt.Printf("  Wildcard:       https://*.%s\n", fullDomain)
 	}
@@ -658,7 +607,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		green.Printf("\n  SSH private key saved to: %s\n", sshKeyPath)
 	}
 
-	if !azureSkipAppGw {
+	if !azureSkipLB {
 		fmt.Println()
 		bold.Println("Web Access")
 		bold.Println("----------")

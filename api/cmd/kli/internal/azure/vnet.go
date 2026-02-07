@@ -13,8 +13,6 @@ const (
 	DefaultVNetCIDR = "10.0.0.0/16"
 	// Default Subnet CIDR
 	DefaultSubnetCIDR = "10.0.0.0/24"
-	// App Gateway Subnet CIDR (separate subnet required)
-	AppGatewaySubnetCIDR = "10.0.1.0/24"
 )
 
 // GetDefaultVNet finds or creates a default VNet for Kloudlite
@@ -130,40 +128,6 @@ func EnsureSubnet(ctx context.Context, cfg *AzureConfig, vnetName, installationK
 	}
 
 	return *result.ID, cfg.Location, nil
-}
-
-// EnsureAppGatewaySubnet creates a dedicated subnet for Application Gateway
-func EnsureAppGatewaySubnet(ctx context.Context, cfg *AzureConfig, vnetName, installationKey string) (string, error) {
-	client, err := armnetwork.NewSubnetsClient(cfg.SubscriptionID, cfg.Credential, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create subnet client: %w", err)
-	}
-
-	subnetName := fmt.Sprintf("kl-%s-appgw-subnet", installationKey)
-
-	// Check if subnet already exists
-	existing, err := client.Get(ctx, cfg.ResourceGroup, vnetName, subnetName, nil)
-	if err == nil {
-		// Subnet exists
-		return *existing.ID, nil
-	}
-
-	// Create subnet for Application Gateway
-	poller, err := client.BeginCreateOrUpdate(ctx, cfg.ResourceGroup, vnetName, subnetName, armnetwork.Subnet{
-		Properties: &armnetwork.SubnetPropertiesFormat{
-			AddressPrefix: strPtr(AppGatewaySubnetCIDR),
-		},
-	}, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create App Gateway subnet: %w", err)
-	}
-
-	result, err := poller.PollUntilDone(ctx, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to wait for App Gateway subnet creation: %w", err)
-	}
-
-	return *result.ID, nil
 }
 
 // GetDefaultSubnet returns the first subnet in a VNet

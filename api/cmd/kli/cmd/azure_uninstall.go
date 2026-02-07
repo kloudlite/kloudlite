@@ -20,7 +20,7 @@ var azureUninstallCmd = &cobra.Command{
 	Long: `Uninstall Kloudlite from Azure by deleting all associated resources.
 
 This command will delete:
-  - Application Gateway (if exists)
+  - Load Balancer and its public IP
   - Azure VM and associated disks
   - Workmachine VMs, NICs, and Public IPs
   - Network Interface
@@ -126,9 +126,9 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 
 	var deletionErrors []error
 
-	// Delete Application Gateway first (releases public IP)
-	fmt.Printf("  o Deleting Application Gateway...")
-	err = azureinternal.DeleteApplicationGateway(ctx, cfg, azureUninstallInstallationKey)
+	// Delete Load Balancer first (releases public IP and backend pool references)
+	fmt.Printf("  o Deleting Load Balancer...")
+	err = azureinternal.DeleteLoadBalancer(ctx, cfg, azureUninstallInstallationKey)
 	if err != nil {
 		yellow.Printf(" (warning: %v)\n", err)
 		deletionErrors = append(deletionErrors, err)
@@ -136,8 +136,8 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 		green.Printf(" +\n")
 	}
 
-	// Wait for Application Gateway deletion to propagate
-	time.Sleep(5 * time.Second)
+	// Wait for LB deletion to propagate
+	time.Sleep(2 * time.Second)
 
 	// Delete VM (includes NIC and OS disk due to DeleteOption)
 	fmt.Printf("  o Deleting VM...")
@@ -189,20 +189,6 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("  o Deleting master NSG...")
 	for retries := 0; retries < 5; retries++ {
 		err = azureinternal.DeleteNSGByName(ctx, cfg, fmt.Sprintf("kl-%s-master-nsg", azureUninstallInstallationKey))
-		if err == nil {
-			green.Printf(" +\n")
-			break
-		}
-		if retries < 4 {
-			time.Sleep(10 * time.Second)
-		} else {
-			yellow.Printf(" (warning: %v)\n", err)
-		}
-	}
-
-	fmt.Printf("  o Deleting App Gateway NSG...")
-	for retries := 0; retries < 5; retries++ {
-		err = azureinternal.DeleteNSGByName(ctx, cfg, fmt.Sprintf("kl-%s-appgw-nsg", azureUninstallInstallationKey))
 		if err == nil {
 			green.Printf(" +\n")
 			break
