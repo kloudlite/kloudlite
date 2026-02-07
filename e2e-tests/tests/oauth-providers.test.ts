@@ -40,11 +40,12 @@ test.describe('OAuth Providers', () => {
     const googleCard = page.locator('.rounded-lg.border').filter({ hasText: 'Google' })
     await googleCard.getByRole('button', { name: /Set up credentials|Edit credentials/ }).click()
 
-    const secretInput = page.getByLabel('Client Secret')
+    const dialog = page.getByRole('dialog')
+    const secretInput = dialog.getByLabel('Client Secret')
     await expect(secretInput).toHaveAttribute('type', 'password')
 
-    // Click the eye toggle button (the button adjacent to the secret input)
-    const eyeButton = page.getByRole('dialog').locator('#client-secret + button')
+    // Click the eye toggle button (sibling of the secret input inside its wrapper)
+    const eyeButton = secretInput.locator('..').getByRole('button')
     await eyeButton.click()
     await expect(secretInput).toHaveAttribute('type', 'text')
 
