@@ -2,6 +2,7 @@ import { LoginCard } from '@/components/console/login-card'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { redirect } from 'next/navigation'
 import { ThemeSwitcher } from '@kloudlite/ui'
+import { setThemeCookie } from '@/app/actions/theme'
 
 const ERROR_MESSAGES: Record<string, string> = {
   missing_params: 'Missing required parameters. Please try again.',
@@ -43,7 +44,7 @@ export default async function LoginPage({
     <div className="bg-background min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Theme switcher */}
       <div className="absolute top-6 right-6 z-10">
-        <ThemeSwitcher />
+        <ThemeSwitcher setThemeCookie={setThemeCookie} />
       </div>
 
       {/* Grid pattern background */}
