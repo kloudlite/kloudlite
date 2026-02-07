@@ -1,0 +1,15 @@
+{
+  "name": "e2e-tests",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "playwright": "^1.50.0",
+    "typescript": "^5.0.0"
+  }
+}

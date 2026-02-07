@@ -65,13 +65,13 @@ interface MachineConfigsListProps {
 
 const categoryColors: Record<string, string> = {
   general: 'bg-info/10 text-info border-info/20',
-  'compute-optimized': 'bg-purple-50 text-purple-700 border-purple-200',
-  'memory-optimized': 'bg-orange-50 text-orange-700 border-orange-200',
+  'compute-optimized': 'bg-primary/10 text-primary border-primary/20',
+  'memory-optimized': 'bg-warning/10 text-warning border-warning/20',
   gpu: 'bg-success/10 text-success border-success/20',
   development: 'bg-muted text-foreground border-border',
   // Fallback for old values
-  compute: 'bg-purple-50 text-purple-700 border-purple-200',
-  memory: 'bg-orange-50 text-orange-700 border-orange-200',
+  compute: 'bg-primary/10 text-primary border-primary/20',
+  memory: 'bg-warning/10 text-warning border-warning/20',
 }
 
 const categoryLabels: Record<string, string> = {

@@ -33,7 +33,7 @@ export function AdminProfileDropdown({ name, email, hasUserRole }: AdminProfileD
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">{name || 'User'}</p>
-            <p className="text-xs text-gray-500">{email}</p>
+            <p className="text-muted-foreground text-xs">{email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

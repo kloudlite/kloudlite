@@ -33,16 +33,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-background min-h-screen">
       {/* Admin Header */}
-      <header className="border-b bg-white">
+      <header className="border-b bg-background">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex h-16 items-center justify-between">
             {/* Logo / Brand and Navigation */}
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
                 <KloudliteLogo className="text-lg font-medium" />
-                <span className="text-lg font-medium text-gray-600">Admin</span>
+                <span className="text-muted-foreground text-lg font-medium">Admin</span>
               </div>
 
               {/* Admin Navigation */}
