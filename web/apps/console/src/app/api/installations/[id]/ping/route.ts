@@ -1,8 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getInstallationById } from '@/lib/console/storage'
+import dns from 'node:dns'
+import https from 'node:https'
 
 export const runtime = 'nodejs'
+
+// Use Cloudflare DNS (1.1.1.1) to avoid stale negative cache from system resolver.
+// Newly created Cloudflare DNS records may not resolve via the local resolver for minutes
+// due to negative NXDOMAIN caching, but 1.1.1.1 picks them up immediately.
+const resolver = new dns.Resolver()
+resolver.setServers(['1.1.1.1', '1.0.0.1'])
+
+function resolveHostname(hostname: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    resolver.resolve4(hostname, (err, addresses) => {
+      if (err) reject(err)
+      else resolve(addresses[0])
+    })
+  })
+}
+
+function httpsHead(ip: string, hostname: string, timeoutMs: number): Promise<{ status: number }> {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: ip,
+        port: 443,
+        path: '/',
+        method: 'HEAD',
+        headers: { Host: hostname },
+        servername: hostname, // TLS SNI — Cloudflare needs this to route correctly
+        timeout: timeoutMs,
+      },
+      (res) => {
+        res.resume() // drain response
+        resolve({ status: res.statusCode ?? 0 })
+      },
+    )
+    req.on('timeout', () => {
+      req.destroy()
+      reject(new Error('timeout'))
+    })
+    req.on('error', reject)
+    req.end()
+  })
+}
 
 /**
  * Check if an installation's dashboard is reachable (active)
@@ -66,45 +109,50 @@ export async function GET(
 
     // Build the dashboard URL
     const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
-    const url = `https://${installation.subdomain}.${domain}`
+    const hostname = `${installation.subdomain}.${domain}`
+    const url = `https://${hostname}`
 
-    // Ping the URL with a timeout
+    // Resolve via Cloudflare DNS (1.1.1.1) to bypass stale system resolver cache
     const startTime = Date.now()
+    let resolvedIp: string
     try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
-
-      const response = await fetch(url, {
-        method: 'HEAD',
-        signal: controller.signal,
-        redirect: 'follow',
+      resolvedIp = await resolveHostname(hostname)
+    } catch {
+      const latency = Date.now() - startTime
+      return NextResponse.json({
+        active: false,
+        reason: 'dns_failed',
+        latency,
+        message: `DNS resolution failed for ${hostname} via 1.1.1.1`
       })
+    }
 
-      clearTimeout(timeoutId)
-
+    // Ping using resolved IP with correct SNI so Cloudflare routes properly
+    try {
+      const { status } = await httpsHead(resolvedIp, hostname, 5000)
       const latency = Date.now() - startTime
 
-      if (response.ok || response.status === 401 || response.status === 403) {
-        // 401/403 means the server is up but requires auth - still considered active
+      if (status >= 200 && status < 500) {
+        // Any non-5xx response means the server is up (redirects, auth-required, etc.)
         return NextResponse.json({
           active: true,
           latency,
-          status: response.status,
+          status,
           url
         })
       } else {
         return NextResponse.json({
           active: false,
           reason: 'error_response',
-          status: response.status,
+          status,
           latency,
-          message: `Server returned ${response.status}`
+          message: `Server returned ${status}`
         })
       }
     } catch (fetchError) {
       const latency = Date.now() - startTime
 
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      if (fetchError instanceof Error && fetchError.message === 'timeout') {
         return NextResponse.json({
           active: false,
           reason: 'timeout',

@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
+    "test:dashboard": "playwright test --project=dashboard",
+    "test:console": "playwright test --project=console",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed"
   },
