@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -36,8 +37,11 @@ type VerifyInstallationOptions struct {
 }
 
 func VerifyInstallation(ctx context.Context, installationKey string, opts *VerifyInstallationOptions) (*VerifyInstallationResult, error) {
-	// TODO: Make this configurable via flag or environment variable
-	registrationAPIURL := "https://console.kloudlite.io/api/installations/verify-key"
+	baseURL := os.Getenv("CONSOLE_BASE_URL")
+	if baseURL == "" {
+		baseURL = "https://console.kloudlite.io"
+	}
+	registrationAPIURL := baseURL + "/api/installations/verify-key"
 
 	// Create request payload
 	reqPayload := VerifyInstallationRequest{
