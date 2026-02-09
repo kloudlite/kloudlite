@@ -356,6 +356,14 @@ exec 2>&1
 
 echo "Starting Kloudlite installation at $(date)"
 
+# Wait for any existing apt processes to finish (cloud-init apt setup)
+echo "Waiting for apt locks to be released..."
+while fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+  echo "  apt is locked, waiting..."
+  sleep 5
+done
+echo "apt locks released"
+
 # Update system
 apt-get update -y
 apt-get upgrade -y
