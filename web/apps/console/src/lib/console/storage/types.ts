@@ -66,8 +66,13 @@ export interface Installation {
   ipRecords?: IPRecord[]
   deploymentReady?: boolean
   lastHealthCheck?: string
-  cloudProvider?: 'aws' | 'gcp' | 'azure'
+  cloudProvider?: 'aws' | 'gcp' | 'azure' | 'oci'
   cloudLocation?: string
+  acaJobExecutionName?: string
+  acaJobStatus?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown'
+  acaJobStartedAt?: string
+  acaJobCompletedAt?: string
+  acaJobError?: string
   createdAt: string
   updatedAt: string
 }

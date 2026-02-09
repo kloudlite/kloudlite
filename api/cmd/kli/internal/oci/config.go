@@ -17,14 +17,15 @@ import (
 
 // OCIConfig holds OCI configuration
 type OCIConfig struct {
-	TenancyOCID    string
-	UserOCID       string
-	Region         string
+	TenancyOCID     string
+	UserOCID        string
+	Region          string
 	CompartmentOCID string
-	Fingerprint    string
-	KeyFile        string
-	PassPhrase     string
-	ConfigProvider common.ConfigurationProvider
+	Fingerprint     string
+	KeyFile         string
+	KeyContent      string // PEM private key content (alternative to KeyFile)
+	PassPhrase      string
+	ConfigProvider  common.ConfigurationProvider
 }
 
 // LoadOCIConfig loads OCI configuration from flags/env/config file
@@ -53,6 +54,9 @@ func LoadOCIConfig(ctx context.Context, tenancy, user, region, compartment, fing
 	}
 	if cfg.Fingerprint == "" {
 		cfg.Fingerprint = os.Getenv("OCI_CLI_FINGERPRINT")
+	}
+	if cfg.KeyContent == "" {
+		cfg.KeyContent = os.Getenv("OCI_CLI_KEY_CONTENT")
 	}
 	if cfg.KeyFile == "" {
 		cfg.KeyFile = os.Getenv("OCI_CLI_KEY_FILE")
@@ -128,20 +132,28 @@ func LoadOCIConfig(ctx context.Context, tenancy, user, region, compartment, fing
 // getConfigProvider returns an OCI config provider
 func getConfigProvider(cfg *OCIConfig) (common.ConfigurationProvider, error) {
 	// If we have all the explicit values, use them
-	if cfg.TenancyOCID != "" && cfg.UserOCID != "" && cfg.Region != "" && cfg.Fingerprint != "" && cfg.KeyFile != "" {
-		// Expand ~ in key file path
-		keyFile := cfg.KeyFile
-		if strings.HasPrefix(keyFile, "~") {
-			home, err := os.UserHomeDir()
-			if err == nil {
-				keyFile = filepath.Join(home, keyFile[1:])
-			}
-		}
+	if cfg.TenancyOCID != "" && cfg.UserOCID != "" && cfg.Region != "" && cfg.Fingerprint != "" && (cfg.KeyContent != "" || cfg.KeyFile != "") {
+		var keyPEM string
 
-		// Read the private key file content
-		keyContent, err := os.ReadFile(keyFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read key file %s: %w", keyFile, err)
+		if cfg.KeyContent != "" {
+			// Use key content directly (e.g., from OCI_CLI_KEY_CONTENT env var)
+			keyPEM = cfg.KeyContent
+		} else {
+			// Expand ~ in key file path
+			keyFile := cfg.KeyFile
+			if strings.HasPrefix(keyFile, "~") {
+				home, err := os.UserHomeDir()
+				if err == nil {
+					keyFile = filepath.Join(home, keyFile[1:])
+				}
+			}
+
+			// Read the private key file content
+			keyBytes, err := os.ReadFile(keyFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read key file %s: %w", keyFile, err)
+			}
+			keyPEM = string(keyBytes)
 		}
 
 		var passphrase *string
@@ -154,7 +166,7 @@ func getConfigProvider(cfg *OCIConfig) (common.ConfigurationProvider, error) {
 			cfg.UserOCID,
 			cfg.Region,
 			cfg.Fingerprint,
-			string(keyContent),
+			keyPEM,
 			passphrase,
 		), nil
 	}

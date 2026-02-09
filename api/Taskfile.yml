@@ -13,6 +13,12 @@ tasks:
     cmds:
       - go build -ldflags='-s -w' -o bin/tunnel-server ./cmd/tunnel-server/
 
+  build:oci-installer:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags='-s -w' -o bin/oci-installer ./cmd/kli/oci-installer/
+
   build:image-tunnel-server:
     env:
       IMAGE: "ghcr.io/kloudlite/kloudlite/tunnel-server:development"
