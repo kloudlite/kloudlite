@@ -5,6 +5,7 @@ import { DeleteInstallationButton } from '@/components/delete-installation-butto
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
 import { UninstallScriptCard } from '@/components/uninstall-script-card'
+import { ManagedUninstallButton } from '@/components/managed-uninstall-button'
 import { AlertTriangle } from 'lucide-react'
 
 interface PageProps {
@@ -117,7 +118,26 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
             <p className="text-muted-foreground text-sm">Irreversible actions that affect your installation</p>
           </div>
 
-          {installation.secretKey && (
+          {installation.secretKey && installation.cloudProvider === 'oci' && (
+            <>
+              <div className="space-y-4 mb-6">
+                <div>
+                  <p className="text-foreground text-sm font-semibold">Uninstall Kloudlite Cloud</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    This will tear down all managed infrastructure and delete this installation.
+                  </p>
+                </div>
+                <ManagedUninstallButton
+                  installationId={installation.id}
+                  installationName={installation.name}
+                />
+              </div>
+
+              <div className="border-t border-red-500/20 my-6" />
+            </>
+          )}
+
+          {installation.secretKey && installation.cloudProvider !== 'oci' && (
             <>
               <div className="border border-red-500/20 bg-red-500/5 rounded-lg p-4 mb-6">
                 <UninstallScriptCard

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Button, Input, Textarea, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@kloudlite/ui'
+import { Button, Input, Textarea, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription, RadioGroup, RadioGroupItem, Label } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -24,6 +24,7 @@ const installationSchema = z.object({
       /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/,
       'Subdomain must start and end with alphanumeric characters and can only contain lowercase letters, numbers, and hyphens',
     ),
+  hostingType: z.enum(['kloudlite', 'byoc']),
 })
 
 type InstallationFormData = z.infer<typeof installationSchema>
@@ -40,6 +41,7 @@ export default function NewInstallationPage() {
       name: '',
       description: '',
       subdomain: '',
+      hostingType: 'kloudlite',
     },
   })
 
@@ -87,6 +89,7 @@ export default function NewInstallationPage() {
           name: data.name,
           description: data.description || undefined,
           subdomain: data.subdomain,
+          hostingType: data.hostingType,
         }),
       })
 
@@ -98,8 +101,12 @@ export default function NewInstallationPage() {
       await response.json()
       toast.success('Installation created successfully!')
 
-      // Redirect to install step
-      router.push('/installations/new/install')
+      // Redirect based on hosting type
+      if (data.hostingType === 'kloudlite') {
+        router.push('/installations/new/kloudlite-cloud')
+      } else {
+        router.push('/installations/new/install')
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create installation')
       toast.error(error.message)
@@ -285,6 +292,58 @@ export default function NewInstallationPage() {
                           )}
                         </span>
                       </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="hostingType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hosting Type</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="grid gap-3"
+                          disabled={creating}
+                        >
+                          <Label
+                            htmlFor="hosting-kloudlite"
+                            className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                              field.value === 'kloudlite'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-foreground/10 hover:border-foreground/20'
+                            }`}
+                          >
+                            <RadioGroupItem value="kloudlite" id="hosting-kloudlite" className="mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-foreground">Kloudlite Cloud</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                We manage the infrastructure for you. No CLI required.
+                              </p>
+                            </div>
+                          </Label>
+                          <Label
+                            htmlFor="hosting-byoc"
+                            className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                              field.value === 'byoc'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-foreground/10 hover:border-foreground/20'
+                            }`}
+                          >
+                            <RadioGroupItem value="byoc" id="hosting-byoc" className="mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-foreground">Bring your own Cloud</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Deploy to your own AWS, GCP, or Azure account using CLI commands.
+                              </p>
+                            </div>
+                          </Label>
+                        </RadioGroup>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
