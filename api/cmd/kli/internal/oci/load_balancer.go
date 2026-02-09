@@ -89,9 +89,9 @@ func CreateNetworkLoadBalancer(ctx context.Context, cfg *OCIConfig, subnetID, in
 
 	// Health check config (TCP for Layer 4 NLB)
 	healthCheckPort := 80
-	healthCheckInterval := 10000 // 10 seconds in ms
-	healthCheckTimeout := 3000   // 3 seconds in ms
-	healthCheckRetries := 3
+	healthCheckInterval := 5000 // 5 seconds in ms
+	healthCheckTimeout := 3000  // 3 seconds in ms
+	healthCheckRetries := 2
 
 	// Backend set with the instance
 	backendPort := 80
