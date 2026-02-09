@@ -242,6 +242,15 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 	createdResources.vcnID = vcnID
 	createdResources.Unlock()
 
+	// Ensure subnet security list has required rules for NLB health checks
+	fmt.Printf("  o Updating subnet security list rules...")
+	if err := ociinternal.EnsureSubnetSecurityListRules(ctx, cfg, subnetID); err != nil {
+		red.Printf(" x\n")
+		yellow.Printf("    Error: %v\n\n", err)
+		os.Exit(1)
+	}
+	green.Printf(" +\n")
+
 	time.Sleep(1 * time.Second)
 
 	// Parallel Resource Creation

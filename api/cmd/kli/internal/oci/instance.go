@@ -371,6 +371,16 @@ apt-get upgrade -y
 # Install required packages
 apt-get install -y curl wget git
 
+# Open firewall ports for K3s and HTTP/HTTPS traffic
+# OCI Ubuntu images ship with iptables rules that reject all traffic except SSH
+echo "Opening firewall ports..."
+iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 6443 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 10250 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 5001 -j ACCEPT
+iptables -I INPUT 1 -p udp --dport 8472 -j ACCEPT
+
 # Fetch instance IPs from OCI Instance Metadata Service v2
 echo "Fetching instance metadata..."
 PRIVATE_IP=$(curl -H "Authorization: Bearer Oracle" http://169.254.169.254/opc/v2/vnics/ 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['privateIp'])" 2>/dev/null || echo "")
