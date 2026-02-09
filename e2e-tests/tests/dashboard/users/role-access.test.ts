@@ -1,6 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
-
-const DEV_TOKEN = 'dev-superadmin'
+import { superadminLogin } from '../../../lib/helpers'
 
 // Test user credentials
 const TEST_PASSWORD = 'testpass123'
@@ -23,11 +22,6 @@ const TEST_USERS = {
 } as const
 
 // --- Helpers ---
-
-async function loginAsSuperAdmin(page: Page) {
-  await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
-  await page.waitForURL('**/admin/**', { timeout: 15_000 })
-}
 
 async function navigateToUserManagement(page: Page) {
   await page.getByRole('link', { name: 'User Management' }).click()
@@ -114,7 +108,7 @@ async function loginAsCredentials(page: Page, email: string, password: string) {
   )
 }
 
-test.describe('Role-based user access', () => {
+test.describe('Dashboard > Users > Role Access', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   // Increase timeout for setup/teardown since they create multiple users
@@ -124,7 +118,7 @@ test.describe('Role-based user access', () => {
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage({ storageState: { cookies: [], origins: [] } })
 
-    await loginAsSuperAdmin(page)
+    await superadminLogin(page)
     await navigateToUserManagement(page)
 
     // Create all three test users
@@ -144,7 +138,7 @@ test.describe('Role-based user access', () => {
   test.afterAll(async ({ browser }) => {
     const page = await browser.newPage({ storageState: { cookies: [], origins: [] } })
 
-    await loginAsSuperAdmin(page)
+    await superadminLogin(page)
     await navigateToUserManagement(page)
 
     // Delete all test users (reverse order to avoid index shifts)

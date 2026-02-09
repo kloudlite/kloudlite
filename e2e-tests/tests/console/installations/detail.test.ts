@@ -1,20 +1,8 @@
-import { test, expect, Page } from '@playwright/test'
+import { consoleTest as test, expect } from '../../../lib/fixtures'
+import { escapeRegex } from '../../../lib/helpers'
 
-async function devLogin(page: Page) {
-  await page.goto('/api/dev-login')
-  await page.waitForURL('**/installations', { timeout: 15_000 })
-}
-
-function escapeRegex(str: string) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
-test.describe('Installation Detail', () => {
+test.describe('Console > Installations > Detail', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
-
-  test.beforeEach(async ({ page }) => {
-    await devLogin(page)
-  })
 
   test('clicking an installation navigates to detail page', async ({ page }) => {
     const table = page.getByRole('table')

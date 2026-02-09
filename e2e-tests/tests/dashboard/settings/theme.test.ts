@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Console Theme Switcher', () => {
+test.describe('Dashboard > Settings > Theme', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login')
+    await page.goto('/auth/signin')
   })
 
   test('switch to dark mode', async ({ page }) => {
@@ -32,11 +32,9 @@ test.describe('Console Theme Switcher', () => {
     await page.getByRole('button', { name: 'Toggle theme' }).click()
     await page.getByRole('menuitem', { name: 'Dark' }).click()
 
-    await expect(page.locator('html')).toHaveClass(/dark/)
-
     await page.reload()
 
-    await expect(page.locator('html')).toHaveClass(/dark/, { timeout: 10_000 })
+    await expect(page.locator('html')).toHaveClass(/dark/)
   })
 
   test('system theme follows prefers-color-scheme', async ({ page }) => {

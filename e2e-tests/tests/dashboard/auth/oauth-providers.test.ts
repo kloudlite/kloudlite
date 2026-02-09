@@ -1,13 +1,10 @@
-import { test, expect } from '@playwright/test'
+import { dashboardTest as test, expect } from '../../../lib/fixtures'
+import { superadminLogin } from '../../../lib/helpers'
 
-const DEV_TOKEN = 'dev-superadmin'
-
-test.describe('OAuth Providers', () => {
+test.describe('Dashboard > Auth > OAuth Providers', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
-    await page.waitForURL('**/admin/**', { timeout: 15_000 })
     await page.getByRole('link', { name: 'OAuth Providers' }).click()
     await expect(page.getByRole('heading', { name: 'OAuth Provider Configuration' })).toBeVisible()
   })
@@ -73,14 +70,12 @@ const OAUTH_PROVIDERS = [
   { name: 'Microsoft', buttonText: 'Continue with Microsoft' },
 ] as const
 
-test.describe('OAuth providers on login screen', () => {
+test.describe('Dashboard > Auth > OAuth Login Screen', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
   test.describe.configure({ timeout: 60_000 })
 
   test('all configured OAuth providers are visible on signin page', async ({ page }) => {
-    // Login as superadmin and go to OAuth Providers page
-    await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
-    await page.waitForURL('**/admin/**', { timeout: 15_000 })
+    // page arrives pre-authenticated as superadmin
     await page.getByRole('link', { name: 'OAuth Providers' }).click()
     await expect(page.getByRole('heading', { name: 'OAuth Provider Configuration' })).toBeVisible()
 
@@ -121,8 +116,7 @@ test.describe('OAuth providers on login screen', () => {
 
     // Restore original state — disable providers that were not originally enabled
     if (originallyDisabled.length > 0) {
-      await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
-      await page.waitForURL('**/admin/**', { timeout: 15_000 })
+      await superadminLogin(page)
       await page.getByRole('link', { name: 'OAuth Providers' }).click()
       await expect(page.getByRole('heading', { name: 'OAuth Provider Configuration' })).toBeVisible()
 

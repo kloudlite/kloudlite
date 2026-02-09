@@ -6,11 +6,15 @@
     "test": "playwright test",
     "test:dashboard": "playwright test --project=dashboard",
     "test:console": "playwright test --project=console",
+    "test:aws": "playwright test --project=aws",
+    "test:gcp": "playwright test --project=gcp",
+    "test:azure": "playwright test --project=azure",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
+    "@types/node": "^25.2.2",
     "playwright": "^1.50.0",
     "typescript": "^5.0.0"
   }

@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { dashboardTest } from '../../../lib/fixtures'
+import { DEV_TOKEN } from '../../../lib/constants'
 
-const DEV_TOKEN = 'dev-superadmin'
-
-test.describe('Super Admin Login Flow', () => {
+test.describe('Dashboard > Auth > Super Admin Login', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test('login with dev token and redirect to admin', async ({ page }) => {
@@ -27,15 +27,10 @@ test.describe('Super Admin Login Flow', () => {
   })
 })
 
-test.describe('Super Admin Dashboard', () => {
-  test.use({ storageState: { cookies: [], origins: [] } })
+dashboardTest.describe('Dashboard > Auth > Super Admin Dashboard', () => {
+  dashboardTest.use({ storageState: { cookies: [], origins: [] } })
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
-    await page.waitForURL('**/admin/**', { timeout: 15_000 })
-  })
-
-  test('nav links are visible and navigable', async ({ page }) => {
+  dashboardTest('nav links are visible and navigable', async ({ page }) => {
     await page.getByRole('link', { name: 'Machine Configs' }).click()
     await expect(page).toHaveURL(/\/admin\/machine-configs/)
 
@@ -46,7 +41,7 @@ test.describe('Super Admin Dashboard', () => {
     await expect(page).toHaveURL(/\/admin\/users/)
   })
 
-  test('sign out redirects away from admin', async ({ page }) => {
+  dashboardTest('sign out redirects away from admin', async ({ page }) => {
     await page.getByRole('button', { name: 'Super Admin (Dev)' }).click()
 
     await expect(page.getByText('admin@dev-installation')).toBeVisible()
@@ -54,5 +49,4 @@ test.describe('Super Admin Dashboard', () => {
     await page.getByRole('menuitem', { name: 'Sign out' }).click()
     await expect(page).not.toHaveURL(/\/admin/)
   })
-
 })

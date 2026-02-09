@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { TIMEOUTS } from './lib/constants'
 
 export default defineConfig({
   testDir: './tests',
@@ -7,8 +8,8 @@ export default defineConfig({
     timeout: 5_000,
   },
   use: {
-    navigationTimeout: 15_000,
-    actionTimeout: 10_000,
+    navigationTimeout: TIMEOUTS.navigation,
+    actionTimeout: TIMEOUTS.action,
     trace: 'on-first-retry',
   },
   projects: [
@@ -39,7 +40,7 @@ export default defineConfig({
       timeout: 30_000,
       use: { baseURL: 'http://localhost:3002' },
     },
-    // Console tests
+    // Console tests (UI-only, no cloud provisioning)
     {
       name: 'console',
       testDir: './tests/console',
@@ -48,7 +49,40 @@ export default defineConfig({
         baseURL: 'http://localhost:3002',
       },
       dependencies: ['warmup-console'],
-      testIgnore: /global\.setup\.ts/,
+      testIgnore: [/global\.setup\.ts/, /\/providers\//],
+    },
+    // AWS installation lifecycle (long-running)
+    {
+      name: 'aws',
+      testDir: './tests/console/providers/aws',
+      timeout: TIMEOUTS.providerTest,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:3002',
+      },
+      dependencies: ['warmup-console'],
+    },
+    // GCP installation lifecycle (long-running)
+    {
+      name: 'gcp',
+      testDir: './tests/console/providers/gcp',
+      timeout: TIMEOUTS.providerTest,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:3002',
+      },
+      dependencies: ['warmup-console'],
+    },
+    // Azure installation lifecycle (long-running)
+    {
+      name: 'azure',
+      testDir: './tests/console/providers/azure',
+      timeout: TIMEOUTS.providerTest,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:3002',
+      },
+      dependencies: ['warmup-console'],
     },
   ],
 })
