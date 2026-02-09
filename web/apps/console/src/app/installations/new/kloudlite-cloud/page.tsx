@@ -37,7 +37,7 @@ export default function KloudliteCloudPage() {
     }
   }, [])
 
-  // On mount: get session, verify key, trigger deploy
+  // On mount: get session, verify key, check existing job status, trigger deploy only if needed
   useEffect(() => {
     if (initRef.current) return
     initRef.current = true
@@ -74,7 +74,25 @@ export default function KloudliteCloudPage() {
         const instId = verifyData.installationId
         setInstallationId(instId)
 
-        // Step 3: Trigger deploy
+        // Step 3: Check if a job is already running before triggering
+        try {
+          const statusRes = await fetch(`/api/installations/${instId}/job-status`)
+          if (statusRes.ok) {
+            const statusData = await statusRes.json()
+            if (statusData.status === 'running' || statusData.status === 'pending') {
+              setStatus(statusData.status)
+              return
+            }
+            if (statusData.status === 'succeeded') {
+              setStatus('succeeded')
+              return
+            }
+          }
+        } catch {
+          // Ignore status check errors, proceed to trigger
+        }
+
+        // Step 4: No active job — trigger deploy
         await triggerDeploy(instId)
       } catch (err) {
         console.error('Error initializing:', err)

@@ -5,14 +5,15 @@ export const runtime = 'nodejs'
 
 /**
  * POST /api/installations/job-lock
- * Body: { installationKey: string, action: "lock" | "unlock" }
+ * Body: { installationKey: string, action: "lock" | "unlock", status?: "failed" }
  *
  * Called by the OCI installer job to acquire/release a lock.
  * Lock is per installation key — only one job can run at a time.
  */
 export async function POST(request: Request) {
   try {
-    const { installationKey, action } = await request.json()
+    const body = await request.json()
+    const { installationKey, action, status: jobStatus } = body
 
     if (!installationKey || !action) {
       return NextResponse.json({ error: 'installationKey and action are required' }, { status: 400 })
@@ -43,8 +44,9 @@ export async function POST(request: Request) {
     }
 
     if (action === 'unlock') {
+      const finalStatus = jobStatus === 'failed' ? 'failed' : 'succeeded'
       await updateInstallation(installation.id, {
-        acaJobStatus: 'succeeded',
+        acaJobStatus: finalStatus,
         acaJobCompletedAt: new Date().toISOString(),
       })
 
