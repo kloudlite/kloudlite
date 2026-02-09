@@ -356,6 +356,16 @@ exec 2>&1
 
 echo "Starting Kloudlite installation at $(date)"
 
+# Open firewall ports FIRST — OCI Ubuntu images reject all non-SSH traffic by default.
+# Opening ports early lets NLB health checks pass as soon as a service binds to port 80.
+echo "Opening firewall ports..."
+iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 6443 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 10250 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 5001 -j ACCEPT
+iptables -I INPUT 1 -p udp --dport 8472 -j ACCEPT
+
 # Wait for any existing apt processes to finish (cloud-init apt setup)
 echo "Waiting for apt locks to be released..."
 while fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
@@ -364,22 +374,9 @@ while fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-fronte
 done
 echo "apt locks released"
 
-# Update system
+# Update package lists and install required packages (skip upgrade — fresh image is recent enough)
 apt-get update -y
-apt-get upgrade -y
-
-# Install required packages
 apt-get install -y curl wget git
-
-# Open firewall ports for K3s and HTTP/HTTPS traffic
-# OCI Ubuntu images ship with iptables rules that reject all traffic except SSH
-echo "Opening firewall ports..."
-iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
-iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
-iptables -I INPUT 1 -p tcp --dport 6443 -j ACCEPT
-iptables -I INPUT 1 -p tcp --dport 10250 -j ACCEPT
-iptables -I INPUT 1 -p tcp --dport 5001 -j ACCEPT
-iptables -I INPUT 1 -p udp --dport 8472 -j ACCEPT
 
 # Fetch instance IPs from OCI Instance Metadata Service v2
 echo "Fetching instance metadata..."
