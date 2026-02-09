@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -80,6 +83,50 @@ func loadConfig() (*Config, error) {
 	return cfg, nil
 }
 
+// acquireLock tries to acquire a job lock via the console API.
+// Returns true if lock acquired, false if another job is already running.
+func acquireLock(cfg *Config) (bool, error) {
+	return callJobLock(cfg, "lock")
+}
+
+// releaseLock releases the job lock via the console API.
+func releaseLock(cfg *Config) {
+	ok, err := callJobLock(cfg, "unlock")
+	if err != nil {
+		log.Printf("Warning: failed to release lock: %v", err)
+	} else if !ok {
+		log.Printf("Warning: lock release returned unexpected result")
+	}
+}
+
+func callJobLock(cfg *Config, action string) (bool, error) {
+	url := fmt.Sprintf("%s/api/installations/job-lock", cfg.ConsoleBaseURL)
+
+	body, _ := json.Marshal(map[string]string{
+		"installationKey": cfg.InstallationKey,
+		"action":          action,
+	})
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		return false, fmt.Errorf("failed to call job-lock API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false, fmt.Errorf("failed to decode job-lock response: %w", err)
+	}
+
+	if action == "lock" {
+		acquired, _ := result["acquired"].(bool)
+		return acquired, nil
+	}
+
+	released, _ := result["released"].(bool)
+	return released, nil
+}
+
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.LUTC)
 
@@ -95,6 +142,18 @@ func main() {
 	log.Printf("Installation Key: %s", cfg.InstallationKey)
 	log.Printf("OCI Region:       %s", cfg.OCIRegion)
 	log.Printf("Console URL:      %s", cfg.ConsoleBaseURL)
+
+	// Acquire lock — exit immediately if another job is already running
+	acquired, err := acquireLock(cfg)
+	if err != nil {
+		log.Fatalf("Failed to acquire lock: %v", err)
+	}
+	if !acquired {
+		log.Println("Another job is already running for this installation. Exiting.")
+		os.Exit(0)
+	}
+	log.Println("Lock acquired")
+	defer releaseLock(cfg)
 
 	// 25-minute timeout for the overall operation
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Minute)

@@ -3,6 +3,8 @@ import { requireOwnerPermission } from '@/lib/console/authorization'
 import { getInstallationById, updateInstallation } from '@/lib/console/storage'
 import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
 
+const STALE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
@@ -15,13 +17,22 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     }
 
     if (!installation.subdomain) {
-      return NextResponse.json(
-        { error: 'No subdomain configured for this installation' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'No subdomain configured' }, { status: 400 })
     }
 
-    // Read OCI credentials from server-side env vars
+    // If a job is already running and not stale, return existing execution
+    if (
+      (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
+      installation.acaJobStartedAt &&
+      Date.now() - new Date(installation.acaJobStartedAt).getTime() < STALE_TIMEOUT_MS
+    ) {
+      return NextResponse.json({
+        success: true,
+        executionName: installation.acaJobExecutionName,
+        message: 'Job already running',
+      })
+    }
+
     const ociTenancy = process.env.KLOUDLITE_OCI_TENANCY
     const ociUser = process.env.KLOUDLITE_OCI_USER
     const ociRegion = process.env.KLOUDLITE_OCI_REGION
@@ -31,10 +42,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (!ociTenancy || !ociUser || !ociRegion || !ociFingerprint || !ociPrivateKey) {
       console.error('Missing KLOUDLITE_OCI_* env vars for managed install')
-      return NextResponse.json(
-        { error: 'Kloudlite Cloud is not configured on this server' },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: 'Kloudlite Cloud is not configured on this server' }, { status: 500 })
     }
 
     const result = await triggerOCIInstallerJob({
@@ -48,7 +56,6 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       ociPrivateKey,
     })
 
-    // Store execution info on the installation
     await updateInstallation(id, {
       acaJobExecutionName: result.executionName,
       acaJobStatus: result.status,
@@ -59,10 +66,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       cloudLocation: ociRegion,
     })
 
-    return NextResponse.json({
-      success: true,
-      executionName: result.executionName,
-    })
+    return NextResponse.json({ success: true, executionName: result.executionName })
   } catch (error) {
     console.error('Error triggering managed install:', error)
     const message = error instanceof Error ? error.message : 'Failed to trigger install'

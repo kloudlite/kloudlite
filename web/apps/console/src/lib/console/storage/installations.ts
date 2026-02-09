@@ -382,6 +382,11 @@ export async function updateInstallation(
 }
 
 /**
+ * Atomically acquire a job lock for an installation.
+ * Uses a conditional UPDATE that only succeeds if no job is currently running/pending.
+ * Returns true if the lock was acquired, false if a job is already running.
+ */
+/**
  * Atomically mark installation complete with optional secret key
  */
 export async function markInstallationComplete(
