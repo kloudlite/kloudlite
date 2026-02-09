@@ -58,7 +58,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     await updateInstallation(id, {
       acaJobExecutionName: result.executionName,
-      acaJobStatus: result.status,
+      acaJobStatus: 'pending',
       acaJobStartedAt: new Date().toISOString(),
       acaJobCompletedAt: undefined,
       acaJobError: undefined,

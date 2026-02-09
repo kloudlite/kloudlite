@@ -24,9 +24,9 @@ export async function POST(request: Request) {
     }
 
     if (action === 'lock') {
-      // If already locked and not stale (< 30 min), reject
+      // Only reject if another job is actively running (not just pending/triggered)
       if (
-        (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
+        installation.acaJobStatus === 'running' &&
         installation.acaJobStartedAt &&
         Date.now() - new Date(installation.acaJobStartedAt).getTime() < 30 * 60 * 1000
       ) {
