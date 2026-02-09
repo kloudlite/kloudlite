@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { getValidUserInstallations, type Installation } from '@/lib/console/storage'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
 import { PendingInvitationsBanner } from '@/components/pending-invitations-banner'
-import { Button, ScrollArea } from '@kloudlite/ui'
-import { Plus } from 'lucide-react'
+import { NewInstallationButton } from '@/components/new-installation-button'
+import { ScrollArea } from '@kloudlite/ui'
 
 export default async function InstallationsPage() {
   const session = await getRegistrationSession()
@@ -40,12 +39,7 @@ export default async function InstallationsPage() {
                 Manage and monitor your cloud deployments
               </p>
             </div>
-            <Link href="/installations/new-kl-cloud">
-              <Button size="default">
-                <Plus className="h-4 w-4" />
-                New Installation
-              </Button>
-            </Link>
+            <NewInstallationButton />
           </div>
 
           {/* Installations List with Filter */}

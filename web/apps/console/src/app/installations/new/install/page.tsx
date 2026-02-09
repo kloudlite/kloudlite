@@ -235,7 +235,7 @@ export default function InstallPage() {
 
   if (loading) {
     return (
-      <div className="bg-background flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <Loader2 className="text-primary size-8 animate-spin" />
       </div>
     )

@@ -87,9 +87,17 @@ export async function isSubdomainAvailable(subdomain: string): Promise<boolean> 
     .eq('subdomain', subdomainLower)
     .single()
 
-  // If no reservation exists, subdomain is available
+  // If no reservation exists, also check the installations table directly
+  // (handles cases where domain_reservation was cleaned up but installation row remains)
   if (!reservationResult.data) {
-    return true
+    const installationCheck = await supabase
+      .from('installations')
+      .select('id')
+      .eq('subdomain', subdomainLower)
+      .single()
+
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    return !installationCheck.data
   }
 
   // Reservation exists - check if it's expired

@@ -12,6 +12,7 @@ import { DefaultAzureCredential } from '@azure/identity'
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID || ''
 const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP || 'rg-kloudlite'
 const JOB_NAME = process.env.OCI_INSTALLER_JOB_NAME || 'job-oci-installer'
+const OCI_INSTALLER_IMAGE = process.env.OCI_INSTALLER_IMAGE || 'ghcr.io/kloudlite/kloudlite/oci-installer:sha-b500f8c'
 
 function getClient(): ContainerAppsAPIClient {
   const credential = new DefaultAzureCredential()
@@ -77,6 +78,7 @@ export async function triggerOCIInstallerJob(
       containers: [
         {
           name: 'oci-installer',
+          image: OCI_INSTALLER_IMAGE,
           env: envVars,
         },
       ],
@@ -102,6 +104,7 @@ export async function getJobExecutionStatus(executionName: string): Promise<JobS
 
   const execution = await client.jobExecution(RESOURCE_GROUP, JOB_NAME, executionName)
 
+  console.log(`[aca-jobs] execution ${executionName} raw status: ${execution.status}`)
   const status = mapRunningState(execution.status)
 
   return {
