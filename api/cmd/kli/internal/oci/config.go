@@ -137,7 +137,8 @@ func getConfigProvider(cfg *OCIConfig) (common.ConfigurationProvider, error) {
 
 		if cfg.KeyContent != "" {
 			// Use key content directly (e.g., from OCI_CLI_KEY_CONTENT env var)
-			keyPEM = cfg.KeyContent
+			// Handle escaped newlines from env vars (e.g. "-----BEGIN...\\nMII..." → real newlines)
+			keyPEM = strings.ReplaceAll(cfg.KeyContent, `\n`, "\n")
 		} else {
 			// Expand ~ in key file path
 			keyFile := cfg.KeyFile
