@@ -55,7 +55,7 @@ e2e-tests/
       auth/
         login.test.ts           # Login page UI, OAuth buttons, dev login flow, sign out
       installations/
-        list.test.ts            # Installation list, filters, search, table columns
+        list.test.ts            # Installation list, filters, search, table columns, continue button
         detail.test.ts          # Installation detail, overview/team tabs
         cli-download.test.ts    # CLI download page, platform sections, direct links
       providers/
