@@ -165,7 +165,7 @@ export default function InstallPage() {
 
           if (!data.installationKey) {
             // No installation key, redirect to create installation page
-            router.push('/installations/new')
+            router.push('/installations/new-byoc')
             return
           }
 
@@ -224,7 +224,7 @@ export default function InstallPage() {
   // Redirect if no session after loading completes
   useEffect(() => {
     if (!loading && (!session || !session.installationKey)) {
-      router.push('/installations/new')
+      router.push('/installations/new-byoc')
     }
   }, [loading, session, router])
 

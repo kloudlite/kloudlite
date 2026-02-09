@@ -40,7 +40,7 @@ export default async function InstallationsPage() {
                 Manage and monitor your cloud deployments
               </p>
             </div>
-            <Link href="/installations/new">
+            <Link href="/installations/new-kl-cloud">
               <Button size="default">
                 <Plus className="h-4 w-4" />
                 New Installation
