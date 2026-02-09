@@ -41,6 +41,11 @@ export async function getInstallationById(installationId: string): Promise<Insta
     lastHealthCheck: data.last_health_check || undefined,
     cloudProvider: data.cloud_provider || undefined,
     cloudLocation: data.cloud_location || undefined,
+    acaJobExecutionName: (data as any).aca_job_execution_name || undefined,
+    acaJobStatus: (data as any).aca_job_status || undefined,
+    acaJobStartedAt: (data as any).aca_job_started_at || undefined,
+    acaJobCompletedAt: (data as any).aca_job_completed_at || undefined,
+    acaJobError: (data as any).aca_job_error || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords:
@@ -174,6 +179,11 @@ export async function getUserInstallations(userId: string): Promise<Installation
         lastHealthCheck: inst.last_health_check || undefined,
         cloudProvider: inst.cloud_provider || undefined,
         cloudLocation: inst.cloud_location || undefined,
+        acaJobExecutionName: (inst as any).aca_job_execution_name || undefined,
+        acaJobStatus: (inst as any).aca_job_status || undefined,
+        acaJobStartedAt: (inst as any).aca_job_started_at || undefined,
+        acaJobCompletedAt: (inst as any).aca_job_completed_at || undefined,
+        acaJobError: (inst as any).aca_job_error || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
         ipRecords:
@@ -339,10 +349,25 @@ export async function updateInstallation(
   if (updates.cloudLocation !== undefined)
     updateData.cloud_location = updates.cloudLocation || null
 
+  // ACA Job fields (cast to any since these columns may not be in generated types yet)
+  const extraUpdates: Record<string, unknown> = {}
+  if (updates.acaJobExecutionName !== undefined)
+    extraUpdates.aca_job_execution_name = updates.acaJobExecutionName || null
+  if (updates.acaJobStatus !== undefined)
+    extraUpdates.aca_job_status = updates.acaJobStatus || null
+  if (updates.acaJobStartedAt !== undefined)
+    extraUpdates.aca_job_started_at = updates.acaJobStartedAt || null
+  if (updates.acaJobCompletedAt !== undefined)
+    extraUpdates.aca_job_completed_at = updates.acaJobCompletedAt || null
+  if (updates.acaJobError !== undefined)
+    extraUpdates.aca_job_error = updates.acaJobError || null
+
+  const mergedUpdateData = { ...updateData, ...extraUpdates }
+
   const { error } = await supabase
     .from('installations')
     // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .update(updateData)
+    .update(mergedUpdateData)
     .eq('id', installationId)
 
   if (error) {

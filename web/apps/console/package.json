@@ -9,6 +9,8 @@
     "lint": "echo 'Linting skipped - Next.js 16 + ESLint 9 compatibility issue'"
   },
   "dependencies": {
+    "@azure/arm-appcontainers": "^3.0.0",
+    "@azure/identity": "^4.13.0",
     "@hookform/resolvers": "^5.2.2",
     "@kloudlite/lib": "workspace:*",
     "@kloudlite/types": "workspace:*",

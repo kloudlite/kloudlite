@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 
 interface UninstallScriptCardProps {
   installationKey: string
-  provider?: 'aws' | 'gcp' | 'azure'
+  provider?: 'aws' | 'gcp' | 'azure' | 'oci'
   region?: string
 }
 

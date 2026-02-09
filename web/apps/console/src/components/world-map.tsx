@@ -86,7 +86,7 @@ const DEFAULT_REGIONS: Record<string, string> = {
 
 interface WorldMapProps {
   selectedRegion: string
-  provider: 'aws' | 'gcp' | 'azure'
+  provider: 'aws' | 'gcp' | 'azure' | 'oci'
   className?: string
 }
 
@@ -123,6 +123,7 @@ export function WorldMap({ selectedRegion, provider, className = '' }: WorldMapP
     aws: { bg: 'from-orange-500/10 to-orange-600/5', text: 'text-orange-600', dot: 'bg-orange-500' },
     gcp: { bg: 'from-blue-500/10 to-blue-600/5', text: 'text-blue-600', dot: 'bg-blue-500' },
     azure: { bg: 'from-sky-500/10 to-sky-600/5', text: 'text-sky-600', dot: 'bg-sky-500' },
+    oci: { bg: 'from-red-500/10 to-red-600/5', text: 'text-red-600', dot: 'bg-red-500' },
   }
 
   const colors = providerColors[provider]

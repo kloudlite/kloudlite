@@ -34,6 +34,16 @@ func NewClient() *Client {
 	}
 }
 
+// NewClientWithBase creates a new console API client with a custom base URL
+func NewClientWithBase(baseURL string) *Client {
+	return &Client{
+		baseURL: baseURL,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
+}
+
 // CheckSubdomainAvailabilityResponse is the response from check-domain-kli
 type CheckSubdomainAvailabilityResponse struct {
 	Available bool   `json:"available"`

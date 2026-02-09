@@ -136,9 +136,12 @@ jobs:
               "CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
               "CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}" \
               "NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
+              "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+              "AZURE_RESOURCE_GROUP=${{ secrets.AZURE_RESOURCE_GROUP || 'rg-kloudlite' }}" \
+              "OCI_INSTALLER_JOB_NAME=${{ secrets.OCI_INSTALLER_JOB_NAME || 'job-oci-installer' }}" \
             --output none
 
-          echo "✓ Environment variables synced (19 variables)"
+          echo "✓ Environment variables synced (22 variables)"
 
   sync-website-env:
     name: Sync Website Environment Variables
