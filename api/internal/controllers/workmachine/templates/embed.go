@@ -30,6 +30,7 @@ const (
 	K3sAgentSetupAWS   templateFile = "k3s-agent-setup-aws.yml"   // Bash script for AWS (handles NVMe device detection)
 	K3sAgentSetupAzure templateFile = "k3s-agent-setup-azure.yml" // Cloud-init for Azure
 	K3sAgentSetupGCP   templateFile = "k3s-agent-setup-gcp.yml"   // Cloud-init for GCP
+	K3sAgentSetupOCI   templateFile = "k3s-agent-setup-oci.yml"   // Cloud-init for OCI
 )
 
 type K3sAgentSetupArgs struct {

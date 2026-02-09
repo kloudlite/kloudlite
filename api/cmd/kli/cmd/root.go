@@ -27,7 +27,10 @@ from the command line.`,
 
   # Check Azure prerequisites
   kli azure doctor
-  kli az doctor`,
+  kli az doctor
+
+  # Check OCI prerequisites
+  kli oci doctor`,
 }
 
 func init() {
@@ -36,6 +39,7 @@ func init() {
 	RootCmd.AddCommand(awsCmd)
 	RootCmd.AddCommand(gcpCmd)
 	RootCmd.AddCommand(azureCmd)
+	RootCmd.AddCommand(ociCmd)
 }
 
 // Execute runs the root command

@@ -29,6 +29,9 @@ var AzureMachineTypes string
 //go:embed gcp-machine-types.yaml
 var GCPMachineTypes string
 
+//go:embed oci-machine-types.yaml
+var OCIMachineTypes string
+
 //go:embed image-registry.yaml
 var ImageRegistry string
 
