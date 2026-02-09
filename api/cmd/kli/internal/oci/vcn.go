@@ -3,6 +3,7 @@ package oci
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/oracle/oci-go-sdk/v65/core"
 )
@@ -85,6 +86,110 @@ func GetDefaultSubnet(ctx context.Context, cfg *OCIConfig, vcnID string) (string
 	}
 
 	return "", "", fmt.Errorf("no subnet found in VCN %s; please create a subnet first", vcnID)
+}
+
+// EnsureSubnetSecurityListRules ensures the subnet's security list has the required
+// ingress/egress rules for NLB health checks and traffic. OCI NLBs require the
+// subnet's security list (not just the NSG) to allow health check traffic to backends.
+func EnsureSubnetSecurityListRules(ctx context.Context, cfg *OCIConfig, subnetID string) error {
+	vnClient, err := core.NewVirtualNetworkClientWithConfigurationProvider(cfg.ConfigProvider)
+	if err != nil {
+		return fmt.Errorf("failed to create virtual network client: %w", err)
+	}
+
+	// Get the subnet to find its security list
+	subnetResp, err := vnClient.GetSubnet(ctx, core.GetSubnetRequest{
+		SubnetId: &subnetID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get subnet: %w", err)
+	}
+
+	if len(subnetResp.SecurityListIds) == 0 {
+		return fmt.Errorf("subnet has no security lists")
+	}
+
+	slID := subnetResp.SecurityListIds[0]
+
+	// Get current security list
+	slResp, err := vnClient.GetSecurityList(ctx, core.GetSecurityListRequest{
+		SecurityListId: &slID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get security list: %w", err)
+	}
+
+	// Check if rules already exist (look for HTTP port 80)
+	for _, rule := range slResp.IngressSecurityRules {
+		if rule.TcpOptions != nil && rule.TcpOptions.DestinationPortRange != nil &&
+			rule.TcpOptions.DestinationPortRange.Min != nil && *rule.TcpOptions.DestinationPortRange.Min == 80 {
+			return nil // Already has port 80 rule
+		}
+	}
+
+	// Build ingress rules — ports needed for NLB health checks and traffic
+	requiredPorts := []struct {
+		port        int
+		description string
+	}{
+		{22, "Allow SSH"},
+		{80, "Allow HTTP"},
+		{443, "Allow HTTPS"},
+		{6443, "Allow K3s API"},
+	}
+
+	ingressRules := slResp.IngressSecurityRules
+	for _, p := range requiredPorts {
+		port := p.port
+		desc := p.description
+		ingressRules = append(ingressRules, core.IngressSecurityRule{
+			Protocol:   strPtr("6"), // TCP
+			Source:     strPtr("0.0.0.0/0"),
+			SourceType: core.IngressSecurityRuleSourceTypeCidrBlock,
+			TcpOptions: &core.TcpOptions{
+				DestinationPortRange: &core.PortRange{
+					Min: &port,
+					Max: &port,
+				},
+			},
+			Description: &desc,
+		})
+	}
+
+	// Ensure egress rule exists
+	egressRules := slResp.EgressSecurityRules
+	hasEgress := false
+	for _, rule := range egressRules {
+		if rule.Destination != nil && *rule.Destination == "0.0.0.0/0" && *rule.Protocol == "all" {
+			hasEgress = true
+			break
+		}
+	}
+	if !hasEgress {
+		egressDesc := "Allow all egress"
+		egressRules = append(egressRules, core.EgressSecurityRule{
+			Protocol:        strPtr("all"),
+			Destination:     strPtr("0.0.0.0/0"),
+			DestinationType: core.EgressSecurityRuleDestinationTypeCidrBlock,
+			Description:     &egressDesc,
+		})
+	}
+
+	_, err = vnClient.UpdateSecurityList(ctx, core.UpdateSecurityListRequest{
+		SecurityListId: &slID,
+		UpdateSecurityListDetails: core.UpdateSecurityListDetails{
+			IngressSecurityRules: ingressRules,
+			EgressSecurityRules:  egressRules,
+		},
+	})
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "Conflict") {
+			return nil
+		}
+		return fmt.Errorf("failed to update security list: %w", err)
+	}
+
+	return nil
 }
 
 // GetVCNCIDR returns the CIDR of the VCN
