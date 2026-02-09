@@ -91,9 +91,9 @@ func runInstall(ctx context.Context, cfg *Config) error {
 	// Parallel resource creation
 	nextStep("Creating resources in parallel (NSG, Storage, IAM)...")
 	var (
-		wg         sync.WaitGroup
-		nsgID      string
-		bucketName = ociinternal.GetBucketName(cfg.InstallationKey)
+		wg                                   sync.WaitGroup
+		nsgID                                string
+		bucketName                           = ociinternal.GetBucketName(cfg.InstallationKey)
 		nsgErr, storageErr, dgErr, policyErr error
 	)
 
