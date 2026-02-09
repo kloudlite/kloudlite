@@ -90,8 +90,12 @@ func acquireLock(cfg *Config) (bool, error) {
 }
 
 // releaseLock releases the job lock via the console API.
-func releaseLock(cfg *Config) {
-	ok, err := callJobLock(cfg, "unlock")
+func releaseLock(cfg *Config, failed bool) {
+	status := "succeeded"
+	if failed {
+		status = "failed"
+	}
+	ok, err := callJobLock(cfg, "unlock", status)
 	if err != nil {
 		log.Printf("Warning: failed to release lock: %v", err)
 	} else if !ok {
@@ -99,13 +103,17 @@ func releaseLock(cfg *Config) {
 	}
 }
 
-func callJobLock(cfg *Config, action string) (bool, error) {
+func callJobLock(cfg *Config, action string, status ...string) (bool, error) {
 	url := fmt.Sprintf("%s/api/installations/job-lock", cfg.ConsoleBaseURL)
 
-	body, _ := json.Marshal(map[string]string{
+	payload := map[string]string{
 		"installationKey": cfg.InstallationKey,
 		"action":          action,
-	})
+	}
+	if len(status) > 0 {
+		payload["status"] = status[0]
+	}
+	body, _ := json.Marshal(payload)
 
 	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
@@ -129,7 +137,10 @@ func callJobLock(cfg *Config, action string) (bool, error) {
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.LUTC)
+	os.Exit(run())
+}
 
+func run() int {
 	log.Println("=== Kloudlite OCI Installer Job ===")
 	startTime := time.Now()
 
@@ -146,14 +157,16 @@ func main() {
 	// Acquire lock — exit immediately if another job is already running
 	acquired, err := acquireLock(cfg)
 	if err != nil {
-		log.Fatalf("Failed to acquire lock: %v", err)
+		log.Printf("Failed to acquire lock: %v", err)
+		return 1
 	}
 	if !acquired {
 		log.Println("Another job is already running for this installation. Exiting.")
-		os.Exit(0)
+		return 0
 	}
 	log.Println("Lock acquired")
-	defer releaseLock(cfg)
+	failed := false
+	defer func() { releaseLock(cfg, failed) }()
 
 	// 25-minute timeout for the overall operation
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Minute)
@@ -172,14 +185,17 @@ func main() {
 	case "install":
 		if err := runInstall(ctx, cfg); err != nil {
 			log.Printf("FAILED: Installation failed after %s: %v", time.Since(startTime).Truncate(time.Second), err)
-			os.Exit(1)
+			failed = true
+			return 1
 		}
 	case "uninstall":
 		if err := runUninstall(ctx, cfg); err != nil {
 			log.Printf("FAILED: Uninstallation failed after %s: %v", time.Since(startTime).Truncate(time.Second), err)
-			os.Exit(1)
+			failed = true
+			return 1
 		}
 	}
 
 	log.Printf("=== Completed successfully in %s ===", time.Since(startTime).Truncate(time.Second))
+	return 0
 }

@@ -12,7 +12,7 @@ import { DefaultAzureCredential } from '@azure/identity'
 const SUBSCRIPTION_ID = process.env.AZURE_SUBSCRIPTION_ID || ''
 const RESOURCE_GROUP = process.env.AZURE_RESOURCE_GROUP || 'rg-kloudlite'
 const JOB_NAME = process.env.OCI_INSTALLER_JOB_NAME || 'job-oci-installer'
-const OCI_INSTALLER_IMAGE = process.env.OCI_INSTALLER_IMAGE || 'ghcr.io/kloudlite/kloudlite/oci-installer:sha-d5c9653'
+const OCI_INSTALLER_IMAGE = process.env.OCI_INSTALLER_IMAGE || 'ghcr.io/kloudlite/kloudlite/oci-installer:sha-2b53c79'
 
 function getClient(): ContainerAppsAPIClient {
   const credential = new DefaultAzureCredential()
