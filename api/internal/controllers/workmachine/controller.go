@@ -10,6 +10,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/azure"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/gcp"
+	ocicloud "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/oci"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/errors"
@@ -77,6 +78,13 @@ type gcpProviderEnv struct {
 	GCP_ZONE       string `env:"GCP_ZONE" required:"true"`
 	GCP_NETWORK    string `env:"GCP_NETWORK" required:"true"`
 	GCP_SUBNETWORK string `env:"GCP_SUBNETWORK" required:"true"`
+}
+
+type ociProviderEnv struct {
+	OCI_COMPARTMENT string `env:"OCI_COMPARTMENT" required:"true"`
+	OCI_REGION      string `env:"OCI_REGION" required:"true"`
+	OCI_SUBNET_ID   string `env:"OCI_SUBNET_ID" required:"true"`
+	OCI_NSG_ID      string `env:"OCI_NSG_ID" required:"true"`
 }
 
 // WorkMachineReconciler reconciles a WorkMachine object
@@ -763,6 +771,42 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			})
 			if err != nil {
 				return errors.Wrap("failed to create GCP provider client", err)
+			}
+
+			if err := p.ValidatePermissions(ctx); err != nil {
+				return err
+			}
+
+			r.cloudProviderAPI = p
+		}
+	case v1.OCI:
+		{
+			var ociEnv ociProviderEnv
+			if err := env.Set(&ociEnv); err != nil {
+				return errors.Wrap("failed to load OCI env vars", err)
+			}
+
+			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cf()
+			p, err := ocicloud.NewProvider(ctx, ocicloud.ProviderArgs{
+				CompartmentID: ociEnv.OCI_COMPARTMENT,
+				Region:        ociEnv.OCI_REGION,
+				SubnetID:      ociEnv.OCI_SUBNET_ID,
+				NSGID:         ociEnv.OCI_NSG_ID,
+				ResourceTags: []ocicloud.Tag{
+					{
+						Key:   "installation-id",
+						Value: r.env.KloudliteInstallationID,
+					},
+				},
+
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
+			})
+			if err != nil {
+				return errors.Wrap("failed to create OCI provider client", err)
 			}
 
 			if err := p.ValidatePermissions(ctx); err != nil {

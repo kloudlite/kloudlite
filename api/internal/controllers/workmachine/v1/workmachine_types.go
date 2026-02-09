@@ -91,6 +91,7 @@ const (
 	AWS   CloudProvider = "aws"
 	GCP   CloudProvider = "gcp"
 	Azure CloudProvider = "azure"
+	OCI   CloudProvider = "oci"
 )
 
 // MachineConfiguration defines configuration options for the WorkMachine

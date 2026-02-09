@@ -1,0 +1,73 @@
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: vm-standard-e4-flex-1-8
+  labels:
+    kloudlite.io/machinetype.default: "true"
+spec:
+  displayName: Starter (E4.Flex 1/8)
+  description: For testing and small experiments - 1 OCPU, 8GB RAM
+  category: development
+  active: true
+  isDefault: true
+  priority: 5
+  resources:
+    cpu: "1"
+    memory: 8Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: vm-standard-e4-flex-2-16
+spec:
+  displayName: Light (E4.Flex 2/16)
+  description: For simple projects and learning - 2 OCPUs, 16GB RAM
+  category: development
+  active: true
+  priority: 10
+  resources:
+    cpu: "2"
+    memory: 16Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: vm-standard-e5-flex-2-16
+spec:
+  displayName: Standard (E5.Flex 2/16)
+  description: For typical full-stack development - 2 OCPUs, 16GB RAM (latest gen)
+  category: general
+  active: true
+  priority: 20
+  resources:
+    cpu: "2"
+    memory: 16Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: vm-standard-e4-flex-4-32
+spec:
+  displayName: Heavy (E4.Flex 4/32)
+  description: For microservices and complex projects - 4 OCPUs, 32GB RAM
+  category: compute-optimized
+  active: true
+  priority: 30
+  resources:
+    cpu: "4"
+    memory: 32Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: vm-standard-e5-flex-4-64
+spec:
+  displayName: Intensive (E5.Flex 4/64)
+  description: For large-scale projects with many services - 4 OCPUs, 64GB RAM
+  category: memory-optimized
+  active: true
+  priority: 40
+  resources:
+    cpu: "4"
+    memory: 64Gi
