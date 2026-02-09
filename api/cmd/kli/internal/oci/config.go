@@ -31,12 +31,12 @@ type OCIConfig struct {
 // LoadOCIConfig loads OCI configuration from flags/env/config file
 func LoadOCIConfig(ctx context.Context, tenancy, user, region, compartment, fingerprint, keyFile string) (*OCIConfig, error) {
 	cfg := &OCIConfig{
-		TenancyOCID:    tenancy,
-		UserOCID:       user,
-		Region:         region,
+		TenancyOCID:     tenancy,
+		UserOCID:        user,
+		Region:          region,
 		CompartmentOCID: compartment,
-		Fingerprint:    fingerprint,
-		KeyFile:        keyFile,
+		Fingerprint:     fingerprint,
+		KeyFile:         keyFile,
 	}
 
 	// Try environment variables for any missing values
