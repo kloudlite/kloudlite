@@ -96,7 +96,6 @@ export async function isSubdomainAvailable(subdomain: string): Promise<boolean> 
       .eq('subdomain', subdomainLower)
       .single()
 
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
     return !installationCheck.data
   }
 
