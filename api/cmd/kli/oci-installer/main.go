@@ -154,19 +154,21 @@ func run() int {
 	log.Printf("OCI Region:       %s", cfg.OCIRegion)
 	log.Printf("Console URL:      %s", cfg.ConsoleBaseURL)
 
-	// Acquire lock — exit immediately if another job is already running
-	acquired, err := acquireLock(cfg)
-	if err != nil {
-		log.Printf("Failed to acquire lock: %v", err)
-		return 1
+	// Try to acquire lock — log warning but continue if lock service is unavailable
+	acquired, lockErr := acquireLock(cfg)
+	if lockErr != nil {
+		log.Printf("Warning: lock service unavailable: %v (continuing anyway)", lockErr)
+	} else if !acquired {
+		log.Println("Warning: lock not acquired (another job may be running). Continuing anyway.")
+	} else {
+		log.Println("Lock acquired")
 	}
-	if !acquired {
-		log.Println("Another job is already running for this installation. Exiting.")
-		return 0
-	}
-	log.Println("Lock acquired")
 	failed := false
-	defer func() { releaseLock(cfg, failed) }()
+	defer func() {
+		if acquired {
+			releaseLock(cfg, failed)
+		}
+	}()
 
 	// 25-minute timeout for the overall operation
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Minute)
