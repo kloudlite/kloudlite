@@ -114,3 +114,46 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    name: Deploy to ACA Job
+    needs: build-and-push
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          SHORT_SHA="${{ github.sha }}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          echo "image-tag=sha-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Update ACA Job image
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/oci-installer:${{ steps.tag.outputs.image-tag }}"
+          echo "Deploying OCI Installer..."
+          echo "Image: $IMAGE"
+
+          az containerapp job update \
+            --name job-oci-installer \
+            --resource-group rg-kloudlite \
+            --image "$IMAGE" \
+            --output none
+
+          echo "✓ ACA Job image updated"
+
+      - name: Deployment summary
+        run: |
+          echo "### Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **ACA Job**: job-oci-installer" >> $GITHUB_STEP_SUMMARY
+          echo "- **Resource Group**: rg-kloudlite" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${{ steps.tag.outputs.image-tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
