@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, XCircle, RefreshCw } from 'lucide-react'
@@ -13,6 +13,7 @@ export default function KloudliteCloudPage() {
   const [status, setStatus] = useState<DeployStatus>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [installationId, setInstallationId] = useState<string | null>(null)
+  const initRef = useRef(false)
 
   const triggerDeploy = useCallback(async (instId: string) => {
     setStatus('triggering')
@@ -38,6 +39,9 @@ export default function KloudliteCloudPage() {
 
   // On mount: get session, verify key, trigger deploy
   useEffect(() => {
+    if (initRef.current) return
+    initRef.current = true
+
     const init = async () => {
       try {
         // Step 1: Get session

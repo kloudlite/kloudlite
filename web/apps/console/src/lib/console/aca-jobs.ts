@@ -67,7 +67,7 @@ export async function triggerOCIInstallerJob(
     { name: 'OCI_CLI_REGION', value: params.ociRegion },
     { name: 'OCI_CLI_COMPARTMENT', value: params.ociCompartment || '' },
     { name: 'OCI_CLI_FINGERPRINT', value: params.ociFingerprint },
-    { name: 'OCI_CLI_KEY_CONTENT', value: params.ociPrivateKey },
+    { name: 'OCI_CLI_KEY_CONTENT', value: params.ociPrivateKey.replace(/\\n/g, '\n') },
     { name: 'SKIP_LB', value: String(params.skipLB ?? false) },
     { name: 'ENABLE_DELETION_PROTECTION', value: String(params.enableDeletionProtection ?? true) },
   ]
