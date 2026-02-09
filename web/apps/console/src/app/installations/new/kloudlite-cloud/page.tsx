@@ -49,7 +49,7 @@ export default function KloudliteCloudPage() {
         const sessionData = await sessionRes.json()
 
         if (!sessionData.installationKey) {
-          router.push('/installations/new')
+          router.push('/installations/new-kl-cloud')
           return
         }
 
@@ -62,7 +62,7 @@ export default function KloudliteCloudPage() {
 
         if (!verifyRes.ok) {
           toast.error('Failed to verify installation')
-          router.push('/installations/new')
+          router.push('/installations/new-kl-cloud')
           return
         }
 
