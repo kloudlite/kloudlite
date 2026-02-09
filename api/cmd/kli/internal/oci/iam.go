@@ -33,10 +33,11 @@ func EnsureDynamicGroup(ctx context.Context, cfg *OCIConfig, installationKey str
 		return existingID, nil
 	}
 
-	// Matching rule: instances in the compartment with the kloudlite tag
+	// Matching rule: all instances in the compartment
+	// Note: OCI dynamic groups cannot match on freeform tags, only defined tags
 	matchingRule := fmt.Sprintf(
-		"All {instance.compartment.id = '%s', tag.managed-by.value = 'kloudlite', tag.installation-id.value = '%s'}",
-		cfg.CompartmentOCID, installationKey,
+		"All {instance.compartment.id = '%s'}",
+		cfg.CompartmentOCID,
 	)
 
 	description := fmt.Sprintf("Kloudlite installation %s dynamic group", installationKey)
@@ -79,17 +80,22 @@ func EnsurePolicy(ctx context.Context, cfg *OCIConfig, installationKey string) (
 	}
 
 	description := fmt.Sprintf("Kloudlite installation %s policy", installationKey)
+	// Use OCI resource family types for broader, correct permissions
+	// instance-family: instances, instance-images, instance-agent-plugins
+	// virtual-network-family: vcns, subnets, vnics, security-lists, network-security-groups, route-tables
+	// volume-family: volumes, boot-volumes, volume-attachments, boot-volume-attachments
+	// object-family: objects, buckets
+	compartmentClause := fmt.Sprintf("in compartment id %s", cfg.CompartmentOCID)
+	// If compartment is the tenancy itself, use "in tenancy" syntax
+	if cfg.CompartmentOCID == cfg.TenancyOCID {
+		compartmentClause = "in tenancy"
+	}
+
 	statements := []string{
-		fmt.Sprintf("Allow dynamic-group %s to manage objects in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to manage buckets in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to manage instances in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to manage vnics in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to use subnets in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to use network-security-groups in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to read images in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to manage volume-attachments in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to manage boot-volume-attachments in compartment id %s", dgName, cfg.CompartmentOCID),
-		fmt.Sprintf("Allow dynamic-group %s to manage volumes in compartment id %s", dgName, cfg.CompartmentOCID),
+		fmt.Sprintf("Allow dynamic-group %s to manage object-family %s", dgName, compartmentClause),
+		fmt.Sprintf("Allow dynamic-group %s to manage instance-family %s", dgName, compartmentClause),
+		fmt.Sprintf("Allow dynamic-group %s to use virtual-network-family %s", dgName, compartmentClause),
+		fmt.Sprintf("Allow dynamic-group %s to manage volume-family %s", dgName, compartmentClause),
 	}
 
 	resp, err := client.CreatePolicy(ctx, identity.CreatePolicyRequest{
