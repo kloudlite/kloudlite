@@ -1,6 +1,7 @@
 'use client'
 
 import { InstallationForm } from '@/components/installation-form'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function NewKlCloudPage() {
   return (
@@ -19,7 +20,9 @@ export default function NewKlCloudPage() {
             <h3 className="text-sm font-semibold text-foreground mb-3">What happens next?</h3>
             <div className="space-y-3">
               <div className="flex gap-3">
-                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">&check;</div>
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <CheckCircle2 className="w-3 h-3" />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">Choose hosting type</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Kloudlite Cloud selected</p>
