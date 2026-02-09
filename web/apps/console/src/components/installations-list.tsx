@@ -277,17 +277,8 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                               variant="default"
                               size="sm"
                               onClick={() => {
-                                // Route to appropriate installation step
-                                if (!installation.secretKey || !installation.deploymentReady) {
-                                  // Not installed or still deploying → go to install step
-                                  router.push('/installations/new/install')
-                                } else if (!installation.subdomain) {
-                                  // No subdomain → go to details step
-                                  router.push('/installations/new')
-                                } else {
-                                  // Fallback to installation details
-                                  router.push(`/installations/${installation.id}`)
-                                }
+                                // Use the continue API to update session cookie and redirect to the correct step
+                                router.push(`/api/installations/${installation.id}/continue`)
                               }}
                             >
                               Continue
