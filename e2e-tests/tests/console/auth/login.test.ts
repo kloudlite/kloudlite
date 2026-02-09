@@ -1,11 +1,7 @@
-import { test, expect, Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
+import { devLogin } from '../../../lib/helpers'
 
-async function devLogin(page: Page) {
-  await page.goto('/api/dev-login')
-  await page.waitForURL('**/installations', { timeout: 15_000 })
-}
-
-test.describe('Console Login Page', () => {
+test.describe('Console > Auth > Login', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test.beforeEach(async ({ page }) => {
@@ -53,7 +49,7 @@ test.describe('Console Login Page', () => {
   })
 })
 
-test.describe('Console Sign Out', () => {
+test.describe('Console > Auth > Sign Out', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test('sign out redirects to login', async ({ page }) => {

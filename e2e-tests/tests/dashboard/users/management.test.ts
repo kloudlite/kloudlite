@@ -1,13 +1,9 @@
-import { test, expect } from '@playwright/test'
+import { dashboardTest as test, expect } from '../../../lib/fixtures'
 
-const DEV_TOKEN = 'dev-superadmin'
-
-test.describe('User Management', () => {
+test.describe('Dashboard > Users > Management', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`/superadmin-login?token=${DEV_TOKEN}`)
-    await page.waitForURL('**/admin/**', { timeout: 15_000 })
     await page.getByRole('link', { name: 'User Management' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'User Management' })).toBeVisible()
   })

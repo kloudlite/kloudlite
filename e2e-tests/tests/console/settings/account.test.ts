@@ -1,16 +1,7 @@
-import { test, expect, Page } from '@playwright/test'
+import { consoleTest as test, expect } from '../../../lib/fixtures'
 
-async function devLogin(page: Page) {
-  await page.goto('/api/dev-login')
-  await page.waitForURL('**/installations', { timeout: 15_000 })
-}
-
-test.describe('Account Settings', () => {
+test.describe('Console > Settings > Account', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
-
-  test.beforeEach(async ({ page }) => {
-    await devLogin(page)
-  })
 
   test('navigate to account settings via header dropdown', async ({ page }) => {
     // Wait for the page to fully load before interacting with header

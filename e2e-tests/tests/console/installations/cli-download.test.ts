@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('CLI Download Page', () => {
+test.describe('Console > Installations > CLI Download', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/install/kli')
   })

@@ -1,8 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { DEV_TOKEN } from '../../../lib/constants'
 
-const DEV_TOKEN = 'dev-superadmin'
-
-test.describe('Existing session → superadmin login', () => {
+test.describe('Dashboard > Auth > Existing Session', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test('shows warning when user is already logged in', async ({ page }) => {
