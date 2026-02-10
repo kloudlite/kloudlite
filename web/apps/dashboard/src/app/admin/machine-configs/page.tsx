@@ -3,6 +3,7 @@ import { getSession } from '@/lib/get-session'
 import { MachineConfigsList } from '../_components/machine-configs-list'
 import { listMachineTypes } from '@/app/actions/machine-type.actions'
 import type { MachineType } from '@/types/machine'
+import { env } from '@/lib/env'
 
 // Parse Kubernetes resource strings (e.g., "4Gi" -> 4)
 function parseResourceValue(value?: string | number): number {
@@ -35,6 +36,11 @@ function transformMachineTypes(machineTypes: MachineType[]) {
 }
 
 export default async function MachineConfigsPage() {
+  // In Kloudlite Cloud mode, machine configs are pre-configured — redirect to users
+  if (env.isKloudliteCloud) {
+    redirect('/admin/users')
+  }
+
   // Check authentication and permissions
   const session = await getSession()
   if (!session || !session.user?.email) {

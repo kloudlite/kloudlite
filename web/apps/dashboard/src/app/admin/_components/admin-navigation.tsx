@@ -4,14 +4,22 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Users, Settings, Shield } from 'lucide-react'
 
-export function AdminNavigation() {
+interface AdminNavigationProps {
+  isKloudliteCloud?: boolean
+}
+
+export function AdminNavigation({ isKloudliteCloud }: AdminNavigationProps) {
   const pathname = usePathname()
 
-  const navItems = [
+  const allNavItems = [
     { href: '/admin/users', label: 'User Management', icon: Users },
     { href: '/admin/machine-configs', label: 'Machine Configs', icon: Settings },
     { href: '/admin/oauth-providers', label: 'OAuth Providers', icon: Shield },
   ]
+
+  const navItems = isKloudliteCloud
+    ? allNavItems.filter((item) => item.href !== '/admin/machine-configs')
+    : allNavItems
 
   return (
     <nav className="hidden items-center gap-1 md:flex">

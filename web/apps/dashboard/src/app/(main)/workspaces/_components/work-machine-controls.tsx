@@ -79,6 +79,7 @@ interface WorkMachineControlsProps {
   onStop?: () => void
   onTypeChange?: (typeId: string) => void
   isLoading?: boolean
+  isKloudliteCloud?: boolean
 }
 
 // Parse K8s resource strings (e.g., "4", "8Gi" -> numbers)
@@ -114,6 +115,7 @@ export function WorkMachineControls({
   onStop,
   onTypeChange,
   isLoading = false,
+  isKloudliteCloud,
 }: WorkMachineControlsProps) {
   const router = useRouter()
   const [_isPending, startTransition] = useTransition()
@@ -344,75 +346,77 @@ export function WorkMachineControls({
           {buttonConfig.label}
         </Button>
 
-        {/* Machine Type Selector - Only render after mount to prevent hydration mismatch */}
-        {mounted ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                disabled={isLoading || isTransitioning}
-                title={
-                  isTransitioning
-                    ? 'Machine type cannot be changed during state transitions'
-                    : undefined
-                }
-              >
-                <Zap className="h-4 w-4" />
-                {currentMachineType?.name || 'Select Type'}
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Machine Type</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {availableMachineTypes.map((type) => (
-                <DropdownMenuItem
-                  key={type.id}
-                  className="flex items-start gap-3 p-3"
-                  onClick={() => handleTypeSelect(type.id)}
+        {/* Machine Type Selector - Hidden in Kloudlite Cloud (admin-controlled) */}
+        {!isKloudliteCloud && (
+          mounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isLoading || isTransitioning}
+                  title={
+                    isTransitioning
+                      ? 'Machine type cannot be changed during state transitions'
+                      : undefined
+                  }
                 >
-                  <div className="mt-0.5">
-                    {selectedType === type.id && <Check className="text-success h-4 w-4" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{type.name}</span>
+                  <Zap className="h-4 w-4" />
+                  {currentMachineType?.name || 'Select Type'}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Machine Type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableMachineTypes.map((type) => (
+                  <DropdownMenuItem
+                    key={type.id}
+                    className="flex items-start gap-3 p-3"
+                    onClick={() => handleTypeSelect(type.id)}
+                  >
+                    <div className="mt-0.5">
+                      {selectedType === type.id && <Check className="text-success h-4 w-4" />}
                     </div>
-                    <div className="text-muted-foreground mt-1 text-xs">{type.description}</div>
-                    <div className="text-muted-foreground mt-2 flex items-center gap-4 text-xs">
-                      <span className="flex items-center gap-1">
-                        <Cpu className="h-3 w-3" />
-                        {parseResourceValue(type.cpu)} vCPU
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MemoryStick className="h-3 w-3" />
-                        {parseResourceValue(type.memory)} GB
-                      </span>
-                      {type.gpu && (
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{type.name}</span>
+                      </div>
+                      <div className="text-muted-foreground mt-1 text-xs">{type.description}</div>
+                      <div className="text-muted-foreground mt-2 flex items-center gap-4 text-xs">
                         <span className="flex items-center gap-1">
-                          <Zap className="h-3 w-3" />
-                          {parseResourceValue(type.gpu)} GPU
+                          <Cpu className="h-3 w-3" />
+                          {parseResourceValue(type.cpu)} vCPU
                         </span>
-                      )}
+                        <span className="flex items-center gap-1">
+                          <MemoryStick className="h-3 w-3" />
+                          {parseResourceValue(type.memory)} GB
+                        </span>
+                        {type.gpu && (
+                          <span className="flex items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            {parseResourceValue(type.gpu)} GPU
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            disabled
-          >
-            <Zap className="h-4 w-4" />
-            {currentMachineType?.name || 'Select Type'}
-            <ChevronDown className="h-3 w-3" />
-          </Button>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled
+            >
+              <Zap className="h-4 w-4" />
+              {currentMachineType?.name || 'Select Type'}
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          )
         )}
 
         {/* Settings Button */}
