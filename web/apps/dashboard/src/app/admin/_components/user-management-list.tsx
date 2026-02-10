@@ -120,6 +120,19 @@ export function UserManagementList({
   const [selectedMachineType, setSelectedMachineType] = useState('')
   const [createUserMachineType, setCreateUserMachineType] = useState('')
 
+  // Debug: log work machines data to identify lookup issues
+  useEffect(() => {
+    if (isKloudliteCloud) {
+      console.log('[DEBUG] workMachines prop:', workMachines.length, workMachines.map((m: any) => ({
+        name: m.metadata?.name,
+        ownedBy: m.spec?.ownedBy,
+        machineType: m.spec?.machineType,
+        labels: m.metadata?.labels,
+      })))
+      console.log('[DEBUG] users:', users.map(u => ({ username: u.username, name: u.name })))
+    }
+  }, [workMachines, users, isKloudliteCloud])
+
   // Helper to get machine type for a user from work machines
   const getUserMachineType = useCallback((username: string): string | null => {
     const wm = workMachines.find((m: any) => m.spec?.ownedBy === username)
