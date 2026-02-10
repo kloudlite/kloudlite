@@ -32,6 +32,8 @@ function validateEnv() {
     env: process.env.NEXT_PUBLIC_ENV || 'development',
     isDevelopment: process.env.NODE_ENV === 'development',
     isProduction: process.env.NODE_ENV === 'production',
+    installationType: process.env.INSTALLATION_TYPE || 'self-hosted',
+    isKloudliteCloud: process.env.INSTALLATION_TYPE === 'kloudlite-cloud',
   }
 }
 

@@ -16,6 +16,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@kloudlite/ui'
 import {
   Plus,
@@ -30,6 +35,7 @@ import {
   Check,
   X,
   AlertCircle,
+  Cpu,
 } from 'lucide-react'
 import {
   createUser,
@@ -38,6 +44,7 @@ import {
   resetUserPassword,
   checkUsernameAvailability,
 } from '@/app/actions/user.actions'
+import { adminAssignMachineType } from '@/app/actions/work-machine.actions'
 import { generateUsernameFromEmail } from '@/lib/utils/username'
 import { UserDisplay, CreateUserFormData, userToDisplay } from '@/types/user'
 import { toast } from 'sonner'
@@ -52,16 +59,39 @@ function getAvailableRoles(currentUserRole: 'super-admin' | 'admin'): string[] {
   }
 }
 
+interface MachineTypeOption {
+  id: string
+  name: string
+  description?: string
+  cpu?: string
+  memory?: string
+  tierSubtitle?: string
+  tierPrice?: string
+  tierPriceUnit?: string
+  tierIncludedHours?: string
+  tierExtraHourPrice?: string
+  tierStorageGb?: string
+  tierSuspendMinutes?: string
+  tierPopular?: boolean
+}
+
 interface UserManagementListProps {
   users: UserDisplay[]
   currentUserRole: 'super-admin' | 'admin'
+  isKloudliteCloud?: boolean
+  machineTypes?: MachineTypeOption[]
+  workMachines?: any[]
 }
 
 export function UserManagementList({
   users: initialUsers,
   currentUserRole,
+  isKloudliteCloud,
+  machineTypes = [],
+  workMachines: initialWorkMachines = [],
 }: UserManagementListProps) {
   const [users, setUsers] = useState(initialUsers)
+  const [workMachines, setWorkMachines] = useState(initialWorkMachines)
   const [roleFilter, setRoleFilter] = useState<'all' | 'super-admin' | 'admin' | 'user'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active'>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -73,6 +103,23 @@ export function UserManagementList({
   const [isPending, startTransition] = useTransition()
   const [formError, setFormError] = useState<string | null>(null)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
+
+  // Machine type assignment state (Kloudlite Cloud only)
+  const [assigningUser, setAssigningUser] = useState<UserDisplay | null>(null)
+  const [selectedMachineType, setSelectedMachineType] = useState('')
+  const [createUserMachineType, setCreateUserMachineType] = useState('')
+
+  // Helper to get machine type for a user from work machines
+  const getUserMachineType = useCallback((username: string): string | null => {
+    const wm = workMachines.find((m: any) => m.spec?.ownedBy === username)
+    return wm?.spec?.machineType || null
+  }, [workMachines])
+
+  // Helper to get machine type display name
+  const getMachineTypeName = useCallback((typeId: string): string => {
+    const mt = machineTypes.find((t) => t.id === typeId)
+    return mt?.name || typeId
+  }, [machineTypes])
 
   // Form state
   const [formData, setFormData] = useState<CreateUserFormData>({
@@ -112,6 +159,7 @@ export function UserManagementList({
       suggested: null,
     })
     setUsernameManuallyEdited(false)
+    setCreateUserMachineType('')
   }
 
   const resetDeleteDialog = () => {
@@ -234,6 +282,11 @@ export function UserManagementList({
       return
     }
 
+    if (isKloudliteCloud && !editingUser && formData.roles.includes('user') && !createUserMachineType) {
+      setFormError('Machine type is required when user role is assigned')
+      return
+    }
+
     startTransition(async () => {
       try {
         if (editingUser) {
@@ -252,7 +305,22 @@ export function UserManagementList({
           const result = await createUser(formData as any)
           if (result.success && result.data) {
             setUsers((prev) => [...prev, userToDisplay(result.data as any)])
-            toast.success('User created successfully')
+            // If cloud mode and machine type selected, assign it
+            if (isKloudliteCloud && createUserMachineType && formData.username) {
+              const assignResult = await adminAssignMachineType(formData.username, createUserMachineType)
+              if (assignResult.success) {
+                setWorkMachines((prev: any[]) => [
+                  ...prev,
+                  { spec: { ownedBy: formData.username, machineType: createUserMachineType } },
+                ])
+                toast.success('User created and machine type assigned')
+              } else {
+                toast.success('User created, but failed to assign machine type')
+              }
+              setCreateUserMachineType('')
+            } else {
+              toast.success('User created successfully')
+            }
             resetForm()
           } else {
             setFormError(result.error || 'Failed to create user')
@@ -332,6 +400,37 @@ export function UserManagementList({
       } catch (error) {
         toast.error('An unexpected error occurred')
         console.error('Toggle user status error:', error)
+      }
+    })
+  }
+
+  const handleAssignMachineType = async () => {
+    if (!assigningUser || !selectedMachineType) return
+
+    startTransition(async () => {
+      try {
+        const result = await adminAssignMachineType(assigningUser.username, selectedMachineType)
+        if (result.success) {
+          // Update local work machines state
+          setWorkMachines((prev: any[]) => {
+            const existing = prev.findIndex((m: any) => m.spec?.ownedBy === assigningUser.username)
+            if (existing >= 0) {
+              const updated = [...prev]
+              updated[existing] = { ...updated[existing], spec: { ...updated[existing].spec, machineType: selectedMachineType } }
+              return updated
+            }
+            // Add new entry
+            return [...prev, { spec: { ownedBy: assigningUser.username, machineType: selectedMachineType } }]
+          })
+          toast.success(`Machine type assigned to ${assigningUser.name}`)
+          setAssigningUser(null)
+          setSelectedMachineType('')
+        } else {
+          toast.error(result.error || 'Failed to assign machine type')
+        }
+      } catch (error) {
+        toast.error('An unexpected error occurred')
+        console.error('Assign machine type error:', error)
       }
     })
   }
@@ -442,6 +541,9 @@ export function UserManagementList({
             <tr className="border-b">
               <th className="text-foreground p-4 text-left text-sm font-medium">User</th>
               <th className="text-foreground w-40 p-4 text-left text-sm font-medium">Role</th>
+              {isKloudliteCloud && (
+                <th className="text-foreground w-40 p-4 text-left text-sm font-medium">Machine Type</th>
+              )}
               <th className="text-foreground w-28 p-4 text-left text-sm font-medium">Status</th>
               <th className="text-foreground w-32 p-4 text-left text-sm font-medium">Last Login</th>
               <th className="text-foreground w-32 p-4 text-left text-sm font-medium">Created</th>
@@ -449,112 +551,146 @@ export function UserManagementList({
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-muted border-b">
-                <td className="p-4">
-                  <div>
-                    <div className="text-sm font-medium">{user.name}</div>
-                    <div className="text-muted-foreground text-sm">{user.email}</div>
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={isKloudliteCloud ? 7 : 6} className="p-12 text-center">
+                  <div className="text-muted-foreground">
+                    <p className="text-sm font-medium">No users found</p>
+                    <p className="mt-1 text-xs">Click &quot;Add User&quot; to create the first user.</p>
                   </div>
-                </td>
-                <td className="w-40 p-4">
-                  <div className="flex flex-wrap gap-1">
-                    {(user.role || '').split(', ').filter(Boolean).map((role, index) => (
-                      <span
-                        key={index}
-                        className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
-                          role === 'super-admin'
-                            ? 'bg-purple-100 text-purple-700'
-                            : role === 'admin'
-                              ? 'bg-info/10 text-info'
-                              : 'bg-muted text-foreground'
-                        }`}
-                      >
-                        {role}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="w-28 p-4">
-                  <span
-                    className={`inline-flex min-w-[70px] justify-center rounded-md px-2 py-1 text-xs font-medium ${
-                      user.status === 'active'
-                        ? 'bg-success/10 text-success'
-                        : user.status === 'suspended'
-                          ? 'bg-destructive/10 text-destructive'
-                          : 'bg-warning/10 text-warning'
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </td>
-                <td className="w-32 p-4">
-                  <span className="text-muted-foreground text-sm">{user.lastLogin}</span>
-                </td>
-                <td className="w-32 p-4">
-                  <span className="text-muted-foreground text-sm">{user.created}</span>
-                </td>
-                <td className="w-20 p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {canEditUser(user) && (
-                        <>
-                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setResettingPasswordUser(user)}>
-                            <Key className="mr-2 h-4 w-4" />
-                            Reset Password
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Send Invite
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {user.status === 'active' ? (
-                            <DropdownMenuItem
-                              className="text-warning"
-                              onClick={() => handleToggleUserStatus(user, false)}
-                            >
-                              <UserX className="mr-2 h-4 w-4" />
-                              Disable User
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              className="text-success"
-                              onClick={() => handleToggleUserStatus(user, true)}
-                            >
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Enable User
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setDeletingUser(user)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete User
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      {!canEditUser(user) && (
-                        <DropdownMenuItem disabled>
-                          <Edit className="mr-2 h-4 w-4" />
-                          View Only (Insufficient Permissions)
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-muted border-b">
+                  <td className="p-4">
+                    <div>
+                      <div className="text-sm font-medium">{user.name}</div>
+                      <div className="text-muted-foreground text-sm">{user.email}</div>
+                    </div>
+                  </td>
+                  <td className="w-40 p-4">
+                    <div className="flex flex-wrap gap-1">
+                      {(user.role || '').split(', ').filter(Boolean).map((role, index) => (
+                        <span
+                          key={index}
+                          className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
+                            role === 'super-admin'
+                              ? 'bg-purple-100 text-purple-700'
+                              : role === 'admin'
+                                ? 'bg-info/10 text-info'
+                                : 'bg-muted text-foreground'
+                          }`}
+                        >
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  {isKloudliteCloud && (
+                    <td className="w-40 p-4">
+                      {(() => {
+                        const mt = getUserMachineType(user.username)
+                        return mt ? (
+                          <span className="inline-flex rounded-md bg-primary/10 text-primary px-2 py-1 text-xs font-medium">
+                            {getMachineTypeName(mt)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs italic">Not assigned</span>
+                        )
+                      })()}
+                    </td>
+                  )}
+                  <td className="w-28 p-4">
+                    <span
+                      className={`inline-flex min-w-[70px] justify-center rounded-md px-2 py-1 text-xs font-medium ${
+                        user.status === 'active'
+                          ? 'bg-success/10 text-success'
+                          : user.status === 'suspended'
+                            ? 'bg-destructive/10 text-destructive'
+                            : 'bg-warning/10 text-warning'
+                      }`}
+                    >
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="w-32 p-4">
+                    <span className="text-muted-foreground text-sm">{user.lastLogin}</span>
+                  </td>
+                  <td className="w-32 p-4">
+                    <span className="text-muted-foreground text-sm">{user.created}</span>
+                  </td>
+                  <td className="w-20 p-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEditUser(user) && (
+                          <>
+                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit User
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setResettingPasswordUser(user)}>
+                              <Key className="mr-2 h-4 w-4" />
+                              Reset Password
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Mail className="mr-2 h-4 w-4" />
+                              Send Invite
+                            </DropdownMenuItem>
+                            {isKloudliteCloud && (
+                              <DropdownMenuItem onClick={() => {
+                                setAssigningUser(user)
+                                setSelectedMachineType(getUserMachineType(user.username) || '')
+                              }}>
+                                <Cpu className="mr-2 h-4 w-4" />
+                                Assign Machine Type
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            {user.status === 'active' ? (
+                              <DropdownMenuItem
+                                className="text-warning"
+                                onClick={() => handleToggleUserStatus(user, false)}
+                              >
+                                <UserX className="mr-2 h-4 w-4" />
+                                Disable User
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="text-success"
+                                onClick={() => handleToggleUserStatus(user, true)}
+                              >
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Enable User
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeletingUser(user)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete User
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {!canEditUser(user) && (
+                          <DropdownMenuItem disabled>
+                            <Edit className="mr-2 h-4 w-4" />
+                            View Only (Insufficient Permissions)
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -686,6 +822,10 @@ export function UserManagementList({
                           ...prev,
                           roles: prev.roles.filter((r) => r !== role),
                         }))
+                        // Clear machine type selection when "user" role is removed
+                        if (role === 'user') {
+                          setCreateUserMachineType('')
+                        }
                       } else {
                         setFormData((prev) => ({
                           ...prev,
@@ -709,6 +849,34 @@ export function UserManagementList({
                 <p className="text-destructive mt-2 text-sm">At least one role is required</p>
               )}
             </div>
+            {isKloudliteCloud && !editingUser && formData.roles.includes('user') && (
+              <div className="space-y-2">
+                <Label>Machine Type *</Label>
+                <Select value={createUserMachineType} onValueChange={setCreateUserMachineType}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a machine type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {machineTypes.map((mt) => (
+                      <SelectItem key={mt.id} value={mt.id}>
+                        <span className="font-medium">{mt.name}</span>
+                        {mt.cpu && (
+                          <span className="text-muted-foreground text-xs ml-2">
+                            ({mt.cpu} vCPUs, {mt.memory} RAM{mt.tierPrice ? `, $${mt.tierPrice}${mt.tierPriceUnit}` : ''})
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {hasAttemptedSubmit && !createUserMachineType && (
+                  <p className="text-destructive mt-1 text-sm">Machine type is required</p>
+                )}
+                <p className="text-muted-foreground text-sm">
+                  A work machine will be created in stopped state with this configuration.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={resetForm} disabled={isPending}>
@@ -720,7 +888,8 @@ export function UserManagementList({
                 isPending ||
                 (!editingUser && !formData.username) ||
                 !formData.email ||
-                formData.roles.length === 0
+                formData.roles.length === 0 ||
+                (isKloudliteCloud && !editingUser && formData.roles.includes('user') && !createUserMachineType)
               }
             >
               {isPending ? (
@@ -827,6 +996,114 @@ export function UserManagementList({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Assign Machine Type Dialog (Kloudlite Cloud only) */}
+      {isKloudliteCloud && (
+        <Dialog
+          open={!!assigningUser}
+          onOpenChange={(open) => {
+            if (!open) {
+              setAssigningUser(null)
+              setSelectedMachineType('')
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Assign Machine Type</DialogTitle>
+              <DialogDescription>
+                Select a machine type for user &quot;{assigningUser?.name}&quot;.
+                {getUserMachineType(assigningUser?.username || '')
+                  ? ' This will update their existing machine configuration.'
+                  : ' A new work machine will be created in stopped state.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-4">
+              {machineTypes.map((mt) => {
+                const isSelected = selectedMachineType === mt.id
+                const hasTierData = !!mt.tierPrice
+                return (
+                  <button
+                    key={mt.id}
+                    type="button"
+                    onClick={() => setSelectedMachineType(mt.id)}
+                    className={`w-full text-left rounded-lg border p-4 transition-colors ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                        : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{mt.name}</span>
+                          {mt.tierPopular && (
+                            <span className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                              Most Popular
+                            </span>
+                          )}
+                        </div>
+                        {mt.tierSubtitle && (
+                          <p className="text-muted-foreground text-xs mt-0.5">{mt.tierSubtitle}</p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                          {mt.cpu && <span>{mt.cpu} vCPUs</span>}
+                          {mt.memory && <span>{mt.memory} RAM</span>}
+                          {mt.tierStorageGb && <span>{mt.tierStorageGb}GB storage</span>}
+                          {mt.tierIncludedHours && <span>{mt.tierIncludedHours} hrs/mo</span>}
+                          {mt.tierSuspendMinutes && (
+                            <span>
+                              {parseInt(mt.tierSuspendMinutes) >= 60
+                                ? `${parseInt(mt.tierSuspendMinutes) / 60} hr suspend`
+                                : `${mt.tierSuspendMinutes} min suspend`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {hasTierData && (
+                        <div className="text-right shrink-0">
+                          <div className="text-lg font-bold">${mt.tierPrice}</div>
+                          <div className="text-muted-foreground text-[10px]">{mt.tierPriceUnit}</div>
+                          {mt.tierExtraHourPrice && (
+                            <div className="text-muted-foreground text-[10px] mt-0.5">
+                              +${mt.tierExtraHourPrice}/hr extra
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAssigningUser(null)
+                  setSelectedMachineType('')
+                }}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAssignMachineType}
+                disabled={isPending || !selectedMachineType}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Assigning...
+                  </>
+                ) : (
+                  'Assign'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

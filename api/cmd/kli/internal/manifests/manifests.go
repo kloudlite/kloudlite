@@ -32,6 +32,9 @@ var GCPMachineTypes string
 //go:embed oci-machine-types.yaml
 var OCIMachineTypes string
 
+//go:embed cloud-machine-types.yaml
+var CloudMachineTypes string
+
 //go:embed image-registry.yaml
 var ImageRegistry string
 
