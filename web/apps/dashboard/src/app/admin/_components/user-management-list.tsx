@@ -92,6 +92,10 @@ export function UserManagementList({
 }: UserManagementListProps) {
   const [users, setUsers] = useState(initialUsers)
   const [workMachines, setWorkMachines] = useState(initialWorkMachines)
+
+  // Sync state with server prop changes (e.g. after router.refresh from watch events)
+  useEffect(() => { setUsers(initialUsers) }, [initialUsers])
+  useEffect(() => { setWorkMachines(initialWorkMachines) }, [initialWorkMachines])
   const [roleFilter, setRoleFilter] = useState<'all' | 'super-admin' | 'admin' | 'user'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active'>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -246,6 +250,11 @@ export function UserManagementList({
       displayName: user.displayName || '',
       roles: roles.length > 0 ? roles : ['user'], // Ensure at least one role
     })
+
+    // Pre-populate machine type for editing
+    if (isKloudliteCloud) {
+      setCreateUserMachineType(getUserMachineType(user.username) || '')
+    }
   }
 
   // Helper function to check if current user can edit another user
@@ -298,7 +307,27 @@ export function UserManagementList({
           const result = await updateUser(editingUser.id, formData)
           if (result.success && result.data) {
             setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? userToDisplay(result.data as any) : u)))
-            toast.success('User updated successfully')
+            // If machine type changed, assign the new one
+            const currentMt = getUserMachineType(editingUser.username)
+            if (isKloudliteCloud && createUserMachineType && createUserMachineType !== currentMt) {
+              const assignResult = await adminAssignMachineType(editingUser.username, createUserMachineType)
+              if (assignResult.success) {
+                setWorkMachines((prev: any[]) => {
+                  const existing = prev.findIndex((m: any) => m.spec?.ownedBy === editingUser.username)
+                  if (existing >= 0) {
+                    const updated = [...prev]
+                    updated[existing] = { ...updated[existing], spec: { ...updated[existing].spec, machineType: createUserMachineType } }
+                    return updated
+                  }
+                  return [...prev, { spec: { ownedBy: editingUser.username, machineType: createUserMachineType } }]
+                })
+                toast.success('User updated and machine type changed')
+              } else {
+                toast.success('User updated, but failed to change machine type')
+              }
+            } else {
+              toast.success('User updated successfully')
+            }
             resetForm()
           } else {
             setFormError(result.error || 'Failed to update user')
@@ -853,9 +882,9 @@ export function UserManagementList({
                 <p className="text-destructive mt-2 text-sm">At least one role is required</p>
               )}
             </div>
-            {isKloudliteCloud && !editingUser && formData.roles.includes('user') && (
+            {isKloudliteCloud && formData.roles.includes('user') && (
               <div className="space-y-2">
-                <Label>Machine Type *</Label>
+                <Label>Machine Type {!editingUser && '*'}</Label>
                 <Select value={createUserMachineType} onValueChange={setCreateUserMachineType}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a machine type" />
@@ -873,11 +902,13 @@ export function UserManagementList({
                     ))}
                   </SelectContent>
                 </Select>
-                {hasAttemptedSubmit && !createUserMachineType && (
+                {!editingUser && hasAttemptedSubmit && !createUserMachineType && (
                   <p className="text-destructive mt-1 text-sm">Machine type is required</p>
                 )}
                 <p className="text-muted-foreground text-sm">
-                  A work machine will be created in stopped state with this configuration.
+                  {editingUser
+                    ? 'Change the machine type for this user\'s work machine.'
+                    : 'A work machine will be created in stopped state with this configuration.'}
                 </p>
               </div>
             )}
