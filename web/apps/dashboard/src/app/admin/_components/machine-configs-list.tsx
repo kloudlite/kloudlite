@@ -96,100 +96,92 @@ export function MachineConfigsList({
   isReadOnly = false,
 }: MachineConfigsListProps) {
   const router = useRouter()
-  const [_isPending, startTransition] = useTransition()
+  const [_isDeleting, startDeleteTransition] = useTransition()
+  const [_isToggling, startToggleTransition] = useTransition()
+  const [isSaving, startSaveTransition] = useTransition()
   const [configs, _setConfigs] = useState(initialConfigs)
   const [isAddConfigOpen, setIsAddConfigOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<MachineConfig | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
   const [isActive, setIsActive] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<
     'general' | 'compute-optimized' | 'memory-optimized' | 'gpu' | 'development'
   >('general')
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('Are you sure you want to delete this machine configuration?')) {
       return
     }
 
-    setIsLoading(true)
-    try {
-      const result = await deleteMachineType(id)
-      if (result.success) {
-        toast.success('Machine configuration deleted successfully')
-        startTransition(() => {
+    startDeleteTransition(async () => {
+      try {
+        const result = await deleteMachineType(id)
+        if (result.success) {
+          toast.success('Machine configuration deleted successfully')
           router.refresh()
-        })
-      } else {
-        toast.error(result.error || 'Failed to delete machine configuration')
+        } else {
+          toast.error(result.error || 'Failed to delete machine configuration')
+        }
+      } catch (_error) {
+        toast.error('An error occurred while deleting')
       }
-    } catch (_error) {
-      toast.error('An error occurred while deleting')
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
-  const handleToggleActive = async (id: string, currentActive: boolean) => {
-    setIsLoading(true)
-    try {
-      const result = currentActive ? await deactivateMachineType(id) : await activateMachineType(id)
+  const handleToggleActive = (id: string, currentActive: boolean) => {
+    startToggleTransition(async () => {
+      try {
+        const result = currentActive ? await deactivateMachineType(id) : await activateMachineType(id)
 
-      if (result.success) {
-        toast.success(
-          `Machine configuration ${currentActive ? 'deactivated' : 'activated'} successfully`,
-        )
-        startTransition(() => {
+        if (result.success) {
+          toast.success(
+            `Machine configuration ${currentActive ? 'deactivated' : 'activated'} successfully`,
+          )
           router.refresh()
-        })
-      } else {
-        toast.error(result.error || 'Failed to update machine configuration')
+        } else {
+          toast.error(result.error || 'Failed to update machine configuration')
+        }
+      } catch (_error) {
+        toast.error('An error occurred while updating')
       }
-    } catch (_error) {
-      toast.error('An error occurred while updating')
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
-  const handleSave = async (formData: FormData) => {
-    setIsLoading(true)
-    try {
-      const rawName = formData.get('name') as string
-      // Convert dots to hyphens for Kubernetes-friendly resource names (e.g., "m5.xlarge" -> "m5-xlarge")
-      const k8sName = rawName.replace(/\./g, '-')
+  const handleSave = (formData: FormData) => {
+    startSaveTransition(async () => {
+      try {
+        const rawName = formData.get('name') as string
+        // Convert dots to hyphens for Kubernetes-friendly resource names (e.g., "m5.xlarge" -> "m5-xlarge")
+        const k8sName = rawName.replace(/\./g, '-')
 
-      const data = {
-        name: k8sName,
-        displayName: formData.get('displayName') as string,
-        description: formData.get('description') as string,
-        cpu: parseInt(formData.get('cpu') as string),
-        memory: parseInt(formData.get('memory') as string),
-        gpu: formData.get('gpu') ? parseInt(formData.get('gpu') as string) : undefined,
-        category: selectedCategory,
-        active: isActive,
-      }
+        const data = {
+          name: k8sName,
+          displayName: formData.get('displayName') as string,
+          description: formData.get('description') as string,
+          cpu: parseInt(formData.get('cpu') as string),
+          memory: parseInt(formData.get('memory') as string),
+          gpu: formData.get('gpu') ? parseInt(formData.get('gpu') as string) : undefined,
+          category: selectedCategory,
+          active: isActive,
+        }
 
-      const result = editingConfig
-        ? await updateMachineType(editingConfig.id, data)
-        : await createMachineType(data)
+        const result = editingConfig
+          ? await updateMachineType(editingConfig.id, data)
+          : await createMachineType(data)
 
-      if (result.success) {
-        toast.success(`Machine configuration ${editingConfig ? 'updated' : 'created'} successfully`)
-        setIsAddConfigOpen(false)
-        setEditingConfig(null)
-        startTransition(() => {
+        if (result.success) {
+          toast.success(`Machine configuration ${editingConfig ? 'updated' : 'created'} successfully`)
+          setIsAddConfigOpen(false)
+          setEditingConfig(null)
           router.refresh()
-        })
-      } else {
-        toast.error(
-          result.error || `Failed to ${editingConfig ? 'update' : 'create'} machine configuration`,
-        )
+        } else {
+          toast.error(
+            result.error || `Failed to ${editingConfig ? 'update' : 'create'} machine configuration`,
+          )
+        }
+      } catch (_error) {
+        toast.error('An error occurred')
       }
-    } catch (_error) {
-      toast.error('An error occurred')
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
   return (
@@ -322,7 +314,7 @@ export function MachineConfigsList({
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDelete(config.id)}
-                          disabled={isLoading}
+                          disabled={_isDeleting}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Configuration
@@ -514,12 +506,12 @@ export function MachineConfigsList({
                   setIsAddConfigOpen(false)
                   setEditingConfig(null)
                 }}
-                disabled={isLoading}
+                disabled={isSaving}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Saving...' : editingConfig ? 'Update' : 'Create'}
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? 'Saving...' : editingConfig ? 'Update' : 'Create'}
               </Button>
             </DialogFooter>
           </form>

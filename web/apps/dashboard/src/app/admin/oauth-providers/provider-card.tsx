@@ -47,7 +47,8 @@ interface OAuthProvidersListProps {
 
 export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvidersListProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [isSaving, startSaveTransition] = useTransition()
+  const [isToggling, startToggleTransition] = useTransition()
   const [editingType, setEditingType] = useState<string | null>(null)
   const [formData, setFormData] = useState({ clientId: '', clientSecret: '', tenantId: '' })
   const [formError, setFormError] = useState('')
@@ -70,7 +71,7 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
     const provider = getProvider(editingType)
     setFormError('')
 
-    startTransition(async () => {
+    startSaveTransition(async () => {
       try {
         const result = await updateOAuthProvider(editingType, {
           ...provider,
@@ -95,7 +96,7 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
   const handleToggle = (type: string, checked: boolean) => {
     const provider = getProvider(type)
 
-    startTransition(async () => {
+    startToggleTransition(async () => {
       try {
         const result = await updateOAuthProvider(type, { ...provider, enabled: checked })
 
@@ -136,7 +137,7 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
                 <Switch
                   checked={provider.enabled}
                   onCheckedChange={(checked) => handleToggle(type, checked)}
-                  disabled={isPending || isReadOnly || !isConfigured}
+                  disabled={isToggling || isReadOnly || !isConfigured}
                 />
               </div>
 
@@ -161,7 +162,7 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
 
                 {!isReadOnly && (
                   <div className="mt-4">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(type)} disabled={isPending}>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(type)} disabled={isSaving}>
                       {isConfigured ? 'Edit credentials' : 'Set up credentials'}
                     </Button>
                   </div>
@@ -198,7 +199,7 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
                 type="text"
                 value={formData.clientId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, clientId: e.target.value }))}
-                disabled={isPending}
+                disabled={isSaving}
                 placeholder="Enter client ID"
               />
             </div>
@@ -211,7 +212,7 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
                   type={showSecret ? 'text' : 'password'}
                   value={formData.clientSecret}
                   onChange={(e) => setFormData((prev) => ({ ...prev, clientSecret: e.target.value }))}
-                  disabled={isPending}
+                  disabled={isSaving}
                   placeholder="Enter client secret"
                   className="pr-10"
                 />
@@ -233,7 +234,7 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
                   type="text"
                   value={formData.tenantId}
                   onChange={(e) => setFormData((prev) => ({ ...prev, tenantId: e.target.value }))}
-                  disabled={isPending}
+                  disabled={isSaving}
                   placeholder="Enter tenant ID (or leave empty for 'common')"
                 />
               </div>
@@ -241,11 +242,11 @@ export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvi
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingType(null)} disabled={isPending}>
+            <Button variant="outline" onClick={() => setEditingType(null)} disabled={isSaving}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? 'Saving...' : 'Save credentials'}
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save credentials'}
             </Button>
           </DialogFooter>
         </DialogContent>
