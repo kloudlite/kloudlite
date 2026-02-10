@@ -42,14 +42,23 @@ export async function POST(request: Request) {
       acaJobStatus: completed ? 'succeeded' : 'running',
     }
 
-    // If this is the first progress report, record the start time
+    // If this is the first progress report, record the start time and reset deploymentReady
     if (!installation.acaJobStartedAt || installation.acaJobStatus !== 'running') {
       updates.acaJobStartedAt = new Date().toISOString()
+      if (operation === 'install') {
+        updates.deploymentReady = false
+      }
     }
 
-    // Record completion time
+    // Record completion time and clear job fields after successful install
     if (completed) {
       updates.acaJobCompletedAt = new Date().toISOString()
+      if (operation === 'install') {
+        updates.acaJobOperation = null
+        updates.acaJobCurrentStep = null
+        updates.acaJobTotalSteps = null
+        updates.acaJobStepDescription = null
+      }
     }
 
     await updateInstallation(installation.id, updates)

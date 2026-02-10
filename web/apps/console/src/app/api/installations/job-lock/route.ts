@@ -52,10 +52,20 @@ export async function POST(request: Request) {
 
     if (action === 'unlock') {
       const finalStatus = jobStatus === 'failed' ? 'failed' : 'succeeded'
-      await updateInstallation(installation.id, {
+      const updates: Record<string, unknown> = {
         acaJobStatus: finalStatus,
         acaJobCompletedAt: new Date().toISOString(),
-      })
+      }
+
+      // Clear job fields after successful install (no longer needed)
+      if (installation.acaJobOperation === 'install' && finalStatus === 'succeeded') {
+        updates.acaJobOperation = null
+        updates.acaJobCurrentStep = null
+        updates.acaJobTotalSteps = null
+        updates.acaJobStepDescription = null
+      }
+
+      await updateInstallation(installation.id, updates)
 
       // Auto-delete installation after successful uninstall
       if (installation.acaJobOperation === 'uninstall' && finalStatus === 'succeeded') {
