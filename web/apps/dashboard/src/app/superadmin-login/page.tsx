@@ -28,27 +28,24 @@ export default async function SuperAdminLoginPage({
     return <SessionWarningCard token={token} session={session} />
   }
 
-  // No existing session — auto-redirect to the route handler that performs signIn
-  return <AutoRedirect token={token} />
-}
+  // No existing session — sign in directly (eliminates meta-refresh round-trip).
+  // signIn throws NEXT_REDIRECT on success, which Next.js handles as a redirect.
+  try {
+    await signIn('credentials', {
+      superadminToken: token,
+      redirectTo: '/admin',
+    })
+  } catch (err: any) {
+    // NextAuth v5 signIn throws NEXT_REDIRECT on success — re-throw it
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw err
+    }
+    // Auth failed
+    return <ErrorCard message="Invalid or expired super-admin token" />
+  }
 
-function AutoRedirect({ token }: { token: string }) {
-  const loginUrl = `/api/superadmin-login?token=${encodeURIComponent(token)}`
-  return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-            <Shield className="text-primary h-8 w-8" />
-          </div>
-          <CardTitle className="text-2xl">Super Admin Login</CardTitle>
-          <CardDescription>Redirecting...</CardDescription>
-        </CardHeader>
-      </Card>
-      {/* meta refresh for instant redirect without JS */}
-      <meta httpEquiv="refresh" content={`0;url=${loginUrl}`} />
-    </div>
-  )
+  // signIn always throws NEXT_REDIRECT on success — this is unreachable
+  return <ErrorCard message="Unexpected error during login" />
 }
 
 function SessionWarningCard({ token, session }: { token: string; session: any }) {
