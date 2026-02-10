@@ -366,18 +366,6 @@ iptables -I INPUT 1 -p tcp --dport 10250 -j ACCEPT
 iptables -I INPUT 1 -p tcp --dport 5001 -j ACCEPT
 iptables -I INPUT 1 -p udp --dport 8472 -j ACCEPT
 
-# Wait for any existing apt processes to finish (cloud-init apt setup)
-echo "Waiting for apt locks to be released..."
-while fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-  echo "  apt is locked, waiting..."
-  sleep 5
-done
-echo "apt locks released"
-
-# Update package lists and install required packages (skip upgrade — fresh image is recent enough)
-apt-get update -y
-apt-get install -y curl wget git
-
 # Fetch instance IPs from OCI Instance Metadata Service v2
 echo "Fetching instance metadata..."
 PRIVATE_IP=$(curl -H "Authorization: Bearer Oracle" http://169.254.169.254/opc/v2/vnics/ 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['privateIp'])" 2>/dev/null || echo "")
@@ -391,7 +379,23 @@ K3S_VERSION="%s"
 K3S_AGENT_TOKEN="%s"
 K3S_SERVER_URL="https://$PRIVATE_IP:6443"
 
-# Install K3s server with predefined token
+# Start kli download in background BEFORE K3s install
+echo "Downloading Kloudlite CLI binary (background)..."
+(
+  KLI_RELEASE_TAG=$(curl -fsSL "https://api.github.com/repos/kloudlite/kloudlite/releases" | \
+    grep -o '"tag_name": "kli-[^"]*"' | head -1 | cut -d'"' -f4)
+  if [ -z "$KLI_RELEASE_TAG" ]; then
+    echo "ERROR: Could not find kli release"
+    exit 1
+  fi
+  echo "Found kli release: $KLI_RELEASE_TAG"
+  curl -fsSL "https://github.com/kloudlite/kloudlite/releases/download/${KLI_RELEASE_TAG}/kli-linux-amd64" \
+    -o /usr/local/bin/kli
+  chmod +x /usr/local/bin/kli
+) &
+KLI_DOWNLOAD_PID=$!
+
+# Install K3s server with predefined token (runs in parallel with kli download)
 echo "Installing K3s server..."
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" K3S_AGENT_TOKEN="$K3S_AGENT_TOKEN" sh -s - server \
   --disable traefik \
@@ -407,6 +411,10 @@ echo "K3s installation completed at $(date)"
 echo "K3s Version: $K3S_VERSION"
 echo "K3s Server URL: $K3S_SERVER_URL"
 
+# Wait for kli download to complete
+echo "Waiting for kli download to complete..."
+wait $KLI_DOWNLOAD_PID || { echo "ERROR: kli download failed"; exit 1; }
+
 # Install Kloudlite components
 echo "Installing Kloudlite API Server and Frontend..."
 
@@ -415,18 +423,6 @@ kubectl create namespace kloudlite || true
 
 # Create K3s manifests directory
 mkdir -p /var/lib/rancher/k3s/server/manifests
-
-# Download and install Kloudlite CLI
-echo "Downloading Kloudlite CLI binary..."
-KLI_RELEASE_TAG=$(curl -fsSL "https://api.github.com/repos/kloudlite/kloudlite/releases" | \
-  grep -o '"tag_name": "kli-[^"]*"' | head -1 | cut -d'"' -f4)
-if [ -z "$KLI_RELEASE_TAG" ]; then
-  echo "ERROR: Could not find kli release"
-  exit 1
-fi
-echo "Found kli release: $KLI_RELEASE_TAG"
-curl -fsSL "https://github.com/kloudlite/kloudlite/releases/download/${KLI_RELEASE_TAG}/kli-linux-amd64" -o /usr/local/bin/kli
-chmod +x /usr/local/bin/kli
 
 K3S_AGENT_TOKEN=$(cat /var/lib/rancher/k3s/server/agent-token)
 
