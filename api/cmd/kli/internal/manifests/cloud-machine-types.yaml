@@ -1,11 +1,11 @@
 ---
 # Kloudlite Cloud machine types — pre-configured tiers for managed installations
-# Apply with: kubectl apply -f cloud-machine-types.yaml
+# These map to OCI Flex shapes via the naming convention: vm-standard-{series}-flex-{ocpus}-{memory}
 
 apiVersion: machines.kloudlite.io/v1
 kind: MachineType
 metadata:
-  name: cloud-tier-1
+  name: vm-standard-e4-flex-8-16
   labels:
     kloudlite.io/machinetype.default: "true"
   annotations:
@@ -31,7 +31,7 @@ spec:
 apiVersion: machines.kloudlite.io/v1
 kind: MachineType
 metadata:
-  name: cloud-tier-2
+  name: vm-standard-e5-flex-12-32
   annotations:
     kloudlite.io/tier-name: "Tier 2"
     kloudlite.io/tier-subtitle: "Standard workloads"
@@ -55,7 +55,7 @@ spec:
 apiVersion: machines.kloudlite.io/v1
 kind: MachineType
 metadata:
-  name: cloud-tier-3
+  name: vm-standard-e5-flex-16-64
   annotations:
     kloudlite.io/tier-name: "Tier 3"
     kloudlite.io/tier-subtitle: "Power users"
