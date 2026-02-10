@@ -53,22 +53,30 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
   }, [])
 
   const handlePin = async () => {
-    const result = await pinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
-    if (result.success) {
-      toast.success('Workspace pinned to dashboard')
-      router.refresh()
-    } else {
-      toast.error('Failed to pin workspace', { description: result.error })
+    try {
+      const result = await pinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+      if (result.success) {
+        toast.success('Workspace pinned to dashboard')
+        router.refresh()
+      } else {
+        toast.error('Failed to pin workspace', { description: result.error })
+      }
+    } catch {
+      toast.error('Failed to pin workspace')
     }
   }
 
   const handleUnpin = async () => {
-    const result = await unpinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
-    if (result.success) {
-      toast.success('Workspace unpinned from dashboard')
-      router.refresh()
-    } else {
-      toast.error('Failed to unpin workspace', { description: result.error })
+    try {
+      const result = await unpinWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+      if (result.success) {
+        toast.success('Workspace unpinned from dashboard')
+        router.refresh()
+      } else {
+        toast.error('Failed to unpin workspace', { description: result.error })
+      }
+    } catch {
+      toast.error('Failed to unpin workspace')
     }
   }
 
@@ -103,12 +111,13 @@ export function WorkspaceRowActions({ workspace, workMachineRunning = false, isP
       }
 
       if (result && !result.success) {
-        throw new Error(result.error)
+        toast.error(`Failed to ${action} workspace`, { description: result.error })
+        return
       }
       router.refresh()
     } catch (error) {
       console.error(`Failed to ${action} workspace:`, error)
-      alert(error instanceof Error ? error.message : `Failed to ${action} workspace`)
+      toast.error(`Failed to ${action} workspace`)
     }
   }
 

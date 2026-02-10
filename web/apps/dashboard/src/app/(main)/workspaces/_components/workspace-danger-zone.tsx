@@ -47,10 +47,10 @@ export function WorkspaceDangerZone({
         router.push('/workspaces')
       } else {
         setError(result.error || 'Failed to delete workspace')
-        setIsDeleting(false)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
+    } finally {
       setIsDeleting(false)
     }
   }

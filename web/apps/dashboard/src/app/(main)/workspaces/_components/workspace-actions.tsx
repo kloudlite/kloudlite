@@ -24,30 +24,38 @@ export function WorkspaceActions({ workspace, workMachineRunning = false }: Work
     setIsLoading(true)
     setError(null)
 
-    const result = await suspendWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+    try {
+      const result = await suspendWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
-    if (result.success) {
-      router.refresh()
-    } else {
-      setError(result.error || 'Failed to suspend workspace')
+      if (result.success) {
+        router.refresh()
+      } else {
+        setError(result.error || 'Failed to suspend workspace')
+      }
+    } catch {
+      setError('Failed to suspend workspace')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const handleActivate = async () => {
     setIsLoading(true)
     setError(null)
 
-    const result = await activateWorkspace(workspace.metadata.name, workspace.metadata.namespace)
+    try {
+      const result = await activateWorkspace(workspace.metadata.name, workspace.metadata.namespace)
 
-    if (result.success) {
-      router.refresh()
-    } else {
-      setError(result.error || 'Failed to activate workspace')
+      if (result.success) {
+        router.refresh()
+      } else {
+        setError(result.error || 'Failed to activate workspace')
+      }
+    } catch {
+      setError('Failed to activate workspace')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   // Workspace is in a transitional state (activating)

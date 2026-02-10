@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@kloudlite/ui'
 import { MoreHorizontal, Shield, User, Eye } from 'lucide-react'
+import { toast } from 'sonner'
 import type {
   InstallationMember,
   MemberRole,
@@ -70,8 +71,8 @@ export function TeamMembersTable({
 
       // Reload page to show updated list
       window.location.reload()
-    } catch (error) {
-      alert('Failed to remove member')
+    } catch {
+      toast.error('Failed to remove member')
     } finally {
       setRemovingMember(null)
       setMemberToRemove(null)
@@ -92,8 +93,8 @@ export function TeamMembersTable({
       if (!response.ok) throw new Error('Failed to update role')
 
       window.location.reload()
-    } catch (error) {
-      alert('Failed to update member role')
+    } catch {
+      toast.error('Failed to update member role')
     }
   }
 
