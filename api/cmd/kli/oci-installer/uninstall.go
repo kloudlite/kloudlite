@@ -30,8 +30,8 @@ func runUninstall(ctx context.Context, cfg *Config) error {
 	log.Printf("  Region:      %s", ociCfg.Region)
 	log.Printf("  Compartment: %s", ociCfg.CompartmentOCID)
 
-	// Phase 1: Find instances and delete NLB + instances in parallel
-	nextStep("Phase 1: Deleting NLB and instances...")
+	// Phase 1: Find instances and delete Reserved IP + instances in parallel
+	nextStep("Phase 1: Deleting instances and public IPs...")
 
 	instanceIDs, findErr := ociinternal.FindAllInstancesByTag(ctx, ociCfg, cfg.InstallationKey)
 	if findErr != nil {
@@ -41,18 +41,19 @@ func runUninstall(ctx context.Context, cfg *Config) error {
 	}
 
 	var phase1Wg sync.WaitGroup
-	var instanceErr, nlbErr error
+	var instanceErr, ipErr error
 
 	phase1Wg.Add(2)
 
+	// Delete reserved IP
 	go func() {
 		defer phase1Wg.Done()
-		log.Printf("  [parallel] Starting NLB cleanup")
-		nlbErr = ociinternal.DeleteNetworkLoadBalancer(ctx, ociCfg, cfg.InstallationKey)
-		if nlbErr != nil {
-			log.Printf("  [parallel] NLB cleanup warning: %v", nlbErr)
+		log.Printf("  [parallel] Starting Reserved IP cleanup")
+		ipErr = ociinternal.DeleteReservedPublicIP(ctx, ociCfg, cfg.InstallationKey)
+		if ipErr != nil {
+			log.Printf("  [parallel] Reserved IP cleanup warning: %v", ipErr)
 		} else {
-			log.Printf("  [parallel] NLB cleanup completed")
+			log.Printf("  [parallel] Reserved IP cleanup completed")
 		}
 	}()
 
@@ -153,7 +154,7 @@ func runUninstall(ctx context.Context, cfg *Config) error {
 	}
 
 	log.Printf("=== Uninstallation Summary ===")
-	log.Printf("  NLB:             %s", statusStr(nlbErr))
+	log.Printf("  Reserved IP:     %s", statusStr(ipErr))
 	log.Printf("  Instances:       %d terminated", len(instanceIDs))
 	log.Printf("  NSG:             %s", statusStr(nsgErr))
 	log.Printf("  Dynamic Group:   %s", statusStr(dgErr))

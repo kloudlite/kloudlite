@@ -24,71 +24,62 @@ func (p *OCIProvider) Name() string {
 }
 
 // LoadBalancerProvider implementation
+// OCI uses reserved public IPs assigned directly to VMs instead of load balancers.
+// These methods satisfy the CloudProvider interface but are no-ops.
 
-// CreateLoadBalancer creates an OCI Network Load Balancer
+// CreateLoadBalancer is not applicable for OCI — uses reserved public IPs instead.
 func (p *OCIProvider) CreateLoadBalancer(ctx context.Context, installationKey, vpcID string, subnetIDs []string, securityGroupID string) (*provider.LoadBalancerInfo, error) {
-	// For OCI, we need instance IP to create the NLB backend
-	// This is handled in the install command directly
-	return nil, fmt.Errorf("CreateLoadBalancer should be called via OCI-specific functions")
+	return nil, fmt.Errorf("OCI uses reserved public IPs instead of load balancers")
 }
 
-// CreateTargetGroup is not applicable for OCI NLB - uses backend sets
+// CreateTargetGroup is not applicable for OCI.
 func (p *OCIProvider) CreateTargetGroup(ctx context.Context, installationKey, vpcID string) (string, error) {
-	return BackendSetName, nil
+	return "", nil
 }
 
-// RegisterTargets is handled during NLB creation for OCI
+// RegisterTargets is not applicable for OCI.
 func (p *OCIProvider) RegisterTargets(ctx context.Context, targetGroupID string, instanceIDs ...string) error {
 	return nil
 }
 
-// CreateHTTPSListener is not applicable for OCI - Cloudflare handles TLS
+// CreateHTTPSListener is not applicable for OCI — Cloudflare handles TLS.
 func (p *OCIProvider) CreateHTTPSListener(ctx context.Context, loadBalancerID, targetGroupID, certificateID string) (string, error) {
 	return "", fmt.Errorf("HTTPS listener not applicable for OCI - use Cloudflare for TLS termination")
 }
 
-// CreateHTTPRedirectListener is not applicable for OCI NLB (Layer 4)
+// CreateHTTPRedirectListener is not applicable for OCI.
 func (p *OCIProvider) CreateHTTPRedirectListener(ctx context.Context, loadBalancerID string) (string, error) {
-	return "", fmt.Errorf("HTTP redirect listener not applicable for OCI NLB (Layer 4)")
+	return "", fmt.Errorf("HTTP redirect listener not applicable for OCI")
 }
 
-// WaitForLoadBalancerActive waits for the NLB to become active
+// WaitForLoadBalancerActive is not applicable for OCI — reserved IPs are instant.
 func (p *OCIProvider) WaitForLoadBalancerActive(ctx context.Context, loadBalancerID string) error {
-	_, err := WaitForNLBActive(ctx, p.Config, loadBalancerID)
-	return err
+	return nil
 }
 
-// DeleteLoadBalancer deletes the OCI NLB
+// DeleteLoadBalancer deletes the reserved public IP for an OCI installation.
 func (p *OCIProvider) DeleteLoadBalancer(ctx context.Context, installationKey string) error {
-	return DeleteNetworkLoadBalancer(ctx, p.Config, installationKey)
+	return DeleteReservedPublicIP(ctx, p.Config, installationKey)
 }
 
-// DeleteTargetGroup is a no-op for OCI - backend sets are deleted with the NLB
+// DeleteTargetGroup is a no-op for OCI.
 func (p *OCIProvider) DeleteTargetGroup(ctx context.Context, installationKey string) error {
 	return nil
 }
 
-// FindLoadBalancerByInstallationKey finds the NLB by installation key
+// FindLoadBalancerByInstallationKey returns the reserved IP name for the installation.
 func (p *OCIProvider) FindLoadBalancerByInstallationKey(ctx context.Context, installationKey string) (string, error) {
-	ip, err := GetNLBIP(ctx, p.Config, installationKey)
-	if err != nil {
-		return "", err
-	}
-	if ip == "" {
-		return "", nil
-	}
-	return NLBName(installationKey), nil
+	return ReservedIPName(installationKey), nil
 }
 
-// FindTargetGroupByInstallationKey returns the backend set name
+// FindTargetGroupByInstallationKey is a no-op for OCI.
 func (p *OCIProvider) FindTargetGroupByInstallationKey(ctx context.Context, installationKey string) (string, error) {
-	return BackendSetName, nil
+	return "", nil
 }
 
-// GetLoadBalancerDNSName returns the IP address of the NLB
+// GetLoadBalancerDNSName is not applicable for OCI — use reserved IP directly.
 func (p *OCIProvider) GetLoadBalancerDNSName(ctx context.Context, loadBalancerID string) (string, error) {
-	// loadBalancerID here is the NLB name, extract installation key
-	return "", fmt.Errorf("use GetNLBIP instead")
+	return "", fmt.Errorf("OCI uses reserved public IPs, not load balancer DNS names")
 }
 
 // TLSCertificateProvider implementation
