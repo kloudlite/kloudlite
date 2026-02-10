@@ -21,7 +21,7 @@ var ociUninstallCmd = &cobra.Command{
 	Long: `Uninstall Kloudlite from OCI by removing all resources created during installation.
 
 This command will:
-  - Delete Network Load Balancer
+  - Delete Reserved Public IP
   - Terminate ALL Compute Instances (including workmachines and sub-resources)
   - Delete Network Security Group
   - Delete Dynamic Group and IAM Policy
@@ -109,8 +109,8 @@ func runOCIUninstall(cmd *cobra.Command, args []string) {
 
 	startTime := time.Now()
 
-	// Phase 1: Delete NLB and ALL instances (by tag) in parallel
-	var instanceErr, nlbErr error
+	// Phase 1: Delete Reserved IP and ALL instances (by tag) in parallel
+	var instanceErr, ipErr error
 
 	// Find ALL instances with the installation-id tag (includes workmachines and sub-resources)
 	instanceIDs, findErr := ociinternal.FindAllInstancesByTag(ctx, cfg, ociUninstallInstallationKey)
@@ -124,12 +124,12 @@ func runOCIUninstall(cmd *cobra.Command, args []string) {
 	phase1Wg.Add(2)
 	go func() {
 		defer phase1Wg.Done()
-		fmt.Printf("    [%s] Starting: Network Load Balancer cleanup\n", time.Now().Format("15:04:05"))
-		nlbErr = ociinternal.DeleteNetworkLoadBalancer(ctx, cfg, ociUninstallInstallationKey)
-		if nlbErr != nil {
-			fmt.Printf("    [%s] Warning: NLB cleanup - %v\n", time.Now().Format("15:04:05"), nlbErr)
+		fmt.Printf("    [%s] Starting: Reserved IP cleanup\n", time.Now().Format("15:04:05"))
+		ipErr = ociinternal.DeleteReservedPublicIP(ctx, cfg, ociUninstallInstallationKey)
+		if ipErr != nil {
+			fmt.Printf("    [%s] Warning: Reserved IP cleanup - %v\n", time.Now().Format("15:04:05"), ipErr)
 		} else {
-			fmt.Printf("    [%s] Completed: NLB cleanup\n", time.Now().Format("15:04:05"))
+			fmt.Printf("    [%s] Completed: Reserved IP cleanup\n", time.Now().Format("15:04:05"))
 		}
 	}()
 	go func() {
@@ -208,7 +208,7 @@ func runOCIUninstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    Operations completed in %.1fs\n", elapsed.Seconds())
 
 	// Report results
-	hasErrors := nsgErr != nil || dgErr != nil || policyErr != nil || storageErr != nil || instanceErr != nil
+	hasErrors := nsgErr != nil || dgErr != nil || policyErr != nil || storageErr != nil || instanceErr != nil || ipErr != nil
 	if hasErrors {
 		red.Printf(" x\n")
 		if instanceErr != nil {
@@ -234,7 +234,9 @@ func runOCIUninstall(cmd *cobra.Command, args []string) {
 	fmt.Println()
 	bold.Println("Deleted Resources")
 	bold.Println("-----------------")
-	fmt.Printf("    Network LB:     Deleted\n")
+	if ipErr == nil {
+		fmt.Printf("    Reserved IP:     Deleted\n")
+	}
 	if instanceErr == nil && findErr == nil && len(instanceIDs) > 0 {
 		fmt.Printf("    Instances:       %d terminated\n", len(instanceIDs))
 		for _, id := range instanceIDs {

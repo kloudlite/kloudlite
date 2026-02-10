@@ -90,17 +90,22 @@ func runInstall(ctx context.Context, cfg *Config) error {
 	log.Printf("  Subnet security list rules updated")
 
 	// Parallel resource creation
-	nextStep("Creating resources in parallel (NSG, Storage, IAM)...")
+	nextStep("Creating resources in parallel (NSG, Storage, IAM, Reserved IP)...")
 	var (
-		wg                                   sync.WaitGroup
-		nsgID                                string
-		bucketName                           = ociinternal.GetBucketName(cfg.InstallationKey)
-		nsgErr, storageErr, dgErr, policyErr error
+		wg                                              sync.WaitGroup
+		nsgID                                           string
+		reservedIP                                      string
+		bucketName                                      = ociinternal.GetBucketName(cfg.InstallationKey)
+		nsgErr, storageErr, dgErr, policyErr, ipErr     error
 	)
 
 	startTime := time.Now()
 
-	wg.Add(3)
+	parallelCount := 3
+	if !cfg.SkipLB {
+		parallelCount = 4
+	}
+	wg.Add(parallelCount)
 
 	// NSG
 	go func() {
@@ -143,6 +148,20 @@ func runInstall(ctx context.Context, cfg *Config) error {
 		}
 	}()
 
+	// Reserved Public IP (only when LB/DNS is needed)
+	if !cfg.SkipLB {
+		go func() {
+			defer wg.Done()
+			log.Printf("  [parallel] Starting Reserved IP creation")
+			reservedIP, ipErr = ociinternal.ReservePublicIP(ctx, ociCfg, cfg.InstallationKey)
+			if ipErr != nil {
+				log.Printf("  [parallel] Reserved IP failed: %v", ipErr)
+			} else {
+				log.Printf("  [parallel] Reserved IP completed: %s", reservedIP)
+			}
+		}()
+	}
+
 	wg.Wait()
 	log.Printf("  Parallel operations completed in %.1fs", time.Since(startTime).Seconds())
 
@@ -159,11 +178,17 @@ func runInstall(ctx context.Context, cfg *Config) error {
 	if policyErr != nil {
 		return fmt.Errorf("Policy creation failed: %w", policyErr)
 	}
+	if ipErr != nil {
+		return fmt.Errorf("Reserved IP creation failed: %w", ipErr)
+	}
 
 	log.Printf("  NSG:            %s", nsgID)
 	log.Printf("  Storage Bucket: %s", bucketName)
 	log.Printf("  Dynamic Group:  Created")
 	log.Printf("  Policy:         Created")
+	if !cfg.SkipLB {
+		log.Printf("  Reserved IP:    %s", reservedIP)
+	}
 
 	// Instance launch
 	nextStep("Launching OCI instance (VM.Standard.E4.Flex 1 OCPU / 8GB)...")
@@ -187,22 +212,22 @@ func runInstall(ctx context.Context, cfg *Config) error {
 	log.Printf("  Public IP:  %s", publicIP)
 	log.Printf("  Private IP: %s", privateIP)
 
-	// Load Balancer setup
+	// Assign reserved IP to instance
 	if !cfg.SkipLB {
-		nextStep("Creating Network Load Balancer...")
-		_, nlbIP, err := ociinternal.CreateNetworkLoadBalancer(ctx, ociCfg, subnetID, instanceID, privateIP, cfg.InstallationKey)
+		nextStep("Assigning reserved IP to instance...")
+		_, err = ociinternal.AssignReservedIP(ctx, ociCfg, instanceID, cfg.InstallationKey)
 		if err != nil {
-			return fmt.Errorf("failed to create NLB: %w", err)
+			return fmt.Errorf("failed to assign reserved IP: %w", err)
 		}
-		log.Printf("  NLB IP: %s", nlbIP)
+		log.Printf("  Reserved IP: %s assigned to instance", reservedIP)
 
 		// DNS Configuration
 		nextStep("Configuring DNS (Cloudflare proxied)...")
-		_, err = consoleClient.ConfigureRootDNS(ctx, cfg.InstallationKey, secretKey, nlbIP, "a", true)
+		_, err = consoleClient.ConfigureRootDNS(ctx, cfg.InstallationKey, secretKey, reservedIP, "a", true)
 		if err != nil {
 			return fmt.Errorf("failed to configure DNS: %w", err)
 		}
-		log.Printf("  DNS configured for %s -> %s", fullDomain, nlbIP)
+		log.Printf("  DNS configured for %s -> %s", fullDomain, reservedIP)
 	}
 
 	// Summary
