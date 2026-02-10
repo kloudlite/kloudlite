@@ -282,8 +282,8 @@ export function UserManagementList({
       return
     }
 
-    if (isKloudliteCloud && !editingUser && !createUserMachineType) {
-      setFormError('Machine type is required')
+    if (isKloudliteCloud && !editingUser && formData.roles.includes('user') && !createUserMachineType) {
+      setFormError('Machine type is required when user role is assigned')
       return
     }
 
@@ -551,135 +551,146 @@ export function UserManagementList({
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-muted border-b">
-                <td className="p-4">
-                  <div>
-                    <div className="text-sm font-medium">{user.name}</div>
-                    <div className="text-muted-foreground text-sm">{user.email}</div>
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={isKloudliteCloud ? 7 : 6} className="p-12 text-center">
+                  <div className="text-muted-foreground">
+                    <p className="text-sm font-medium">No users found</p>
+                    <p className="mt-1 text-xs">Click &quot;Add User&quot; to create the first user.</p>
                   </div>
-                </td>
-                <td className="w-40 p-4">
-                  <div className="flex flex-wrap gap-1">
-                    {(user.role || '').split(', ').filter(Boolean).map((role, index) => (
-                      <span
-                        key={index}
-                        className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
-                          role === 'super-admin'
-                            ? 'bg-purple-100 text-purple-700'
-                            : role === 'admin'
-                              ? 'bg-info/10 text-info'
-                              : 'bg-muted text-foreground'
-                        }`}
-                      >
-                        {role}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                {isKloudliteCloud && (
-                  <td className="w-40 p-4">
-                    {(() => {
-                      const mt = getUserMachineType(user.username)
-                      return mt ? (
-                        <span className="inline-flex rounded-md bg-primary/10 text-primary px-2 py-1 text-xs font-medium">
-                          {getMachineTypeName(mt)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-xs italic">Not assigned</span>
-                      )
-                    })()}
-                  </td>
-                )}
-                <td className="w-28 p-4">
-                  <span
-                    className={`inline-flex min-w-[70px] justify-center rounded-md px-2 py-1 text-xs font-medium ${
-                      user.status === 'active'
-                        ? 'bg-success/10 text-success'
-                        : user.status === 'suspended'
-                          ? 'bg-destructive/10 text-destructive'
-                          : 'bg-warning/10 text-warning'
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </td>
-                <td className="w-32 p-4">
-                  <span className="text-muted-foreground text-sm">{user.lastLogin}</span>
-                </td>
-                <td className="w-32 p-4">
-                  <span className="text-muted-foreground text-sm">{user.created}</span>
-                </td>
-                <td className="w-20 p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {canEditUser(user) && (
-                        <>
-                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setResettingPasswordUser(user)}>
-                            <Key className="mr-2 h-4 w-4" />
-                            Reset Password
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Send Invite
-                          </DropdownMenuItem>
-                          {isKloudliteCloud && (
-                            <DropdownMenuItem onClick={() => {
-                              setAssigningUser(user)
-                              setSelectedMachineType(getUserMachineType(user.username) || '')
-                            }}>
-                              <Cpu className="mr-2 h-4 w-4" />
-                              Assign Machine Type
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          {user.status === 'active' ? (
-                            <DropdownMenuItem
-                              className="text-warning"
-                              onClick={() => handleToggleUserStatus(user, false)}
-                            >
-                              <UserX className="mr-2 h-4 w-4" />
-                              Disable User
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              className="text-success"
-                              onClick={() => handleToggleUserStatus(user, true)}
-                            >
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Enable User
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setDeletingUser(user)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete User
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      {!canEditUser(user) && (
-                        <DropdownMenuItem disabled>
-                          <Edit className="mr-2 h-4 w-4" />
-                          View Only (Insufficient Permissions)
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-muted border-b">
+                  <td className="p-4">
+                    <div>
+                      <div className="text-sm font-medium">{user.name}</div>
+                      <div className="text-muted-foreground text-sm">{user.email}</div>
+                    </div>
+                  </td>
+                  <td className="w-40 p-4">
+                    <div className="flex flex-wrap gap-1">
+                      {(user.role || '').split(', ').filter(Boolean).map((role, index) => (
+                        <span
+                          key={index}
+                          className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
+                            role === 'super-admin'
+                              ? 'bg-purple-100 text-purple-700'
+                              : role === 'admin'
+                                ? 'bg-info/10 text-info'
+                                : 'bg-muted text-foreground'
+                          }`}
+                        >
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  {isKloudliteCloud && (
+                    <td className="w-40 p-4">
+                      {(() => {
+                        const mt = getUserMachineType(user.username)
+                        return mt ? (
+                          <span className="inline-flex rounded-md bg-primary/10 text-primary px-2 py-1 text-xs font-medium">
+                            {getMachineTypeName(mt)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs italic">Not assigned</span>
+                        )
+                      })()}
+                    </td>
+                  )}
+                  <td className="w-28 p-4">
+                    <span
+                      className={`inline-flex min-w-[70px] justify-center rounded-md px-2 py-1 text-xs font-medium ${
+                        user.status === 'active'
+                          ? 'bg-success/10 text-success'
+                          : user.status === 'suspended'
+                            ? 'bg-destructive/10 text-destructive'
+                            : 'bg-warning/10 text-warning'
+                      }`}
+                    >
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="w-32 p-4">
+                    <span className="text-muted-foreground text-sm">{user.lastLogin}</span>
+                  </td>
+                  <td className="w-32 p-4">
+                    <span className="text-muted-foreground text-sm">{user.created}</span>
+                  </td>
+                  <td className="w-20 p-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEditUser(user) && (
+                          <>
+                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit User
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setResettingPasswordUser(user)}>
+                              <Key className="mr-2 h-4 w-4" />
+                              Reset Password
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Mail className="mr-2 h-4 w-4" />
+                              Send Invite
+                            </DropdownMenuItem>
+                            {isKloudliteCloud && (
+                              <DropdownMenuItem onClick={() => {
+                                setAssigningUser(user)
+                                setSelectedMachineType(getUserMachineType(user.username) || '')
+                              }}>
+                                <Cpu className="mr-2 h-4 w-4" />
+                                Assign Machine Type
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            {user.status === 'active' ? (
+                              <DropdownMenuItem
+                                className="text-warning"
+                                onClick={() => handleToggleUserStatus(user, false)}
+                              >
+                                <UserX className="mr-2 h-4 w-4" />
+                                Disable User
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="text-success"
+                                onClick={() => handleToggleUserStatus(user, true)}
+                              >
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Enable User
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeletingUser(user)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete User
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {!canEditUser(user) && (
+                          <DropdownMenuItem disabled>
+                            <Edit className="mr-2 h-4 w-4" />
+                            View Only (Insufficient Permissions)
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -811,6 +822,10 @@ export function UserManagementList({
                           ...prev,
                           roles: prev.roles.filter((r) => r !== role),
                         }))
+                        // Clear machine type selection when "user" role is removed
+                        if (role === 'user') {
+                          setCreateUserMachineType('')
+                        }
                       } else {
                         setFormData((prev) => ({
                           ...prev,
@@ -834,7 +849,7 @@ export function UserManagementList({
                 <p className="text-destructive mt-2 text-sm">At least one role is required</p>
               )}
             </div>
-            {isKloudliteCloud && !editingUser && (
+            {isKloudliteCloud && !editingUser && formData.roles.includes('user') && (
               <div className="space-y-2">
                 <Label>Machine Type *</Label>
                 <Select value={createUserMachineType} onValueChange={setCreateUserMachineType}>
@@ -874,7 +889,7 @@ export function UserManagementList({
                 (!editingUser && !formData.username) ||
                 !formData.email ||
                 formData.roles.length === 0 ||
-                (isKloudliteCloud && !editingUser && !createUserMachineType)
+                (isKloudliteCloud && !editingUser && formData.roles.includes('user') && !createUserMachineType)
               }
             >
               {isPending ? (
