@@ -27,7 +27,9 @@ export function InstallationJobProgress({ installationId, initialActive }: Insta
     try {
       const res = await fetch(`/api/installations/${installationId}/job-status`)
       if (!res.ok) {
+        // Record may have been deleted (e.g. auto-delete after uninstall)
         setActive(false)
+        router.refresh()
         return
       }
       const data: JobStatus = await res.json()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@kloudlite/ui'
 import { Trash2, Loader2, AlertTriangle } from 'lucide-react'
@@ -24,55 +24,8 @@ export function DeleteInstallationButton({
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [open, setOpen] = useState(false)
-  const [phase, setPhase] = useState<'idle' | 'uninstalling' | 'deleting'>('idle')
-  const [stepInfo, setStepInfo] = useState<{ current: number; total: number; description: string } | null>(null)
 
   const isManaged = cloudProvider === 'oci' && hasSecretKey
-
-  const pollJobStatus = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/installations/${installationId}/job-status`)
-      if (!response.ok) return null
-      const data = await response.json()
-
-      // Capture step progress
-      if (data.currentStep != null && data.totalSteps != null) {
-        setStepInfo({
-          current: data.currentStep,
-          total: data.totalSteps,
-          description: data.stepDescription || '',
-        })
-      }
-
-      return data.status as string
-    } catch {
-      return null
-    }
-  }, [installationId])
-
-  // Poll uninstall job while uninstalling
-  useEffect(() => {
-    if (phase !== 'uninstalling') return
-
-    const poll = async () => {
-      const status = await pollJobStatus()
-      if (!status) return
-
-      if (status === 'succeeded') {
-        setPhase('deleting')
-        await doDelete()
-      } else if (status === 'failed') {
-        toast.error('Uninstall job failed. Please try again.')
-        setDeleting(false)
-        setPhase('idle')
-        setStepInfo(null)
-      }
-    }
-
-    poll()
-    const interval = setInterval(poll, 5000)
-    return () => clearInterval(interval)
-  }, [phase, installationId, pollJobStatus])
 
   const doDelete = async () => {
     try {
@@ -88,14 +41,12 @@ export function DeleteInstallationButton({
       toast.success('Installation deleted successfully')
       setOpen(false)
       setDeleting(false)
-      setPhase('idle')
       router.push('/installations')
       router.refresh()
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to delete installation')
       toast.error(error.message)
       setDeleting(false)
-      setPhase('idle')
     }
   }
 
@@ -103,8 +54,8 @@ export function DeleteInstallationButton({
     setDeleting(true)
 
     if (isManaged) {
-      // Trigger uninstall job first, then delete on success
-      setPhase('uninstalling')
+      // Trigger uninstall job, then navigate to list where progress is shown.
+      // The job-lock endpoint auto-deletes the record when uninstall succeeds.
       try {
         const response = await fetch(
           `/api/installations/${installationId}/trigger-managed-uninstall`,
@@ -114,30 +65,21 @@ export function DeleteInstallationButton({
           const data = await response.json()
           throw new Error(data.error || 'Failed to trigger uninstall')
         }
-        toast.success('Uninstall job started — infrastructure will be torn down before deletion')
+        toast.success('Uninstall started — infrastructure is being torn down')
+        setOpen(false)
+        setDeleting(false)
+        router.push('/installations')
+        router.refresh()
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to trigger uninstall'
         toast.error(message)
         setDeleting(false)
-        setPhase('idle')
       }
     } else {
       // Direct delete for BYOC installations
       await doDelete()
     }
   }
-
-  const buttonLabel = 'Delete Installation'
-  const actionLabel = 'Delete'
-
-  const progressLabel =
-    phase === 'uninstalling'
-      ? stepInfo && stepInfo.current > 0
-        ? `Uninstalling... (Step ${stepInfo.current}/${stepInfo.total})`
-        : 'Uninstalling infrastructure...'
-      : phase === 'deleting'
-        ? 'Deleting...'
-        : 'Deleting...'
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -147,12 +89,12 @@ export function DeleteInstallationButton({
             {deleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {progressLabel}
+                Deleting...
               </>
             ) : (
               <>
                 <Trash2 className="mr-2 h-4 w-4" />
-                {buttonLabel}
+                Delete Installation
               </>
             )}
           </Button>
@@ -201,10 +143,10 @@ export function DeleteInstallationButton({
             {deleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {progressLabel}
+                {isManaged ? 'Starting uninstall...' : 'Deleting...'}
               </>
             ) : (
-              actionLabel
+              'Delete'
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
