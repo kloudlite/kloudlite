@@ -399,6 +399,7 @@ export GCS_BUCKET="%s"
 export AUTH_COOKIE_DOMAIN="%s"
 export CLOUDFLARE_DNS_DOMAIN="khost.dev"
 export KLOUDLITE_REGISTRY_HOST="cr.%s"
+export INSTALLATION_TYPE="kloudlite-cloud"
 if ! kli install-manifests; then
   echo "ERROR: Failed to install Kloudlite manifests"
   exit 1

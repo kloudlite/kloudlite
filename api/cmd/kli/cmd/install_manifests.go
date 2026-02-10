@@ -154,6 +154,11 @@ data:
 		if cloudflareDNSDomain == "" {
 			cloudflareDNSDomain = "khost.dev"
 		}
+		installationType := os.Getenv("INSTALLATION_TYPE")
+		if installationType == "" {
+			installationType = "self-hosted"
+		}
+		frontendManifest = strings.ReplaceAll(frontendManifest, "${INSTALLATION_TYPE}", installationType)
 		frontendManifest = strings.ReplaceAll(frontendManifest, "${AUTH_COOKIE_DOMAIN}", authCookieDomain)
 		frontendManifest = strings.ReplaceAll(frontendManifest, "${CLOUDFLARE_DNS_DOMAIN}", cloudflareDNSDomain)
 

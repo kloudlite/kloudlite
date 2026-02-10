@@ -69,6 +69,8 @@ spec:
               value: "${AUTH_COOKIE_DOMAIN}"
             - name: CLOUDFLARE_DNS_DOMAIN
               value: "${CLOUDFLARE_DNS_DOMAIN}"
+            - name: INSTALLATION_TYPE
+              value: "${INSTALLATION_TYPE}"
             - name: HOSTED_SUBDOMAIN
               value: "${AUTH_COOKIE_DOMAIN}"
           resources:
