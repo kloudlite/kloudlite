@@ -1,0 +1,76 @@
+---
+# Kloudlite Cloud machine types — pre-configured tiers for managed installations
+# Apply with: kubectl apply -f cloud-machine-types.yaml
+
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: cloud-tier-1
+  labels:
+    kloudlite.io/machinetype.default: "true"
+  annotations:
+    kloudlite.io/tier-name: "Tier 1"
+    kloudlite.io/tier-subtitle: "Light workloads"
+    kloudlite.io/tier-price: "29"
+    kloudlite.io/tier-price-unit: "/user/mo"
+    kloudlite.io/tier-included-hours: "160"
+    kloudlite.io/tier-extra-hour-price: "0.18"
+    kloudlite.io/tier-storage-gb: "100"
+    kloudlite.io/tier-suspend-minutes: "15"
+spec:
+  displayName: "Tier 1"
+  description: "Light workloads — 8 vCPUs, 16GB RAM, 100GB storage, 160 hrs/mo included"
+  category: general
+  active: true
+  isDefault: true
+  priority: 10
+  resources:
+    cpu: "8"
+    memory: 16Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: cloud-tier-2
+  annotations:
+    kloudlite.io/tier-name: "Tier 2"
+    kloudlite.io/tier-subtitle: "Standard workloads"
+    kloudlite.io/tier-price: "49"
+    kloudlite.io/tier-price-unit: "/user/mo"
+    kloudlite.io/tier-included-hours: "160"
+    kloudlite.io/tier-extra-hour-price: "0.30"
+    kloudlite.io/tier-storage-gb: "200"
+    kloudlite.io/tier-suspend-minutes: "30"
+    kloudlite.io/tier-popular: "true"
+spec:
+  displayName: "Tier 2"
+  description: "Standard workloads — 12 vCPUs, 32GB RAM, 200GB storage, 160 hrs/mo included"
+  category: general
+  active: true
+  priority: 20
+  resources:
+    cpu: "12"
+    memory: 32Gi
+---
+apiVersion: machines.kloudlite.io/v1
+kind: MachineType
+metadata:
+  name: cloud-tier-3
+  annotations:
+    kloudlite.io/tier-name: "Tier 3"
+    kloudlite.io/tier-subtitle: "Power users"
+    kloudlite.io/tier-price: "89"
+    kloudlite.io/tier-price-unit: "/user/mo"
+    kloudlite.io/tier-included-hours: "160"
+    kloudlite.io/tier-extra-hour-price: "0.55"
+    kloudlite.io/tier-storage-gb: "500"
+    kloudlite.io/tier-suspend-minutes: "60"
+spec:
+  displayName: "Tier 3"
+  description: "Power users — 16 vCPUs, 64GB RAM, 500GB storage, 160 hrs/mo included"
+  category: compute-optimized
+  active: true
+  priority: 30
+  resources:
+    cpu: "16"
+    memory: 64Gi

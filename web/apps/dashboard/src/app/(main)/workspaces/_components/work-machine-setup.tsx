@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Server, Rocket, Cpu, HardDrive, Sparkles } from 'lucide-react'
+import { Server, Rocket, Cpu, HardDrive, Sparkles, Clock } from 'lucide-react'
 import {
   Button,
   KloudliteLogo,
@@ -36,6 +36,7 @@ interface WorkMachineSetupProps {
   displayName?: string
   isAdmin?: boolean
   isSuperAdmin?: boolean
+  isKloudliteCloud?: boolean
 }
 
 export function WorkMachineSetup({
@@ -44,6 +45,7 @@ export function WorkMachineSetup({
   displayName,
   isAdmin,
   isSuperAdmin,
+  isKloudliteCloud,
 }: WorkMachineSetupProps) {
   const router = useRouter()
   const [_isPending, startTransition] = useTransition()
@@ -112,115 +114,134 @@ export function WorkMachineSetup({
           </div>
 
           {/* Setup Section */}
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-lg font-semibold mb-2 flex items-center justify-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Choose Your Machine Configuration
-              </h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Select the resources that match your development needs
-              </p>
-            </div>
-
-            {/* Machine Type Selector */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Machine Type</label>
-              <Select value={selectedType} onValueChange={setSelectedType} disabled={isCreating}>
-                <SelectTrigger className="w-full h-11">
-                  <SelectValue placeholder="Select a machine type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableMachineTypes.map((mt) => (
-                    <SelectItem key={mt.id} value={mt.id}>
-                      <div className="flex items-center gap-2 py-1">
-                        <span className="font-medium">{mt.name}</span>
-                        <span className="text-muted-foreground text-xs">
-                          ({mt.cpu} CPU, {mt.memory} RAM)
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Selected Machine Details */}
-            {selectedMachineType && (
-              <div className="bg-muted/20 border border-border/50 rounded-lg p-6 space-y-5">
+          {isKloudliteCloud ? (
+            /* Cloud mode: admin assigns machine type */
+            <div className="space-y-6">
+              <div className="bg-muted/30 border border-border/50 rounded-lg p-8 text-center space-y-4">
+                <div className="bg-primary/10 mx-auto flex h-14 w-14 items-center justify-center rounded-full ring-8 ring-primary/5">
+                  <Clock className="text-primary h-7 w-7" />
+                </div>
                 <div>
-                  <h3 className="text-base font-semibold mb-1">{selectedMachineType.name}</h3>
-                  <p className="text-muted-foreground text-sm">{selectedMachineType.description}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 bg-background/80 border border-border/30 rounded-lg p-3">
-                    <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                      <Cpu className="text-primary h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-0.5">CPU</p>
-                      <p className="text-sm font-semibold">{selectedMachineType.cpu} Cores</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 bg-background/80 border border-border/30 rounded-lg p-3">
-                    <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                      <HardDrive className="text-primary h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-0.5">Memory</p>
-                      <p className="text-sm font-semibold">{selectedMachineType.memory}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-primary/5 border-l-4 border-primary rounded p-3">
-                  <p className="text-sm">
-                    <span className="font-medium">Category:</span>{' '}
-                    <span className="capitalize text-muted-foreground">{selectedMachineType.category}</span>
+                  <h2 className="text-lg font-semibold mb-2">Waiting for Machine Assignment</h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto">
+                    Your administrator will assign a machine configuration for you.
+                    Please check back soon or contact your admin to get started.
                   </p>
                 </div>
               </div>
-            )}
-
-            {/* No Types Available */}
-            {availableMachineTypes.length === 0 && (
-              <div className="bg-destructive/10 border-destructive border rounded-lg p-6 text-center">
-                <Server className="text-destructive mx-auto mb-3 h-10 w-10" />
-                <p className="text-sm font-semibold mb-1">No machine types available</p>
-                <p className="text-muted-foreground text-xs">
-                  Please contact your administrator to configure machine types
+            </div>
+          ) : (
+            /* Self-hosted mode: user picks machine type */
+            <div className="space-y-6">
+              <div className="text-center mb-6">
+                <h2 className="text-lg font-semibold mb-2 flex items-center justify-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Choose Your Machine Configuration
+                </h2>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Select the resources that match your development needs
                 </p>
               </div>
-            )}
 
-            {/* Create Button */}
-            <Button
-              onClick={handleCreate}
-              disabled={!selectedType || isCreating || availableMachineTypes.length === 0}
-              className="w-full h-11 text-base font-semibold"
-              size="lg"
-            >
-              {isCreating ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
-                  Creating Your Environment...
-                </>
-              ) : (
-                <>
-                  <Rocket className="h-4 w-4 mr-2" />
-                  Create Work Machine
-                </>
+              {/* Machine Type Selector */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Machine Type</label>
+                <Select value={selectedType} onValueChange={setSelectedType} disabled={isCreating}>
+                  <SelectTrigger className="w-full h-11">
+                    <SelectValue placeholder="Select a machine type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableMachineTypes.map((mt) => (
+                      <SelectItem key={mt.id} value={mt.id}>
+                        <div className="flex items-center gap-2 py-1">
+                          <span className="font-medium">{mt.name}</span>
+                          <span className="text-muted-foreground text-xs">
+                            ({mt.cpu} CPU, {mt.memory} RAM)
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Selected Machine Details */}
+              {selectedMachineType && (
+                <div className="bg-muted/20 border border-border/50 rounded-lg p-6 space-y-5">
+                  <div>
+                    <h3 className="text-base font-semibold mb-1">{selectedMachineType.name}</h3>
+                    <p className="text-muted-foreground text-sm">{selectedMachineType.description}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 bg-background/80 border border-border/30 rounded-lg p-3">
+                      <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+                        <Cpu className="text-primary h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">CPU</p>
+                        <p className="text-sm font-semibold">{selectedMachineType.cpu} Cores</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-background/80 border border-border/30 rounded-lg p-3">
+                      <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+                        <HardDrive className="text-primary h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Memory</p>
+                        <p className="text-sm font-semibold">{selectedMachineType.memory}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-primary/5 border-l-4 border-primary rounded p-3">
+                    <p className="text-sm">
+                      <span className="font-medium">Category:</span>{' '}
+                      <span className="capitalize text-muted-foreground">{selectedMachineType.category}</span>
+                    </p>
+                  </div>
+                </div>
               )}
-            </Button>
 
-            {selectedType && !isCreating && (
-              <p className="text-muted-foreground text-center text-xs">
-                This will take a few moments to provision your development environment
-              </p>
-            )}
-          </div>
+              {/* No Types Available */}
+              {availableMachineTypes.length === 0 && (
+                <div className="bg-destructive/10 border-destructive border rounded-lg p-6 text-center">
+                  <Server className="text-destructive mx-auto mb-3 h-10 w-10" />
+                  <p className="text-sm font-semibold mb-1">No machine types available</p>
+                  <p className="text-muted-foreground text-xs">
+                    Please contact your administrator to configure machine types
+                  </p>
+                </div>
+              )}
+
+              {/* Create Button */}
+              <Button
+                onClick={handleCreate}
+                disabled={!selectedType || isCreating || availableMachineTypes.length === 0}
+                className="w-full h-11 text-base font-semibold"
+                size="lg"
+              >
+                {isCreating ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                    Creating Your Environment...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="h-4 w-4 mr-2" />
+                    Create Work Machine
+                  </>
+                )}
+              </Button>
+
+              {selectedType && !isCreating && (
+                <p className="text-muted-foreground text-center text-xs">
+                  This will take a few moments to provision your development environment
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

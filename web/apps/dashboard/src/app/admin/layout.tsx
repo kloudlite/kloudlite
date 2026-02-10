@@ -4,6 +4,7 @@ import { KloudliteLogo } from '@kloudlite/ui'
 import { AdminNavigation } from './_components/admin-navigation'
 import { AdminProfileDropdown } from './_components/admin-profile-dropdown'
 import { isSystemReady, SystemSetupPage } from '@/lib/system-check'
+import { env } from '@/lib/env'
 
 // Admin layout - only users with admin/super-admin roles can access
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -46,7 +47,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </div>
 
               {/* Admin Navigation */}
-              <AdminNavigation />
+              <AdminNavigation isKloudliteCloud={env.isKloudliteCloud} />
             </div>
 
             {/* User Dropdown */}

@@ -7,6 +7,7 @@ import type { WorkMachine } from '@kloudlite/types'
 import { WorkMachineCard } from './workspaces/_components/work-machine-card'
 import { WorkMachineMetrics } from './workspaces/_components/work-machine-metrics'
 import { WorkMachineSetup } from './workspaces/_components/work-machine-setup'
+import { env } from '@/lib/env'
 
 // Helper to map work machine CR to display format
 function transformWorkMachine(wm: WorkMachine) {
@@ -117,6 +118,7 @@ export default async function HomePage() {
         displayName={session.user?.name || undefined}
         isAdmin={userRoles.includes('admin')}
         isSuperAdmin={userRoles.includes('super-admin')}
+        isKloudliteCloud={env.isKloudliteCloud}
       />
     )
   }
@@ -136,6 +138,7 @@ export default async function HomePage() {
       <WorkMachineCard
         machine={workMachine}
         availableMachineTypes={availableMachineTypes}
+        isKloudliteCloud={env.isKloudliteCloud}
       />
 
       {/* Monitoring Section - Only show when machine is running */}

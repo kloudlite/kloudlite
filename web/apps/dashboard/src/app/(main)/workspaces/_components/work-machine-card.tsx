@@ -44,6 +44,7 @@ interface MachineType {
 interface WorkMachineCardProps {
   machine: WorkMachine
   availableMachineTypes: MachineType[]
+  isKloudliteCloud?: boolean
 }
 
 // Helper to get state display info
@@ -86,7 +87,7 @@ function getStateDisplay(currentState: string, desiredState: string) {
   }
 }
 
-export function WorkMachineCard({ machine, availableMachineTypes }: WorkMachineCardProps) {
+export function WorkMachineCard({ machine, availableMachineTypes, isKloudliteCloud }: WorkMachineCardProps) {
   const router = useRouter()
   const [_isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(false)
@@ -201,6 +202,7 @@ export function WorkMachineCard({ machine, availableMachineTypes }: WorkMachineC
             onStop={handleStop}
             onTypeChange={handleTypeChange}
             isLoading={isLoading}
+            isKloudliteCloud={isKloudliteCloud}
           />
         </div>
 
