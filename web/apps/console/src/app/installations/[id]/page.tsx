@@ -3,6 +3,7 @@ import { getRegistrationSession } from '@/lib/console-auth'
 import { getInstallationById, checkInstallationDomainStatus, getMemberRole } from '@/lib/console/storage'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
+import { InstallationJobProgress } from '@/components/installation-job-progress'
 import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
 import { UninstallScriptCard } from '@/components/uninstall-script-card'
 import { AlertTriangle } from 'lucide-react'
@@ -113,6 +114,14 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
+      {/* Job Progress Banner */}
+      {hasActiveJob && (
+        <InstallationJobProgress
+          installationId={installation.id}
+          initialActive={true}
+        />
+      )}
+
       {/* Status & Details Card */}
       <div className="border border-foreground/10 rounded-lg p-6 bg-background">
         <InstallationDetailsCard

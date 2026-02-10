@@ -137,6 +137,15 @@ func callJobLock(cfg *Config, action string, status ...string) (bool, error) {
 
 // reportProgress sends step progress to the console API (fire-and-forget).
 func reportProgress(cfg *Config, operation string, currentStep, totalSteps int, stepDescription string) {
+	sendProgress(cfg, operation, currentStep, totalSteps, stepDescription, false)
+}
+
+// reportProgressComplete marks the job as completed in the console API.
+func reportProgressComplete(cfg *Config, operation string, totalSteps int, stepDescription string) {
+	sendProgress(cfg, operation, totalSteps, totalSteps, stepDescription, true)
+}
+
+func sendProgress(cfg *Config, operation string, currentStep, totalSteps int, stepDescription string, completed bool) {
 	url := fmt.Sprintf("%s/api/installations/job-progress", cfg.ConsoleBaseURL)
 
 	payload := map[string]any{
@@ -145,6 +154,7 @@ func reportProgress(cfg *Config, operation string, currentStep, totalSteps int, 
 		"currentStep":     currentStep,
 		"totalSteps":      totalSteps,
 		"stepDescription": stepDescription,
+		"completed":       completed,
 	}
 	body, _ := json.Marshal(payload)
 
@@ -215,12 +225,14 @@ func run() int {
 			failed = true
 			return 1
 		}
+		reportProgressComplete(cfg, "install", 9, "Installation complete")
 	case "uninstall":
 		if err := runUninstall(ctx, cfg); err != nil {
 			log.Printf("FAILED: Uninstallation failed after %s: %v", time.Since(startTime).Truncate(time.Second), err)
 			failed = true
 			return 1
 		}
+		reportProgressComplete(cfg, "uninstall", 4, "Uninstallation complete")
 	}
 
 	log.Printf("=== Completed successfully in %s ===", time.Since(startTime).Truncate(time.Second))
