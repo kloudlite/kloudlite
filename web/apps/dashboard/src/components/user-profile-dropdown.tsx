@@ -73,17 +73,13 @@ export function UserProfileDropdown({
             <DropdownMenuSeparator />
           </>
         )}
-        <form action={signOutAction}>
-          <DropdownMenuItem asChild>
-            <button
-              type="submit"
-              className="w-full text-red-600 dark:text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-600 dark:focus:text-red-400 hover:bg-red-500/10"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </button>
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem
+          onClick={() => signOutAction()}
+          className="text-red-600 dark:text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-600 dark:focus:text-red-400 hover:bg-red-500/10"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

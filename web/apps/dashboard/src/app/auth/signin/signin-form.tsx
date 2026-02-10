@@ -56,7 +56,12 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
       if (result?.ok) {
         router.push('/')
         router.refresh()
+        return
       }
+
+      // Unexpected response — reset so the user can retry
+      setError('An error occurred. Please try again.')
+      setLoadingAction(null)
     } catch (err) {
       console.error('Sign in error:', err)
       setError('An error occurred. Please try again.')
@@ -71,6 +76,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
     } catch (error) {
       console.error(`OAuth login error with ${provider}:`, error)
       setError(`Failed to sign in with ${provider}`)
+    } finally {
       setLoadingAction(null)
     }
   }

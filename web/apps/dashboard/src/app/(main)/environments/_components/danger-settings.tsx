@@ -29,14 +29,19 @@ export function DangerSettings({ environmentId, environmentName }: DangerSetting
 
   const handleDelete = () => {
     startTransition(async () => {
-      const result = await deleteEnvironment(environmentId)
-      if (result.success) {
-        toast.success('Environment deleted successfully')
-        router.push('/environments')
-      } else {
-        toast.error(result.error || 'Failed to delete environment')
+      try {
+        const result = await deleteEnvironment(environmentId)
+        if (result.success) {
+          toast.success('Environment deleted successfully')
+          router.push('/environments')
+        } else {
+          toast.error(result.error || 'Failed to delete environment')
+        }
+      } catch {
+        toast.error('Failed to delete environment')
+      } finally {
+        setShowDeleteDialog(false)
       }
-      setShowDeleteDialog(false)
     })
   }
 

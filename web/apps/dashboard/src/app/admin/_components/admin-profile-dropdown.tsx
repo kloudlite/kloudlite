@@ -48,14 +48,13 @@ export function AdminProfileDropdown({ name, email, hasUserRole }: AdminProfileD
             <DropdownMenuSeparator />
           </>
         )}
-        <form action={signOutAction}>
-          <DropdownMenuItem asChild>
-            <button type="submit" className="w-full text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </button>
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem
+          onClick={() => signOutAction()}
+          className="text-destructive focus:text-destructive cursor-pointer"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
