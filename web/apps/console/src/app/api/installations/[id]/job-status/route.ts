@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import { requireInstallationAccess } from '@/lib/console/authorization'
-import { getInstallationById, updateInstallation } from '@/lib/console/storage'
+import {
+  getInstallationById,
+  updateInstallation,
+  deleteInstallation,
+  deleteIpRecords,
+  deleteDomainReservation,
+} from '@/lib/console/storage'
+import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 import { getJobExecutionStatus } from '@/lib/console/aca-jobs'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +27,23 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       // If there's no ACA execution AND no progress data, return 404
       if (!installation.acaJobStatus && !installation.acaJobOperation) {
         return NextResponse.json({ error: 'No job execution found' }, { status: 404 })
+      }
+
+      // Auto-delete after successful uninstall (BYOC path)
+      if (installation.acaJobOperation === 'uninstall' && installation.acaJobStatus === 'succeeded') {
+        try {
+          console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall (BYOC)`)
+          const dnsRecordIds = await deleteIpRecords(id)
+          if (dnsRecordIds.length > 0) {
+            await deleteDnsRecords(dnsRecordIds)
+          }
+          await deleteDomainReservation(id)
+          await deleteInstallation(id)
+          console.log(`[job-status] Installation ${id} auto-deleted (BYOC)`)
+        } catch (deleteErr) {
+          console.error(`[job-status] Failed to auto-delete installation ${id}:`, deleteErr)
+        }
+        return NextResponse.json({ status: 'succeeded', operation: 'uninstall', deleted: true })
       }
 
       // Return DB-stored progress for BYOC installations
@@ -49,6 +73,23 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         updates.acaJobError = result.error
       }
       await updateInstallation(id, updates)
+    }
+
+    // Auto-delete after successful uninstall
+    if (installation.acaJobOperation === 'uninstall' && result.status === 'succeeded') {
+      try {
+        console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall`)
+        const dnsRecordIds = await deleteIpRecords(id)
+        if (dnsRecordIds.length > 0) {
+          await deleteDnsRecords(dnsRecordIds)
+        }
+        await deleteDomainReservation(id)
+        await deleteInstallation(id)
+        console.log(`[job-status] Installation ${id} auto-deleted`)
+      } catch (deleteErr) {
+        console.error(`[job-status] Failed to auto-delete installation ${id}:`, deleteErr)
+      }
+      return NextResponse.json({ status: 'succeeded', operation: 'uninstall', deleted: true })
     }
 
     // Re-fetch installation to get latest progress fields (may have been updated by job-progress callback)

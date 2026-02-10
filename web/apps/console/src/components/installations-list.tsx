@@ -38,29 +38,38 @@ export function InstallationsList({ installations }: InstallationsListProps) {
 
   // Helper function to get installation status
   const getInstallationStatus = (installation: Installation) => {
-    // Check active jobs first
-    if (hasActiveJob(installation)) {
-      if (installation.acaJobOperation === 'uninstall') {
+    // Uninstall operations: show UNINSTALLING until the record is auto-deleted
+    if (installation.acaJobOperation === 'uninstall') {
+      if (installation.acaJobStatus === 'failed') {
         return {
-          status: 'UNINSTALLING',
+          status: 'UNINSTALL FAILED',
           statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
           isPending: false,
-          isActiveJob: true,
-          stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
-            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
-            : undefined,
+          isActiveJob: false,
+          stepInfo: undefined,
         }
       }
-      if (installation.acaJobOperation === 'install') {
-        return {
-          status: 'INSTALLING',
-          statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
-          isPending: false,
-          isActiveJob: true,
-          stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
-            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
-            : undefined,
-        }
+      return {
+        status: 'UNINSTALLING',
+        statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
+        isPending: false,
+        isActiveJob: true,
+        stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
+          ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
+          : undefined,
+      }
+    }
+
+    // Check active install jobs
+    if (hasActiveJob(installation) && installation.acaJobOperation === 'install') {
+      return {
+        status: 'INSTALLING',
+        statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
+        isPending: false,
+        isActiveJob: true,
+        stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
+          ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
+          : undefined,
       }
     }
 
@@ -111,14 +120,20 @@ export function InstallationsList({ installations }: InstallationsListProps) {
     }
   }
 
-  // Auto-refresh when any installation has an active job
-  const hasAnyActiveJob = installations.some(hasActiveJob)
+  // Check if installation needs polling (active job or pending uninstall deletion)
+  const needsPolling = (installation: Installation) => {
+    return hasActiveJob(installation) ||
+      (installation.acaJobOperation === 'uninstall' && installation.acaJobStatus !== 'failed')
+  }
+
+  // Auto-refresh when any installation has an active job or pending uninstall
+  const hasAnyActiveJob = installations.some(needsPolling)
   useEffect(() => {
     if (!hasAnyActiveJob) return
     const interval = setInterval(async () => {
       // Sync job status from ACA API → DB for active installations
       for (const inst of installations) {
-        if (hasActiveJob(inst)) {
+        if (needsPolling(inst)) {
           try { await fetch(`/api/installations/${inst.id}/job-status`) } catch {}
         }
       }

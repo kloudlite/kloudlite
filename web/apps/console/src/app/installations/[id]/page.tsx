@@ -55,9 +55,18 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
     (installation.acaJobOperation === 'install' || installation.acaJobOperation === 'uninstall')
 
   // Determine installation status
+  const isUninstalling = installation.acaJobOperation === 'uninstall' && installation.acaJobStatus !== 'failed'
+
   const getStatus = () => {
-    // Check active jobs first
-    if (hasActiveJob && installation.acaJobOperation === 'uninstall') {
+    // Uninstall operations: show UNINSTALLING until the record is auto-deleted
+    if (installation.acaJobOperation === 'uninstall') {
+      if (installation.acaJobStatus === 'failed') {
+        return {
+          label: 'UNINSTALL FAILED',
+          color: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
+          description: 'Uninstall job failed. You can retry from the danger zone below.',
+        }
+      }
       const stepInfo = installation.acaJobCurrentStep && installation.acaJobTotalSteps
         ? ` (Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps})`
         : ''
@@ -115,7 +124,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       {/* Job Progress Banner */}
-      {hasActiveJob && (
+      {(hasActiveJob || isUninstalling) && (
         <InstallationJobProgress
           installationId={installation.id}
           initialActive={true}
@@ -142,8 +151,8 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Danger Zone - Only for Owner, hidden during active jobs */}
-      {userRole === 'owner' && !hasActiveJob && (
+      {/* Danger Zone - Only for Owner, hidden during active jobs and uninstall */}
+      {userRole === 'owner' && !hasActiveJob && !isUninstalling && (
         <div className="border border-red-500/20 rounded-lg p-6 bg-red-500/5">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-1">
