@@ -503,16 +503,16 @@ until kubectl get crd machinetypes.machines.kloudlite.io 2>/dev/null; do
 done
 echo "MachineType CRD registered successfully"
 
-# Create OCI-specific MachineTypes
-echo "Creating OCI MachineTypes..."
+# Create Kloudlite Cloud MachineTypes
+echo "Creating Cloud MachineTypes..."
 cat <<'MACHINEEOF' | kubectl apply -f -
 %s
 MACHINEEOF
 
 if [ $? -eq 0 ]; then
-  echo "OCI MachineTypes created successfully"
+  echo "Cloud MachineTypes created successfully"
 else
-  echo "ERROR: Failed to create OCI MachineTypes"
+  echo "ERROR: Failed to create Cloud MachineTypes"
 fi
 
 # Wait for API Server to be ready
@@ -652,6 +652,6 @@ echo "Kloudlite installation completed successfully at $(date)!"
 `, internal.K3sVersion, k3sToken, secretKey, jwtSecret, jwtSecret, secretKey,
 		installationKey, cfg.TenancyOCID, cfg.Region, cfg.CompartmentOCID, subnetID, nsgID, fullDomain, fullDomain,
 		cfg.TenancyOCID, cfg.Region, bucketName, fullDomain, fullDomain,
-		manifests.OCIMachineTypes,
+		manifests.CloudMachineTypes,
 		bucketName, cfg.TenancyOCID, cfg.Region)
 }
