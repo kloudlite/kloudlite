@@ -25,6 +25,17 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     if (!installation) {
       return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
     }
+    // Guard against delete while uninstall is actively running
+    if (
+      installation.acaJobOperation === 'uninstall' &&
+      (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending')
+    ) {
+      return NextResponse.json(
+        { error: 'Cannot delete while uninstall is in progress' },
+        { status: 409 },
+      )
+    }
+
     console.log(`Deleting installation: ${id}`)
 
     // Step 1: Get all DNS record IDs and delete IP records from database

@@ -200,9 +200,7 @@ func run() int {
 	}
 	failed := false
 	defer func() {
-		if acquired {
-			releaseLock(cfg, failed)
-		}
+		releaseLock(cfg, failed)
 	}()
 
 	// 25-minute timeout for the overall operation

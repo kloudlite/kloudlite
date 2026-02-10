@@ -68,6 +68,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       acaJobCurrentStep: 0,
       acaJobTotalSteps: 9,
       acaJobStepDescription: 'Starting installation...',
+      deploymentReady: false,
     })
 
     return NextResponse.json({ success: true, executionName: result.executionName })
