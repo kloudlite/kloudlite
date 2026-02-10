@@ -27,8 +27,9 @@ This command will:
   - Create VCN, Subnet, and Network Security Group
   - Create Object Storage bucket for K3s database backups
   - Create Dynamic Group and IAM Policy
+  - Reserve a public IP address
   - Launch VM.Standard.E4.Flex instance (1 OCPU, 8GB RAM) with 100GB boot volume
-  - Create Network Load Balancer (Layer 4, TCP passthrough)
+  - Assign reserved IP to instance
   - Configure DNS with Cloudflare proxy mode (TLS termination at Cloudflare edge)
 
 NOTE: The subdomain must be reserved in the console (console.kloudlite.io)
@@ -94,13 +95,13 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 
 	var createdResources struct {
 		sync.Mutex
-		instanceID   string
-		nsgID        string
-		vcnID        string
-		bucketName   string
-		dgCreated    bool
+		instanceID    string
+		nsgID         string
+		vcnID         string
+		bucketName    string
+		dgCreated     bool
 		policyCreated bool
-		nlbCreated   bool
+		ipCreated     bool
 	}
 
 	var ociCfg *ociinternal.OCIConfig
@@ -118,9 +119,9 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 		}
 
 		// Cleanup in reverse order
-		if createdResources.nlbCreated {
-			fmt.Printf("  Deleting Network Load Balancer...\n")
-			ociinternal.DeleteNetworkLoadBalancer(context.Background(), ociCfg, ociInstallationKey)
+		if createdResources.ipCreated {
+			fmt.Printf("  Deleting Reserved Public IP...\n")
+			ociinternal.DeleteReservedPublicIP(context.Background(), ociCfg, ociInstallationKey)
 		}
 		if createdResources.instanceID != "" {
 			fmt.Printf("  Terminating instance...\n")
@@ -257,8 +258,8 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("  o Creating resources in parallel...\n")
 
 	var wg sync.WaitGroup
-	var nsgID, bucketName string
-	var nsgErr, storageErr, dgErr, policyErr error
+	var nsgID, bucketName, reservedIP string
+	var nsgErr, storageErr, dgErr, policyErr, ipErr error
 	bucketName = ociinternal.GetBucketName(ociInstallationKey)
 
 	startTime := time.Now()
@@ -320,6 +321,24 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 		}
 	}()
 
+	// Reserved Public IP (parallel, only when LB/DNS is needed)
+	if !ociSkipLB {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Printf("    [%s] Starting: Reserved IP creation\n", time.Now().Format("15:04:05"))
+			reservedIP, ipErr = ociinternal.ReservePublicIP(ctx, cfg, ociInstallationKey)
+			if ipErr != nil {
+				fmt.Printf("    [%s] Failed: Reserved IP - %v\n", time.Now().Format("15:04:05"), ipErr)
+			} else {
+				createdResources.Lock()
+				createdResources.ipCreated = true
+				createdResources.Unlock()
+				fmt.Printf("    [%s] Completed: Reserved IP (%s)\n", time.Now().Format("15:04:05"), reservedIP)
+			}
+		}()
+	}
+
 	wg.Wait()
 	elapsed := time.Since(startTime)
 	fmt.Printf("    Parallel operations completed in %.1fs\n", elapsed.Seconds())
@@ -345,12 +364,20 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 		yellow.Printf("    Policy Error: %v\n\n", policyErr)
 		os.Exit(1)
 	}
+	if ipErr != nil {
+		red.Printf(" x\n")
+		yellow.Printf("    Reserved IP Error: %v\n\n", ipErr)
+		os.Exit(1)
+	}
 
 	green.Printf(" +\n")
 	fmt.Printf("    NSG:            %s\n", nsgID)
 	fmt.Printf("    Storage Bucket: %s\n", bucketName)
 	fmt.Printf("    Dynamic Group:  Created\n")
 	fmt.Printf("    Policy:         Created\n")
+	if !ociSkipLB {
+		fmt.Printf("    Reserved IP:    %s\n", reservedIP)
+	}
 
 	// Instance Launch
 	bold.Println("\nInstance Deployment")
@@ -399,31 +426,26 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    Public IP: %s\n", publicIP)
 	fmt.Printf("    Private IP: %s\n", privateIP)
 
-	// Load Balancer Setup (unless skipping)
-	var lbIP string
+	// Reserved IP Assignment + DNS (unless skipping)
 	if !ociSkipLB {
-		bold.Println("\nLoad Balancer Setup")
-		bold.Println("-------------------")
+		bold.Println("\nReserved IP Assignment")
+		bold.Println("----------------------")
 
-		fmt.Printf("  o Creating Network Load Balancer...")
-		_, nlbIP, err := ociinternal.CreateNetworkLoadBalancer(ctx, cfg, subnetID, instanceID, privateIP, ociInstallationKey)
+		fmt.Printf("  o Assigning reserved IP to instance...")
+		_, err = ociinternal.AssignReservedIP(ctx, cfg, instanceID, ociInstallationKey)
 		if err != nil {
 			red.Printf(" x\n")
 			yellow.Printf("    Error: %v\n\n", err)
 			os.Exit(1)
 		}
-		lbIP = nlbIP
-		createdResources.Lock()
-		createdResources.nlbCreated = true
-		createdResources.Unlock()
 		green.Printf(" +\n")
-		fmt.Printf("    NLB IP: %s\n", lbIP)
+		fmt.Printf("    Reserved IP: %s assigned to instance\n", reservedIP)
 
-		// Register LB IP with console for DNS configuration (A record, Cloudflare proxied for TLS)
+		// Register reserved IP with console for DNS configuration (A record, Cloudflare proxied for TLS)
 		bold.Println("\nDNS Configuration")
 		bold.Println("-----------------")
 		fmt.Printf("  o Configuring DNS for %s (Cloudflare proxied)...", fullDomain)
-		_, err = consoleClient.ConfigureRootDNS(ctx, ociInstallationKey, secretKey, lbIP, "a", true)
+		_, err = consoleClient.ConfigureRootDNS(ctx, ociInstallationKey, secretKey, reservedIP, "a", true)
 		if err != nil {
 			red.Printf(" x\n")
 			yellow.Printf("    Error: %v\n\n", err)
@@ -449,9 +471,9 @@ func runOCIInstall(cmd *cobra.Command, args []string) {
 
 	if !ociSkipLB {
 		fmt.Println()
-		bold.Println("Load Balancer Details")
-		bold.Println("---------------------")
-		fmt.Printf("  NLB IP:         %s\n", lbIP)
+		bold.Println("Network Details")
+		bold.Println("---------------")
+		fmt.Printf("  Reserved IP:    %s\n", reservedIP)
 		fmt.Printf("  Custom Domain:  https://%s\n", fullDomain)
 		fmt.Printf("  Wildcard:       https://*.%s\n", fullDomain)
 	}

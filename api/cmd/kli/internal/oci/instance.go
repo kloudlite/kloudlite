@@ -101,9 +101,9 @@ func LaunchInstance(ctx context.Context, cfg *OCIConfig, imageID, subnetID, nsgI
 			CreateVnicDetails: &core.CreateVnicDetails{
 				SubnetId:       &subnetID,
 				NsgIds:         []string{nsgID},
-				AssignPublicIp: boolPtr(true),
+				AssignPublicIp: boolPtr(false),
 			},
-			Metadata: metadata,
+			Metadata:     metadata,
 			FreeformTags: tags,
 		},
 	})
