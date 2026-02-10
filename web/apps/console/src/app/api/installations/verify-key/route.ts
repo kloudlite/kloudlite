@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       subdomain: updatedInstallation.subdomain,
       deploymentReady: updatedInstallation.deploymentReady || false,
       ipRecords: updatedInstallation.ipRecords || [],
+      cloudProvider: updatedInstallation.cloudProvider || null,
     })
 
     // Disable all caching

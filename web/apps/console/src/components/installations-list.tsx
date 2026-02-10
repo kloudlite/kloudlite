@@ -64,6 +64,17 @@ export function InstallationsList({ installations }: InstallationsListProps) {
       }
     }
 
+    // Check for failed jobs (installation not ready and job failed)
+    if (installation.acaJobStatus === 'failed' && !installation.deploymentReady) {
+      return {
+        status: 'ERROR',
+        statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
+        isPending: true,
+        isActiveJob: false,
+        stepInfo: undefined,
+      }
+    }
+
     if (!installation.secretKey) {
       return {
         status: 'NOT INSTALLED',
@@ -104,11 +115,17 @@ export function InstallationsList({ installations }: InstallationsListProps) {
   const hasAnyActiveJob = installations.some(hasActiveJob)
   useEffect(() => {
     if (!hasAnyActiveJob) return
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
+      // Sync job status from ACA API → DB for active installations
+      for (const inst of installations) {
+        if (hasActiveJob(inst)) {
+          try { await fetch(`/api/installations/${inst.id}/job-status`) } catch {}
+        }
+      }
       router.refresh()
     }, 5000)
     return () => clearInterval(interval)
-  }, [hasAnyActiveJob, router])
+  }, [hasAnyActiveJob, router, installations])
 
   // Apply status filter
   let filteredInstallations = installations
@@ -268,20 +285,23 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                   const installationUrl = isValidSubdomain
                     ? `https://${installation.subdomain}.${domain}`
                     : null
+                  const displayName = installation.name || installation.subdomain || 'Unnamed Installation'
 
                   return (
                     <tr key={installation.id} className="group hover:bg-muted/20 transition-colors relative">
-                      <td className="px-6 py-3.5 relative">
+                      <td className="px-6 py-3 relative">
                         <div className="relative z-10">
                           <Link
                             href={`/installations/${installation.id}`}
                             className="text-sm font-medium text-foreground group-hover:text-primary transition-colors cursor-pointer hover:cursor-pointer"
                           >
-                            {installation.name}
+                            {displayName}
                           </Link>
-                          <div className="text-muted-foreground/60 mt-0.5 text-xs line-clamp-1 leading-relaxed">
-                            {installation.description || installation.name}
-                          </div>
+                          {installation.description && installation.description !== displayName && (
+                            <div className="text-muted-foreground/60 mt-0.5 text-xs line-clamp-1">
+                              {installation.description}
+                            </div>
+                          )}
                           {/* Show domain on mobile */}
                           <div className="md:hidden mt-1">
                             {installationUrl ? (
@@ -300,7 +320,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5 hidden md:table-cell">
+                      <td className="px-6 py-3 hidden md:table-cell">
                         {installationUrl ? (
                           <a
                             href={installationUrl}
@@ -315,22 +335,22 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                           <span className="text-muted-foreground/50 text-sm">Not configured</span>
                         )}
                       </td>
-                      <td className="px-6 py-3.5">
-                        <div className="flex flex-col gap-1">
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-md w-fit ${statusColor}`}
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md whitespace-nowrap ${statusColor}`}
                           >
                             {isActiveJob && <Loader2 className="h-3 w-3 animate-spin" />}
                             {status}
                           </span>
                           {stepInfo && (
-                            <span className="text-[10px] text-muted-foreground pl-0.5">
+                            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
                               {stepInfo}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-3.5 text-right">
+                      <td className="px-6 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {isPending && !isActiveJob && (
                             <Button
