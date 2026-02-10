@@ -1,4 +1,5 @@
 import { getSession } from '@/lib/get-session'
+import { redirect } from 'next/navigation'
 import { signIn } from '@/lib/auth'
 import { Shield, AlertCircle, AlertTriangle, LogIn } from 'lucide-react'
 import {
@@ -28,24 +29,10 @@ export default async function SuperAdminLoginPage({
     return <SessionWarningCard token={token} session={session} />
   }
 
-  // No existing session — sign in directly (eliminates meta-refresh round-trip).
-  // signIn throws NEXT_REDIRECT on success, which Next.js handles as a redirect.
-  try {
-    await signIn('credentials', {
-      superadminToken: token,
-      redirectTo: '/admin',
-    })
-  } catch (err: any) {
-    // NextAuth v5 signIn throws NEXT_REDIRECT on success — re-throw it
-    if (err?.digest?.startsWith('NEXT_REDIRECT')) {
-      throw err
-    }
-    // Auth failed
-    return <ErrorCard message="Invalid or expired super-admin token" />
-  }
-
-  // signIn always throws NEXT_REDIRECT on success — this is unreachable
-  return <ErrorCard message="Unexpected error during login" />
+  // No existing session — server-side redirect to the API route handler which
+  // can set session cookies (server components can only read cookies, not set them).
+  // This is faster than the old <meta refresh> approach: a 302 vs rendering HTML.
+  redirect(`/api/superadmin-login?token=${encodeURIComponent(token)}`)
 }
 
 function SessionWarningCard({ token, session }: { token: string; session: any }) {
