@@ -205,6 +205,13 @@ export async function initializeWatchers(): Promise<void> {
   for (const config of CLUSTER_WATCH_CONFIGS) {
     startWatch(config).catch(console.error)
   }
+
+  // Block until initial LISTs complete so the first request gets data immediately.
+  // If K8s API is down, waitForReady's 10s timeout ensures we don't block forever.
+  await Promise.all(
+    CLUSTER_WATCH_CONFIGS.map((c) => resourceStore.waitForReady(c.plural))
+  )
+  console.log('[K8S-WATCHER] All cluster-scoped resources ready')
 }
 
 /**
