@@ -61,6 +61,29 @@ jobs:
               "CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
               "CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}" \
               "NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}" \
+              "KLOUDLITE_OCI_TENANCY=${{ secrets.KLOUDLITE_OCI_TENANCY }}" \
+              "KLOUDLITE_OCI_USER=${{ secrets.KLOUDLITE_OCI_USER }}" \
+              "KLOUDLITE_OCI_REGION=${{ secrets.KLOUDLITE_OCI_REGION }}" \
+              "KLOUDLITE_OCI_COMPARTMENT=${{ secrets.KLOUDLITE_OCI_COMPARTMENT }}" \
+              "KLOUDLITE_OCI_FINGERPRINT=${{ secrets.KLOUDLITE_OCI_FINGERPRINT }}" \
+              "KLOUDLITE_OCI_PRIVATE_KEY=${{ secrets.KLOUDLITE_OCI_PRIVATE_KEY }}" \
+              "OCI_INSTALLER_JOB_NAME=${{ secrets.OCI_INSTALLER_JOB_NAME || 'job-oci-installer' }}" \
+              "AZURE_RESOURCE_GROUP=${{ secrets.AZURE_RESOURCE_GROUP || 'rg-kloudlite' }}" \
+              "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+              "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" \
+              "SENDGRID_FROM_EMAIL=${{ secrets.SENDGRID_FROM_EMAIL || 'support@kloudlite.io' }}" \
+              "SENDGRID_FROM_NAME=${{ secrets.SENDGRID_FROM_NAME || 'Kloudlite' }}" \
+              "TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              "NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
+              "NEXT_PUBLIC_CONSOLE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}" \
+              "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+              "SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              "NEXTAUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "ANTHROPIC_AUTH_TOKEN=${{ secrets.ANTHROPIC_AUTH_TOKEN }}" \
+              "ANTHROPIC_BASE_URL=${{ secrets.ANTHROPIC_BASE_URL }}" \
+              "MICROSOFT_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}" \
+              "MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}" \
+              "MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}" \
             --output none
 
           echo "✓ Environment variables synced successfully"
@@ -73,7 +96,7 @@ jobs:
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| **Container App** | ca-kloudlite-registration |" >> $GITHUB_STEP_SUMMARY
           echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Variables Synced** | 19 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Variables Synced** | 38 |" >> $GITHUB_STEP_SUMMARY
           echo "| **Status** | ✓ Synced |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note**: Container app will restart to apply new environment variables." >> $GITHUB_STEP_SUMMARY
