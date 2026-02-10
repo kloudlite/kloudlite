@@ -14,8 +14,25 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
     }
 
+    // For BYOC installations (AWS/GCP/Azure), there's no ACA job execution.
+    // Progress is reported via the job-progress endpoint and stored directly in the DB.
     if (!installation.acaJobExecutionName) {
-      return NextResponse.json({ error: 'No job execution found' }, { status: 404 })
+      // If there's no ACA execution AND no progress data, return 404
+      if (!installation.acaJobStatus && !installation.acaJobOperation) {
+        return NextResponse.json({ error: 'No job execution found' }, { status: 404 })
+      }
+
+      // Return DB-stored progress for BYOC installations
+      return NextResponse.json({
+        status: installation.acaJobStatus || 'unknown',
+        startedAt: installation.acaJobStartedAt,
+        completedAt: installation.acaJobCompletedAt,
+        error: installation.acaJobError,
+        operation: installation.acaJobOperation,
+        currentStep: installation.acaJobCurrentStep,
+        totalSteps: installation.acaJobTotalSteps,
+        stepDescription: installation.acaJobStepDescription,
+      })
     }
 
     const result = await getJobExecutionStatus(installation.acaJobExecutionName)
@@ -34,12 +51,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       await updateInstallation(id, updates)
     }
 
+    // Re-fetch installation to get latest progress fields (may have been updated by job-progress callback)
+    const updatedInstallation = await getInstallationById(id)
+
     return NextResponse.json({
       status: result.status,
       executionName: installation.acaJobExecutionName,
       startedAt: result.startedAt || installation.acaJobStartedAt,
       completedAt: result.completedAt || installation.acaJobCompletedAt,
       error: result.error || installation.acaJobError,
+      operation: updatedInstallation?.acaJobOperation || installation.acaJobOperation,
+      currentStep: updatedInstallation?.acaJobCurrentStep ?? installation.acaJobCurrentStep,
+      totalSteps: updatedInstallation?.acaJobTotalSteps ?? installation.acaJobTotalSteps,
+      stepDescription: updatedInstallation?.acaJobStepDescription || installation.acaJobStepDescription,
     })
   } catch (error) {
     console.error('Error getting job status:', error)

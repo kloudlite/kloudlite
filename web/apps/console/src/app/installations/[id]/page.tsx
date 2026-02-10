@@ -5,7 +5,6 @@ import { DeleteInstallationButton } from '@/components/delete-installation-butto
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { SuperAdminLoginCard } from '@/components/superadmin-login-card'
 import { UninstallScriptCard } from '@/components/uninstall-script-card'
-import { ManagedUninstallButton } from '@/components/managed-uninstall-button'
 import { AlertTriangle } from 'lucide-react'
 
 interface PageProps {
@@ -49,8 +48,35 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
     }
   }
 
+  // Check if installation has an active job
+  const hasActiveJob =
+    (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
+    (installation.acaJobOperation === 'install' || installation.acaJobOperation === 'uninstall')
+
   // Determine installation status
   const getStatus = () => {
+    // Check active jobs first
+    if (hasActiveJob && installation.acaJobOperation === 'uninstall') {
+      const stepInfo = installation.acaJobCurrentStep && installation.acaJobTotalSteps
+        ? ` (Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps})`
+        : ''
+      return {
+        label: 'UNINSTALLING',
+        color: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
+        description: `Infrastructure is being torn down${stepInfo}`,
+      }
+    }
+    if (hasActiveJob && installation.acaJobOperation === 'install') {
+      const stepInfo = installation.acaJobCurrentStep && installation.acaJobTotalSteps
+        ? ` (Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps})`
+        : ''
+      return {
+        label: 'INSTALLING',
+        color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
+        description: `Installation is in progress${stepInfo}`,
+      }
+    }
+
     if (!installation.secretKey) {
       return {
         label: 'NOT INSTALLED',
@@ -107,8 +133,8 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Danger Zone - Only for Owner */}
-      {userRole === 'owner' && (
+      {/* Danger Zone - Only for Owner, hidden during active jobs */}
+      {userRole === 'owner' && !hasActiveJob && (
         <div className="border border-red-500/20 rounded-lg p-6 bg-red-500/5">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-1">
@@ -117,25 +143,6 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
             </div>
             <p className="text-muted-foreground text-sm">Irreversible actions that affect your installation</p>
           </div>
-
-          {installation.secretKey && installation.cloudProvider === 'oci' && (
-            <>
-              <div className="space-y-4 mb-6">
-                <div>
-                  <p className="text-foreground text-sm font-semibold">Uninstall Kloudlite Cloud</p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    This will tear down all managed infrastructure and delete this installation.
-                  </p>
-                </div>
-                <ManagedUninstallButton
-                  installationId={installation.id}
-                  installationName={installation.name}
-                />
-              </div>
-
-              <div className="border-t border-red-500/20 my-6" />
-            </>
-          )}
 
           {installation.secretKey && installation.cloudProvider !== 'oci' && (
             <>
@@ -148,26 +155,15 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
               </div>
 
               <div className="border-t border-red-500/20 my-6" />
-
-              <div className="border border-amber-500/20 bg-amber-500/10 rounded-lg p-4 mb-6">
-                <p className="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
-                  Warning: Destructive Action
-                </p>
-                <p className="text-sm text-amber-900 dark:text-amber-200">
-                  Force deleting this installation will immediately remove it from our system.
-                  For a cleaner uninstallation, run the uninstall script above first,
-                  then delete the record here.
-                </p>
-              </div>
             </>
           )}
 
           <div className="space-y-4">
             <div>
-              <p className="text-foreground text-sm font-semibold">Force Delete Installation</p>
+              <p className="text-foreground text-sm font-semibold">Delete Installation</p>
               <p className="text-muted-foreground mt-1 text-sm">
-                {installation.secretKey
-                  ? 'Forcefully delete this installation record. Run the uninstall script above first if you want to clean up cloud resources.'
+                {installation.cloudProvider === 'oci'
+                  ? 'This will tear down all managed infrastructure and permanently delete this installation.'
                   : 'Permanently delete this installation record. This action cannot be undone.'}
               </p>
             </div>
@@ -175,6 +171,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
               installationId={installation.id}
               installationName={installation.name}
               hasSecretKey={!!installation.secretKey}
+              cloudProvider={installation.cloudProvider}
               variant="button"
             />
           </div>

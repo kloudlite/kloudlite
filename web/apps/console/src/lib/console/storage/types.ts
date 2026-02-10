@@ -73,6 +73,10 @@ export interface Installation {
   acaJobStartedAt?: string
   acaJobCompletedAt?: string
   acaJobError?: string
+  acaJobOperation?: 'install' | 'uninstall'
+  acaJobCurrentStep?: number
+  acaJobTotalSteps?: number
+  acaJobStepDescription?: string
   createdAt: string
   updatedAt: string
 }

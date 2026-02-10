@@ -61,6 +61,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       acaJobStartedAt: new Date().toISOString(),
       acaJobCompletedAt: undefined,
       acaJobError: undefined,
+      acaJobOperation: 'uninstall',
+      acaJobCurrentStep: 0,
+      acaJobTotalSteps: 4,
+      acaJobStepDescription: 'Starting uninstallation...',
     })
 
     return NextResponse.json({ success: true, executionName: result.executionName })

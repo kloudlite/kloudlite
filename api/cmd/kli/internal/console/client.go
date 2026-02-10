@@ -287,6 +287,61 @@ func (c *Client) ConfigureRootDNS(ctx context.Context, installationKey, secretKe
 	return &result, nil
 }
 
+// ReportProgress reports installation/uninstallation progress to the console API.
+// This is fire-and-forget — errors are logged but do not stop the operation.
+func (c *Client) ReportProgress(ctx context.Context, installationKey, operation string, currentStep, totalSteps int, stepDescription string) {
+	c.reportProgressInternal(ctx, installationKey, operation, currentStep, totalSteps, stepDescription, false)
+}
+
+// ReportProgressComplete reports the final step and marks the job as completed.
+func (c *Client) ReportProgressComplete(ctx context.Context, installationKey, operation string, totalSteps int, stepDescription string) {
+	c.reportProgressInternal(ctx, installationKey, operation, totalSteps, totalSteps, stepDescription, true)
+}
+
+func (c *Client) reportProgressInternal(ctx context.Context, installationKey, operation string, currentStep, totalSteps int, stepDescription string, completed bool) {
+	reqURL := fmt.Sprintf("%s/api/installations/job-progress", c.baseURL)
+
+	payload := struct {
+		InstallationKey string `json:"installationKey"`
+		Operation       string `json:"operation"`
+		CurrentStep     int    `json:"currentStep"`
+		TotalSteps      int    `json:"totalSteps"`
+		StepDescription string `json:"stepDescription"`
+		Completed       bool   `json:"completed,omitempty"`
+	}{
+		InstallationKey: installationKey,
+		Operation:       operation,
+		CurrentStep:     currentStep,
+		TotalSteps:      totalSteps,
+		StepDescription: stepDescription,
+		Completed:       completed,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Printf("Warning: failed to marshal progress payload: %v\n", err)
+		return
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, bytes.NewReader(body))
+	if err != nil {
+		fmt.Printf("Warning: failed to create progress request: %v\n", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		fmt.Printf("Warning: failed to report progress: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Warning: progress report returned status %d\n", resp.StatusCode)
+	}
+}
+
 // GetFullDomain returns the full domain for a subdomain
 func GetFullDomain(subdomain string) string {
 	return fmt.Sprintf("%s.%s", subdomain, KhostDomain)

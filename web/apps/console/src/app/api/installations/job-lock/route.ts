@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getInstallationByKey, updateInstallation } from '@/lib/console/storage'
+import {
+  getInstallationByKey,
+  updateInstallation,
+  deleteInstallation,
+  deleteIpRecords,
+  deleteDomainReservation,
+} from '@/lib/console/storage'
+import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 
 export const runtime = 'nodejs'
 
@@ -49,6 +56,22 @@ export async function POST(request: Request) {
         acaJobStatus: finalStatus,
         acaJobCompletedAt: new Date().toISOString(),
       })
+
+      // Auto-delete installation after successful uninstall
+      if (installation.acaJobOperation === 'uninstall' && finalStatus === 'succeeded') {
+        try {
+          console.log(`Auto-deleting installation ${installation.id} after successful uninstall`)
+          const dnsRecordIds = await deleteIpRecords(installation.id)
+          if (dnsRecordIds.length > 0) {
+            await deleteDnsRecords(dnsRecordIds)
+          }
+          await deleteDomainReservation(installation.id)
+          await deleteInstallation(installation.id)
+          console.log(`Installation ${installation.id} auto-deleted successfully`)
+        } catch (deleteErr) {
+          console.error(`Failed to auto-delete installation ${installation.id}:`, deleteErr)
+        }
+      }
 
       return NextResponse.json({ released: true })
     }

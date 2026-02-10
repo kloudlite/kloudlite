@@ -186,6 +186,14 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	// Console API client
 	consoleClient := console.NewClient()
 
+	// Progress tracking
+	totalSteps := 9
+	step := 0
+	reportStep := func(desc string) {
+		step++
+		consoleClient.ReportProgress(ctx, installationKey, "install", step, totalSteps, desc)
+	}
+
 	// Verify Installation and get subdomain
 	bold.Println("Verifying Installation")
 	bold.Println("----------------------")
@@ -202,6 +210,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	}
 	green.Printf(" +\n")
 	fmt.Printf("    Secret key obtained successfully\n")
+	reportStep("Verifying installation")
 
 	secretKey := verifyResult.SecretKey
 	var fullDomain string
@@ -235,6 +244,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	}
 	green.Printf(" +\n")
 	fmt.Printf("    %s\n", amiID)
+	reportStep("Finding Ubuntu AMI")
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
@@ -279,6 +289,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	if !skipALB {
 		fmt.Printf("    ALB Subnets: %d across multiple AZs\n", len(allSubnets))
 	}
+	reportStep("Setting up network")
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
@@ -394,6 +405,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	}
 	fmt.Printf("    IAM Role:       %s\n", roleName)
 	fmt.Printf("    S3 Bucket:      %s\n", bucketName)
+	reportStep("Creating cloud resources")
 
 	// Pace API calls to prevent rate limiting (longer delay after parallel operations)
 	time.Sleep(2 * time.Second)
@@ -426,6 +438,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	green.Printf(" +\n")
+	reportStep("Finalizing IAM setup")
 
 	// Pace API calls to prevent rate limiting
 	time.Sleep(1 * time.Second)
@@ -460,6 +473,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	createdResources.Unlock()
 	green.Printf(" +\n")
 	fmt.Printf("    %s\n", instanceID)
+	reportStep("Launching EC2 instance")
 
 	fmt.Printf("  o Waiting for instance to be ready...")
 	publicIP, privateIP, err := awsinternal.WaitForInstance(ctx, cfg, instanceID)
@@ -471,6 +485,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" +\n")
 	fmt.Printf("    Public IP: %s\n", publicIP)
 	fmt.Printf("    Private IP: %s\n", privateIP)
+	reportStep("Waiting for instance")
 
 	// ALB and TLS Setup (unless skipping)
 	var albDNSName string
@@ -535,6 +550,7 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		green.Printf(" +\n")
+		reportStep("Setting up Load Balancer")
 
 		// Register ALB DNS with console for CNAME creation (proxied for Cloudflare TLS)
 		bold.Println("\nDNS Configuration")
@@ -547,7 +563,11 @@ func runAWSInstall(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		green.Printf(" +\n")
+		reportStep("Configuring DNS")
 	}
+
+	// Mark job as completed
+	consoleClient.ReportProgressComplete(ctx, installationKey, "install", totalSteps, "Installation complete")
 
 	// Success Summary
 	fmt.Println()

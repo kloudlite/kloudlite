@@ -13,6 +13,9 @@ export default function KloudliteCloudPage() {
   const [status, setStatus] = useState<DeployStatus>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [installationId, setInstallationId] = useState<string | null>(null)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [totalSteps, setTotalSteps] = useState(9)
+  const [stepDescription, setStepDescription] = useState('')
   const initRef = useRef(false)
 
   const triggerDeploy = useCallback(async (instId: string) => {
@@ -114,6 +117,11 @@ export default function KloudliteCloudPage() {
         if (!response.ok) return
 
         const data = await response.json()
+
+        // Capture progress info
+        if (data.currentStep != null) setCurrentStep(data.currentStep)
+        if (data.totalSteps != null) setTotalSteps(data.totalSteps)
+        if (data.stepDescription) setStepDescription(data.stepDescription)
 
         if (data.status === 'succeeded') {
           setStatus('succeeded')
@@ -278,10 +286,28 @@ export default function KloudliteCloudPage() {
                     This process typically takes 10-15 minutes. You can safely keep this window open.
                   </p>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 p-4 rounded-sm">
-                  <p className="text-sm text-blue-800 dark:text-blue-300">
-                    Provisioning infrastructure, configuring networking, and deploying services...
-                  </p>
+
+                {/* Progress bar */}
+                <div className="max-w-md mx-auto space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {currentStep > 0 ? `Step ${currentStep} of ${totalSteps}` : 'Starting...'}
+                    </span>
+                    <span className="text-muted-foreground font-medium">
+                      {totalSteps > 0 ? `${Math.round((currentStep / totalSteps) * 100)}%` : '0%'}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-foreground/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0}%` }}
+                    />
+                  </div>
+                  {stepDescription && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {stepDescription}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -335,7 +361,11 @@ export default function KloudliteCloudPage() {
           {(status === 'triggering' || status === 'pending' || status === 'running') && (
             <>
               <Loader2 className="size-4 animate-spin text-blue-600" />
-              <span className="text-muted-foreground">Deployment in progress...</span>
+              <span className="text-muted-foreground">
+                {currentStep > 0
+                  ? `Step ${currentStep} of ${totalSteps} — ${stepDescription || 'In progress...'}`
+                  : 'Deployment in progress...'}
+              </span>
             </>
           )}
           {status === 'succeeded' && (

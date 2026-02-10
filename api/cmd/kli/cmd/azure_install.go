@@ -191,6 +191,14 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	// Console API client
 	consoleClient := console.NewClient()
 
+	// Progress tracking
+	totalSteps := 10
+	step := 0
+	reportStep := func(desc string) {
+		step++
+		consoleClient.ReportProgress(ctx, azureInstallationKey, "install", step, totalSteps, desc)
+	}
+
 	// Verify Installation and get subdomain
 	bold.Println("Verifying Installation")
 	bold.Println("----------------------")
@@ -207,6 +215,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	}
 	green.Printf(" +\n")
 	fmt.Printf("    Secret key obtained successfully\n")
+	reportStep("Verifying installation")
 
 	secretKey := verifyResult.SecretKey
 	var fullDomain string
@@ -244,6 +253,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	createdResources.Unlock()
 	green.Printf(" +\n")
 	fmt.Printf("    %s\n", resourceGroup)
+	reportStep("Creating resource group")
 
 	// Find Ubuntu Image
 	fmt.Printf("  o Finding Ubuntu image...")
@@ -285,6 +295,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" +\n")
 	fmt.Printf("    VNet: kl-%s-vnet (%s)\n", azureInstallationKey, vnetCIDR)
 	fmt.Printf("    Subnet: kl-%s-subnet\n", azureInstallationKey)
+	reportStep("Setting up network")
 
 	// Pace API calls
 	time.Sleep(1 * time.Second)
@@ -372,6 +383,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    NSG: kl-%s-nsg\n", azureInstallationKey)
 	fmt.Printf("    Managed Identity: kl-%s-identity\n", azureInstallationKey)
 	fmt.Printf("    Storage Account: %s\n", storageAccountName)
+	reportStep("Creating cloud resources")
 
 	// Pace API calls
 	time.Sleep(2 * time.Second)
@@ -428,6 +440,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	createdResources.Unlock()
 	green.Printf(" +\n")
 	fmt.Printf("    Master NSG: kl-%s-master-nsg\n", azureInstallationKey)
+	reportStep("Assigning roles & creating master NSG")
 
 	// Instance Deployment
 	bold.Println("\nInstance Deployment")
@@ -503,6 +516,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" +\n")
 	fmt.Printf("    Public IP: %s\n", publicIP)
 	fmt.Printf("    Private IP: %s\n", privateIP)
+	reportStep("Launching VM instance")
 
 	// Load Balancer Setup (unless skipping)
 	var lbPublicIP string
@@ -534,6 +548,7 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		green.Printf(" +\n")
+		reportStep("Setting up Load Balancer")
 
 		// Configure DNS with LB public IP
 		bold.Println("\nDNS Configuration")
@@ -554,7 +569,11 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 		} else {
 			green.Printf(" +\n")
 		}
+		reportStep("Configuring DNS")
 	}
+
+	// Mark job as completed
+	consoleClient.ReportProgressComplete(ctx, azureInstallationKey, "install", totalSteps, "Installation complete")
 
 	// Success Summary
 	fmt.Println()

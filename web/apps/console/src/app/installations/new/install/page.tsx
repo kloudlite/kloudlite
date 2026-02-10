@@ -28,6 +28,7 @@ interface SessionData {
     name: string
   }
   installationKey: string
+  installationId?: string
 }
 
 const AWS_REGIONS = [
@@ -154,6 +155,11 @@ export default function InstallPage() {
   const [verificationStatus, setVerificationStatus] = useState<'waiting' | 'verified' | 'dns_pending' | 'complete' | 'error'>(
     'waiting',
   )
+  const [installationId, setInstallationId] = useState<string | null>(null)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [totalSteps, setTotalSteps] = useState(0)
+  const [stepDescription, setStepDescription] = useState('')
+  const [jobActive, setJobActive] = useState(false)
 
   // Check session on mount
   useEffect(() => {
@@ -182,6 +188,59 @@ export default function InstallPage() {
     }
     checkSession()
   }, [router])
+
+  // Get installation ID from key verification
+  useEffect(() => {
+    if (!session?.installationKey) return
+
+    const verifyKey = async () => {
+      try {
+        const response = await fetch('/api/installations/verify-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ installationKey: session.installationKey }),
+        })
+        if (response.ok) {
+          const data = await response.json()
+          if (data.installationId) {
+            setInstallationId(data.installationId)
+          }
+        }
+      } catch {
+        // Non-critical — progress tracking just won't work
+      }
+    }
+
+    verifyKey()
+  }, [session])
+
+  // Poll job-status for progress when we have an installation ID
+  useEffect(() => {
+    if (!installationId || verificationStatus === 'complete') return
+
+    const pollProgress = async () => {
+      try {
+        const response = await fetch(`/api/installations/${installationId}/job-status`)
+        if (!response.ok) return
+
+        const data = await response.json()
+
+        if (data.currentStep != null) setCurrentStep(data.currentStep)
+        if (data.totalSteps != null) setTotalSteps(data.totalSteps)
+        if (data.stepDescription) setStepDescription(data.stepDescription)
+
+        const isActive = (data.status === 'running' || data.status === 'pending') &&
+          (data.operation === 'install' || data.operation === 'uninstall')
+        setJobActive(isActive)
+      } catch {
+        // Ignore polling errors
+      }
+    }
+
+    pollProgress()
+    const interval = setInterval(pollProgress, 5000)
+    return () => clearInterval(interval)
+  }, [installationId, verificationStatus])
 
   // Poll for deployment verification every 5 seconds
   useEffect(() => {
@@ -540,12 +599,43 @@ export default function InstallPage() {
           </div>
         </div>
 
+        {/* Progress Bar - shown when CLI is actively running */}
+        {jobActive && totalSteps > 0 && verificationStatus !== 'complete' && (
+          <div className="border border-foreground/10 rounded-lg bg-background p-6">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {currentStep > 0 ? `Step ${currentStep} of ${totalSteps}` : 'Starting...'}
+                </span>
+                <span className="text-muted-foreground font-medium">
+                  {totalSteps > 0 ? `${Math.round((currentStep / totalSteps) * 100)}%` : '0%'}
+                </span>
+              </div>
+              <div className="h-2 bg-foreground/[0.06] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0}%` }}
+                />
+              </div>
+              {stepDescription && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {stepDescription}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Verification Status */}
         <div className="flex items-center justify-center gap-3 text-base">
           {verificationStatus === 'waiting' && (
             <>
               <Loader2 className="size-4 animate-spin text-blue-600" />
-              <span className="text-muted-foreground">Waiting for deployment...</span>
+              <span className="text-muted-foreground">
+                {jobActive && currentStep > 0
+                  ? `Step ${currentStep} of ${totalSteps} — ${stepDescription || 'In progress...'}`
+                  : 'Waiting for deployment...'}
+              </span>
             </>
           )}
           {verificationStatus === 'dns_pending' && (

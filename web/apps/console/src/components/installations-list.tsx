@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Input } from '@kloudlite/ui'
-import { MoreHorizontal, ExternalLink, Settings, Search } from 'lucide-react'
+import { MoreHorizontal, ExternalLink, Settings, Search, Loader2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,13 +28,49 @@ export function InstallationsList({ installations }: InstallationsListProps) {
   const pendingRef = useRef<HTMLButtonElement>(null)
   const installedRef = useRef<HTMLButtonElement>(null)
 
+  // Check if an installation has an active job (running or pending)
+  const hasActiveJob = (installation: Installation) => {
+    return (
+      (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
+      (installation.acaJobOperation === 'install' || installation.acaJobOperation === 'uninstall')
+    )
+  }
+
   // Helper function to get installation status
   const getInstallationStatus = (installation: Installation) => {
+    // Check active jobs first
+    if (hasActiveJob(installation)) {
+      if (installation.acaJobOperation === 'uninstall') {
+        return {
+          status: 'UNINSTALLING',
+          statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
+          isPending: false,
+          isActiveJob: true,
+          stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
+            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
+            : undefined,
+        }
+      }
+      if (installation.acaJobOperation === 'install') {
+        return {
+          status: 'INSTALLING',
+          statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
+          isPending: false,
+          isActiveJob: true,
+          stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
+            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
+            : undefined,
+        }
+      }
+    }
+
     if (!installation.secretKey) {
       return {
         status: 'NOT INSTALLED',
         statusColor: 'bg-foreground/[0.06] text-foreground border border-foreground/10',
         isPending: true,
+        isActiveJob: false,
+        stepInfo: undefined,
       }
     }
     if (!installation.subdomain) {
@@ -42,6 +78,8 @@ export function InstallationsList({ installations }: InstallationsListProps) {
         status: 'PENDING',
         statusColor: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
         isPending: true,
+        isActiveJob: false,
+        stepInfo: undefined,
       }
     }
     if (!installation.deploymentReady) {
@@ -49,14 +87,28 @@ export function InstallationsList({ installations }: InstallationsListProps) {
         status: 'CONFIGURING',
         statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
         isPending: true,
+        isActiveJob: false,
+        stepInfo: undefined,
       }
     }
     return {
       status: 'ACTIVE',
       statusColor: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
       isPending: false,
+      isActiveJob: false,
+      stepInfo: undefined,
     }
   }
+
+  // Auto-refresh when any installation has an active job
+  const hasAnyActiveJob = installations.some(hasActiveJob)
+  useEffect(() => {
+    if (!hasAnyActiveJob) return
+    const interval = setInterval(() => {
+      router.refresh()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [hasAnyActiveJob, router])
 
   // Apply status filter
   let filteredInstallations = installations
@@ -207,7 +259,7 @@ export function InstallationsList({ installations }: InstallationsListProps) {
               </thead>
               <tbody className="bg-background divide-y divide-foreground/5">
                 {filteredInstallations.map((installation) => {
-                  const { status, statusColor, isPending } = getInstallationStatus(installation)
+                  const { status, statusColor, isPending, isActiveJob, stepInfo } = getInstallationStatus(installation)
                   // Validate subdomain before constructing URL
                   const isValidSubdomain =
                     installation.subdomain &&
@@ -264,15 +316,23 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                         )}
                       </td>
                       <td className="px-6 py-3.5">
-                        <span
-                          className={`inline-flex px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-md ${statusColor}`}
-                        >
-                          {status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-md w-fit ${statusColor}`}
+                          >
+                            {isActiveJob && <Loader2 className="h-3 w-3 animate-spin" />}
+                            {status}
+                          </span>
+                          {stepInfo && (
+                            <span className="text-[10px] text-muted-foreground pl-0.5">
+                              {stepInfo}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {isPending && (
+                          {isPending && !isActiveJob && (
                             <Button
                               variant="default"
                               size="sm"
@@ -284,31 +344,33 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                               Continue
                             </Button>
                           )}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {installationUrl && (
-                                <DropdownMenuItem asChild>
-                                  <a href={installationUrl} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="mr-2 h-4 w-4" />
-                                    Open
-                                  </a>
-                                </DropdownMenuItem>
-                              )}
-                              {!isPending && (
-                                <DropdownMenuItem
-                                  onSelect={() => router.push(`/installations/${installation.id}`)}
-                                >
-                                  <Settings className="mr-2 h-4 w-4" />
-                                  Settings
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          {!isActiveJob && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {installationUrl && (
+                                  <DropdownMenuItem asChild>
+                                    <a href={installationUrl} target="_blank" rel="noopener noreferrer">
+                                      <ExternalLink className="mr-2 h-4 w-4" />
+                                      Open
+                                    </a>
+                                  </DropdownMenuItem>
+                                )}
+                                {!isPending && (
+                                  <DropdownMenuItem
+                                    onSelect={() => router.push(`/installations/${installation.id}`)}
+                                  >
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    Settings
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </td>
                     </tr>

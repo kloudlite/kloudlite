@@ -46,6 +46,10 @@ export async function getInstallationById(installationId: string): Promise<Insta
     acaJobStartedAt: (data as any).aca_job_started_at || undefined,
     acaJobCompletedAt: (data as any).aca_job_completed_at || undefined,
     acaJobError: (data as any).aca_job_error || undefined,
+    acaJobOperation: (data as any).aca_job_operation || undefined,
+    acaJobCurrentStep: (data as any).aca_job_current_step ?? undefined,
+    acaJobTotalSteps: (data as any).aca_job_total_steps ?? undefined,
+    acaJobStepDescription: (data as any).aca_job_step_description || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords:
@@ -184,6 +188,10 @@ export async function getUserInstallations(userId: string): Promise<Installation
         acaJobStartedAt: (inst as any).aca_job_started_at || undefined,
         acaJobCompletedAt: (inst as any).aca_job_completed_at || undefined,
         acaJobError: (inst as any).aca_job_error || undefined,
+        acaJobOperation: (inst as any).aca_job_operation || undefined,
+        acaJobCurrentStep: (inst as any).aca_job_current_step ?? undefined,
+        acaJobTotalSteps: (inst as any).aca_job_total_steps ?? undefined,
+        acaJobStepDescription: (inst as any).aca_job_step_description || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
         ipRecords:
@@ -361,6 +369,14 @@ export async function updateInstallation(
     extraUpdates.aca_job_completed_at = updates.acaJobCompletedAt || null
   if (updates.acaJobError !== undefined)
     extraUpdates.aca_job_error = updates.acaJobError || null
+  if (updates.acaJobOperation !== undefined)
+    extraUpdates.aca_job_operation = updates.acaJobOperation || null
+  if (updates.acaJobCurrentStep !== undefined)
+    extraUpdates.aca_job_current_step = updates.acaJobCurrentStep ?? null
+  if (updates.acaJobTotalSteps !== undefined)
+    extraUpdates.aca_job_total_steps = updates.acaJobTotalSteps ?? null
+  if (updates.acaJobStepDescription !== undefined)
+    extraUpdates.aca_job_step_description = updates.acaJobStepDescription || null
 
   const mergedUpdateData = { ...updateData, ...extraUpdates }
 

@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/console"
 	gcpinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/gcp"
 
 	"github.com/fatih/color"
@@ -104,6 +105,15 @@ func runGCPUninstall(cmd *cobra.Command, args []string) {
 	green.Printf("  Zone:             %s\n", cfg.Zone)
 	fmt.Println()
 
+	// Console API client for progress reporting
+	consoleClient := console.NewClient()
+	totalSteps := 4
+	step := 0
+	reportStep := func(desc string) {
+		step++
+		consoleClient.ReportProgress(ctx, gcpUninstallInstallationKey, "uninstall", step, totalSteps, desc)
+	}
+
 	// Resource Cleanup
 	bold.Println("Removing Resources")
 	bold.Println("------------------")
@@ -139,6 +149,8 @@ func runGCPUninstall(cmd *cobra.Command, args []string) {
 		}
 	}()
 	phase1Wg.Wait()
+	reportStep("Deleting Load Balancer")
+	reportStep("Deleting VM instance")
 
 	// Phase 2: Parallel cleanup of remaining resources
 	var wg sync.WaitGroup
@@ -192,6 +204,8 @@ func runGCPUninstall(cmd *cobra.Command, args []string) {
 	wg.Wait()
 	elapsed := time.Since(startTime)
 	fmt.Printf("    Operations completed in %.1fs\n", elapsed.Seconds())
+	reportStep("Cleaning up firewalls & service account")
+	reportStep("Deleting storage bucket")
 
 	// Report results
 	hasErrors := firewallErr != nil || saErr != nil || storageErr != nil || instanceErr != nil
@@ -230,6 +244,9 @@ func runGCPUninstall(cmd *cobra.Command, args []string) {
 	if storageErr == nil {
 		fmt.Printf("    Storage Bucket:   %s\n", bucketName)
 	}
+
+	// Mark job as completed
+	consoleClient.ReportProgressComplete(ctx, gcpUninstallInstallationKey, "uninstall", totalSteps, "Uninstallation complete")
 
 	// Success Summary
 	fmt.Println()
