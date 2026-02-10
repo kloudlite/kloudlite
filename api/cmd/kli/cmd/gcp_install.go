@@ -164,6 +164,14 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 	// Console API client
 	consoleClient := console.NewClient()
 
+	// Progress tracking
+	totalSteps := 9
+	step := 0
+	reportStep := func(desc string) {
+		step++
+		consoleClient.ReportProgress(ctx, gcpInstallationKey, "install", step, totalSteps, desc)
+	}
+
 	// Verify Installation and get subdomain
 	bold.Println("Verifying Installation")
 	bold.Println("----------------------")
@@ -180,6 +188,7 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 	}
 	green.Printf(" +\n")
 	fmt.Printf("    Secret key obtained successfully\n")
+	reportStep("Verifying installation")
 
 	secretKey := verifyResult.SecretKey
 	var fullDomain string
@@ -211,6 +220,7 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	green.Printf(" +\n")
+	reportStep("Enabling GCP APIs")
 
 	// Find Ubuntu image
 	fmt.Printf("  o Finding Ubuntu 24.04 LTS image...")
@@ -243,6 +253,7 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" +\n")
 	fmt.Printf("    Network: %s\n", networkName)
 	fmt.Printf("    Subnet CIDR: %s\n", subnetCIDR)
+	reportStep("Setting up network")
 
 	time.Sleep(1 * time.Second)
 
@@ -329,6 +340,7 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("    Service Account: %s\n", saEmail)
 	fmt.Printf("    Storage Bucket:  %s\n", bucketName)
 	fmt.Printf("    Firewall Rules:  Created\n")
+	reportStep("Creating cloud resources")
 
 	// Grant IAM roles (depends on service account)
 	bold.Println("\nFinalizing IAM Setup")
@@ -341,6 +353,7 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	green.Printf(" +\n")
+	reportStep("Finalizing IAM setup")
 
 	time.Sleep(2 * time.Second)
 
@@ -379,6 +392,7 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 	green.Printf(" +\n")
 	fmt.Printf("    Public IP: %s\n", publicIP)
 	fmt.Printf("    Private IP: %s\n", privateIP)
+	reportStep("Launching VM instance")
 
 	// Load Balancer Setup (unless skipping)
 	var lbIP string
@@ -478,6 +492,7 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		green.Printf(" +\n")
+		reportStep("Setting up Load Balancer")
 
 		// Register LB IP with console for DNS configuration (A record, Cloudflare proxied for TLS)
 		bold.Println("\nDNS Configuration")
@@ -490,7 +505,11 @@ func runGCPInstall(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		green.Printf(" +\n")
+		reportStep("Configuring DNS")
 	}
+
+	// Mark job as completed
+	consoleClient.ReportProgressComplete(ctx, gcpInstallationKey, "install", totalSteps, "Installation complete")
 
 	// Success Summary
 	fmt.Println()

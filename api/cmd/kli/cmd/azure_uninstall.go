@@ -9,6 +9,7 @@ import (
 	"time"
 
 	azureinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/azure"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/console"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -120,6 +121,15 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 	fmt.Printf("  Resource Group:   %s\n", cfg.ResourceGroup)
 	fmt.Println()
 
+	// Console API client for progress reporting
+	consoleClient := console.NewClient()
+	totalSteps := 7
+	step := 0
+	reportStep := func(desc string) {
+		step++
+		consoleClient.ReportProgress(ctx, azureUninstallInstallationKey, "uninstall", step, totalSteps, desc)
+	}
+
 	// Start deletion
 	bold.Println("Deleting Resources")
 	bold.Println("------------------")
@@ -136,6 +146,8 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 		green.Printf(" +\n")
 	}
 
+	reportStep("Deleting Load Balancer")
+
 	// Wait for LB deletion to propagate
 	time.Sleep(2 * time.Second)
 
@@ -148,6 +160,8 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 	} else {
 		green.Printf(" +\n")
 	}
+
+	reportStep("Deleting VM")
 
 	// Wait for VM deletion to complete
 	time.Sleep(5 * time.Second)
@@ -163,6 +177,8 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 	} else {
 		green.Printf(" + (none found)\n")
 	}
+
+	reportStep("Deleting Workmachine resources")
 
 	time.Sleep(5 * time.Second)
 
@@ -215,6 +231,8 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	reportStep("Cleaning up network (NIC, PIP, NSGs)")
+
 	// Delete Managed Identity
 	fmt.Printf("  o Deleting Managed Identity...")
 	err = azureinternal.DeleteManagedIdentity(ctx, cfg, azureUninstallInstallationKey)
@@ -240,6 +258,8 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 		yellow.Printf(" (not found)\n")
 	}
 
+	reportStep("Deleting identity & storage")
+
 	// Delete VNet (includes subnets)
 	fmt.Printf("  o Deleting VNet...")
 	err = azureinternal.DeleteVNet(ctx, cfg, azureUninstallInstallationKey)
@@ -249,6 +269,8 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 	} else {
 		green.Printf(" +\n")
 	}
+
+	reportStep("Deleting VNet")
 
 	// Optionally delete resource group
 	if azureDeleteResourceGroup {
@@ -261,6 +283,9 @@ func runAzureUninstall(cmd *cobra.Command, args []string) {
 			green.Printf(" +\n")
 		}
 	}
+
+	// Mark job as completed
+	consoleClient.ReportProgressComplete(ctx, azureUninstallInstallationKey, "uninstall", totalSteps, "Uninstallation complete")
 
 	// Summary
 	fmt.Println()

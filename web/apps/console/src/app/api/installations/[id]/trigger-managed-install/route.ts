@@ -63,6 +63,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       acaJobError: undefined,
       cloudProvider: 'oci',
       cloudLocation: ociRegion,
+      acaJobOperation: 'install',
+      acaJobCurrentStep: 0,
+      acaJobTotalSteps: 9,
+      acaJobStepDescription: 'Starting installation...',
     })
 
     return NextResponse.json({ success: true, executionName: result.executionName })

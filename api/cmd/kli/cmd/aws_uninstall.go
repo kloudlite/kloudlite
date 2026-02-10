@@ -12,6 +12,7 @@ import (
 	"time"
 
 	awsinternal "github.com/kloudlite/kloudlite/api/cmd/kli/internal/aws"
+	"github.com/kloudlite/kloudlite/api/cmd/kli/internal/console"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -105,6 +106,15 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	green.Printf("+ %s\n", cfg.Region)
 	fmt.Println()
 
+	// Console API client for progress reporting
+	consoleClient := console.NewClient()
+	totalSteps := 5
+	step := 0
+	reportStep := func(desc string) {
+		step++
+		consoleClient.ReportProgress(ctx, uninstallKey, "uninstall", step, totalSteps, desc)
+	}
+
 	// Resource Cleanup
 	bold.Println("Removing Resources")
 	bold.Println("------------------")
@@ -151,6 +161,8 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 		fmt.Printf("    [%s] Completed: Target Group deleted\n", time.Now().Format("15:04:05"))
 	}
 
+	reportStep("Deleting ALB & Target Group")
+
 	// Delete ACM certificate
 	fmt.Printf("    [%s] Starting: ACM Certificate cleanup\n", time.Now().Format("15:04:05"))
 	certARN, findErr := awsinternal.FindCertificateByInstallationKey(ctx, cfg, uninstallKey)
@@ -167,6 +179,8 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	} else {
 		fmt.Printf("    [%s] ACM Certificate not found (skipping)\n", time.Now().Format("15:04:05"))
 	}
+
+	reportStep("Deleting ACM Certificate")
 
 	// Phase 2: Parallel cleanup of remaining resources
 	var wg sync.WaitGroup
@@ -284,6 +298,8 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	wg.Wait()
 	elapsed := time.Since(startTime)
 	fmt.Printf("    Operations completed in %.1fs\n", elapsed.Seconds())
+	reportStep("Terminating instances & security groups")
+	reportStep("Cleaning up IAM, S3, SSH keys")
 
 	// Report results
 	hasErrors := sgErr != nil || albSgErr != nil || masterSgErr != nil || keyErr != nil || iamErr != nil || s3Err != nil || albErr != nil || tgErr != nil || certErr != nil
@@ -354,6 +370,9 @@ func runAWSUninstall(cmd *cobra.Command, args []string) {
 	if s3Err == nil {
 		fmt.Printf("    S3 Bucket:        %s\n", bucketName)
 	}
+
+	// Mark job as completed
+	consoleClient.ReportProgressComplete(ctx, uninstallKey, "uninstall", totalSteps, "Uninstallation complete")
 
 	// Success Summary
 	fmt.Println()

@@ -121,7 +121,7 @@ func callJobLock(cfg *Config, action string, status ...string) (bool, error) {
 	}
 	defer resp.Body.Close()
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return false, fmt.Errorf("failed to decode job-lock response: %w", err)
 	}
@@ -133,6 +133,31 @@ func callJobLock(cfg *Config, action string, status ...string) (bool, error) {
 
 	released, _ := result["released"].(bool)
 	return released, nil
+}
+
+// reportProgress sends step progress to the console API (fire-and-forget).
+func reportProgress(cfg *Config, operation string, currentStep, totalSteps int, stepDescription string) {
+	url := fmt.Sprintf("%s/api/installations/job-progress", cfg.ConsoleBaseURL)
+
+	payload := map[string]any{
+		"installationKey": cfg.InstallationKey,
+		"operation":       operation,
+		"currentStep":     currentStep,
+		"totalSteps":      totalSteps,
+		"stepDescription": stepDescription,
+	}
+	body, _ := json.Marshal(payload)
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		log.Printf("Warning: failed to report progress: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		log.Printf("Warning: progress report returned status %d", resp.StatusCode)
+	}
 }
 
 func main() {

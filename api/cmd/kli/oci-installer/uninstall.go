@@ -17,6 +17,7 @@ func runUninstall(ctx context.Context, cfg *Config) error {
 	nextStep := func(desc string) {
 		step++
 		log.Printf("[STEP %d/%d] %s", step, totalSteps, desc)
+		reportProgress(cfg, "uninstall", step, totalSteps, desc)
 	}
 
 	// Load OCI config
