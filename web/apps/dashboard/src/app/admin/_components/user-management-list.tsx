@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect, useCallback } from 'react'
+import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 import {
   Button,
   Input,
@@ -88,14 +89,16 @@ export function UserManagementList({
   currentUserRole,
   isKloudliteCloud,
   machineTypes = [],
-  workMachines: initialWorkMachines = [],
+  workMachines = [],
 }: UserManagementListProps) {
   const [users, setUsers] = useState(initialUsers)
-  const [workMachines, setWorkMachines] = useState(initialWorkMachines)
 
-  // Sync state with server prop changes (e.g. after router.refresh from watch events)
+  // Sync users state with server prop changes (e.g. after router.refresh from watch events)
   useEffect(() => { setUsers(initialUsers) }, [initialUsers])
-  useEffect(() => { setWorkMachines(initialWorkMachines) }, [initialWorkMachines])
+
+  // Auto-refresh when K8s resources change via watch events
+  useResourceWatch('users')
+  useResourceWatch('workmachines')
   const [roleFilter, setRoleFilter] = useState<'all' | 'super-admin' | 'admin' | 'user'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active'>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -312,15 +315,6 @@ export function UserManagementList({
             if (isKloudliteCloud && createUserMachineType && createUserMachineType !== currentMt) {
               const assignResult = await adminAssignMachineType(editingUser.username, createUserMachineType)
               if (assignResult.success) {
-                setWorkMachines((prev: any[]) => {
-                  const existing = prev.findIndex((m: any) => m.spec?.ownedBy === editingUser.username)
-                  if (existing >= 0) {
-                    const updated = [...prev]
-                    updated[existing] = { ...updated[existing], spec: { ...updated[existing].spec, machineType: createUserMachineType } }
-                    return updated
-                  }
-                  return [...prev, { spec: { ownedBy: editingUser.username, machineType: createUserMachineType } }]
-                })
                 toast.success('User updated and machine type changed')
               } else {
                 toast.success('User updated, but failed to change machine type')
@@ -342,13 +336,9 @@ export function UserManagementList({
             if (isKloudliteCloud && createUserMachineType && formData.username) {
               const assignResult = await adminAssignMachineType(formData.username, createUserMachineType)
               if (assignResult.success) {
-                setWorkMachines((prev: any[]) => [
-                  ...prev,
-                  { spec: { ownedBy: formData.username, machineType: createUserMachineType } },
-                ])
                 toast.success('User created and machine type assigned')
               } else {
-                toast.success('User created, but failed to assign machine type')
+                toast.error('User created, but failed to assign machine type')
               }
               setCreateUserMachineType('')
             } else {
@@ -444,17 +434,6 @@ export function UserManagementList({
       try {
         const result = await adminAssignMachineType(assigningUser.username, selectedMachineType)
         if (result.success) {
-          // Update local work machines state
-          setWorkMachines((prev: any[]) => {
-            const existing = prev.findIndex((m: any) => m.spec?.ownedBy === assigningUser.username)
-            if (existing >= 0) {
-              const updated = [...prev]
-              updated[existing] = { ...updated[existing], spec: { ...updated[existing].spec, machineType: selectedMachineType } }
-              return updated
-            }
-            // Add new entry
-            return [...prev, { spec: { ownedBy: assigningUser.username, machineType: selectedMachineType } }]
-          })
           toast.success(`Machine type assigned to ${assigningUser.name}`)
           setAssigningUser(null)
           setSelectedMachineType('')
