@@ -31,7 +31,7 @@ spec:
       containers:
         - name: frontend
           image: ghcr.io/kloudlite/kloudlite/web-dashboard:development
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
               name: http
