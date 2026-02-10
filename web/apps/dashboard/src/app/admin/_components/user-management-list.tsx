@@ -100,7 +100,11 @@ export function UserManagementList({
   const [deletingUser, setDeletingUser] = useState<UserDisplay | null>(null)
   const [resettingPasswordUser, setResettingPasswordUser] = useState<UserDisplay | null>(null)
   const [newPassword, setNewPassword] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const [isSubmitting, startSubmitTransition] = useTransition()
+  const [isDeleting, startDeleteTransition] = useTransition()
+  const [isResettingPassword, startResetPasswordTransition] = useTransition()
+  const [_isTogglingStatus, startToggleStatusTransition] = useTransition()
+  const [isAssigningMachine, startAssignMachineTransition] = useTransition()
   const [formError, setFormError] = useState<string | null>(null)
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
 
@@ -287,7 +291,7 @@ export function UserManagementList({
       return
     }
 
-    startTransition(async () => {
+    startSubmitTransition(async () => {
       try {
         if (editingUser) {
           // Update existing user
@@ -339,7 +343,7 @@ export function UserManagementList({
   const handleDeleteUser = async () => {
     if (!deletingUser) return
 
-    startTransition(async () => {
+    startDeleteTransition(async () => {
       try {
         const result = await deleteUser(deletingUser.id)
         if (result.success) {
@@ -364,7 +368,7 @@ export function UserManagementList({
       return
     }
 
-    startTransition(async () => {
+    startResetPasswordTransition(async () => {
       try {
         const result = await resetUserPassword(resettingPasswordUser.id, newPassword)
         if (result.success) {
@@ -381,7 +385,7 @@ export function UserManagementList({
   }
 
   const handleToggleUserStatus = async (user: UserDisplay, enable: boolean) => {
-    startTransition(async () => {
+    startToggleStatusTransition(async () => {
       try {
         const action = enable ? 'activate' : 'deactivate'
         const result = await updateUser(user.id, { isActive: enable })
@@ -407,7 +411,7 @@ export function UserManagementList({
   const handleAssignMachineType = async () => {
     if (!assigningUser || !selectedMachineType) return
 
-    startTransition(async () => {
+    startAssignMachineTransition(async () => {
       try {
         const result = await adminAssignMachineType(assigningUser.username, selectedMachineType)
         if (result.success) {
@@ -879,20 +883,20 @@ export function UserManagementList({
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetForm} disabled={isPending}>
+            <Button variant="outline" onClick={resetForm} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={
-                isPending ||
+                isSubmitting ||
                 (!editingUser && !formData.username) ||
                 !formData.email ||
                 formData.roles.length === 0 ||
                 (isKloudliteCloud && !editingUser && formData.roles.includes('user') && !createUserMachineType)
               }
             >
-              {isPending ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {editingUser ? 'Updating...' : 'Creating...'}
@@ -925,11 +929,11 @@ export function UserManagementList({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={resetDeleteDialog} disabled={isPending}>
+            <Button variant="outline" onClick={resetDeleteDialog} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteUser} disabled={isPending}>
-              {isPending ? (
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={isDeleting}>
+              {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Deleting...
@@ -980,11 +984,11 @@ export function UserManagementList({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetPasswordDialog} disabled={isPending}>
+            <Button variant="outline" onClick={resetPasswordDialog} disabled={isResettingPassword}>
               Cancel
             </Button>
-            <Button onClick={handleResetPassword} disabled={isPending || newPassword.length < 8}>
-              {isPending ? (
+            <Button onClick={handleResetPassword} disabled={isResettingPassword || newPassword.length < 8}>
+              {isResettingPassword ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Resetting...
@@ -1083,15 +1087,15 @@ export function UserManagementList({
                   setAssigningUser(null)
                   setSelectedMachineType('')
                 }}
-                disabled={isPending}
+                disabled={isAssigningMachine}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleAssignMachineType}
-                disabled={isPending || !selectedMachineType}
+                disabled={isAssigningMachine || !selectedMachineType}
               >
-                {isPending ? (
+                {isAssigningMachine ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Assigning...
