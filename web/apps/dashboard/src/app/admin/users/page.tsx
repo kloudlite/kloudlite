@@ -88,10 +88,7 @@ export default async function UsersPage() {
       ? workMachinesResult.data
       : []
 
-    if (isCloud) {
-      console.log('[ADMIN USERS] workMachines count:', workMachines.length,
-        'data:', workMachines.map((wm: any) => ({ name: wm.metadata?.name, ownedBy: wm.spec?.ownedBy, machineType: wm.spec?.machineType })))
-    }
+
 
     return (
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
