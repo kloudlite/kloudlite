@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 import {
   Button,
@@ -91,6 +92,7 @@ export function UserManagementList({
   machineTypes = [],
   workMachines = [],
 }: UserManagementListProps) {
+  const router = useRouter()
   const [users, setUsers] = useState(initialUsers)
 
   // Sync users state with server prop changes (e.g. after router.refresh from watch events)
@@ -119,19 +121,6 @@ export function UserManagementList({
   const [assigningUser, setAssigningUser] = useState<UserDisplay | null>(null)
   const [selectedMachineType, setSelectedMachineType] = useState('')
   const [createUserMachineType, setCreateUserMachineType] = useState('')
-
-  // Debug: log work machines data to identify lookup issues
-  useEffect(() => {
-    if (isKloudliteCloud) {
-      console.log('[DEBUG] workMachines prop:', workMachines.length, workMachines.map((m: any) => ({
-        name: m.metadata?.name,
-        ownedBy: m.spec?.ownedBy,
-        machineType: m.spec?.machineType,
-        labels: m.metadata?.labels,
-      })))
-      console.log('[DEBUG] users:', users.map(u => ({ username: u.username, name: u.name })))
-    }
-  }, [workMachines, users, isKloudliteCloud])
 
   // Helper to get machine type for a user from work machines
   const getUserMachineType = useCallback((username: string): string | null => {
@@ -336,6 +325,7 @@ export function UserManagementList({
               toast.success('User updated successfully')
             }
             resetForm()
+            router.refresh()
           } else {
             setFormError(result.error || 'Failed to update user')
             toast.error(result.error || 'Failed to update user')
@@ -358,6 +348,7 @@ export function UserManagementList({
               toast.success('User created successfully')
             }
             resetForm()
+            router.refresh()
           } else {
             setFormError(result.error || 'Failed to create user')
             toast.error(result.error || 'Failed to create user')
@@ -382,6 +373,7 @@ export function UserManagementList({
           setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id))
           toast.success('User deleted successfully')
           resetDeleteDialog()
+          router.refresh()
         } else {
           toast.error(result.error || 'Failed to delete user')
         }
@@ -450,6 +442,7 @@ export function UserManagementList({
           toast.success(`Machine type assigned to ${assigningUser.name}`)
           setAssigningUser(null)
           setSelectedMachineType('')
+          router.refresh()
         } else {
           toast.error(result.error || 'Failed to assign machine type')
         }
