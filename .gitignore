@@ -51,3 +51,4 @@ devenv/k3s-config/
 *.dylib
 *.test
 *.out
+CLAUDE.md
