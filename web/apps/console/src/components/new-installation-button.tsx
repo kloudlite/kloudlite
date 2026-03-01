@@ -1,11 +1,48 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@kloudlite/ui'
-import { Plus, Cloud, Server } from 'lucide-react'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@kloudlite/ui'
+import { Plus, Cloud, Server, CreditCard } from 'lucide-react'
 
-export function NewInstallationButton() {
+interface NewInstallationButtonProps {
+  hasActiveSubscription: boolean
+}
+
+export function NewInstallationButton({ hasActiveSubscription }: NewInstallationButtonProps) {
   const router = useRouter()
+
+  if (!hasActiveSubscription) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="default"
+              variant="outline"
+              className="gap-2"
+              onClick={() => router.push('/installations/settings/billing')}
+            >
+              <CreditCard className="h-4 w-4" />
+              Subscribe to Create
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Subscribe to a plan to create installations</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
 
   return (
     <DropdownMenu>
