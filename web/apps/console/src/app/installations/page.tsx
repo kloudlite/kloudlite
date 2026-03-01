@@ -1,11 +1,25 @@
 import { redirect } from 'next/navigation'
-import { getValidUserInstallations, type Installation } from '@/lib/console/storage'
+import {
+  getValidUserInstallations,
+  getSubscriptionByInstallation,
+  type Installation,
+} from '@/lib/console/storage'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
 import { PendingInvitationsBanner } from '@/components/pending-invitations-banner'
 import { NewInstallationButton } from '@/components/new-installation-button'
 import { ScrollArea } from '@kloudlite/ui'
+
+async function hasAnyActiveSubscription(installations: Installation[]): Promise<boolean> {
+  for (const installation of installations) {
+    const sub = await getSubscriptionByInstallation(installation.id)
+    if (sub && ['active', 'authenticated', 'created'].includes(sub.status)) {
+      return true
+    }
+  }
+  return false
+}
 
 export default async function InstallationsPage() {
   const session = await getRegistrationSession()
@@ -24,6 +38,8 @@ export default async function InstallationsPage() {
     installations = []
   }
 
+  const hasSubscription = await hasAnyActiveSubscription(installations)
+
   return (
     <div className="bg-background h-screen flex flex-col">
       <InstallationsHeader user={session.user} />
@@ -39,7 +55,7 @@ export default async function InstallationsPage() {
                 Manage and monitor your cloud deployments
               </p>
             </div>
-            <NewInstallationButton />
+            <NewInstallationButton hasActiveSubscription={hasSubscription} />
           </div>
 
           {/* Installations List with Filter */}
