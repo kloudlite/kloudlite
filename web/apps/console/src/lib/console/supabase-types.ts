@@ -217,6 +217,149 @@ export type Database = {
           role?: 'admin' | 'member' | 'viewer'
         }
       }
+      subscription_plans: {
+        Row: {
+          id: string
+          razorpay_plan_id: string | null
+          tier: number
+          name: string
+          amount_per_user: number
+          base_fee: number
+          currency: string
+          monthly_hours: number
+          overage_rate: number
+          cpu: number
+          ram: string
+          storage: string
+          auto_suspend: string
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          razorpay_plan_id?: string | null
+          tier: number
+          name: string
+          amount_per_user: number
+          base_fee?: number
+          currency?: string
+          monthly_hours?: number
+          overage_rate?: number
+          cpu: number
+          ram: string
+          storage: string
+          auto_suspend: string
+          description?: string | null
+        }
+        Update: {
+          razorpay_plan_id?: string | null
+          tier?: number
+          name?: string
+          amount_per_user?: number
+          base_fee?: number
+          currency?: string
+          monthly_hours?: number
+          overage_rate?: number
+          cpu?: number
+          ram?: string
+          storage?: string
+          auto_suspend?: string
+          description?: string | null
+        }
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          installation_id: string
+          plan_id: string
+          razorpay_subscription_id: string | null
+          razorpay_customer_id: string | null
+          status:
+            | 'created'
+            | 'authenticated'
+            | 'active'
+            | 'paused'
+            | 'cancelled'
+            | 'expired'
+          quantity: number
+          current_start: string | null
+          current_end: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          installation_id: string
+          plan_id: string
+          razorpay_subscription_id?: string | null
+          razorpay_customer_id?: string | null
+          status?:
+            | 'created'
+            | 'authenticated'
+            | 'active'
+            | 'paused'
+            | 'cancelled'
+            | 'expired'
+          quantity?: number
+          current_start?: string | null
+          current_end?: string | null
+        }
+        Update: {
+          plan_id?: string
+          razorpay_subscription_id?: string | null
+          razorpay_customer_id?: string | null
+          status?:
+            | 'created'
+            | 'authenticated'
+            | 'active'
+            | 'paused'
+            | 'cancelled'
+            | 'expired'
+          quantity?: number
+          current_start?: string | null
+          current_end?: string | null
+        }
+      }
+      invoices: {
+        Row: {
+          id: string
+          subscription_id: string
+          installation_id: string
+          razorpay_invoice_id: string | null
+          razorpay_payment_id: string | null
+          amount: number
+          currency: string
+          status: 'issued' | 'paid' | 'expired' | 'cancelled'
+          billing_start: string | null
+          billing_end: string | null
+          paid_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          subscription_id: string
+          installation_id: string
+          razorpay_invoice_id?: string | null
+          razorpay_payment_id?: string | null
+          amount: number
+          currency?: string
+          status?: 'issued' | 'paid' | 'expired' | 'cancelled'
+          billing_start?: string | null
+          billing_end?: string | null
+          paid_at?: string | null
+        }
+        Update: {
+          razorpay_invoice_id?: string | null
+          razorpay_payment_id?: string | null
+          amount?: number
+          currency?: string
+          status?: 'issued' | 'paid' | 'expired' | 'cancelled'
+          billing_start?: string | null
+          billing_end?: string | null
+          paid_at?: string | null
+        }
+      }
     }
   }
 }
