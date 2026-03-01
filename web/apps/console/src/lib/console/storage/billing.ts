@@ -84,6 +84,7 @@ export async function getPlanById(planId: string): Promise<Plan | null> {
 export async function updatePlanRazorpayId(planId: string, razorpayPlanId: string): Promise<void> {
   const { error } = await supabase
     .from('subscription_plans')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update({ razorpay_plan_id: razorpayPlanId })
     .eq('id', planId)
   if (error) {
@@ -159,6 +160,7 @@ export async function updateSubscriptionStatus(
   if (periodEnd) updateData.current_end = periodEnd
   const { error } = await supabase
     .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
     .update(updateData)
     .eq('razorpay_subscription_id', razorpaySubscriptionId)
   if (error) {
