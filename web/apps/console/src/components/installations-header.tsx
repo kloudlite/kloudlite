@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Button, Avatar, AvatarFallback, AvatarImage, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, KloudliteLogo } from '@kloudlite/ui'
+import { Button, Avatar, AvatarFallback, AvatarImage, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, KloudliteLogo, ThemeSwitcher } from '@kloudlite/ui'
 import { Settings, LogOut } from 'lucide-react'
 
 interface InstallationsHeaderProps {
@@ -44,7 +44,9 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
           </Link>
         </div>
 
-        {/* User Menu */}
+        {/* Theme & User Menu */}
+        <div className="flex items-center gap-1">
+          <ThemeSwitcher />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 gap-2 px-2 hover:bg-muted/50 transition-colors">
@@ -82,6 +84,7 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </header>
   )
