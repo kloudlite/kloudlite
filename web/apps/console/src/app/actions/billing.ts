@@ -70,22 +70,23 @@ export async function createNewSubscription(
   const razorpay = getRazorpay()
 
   // Create Razorpay customer
-  const customer = await razorpay.customers.create({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const customer = (await razorpay.customers.create({
     name: session.user.name,
     email: session.user.email,
-  })
+  })) as any
 
   // Create Razorpay subscription
-  const razorpaySub = await razorpay.subscriptions.create({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const razorpaySub = (await razorpay.subscriptions.create({
     plan_id: plan.razorpayPlanId,
     total_count: 120,
     quantity: quantity,
-    customer_id: customer.id,
     notes: {
       installation_id: installationId,
       plan_tier: String(plan.tier),
     },
-  })
+  } as any)) as any
 
   // Save locally
   const subscription = await createSubscription({
