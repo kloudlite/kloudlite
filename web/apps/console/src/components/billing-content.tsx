@@ -37,21 +37,6 @@ export function BillingContent({
 }: BillingContentProps) {
   const router = useRouter()
   const { openCheckout } = useRazorpay()
-  const [razorpayKey, setRazorpayKey] = useState<string | null>(null)
-  const [isLoadingKey, setIsLoadingKey] = useState(false)
-
-  const loadRazorpayKey = useCallback(async () => {
-    if (razorpayKey || isLoadingKey) return
-    setIsLoadingKey(true)
-    try {
-      const key = await getRazorpayKey()
-      setRazorpayKey(key)
-    } catch {
-      toast.error('Failed to load payment configuration')
-    } finally {
-      setIsLoadingKey(false)
-    }
-  }, [razorpayKey, isLoadingKey])
 
   const activeSubs = subscriptions.filter(
     (s) => !['cancelled', 'expired'].includes(s.status),
@@ -65,13 +50,11 @@ export function BillingContent({
   const handlePayNow = useCallback(async () => {
     if (!pendingInvoice?.razorpayInvoiceId) return
 
-    if (!razorpayKey) {
-      await loadRazorpayKey()
-      return
-    }
+    // Load Razorpay key if not already loaded
+    const key = await getRazorpayKey()
 
     const options = {
-      key: razorpayKey,
+      key: key,
       order_id: pendingInvoice.razorpayInvoiceId,
       amount: pendingInvoice.amount,
       currency: pendingInvoice.currency,
@@ -106,7 +89,7 @@ export function BillingContent({
     }
 
     openCheckout(options)
-  }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout, razorpayKey, loadRazorpayKey])
+  }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout])
 
   const handleSubscribe = useCallback(
     async (
@@ -114,17 +97,15 @@ export function BillingContent({
       billingPeriod: 'monthly' | 'annual',
     ) => {
       try {
-        if (!razorpayKey) {
-          await loadRazorpayKey()
-          return
-        }
-
         const order = await createInstallationOrder(installationId, allocations, billingPeriod)
+
+        // Load Razorpay key
+        const key = await getRazorpayKey()
 
         const totalUsers = allocations.reduce((sum, a) => sum + a.quantity, 0)
         const periodLabel = billingPeriod === 'annual' ? 'Annual' : 'Monthly'
         const options = {
-          key: razorpayKey,
+          key: key,
           order_id: order.razorpayOrderId,
           amount: order.amount,
           currency: order.currency,
