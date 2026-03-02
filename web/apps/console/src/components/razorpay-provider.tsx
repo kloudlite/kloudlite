@@ -17,6 +17,8 @@ interface RazorpayCheckoutOptions {
   modal?: { ondismiss?: () => void }
 }
 
+export type { RazorpayCheckoutOptions }
+
 interface RazorpayContextValue {
   isLoaded: boolean
   openCheckout: (options: RazorpayCheckoutOptions) => void
@@ -43,18 +45,38 @@ export function RazorpayProvider({ children }: { children: React.ReactNode }) {
     const script = document.createElement('script')
     script.src = CHECKOUT_SRC
     script.async = true
-    script.onload = () => setIsLoaded(true)
-    script.onerror = () => console.error('Failed to load Razorpay checkout script')
+    script.onload = () => {
+      console.log('[Razorpay] Checkout script loaded successfully')
+      setIsLoaded(true)
+    }
+    script.onerror = () => console.error('[Razorpay] Failed to load checkout script')
     document.head.appendChild(script)
   }, [])
 
   const openCheckout = useCallback(
     (options: RazorpayCheckoutOptions) => {
-      if (!(window as any).Razorpay) {
+      const RazorpayClass = (window as any).Razorpay
+      if (!RazorpayClass) {
         throw new Error('Razorpay checkout not loaded')
       }
-      const rzp = new (window as any).Razorpay(options)
+
+      console.log('[Razorpay] Opening checkout with:', {
+        key: options.key ? `${options.key.slice(0, 12)}...` : 'MISSING',
+        order_id: options.order_id,
+        amount: options.amount,
+        currency: options.currency,
+        hasHandler: !!options.handler,
+        hasOndismiss: !!options.modal?.ondismiss,
+      })
+
+      const rzp = new RazorpayClass(options)
+
+      rzp.on('payment.failed', (resp: any) => {
+        console.error('[Razorpay] payment.failed event:', resp?.error)
+      })
+
       rzp.open()
+      console.log('[Razorpay] rzp.open() called')
     },
     [],
   )
