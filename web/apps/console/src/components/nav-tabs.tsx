@@ -11,6 +11,7 @@ export interface NavTab {
   label: string
   href: string
   icon?: LucideIcon
+  matchPrefix?: boolean
 }
 
 interface NavTabsProps {
@@ -24,7 +25,9 @@ export function NavTabs({ tabs, className }: NavTabsProps) {
   const tabRefs = useRef<Map<string, HTMLAnchorElement>>(new Map())
 
   // Find the active tab based on pathname
-  const activeTab = tabs.find((tab) => pathname === tab.href)?.id || tabs[0]?.id
+  const activeTab =
+    tabs.find((tab) => (tab.matchPrefix ? pathname.startsWith(tab.href) : pathname === tab.href))
+      ?.id || tabs[0]?.id
 
   // Update underline position
   useEffect(() => {
@@ -53,7 +56,7 @@ export function NavTabs({ tabs, className }: NavTabsProps) {
     <div className={cn('inline-flex gap-1 relative', className)}>
       {tabs.map((tab) => {
         const Icon = tab.icon
-        const isActive = pathname === tab.href
+        const isActive = tab.matchPrefix ? pathname.startsWith(tab.href) : pathname === tab.href
         return (
           <Link
             key={tab.id}

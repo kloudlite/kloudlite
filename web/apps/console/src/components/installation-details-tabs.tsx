@@ -1,6 +1,6 @@
 'use client'
 
-import { Users } from 'lucide-react'
+import { CreditCard, Users } from 'lucide-react'
 import { NavTabs, type NavTab } from './nav-tabs'
 
 interface InstallationDetailsTabsProps {
@@ -19,6 +19,13 @@ export function InstallationDetailsTabs({ installationId }: InstallationDetailsT
       label: 'Team',
       icon: Users,
       href: `/installations/${installationId}/team`,
+    },
+    {
+      id: 'billing',
+      label: 'Billing',
+      icon: CreditCard,
+      href: `/installations/${installationId}/billing`,
+      matchPrefix: true,
     },
   ]
 

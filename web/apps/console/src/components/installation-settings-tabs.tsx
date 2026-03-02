@@ -7,7 +7,6 @@ import { cn } from '@kloudlite/lib'
 
 const tabs = [
   { id: 'profile', label: 'Profile', href: '/installations/settings/profile' },
-  { id: 'billing', label: 'Billing', href: '/installations/settings/billing' },
 ]
 
 export function InstallationSettingsTabs() {
