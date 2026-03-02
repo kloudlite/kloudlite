@@ -139,9 +139,13 @@ jobs:
               "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
               "AZURE_RESOURCE_GROUP=${{ secrets.AZURE_RESOURCE_GROUP || 'rg-kloudlite' }}" \
               "OCI_INSTALLER_JOB_NAME=${{ secrets.OCI_INSTALLER_JOB_NAME || 'job-oci-installer' }}" \
+              "RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}" \
+              "RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
+              "RAZORPAY_WEBHOOK_SECRET=${{ secrets.RAZORPAY_WEBHOOK_SECRET }}" \
+              "NEXT_PUBLIC_RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}" \
             --output none
 
-          echo "✓ Environment variables synced (22 variables)"
+          echo "✓ Environment variables synced (26 variables)"
 
   sync-website-env:
     name: Sync Website Environment Variables
