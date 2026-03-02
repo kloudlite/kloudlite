@@ -241,7 +241,6 @@ export function KlCloudInstallationForm({
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create installation')
       toast.error(error.message)
-    } finally {
       setCreating(false)
     }
   }
