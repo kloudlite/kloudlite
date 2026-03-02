@@ -7,7 +7,6 @@
     "dev:console": "turbo run dev --filter=console",
     "dev:dashboard": "turbo run dev --filter=dashboard",
     "dev:website": "turbo run dev --filter=website",
-    "dev:console-cron": "turbo run dev --filter=console-cron",
     "dev:tests": "turbo run dev --filter=tests",
     "build": "turbo run build",
     "build:console": "turbo run build --filter=console",
