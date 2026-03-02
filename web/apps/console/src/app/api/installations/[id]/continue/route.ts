@@ -67,15 +67,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     // Kloudlite Cloud — check subscription before deploy
     const subs = await getSubscriptionsByInstallation(id)
     const hasActiveSub = subs.some((s) =>
-      ['active', 'authenticated', 'created'].includes(s.status),
+      ['active', 'authenticated'].includes(s.status),
+    )
+
+    // Check for pending/created subscriptions (payment not completed yet)
+    const hasPendingSub = subs.some((s) =>
+      ['created', 'pending'].includes(s.status),
     )
 
     if (!hasActiveSub) {
       // No subscription yet — go back to plan/payment page with existing installation
       redirectPath = `/installations/new-kl-cloud?installation=${id}`
     } else if (!installation.deploymentReady) {
-      // Subscribed but not deployed — go to deploy page
-      redirectPath = '/installations/new/kloudlite-cloud'
+      if (hasPendingSub) {
+        // Payment pending — go back to payment page to complete
+        redirectPath = `/installations/new-kl-cloud?installation=${id}`
+      } else {
+        // Subscribed and deployed — go to deploy page
+        redirectPath = '/installations/new/kloudlite-cloud'
+      }
     } else {
       redirectPath = '/installations'
     }
