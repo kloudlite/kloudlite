@@ -18,7 +18,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     // Require at least one active subscription for this installation
     const subs = await getSubscriptionsByInstallation(id)
-    const hasActive = subs.some((s) => ['active', 'authenticated', 'created'].includes(s.status))
+    const hasActive = subs.some((s) => ['active', 'authenticated'].includes(s.status))
     if (!hasActive) {
       return NextResponse.json(
         { error: 'Active subscription required to deploy Kloudlite Cloud' },

@@ -119,16 +119,16 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
             {isAnnual ? (
               <>
                 <span className="text-sm text-muted-foreground line-through mr-2">
-                  ${(baseFee * 12).toFixed(0)}
+                  ₹{(baseFee * 12).toFixed(0)}
                 </span>
                 <span className="text-3xl font-bold text-foreground">
-                  ${(baseFee * 12 * (1 - discountPct / 100)).toFixed(0)}
+                  ₹{(baseFee * 12 * (1 - discountPct / 100)).toFixed(0)}
                 </span>
                 <span className="text-muted-foreground text-sm">/yr</span>
               </>
             ) : (
               <>
-                <span className="text-3xl font-bold text-foreground">${baseFee}</span>
+                <span className="text-3xl font-bold text-foreground">₹{baseFee}</span>
                 <span className="text-muted-foreground text-sm">/mo</span>
               </>
             )}
@@ -158,7 +158,7 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
                         <span>{plan.storage} storage</span>
                         <span>{plan.monthlyHours} hrs/mo</span>
                         <span>{plan.autoSuspend} auto-suspend</span>
-                        <span>Overage: ${(plan.overageRate / 100).toFixed(2)}/hr</span>
+                        <span>Overage: ₹{(plan.overageRate / 100).toFixed(2)}/hr</span>
                       </div>
                     </div>
 
@@ -167,16 +167,16 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
                         {isAnnual ? (
                           <>
                             <span className="text-xs text-muted-foreground line-through mr-1">
-                              ${(unitPrice * 12).toFixed(0)}
+                              ₹{(unitPrice * 12).toFixed(0)}
                             </span>
                             <span className="text-lg font-bold text-foreground">
-                              ${(unitPrice * 12 * (1 - discountPct / 100)).toFixed(0)}
+                              ₹{(unitPrice * 12 * (1 - discountPct / 100)).toFixed(0)}
                             </span>
                             <span className="text-muted-foreground text-xs">/user/yr</span>
                           </>
                         ) : (
                           <>
-                            <span className="text-lg font-bold text-foreground">${unitPrice}</span>
+                            <span className="text-lg font-bold text-foreground">₹{unitPrice}</span>
                             <span className="text-muted-foreground text-xs">/user/mo</span>
                           </>
                         )}
@@ -188,6 +188,7 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
+                          aria-label={`Decrease users for ${plan.name}`}
                           disabled={qty <= 0 || loading}
                           onClick={() => setQuantity(plan.id, qty - 1)}
                         >
@@ -207,6 +208,7 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
+                          aria-label={`Increase users for ${plan.name}`}
                           disabled={qty >= 100 || loading}
                           onClick={() => setQuantity(plan.id, qty + 1)}
                         >
@@ -233,7 +235,7 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Control Plane (base fee)</span>
               <span className="text-foreground">
-                ${isAnnual ? (baseFee * 12 * (1 - discountPct / 100)).toFixed(2) : baseFee.toFixed(2)}
+                ₹{isAnnual ? (baseFee * 12 * (1 - discountPct / 100)).toFixed(2) : baseFee.toFixed(2)}
               </span>
             </div>
             {sizeCosts.map(({ plan, quantity: qty, lineTotal }) => {
@@ -243,20 +245,20 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
               return (
                 <div key={plan.id} className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {plan.name} &mdash; {qty} {qty === 1 ? 'user' : 'users'} &times; $
+                    {plan.name} &mdash; {qty} {qty === 1 ? 'user' : 'users'} &times; ₹
                     {isAnnual
                       ? ((plan.amountPerUser / 100) * 12 * (1 - discountPct / 100)).toFixed(0)
                       : plan.amountPerUser / 100}
                     {periodLabel}
                   </span>
-                  <span className="text-foreground">${displayLine.toFixed(2)}</span>
+                  <span className="text-foreground">₹{displayLine.toFixed(2)}</span>
                 </div>
               )
             })}
             {totalUsers === 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground italic">No users selected</span>
-                <span className="text-foreground">$0.00</span>
+                <span className="text-foreground">₹0.00</span>
               </div>
             )}
           </div>
@@ -267,7 +269,7 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
                 You save vs monthly
               </span>
               <span className="text-green-700 dark:text-green-400 font-medium">
-                -${(monthlyTotal * 12 - annualTotal).toFixed(2)}
+                -₹{(monthlyTotal * 12 - annualTotal).toFixed(2)}
               </span>
             </div>
           )}
@@ -277,7 +279,7 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
               Total {isAnnual ? 'per year' : 'per month'} ({totalUsers}{' '}
               {totalUsers === 1 ? 'user' : 'users'})
             </span>
-            <span className="text-xl font-bold text-foreground">${displayTotal.toFixed(2)}</span>
+            <span className="text-xl font-bold text-foreground">₹{displayTotal.toFixed(2)}</span>
           </div>
         </div>
 
@@ -294,7 +296,7 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
                 Processing...
               </>
             ) : (
-              `Subscribe — $${displayTotal.toFixed(2)}${periodLabel}`
+              `Subscribe — ₹${displayTotal.toFixed(2)}${periodLabel}`
             )}
           </Button>
         </div>

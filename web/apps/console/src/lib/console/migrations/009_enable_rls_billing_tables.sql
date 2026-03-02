@@ -54,7 +54,7 @@ USING (
 WITH CHECK (
   EXISTS (
     SELECT 1 FROM installations
-    WHERE installations.id = NEW.installation_id
+    WHERE installations.id = subscriptions.installation_id
     AND installations.user_id = auth.uid()
   )
 );
@@ -91,7 +91,7 @@ USING (
 WITH CHECK (
   EXISTS (
     SELECT 1 FROM installations
-    WHERE installations.id = NEW.installation_id
+    WHERE installations.id = invoices.installation_id
     AND installations.user_id = auth.uid()
   )
 );

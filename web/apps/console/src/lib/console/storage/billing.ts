@@ -202,6 +202,19 @@ export async function cancelSubscriptionsByInstallation(
   }
 }
 
+export async function deleteCreatedSubscriptions(
+  installationId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('subscriptions')
+    .delete()
+    .eq('installation_id', installationId)
+    .eq('status', 'created')
+  if (error) {
+    throw new Error(`Failed to delete stale subscriptions: ${error.message}`)
+  }
+}
+
 export async function getActiveSubscriptionsByInstallationIds(
   installationIds: string[],
 ): Promise<Record<string, Subscription>> {

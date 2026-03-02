@@ -61,21 +61,6 @@ export function KlCloudInstallationForm({
   const [creating, setCreating] = useState(false)
   const [checkingSubdomain, setCheckingSubdomain] = useState(false)
   const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
-  const [razorpayKey, setRazorpayKey] = useState<string | null>(null)
-  const [isLoadingKey, setIsLoadingKey] = useState(false)
-
-  const loadRazorpayKey = async () => {
-    if (razorpayKey || isLoadingKey) return
-    setIsLoadingKey(true)
-    try {
-      const key = await getRazorpayKey()
-      setRazorpayKey(key)
-    } catch {
-      toast.error('Failed to load payment configuration')
-    } finally {
-      setIsLoadingKey(false)
-    }
-  }
 
   // Per-tier quantities
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
@@ -87,7 +72,7 @@ export function KlCloudInstallationForm({
   })
 
   const baseFee = plans[0]?.baseFee ? plans[0].baseFee / 100 : 29
-  const currencySymbol = plans[0]?.currency === 'INR' ? '₹' : '$'
+  const currencySymbol = '₹'
   const totalUsers = Object.values(quantities).reduce((sum, q) => sum + q, 0)
 
   // Calculate cost breakdown per tier
@@ -194,12 +179,8 @@ export function KlCloudInstallationForm({
       // Step 3: Create Razorpay order for the total amount
       const order = await createInstallationOrder(installationId, tierAllocations)
 
-      // Step 4: Load Razorpay key if not already loaded
-      let key = razorpayKey
-      if (!key) {
-        key = await getRazorpayKey()
-        setRazorpayKey(key)
-      }
+      // Step 4: Load Razorpay key
+      const key = await getRazorpayKey()
 
       // Step 5: Open Razorpay Checkout for payment
       const options = {
@@ -437,6 +418,7 @@ export function KlCloudInstallationForm({
                           <div className="flex items-center gap-0 shrink-0">
                             <button
                               type="button"
+                              aria-label={`Decrease users for ${plan.name}`}
                               className="flex size-8 items-center justify-center rounded-l-md border border-foreground/10 bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
                               disabled={qty <= 0 || creating}
                               onClick={() => setQuantity(plan.id, qty - 1)}
@@ -456,6 +438,7 @@ export function KlCloudInstallationForm({
                             />
                             <button
                               type="button"
+                              aria-label={`Increase users for ${plan.name}`}
                               className="flex size-8 items-center justify-center rounded-r-md border border-foreground/10 bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
                               disabled={qty >= 100 || creating}
                               onClick={() => setQuantity(plan.id, qty + 1)}

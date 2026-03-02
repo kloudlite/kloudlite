@@ -71,9 +71,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     )
 
     // Check for pending/created subscriptions (payment not completed yet)
-    const hasPendingSub = subs.some((s) =>
-      ['created', 'pending'].includes(s.status),
-    )
+    const hasPendingSub = subs.some((s) => s.status === 'created')
 
     if (!hasActiveSub) {
       // No subscription yet — go back to plan/payment page with existing installation
@@ -102,10 +100,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
   }
 
-  // Construct redirect URL using the request host headers
-  const host = request.headers.get('host') || request.headers.get('x-forwarded-host')
-  const protocol = request.headers.get('x-forwarded-proto') || 'https'
-  const redirectUrl = host ? `${protocol}://${host}${redirectPath}` : new URL(redirectPath, request.url).toString()
-
-  return NextResponse.redirect(redirectUrl)
+  return NextResponse.redirect(new URL(redirectPath, request.url))
 }

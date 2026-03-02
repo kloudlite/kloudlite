@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { InvoiceHistory } from '@/components/billing/invoice-history'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
 import {
   getRazorpayKey,
   createInstallationOrder,
@@ -37,9 +37,10 @@ export function BillingContent({
 }: BillingContentProps) {
   const router = useRouter()
   const { openCheckout } = useRazorpay()
+  const [paying, setPaying] = useState(false)
 
   const activeSubs = subscriptions.filter(
-    (s) => !['cancelled', 'expired'].includes(s.status),
+    (s) => ['active', 'authenticated', 'paused'].includes(s.status),
   )
   const pastSubs = subscriptions.filter((s) =>
     ['cancelled', 'expired'].includes(s.status),
@@ -48,9 +49,9 @@ export function BillingContent({
   const pendingInvoice = invoices.find((i) => i.status === 'issued')
 
   const handlePayNow = useCallback(async () => {
-    if (!pendingInvoice?.razorpayInvoiceId) return
+    if (!pendingInvoice?.razorpayInvoiceId || paying) return
+    setPaying(true)
 
-    // Load Razorpay key if not already loaded
     const key = await getRazorpayKey()
 
     const options = {
@@ -83,13 +84,14 @@ export function BillingContent({
       },
       modal: {
         ondismiss: () => {
+          setPaying(false)
           toast.info('Payment cancelled. You can try again anytime.')
         },
       },
     }
 
     openCheckout(options)
-  }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout])
+  }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout, paying])
 
   const handleSubscribe = useCallback(
     async (
@@ -144,7 +146,7 @@ export function BillingContent({
         toast.error(error instanceof Error ? error.message : 'Failed to create order')
       }
     },
-    [installationId, userEmail, userName, router, openCheckout, razorpayKey, loadRazorpayKey],
+    [installationId, userEmail, userName, router, openCheckout],
   )
 
   const handleCancel = useCallback(async () => {
@@ -171,19 +173,24 @@ export function BillingContent({
                 Payment Due
               </p>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                {(pendingInvoice.amount / 100).toLocaleString('en-IN', {
-                  style: 'currency',
-                  currency: pendingInvoice.currency,
-                })}{' '}
+                ₹{(pendingInvoice.amount / 100).toFixed(2)}{' '}
                 due for your subscription renewal
               </p>
             </div>
           </div>
           <button
             onClick={handlePayNow}
-            className="shrink-0 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 transition-colors"
+            disabled={paying}
+            className="shrink-0 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 transition-colors disabled:opacity-50"
           >
-            Pay Now
+            {paying ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </span>
+            ) : (
+              'Pay Now'
+            )}
           </button>
         </div>
       )}
