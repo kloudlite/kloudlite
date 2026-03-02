@@ -183,7 +183,7 @@ jobs:
             --image "$IMAGE" \
             --set-env-vars \
               "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
-              "SUPABASE_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+              "SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
               "RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}" \
               "RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
               "BILLING_GRACE_DAYS=7" \
