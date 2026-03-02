@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById } from '@/lib/console/storage'
+import { getInstallationById, getSubscriptionsByInstallation } from '@/lib/console/storage'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 
@@ -59,21 +59,37 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return true
   }
 
-  // Determine next step based on installation status
+  // Determine next step based on installation status and hosting type
+  const isKloudliteCloud = installation.cloudProvider === 'oci'
   let redirectPath: string
 
-  if (!installation.secretKey) {
-    // Not installed yet - go to install step
-    redirectPath = '/installations/new/install'
-  } else if (!isValidSubdomain(installation.subdomain)) {
-    // Installed but no valid domain - go to domain step
-    redirectPath = '/installations/new/domain'
-  } else if (!installation.deploymentReady) {
-    // Has valid domain but not ready - go to complete step
-    redirectPath = '/installations/new/complete'
+  if (isKloudliteCloud) {
+    // Kloudlite Cloud — check subscription before deploy
+    const subs = await getSubscriptionsByInstallation(id)
+    const hasActiveSub = subs.some((s) =>
+      ['active', 'authenticated', 'created'].includes(s.status),
+    )
+
+    if (!hasActiveSub) {
+      // No subscription yet — go back to plan/payment page with existing installation
+      redirectPath = `/installations/new-kl-cloud?installation=${id}`
+    } else if (!installation.deploymentReady) {
+      // Subscribed but not deployed — go to deploy page
+      redirectPath = '/installations/new/kloudlite-cloud'
+    } else {
+      redirectPath = '/installations'
+    }
   } else {
-    // Fully set up - go back to installations list
-    redirectPath = '/installations'
+    // BYOC flow
+    if (!installation.secretKey) {
+      redirectPath = '/installations/new/install'
+    } else if (!isValidSubdomain(installation.subdomain)) {
+      redirectPath = '/installations/new/domain'
+    } else if (!installation.deploymentReady) {
+      redirectPath = '/installations/new/complete'
+    } else {
+      redirectPath = '/installations'
+    }
   }
 
   // Construct redirect URL using the request host headers

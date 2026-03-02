@@ -233,6 +233,7 @@ export type Database = {
           storage: string
           auto_suspend: string
           description: string | null
+          annual_discount_pct: number
           created_at: string
           updated_at: string
         }
@@ -251,6 +252,7 @@ export type Database = {
           storage: string
           auto_suspend: string
           description?: string | null
+          annual_discount_pct?: number
         }
         Update: {
           razorpay_plan_id?: string | null
@@ -266,6 +268,7 @@ export type Database = {
           storage?: string
           auto_suspend?: string
           description?: string | null
+          annual_discount_pct?: number
         }
       }
       subscriptions: {
@@ -283,6 +286,7 @@ export type Database = {
             | 'cancelled'
             | 'expired'
           quantity: number
+          billing_period: 'monthly' | 'annual'
           current_start: string | null
           current_end: string | null
           created_at: string
@@ -302,6 +306,7 @@ export type Database = {
             | 'cancelled'
             | 'expired'
           quantity?: number
+          billing_period?: 'monthly' | 'annual'
           current_start?: string | null
           current_end?: string | null
         }
@@ -317,6 +322,7 @@ export type Database = {
             | 'cancelled'
             | 'expired'
           quantity?: number
+          billing_period?: 'monthly' | 'annual'
           current_start?: string | null
           current_end?: string | null
         }

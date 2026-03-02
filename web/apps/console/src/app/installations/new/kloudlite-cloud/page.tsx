@@ -40,14 +40,13 @@ export default function KloudliteCloudPage() {
     }
   }, [])
 
-  // On mount: get session, verify key, check existing job status, trigger deploy only if needed
+  // On mount: get session, verify key, trigger deploy
   useEffect(() => {
     if (initRef.current) return
     initRef.current = true
 
     const init = async () => {
       try {
-        // Step 1: Get session
         const sessionRes = await fetch('/api/installations/session')
         if (!sessionRes.ok) {
           router.push('/login')
@@ -60,7 +59,6 @@ export default function KloudliteCloudPage() {
           return
         }
 
-        // Step 2: Verify key to get installation ID
         const verifyRes = await fetch('/api/installations/verify-key', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -77,7 +75,7 @@ export default function KloudliteCloudPage() {
         const instId = verifyData.installationId
         setInstallationId(instId)
 
-        // Step 3: Check if a job is already running before triggering
+        // Check if a job is already running before triggering
         try {
           const statusRes = await fetch(`/api/installations/${instId}/job-status`)
           if (statusRes.ok) {
@@ -95,7 +93,6 @@ export default function KloudliteCloudPage() {
           // Ignore status check errors, proceed to trigger
         }
 
-        // Step 4: No active job — trigger deploy
         await triggerDeploy(instId)
       } catch (err) {
         console.error('Error initializing:', err)
@@ -118,7 +115,6 @@ export default function KloudliteCloudPage() {
 
         const data = await response.json()
 
-        // Capture progress info
         if (data.currentStep != null) setCurrentStep(data.currentStep)
         if (data.totalSteps != null) setTotalSteps(data.totalSteps)
         if (data.stepDescription) setStepDescription(data.stepDescription)
@@ -214,8 +210,8 @@ export default function KloudliteCloudPage() {
                   <CheckCircle2 className="w-3 h-3" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">Create installation</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Set up your installation details</p>
+                  <p className="text-sm font-medium text-foreground">Configure & subscribe</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Installation details, plan & payment</p>
                 </div>
               </div>
               <div className="flex gap-3">

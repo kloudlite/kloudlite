@@ -16,10 +16,10 @@ export async function syncPlansToRazorpay(): Promise<void> {
       period: 'monthly',
       interval: 1,
       item: {
-        name: `Kloudlite ${plan.name} (per user)`,
+        name: `Kloudlite ${plan.name} — ${plan.cpu} vCPU, ${plan.ram} (per user)`,
         amount: plan.amountPerUser,
         currency: plan.currency,
-        description: plan.description || `Kloudlite ${plan.name} subscription`,
+        description: plan.description || `Kloudlite ${plan.name} compute`,
       },
     })
 

@@ -1,15 +1,22 @@
 'use server'
 
+import crypto from 'crypto'
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getRazorpay } from '@/lib/razorpay'
-import { syncPlansToRazorpay } from '@/lib/razorpay-plans'
 import {
   getPlans,
   getPlanById,
-  getSubscriptionByInstallation,
+  getSubscriptionsByInstallation,
   createSubscription,
+  activateSubscriptionsByInstallation,
+  cancelSubscriptionsByInstallation,
   getInvoicesByInstallation,
+  upsertInvoice,
+  extendSubscriptionPeriod,
+  updateInvoiceStatus,
+  scheduleRenewalJobs,
+  cancelRenewalJobs,
 } from '@/lib/console/storage'
 import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
 import { getInstallationById, getMemberRole } from '@/lib/console/storage'
@@ -20,11 +27,11 @@ export async function fetchPlans(): Promise<Plan[]> {
   return getPlans()
 }
 
-export async function fetchSubscription(installationId: string): Promise<Subscription | null> {
+export async function fetchSubscriptions(installationId: string): Promise<Subscription[]> {
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
 
-  return getSubscriptionByInstallation(installationId)
+  return getSubscriptionsByInstallation(installationId)
 }
 
 export async function fetchInvoices(installationId: string): Promise<Invoice[]> {
@@ -36,70 +43,176 @@ export async function fetchInvoices(installationId: string): Promise<Invoice[]> 
 
 // --- Write Actions ---
 
-export async function createNewSubscription(
+export async function createInstallationOrder(
   installationId: string,
-  planId: string,
-  quantity: number,
-): Promise<{ subscriptionId: string; razorpaySubscriptionId: string }> {
+  allocations: { planId: string; quantity: number }[],
+  billingPeriod: 'monthly' | 'annual' = 'monthly',
+): Promise<{ razorpayOrderId: string; amount: number; currency: string }> {
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
 
   // Verify owner permission
   const role = await getMemberRole(installationId, session.user.id)
   const installation = await getInstallationById(installationId)
-
   const isOwner = role === 'owner' || installation?.userId === session.user.id
   if (!isOwner) {
     throw new Error('Only the installation owner can manage billing')
   }
 
-  // Check no existing active subscription
-  const existing = await getSubscriptionByInstallation(installationId)
-  if (existing && !['cancelled', 'expired'].includes(existing.status)) {
-    throw new Error('Installation already has an active subscription')
+  if (allocations.length === 0) {
+    throw new Error('At least one compute size must have users assigned')
   }
 
-  // Ensure plans are synced to Razorpay
-  await syncPlansToRazorpay()
-
-  const plan = await getPlanById(planId)
-  if (!plan || !plan.razorpayPlanId) {
-    throw new Error('Plan not found or not synced to Razorpay')
+  // Check no existing active subscriptions
+  const existing = await getSubscriptionsByInstallation(installationId)
+  const activeExisting = existing.filter((s) => !['cancelled', 'expired'].includes(s.status))
+  if (activeExisting.length > 0) {
+    throw new Error('Installation already has active subscriptions')
   }
+
+  // Resolve all plans and compute total amount
+  const resolvedPlans = await Promise.all(
+    allocations.map(async (alloc) => {
+      const plan = await getPlanById(alloc.planId)
+      if (!plan) {
+        throw new Error(`Plan not found: ${alloc.planId}`)
+      }
+      return { plan, quantity: alloc.quantity }
+    }),
+  )
+
+  // Compute total: baseFee (once) + sum(amountPerUser * quantity)
+  const baseFee = resolvedPlans[0].plan.baseFee
+  const currency = resolvedPlans[0].plan.currency
+  const discountPct = resolvedPlans[0].plan.annualDiscountPct
+  const userTotal = resolvedPlans.reduce((sum, { plan, quantity }) => {
+    return sum + plan.amountPerUser * quantity
+  }, 0)
+  const monthlyTotal = baseFee + userTotal
+
+  // Annual: monthly * 12 * (1 - discount/100)
+  const totalAmount =
+    billingPeriod === 'annual'
+      ? Math.round(monthlyTotal * 12 * (1 - discountPct / 100))
+      : monthlyTotal
 
   const razorpay = getRazorpay()
 
-  // Create Razorpay customer
+  // Create Razorpay Order
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const customer = (await razorpay.customers.create({
-    name: session.user.name,
-    email: session.user.email,
-  })) as any
-
-  // Create Razorpay subscription
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const razorpaySub = (await razorpay.subscriptions.create({
-    plan_id: plan.razorpayPlanId,
-    total_count: 120,
-    quantity: quantity,
+  const order = (await razorpay.orders.create({
+    amount: totalAmount,
+    currency,
+    receipt: `inst_${installationId.slice(0, 8)}_${Date.now()}`,
     notes: {
       installation_id: installationId,
-      plan_tier: String(plan.tier),
+      allocations: JSON.stringify(allocations),
     },
-  } as any)) as any
+  })) as any
 
-  // Save locally
-  const subscription = await createSubscription({
-    installationId,
-    planId,
-    razorpaySubscriptionId: razorpaySub.id,
-    razorpayCustomerId: customer.id,
-    quantity,
-  })
+  // Create local subscription records (status: 'created')
+  // Only store order_id on the first record (UNIQUE constraint on razorpay_subscription_id)
+  let isFirst = true
+  for (const { plan, quantity } of resolvedPlans) {
+    await createSubscription({
+      installationId,
+      planId: plan.id,
+      razorpaySubscriptionId: isFirst ? order.id : null,
+      razorpayCustomerId: null,
+      quantity,
+      billingPeriod,
+    })
+    isFirst = false
+  }
 
   return {
-    subscriptionId: subscription.id,
-    razorpaySubscriptionId: razorpaySub.id,
+    razorpayOrderId: order.id,
+    amount: totalAmount,
+    currency,
+  }
+}
+
+export async function verifyPaymentAndActivate(
+  installationId: string,
+  razorpayOrderId: string,
+  razorpayPaymentId: string,
+  razorpaySignature: string,
+): Promise<void> {
+  const session = await getRegistrationSession()
+  if (!session?.user) redirect('/login')
+
+  // Verify owner permission
+  const role = await getMemberRole(installationId, session.user.id)
+  const installation = await getInstallationById(installationId)
+  const isOwner = role === 'owner' || installation?.userId === session.user.id
+  if (!isOwner) {
+    throw new Error('Only the installation owner can verify payments')
+  }
+
+  // Verify Razorpay payment signature
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  if (!keySecret) {
+    throw new Error('RAZORPAY_KEY_SECRET not configured')
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', keySecret)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+    .digest('hex')
+
+  if (expectedSignature !== razorpaySignature) {
+    throw new Error('Payment verification failed — invalid signature')
+  }
+
+  // Check if this is a renewal or first-time activation
+  const subs = await getSubscriptionsByInstallation(installationId)
+  const hasActiveSubs = subs.some((s) => s.status === 'active')
+
+  // Determine billing period from existing subscriptions
+  const billingPeriod = subs[0]?.billingPeriod ?? 'monthly'
+  const periodDays = billingPeriod === 'annual' ? 365 : 30
+
+  const now = new Date().toISOString()
+  const periodEnd = new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000).toISOString()
+
+  if (hasActiveSubs) {
+    // Renewal: extend existing active subscriptions
+    await extendSubscriptionPeriod(installationId, now, periodEnd)
+
+    // Update the issued invoice to paid
+    await updateInvoiceStatus(razorpayOrderId, 'paid', razorpayPaymentId, now)
+
+    // Cancel old pending jobs and schedule new ones for the extended period
+    await cancelRenewalJobs(installationId)
+    await scheduleRenewalJobs(installationId, periodEnd, billingPeriod)
+  } else {
+    // First-time: activate 'created' subscriptions
+    await activateSubscriptionsByInstallation(installationId, now, periodEnd)
+
+    // Fetch order to get amount/currency for invoice
+    const razorpay = getRazorpay()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const order = (await razorpay.orders.fetch(razorpayOrderId)) as any
+
+    // Create invoice record
+    const firstSub = subs[0]
+    if (firstSub) {
+      await upsertInvoice({
+        subscriptionId: firstSub.id,
+        installationId,
+        razorpayInvoiceId: razorpayOrderId,
+        razorpayPaymentId,
+        amount: order.amount,
+        currency: order.currency,
+        status: 'paid',
+        billingStart: now,
+        billingEnd: periodEnd,
+        paidAt: now,
+      })
+    }
+
+    // Schedule renewal and expiry jobs for this subscription
+    await scheduleRenewalJobs(installationId, periodEnd, billingPeriod)
   }
 }
 
@@ -115,15 +228,18 @@ export async function cancelExistingSubscription(installationId: string): Promis
     throw new Error('Only the installation owner can manage billing')
   }
 
-  const subscription = await getSubscriptionByInstallation(installationId)
-  if (!subscription || !subscription.razorpaySubscriptionId) {
-    throw new Error('No active subscription found')
+  const subs = await getSubscriptionsByInstallation(installationId)
+  const activeSubs = subs.filter(
+    (s) => !['cancelled', 'expired'].includes(s.status),
+  )
+
+  if (activeSubs.length === 0) {
+    throw new Error('No active subscriptions found')
   }
 
-  if (['cancelled', 'expired'].includes(subscription.status)) {
-    throw new Error('Subscription is already cancelled')
-  }
+  // Cancel locally (Orders don't have Razorpay-side subscriptions to cancel)
+  await cancelSubscriptionsByInstallation(installationId)
 
-  const razorpay = getRazorpay()
-  await razorpay.subscriptions.cancel(subscription.razorpaySubscriptionId, false)
+  // Cancel any pending renewal/expiry jobs
+  await cancelRenewalJobs(installationId)
 }

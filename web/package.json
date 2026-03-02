@@ -7,6 +7,7 @@
     "dev:console": "turbo run dev --filter=console",
     "dev:dashboard": "turbo run dev --filter=dashboard",
     "dev:website": "turbo run dev --filter=website",
+    "dev:console-cron": "turbo run dev --filter=console-cron",
     "dev:tests": "turbo run dev --filter=tests",
     "build": "turbo run build",
     "build:console": "turbo run build --filter=console",
@@ -17,7 +18,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "@types/pg": "^8.18.0",
+    "dotenv": "^17.3.1",
     "eslint-config-prettier": "^10.1.8",
+    "pg": "^8.19.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "turbo": "^2.3.3"
