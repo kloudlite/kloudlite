@@ -194,15 +194,16 @@ export function KlCloudInstallationForm({
       // Step 3: Create Razorpay order for the total amount
       const order = await createInstallationOrder(installationId, tierAllocations)
 
-      // Step 4: Load Razorpay key and open checkout
-      if (!razorpayKey) {
-        await loadRazorpayKey()
-        return
+      // Step 4: Load Razorpay key if not already loaded
+      let key = razorpayKey
+      if (!key) {
+        key = await getRazorpayKey()
+        setRazorpayKey(key)
       }
 
       // Step 5: Open Razorpay Checkout for payment
       const options = {
-        key: razorpayKey,
+        key: key,
         order_id: order.razorpayOrderId,
         amount: order.amount,
         currency: order.currency,
