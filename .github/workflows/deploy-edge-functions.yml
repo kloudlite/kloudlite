@@ -1,0 +1,126 @@
+name: Deploy Edge Functions
+
+on:
+  push:
+    branches:
+      - master
+      - development
+    paths:
+      - 'supabase/functions/**'
+      - 'web/apps/console/src/lib/console/migrations/**'
+      - '.github/workflows/deploy-edge-functions.yml'
+  workflow_dispatch:
+    inputs:
+      run-migrations:
+        description: 'Run Supabase migrations'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-migrations:
+    name: Run Supabase Migrations
+    runs-on: ubuntu-latest
+    environment: production
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.run-migrations == 'true') ||
+      (github.event_name == 'push')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changed migrations
+        id: changes
+        run: |
+          MIGRATION_DIR="web/apps/console/src/lib/console/migrations"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+            ls -1 "$MIGRATION_DIR"/*.sql | sort > /tmp/migrations.txt
+          else
+            CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- "$MIGRATION_DIR/*.sql" || true)
+            if [ -z "$CHANGED" ]; then
+              echo "run=false" >> $GITHUB_OUTPUT
+              echo "No migration files changed"
+            else
+              echo "run=true" >> $GITHUB_OUTPUT
+              echo "$CHANGED" | sort > /tmp/migrations.txt
+              echo "Changed migrations:"
+              cat /tmp/migrations.txt
+            fi
+          fi
+
+      - name: Run migrations via psql
+        if: steps.changes.outputs.run == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "SUPABASE_DATABASE_URL secret is not set, skipping migrations"
+            echo "To enable: add SUPABASE_DATABASE_URL to the production environment secrets"
+            echo "Format: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
+            exit 0
+          fi
+
+          echo "Running Supabase migrations..."
+
+          while IFS= read -r file; do
+            echo ""
+            echo "--- Applying: $(basename "$file") ---"
+            psql "$DATABASE_URL" -f "$file" 2>&1
+            if [ $? -ne 0 ]; then
+              echo "Migration failed: $file"
+              exit 1
+            fi
+            echo "Applied: $(basename "$file")"
+          done < /tmp/migrations.txt
+
+          echo ""
+          echo "All migrations applied successfully"
+
+  deploy-functions:
+    name: Deploy Edge Functions
+    needs: [run-migrations]
+    if: |
+      always() &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy billing-cron function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase functions deploy billing-cron \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Set function secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "${{ secrets.RAZORPAY_KEY_ID }}" | supabase secrets set RAZORPAY_KEY_ID --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          echo "${{ secrets.RAZORPAY_KEY_SECRET }}" | supabase secrets set RAZORPAY_KEY_SECRET --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary: Edge Functions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Function** | billing-cron |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Project** | ${{ secrets.SUPABASE_PROJECT_REF }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Deployed at** | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY

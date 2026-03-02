@@ -59,18 +59,6 @@
         "typescript": "^5.0.0",
       },
     },
-    "apps/console-cron": {
-      "name": "console-cron",
-      "version": "0.1.0",
-      "dependencies": {
-        "@supabase/supabase-js": "^2.47.10",
-        "razorpay": "^2.9.6",
-      },
-      "devDependencies": {
-        "@types/node": "^22.0.0",
-        "typescript": "^5.0.0",
-      },
-    },
     "apps/dashboard": {
       "name": "dashboard",
       "version": "0.1.0",
@@ -908,8 +896,6 @@
     "concat-map": ["concat-map@0.0.1", "", {}, "sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg=="],
 
     "console": ["console@workspace:apps/console"],
-
-    "console-cron": ["console-cron@workspace:apps/console-cron"],
 
     "convert-source-map": ["convert-source-map@2.0.0", "", {}, "sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg=="],
 
