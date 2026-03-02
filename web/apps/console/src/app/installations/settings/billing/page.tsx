@@ -1,10 +1,10 @@
-import Script from 'next/script'
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { BillingContent } from '@/components/billing-content'
+import { RazorpayProvider } from '@/components/razorpay-provider'
 import {
   getPlans,
-  getSubscriptionByInstallation,
+  getSubscriptionsByInstallation,
   getInvoicesByInstallation,
   getMemberRole,
   getInstallationById,
@@ -45,24 +45,23 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
   const isOwner = role === 'owner'
 
-  const [plans, subscription, invoices] = await Promise.all([
+  const [plans, subscriptions, invoices] = await Promise.all([
     getPlans(),
-    getSubscriptionByInstallation(installationId),
+    getSubscriptionsByInstallation(installationId),
     getInvoicesByInstallation(installationId),
   ])
 
   return (
-    <>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+    <RazorpayProvider>
       <BillingContent
         installationId={installationId}
         plans={plans}
-        subscription={subscription}
+        subscriptions={subscriptions}
         invoices={invoices}
         isOwner={isOwner}
         userEmail={session.user.email}
         userName={session.user.name}
       />
-    </>
+    </RazorpayProvider>
   )
 }

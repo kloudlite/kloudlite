@@ -18,28 +18,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    // Check for active subscription
-    const { getValidUserInstallations, getSubscriptionByInstallation } = await import(
-      '@/lib/console/storage'
-    )
-    const existingInstallations = await getValidUserInstallations(session.user.id)
-
-    let hasActiveSubscription = false
-    for (const inst of existingInstallations) {
-      const sub = await getSubscriptionByInstallation(inst.id)
-      if (sub && ['active', 'authenticated', 'created'].includes(sub.status)) {
-        hasActiveSubscription = true
-        break
-      }
-    }
-
-    if (!hasActiveSubscription) {
-      return NextResponse.json(
-        { error: 'Active subscription required to create installations' },
-        { status: 403 },
-      )
-    }
-
     // Cleanup any expired installations for this user before creating a new one
     const cleanedUp = await cleanupExpiredInstallations(session.user.id)
     if (cleanedUp > 0) {

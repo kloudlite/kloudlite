@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation'
 import {
   getValidUserInstallations,
-  getSubscriptionByInstallation,
+  getPendingInvoicesByInstallationIds,
+  getActiveSubscriptionsByInstallationIds,
   type Installation,
+  type Invoice,
+  type Subscription,
 } from '@/lib/console/storage'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsList } from '@/components/installations-list'
@@ -10,16 +13,6 @@ import { InstallationsHeader } from '@/components/installations-header'
 import { PendingInvitationsBanner } from '@/components/pending-invitations-banner'
 import { NewInstallationButton } from '@/components/new-installation-button'
 import { ScrollArea } from '@kloudlite/ui'
-
-async function hasAnyActiveSubscription(installations: Installation[]): Promise<boolean> {
-  for (const installation of installations) {
-    const sub = await getSubscriptionByInstallation(installation.id)
-    if (sub && ['active', 'authenticated', 'created'].includes(sub.status)) {
-      return true
-    }
-  }
-  return false
-}
 
 export default async function InstallationsPage() {
   const session = await getRegistrationSession()
@@ -31,14 +24,21 @@ export default async function InstallationsPage() {
 
   // Fetch user's valid (non-expired) installations from database
   let installations: Installation[] = []
+  let pendingInvoices: Record<string, Invoice> = {}
+  let activeSubscriptions: Record<string, Subscription> = {}
   try {
     installations = await getValidUserInstallations(session.user.id)
+    if (installations.length > 0) {
+      const ids = installations.map((i) => i.id)
+      ;[pendingInvoices, activeSubscriptions] = await Promise.all([
+        getPendingInvoicesByInstallationIds(ids),
+        getActiveSubscriptionsByInstallationIds(ids),
+      ])
+    }
   } catch (error) {
     console.error('Error fetching installations:', error)
     installations = []
   }
-
-  const hasSubscription = await hasAnyActiveSubscription(installations)
 
   return (
     <div className="bg-background h-screen flex flex-col">
@@ -55,11 +55,15 @@ export default async function InstallationsPage() {
                 Manage and monitor your cloud deployments
               </p>
             </div>
-            <NewInstallationButton hasActiveSubscription={hasSubscription} />
+            <NewInstallationButton />
           </div>
 
           {/* Installations List with Filter */}
-          <InstallationsList installations={installations} />
+          <InstallationsList
+            installations={installations}
+            pendingInvoices={pendingInvoices}
+            activeSubscriptions={activeSubscriptions}
+          />
         </main>
       </ScrollArea>
     </div>

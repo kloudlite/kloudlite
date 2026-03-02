@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireOwnerPermission } from '@/lib/console/authorization'
-import { getInstallationById, updateInstallation } from '@/lib/console/storage'
+import { getInstallationById, updateInstallation, getSubscriptionsByInstallation } from '@/lib/console/storage'
 import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
 
 const STALE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
@@ -14,6 +14,16 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const installation = await getInstallationById(id)
     if (!installation) {
       return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+    }
+
+    // Require at least one active subscription for this installation
+    const subs = await getSubscriptionsByInstallation(id)
+    const hasActive = subs.some((s) => ['active', 'authenticated', 'created'].includes(s.status))
+    if (!hasActive) {
+      return NextResponse.json(
+        { error: 'Active subscription required to deploy Kloudlite Cloud' },
+        { status: 403 },
+      )
     }
 
     if (!installation.subdomain) {

@@ -3,22 +3,22 @@
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { PlanCards } from '@/components/billing/plan-cards'
+import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { InvoiceHistory } from '@/components/billing/invoice-history'
-import { createNewSubscription, cancelExistingSubscription } from '@/app/actions/billing'
+import { AlertTriangle } from 'lucide-react'
+import {
+  createInstallationOrder,
+  verifyPaymentAndActivate,
+  cancelExistingSubscription,
+} from '@/app/actions/billing'
+import { useRazorpay } from '@/components/razorpay-provider'
 import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
-
-declare global {
-  interface Window {
-    Razorpay: new (options: Record<string, unknown>) => { open: () => void }
-  }
-}
 
 interface BillingContentProps {
   installationId: string
   plans: Plan[]
-  subscription: Subscription | null
+  subscriptions: Subscription[]
   invoices: Invoice[]
   isOwner: boolean
   userEmail: string
@@ -28,24 +28,82 @@ interface BillingContentProps {
 export function BillingContent({
   installationId,
   plans,
-  subscription,
+  subscriptions,
   invoices,
   isOwner,
   userEmail,
   userName,
 }: BillingContentProps) {
   const router = useRouter()
+  const { openCheckout } = useRazorpay()
+
+  const activeSubs = subscriptions.filter(
+    (s) => !['cancelled', 'expired'].includes(s.status),
+  )
+  const pastSubs = subscriptions.filter((s) =>
+    ['cancelled', 'expired'].includes(s.status),
+  )
+  const hasActiveSubs = activeSubs.length > 0
+  const pendingInvoice = invoices.find((i) => i.status === 'issued')
+
+  const handlePayNow = useCallback(() => {
+    if (!pendingInvoice?.razorpayInvoiceId) return
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      order_id: pendingInvoice.razorpayInvoiceId,
+      amount: pendingInvoice.amount,
+      currency: pendingInvoice.currency,
+      name: 'Kloudlite',
+      description: 'Subscription Renewal',
+      prefill: {
+        email: userEmail,
+        name: userName,
+      },
+      theme: {
+        color: '#3B82F6',
+      },
+      handler: async (response: Record<string, string>) => {
+        try {
+          await verifyPaymentAndActivate(
+            installationId,
+            response.razorpay_order_id,
+            response.razorpay_payment_id,
+            response.razorpay_signature,
+          )
+          toast.success('Payment successful! Subscription renewed.')
+          router.refresh()
+        } catch {
+          toast.error('Payment verification failed. Please contact support.')
+        }
+      },
+      modal: {
+        ondismiss: () => {
+          toast.info('Payment cancelled. You can try again anytime.')
+        },
+      },
+    }
+
+    openCheckout(options)
+  }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout])
 
   const handleSubscribe = useCallback(
-    async (planId: string) => {
+    async (
+      allocations: { planId: string; quantity: number }[],
+      billingPeriod: 'monthly' | 'annual',
+    ) => {
       try {
-        const result = await createNewSubscription(installationId, planId, 1)
+        const order = await createInstallationOrder(installationId, allocations, billingPeriod)
 
+        const totalUsers = allocations.reduce((sum, a) => sum + a.quantity, 0)
+        const periodLabel = billingPeriod === 'annual' ? 'Annual' : 'Monthly'
         const options = {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          subscription_id: result.razorpaySubscriptionId,
+          order_id: order.razorpayOrderId,
+          amount: order.amount,
+          currency: order.currency,
           name: 'Kloudlite',
-          description: 'Cloud Workspace Subscription',
+          description: `${totalUsers} ${totalUsers === 1 ? 'user' : 'users'} — ${periodLabel} — Kloudlite Cloud`,
           prefill: {
             email: userEmail,
             name: userName,
@@ -53,9 +111,19 @@ export function BillingContent({
           theme: {
             color: '#3B82F6',
           },
-          handler: () => {
-            toast.success('Subscription activated! Payment processing...')
-            router.refresh()
+          handler: async (response: Record<string, string>) => {
+            try {
+              await verifyPaymentAndActivate(
+                installationId,
+                response.razorpay_order_id,
+                response.razorpay_payment_id,
+                response.razorpay_signature,
+              )
+              toast.success('Payment successful!')
+              router.refresh()
+            } catch {
+              toast.error('Payment verification failed. Please contact support.')
+            }
           },
           modal: {
             ondismiss: () => {
@@ -64,13 +132,12 @@ export function BillingContent({
           },
         }
 
-        const rzp = new window.Razorpay(options)
-        rzp.open()
+        openCheckout(options)
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to create subscription')
+        toast.error(error instanceof Error ? error.message : 'Failed to create order')
       }
     },
-    [installationId, userEmail, userName, router],
+    [installationId, userEmail, userName, router, openCheckout],
   )
 
   const handleCancel = useCallback(async () => {
@@ -78,45 +145,80 @@ export function BillingContent({
     router.refresh()
   }, [installationId, router])
 
-  const activePlan = subscription ? plans.find((p) => p.id === subscription.planId) : undefined
-
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold">Billing & Plans</h2>
+        <h2 className="text-xl font-semibold">Billing & Compute</h2>
         <p className="text-muted-foreground mt-1 text-base">
-          Manage your subscription and payment methods
+          Manage your subscriptions and payment methods
         </p>
       </div>
 
-      {/* Active Subscription */}
-      {subscription && (
-        <SubscriptionStatus
-          subscription={subscription}
-          plan={activePlan}
-          isOwner={isOwner}
-          onCancel={handleCancel}
-        />
+      {/* Payment Due Banner */}
+      {pendingInvoice && isOwner && (
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Payment Due
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                {(pendingInvoice.amount / 100).toLocaleString('en-IN', {
+                  style: 'currency',
+                  currency: pendingInvoice.currency,
+                })}{' '}
+                due for your subscription renewal
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handlePayNow}
+            className="shrink-0 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 transition-colors"
+          >
+            Pay Now
+          </button>
+        </div>
       )}
 
-      {/* Plan Selection */}
-      <div>
-        <h3 className="text-base font-medium mb-4">
-          {subscription && !['cancelled', 'expired'].includes(subscription.status)
-            ? 'Available Plans'
-            : 'Choose a Plan'}
-        </h3>
-        <PlanCards
-          plans={plans}
-          subscription={subscription}
-          installationId={installationId}
-          isOwner={isOwner}
-          onSubscribe={handleSubscribe}
-        />
-        <p className="text-muted-foreground text-xs mt-3 text-center">
-          All plans include a ${plans[0] ? plans[0].baseFee / 100 : 29}/month base fee for the control plane
-        </p>
-      </div>
+      {/* Active Subscriptions */}
+      {hasActiveSubs &&
+        activeSubs.map((sub) => {
+          const plan = plans.find((p) => p.id === sub.planId)
+          return (
+            <SubscriptionStatus
+              key={sub.id}
+              subscription={sub}
+              plan={plan}
+              isOwner={isOwner}
+              onCancel={handleCancel}
+            />
+          )
+        })}
+
+      {/* Subscribe / Add Compute */}
+      {isOwner && !hasActiveSubs && (
+        <SubscriptionConfigurator plans={plans} onSubscribe={handleSubscribe} />
+      )}
+
+      {/* Past Subscriptions */}
+      {pastSubs.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground">Past Subscriptions</h3>
+          {pastSubs.map((sub) => {
+            const plan = plans.find((p) => p.id === sub.planId)
+            return (
+              <SubscriptionStatus
+                key={sub.id}
+                subscription={sub}
+                plan={plan}
+                isOwner={isOwner}
+                onCancel={handleCancel}
+              />
+            )
+          })}
+        </div>
+      )}
 
       {/* Invoice History */}
       <InvoiceHistory invoices={invoices} />

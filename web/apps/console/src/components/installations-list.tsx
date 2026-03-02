@@ -12,13 +12,26 @@ import {
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
-import type { Installation } from '@/lib/console/storage'
+import type { Installation, Invoice, Subscription } from '@/lib/console/storage'
 
 interface InstallationsListProps {
   installations: Installation[]
+  pendingInvoices: Record<string, Invoice>
+  activeSubscriptions?: Record<string, Subscription>
 }
 
-export function InstallationsList({ installations }: InstallationsListProps) {
+function isExpiringSoon(sub: Subscription | undefined): boolean {
+  if (!sub?.currentEnd || sub.status !== 'active') return false
+  const msUntilEnd = new Date(sub.currentEnd).getTime() - Date.now()
+  const daysUntilEnd = Math.ceil(msUntilEnd / (24 * 60 * 60 * 1000))
+  return daysUntilEnd <= 7 && daysUntilEnd > 0
+}
+
+export function InstallationsList({
+  installations,
+  pendingInvoices,
+  activeSubscriptions = {},
+}: InstallationsListProps) {
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'installed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -358,6 +371,16 @@ export function InstallationsList({ installations }: InstallationsListProps) {
                             {isActiveJob && <Loader2 className="h-3 w-3 animate-spin" />}
                             {status}
                           </span>
+                          {isExpiringSoon(activeSubscriptions[installation.id]) && (
+                            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md whitespace-nowrap bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                              Expiring Soon
+                            </span>
+                          )}
+                          {pendingInvoices[installation.id] && (
+                            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md whitespace-nowrap bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                              Payment Due
+                            </span>
+                          )}
                           {stepInfo && (
                             <span className="text-[11px] text-muted-foreground whitespace-nowrap">
                               {stepInfo}

@@ -1,9 +1,21 @@
-'use client'
-
-import { InstallationForm } from '@/components/installation-form'
+import { getPlans, getInstallationById } from '@/lib/console/storage'
+import { KlCloudInstallationForm } from '@/components/kl-cloud-installation-form'
+import { RazorpayProvider } from '@/components/razorpay-provider'
 import { CheckCircle2 } from 'lucide-react'
 
-export default function NewKlCloudPage() {
+interface NewKlCloudPageProps {
+  searchParams: Promise<{ installation?: string }>
+}
+
+export default async function NewKlCloudPage({ searchParams }: NewKlCloudPageProps) {
+  const params = await searchParams
+  const plans = await getPlans()
+
+  // If continuing an existing installation, fetch it
+  const existingInstallation = params.installation
+    ? await getInstallationById(params.installation)
+    : null
+
   return (
     <div className="lg:flex lg:gap-12">
       {/* Left Column - Information */}
@@ -31,8 +43,12 @@ export default function NewKlCloudPage() {
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">2</div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">Create installation</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Set up your installation details</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {existingInstallation ? 'Subscribe & pay' : 'Configure installation'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {existingInstallation ? 'Choose compute sizes & payment' : 'Name, domain, plan & payment'}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -71,22 +87,21 @@ export default function NewKlCloudPage() {
         {/* Header */}
         <div>
           <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-            Create Installation
+            {existingInstallation ? 'Complete Subscription' : 'Create Installation'}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Set up your Kloudlite Cloud installation
+            {existingInstallation
+              ? `Choose compute sizes and subscribe for "${existingInstallation.name}"`
+              : 'Set up your Kloudlite Cloud installation'}
           </p>
         </div>
 
-        {/* Form Card */}
-        <div className="border border-foreground/10 rounded-lg bg-background">
-          <div className="p-8">
-            <InstallationForm
-              hostingType="kloudlite"
-              redirectTo="/installations/new/kloudlite-cloud"
-            />
-          </div>
-        </div>
+        <RazorpayProvider>
+          <KlCloudInstallationForm
+            plans={plans}
+            existingInstallationId={existingInstallation?.id}
+          />
+        </RazorpayProvider>
 
         {/* Help text */}
         <div className="flex items-start gap-3 text-sm text-muted-foreground">

@@ -33,7 +33,7 @@ function addSecurityHeaders(response: NextResponse, req: NextRequest): NextRespo
 
   response.headers.set(
     'Content-Security-Policy',
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com; connect-src ${connectSrc} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com;`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com https://checkout.razorpay.com; connect-src ${connectSrc} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com https://lumberjack-cx.razorpay.com https://api.razorpay.com; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com;`,
   )
 
   return response

@@ -19,6 +19,7 @@ export interface Plan {
   storage: string
   autoSuspend: string
   description: string | null
+  annualDiscountPct: number
   createdAt: string
 }
 
@@ -30,6 +31,7 @@ export interface Subscription {
   razorpayCustomerId: string | null
   status: 'created' | 'authenticated' | 'active' | 'paused' | 'cancelled' | 'expired'
   quantity: number
+  billingPeriod: 'monthly' | 'annual'
   currentStart: string | null
   currentEnd: string | null
   createdAt: string

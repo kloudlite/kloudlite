@@ -1,0 +1,205 @@
+name: Build and Deploy Console Cron
+
+on:
+  push:
+    branches:
+      - master
+      - development
+    paths:
+      - 'web/apps/console-cron/**'
+      - 'web/apps/console/src/lib/console/migrations/**'
+      - '.github/workflows/deploy-console-cron.yml'
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Image tag to deploy (e.g., sha-abc123, dev)'
+        required: false
+        type: string
+        default: 'dev'
+      run-migrations:
+        description: 'Run Supabase migrations'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  RESOURCE_GROUP: rg-kloudlite
+
+jobs:
+  build-and-push:
+    name: Build console-cron
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.tag.outputs.image-tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.image-tag }}" ]; then
+            echo "image-tag=${{ github.event.inputs.image-tag }}" >> $GITHUB_OUTPUT
+          else
+            SHORT_SHA="${{ github.sha }}"
+            SHORT_SHA="${SHORT_SHA:0:7}"
+            echo "image-tag=sha-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/console-cron
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web/apps/console-cron
+          file: ./web/apps/console-cron/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=console-cron
+          cache-to: type=gha,mode=max,scope=console-cron,ignore-error=true
+
+  run-migrations:
+    name: Run Supabase Migrations
+    runs-on: ubuntu-latest
+    environment: production
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.run-migrations == 'true') ||
+      (github.event_name == 'push')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changed migrations
+        id: changes
+        run: |
+          MIGRATION_DIR="web/apps/console/src/lib/console/migrations"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual trigger: run all migrations (they use IF NOT EXISTS)
+            echo "run=true" >> $GITHUB_OUTPUT
+            ls -1 "$MIGRATION_DIR"/*.sql | sort > /tmp/migrations.txt
+          else
+            # Push trigger: check which migration files changed
+            CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- "$MIGRATION_DIR/*.sql" || true)
+            if [ -z "$CHANGED" ]; then
+              echo "run=false" >> $GITHUB_OUTPUT
+              echo "No migration files changed"
+            else
+              echo "run=true" >> $GITHUB_OUTPUT
+              echo "$CHANGED" | sort > /tmp/migrations.txt
+              echo "Changed migrations:"
+              cat /tmp/migrations.txt
+            fi
+          fi
+
+      - name: Run migrations via psql
+        if: steps.changes.outputs.run == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "SUPABASE_DATABASE_URL secret is not set, skipping migrations"
+            echo "To enable: add SUPABASE_DATABASE_URL to the production environment secrets"
+            echo "Format: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
+            exit 0
+          fi
+
+          echo "Running Supabase migrations..."
+
+          while IFS= read -r file; do
+            echo ""
+            echo "--- Applying: $(basename "$file") ---"
+            psql "$DATABASE_URL" -f "$file" 2>&1
+            if [ $? -ne 0 ]; then
+              echo "Migration failed: $file"
+              exit 1
+            fi
+            echo "Applied: $(basename "$file")"
+          done < /tmp/migrations.txt
+
+          echo ""
+          echo "All migrations applied successfully"
+
+  deploy:
+    name: Deploy console-cron
+    needs: [build-and-push, run-migrations]
+    if: |
+      always() &&
+      needs.build-and-push.result == 'success' &&
+      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Container App
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/console-cron:${{ needs.build-and-push.outputs.image-tag }}"
+
+          echo "Deploying console-cron..."
+          echo "Image: $IMAGE"
+
+          az containerapp update \
+            --name ca-kloudlite-console-cron \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "$IMAGE" \
+            --set-env-vars \
+              "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+              "SUPABASE_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+              "RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}" \
+              "RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}" \
+              "BILLING_GRACE_DAYS=7" \
+            --output none
+
+          echo "Deployed successfully"
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary: console-cron" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Container App** | ca-kloudlite-console-cron |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Resource Group** | ${{ env.RESOURCE_GROUP }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Image Tag** | ${{ needs.build-and-push.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

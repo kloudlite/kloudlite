@@ -18,6 +18,7 @@ function mapToPlan(row: PlanRow): Plan {
     storage: row.storage,
     autoSuspend: row.auto_suspend,
     description: row.description,
+    annualDiscountPct: row.annual_discount_pct ?? 20,
     createdAt: row.created_at,
   }
 }
@@ -31,6 +32,7 @@ function mapToSubscription(row: SubscriptionRow): Subscription {
     razorpayCustomerId: row.razorpay_customer_id,
     status: row.status,
     quantity: row.quantity,
+    billingPeriod: row.billing_period ?? 'monthly',
     currentStart: row.current_start,
     currentEnd: row.current_end,
     createdAt: row.created_at,
@@ -61,7 +63,6 @@ export async function getPlans(): Promise<Plan[]> {
     .select('*')
     .order('tier', { ascending: true })
   if (error) {
-    console.error('Error fetching plans:', error)
     return []
   }
   return (data as PlanRow[]).map(mapToPlan)
@@ -73,11 +74,7 @@ export async function getPlanById(planId: string): Promise<Plan | null> {
     .select('*')
     .eq('id', planId)
     .single()
-  if (error) {
-    if (error.code === 'PGRST116') return null
-    console.error('Error fetching plan:', error)
-    return null
-  }
+  if (error) return null
   return mapToPlan(data as PlanRow)
 }
 
@@ -93,17 +90,18 @@ export async function updatePlanRazorpayId(planId: string, razorpayPlanId: strin
 }
 
 export async function getSubscriptionByInstallation(installationId: string): Promise<Subscription | null> {
+  const subs = await getSubscriptionsByInstallation(installationId)
+  return subs[0] || null
+}
+
+export async function getSubscriptionsByInstallation(installationId: string): Promise<Subscription[]> {
   const { data, error } = await supabase
     .from('subscriptions')
     .select('*')
     .eq('installation_id', installationId)
-    .single()
-  if (error) {
-    if (error.code === 'PGRST116') return null
-    console.error('Error fetching subscription:', error)
-    return null
-  }
-  return mapToSubscription(data as SubscriptionRow)
+    .order('created_at', { ascending: false })
+  if (error) return []
+  return (data as SubscriptionRow[]).map(mapToSubscription)
 }
 
 export async function getSubscriptionByRazorpayId(razorpaySubscriptionId: string): Promise<Subscription | null> {
@@ -112,20 +110,17 @@ export async function getSubscriptionByRazorpayId(razorpaySubscriptionId: string
     .select('*')
     .eq('razorpay_subscription_id', razorpaySubscriptionId)
     .single()
-  if (error) {
-    if (error.code === 'PGRST116') return null
-    console.error('Error fetching subscription by razorpay ID:', error)
-    return null
-  }
+  if (error) return null
   return mapToSubscription(data as SubscriptionRow)
 }
 
 export async function createSubscription(data: {
   installationId: string
   planId: string
-  razorpaySubscriptionId: string
-  razorpayCustomerId: string
+  razorpaySubscriptionId: string | null
+  razorpayCustomerId: string | null
   quantity: number
+  billingPeriod?: 'monthly' | 'annual'
 }): Promise<Subscription> {
   type Insert = Database['public']['Tables']['subscriptions']['Insert']
   const insertData: Insert = {
@@ -135,6 +130,7 @@ export async function createSubscription(data: {
     razorpay_customer_id: data.razorpayCustomerId,
     quantity: data.quantity,
     status: 'created',
+    billing_period: data.billingPeriod ?? 'monthly',
   }
   const result = await supabase
     .from('subscriptions')
@@ -168,17 +164,211 @@ export async function updateSubscriptionStatus(
   }
 }
 
+export async function activateSubscriptionsByInstallation(
+  installationId: string,
+  periodStart: string,
+  periodEnd: string,
+): Promise<void> {
+  type Update = Database['public']['Tables']['subscriptions']['Update']
+  const updateData: Update = {
+    status: 'active',
+    current_start: periodStart,
+    current_end: periodEnd,
+  }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('installation_id', installationId)
+    .eq('status', 'created')
+  if (error) {
+    throw new Error(`Failed to activate subscriptions: ${error.message}`)
+  }
+}
+
+export async function cancelSubscriptionsByInstallation(
+  installationId: string,
+): Promise<void> {
+  type Update = Database['public']['Tables']['subscriptions']['Update']
+  const updateData: Update = { status: 'cancelled' }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('installation_id', installationId)
+    .in('status', ['created', 'authenticated', 'active', 'paused'])
+  if (error) {
+    throw new Error(`Failed to cancel subscriptions: ${error.message}`)
+  }
+}
+
+export async function getActiveSubscriptionsByInstallationIds(
+  installationIds: string[],
+): Promise<Record<string, Subscription>> {
+  if (installationIds.length === 0) return {}
+
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .in('installation_id', installationIds)
+    .eq('status', 'active')
+
+  if (error) return {}
+
+  const result: Record<string, Subscription> = {}
+  for (const row of data as SubscriptionRow[]) {
+    // Keep only the first active subscription per installation
+    if (!result[row.installation_id]) {
+      result[row.installation_id] = mapToSubscription(row)
+    }
+  }
+  return result
+}
+
 export async function getInvoicesByInstallation(installationId: string): Promise<Invoice[]> {
   const { data, error } = await supabase
     .from('invoices')
     .select('*')
     .eq('installation_id', installationId)
     .order('created_at', { ascending: false })
-  if (error) {
-    console.error('Error fetching invoices:', error)
-    return []
-  }
+  if (error) return []
   return (data as InvoiceRow[]).map(mapToInvoice)
+}
+
+export async function getPendingInvoicesByInstallationIds(
+  installationIds: string[],
+): Promise<Record<string, Invoice>> {
+  if (installationIds.length === 0) return {}
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .in('installation_id', installationIds)
+    .eq('status', 'issued')
+
+  if (error) return {}
+
+  const result: Record<string, Invoice> = {}
+  for (const row of data as InvoiceRow[]) {
+    // Keep only the first (most recent) pending invoice per installation
+    if (!result[row.installation_id]) {
+      result[row.installation_id] = mapToInvoice(row)
+    }
+  }
+  return result
+}
+
+export async function getPendingInvoiceByInstallation(
+  installationId: string,
+): Promise<Invoice | null> {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('installation_id', installationId)
+    .eq('status', 'issued')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return mapToInvoice(data as InvoiceRow)
+}
+
+export async function extendSubscriptionPeriod(
+  installationId: string,
+  newStart: string,
+  newEnd: string,
+): Promise<void> {
+  type Update = Database['public']['Tables']['subscriptions']['Update']
+  const updateData: Update = {
+    current_start: newStart,
+    current_end: newEnd,
+  }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('installation_id', installationId)
+    .eq('status', 'active')
+  if (error) {
+    throw new Error(`Failed to extend subscription period: ${error.message}`)
+  }
+}
+
+export async function updateInvoiceStatus(
+  razorpayInvoiceId: string,
+  status: Invoice['status'],
+  razorpayPaymentId?: string,
+  paidAt?: string,
+): Promise<void> {
+  type Update = Database['public']['Tables']['invoices']['Update']
+  const updateData: Update = { status }
+  if (razorpayPaymentId) updateData.razorpay_payment_id = razorpayPaymentId
+  if (paidAt) updateData.paid_at = paidAt
+  const { error } = await supabase
+    .from('invoices')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('razorpay_invoice_id', razorpayInvoiceId)
+  if (error) {
+    throw new Error(`Failed to update invoice status: ${error.message}`)
+  }
+}
+
+// --- Renewal Job Scheduling ---
+
+export async function scheduleRenewalJobs(
+  installationId: string,
+  currentEnd: string,
+  billingPeriod: 'monthly' | 'annual' = 'monthly',
+  graceDays = 7,
+): Promise<void> {
+  const endDate = new Date(currentEnd)
+
+  // Annual subs: send renewal notice 7 days before end; Monthly: 24h before
+  const renewalLeadMs =
+    billingPeriod === 'annual' ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000
+  const renewalAt = new Date(endDate.getTime() - renewalLeadMs).toISOString()
+
+  // Schedule expiry after grace period
+  const expireAt = new Date(
+    endDate.getTime() + graceDays * 24 * 60 * 60 * 1000,
+  ).toISOString()
+
+  const { error } = await supabase
+    .from('renewal_jobs')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .insert([
+      {
+        installation_id: installationId,
+        job_type: 'renewal',
+        scheduled_at: renewalAt,
+        status: 'pending',
+      },
+      {
+        installation_id: installationId,
+        job_type: 'expire',
+        scheduled_at: expireAt,
+        status: 'pending',
+      },
+    ])
+
+  if (error) {
+    throw new Error(`Failed to schedule renewal jobs: ${error.message}`)
+  }
+}
+
+export async function cancelRenewalJobs(installationId: string): Promise<void> {
+  const { error } = await supabase
+    .from('renewal_jobs')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update({ status: 'cancelled' })
+    .eq('installation_id', installationId)
+    .eq('status', 'pending')
+
+  if (error) {
+    throw new Error(`Failed to cancel renewal jobs: ${error.message}`)
+  }
 }
 
 export async function upsertInvoice(data: {

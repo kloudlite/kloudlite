@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
   name TEXT NOT NULL,
   amount_per_user INTEGER NOT NULL,
   base_fee INTEGER NOT NULL DEFAULT 2900,
-  currency TEXT NOT NULL DEFAULT 'USD',
+  currency TEXT NOT NULL DEFAULT 'INR',
   monthly_hours INTEGER NOT NULL DEFAULT 160,
   overage_rate INTEGER NOT NULL DEFAULT 0,
   cpu INTEGER NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   current_end TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(installation_id)
+  UNIQUE(installation_id, plan_id)
 );
 
 -- Indexes for subscriptions
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   razorpay_invoice_id TEXT UNIQUE,
   razorpay_payment_id TEXT,
   amount INTEGER NOT NULL,
-  currency TEXT NOT NULL DEFAULT 'USD',
+  currency TEXT NOT NULL DEFAULT 'INR',
   status TEXT NOT NULL DEFAULT 'issued' CHECK (status IN ('issued', 'paid', 'expired', 'cancelled')),
   billing_start TIMESTAMPTZ,
   billing_end TIMESTAMPTZ,
@@ -96,9 +96,9 @@ CREATE TRIGGER update_subscriptions_updated_at
 -- ============================================================================
 
 INSERT INTO subscription_plans (tier, name, amount_per_user, base_fee, currency, monthly_hours, overage_rate, cpu, ram, storage, auto_suspend, description) VALUES
-  (1, 'Tier 1', 2900, 2900, 'USD', 160, 18, 8, '16 GB', '100 GB', '15 min', 'Great for individual developers and small teams'),
-  (2, 'Tier 2', 4900, 2900, 'USD', 160, 30, 12, '32 GB', '200 GB', '30 min', 'Perfect for growing teams with heavier workloads'),
-  (3, 'Tier 3', 8900, 2900, 'USD', 160, 55, 16, '64 GB', '500 GB', '1 hr', 'For power users and large teams needing maximum resources');
+  (1, 'Small', 2900, 2900, 'INR', 160, 18, 8, '16 GB', '100 GB', '15 min', '8 vCPUs, 16 GB RAM — suitable for lightweight development'),
+  (2, 'Medium', 4900, 2900, 'INR', 160, 30, 12, '32 GB', '200 GB', '30 min', '12 vCPUs, 32 GB RAM — balanced for most development workflows'),
+  (3, 'Large', 8900, 2900, 'INR', 160, 55, 16, '64 GB', '500 GB', '1 hr', '16 vCPUs, 64 GB RAM — for resource-intensive workloads');
 
 -- ============================================================================
 -- MIGRATION COMPLETE
