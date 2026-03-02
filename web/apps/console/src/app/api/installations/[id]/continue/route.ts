@@ -4,15 +4,22 @@ import { getInstallationById, getSubscriptionsByInstallation } from '@/lib/conso
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 
+function getPublicOrigin(request: Request): string {
+  const proto = request.headers.get('x-forwarded-proto') || 'https'
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
+  return `${proto}://${host}`
+}
+
 /**
  * Continue API route - loads installation context and redirects to the appropriate step
  */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const origin = getPublicOrigin(request)
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', origin))
   }
 
   // Fetch the installation
@@ -20,12 +27,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   if (!installation) {
     console.error('Installation not found:', id)
-    return NextResponse.redirect(new URL('/installations', request.url))
+    return NextResponse.redirect(new URL('/installations', origin))
   }
 
   // Verify user owns this installation
   if (installation.userId !== session.user.id) {
-    return NextResponse.redirect(new URL('/installations', request.url))
+    return NextResponse.redirect(new URL('/installations', origin))
   }
 
   // Update session cookie with this installation's key
@@ -100,5 +107,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
   }
 
-  return NextResponse.redirect(new URL(redirectPath, request.url))
+  return NextResponse.redirect(new URL(redirectPath, origin))
 }
