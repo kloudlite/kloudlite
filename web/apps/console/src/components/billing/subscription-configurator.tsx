@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Button, Badge, Card, CardContent, Input } from '@kloudlite/ui'
+import { Button, Input } from '@kloudlite/ui'
 import { Loader2, Minus, Plus } from 'lucide-react'
 import { cn } from '@kloudlite/lib'
 import { previewModification } from '@/app/actions/billing'
@@ -137,16 +137,16 @@ export function SubscriptionConfigurator({
   const periodLabel = isAnnual ? '/yr' : '/mo'
 
   return (
-    <div className="space-y-8">
-      {/* Billing Period Toggle */}
+    <div>
+      {/* Billing Period Toggle — left-aligned */}
       {billingPeriodLocked ? (
-        <div className="flex items-center justify-center">
-          <Badge variant="outline" className="text-sm px-3 py-1">
+        <div className="pb-4">
+          <span className="text-sm font-medium text-muted-foreground">
             {billingPeriodLocked === 'annual' ? 'Annual' : 'Monthly'} billing
-          </Badge>
+          </span>
         </div>
       ) : (
-        <div className="flex items-center justify-center">
+        <div className="pb-4">
           <div className="inline-flex items-center rounded-lg border border-foreground/10 bg-muted/30 p-1">
             <button
               onClick={() => setBillingPeriod('monthly')}
@@ -177,130 +177,119 @@ export function SubscriptionConfigurator({
         </div>
       )}
 
-      {/* Base Fee Banner */}
-      <div className="border border-foreground/10 rounded-lg p-5 bg-muted/30">
+      {/* Control Plane — flat row */}
+      <div className="border-t border-foreground/10 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="text-xs font-medium">
-                Base Fee
-              </Badge>
-            </div>
-            <h3 className="font-semibold text-foreground">Control Plane</h3>
+            <h3 className="font-semibold text-sm text-foreground">Control Plane</h3>
             <p className="text-sm text-muted-foreground">Dashboard, user management, billing</p>
           </div>
           <div className="text-right">
             {isAnnual ? (
-              <>
-                <span className="text-sm text-muted-foreground line-through mr-2">
+              <span className="text-sm font-semibold tabular-nums text-foreground">
+                <span className="text-muted-foreground line-through font-normal mr-1.5">
                   ₹{(baseFee * 12).toFixed(0)}
                 </span>
-                <span className="text-3xl font-bold text-foreground">
-                  ₹{(baseFee * 12 * (1 - discountPct / 100)).toFixed(0)}
-                </span>
-                <span className="text-muted-foreground text-sm">/yr</span>
-              </>
+                ₹{(baseFee * 12 * (1 - discountPct / 100)).toFixed(0)}
+                <span className="text-muted-foreground font-normal">/yr</span>
+              </span>
             ) : (
-              <>
-                <span className="text-3xl font-bold text-foreground">₹{baseFee}</span>
-                <span className="text-muted-foreground text-sm">/mo</span>
-              </>
+              <span className="text-sm font-semibold tabular-nums text-foreground">
+                ₹{baseFee}
+                <span className="text-muted-foreground font-normal">/mo</span>
+              </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Compute Size Cards with Quantity */}
-      <div>
-        <h3 className="text-sm font-medium text-foreground mb-3">Choose compute size per user</h3>
-        <div className="space-y-3">
+      {/* Compute Sizes — bare rows */}
+      <div className="border-t border-foreground/10 pt-4">
+        <h3 className="text-sm font-medium text-foreground pb-2">Compute size per user</h3>
+        <div className="divide-y divide-foreground/5">
           {plans.map((plan) => {
             const qty = quantities[plan.id] || 0
             const unitPrice = plan.amountPerUser / 100
             return (
-              <Card key={plan.id} className="border-foreground/10">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-foreground text-sm">{plan.name}</h4>
-                        <span className="text-xs text-muted-foreground font-mono">
-                          {plan.cpu} vCPU &middot; {plan.ram}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                        <span>{plan.storage} storage</span>
-                        <span>{plan.monthlyHours} hrs/mo</span>
-                        <span>{plan.autoSuspend} auto-suspend</span>
-                        <span>Overage: ₹{(plan.overageRate / 100).toFixed(2)}/hr</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 shrink-0">
-                      <div className="text-right">
-                        {isAnnual ? (
-                          <>
-                            <span className="text-xs text-muted-foreground line-through mr-1">
-                              ₹{(unitPrice * 12).toFixed(0)}
-                            </span>
-                            <span className="text-lg font-bold text-foreground">
-                              ₹{(unitPrice * 12 * (1 - discountPct / 100)).toFixed(0)}
-                            </span>
-                            <span className="text-muted-foreground text-xs">/user/yr</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-lg font-bold text-foreground">₹{unitPrice}</span>
-                            <span className="text-muted-foreground text-xs">/user/mo</span>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          aria-label={`Decrease users for ${plan.name}`}
-                          disabled={qty <= 0 || loading}
-                          onClick={() => setQuantity(plan.id, qty - 1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          value={qty}
-                          onChange={(e) => setQuantity(plan.id, parseInt(e.target.value) || 0)}
-                          className="h-8 w-14 text-center font-mono text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          disabled={loading}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          aria-label={`Increase users for ${plan.name}`}
-                          disabled={qty >= 100 || loading}
-                          onClick={() => setQuantity(plan.id, qty + 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
+              <div key={plan.id} className="flex items-center justify-between gap-4 py-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-foreground text-sm">{plan.name}</h4>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {plan.cpu} vCPU &middot; {plan.ram}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                    <span>{plan.storage} storage</span>
+                    <span>{plan.monthlyHours} hrs/mo</span>
+                    <span>{plan.autoSuspend} auto-suspend</span>
+                    <span>Overage: ₹{(plan.overageRate / 100).toFixed(2)}/hr</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="text-right tabular-nums">
+                    {isAnnual ? (
+                      <>
+                        <span className="text-xs text-muted-foreground line-through mr-1">
+                          ₹{(unitPrice * 12).toFixed(0)}
+                        </span>
+                        <span className="text-sm font-semibold text-foreground">
+                          ₹{(unitPrice * 12 * (1 - discountPct / 100)).toFixed(0)}
+                        </span>
+                        <span className="text-muted-foreground text-xs">/user/yr</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm font-semibold text-foreground">₹{unitPrice}</span>
+                        <span className="text-muted-foreground text-xs">/user/mo</span>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={`Decrease users for ${plan.name}`}
+                      disabled={qty <= 0 || loading}
+                      onClick={() => setQuantity(plan.id, qty - 1)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={qty}
+                      onChange={(e) => setQuantity(plan.id, parseInt(e.target.value) || 0)}
+                      className="h-8 w-14 text-center font-mono text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      disabled={loading}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={`Increase users for ${plan.name}`}
+                      disabled={qty >= 100 || loading}
+                      onClick={() => setQuantity(plan.id, qty + 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )
           })}
         </div>
       </div>
 
-      {/* Cost Summary */}
-      <div className="border border-foreground/10 rounded-lg bg-background">
-        <div className="p-5 space-y-3">
+      {/* Summary — subtle bg, no border */}
+      <div className="border-t border-foreground/10 pt-4">
+        <div className="rounded-lg bg-muted/30 p-4 space-y-3">
           <h3 className="text-sm font-medium text-foreground">
             {isAnnual ? 'Annual' : 'Monthly'} cost breakdown
           </h3>
@@ -308,7 +297,7 @@ export function SubscriptionConfigurator({
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Control Plane (base fee)</span>
-              <span className="text-foreground">
+              <span className="text-foreground tabular-nums">
                 ₹{isAnnual ? (baseFee * 12 * (1 - discountPct / 100)).toFixed(2) : baseFee.toFixed(2)}
               </span>
             </div>
@@ -325,14 +314,14 @@ export function SubscriptionConfigurator({
                       : plan.amountPerUser / 100}
                     {periodLabel}
                   </span>
-                  <span className="text-foreground">₹{displayLine.toFixed(2)}</span>
+                  <span className="text-foreground tabular-nums">₹{displayLine.toFixed(2)}</span>
                 </div>
               )
             })}
             {totalUsers === 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground italic">No users selected</span>
-                <span className="text-foreground">₹0.00</span>
+                <span className="text-foreground tabular-nums">₹0.00</span>
               </div>
             )}
           </div>
@@ -342,7 +331,7 @@ export function SubscriptionConfigurator({
               <span className="text-green-700 dark:text-green-400">
                 You save vs monthly
               </span>
-              <span className="text-green-700 dark:text-green-400 font-medium">
+              <span className="text-green-700 dark:text-green-400 font-medium tabular-nums">
                 -₹{(monthlyTotal * 12 - annualTotal).toFixed(2)}
               </span>
             </div>
@@ -353,64 +342,67 @@ export function SubscriptionConfigurator({
               Total {isAnnual ? 'per year' : 'per month'} ({totalUsers}{' '}
               {totalUsers === 1 ? 'user' : 'users'})
             </span>
-            <span className="text-xl font-bold text-foreground">₹{displayTotal.toFixed(2)}</span>
+            <span className="text-lg font-bold text-foreground tabular-nums">
+              ₹{displayTotal.toFixed(2)}
+            </span>
           </div>
-        </div>
 
-        {/* Proration Preview (modify mode only) */}
-        {isModifyMode && !quantitiesUnchanged && (
-          <div className="border-t border-foreground/10 px-5 py-3">
-            {previewLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Calculating proration...
-              </div>
-            ) : proration ? (
-              <p className="text-sm text-muted-foreground">
-                {proration.isUpgrade
-                  ? `Prorated charge: ₹${(proration.proratedAmount / 100).toFixed(2)} for ${proration.remainingDays} remaining days`
-                  : 'Downgrade applies immediately. No charge.'}
-              </p>
-            ) : null}
-          </div>
-        )}
-
-        <div className="border-t border-foreground/10 p-5 flex gap-3">
-          {onCancel && (
-            <Button
-              variant="outline"
-              size="lg"
-              className="flex-1"
-              onClick={onCancel}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
+          {/* Proration Preview (modify mode only) */}
+          {isModifyMode && !quantitiesUnchanged && (
+            <div className="border-t border-foreground/10 pt-3">
+              {previewLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Calculating proration...
+                </div>
+              ) : proration ? (
+                <p className="text-sm text-muted-foreground">
+                  {proration.isUpgrade
+                    ? `Prorated charge: ₹${(proration.proratedAmount / 100).toFixed(2)} for ${proration.remainingDays} remaining days`
+                    : 'Downgrade applies immediately. No charge.'}
+                </p>
+              ) : null}
+            </div>
           )}
-          <Button
-            className={cn(onCancel ? 'flex-1' : 'w-full')}
-            size="lg"
-            disabled={
-              totalUsers === 0 ||
-              loading ||
-              (isModifyMode && quantitiesUnchanged)
-            }
-            onClick={handleSubscribe}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Processing...
-              </>
-            ) : isModifyMode ? (
-              proration?.isUpgrade
-                ? `Upgrade — ₹${(proration.proratedAmount / 100).toFixed(2)} prorated`
-                : 'Apply Changes'
-            ) : (
-              `Subscribe — ₹${displayTotal.toFixed(2)}${periodLabel}`
-            )}
-          </Button>
         </div>
+      </div>
+
+      {/* Action Buttons — standalone */}
+      <div className="pt-4 flex gap-3">
+        {onCancel && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="flex-1"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+        )}
+        <Button
+          className={cn(onCancel ? 'flex-1' : 'w-full')}
+          size="lg"
+          disabled={
+            totalUsers === 0 ||
+            loading ||
+            (isModifyMode && quantitiesUnchanged)
+          }
+          onClick={handleSubscribe}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Processing...
+            </>
+          ) : isModifyMode ? (
+            proration?.isUpgrade
+              ? `Upgrade — ₹${(proration.proratedAmount / 100).toFixed(2)} prorated`
+              : 'Apply Changes'
+          ) : (
+            `Subscribe — ₹${displayTotal.toFixed(2)}${periodLabel}`
+          )}
+        </Button>
       </div>
     </div>
   )
