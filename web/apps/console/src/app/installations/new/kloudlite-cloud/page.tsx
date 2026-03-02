@@ -75,6 +75,24 @@ export default function KloudliteCloudPage() {
         const instId = verifyData.installationId
         setInstallationId(instId)
 
+        // Verify the installation has an active subscription before deploying
+        try {
+          const subRes = await fetch(`/api/installations/${instId}/subscription`)
+          if (subRes.ok) {
+            const subData = await subRes.json()
+            const hasActive = subData.subscriptions?.some(
+              (s: { status: string }) => ['active', 'authenticated'].includes(s.status),
+            )
+            if (!hasActive) {
+              toast.error('No active subscription found. Please complete payment first.')
+              router.push(`/installations/new-kl-cloud?installation=${instId}`)
+              return
+            }
+          }
+        } catch {
+          // If subscription check fails, let trigger-managed-install handle it
+        }
+
         // Check if a job is already running before triggering
         try {
           const statusRes = await fetch(`/api/installations/${instId}/job-status`)

@@ -210,15 +210,31 @@ export function KlCloudInstallationForm({
         },
         modal: {
           ondismiss: () => {
+            setCreating(false)
             toast.info(
               'Payment cancelled. Your installation has been created — you can subscribe from billing settings.',
             )
-            router.push('/installations/new/kloudlite-cloud')
+            router.push('/installations')
           },
         },
       }
 
-      openCheckout(options)
+      console.log('[Billing] About to open checkout:', {
+        order_id: order.razorpayOrderId,
+        amount: order.amount,
+        currency: order.currency,
+        key: key ? `${key.slice(0, 8)}...` : 'MISSING',
+        razorpayLoaded,
+        windowRazorpay: !!(window as any).Razorpay,
+      })
+
+      try {
+        openCheckout(options)
+      } catch (checkoutErr) {
+        console.error('Failed to open Razorpay checkout:', checkoutErr)
+        toast.error('Failed to open payment window. Please try again.')
+        setCreating(false)
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create installation')
       toast.error(error.message)
