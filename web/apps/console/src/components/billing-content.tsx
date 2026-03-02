@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
@@ -8,6 +8,7 @@ import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { InvoiceHistory } from '@/components/billing/invoice-history'
 import { AlertTriangle } from 'lucide-react'
 import {
+  getRazorpayKey,
   createInstallationOrder,
   verifyPaymentAndActivate,
   cancelExistingSubscription,
@@ -36,6 +37,21 @@ export function BillingContent({
 }: BillingContentProps) {
   const router = useRouter()
   const { openCheckout } = useRazorpay()
+  const [razorpayKey, setRazorpayKey] = useState<string | null>(null)
+  const [isLoadingKey, setIsLoadingKey] = useState(false)
+
+  const loadRazorpayKey = useCallback(async () => {
+    if (razorpayKey || isLoadingKey) return
+    setIsLoadingKey(true)
+    try {
+      const key = await getRazorpayKey()
+      setRazorpayKey(key)
+    } catch {
+      toast.error('Failed to load payment configuration')
+    } finally {
+      setIsLoadingKey(false)
+    }
+  }, [razorpayKey, isLoadingKey])
 
   const activeSubs = subscriptions.filter(
     (s) => !['cancelled', 'expired'].includes(s.status),
@@ -46,11 +62,16 @@ export function BillingContent({
   const hasActiveSubs = activeSubs.length > 0
   const pendingInvoice = invoices.find((i) => i.status === 'issued')
 
-  const handlePayNow = useCallback(() => {
+  const handlePayNow = useCallback(async () => {
     if (!pendingInvoice?.razorpayInvoiceId) return
 
+    if (!razorpayKey) {
+      await loadRazorpayKey()
+      return
+    }
+
     const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      key: razorpayKey,
       order_id: pendingInvoice.razorpayInvoiceId,
       amount: pendingInvoice.amount,
       currency: pendingInvoice.currency,
@@ -85,7 +106,7 @@ export function BillingContent({
     }
 
     openCheckout(options)
-  }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout])
+  }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout, razorpayKey, loadRazorpayKey])
 
   const handleSubscribe = useCallback(
     async (
@@ -93,12 +114,17 @@ export function BillingContent({
       billingPeriod: 'monthly' | 'annual',
     ) => {
       try {
+        if (!razorpayKey) {
+          await loadRazorpayKey()
+          return
+        }
+
         const order = await createInstallationOrder(installationId, allocations, billingPeriod)
 
         const totalUsers = allocations.reduce((sum, a) => sum + a.quantity, 0)
         const periodLabel = billingPeriod === 'annual' ? 'Annual' : 'Monthly'
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          key: razorpayKey,
           order_id: order.razorpayOrderId,
           amount: order.amount,
           currency: order.currency,
@@ -137,7 +163,7 @@ export function BillingContent({
         toast.error(error instanceof Error ? error.message : 'Failed to create order')
       }
     },
-    [installationId, userEmail, userName, router, openCheckout],
+    [installationId, userEmail, userName, router, openCheckout, razorpayKey, loadRazorpayKey],
   )
 
   const handleCancel = useCallback(async () => {
