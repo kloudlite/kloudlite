@@ -11,6 +11,7 @@ import {
   createSubscription,
   activateSubscriptionsByInstallation,
   cancelSubscriptionsByInstallation,
+  deleteCreatedSubscriptions,
   getInvoicesByInstallation,
   upsertInvoice,
   extendSubscriptionPeriod,
@@ -69,11 +70,18 @@ export async function createInstallationOrder(
     throw new Error('At least one compute size must have users assigned')
   }
 
-  // Check no existing active subscriptions
+  // Check existing subscriptions
   const existing = await getSubscriptionsByInstallation(installationId)
-  const activeExisting = existing.filter((s) => !['cancelled', 'expired'].includes(s.status))
-  if (activeExisting.length > 0) {
+  const activeOrPaid = existing.filter((s) => ['active', 'authenticated', 'paused'].includes(s.status))
+  if (activeOrPaid.length > 0) {
     throw new Error('Installation already has active subscriptions')
+  }
+
+  // Delete stale 'created' subscriptions from previous incomplete checkout attempts
+  // Uses DELETE (not soft-cancel) to free the UNIQUE(installation_id, plan_id) constraint
+  const staleCreated = existing.filter((s) => s.status === 'created')
+  if (staleCreated.length > 0) {
+    await deleteCreatedSubscriptions(installationId)
   }
 
   // Resolve all plans and compute total amount
@@ -166,12 +174,36 @@ export async function verifyPaymentAndActivate(
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest('hex')
 
-  if (expectedSignature !== razorpaySignature) {
+  try {
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, 'hex'),
+      Buffer.from(razorpaySignature, 'hex'),
+    )
+    if (!isValid) {
+      throw new Error('Payment verification failed — invalid signature')
+    }
+  } catch {
     throw new Error('Payment verification failed — invalid signature')
   }
 
-  // Check if this is a renewal or first-time activation
+  // Verify the order belongs to this installation via Razorpay API
+  const razorpay = getRazorpay()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const order = (await razorpay.orders.fetch(razorpayOrderId)) as any
+  if (order.notes?.installation_id !== installationId) {
+    throw new Error('Payment verification failed — order does not belong to this installation')
+  }
+  if (order.status !== 'paid') {
+    throw new Error('Payment verification failed — order is not paid')
+  }
+
+  // Check if this order was already verified (idempotency guard)
   const subs = await getSubscriptionsByInstallation(installationId)
+  const alreadyLinkedSub = subs.find((s) => s.razorpaySubscriptionId === razorpayOrderId)
+  if (alreadyLinkedSub && alreadyLinkedSub.status === 'active') {
+    return // Already activated — idempotent no-op
+  }
+
   const hasActiveSubs = subs.some((s) => s.status === 'active')
 
   // Determine billing period from existing subscriptions
@@ -195,12 +227,7 @@ export async function verifyPaymentAndActivate(
     // First-time: activate 'created' subscriptions
     await activateSubscriptionsByInstallation(installationId, now, periodEnd)
 
-    // Fetch order to get amount/currency for invoice
-    const razorpay = getRazorpay()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const order = (await razorpay.orders.fetch(razorpayOrderId)) as any
-
-    // Create invoice record
+    // Create invoice record (order already fetched above)
     const firstSub = subs[0]
     if (firstSub) {
       await upsertInvoice({

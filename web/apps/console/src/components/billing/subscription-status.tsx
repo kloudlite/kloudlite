@@ -93,8 +93,8 @@ export function SubscriptionStatus({ subscription, plan, isOwner, onCancel }: Su
 
   const costDisplay = plan
     ? isAnnual
-      ? `$${((plan.baseFee + plan.amountPerUser * subscription.quantity) / 100 * 12 * (1 - (plan.annualDiscountPct ?? 20) / 100)).toFixed(2)}/yr`
-      : `$${((plan.baseFee + plan.amountPerUser * subscription.quantity) / 100).toFixed(2)}/mo`
+      ? `₹${((plan.amountPerUser * subscription.quantity) / 100 * 12 * (1 - (plan.annualDiscountPct ?? 20) / 100)).toFixed(2)}/yr`
+      : `₹${((plan.amountPerUser * subscription.quantity) / 100).toFixed(2)}/mo`
     : '\u2014'
 
   return (

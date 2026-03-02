@@ -47,7 +47,7 @@ export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
                       : '\u2014'}
                   </td>
                   <td className="py-3 pr-4 text-right font-medium">
-                    ${(invoice.amount / 100).toFixed(2)} {invoice.currency}
+                    ₹{(invoice.amount / 100).toFixed(2)}
                   </td>
                   <td className="py-3 text-right">
                     <Badge variant="outline" className={invoiceStatusColors[invoice.status]}>

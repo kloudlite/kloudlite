@@ -92,7 +92,7 @@ CREATE TRIGGER update_subscriptions_updated_at
 
 -- ============================================================================
 -- 5. SEED DATA
--- Subscription plans (amounts in cents: $29=2900, $49=4900, $89=8900)
+-- Subscription plans (amounts in paise: ₹29=2900, ₹49=4900, ₹89=8900)
 -- ============================================================================
 
 INSERT INTO subscription_plans (tier, name, amount_per_user, base_fee, currency, monthly_hours, overage_rate, cpu, ram, storage, auto_suspend, description) VALUES
