@@ -212,35 +212,41 @@ export async function verifyPaymentAndActivate(
     // Renewal: extend existing active subscriptions
     await extendSubscriptionPeriod(installationId, now, periodEnd)
 
-    // Update the issued invoice to paid
-    await updateInvoiceStatus(razorpayOrderId, 'paid', razorpayPaymentId, now)
-
-    // Cancel old pending jobs and schedule new ones for the extended period
-    await cancelRenewalJobs(installationId)
-    await scheduleRenewalJobs(installationId, periodEnd, billingPeriod)
+    // Post-activation bookkeeping — failures here must not invalidate the payment
+    // (subscription is already extended, money was charged)
+    try {
+      await updateInvoiceStatus(razorpayOrderId, 'paid', razorpayPaymentId, now)
+      await cancelRenewalJobs(installationId)
+      await scheduleRenewalJobs(installationId, periodEnd, billingPeriod)
+    } catch (bookkeepingErr) {
+      console.error('[Billing] Post-renewal bookkeeping failed (subscription still active):', bookkeepingErr)
+    }
   } else {
     // First-time: activate 'created' subscriptions
     await activateSubscriptionsByInstallation(installationId, now, periodEnd)
 
-    // Create invoice record (order already fetched above)
-    const firstSub = subs[0]
-    if (firstSub) {
-      await upsertInvoice({
-        subscriptionId: firstSub.id,
-        installationId,
-        razorpayInvoiceId: razorpayOrderId,
-        razorpayPaymentId,
-        amount: order.amount,
-        currency: order.currency,
-        status: 'paid',
-        billingStart: now,
-        billingEnd: periodEnd,
-        paidAt: now,
-      })
+    // Post-activation bookkeeping — failures here must not invalidate the payment
+    // (subscription is already active, money was charged)
+    try {
+      const firstSub = subs[0]
+      if (firstSub) {
+        await upsertInvoice({
+          subscriptionId: firstSub.id,
+          installationId,
+          razorpayInvoiceId: razorpayOrderId,
+          razorpayPaymentId,
+          amount: order.amount,
+          currency: order.currency,
+          status: 'paid',
+          billingStart: now,
+          billingEnd: periodEnd,
+          paidAt: now,
+        })
+      }
+      await scheduleRenewalJobs(installationId, periodEnd, billingPeriod)
+    } catch (bookkeepingErr) {
+      console.error('[Billing] Post-activation bookkeeping failed (subscription still active):', bookkeepingErr)
     }
-
-    // Schedule renewal and expiry jobs for this subscription
-    await scheduleRenewalJobs(installationId, periodEnd, billingPeriod)
   }
 }
 

@@ -8,7 +8,10 @@ import {
 
 function verifyWebhookSignature(body: string, signature: string, secret: string): boolean {
   const expected = crypto.createHmac('sha256', secret).update(body).digest('hex')
-  return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'))
+  return (
+    expected.length === signature.length &&
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+  )
 }
 
 export async function POST(request: Request) {
