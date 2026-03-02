@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button, Badge, Card, CardContent, Input } from '@kloudlite/ui'
 import { Loader2, Minus, Plus } from 'lucide-react'
 import { cn } from '@kloudlite/lib'
+import { previewModification } from '@/app/actions/billing'
 import type { Plan } from '@/lib/console/storage'
 
 type BillingPeriod = 'monthly' | 'annual'
@@ -14,18 +15,83 @@ interface SubscriptionConfiguratorProps {
     allocations: { planId: string; quantity: number }[],
     billingPeriod: BillingPeriod,
   ) => Promise<void>
+  initialQuantities?: Record<string, number>
+  billingPeriodLocked?: BillingPeriod
+  mode?: 'subscribe' | 'modify'
+  onCancel?: () => void
+  installationId?: string
 }
 
-export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionConfiguratorProps) {
+interface ProrationPreview {
+  proratedAmount: number
+  isUpgrade: boolean
+  remainingDays: number
+}
+
+export function SubscriptionConfigurator({
+  plans,
+  onSubscribe,
+  initialQuantities,
+  billingPeriodLocked,
+  mode = 'subscribe',
+  onCancel,
+  installationId,
+}: SubscriptionConfiguratorProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
+    if (initialQuantities) return { ...initialQuantities }
     const initial: Record<string, number> = {}
     for (const plan of plans) {
       initial[plan.id] = 0
     }
     return initial
   })
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(billingPeriodLocked ?? 'monthly')
   const [loading, setLoading] = useState(false)
+  const [proration, setProration] = useState<ProrationPreview | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const isModifyMode = mode === 'modify'
+
+  const quantitiesUnchanged = isModifyMode && initialQuantities
+    ? plans.every((p) => (quantities[p.id] || 0) === (initialQuantities[p.id] || 0))
+    : false
+
+  const fetchPreview = useCallback(async () => {
+    if (!isModifyMode || !installationId || quantitiesUnchanged) {
+      setProration(null)
+      return
+    }
+    const allocations = plans
+      .map((p) => ({ planId: p.id, quantity: quantities[p.id] || 0 }))
+      .filter((a) => a.quantity > 0)
+    if (allocations.length === 0) {
+      setProration(null)
+      return
+    }
+    setPreviewLoading(true)
+    try {
+      const result = await previewModification(installationId, allocations)
+      setProration({
+        proratedAmount: result.proratedAmount,
+        isUpgrade: result.isUpgrade,
+        remainingDays: result.remainingDays,
+      })
+    } catch {
+      setProration(null)
+    } finally {
+      setPreviewLoading(false)
+    }
+  }, [isModifyMode, installationId, quantities, plans, quantitiesUnchanged])
+
+  useEffect(() => {
+    if (!isModifyMode) return
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(fetchPreview, 500)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [fetchPreview, isModifyMode])
 
   const baseFee = plans[0]?.baseFee ? plans[0].baseFee / 100 : 29
   const discountPct = plans[0]?.annualDiscountPct ?? 20
@@ -73,35 +139,43 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
   return (
     <div className="space-y-8">
       {/* Billing Period Toggle */}
-      <div className="flex items-center justify-center">
-        <div className="inline-flex items-center rounded-lg border border-foreground/10 bg-muted/30 p-1">
-          <button
-            onClick={() => setBillingPeriod('monthly')}
-            className={cn(
-              'px-4 py-2 text-sm font-medium rounded-md transition-all',
-              !isAnnual
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setBillingPeriod('annual')}
-            className={cn(
-              'px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2',
-              isAnnual
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            Annual
-            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400">
-              Save {discountPct}%
-            </span>
-          </button>
+      {billingPeriodLocked ? (
+        <div className="flex items-center justify-center">
+          <Badge variant="outline" className="text-sm px-3 py-1">
+            {billingPeriodLocked === 'annual' ? 'Annual' : 'Monthly'} billing
+          </Badge>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center justify-center">
+          <div className="inline-flex items-center rounded-lg border border-foreground/10 bg-muted/30 p-1">
+            <button
+              onClick={() => setBillingPeriod('monthly')}
+              className={cn(
+                'px-4 py-2 text-sm font-medium rounded-md transition-all',
+                !isAnnual
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod('annual')}
+              className={cn(
+                'px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2',
+                isAnnual
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Annual
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400">
+                Save {discountPct}%
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Base Fee Banner */}
       <div className="border border-foreground/10 rounded-lg p-5 bg-muted/30">
@@ -283,11 +357,44 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
           </div>
         </div>
 
-        <div className="border-t border-foreground/10 p-5">
+        {/* Proration Preview (modify mode only) */}
+        {isModifyMode && !quantitiesUnchanged && (
+          <div className="border-t border-foreground/10 px-5 py-3">
+            {previewLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Calculating proration...
+              </div>
+            ) : proration ? (
+              <p className="text-sm text-muted-foreground">
+                {proration.isUpgrade
+                  ? `Prorated charge: ₹${(proration.proratedAmount / 100).toFixed(2)} for ${proration.remainingDays} remaining days`
+                  : 'Downgrade applies immediately. No charge.'}
+              </p>
+            ) : null}
+          </div>
+        )}
+
+        <div className="border-t border-foreground/10 p-5 flex gap-3">
+          {onCancel && (
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1"
+              onClick={onCancel}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+          )}
           <Button
-            className="w-full"
+            className={cn(onCancel ? 'flex-1' : 'w-full')}
             size="lg"
-            disabled={totalUsers === 0 || loading}
+            disabled={
+              totalUsers === 0 ||
+              loading ||
+              (isModifyMode && quantitiesUnchanged)
+            }
             onClick={handleSubscribe}
           >
             {loading ? (
@@ -295,6 +402,10 @@ export function SubscriptionConfigurator({ plans, onSubscribe }: SubscriptionCon
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Processing...
               </>
+            ) : isModifyMode ? (
+              proration?.isUpgrade
+                ? `Upgrade — ₹${(proration.proratedAmount / 100).toFixed(2)} prorated`
+                : 'Apply Changes'
             ) : (
               `Subscribe — ₹${displayTotal.toFixed(2)}${periodLabel}`
             )}
