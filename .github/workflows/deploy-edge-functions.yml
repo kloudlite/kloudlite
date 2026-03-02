@@ -112,8 +112,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          echo "${{ secrets.RAZORPAY_KEY_ID }}" | supabase secrets set RAZORPAY_KEY_ID --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          echo "${{ secrets.RAZORPAY_KEY_SECRET }}" | supabase secrets set RAZORPAY_KEY_SECRET --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          supabase secrets set RAZORPAY_KEY_ID="${{ secrets.RAZORPAY_KEY_ID }}" --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          supabase secrets set RAZORPAY_KEY_SECRET="${{ secrets.RAZORPAY_KEY_SECRET }}" --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
 
       - name: Deployment Summary
         run: |
