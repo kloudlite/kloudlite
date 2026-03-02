@@ -118,6 +118,9 @@ jobs:
 
           # Installation Domain
           NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
+
+          # Razorpay (client-side key for checkout)
+          NEXT_PUBLIC_RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}
           EOF
 
       - name: Create environment file for dashboard
