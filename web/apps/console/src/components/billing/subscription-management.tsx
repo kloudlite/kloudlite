@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import { Button } from '@kloudlite/ui'
 import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
-import { InvoiceHistory } from '@/components/billing/invoice-history'
 import { AlertTriangle, Loader2, Pencil } from 'lucide-react'
 import {
   getRazorpayKey,
@@ -19,7 +18,7 @@ import {
 import { useRazorpay } from '@/components/razorpay-provider'
 import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
 
-interface BillingContentProps {
+interface SubscriptionManagementProps {
   installationId: string
   plans: Plan[]
   subscriptions: Subscription[]
@@ -29,7 +28,7 @@ interface BillingContentProps {
   userName: string
 }
 
-export function BillingContent({
+export function SubscriptionManagement({
   installationId,
   plans,
   subscriptions,
@@ -37,19 +36,17 @@ export function BillingContent({
   isOwner,
   userEmail,
   userName,
-}: BillingContentProps) {
+}: SubscriptionManagementProps) {
   const router = useRouter()
   const { openCheckout } = useRazorpay()
   const [paying, setPaying] = useState(false)
   const [editing, setEditing] = useState(false)
 
-  const activeSubs = subscriptions.filter(
-    (s) => ['active', 'authenticated', 'paused'].includes(s.status),
+  const activeSubs = subscriptions.filter((s) =>
+    ['active', 'authenticated', 'paused'].includes(s.status),
   )
   const visibleActiveSubs = activeSubs.filter((s) => s.quantity > 0)
-  const pastSubs = subscriptions.filter((s) =>
-    ['cancelled', 'expired'].includes(s.status),
-  )
+  const pastSubs = subscriptions.filter((s) => ['cancelled', 'expired'].includes(s.status))
   const hasActiveSubs = activeSubs.length > 0
   const pendingInvoice = invoices.find((i) => i.status === 'issued')
 
@@ -228,13 +225,6 @@ export function BillingContent({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-xl font-semibold">Billing & Compute</h2>
-        <p className="text-muted-foreground mt-1 text-base">
-          Manage your subscriptions and payment methods
-        </p>
-      </div>
-
       {/* Payment Due Banner */}
       {pendingInvoice && isOwner && (
         <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
@@ -245,8 +235,7 @@ export function BillingContent({
                 Payment Due
               </p>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                ₹{(pendingInvoice.amount / 100).toFixed(2)}{' '}
-                due for your subscription renewal
+                ₹{(pendingInvoice.amount / 100).toFixed(2)} due for your subscription renewal
               </p>
             </div>
           </div>
@@ -336,9 +325,6 @@ export function BillingContent({
           })}
         </div>
       )}
-
-      {/* Invoice History */}
-      <InvoiceHistory invoices={invoices} />
 
       {!isOwner && (
         <p className="text-muted-foreground text-sm text-center py-4">
