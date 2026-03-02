@@ -18,6 +18,8 @@ import {
   updateInvoiceStatus,
   scheduleRenewalJobs,
   cancelRenewalJobs,
+  updateSubscriptionQuantity,
+  upsertActiveSubscription,
 } from '@/lib/console/storage'
 import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
 import { getInstallationById, getMemberRole } from '@/lib/console/storage'
@@ -247,6 +249,246 @@ export async function verifyPaymentAndActivate(
     } catch (bookkeepingErr) {
       console.error('[Billing] Post-activation bookkeeping failed (subscription still active):', bookkeepingErr)
     }
+  }
+}
+
+// --- Subscription Modification Actions ---
+
+function computeProration(
+  activeSubs: { planId: string; quantity: number; billingPeriod: 'monthly' | 'annual'; currentEnd: string | null }[],
+  newAllocations: { planId: string; quantity: number }[],
+  plans: Plan[],
+): { proratedAmount: number; remainingDays: number; oldMonthlyTotal: number; newMonthlyTotal: number } {
+  const now = Date.now()
+  const currentEnd = activeSubs[0]?.currentEnd
+  if (!currentEnd) {
+    return { proratedAmount: 0, remainingDays: 0, oldMonthlyTotal: 0, newMonthlyTotal: 0 }
+  }
+
+  const endMs = new Date(currentEnd).getTime()
+  const remainingDays = Math.max(0, Math.ceil((endMs - now) / (24 * 60 * 60 * 1000)))
+
+  const planMap = new Map(plans.map((p) => [p.id, p]))
+
+  const oldUserTotal = activeSubs.reduce((sum, sub) => {
+    const plan = planMap.get(sub.planId)
+    return sum + (plan ? plan.amountPerUser * sub.quantity : 0)
+  }, 0)
+
+  const newUserTotal = newAllocations.reduce((sum, alloc) => {
+    const plan = planMap.get(alloc.planId)
+    return sum + (plan ? plan.amountPerUser * alloc.quantity : 0)
+  }, 0)
+
+  const monthlyDiff = newUserTotal - oldUserTotal
+  const billingPeriod = activeSubs[0]?.billingPeriod ?? 'monthly'
+  const discountPct = planMap.values().next().value?.annualDiscountPct ?? 20
+
+  let proratedAmount: number
+  if (billingPeriod === 'annual') {
+    proratedAmount = Math.round(monthlyDiff * 12 * (1 - discountPct / 100) * remainingDays / 365)
+  } else {
+    proratedAmount = Math.round(monthlyDiff * remainingDays / 30)
+  }
+
+  return { proratedAmount, remainingDays, oldMonthlyTotal: oldUserTotal, newMonthlyTotal: newUserTotal }
+}
+
+async function applyQuantityChanges(
+  installationId: string,
+  activeSubs: Subscription[],
+  newAllocations: { planId: string; quantity: number }[],
+): Promise<void> {
+  const allocMap = new Map(newAllocations.map((a) => [a.planId, a.quantity]))
+
+  // Update existing active subs
+  for (const sub of activeSubs) {
+    const newQty = allocMap.get(sub.planId) ?? 0
+    if (newQty !== sub.quantity) {
+      await updateSubscriptionQuantity(sub.id, newQty)
+    }
+    allocMap.delete(sub.planId)
+  }
+
+  // Upsert new tiers not currently active
+  for (const [planId, quantity] of allocMap) {
+    if (quantity > 0) {
+      const refSub = activeSubs[0]
+      await upsertActiveSubscription({
+        installationId,
+        planId,
+        quantity,
+        billingPeriod: refSub.billingPeriod,
+        currentStart: refSub.currentStart!,
+        currentEnd: refSub.currentEnd!,
+      })
+    }
+  }
+}
+
+export async function previewModification(
+  installationId: string,
+  newAllocations: { planId: string; quantity: number }[],
+): Promise<{
+  proratedAmount: number
+  isUpgrade: boolean
+  remainingDays: number
+  oldMonthlyTotal: number
+  newMonthlyTotal: number
+}> {
+  const session = await getRegistrationSession()
+  if (!session?.user) redirect('/login')
+
+  const subs = await getSubscriptionsByInstallation(installationId)
+  const activeSubs = subs.filter((s) => s.status === 'active')
+  if (activeSubs.length === 0) {
+    throw new Error('No active subscriptions found')
+  }
+
+  const plans = await getPlans()
+  const result = computeProration(activeSubs, newAllocations, plans)
+
+  return {
+    ...result,
+    isUpgrade: result.proratedAmount > 0,
+  }
+}
+
+export async function modifySubscriptionQuantities(
+  installationId: string,
+  newAllocations: { planId: string; quantity: number }[],
+): Promise<{ applied: true } | { applied: false; razorpayOrderId: string; amount: number; currency: string }> {
+  const session = await getRegistrationSession()
+  if (!session?.user) redirect('/login')
+
+  // Verify owner permission
+  const role = await getMemberRole(installationId, session.user.id)
+  const installation = await getInstallationById(installationId)
+  const isOwner = role === 'owner' || installation?.userId === session.user.id
+  if (!isOwner) {
+    throw new Error('Only the installation owner can manage billing')
+  }
+
+  const totalNewUsers = newAllocations.reduce((sum, a) => sum + a.quantity, 0)
+  if (totalNewUsers === 0) {
+    throw new Error('At least one user must be assigned')
+  }
+
+  const subs = await getSubscriptionsByInstallation(installationId)
+  const activeSubs = subs.filter((s) => s.status === 'active')
+  if (activeSubs.length === 0) {
+    throw new Error('No active subscriptions to modify')
+  }
+
+  const plans = await getPlans()
+  const { proratedAmount } = computeProration(activeSubs, newAllocations, plans)
+
+  // Downgrade or no cost change — apply immediately
+  if (proratedAmount <= 0 || proratedAmount < 100) {
+    await applyQuantityChanges(installationId, activeSubs, newAllocations)
+    return { applied: true }
+  }
+
+  // Upgrade — create Razorpay order for prorated amount
+  const currency = plans[0]?.currency ?? 'INR'
+  const razorpay = getRazorpay()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const order = (await razorpay.orders.create({
+    amount: proratedAmount,
+    currency,
+    receipt: `mod_${installationId.slice(0, 8)}_${Date.now()}`,
+    notes: {
+      installation_id: installationId,
+      modification: 'true',
+      allocations: JSON.stringify(newAllocations),
+    },
+  })) as any
+
+  return {
+    applied: false,
+    razorpayOrderId: order.id,
+    amount: proratedAmount,
+    currency,
+  }
+}
+
+export async function verifyModificationAndApply(
+  installationId: string,
+  razorpayOrderId: string,
+  razorpayPaymentId: string,
+  razorpaySignature: string,
+): Promise<void> {
+  const session = await getRegistrationSession()
+  if (!session?.user) redirect('/login')
+
+  // Verify owner permission
+  const role = await getMemberRole(installationId, session.user.id)
+  const installation = await getInstallationById(installationId)
+  const isOwner = role === 'owner' || installation?.userId === session.user.id
+  if (!isOwner) {
+    throw new Error('Only the installation owner can verify payments')
+  }
+
+  // Verify Razorpay payment signature
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+  if (!keySecret) {
+    throw new Error('RAZORPAY_KEY_SECRET not configured')
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', keySecret)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+    .digest('hex')
+
+  const sigValid =
+    expectedSignature.length === razorpaySignature.length &&
+    crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(razorpaySignature))
+
+  if (!sigValid) {
+    console.error('[Billing] Modification signature mismatch for order', razorpayOrderId)
+    throw new Error('Payment verification failed — invalid signature')
+  }
+
+  // Verify the order belongs to this installation and is a modification
+  const razorpay = getRazorpay()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const order = (await razorpay.orders.fetch(razorpayOrderId)) as any
+  if (order.notes?.installation_id !== installationId) {
+    throw new Error('Payment verification failed — order does not belong to this installation')
+  }
+  if (order.notes?.modification !== 'true') {
+    throw new Error('Payment verification failed — order is not a modification')
+  }
+
+  // Parse allocations from order notes
+  const newAllocations = JSON.parse(order.notes.allocations) as { planId: string; quantity: number }[]
+
+  const subs = await getSubscriptionsByInstallation(installationId)
+  const activeSubs = subs.filter((s) => s.status === 'active')
+  if (activeSubs.length === 0) {
+    throw new Error('No active subscriptions to modify')
+  }
+
+  await applyQuantityChanges(installationId, activeSubs, newAllocations)
+
+  // Create invoice for prorated amount (bookkeeping — don't fail the modification)
+  try {
+    const firstSub = activeSubs[0]
+    await upsertInvoice({
+      subscriptionId: firstSub.id,
+      installationId,
+      razorpayInvoiceId: razorpayOrderId,
+      razorpayPaymentId,
+      amount: order.amount,
+      currency: order.currency,
+      status: 'paid',
+      billingStart: new Date().toISOString(),
+      billingEnd: firstSub.currentEnd ?? undefined,
+      paidAt: new Date().toISOString(),
+    })
+  } catch (bookkeepingErr) {
+    console.error('[Billing] Post-modification bookkeeping failed:', bookkeepingErr)
   }
 }
 

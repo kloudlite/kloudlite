@@ -384,6 +384,51 @@ export async function cancelRenewalJobs(installationId: string): Promise<void> {
   }
 }
 
+export async function updateSubscriptionQuantity(
+  subscriptionId: string,
+  newQuantity: number,
+): Promise<void> {
+  type Update = Database['public']['Tables']['subscriptions']['Update']
+  const updateData: Update = { quantity: newQuantity }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('id', subscriptionId)
+  if (error) {
+    throw new Error(`Failed to update subscription quantity: ${error.message}`)
+  }
+}
+
+export async function upsertActiveSubscription(data: {
+  installationId: string
+  planId: string
+  quantity: number
+  billingPeriod: 'monthly' | 'annual'
+  currentStart: string
+  currentEnd: string
+}): Promise<void> {
+  type Insert = Database['public']['Tables']['subscriptions']['Insert']
+  const insertData: Insert = {
+    installation_id: data.installationId,
+    plan_id: data.planId,
+    quantity: data.quantity,
+    billing_period: data.billingPeriod,
+    status: 'active',
+    current_start: data.currentStart,
+    current_end: data.currentEnd,
+    razorpay_subscription_id: null,
+    razorpay_customer_id: null,
+  }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .upsert(insertData, { onConflict: 'installation_id,plan_id' })
+  if (error) {
+    throw new Error(`Failed to upsert active subscription: ${error.message}`)
+  }
+}
+
 export async function upsertInvoice(data: {
   subscriptionId: string
   installationId: string

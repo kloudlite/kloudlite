@@ -1,17 +1,20 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Button } from '@kloudlite/ui'
 import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { InvoiceHistory } from '@/components/billing/invoice-history'
-import { AlertTriangle, Loader2 } from 'lucide-react'
+import { AlertTriangle, Loader2, Pencil } from 'lucide-react'
 import {
   getRazorpayKey,
   createInstallationOrder,
   verifyPaymentAndActivate,
   cancelExistingSubscription,
+  modifySubscriptionQuantities,
+  verifyModificationAndApply,
 } from '@/app/actions/billing'
 import { useRazorpay } from '@/components/razorpay-provider'
 import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
@@ -38,15 +41,84 @@ export function BillingContent({
   const router = useRouter()
   const { openCheckout } = useRazorpay()
   const [paying, setPaying] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const activeSubs = subscriptions.filter(
     (s) => ['active', 'authenticated', 'paused'].includes(s.status),
   )
+  const visibleActiveSubs = activeSubs.filter((s) => s.quantity > 0)
   const pastSubs = subscriptions.filter((s) =>
     ['cancelled', 'expired'].includes(s.status),
   )
   const hasActiveSubs = activeSubs.length > 0
   const pendingInvoice = invoices.find((i) => i.status === 'issued')
+
+  const initialQuantities = useMemo(() => {
+    const q: Record<string, number> = {}
+    for (const plan of plans) {
+      const sub = activeSubs.find((s) => s.planId === plan.id)
+      q[plan.id] = sub?.quantity ?? 0
+    }
+    return q
+  }, [plans, activeSubs])
+
+  const handleModify = useCallback(
+    async (allocations: { planId: string; quantity: number }[]) => {
+      try {
+        const result = await modifySubscriptionQuantities(installationId, allocations)
+
+        if (result.applied) {
+          toast.success('Subscription updated successfully.')
+          setEditing(false)
+          router.refresh()
+          return
+        }
+
+        // Upgrade — open Razorpay checkout for prorated amount
+        const key = await getRazorpayKey()
+        const options = {
+          key,
+          order_id: result.razorpayOrderId,
+          amount: result.amount,
+          currency: result.currency,
+          name: 'Kloudlite',
+          description: 'Subscription Upgrade (prorated)',
+          prefill: {
+            email: userEmail,
+            name: userName,
+          },
+          theme: {
+            color: '#3B82F6',
+          },
+          handler: async (response: Record<string, string>) => {
+            try {
+              await verifyModificationAndApply(
+                installationId,
+                response.razorpay_order_id,
+                response.razorpay_payment_id,
+                response.razorpay_signature,
+              )
+              toast.success('Upgrade successful! Quantities updated.')
+              setEditing(false)
+              router.refresh()
+            } catch {
+              toast.error('Payment verification failed. Please contact support.')
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              toast.info('Payment cancelled. No changes were made.')
+            },
+          },
+        }
+
+        openCheckout(options)
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to modify subscription')
+      }
+    },
+    [installationId, userEmail, userName, router, openCheckout],
+  )
 
   const handlePayNow = useCallback(async () => {
     if (!pendingInvoice?.razorpayInvoiceId || paying) return
@@ -196,19 +268,50 @@ export function BillingContent({
       )}
 
       {/* Active Subscriptions */}
-      {hasActiveSubs &&
-        activeSubs.map((sub) => {
-          const plan = plans.find((p) => p.id === sub.planId)
-          return (
-            <SubscriptionStatus
-              key={sub.id}
-              subscription={sub}
-              plan={plan}
-              isOwner={isOwner}
-              onCancel={handleCancel}
-            />
-          )
-        })}
+      {hasActiveSubs && !editing && (
+        <>
+          {isOwner && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing(true)}
+                className="gap-2"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Change Users
+              </Button>
+            </div>
+          )}
+          {visibleActiveSubs.map((sub) => {
+            const plan = plans.find((p) => p.id === sub.planId)
+            return (
+              <SubscriptionStatus
+                key={sub.id}
+                subscription={sub}
+                plan={plan}
+                isOwner={isOwner}
+                onCancel={handleCancel}
+              />
+            )
+          })}
+        </>
+      )}
+
+      {/* Edit Mode — Modify Quantities */}
+      {hasActiveSubs && editing && (
+        <SubscriptionConfigurator
+          plans={plans}
+          onSubscribe={async (allocations) => {
+            await handleModify(allocations)
+          }}
+          initialQuantities={initialQuantities}
+          billingPeriodLocked={activeSubs[0].billingPeriod}
+          mode="modify"
+          onCancel={() => setEditing(false)}
+          installationId={installationId}
+        />
+      )}
 
       {/* Subscribe / Add Compute */}
       {isOwner && !hasActiveSubs && (
