@@ -23,6 +23,12 @@ import { getInstallationById, getMemberRole } from '@/lib/console/storage'
 
 // --- Read Actions ---
 
+export async function getRazorpayKey(): Promise<string> {
+  const keyId = process.env.RAZORPAY_KEY_ID
+  if (!keyId) throw new Error('RAZORPAY_KEY_ID not configured')
+  return keyId
+}
+
 export async function fetchPlans(): Promise<Plan[]> {
   return getPlans()
 }

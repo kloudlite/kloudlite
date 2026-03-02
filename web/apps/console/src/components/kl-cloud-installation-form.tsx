@@ -19,7 +19,11 @@ import {
 } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, AlertCircle, Minus, Plus, Cpu, HardDrive, Clock, Zap } from 'lucide-react'
 import { toast } from 'sonner'
-import { createInstallationOrder, verifyPaymentAndActivate } from '@/app/actions/billing'
+import {
+  getRazorpayKey,
+  createInstallationOrder,
+  verifyPaymentAndActivate,
+} from '@/app/actions/billing'
 import { useRazorpay } from '@/components/razorpay-provider'
 import type { Plan } from '@/lib/console/storage'
 
@@ -57,6 +61,21 @@ export function KlCloudInstallationForm({
   const [creating, setCreating] = useState(false)
   const [checkingSubdomain, setCheckingSubdomain] = useState(false)
   const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
+  const [razorpayKey, setRazorpayKey] = useState<string | null>(null)
+  const [isLoadingKey, setIsLoadingKey] = useState(false)
+
+  const loadRazorpayKey = async () => {
+    if (razorpayKey || isLoadingKey) return
+    setIsLoadingKey(true)
+    try {
+      const key = await getRazorpayKey()
+      setRazorpayKey(key)
+    } catch {
+      toast.error('Failed to load payment configuration')
+    } finally {
+      setIsLoadingKey(false)
+    }
+  }
 
   // Per-tier quantities
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
@@ -175,9 +194,15 @@ export function KlCloudInstallationForm({
       // Step 3: Create Razorpay order for the total amount
       const order = await createInstallationOrder(installationId, tierAllocations)
 
-      // Step 4: Open Razorpay Checkout for payment
+      // Step 4: Load Razorpay key and open checkout
+      if (!razorpayKey) {
+        await loadRazorpayKey()
+        return
+      }
+
+      // Step 5: Open Razorpay Checkout for payment
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: razorpayKey,
         order_id: order.razorpayOrderId,
         amount: order.amount,
         currency: order.currency,
