@@ -163,7 +163,7 @@ export async function verifyPaymentAndActivate(
     throw new Error('Only the installation owner can verify payments')
   }
 
-  // Verify Razorpay payment signature
+  // Verify Razorpay payment signature (proves Razorpay signed order_id|payment_id with our secret)
   const keySecret = process.env.RAZORPAY_KEY_SECRET
   if (!keySecret) {
     throw new Error('RAZORPAY_KEY_SECRET not configured')
@@ -174,15 +174,12 @@ export async function verifyPaymentAndActivate(
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest('hex')
 
-  try {
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'hex'),
-      Buffer.from(razorpaySignature, 'hex'),
-    )
-    if (!isValid) {
-      throw new Error('Payment verification failed — invalid signature')
-    }
-  } catch {
+  const sigValid =
+    expectedSignature.length === razorpaySignature.length &&
+    crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(razorpaySignature))
+
+  if (!sigValid) {
+    console.error('[Billing] Signature mismatch for order', razorpayOrderId)
     throw new Error('Payment verification failed — invalid signature')
   }
 
@@ -191,10 +188,8 @@ export async function verifyPaymentAndActivate(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const order = (await razorpay.orders.fetch(razorpayOrderId)) as any
   if (order.notes?.installation_id !== installationId) {
+    console.error('[Billing] Order installation mismatch:', order.notes?.installation_id, '!==', installationId)
     throw new Error('Payment verification failed — order does not belong to this installation')
-  }
-  if (order.status !== 'paid') {
-    throw new Error('Payment verification failed — order is not paid')
   }
 
   // Check if this order was already verified (idempotency guard)

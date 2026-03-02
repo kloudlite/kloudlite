@@ -195,7 +195,6 @@ export function KlCloudInstallationForm({
         },
         handler: async (response: Record<string, string>) => {
           try {
-            // Verify payment server-side and activate subscriptions
             await verifyPaymentAndActivate(
               installationId,
               response.razorpay_order_id,
@@ -204,8 +203,12 @@ export function KlCloudInstallationForm({
             )
             toast.success('Payment successful! Starting deployment...')
             router.push('/installations/new/kloudlite-cloud')
-          } catch {
-            toast.error('Payment verification failed. Please contact support.')
+          } catch (err) {
+            console.error('[Billing] Payment verification failed:', err)
+            toast.error(
+              err instanceof Error ? err.message : 'Payment verification failed. Please contact support.',
+            )
+            setCreating(false)
           }
         },
         modal: {
