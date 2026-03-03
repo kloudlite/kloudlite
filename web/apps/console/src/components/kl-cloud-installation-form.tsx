@@ -25,6 +25,7 @@ import {
   verifyPaymentAndActivate,
 } from '@/app/actions/billing'
 import { useRazorpay } from '@/components/razorpay-provider'
+import { getCurrencySymbol } from '@/lib/billing-utils'
 import type { Plan } from '@/lib/console/storage'
 
 const installationSchema = z.object({
@@ -72,7 +73,7 @@ export function KlCloudInstallationForm({
   })
 
   const baseFee = plans[0]?.baseFee ? plans[0].baseFee / 100 : 29
-  const currencySymbol = '₹'
+  const currencySymbol = getCurrencySymbol(plans[0]?.currency)
   const totalUsers = Object.values(quantities).reduce((sum, q) => sum + q, 0)
 
   // Calculate cost breakdown per tier

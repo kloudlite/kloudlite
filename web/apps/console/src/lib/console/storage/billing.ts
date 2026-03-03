@@ -33,6 +33,7 @@ function mapToSubscription(row: SubscriptionRow): Subscription {
     status: row.status,
     quantity: row.quantity,
     billingPeriod: row.billing_period ?? 'monthly',
+    scheduledBillingPeriod: row.scheduled_billing_period ?? null,
     currentStart: row.current_start,
     currentEnd: row.current_end,
     createdAt: row.created_at,
@@ -238,6 +239,17 @@ export async function getActiveSubscriptionsByInstallationIds(
   return result
 }
 
+export async function getInvoiceByPaymentId(razorpayPaymentId: string): Promise<Invoice | null> {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('razorpay_payment_id', razorpayPaymentId)
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return mapToInvoice(data as InvoiceRow)
+}
+
 export async function getInvoicesByInstallation(installationId: string): Promise<Invoice[]> {
   const { data, error } = await supabase
     .from('invoices')
@@ -400,6 +412,23 @@ export async function updateSubscriptionQuantity(
   }
 }
 
+export async function updateSubscriptionPeriod(
+  subscriptionId: string,
+  billingPeriod: 'monthly' | 'annual',
+  currentEnd: string,
+): Promise<void> {
+  type Update = Database['public']['Tables']['subscriptions']['Update']
+  const updateData: Update = { billing_period: billingPeriod, current_end: currentEnd }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('id', subscriptionId)
+  if (error) {
+    throw new Error(`Failed to update subscription period: ${error.message}`)
+  }
+}
+
 export async function upsertActiveSubscription(data: {
   installationId: string
   planId: string
@@ -460,5 +489,70 @@ export async function upsertInvoice(data: {
     .upsert(insertData, { onConflict: 'razorpay_invoice_id' })
   if (error) {
     throw new Error(`Failed to upsert invoice: ${error.message}`)
+  }
+}
+
+export async function setScheduledBillingPeriod(
+  subscriptionId: string,
+  period: 'monthly' | 'annual',
+): Promise<void> {
+  type Update = Database['public']['Tables']['subscriptions']['Update']
+  const updateData: Update = { scheduled_billing_period: period }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('id', subscriptionId)
+  if (error) {
+    throw new Error(`Failed to set scheduled billing period: ${error.message}`)
+  }
+}
+
+export async function clearScheduledBillingPeriod(
+  installationId: string,
+): Promise<void> {
+  type Update = Database['public']['Tables']['subscriptions']['Update']
+  const updateData: Update = { scheduled_billing_period: null }
+  const { error } = await supabase
+    .from('subscriptions')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .update(updateData)
+    .eq('installation_id', installationId)
+    .eq('status', 'active')
+  if (error) {
+    throw new Error(`Failed to clear scheduled billing period: ${error.message}`)
+  }
+}
+
+// --- Webhook Idempotency ---
+
+export async function isWebhookEventProcessed(razorpayEventId: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('processed_webhook_events')
+    .select('*', { count: 'exact', head: true })
+    .eq('razorpay_event_id', razorpayEventId)
+
+  if (error) {
+    console.error('Failed to check webhook event:', error.message)
+    return false
+  }
+  return (count ?? 0) > 0
+}
+
+export async function markWebhookEventProcessed(
+  razorpayEventId: string,
+  eventType: string,
+): Promise<void> {
+  type Insert = Database['public']['Tables']['processed_webhook_events']['Insert']
+  const insertData: Insert = {
+    razorpay_event_id: razorpayEventId,
+    event_type: eventType,
+  }
+  const { error } = await supabase
+    .from('processed_webhook_events')
+    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    .insert(insertData)
+  if (error) {
+    console.error('Failed to mark webhook event as processed:', error.message)
   }
 }
