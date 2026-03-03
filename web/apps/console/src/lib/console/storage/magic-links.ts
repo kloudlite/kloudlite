@@ -45,7 +45,7 @@ export async function createMagicLinkToken(
 
   const { error } = await supabase
     .from('magic_link_tokens')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert(insertData)
 
   if (error) {
@@ -79,19 +79,19 @@ export async function verifyMagicLinkToken(
   }
 
   // Check if token has already been used
-  // @ts-expect-error - Supabase client with placeholder values has type issues during build
+  // @ts-expect-error — Supabase generic inference resolves to never
   if (data.used_at) {
     return null
   }
 
   // Check if token has expired
-  // @ts-expect-error - Supabase client with placeholder values has type issues during build
+  // @ts-expect-error — Supabase generic inference resolves to never
   const expiresAt = new Date(data.expires_at)
   if (expiresAt < new Date()) {
     return null
   }
 
-  // @ts-expect-error - Supabase client with placeholder values has type issues during build
+  // @ts-expect-error — Supabase generic inference resolves to never
   return data.email
 }
 
@@ -106,7 +106,7 @@ export async function markTokenAsUsed(token: string): Promise<void> {
 
   const { error } = await supabase
     .from('magic_link_tokens')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('token', token)
 

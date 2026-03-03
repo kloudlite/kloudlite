@@ -100,7 +100,7 @@ export async function isSubdomainAvailable(subdomain: string): Promise<boolean> 
   }
 
   // Reservation exists - check if it's expired
-  // @ts-expect-error - Supabase client with placeholder values has type issues during build
+  // @ts-expect-error — Supabase generic inference resolves to never
   const reservation = reservationResult.data
   const reservedAt = new Date(reservation.reserved_at).getTime()
   const now = Date.now()
@@ -120,7 +120,7 @@ export async function isSubdomainAvailable(subdomain: string): Promise<boolean> 
 
   // If installation doesn't exist or hasn't completed deployment, subdomain is available
   // (the expired reservation will be cleaned up when someone reserves it)
-  // @ts-expect-error - Supabase client with placeholder values has type issues during build
+  // @ts-expect-error — Supabase generic inference resolves to never
   if (!installationResult.data || !installationResult.data.deployment_ready) {
     return true
   }
@@ -145,7 +145,7 @@ export async function reserveSubdomain(
   // Insert domain reservation (will fail if subdomain already exists due to PRIMARY KEY)
   const result = await supabase
     .from('domain_reservations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert({
       subdomain: subdomainLower,
       installation_id: installationId,
@@ -153,7 +153,7 @@ export async function reserveSubdomain(
       user_email: userEmail.toLowerCase(),
       user_name: userName,
       reserved_at: reservedAt,
-      status: 'reserved',
+      status: 'reserved' as const,
     })
     .select()
     .single()
@@ -171,7 +171,7 @@ export async function reserveSubdomain(
   // Atomically update installation with subdomain and mark as ready for deployment
   await supabase
     .from('installations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update({
       subdomain: subdomainLower,
       reserved_at: reservedAt,
@@ -247,7 +247,7 @@ export async function checkInstallationDomainStatus(
     return { isExpired: true, isClaimedByOther: false }
   }
 
-  // @ts-expect-error - Supabase client with placeholder values has type issues during build
+  // @ts-expect-error — Supabase generic inference resolves to never
   const reservation = reservationResult.data
 
   // If the reservation belongs to this installation, it's not claimed by another
@@ -269,7 +269,7 @@ export async function checkInstallationDomainStatus(
     .single()
 
   // If the other installation has completed deployment, the domain is permanently claimed
-  // @ts-expect-error - Supabase client with placeholder values has type issues during build
+  // @ts-expect-error — Supabase generic inference resolves to never
   if (installationResult.data?.deployment_ready) {
     return {
       isExpired: true,
@@ -318,7 +318,7 @@ export async function reReserveSubdomain(
   // Insert new domain reservation
   const result = await supabase
     .from('domain_reservations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert({
       subdomain: subdomainLower,
       installation_id: installationId,
@@ -326,7 +326,7 @@ export async function reReserveSubdomain(
       user_email: userEmail.toLowerCase(),
       user_name: userName,
       reserved_at: reservedAt,
-      status: 'reserved',
+      status: 'reserved' as const,
     })
     .select()
     .single()
@@ -343,7 +343,7 @@ export async function reReserveSubdomain(
   // Update installation with new subdomain
   await supabase
     .from('installations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update({
       subdomain: subdomainLower,
       reserved_at: reservedAt,

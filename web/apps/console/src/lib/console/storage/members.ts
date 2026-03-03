@@ -23,7 +23,7 @@ export async function getMemberRole(
     .single()
 
   if (data) {
-    return (data as { role: string }).role as MemberRole
+    return data.role as MemberRole
   }
 
   if (error && error.code !== 'PGRST116') {
@@ -37,7 +37,7 @@ export async function getMemberRole(
     .eq('id', installationId)
     .single()
 
-  if (installationData && (installationData as { user_id: string }).user_id === userId) {
+  if (installationData && installationData.user_id === userId) {
     return 'owner'
   }
 
@@ -93,7 +93,7 @@ export async function getInstallationMembers(
     .eq('id', installationId)
     .single()
 
-  const installation = installationData as { user_id: string; created_at: string } | null
+  const installation = installationData
 
   // Check if owner is already in members list
   const ownerInMembers = members.some(
@@ -183,17 +183,15 @@ export async function addInstallationMember(
     throw new Error('Failed to add member: No data returned')
   }
 
-  const memberData = data as any
-
   return {
-    id: memberData.id,
-    installationId: memberData.installation_id,
-    userId: memberData.user_id,
-    role: memberData.role,
-    addedBy: memberData.added_by,
-    addedAt: memberData.added_at,
-    createdAt: memberData.created_at,
-    updatedAt: memberData.updated_at,
+    id: data.id,
+    installationId: data.installation_id,
+    userId: data.user_id,
+    role: data.role as MemberRole,
+    addedBy: data.added_by,
+    addedAt: data.added_at,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
   }
 }
 

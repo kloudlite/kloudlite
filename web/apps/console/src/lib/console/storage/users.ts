@@ -84,7 +84,7 @@ export async function saveUserRegistration(registration: UserRegistration): Prom
   // Try to insert first
   const { error: insertError } = await supabase
     .from('user_registrations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert(insertData)
 
   // If user already exists (unique constraint violation), update instead
@@ -96,7 +96,7 @@ export async function saveUserRegistration(registration: UserRegistration): Prom
 
     const { error: updateError } = await supabase
       .from('user_registrations')
-      // @ts-expect-error - Supabase client with placeholder values has type issues during build
+      // @ts-expect-error — Supabase generic inference resolves mutations to never
       .update(updateData)
       .eq('user_id', registration.userId)
 

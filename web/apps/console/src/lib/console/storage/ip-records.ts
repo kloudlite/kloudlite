@@ -14,7 +14,7 @@ export async function addOrUpdateIpRecord(
 ): Promise<number> {
   const { error } = await supabase
     .from('ip_records')
-    // @ts-expect-error - Supabase placeholder client type inference issue
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .upsert(
       {
         installation_id: installationId,

@@ -30,11 +30,11 @@ export async function createInvitation(
     .select()
     .single()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (error || !data) {
+    if (error?.code === '23505') {
       throw new Error('User already has a pending invitation')
     }
-    throw new Error(`Failed to create invitation: ${error.message}`)
+    throw new Error(`Failed to create invitation: ${error?.message ?? 'No data returned'}`)
   }
 
   return {
@@ -43,7 +43,7 @@ export async function createInvitation(
     email: data.email,
     role: data.role as Exclude<MemberRole, 'owner'>,
     invitedBy: data.invited_by,
-    status: data.status,
+    status: data.status as InstallationInvitation['status'],
     expiresAt: data.expires_at,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
@@ -146,19 +146,17 @@ export async function acceptInvitation(
     throw new Error('Invitation not found')
   }
 
-  const invData = invitation as any
-
   // Check if expired
-  if (new Date(invData.expires_at) < new Date()) {
+  if (new Date(invitation.expires_at) < new Date()) {
     throw new Error('Invitation has expired')
   }
 
   // Add member
   const member = await addInstallationMember(
-    invData.installation_id,
+    invitation.installation_id,
     userId,
-    invData.role,
-    invData.invited_by
+    invitation.role as Exclude<MemberRole, 'owner'>,
+    invitation.invited_by
   )
 
   // Mark invitation as accepted

@@ -69,6 +69,18 @@ export type Database = {
           last_health_check: string | null
           cloud_provider: 'aws' | 'gcp' | 'azure' | 'oci' | null
           cloud_location: string | null
+          aca_job_execution_name: string | null
+          aca_job_status: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
+          aca_job_started_at: string | null
+          aca_job_completed_at: string | null
+          aca_job_error: string | null
+          aca_job_operation: 'install' | 'uninstall' | null
+          aca_job_current_step: number | null
+          aca_job_total_steps: number | null
+          aca_job_step_description: string | null
+          root_dns_target: string | null
+          root_dns_type: 'cname' | 'a' | null
+          root_dns_record_id: string | null
           created_at: string
           updated_at: string
         }
@@ -86,6 +98,18 @@ export type Database = {
           last_health_check?: string | null
           cloud_provider?: 'aws' | 'gcp' | 'azure' | 'oci' | null
           cloud_location?: string | null
+          aca_job_execution_name?: string | null
+          aca_job_status?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
+          aca_job_started_at?: string | null
+          aca_job_completed_at?: string | null
+          aca_job_error?: string | null
+          aca_job_operation?: 'install' | 'uninstall' | null
+          aca_job_current_step?: number | null
+          aca_job_total_steps?: number | null
+          aca_job_step_description?: string | null
+          root_dns_target?: string | null
+          root_dns_type?: 'cname' | 'a' | null
+          root_dns_record_id?: string | null
         }
         Update: {
           user_id?: string
@@ -100,6 +124,18 @@ export type Database = {
           last_health_check?: string | null
           cloud_provider?: 'aws' | 'gcp' | 'azure' | 'oci' | null
           cloud_location?: string | null
+          aca_job_execution_name?: string | null
+          aca_job_status?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
+          aca_job_started_at?: string | null
+          aca_job_completed_at?: string | null
+          aca_job_error?: string | null
+          aca_job_operation?: 'install' | 'uninstall' | null
+          aca_job_current_step?: number | null
+          aca_job_total_steps?: number | null
+          aca_job_step_description?: string | null
+          root_dns_target?: string | null
+          root_dns_type?: 'cname' | 'a' | null
+          root_dns_record_id?: string | null
         }
       }
       ip_records: {
@@ -367,6 +403,35 @@ export type Database = {
           billing_start?: string | null
           billing_end?: string | null
           paid_at?: string | null
+        }
+      }
+      renewal_jobs: {
+        Row: {
+          id: string
+          installation_id: string
+          job_type: 'renewal' | 'expire'
+          scheduled_at: string
+          status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          attempts: number
+          last_error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          installation_id: string
+          job_type: 'renewal' | 'expire'
+          scheduled_at: string
+          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          attempts?: number
+          last_error?: string | null
+        }
+        Update: {
+          job_type?: 'renewal' | 'expire'
+          scheduled_at?: string
+          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          attempts?: number
+          last_error?: string | null
         }
       }
       processed_webhook_events: {
