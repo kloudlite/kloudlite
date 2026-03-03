@@ -41,15 +41,15 @@ export async function getInstallationById(installationId: string): Promise<Insta
     lastHealthCheck: data.last_health_check || undefined,
     cloudProvider: data.cloud_provider || undefined,
     cloudLocation: data.cloud_location || undefined,
-    acaJobExecutionName: (data as any).aca_job_execution_name || undefined,
-    acaJobStatus: (data as any).aca_job_status || undefined,
-    acaJobStartedAt: (data as any).aca_job_started_at || undefined,
-    acaJobCompletedAt: (data as any).aca_job_completed_at || undefined,
-    acaJobError: (data as any).aca_job_error || undefined,
-    acaJobOperation: (data as any).aca_job_operation || undefined,
-    acaJobCurrentStep: (data as any).aca_job_current_step ?? undefined,
-    acaJobTotalSteps: (data as any).aca_job_total_steps ?? undefined,
-    acaJobStepDescription: (data as any).aca_job_step_description || undefined,
+    acaJobExecutionName: data.aca_job_execution_name || undefined,
+    acaJobStatus: data.aca_job_status || undefined,
+    acaJobStartedAt: data.aca_job_started_at || undefined,
+    acaJobCompletedAt: data.aca_job_completed_at || undefined,
+    acaJobError: data.aca_job_error || undefined,
+    acaJobOperation: data.aca_job_operation || undefined,
+    acaJobCurrentStep: data.aca_job_current_step ?? undefined,
+    acaJobTotalSteps: data.aca_job_total_steps ?? undefined,
+    acaJobStepDescription: data.aca_job_step_description || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     ipRecords:
@@ -137,7 +137,7 @@ export async function getUserInstallations(userId: string): Promise<Installation
     console.error('Error getting member installations:', memberResult.error)
   }
 
-  const memberInstallationIds = (memberResult.data || []).map((m: any) => m.installation_id)
+  const memberInstallationIds = (memberResult.data || []).map((m: { installation_id: string }) => m.installation_id)
 
   // Get owned installation IDs
   const ownedIds = new Set(ownedInstallations.map((i) => i.id))
@@ -183,15 +183,15 @@ export async function getUserInstallations(userId: string): Promise<Installation
         lastHealthCheck: inst.last_health_check || undefined,
         cloudProvider: inst.cloud_provider || undefined,
         cloudLocation: inst.cloud_location || undefined,
-        acaJobExecutionName: (inst as any).aca_job_execution_name || undefined,
-        acaJobStatus: (inst as any).aca_job_status || undefined,
-        acaJobStartedAt: (inst as any).aca_job_started_at || undefined,
-        acaJobCompletedAt: (inst as any).aca_job_completed_at || undefined,
-        acaJobError: (inst as any).aca_job_error || undefined,
-        acaJobOperation: (inst as any).aca_job_operation || undefined,
-        acaJobCurrentStep: (inst as any).aca_job_current_step ?? undefined,
-        acaJobTotalSteps: (inst as any).aca_job_total_steps ?? undefined,
-        acaJobStepDescription: (inst as any).aca_job_step_description || undefined,
+        acaJobExecutionName: inst.aca_job_execution_name || undefined,
+        acaJobStatus: inst.aca_job_status || undefined,
+        acaJobStartedAt: inst.aca_job_started_at || undefined,
+        acaJobCompletedAt: inst.aca_job_completed_at || undefined,
+        acaJobError: inst.aca_job_error || undefined,
+        acaJobOperation: inst.aca_job_operation || undefined,
+        acaJobCurrentStep: inst.aca_job_current_step ?? undefined,
+        acaJobTotalSteps: inst.aca_job_total_steps ?? undefined,
+        acaJobStepDescription: inst.aca_job_step_description || undefined,
         createdAt: inst.created_at,
         updatedAt: inst.updated_at,
         ipRecords:
@@ -287,7 +287,7 @@ export async function createInstallation(
 
   const result = await supabase
     .from('installations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert(insertData)
     .select()
     .single()
@@ -300,12 +300,13 @@ export async function createInstallation(
   const data = result.data as InstallationRow
 
   // Add the creator as owner in installation_members
-  const memberResult = await (supabase as any)
+  const memberResult = await supabase
     .from('installation_members')
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert({
       installation_id: data.id,
       user_id: userId,
-      role: 'owner',
+      role: 'owner' as const,
       added_by: userId,
     })
 
@@ -356,34 +357,29 @@ export async function updateInstallation(
     updateData.cloud_provider = updates.cloudProvider || null
   if (updates.cloudLocation !== undefined)
     updateData.cloud_location = updates.cloudLocation || null
-
-  // ACA Job fields (cast to any since these columns may not be in generated types yet)
-  const extraUpdates: Record<string, unknown> = {}
   if (updates.acaJobExecutionName !== undefined)
-    extraUpdates.aca_job_execution_name = updates.acaJobExecutionName || null
+    updateData.aca_job_execution_name = updates.acaJobExecutionName || null
   if (updates.acaJobStatus !== undefined)
-    extraUpdates.aca_job_status = updates.acaJobStatus || null
+    updateData.aca_job_status = updates.acaJobStatus || null
   if (updates.acaJobStartedAt !== undefined)
-    extraUpdates.aca_job_started_at = updates.acaJobStartedAt || null
+    updateData.aca_job_started_at = updates.acaJobStartedAt || null
   if (updates.acaJobCompletedAt !== undefined)
-    extraUpdates.aca_job_completed_at = updates.acaJobCompletedAt || null
+    updateData.aca_job_completed_at = updates.acaJobCompletedAt || null
   if (updates.acaJobError !== undefined)
-    extraUpdates.aca_job_error = updates.acaJobError || null
+    updateData.aca_job_error = updates.acaJobError || null
   if (updates.acaJobOperation !== undefined)
-    extraUpdates.aca_job_operation = updates.acaJobOperation || null
+    updateData.aca_job_operation = updates.acaJobOperation || null
   if (updates.acaJobCurrentStep !== undefined)
-    extraUpdates.aca_job_current_step = updates.acaJobCurrentStep ?? null
+    updateData.aca_job_current_step = updates.acaJobCurrentStep ?? null
   if (updates.acaJobTotalSteps !== undefined)
-    extraUpdates.aca_job_total_steps = updates.acaJobTotalSteps ?? null
+    updateData.aca_job_total_steps = updates.acaJobTotalSteps ?? null
   if (updates.acaJobStepDescription !== undefined)
-    extraUpdates.aca_job_step_description = updates.acaJobStepDescription || null
-
-  const mergedUpdateData = { ...updateData, ...extraUpdates }
+    updateData.aca_job_step_description = updates.acaJobStepDescription || null
 
   const { error } = await supabase
     .from('installations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .update(mergedUpdateData)
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
+    .update(updateData)
     .eq('id', installationId)
 
   if (error) {
@@ -464,16 +460,16 @@ export async function updateInstallationRootDns(
   type: 'cname' | 'a',
   recordId: string,
 ): Promise<void> {
-  const updateData = {
+  type InstallationUpdate = Database['public']['Tables']['installations']['Update']
+  const updateData: InstallationUpdate = {
     root_dns_target: target,
     root_dns_type: type,
     root_dns_record_id: recordId,
-    updated_at: new Date().toISOString(),
   }
 
   const { error } = await supabase
     .from('installations')
-    // @ts-expect-error - These columns exist in DB but not in generated types
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('id', installationId)
 
@@ -488,7 +484,7 @@ export async function updateInstallationRootDns(
 export async function resetInstallation(installationId: string): Promise<void> {
   const { error } = await supabase
     .from('installations')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update({
       subdomain: null,
       reserved_at: null,

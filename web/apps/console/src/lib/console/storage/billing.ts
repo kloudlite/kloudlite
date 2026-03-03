@@ -124,7 +124,7 @@ export async function createSubscription(data: {
   }
   const result = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert(insertData)
     .select()
     .single()
@@ -146,7 +146,7 @@ export async function updateSubscriptionStatus(
   if (periodEnd) updateData.current_end = periodEnd
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('razorpay_subscription_id', razorpaySubscriptionId)
   if (error) {
@@ -167,7 +167,7 @@ export async function activateSubscriptionsByInstallation(
   }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('installation_id', installationId)
     .eq('status', 'created')
@@ -183,7 +183,7 @@ export async function cancelSubscriptionsByInstallation(
   const updateData: Update = { status: 'cancelled' }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('installation_id', installationId)
     .in('status', ['created', 'authenticated', 'active', 'paused'])
@@ -300,7 +300,7 @@ export async function extendSubscriptionPeriod(
   }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('installation_id', installationId)
     .eq('status', 'active')
@@ -321,7 +321,7 @@ export async function updateInvoiceStatus(
   if (paidAt) updateData.paid_at = paidAt
   const { error } = await supabase
     .from('invoices')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('razorpay_invoice_id', razorpayInvoiceId)
   if (error) {
@@ -351,19 +351,19 @@ export async function scheduleRenewalJobs(
 
   const { error } = await supabase
     .from('renewal_jobs')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert([
       {
         installation_id: installationId,
-        job_type: 'renewal',
+        job_type: 'renewal' as const,
         scheduled_at: renewalAt,
-        status: 'pending',
+        status: 'pending' as const,
       },
       {
         installation_id: installationId,
-        job_type: 'expire',
+        job_type: 'expire' as const,
         scheduled_at: expireAt,
-        status: 'pending',
+        status: 'pending' as const,
       },
     ])
 
@@ -375,8 +375,8 @@ export async function scheduleRenewalJobs(
 export async function cancelRenewalJobs(installationId: string): Promise<void> {
   const { error } = await supabase
     .from('renewal_jobs')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .update({ status: 'cancelled' })
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
+    .update({ status: 'cancelled' as const })
     .eq('installation_id', installationId)
     .eq('status', 'pending')
 
@@ -393,7 +393,7 @@ export async function updateSubscriptionQuantity(
   const updateData: Update = { quantity: newQuantity }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('id', subscriptionId)
   if (error) {
@@ -410,7 +410,7 @@ export async function updateSubscriptionPeriod(
   const updateData: Update = { billing_period: billingPeriod, current_end: currentEnd }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('id', subscriptionId)
   if (error) {
@@ -440,7 +440,7 @@ export async function upsertActiveSubscription(data: {
   }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .upsert(insertData, { onConflict: 'installation_id,plan_id' })
   if (error) {
     throw new Error(`Failed to upsert active subscription: ${error.message}`)
@@ -474,7 +474,7 @@ export async function upsertInvoice(data: {
   }
   const { error } = await supabase
     .from('invoices')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .upsert(insertData, { onConflict: 'razorpay_invoice_id' })
   if (error) {
     throw new Error(`Failed to upsert invoice: ${error.message}`)
@@ -489,7 +489,7 @@ export async function setScheduledBillingPeriod(
   const updateData: Update = { scheduled_billing_period: period }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('id', subscriptionId)
   if (error) {
@@ -504,7 +504,7 @@ export async function clearScheduledBillingPeriod(
   const updateData: Update = { scheduled_billing_period: null }
   const { error } = await supabase
     .from('subscriptions')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
     .eq('installation_id', installationId)
     .eq('status', 'active')
@@ -539,7 +539,7 @@ export async function markWebhookEventProcessed(
   }
   const { error } = await supabase
     .from('processed_webhook_events')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
+    // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert(insertData)
   if (error) {
     console.error('Failed to mark webhook event as processed:', error.message)
