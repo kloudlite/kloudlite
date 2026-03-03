@@ -6,6 +6,7 @@ import { Loader2, Minus, Plus } from 'lucide-react'
 import { cn } from '@kloudlite/lib'
 import { previewModification } from '@/app/actions/billing'
 import { getCurrencySymbol } from '@/lib/billing-utils'
+import { getErrorMessage } from '@/lib/errors'
 import type { Plan } from '@/lib/console/storage'
 
 type BillingPeriod = 'monthly' | 'annual'
@@ -92,7 +93,7 @@ export function SubscriptionConfigurator({
       })
     } catch (err) {
       setProration(null)
-      setPreviewError(err instanceof Error ? err.message : 'Failed to calculate proration')
+      setPreviewError(getErrorMessage(err, 'Failed to calculate proration'))
     } finally {
       setPreviewLoading(false)
     }

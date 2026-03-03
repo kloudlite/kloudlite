@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 import {
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     const token = cookieStore.get('registration_session')?.value
 
     if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      return apiError('Not authenticated', 401)
     }
 
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     const sessionInstallationKey = payload.installationKey as string | undefined
 
     if (!userEmail || !userId) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+      return apiError('Invalid session', 401)
     }
 
     // Get subdomain from request body
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     const { subdomain } = body
 
     if (!subdomain) {
-      return NextResponse.json({ error: 'Subdomain is required' }, { status: 400 })
+      return apiError('Subdomain is required', 400)
     }
 
     // Determine which installation to use
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
       // Use the installation from session
       const installation = installations.find((i) => i.installationKey === sessionInstallationKey)
       if (!installation) {
-        return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+        return apiError('Installation not found', 404)
       }
       installationId = installation.id
     } else {
@@ -98,9 +99,9 @@ export async function POST(request: NextRequest) {
       error.message === 'Subdomain is not available' ||
       error.message === 'Subdomain is already reserved'
     ) {
-      return NextResponse.json({ error: 'Subdomain is not available' }, { status: 409 })
+      return apiError('Subdomain is not available', 409)
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return apiError('Internal server error', 500)
   }
 }

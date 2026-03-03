@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import {
   getInstallationByKey,
   deleteIpRecords,
@@ -25,10 +26,7 @@ export async function POST(request: NextRequest) {
     // Extract and validate bearer token
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 },
-      )
+      return apiError('Missing or invalid authorization header', 401)
     }
 
     const secretKey = authHeader.substring(7) // Remove "Bearer " prefix
@@ -37,19 +35,19 @@ export async function POST(request: NextRequest) {
     const { installationKey } = body
 
     if (!installationKey) {
-      return NextResponse.json({ error: 'Installation key is required' }, { status: 400 })
+      return apiError('Installation key is required', 400)
     }
 
     // Look up installation by installation key
     const installation = await getInstallationByKey(installationKey)
 
     if (!installation) {
-      return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
+      return apiError('Invalid installation key', 404)
     }
 
     // Verify secret key matches
     if (installation.secretKey !== secretKey) {
-      return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
+      return apiError('Invalid secret key', 403)
     }
 
     console.log(`Starting uninstall for installation: ${installation.id}`)
@@ -100,6 +98,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Uninstall error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return apiError('Internal server error', 500)
   }
 }

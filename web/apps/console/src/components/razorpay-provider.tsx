@@ -2,6 +2,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => {
+      open(): void
+      on(event: string, handler: (resp: Record<string, unknown>) => void): void
+    }
+  }
+}
+
 interface RazorpayCheckoutOptions {
   key?: string
   subscription_id?: string
@@ -37,7 +46,7 @@ export function RazorpayProvider({ children }: { children: React.ReactNode }) {
     scriptRef.current = true
 
     // Already loaded (e.g. HMR)
-    if ((window as any).Razorpay) {
+    if (window.Razorpay) {
       setIsLoaded(true)
       return
     }
@@ -55,7 +64,7 @@ export function RazorpayProvider({ children }: { children: React.ReactNode }) {
 
   const openCheckout = useCallback(
     (options: RazorpayCheckoutOptions) => {
-      const RazorpayClass = (window as any).Razorpay
+      const RazorpayClass = window.Razorpay
       if (!RazorpayClass) {
         throw new Error('Razorpay checkout not loaded')
       }
@@ -71,7 +80,7 @@ export function RazorpayProvider({ children }: { children: React.ReactNode }) {
 
       const rzp = new RazorpayClass(options)
 
-      rzp.on('payment.failed', (resp: any) => {
+      rzp.on('payment.failed', (resp: Record<string, unknown>) => {
         console.error('[Razorpay] payment.failed event:', resp?.error)
       })
 

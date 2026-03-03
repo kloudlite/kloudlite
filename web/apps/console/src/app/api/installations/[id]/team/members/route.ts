@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiCatchError } from '@/lib/api-helpers'
 import { requireInstallationAccess } from '@/lib/console/authorization'
 import { getInstallationMembers } from '@/lib/console/storage'
 
@@ -18,8 +19,6 @@ export async function GET(
 
     return NextResponse.json({ members })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to get members'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Failed to get members')
   }
 }

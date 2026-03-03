@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireManagePermission } from '@/lib/console/authorization'
 import {
   removeInstallationMember,
@@ -22,16 +23,14 @@ export async function PATCH(
     const { role } = body as { role: MemberRole }
 
     if (!role || !['owner', 'admin', 'member', 'viewer'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+      return apiError('Invalid role', 400)
     }
 
     await updateMemberRole(memberId, role)
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to update member'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Failed to update member')
   }
 }
 
@@ -51,8 +50,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to remove member'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Failed to remove member')
   }
 }

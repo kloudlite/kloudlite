@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireOwnerPermission } from '@/lib/console/authorization'
 import { getInstallationById, updateInstallation, getSubscriptionsByInstallation } from '@/lib/console/storage'
 import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
@@ -13,21 +14,18 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     const installation = await getInstallationById(id)
     if (!installation) {
-      return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+      return apiError('Installation not found', 404)
     }
 
     // Require at least one active subscription for this installation
     const subs = await getSubscriptionsByInstallation(id)
     const hasActive = subs.some((s) => ['active', 'authenticated'].includes(s.status))
     if (!hasActive) {
-      return NextResponse.json(
-        { error: 'Active subscription required to deploy Kloudlite Cloud' },
-        { status: 403 },
-      )
+      return apiError('Active subscription required to deploy Kloudlite Cloud', 403)
     }
 
     if (!installation.subdomain) {
-      return NextResponse.json({ error: 'No subdomain configured' }, { status: 400 })
+      return apiError('No subdomain configured', 400)
     }
 
     // If a job is already running and not stale, return existing execution
@@ -52,7 +50,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (!ociTenancy || !ociUser || !ociRegion || !ociFingerprint || !ociPrivateKey) {
       console.error('Missing KLOUDLITE_OCI_* env vars for managed install')
-      return NextResponse.json({ error: 'Kloudlite Cloud is not configured on this server' }, { status: 500 })
+      return apiError('Kloudlite Cloud is not configured on this server', 500)
     }
 
     const result = await triggerOCIInstallerJob({
@@ -84,8 +82,6 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ success: true, executionName: result.executionName })
   } catch (error) {
     console.error('Error triggering managed install:', error)
-    const message = error instanceof Error ? error.message : 'Failed to trigger install'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Failed to trigger install')
   }
 }

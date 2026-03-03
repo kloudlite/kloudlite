@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { isSubdomainAvailable } from '@/lib/console/storage'
 
 /**
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
     const subdomain = searchParams.get('subdomain')
 
     if (!subdomain) {
-      return NextResponse.json({ error: 'Subdomain is required' }, { status: 400 })
+      return apiError('Subdomain is required', 400)
     }
 
     const available = await isSubdomainAvailable(subdomain)
@@ -28,6 +29,6 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Check subdomain error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return apiError('Internal server error', 500)
   }
 }

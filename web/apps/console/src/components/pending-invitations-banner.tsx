@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import { Mail, X } from 'lucide-react'
+import { toast } from 'sonner'
 import type { InstallationInvitation } from '@/lib/console/storage'
 
 export function PendingInvitationsBanner() {
+  const router = useRouter()
   const [invitations, setInvitations] = useState<InstallationInvitation[]>([])
   const [loading, setLoading] = useState(true)
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
@@ -33,10 +36,10 @@ export function PendingInvitationsBanner() {
       })
 
       if (response.ok) {
-        window.location.href = '/installations'
+        router.push('/installations')
       }
-    } catch (error) {
-      alert('Failed to accept invitation')
+    } catch {
+      toast.error('Failed to accept invitation')
     }
   }
 
@@ -49,8 +52,8 @@ export function PendingInvitationsBanner() {
       if (response.ok) {
         setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId))
       }
-    } catch (error) {
-      alert('Failed to reject invitation')
+    } catch {
+      toast.error('Failed to reject invitation')
     }
   }
 

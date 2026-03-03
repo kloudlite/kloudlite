@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { apiError } from '@/lib/api-helpers'
 import {
   getSubscriptionByRazorpayId,
   getInvoiceByPaymentId,
@@ -21,30 +22,30 @@ export async function POST(request: Request) {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET
   if (!secret) {
     console.error('RAZORPAY_WEBHOOK_SECRET not configured')
-    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+    return apiError('Webhook secret not configured', 500)
   }
 
   const body = await request.text()
   const signature = request.headers.get('x-razorpay-signature')
 
   if (!signature) {
-    return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+    return apiError('Missing signature', 401)
   }
 
   // Verify HMAC signature using timing-safe comparison
   try {
     if (!verifyWebhookSignature(body, signature, secret)) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      return apiError('Invalid signature', 401)
     }
   } catch {
-    return NextResponse.json({ error: 'Invalid signature format' }, { status: 401 })
+    return apiError('Invalid signature format', 401)
   }
 
   let event: Record<string, unknown>
   try {
     event = JSON.parse(body)
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    return apiError('Invalid JSON body', 400)
   }
 
   const eventType = event.event as string
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Razorpay webhook payloads are untyped — fields accessed as string/number below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload = event.payload as any
 
@@ -149,6 +151,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ status: 'ok' })
   } catch (error) {
     console.error('Webhook processing error:', { eventType, error })
-    return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
+    return apiError('Processing failed', 500)
   }
 }

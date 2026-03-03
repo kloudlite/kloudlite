@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { createInstallation, cleanupExpiredInstallations, updateInstallation } from '@/lib/console/storage'
 import { SignJWT } from 'jose'
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
     const session = await getRegistrationSession()
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      return apiError('Not authenticated', 401)
     }
 
     // Cleanup any expired installations for this user before creating a new one
@@ -28,17 +29,17 @@ export async function POST(request: Request) {
     const { name, description, subdomain, hostingType } = body
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return NextResponse.json({ error: 'Installation name is required' }, { status: 400 })
+      return apiError('Installation name is required', 400)
     }
 
     if (!subdomain || typeof subdomain !== 'string' || subdomain.trim().length === 0) {
-      return NextResponse.json({ error: 'Subdomain is required' }, { status: 400 })
+      return apiError('Subdomain is required', 400)
     }
 
     // Validate subdomain format
     const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
     if (!subdomainRegex.test(subdomain.trim())) {
-      return NextResponse.json({ error: 'Invalid subdomain format' }, { status: 400 })
+      return apiError('Invalid subdomain format', 400)
     }
 
     // Generate a new installation key
@@ -92,6 +93,6 @@ export async function POST(request: Request) {
     return response
   } catch (error) {
     console.error('Error creating installation:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return apiError('Internal server error', 500)
   }
 }

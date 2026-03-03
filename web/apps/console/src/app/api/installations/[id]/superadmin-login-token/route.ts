@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, randomBytes } from 'crypto'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireInstallationAccess } from '@/lib/console/authorization'
 import { getInstallationById } from '@/lib/console/storage'
 
@@ -38,19 +39,13 @@ export async function POST(
     const installation = await getInstallationById(installationId)
 
     if (!installation) {
-      return NextResponse.json(
-        { error: 'Installation not found' },
-        { status: 404 }
-      )
+      return apiError('Installation not found', 404)
     }
 
     // Use installation secret as signing key
     const installationSecret = installation.secretKey
     if (!installationSecret) {
-      return NextResponse.json(
-        { error: 'Installation secret not available - complete installation first' },
-        { status: 400 }
-      )
+      return apiError('Installation secret not available - complete installation first', 400)
     }
 
     // Generate token payload
@@ -78,10 +73,7 @@ export async function POST(
 
     // Construct login URL pointing to installation dashboard
     if (!installation.subdomain) {
-      return NextResponse.json(
-        { error: 'Installation subdomain not configured' },
-        { status: 400 }
-      )
+      return apiError('Installation subdomain not configured', 400)
     }
 
     const domain = process.env.CLOUDFLARE_DNS_DOMAIN || 'khost.dev'
@@ -95,8 +87,6 @@ export async function POST(
     })
   } catch (error) {
     console.error('Error generating superadmin login token:', error)
-    const message = error instanceof Error ? error.message : 'Internal server error'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Internal server error')
   }
 }

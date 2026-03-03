@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button, Input } from '@kloudlite/ui'
 import {
   Dialog,
@@ -19,12 +20,14 @@ import {
   SelectValue,
 } from '@kloudlite/ui'
 import { UserPlus } from 'lucide-react'
+import { getErrorMessage } from '@/lib/errors'
 
 interface InviteMemberButtonProps {
   installationId: string
 }
 
 export function InviteMemberButton({ installationId }: InviteMemberButtonProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'admin' | 'member' | 'viewer'>('member')
@@ -53,10 +56,10 @@ export function InviteMemberButton({ installationId }: InviteMemberButtonProps) 
       setRole('member')
       setOpen(false)
 
-      // Reload to show new invitation
-      window.location.reload()
+      // Refresh to show new invitation
+      router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send invitation')
+      setError(getErrorMessage(err, 'Failed to send invitation'))
     } finally {
       setLoading(false)
     }

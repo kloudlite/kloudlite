@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
+import { getErrorMessage } from '@/lib/errors'
 import {
   requireManagePermission,
   requireInstallationAccess,
@@ -26,9 +28,7 @@ export async function GET(
 
     return NextResponse.json({ invitations })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to get invitations'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Failed to get invitations')
   }
 }
 
@@ -48,10 +48,7 @@ export async function POST(
     const { email, role } = body as { email: string; role: Exclude<MemberRole, 'owner'> }
 
     if (!email || !role) {
-      return NextResponse.json(
-        { error: 'Email and role are required' },
-        { status: 400 }
-      )
+      return apiError('Email and role are required', 400)
     }
 
     // Check if user already exists and is a member
@@ -65,7 +62,7 @@ export async function POST(
 
     return NextResponse.json({ invitation })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to create invitation'
+    const message = getErrorMessage(error, 'Failed to create invitation')
     const status = message.includes('Unauthorized')
       ? 401
       : message.includes('Forbidden')
@@ -73,6 +70,6 @@ export async function POST(
         : message.includes('already has')
           ? 409
           : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiError(message, status)
   }
 }

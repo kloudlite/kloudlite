@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getInstallationById, getMemberRole } from '@/lib/console/storage'
 import { SignJWT } from 'jose'
@@ -12,14 +13,14 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   // Fetch the installation
   const installation = await getInstallationById(id)
 
   if (!installation) {
-    return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+    return apiError('Installation not found', 404)
   }
 
   // Check if user has access to this installation (owner or team member)
@@ -34,7 +35,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   })
 
   if (!isOwner && !userRole) {
-    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    return apiError('Access denied', 403)
   }
 
   // Update session cookie with this installation's key

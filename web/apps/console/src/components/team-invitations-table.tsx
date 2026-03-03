@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import {
   AlertDialog,
@@ -13,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@kloudlite/ui'
 import { X } from 'lucide-react'
+import { toast } from 'sonner'
 import type { InstallationInvitation } from '@/lib/console/storage'
 
 interface TeamInvitationsTableProps {
@@ -24,6 +26,7 @@ export function TeamInvitationsTable({
   invitations,
   installationId,
 }: TeamInvitationsTableProps) {
+  const router = useRouter()
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [invitationToCancel, setInvitationToCancel] = useState<{ id: string; email: string } | null>(null)
 
@@ -39,9 +42,9 @@ export function TeamInvitationsTable({
 
       if (!response.ok) throw new Error('Failed to cancel invitation')
 
-      window.location.reload()
-    } catch (error) {
-      alert('Failed to cancel invitation')
+      router.refresh()
+    } catch {
+      toast.error('Failed to cancel invitation')
     } finally {
       setCancelingId(null)
       setInvitationToCancel(null)

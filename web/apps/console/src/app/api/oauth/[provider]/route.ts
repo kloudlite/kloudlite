@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 
 // OAuth configuration for console app
 const OAUTH_CONFIGS = {
@@ -28,7 +29,7 @@ export async function GET(
   const config = OAUTH_CONFIGS[provider]
 
   if (!config) {
-    return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
+    return apiError('Invalid provider', 400)
   }
 
   const redirectUri = `${process.env.NEXTAUTH_URL}/api/oauth/callback/${provider}`

@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@kloudlite/ui'
 import Turnstile from 'react-turnstile'
+import { getErrorMessage } from '@/lib/errors'
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -79,7 +80,7 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
       setSuccess(true)
       onSuccess?.()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setError(getErrorMessage(err, 'Something went wrong'))
       // Reset captcha on error
       setCaptchaToken(null)
       setTurnstileKey(prev => prev + 1)
