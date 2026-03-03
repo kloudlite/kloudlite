@@ -240,7 +240,7 @@ export function MagicLinkForm({ siteKey, onSuccess }: MagicLinkFormProps) {
 
       <div className="space-y-2">
         <p className="text-xs text-center text-muted-foreground">
-          We'll send you a link to sign in without a password
+          We&apos;ll send you a link to sign in without a password
         </p>
         {process.env.NODE_ENV === 'development' && (
           <p className="text-xs text-center text-warning/80">

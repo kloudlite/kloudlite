@@ -1,5 +1,6 @@
 'use client'
 
+import type React from 'react'
 import { useState } from 'react'
 import { Button } from '@kloudlite/ui'
 import {
@@ -32,7 +33,7 @@ interface TeamMembersTableProps {
   installationId: string
 }
 
-const roleIcons: Record<MemberRole, any> = {
+const roleIcons: Record<MemberRole, React.ComponentType<{ className?: string }>> = {
   owner: Shield,
   admin: Shield,
   member: User,

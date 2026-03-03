@@ -21,7 +21,7 @@ export async function POST(
   try {
     await rejectInvitation(invitationId)
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (_error) {
     return apiError('Failed to reject invitation', 500)
   }
 }

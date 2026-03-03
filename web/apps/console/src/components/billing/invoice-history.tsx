@@ -40,6 +40,13 @@ function sortInvoices(invoices: Invoice[], column: SortColumn, direction: SortDi
   })
 }
 
+function SortIcon({ column, sortColumn, sortDirection }: { column: SortColumn; sortColumn: SortColumn; sortDirection: SortDirection }) {
+  if (sortColumn !== column) return <ArrowUpDown className="h-3 w-3 opacity-40" />
+  return sortDirection === 'asc'
+    ? <ArrowUp className="h-3 w-3" />
+    : <ArrowDown className="h-3 w-3" />
+}
+
 export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
@@ -57,13 +64,6 @@ export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
     }
   }
 
-  const SortIcon = ({ column }: { column: SortColumn }) => {
-    if (sortColumn !== column) return <ArrowUpDown className="h-3 w-3 opacity-40" />
-    return sortDirection === 'asc'
-      ? <ArrowUp className="h-3 w-3" />
-      : <ArrowDown className="h-3 w-3" />
-  }
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -74,7 +74,7 @@ export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
               onClick={() => toggleSort('date')}
             >
               <span className="inline-flex items-center gap-1">
-                Date <SortIcon column="date" />
+                Date <SortIcon column="date" sortColumn={sortColumn} sortDirection={sortDirection} />
               </span>
             </th>
             <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Period</th>
@@ -83,7 +83,7 @@ export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
               onClick={() => toggleSort('amount')}
             >
               <span className="inline-flex items-center justify-end gap-1">
-                Amount <SortIcon column="amount" />
+                Amount <SortIcon column="amount" sortColumn={sortColumn} sortDirection={sortDirection} />
               </span>
             </th>
             <th
@@ -91,7 +91,7 @@ export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
               onClick={() => toggleSort('status')}
             >
               <span className="inline-flex items-center justify-end gap-1">
-                Status <SortIcon column="status" />
+                Status <SortIcon column="status" sortColumn={sortColumn} sortDirection={sortDirection} />
               </span>
             </th>
           </tr>

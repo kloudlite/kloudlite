@@ -1,6 +1,7 @@
 /**
  * Team Member Management
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from '../supabase'
 import type { MemberRole, InstallationMember } from './types'
