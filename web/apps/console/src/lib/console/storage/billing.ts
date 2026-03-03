@@ -79,17 +79,6 @@ export async function getPlanById(planId: string): Promise<Plan | null> {
   return mapToPlan(data as PlanRow)
 }
 
-export async function updatePlanRazorpayId(planId: string, razorpayPlanId: string): Promise<void> {
-  const { error } = await supabase
-    .from('subscription_plans')
-    // @ts-expect-error - Supabase client with placeholder values has type issues during build
-    .update({ razorpay_plan_id: razorpayPlanId })
-    .eq('id', planId)
-  if (error) {
-    throw new Error(`Failed to update plan razorpay_plan_id: ${error.message}`)
-  }
-}
-
 export async function getSubscriptionByInstallation(installationId: string): Promise<Subscription | null> {
   const subs = await getSubscriptionsByInstallation(installationId)
   return subs[0] || null
