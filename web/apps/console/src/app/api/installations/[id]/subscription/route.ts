@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
 import {
   getSubscriptionsByInstallation,
@@ -15,7 +16,7 @@ export async function GET(
 ) {
   const session = await getRegistrationSession()
   if (!session?.user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    return apiError('Not authenticated', 401)
   }
 
   const { id } = await params
@@ -24,7 +25,7 @@ export async function GET(
   const role = await getMemberRole(id, session.user.id)
   const installation = await getInstallationById(id)
   if (!role && installation?.userId !== session.user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return apiError('Forbidden', 403)
   }
 
   const [subscriptions, plans] = await Promise.all([

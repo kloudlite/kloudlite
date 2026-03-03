@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { rejectInvitation } from '@/lib/console/storage'
 
@@ -14,13 +15,13 @@ export async function POST(
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   try {
     await rejectInvitation(invitationId)
     return NextResponse.json({ success: true })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to reject invitation' }, { status: 500 })
+    return apiError('Failed to reject invitation', 500)
   }
 }

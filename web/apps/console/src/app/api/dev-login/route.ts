@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 import { saveUserRegistration, getUserByEmail } from '@/lib/console/storage'
@@ -12,7 +13,7 @@ export const runtime = 'nodejs'
 export async function GET() {
   // Only allow in development
   if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not available in production' }, { status: 403 })
+    return apiError('Not available in production', 403)
   }
 
   const devUser = {

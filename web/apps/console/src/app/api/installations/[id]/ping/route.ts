@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getInstallationById } from '@/lib/console/storage'
 import dns from 'node:dns'
@@ -64,7 +65,7 @@ export async function GET(
     const session = await getRegistrationSession()
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      return apiError('Not authenticated', 401)
     }
 
     const { id } = await params
@@ -73,12 +74,12 @@ export async function GET(
     const installation = await getInstallationById(id)
 
     if (!installation) {
-      return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+      return apiError('Installation not found', 404)
     }
 
     // Verify ownership
     if (installation.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+      return apiError('Unauthorized', 403)
     }
 
     // Check if installation has a valid subdomain and is deployment ready
@@ -170,6 +171,6 @@ export async function GET(
     }
   } catch (error) {
     console.error('Error in ping endpoint:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return apiError('Internal server error', 500)
   }
 }

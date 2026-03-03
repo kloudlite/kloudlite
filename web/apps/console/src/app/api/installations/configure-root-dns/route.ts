@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import {
   getInstallationByKey,
   updateInstallationRootDns,
@@ -37,10 +38,7 @@ export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 },
-      )
+      return apiError('Missing or invalid authorization header', 401)
     }
 
     const secretKey = authHeader.substring(7)
@@ -48,31 +46,28 @@ export async function POST(request: NextRequest) {
     const { installationKey, target, type, proxied = false } = body
 
     if (!installationKey) {
-      return NextResponse.json({ error: 'installationKey is required' }, { status: 400 })
+      return apiError('installationKey is required', 400)
     }
 
     if (!target) {
-      return NextResponse.json({ error: 'target is required' }, { status: 400 })
+      return apiError('target is required', 400)
     }
 
     if (!type || !['cname', 'a'].includes(type)) {
-      return NextResponse.json({ error: 'type must be "cname" or "a"' }, { status: 400 })
+      return apiError('type must be "cname" or "a"', 400)
     }
 
     const installation = await getInstallationByKey(installationKey)
     if (!installation) {
-      return NextResponse.json({ error: 'Invalid installation key' }, { status: 404 })
+      return apiError('Invalid installation key', 404)
     }
 
     if (installation.secretKey !== secretKey) {
-      return NextResponse.json({ error: 'Invalid secret key' }, { status: 403 })
+      return apiError('Invalid secret key', 403)
     }
 
     if (!installation.subdomain) {
-      return NextResponse.json(
-        { error: 'Installation must have a subdomain assigned' },
-        { status: 400 },
-      )
+      return apiError('Installation must have a subdomain assigned', 400)
     }
 
     const fullDomain = `${installation.subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
@@ -89,10 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!recordId) {
-      return NextResponse.json(
-        { error: 'Failed to create DNS record' },
-        { status: 500 },
-      )
+      return apiError('Failed to create DNS record', 500)
     }
 
     // Store DNS info in installation record
@@ -117,6 +109,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Configure root DNS error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return apiError('Internal server error', 500)
   }
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button, ScrollArea } from '@kloudlite/ui'
 import { Alert, AlertDescription } from '@kloudlite/ui'
 import { Shield, Copy, Check, Loader2, Clock, ExternalLink } from 'lucide-react'
+import { getErrorMessage } from '@/lib/errors'
 
 interface SuperAdminLoginCardProps {
   installationId: string
@@ -53,7 +54,7 @@ export function SuperAdminLoginCard({ installationId, isActive }: SuperAdminLogi
         setTimeRemaining(null)
       }, data.validForSeconds * 1000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate login URL')
+      setError(getErrorMessage(err, 'Failed to generate login URL'))
     } finally {
       setLoading(false)
     }

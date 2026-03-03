@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireOwnerPermission } from '@/lib/console/authorization'
 import {
   getInstallationById,
@@ -23,17 +24,14 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     const installation = await getInstallationById(id)
 
     if (!installation) {
-      return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+      return apiError('Installation not found', 404)
     }
     // Guard against delete while uninstall is actively running
     if (
       installation.acaJobOperation === 'uninstall' &&
       (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending')
     ) {
-      return NextResponse.json(
-        { error: 'Cannot delete while uninstall is in progress' },
-        { status: 409 },
-      )
+      return apiError('Cannot delete while uninstall is in progress', 409)
     }
 
     console.log(`Deleting installation: ${id}`)
@@ -68,8 +66,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting installation:', error)
-    const message = error instanceof Error ? error.message : 'Failed to delete installation'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Failed to delete installation')
   }
 }

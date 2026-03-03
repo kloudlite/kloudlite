@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireInstallationAccess } from '@/lib/console/authorization'
 import {
   getInstallationById,
@@ -18,7 +19,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
     const installation = await getInstallationById(id)
     if (!installation) {
-      return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+      return apiError('Installation not found', 404)
     }
 
     // For BYOC installations (AWS/GCP/Azure), there's no ACA job execution.
@@ -26,7 +27,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     if (!installation.acaJobExecutionName) {
       // If there's no ACA execution AND no progress data, return 404
       if (!installation.acaJobStatus && !installation.acaJobOperation) {
-        return NextResponse.json({ error: 'No job execution found' }, { status: 404 })
+        return apiError('No job execution found', 404)
       }
 
       // Auto-delete after successful uninstall (BYOC path)
@@ -108,8 +109,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     })
   } catch (error) {
     console.error('Error getting job status:', error)
-    const message = error instanceof Error ? error.message : 'Failed to get job status'
-    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
-    return NextResponse.json({ error: message }, { status })
+    return apiCatchError(error, 'Failed to get job status')
   }
 }

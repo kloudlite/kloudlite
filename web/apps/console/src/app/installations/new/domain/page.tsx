@@ -9,6 +9,8 @@ import { Button, Input, Form, FormControl, FormField, FormItem, FormLabel, FormM
 import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
 import { InstallationProgress } from '@/components/installation-progress'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
+import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
 
 const subdomainSchema = z.object({
   subdomain: z
@@ -25,8 +27,7 @@ type SubdomainFormData = z.infer<typeof subdomainSchema>
 
 export default function ConfigureDomainPage() {
   const router = useRouter()
-  const [checkingSubdomain, setCheckingSubdomain] = useState(false)
-  const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
+  const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck()
   const [saving, setSaving] = useState(false)
 
   const form = useForm<SubdomainFormData>({
@@ -35,25 +36,6 @@ export default function ConfigureDomainPage() {
       subdomain: '',
     },
   })
-
-  const checkSubdomainAvailability = async (subdomain: string) => {
-    if (!subdomain || subdomain.length < 3) {
-      setSubdomainAvailable(null)
-      return
-    }
-
-    setCheckingSubdomain(true)
-    try {
-      const response = await fetch(`/api/installations/check-subdomain?subdomain=${subdomain}`)
-      const data = await response.json()
-      setSubdomainAvailable(data.available)
-    } catch (err) {
-      console.error('Error checking subdomain:', err)
-      setSubdomainAvailable(false)
-    } finally {
-      setCheckingSubdomain(false)
-    }
-  }
 
   const onSubmit = async (data: SubdomainFormData) => {
     setSaving(true)
@@ -80,8 +62,7 @@ export default function ConfigureDomainPage() {
       // Redirect to complete step
       router.push('/installations/new/complete')
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to reserve subdomain')
-      toast.error(error.message)
+      toast.error(getErrorMessage(err, 'Failed to reserve subdomain'))
     } finally {
       setSaving(false)
     }

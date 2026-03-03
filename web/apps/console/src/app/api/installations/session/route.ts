@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 
@@ -7,7 +8,7 @@ export async function GET() {
   const token = cookieStore.get('registration_session')?.value
 
   if (!token) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    return apiError('Not authenticated', 401)
   }
 
   try {
@@ -32,6 +33,6 @@ export async function GET() {
 
     return response
   } catch {
-    return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    return apiError('Invalid session', 401)
   }
 }

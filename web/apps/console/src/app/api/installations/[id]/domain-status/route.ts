@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getInstallationById, checkInstallationDomainStatus } from '@/lib/console/storage'
 
@@ -11,19 +12,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const session = await getRegistrationSession()
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return apiError('Unauthorized', 401)
   }
 
   // Fetch the installation
   const installation = await getInstallationById(id)
 
   if (!installation) {
-    return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+    return apiError('Installation not found', 404)
   }
 
   // Verify user owns this installation
   if (installation.userId !== session.user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return apiError('Forbidden', 403)
   }
 
   // If installation is already deployed (deploymentReady=true), domain is locked

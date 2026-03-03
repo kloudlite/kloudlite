@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiError } from '@/lib/api-helpers'
 import { getInstallationByKey, updateInstallation } from '@/lib/console/storage'
 
 export const runtime = 'nodejs'
@@ -20,15 +21,12 @@ export async function POST(request: Request) {
     const { installationKey, operation, currentStep, totalSteps, stepDescription, completed } = body
 
     if (!installationKey || !operation || currentStep == null || !totalSteps) {
-      return NextResponse.json(
-        { error: 'installationKey, operation, currentStep, and totalSteps are required' },
-        { status: 400 },
-      )
+      return apiError('installationKey, operation, currentStep, and totalSteps are required', 400)
     }
 
     const installation = await getInstallationByKey(installationKey)
     if (!installation) {
-      return NextResponse.json({ error: 'Installation not found' }, { status: 404 })
+      return apiError('Installation not found', 404)
     }
 
     // Set acaJobStatus to 'running' so the frontend shows INSTALLING/UNINSTALLING badges.
@@ -66,6 +64,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('Job progress error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return apiError('Internal server error', 500)
   }
 }

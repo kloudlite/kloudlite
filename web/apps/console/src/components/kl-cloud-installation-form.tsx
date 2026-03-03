@@ -26,6 +26,8 @@ import {
 } from '@/app/actions/billing'
 import { useRazorpay } from '@/components/razorpay-provider'
 import { getCurrencySymbol } from '@/lib/billing-utils'
+import { getErrorMessage } from '@/lib/errors'
+import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
 import type { Plan } from '@/lib/console/storage'
 
 const installationSchema = z.object({
@@ -60,8 +62,7 @@ export function KlCloudInstallationForm({
   const router = useRouter()
   const { isLoaded: razorpayLoaded, openCheckout } = useRazorpay()
   const [creating, setCreating] = useState(false)
-  const [checkingSubdomain, setCheckingSubdomain] = useState(false)
-  const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
+  const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
 
   // Per-tier quantities
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
@@ -102,31 +103,6 @@ export function KlCloudInstallationForm({
 
   const setQuantity = (planId: string, value: number) => {
     setQuantities((prev) => ({ ...prev, [planId]: Math.max(0, Math.min(100, value)) }))
-  }
-
-  const checkSubdomainAvailability = async (subdomain: string) => {
-    if (!subdomain || subdomain.length < 3) {
-      setSubdomainAvailable(null)
-      return
-    }
-
-    const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
-    if (!subdomainRegex.test(subdomain)) {
-      setSubdomainAvailable(null)
-      return
-    }
-
-    setCheckingSubdomain(true)
-    try {
-      const response = await fetch(`/api/installations/check-domain-kli?subdomain=${subdomain}`)
-      const data = await response.json()
-      setSubdomainAvailable(data.available)
-    } catch (err) {
-      console.error('Error checking subdomain:', err)
-      setSubdomainAvailable(false)
-    } finally {
-      setCheckingSubdomain(false)
-    }
   }
 
   const onSubmit = async (data: InstallationFormData) => {
@@ -206,9 +182,7 @@ export function KlCloudInstallationForm({
             router.push('/installations/new/kloudlite-cloud')
           } catch (err) {
             console.error('[Billing] Payment verification failed:', err)
-            toast.error(
-              err instanceof Error ? err.message : 'Payment verification failed. Please contact support.',
-            )
+            toast.error(getErrorMessage(err, 'Payment verification failed. Please contact support.'))
             setCreating(false)
           }
         },
@@ -229,7 +203,7 @@ export function KlCloudInstallationForm({
         currency: order.currency,
         key: key ? `${key.slice(0, 8)}...` : 'MISSING',
         razorpayLoaded,
-        windowRazorpay: !!(window as any).Razorpay,
+        windowRazorpay: !!window.Razorpay,
       })
 
       try {
@@ -240,8 +214,7 @@ export function KlCloudInstallationForm({
         setCreating(false)
       }
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to create installation')
-      toast.error(error.message)
+      toast.error(getErrorMessage(err, 'Failed to create installation'))
       setCreating(false)
     }
   }

@@ -24,6 +24,8 @@ import {
 } from '@kloudlite/ui'
 import { CheckCircle2, Loader2, AlertCircle, ArrowLeft, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
+import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
 
 const subdomainSchema = z.object({
   subdomain: z
@@ -51,8 +53,7 @@ export default function ReselectDomainPage() {
   const params = useParams()
   const installationId = params.id as string
 
-  const [checkingSubdomain, setCheckingSubdomain] = useState(false)
-  const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
+  const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck()
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [installationInfo, setInstallationInfo] = useState<InstallationInfo | null>(null)
@@ -102,25 +103,6 @@ export default function ReselectDomainPage() {
     fetchInstallationInfo()
   }, [installationId, router])
 
-  const checkSubdomainAvailability = async (subdomain: string) => {
-    if (!subdomain || subdomain.length < 3) {
-      setSubdomainAvailable(null)
-      return
-    }
-
-    setCheckingSubdomain(true)
-    try {
-      const response = await fetch(`/api/installations/check-subdomain?subdomain=${subdomain}`)
-      const data = await response.json()
-      setSubdomainAvailable(data.available)
-    } catch (err) {
-      console.error('Error checking subdomain:', err)
-      setSubdomainAvailable(false)
-    } finally {
-      setCheckingSubdomain(false)
-    }
-  }
-
   const onSubmit = async (data: SubdomainFormData) => {
     setSaving(true)
 
@@ -146,8 +128,7 @@ export default function ReselectDomainPage() {
       // Redirect back to installation page
       router.push(`/installations/${installationId}`)
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to reserve subdomain')
-      toast.error(error.message)
+      toast.error(getErrorMessage(err, 'Failed to reserve subdomain'))
     } finally {
       setSaving(false)
     }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@kloudlite/ui'
 import { Trash2, Loader2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 
 interface DeleteInstallationButtonProps {
   installationId: string
@@ -44,8 +45,7 @@ export function DeleteInstallationButton({
       router.push('/installations')
       router.refresh()
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to delete installation')
-      toast.error(error.message)
+      toast.error(getErrorMessage(err, 'Failed to delete installation'))
       setDeleting(false)
     }
   }
@@ -71,8 +71,7 @@ export function DeleteInstallationButton({
         router.push('/installations')
         router.refresh()
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to trigger uninstall'
-        toast.error(message)
+        toast.error(getErrorMessage(err, 'Failed to trigger uninstall'))
         setDeleting(false)
       }
     } else {

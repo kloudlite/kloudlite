@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getRazorpay } from '@/lib/razorpay'
+import type { RazorpayOrder } from '@/lib/razorpay-types'
 import {
   getPlans,
   getPlanById,
@@ -118,7 +119,6 @@ export async function createInstallationOrder(
   const razorpay = getRazorpay()
 
   // Create Razorpay Order
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const order = (await razorpay.orders.create({
     amount: totalAmount,
     currency,
@@ -127,7 +127,7 @@ export async function createInstallationOrder(
       installation_id: installationId,
       allocations: JSON.stringify(allocations),
     },
-  })) as any
+  })) as unknown as RazorpayOrder
 
   // Create local subscription records (status: 'created')
   // Only store order_id on the first record (UNIQUE constraint on razorpay_subscription_id)
@@ -190,8 +190,7 @@ export async function verifyPaymentAndActivate(
 
   // Verify the order belongs to this installation via Razorpay API
   const razorpay = getRazorpay()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const order = (await razorpay.orders.fetch(razorpayOrderId)) as any
+  const order = (await razorpay.orders.fetch(razorpayOrderId)) as unknown as RazorpayOrder
   if (order.notes?.installation_id !== installationId) {
     console.error('[Billing] Order installation mismatch:', order.notes?.installation_id, '!==', installationId)
     throw new Error('Payment verification failed — order does not belong to this installation')
@@ -492,7 +491,6 @@ export async function modifySubscriptionQuantities(
         // Quantity upgrade within annual — needs payment
         const currency = plans[0]?.currency ?? 'INR'
         const razorpay = getRazorpay()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const order = (await razorpay.orders.create({
           amount: proratedAmount,
           currency,
@@ -504,7 +502,7 @@ export async function modifySubscriptionQuantities(
             schedule_monthly: 'true',
             ...(newCurrentEnd ? { new_current_end: newCurrentEnd } : {}),
           },
-        })) as any
+        })) as unknown as RazorpayOrder
 
         return {
           applied: false,
@@ -537,7 +535,6 @@ export async function modifySubscriptionQuantities(
   const currency = plans[0]?.currency ?? 'INR'
   const razorpay = getRazorpay()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const order = (await razorpay.orders.create({
     amount: proratedAmount,
     currency,
@@ -549,7 +546,7 @@ export async function modifySubscriptionQuantities(
       ...(newBillingPeriod ? { billing_period: newBillingPeriod } : {}),
       ...(newCurrentEnd ? { new_current_end: newCurrentEnd } : {}),
     },
-  })) as any
+  })) as unknown as RazorpayOrder
 
   return {
     applied: false,
@@ -598,8 +595,7 @@ export async function verifyModificationAndApply(
 
   // Verify the order belongs to this installation and is a modification
   const razorpay = getRazorpay()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const order = (await razorpay.orders.fetch(razorpayOrderId)) as any
+  const order = (await razorpay.orders.fetch(razorpayOrderId)) as unknown as RazorpayOrder
   if (order.notes?.installation_id !== installationId) {
     throw new Error('Payment verification failed — order does not belong to this installation')
   }

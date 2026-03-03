@@ -8,6 +8,8 @@ import * as z from 'zod'
 import { Button, Input, Textarea, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
+import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
 
 const installationSchema = z.object({
   name: z
@@ -36,8 +38,7 @@ interface InstallationFormProps {
 export function InstallationForm({ hostingType, redirectTo }: InstallationFormProps) {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
-  const [checkingSubdomain, setCheckingSubdomain] = useState(false)
-  const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
+  const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
 
   const form = useForm<InstallationFormData>({
     resolver: zodResolver(installationSchema),
@@ -47,31 +48,6 @@ export function InstallationForm({ hostingType, redirectTo }: InstallationFormPr
       subdomain: '',
     },
   })
-
-  const checkSubdomainAvailability = async (subdomain: string) => {
-    if (!subdomain || subdomain.length < 3) {
-      setSubdomainAvailable(null)
-      return
-    }
-
-    const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
-    if (!subdomainRegex.test(subdomain)) {
-      setSubdomainAvailable(null)
-      return
-    }
-
-    setCheckingSubdomain(true)
-    try {
-      const response = await fetch(`/api/installations/check-domain-kli?subdomain=${subdomain}`)
-      const data = await response.json()
-      setSubdomainAvailable(data.available)
-    } catch (err) {
-      console.error('Error checking subdomain:', err)
-      setSubdomainAvailable(false)
-    } finally {
-      setCheckingSubdomain(false)
-    }
-  }
 
   const onSubmit = async (data: InstallationFormData) => {
     if (subdomainAvailable !== true) {
@@ -104,8 +80,7 @@ export function InstallationForm({ hostingType, redirectTo }: InstallationFormPr
       toast.success('Installation created successfully!')
       router.push(redirectTo)
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to create installation')
-      toast.error(error.message)
+      toast.error(getErrorMessage(err, 'Failed to create installation'))
     } finally {
       setCreating(false)
     }
