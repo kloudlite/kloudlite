@@ -66,17 +66,3 @@ export async function requireOwnerPermission(
 
   return context
 }
-
-/**
- * Permission helper for role hierarchy
- */
-export function hasPermission(userRole: MemberRole, requiredRole: MemberRole): boolean {
-  const hierarchy: Record<MemberRole, number> = {
-    owner: 4,
-    admin: 3,
-    member: 2,
-    viewer: 1,
-  }
-
-  return hierarchy[userRole] >= hierarchy[requiredRole]
-}

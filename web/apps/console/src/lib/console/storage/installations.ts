@@ -505,7 +505,7 @@ export async function resetInstallation(installationId: string): Promise<void> {
 }
 
 // Installation validity window (15 minutes) - after this, incomplete installations expire
-export const INSTALLATION_VALIDITY_MS = 15 * 60 * 1000
+const INSTALLATION_VALIDITY_MS = 15 * 60 * 1000
 
 /**
  * Check if an installation is still valid
@@ -513,7 +513,7 @@ export const INSTALLATION_VALIDITY_MS = 15 * 60 * 1000
  * 1. It has completed deployment (deploymentReady === true), OR
  * 2. It was created within the last 15 minutes
  */
-export function isInstallationValid(installation: Installation): boolean {
+function isInstallationValid(installation: Installation): boolean {
   // If domain is registered and deployment is ready, it's always valid
   if (installation.deploymentReady) {
     return true
@@ -522,18 +522,4 @@ export function isInstallationValid(installation: Installation): boolean {
   const createdAt = new Date(installation.createdAt).getTime()
   const now = Date.now()
   return (now - createdAt) < INSTALLATION_VALIDITY_MS
-}
-
-/**
- * Get remaining validity time in milliseconds
- * Returns 0 if expired, or remaining time if still valid
- */
-export function getInstallationRemainingTime(installation: Installation): number {
-  if (installation.deploymentReady) {
-    return Infinity // Always valid
-  }
-  const createdAt = new Date(installation.createdAt).getTime()
-  const expiresAt = createdAt + INSTALLATION_VALIDITY_MS
-  const remaining = expiresAt - Date.now()
-  return remaining > 0 ? remaining : 0
 }
