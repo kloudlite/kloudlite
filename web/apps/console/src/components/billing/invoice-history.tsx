@@ -1,5 +1,9 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle } from '@kloudlite/ui'
-import { Receipt } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { Badge } from '@kloudlite/ui'
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
+import { formatCurrency } from '@/lib/billing-utils'
 import type { Invoice } from '@/lib/console/storage'
 
 interface InvoiceHistoryProps {
@@ -13,53 +17,108 @@ const invoiceStatusColors: Record<string, string> = {
   cancelled: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
 }
 
+type SortColumn = 'date' | 'amount' | 'status'
+type SortDirection = 'asc' | 'desc'
+
+const statusOrder: Record<string, number> = { issued: 0, paid: 1, expired: 2, cancelled: 3 }
+
+function sortInvoices(invoices: Invoice[], column: SortColumn, direction: SortDirection): Invoice[] {
+  return [...invoices].sort((a, b) => {
+    let cmp = 0
+    switch (column) {
+      case 'date':
+        cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        break
+      case 'amount':
+        cmp = a.amount - b.amount
+        break
+      case 'status':
+        cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)
+        break
+    }
+    return direction === 'asc' ? cmp : -cmp
+  })
+}
+
 export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
+  const [sortColumn, setSortColumn] = useState<SortColumn>('date')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+
   if (invoices.length === 0) return null
 
+  const sorted = sortInvoices(invoices, sortColumn, sortDirection)
+
+  const toggleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortColumn(column)
+      setSortDirection('desc')
+    }
+  }
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return <ArrowUpDown className="h-3 w-3 opacity-40" />
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-3 w-3" />
+      : <ArrowDown className="h-3 w-3" />
+  }
+
   return (
-    <Card className="border-foreground/10">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Receipt className="h-5 w-5" />
-          Invoice History
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-foreground/10">
-                <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Date</th>
-                <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Period</th>
-                <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Amount</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((invoice) => (
-                <tr key={invoice.id} className="border-b border-foreground/5">
-                  <td className="py-3 pr-4">
-                    {new Date(invoice.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 pr-4 text-muted-foreground">
-                    {invoice.billingStart && invoice.billingEnd
-                      ? `${new Date(invoice.billingStart).toLocaleDateString()} \u2014 ${new Date(invoice.billingEnd).toLocaleDateString()}`
-                      : '\u2014'}
-                  </td>
-                  <td className="py-3 pr-4 text-right font-medium">
-                    ₹{(invoice.amount / 100).toFixed(2)}
-                  </td>
-                  <td className="py-3 text-right">
-                    <Badge variant="outline" className={invoiceStatusColors[invoice.status]}>
-                      {invoice.status}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-foreground/10">
+            <th
+              className="text-left py-2 pr-4 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
+              onClick={() => toggleSort('date')}
+            >
+              <span className="inline-flex items-center gap-1">
+                Date <SortIcon column="date" />
+              </span>
+            </th>
+            <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Period</th>
+            <th
+              className="text-right py-2 pr-4 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
+              onClick={() => toggleSort('amount')}
+            >
+              <span className="inline-flex items-center justify-end gap-1">
+                Amount <SortIcon column="amount" />
+              </span>
+            </th>
+            <th
+              className="text-right py-2 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
+              onClick={() => toggleSort('status')}
+            >
+              <span className="inline-flex items-center justify-end gap-1">
+                Status <SortIcon column="status" />
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((invoice) => (
+            <tr key={invoice.id} className="border-b border-foreground/5">
+              <td className="py-3 pr-4">
+                {new Date(invoice.createdAt).toLocaleDateString()}
+              </td>
+              <td className="py-3 pr-4 text-muted-foreground">
+                {invoice.billingStart && invoice.billingEnd
+                  ? `${new Date(invoice.billingStart).toLocaleDateString()} \u2013 ${new Date(invoice.billingEnd).toLocaleDateString()}`
+                  : '\u2014'}
+              </td>
+              <td className="py-3 pr-4 text-right font-medium">
+                {formatCurrency(invoice.amount, invoice.currency)}
+              </td>
+              <td className="py-3 text-right">
+                <Badge variant="outline" className={invoiceStatusColors[invoice.status]}>
+                  {invoice.status}
+                </Badge>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

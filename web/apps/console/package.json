@@ -39,11 +39,15 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.0",
-    "typescript": "^5.0.0"
+    "happy-dom": "^20.8.3",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.18"
   }
 }

@@ -5,9 +5,10 @@ import { NavTabs, type NavTab } from './nav-tabs'
 
 interface InstallationDetailsTabsProps {
   installationId: string
+  cloudProvider?: string
 }
 
-export function InstallationDetailsTabs({ installationId }: InstallationDetailsTabsProps) {
+export function InstallationDetailsTabs({ installationId, cloudProvider }: InstallationDetailsTabsProps) {
   const tabs: NavTab[] = [
     {
       id: 'overview',
@@ -20,14 +21,16 @@ export function InstallationDetailsTabs({ installationId }: InstallationDetailsT
       icon: Users,
       href: `/installations/${installationId}/team`,
     },
-    {
+  ]
+
+  if (cloudProvider === 'oci') {
+    tabs.push({
       id: 'billing',
       label: 'Billing',
       icon: CreditCard,
       href: `/installations/${installationId}/billing`,
-      matchPrefix: true,
-    },
-  ]
+    })
+  }
 
   return <NavTabs tabs={tabs} />
 }

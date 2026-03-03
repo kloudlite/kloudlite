@@ -81,7 +81,7 @@ export function NavTabs({ tabs, className }: NavTabsProps) {
       {/* Animated underline with CSS transition */}
       {underlineStyle.width > 0 && (
         <div
-          className="absolute bottom-1 h-[2px] bg-primary transition-all duration-300 ease-out"
+          className="absolute bottom-0 h-[2px] bg-primary transition-all duration-300 ease-out"
           style={{
             left: `${underlineStyle.left}px`,
             width: `${underlineStyle.width}px`,

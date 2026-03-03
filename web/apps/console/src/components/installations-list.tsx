@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Input } from '@kloudlite/ui'
 import { MoreHorizontal, ExternalLink, Settings, Search, Loader2 } from 'lucide-react'
+import { NewInstallationButton } from '@/components/new-installation-button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,25 @@ import {
 } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
 import type { Installation, Invoice, Subscription } from '@/lib/console/storage'
+
+const providerConfig: Record<string, { label: string; className: string }> = {
+  aws: { label: 'AWS', className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20' },
+  gcp: { label: 'GCP', className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20' },
+  azure: { label: 'Azure', className: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20' },
+  oci: { label: 'Kloudlite', className: 'bg-primary/10 text-primary border-primary/20' },
+}
+
+function ProviderBadge({ provider }: { provider?: string }) {
+  if (!provider || !providerConfig[provider]) {
+    return <span className="text-muted-foreground/40">{'\u2014'}</span>
+  }
+  const { label, className } = providerConfig[provider]
+  return (
+    <span className={cn('inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-md border', className)}>
+      {label}
+    </span>
+  )
+}
 
 interface InstallationsListProps {
   installations: Installation[]
@@ -212,72 +232,77 @@ export function InstallationsList({
 
   return (
     <div className="space-y-5">
-      {/* Filter and Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-          {/* Status Filter */}
-          <div className="inline-flex gap-1 relative">
-            <button
-              ref={allRef}
-              onClick={() => setStatusFilter('all')}
-              className={cn(
-                'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
-                'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
-                statusFilter === 'all'
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              All
-            </button>
-            <button
-              ref={pendingRef}
-              onClick={() => setStatusFilter('pending')}
-              className={cn(
-                'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
-                'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
-                statusFilter === 'pending'
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              Pending
-            </button>
-            <button
-              ref={installedRef}
-              onClick={() => setStatusFilter('installed')}
-              className={cn(
-                'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
-                'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
-                statusFilter === 'installed'
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              Installed
-            </button>
-
-            {/* Animated underline with CSS transition */}
-            {underlineStyle.width > 0 && (
-              <div
-                className="absolute bottom-0.5 h-[2px] bg-primary transition-all duration-300 ease-out"
-                style={{
-                  left: `${underlineStyle.left}px`,
-                  width: `${underlineStyle.width}px`,
-                }}
-              />
-            )}
+      {/* Page Header */}
+      <div className="flex items-center justify-between pb-6 mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Installations</h1>
+        <div className="flex items-center gap-3">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search installations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
+          <NewInstallationButton />
         </div>
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search installations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="border-b border-foreground/10 mb-5">
+        <div className="inline-flex gap-1 relative">
+          <button
+            ref={allRef}
+            onClick={() => setStatusFilter('all')}
+            className={cn(
+              'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
+              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
+              statusFilter === 'all'
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            All
+          </button>
+          <button
+            ref={pendingRef}
+            onClick={() => setStatusFilter('pending')}
+            className={cn(
+              'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
+              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
+              statusFilter === 'pending'
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Pending
+          </button>
+          <button
+            ref={installedRef}
+            onClick={() => setStatusFilter('installed')}
+            className={cn(
+              'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
+              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
+              statusFilter === 'installed'
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Installed
+          </button>
+
+          {/* Animated underline with CSS transition */}
+          {underlineStyle.width > 0 && (
+            <div
+              className="absolute bottom-0 h-[2px] bg-primary transition-all duration-300 ease-out"
+              style={{
+                left: `${underlineStyle.left}px`,
+                width: `${underlineStyle.width}px`,
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -288,10 +313,13 @@ export function InstallationsList({
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-foreground/10 bg-muted/30">
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[35%]">
+                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[30%]">
                     Name
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[35%] hidden md:table-cell">
+                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[10%] hidden lg:table-cell">
+                    Provider
+                  </th>
+                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[30%] hidden md:table-cell">
                     Domain
                   </th>
                   <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[15%]">
@@ -347,6 +375,9 @@ export function InstallationsList({
                             )}
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-3 hidden lg:table-cell">
+                        <ProviderBadge provider={installation.cloudProvider} />
                       </td>
                       <td className="px-6 py-3 hidden md:table-cell">
                         {installationUrl ? (
@@ -410,14 +441,6 @@ export function InstallationsList({
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                {installationUrl && (
-                                  <DropdownMenuItem asChild>
-                                    <a href={installationUrl} target="_blank" rel="noopener noreferrer">
-                                      <ExternalLink className="mr-2 h-4 w-4" />
-                                      Open
-                                    </a>
-                                  </DropdownMenuItem>
-                                )}
                                 {!isPending && (
                                   <DropdownMenuItem
                                     onSelect={() => router.push(`/installations/${installation.id}`)}

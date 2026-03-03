@@ -289,6 +289,7 @@ export type Database = {
           billing_period: 'monthly' | 'annual'
           current_start: string | null
           current_end: string | null
+          scheduled_billing_period: 'monthly' | 'annual' | null
           created_at: string
           updated_at: string
         }
@@ -309,6 +310,7 @@ export type Database = {
           billing_period?: 'monthly' | 'annual'
           current_start?: string | null
           current_end?: string | null
+          scheduled_billing_period?: 'monthly' | 'annual' | null
         }
         Update: {
           plan_id?: string
@@ -325,6 +327,7 @@ export type Database = {
           billing_period?: 'monthly' | 'annual'
           current_start?: string | null
           current_end?: string | null
+          scheduled_billing_period?: 'monthly' | 'annual' | null
         }
       }
       invoices: {
@@ -364,6 +367,25 @@ export type Database = {
           billing_start?: string | null
           billing_end?: string | null
           paid_at?: string | null
+        }
+      }
+      processed_webhook_events: {
+        Row: {
+          id: string
+          razorpay_event_id: string
+          event_type: string
+          processed_at: string
+        }
+        Insert: {
+          id?: string
+          razorpay_event_id: string
+          event_type: string
+          processed_at?: string
+        }
+        Update: {
+          razorpay_event_id?: string
+          event_type?: string
+          processed_at?: string
         }
       }
     }

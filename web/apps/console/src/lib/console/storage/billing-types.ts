@@ -32,6 +32,7 @@ export interface Subscription {
   status: 'created' | 'authenticated' | 'active' | 'paused' | 'cancelled' | 'expired'
   quantity: number
   billingPeriod: 'monthly' | 'annual'
+  scheduledBillingPeriod: 'monthly' | 'annual' | null
   currentStart: string | null
   currentEnd: string | null
   createdAt: string

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import {
   getSubscriptionByRazorpayId,
+  getInvoiceByPaymentId,
+  isWebhookEventProcessed,
+  markWebhookEventProcessed,
   updateSubscriptionStatus,
   upsertInvoice,
 } from '@/lib/console/storage'
@@ -45,6 +48,15 @@ export async function POST(request: Request) {
   }
 
   const eventType = event.event as string
+  const eventId = event.id as string | undefined
+
+  // Event-level idempotency: skip if this exact event was already processed
+  if (eventId) {
+    const alreadyProcessed = await isWebhookEventProcessed(eventId)
+    if (alreadyProcessed) {
+      return NextResponse.json({ status: 'ok', skipped: 'duplicate' })
+    }
+  }
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,6 +112,10 @@ export async function POST(request: Request) {
         const payment = payload.payment?.entity
         if (!payment) break
 
+        // Idempotency: skip if this payment was already processed
+        const existing = await getInvoiceByPaymentId(payment.id)
+        if (existing) break
+
         // Look up the subscription from our DB using the order_id from payment notes
         const orderId = payment.order_id
         if (orderId) {
@@ -123,6 +139,11 @@ export async function POST(request: Request) {
       }
       default:
         console.log('Unhandled webhook event:', eventType)
+    }
+
+    // Mark this event as processed for future deduplication
+    if (eventId) {
+      await markWebhookEventProcessed(eventId, eventType)
     }
 
     return NextResponse.json({ status: 'ok' })

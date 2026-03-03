@@ -115,15 +115,15 @@ async function getDueJobs(): Promise<RenewalJobRow[]> {
   return data as RenewalJobRow[]
 }
 
-async function claimJob(jobId: string): Promise<boolean> {
+async function claimJob(job: RenewalJobRow): Promise<boolean> {
   const { error, count } = await supabase
     .from('renewal_jobs')
-    .update({ status: 'processing', attempts: 1 })
-    .eq('id', jobId)
+    .update({ status: 'processing', attempts: job.attempts + 1 })
+    .eq('id', job.id)
     .eq('status', 'pending')
 
   if (error) {
-    console.error(`Failed to claim job ${jobId}:`, error.message)
+    console.error(`Failed to claim job ${job.id}:`, error.message)
     return false
   }
   return (count ?? 0) > 0
@@ -359,16 +359,62 @@ async function processExpireJob(job: RenewalJobRow): Promise<void> {
   console.log(`[expire] Expired subscriptions for ${installationId}`)
 }
 
-async function processDueJobs(): Promise<{ processed: number; errors: number }> {
+async function recoverStuckJobs(): Promise<number> {
+  const stuckThreshold = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+  const { data, error } = await supabase
+    .from('renewal_jobs')
+    .update({ status: 'pending' })
+    .eq('status', 'processing')
+    .lt('updated_at', stuckThreshold)
+    .select('id')
+
+  if (error) {
+    console.error('[cron] Failed to recover stuck jobs:', error.message)
+    return 0
+  }
+  const count = data?.length ?? 0
+  if (count > 0) {
+    console.log(`[cron] Recovered ${count} stuck job(s)`)
+  }
+  return count
+}
+
+async function cleanupOldJobs(): Promise<number> {
+  const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+  const { data, error } = await supabase
+    .from('renewal_jobs')
+    .delete()
+    .in('status', ['completed', 'failed', 'cancelled'])
+    .lt('updated_at', cutoff)
+    .select('id')
+
+  if (error) {
+    console.error('[cron] Failed to cleanup old jobs:', error.message)
+    return 0
+  }
+  const count = data?.length ?? 0
+  if (count > 0) {
+    console.log(`[cron] Cleaned up ${count} old job(s)`)
+  }
+  return count
+}
+
+async function processDueJobs(): Promise<{ processed: number; errors: number; recovered: number; cleaned: number }> {
+  // Recover jobs stuck in 'processing' for more than 10 minutes
+  const recovered = await recoverStuckJobs()
+
+  // Cleanup terminal jobs older than 90 days
+  const cleaned = await cleanupOldJobs()
+
   const jobs = await getDueJobs()
-  if (jobs.length === 0) return { processed: 0, errors: 0 }
+  if (jobs.length === 0) return { processed: 0, errors: 0, recovered, cleaned }
 
   console.log(`[cron] Found ${jobs.length} due job(s)`)
   let processed = 0
   let errors = 0
 
   for (const job of jobs) {
-    const claimed = await claimJob(job.id)
+    const claimed = await claimJob(job)
     if (!claimed) {
       console.log(`[cron] Job ${job.id} already claimed, skipping`)
       continue
@@ -407,7 +453,7 @@ async function processDueJobs(): Promise<{ processed: number; errors: number }> 
     }
   }
 
-  return { processed, errors }
+  return { processed, errors, recovered, cleaned }
 }
 
 // --- Edge Function handler ---

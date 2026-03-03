@@ -68,7 +68,7 @@ export default async function InstallationLayout({ children, params }: LayoutPro
           </div>
 
           {/* Page Header */}
-          <div className="border-b border-foreground/10 pb-6 mb-8">
+          <div className="pb-6">
             {/* Installation Name and Domain */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
@@ -118,8 +118,8 @@ export default async function InstallationLayout({ children, params }: LayoutPro
           </div>
 
           {/* Tabs */}
-          <div className="mb-8">
-            <InstallationDetailsTabs installationId={id} />
+          <div className="border-b border-foreground/10 mb-8">
+            <InstallationDetailsTabs installationId={id} cloudProvider={installation.cloudProvider} />
           </div>
 
           {/* Page Content */}
