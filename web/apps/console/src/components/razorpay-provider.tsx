@@ -47,7 +47,7 @@ export function RazorpayProvider({ children }: { children: React.ReactNode }) {
 
     // Already loaded (e.g. HMR)
     if (window.Razorpay) {
-      setIsLoaded(true)
+      queueMicrotask(() => setIsLoaded(true))
       return
     }
 

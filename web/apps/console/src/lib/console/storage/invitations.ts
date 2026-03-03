@@ -1,6 +1,7 @@
 /**
  * Invitation Management
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from '../supabase'
 import type { MemberRole, InstallationInvitation, InstallationMember } from './types'

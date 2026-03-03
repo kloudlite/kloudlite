@@ -46,9 +46,12 @@ export function InstallationJobProgress({ installationId, initialActive }: Insta
 
   useEffect(() => {
     if (!active) return
-    fetchStatus()
+    const timeout = setTimeout(fetchStatus, 0)
     const interval = setInterval(fetchStatus, 5000)
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(timeout)
+      clearInterval(interval)
+    }
   }, [active, fetchStatus])
 
   if (!active && !jobStatus) return null

@@ -103,7 +103,7 @@ export function InviteMemberButton({ installationId }: InviteMemberButtonProps) 
               <label htmlFor="role" className="text-base font-medium">
                 Role
               </label>
-              <Select value={role} onValueChange={(value: any) => setRole(value)}>
+              <Select value={role} onValueChange={(value: string) => setRole(value as 'admin' | 'member' | 'viewer')}>
                 <SelectTrigger className="mt-2">
                   <SelectValue />
                 </SelectTrigger>

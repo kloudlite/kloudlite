@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Input } from '@kloudlite/ui'
@@ -154,10 +154,10 @@ export function InstallationsList({
   }
 
   // Check if installation needs polling (active job or pending uninstall deletion)
-  const needsPolling = (installation: Installation) => {
+  const needsPolling = useCallback((installation: Installation) => {
     return hasActiveJob(installation) ||
       (installation.acaJobOperation === 'uninstall' && installation.acaJobStatus !== 'failed')
-  }
+  }, [])
 
   // Auto-refresh when any installation has an active job or pending uninstall
   const hasAnyActiveJob = installations.some(needsPolling)
@@ -173,7 +173,7 @@ export function InstallationsList({
       router.refresh()
     }, 5000)
     return () => clearInterval(interval)
-  }, [hasAnyActiveJob, router, installations])
+  }, [hasAnyActiveJob, router, installations, needsPolling])
 
   // Apply status filter
   let filteredInstallations = installations

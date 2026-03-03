@@ -17,7 +17,7 @@ export async function GET() {
   try {
     const invitations = await getUserPendingInvitations(session.user.email)
     return NextResponse.json({ invitations })
-  } catch (error) {
+  } catch (_error) {
     return apiError('Failed to get invitations', 500)
   }
 }

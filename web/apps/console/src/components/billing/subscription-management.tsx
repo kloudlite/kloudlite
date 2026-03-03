@@ -71,9 +71,9 @@ export function SubscriptionManagement({
   const [paying, setPaying] = useState(false)
   const [editing, setEditing] = useState(false)
 
-  const activeSubs = subscriptions.filter((s) =>
+  const activeSubs = useMemo(() => subscriptions.filter((s) =>
     ['active', 'authenticated', 'paused'].includes(s.status),
-  )
+  ), [subscriptions])
   const visibleActiveSubs = activeSubs.filter((s) => s.quantity > 0)
   const pastSubs = subscriptions.filter((s) => ['cancelled', 'expired'].includes(s.status))
   const hasActiveSubs = activeSubs.length > 0

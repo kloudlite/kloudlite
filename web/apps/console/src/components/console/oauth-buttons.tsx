@@ -37,10 +37,6 @@ const providers = [
 ]
 
 export function OAuthButtons() {
-  const handleClick = (providerId: string) => {
-    window.location.href = `/api/oauth/${providerId}`
-  }
-
   return (
     <div className="space-y-3">
       {providers.map((provider) => {
@@ -48,20 +44,22 @@ export function OAuthButtons() {
         return (
           <Button
             key={provider.id}
-            onClick={() => handleClick(provider.id)}
+            asChild
             size="lg"
             className={`w-full gap-3 text-base font-medium transition-all duration-200 shadow-sm hover:shadow-md group ${provider.colorClass}`}
           >
-            <Icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-            <span className="flex-1 text-left">Continue with {provider.name}</span>
-            <svg
-              className="h-4 w-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <a href={`/api/oauth/${provider.id}`}>
+              <Icon className="h-5 w-5 transition-transform group-hover:scale-110" />
+              <span className="flex-1 text-left">Continue with {provider.name}</span>
+              <svg
+                className="h-4 w-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
           </Button>
         )
       })}
