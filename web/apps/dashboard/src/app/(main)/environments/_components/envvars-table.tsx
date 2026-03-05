@@ -1,5 +1,6 @@
 import { Key } from 'lucide-react'
 import { Badge } from '@kloudlite/ui'
+import { memo } from 'react'
 import type { EnvVar } from '@kloudlite/types'
 import { EnvVarActions } from './envvar-actions'
 
@@ -8,7 +9,7 @@ interface EnvVarsTableProps {
   environmentId: string
 }
 
-export function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
+export const EnvVarsTable = memo(function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
   return (
     <div className="bg-card overflow-hidden rounded-lg border">
       <table className="min-w-full">
@@ -64,4 +65,4 @@ export function EnvVarsTable({ envVars, environmentId }: EnvVarsTableProps) {
       </table>
     </div>
   )
-}
+})

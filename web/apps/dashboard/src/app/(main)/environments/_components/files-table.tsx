@@ -1,5 +1,6 @@
 import { File } from 'lucide-react'
 import type { FileInfo } from '@kloudlite/types'
+import { memo } from 'react'
 import { FileActions } from './file-actions'
 
 interface FilesTableProps {
@@ -7,7 +8,7 @@ interface FilesTableProps {
   environmentId: string
 }
 
-export function FilesTable({ files, environmentId }: FilesTableProps) {
+export const FilesTable = memo(function FilesTable({ files, environmentId }: FilesTableProps) {
   return (
     <div className="bg-card overflow-hidden rounded-lg border">
       <table className="min-w-full">
@@ -39,4 +40,4 @@ export function FilesTable({ files, environmentId }: FilesTableProps) {
       </table>
     </div>
   )
-}
+})

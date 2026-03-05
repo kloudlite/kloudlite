@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import {
@@ -45,7 +45,7 @@ const roleColors: Record<MemberRole, string> = {
   viewer: 'bg-foreground/[0.06] text-foreground border border-foreground/10',
 }
 
-export function TeamMembersTable({
+export const TeamMembersTable = memo(function TeamMembersTable({
   members,
   currentUserId,
   userRole,
@@ -264,4 +264,4 @@ export function TeamMembersTable({
       </AlertDialog>
     </div>
   )
-}
+})

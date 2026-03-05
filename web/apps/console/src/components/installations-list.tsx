@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Input } from '@kloudlite/ui'
@@ -61,7 +61,7 @@ function isExpiringSoon(sub: Subscription | undefined): boolean {
   return daysUntilEnd <= 7 && daysUntilEnd > 0
 }
 
-export function InstallationsList({
+export const InstallationsList = memo(function InstallationsList({
   installations,
   pendingInvoices,
   activeSubscriptions = {},
@@ -533,4 +533,4 @@ export function InstallationsList({
       )}
     </div>
   )
-}
+})

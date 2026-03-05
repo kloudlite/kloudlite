@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { memo } from 'react'
 import { Badge, Button } from '@kloudlite/ui'
 import { MoreHorizontal, Box, FileCode, Lock } from 'lucide-react'
 import {
@@ -28,7 +29,7 @@ interface EnvironmentCardProps {
   environment: Environment
 }
 
-export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
+export const EnvironmentCard = memo(function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
   return (
     <Link href={`/environments/${env.hash}`} className="group block">
       <div className="bg-card hover:border-border cursor-pointer overflow-hidden rounded-lg border transition-all">
@@ -137,4 +138,4 @@ export function EnvironmentCard({ environment: env }: EnvironmentCardProps) {
       </div>
     </Link>
   )
-}
+})
