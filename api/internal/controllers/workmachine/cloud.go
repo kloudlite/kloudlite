@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	klerrors "github.com/kloudlite/kloudlite/api/internal/pkg/errors"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -71,7 +70,7 @@ func (r *WorkMachineReconciler) createNewMachine(check *reconciler.Check[*v1.Wor
 		obj.Status.Message = "Cloud machine created, waiting for node to join"
 	}
 
-	check.Logger().Debug("Using configured cloud machine creation retry interval", zap.Duration("interval", r.Cfg.WorkMachine.CloudMachineCreationRetryInterval))
+	check.Logger().Debug("Using configured cloud machine creation retry interval", "interval", r.Cfg.WorkMachine.CloudMachineCreationRetryInterval)
 	return check.UpdateMsg("created cloud machine").RequeueAfter(r.Cfg.WorkMachine.CloudMachineCreationRetryInterval)
 }
 

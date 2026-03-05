@@ -3,8 +3,6 @@ package environment
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -126,20 +124,4 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 	}
 
 	return nil
-}
-
-// joinErrors combines multiple errors into a single error message
-func joinErrors(errors []error) error {
-	if len(errors) == 0 {
-		return nil
-	}
-
-	var sb strings.Builder
-	for i, err := range errors {
-		if i > 0 {
-			sb.WriteString("; ")
-		}
-		sb.WriteString(err.Error())
-	}
-	return fmt.Errorf("%s", sb.String())
 }
