@@ -597,9 +597,9 @@ export function WorkMachineControls({
                     {/* List */}
                     {sshAuthorizedKeys.length > 0 ? (
                       <div className="overflow-hidden rounded-md border">
-                        {sshAuthorizedKeys.map((key, index) => (
+                        {sshAuthorizedKeys.map((key) => (
                           <div
-                            key={index}
+                            key={key}
                             className="hover:bg-muted/30 group flex items-center justify-between gap-2 border-b px-3 py-2.5 transition-colors last:border-b-0"
                           >
                             <code className="text-muted-foreground flex-1 truncate font-mono text-xs">

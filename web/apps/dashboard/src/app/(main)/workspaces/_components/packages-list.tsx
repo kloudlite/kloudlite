@@ -121,9 +121,9 @@ export function PackagesList({ workspace, initialPackageRequest }: PackagesListP
 
         {packages.length > 0 ? (
           <div className="divide-y">
-            {packages.map((pkg, index) => (
+            {packages.map((pkg) => (
               <div
-                key={index}
+                key={pkg.name + (pkg.channel || pkg.nixpkgsCommit || '')}
                 className="flex items-center gap-4 px-4 py-3"
               >
                 <div className={`flex-shrink-0 rounded-lg p-2 ${

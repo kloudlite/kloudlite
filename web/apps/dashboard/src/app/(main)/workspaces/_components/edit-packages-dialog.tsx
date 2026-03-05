@@ -156,8 +156,8 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
     toast.success('Package added')
   }
 
-  const removePackage = (index: number) => {
-    setPackages(packages.filter((_, i) => i !== index))
+  const removePackage = (pkgToRemove: PackageWithVersion) => {
+    setPackages(packages.filter((pkg) => pkg.name !== pkgToRemove.name))
   }
 
   const handleSave = async () => {
@@ -214,9 +214,9 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
           {/* Package List */}
           {packages.length > 0 && (
             <div className="space-y-2">
-              {packages.map((pkg, index) => (
+              {packages.map((pkg) => (
                 <div
-                  key={index}
+                  key={pkg.name + (pkg.channel || pkg.nixpkgsCommit || '')}
                   className="bg-muted flex items-center justify-between rounded-lg p-3"
                 >
                   <div className="flex-1">
@@ -237,7 +237,7 @@ export function EditPackagesDialog({ workspace }: EditPackagesDialogProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => removePackage(index)}
+                    onClick={() => removePackage(pkg)}
                     disabled={isLoading}
                   >
                     <X className="h-4 w-4" />

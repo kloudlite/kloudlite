@@ -276,8 +276,8 @@ export function AdminMachineDetail({ machine }: AdminMachineDetailProps) {
               <h2 className="text-lg font-medium">Activity Log</h2>
             </div>
             <div className="divide-border divide-y">
-              {machine.activityLog.map((log, index) => (
-                <div key={index} className="px-6 py-4">
+              {machine.activityLog.map((log) => (
+                <div key={log.timestamp + log.action} className="px-6 py-4">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium">{log.action}</p>
