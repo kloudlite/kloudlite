@@ -116,7 +116,13 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to create Environment controller: %w", err)
 	}
 
-	if err := workmachine.Register(mgr); err != nil {
+	// Load controller configuration
+	controllerCfg, err := LoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("unable to load controller configuration: %w", err)
+	}
+
+	if err := workmachine.Register(mgr, controllerCfg); err != nil {
 		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
 	}
 
