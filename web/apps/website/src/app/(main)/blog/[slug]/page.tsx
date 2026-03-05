@@ -116,11 +116,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     {post.content.split('\n\n').map((block, index) => {
                       const lines = block.trim().split('\n')
                       const firstLine = lines[0]
+                      // Create a simple hash from the block content for unique keys
+                      const blockKey = `${index}-${block.trim().slice(0, 20)}`
 
                       // Heading level 1
                       if (firstLine.startsWith('# ')) {
                         return (
-                          <h2 key={index} className="group text-[1.75rem] lg:text-3xl font-bold text-foreground mt-12 mb-6 first:mt-0 leading-[1.3] tracking-tight">
+                          <h2 key={blockKey} className="group text-[1.75rem] lg:text-3xl font-bold text-foreground mt-12 mb-6 first:mt-0 leading-[1.3] tracking-tight">
                             <span className="relative inline-block">
                               {firstLine.slice(2)}
                               <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
@@ -132,7 +134,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Heading level 2
                       if (firstLine.startsWith('## ')) {
                         return (
-                          <h3 key={index} className="text-[1.5rem] lg:text-2xl font-bold text-foreground mt-10 mb-5 leading-[1.3] tracking-tight">
+                          <h3 key={blockKey} className="text-[1.5rem] lg:text-2xl font-bold text-foreground mt-10 mb-5 leading-[1.3] tracking-tight">
                             {firstLine.slice(3)}
                           </h3>
                         )
@@ -141,7 +143,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Heading level 3
                       if (firstLine.startsWith('### ')) {
                         return (
-                          <h4 key={index} className="text-[1.25rem] lg:text-xl font-semibold text-foreground mt-8 mb-4 leading-[1.4] tracking-tight">
+                          <h4 key={blockKey} className="text-[1.25rem] lg:text-xl font-semibold text-foreground mt-8 mb-4 leading-[1.4] tracking-tight">
                             {firstLine.slice(4)}
                           </h4>
                         )
@@ -151,7 +153,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       if (firstLine.startsWith('```')) {
                         const code = lines.slice(1, -1).join('\n')
                         return (
-                          <div key={index} className="group relative my-8">
+                          <div key={blockKey} className="group relative my-8">
                             {/* Top accent line */}
                             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-center" />
 
@@ -165,9 +167,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Unordered list
                       if (firstLine.startsWith('- ') || firstLine.startsWith('* ')) {
                         return (
-                          <ul key={index} className="space-y-3 my-6">
+                          <ul key={blockKey} className="space-y-3 my-6">
                             {lines.map((line, i) => (
-                              <li key={i} className="group flex items-start gap-3 text-[1.0625rem] text-foreground leading-[1.7]">
+                              <li key={`${blockKey}-${i}`} className="group flex items-start gap-3 text-[1.0625rem] text-foreground leading-[1.7]">
                                 <span className="w-1.5 h-1.5 bg-foreground rounded-sm mt-2.5 flex-shrink-0 transition-all duration-300 group-hover:scale-125 group-hover:bg-primary" />
                                 <span>{line.slice(2)}</span>
                               </li>
@@ -179,14 +181,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Numbered list
                       if (/^\d+\./.test(firstLine)) {
                         return (
-                          <ol key={index} className="space-y-2 my-6 pl-6">
+                          <ol key={blockKey} className="space-y-2 my-6 pl-6">
                             {lines.map((line, i) => {
                               const content = line.replace(/^\d+\.\s*/, '')
                               const [title, ...rest] = content.split(':')
 
                               if (rest.length > 0) {
                                 return (
-                                  <li key={i} className="text-[1.0625rem] leading-[1.7] list-decimal">
+                                  <li key={`${blockKey}-${i}`} className="text-[1.0625rem] leading-[1.7] list-decimal">
                                     <strong className="font-semibold text-foreground">{title}:</strong>
                                     <span className="text-foreground">{rest.join(':')}</span>
                                   </li>
@@ -194,7 +196,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                               }
 
                               return (
-                                <li key={i} className="text-[1.0625rem] text-foreground leading-[1.7] list-decimal">
+                                <li key={`${blockKey}-${i}`} className="text-[1.0625rem] text-foreground leading-[1.7] list-decimal">
                                   {content}
                                 </li>
                               )
@@ -206,7 +208,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       // Regular paragraph
                       if (block.trim()) {
                         return (
-                          <p key={index} className="text-[1.0625rem] text-foreground leading-[1.7] mb-6">
+                          <p key={blockKey} className="text-[1.0625rem] text-foreground leading-[1.7] mb-6">
                             {block.trim()}
                           </p>
                         )
