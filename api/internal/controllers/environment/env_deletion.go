@@ -3,10 +3,12 @@ package environment
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
 	"go.uber.org/zap"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -19,20 +21,24 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 	if environment.Status.State != environmentsv1.EnvironmentStateDeleting {
 		if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateDeleting, "Deleting environment and cleaning up resources", logger); err != nil {
 			logger.Error("Failed to update environment status to deleting after retries", zap.Error(err))
-			// Continue with deletion even if status update fails
+			// Continue with deletion even if status update fails, as this is non-critical
 		}
 	}
 
 	// Clean up workspace environment connections referencing this environment
+	// This is critical - if cleanup fails, we should requeue and retry
 	if err := r.cleanupWorkspaceConnections(ctx, environment, logger); err != nil {
-		logger.Error("Failed to cleanup workspace connections", zap.Error(err))
-		// Continue with deletion even if cleanup fails
+		logger.Error("Failed to cleanup workspace connections, will retry", zap.Error(err))
+		// Requeue with a delay to allow transient issues to resolve
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.DeletionRetryInterval}, fmt.Errorf("failed to cleanup workspace connections: %w", err)
 	}
 
 	// Clean up compose resources
+	// This is critical - if cleanup fails, we should requeue and retry
 	if err := r.cleanupComposeResources(ctx, environment, logger); err != nil {
-		logger.Error("Failed to cleanup compose resources", zap.Error(err))
-		// Continue with deletion even if cleanup fails
+		logger.Error("Failed to cleanup compose resources, will retry", zap.Error(err))
+		// Requeue with a delay to allow transient issues to resolve
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.DeletionRetryInterval}, fmt.Errorf("failed to cleanup compose resources: %w", err)
 	}
 
 	// Snapshots are automatically deleted via owner references when the namespace is deleted
@@ -41,12 +47,12 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 	// Delete namespace and wait for completion
 	deleted, err := r.deleteNamespace(ctx, environment, logger)
 	if err != nil {
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, err
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.DeletionRetryInterval}, err
 	}
 
 	if !deleted {
 		// Namespace deletion in progress
-		return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.PodTerminationRetryInterval}, nil
 	}
 
 	// All cleanup complete, remove finalizer
@@ -68,7 +74,7 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	// Get Workspace type to list workspaces
 	workspaceList := &workspacev1.WorkspaceList{}
-	if err := r.List(ctx, workspaceList); err != nil {
+	if err := pagination.ListAll(ctx, r, workspaceList); err != nil {
 		return fmt.Errorf("failed to list workspaces: %w", err)
 	}
 
@@ -79,6 +85,7 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 	}
 
 	cleanedCount := 0
+	var errors []error
 	for i := range workspaceList.Items {
 		workspace := &workspaceList.Items[i]
 
@@ -100,7 +107,8 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 				logger.Error("Failed to remove environment connection from workspace",
 					zap.String("workspace", workspace.Name),
 					zap.Error(err))
-				// Continue with other workspaces even if one fails
+				// Collect error but continue with other workspaces
+				errors = append(errors, fmt.Errorf("workspace %s: %w", workspace.Name, err))
 				continue
 			}
 			cleanedCount++
@@ -112,5 +120,26 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 			zap.Int("count", cleanedCount))
 	}
 
+	// Return aggregated error if any workspace cleanup failed
+	if len(errors) > 0 {
+		return fmt.Errorf("failed to cleanup %d workspace connections: %w", len(errors), joinErrors(errors))
+	}
+
 	return nil
+}
+
+// joinErrors combines multiple errors into a single error message
+func joinErrors(errors []error) error {
+	if len(errors) == 0 {
+		return nil
+	}
+
+	var sb strings.Builder
+	for i, err := range errors {
+		if i > 0 {
+			sb.WriteString("; ")
+		}
+		sb.WriteString(err.Error())
+	}
+	return fmt.Errorf("%s", sb.String())
 }

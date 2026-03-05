@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllers/shared"
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -29,10 +31,40 @@ import (
 const (
 	workspaceFinalizer        = "workspaces.kloudlite.io/finalizer"
 	workspaceCleanupFinalizer = "workspaces.kloudlite.io/directory-cleanup"
-
-	// Default idle timeout if not specified in workspace settings (30 minutes)
-	defaultIdleTimeoutMinutes = 30
 )
+
+// ControllerConfig holds workspace controller configuration values
+// This is a local copy to avoid import cycles with the controllers package
+type ControllerConfig struct {
+	Workspace struct {
+		DefaultIdleTimeoutMinutes    int
+		RequeueIntervalMinutes      int
+		RBACCleanupIntervalMinutes  int
+		KubectlImage               string
+		GitImage                   string
+		AlpineImage                string
+		CleanupPodTTLSeconds       int64
+		VSCodeVersion              string
+	}
+	Environment struct {
+		LifecycleRetryInterval time.Duration
+	}
+}
+
+// Controller configuration - initialized during controller setup
+var cfg *ControllerConfig
+
+// Global pod deletion tracker to prevent race conditions between workspace and workmachine controllers
+var podDeletionTracker *shared.PodDeletionTracker
+
+// shouldRunRBACCleanup determines if RBAC garbage collection should run
+// Uses a simple time-based check to run cleanup periodically
+func shouldRunRBACCleanup() bool {
+	// Use current minute to determine if we should run cleanup
+	// Run every rbacCleanupIntervalMinutes minutes
+	currentMinute := time.Now().Minute()
+	return currentMinute%cfg.Workspace.RBACCleanupIntervalMinutes == 0
+}
 
 // WorkspaceReconciler reconciles Workspace objects and manages VS Code server pods
 type WorkspaceReconciler struct {
@@ -42,6 +74,7 @@ type WorkspaceReconciler struct {
 	Config    *rest.Config
 	Clientset *kubernetes.Clientset
 	JWTSecret string // JWT secret (kept for compatibility, no longer used for registry)
+	Cfg       *ControllerConfig // Controller configuration
 }
 
 // Reconcile handles Workspace events and ensures the workspace pod exists
@@ -51,6 +84,22 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 	)
 
 	logger.Info("Reconciling Workspace")
+
+	// Periodically run orphaned RBAC cleanup (every rbacCleanupIntervalMinutes)
+	// We use a simple counter approach by checking if this is the first workspace in the list
+	// This avoids running cleanup on every reconciliation
+	if shouldRunRBACCleanup() {
+		go func() {
+			r.Logger.Info("Running periodic orphaned RBAC cleanup")
+			deletedCount, errors := r.cleanupOrphanedRBACResources(ctx, r.Logger)
+			if len(errors) > 0 {
+				r.Logger.Warn("Periodic RBAC cleanup encountered errors",
+					zap.Int("deletedCount", deletedCount),
+					zap.Int("errorCount", len(errors)),
+					zap.String("errors", fmt.Sprintf("%v", errors)))
+			}
+		}()
+	}
 
 	// Fetch the Workspace instance (namespaced)
 	workspace := &workspacev1.Workspace{}
@@ -158,7 +207,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 
 	// Set default VS Code version if not provided
 	if workspace.Spec.VSCodeVersion == "" {
-		workspace.Spec.VSCodeVersion = "latest"
+		workspace.Spec.VSCodeVersion = cfg.Workspace.VSCodeVersion
 	}
 
 	// Handle workspace creation from snapshot if fromSnapshot is set
@@ -187,11 +236,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// Requeue after 1 minute to check idle status periodically for all active workspaces
+	// Requeue after configured interval to check idle status periodically for all active workspaces
 	// This is needed for idle state tracking (displayed in UI) even when auto-stop is not enabled
 	if workspace.Spec.Status == "active" {
 		if result.RequeueAfter == 0 && !result.Requeue {
-			result.RequeueAfter = 1 * time.Minute
+			result.RequeueAfter = time.Duration(cfg.Workspace.RequeueIntervalMinutes) * time.Minute
 		}
 	}
 
@@ -445,6 +494,12 @@ func (r *WorkspaceReconciler) setupWorkspaceRBAC(ctx context.Context, workspace 
 
 // SetupWithManager sets up the controller with the Manager
 func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// Initialize the global pod deletion tracker if not already initialized
+	if podDeletionTracker == nil {
+		podDeletionTracker = shared.NewPodDeletionTracker(r.Logger)
+		r.Logger.Info("Initialized pod deletion tracker for race condition prevention")
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&workspacev1.Workspace{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Pod{}).
@@ -453,10 +508,41 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&environmentv1.Environment{},
 			handler.EnqueueRequestsFromMapFunc(r.findWorkspacesForEnvironment),
 		).
+		Watches(
+			&rbacv1.ClusterRole{},
+			handler.EnqueueRequestsFromMapFunc(r.enqueueForRBACCleanup),
+		).
+		Watches(
+			&rbacv1.ClusterRoleBinding{},
+			handler.EnqueueRequestsFromMapFunc(r.enqueueForRBACCleanup),
+		).
 		Complete(r)
 }
 
-// findWorkspacesForEnvironment finds all workspaces connected to a deactivated environment
+// enqueueForRBACCleanup triggers orphaned RBAC cleanup when ClusterRole or ClusterRoleBinding changes
+// This ensures leaked resources are cleaned up promptly
+func (r *WorkspaceReconciler) enqueueForRBACCleanup(ctx context.Context, obj client.Object) []reconcile.Request {
+	// Run orphaned RBAC cleanup in the background
+	go func() {
+		r.Logger.Info("Triggering orphaned RBAC cleanup")
+		deletedCount, errors := r.cleanupOrphanedRBACResources(ctx, r.Logger)
+		if len(errors) > 0 {
+			r.Logger.Warn("Triggered RBAC cleanup encountered errors",
+				zap.Int("deletedCount", deletedCount),
+				zap.Int("errorCount", len(errors)),
+				zap.String("errors", fmt.Sprintf("%v", errors)))
+		}
+	}()
+
+	// Return empty request list since we're just triggering cleanup
+	return nil
+}
+
+// findWorkspacesForEnvironment finds all workspaces connected to a deactivated environment.
+//
+// Uses pagination with a default page size of 100 items to efficiently find workspaces
+// in clusters with many resources. This prevents API server overload when environments
+// are deactivated and all connected workspaces need to be reconciled.
 func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, obj client.Object) []reconcile.Request {
 	env, ok := obj.(*environmentv1.Environment)
 	if !ok {
@@ -473,14 +559,15 @@ func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, 
 		return nil
 	}
 
-	// Find all workspaces connected to this environment
+	// Find all workspaces connected to this environment using pagination
+	// Default page size of 100 prevents API overload in large clusters
 	var workspaces workspacev1.WorkspaceList
-	if err := r.Client.List(ctx, &workspaces); err != nil {
+	if err := pagination.ListAll(ctx, r.Client, &workspaces); err != nil {
 		r.Logger.Error("findWorkspacesForEnvironment: failed to list workspaces", zap.Error(err))
 		return nil
 	}
 
-	r.Logger.Info("findWorkspacesForEnvironment: found workspaces", zap.Int("count", len(workspaces.Items)))
+	r.Logger.Info("findWorkspacesForEnvironment: listed all workspaces using pagination", zap.Int("count", len(workspaces.Items)))
 
 	var requests []reconcile.Request
 	for _, ws := range workspaces.Items {

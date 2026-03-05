@@ -180,7 +180,7 @@ func (r *WorkspaceReconciler) createWorkspacePod(workspace *workspacev1.Workspac
 				initContainers := []corev1.Container{
 					{
 						Name:  "init-workspace-dir",
-						Image: "bitnami/kubectl:latest",
+						Image: cfg.Workspace.KubectlImage,
 						SecurityContext: &corev1.SecurityContext{
 							RunAsUser:  fn.Ptr(int64(0)),
 							RunAsGroup: fn.Ptr(int64(0)),
@@ -368,7 +368,7 @@ chmod 644 /tmp-writable/kloudlite-context.json
 
 					initContainers = append(initContainers, corev1.Container{
 						Name:  "git-clone",
-						Image: "alpine/git:latest",
+						Image: cfg.Workspace.GitImage,
 						Command: []string{
 							"sh",
 							"-c",

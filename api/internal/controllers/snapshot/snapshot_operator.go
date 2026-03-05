@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/pkg/imageref"
 	"go.uber.org/zap"
 )
 
@@ -36,24 +36,24 @@ func (o *DefaultSnapshotOperator) DeleteFromRegistry(ctx context.Context, imageR
 
 	o.Logger.Info("Deleting snapshot from registry", zap.String("imageRef", imageRef))
 
-	// Parse image reference: registry:port/repo/path:tag
+	// Parse image reference using robust parser
 	// Example: image-registry.kloudlite.svc.cluster.local:5000/snapshots/karthik/snapshot-name:snapshot-name
-	parts := strings.SplitN(imageRef, "/", 2)
-	if len(parts) != 2 {
-		return fmt.Errorf("invalid image reference format: %s", imageRef)
+	ref, err := imageref.Parse(imageRef)
+	if err != nil {
+		return fmt.Errorf("failed to parse image reference %s: %w", imageRef, err)
 	}
 
-	registry := parts[0]
-	repoAndTag := parts[1]
+	registry := ref.Registry
+	repository := ref.Repository
+	tag := ref.Tag
 
-	// Split repo and tag
-	tagIdx := strings.LastIndex(repoAndTag, ":")
-	if tagIdx == -1 {
+	// Validate that we have a tag (not a digest)
+	if tag == "" && ref.Digest != "" {
+		return fmt.Errorf("cannot delete by digest, use tag-based reference: %s", imageRef)
+	}
+	if tag == "" {
 		return fmt.Errorf("no tag found in image reference: %s", imageRef)
 	}
-
-	repository := repoAndTag[:tagIdx]
-	tag := repoAndTag[tagIdx+1:]
 
 	// Step 1: Get the manifest digest for this tag
 	manifestURL := fmt.Sprintf("http://%s/v2/%s/manifests/%s", registry, repository, tag)

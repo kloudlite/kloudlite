@@ -9,6 +9,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/internal/controllers/composition"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workmachinev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -224,9 +225,11 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		deployedPVCs[i] = pvc.Name
 	}
 
-	// Cleanup removed resources
+	// Cleanup removed resources - now properly handles errors
 	if err := r.cleanupRemovedComposeResources(ctx, environment, oldDeployedResources, deployedStatefulSets, deployedServices, deployedPVCs, logger); err != nil {
-		logger.Warn("Failed to cleanup removed resources", zap.Error(err))
+		logger.Error("Failed to cleanup removed resources", zap.Error(err))
+		// Return error to indicate partial failure, allowing the reconcile loop to retry
+		return false, fmt.Errorf("failed to cleanup removed resources: %w", err)
 	}
 
 	// Update deployed resources in status
@@ -415,6 +418,8 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 	currentServiceSet := makeStringSet(currentServices)
 	currentPVCSet := makeStringSet(currentPVCs)
 
+	var errors []error
+
 	// Delete removed StatefulSets
 	for _, name := range oldResources.StatefulSets {
 		if !currentStatefulSetSet[name] {
@@ -422,7 +427,8 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 			if err := r.Delete(ctx, &appsv1.StatefulSet{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 			}); err != nil && !apierrors.IsNotFound(err) {
-				return err
+				logger.Error("Failed to delete removed StatefulSet", zap.String("name", name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("StatefulSet %s: %w", name, err))
 			}
 		}
 	}
@@ -434,7 +440,8 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 			if err := r.Delete(ctx, &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 			}); err != nil && !apierrors.IsNotFound(err) {
-				return err
+				logger.Error("Failed to delete removed service", zap.String("name", name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("Service %s: %w", name, err))
 			}
 		}
 	}
@@ -446,9 +453,15 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 			if err := r.Delete(ctx, &corev1.PersistentVolumeClaim{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 			}); err != nil && !apierrors.IsNotFound(err) {
-				return err
+				logger.Error("Failed to delete removed PVC", zap.String("name", name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("PVC %s: %w", name, err))
 			}
 		}
+	}
+
+	// Return aggregated error if any resource deletion failed
+	if len(errors) > 0 {
+		return fmt.Errorf("failed to delete %d resources: %w", len(errors), joinErrors(errors))
 	}
 
 	return nil
@@ -572,10 +585,10 @@ func (r *EnvironmentReconciler) checkSingleStatefulSetHealth(ctx context.Context
 		return status
 	}
 
-	// Check pod status
+	// Check pod status using pagination
 	podList := &corev1.PodList{}
 	matchLabels := sts.Spec.Selector.MatchLabels
-	if err := r.List(ctx, podList,
+	if err := pagination.ListAll(ctx, r, podList,
 		client.InNamespace(sts.Namespace),
 		client.MatchingLabels(matchLabels),
 	); err != nil {
@@ -670,34 +683,53 @@ func (r *EnvironmentReconciler) cleanupComposeResources(ctx context.Context, env
 	namespace := environment.Spec.TargetNamespace
 	labelSelector := client.MatchingLabels{dockerCompositionLabel: environment.Name}
 
-	// Delete StatefulSets
+	var errors []error
+
+	// Delete StatefulSets using pagination
 	stsList := &appsv1.StatefulSetList{}
-	if err := r.List(ctx, stsList, client.InNamespace(namespace), labelSelector); err == nil {
+	if err := pagination.ListAll(ctx, r, stsList, client.InNamespace(namespace), labelSelector); err != nil {
+		logger.Error("Failed to list StatefulSets for cleanup", zap.Error(err))
+		errors = append(errors, fmt.Errorf("failed to list StatefulSets: %w", err))
+	} else {
 		for _, s := range stsList.Items {
 			if err := r.Delete(ctx, &s); err != nil && !apierrors.IsNotFound(err) {
-				logger.Warn("Failed to delete StatefulSet", zap.String("name", s.Name), zap.Error(err))
+				logger.Error("Failed to delete StatefulSet", zap.String("name", s.Name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("StatefulSet %s: %w", s.Name, err))
 			}
 		}
 	}
 
-	// Delete services
+	// Delete services using pagination
 	serviceList := &corev1.ServiceList{}
-	if err := r.List(ctx, serviceList, client.InNamespace(namespace), labelSelector); err == nil {
+	if err := pagination.ListAll(ctx, r, serviceList, client.InNamespace(namespace), labelSelector); err != nil {
+		logger.Error("Failed to list Services for cleanup", zap.Error(err))
+		errors = append(errors, fmt.Errorf("failed to list Services: %w", err))
+	} else {
 		for _, s := range serviceList.Items {
 			if err := r.Delete(ctx, &s); err != nil && !apierrors.IsNotFound(err) {
-				logger.Warn("Failed to delete service", zap.String("name", s.Name), zap.Error(err))
+				logger.Error("Failed to delete Service", zap.String("name", s.Name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("Service %s: %w", s.Name, err))
 			}
 		}
 	}
 
-	// Delete PVCs (including those created by VolumeClaimTemplates)
+	// Delete PVCs (including those created by VolumeClaimTemplates) using pagination
 	pvcList := &corev1.PersistentVolumeClaimList{}
-	if err := r.List(ctx, pvcList, client.InNamespace(namespace), labelSelector); err == nil {
+	if err := pagination.ListAll(ctx, r, pvcList, client.InNamespace(namespace), labelSelector); err != nil {
+		logger.Error("Failed to list PVCs for cleanup", zap.Error(err))
+		errors = append(errors, fmt.Errorf("failed to list PVCs: %w", err))
+	} else {
 		for _, p := range pvcList.Items {
 			if err := r.Delete(ctx, &p); err != nil && !apierrors.IsNotFound(err) {
-				logger.Warn("Failed to delete PVC", zap.String("name", p.Name), zap.Error(err))
+				logger.Error("Failed to delete PVC", zap.String("name", p.Name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("PVC %s: %w", p.Name, err))
 			}
 		}
+	}
+
+	// Return aggregated error if any cleanup failed
+	if len(errors) > 0 {
+		return fmt.Errorf("failed to cleanup compose resources (%d errors): %w", len(errors), joinErrors(errors))
 	}
 
 	return nil
@@ -709,4 +741,20 @@ func makeStringSet(items []string) map[string]bool {
 		set[item] = true
 	}
 	return set
+}
+
+// joinErrors combines multiple errors into a single error message
+func joinErrors(errors []error) error {
+	if len(errors) == 0 {
+		return nil
+	}
+
+	var sb strings.Builder
+	for i, err := range errors {
+		if i > 0 {
+			sb.WriteString("; ")
+		}
+		sb.WriteString(err.Error())
+	}
+	return fmt.Errorf("%s", sb.String())
 }

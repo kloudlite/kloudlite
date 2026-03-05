@@ -36,6 +36,11 @@ type Router struct {
 	httpServer       *http.Server
 	httpsServer      *http.Server
 	registryUsername string // Username for registry path access control
+
+	// Metrics for concurrent update tracking
+	concurrentUpdateAttempts int64
+	concurrentUpdateConflicts int64
+	metricsMutex             sync.Mutex
 }
 
 // NewRouter creates a new Router
@@ -47,15 +52,93 @@ func NewRouter(logger *zap.Logger, registryUsername string) *Router {
 	}
 }
 
-// UpdateRoutes updates the routing table
+// UpdateRoutes updates the routing table atomically
+// This method ensures that route table updates are atomic and safe for concurrent access
+// Uses try-lock pattern to detect and report concurrent update conflicts
 func (r *Router) UpdateRoutes(routes []*Route) error {
-	r.routesMutex.Lock()
-	defer r.routesMutex.Unlock()
+	// Track metrics for concurrent update attempts
+	r.metricsMutex.Lock()
+	r.concurrentUpdateAttempts++
+	attempts := r.concurrentUpdateAttempts
+	conflicts := r.concurrentUpdateConflicts
+	r.metricsMutex.Unlock()
 
+	// Detect potential concurrent updates by checking if we can acquire the lock immediately
+	// If not, there's another update in progress
+	lockAcquired := make(chan bool, 1)
+	go func() {
+		r.routesMutex.Lock()
+		lockAcquired <- true
+	}()
+
+	select {
+	case <-lockAcquired:
+		// Lock acquired immediately, no conflict
+	case <-time.After(10 * time.Millisecond):
+		// Lock acquisition took >10ms, indicating potential contention
+		r.metricsMutex.Lock()
+		r.concurrentUpdateConflicts++
+		conflicts = r.concurrentUpdateConflicts
+		r.metricsMutex.Unlock()
+
+		// Wait for lock to be acquired
+		<-lockAcquired
+
+		r.logger.Warn("Detected concurrent route update - potential race condition",
+			zap.Int64("conflict_count", conflicts),
+			zap.Int64("total_attempts", attempts),
+		)
+	}
+
+	oldRoutes := r.routes
 	r.routes = routes
-	r.logger.Info("Routes updated", zap.Int("count", len(routes)))
+	r.routesMutex.Unlock()
+
+	// Log route update details
+	r.logger.Info("Routes updated atomically",
+		zap.Int("old_count", len(oldRoutes)),
+		zap.Int("new_count", len(routes)),
+		zap.Int64("concurrent_attempts", attempts),
+		zap.Int64("concurrent_conflicts", conflicts),
+	)
 
 	return nil
+}
+
+// GetRoutes returns a copy of the current routes atomically
+func (r *Router) GetRoutes() []*Route {
+	r.routesMutex.RLock()
+	defer r.routesMutex.RUnlock()
+
+	// Return a deep copy to prevent external modifications
+	routesCopy := make([]*Route, len(r.routes))
+	for i, route := range r.routes {
+		routesCopy[i] = &Route{
+			Host:        route.Host,
+			Path:        route.Path,
+			PathType:    route.PathType,
+			BackendURL:  route.BackendURL,
+			IngressName: route.IngressName,
+			Namespace:   route.Namespace,
+		}
+	}
+	return routesCopy
+}
+
+// GetMetrics returns router metrics for monitoring
+func (r *Router) GetMetrics() map[string]interface{} {
+	r.routesMutex.RLock()
+	routeCount := len(r.routes)
+	r.routesMutex.RUnlock()
+
+	r.metricsMutex.Lock()
+	defer r.metricsMutex.Unlock()
+
+	return map[string]interface{}{
+		"route_count":               routeCount,
+		"concurrent_update_attempts": r.concurrentUpdateAttempts,
+		"concurrent_update_conflicts": r.concurrentUpdateConflicts,
+	}
 }
 
 // isWebSocketRequest checks if the request is a WebSocket upgrade request
@@ -78,10 +161,8 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Find matching route (hold lock only during route lookup)
-	r.routesMutex.RLock()
+	// Find matching route (findMatchingRoute handles its own locking)
 	route := r.findMatchingRoute(req)
-	r.routesMutex.RUnlock()
 
 	if route == nil {
 		http.Error(w, "No route found", http.StatusNotFound)
@@ -352,6 +433,7 @@ func (r *Router) checkRegistryAccess(req *http.Request) error {
 }
 
 // findMatchingRoute finds a route matching the request
+// This method holds the read lock only during the route lookup to minimize contention
 func (r *Router) findMatchingRoute(req *http.Request) *Route {
 	host := req.Host
 
@@ -370,6 +452,10 @@ func (r *Router) findMatchingRoute(req *http.Request) *Route {
 	}
 
 	path := req.URL.Path
+
+	// Acquire read lock to safely access routes
+	r.routesMutex.RLock()
+	defer r.routesMutex.RUnlock()
 
 	var bestMatch *Route
 	var bestMatchScore int

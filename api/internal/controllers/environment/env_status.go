@@ -268,7 +268,7 @@ func (r *EnvironmentReconciler) handleSnapshotRestore(ctx context.Context, envir
 
 	default:
 		logger.Warn("Unknown restore state", zap.String("state", string(restore.Status.State)))
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.StatusUpdateRetryInterval}, nil
 	}
 }
 
@@ -305,7 +305,8 @@ func (r *EnvironmentReconciler) updateSnapshotRestoreStatus(ctx context.Context,
 	}
 
 	// Requeue to check progress
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	logger.Debug("Using configured snapshot restore status retry interval", zap.Duration("interval", r.Cfg.Snapshot.SnapshotRestoreStatusRetryInterval))
+	return reconcile.Result{RequeueAfter: r.Cfg.Snapshot.SnapshotRestoreStatusRetryInterval}, nil
 }
 
 // failSnapshotRestore marks the snapshot restore as failed and clears FromSnapshot

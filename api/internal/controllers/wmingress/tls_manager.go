@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -31,15 +32,67 @@ func NewTLSManager(logger *zap.Logger) *TLSManager {
 	}
 }
 
-// UpdateCertificates updates the certificate store
+// UpdateCertificates updates the certificate store atomically
+// Uses the same try-lock pattern as router to detect concurrent updates
 func (m *TLSManager) UpdateCertificates(certificates map[string]*TLSCertificate) error {
-	m.certsMutex.Lock()
-	defer m.certsMutex.Unlock()
+	// Detect potential concurrent updates by checking if we can acquire the lock immediately
+	lockAcquired := make(chan bool, 1)
+	go func() {
+		m.certsMutex.Lock()
+		lockAcquired <- true
+	}()
 
+	select {
+	case <-lockAcquired:
+		// Lock acquired immediately, no conflict
+	case <-time.After(10 * time.Millisecond):
+		// Lock acquisition took >10ms, indicating potential contention
+		// Wait for lock to be acquired
+		<-lockAcquired
+
+		m.logger.Warn("Detected concurrent TLS certificate update - potential race condition")
+	}
+
+	// Atomic swap of the certificates map
+	oldCount := len(m.certificates)
 	m.certificates = certificates
-	m.logger.Info("TLS certificates updated", zap.Int("count", len(certificates)))
+
+	m.logger.Info("TLS certificates updated atomically",
+		zap.Int("old_count", oldCount),
+		zap.Int("new_count", len(certificates)),
+	)
+
+	m.certsMutex.Unlock()
 
 	return nil
+}
+
+// GetCertificates returns a copy of the current certificates atomically
+func (m *TLSManager) GetCertificates() map[string]*TLSCertificate {
+	m.certsMutex.RLock()
+	defer m.certsMutex.RUnlock()
+
+	// Return a deep copy to prevent external modifications
+	certificatesCopy := make(map[string]*TLSCertificate, len(m.certificates))
+	for host, cert := range m.certificates {
+		certificatesCopy[host] = &TLSCertificate{
+			Hosts:    append([]string{}, cert.Hosts...),
+			CertPEM:  append([]byte{}, cert.CertPEM...),
+			KeyPEM:   append([]byte{}, cert.KeyPEM...),
+			SecretID: cert.SecretID,
+		}
+	}
+	return certificatesCopy
+}
+
+// GetMetrics returns TLS manager metrics for monitoring
+func (m *TLSManager) GetMetrics() map[string]interface{} {
+	m.certsMutex.RLock()
+	defer m.certsMutex.RUnlock()
+
+	return map[string]interface{}{
+		"certificate_count": len(m.certificates),
+	}
 }
 
 // GetTLSConfig returns a tls.Config with certificate resolution

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/zap"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -243,5 +244,6 @@ func (r *WorkMachineReconciler) checkAutoShutdown(check *reconciler.Check[*v1.Wo
 		return check.Errored(fmt.Errorf("failed to update WorkMachine spec for auto-shutdown: %w", err))
 	}
 
-	return check.UpdateMsg("Auto-shutdown triggered due to idle timeout").RequeueAfter(5 * time.Second)
+	check.Logger().Debug("Using configured auto-shutdown trigger retry interval", zap.Duration("interval", r.Cfg.WorkMachine.AutoShutdownTriggerRetryInterval))
+	return check.UpdateMsg("Auto-shutdown triggered due to idle timeout").RequeueAfter(r.Cfg.WorkMachine.AutoShutdownTriggerRetryInterval)
 }

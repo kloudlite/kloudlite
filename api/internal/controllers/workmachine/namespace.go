@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllers/shared"
 	environmentV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/api/internal/controllers/packages/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
@@ -16,6 +17,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
+// Global pod deletion tracker shared with workspace controller to prevent race conditions
+var podDeletionTracker *shared.PodDeletionTracker
+
 
 // createNamespace creates or updates the target namespace for the WorkMachine
 func (r *WorkMachineReconciler) createNamespace(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
@@ -130,15 +134,26 @@ func (r *WorkMachineReconciler) deleteNamespace(check *reconciler.Check[*v1.Work
 	}
 
 	// Directly delete workspace pods to speed up cleanup
+	// Use shared tracker to prevent race conditions with workspace controller
 	for _, ws := range ownedWorkspaces {
 		// Delete the workspace pod directly
 		podName := fmt.Sprintf("workspace-%s", ws.Name)
 		pod := &corev1.Pod{}
 		err := r.Get(check.Context(), client.ObjectKey{Name: podName, Namespace: namespaceName}, pod)
 		if err == nil {
-			// Pod exists, delete it
-			if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
-				return check.Failed(fmt.Errorf("failed to delete workspace pod %s: %w", podName, err))
+			// Check if another controller is already deleting this pod
+			if !podDeletionTracker.TryStartDeletion(pod.UID, podName, namespaceName, "workmachine") {
+				check.Logger().Info("Pod deletion already in progress by another controller, skipping",
+					"pod", podName,
+					"namespace", namespaceName)
+			} else {
+				// Ensure we mark the deletion as complete when we exit
+				defer podDeletionTracker.CompleteDeletion(pod.UID, podName, namespaceName, nil)
+
+				// Pod exists, delete it
+				if err := r.Delete(check.Context(), pod); err != nil && !apiErrors.IsNotFound(err) {
+					return check.Failed(fmt.Errorf("failed to delete workspace pod %s: %w", podName, err))
+				}
 			}
 		} else if !apiErrors.IsNotFound(err) {
 			return check.Errored(err)

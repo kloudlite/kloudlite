@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
@@ -68,22 +70,22 @@ func (r *WorkspaceReconciler) buildServicePorts(workspace *workspacev1.Workspace
 	}
 
 	// Track which ports are already defined to avoid duplicates
-	definedPorts := make(map[string]bool)
+	definedPorts := make(map[portKey]bool)
 	for _, p := range ports {
-		key := fmt.Sprintf("%s-%d", p.Protocol, p.Port)
+		key := portKey{protocol: p.Protocol, port: p.Port}
 		definedPorts[key] = true
 	}
 
 	// Add user-exposed ports (always TCP for HTTP)
 	for _, exposed := range workspace.Spec.Expose {
-		key := fmt.Sprintf("TCP-%d", exposed.Port)
+		key := portKey{protocol: corev1.ProtocolTCP, port: int32(exposed.Port)}
 		if definedPorts[key] {
 			continue // Skip if already defined
 		}
 		definedPorts[key] = true
 
 		ports = append(ports, corev1.ServicePort{
-			Name:       fmt.Sprintf("exposed-%d", exposed.Port),
+			Name:       "exposed-" + strconv.FormatInt(int64(exposed.Port), 10),
 			Protocol:   corev1.ProtocolTCP,
 			Port:       exposed.Port,
 			TargetPort: intstr.FromInt32(exposed.Port),
@@ -93,9 +95,15 @@ func (r *WorkspaceReconciler) buildServicePorts(workspace *workspacev1.Workspace
 	return ports
 }
 
+// portKey is used to uniquely identify ports without string operations
+type portKey struct {
+	protocol corev1.Protocol
+	port     int32
+}
+
 // ensureWorkspaceService ensures a Service is created for the workspace
 func (r *WorkspaceReconciler) ensureWorkspaceService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	serviceName := fmt.Sprintf("ws-%s", workspace.Name)
+	serviceName := buildWorkspaceServiceName(workspace.Name)
 
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
@@ -158,10 +166,10 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	}
 
 	// Service name that ingress will route to
-	serviceName := fmt.Sprintf("ws-%s", workspace.Name)
+	serviceName := buildWorkspaceServiceName(workspace.Name)
 
 	// Generate hash of owner-workspaceName for unique, DNS-friendly hostnames
-	wsHash := generateHash(fmt.Sprintf("%s-%s", workspace.Spec.OwnedBy, workspace.Name))
+	wsHash := generateHash(buildHashInput(workspace.Spec.OwnedBy, workspace.Name))
 
 	// Build Ingress rules
 	var ingressRules []networkingv1.IngressRule
@@ -169,7 +177,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	for prefix, port := range httpServices {
 		// Use pattern: {prefix}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: claude-a1b2c3d4.eastman.khost.dev
-		host := fmt.Sprintf("%s-%s.%s", prefix, wsHash, subdomain)
+		host := buildHostname(prefix, wsHash, subdomain)
 
 		pathType := networkingv1.PathTypePrefix
 		ingressRules = append(ingressRules, networkingv1.IngressRule{
@@ -200,7 +208,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 	for _, exposed := range workspace.Spec.Expose {
 		// Use pattern: p{port}-{hash(owner-workspaceName)}.{subdomain}
 		// Example: p3000-a1b2c3d4.eastman.khost.dev
-		host := fmt.Sprintf("p%d-%s.%s", exposed.Port, wsHash, subdomain)
+		host := buildPortHostname(exposed.Port, wsHash, subdomain)
 
 		pathType := networkingv1.PathTypePrefix
 		ingressRules = append(ingressRules, networkingv1.IngressRule{
@@ -258,7 +266,7 @@ func (r *WorkspaceReconciler) setupWorkspaceIngress(ctx context.Context, workspa
 // ensureWorkspaceHeadlessService ensures a headless Service is created for the workspace
 // This headless service is used by service intercepts to route traffic to workspace pods
 func (r *WorkspaceReconciler) ensureWorkspaceHeadlessService(ctx context.Context, workspace *workspacev1.Workspace, logger *zap.Logger) error {
-	headlessServiceName := fmt.Sprintf("ws-%s-headless", workspace.Name)
+	headlessServiceName := buildHeadlessServiceName(workspace.Name)
 
 	// Get target namespace from WorkMachine
 	targetNamespace, err := r.getWorkspaceTargetNamespace(ctx, workspace)
@@ -311,4 +319,52 @@ func (r *WorkspaceReconciler) ensureWorkspaceHeadlessService(ctx context.Context
 	// Headless service exists, no need to update
 	logger.Info("Headless service already exists", zap.String("name", headlessServiceName))
 	return nil
+}
+
+// Helper functions for efficient string operations
+
+// buildWorkspaceServiceName constructs the workspace service name
+func buildWorkspaceServiceName(workspaceName string) string {
+	return "ws-" + workspaceName
+}
+
+// buildHeadlessServiceName constructs the headless service name
+func buildHeadlessServiceName(workspaceName string) string {
+	return "ws-" + workspaceName + "-headless"
+}
+
+// buildHashInput constructs input for hash generation
+func buildHashInput(owner, name string) string {
+	return owner + "-" + name
+}
+
+// buildHostname constructs a hostname for ingress rules
+func buildHostname(prefix, hash, subdomain string) string {
+	return prefix + "-" + hash + "." + subdomain
+}
+
+// buildPortHostname constructs a hostname for exposed ports
+func buildPortHostname(port int32, hash, subdomain string) string {
+	// Validate port range
+	if port < 1 || port > 65535 {
+		// Return a safe default if port is invalid
+		var sb strings.Builder
+		sb.Grow(5 + len(hash) + 1 + len(subdomain)) // "p0-" + hash + "." + subdomain
+		sb.WriteString("p0-")
+		sb.WriteString(hash)
+		sb.WriteString(".")
+		sb.WriteString(subdomain)
+		return sb.String()
+	}
+
+	var sb strings.Builder
+	// Estimate size: "p" + max 5 digits + "-" + hash + "." + subdomain
+	sb.Grow(1 + 5 + 1 + len(hash) + 1 + len(subdomain))
+	sb.WriteString("p")
+	sb.WriteString(strconv.FormatInt(int64(port), 10))
+	sb.WriteString("-")
+	sb.WriteString(hash)
+	sb.WriteString(".")
+	sb.WriteString(subdomain)
+	return sb.String()
 }
