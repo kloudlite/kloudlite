@@ -2,11 +2,9 @@ package controllers
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"time"
 
-	"github.com/codingconcepts/env"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/kloudlite/kloudlite/api/internal/controllerconfig"
 )
 
@@ -21,7 +19,7 @@ type ControllerConfig = controllerconfig.ControllerConfig
 // LoadConfig loads controller configuration from environment variables
 func LoadConfig() (*ControllerConfig, error) {
 	var cfg ControllerConfig
-	if err := env.Parse(&cfg); err != nil {
+	if err := envconfig.Process("", &cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse controller configuration: %w", err)
 	}
 
@@ -139,23 +137,4 @@ func LoadConfig() (*ControllerConfig, error) {
 	cfg.Environment.SnapshotRestoreWaitInterval = cfg.Environment.SnapshotRestoreRetryInterval
 
 	return &cfg, nil
-}
-
-// GetEnvOrDefault gets an environment variable or returns default value
-// This is a helper for backward compatibility with existing code
-func GetEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-// GetEnvIntOrDefault gets an environment variable as int or returns default value
-func GetEnvIntOrDefault(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
 }
