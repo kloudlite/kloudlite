@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect, useCallback, memo } from 'react'
+import { useState, useTransition, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 import {
@@ -85,7 +85,7 @@ interface UserManagementListProps {
   workMachines?: any[]
 }
 
-export const UserManagementList = memo(function UserManagementList({
+export function UserManagementList({
   users: initialUsers,
   currentUserRole,
   isKloudliteCloud,
@@ -1126,4 +1126,4 @@ export const UserManagementList = memo(function UserManagementList({
       )}
     </div>
   )
-})
+}

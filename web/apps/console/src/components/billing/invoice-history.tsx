@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, memo } from 'react'
+import { useState } from 'react'
 import { Badge } from '@kloudlite/ui'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/billing-utils'
@@ -47,7 +47,7 @@ function SortIcon({ column, sortColumn, sortDirection }: { column: SortColumn; s
     : <ArrowDown className="h-3 w-3" />
 }
 
-export const InvoiceHistory = memo(function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
+export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
@@ -121,4 +121,4 @@ export const InvoiceHistory = memo(function InvoiceHistory({ invoices }: Invoice
       </table>
     </div>
   )
-})
+}

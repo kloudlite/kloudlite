@@ -1,7 +1,7 @@
 'use client'
 
 import { Network, Copy, Check, AlertCircle, AlertTriangle, Terminal } from 'lucide-react'
-import { useState, memo } from 'react'
+import { useState } from 'react'
 import type { K8sService, CompositionSpec, CompositionStatus } from '@kloudlite/types'
 import { Alert, AlertDescription, AlertTitle, Badge, Button } from '@kloudlite/ui'
 import { ServiceLogsViewer } from './service-logs-viewer'
@@ -18,7 +18,7 @@ interface ServicesListProps {
   isEnvActive?: boolean // Whether the environment is active
 }
 
-export const ServicesList = memo(function ServicesList({
+export function ServicesList({
   services,
   namespace,
   environmentName: _environmentName,
@@ -220,4 +220,4 @@ export const ServicesList = memo(function ServicesList({
       />
     </>
   )
-})
+}

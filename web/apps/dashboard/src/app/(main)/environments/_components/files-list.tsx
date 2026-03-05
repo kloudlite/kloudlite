@@ -5,14 +5,13 @@ import type { FileInfo } from '@kloudlite/types'
 import { AddFileSheet } from './add-file-sheet'
 import { FilesTable } from './files-table'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
-import { memo } from 'react'
 
 interface FilesListProps {
   environmentId: string
   files: FileInfo[]
 }
 
-export const FilesList = memo(function FilesList({ environmentId, files }: FilesListProps) {
+export function FilesList({ environmentId, files }: FilesListProps) {
   useResourceWatch('configmaps')
 
   return (
@@ -38,4 +37,4 @@ export const FilesList = memo(function FilesList({ environmentId, files }: Files
       )}
     </div>
   )
-})
+}

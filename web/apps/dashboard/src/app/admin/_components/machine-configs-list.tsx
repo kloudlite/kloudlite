@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, memo } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Button,
@@ -91,7 +91,7 @@ function toDisplayName(k8sName: string): string {
   return k8sName.replace(/-/g, '.')
 }
 
-export const MachineConfigsList = memo(function MachineConfigsList({
+export function MachineConfigsList({
   configs: initialConfigs,
   isReadOnly = false,
 }: MachineConfigsListProps) {
@@ -519,4 +519,4 @@ export const MachineConfigsList = memo(function MachineConfigsList({
       </Dialog>
     </div>
   )
-})
+}

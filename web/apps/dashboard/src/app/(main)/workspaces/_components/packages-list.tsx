@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Package,
   CheckCircle2,
@@ -28,7 +28,7 @@ interface PackagesListProps {
   initialPackageRequest?: PackageRequest | null
 }
 
-export const PackagesList = memo(function PackagesList({ workspace, initialPackageRequest }: PackagesListProps) {
+export function PackagesList({ workspace, initialPackageRequest }: PackagesListProps) {
   useResourceWatch('packagerequests')
 
   const [packages, setPackages] = useState<PackageWithStatus[]>([])
@@ -247,7 +247,7 @@ export const PackagesList = memo(function PackagesList({ workspace, initialPacka
       </div>
     </div>
   )
-})
+}
 
 function CommandLine({
   comment,
