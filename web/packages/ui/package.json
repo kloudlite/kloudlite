@@ -1,15 +1,15 @@
 {
-    "name": "@kloudlite/ui",
-    "version": "0.0.0",
-    "main": "./src/index.ts",
-    "types": "./src/index.ts",
-    "scripts": {
-        "lint": "echo 'No lint configured for @kloudlite/ui'",
-        "test": "vitest",
-        "test:run": "vitest run",
-        "test:coverage": "vitest run --coverage"
-    },
-    "dependencies": {
+  "name": "@kloudlite/ui",
+  "version": "0.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "echo 'No lint configured for @kloudlite/ui'",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
         "@hookform/resolvers": "^5.2.2",
         "@kloudlite/lib": "workspace:*",
         "@radix-ui/react-accordion": "^1.2.12",
@@ -55,21 +55,21 @@
         "vaul": "^1.1.2",
         "zod": "^4.3.5"
     },
-    "peerDependencies": {
-        "next": "^16.0.0",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
-        "react-hook-form": "^7.71.1"
-    },
-    "devDependencies": {
-        "typescript": "^5.0.0",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0",
-        "@testing-library/jest-dom": "^6.9.1",
-        "@testing-library/react": "^16.2.0",
-        "@testing-library/user-event": "^14.6.1",
-        "@vitejs/plugin-react": "^5.1.4",
-        "vitest": "^4.0.18",
-        "happy-dom": "^20.8.3"
-    }
+  "peerDependencies": {
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.71.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^5.1.4",
+    "vitest": "^4.0.18",
+    "happy-dom": "^20.8.3"
+  }
 }
