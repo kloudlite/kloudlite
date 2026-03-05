@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import {
@@ -22,10 +22,7 @@ import {
 } from '@kloudlite/ui'
 import { MoreHorizontal, Shield, User, Eye } from 'lucide-react'
 import { toast } from 'sonner'
-import type {
-  InstallationMember,
-  MemberRole,
-} from '@/lib/console/storage'
+import type { InstallationMember, MemberRole } from '@/lib/console/storage'
 
 interface TeamMembersTableProps {
   members: InstallationMember[]
@@ -60,6 +57,53 @@ export function TeamMembersTable({
 
   const canManage = userRole === 'owner' || userRole === 'admin'
 
+  const handleChangeRole = useCallback(
+    async (memberId: string, newRole: MemberRole) => {
+      try {
+        const response = await fetch(
+          `/api/installations/${installationId}/team/members/${memberId}`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole }),
+          },
+        )
+
+        if (!response.ok) throw new Error('Failed to update role')
+
+        router.refresh()
+      } catch {
+        toast.error('Failed to update member role')
+      }
+    },
+    [installationId, router],
+  )
+
+  const handleChangeRoleToAdmin = useCallback(
+    (memberId: string) => {
+      handleChangeRole(memberId, 'admin')
+    },
+    [handleChangeRole],
+  )
+
+  const handleChangeRoleToMember = useCallback(
+    (memberId: string) => {
+      handleChangeRole(memberId, 'member')
+    },
+    [handleChangeRole],
+  )
+
+  const handleChangeRoleToViewer = useCallback(
+    (memberId: string) => {
+      handleChangeRole(memberId, 'viewer')
+    },
+    [handleChangeRole],
+  )
+
+  const handleSetMemberToRemove = useCallback((memberId: string, memberName: string) => {
+    setMemberToRemove({ id: memberId, name: memberName })
+  }, [])
+
   const handleRemoveMember = async () => {
     if (!memberToRemove) return
 
@@ -67,7 +111,7 @@ export function TeamMembersTable({
     try {
       const response = await fetch(
         `/api/installations/${installationId}/team/members/${memberToRemove.id}`,
-        { method: 'DELETE' }
+        { method: 'DELETE' },
       )
 
       if (!response.ok) throw new Error('Failed to remove member')
@@ -82,51 +126,32 @@ export function TeamMembersTable({
     }
   }
 
-  const handleChangeRole = async (memberId: string, newRole: MemberRole) => {
-    try {
-      const response = await fetch(
-        `/api/installations/${installationId}/team/members/${memberId}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ role: newRole }),
-        }
-      )
-
-      if (!response.ok) throw new Error('Failed to update role')
-
-      router.refresh()
-    } catch {
-      toast.error('Failed to update member role')
-    }
-  }
-
   return (
-    <div className="overflow-hidden border border-foreground/10 rounded-lg">
+    <div className="border-foreground/10 overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead>
-            <tr className="border-b border-foreground/10 bg-muted/30">
-              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[25%]">
+            <tr className="border-foreground/10 bg-muted/30 border-b">
+              <th className="text-muted-foreground w-[25%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
                 Member
               </th>
-              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[30%]">
+              <th className="text-muted-foreground w-[30%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
                 Email
               </th>
-              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[20%]">
+              <th className="text-muted-foreground w-[20%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
                 Role
               </th>
-              <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[15%]">
+              <th className="text-muted-foreground w-[15%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
                 Added
               </th>
               {canManage && (
-                <th className="text-muted-foreground px-6 py-3.5 text-right text-xs font-semibold tracking-wide w-[10%]">
+                <th className="text-muted-foreground w-[10%] px-6 py-3.5 text-right text-xs font-semibold tracking-wide">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="bg-background divide-y divide-foreground/5">
+          <tbody className="bg-background divide-foreground/5 divide-y">
             {members.map((member) => {
               const RoleIcon = roleIcons[member.role]
               const isCurrentUser = member.userId === currentUserId
@@ -136,19 +161,19 @@ export function TeamMembersTable({
               return (
                 <tr key={member.id} className="group hover:bg-muted/20 transition-colors">
                   <td className="px-6 py-3.5">
-                    <div className="text-sm font-medium text-foreground">
+                    <div className="text-foreground text-sm font-medium">
                       {member.userName}
                       {isCurrentUser && (
-                        <span className="text-muted-foreground ml-2 text-xs font-normal">(You)</span>
+                        <span className="text-muted-foreground ml-2 text-xs font-normal">
+                          (You)
+                        </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-3.5 text-sm text-foreground">
-                    {member.userEmail}
-                  </td>
+                  <td className="text-foreground px-6 py-3.5 text-sm">{member.userEmail}</td>
                   <td className="px-6 py-3.5">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-md ${roleColors[member.role]}`}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase ${roleColors[member.role]}`}
                     >
                       <RoleIcon className="h-3 w-3" />
                       {member.role}
@@ -170,19 +195,19 @@ export function TeamMembersTable({
                             {userRole === 'owner' && (
                               <>
                                 <DropdownMenuItem
-                                  onClick={() => handleChangeRole(member.id, 'admin')}
+                                  onClick={() => handleChangeRoleToAdmin(member.id)}
                                   disabled={member.role === 'admin'}
                                 >
                                   Change to Admin
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => handleChangeRole(member.id, 'member')}
+                                  onClick={() => handleChangeRoleToMember(member.id)}
                                   disabled={member.role === 'member'}
                                 >
                                   Change to Member
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => handleChangeRole(member.id, 'viewer')}
+                                  onClick={() => handleChangeRoleToViewer(member.id)}
                                   disabled={member.role === 'viewer'}
                                 >
                                   Change to Viewer
@@ -190,8 +215,10 @@ export function TeamMembersTable({
                               </>
                             )}
                             <DropdownMenuItem
-                              onClick={() => setMemberToRemove({ id: member.id, name: member.userName || '' })}
-                              className="text-red-600 dark:text-red-400 focus:bg-red-500/10 focus:text-red-600 dark:focus:text-red-400"
+                              onClick={() =>
+                                handleSetMemberToRemove(member.id, member.userName || '')
+                              }
+                              className="text-red-600 focus:bg-red-500/10 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
                               disabled={removingMember === member.id}
                             >
                               {removingMember === member.id ? 'Removing...' : 'Remove'}
@@ -211,20 +238,24 @@ export function TeamMembersTable({
       </div>
 
       {/* Remove Member Confirmation Dialog */}
-      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+      <AlertDialog
+        open={!!memberToRemove}
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+      >
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove <span className="font-semibold text-foreground">{memberToRemove?.name}</span> from this installation?
-              This action cannot be undone.
+              Are you sure you want to remove{' '}
+              <span className="text-foreground font-semibold">{memberToRemove?.name}</span> from
+              this installation? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveMember}
-              className="bg-red-600 hover:bg-red-700 active:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-700 dark:active:bg-red-800"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 active:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 dark:active:bg-red-800"
             >
               Remove
             </AlertDialogAction>

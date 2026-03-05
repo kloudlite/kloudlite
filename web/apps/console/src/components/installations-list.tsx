@@ -16,9 +16,18 @@ import { cn } from '@kloudlite/lib'
 import type { Installation, Invoice, Subscription } from '@/lib/console/storage'
 
 const providerConfig: Record<string, { label: string; className: string }> = {
-  aws: { label: 'AWS', className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20' },
-  gcp: { label: 'GCP', className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20' },
-  azure: { label: 'Azure', className: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20' },
+  aws: {
+    label: 'AWS',
+    className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  },
+  gcp: {
+    label: 'GCP',
+    className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  },
+  azure: {
+    label: 'Azure',
+    className: 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20',
+  },
   oci: { label: 'Kloudlite', className: 'bg-primary/10 text-primary border-primary/20' },
 }
 
@@ -28,7 +37,12 @@ function ProviderBadge({ provider }: { provider?: string }) {
   }
   const { label, className } = providerConfig[provider]
   return (
-    <span className={cn('inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-md border', className)}>
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium',
+        className,
+      )}
+    >
       {label}
     </span>
   )
@@ -87,9 +101,10 @@ export function InstallationsList({
         statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
         isPending: false,
         isActiveJob: true,
-        stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
-          ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
-          : undefined,
+        stepInfo:
+          installation.acaJobCurrentStep && installation.acaJobTotalSteps
+            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
+            : undefined,
       }
     }
 
@@ -100,9 +115,10 @@ export function InstallationsList({
         statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
         isPending: false,
         isActiveJob: true,
-        stepInfo: installation.acaJobCurrentStep && installation.acaJobTotalSteps
-          ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
-          : undefined,
+        stepInfo:
+          installation.acaJobCurrentStep && installation.acaJobTotalSteps
+            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
+            : undefined,
       }
     }
 
@@ -129,7 +145,8 @@ export function InstallationsList({
     if (!installation.subdomain) {
       return {
         status: 'PENDING',
-        statusColor: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
+        statusColor:
+          'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
         isPending: true,
         isActiveJob: false,
         stepInfo: undefined,
@@ -155,9 +172,31 @@ export function InstallationsList({
 
   // Check if installation needs polling (active job or pending uninstall deletion)
   const needsPolling = useCallback((installation: Installation) => {
-    return hasActiveJob(installation) ||
+    return (
+      hasActiveJob(installation) ||
       (installation.acaJobOperation === 'uninstall' && installation.acaJobStatus !== 'failed')
+    )
   }, [])
+
+  // Filter change handlers
+  const handleFilterAll = useCallback(() => setStatusFilter('all'), [])
+  const handleFilterPending = useCallback(() => setStatusFilter('pending'), [])
+  const handleFilterInstalled = useCallback(() => setStatusFilter('installed'), [])
+
+  // Installation navigation handlers
+  const handleContinueInstallation = useCallback(
+    (installationId: string) => {
+      router.push(`/api/installations/${installationId}/continue`)
+    },
+    [router],
+  )
+
+  const handleViewSettings = useCallback(
+    (installationId: string) => {
+      router.push(`/installations/${installationId}`)
+    },
+    [router],
+  )
 
   // Auto-refresh when any installation has an active job or pending uninstall
   const hasAnyActiveJob = installations.some(needsPolling)
@@ -167,7 +206,9 @@ export function InstallationsList({
       // Sync job status from ACA API → DB for active installations
       for (const inst of installations) {
         if (needsPolling(inst)) {
-          try { await fetch(`/api/installations/${inst.id}/job-status`) } catch {}
+          try {
+            await fetch(`/api/installations/${inst.id}/job-status`)
+          } catch {}
         }
       }
       router.refresh()
@@ -216,7 +257,7 @@ export function InstallationsList({
 
         setUnderlineStyle({
           left: leftOffset,
-          width: underlineWidth
+          width: underlineWidth,
         })
       }
     }
@@ -233,11 +274,11 @@ export function InstallationsList({
   return (
     <div className="space-y-5">
       {/* Page Header */}
-      <div className="flex items-center justify-between pb-6 mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Installations</h1>
+      <div className="mb-6 flex items-center justify-between pb-6">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">Installations</h1>
         <div className="flex items-center gap-3">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="Search installations..."
@@ -251,43 +292,43 @@ export function InstallationsList({
       </div>
 
       {/* Status Filter Tabs */}
-      <div className="border-b border-foreground/10 mb-5">
-        <div className="inline-flex gap-1 relative">
+      <div className="border-foreground/10 mb-5 border-b">
+        <div className="relative inline-flex gap-1">
           <button
             ref={allRef}
-            onClick={() => setStatusFilter('all')}
+            onClick={handleFilterAll}
             className={cn(
-              'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
+              'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
               'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
               statusFilter === 'all'
                 ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             All
           </button>
           <button
             ref={pendingRef}
-            onClick={() => setStatusFilter('pending')}
+            onClick={handleFilterPending}
             className={cn(
-              'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
+              'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
               'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
               statusFilter === 'pending'
                 ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             Pending
           </button>
           <button
             ref={installedRef}
-            onClick={() => setStatusFilter('installed')}
+            onClick={handleFilterInstalled}
             className={cn(
-              'relative px-5 py-2 text-sm font-medium transition-all duration-200 cursor-pointer',
+              'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
               'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
               statusFilter === 'installed'
                 ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             Installed
@@ -296,7 +337,7 @@ export function InstallationsList({
           {/* Animated underline with CSS transition */}
           {underlineStyle.width > 0 && (
             <div
-              className="absolute bottom-0 h-[2px] bg-primary transition-all duration-300 ease-out"
+              className="bg-primary absolute bottom-0 h-[2px] transition-all duration-300 ease-out"
               style={{
                 left: `${underlineStyle.left}px`,
                 width: `${underlineStyle.width}px`,
@@ -308,31 +349,32 @@ export function InstallationsList({
 
       {/* Table */}
       {filteredInstallations.length > 0 ? (
-        <div className="overflow-hidden border border-foreground/10 rounded-lg">
+        <div className="border-foreground/10 overflow-hidden rounded-lg border">
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="border-b border-foreground/10 bg-muted/30">
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[30%]">
+                <tr className="border-foreground/10 bg-muted/30 border-b">
+                  <th className="text-muted-foreground w-[30%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
                     Name
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[10%] hidden lg:table-cell">
+                  <th className="text-muted-foreground hidden w-[10%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide lg:table-cell">
                     Provider
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[30%] hidden md:table-cell">
+                  <th className="text-muted-foreground hidden w-[30%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide md:table-cell">
                     Domain
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-left text-xs font-semibold tracking-wide w-[15%]">
+                  <th className="text-muted-foreground w-[15%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
                     Status
                   </th>
-                  <th className="text-muted-foreground px-6 py-3.5 text-right text-xs font-semibold tracking-wide w-[15%]">
+                  <th className="text-muted-foreground w-[15%] px-6 py-3.5 text-right text-xs font-semibold tracking-wide">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-background divide-y divide-foreground/5">
+              <tbody className="bg-background divide-foreground/5 divide-y">
                 {filteredInstallations.map((installation) => {
-                  const { status, statusColor, isPending, isActiveJob, stepInfo } = getInstallationStatus(installation)
+                  const { status, statusColor, isPending, isActiveJob, stepInfo } =
+                    getInstallationStatus(installation)
                   // Validate subdomain before constructing URL
                   const isValidSubdomain =
                     installation.subdomain &&
@@ -341,51 +383,57 @@ export function InstallationsList({
                   const installationUrl = isValidSubdomain
                     ? `https://${installation.subdomain}.${domain}`
                     : null
-                  const displayName = installation.name || installation.subdomain || 'Unnamed Installation'
+                  const displayName =
+                    installation.name || installation.subdomain || 'Unnamed Installation'
 
                   return (
-                    <tr key={installation.id} className="group hover:bg-muted/20 transition-colors relative">
-                      <td className="px-6 py-3 relative">
+                    <tr
+                      key={installation.id}
+                      className="group hover:bg-muted/20 relative transition-colors"
+                    >
+                      <td className="relative px-6 py-3">
                         <div className="relative z-10">
                           <Link
                             href={`/installations/${installation.id}`}
-                            className="text-sm font-medium text-foreground group-hover:text-primary transition-colors cursor-pointer hover:cursor-pointer"
+                            className="text-foreground group-hover:text-primary cursor-pointer text-sm font-medium transition-colors hover:cursor-pointer"
                           >
                             {displayName}
                           </Link>
                           {installation.description && installation.description !== displayName && (
-                            <div className="text-muted-foreground/60 mt-0.5 text-xs line-clamp-1">
+                            <div className="text-muted-foreground/60 mt-0.5 line-clamp-1 text-xs">
                               {installation.description}
                             </div>
                           )}
                           {/* Show domain on mobile */}
-                          <div className="md:hidden mt-1">
+                          <div className="mt-1 md:hidden">
                             {installationUrl ? (
                               <a
                                 href={installationUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary/80 hover:text-primary flex items-center gap-1 text-[11px] font-mono hover:underline transition-colors"
+                                className="text-primary/80 hover:text-primary flex items-center gap-1 font-mono text-[11px] transition-colors hover:underline"
                               >
                                 {installation.subdomain}.{domain}
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             ) : (
-                              <span className="text-muted-foreground/50 text-xs">Not configured</span>
+                              <span className="text-muted-foreground/50 text-xs">
+                                Not configured
+                              </span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3 hidden lg:table-cell">
+                      <td className="hidden px-6 py-3 lg:table-cell">
                         <ProviderBadge provider={installation.cloudProvider} />
                       </td>
-                      <td className="px-6 py-3 hidden md:table-cell">
+                      <td className="hidden px-6 py-3 md:table-cell">
                         {installationUrl ? (
                           <a
                             href={installationUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary/80 hover:text-primary inline-flex items-center gap-1.5 text-[13px] font-mono hover:underline transition-colors"
+                            className="text-primary/80 hover:text-primary inline-flex items-center gap-1.5 font-mono text-[13px] transition-colors hover:underline"
                           >
                             {installation.subdomain}.{domain}
                             <ExternalLink className="h-3 w-3" />
@@ -397,23 +445,23 @@ export function InstallationsList({
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md whitespace-nowrap ${statusColor}`}
+                            className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wider whitespace-nowrap uppercase ${statusColor}`}
                           >
                             {isActiveJob && <Loader2 className="h-3 w-3 animate-spin" />}
                             {status}
                           </span>
                           {isExpiringSoon(activeSubscriptions[installation.id]) && (
-                            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md whitespace-nowrap bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                            <span className="inline-flex items-center rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider whitespace-nowrap text-amber-700 uppercase dark:text-amber-400">
                               Expiring Soon
                             </span>
                           )}
                           {pendingInvoices[installation.id] && (
-                            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md whitespace-nowrap bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                            <span className="inline-flex items-center rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider whitespace-nowrap text-amber-700 uppercase dark:text-amber-400">
                               Payment Due
                             </span>
                           )}
                           {stepInfo && (
-                            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                            <span className="text-muted-foreground text-[11px] whitespace-nowrap">
                               {stepInfo}
                             </span>
                           )}
@@ -425,10 +473,7 @@ export function InstallationsList({
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={() => {
-                                // Use the continue API to update session cookie and redirect to the correct step
-                                router.push(`/api/installations/${installation.id}/continue`)
-                              }}
+                              onClick={() => handleContinueInstallation(installation.id)}
                             >
                               Continue
                             </Button>
@@ -443,7 +488,7 @@ export function InstallationsList({
                               <DropdownMenuContent align="end">
                                 {!isPending && (
                                   <DropdownMenuItem
-                                    onSelect={() => router.push(`/installations/${installation.id}`)}
+                                    onSelect={() => handleViewSettings(installation.id)}
                                   >
                                     <Settings className="mr-2 h-4 w-4" />
                                     Settings
@@ -462,12 +507,12 @@ export function InstallationsList({
           </div>
         </div>
       ) : (
-        <div className="border border-foreground/10 rounded-lg py-12 text-center bg-muted/10">
+        <div className="border-foreground/10 bg-muted/10 rounded-lg border py-12 text-center">
           <div className="mx-auto max-w-md px-4">
-            <div className="mx-auto w-10 h-10 bg-muted rounded-lg border border-foreground/10 flex items-center justify-center mb-3">
-              <Search className="h-4 w-4 text-muted-foreground" />
+            <div className="bg-muted border-foreground/10 mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg border">
+              <Search className="text-muted-foreground h-4 w-4" />
             </div>
-            <h3 className="text-foreground text-sm font-semibold mb-1">
+            <h3 className="text-foreground mb-1 text-sm font-semibold">
               {searchQuery.trim()
                 ? 'No installations found'
                 : statusFilter === 'pending'
@@ -476,7 +521,7 @@ export function InstallationsList({
                     ? 'No active installations'
                     : 'No installations'}
             </h3>
-            <p className="text-muted-foreground text-sm mb-5 leading-relaxed">
+            <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
               {searchQuery.trim()
                 ? 'Try adjusting your search query or filters'
                 : statusFilter === 'all'
