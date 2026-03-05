@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button, Avatar, AvatarFallback, AvatarImage, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, KloudliteLogo, ThemeSwitcher } from '@kloudlite/ui'
 import { Settings, LogOut } from 'lucide-react'
 
@@ -15,6 +16,8 @@ interface InstallationsHeaderProps {
 }
 
 export function InstallationsHeader({ user }: InstallationsHeaderProps) {
+  const router = useRouter()
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -27,7 +30,7 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
   const handleLogout = async () => {
     // Clear the registration session cookie
     await fetch('/api/register/logout', { method: 'POST' })
-    window.location.href = '/login'
+    router.push('/login')
   }
 
   return (
