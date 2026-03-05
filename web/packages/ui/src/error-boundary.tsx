@@ -1,66 +1,14 @@
 import * as React from "react"
 
-import { cn } from "./lib/utils"
-
 interface ErrorBoundaryProps {
   children: React.ReactNode
   fallback?: React.ReactNode
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
 }
 
 interface ErrorBoundaryState {
   hasError: boolean
   error?: Error
 }
-
-const ErrorBoundaryFallback = ({ error, onReset }: { error?: Error; onReset?: () => void }) => (
-  <div className="flex min-h-[400px] items-center justify-center p-6">
-    <div className="w-full max-w-md space-y-4">
-      <div className="flex flex-col items-center space-y-2 text-center">
-        <div className="rounded-full bg-destructive/10 p-3">
-          <svg
-            className="size-6 text-destructive"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-        </div>
-        <h3 className="text-lg font-semibold">Something went wrong</h3>
-        <p className="text-sm text-muted-foreground">
-          An unexpected error occurred. Please try again or contact support if the problem persists.
-        </p>
-      </div>
-      {error && (
-        <details className="rounded-lg border border-border bg-muted/50 p-3">
-          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-            Error details
-          </summary>
-          <pre className="mt-2 overflow-x-auto text-xs text-muted-foreground">
-            {error.message}
-          </pre>
-        </details>
-      )}
-      {onReset && (
-        <div className="flex justify-center">
-          <button
-            onClick={onReset}
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            Try again
-          </button>
-        </div>
-      )}
-    </div>
-  </div>
-)
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -74,7 +22,6 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     console.error("ErrorBoundary caught an error:", error, errorInfo)
-    this.props.onError?.(error, errorInfo)
   }
 
   handleReset = (): void => {
@@ -86,24 +33,48 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       if (this.props.fallback) {
         return this.props.fallback
       }
-      return <ErrorBoundaryFallback error={this.state.error} onReset={this.handleReset} />
+
+      return (
+        <div className="flex min-h-[400px] items-center justify-center p-6">
+          <div className="w-full max-w-md space-y-4">
+            <div className="flex flex-col items-center space-y-2 text-center">
+              <div className="rounded-full bg-destructive/10 p-3">
+                <svg
+                  className="size-6 text-destructive"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold">Something went wrong</h3>
+              <p className="text-sm text-muted-foreground">
+                An unexpected error occurred. Please try again or contact support if the problem
+                persists.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <button
+                onClick={this.handleReset}
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      )
     }
 
     return this.props.children
   }
 }
 
-const ErrorBoundaryWithFallback = React.forwardRef<
-  React.ComponentRef<typeof ErrorBoundary>,
-  Omit<ErrorBoundaryProps, "children"> & {
-    children: React.ReactNode
-    className?: string
-  }
->(({ className, children, ...props }, ref) => (
-  <div className={cn(className)} ref={ref}>
-    <ErrorBoundary {...props}>{children}</ErrorBoundary>
-  </div>
-))
-ErrorBoundaryWithFallback.displayName = "ErrorBoundaryWithFallback"
-
-export { ErrorBoundary, ErrorBoundaryFallback, ErrorBoundaryWithFallback }
+export { ErrorBoundary }
