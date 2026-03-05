@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Container,
@@ -47,7 +47,7 @@ interface TagsState {
   error: string | null
 }
 
-export function RepositoryList({ repositories: initialRepositories }: RepositoryListProps) {
+export const RepositoryList = memo(function RepositoryList({ repositories: initialRepositories }: RepositoryListProps) {
   const [repositories, setRepositories] = useState(initialRepositories)
   const [expandedRepo, setExpandedRepo] = useState<string | null>(null)
   const [tagsState, setTagsState] = useState<TagsState>({ loading: false, tags: [], error: null })
@@ -394,4 +394,4 @@ export function RepositoryList({ repositories: initialRepositories }: Repository
       </AlertDialog>
     </>
   )
-}
+})

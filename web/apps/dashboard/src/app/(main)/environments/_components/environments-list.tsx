@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Badge, type BadgeProps, Button } from '@kloudlite/ui'
@@ -93,7 +93,7 @@ function formatErrorMessage(error: string): string {
   return error
 }
 
-export function EnvironmentsList({
+export const EnvironmentsList = memo(function EnvironmentsList({
   environments: initialEnvironments,
   currentUser,
   workMachineRunning = false,
@@ -572,4 +572,4 @@ export function EnvironmentsList({
 
     </div>
   )
-}
+})

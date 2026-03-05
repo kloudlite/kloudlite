@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import {
@@ -22,7 +22,7 @@ interface TeamInvitationsTableProps {
   installationId: string
 }
 
-export function TeamInvitationsTable({
+export const TeamInvitationsTable = memo(function TeamInvitationsTable({
   invitations,
   installationId,
 }: TeamInvitationsTableProps) {
@@ -134,4 +134,4 @@ export function TeamInvitationsTable({
       </AlertDialog>
     </div>
   )
-}
+})

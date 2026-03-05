@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import Link from 'next/link'
 import { Activity } from 'lucide-react'
 import { Badge, type BadgeProps } from '@kloudlite/ui'
@@ -18,7 +18,7 @@ interface WorkspacesListProps {
   pinnedWorkspaceIds?: string[]
 }
 
-export function WorkspacesList({
+export const WorkspacesList = memo(function WorkspacesList({
   workspaces,
   currentUser,
   namespace: _namespace = 'default',
@@ -248,4 +248,4 @@ export function WorkspacesList({
       )}
     </div>
   )
-}
+})

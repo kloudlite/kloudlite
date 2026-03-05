@@ -6,13 +6,14 @@ import type { EnvVar } from '@kloudlite/types'
 import { AddEnvVarSheet } from './add-envvar-sheet'
 import { EnvVarsTable } from './envvars-table'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
+import { memo } from 'react'
 
 interface EnvVarsListProps {
   environmentId: string
   envVars: EnvVar[]
 }
 
-export function EnvVarsList({ environmentId, envVars }: EnvVarsListProps) {
+export const EnvVarsList = memo(function EnvVarsList({ environmentId, envVars }: EnvVarsListProps) {
   const router = useRouter()
   useResourceWatch('configmaps')
 
@@ -39,4 +40,4 @@ export function EnvVarsList({ environmentId, envVars }: EnvVarsListProps) {
       )}
     </div>
   )
-}
+})
