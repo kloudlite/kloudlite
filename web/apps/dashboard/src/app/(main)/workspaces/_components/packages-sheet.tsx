@@ -208,8 +208,8 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
     toast.success('Package added')
   }
 
-  const removePackage = (index: number) => {
-    setPackages(packages.filter((_, i) => i !== index))
+  const removePackage = (pkgToRemove: PackageWithVersion) => {
+    setPackages(packages.filter((pkg) => pkg.name !== pkgToRemove.name))
   }
 
   const handleSave = async () => {
@@ -415,9 +415,9 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Configured Packages ({packages.length})</h4>
                 <div className="space-y-2">
-                  {packages.map((pkg, index) => (
+                  {packages.map((pkg) => (
                     <div
-                      key={index}
+                      key={pkg.name + (pkg.channel || pkg.nixpkgsCommit || '')}
                       className="bg-card flex items-start justify-between rounded-lg border p-3"
                     >
                       <div className="min-w-0 flex-1">
@@ -451,7 +451,7 @@ export function PackagesSheet({ workspace, trigger }: PackagesSheetProps) {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => removePackage(index)}
+                        onClick={() => removePackage(pkg)}
                         disabled={isLoading}
                       >
                         <X className="h-4 w-4" />

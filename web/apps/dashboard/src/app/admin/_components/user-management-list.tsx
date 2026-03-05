@@ -589,9 +589,9 @@ export function UserManagementList({
                   </td>
                   <td className="w-40 p-4">
                     <div className="flex flex-wrap gap-1">
-                      {(user.role || '').split(', ').filter(Boolean).map((role, index) => (
+                      {(user.role || '').split(', ').filter(Boolean).map((role) => (
                         <span
-                          key={index}
+                          key={role}
                           className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                             role === 'super-admin'
                               ? 'bg-purple-100 text-purple-700'
