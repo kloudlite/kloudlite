@@ -499,7 +499,7 @@ function WebsiteLandingPage() {
               {/* Testimonials Grid - Rotating Content */}
               {testimonials.slice(0, 3).map((testimonial, index) => (
                 <div
-                  key={index}
+                  key={testimonial.name}
                   className={cn(
                     "p-8 lg:p-12 border-b border-foreground/10 bg-foreground/[0.015] hover:bg-foreground/[0.03] transition-all duration-300 group cursor-default",
                     "sm:col-span-2 lg:col-span-1",
