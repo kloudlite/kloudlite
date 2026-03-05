@@ -2,6 +2,7 @@
 
 import type React from 'react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import {
   DropdownMenu,
@@ -53,6 +54,7 @@ export function TeamMembersTable({
   userRole,
   installationId,
 }: TeamMembersTableProps) {
+  const router = useRouter()
   const [removingMember, setRemovingMember] = useState<string | null>(null)
   const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null)
 
@@ -70,8 +72,8 @@ export function TeamMembersTable({
 
       if (!response.ok) throw new Error('Failed to remove member')
 
-      // Reload page to show updated list
-      window.location.reload()
+      // Refresh page data to show updated list
+      router.refresh()
     } catch {
       toast.error('Failed to remove member')
     } finally {
@@ -93,7 +95,7 @@ export function TeamMembersTable({
 
       if (!response.ok) throw new Error('Failed to update role')
 
-      window.location.reload()
+      router.refresh()
     } catch {
       toast.error('Failed to update member role')
     }
