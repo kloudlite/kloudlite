@@ -558,8 +558,8 @@ export default function InstallPage() {
                   <div>
                     <p className="text-foreground mb-3 text-base font-semibold">Prerequisites:</p>
                     <ul className="text-muted-foreground space-y-2 text-base leading-relaxed">
-                      {config.requirements.map((req, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
+                      {config.requirements.map((req) => (
+                        <li key={req} className="flex items-start gap-3">
                           <div className="bg-muted-foreground mt-2 size-1.5 flex-shrink-0" />
                           <span>{req}</span>
                         </li>
@@ -570,8 +570,8 @@ export default function InstallPage() {
                   <div>
                     <p className="text-foreground mb-3 text-base font-semibold">Run this command:</p>
                     <div className="space-y-3">
-                      {config.commands.map((cmd, idx) => (
-                        <div key={idx} className="bg-muted p-4">
+                      {config.commands.map((cmd) => (
+                        <div key={cmd} className="bg-muted p-4">
                           <div className="flex items-start justify-between gap-4">
                             <code className="flex-1 font-mono text-base leading-relaxed break-all">
                               {cmd}
