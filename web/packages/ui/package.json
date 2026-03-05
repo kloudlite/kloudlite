@@ -4,7 +4,10 @@
     "main": "./src/index.ts",
     "types": "./src/index.ts",
     "scripts": {
-        "lint": "echo 'No lint configured for @kloudlite/ui'"
+        "lint": "echo 'No lint configured for @kloudlite/ui'",
+        "test": "vitest",
+        "test:run": "vitest run",
+        "test:coverage": "vitest run --coverage"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.2",
@@ -61,6 +64,12 @@
     "devDependencies": {
         "typescript": "^5.0.0",
         "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0"
+        "@types/react-dom": "^19.0.0",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.2.0",
+        "@testing-library/user-event": "^14.6.1",
+        "@vitejs/plugin-react": "^5.1.4",
+        "vitest": "^4.0.18",
+        "happy-dom": "^20.8.3"
     }
 }

@@ -8,7 +8,10 @@
         "./k8s": "./src/k8s/index.ts"
     },
     "scripts": {
-        "lint": "echo 'No lint configured for @kloudlite/lib'"
+        "lint": "echo 'No lint configured for @kloudlite/lib'",
+        "test": "vitest",
+        "test:run": "vitest run",
+        "test:coverage": "vitest run --coverage"
     },
     "dependencies": {
         "@kloudlite/types": "workspace:*",
@@ -20,6 +23,12 @@
         "tailwind-merge": "^3.3.1"
     },
     "devDependencies": {
-        "typescript": "^5.0.0"
+        "typescript": "^5.0.0",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.2.0",
+        "@testing-library/user-event": "^14.6.1",
+        "@vitejs/plugin-react": "^5.1.4",
+        "vitest": "^4.0.18",
+        "happy-dom": "^20.8.3"
     }
 }
