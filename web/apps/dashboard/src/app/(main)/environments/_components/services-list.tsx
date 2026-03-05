@@ -175,8 +175,8 @@ export function ServicesList({
                     <td className="px-6 py-4">
                       {service.ports.length > 0 ? (
                         <div className="space-y-1">
-                          {service.ports.map((port, idx) => (
-                            <div key={idx} className="text-sm">
+                          {service.ports.map((port) => (
+                            <div key={port.port} className="text-sm">
                               {port.port}
                               {port.targetPort && port.targetPort !== String(port.port) && (
                                 <span className="text-muted-foreground"> → {port.targetPort}</span>
