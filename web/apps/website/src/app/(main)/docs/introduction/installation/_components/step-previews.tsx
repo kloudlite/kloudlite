@@ -313,7 +313,7 @@ export function CloudProviderPreview() {
               <div className="absolute inset-0 flex items-center justify-center opacity-20">
                 <div className="grid grid-cols-12 gap-1">
                   {Array.from({ length: 48 }).map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-none bg-foreground" />
+                    <div key={`dot-${i}`} className="w-1.5 h-1.5 rounded-none bg-foreground" />
                   ))}
                 </div>
               </div>

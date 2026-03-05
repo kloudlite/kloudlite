@@ -608,7 +608,7 @@ export default function ComponentsPage() {
             <ScrollArea className="h-[200px] w-[350px] rounded-md border p-4">
               <div className="space-y-4">
                 {Array.from({ length: 20 }).map((_, i) => (
-                  <p key={i} className="text-sm">
+                  <p key={`scroll-item-${i + 1}`} className="text-sm">
                     Scroll item {i + 1}
                   </p>
                 ))}

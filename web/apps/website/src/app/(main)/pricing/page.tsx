@@ -574,8 +574,8 @@ function Tier({
         <span className="text-muted-foreground text-sm">/user/mo</span>
       </div>
       <ul className="mt-6 space-y-3">
-        {features.map((f, i) => (
-          <li key={i} className="text-muted-foreground text-base transition-colors group-hover:text-foreground">{f}</li>
+        {features.map((f) => (
+          <li key={f} className="text-muted-foreground text-base transition-colors group-hover:text-foreground">{f}</li>
         ))}
       </ul>
       {extraHourlyRate && (

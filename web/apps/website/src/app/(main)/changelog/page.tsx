@@ -137,9 +137,9 @@ function ChangeSection({
         {title}
       </h3>
       <ul className="space-y-3">
-        {items.map((item, i) => (
+        {items.map((item) => (
           <li
-            key={i}
+            key={`${title}-${item}`}
             className="text-muted-foreground text-sm leading-relaxed flex items-start gap-2.5 transition-colors group-hover:text-foreground font-medium"
           >
             <span className={cn('mt-[0.2rem] font-bold leading-none', `text-${color}`)}>{symbol}</span>
@@ -432,9 +432,9 @@ export default function ChangelogPage() {
                       {/* Highlights */}
                       {entry.highlights.length > 0 && (
                         <div className="mt-6 flex flex-wrap gap-3">
-                          {entry.highlights.map((highlight, i) => (
+                          {entry.highlights.map((highlight) => (
                             <span
-                              key={i}
+                              key={highlight}
                               className="px-3 py-1.5 bg-foreground/[0.02] border border-foreground/10 rounded-sm text-muted-foreground text-sm font-medium"
                             >
                               {highlight}

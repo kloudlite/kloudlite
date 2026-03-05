@@ -640,8 +640,8 @@ function DemoWorkmachine({ show }: SlideProps) {
       </A>
       <A show={show} delay={400} from="scale">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {features.map((f, i) => (
-            <div key={i} className="p-4 border border-foreground/10 text-left">
+          {features.map((f) => (
+            <div key={f.name} className="p-4 border border-foreground/10 text-left">
               <p className="font-semibold text-sm">{f.name}</p>
               <p className="text-foreground/50 text-xs mt-1">{f.desc}</p>
             </div>
@@ -1073,8 +1073,8 @@ function AIAgents({ show }: SlideProps) {
       </A>
       <A show={show} delay={400} from="scale">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {agents.map((agent, i) => (
-            <div key={i} className="p-4 border border-foreground/10 text-left hover:border-primary/30 transition-colors">
+          {agents.map((agent) => (
+            <div key={agent.name} className="p-4 border border-foreground/10 text-left hover:border-primary/30 transition-colors">
               <p className="font-semibold text-sm">{agent.name}</p>
               <p className="text-foreground/50 text-xs mt-1">{agent.desc}</p>
             </div>
@@ -1119,8 +1119,8 @@ function AICodeScans({ show }: SlideProps) {
         <div className="border border-foreground/10 p-6 inline-block text-left">
           <p className="text-foreground/40 text-xs uppercase tracking-wider mb-4">Scan Results</p>
           <div className="space-y-3">
-            {scans.map((scan, i) => (
-              <div key={i} className="flex items-center justify-between gap-8">
+            {scans.map((scan) => (
+              <div key={scan.name} className="flex items-center justify-between gap-8">
                 <span className="text-sm">{scan.name}</span>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs ${scan.status === 'passed' ? 'text-green-500' : 'text-yellow-500'}`}>
@@ -1265,8 +1265,8 @@ function PricingTiers({ show }: SlideProps) {
         <h3 className="text-3xl font-bold mb-10 text-center">Cloud Tiers</h3>
       </A>
       <div className="grid lg:grid-cols-3 gap-6">
-        {tiers.map((tier, i) => (
-          <A key={i} show={show} delay={100 + i * 120} from="bottom">
+        {tiers.map((tier) => (
+          <A key={tier.name} show={show} delay={100 + tiers.indexOf(tier) * 120} from="bottom">
             <div className="border border-foreground/10 p-8 text-center">
               <p className="text-primary text-xs font-semibold uppercase tracking-wider">{tier.name}</p>
               <div className="mt-4">
@@ -1431,15 +1431,15 @@ export default function SalesPitchPage() {
 
       {/* Position indicator */}
       <div className="absolute top-2 right-2 lg:top-4 lg:right-4 z-20 flex items-center gap-1.5">
-        {slideGrid.map((col, i) => (
-          <div key={i} className="flex flex-col gap-1">
-            {col.map((_, j) => (
+        {slideGrid.map((col, colIndex) => (
+          <div key={`col-${colIndex}`} className="flex flex-col gap-1">
+            {col.map((_, rowIndex) => (
               <button
-                key={j}
-                onClick={() => navigate(i, j)}
+                key={`col-${colIndex}-row-${rowIndex}`}
+                onClick={() => navigate(colIndex, rowIndex)}
                 className={cn(
                   'w-2 h-2 rounded-none transition-all duration-300',
-                  i === position.x && j === position.y
+                  colIndex === position.x && rowIndex === position.y
                     ? 'bg-primary scale-125'
                     : 'bg-foreground/20 hover:bg-foreground/40'
                 )}
