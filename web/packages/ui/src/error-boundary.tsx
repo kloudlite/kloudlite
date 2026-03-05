@@ -1,4 +1,7 @@
 import * as React from "react"
+import { AlertTriangle } from "lucide-react"
+
+import { Button } from "./button"
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
@@ -35,24 +38,15 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       }
 
       return (
-        <div className="flex min-h-[400px] items-center justify-center p-6">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="flex min-h-[400px] items-center justify-center p-6"
+        >
           <div className="w-full max-w-md space-y-4">
             <div className="flex flex-col items-center space-y-2 text-center">
               <div className="rounded-full bg-destructive/10 p-3">
-                <svg
-                  className="size-6 text-destructive"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <AlertTriangle className="size-6 text-destructive" aria-hidden="true" />
               </div>
               <h3 className="text-lg font-semibold">Something went wrong</h3>
               <p className="text-sm text-muted-foreground">
@@ -61,12 +55,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
               </p>
             </div>
             <div className="flex justify-center">
-              <button
-                onClick={this.handleReset}
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                Try again
-              </button>
+              <Button onClick={this.handleReset}>Try again</Button>
             </div>
           </div>
         </div>
