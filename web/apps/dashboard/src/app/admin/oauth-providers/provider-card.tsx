@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, memo } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Alert,
@@ -45,7 +45,7 @@ interface OAuthProvidersListProps {
   isReadOnly?: boolean
 }
 
-export const OAuthProvidersList = memo(function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvidersListProps) {
+export function OAuthProvidersList({ providers, isReadOnly = false }: OAuthProvidersListProps) {
   const router = useRouter()
   const [isSaving, startSaveTransition] = useTransition()
   const [isToggling, startToggleTransition] = useTransition()
@@ -253,4 +253,4 @@ export const OAuthProvidersList = memo(function OAuthProvidersList({ providers, 
       </Dialog>
     </>
   )
-})
+}
