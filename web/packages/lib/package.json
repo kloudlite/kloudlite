@@ -1,34 +1,31 @@
 {
-    "name": "@kloudlite/lib",
-    "version": "0.0.0",
-    "main": "./src/index.ts",
-    "types": "./src/index.ts",
-    "exports": {
-        ".": "./src/index.ts",
-        "./k8s": "./src/k8s/index.ts"
-    },
-    "scripts": {
-        "lint": "echo 'No lint configured for @kloudlite/lib'",
-        "test": "vitest",
-        "test:run": "vitest run",
-        "test:coverage": "vitest run --coverage"
-    },
-    "dependencies": {
-        "@kloudlite/types": "workspace:*",
-        "@kubernetes/client-node": "^1.4.0",
-        "@supabase/supabase-js": "^2.47.10",
-        "clsx": "^2.1.1",
-        "date-fns": "^3.0.0",
-        "jose": "^5.0.0",
-        "tailwind-merge": "^3.3.1"
-    },
-    "devDependencies": {
-        "typescript": "^5.0.0",
-        "@testing-library/jest-dom": "^6.9.1",
-        "@testing-library/react": "^16.2.0",
-        "@testing-library/user-event": "^14.6.1",
-        "@vitejs/plugin-react": "^5.1.4",
-        "vitest": "^4.0.18",
-        "happy-dom": "^20.8.3"
-    }
+  "name": "@kloudlite/lib",
+  "version": "0.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./k8s": "./src/k8s/index.ts"
+  },
+  "scripts": {
+    "lint": "echo 'No lint configured for @kloudlite/lib'",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@kloudlite/types": "workspace:*",
+    "@kubernetes/client-node": "^1.4.0",
+    "@supabase/supabase-js": "^2.47.10",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.0.0",
+    "jose": "^5.0.0",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "vitest": "^4.0.18",
+    "happy-dom": "^20.8.3"
+  }
 }
