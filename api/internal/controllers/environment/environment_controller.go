@@ -3,10 +3,11 @@ package environment
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllerconfig"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workmachinevl "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,6 +38,7 @@ type EnvironmentReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Logger *zap.Logger
+	Cfg    *controllerconfig.ControllerConfig // Controller configuration
 }
 
 // Reconcile handles Environment events and ensures namespace exists
@@ -225,7 +227,7 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateSnapping, "Taking snapshot, waiting for pods to terminate...", logger); err != nil {
 					logger.Warn("Failed to update snapping message", zap.Error(err))
 				}
-				return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+				return reconcile.Result{RequeueAfter: r.Cfg.Environment.PodTerminationRetryInterval}, nil
 			}
 
 			// Pods terminated - stay in snapping state, snapshot controller will handle the rest
@@ -268,7 +270,7 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 				if err := r.updateEnvironmentStatus(ctx, environment, environmentsv1.EnvironmentStateDeactivating, "Waiting for pods to terminate...", logger); err != nil {
 					logger.Warn("Failed to update deactivating message", zap.Error(err))
 				}
-				return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+				return reconcile.Result{RequeueAfter: r.Cfg.Environment.PodTerminationRetryInterval}, nil
 			}
 
 			// All pods terminated - now set to inactive
@@ -433,7 +435,7 @@ func (r *EnvironmentReconciler) findEnvironmentForComposeResource(ctx context.Co
 // environment is marked as inactive. Only Succeeded pods (completed Jobs) are ignored.
 func (r *EnvironmentReconciler) waitForPodsTerminated(ctx context.Context, namespace string, logger *zap.Logger) bool {
 	pods := &corev1.PodList{}
-	if err := r.List(ctx, pods, client.InNamespace(namespace)); err != nil {
+	if err := pagination.ListAll(ctx, r, pods, client.InNamespace(namespace)); err != nil {
 		logger.Warn("Failed to list pods", zap.Error(err))
 		return false
 	}
@@ -456,7 +458,7 @@ func (r *EnvironmentReconciler) waitForPodsTerminated(ctx context.Context, names
 func (r *EnvironmentReconciler) hasActiveSnapshotOperation(ctx context.Context, environmentName string) (bool, error) {
 	// Check for active EnvironmentSnapshotRequests
 	snapshotRequests := &environmentsv1.EnvironmentSnapshotRequestList{}
-	if err := r.List(ctx, snapshotRequests); err != nil {
+	if err := pagination.ListAll(ctx, r, snapshotRequests); err != nil {
 		return false, err
 	}
 
@@ -473,7 +475,7 @@ func (r *EnvironmentReconciler) hasActiveSnapshotOperation(ctx context.Context, 
 
 	// Check for active EnvironmentSnapshotRestores
 	snapshotRestores := &environmentsv1.EnvironmentSnapshotRestoreList{}
-	if err := r.List(ctx, snapshotRestores); err != nil {
+	if err := pagination.ListAll(ctx, r, snapshotRestores); err != nil {
 		return false, err
 	}
 

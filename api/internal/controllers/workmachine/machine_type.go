@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
 	environmentV1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	v1 "github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -80,7 +79,7 @@ func (r *WorkMachineReconciler) initiateMachineTypeChange(check *reconciler.Chec
 		"to", newType,
 		"workMachine", obj.Name)
 
-	check.Logger().Debug("Using configured machine type change retry interval", zap.Duration("interval", r.Cfg.WorkMachine.MachineTypeChangeRetryInterval))
+	check.Logger().Debug("Using configured machine type change retry interval", "interval", r.Cfg.WorkMachine.MachineTypeChangeRetryInterval)
 	return check.UpdateMsg(obj.Status.MachineTypeChangeMessage).RequeueAfter(r.Cfg.WorkMachine.MachineTypeChangeRetryInterval)
 }
 

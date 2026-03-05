@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllerconfig"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
@@ -29,7 +30,7 @@ type EnvironmentSnapshotRestoreReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Logger *zap.Logger
-	Cfg    *ControllerConfig // Controller configuration
+	Cfg    *controllerconfig.ControllerConfig // Controller configuration
 }
 
 // Reconcile handles EnvironmentSnapshotRestore events

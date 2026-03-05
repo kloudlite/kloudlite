@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/pkg/imageref"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/file"
@@ -114,7 +115,7 @@ func extractTarGz(srcFile string, destDir string) error {
 
 		targetPath := filepath.Join(destDir, header.Name)
 
-		// Ensure the target path is within destDir (security check)
+		// Ensure target path is within destDir (security check)
 		if !strings.HasPrefix(filepath.Clean(targetPath), filepath.Clean(destDir)) {
 			return fmt.Errorf("invalid tar path: %s", header.Name)
 		}
@@ -156,34 +157,36 @@ func extractTarGz(srcFile string, destDir string) error {
 
 // parseImageRef extracts registry, repository and tag from an image reference
 // e.g., "registry:5000/repo/path:tag" -> registry="registry:5000", repo="repo/path", tag="tag"
-func parseImageRef(imageRef string) (registry, repo, tag string) {
-	tag = "latest"
-
-	// Find the last colon that's part of the tag (not the port)
-	lastSlash := strings.LastIndex(imageRef, "/")
-	lastColon := strings.LastIndex(imageRef, ":")
-
-	if lastColon > lastSlash {
-		tag = imageRef[lastColon+1:]
-		imageRef = imageRef[:lastColon]
+// This function uses robust imageref parser for proper OCI reference handling
+// Returns an error if the image reference is invalid or uses digest instead of tag
+func parseImageRef(imageRef string) (registry, repo, tag string, err error) {
+	ref, err := imageref.Parse(imageRef)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to parse image reference %q: %w", imageRef, err)
 	}
 
-	// Split into registry and repo
-	firstSlash := strings.Index(imageRef, "/")
-	if firstSlash != -1 {
-		registry = imageRef[:firstSlash]
-		repo = imageRef[firstSlash+1:]
-	} else {
-		registry = imageRef
-		repo = ""
+	// Handle both tagged and digested references
+	// For digested references, we need a tag for ORAS operations
+	// If digest is present, it's stored in ref.Digest
+	if ref.Tag == "" {
+		// If no tag is present but digest exists, this is a digest-only reference
+		// ORAS operations require a tag, so this is an error condition
+		if ref.Digest != "" {
+			return "", "", "", fmt.Errorf("image reference %q uses digest but tag is required for ORAS operations", imageRef)
+		}
+		// No tag or digest - this is invalid
+		return "", "", "", fmt.Errorf("image reference %q has no tag or digest", imageRef)
 	}
 
-	return
+	return ref.Registry, ref.Repository, ref.Tag, nil
 }
 
 // orasPushSnapshot pushes a directory as a snapshot to an OCI registry
 func orasPushSnapshot(ctx context.Context, srcDir string, imageRef string, plainHTTP bool) error {
-	registry, repo, tag := parseImageRef(imageRef)
+	registry, repo, tag, err := parseImageRef(imageRef)
+	if err != nil {
+		return fmt.Errorf("failed to parse image reference: %w", err)
+	}
 
 	// Create repository reference
 	repoRef, err := remote.NewRepository(registry + "/" + repo)
@@ -209,13 +212,13 @@ func orasPushSnapshot(ctx context.Context, srcDir string, imageRef string, plain
 	}
 	defer fs.Close()
 
-	// Add the file to the store
+	// Add file to store
 	fileDesc, err := fs.Add(ctx, filepath.Base(tmpFile), snapshotMediaType, tmpFile)
 	if err != nil {
 		return fmt.Errorf("failed to add file to store: %w", err)
 	}
 
-	// Pack the artifact using PackManifest
+	// Pack artifact using PackManifest
 	manifestDesc, err := oras.PackManifest(ctx, fs, oras.PackManifestVersion1_1, snapshotMediaType, oras.PackManifestOptions{
 		Layers: []ocispec.Descriptor{fileDesc},
 	})
@@ -223,7 +226,7 @@ func orasPushSnapshot(ctx context.Context, srcDir string, imageRef string, plain
 		return fmt.Errorf("failed to pack artifact: %w", err)
 	}
 
-	// Tag the manifest
+	// Tag manifest
 	if err := fs.Tag(ctx, manifestDesc, tag); err != nil {
 		return fmt.Errorf("failed to tag manifest: %w", err)
 	}
@@ -239,7 +242,10 @@ func orasPushSnapshot(ctx context.Context, srcDir string, imageRef string, plain
 
 // orasPullSnapshot pulls a snapshot from an OCI registry and extracts it to a directory
 func orasPullSnapshot(ctx context.Context, imageRef string, destDir string, plainHTTP bool) error {
-	registry, repo, tag := parseImageRef(imageRef)
+	registry, repo, tag, err := parseImageRef(imageRef)
+	if err != nil {
+		return fmt.Errorf("failed to parse image reference: %w", err)
+	}
 
 	// Create repository reference
 	repoRef, err := remote.NewRepository(registry + "/" + repo)
@@ -250,21 +256,21 @@ func orasPullSnapshot(ctx context.Context, imageRef string, destDir string, plai
 	repoRef.PlainHTTP = plainHTTP
 	repoRef.Client = retry.DefaultClient
 
-	// Create a temporary directory for the pull
+	// Create a temporary directory for pull
 	tmpDir, err := os.MkdirTemp("/tmp", "oras-pull-")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create a file store for the pull
+	// Create a file store for pull
 	fs, err := file.New(tmpDir)
 	if err != nil {
 		return fmt.Errorf("failed to create file store: %w", err)
 	}
 	defer fs.Close()
 
-	// Pull the artifact
+	// Pull artifact
 	_, err = oras.Copy(ctx, repoRef, tag, fs, tag, oras.DefaultCopyOptions)
 	if err != nil {
 		return fmt.Errorf("failed to pull from registry: %w", err)

@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"time"
 
+	"github.com/kloudlite/kloudlite/api/internal/controllerconfig"
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
 	"go.uber.org/zap"
@@ -28,6 +28,7 @@ type EnvironmentForkRequestReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Logger *zap.Logger
+	Cfg    *controllerconfig.ControllerConfig // Controller configuration
 }
 
 // Reconcile handles EnvironmentForkRequest events
@@ -127,7 +128,7 @@ func (r *EnvironmentForkRequestReconciler) handleValidating(ctx context.Context,
 				logger.Error("Failed to update status", zap.Error(err))
 			}
 		}
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.ForkRetryInterval}, nil
 	}
 
 	// Check if SnapshotArtifacts exists
@@ -283,7 +284,7 @@ func (r *EnvironmentForkRequestReconciler) handleCreatingEnvironment(ctx context
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.ForkRetryInterval}, nil
 }
 
 // handleWaitingForRestore waits for the environment's snapshot restore to complete
@@ -336,7 +337,7 @@ func (r *EnvironmentForkRequestReconciler) handleWaitingForRestore(ctx context.C
 	}
 
 	// Requeue to check again
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.ForkRetryInterval}, nil
 }
 
 // applyOverrides applies the override values to the environment spec

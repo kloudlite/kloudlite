@@ -742,19 +742,3 @@ func makeStringSet(items []string) map[string]bool {
 	}
 	return set
 }
-
-// joinErrors combines multiple errors into a single error message
-func joinErrors(errors []error) error {
-	if len(errors) == 0 {
-		return nil
-	}
-
-	var sb strings.Builder
-	for i, err := range errors {
-		if i > 0 {
-			sb.WriteString("; ")
-		}
-		sb.WriteString(err.Error())
-	}
-	return fmt.Errorf("%s", sb.String())
-}
