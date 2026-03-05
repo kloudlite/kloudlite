@@ -189,7 +189,7 @@ function LogEntryRow({ entry, searchTerm }: { entry: LogEntry; searchTerm: strin
     const parts = text.split(regex)
     return parts.map((part, i) =>
       regex.test(part) ? (
-        <mark key={i} className="bg-yellow-500/40 text-yellow-200 rounded px-0.5">{part}</mark>
+        <mark key={`${text}-${i}`} className="bg-yellow-500/40 text-yellow-200 rounded px-0.5">{part}</mark>
       ) : part
     )
   }
