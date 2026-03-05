@@ -1265,8 +1265,8 @@ function PricingTiers({ show }: SlideProps) {
         <h3 className="text-3xl font-bold mb-10 text-center">Cloud Tiers</h3>
       </A>
       <div className="grid lg:grid-cols-3 gap-6">
-        {tiers.map((tier) => (
-          <A key={tier.name} show={show} delay={100 + tiers.indexOf(tier) * 120} from="bottom">
+        {tiers.map((tier, i) => (
+          <A key={tier.name} show={show} delay={100 + i * 120} from="bottom">
             <div className="border border-foreground/10 p-8 text-center">
               <p className="text-primary text-xs font-semibold uppercase tracking-wider">{tier.name}</p>
               <div className="mt-4">

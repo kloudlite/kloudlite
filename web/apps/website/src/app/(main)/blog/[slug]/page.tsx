@@ -116,7 +116,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     {post.content.split('\n\n').map((block, index) => {
                       const lines = block.trim().split('\n')
                       const firstLine = lines[0]
-                      // Create a simple hash from the block content for unique keys
+                      // Create unique key combining index with content hash
+                      // Index prefix guarantees uniqueness (blocks are never reordered),
+                      // while content hash provides semantic meaning for debugging
                       const blockKey = `${index}-${block.trim().slice(0, 20)}`
 
                       // Heading level 1
