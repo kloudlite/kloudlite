@@ -190,7 +190,7 @@ func (r *WorkspaceReconciler) checkAndSuspendIdleWorkspace(ctx context.Context, 
 	}
 
 	// Get idle timeout from workspace settings or use default
-	idleTimeout := defaultIdleTimeoutMinutes
+	idleTimeout := cfg.Workspace.DefaultIdleTimeoutMinutes
 	if workspace.Spec.Settings != nil && workspace.Spec.Settings.IdleTimeout > 0 {
 		idleTimeout = int(workspace.Spec.Settings.IdleTimeout)
 	}

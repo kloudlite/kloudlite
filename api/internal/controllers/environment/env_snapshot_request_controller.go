@@ -9,6 +9,7 @@ import (
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +31,7 @@ type EnvironmentSnapshotRequestReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Logger *zap.Logger
+	Cfg    *ControllerConfig // Controller configuration
 }
 
 // Reconcile handles EnvironmentSnapshotRequest events
@@ -149,7 +151,7 @@ func (r *EnvironmentSnapshotRequestReconciler) handleStoppingWorkloads(
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRequestRetryInterval}, nil
 }
 
 func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
@@ -158,9 +160,9 @@ func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
 	env *environmentsv1.Environment,
 	logger *zap.Logger,
 ) (reconcile.Result, error) {
-	// Check if all pods are terminated
+	// Check if all pods are terminated using pagination
 	pods := &corev1.PodList{}
-	if err := r.List(ctx, pods, client.InNamespace(env.Spec.TargetNamespace)); err != nil {
+	if err := pagination.ListAll(ctx, r, pods, client.InNamespace(env.Spec.TargetNamespace)); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -168,7 +170,7 @@ func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
 	for _, pod := range pods.Items {
 		if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
 			logger.Debug("Pod still running", zap.String("pod", pod.Name), zap.String("phase", string(pod.Status.Phase)))
-			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+			return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRequestRetryInterval}, nil
 		}
 	}
 
@@ -264,7 +266,7 @@ func (r *EnvironmentSnapshotRequestReconciler) handleWaitingForPods(
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRequestRetryInterval}, nil
 }
 
 // boolPtr returns a pointer to a bool
@@ -315,7 +317,7 @@ func (r *EnvironmentSnapshotRequestReconciler) handleSnapshotInProgress(
 		}
 	}
 
-	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRequestRetryInterval}, nil
 }
 
 func (r *EnvironmentSnapshotRequestReconciler) handleRestoringEnvironment(
@@ -444,7 +446,7 @@ func (r *EnvironmentSnapshotRequestReconciler) setFailed(
 // getNodeForWorkMachine finds the k8s node for a workmachine by label
 func (r *EnvironmentSnapshotRequestReconciler) getNodeForWorkMachine(ctx context.Context, workmachineName string) (string, error) {
 	var nodes corev1.NodeList
-	if err := r.List(ctx, &nodes, client.MatchingLabels{
+	if err := pagination.ListAll(ctx, r, &nodes, client.MatchingLabels{
 		"kloudlite.io/workmachine": workmachineName,
 	}); err != nil {
 		return "", err
@@ -509,9 +511,9 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 		}
 	}
 
-	// Capture ConfigMaps (excluding system ones)
+	// Capture ConfigMaps (excluding system ones) using pagination
 	configMaps := &corev1.ConfigMapList{}
-	if err := r.List(ctx, configMaps, client.InNamespace(namespace)); err != nil {
+	if err := pagination.ListAll(ctx, r, configMaps, client.InNamespace(namespace)); err != nil {
 		return fmt.Errorf("failed to list configmaps: %w", err)
 	}
 
@@ -545,9 +547,9 @@ func (r *EnvironmentSnapshotRequestReconciler) createSnapshotArtifacts(ctx conte
 		logger.Info("Captured configmaps", zap.Int("count", len(userConfigMaps)))
 	}
 
-	// Capture Secrets (excluding service account tokens and system secrets)
+	// Capture Secrets (excluding service account tokens and system secrets) using pagination
 	secrets := &corev1.SecretList{}
-	if err := r.List(ctx, secrets, client.InNamespace(namespace)); err != nil {
+	if err := pagination.ListAll(ctx, r, secrets, client.InNamespace(namespace)); err != nil {
 		return fmt.Errorf("failed to list secrets: %w", err)
 	}
 

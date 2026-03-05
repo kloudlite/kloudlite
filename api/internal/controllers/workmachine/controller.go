@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/codingconcepts/env"
+	"github.com/kloudlite/kloudlite/api/internal/controllerconfig"
+	"github.com/kloudlite/kloudlite/api/internal/controllers/shared"
+	"go.uber.org/zap"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/azure"
@@ -97,6 +100,9 @@ type WorkMachineReconciler struct {
 	// filled post initialization
 	env              Env
 	cloudProviderAPI cloud.Provider
+
+	// Cfg contains controller configuration
+	Cfg *controllerconfig.ControllerConfig
 }
 
 const (
@@ -666,6 +672,17 @@ func (r *WorkMachineReconciler) handleNodeRebootRequest(check *reconciler.Check[
 func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := env.Set(&r.env); err != nil {
 		return errors.Wrap("failed to load env vars", err)
+	}
+
+	// Initialize the global pod deletion tracker if not already initialized
+	// This is shared with the workspace controller to prevent race conditions
+	if podDeletionTracker == nil {
+		logger, err := zap.NewProduction()
+		if err != nil {
+			return errors.Wrap("failed to create logger for pod deletion tracker", err)
+		}
+		podDeletionTracker = shared.NewPodDeletionTracker(logger)
+		logger.Info("Initialized pod deletion tracker for race condition prevention")
 	}
 
 	switch r.env.CloudProvider {

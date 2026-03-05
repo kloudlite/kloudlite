@@ -8,6 +8,7 @@ import (
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/api/internal/controllers/snapshot/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -28,6 +29,7 @@ type EnvironmentSnapshotRestoreReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Logger *zap.Logger
+	Cfg    *ControllerConfig // Controller configuration
 }
 
 // Reconcile handles EnvironmentSnapshotRestore events
@@ -120,7 +122,7 @@ func (r *EnvironmentSnapshotRestoreReconciler) handlePending(
 		if err := r.Status().Update(ctx, restore); err != nil {
 			return reconcile.Result{}, err
 		}
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.ForkRetryInterval}, nil
 	}
 
 	// Verify workmachine is ready
@@ -134,7 +136,7 @@ func (r *EnvironmentSnapshotRestoreReconciler) handlePending(
 		if err := r.Status().Update(ctx, restore); err != nil {
 			return reconcile.Result{}, err
 		}
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		return reconcile.Result{RequeueAfter: r.Cfg.Environment.ForkRetryInterval}, nil
 	}
 
 	// Update status to start stopping workloads
@@ -179,7 +181,7 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleStoppingWorkloads(
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRestoreRetryInterval}, nil
 }
 
 func (r *EnvironmentSnapshotRestoreReconciler) handleWaitingForPods(
@@ -188,9 +190,9 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleWaitingForPods(
 	env *environmentsv1.Environment,
 	logger *zap.Logger,
 ) (reconcile.Result, error) {
-	// Check if all pods are terminated
+	// Check if all pods are terminated using pagination
 	pods := &corev1.PodList{}
-	if err := r.List(ctx, pods, client.InNamespace(env.Spec.TargetNamespace)); err != nil {
+	if err := pagination.ListAll(ctx, r, pods, client.InNamespace(env.Spec.TargetNamespace)); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -198,7 +200,7 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleWaitingForPods(
 	for _, pod := range pods.Items {
 		if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
 			logger.Debug("Pod still running", zap.String("pod", pod.Name), zap.String("phase", string(pod.Status.Phase)))
-			return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+			return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRestoreRetryInterval}, nil
 		}
 	}
 
@@ -252,7 +254,7 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleWaitingForPods(
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRestoreRetryInterval}, nil
 }
 
 func (r *EnvironmentSnapshotRestoreReconciler) handleRestoreInProgress(
@@ -297,7 +299,7 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleRestoreInProgress(
 		}
 	}
 
-	return reconcile.Result{RequeueAfter: 2 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: r.Cfg.Environment.SnapshotRestoreRetryInterval}, nil
 }
 
 func (r *EnvironmentSnapshotRestoreReconciler) handleApplyingArtifacts(
@@ -319,8 +321,9 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleApplyingArtifacts(
 	// Use the existing apply artifacts logic from environment controller
 	envReconciler := &EnvironmentReconciler{Client: r.Client, Scheme: r.Scheme, Logger: r.Logger}
 	if err := envReconciler.applySnapshotArtifacts(ctx, restore.Spec.SnapshotName, sourceNamespace, env, logger); err != nil {
-		logger.Warn("Failed to apply snapshot artifacts", zap.Error(err))
-		// Don't fail the restore, just log the warning
+		logger.Error("Failed to apply snapshot artifacts", zap.Error(err))
+		// Return error to allow retry - artifact application is critical
+		return reconcile.Result{}, fmt.Errorf("failed to apply snapshot artifacts: %w", err)
 	}
 
 	// Track restored artifacts in status
@@ -336,7 +339,8 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleApplyingArtifacts(
 	lineage := append(snapshot.Status.Lineage, restore.Spec.SnapshotName)
 	if err := envReconciler.cloneSnapshotsForLineage(ctx, env, sourceNamespace, lineage, logger); err != nil {
 		logger.Error("Failed to clone snapshots for lineage", zap.Error(err))
-		// Continue anyway
+		// Return error to allow retry - snapshot cloning is critical
+		return reconcile.Result{}, fmt.Errorf("failed to clone snapshots for lineage: %w", err)
 	}
 
 	// Update LastRestoredSnapshot on environment
@@ -408,7 +412,9 @@ func (r *EnvironmentSnapshotRestoreReconciler) handleDeletion(
 				env.Status.State = environmentsv1.EnvironmentStateInactive
 				env.Status.Message = "Snapshot restore cancelled"
 				if err := r.Status().Update(ctx, env); err != nil {
-					logger.Warn("Failed to restore environment state on deletion", zap.Error(err))
+					logger.Error("Failed to restore environment state on deletion", zap.Error(err))
+					// Return error to allow retry - environment state restoration is important
+					return reconcile.Result{}, fmt.Errorf("failed to restore environment state: %w", err)
 				}
 			}
 		}
@@ -445,7 +451,9 @@ func (r *EnvironmentSnapshotRestoreReconciler) setFailed(
 			env.Status.State = environmentsv1.EnvironmentStateInactive
 			env.Status.Message = fmt.Sprintf("Snapshot restore failed: %s", message)
 			if err := r.Status().Update(ctx, env); err != nil {
-				logger.Warn("Failed to restore environment state after failure", zap.Error(err))
+				logger.Error("Failed to restore environment state after failure", zap.Error(err))
+				// Log but don't return error since we're already in a failed state
+				// The environment state will be corrected on next reconcile
 			}
 		}
 	}
@@ -456,7 +464,7 @@ func (r *EnvironmentSnapshotRestoreReconciler) setFailed(
 // getNodeForWorkMachine finds the k8s node for a workmachine by label
 func (r *EnvironmentSnapshotRestoreReconciler) getNodeForWorkMachine(ctx context.Context, workmachineName string) (string, error) {
 	var nodes corev1.NodeList
-	if err := r.List(ctx, &nodes, client.MatchingLabels{
+	if err := pagination.ListAll(ctx, r, &nodes, client.MatchingLabels{
 		"kloudlite.io/workmachine": workmachineName,
 	}); err != nil {
 		return "", err

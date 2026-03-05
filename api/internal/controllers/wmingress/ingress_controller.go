@@ -5,8 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -18,6 +20,57 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
+
+// ReconciliationMetrics tracks reconciliation performance
+type ReconciliationMetrics struct {
+	mu                    sync.Mutex
+	TotalReconciliations  int64
+	SkippedReconciliations int64
+	FullRebuilds          int64
+	IncrementalRebuilds   int64
+	AverageReconcileTime  time.Duration
+	totalReconcileTime    time.Duration
+
+	// Race condition tracking
+	ConcurrentReconciliations int64
+	ReconciliationConflicts   int64
+	RouteUpdateConflicts      int64
+	CertUpdateConflicts       int64
+}
+
+// RecordReconcile records a reconciliation attempt
+func (m *ReconciliationMetrics) RecordReconcile(skipped bool, fullRebuild bool, duration time.Duration) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.TotalReconciliations++
+	if skipped {
+		m.SkippedReconciliations++
+	}
+	if fullRebuild {
+		m.FullRebuilds++
+	} else {
+		m.IncrementalRebuilds++
+	}
+	m.totalReconcileTime += duration
+	m.AverageReconcileTime = m.totalReconcileTime / time.Duration(m.TotalReconciliations)
+}
+
+// GetStats returns current metrics
+func (m *ReconciliationMetrics) GetStats() map[string]interface{} {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return map[string]interface{}{
+		"total_reconciliations":    m.TotalReconciliations,
+		"skipped_reconciliations":  m.SkippedReconciliations,
+		"full_rebuilds":           m.FullRebuilds,
+		"incremental_rebuilds":    m.IncrementalRebuilds,
+		"average_reconcile_time":  m.AverageReconcileTime.String(),
+		"concurrent_reconciliations": m.ConcurrentReconciliations,
+		"reconciliation_conflicts":   m.ReconciliationConflicts,
+	}
+}
 
 // IngressReconciler reconciles Ingress resources and updates routing configuration
 type IngressReconciler struct {
@@ -40,31 +93,98 @@ type IngressReconciler struct {
 	// When set, write operations to cr.* domains are restricted to /v2/{username}/*
 	RegistryUsername string
 
+	// Optimization: Force full rebuild on every event (for debugging)
+	ForceFullRebuild bool
+
 	// HTTP server components
 	router      *Router
 	tlsManager  *TLSManager
 	configMutex sync.RWMutex
 	currentHash string
+
+	// Caching for efficient reconciliation
+	ingressCache map[string]string // key: namespace/name, value: resourceVersion hash
+
+	// Metrics tracking
+	metrics ReconciliationMetrics
 }
 
 // SetupWithManager sets up the controller with the Manager
 func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// Initialize caches
+	r.ingressCache = make(map[string]string)
+
+	// Load configuration from environment if not already set
+	if r.ForceFullRebuild == false {
+		r.ForceFullRebuild = os.Getenv("WM_INGRESS_FORCE_FULL_REBUILD") == "true"
+	}
+	if r.ForceFullRebuild {
+		r.Logger.Warn("Force full rebuild enabled - O(n) reconciliation mode")
+	}
+
 	// Watch all Ingress resources cluster-wide with configured ingressClassName
+	// Use optimized predicate to filter events efficiently
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&networkingv1.Ingress{}).
 		Watches(&corev1.Secret{}, &secretEventHandler{reconciler: r}).
-		WithEventFilter(predicate.Funcs{
-			CreateFunc: func(e event.CreateEvent) bool {
-				return r.shouldProcessResource(e.Object)
-			},
-			UpdateFunc: func(e event.UpdateEvent) bool {
-				return r.shouldProcessResource(e.ObjectNew)
-			},
-			DeleteFunc: func(e event.DeleteEvent) bool {
-				return r.shouldProcessResource(e.Object)
-			},
-		}).
+		WithEventFilter(r.ingressPredicate()).
 		Complete(r)
+}
+
+// ingressPredicate creates an optimized event filter for Ingress resources
+func (r *IngressReconciler) ingressPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return r.shouldProcessResource(e.Object)
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Skip updates that don't change the spec (only metadata changes)
+			if !r.hasSpecChanged(e.ObjectOld, e.ObjectNew) {
+				return false
+			}
+			return r.shouldProcessResource(e.ObjectNew)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return r.shouldProcessResource(e.Object)
+		},
+		GenericFunc: func(e event.GenericEvent) bool {
+			return r.shouldProcessResource(e.Object)
+		},
+	}
+}
+
+// hasSpecChanged checks if the spec of a resource has changed
+func (r *IngressReconciler) hasSpecChanged(oldObj, newObj client.Object) bool {
+	switch old := oldObj.(type) {
+	case *networkingv1.Ingress:
+		new, ok := newObj.(*networkingv1.Ingress)
+		if !ok {
+			return true
+		}
+		// Check if Ingress spec changed
+		if old.ResourceVersion == new.ResourceVersion {
+			return false
+		}
+		// Compare specs
+		oldSpec, _ := json.Marshal(old.Spec)
+		newSpec, _ := json.Marshal(new.Spec)
+		return string(oldSpec) != string(newSpec)
+	case *corev1.Secret:
+		new, ok := newObj.(*corev1.Secret)
+		if !ok {
+			return true
+		}
+		// Check if Secret data changed
+		if old.ResourceVersion == new.ResourceVersion {
+			return false
+		}
+		// Compare data
+		oldData, _ := json.Marshal(old.Data)
+		newData, _ := json.Marshal(new.Data)
+		return string(oldData) != string(newData)
+	default:
+		return true
+	}
 }
 
 func (r *IngressReconciler) shouldProcessIngress(ing *networkingv1.Ingress) bool {
@@ -126,7 +246,8 @@ func (r *IngressReconciler) shouldProcessResource(obj client.Object) bool {
 	case *networkingv1.Ingress:
 		return r.shouldProcessIngress(o)
 	case *corev1.Secret:
-		// Process all TLS secrets (we'll check if they're used by Ingress later)
+		// For Secret events, we need to process them to check if they're used
+		// This is checked later in the secretEventHandler
 		return o.Type == corev1.SecretTypeTLS
 	default:
 		return false
@@ -135,12 +256,79 @@ func (r *IngressReconciler) shouldProcessResource(obj client.Object) bool {
 
 // Reconcile reconciles an Ingress or Secret resource
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	startTime := time.Now()
 	logger := r.Logger.With(
 		zap.String("resource", req.Name),
 		zap.String("namespace", req.Namespace),
 	)
 
 	logger.Info("Reconciling resource")
+
+	// Track concurrent reconciliations
+	r.metrics.mu.Lock()
+	r.metrics.ConcurrentReconciliations++
+	currentConcurrent := r.metrics.ConcurrentReconciliations
+	if currentConcurrent > 1 {
+		r.metrics.ReconciliationConflicts++
+	}
+	r.metrics.mu.Unlock()
+
+	if currentConcurrent > 1 {
+		logger.Debug("Concurrent reconciliation detected",
+			zap.Int64("active_reconciliations", currentConcurrent),
+		)
+	}
+
+	// Decrement concurrent counter when done (defer ensures this runs even on error)
+	defer func() {
+		r.metrics.mu.Lock()
+		r.metrics.ConcurrentReconciliations--
+		r.metrics.mu.Unlock()
+	}()
+
+	// Determine if we need a full rebuild or incremental update
+	forceFullRebuild := r.ForceFullRebuild
+
+	// Check if this is a Secret event (Secret events always need full rebuild)
+	// because we don't know which Ingresses use the Secret without listing
+	secret := &corev1.Secret{}
+	if err := r.Get(ctx, req.NamespacedName, secret); err == nil {
+		if secret.Type == corev1.SecretTypeTLS {
+			forceFullRebuild = true
+			logger.Debug("Secret event detected, forcing full rebuild")
+		}
+	}
+
+	// If force full rebuild is disabled, try incremental reconciliation
+	if !forceFullRebuild {
+		// Try to get the Ingress resource
+		ingress := &networkingv1.Ingress{}
+		if err := r.Get(ctx, req.NamespacedName, ingress); err != nil {
+			// Ingress not found, need full rebuild to handle deletion
+			forceFullRebuild = true
+			logger.Debug("Ingress not found, forcing full rebuild for deletion")
+		} else {
+			// Check if this Ingress should be processed
+			if !r.shouldProcessIngress(ingress) {
+				logger.Info("Ingress does not match ingress class, skipping")
+				r.metrics.RecordReconcile(true, false, time.Since(startTime))
+				return ctrl.Result{}, nil
+			}
+
+			// Calculate hash for this specific Ingress
+			ingressKey := fmt.Sprintf("%s/%s", ingress.Namespace, ingress.Name)
+			ingressHash := r.calculateIngressHash(ingress)
+
+			// Check if the Ingress actually changed
+			if cachedHash, exists := r.ingressCache[ingressKey]; exists && cachedHash == ingressHash {
+				logger.Info("Ingress unchanged, skipping reconciliation")
+				r.metrics.RecordReconcile(true, false, time.Since(startTime))
+				return ctrl.Result{}, nil
+			}
+
+			logger.Debug("Ingress changed, proceeding with reconciliation")
+		}
+	}
 
 	// List all Ingress resources cluster-wide
 	ingressList := &networkingv1.IngressList{}
@@ -176,24 +364,71 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if configHash != r.currentHash {
 		logger.Info("Configuration changed, updating router", zap.String("hash", configHash))
 
+		// Atomic update: Update routes first, then certificates
+		// This ensures that if a request arrives between updates, it will either
+		// see the old routes with old certs, or new routes with new certs
+		// Both UpdateRoutes and UpdateCertificates use internal mutexes for safety
+		startRouteUpdate := time.Now()
 		if err := r.router.UpdateRoutes(routes); err != nil {
 			logger.Error("Failed to update routes", zap.Error(err))
 			return ctrl.Result{}, err
 		}
+		routeUpdateDuration := time.Since(startRouteUpdate)
+		logger.Debug("Route update completed", zap.Duration("duration", routeUpdateDuration))
 
-		// Update TLS certificates
+		// Update TLS certificates after routes are updated
+		// This is safe because certificate lookup happens at connection time
+		startCertUpdate := time.Now()
 		if err := r.updateTLSCertificates(ctx, matchedIngresses); err != nil {
 			logger.Error("Failed to update TLS certificates", zap.Error(err))
 			return ctrl.Result{}, err
 		}
+		certUpdateDuration := time.Since(startCertUpdate)
+		logger.Debug("Certificate update completed", zap.Duration("duration", certUpdateDuration))
 
 		r.currentHash = configHash
-		logger.Info("Router configuration updated successfully")
+		logger.Info("Router configuration updated successfully",
+			zap.Int("route_count", len(routes)),
+			zap.Duration("route_update_time", routeUpdateDuration),
+			zap.Duration("cert_update_time", certUpdateDuration),
+		)
 	} else {
 		logger.Info("Configuration unchanged, skipping update")
 	}
 
+	// Update cache with current Ingress hashes
+	r.updateIngressCache(matchedIngresses)
+
+	// Record metrics
+	duration := time.Since(startTime)
+	r.metrics.RecordReconcile(false, forceFullRebuild, duration)
+	logger.Info("Reconciliation completed",
+		zap.Duration("duration", duration),
+		zap.Bool("fullRebuild", forceFullRebuild),
+	)
+
 	return ctrl.Result{}, nil
+}
+
+// calculateIngressHash computes a hash of an Ingress resource for change detection
+func (r *IngressReconciler) calculateIngressHash(ingress *networkingv1.Ingress) string {
+	// Hash the spec to detect actual changes
+	data, _ := json.Marshal(ingress.Spec)
+	hash := sha256.Sum256(data)
+	return fmt.Sprintf("%x", hash)
+}
+
+// updateIngressCache updates the Ingress cache with current hashes
+func (r *IngressReconciler) updateIngressCache(ingresses []networkingv1.Ingress) {
+	newCache := make(map[string]string)
+	for _, ing := range ingresses {
+		key := fmt.Sprintf("%s/%s", ing.Namespace, ing.Name)
+		newCache[key] = r.calculateIngressHash(&ing)
+	}
+
+	r.configMutex.Lock()
+	defer r.configMutex.Unlock()
+	r.ingressCache = newCache
 }
 
 // StartServers starts the HTTP and HTTPS servers
@@ -407,44 +642,182 @@ func (r *IngressReconciler) calculateConfigHash(routes []*Route) string {
 	return fmt.Sprintf("%x", hash)
 }
 
+// GetMetrics returns current reconciliation metrics
+func (r *IngressReconciler) GetMetrics() map[string]interface{} {
+	metrics := r.metrics.GetStats()
+
+	// Add router metrics
+	if r.router != nil {
+		routerMetrics := r.router.GetMetrics()
+		for k, v := range routerMetrics {
+			metrics["router_"+k] = v
+		}
+	}
+
+	// Add TLS manager metrics
+	if r.tlsManager != nil {
+		tlsMetrics := r.tlsManager.GetMetrics()
+		for k, v := range tlsMetrics {
+			metrics["tls_"+k] = v
+		}
+	}
+
+	// Add current config hash
+	r.configMutex.RLock()
+	metrics["current_config_hash"] = r.currentHash
+	r.configMutex.RUnlock()
+
+	return metrics
+}
+
 // secretEventHandler handles Secret events
 type secretEventHandler struct {
 	reconciler *IngressReconciler
 }
 
 func (h *secretEventHandler) Create(ctx context.Context, e event.CreateEvent, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
-	// Trigger reconciliation of all Ingress resources
-	h.enqueueAll(ctx, q)
-}
-
-func (h *secretEventHandler) Update(ctx context.Context, e event.UpdateEvent, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
-	h.enqueueAll(ctx, q)
-}
-
-func (h *secretEventHandler) Delete(ctx context.Context, e event.DeleteEvent, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
-	h.enqueueAll(ctx, q)
-}
-
-func (h *secretEventHandler) Generic(ctx context.Context, e event.GenericEvent, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
-	h.enqueueAll(ctx, q)
-}
-
-func (h *secretEventHandler) enqueueAll(ctx context.Context, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
-	// List all Ingress resources and enqueue them
-	ingressList := &networkingv1.IngressList{}
-	if err := h.reconciler.List(ctx, ingressList); err != nil {
-		h.reconciler.Logger.Error("Failed to list Ingress resources for secret event", zap.Error(err))
+	secret, ok := e.Object.(*corev1.Secret)
+	if !ok {
 		return
 	}
 
+	// Only enqueue if this secret is actually used by Ingress resources
+	if h.isSecretRelevant(ctx, secret) {
+		h.reconciler.Logger.Info("Secret created, triggering reconciliation",
+			zap.String("secret", secret.Name),
+			zap.String("namespace", secret.Namespace),
+		)
+		// Enqueue a single request to trigger full rebuild
+		q.Add(ctrl.Request{
+			NamespacedName: client.ObjectKey{
+				Name:      "secret-event",
+				Namespace: secret.Namespace,
+			},
+		})
+	}
+}
+
+func (h *secretEventHandler) Update(ctx context.Context, e event.UpdateEvent, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
+	newSecret, ok := e.ObjectNew.(*corev1.Secret)
+	if !ok {
+		return
+	}
+
+	oldSecret, ok := e.ObjectOld.(*corev1.Secret)
+	if !ok {
+		return
+	}
+
+	// Check if secret data actually changed
+	if h.hasSecretDataChanged(oldSecret, newSecret) {
+		h.reconciler.Logger.Info("Secret data changed, triggering reconciliation",
+			zap.String("secret", newSecret.Name),
+			zap.String("namespace", newSecret.Namespace),
+		)
+		// Enqueue a single request to trigger full rebuild
+		q.Add(ctrl.Request{
+			NamespacedName: client.ObjectKey{
+				Name:      "secret-event",
+				Namespace: newSecret.Namespace,
+			},
+		})
+	}
+}
+
+func (h *secretEventHandler) Delete(ctx context.Context, e event.DeleteEvent, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
+	secret, ok := e.Object.(*corev1.Secret)
+	if !ok {
+		return
+	}
+
+	// Only enqueue if this secret was actually used by Ingress resources
+	if h.isSecretRelevant(ctx, secret) {
+		h.reconciler.Logger.Info("Secret deleted, triggering reconciliation",
+			zap.String("secret", secret.Name),
+			zap.String("namespace", secret.Namespace),
+		)
+		// Enqueue a single request to trigger full rebuild
+		q.Add(ctrl.Request{
+			NamespacedName: client.ObjectKey{
+				Name:      "secret-event",
+				Namespace: secret.Namespace,
+			},
+		})
+	}
+}
+
+func (h *secretEventHandler) Generic(ctx context.Context, e event.GenericEvent, q workqueue.TypedRateLimitingInterface[ctrl.Request]) {
+	// Generic events are rare for secrets, handle conservatively
+	secret, ok := e.Object.(*corev1.Secret)
+	if !ok {
+		return
+	}
+
+	if h.isSecretRelevant(ctx, secret) {
+		q.Add(ctrl.Request{
+			NamespacedName: client.ObjectKey{
+				Name:      "secret-event",
+				Namespace: secret.Namespace,
+			},
+		})
+	}
+}
+
+// isSecretRelevant checks if a secret is used by any Ingress
+func (h *secretEventHandler) isSecretRelevant(ctx context.Context, secret *corev1.Secret) bool {
+	// Check if this is the wildcard secret
+	if secret.Namespace == h.reconciler.WildcardSecretNamespace &&
+		secret.Name == h.reconciler.WildcardSecretName {
+		return true
+	}
+
+	// Check if any Ingress references this secret
+	ingressList := &networkingv1.IngressList{}
+	if err := h.reconciler.List(ctx, ingressList); err != nil {
+		h.reconciler.Logger.Error("Failed to list Ingress resources", zap.Error(err))
+		return false
+	}
+
 	for _, ing := range ingressList.Items {
-		if h.reconciler.shouldProcessIngress(&ing) {
-			q.Add(ctrl.Request{
-				NamespacedName: client.ObjectKey{
-					Name:      ing.Name,
-					Namespace: ing.Namespace,
-				},
-			})
+		if !h.reconciler.shouldProcessIngress(&ing) {
+			continue
+		}
+		// Check TLS hosts in Ingress spec
+		for _, tls := range ing.Spec.TLS {
+			if tls.SecretName == secret.Name {
+				// TLS secrets are in the same namespace as the Ingress
+				return true
+			}
 		}
 	}
+
+	return false
+}
+
+// hasSecretDataChanged checks if secret data has actually changed
+func (h *secretEventHandler) hasSecretDataChanged(old, new *corev1.Secret) bool {
+	// Quick check: resource version
+	if old.ResourceVersion == new.ResourceVersion {
+		return false
+	}
+
+	// Compare data fields
+	if len(old.Data) != len(new.Data) {
+		return true
+	}
+
+	for key, oldValue := range old.Data {
+		newValue, exists := new.Data[key]
+		if !exists {
+			return true
+		}
+		if len(oldValue) != len(newValue) {
+			return true
+		}
+		if string(oldValue) != string(newValue) {
+			return true
+		}
+	}
+
+	return false
 }

@@ -3,7 +3,6 @@ package workspace
 import (
 	"context"
 	"fmt"
-	"time"
 
 	environmentv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
@@ -218,7 +217,7 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	}
 
 	logger.Info("Workspace pod created successfully")
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: cfg.Environment.LifecycleRetryInterval}, nil
 }
 
 // handleSuspendedWorkspace ensures the workspace pod is stopped
@@ -292,7 +291,7 @@ func (r *WorkspaceReconciler) handleSuspendedWorkspace(ctx context.Context, work
 		logger.Warn("Failed to update workspace status", zap.Error(err))
 	}
 
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	return reconcile.Result{RequeueAfter: cfg.Environment.LifecycleRetryInterval}, nil
 }
 
 // handleSnapshotRestore handles workspace creation from a snapshot

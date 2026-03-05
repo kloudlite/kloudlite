@@ -3,9 +3,11 @@ package environment
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	environmentsv1 "github.com/kloudlite/kloudlite/api/internal/controllers/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/api/internal/controllers/workspace/v1"
+	"github.com/kloudlite/kloudlite/api/internal/pkg/pagination"
 	"github.com/kloudlite/kloudlite/api/internal/pkg/statusutil"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -19,12 +21,13 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 		zap.String("targetNamespace", environment.Spec.TargetNamespace))
 
 	disconnectedWorkspaces := 0
+	var errors []error
 
 	// 1. Find and disconnect all workspaces connected to this environment
 	// Workspaces are cluster-scoped, so list without namespace filter
 	logger.Info("Finding workspaces connected to this environment")
 	workspaceList := &workspacev1.WorkspaceList{}
-	if err := r.List(ctx, workspaceList); err != nil {
+	if err := pagination.ListAll(ctx, r, workspaceList); err != nil {
 		logger.Error("Failed to list workspaces", zap.Error(err))
 		return fmt.Errorf("failed to list workspaces: %w", err)
 	}
@@ -46,7 +49,8 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 				logger.Error("Failed to disconnect workspace",
 					zap.String("workspace", workspace.Name),
 					zap.Error(err))
-				// Continue with other workspaces instead of failing
+				// Collect error but continue with other workspaces
+				errors = append(errors, fmt.Errorf("workspace %s: %w", workspace.Name, err))
 				continue
 			}
 
@@ -64,6 +68,11 @@ func (r *EnvironmentReconciler) handleEnvironmentDeactivation(ctx context.Contex
 		zap.String("environment", environment.Name),
 		zap.Int("disconnectedWorkspaces", disconnectedWorkspaces))
 
+	// Return aggregated error if any workspace disconnect failed
+	if len(errors) > 0 {
+		return fmt.Errorf("failed to disconnect %d workspaces: %w", len(errors), joinErrors(errors))
+	}
+
 	return nil
 }
 
@@ -73,12 +82,13 @@ func (r *EnvironmentReconciler) suspendEnvironment(ctx context.Context, environm
 	namespace := environment.Spec.TargetNamespace
 	const originalReplicasAnnotation = "kloudlite.io/original-replicas"
 
-	// Scale down StatefulSets
+	// Scale down StatefulSets using pagination
 	statefulSets := &appsv1.StatefulSetList{}
-	if err := r.List(ctx, statefulSets, client.InNamespace(namespace)); err != nil {
+	if err := pagination.ListAll(ctx, r, statefulSets, client.InNamespace(namespace)); err != nil {
 		return fmt.Errorf("failed to list StatefulSets: %w", err)
 	}
 
+	var errors []error
 	for _, sts := range statefulSets.Items {
 		if sts.Spec.Replicas != nil && *sts.Spec.Replicas > 0 {
 			// Store original replica count in annotation
@@ -93,11 +103,33 @@ func (r *EnvironmentReconciler) suspendEnvironment(ctx context.Context, environm
 			sts.Spec.Replicas = &zero
 			if err := r.Update(ctx, &sts); err != nil {
 				logger.Error("Failed to scale down StatefulSet", zap.String("statefulset", sts.Name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("StatefulSet %s: %w", sts.Name, err))
 			} else {
 				logger.Debug("Scaled down StatefulSet", zap.String("statefulset", sts.Name))
 			}
 		}
 	}
 
+	// Return aggregated error if any StatefulSet scale down failed
+	if len(errors) > 0 {
+		return fmt.Errorf("failed to scale down %d StatefulSets: %w", len(errors), joinErrors(errors))
+	}
+
 	return nil
+}
+
+// joinErrors combines multiple errors into a single error message
+func joinErrors(errors []error) error {
+	if len(errors) == 0 {
+		return nil
+	}
+
+	var sb strings.Builder
+	for i, err := range errors {
+		if i > 0 {
+			sb.WriteString("; ")
+		}
+		sb.WriteString(err.Error())
+	}
+	return fmt.Errorf("%s", sb.String())
 }

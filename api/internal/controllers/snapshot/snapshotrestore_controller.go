@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	snapshotRestoreFinalizer = "snapshots.kloudlite.io/restore-finalizer"
+	snapshotRestoreFinalizer       = "snapshots.kloudlite.io/restore-finalizer"
+	snapshotRestoreWaitInterval = 5 * time.Second
 )
 
 // RestoreOperator defines the interface for restore operations
@@ -131,7 +132,8 @@ func (r *SnapshotRestoreReconciler) handlePending(ctx context.Context, restore *
 				logger.Error("Failed to update status", zap.Error(err))
 			}
 		}
-		return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		logger.Info("Using configured snapshot restore wait interval", zap.Duration("interval", snapshotRestoreWaitInterval))
+		return reconcile.Result{RequeueAfter: snapshotRestoreWaitInterval}, nil
 	}
 
 	// Ensure snapshot has registry info
