@@ -103,39 +103,45 @@ export function useSubscriptionPayments({
   const handlePayNow = useCallback(async () => {
     if (!pendingInvoice?.razorpayInvoiceId || paying) return
     setPaying(true)
-
-    const key = await getRazorpayKey()
-    const options = {
-      key,
-      order_id: pendingInvoice.razorpayInvoiceId,
-      amount: pendingInvoice.amount,
-      currency: pendingInvoice.currency,
-      name: 'Kloudlite',
-      description: 'Subscription Renewal',
-      prefill: { email: userEmail, name: userName },
-      theme: { color: '#3B82F6' },
-      handler: async (response: Record<string, string>) => {
-        try {
-          await verifyPaymentAndActivate(
-            installationId,
-            response.razorpay_order_id,
-            response.razorpay_payment_id,
-            response.razorpay_signature,
-          )
-          toast.success('Payment successful! Subscription renewed.')
-          router.refresh()
-        } catch {
-          toast.error('Payment verification failed. Please contact support.')
-        }
-      },
-      modal: {
-        ondismiss: () => {
-          setPaying(false)
-          toast.info('Payment cancelled. You can try again anytime.')
+    try {
+      const key = await getRazorpayKey()
+      const options = {
+        key,
+        order_id: pendingInvoice.razorpayInvoiceId,
+        amount: pendingInvoice.amount,
+        currency: pendingInvoice.currency,
+        name: 'Kloudlite',
+        description: 'Subscription Renewal',
+        prefill: { email: userEmail, name: userName },
+        theme: { color: '#3B82F6' },
+        handler: async (response: Record<string, string>) => {
+          try {
+            await verifyPaymentAndActivate(
+              installationId,
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature,
+            )
+            toast.success('Payment successful! Subscription renewed.')
+            setPaying(false)
+            router.refresh()
+          } catch {
+            setPaying(false)
+            toast.error('Payment verification failed. Please contact support.')
+          }
         },
-      },
+        modal: {
+          ondismiss: () => {
+            setPaying(false)
+            toast.info('Payment cancelled. You can try again anytime.')
+          },
+        },
+      }
+      openCheckout(options)
+    } catch (error) {
+      setPaying(false)
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate payment')
     }
-    openCheckout(options)
   }, [pendingInvoice, installationId, userEmail, userName, router, openCheckout, paying])
 
   const handleSubscribe = useCallback(

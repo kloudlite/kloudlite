@@ -27,27 +27,23 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const isOwner = installation.userId === session.user.id
   const userRole = await getMemberRole(id, session.user.id)
 
-  console.log('load-context access check:', {
-    installationUserId: installation.userId,
-    sessionUserId: session.user.id,
-    isOwner,
-    userRole,
-  })
-
   if (!isOwner && !userRole) {
     return apiError('Access denied', 403)
   }
 
-  // Update session cookie with this installation's key
+  // Update session cookie. Only owners get installationKey context for installer callbacks.
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
-  const token = await new SignJWT({
+  const sessionPayload: Record<string, string> = {
     provider: session.provider,
     email: session.user.email,
     name: session.user.name,
-    image: session.user.image,
-    installationKey: installation.installationKey,
+    image: session.user.image || '',
     userId: session.user.id,
-  })
+  }
+  if (isOwner) {
+    sessionPayload.installationKey = installation.installationKey
+  }
+  const token = await new SignJWT(sessionPayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('30d')
@@ -63,7 +59,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   return NextResponse.json({
     success: true,
-    installationKey: installation.installationKey,
+    installationKey: isOwner ? installation.installationKey : undefined,
     subdomain: installation.subdomain,
     deploymentReady: installation.deploymentReady,
   })

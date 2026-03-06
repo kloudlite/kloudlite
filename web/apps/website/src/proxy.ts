@@ -26,10 +26,17 @@ export async function proxy(req: NextRequest) {
   const connectSrc = vpnCheckUrl
     ? `'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* ${vpnCheckUrl}`
     : `'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*`
+  const scriptSrc = [
+    "'self'",
+    "'unsafe-inline'",
+    ...(process.env.NODE_ENV === 'development' ? ["'unsafe-eval'"] : []),
+    'https://challenges.cloudflare.com',
+    'https://static.cloudflareinsights.com',
+  ].join(' ')
 
   response.headers.set(
     'Content-Security-Policy',
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com; connect-src ${connectSrc} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com;`
+    `script-src ${scriptSrc}; connect-src ${connectSrc} https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com;`
   )
 
   return response

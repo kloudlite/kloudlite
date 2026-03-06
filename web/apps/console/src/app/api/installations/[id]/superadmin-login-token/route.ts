@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, randomBytes } from 'crypto'
 import { apiError, apiCatchError } from '@/lib/api-helpers'
-import { requireInstallationAccess } from '@/lib/console/authorization'
+import { requireOwnerPermission } from '@/lib/console/authorization'
 import { getInstallationById } from '@/lib/console/storage'
 
 // Super admin login token validity (5 minutes)
@@ -21,7 +21,7 @@ interface SuperAdminLoginTokenPayload {
  *
  * This creates a time-limited token that allows one-click super admin login
  * to the installation dashboard. Token is valid for 5 minutes.
- * Any team member can access super admin login.
+ * Restricted to installation owner.
  */
 export async function POST(
   _request: NextRequest,
@@ -30,8 +30,8 @@ export async function POST(
   try {
     const { id } = await params
 
-    // Verify user has access to this installation (any role)
-    await requireInstallationAccess(id)
+    // Verify only owner can access this endpoint
+    await requireOwnerPermission(id)
 
     const installationId = id
 

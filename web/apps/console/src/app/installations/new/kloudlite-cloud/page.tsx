@@ -205,9 +205,25 @@ export default function KloudliteCloudPage() {
     }
   }
 
+  const liveMessage = (() => {
+    if (status === 'failed' || status === 'error') {
+      return errorMessage ? `Deployment failed: ${errorMessage}` : 'Deployment failed.'
+    }
+    if (status === 'succeeded') return 'Deployment completed successfully.'
+    if (status === 'running' || status === 'pending' || status === 'triggering') {
+      const stepText = currentStep > 0 ? `Step ${currentStep} of ${totalSteps}.` : ''
+      const detailText = stepDescription ? ` ${stepDescription}` : ''
+      return `Deployment in progress. ${stepText}${detailText}`.trim()
+    }
+    return 'Preparing deployment.'
+  })()
+
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center py-32">
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {liveMessage}
+        </div>
         <Loader2 className="text-primary size-8 animate-spin" />
       </div>
     )
@@ -215,6 +231,9 @@ export default function KloudliteCloudPage() {
 
   return (
     <div className="lg:flex lg:gap-12">
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveMessage}
+      </div>
       {/* Left Column - Information */}
       <div className="hidden lg:block lg:w-[400px] lg:flex-shrink-0">
         <div className="sticky top-6 space-y-6">

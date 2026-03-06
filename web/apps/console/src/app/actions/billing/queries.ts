@@ -6,6 +6,8 @@ import {
   getPlans,
   getSubscriptionsByInstallation,
   getInvoicesByInstallation,
+  getMemberRole,
+  getInstallationById,
 } from '@/lib/console/storage'
 import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
 
@@ -23,12 +25,24 @@ export async function fetchSubscriptions(installationId: string): Promise<Subscr
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
 
+  const role = await getMemberRole(installationId, session.user.id)
+  const installation = await getInstallationById(installationId)
+  if (!role && installation?.userId !== session.user.id) {
+    throw new Error('Forbidden')
+  }
+
   return getSubscriptionsByInstallation(installationId)
 }
 
 export async function fetchInvoices(installationId: string): Promise<Invoice[]> {
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
+
+  const role = await getMemberRole(installationId, session.user.id)
+  const installation = await getInstallationById(installationId)
+  if (!role && installation?.userId !== session.user.id) {
+    throw new Error('Forbidden')
+  }
 
   return getInvoicesByInstallation(installationId)
 }

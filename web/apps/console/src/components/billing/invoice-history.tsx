@@ -70,29 +70,41 @@ export function InvoiceHistory({ invoices }: InvoiceHistoryProps) {
         <thead>
           <tr className="border-b border-foreground/10">
             <th
-              className="text-left py-2 pr-4 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
-              onClick={() => toggleSort('date')}
+              aria-sort={sortColumn === 'date' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+              className="text-left py-2 pr-4 font-medium text-muted-foreground"
             >
-              <span className="inline-flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => toggleSort('date')}
+                className="inline-flex items-center gap-1 cursor-pointer select-none hover:text-foreground transition-colors"
+              >
                 Date <SortIcon column="date" sortColumn={sortColumn} sortDirection={sortDirection} />
-              </span>
+              </button>
             </th>
             <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Period</th>
             <th
-              className="text-right py-2 pr-4 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
-              onClick={() => toggleSort('amount')}
+              aria-sort={sortColumn === 'amount' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+              className="text-right py-2 pr-4 font-medium text-muted-foreground"
             >
-              <span className="inline-flex items-center justify-end gap-1">
+              <button
+                type="button"
+                onClick={() => toggleSort('amount')}
+                className="ml-auto inline-flex items-center justify-end gap-1 cursor-pointer select-none hover:text-foreground transition-colors"
+              >
                 Amount <SortIcon column="amount" sortColumn={sortColumn} sortDirection={sortDirection} />
-              </span>
+              </button>
             </th>
             <th
-              className="text-right py-2 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
-              onClick={() => toggleSort('status')}
+              aria-sort={sortColumn === 'status' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+              className="text-right py-2 font-medium text-muted-foreground"
             >
-              <span className="inline-flex items-center justify-end gap-1">
+              <button
+                type="button"
+                onClick={() => toggleSort('status')}
+                className="ml-auto inline-flex items-center justify-end gap-1 cursor-pointer select-none hover:text-foreground transition-colors"
+              >
                 Status <SortIcon column="status" sortColumn={sortColumn} sortDirection={sortDirection} />
-              </span>
+              </button>
             </th>
           </tr>
         </thead>
