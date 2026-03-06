@@ -1,9 +1,10 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
-import { getPackageRequest } from '@/app/actions/workspace.actions'
+import { getPackageRequest } from '@/app/actions/workspace-packages.actions'
 import { getWorkspaceData } from '../workspace-data'
 import { PackagesList } from '../../_components/packages-list'
 import type { PageProps } from '@/types/shared'
+import type { Workspace, PackageRequest } from '@kloudlite/types'
 
 export default async function PackagesPage({ params }: PageProps) {
   const session = await getSession()
@@ -30,8 +31,8 @@ export default async function PackagesPage({ params }: PageProps) {
 
   return (
     <PackagesList
-      workspace={workspace as any}
-      initialPackageRequest={packageRequest as any}
+      workspace={workspace as unknown as Workspace}
+      initialPackageRequest={packageRequest as PackageRequest | null}
     />
   )
 }

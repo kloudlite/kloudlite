@@ -31,7 +31,7 @@ interface ResourceTypeConfig {
   namespaced: boolean
 }
 
-interface NamespaceStore<T = any> {
+interface NamespaceStore<T = unknown> {
   resources: Map<string, T> // name -> resource
   hashIndex: Map<string, string> // hash -> name (from kloudlite.io/hash label)
   labelIndex: Map<string, Set<string>> // "key=value" -> Set<name>
@@ -68,6 +68,25 @@ class ResourceStore {
 
   getAllConfigs(): ResourceTypeConfig[] {
     return Array.from(this.configs.values())
+  }
+
+  private asMetadataResource(resource: unknown): {
+    metadata?: {
+      name?: string
+      namespace?: string
+      labels?: Record<string, string>
+    }
+  } {
+    if (resource && typeof resource === 'object') {
+      return resource as {
+        metadata?: {
+          name?: string
+          namespace?: string
+          labels?: Record<string, string>
+        }
+      }
+    }
+    return {}
   }
 
   // --- Readiness ---
@@ -154,19 +173,19 @@ class ResourceStore {
     return nsStore
   }
 
-  private extractName(resource: any): string {
-    return resource?.metadata?.name || ''
+  private extractName(resource: unknown): string {
+    return this.asMetadataResource(resource).metadata?.name || ''
   }
 
-  private extractNamespace(resource: any): string {
-    return resource?.metadata?.namespace || CLUSTER_KEY
+  private extractNamespace(resource: unknown): string {
+    return this.asMetadataResource(resource).metadata?.namespace || CLUSTER_KEY
   }
 
-  private extractLabels(resource: any): Record<string, string> {
-    return resource?.metadata?.labels || {}
+  private extractLabels(resource: unknown): Record<string, string> {
+    return this.asMetadataResource(resource).metadata?.labels || {}
   }
 
-  private removeFromIndexes(nsStore: NamespaceStore, name: string, oldResource: any): void {
+  private removeFromIndexes(nsStore: NamespaceStore, name: string, oldResource: unknown): void {
     // Remove from hash index
     const oldHash = this.extractLabels(oldResource)['kloudlite.io/hash']
     if (oldHash) {
@@ -187,7 +206,7 @@ class ResourceStore {
     }
   }
 
-  private addToIndexes(nsStore: NamespaceStore, name: string, resource: any): void {
+  private addToIndexes(nsStore: NamespaceStore, name: string, resource: unknown): void {
     // Add to hash index
     const hash = this.extractLabels(resource)['kloudlite.io/hash']
     if (hash) {
@@ -213,7 +232,7 @@ class ResourceStore {
    * Handle ADDED or MODIFIED watch events.
    * Updates the resource in the store and maintains all indexes.
    */
-  applyResource(plural: string, resource: any): void {
+  applyResource(plural: string, resource: unknown): void {
     const name = this.extractName(resource)
     const namespace = this.extractNamespace(resource)
     if (!name) return
@@ -290,7 +309,7 @@ class ResourceStore {
   /**
    * Get a single namespaced resource by name.
    */
-  get<T = any>(plural: string, namespace: string, name: string): T | null {
+  get<T = unknown>(plural: string, namespace: string, name: string): T | null {
     const typeStore = this.stores.get(plural)
     if (!typeStore) return null
 
@@ -303,14 +322,14 @@ class ResourceStore {
   /**
    * Get a single cluster-scoped resource by name.
    */
-  getCluster<T = any>(plural: string, name: string): T | null {
+  getCluster<T = unknown>(plural: string, name: string): T | null {
     return this.get<T>(plural, CLUSTER_KEY, name)
   }
 
   /**
    * List all resources of a type in a namespace.
    */
-  list<T = any>(plural: string, namespace: string): T[] {
+  list<T = unknown>(plural: string, namespace: string): T[] {
     const typeStore = this.stores.get(plural)
     if (!typeStore) return []
 
@@ -323,14 +342,14 @@ class ResourceStore {
   /**
    * List all cluster-scoped resources of a type.
    */
-  listCluster<T = any>(plural: string): T[] {
+  listCluster<T = unknown>(plural: string): T[] {
     return this.list<T>(plural, CLUSTER_KEY)
   }
 
   /**
    * Lookup a namespaced resource by its kloudlite.io/hash label.
    */
-  getByHash<T = any>(plural: string, namespace: string, hash: string): T | null {
+  getByHash<T = unknown>(plural: string, namespace: string, hash: string): T | null {
     const typeStore = this.stores.get(plural)
     if (!typeStore) return null
 
@@ -346,7 +365,7 @@ class ResourceStore {
   /**
    * Filter namespaced resources by a single label key=value.
    */
-  listByLabel<T = any>(plural: string, namespace: string, key: string, value: string): T[] {
+  listByLabel<T = unknown>(plural: string, namespace: string, key: string, value: string): T[] {
     const typeStore = this.stores.get(plural)
     if (!typeStore) return []
 
@@ -368,7 +387,7 @@ class ResourceStore {
   /**
    * Filter cluster-scoped resources by a single label key=value.
    */
-  listClusterByLabel<T = any>(plural: string, key: string, value: string): T[] {
+  listClusterByLabel<T = unknown>(plural: string, key: string, value: string): T[] {
     return this.listByLabel<T>(plural, CLUSTER_KEY, key, value)
   }
 
@@ -376,18 +395,22 @@ class ResourceStore {
    * Find a namespaced resource where a status field matches a value.
    * Useful for fallback lookups like status.hash.
    */
-  findByStatusField<T = any>(
+  findByStatusField<T = unknown>(
     plural: string,
     namespace: string,
     fieldPath: string,
     value: string,
   ): T | null {
-    const items = this.list<any>(plural, namespace)
+    const items = this.list<unknown>(plural, namespace)
     const parts = fieldPath.split('.')
     for (const item of items) {
-      let current = item
+      let current: unknown = item
       for (const part of parts) {
-        current = current?.[part]
+        if (current && typeof current === 'object') {
+          current = (current as Record<string, unknown>)[part]
+        } else {
+          current = undefined
+        }
       }
       if (current === value) return item as T
     }
@@ -396,8 +419,8 @@ class ResourceStore {
 
   // --- Debug ---
 
-  getStats(): Record<string, any> {
-    const stats: Record<string, any> = {}
+  getStats(): Record<string, Record<string, { count: number; hashIndexSize: number; labelIndexSize: number }>> {
+    const stats: Record<string, Record<string, { count: number; hashIndexSize: number; labelIndexSize: number }>> = {}
     for (const [plural, typeStore] of this.stores) {
       stats[plural] = {}
       for (const [ns, nsStore] of typeStore) {

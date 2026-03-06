@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import { getWorkspaceByHash } from '@/app/actions/workspace.actions'
+import { getWorkspaceByHash } from '@/app/actions/workspace-query.actions'
 
 /**
  * Request-scoped cached version of getWorkspaceByHash.

@@ -246,7 +246,7 @@ async function checkTunnelServerReady(namespace: string): Promise<boolean> {
     }
 
     return false
-  } catch (err) {
+  } catch (_err) {
     // Pod doesn't exist yet
     return false
   }

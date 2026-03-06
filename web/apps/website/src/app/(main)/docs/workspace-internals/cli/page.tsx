@@ -153,8 +153,8 @@ export default function CLIReferencePage() {
           <CodeExample>
             <CodeLine>kl config get                # Show all configuration</CodeLine>
             <CodeLine>kl config get display-name   # Get specific value</CodeLine>
-            <CodeLine>kl config set display-name "My Workspace"</CodeLine>
-            <CodeLine>kl config set git.user-email "dev@example.com"</CodeLine>
+            <CodeLine>kl config set display-name &quot;My Workspace&quot;</CodeLine>
+            <CodeLine>kl config set git.user-email &quot;dev@example.com&quot;</CodeLine>
           </CodeExample>
 
           <div className="mt-5 bg-foreground/[0.02] border border-foreground/10 rounded-sm p-4">

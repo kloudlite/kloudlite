@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { WorkspacesList } from './_components/workspaces-list'
-import { getWorkspacesListFull } from '@/app/actions/workspace.actions'
+import { getWorkspacesListFull } from '@/app/actions/workspace-query.actions'
 import { WorkMachineStoppedAlert } from '@/components/work-machine-stopped-alert'
 import type { Workspace } from '@kloudlite/types'
 

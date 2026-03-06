@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button, ScrollArea, VSCodeIcon, JetBrainsIcon, AntigravityIcon, ZedIcon, CursorIcon } from '@kloudlite/ui'
 import { GetStartedButton } from '@/components/get-started-button'
@@ -8,224 +7,13 @@ import { WebsiteHeader } from '@/components/website-header'
 import { WebsiteFooter } from '@/components/website-footer'
 import { PageHeroTitle } from '@/components/page-hero-title'
 import { ArrowRight, Copy, Layers, ArrowLeftRight, Route, Package, Terminal, Camera, Sparkles, Code2 } from 'lucide-react'
+import { GridContainer } from '@/components/home-page/grid-container'
+import { TypewriterText } from '@/components/home-page/typewriter-text'
+import { WorkflowVisualization } from '@/components/home-page/workflow-visualization'
+import { FeatureCard, FeatureCardContainer } from '@/components/home-page/feature-card'
+import { CrossMarker } from '@/components/home-page/cross-marker'
+import { testimonials } from '@/components/home-page/testimonials'
 import { cn } from '@kloudlite/lib'
-
-// Cross marker component
-function CrossMarker({ className }: { className?: string }) {
-  return (
-    <div className={cn('absolute', className)}>
-      {/* Vertical line */}
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 w-px h-5 bg-foreground/20" />
-      {/* Horizontal line */}
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 h-px w-5 bg-foreground/20" />
-    </div>
-  )
-}
-
-// Grid container like Vercel
-function GridContainer({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn('relative mx-auto max-w-7xl', className)}>
-      <style jsx>{`
-        @keyframes pulseTopLeftToRight {
-          0% { left: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { left: 100%; opacity: 0; }
-        }
-        @keyframes pulseRightTopToBottom {
-          0% { top: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
-        }
-        @keyframes pulseBottomRightToLeft {
-          0% { right: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { right: 100%; opacity: 0; }
-        }
-        @keyframes pulseLeftBottomToTop {
-          0% { bottom: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { bottom: 100%; opacity: 0; }
-        }
-        .pulse-top {
-          animation: pulseTopLeftToRight 4s ease-in-out infinite;
-        }
-        .pulse-right {
-          animation: pulseRightTopToBottom 4s ease-in-out infinite 1s;
-        }
-        .pulse-bottom {
-          animation: pulseBottomRightToLeft 4s ease-in-out infinite 2s;
-        }
-        .pulse-left {
-          animation: pulseLeftBottomToTop 4s ease-in-out infinite 3s;
-        }
-      `}</style>
-      {/* Grid lines */}
-      <div className="absolute inset-0 pointer-events-none overflow-visible">
-        {/* Vertical lines */}
-        <div className="absolute inset-y-0 left-0 w-px bg-foreground/10" />
-        <div className="absolute inset-y-0 right-0 w-px bg-foreground/10" />
-
-        {/* Horizontal lines */}
-        <div className="absolute inset-x-0 top-0 h-px bg-foreground/10" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-foreground/10" />
-
-        {/* Animated pulses */}
-        <div className="pulse-top absolute top-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-        <div className="pulse-right absolute right-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
-        <div className="pulse-bottom absolute bottom-0 w-12 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-        <div className="pulse-left absolute left-0 h-12 w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
-
-        {/* Corner markers */}
-        <CrossMarker className="top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-5 h-5" />
-        <CrossMarker className="top-0 right-0 translate-x-1/2 -translate-y-1/2 w-5 h-5" />
-        <CrossMarker className="bottom-0 left-0 -translate-x-1/2 translate-y-1/2 w-5 h-5" />
-        <CrossMarker className="bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-5 h-5" />
-      </div>
-
-      {/* Content */}
-      <div className="relative">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-// Typewriter effect for developer roles
-function TypewriterText() {
-  const roles = [
-    'Frontend Developer',
-    'Backend Developer',
-    'Full Stack Developer',
-    'DevOps Engineer',
-    'Platform Engineer',
-  ]
-
-  const [currentRoleIndex, setCurrentRoleIndex] = useState(0)
-  const [currentText, setCurrentText] = useState('')
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  useEffect(() => {
-    const currentRole = roles[currentRoleIndex]
-
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        if (currentText.length < currentRole.length) {
-          setCurrentText(currentRole.slice(0, currentText.length + 1))
-        } else {
-          setTimeout(() => setIsDeleting(true), 2000)
-        }
-      } else {
-        if (currentText.length > 0) {
-          setCurrentText(currentText.slice(0, -1))
-        } else {
-          setIsDeleting(false)
-          setCurrentRoleIndex((prev) => (prev + 1) % roles.length)
-        }
-      }
-    }, isDeleting ? 50 : 100)
-
-    return () => clearTimeout(timeout)
-  }, [currentText, isDeleting, currentRoleIndex])
-
-  return (
-    <span className="text-primary">
-      {currentText}
-      <span className="animate-pulse">|</span>
-    </span>
-  )
-}
-
-// Testimonials data
-const testimonials = [
-  {
-    quote: "Kloudlite reduced our environment setup time from hours to minutes. Our developers can now focus on shipping features instead of debugging local configs.",
-    name: "Sarah Johnson",
-    title: "Engineering Lead",
-    company: "TechCorp",
-    initials: "SJ"
-  },
-  {
-    quote: "The service intercept feature is a game changer. We can test against production services without the risk. It's like magic.",
-    name: "Michael Park",
-    title: "Senior Developer",
-    company: "StartupX",
-    initials: "MP"
-  },
-  {
-    quote: "Environment forking changed how we work. Every developer can spin up their own copy and work in parallel. No more waiting.",
-    name: "Emily Rodriguez",
-    title: "CTO",
-    company: "BuildFast",
-    initials: "ER"
-  },
-  {
-    quote: "The AI-ready workspaces with Claude Code integration saved us weeks of setup. Our team is shipping faster than ever.",
-    name: "David Chen",
-    title: "VP Engineering",
-    company: "CodeLabs",
-    initials: "DC"
-  },
-  {
-    quote: "Nix-based package management ensures every developer has the exact same environment. No more 'works on my machine' issues.",
-    name: "Lisa Williams",
-    title: "DevOps Lead",
-    company: "CloudNative Inc",
-    initials: "LW"
-  },
-  {
-    quote: "We moved from local Docker to Kloudlite and our onboarding time dropped from 3 days to 30 minutes. Incredible.",
-    name: "James Miller",
-    title: "Head of Platform",
-    company: "DataStream",
-    initials: "JM"
-  }
-]
-
-// Development workflow visualization
-function WorkflowVisualization() {
-  const steps = [
-    { label: 'Setup', active: false, color: 'gray' },
-    { label: 'Code', active: true, color: 'blue' },
-    { label: 'Build', active: false, color: 'gray' },
-    { label: 'Deploy', active: false, color: 'gray' },
-    { label: 'Test', active: true, color: 'green' },
-  ]
-
-  return (
-    <div className="mt-16">
-      {/* Workflow steps */}
-      <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
-        {steps.map((step, i) => (
-          <div key={step.label} className="flex items-center gap-3 sm:gap-4">
-            <div
-              className={cn(
-                'px-6 py-3 text-sm font-semibold tracking-wide uppercase transition-all',
-                step.color === 'blue' && 'bg-primary/5 text-primary border border-primary/20',
-                step.color === 'green' && 'bg-success/5 text-success border border-success/20',
-                step.color === 'gray' && 'bg-foreground/[0.02] text-muted-foreground border border-foreground/10 line-through opacity-50'
-              )}
-            >
-              {step.label}
-            </div>
-            {i < steps.length - 1 && (
-              <div className="w-6 sm:w-8 h-px bg-foreground/20" />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Tagline */}
-      <p className="text-muted-foreground text-center mt-12 text-lg font-medium">
-        Designed to reduce development loop
-      </p>
-    </div>
-  )
-}
 
 function WebsiteLandingPage() {
 
@@ -497,6 +285,9 @@ function WebsiteLandingPage() {
               </div>
 
               {/* Testimonials Grid - Rotating Content */}
+              <p className="sr-only sm:col-span-2 lg:col-span-3" role="status" aria-live="polite" aria-atomic="true">
+                Showing {Math.min(3, testimonials.length)} developer testimonials.
+              </p>
               {testimonials.slice(0, 3).map((testimonial, index) => (
                 <div
                   key={testimonial.name}
@@ -509,7 +300,7 @@ function WebsiteLandingPage() {
                 >
                   <div className="mb-8 min-h-[140px] flex items-center">
                     <p className="text-foreground text-base leading-relaxed">
-                      "{testimonial.quote}"
+                      &quot;{testimonial.quote}&quot;
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -560,57 +351,6 @@ function WebsiteLandingPage() {
         <WebsiteFooter />
         </main>
       </ScrollArea>
-    </div>
-  )
-}
-
-function FeatureCardContainer({ children, className, href }: { children: React.ReactNode; className?: string; href?: string }) {
-  const content = (
-    <>
-      {/* Subtle bottom accent line */}
-      <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-primary group-hover:w-full transition-all duration-700 ease-out" />
-
-      <div className="relative flex flex-col">
-        {children}
-      </div>
-    </>
-  )
-
-  if (href) {
-    return (
-      <Link href={href} className={cn("group relative p-8 lg:p-10 bg-background hover:bg-foreground/[0.02] transition-all duration-500 overflow-hidden border-b border-foreground/10 cursor-pointer", className)}>
-        {content}
-      </Link>
-    )
-  }
-
-  return (
-    <div className={cn("group relative p-8 lg:p-10 bg-background hover:bg-foreground/[0.02] transition-all duration-500 overflow-hidden border-b border-foreground/10", className)}>
-      {content}
-    </div>
-  )
-}
-
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="flex flex-col h-full space-y-3">
-      {/* Icon - minimal, just the icon */}
-      <div className="text-muted-foreground group-hover:text-primary transition-colors duration-500">
-        <div className="w-8 h-8 opacity-60 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110">
-          {icon}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 space-y-4">
-        <h3 className="text-foreground font-bold text-xl sm:text-2xl tracking-tight leading-tight group-hover:text-primary transition-colors duration-500">
-          {title}
-        </h3>
-
-        <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-          {description}
-        </p>
-      </div>
     </div>
   )
 }

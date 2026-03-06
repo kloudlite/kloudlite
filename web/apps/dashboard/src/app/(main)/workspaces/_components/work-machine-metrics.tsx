@@ -37,6 +37,33 @@ interface WorkMachineMetricsProps {
   machineState?: string
 }
 
+function MetricsSkeletonCard() {
+  return (
+    <div className="bg-card animate-pulse rounded-lg border p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="bg-muted h-9 w-9 rounded-lg"></div>
+          <div className="space-y-0.5">
+            <div className="bg-muted h-5 w-[70px] rounded"></div>
+            <div className="bg-muted h-4 w-[100px] rounded"></div>
+          </div>
+        </div>
+        <div className="bg-muted h-8 w-10 rounded"></div>
+      </div>
+      <div className="space-y-2">
+        <div className="bg-muted h-2 rounded-full"></div>
+        <div className="text-muted-foreground flex justify-between text-xs">
+          <div className="bg-muted h-4 w-5 rounded"></div>
+          <div className="bg-muted h-4 w-8 rounded"></div>
+        </div>
+      </div>
+      <div className="mt-3 text-xs">
+        <div className="bg-muted h-4 w-[140px] rounded"></div>
+      </div>
+    </div>
+  )
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
   const k = 1024
@@ -111,35 +138,10 @@ export function WorkMachineMetrics({
   }
 
   if (!metrics) {
-    const SkeletonCard = () => (
-      <div className="bg-card animate-pulse rounded-lg border p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-muted h-9 w-9 rounded-lg"></div>
-            <div className="space-y-0.5">
-              <div className="bg-muted h-5 w-[70px] rounded"></div>
-              <div className="bg-muted h-4 w-[100px] rounded"></div>
-            </div>
-          </div>
-          <div className="bg-muted h-8 w-10 rounded"></div>
-        </div>
-        <div className="space-y-2">
-          <div className="bg-muted h-2 rounded-full"></div>
-          <div className="text-muted-foreground flex justify-between text-xs">
-            <div className="bg-muted h-4 w-5 rounded"></div>
-            <div className="bg-muted h-4 w-8 rounded"></div>
-          </div>
-        </div>
-        <div className="mt-3 text-xs">
-          <div className="bg-muted h-4 w-[140px] rounded"></div>
-        </div>
-      </div>
-    )
-
     return (
       <div className="grid gap-4 md:grid-cols-2">
-        <SkeletonCard />
-        <SkeletonCard />
+        <MetricsSkeletonCard />
+        <MetricsSkeletonCard />
       </div>
     )
   }

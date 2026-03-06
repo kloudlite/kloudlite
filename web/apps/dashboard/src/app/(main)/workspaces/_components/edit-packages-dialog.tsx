@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@kloudlite/ui'
 import type { Workspace, PackageSpec, PackageRequest } from '@kloudlite/types'
-import { updatePackageRequest, getPackageRequest } from '@/app/actions/workspace.actions'
+import { updatePackageRequest, getPackageRequest } from '@/app/actions/workspace-packages.actions'
 import { searchPackages, resolvePackageVersion } from '@/app/actions/package.actions'
 import { toast } from 'sonner'
 

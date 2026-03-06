@@ -98,7 +98,7 @@ export default function WhyKloudlitePage() {
                     </span>
                   </h1>
                   <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg leading-relaxed">
-                    Hours wasted on setup. Days lost to deployment cycles. Production bugs that could've been caught earlier. We're fixing that.
+                    Hours wasted on setup. Days lost to deployment cycles. Production bugs that could&apos;ve been caught earlier. We&apos;re fixing that.
                   </p>
                 </div>
               </div>
@@ -135,7 +135,7 @@ export default function WhyKloudlitePage() {
                       <Clock className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-foreground font-medium">Debug with mocked data</p>
-                        <p className="text-muted-foreground text-sm mt-1">Find issues in production that mocks didn't catch</p>
+                        <p className="text-muted-foreground text-sm mt-1">Find issues in production that mocks didn&apos;t catch</p>
                       </div>
                     </div>
                   </div>
@@ -198,7 +198,7 @@ export default function WhyKloudlitePage() {
                   </div>
                   <h3 className="text-foreground text-lg font-bold mb-2">Zero Setup</h3>
                   <p className="text-muted-foreground text-base leading-relaxed">
-                    No more "works on my machine". Every developer gets the same, production-like environment.
+                    No more &quot;works on my machine&quot;. Every developer gets the same, production-like environment.
                   </p>
                 </div>
 

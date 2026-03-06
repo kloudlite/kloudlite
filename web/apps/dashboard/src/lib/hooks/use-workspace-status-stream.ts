@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useWebSocket } from './use-websocket'
 
 interface WorkspaceStatusEvent {
@@ -36,9 +36,11 @@ export function useWorkspaceStatusStream(
   const onPhaseChangeRef = useRef(onPhaseChange)
   const onReadyRef = useRef(onReady)
   const onDeletedRef = useRef(onDeleted)
-  onPhaseChangeRef.current = onPhaseChange
-  onReadyRef.current = onReady
-  onDeletedRef.current = onDeleted
+  useEffect(() => {
+    onPhaseChangeRef.current = onPhaseChange
+    onReadyRef.current = onReady
+    onDeletedRef.current = onDeleted
+  }, [onPhaseChange, onReady, onDeleted])
 
   const url = useMemo(() => {
     if (!namespace || !workspaceName) return null

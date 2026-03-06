@@ -103,7 +103,7 @@ export default async function Dashboard() {
           Welcome back{session.user?.name ? `, ${session.user.name}` : ''}
         </h1>
         <p className="text-muted-foreground text-sm">
-          Here's what's happening with your development environment today
+          Here&apos;s what&apos;s happening with your development environment today
         </p>
       </div>
 

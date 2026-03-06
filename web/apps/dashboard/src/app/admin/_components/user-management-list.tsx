@@ -48,8 +48,9 @@ import {
 } from '@/app/actions/user.actions'
 import { adminAssignMachineType } from '@/app/actions/work-machine.actions'
 import { generateUsernameFromEmail } from '@/lib/utils/username'
-import { UserDisplay, CreateUserFormData, userToDisplay } from '@/types/user'
+import { UserDisplay, CreateUserFormData, UserResource, userToDisplay } from '@/types/user'
 import { toast } from 'sonner'
+import type { WorkMachine } from '@kloudlite/lib/k8s'
 
 // Helper function to get available roles based on current user's role
 function getAvailableRoles(currentUserRole: 'super-admin' | 'admin'): string[] {
@@ -82,7 +83,7 @@ interface UserManagementListProps {
   currentUserRole: 'super-admin' | 'admin'
   isKloudliteCloud?: boolean
   machineTypes?: MachineTypeOption[]
-  workMachines?: any[]
+  workMachines?: WorkMachine[]
 }
 
 export function UserManagementList({
@@ -124,7 +125,7 @@ export function UserManagementList({
 
   // Helper to get machine type for a user from work machines
   const getUserMachineType = useCallback((username: string): string | null => {
-    const wm = workMachines.find((m: any) => m.spec?.ownedBy === username)
+    const wm = workMachines.find((m) => m.spec?.ownedBy === username)
     return wm?.spec?.machineType || null
   }, [workMachines])
 
@@ -311,7 +312,11 @@ export function UserManagementList({
           // Update existing user
           const result = await updateUser(editingUser.id, formData)
           if (result.success && result.data) {
-            setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? userToDisplay(result.data as any) : u)))
+            setUsers((prev) =>
+              prev.map((u) =>
+                u.id === editingUser.id ? userToDisplay(result.data as UserResource) : u,
+              ),
+            )
             // If machine type changed, assign the new one
             const currentMt = getUserMachineType(editingUser.username)
             if (isKloudliteCloud && createUserMachineType && createUserMachineType !== currentMt) {
@@ -332,9 +337,9 @@ export function UserManagementList({
           }
         } else {
           // Create new user
-          const result = await createUser(formData as any)
+          const result = await createUser(formData)
           if (result.success && result.data) {
-            setUsers((prev) => [...prev, userToDisplay(result.data as any)])
+            setUsers((prev) => [...prev, userToDisplay(result.data as UserResource)])
             // If cloud mode and machine type selected, assign it
             if (isKloudliteCloud && createUserMachineType && formData.username) {
               const assignResult = await adminAssignMachineType(formData.username, createUserMachineType)

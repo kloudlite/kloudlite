@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Cpu, MemoryStick } from 'lucide-react'
-import { getWorkspaceMetrics } from '@/app/actions/workspace.actions'
+import { getWorkspaceMetrics } from '@/app/actions/workspace-query.actions'
 
 interface WorkspaceMetricsProps {
   workspaceName: string
@@ -16,6 +16,23 @@ interface MetricsData {
   timestamp: string
 }
 
+function MetricsSkeletonCard() {
+  return (
+    <div className="bg-card animate-pulse rounded-lg border p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="bg-muted h-9 w-9 rounded-lg"></div>
+          <div className="space-y-1">
+            <div className="bg-muted h-4 w-[70px] rounded"></div>
+            <div className="bg-muted h-3 w-[100px] rounded"></div>
+          </div>
+        </div>
+        <div className="bg-muted h-8 w-20 rounded"></div>
+      </div>
+    </div>
+  )
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
   const k = 1024
@@ -26,12 +43,11 @@ function formatBytes(bytes: number): string {
 
 export function WorkspaceMetrics({ workspaceName, namespace, isRunning = false }: WorkspaceMetricsProps) {
   const [metrics, setMetrics] = useState<MetricsData | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     // Don't fetch metrics if workspace is not running
     if (!isRunning) {
-      setError('Workspace not running')
       return
     }
 
@@ -40,13 +56,13 @@ export function WorkspaceMetrics({ workspaceName, namespace, isRunning = false }
         const result = await getWorkspaceMetrics(workspaceName, namespace)
         if (result.success && result.data) {
           setMetrics(result.data as MetricsData)
-          setError(null)
+          setFetchError(null)
         } else {
-          setError(result.error || 'Failed to load metrics')
+          setFetchError(result.error || 'Failed to load metrics')
         }
       } catch (err) {
         console.error('Failed to fetch metrics:', err)
-        setError('Failed to load metrics')
+        setFetchError('Failed to load metrics')
       }
     }
 
@@ -60,6 +76,8 @@ export function WorkspaceMetrics({ workspaceName, namespace, isRunning = false }
       clearInterval(intervalId)
     }
   }, [workspaceName, namespace, isRunning])
+
+  const error = !isRunning ? 'Workspace not running' : fetchError
 
   if (error) {
     return (
@@ -75,25 +93,10 @@ export function WorkspaceMetrics({ workspaceName, namespace, isRunning = false }
   }
 
   if (!metrics) {
-    const SkeletonCard = () => (
-      <div className="bg-card animate-pulse rounded-lg border p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-muted h-9 w-9 rounded-lg"></div>
-            <div className="space-y-1">
-              <div className="bg-muted h-4 w-[70px] rounded"></div>
-              <div className="bg-muted h-3 w-[100px] rounded"></div>
-            </div>
-          </div>
-          <div className="bg-muted h-8 w-20 rounded"></div>
-        </div>
-      </div>
-    )
-
     return (
       <div className="grid gap-4 md:grid-cols-2">
-        <SkeletonCard />
-        <SkeletonCard />
+        <MetricsSkeletonCard />
+        <MetricsSkeletonCard />
       </div>
     )
   }

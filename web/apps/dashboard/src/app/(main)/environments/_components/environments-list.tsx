@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Badge, type BadgeProps, Button } from '@kloudlite/ui'
@@ -159,6 +159,12 @@ export function EnvironmentsList({
     filteredEnvironments = filteredEnvironments.filter((env) => env.status === 'active')
   }
 
+  const liveRegionMessage = useMemo(() => {
+    const count = filteredEnvironments.length
+    const label = count === 1 ? 'environment' : 'environments'
+    return `${count} ${label} shown. Scope: ${scopeFilter}. Status: ${statusFilter}.`
+  }, [filteredEnvironments.length, scopeFilter, statusFilter])
+
   const handleActivate = async (envName: string) => {
     // Optimistic update - immediately show activating state
     setEnvironments((prev) =>
@@ -277,6 +283,9 @@ export function EnvironmentsList({
 
   return (
     <div className="space-y-6">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {liveRegionMessage}
+      </p>
       {/* Filters and Actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">

@@ -6,6 +6,7 @@ import { WorkspaceMetrics } from '../../_components/workspace-metrics'
 import { WorkspaceConnectOptions } from '../../_components/workspace-connect-options'
 import { Activity, GitBranch, Globe, ExternalLink, Layers } from 'lucide-react'
 import type { PageProps } from '@/types/shared'
+import type { Workspace } from '@kloudlite/types'
 
 export default async function OverviewPage({ params }: PageProps) {
   const session = await getSession()
@@ -35,7 +36,7 @@ export default async function OverviewPage({ params }: PageProps) {
       {/* Connect to Workspace */}
       <WorkspaceConnectOptions
         workspaceId={`${namespace}/${name}`}
-        workspace={workspace as any}
+        workspace={workspace as unknown as Workspace}
       />
 
       {/* Two-column grid for secondary info */}

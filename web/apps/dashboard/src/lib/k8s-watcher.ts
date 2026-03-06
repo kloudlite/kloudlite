@@ -19,6 +19,20 @@ interface WatchConfig {
   namespace?: string
 }
 
+interface ListResponseLike {
+  items?: unknown[]
+  metadata?: {
+    resourceVersion?: string
+  }
+}
+
+function toListResponse(value: unknown): ListResponseLike {
+  if (value && typeof value === 'object') {
+    return value as ListResponseLike
+  }
+  return {}
+}
+
 // Survive HMR via globalThis
 const g = globalThis as typeof globalThis & {
   __activeWatches?: Map<string, boolean>
@@ -70,7 +84,7 @@ function buildPath(config: WatchConfig): string {
  */
 async function performInitialList(config: WatchConfig): Promise<string> {
   const client = getK8sClient()
-  let response: any
+  let response: unknown
 
   if (config.group) {
     // CRD resources
@@ -113,13 +127,14 @@ async function performInitialList(config: WatchConfig): Promise<string> {
   resourceStore.clearNamespace(config.plural, config.namespace)
 
   // Populate the store
-  const items = response?.items || []
+  const listResponse = toListResponse(response)
+  const items = listResponse.items || []
   for (const item of items) {
     resourceStore.applyResource(config.plural, item)
   }
 
   // Return resourceVersion for watch continuation
-  const rv = response?.metadata?.resourceVersion || ''
+  const rv = listResponse.metadata?.resourceVersion || ''
   return rv
 }
 
@@ -150,20 +165,22 @@ async function startWatch(config: WatchConfig): Promise<void> {
     await k8sWatch.watch(
       path,
       { resourceVersion },
-      (type: string, obj: any) => {
-        const name = obj?.metadata?.name
-        const namespace = obj?.metadata?.namespace
+      (type: string, obj: unknown) => {
+        const resource = obj as { metadata?: { name?: string; namespace?: string } }
+        const name = resource?.metadata?.name
+        const namespace = resource?.metadata?.namespace
 
         if (type === 'ADDED' || type === 'MODIFIED') {
-          resourceStore.applyResource(config.plural, obj)
-        } else if (type === 'DELETED') {
+          resourceStore.applyResource(config.plural, resource)
+        } else if (type === 'DELETED' && name) {
           resourceStore.removeResource(config.plural, namespace || '__cluster__', name)
         }
 
         console.log(`[K8S-WATCHER] ${config.plural} ${type}: ${name}`)
       },
-      (err: any) => {
-        console.error(`[K8S-WATCHER] Watch error for ${watchKey}:`, err?.message || err)
+      (err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error(`[K8S-WATCHER] Watch error for ${watchKey}:`, message)
         activeWatches.set(watchKey, false)
         resourceStore.markStale(config.plural, config.namespace)
 

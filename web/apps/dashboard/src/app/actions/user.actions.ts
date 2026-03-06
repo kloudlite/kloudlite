@@ -181,7 +181,7 @@ export async function createUser(userData: {
     }
 
     console.log('[K8S-API] createUser:', userData.username)
-    const created = await userRepository.create(user as any)
+    const created = await userRepository.create(user as User)
     revalidatePath('/admin/users')
     return { success: true, data: created }
   } catch (err) {
@@ -243,7 +243,7 @@ export async function deleteUser(username: string) {
         console.log('[K8S-API] deleting work machine:', workMachine.metadata.name)
         await workMachineRepository.delete(workMachine.metadata.name)
       }
-    } catch (err) {
+    } catch (_err) {
       // Work machine may not exist for this user, that's fine
       console.log('[K8S-API] no work machine found for user:', username)
     }

@@ -29,6 +29,7 @@ export function TeamInvitationsTable({
   const router = useRouter()
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [invitationToCancel, setInvitationToCancel] = useState<{ id: string; email: string } | null>(null)
+  const [announcement, setAnnouncement] = useState('')
 
   const handleCancel = async () => {
     if (!invitationToCancel) return
@@ -41,10 +42,11 @@ export function TeamInvitationsTable({
       )
 
       if (!response.ok) throw new Error('Failed to cancel invitation')
-
+      setAnnouncement(`Canceled invitation for ${invitationToCancel.email}.`)
       router.refresh()
     } catch {
       toast.error('Failed to cancel invitation')
+      setAnnouncement('Failed to cancel invitation.')
     } finally {
       setCancelingId(null)
       setInvitationToCancel(null)
@@ -57,6 +59,9 @@ export function TeamInvitationsTable({
 
   return (
     <div className="overflow-hidden border border-foreground/10 rounded-lg">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </p>
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead>

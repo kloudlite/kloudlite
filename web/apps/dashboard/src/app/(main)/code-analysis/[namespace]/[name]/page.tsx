@@ -22,9 +22,11 @@ import { Breadcrumb } from '@/components/breadcrumb'
 import {
   getCodeAnalysis,
   triggerCodeAnalysis,
-  type CodeAnalysisResponse,
-  type CodeAnalysisFinding,
-} from '@/app/actions/workspace.actions'
+} from '@/app/actions/workspace-code-analysis.actions'
+import type {
+  CodeAnalysisResponse,
+  CodeAnalysisFinding,
+} from '@/app/actions/workspace-code-analysis.types'
 
 type SeverityFilter = 'all' | 'critical' | 'high' | 'medium' | 'low'
 type TypeFilter = 'all' | 'security' | 'quality'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@kloudlite/ui'
 import { Share2, Bookmark, Twitter, Linkedin, Facebook } from 'lucide-react'
 
@@ -12,27 +12,24 @@ interface SocialButtonsProps {
 }
 
 export function SocialButtons({ slug, title, excerpt, type }: SocialButtonsProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false)
-
-  useEffect(() => {
-    // Check if article is bookmarked
-    const bookmarks = JSON.parse(localStorage.getItem('blog-bookmarks') || '[]')
-    setIsBookmarked(bookmarks.includes(slug))
-  }, [slug])
+  const [bookmarks, setBookmarks] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    return JSON.parse(localStorage.getItem('blog-bookmarks') || '[]')
+  })
+  const isBookmarked = bookmarks.includes(slug)
 
   const toggleBookmark = () => {
-    const bookmarks = JSON.parse(localStorage.getItem('blog-bookmarks') || '[]')
-
+    const stored = JSON.parse(localStorage.getItem('blog-bookmarks') || '[]') as string[]
     if (isBookmarked) {
       // Remove bookmark
-      const updated = bookmarks.filter((b: string) => b !== slug)
+      const updated = stored.filter((b: string) => b !== slug)
       localStorage.setItem('blog-bookmarks', JSON.stringify(updated))
-      setIsBookmarked(false)
+      setBookmarks(updated)
     } else {
       // Add bookmark
-      const updated = [...bookmarks, slug]
+      const updated = [...stored, slug]
       localStorage.setItem('blog-bookmarks', JSON.stringify(updated))
-      setIsBookmarked(true)
+      setBookmarks(updated)
     }
   }
 
@@ -62,7 +59,7 @@ export function SocialButtons({ slug, title, excerpt, type }: SocialButtonsProps
           text: excerpt,
           url: shareUrl,
         })
-      } catch (err) {
+      } catch (_err) {
         console.log('Share cancelled')
       }
     }

@@ -1,7 +1,7 @@
 'use server'
 
 import { workMachineRepository } from '@kloudlite/lib/k8s'
-import type { WorkMachine } from '@kloudlite/lib/k8s'
+import type { WorkMachine, MachineType } from '@kloudlite/lib/k8s'
 import { getSession } from '@/lib/get-session'
 import { resourceStore } from '@/lib/resource-store'
 
@@ -177,7 +177,7 @@ export async function adminAssignMachineType(username: string, machineType: stri
     const existing = getWorkMachineForUser(username)
 
     // Read tier-specific defaults from MachineType annotations
-    const machineTypeResource = resourceStore.getCluster('machinetypes', machineType)
+    const machineTypeResource = resourceStore.getCluster<MachineType>('machinetypes', machineType)
     const ann = machineTypeResource?.metadata?.annotations || {}
     const tierStorageGb = parseInt(ann['kloudlite.io/tier-storage-gb'] || '0', 10) || 50
     const tierSuspendMinutes = parseInt(ann['kloudlite.io/tier-suspend-minutes'] || '0', 10) || 30

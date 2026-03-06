@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileText } from 'lucide-react'
 import { Button, Input, Label } from '@kloudlite/ui'
-import { updateWorkspace } from '@/app/actions/workspace.actions'
+import { updateWorkspace } from '@/app/actions/workspace-mutation.actions'
 
 interface WorkspaceDescriptionFormProps {
   workspaceName: string
@@ -38,7 +38,7 @@ export function WorkspaceDescriptionForm({
       } else {
         setError(result.error || 'Failed to update workspace')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred')
     } finally {
       setIsLoading(false)

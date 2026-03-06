@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { environmentRepository } from '@kloudlite/lib/k8s'
-import type { Environment, WorkMachine } from '@kloudlite/lib/k8s'
+import type { Environment, WorkMachine, UserPreferences } from '@kloudlite/lib/k8s'
 import { compositionService } from '@/lib/services/composition.service'
 import { environmentService } from '@/lib/services/environment.service'
 import { getSession } from '@/lib/get-session'
@@ -20,13 +20,21 @@ import {
 /**
  * Map a raw K8s Service object to the flattened K8sService type
  */
-function mapRawService(svc: any): K8sService {
+function mapRawService(svc: {
+  metadata?: { name?: string; namespace?: string }
+  spec?: {
+    type?: string
+    clusterIP?: string
+    ports?: Array<{ name?: string; protocol?: string; port?: number; targetPort?: string | number }>
+    selector?: Record<string, string>
+  }
+}): K8sService {
   return {
     name: svc.metadata?.name || '',
     namespace: svc.metadata?.namespace || '',
     type: svc.spec?.type || 'ClusterIP',
     clusterIP: svc.spec?.clusterIP || '',
-    ports: (svc.spec?.ports || []).map((p: any) => ({
+    ports: (svc.spec?.ports || []).map((p) => ({
       name: p.name || '',
       protocol: p.protocol || 'TCP',
       port: p.port || 0,
@@ -80,7 +88,7 @@ export async function getEnvironmentsListFull() {
     await resourceStore.waitForReady('userpreferences')
 
     const workMachineResult = getWorkMachineForUser(username)
-    const preferencesResult = resourceStore.getCluster('userpreferences', username)
+    const preferencesResult = resourceStore.getCluster<UserPreferences>('userpreferences', username)
 
     // Get namespace from work machine's targetNamespace
     const namespace = workMachineResult?.spec?.targetNamespace
@@ -638,7 +646,7 @@ export async function getEnvironmentByHash(hashOrName: string) {
     if (targetNs) {
       try {
         await watchResourceInNamespace('services', targetNs)
-        services = resourceStore.list('services', targetNs).map(mapRawService)
+        services = resourceStore.list<Parameters<typeof mapRawService>[0]>('services', targetNs).map(mapRawService)
       } catch (err) {
         console.error('Failed to fetch services:', err)
       }
@@ -688,7 +696,7 @@ export async function getEnvironmentDetails(name: string) {
     if (targetNs) {
       try {
         await watchResourceInNamespace('services', targetNs)
-        services = resourceStore.list('services', targetNs).map(mapRawService)
+        services = resourceStore.list<Parameters<typeof mapRawService>[0]>('services', targetNs).map(mapRawService)
       } catch (err) {
         console.error('Failed to fetch services:', err)
       }

@@ -8,6 +8,7 @@ import { SnapshotsSheet } from '../_components/snapshots-sheet'
 import { getWorkspaceData } from './workspace-data'
 import { ArrowLeft, Camera } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
+import type { Workspace } from '@kloudlite/types'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -39,11 +40,7 @@ function formatTimeAgo(timestamp?: string): string {
 }
 
 export default async function WorkspaceLayout({ children, params }: LayoutProps) {
-  const layoutStart = performance.now()
-
-  const sessionStart = performance.now()
   const session = await getSession()
-  console.log(`[PERF] getSession: ${(performance.now() - sessionStart).toFixed(2)}ms`)
 
   if (!session) {
     redirect('/auth/signin')
@@ -53,16 +50,13 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
   const { id: hash } = await params
 
   // Fetch workspace data using server action
-  const apiStart = performance.now()
   const result = await getWorkspaceData(hash)
-  console.log(`[PERF] getWorkspaceByHash: ${(performance.now() - apiStart).toFixed(2)}ms`)
 
   if (!result.success || !result.data) {
     notFound()
   }
 
   const { workspace, workMachineRunning } = result.data
-  console.log(`[PERF] Layout total (before render): ${(performance.now() - layoutStart).toFixed(2)}ms`)
 
   const workspaceData = {
     hash,
@@ -96,7 +90,7 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
           <h1 className="text-2xl font-semibold tracking-tight truncate">{workspaceData.displayName}</h1>
           <div className="flex-shrink-0 flex items-center gap-2">
             <SnapshotsSheet
-              workspace={workspace as any}
+              workspace={workspace as unknown as Workspace}
               workMachineRunning={workMachineRunning}
               trigger={
                 <Button variant="outline" size="sm">
@@ -105,7 +99,10 @@ export default async function WorkspaceLayout({ children, params }: LayoutProps)
                 </Button>
               }
             />
-            <WorkspaceActions workspace={workspace as any} workMachineRunning={workMachineRunning} />
+            <WorkspaceActions
+              workspace={workspace as unknown as Workspace}
+              workMachineRunning={workMachineRunning}
+            />
           </div>
         </div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">

@@ -6,7 +6,7 @@
     "dev": "next dev --port 3002",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@azure/arm-appcontainers": "^3.0.0",

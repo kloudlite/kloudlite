@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Input } from '@kloudlite/ui'
@@ -270,9 +270,20 @@ export function InstallationsList({
   }, [statusFilter])
 
   const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
+  const liveRegionMessage = useMemo(() => {
+    const count = filteredInstallations.length
+    const label = count === 1 ? 'installation' : 'installations'
+    if (searchQuery.trim()) {
+      return `${count} ${label} match search "${searchQuery.trim()}".`
+    }
+    return `${count} ${label} shown in ${statusFilter} filter.`
+  }, [filteredInstallations.length, searchQuery, statusFilter])
 
   return (
     <div className="space-y-5">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {liveRegionMessage}
+      </p>
       {/* Page Header */}
       <div className="mb-6 flex items-center justify-between pb-6">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">Installations</h1>

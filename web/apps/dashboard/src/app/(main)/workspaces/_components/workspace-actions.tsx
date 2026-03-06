@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@kloudlite/ui'
 import { Pause, Play, Loader2 } from 'lucide-react'
-import { suspendWorkspace, activateWorkspace } from '@/app/actions/workspace.actions'
+import { suspendWorkspace, activateWorkspace } from '@/app/actions/workspace-mutation.actions'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 import type { Workspace } from '@kloudlite/types'
 

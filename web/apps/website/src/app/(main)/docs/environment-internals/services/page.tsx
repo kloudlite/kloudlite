@@ -64,8 +64,8 @@ volumes:
           <div className="bg-foreground/[0.02] border border-foreground/10 rounded-sm p-5">
             <p className="font-semibold text-foreground text-sm mb-3 m-0">Ports</p>
             <div className="bg-muted/50 p-3 font-mono text-xs text-muted-foreground space-y-1 rounded-sm">
-              <div>- "5432:5432" # host:container</div>
-              <div>- "3000:8080" # map 8080 to 3000</div>
+              <div>- &quot;5432:5432&quot; # host:container</div>
+              <div>- &quot;3000:8080&quot; # map 8080 to 3000</div>
             </div>
           </div>
         </div>

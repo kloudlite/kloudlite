@@ -113,7 +113,7 @@ function DiscoveryIntro({ show }: SlideProps) {
       </A>
       <A show={show} delay={150} from="bottom">
         <h2 className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
-          Let's start with<br />
+          Let&apos;s start with<br />
           <span className="text-foreground/40">your current state.</span>
         </h2>
       </A>
@@ -278,7 +278,7 @@ function ProblemOverview({ show }: SlideProps) {
       </A>
       <A show={show} delay={700} from="fade">
         <p className="text-foreground/30 text-sm mt-12">
-          <ChevronDown className="h-4 w-4 inline mr-1" /> Let's quantify it
+          <ChevronDown className="h-4 w-4 inline mr-1" /> Let&apos;s quantify it
         </p>
       </A>
     </div>
@@ -451,7 +451,7 @@ function Principle1({ show }: SlideProps) {
       </A>
       <A show={show} delay={300} from="fade">
         <p className="text-xl text-foreground/70 mb-8 max-w-2xl mx-auto">
-          Cloud workspaces provision in seconds. No installation guides, no dependency hell, no "works on my machine."
+          Cloud workspaces provision in seconds. No installation guides, no dependency hell, no &quot;works on my machine.&quot;
         </p>
       </A>
       <A show={show} delay={500} from="scale">
@@ -562,7 +562,7 @@ function Principle4({ show }: SlideProps) {
       </A>
       <A show={show} delay={300} from="fade">
         <p className="text-xl text-foreground/70 mb-8 max-w-2xl mx-auto">
-          Expose your workspace to teammates, QA, or stakeholders. They interact with your running code—before it's merged.
+          Expose your workspace to teammates, QA, or stakeholders. They interact with your running code—before it&apos;s merged.
         </p>
       </A>
       <A show={show} delay={500} from="scale">
@@ -595,7 +595,7 @@ function DemoOverview({ show }: SlideProps) {
       </A>
       <A show={show} delay={150} from="bottom">
         <h2 className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
-          Let's see it<br />
+          Let&apos;s see it<br />
           <span className="text-foreground/40">in action.</span>
         </h2>
       </A>
@@ -1345,23 +1345,20 @@ const slideGrid: React.FC<SlideProps>[][] = [
 // Slide container that handles mount animation
 function SlideContainer({
   SlideComponent,
-  slideKey,
 }: {
   SlideComponent: React.FC<SlideProps>
-  slideKey: string
 }) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    // Reset and trigger animation on slide change
-    setShow(false)
+    // Trigger animation after mount.
     const timer = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setShow(true)
       })
     })
     return () => cancelAnimationFrame(timer)
-  }, [slideKey])
+  }, [])
 
   return <SlideComponent show={show} />
 }
@@ -1454,7 +1451,6 @@ export default function SalesPitchPage() {
         <SlideContainer
           key={slideKey}
           SlideComponent={CurrentSlide}
-          slideKey={slideKey}
         />
       </div>
 
