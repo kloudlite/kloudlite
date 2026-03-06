@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createRequire } from 'module'
 
 // Use Node.js runtime for Supabase
 export const runtime = 'nodejs'
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_KEY
+const require = createRequire(import.meta.url)
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase configuration')
+function getSupabaseClient() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseKey) {
+    return null
+  }
+
+  const { createClient } = require('@supabase/supabase-js') as typeof import('@supabase/supabase-js')
+  return createClient(supabaseUrl, supabaseKey)
 }
-
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null
 
 interface ContactSubmission {
   name: string
@@ -23,6 +25,7 @@ interface ContactSubmission {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseClient()
   if (!supabase) {
     return NextResponse.json(
       { error: 'Contact form is not configured' },

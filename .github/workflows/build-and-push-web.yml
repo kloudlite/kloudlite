@@ -108,6 +108,8 @@ jobs:
           # Supabase Configuration
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
           # Cloudflare Configuration
@@ -151,6 +153,8 @@ jobs:
           # Supabase Configuration
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
           # Cloudflare Configuration
@@ -170,6 +174,11 @@ jobs:
           # NextAuth Configuration
           AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
           NEXTAUTH_URL=https://kloudlite.io
+
+          # Supabase Configuration (contact form route runs server-side)
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           EOF
 
       - name: Cache Next.js build
@@ -275,4 +284,3 @@ jobs:
       - name: Run ESLint
         run: bun run lint
         continue-on-error: true
-
