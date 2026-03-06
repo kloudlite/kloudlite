@@ -63,7 +63,9 @@ export function ForkWorkspaceSheet({
 
   // Load pushed snapshots when sheet opens
   useEffect(() => {
-    if (open) {
+    if (!open) return
+
+    const frame = requestAnimationFrame(() => {
       setIsLoadingSnapshots(true)
       listPushedSnapshots('workspace').then((result) => {
         if (result.success && result.data) {
@@ -82,7 +84,8 @@ export function ForkWorkspaceSheet({
         setSelectedSnapshot(null)
         setName('')
       }
-    }
+    })
+    return () => cancelAnimationFrame(frame)
   }, [open, preselectedSnapshot])
 
   const handleSubmit = async (e: React.FormEvent) => {

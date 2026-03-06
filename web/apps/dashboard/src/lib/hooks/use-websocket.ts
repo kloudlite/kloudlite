@@ -76,6 +76,7 @@ export function useWebSocket<T = unknown>(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isCleaningUpRef = useRef(false)
   const tokenRef = useRef<string | null>(null)
+  const connectRef = useRef<() => void>(() => {})
 
   // Store callbacks in refs to avoid recreating connect function
   const onMessageRef = useRef(onMessage)
@@ -180,7 +181,7 @@ export function useWebSocket<T = unknown>(
 
         reconnectTimeoutRef.current = setTimeout(() => {
           if (!isCleaningUpRef.current) {
-            connect()
+            connectRef.current()
           }
         }, delay)
       } else {
@@ -192,10 +193,15 @@ export function useWebSocket<T = unknown>(
   }, [url, enabled])
 
   useEffect(() => {
+    connectRef.current = () => {
+      void connect()
+    }
+  }, [connect])
+
+  useEffect(() => {
     if (!enabled || !url) {
       // Cleanup when disabled or no URL
       cleanup()
-      setIsConnected(false)
       return
     }
 
@@ -217,7 +223,7 @@ export function useWebSocket<T = unknown>(
   }, [connect, cleanup])
 
   return {
-    isConnected,
+    isConnected: enabled && !!url && isConnected,
     error,
     reconnect,
   }

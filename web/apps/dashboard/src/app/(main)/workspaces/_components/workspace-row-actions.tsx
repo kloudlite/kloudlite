@@ -28,7 +28,7 @@ import {
   suspendWorkspace,
   activateWorkspace,
   archiveWorkspace,
-} from '@/app/actions/workspace.actions'
+} from '@/app/actions/workspace-mutation.actions'
 import { pinWorkspace, unpinWorkspace } from '@/app/actions/user-preferences.actions'
 import { ForkWorkspaceSheet } from './fork-workspace-sheet'
 import { toast } from 'sonner'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useWebSocket } from './use-websocket'
 
 interface ForkingStatus {
@@ -42,8 +42,10 @@ export function useEnvironmentStatus(
   // Store callbacks in refs to keep eventHandlers stable
   const onStateChangeRef = useRef(onStateChange)
   const onDeletedRef = useRef(onDeleted)
-  onStateChangeRef.current = onStateChange
-  onDeletedRef.current = onDeleted
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange
+    onDeletedRef.current = onDeleted
+  }, [onStateChange, onDeleted])
 
   const url = useMemo(() => {
     if (!envName) return null

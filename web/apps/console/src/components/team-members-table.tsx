@@ -54,6 +54,7 @@ export function TeamMembersTable({
   const router = useRouter()
   const [removingMember, setRemovingMember] = useState<string | null>(null)
   const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null)
+  const [announcement, setAnnouncement] = useState('')
 
   const canManage = userRole === 'owner' || userRole === 'admin'
 
@@ -70,10 +71,11 @@ export function TeamMembersTable({
         )
 
         if (!response.ok) throw new Error('Failed to update role')
-
+        setAnnouncement(`Member role updated to ${newRole}.`)
         router.refresh()
       } catch {
         toast.error('Failed to update member role')
+        setAnnouncement('Failed to update member role.')
       }
     },
     [installationId, router],
@@ -115,11 +117,12 @@ export function TeamMembersTable({
       )
 
       if (!response.ok) throw new Error('Failed to remove member')
-
+      setAnnouncement(`Removed ${memberToRemove.name} from team.`)
       // Refresh page data to show updated list
       router.refresh()
     } catch {
       toast.error('Failed to remove member')
+      setAnnouncement('Failed to remove member.')
     } finally {
       setRemovingMember(null)
       setMemberToRemove(null)
@@ -128,6 +131,9 @@ export function TeamMembersTable({
 
   return (
     <div className="border-foreground/10 overflow-hidden rounded-lg border">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </p>
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead>

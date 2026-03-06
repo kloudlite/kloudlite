@@ -34,7 +34,9 @@ export function EditFileSheet({ environmentId, filename }: EditFileSheetProps) {
 
   // Load file content when sheet opens
   useEffect(() => {
-    if (open) {
+    if (!open) return
+
+    const frame = requestAnimationFrame(() => {
       setEditFilename(filename)
       setLoadingFile(true)
       setContent('')
@@ -50,7 +52,9 @@ export function EditFileSheet({ environmentId, filename }: EditFileSheetProps) {
         .finally(() => {
           setLoadingFile(false)
         })
-    }
+    })
+
+    return () => cancelAnimationFrame(frame)
   }, [open, environmentId, filename])
 
   const handleSubmit = async (e: React.FormEvent) => {

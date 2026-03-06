@@ -1,6 +1,6 @@
 'use server'
 
-import type { Environment } from '@kloudlite/lib/k8s'
+import type { Environment, WorkMachine } from '@kloudlite/lib/k8s'
 import { environmentService } from '@/lib/services/environment.service'
 import { environmentNameSchema, envVarSchema, fileSchema } from '@/lib/validations'
 import { getSession } from '@/lib/get-session'
@@ -25,6 +25,22 @@ import type {
   EnvVar,
 } from '@kloudlite/types'
 
+interface K8sConfigMapLike {
+  metadata?: {
+    labels?: Record<string, string>
+    name?: string
+  }
+  data?: Record<string, string>
+}
+
+interface K8sSecretLike {
+  metadata?: {
+    labels?: Record<string, string>
+  }
+  type?: string
+  data?: Record<string, string>
+}
+
 /**
  * Get the environment's target namespace where configs/secrets are stored
  */
@@ -36,7 +52,11 @@ async function getEnvironmentNamespace(environmentName: string): Promise<string>
 
   // Get the WorkMachine's namespace (same approach as environment.actions.ts)
   await resourceStore.waitForReady('workmachines')
-  const machines = resourceStore.listClusterByLabel<any>('workmachines', 'kloudlite.io/owned-by', session.user.username)
+  const machines = resourceStore.listClusterByLabel<WorkMachine>(
+    'workmachines',
+    'kloudlite.io/owned-by',
+    session.user.username,
+  )
   const workMachine = machines[0] || null
   if (!workMachine) {
     throw new Error(`No WorkMachine found for user ${session.user.username}`)
@@ -101,18 +121,18 @@ export async function getEnvVars(environmentName: string): Promise<GetEnvVarsRes
 
     // Read from store
     console.log('[STORE] getEnvVars: configmaps + secrets from', targetNamespace)
-    const configMaps = resourceStore.list<any>('configmaps', targetNamespace)
-    const secrets = resourceStore.list<any>('secrets', targetNamespace)
+    const configMaps = resourceStore.list<K8sConfigMapLike>('configmaps', targetNamespace)
+    const secrets = resourceStore.list<K8sSecretLike>('secrets', targetNamespace)
 
     // Filter to only environment-specific ConfigMaps (with kloudlite.io/resource-type: config label)
     const envConfigMaps = configMaps.filter(
-      (cm: any) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'config'
+      (cm) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'config'
     )
 
     // Filter to only environment-specific Secrets (with kloudlite.io/resource-type: secret label)
     // Exclude system secrets like service account tokens
     const envSecrets = secrets.filter(
-      (secret: any) =>
+      (secret) =>
         secret.metadata?.labels?.['kloudlite.io/resource-type'] === 'secret' &&
         secret.type !== 'kubernetes.io/service-account-token'
     )
@@ -217,15 +237,15 @@ export async function listFiles(environmentName: string): Promise<ListFilesRespo
 
     // Read from store
     console.log('[STORE] listFiles: configmaps from', targetNamespace)
-    const configMaps = resourceStore.list<any>('configmaps', targetNamespace)
+    const configMaps = resourceStore.list<K8sConfigMapLike>('configmaps', targetNamespace)
 
     // Filter ConfigMaps that are files (have specific label)
     const fileConfigMaps = configMaps.filter(
-      (cm: any) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'file'
+      (cm) => cm.metadata?.labels?.['kloudlite.io/resource-type'] === 'file'
     )
 
     // Convert ConfigMaps to FileInfo objects
-    const files = fileConfigMaps.map((cm: any) => {
+    const files = fileConfigMaps.map((cm) => {
       const filename = cm.metadata?.labels?.['kloudlite.io/filename'] || cm.metadata?.name || 'unknown'
       const configMapName = cm.metadata?.name || 'unknown'
 

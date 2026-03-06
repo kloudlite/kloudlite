@@ -493,7 +493,7 @@ export function InstallationCompletePreview() {
             </button>
 
             <div className="bg-muted/50 p-4 rounded text-left space-y-3">
-              <p className="text-[11px] font-medium">What's next?</p>
+              <p className="text-[11px] font-medium">What&apos;s next?</p>
               <div className="space-y-2 text-[10px]">
                 <div className="flex items-start gap-2">
                   <div className="w-4 h-4 rounded-none bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">

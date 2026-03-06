@@ -7,11 +7,13 @@ import { useEffect, useState } from 'react'
  * Returns true if user has enabled "prefers-reduced-motion" in system settings
  */
 export function useReducedMotion() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  })
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mediaQuery.matches)
 
     const handleChange = () => {
       setPrefersReducedMotion(mediaQuery.matches)

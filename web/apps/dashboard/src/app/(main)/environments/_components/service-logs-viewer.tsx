@@ -28,6 +28,7 @@ export function ServiceLogsViewer({
   const [showFilters, setShowFilters] = useState(false)
   const [stickyScroll, setStickyScroll] = useState(true)
   const [isAtBottom, setIsAtBottom] = useState(true)
+  const [pausedCount, setPausedCount] = useState(0)
   const logsContainerRef = useRef<HTMLDivElement>(null)
   const pausedLogsRef = useRef<LogEntry[]>([])
   const idCounterRef = useRef(0)
@@ -41,6 +42,7 @@ export function ServiceLogsViewer({
   const isPausedRef = useRef(isPaused)
   const stickyScrollRef = useRef(stickyScroll)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const createConnectionRef = useRef<(clearLogs?: boolean) => void>(() => {})
   const maxReconnectAttempts = 10
   const baseReconnectDelay = 1000 // 1 second
 
@@ -100,6 +102,7 @@ export function ServiceLogsViewer({
 
       if (isPausedRef.current) {
         pausedLogsRef.current.push(entry)
+        setPausedCount(pausedLogsRef.current.length)
       } else {
         setLogs((prev) => [...prev, entry])
         setTimeout(scrollToBottom, 0)
@@ -166,7 +169,7 @@ export function ServiceLogsViewer({
             const delay = Math.min(baseReconnectDelay * Math.pow(2, newAttempt - 1), 30000)
 
             reconnectTimeoutRef.current = setTimeout(() => {
-              createConnection(false) // Don't clear logs on reconnect
+              createConnectionRef.current(false) // Don't clear logs on reconnect
             }, delay)
           } else {
             setIsReconnecting(false)
@@ -178,6 +181,10 @@ export function ServiceLogsViewer({
       }
     }
   }, [serviceName, namespace, handleLog])
+
+  useEffect(() => {
+    createConnectionRef.current = createConnection
+  }, [createConnection])
 
   // Manual reconnect function
   const handleReconnect = useCallback(() => {
@@ -196,16 +203,21 @@ export function ServiceLogsViewer({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
-      setIsConnected(false)
-      setIsReconnecting(false)
-      setReconnectAttempt(0)
-      return
+      const frame = requestAnimationFrame(() => {
+        setIsConnected(false)
+        setIsReconnecting(false)
+        setReconnectAttempt(0)
+      })
+      return () => cancelAnimationFrame(frame)
     }
 
-    // Create initial connection and clear logs
-    createConnection(true)
+    const frame = requestAnimationFrame(() => {
+      // Create initial connection and clear logs
+      createConnection(true)
+    })
 
     return () => {
+      cancelAnimationFrame(frame)
       if (eventSourceRef.current) {
         eventSourceRef.current.close()
         eventSourceRef.current = null
@@ -224,6 +236,7 @@ export function ServiceLogsViewer({
     if (!isPaused && pausedLogsRef.current.length > 0) {
       setLogs((prev) => [...prev, ...pausedLogsRef.current])
       pausedLogsRef.current = []
+      setPausedCount(0)
       setTimeout(scrollToBottom, 0)
     }
   }, [isPaused, scrollToBottom])
@@ -268,6 +281,7 @@ export function ServiceLogsViewer({
   const handleClear = () => {
     setLogs([])
     pausedLogsRef.current = []
+    setPausedCount(0)
   }
 
   const handleDownload = () => {
@@ -331,7 +345,7 @@ export function ServiceLogsViewer({
           )}
           {isPaused && (
             <span className="text-muted-foreground text-xs">
-              (Paused - {pausedLogsRef.current.length} new)
+              (Paused - {pausedCount} new)
             </span>
           )}
           <span className="text-muted-foreground text-xs">

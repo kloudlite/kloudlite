@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@kloudlite/ui'
-import { deleteWorkspace } from '@/app/actions/workspace.actions'
+import { deleteWorkspace } from '@/app/actions/workspace-mutation.actions'
 
 interface WorkspaceDangerZoneProps {
   workspaceName: string

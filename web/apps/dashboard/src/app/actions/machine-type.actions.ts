@@ -94,7 +94,17 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
 export async function updateMachineType(name: string, data: MachineTypeUpdateRequest) {
   try {
     // Convert update request to spec format
-    const specUpdate: any = {}
+    const specUpdate: {
+      displayName?: string
+      description?: string
+      category?: string
+      active?: boolean
+      resources?: {
+        cpu?: string
+        memory?: string
+        gpu?: string
+      }
+    } = {}
     if (data.displayName !== undefined) specUpdate.displayName = data.displayName
     if (data.description !== undefined) specUpdate.description = data.description
     if (data.category !== undefined) specUpdate.category = data.category

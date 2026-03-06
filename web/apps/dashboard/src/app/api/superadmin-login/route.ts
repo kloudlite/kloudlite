@@ -13,9 +13,15 @@ export async function GET(request: NextRequest) {
       superadminToken: token,
       redirectTo: '/admin',
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     // NextAuth v5 signIn throws a NEXT_REDIRECT on success — re-throw it
-    if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'digest' in error &&
+      typeof (error as { digest?: string }).digest === 'string' &&
+      (error as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+    ) {
       throw error
     }
     // Auth failed — redirect back to login page with error

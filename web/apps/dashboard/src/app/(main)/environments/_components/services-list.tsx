@@ -30,6 +30,7 @@ export function ServicesList({
 }: ServicesListProps) {
   const [copiedDns, setCopiedDns] = useState<string | null>(null)
   const [logsService, setLogsService] = useState<string | null>(null)
+  const [announcement, setAnnouncement] = useState('')
 
   // Watch for service changes in this environment's namespace
   useResourceWatch('services', namespace)
@@ -46,9 +47,11 @@ export function ServicesList({
     try {
       await navigator.clipboard.writeText(hostname)
       setCopiedDns(hostname)
+      setAnnouncement(`Copied DNS hostname ${hostname}.`)
       setTimeout(() => setCopiedDns(null), 2000)
     } catch (err) {
       console.error('Failed to copy DNS:', err)
+      setAnnouncement('Failed to copy DNS hostname.')
     }
   }
   if (services.length === 0) {
@@ -87,6 +90,9 @@ export function ServicesList({
 
   return (
     <>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {announcement || `${services.length} services loaded.`}
+      </p>
       {isEnvActive && composeStatus?.state === 'failed' && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />

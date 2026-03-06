@@ -8,6 +8,7 @@ import { authenticateUser } from '@/app/actions/user-auth.actions'
 import { getOAuthConfig } from '@/lib/oauth-config'
 import bcrypt from 'bcryptjs'
 import { createHmac } from 'crypto'
+import type { NextRequest } from 'next/server'
 
 interface SuperAdminTokenPayload {
   type: 'superadmin-login'
@@ -349,17 +350,32 @@ export function invalidateAuth() {
 
 // Stable proxy exports that delegate to the lazy singleton
 export const handlers = {
-  GET: (req: any) => getNextAuth().handlers.GET(req),
-  POST: (req: any) => getNextAuth().handlers.POST(req),
+  GET: (req: NextRequest) => getNextAuth().handlers.GET(req),
+  POST: (req: NextRequest) => getNextAuth().handlers.POST(req),
 }
-export const auth: NextAuthResult['auth'] = ((...args: any[]) =>
-  (getNextAuth().auth as Function)(...args)) as any
-export const signIn: NextAuthResult['signIn'] = ((...args: any[]) =>
-  (getNextAuth().signIn as Function)(...args)) as any
-export const signOut: NextAuthResult['signOut'] = ((...args: any[]) =>
-  (getNextAuth().signOut as Function)(...args)) as any
+
+type AuthFn = NextAuthResult['auth']
+type SignInFn = NextAuthResult['signIn']
+type SignOutFn = NextAuthResult['signOut']
+
+export const auth: AuthFn = ((...args: Parameters<AuthFn>) => {
+  const authImpl = getNextAuth().auth as AuthFn
+  return authImpl(...args)
+}) as AuthFn
+
+export const signIn: SignInFn = ((...args: Parameters<SignInFn>) => {
+  const signInImpl = getNextAuth().signIn as SignInFn
+  return signInImpl(...args)
+}) as SignInFn
+
+export const signOut: SignOutFn = ((...args: Parameters<SignOutFn>) => {
+  const signOutImpl = getNextAuth().signOut as SignOutFn
+  return signOutImpl(...args)
+}) as SignOutFn
 
 // Export default for middleware (Edge Runtime compatible)
-const authMiddleware: NextAuthResult['auth'] = ((...args: any[]) =>
-  (getNextAuth().auth as Function)(...args)) as any
+const authMiddleware: AuthFn = ((...args: Parameters<AuthFn>) => {
+  const authImpl = getNextAuth().auth as AuthFn
+  return authImpl(...args)
+}) as AuthFn
 export default authMiddleware

@@ -40,7 +40,9 @@ export function ResourceWatchProvider({ children }: { children: ReactNode }) {
   const routerRef = useRef(router)
 
   // Keep router ref fresh without re-running effects
-  routerRef.current = router
+  useEffect(() => {
+    routerRef.current = router
+  }, [router])
 
   // Flush: call each pending subscription's callback exactly once
   const flush = useCallback(() => {
@@ -52,11 +54,14 @@ export function ResourceWatchProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const handleMessage = useCallback((data: any) => {
+  const handleMessage = useCallback((data: unknown) => {
+    if (!data || typeof data !== 'object') return
+    const message = data as { type?: string; plural?: string; namespace?: string }
     // Skip control messages
-    if (data?.type === 'connected' || data?.type === 'heartbeat') return
+    if (message.type === 'connected' || message.type === 'heartbeat') return
 
-    const { plural, namespace } = data
+    const { plural, namespace } = message
+    if (!plural) return
 
     for (const [id, sub] of subsRef.current.entries()) {
       if (sub.plural === plural && (!sub.namespace || sub.namespace === namespace)) {

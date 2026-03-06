@@ -309,7 +309,7 @@ export function SSHPublicKeyPreview() {
               <ol className="text-muted-foreground text-[10px] space-y-1 list-decimal list-inside m-0">
                 <li>Copy the public key above</li>
                 <li>Go to GitHub → Settings → SSH Keys</li>
-                <li>Click "New SSH Key" and paste</li>
+                <li>Click &quot;New SSH Key&quot; and paste</li>
               </ol>
             </div>
           </div>

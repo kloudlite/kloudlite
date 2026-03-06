@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Shield, ShieldOff, Loader2, Copy, Check, AlertTriangle } from 'lucide-react'
 import {
   DropdownMenu,
@@ -15,6 +15,34 @@ import { useVPNStatus } from '@/lib/hooks/use-vpn-status'
 
 interface VPNStatusIndicatorProps {
   isWorkMachineRunning?: boolean
+}
+
+function CopyButton({
+  text,
+  commandType,
+  onCopy,
+  copiedCommand,
+  disabled,
+}: {
+  text: string
+  commandType: string
+  onCopy: (text: string, commandType: string) => void
+  copiedCommand: string | null
+  disabled: boolean
+}) {
+  return (
+    <button
+      onClick={() => onCopy(text, commandType)}
+      className="ml-2 p-1 hover:bg-accent rounded"
+      disabled={disabled}
+    >
+      {copiedCommand === commandType ? (
+        <Check className="h-4 w-4 text-green-500" />
+      ) : (
+        <Copy className="h-4 w-4" />
+      )}
+    </button>
+  )
 }
 
 function formatUptime(seconds: number): string {
@@ -93,29 +121,14 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
     return 'VPN Not Connected'
   }
 
-  const [serverUrl, setServerUrl] = useState('')
-
-  useEffect(() => {
-    setServerUrl(window.location.origin)
-  }, [])
+  const [serverUrl] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return window.location.origin
+  })
 
   const curlCommand = `curl -fsSL "${serverUrl}/kltun" | sh -s -- --token ${token || 'GENERATING...'}`
   const wgetCommand = `wget -qO- "${serverUrl}/kltun" | sh -s -- --token ${token || 'GENERATING...'}`
   const powershellCommand = `iwr "${serverUrl}/kltun.ps1?token=${encodeURIComponent(token || 'GENERATING...')}" -UseBasicParsing | iex`
-
-  const CopyButton = ({ text, commandType }: { text: string; commandType: string }) => (
-    <button
-      onClick={() => copyToClipboard(text, commandType)}
-      className="ml-2 p-1 hover:bg-accent rounded"
-      disabled={!token}
-    >
-      {copiedCommand === commandType ? (
-        <Check className="h-4 w-4 text-green-500" />
-      ) : (
-        <Copy className="h-4 w-4" />
-      )}
-    </button>
-  )
 
   return (
     <DropdownMenu onOpenChange={handleDropdownOpen}>
@@ -171,7 +184,13 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
                       <code className="flex-1 block p-2 bg-muted rounded text-xs break-all">
                         {curlCommand}
                       </code>
-                      <CopyButton text={curlCommand} commandType="curl" />
+                      <CopyButton
+                        text={curlCommand}
+                        commandType="curl"
+                        onCopy={copyToClipboard}
+                        copiedCommand={copiedCommand}
+                        disabled={!token}
+                      />
                     </div>
                   </div>
                 </TabsContent>
@@ -183,7 +202,13 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
                       <code className="flex-1 block p-2 bg-muted rounded text-xs break-all">
                         {wgetCommand}
                       </code>
-                      <CopyButton text={wgetCommand} commandType="wget" />
+                      <CopyButton
+                        text={wgetCommand}
+                        commandType="wget"
+                        onCopy={copyToClipboard}
+                        copiedCommand={copiedCommand}
+                        disabled={!token}
+                      />
                     </div>
                   </div>
                 </TabsContent>
@@ -195,7 +220,13 @@ export function VPNStatusIndicator({ isWorkMachineRunning = false }: VPNStatusIn
                       <code className="flex-1 block p-2 bg-muted rounded text-xs break-all">
                         {powershellCommand}
                       </code>
-                      <CopyButton text={powershellCommand} commandType="powershell" />
+                      <CopyButton
+                        text={powershellCommand}
+                        commandType="powershell"
+                        onCopy={copyToClipboard}
+                        copiedCommand={copiedCommand}
+                        disabled={!token}
+                      />
                     </div>
                   </div>
                 </TabsContent>

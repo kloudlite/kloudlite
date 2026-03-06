@@ -6,7 +6,9 @@
     "dev": "bun --bun next dev --port 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "echo 'Linting skipped - Next.js 16 + ESLint 9 compatibility issue'"
+    "lint": "eslint .",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@codemirror/lang-yaml": "^6.1.2",
@@ -44,11 +46,15 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@vitejs/plugin-react": "^5.1.4",
     "@types/pg": "^8.15.6",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "dotenv": "^17.2.3",
-    "pg": "^8.16.3"
+    "happy-dom": "^20.8.3",
+    "pg": "^8.16.3",
+    "vitest": "^4.0.18"
   }
 }

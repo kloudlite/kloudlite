@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@kloudlite/ui'
 import type { Workspace, PackageRequest } from '@kloudlite/types'
-import { getPackageRequest } from '@/app/actions/workspace.actions'
+import { getPackageRequest } from '@/app/actions/workspace-packages.actions'
 import { useResourceWatch } from '@/lib/hooks/use-resource-watch'
 
 interface PackageWithStatus {
@@ -33,6 +33,7 @@ export function PackagesList({ workspace, initialPackageRequest }: PackagesListP
 
   const [packages, setPackages] = useState<PackageWithStatus[]>([])
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
+  const [announcement, setAnnouncement] = useState('')
 
   useEffect(() => {
     const loadPackages = async () => {
@@ -72,6 +73,7 @@ export function PackagesList({ workspace, initialPackageRequest }: PackagesListP
   const handleCopy = (command: string, id: string) => {
     navigator.clipboard.writeText(command)
     setCopiedCommand(id)
+    setAnnouncement(`Copied command: ${command}`)
     setTimeout(() => setCopiedCommand(null), 2000)
   }
 
@@ -81,6 +83,9 @@ export function PackagesList({ workspace, initialPackageRequest }: PackagesListP
 
   return (
     <div className="space-y-6">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {announcement || `${packages.length} packages loaded.`}
+      </p>
       {/* Package List */}
       <div className="bg-card rounded-lg border">
         <div className="border-b p-4">

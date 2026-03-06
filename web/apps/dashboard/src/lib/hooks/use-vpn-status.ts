@@ -50,7 +50,6 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
   const [statusInfo, setStatusInfo] = useState<VPNStatusInfo>({
     status: 'checking',
   })
-  const [mounted, setMounted] = useState(false)
   const lastStatusRef = useRef<VPNStatus>('checking')
 
   const checkVPNStatus = useCallback(async () => {
@@ -156,30 +155,34 @@ export function useVPNStatus(options: UseVPNStatusOptions = {}) {
   }, [])
 
   useEffect(() => {
-    setMounted(true)
-
     if (!enabled) {
-      setStatusInfo({ status: 'disconnected' })
       return
     }
 
-    checkVPNStatus()
+    const initialCheck = requestAnimationFrame(() => {
+      checkVPNStatus()
+    })
 
     // Poll for status
     const interval = setInterval(() => {
       checkVPNStatus()
     }, pollInterval)
 
-    return () => clearInterval(interval)
+    return () => {
+      cancelAnimationFrame(initialCheck)
+      clearInterval(interval)
+    }
   }, [enabled, pollInterval, checkVPNStatus])
 
+  const effectiveStatus: VPNStatus = enabled ? statusInfo.status : 'disconnected'
+
   return {
-    status: statusInfo.status,
+    status: effectiveStatus,
     statusMessage: statusInfo.statusMessage,
-    isConnected: statusInfo.status === 'connected',
-    isReconnecting: statusInfo.status === 'reconnecting',
-    isIdle: statusInfo.status === 'idle',
-    isChecking: !mounted || statusInfo.status === 'checking',
+    isConnected: effectiveStatus === 'connected',
+    isReconnecting: effectiveStatus === 'reconnecting',
+    isIdle: effectiveStatus === 'idle',
+    isChecking: enabled && effectiveStatus === 'checking',
     vpnIP: statusInfo.vpnIP,
     sessionID: statusInfo.sessionID,
     connectionUptimeSeconds: statusInfo.connectionUptimeSeconds,

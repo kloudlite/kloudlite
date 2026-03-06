@@ -114,9 +114,12 @@ export function EnvironmentSnapshotsSheet({ environmentName, trigger }: Environm
 
   // Load snapshots when sheet opens
   useEffect(() => {
-    if (open) {
+    if (!open) return
+
+    const frame = requestAnimationFrame(() => {
       loadSnapshots()
-    }
+    })
+    return () => cancelAnimationFrame(frame)
   }, [open, loadSnapshots])
 
   // Re-fetch snapshots when SSE reports a snapshot change (while sheet is open)

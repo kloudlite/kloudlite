@@ -80,7 +80,10 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
 
   // Wait for hydration to complete before rendering dialogs
   useEffect(() => {
-    setMounted(true)
+    const frame = requestAnimationFrame(() => {
+      setMounted(true)
+    })
+    return () => cancelAnimationFrame(frame)
   }, [])
 
   const loadSnapshots = useCallback(async () => {
@@ -92,9 +95,12 @@ export function SnapshotsSheet({ workspace, trigger, workMachineRunning = false 
 
   // Load snapshots when sheet opens
   useEffect(() => {
-    if (open) {
+    if (!open) return
+
+    const frame = requestAnimationFrame(() => {
       loadSnapshots()
-    }
+    })
+    return () => cancelAnimationFrame(frame)
   }, [open, loadSnapshots])
 
   // Re-fetch snapshots when SSE reports a snapshot change (while sheet is open)

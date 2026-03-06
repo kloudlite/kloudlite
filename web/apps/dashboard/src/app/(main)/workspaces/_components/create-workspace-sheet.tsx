@@ -15,7 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@kloudlite/ui'
-import { createWorkspace } from '@/app/actions/workspace.actions'
+import { createWorkspace } from '@/app/actions/workspace-mutation.actions'
 import { toast } from 'sonner'
 import type { Visibility } from '@kloudlite/types'
 import { VisibilitySelector } from '@/components/visibility-selector'
@@ -32,7 +32,10 @@ export function CreateWorkspaceSheet({ workMachineRunning = false }: CreateWorks
 
   // Prevent hydration mismatch with Radix UI components
   useEffect(() => {
-    setMounted(true)
+    const frame = requestAnimationFrame(() => {
+      setMounted(true)
+    })
+    return () => cancelAnimationFrame(frame)
   }, [])
 
   // Basic fields

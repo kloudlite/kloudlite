@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Mock } from 'vitest'
 import {
   createDnsRecord,
   updateDnsRecord,
@@ -12,7 +11,7 @@ import {
 } from './cloudflare-dns'
 
 // Mock global fetch
-global.fetch = vi.fn() as Mock<[RequestInfo | URL, RequestInit?], Promise<Response>>
+global.fetch = vi.fn() as unknown as typeof fetch
 
 describe('Cloudflare DNS Service', () => {
   beforeEach(() => {

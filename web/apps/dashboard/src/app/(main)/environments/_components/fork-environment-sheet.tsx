@@ -38,7 +38,9 @@ export function ForkEnvironmentSheet({
   const [nameError, setNameError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (open && sourceEnvironment) {
+    if (!open || !sourceEnvironment) return
+
+    const frame = requestAnimationFrame(() => {
       setIsCheckingStatus(true)
       setName('')
       setNameError(null)
@@ -61,7 +63,9 @@ export function ForkEnvironmentSheet({
         }
         setIsCheckingStatus(false)
       })
-    }
+    })
+
+    return () => cancelAnimationFrame(frame)
   }, [open, sourceEnvironment])
 
   const validateName = (value: string): string | null => {

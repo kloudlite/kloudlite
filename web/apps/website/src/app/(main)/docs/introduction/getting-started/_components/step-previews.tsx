@@ -267,7 +267,7 @@ export function WorkmachinePreview() {
           </div>
 
           <h3 className="font-medium text-base mb-2">Welcome to Kloudlite!</h3>
-          <p className="text-muted-foreground mb-6">Let's set up your development environment</p>
+          <p className="text-muted-foreground mb-6">Let&apos;s set up your development environment</p>
 
           {/* Machine type selector */}
           <div className="border p-4 text-left space-y-4">
@@ -396,7 +396,7 @@ export function EnvironmentPreview() {
                     <div className="pl-2"><span className="text-[#9cdcfe]">postgres</span><span className="text-[#d4d4d4]">:</span></div>
                     <div className="pl-4"><span className="text-[#9cdcfe]">image</span><span className="text-[#d4d4d4]">: </span><span className="text-[#ce9178]">postgres:15</span></div>
                     <div className="pl-4"><span className="text-[#9cdcfe]">ports</span><span className="text-[#d4d4d4]">:</span></div>
-                    <div className="pl-6 text-[#ce9178]">- "5432:5432"</div>
+                    <div className="pl-6 text-[#ce9178]">- &quot;5432:5432&quot;</div>
                   </div>
                 )}
                 {showLine1 && (
@@ -404,7 +404,7 @@ export function EnvironmentPreview() {
                     <div className="pl-2"><span className="text-[#9cdcfe]">redis</span><span className="text-[#d4d4d4]">:</span></div>
                     <div className="pl-4"><span className="text-[#9cdcfe]">image</span><span className="text-[#d4d4d4]">: </span><span className="text-[#ce9178]">redis:7</span></div>
                     <div className="pl-4"><span className="text-[#9cdcfe]">ports</span><span className="text-[#d4d4d4]">:</span></div>
-                    <div className="pl-6 text-[#ce9178]">- "6379:6379"</div>
+                    <div className="pl-6 text-[#ce9178]">- &quot;6379:6379&quot;</div>
                   </div>
                 )}
                 {showLine2 && (
@@ -702,7 +702,7 @@ export function StartCodingPreview() {
           <div className="flex-1 p-3 font-mono text-[11px] leading-relaxed overflow-hidden text-[#d4d4d4]">
             <div className="flex">
               <span className="text-[#858585] w-6 text-right mr-4">1</span>
-              <span><span className="text-[#c586c0]">import</span> {'{ '}<span className="text-[#9cdcfe]">Client</span>{' }'} <span className="text-[#c586c0]">from</span> <span className="text-[#ce9178]">'pg'</span></span>
+              <span><span className="text-[#c586c0]">import</span> {'{ '}<span className="text-[#9cdcfe]">Client</span>{' }'} <span className="text-[#c586c0]">from</span> <span className="text-[#ce9178]">&apos;pg&apos;</span></span>
             </div>
             <div className="flex">
               <span className="text-[#858585] w-6 text-right mr-4">2</span>
@@ -716,7 +716,7 @@ export function StartCodingPreview() {
               <span className="text-[#858585] w-6 text-right mr-4">4</span>
               <span className="pl-4">
                 {showLine1 ? (
-                  <span className="animate-in fade-in duration-200"><span className="text-[#9cdcfe]">host</span>: <span className="text-[#ce9178]">'postgres'</span>,</span>
+                  <span className="animate-in fade-in duration-200"><span className="text-[#9cdcfe]">host</span>: <span className="text-[#ce9178]">&apos;postgres&apos;</span>,</span>
                 ) : (
                   <span className={cursorVisible ? 'border-l border-[#aeafad]' : ''}>&nbsp;</span>
                 )}
@@ -736,7 +736,7 @@ export function StartCodingPreview() {
               <span className="text-[#858585] w-6 text-right mr-4">6</span>
               <span className="pl-4">
                 {showLine3 ? (
-                  <span className="animate-in fade-in duration-200"><span className="text-[#9cdcfe]">database</span>: <span className="text-[#ce9178]">'myapp'</span></span>
+                  <span className="animate-in fade-in duration-200"><span className="text-[#9cdcfe]">database</span>: <span className="text-[#ce9178]">&apos;myapp&apos;</span></span>
                 ) : (
                   <span>&nbsp;</span>
                 )}
@@ -753,7 +753,10 @@ export function StartCodingPreview() {
             <div className={`flex transition-colors duration-200 ${step === 4 ? 'bg-[#2a2d2e]' : ''}`}>
               <span className="text-[#858585] w-6 text-right mr-4">9</span>
               {showComment ? (
-                <span className="text-[#6a9955] animate-in fade-in duration-200">// Services available via kl env connect<span className={cursorVisible ? 'border-l border-[#aeafad] ml-0.5' : 'ml-0.5'}>&nbsp;</span></span>
+                <span className="text-[#6a9955] animate-in fade-in duration-200">
+                  {'// Services available via kl env connect'}
+                  <span className={cursorVisible ? 'border-l border-[#aeafad] ml-0.5' : 'ml-0.5'}>&nbsp;</span>
+                </span>
               ) : (
                 <span></span>
               )}

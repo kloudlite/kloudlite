@@ -38,7 +38,7 @@ export async function authenticateUser(userData: UserData) {
       try {
         console.log('[K8S-API] authenticateUser: fallback getByEmail', userData.email)
         user = await userRepository.getByEmail(userData.email)
-      } catch (err) {
+      } catch (_err) {
         console.log(`Authentication failed: User with email ${userData.email} not found`)
         return {
           success: false,

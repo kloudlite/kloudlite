@@ -1,6 +1,7 @@
 import { getSession } from '@/lib/get-session'
 import { redirect } from 'next/navigation'
 import { signIn } from '@/lib/auth'
+import Link from 'next/link'
 import { Shield, AlertCircle, AlertTriangle, LogIn } from 'lucide-react'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
@@ -35,7 +36,14 @@ export default async function SuperAdminLoginPage({
   redirect(`/api/superadmin-login?token=${encodeURIComponent(token)}`)
 }
 
-function SessionWarningCard({ token, session }: { token: string; session: any }) {
+interface SessionLike {
+  user: {
+    name?: string | null
+    email?: string | null
+  }
+}
+
+function SessionWarningCard({ token, session }: { token: string; session: SessionLike }) {
   async function loginAsSuperAdmin() {
     'use server'
     await signIn('credentials', {
@@ -65,11 +73,11 @@ function SessionWarningCard({ token, session }: { token: string; session: any })
                 Continue as Super Admin
               </Button>
             </form>
-            <a href="/">
+            <Link href="/">
               <Button variant="outline" className="w-full">
                 Cancel
               </Button>
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>
