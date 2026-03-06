@@ -116,17 +116,18 @@ async function getDueJobs(): Promise<RenewalJobRow[]> {
 }
 
 async function claimJob(job: RenewalJobRow): Promise<boolean> {
-  const { error, count } = await supabase
+  const { data, error } = await supabase
     .from('renewal_jobs')
     .update({ status: 'processing', attempts: job.attempts + 1 })
     .eq('id', job.id)
     .eq('status', 'pending')
+    .select('id')
 
   if (error) {
     console.error(`Failed to claim job ${job.id}:`, error.message)
     return false
   }
-  return (count ?? 0) > 0
+  return (data?.length ?? 0) > 0
 }
 
 async function completeJob(jobId: string): Promise<void> {
@@ -459,9 +460,31 @@ async function processDueJobs(): Promise<{ processed: number; errors: number; re
 // --- Edge Function handler ---
 
 Deno.serve(async (req) => {
-  // Only allow POST (from pg_cron via pg_net) or GET (for manual health checks)
+  // GET is health-only. Processing runs only on authenticated POST.
   if (req.method !== 'POST' && req.method !== 'GET') {
     return new Response('Method not allowed', { status: 405 })
+  }
+
+  if (req.method === 'GET') {
+    return new Response(
+      JSON.stringify({ ok: true, health: 'up', at: new Date().toISOString() }),
+      { headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const authHeader = req.headers.get('authorization') ?? ''
+  const expectedToken = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!expectedToken) {
+    return new Response(
+      JSON.stringify({ ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY not configured' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+  if (authHeader !== `Bearer ${expectedToken}`) {
+    return new Response(
+      JSON.stringify({ ok: false, error: 'Unauthorized' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    )
   }
 
   const start = Date.now()

@@ -32,6 +32,9 @@ export default async function BillingPage({ params }: BillingPageProps) {
   if (!role && installation.userId === session.user.id) {
     role = 'owner'
   }
+  if (!role) {
+    redirect('/installations')
+  }
 
   const isOwner = role === 'owner'
 

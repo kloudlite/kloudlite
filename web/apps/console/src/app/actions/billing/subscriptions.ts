@@ -19,9 +19,42 @@ import {
 } from '@/lib/console/storage'
 import { computeProration, applySubscriptionChanges } from './proration'
 
+type Allocation = { planId: string; quantity: number }
+
+function validateAllocations(
+  allocations: Allocation[],
+  options: { requirePositiveTotal: boolean } = { requirePositiveTotal: true },
+): void {
+  if (!Array.isArray(allocations) || allocations.length === 0) {
+    throw new Error('At least one compute size must be provided')
+  }
+
+  const seen = new Set<string>()
+  let total = 0
+
+  for (const alloc of allocations) {
+    if (!alloc?.planId || typeof alloc.planId !== 'string') {
+      throw new Error('Each allocation must include a valid planId')
+    }
+    if (seen.has(alloc.planId)) {
+      throw new Error(`Duplicate allocation for plan: ${alloc.planId}`)
+    }
+    seen.add(alloc.planId)
+
+    if (!Number.isInteger(alloc.quantity) || alloc.quantity < 0) {
+      throw new Error('Allocation quantity must be a non-negative integer')
+    }
+    total += alloc.quantity
+  }
+
+  if (options.requirePositiveTotal && total <= 0) {
+    throw new Error('At least one user must be assigned')
+  }
+}
+
 export async function createInstallationOrder(
   installationId: string,
-  allocations: { planId: string; quantity: number }[],
+  allocations: Allocation[],
   billingPeriod: 'monthly' | 'annual' = 'monthly',
 ): Promise<{ razorpayOrderId: string; amount: number; currency: string }> {
   const session = await getRegistrationSession()
@@ -35,9 +68,7 @@ export async function createInstallationOrder(
     throw new Error('Only the installation owner can manage billing')
   }
 
-  if (allocations.length === 0) {
-    throw new Error('At least one compute size must have users assigned')
-  }
+  validateAllocations(allocations)
 
   // Check existing subscriptions
   const existing = await getSubscriptionsByInstallation(installationId)
@@ -116,7 +147,7 @@ export async function createInstallationOrder(
 
 export async function previewModification(
   installationId: string,
-  newAllocations: { planId: string; quantity: number }[],
+  newAllocations: Allocation[],
   newBillingPeriod?: 'monthly' | 'annual',
 ): Promise<{
   proratedAmount: number
@@ -129,6 +160,8 @@ export async function previewModification(
 }> {
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
+
+  validateAllocations(newAllocations)
 
   const subs = await getSubscriptionsByInstallation(installationId)
   const activeSubs = subs.filter((s) => s.status === 'active')
@@ -174,7 +207,7 @@ export async function previewModification(
 
 export async function modifySubscriptionQuantities(
   installationId: string,
-  newAllocations: { planId: string; quantity: number }[],
+  newAllocations: Allocation[],
   newBillingPeriod?: 'monthly' | 'annual',
 ): Promise<
   | { applied: true; scheduled?: boolean }
@@ -191,10 +224,7 @@ export async function modifySubscriptionQuantities(
     throw new Error('Only the installation owner can manage billing')
   }
 
-  const totalNewUsers = newAllocations.reduce((sum, a) => sum + a.quantity, 0)
-  if (totalNewUsers === 0) {
-    throw new Error('At least one user must be assigned')
-  }
+  validateAllocations(newAllocations)
 
   const subs = await getSubscriptionsByInstallation(installationId)
   const activeSubs = subs.filter((s) => s.status === 'active')

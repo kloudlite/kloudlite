@@ -13,10 +13,20 @@ export async function proxy(req: NextRequest) {
  * Add security headers to the response
  */
 function addSecurityHeaders(response: NextResponse, _req: NextRequest): NextResponse {
+  const scriptSrc = [
+    "'self'",
+    "'unsafe-inline'",
+    ...(process.env.NODE_ENV === 'development' ? ["'unsafe-eval'"] : []),
+    'https://challenges.cloudflare.com',
+    'https://static.cloudflareinsights.com',
+    'https://checkout.razorpay.com',
+    'https://checkout-static-next.razorpay.com',
+  ].join(' ')
+
   response.headers.set(
     'Content-Security-Policy',
     [
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com https://checkout.razorpay.com https://checkout-static-next.razorpay.com`,
+      `script-src ${scriptSrc}`,
       `style-src 'self' 'unsafe-inline'`,
       `connect-src 'self' https://*.razorpay.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com`,
       `frame-src 'self' https://*.razorpay.com`,

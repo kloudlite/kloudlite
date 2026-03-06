@@ -51,10 +51,15 @@ function addSecurityHeaders(response: NextResponse, req: NextRequest): NextRespo
   }
 
   const connectSrc = connectSrcParts.join(' ')
+  const scriptSrc = [
+    "'self'",
+    "'unsafe-inline'",
+    ...(process.env.NODE_ENV === 'development' ? ["'unsafe-eval'"] : []),
+  ].join(' ')
 
   response.headers.set(
     'Content-Security-Policy',
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src ${connectSrc};`,
+    `script-src ${scriptSrc}; connect-src ${connectSrc};`,
   )
   // Removed deprecated Permissions-Policy features (interest-cohort, browsing-topics)
 
