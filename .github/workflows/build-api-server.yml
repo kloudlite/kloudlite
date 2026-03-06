@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+    tags:
+      - 'api-server-v*'
     paths:
       - 'api/cmd/server/**'
       - 'api/internal/**'
@@ -78,8 +80,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^api-server-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}

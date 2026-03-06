@@ -2,15 +2,10 @@ name: Release kli
 
 on:
   push:
-    branches:
-      - development
-    paths:
-      - 'api/cmd/kli/**'
-      - 'api/go.mod'
-      - 'api/go.sum'
-      - '.github/workflows/release-kli.yml'
     tags:
       - 'kli-v*'
+  schedule:
+    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       release_type:
@@ -82,25 +77,37 @@ jobs:
       - name: Get version from tag
         id: version
         run: |
+          BASE_VERSION="0.1.0"
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.release_type }}" = "nightly" ]; then
-              # Generate nightly version with timestamp
-              TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-              VERSION="0.1.0-nightly-${TIMESTAMP}"
+              TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+              SHORT_SHA="${GITHUB_SHA::7}"
+              VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
               TAG="kli-v${VERSION}"
             else
-              # Use provided tag for stable releases
               TAG="${{ inputs.tag }}"
+              if [ -z "${TAG}" ]; then
+                echo "::error::Tag is required for stable releases."
+                exit 1
+              fi
+              if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+                echo "::error::Invalid stable tag '${TAG}'. Expected format: kli-v0.1.0"
+                exit 1
+              fi
               VERSION="${TAG#kli-v}"
             fi
           elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            # Tag push event
             TAG="${GITHUB_REF#refs/tags/}"
+            if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Invalid pushed tag '${TAG}'. Expected format: kli-v0.1.0"
+              exit 1
+            fi
             VERSION="${TAG#kli-v}"
           else
-            # Push to development branch - create nightly
-            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-            VERSION="0.1.0-nightly-${TIMESTAMP}"
+            TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+            SHORT_SHA="${GITHUB_SHA::7}"
+            VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
             TAG="kli-v${VERSION}"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -144,25 +151,37 @@ jobs:
       - name: Get version from tag
         id: version
         run: |
+          BASE_VERSION="0.1.0"
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.release_type }}" = "nightly" ]; then
-              # Generate nightly version with timestamp
-              TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-              VERSION="0.1.0-nightly-${TIMESTAMP}"
+              TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+              SHORT_SHA="${GITHUB_SHA::7}"
+              VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
               TAG="kli-v${VERSION}"
             else
-              # Use provided tag for stable releases
               TAG="${{ inputs.tag }}"
+              if [ -z "${TAG}" ]; then
+                echo "::error::Tag is required for stable releases."
+                exit 1
+              fi
+              if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+                echo "::error::Invalid stable tag '${TAG}'. Expected format: kli-v0.1.0"
+                exit 1
+              fi
               VERSION="${TAG#kli-v}"
             fi
           elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            # Tag push event
             TAG="${GITHUB_REF#refs/tags/}"
+            if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Invalid pushed tag '${TAG}'. Expected format: kli-v0.1.0"
+              exit 1
+            fi
             VERSION="${TAG#kli-v}"
           else
-            # Push to development branch - create nightly
-            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-            VERSION="0.1.0-nightly-${TIMESTAMP}"
+            TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+            SHORT_SHA="${GITHUB_SHA::7}"
+            VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
             TAG="kli-v${VERSION}"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -270,8 +289,8 @@ jobs:
           name: kli ${{ steps.version.outputs.version }}
           body_path: release-notes.md
           draft: false
-          prerelease: false
-          make_latest: ${{ github.event_name == 'workflow_dispatch' && inputs.make_latest || github.event_name == 'push' }}
+          prerelease: ${{ contains(steps.version.outputs.version, '-nightly.') }}
+          make_latest: ${{ (github.event_name == 'workflow_dispatch' && inputs.release_type == 'stable' && inputs.make_latest) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/kli-v')) }}
           files: |
             release-assets/*
         env:

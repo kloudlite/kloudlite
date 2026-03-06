@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+    tags:
+      - 'wm-ingress-controller-v*'
     paths:
       - 'api/cmd/wm-ingress-controller/**'
       - 'api/cmd/wm-ingress-controller/Dockerfile'
@@ -77,8 +79,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^wm-ingress-controller-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
