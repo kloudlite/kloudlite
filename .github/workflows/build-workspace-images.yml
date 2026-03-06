@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+    tags:
+      - 'workspace-images-v*'
     paths:
       - 'api/workspace-images/**'
       - 'api/cmd/kl/**'
@@ -64,8 +66,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^workspace-images-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
@@ -163,8 +164,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^workspace-images-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}

@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+    tags:
+      - 'workmachine-node-manager-v*'
     paths:
       - 'api/cmd/workmachine-node-manager/**'
       - 'api/internal/controllers/workspace/**'
@@ -84,8 +86,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^workmachine-node-manager-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}

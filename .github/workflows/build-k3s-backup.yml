@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+    tags:
+      - 'k3s-backup-v*'
     paths:
       - 'api/Dockerfile.k3s-backup'
       - '.github/workflows/build-k3s-backup.yml'
@@ -57,8 +59,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^k3s-backup-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}

@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+    tags:
+      - 'oci-installer-v*'
     paths:
       - 'api/cmd/kli/oci-installer/**'
       - 'api/cmd/kli/internal/oci/**'
@@ -80,8 +82,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^oci-installer-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}

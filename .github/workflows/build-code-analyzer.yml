@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+    tags:
+      - 'code-analyzer-v*'
     paths:
       - 'api/cmd/code-analyzer/**'
       - 'api/cmd/code-analyzer/Dockerfile'
@@ -75,8 +77,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=^code-analyzer-v(.*),group=1
             type=sha
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
