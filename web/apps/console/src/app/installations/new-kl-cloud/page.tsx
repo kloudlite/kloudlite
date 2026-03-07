@@ -97,7 +97,7 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
 
         <KlCloudInstallationForm
           existingInstallationId={existingInstallation?.id}
-          tierConfig={getTierConfig('usd')}
+          tierConfig={await getTierConfig('usd')}
           currency="usd"
         />
 
