@@ -1,12 +1,9 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { SubscriptionManagement } from '@/components/billing/subscription-management'
-import { InvoiceHistory } from '@/components/billing/invoice-history'
-import { RazorpayProvider } from '@/components/razorpay-provider'
 import {
-  getPlans,
-  getSubscriptionsByInstallation,
-  getInvoicesByInstallation,
+  getStripeCustomer,
+  getSubscriptionItems,
   getMemberRole,
   getInstallationById,
 } from '@/lib/console/storage'
@@ -38,15 +35,13 @@ export default async function BillingPage({ params }: BillingPageProps) {
 
   const isOwner = role === 'owner'
 
-  const [plans, subscriptions, invoices] = await Promise.all([
-    getPlans(),
-    getSubscriptionsByInstallation(id),
-    getInvoicesByInstallation(id),
+  const [customer, items] = await Promise.all([
+    getStripeCustomer(id),
+    getSubscriptionItems(id),
   ])
 
   return (
     <div className="space-y-6">
-      {/* Subscription Card */}
       <div className="border border-foreground/10 rounded-lg p-6 bg-background">
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-foreground">Subscription</h2>
@@ -54,32 +49,12 @@ export default async function BillingPage({ params }: BillingPageProps) {
             Manage your compute plan and billing
           </p>
         </div>
-        <RazorpayProvider>
-          <SubscriptionManagement
-            installationId={id}
-            plans={plans}
-            subscriptions={subscriptions}
-            invoices={invoices}
-            isOwner={isOwner}
-            userEmail={session.user.email}
-            userName={session.user.name}
-          />
-        </RazorpayProvider>
-      </div>
-
-      {/* Invoice History Card */}
-      <div className="border border-foreground/10 rounded-lg p-6 bg-background">
-        <div className={invoices.length > 0 ? 'mb-6' : ''}>
-          <h2 className="text-lg font-semibold text-foreground">Invoice History</h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Past payments and billing records
-          </p>
-        </div>
-        {invoices.length > 0 ? (
-          <InvoiceHistory invoices={invoices} />
-        ) : (
-          <p className="text-muted-foreground text-sm mt-4">No invoices yet.</p>
-        )}
+        <SubscriptionManagement
+          installationId={id}
+          customer={customer}
+          items={items}
+          isOwner={isOwner}
+        />
       </div>
     </div>
   )

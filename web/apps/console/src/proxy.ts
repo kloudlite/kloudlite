@@ -19,8 +19,7 @@ function addSecurityHeaders(response: NextResponse, _req: NextRequest): NextResp
     ...(process.env.NODE_ENV === 'development' ? ["'unsafe-eval'"] : []),
     'https://challenges.cloudflare.com',
     'https://static.cloudflareinsights.com',
-    'https://checkout.razorpay.com',
-    'https://checkout-static-next.razorpay.com',
+    'https://js.stripe.com',
   ].join(' ')
 
   response.headers.set(
@@ -28,8 +27,8 @@ function addSecurityHeaders(response: NextResponse, _req: NextRequest): NextResp
     [
       `script-src ${scriptSrc}`,
       `style-src 'self' 'unsafe-inline'`,
-      `connect-src 'self' https://*.razorpay.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com`,
-      `frame-src 'self' https://*.razorpay.com`,
+      `connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com`,
+      `frame-src 'self' https://js.stripe.com https://hooks.stripe.com`,
     ].join('; '),
   )
 

@@ -19,16 +19,10 @@ import {
 } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, AlertCircle, Minus, Plus, Cpu, HardDrive, Clock, Zap } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  getRazorpayKey,
-  createInstallationOrder,
-  verifyPaymentAndActivate,
-} from '@/app/actions/billing'
-import { useRazorpay } from '@/components/razorpay-provider'
-import { getCurrencySymbol } from '@/lib/billing-utils'
+import { createCheckoutSession } from '@/app/actions/billing/checkout'
+import { formatCurrency } from '@/lib/billing-utils'
 import { getErrorMessage } from '@/lib/errors'
 import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
-import type { Plan } from '@/lib/console/storage'
 
 const installationSchema = z.object({
   name: z
@@ -49,48 +43,52 @@ const installationSchema = z.object({
 
 type InstallationFormData = z.infer<typeof installationSchema>
 
+const TIER_CONFIG = [
+  { tier: 1, name: 'Tier 1 — Light Workloads', priceId: 'price_tier1_seat', pricePerUnit: 2900, cpu: '1 vCPU', ram: '1 GB', storage: '5 GB', monthlyHours: '730', autoSuspend: '30m' },
+  { tier: 2, name: 'Tier 2 — Standard Workloads', priceId: 'price_tier2_seat', pricePerUnit: 4900, cpu: '2 vCPU', ram: '4 GB', storage: '20 GB', monthlyHours: '730', autoSuspend: '1h' },
+  { tier: 3, name: 'Tier 3 — Power Users', priceId: 'price_tier3_seat', pricePerUnit: 8900, cpu: '4 vCPU', ram: '8 GB', storage: '50 GB', monthlyHours: '730', autoSuspend: '2h' },
+] as const
+
+const CONTROL_PLANE_PRICE = 2900 // $29/mo in cents
+const CONTROL_PLANE_PRICE_ID = 'price_control_plane'
+
 interface KlCloudInstallationFormProps {
-  plans: Plan[]
   existingInstallationId?: string
 }
 
 export function KlCloudInstallationForm({
-  plans,
   existingInstallationId,
 }: KlCloudInstallationFormProps) {
   const isSubscribeOnly = !!existingInstallationId
   const router = useRouter()
-  const { isLoaded: razorpayLoaded, openCheckout } = useRazorpay()
   const [creating, setCreating] = useState(false)
   const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
 
   // Per-tier quantities
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {}
-    for (const plan of plans) {
-      initial[plan.id] = 0
+    for (const tier of TIER_CONFIG) {
+      initial[tier.priceId] = 0
     }
     return initial
   })
 
-  const baseFee = plans[0]?.baseFee ? plans[0].baseFee / 100 : 29
-  const currencySymbol = getCurrencySymbol(plans[0]?.currency)
   const totalUsers = Object.values(quantities).reduce((sum, q) => sum + q, 0)
 
   // Calculate cost breakdown per tier
-  const tierCosts = plans
-    .filter((plan) => (quantities[plan.id] || 0) > 0)
-    .map((plan) => {
-      const qty = quantities[plan.id] || 0
+  const tierCosts = TIER_CONFIG
+    .filter((tier) => (quantities[tier.priceId] || 0) > 0)
+    .map((tier) => {
+      const qty = quantities[tier.priceId] || 0
       return {
-        plan,
+        tier,
         quantity: qty,
-        lineTotal: (plan.amountPerUser * qty) / 100,
+        lineTotal: tier.pricePerUnit * qty,
       }
     })
 
   const userTotal = tierCosts.reduce((sum, t) => sum + t.lineTotal, 0)
-  const monthlyTotal = baseFee + userTotal
+  const monthlyTotal = CONTROL_PLANE_PRICE + userTotal
 
   const form = useForm<InstallationFormData>({
     resolver: zodResolver(installationSchema),
@@ -101,8 +99,8 @@ export function KlCloudInstallationForm({
     },
   })
 
-  const setQuantity = (planId: string, value: number) => {
-    setQuantities((prev) => ({ ...prev, [planId]: Math.max(0, Math.min(100, value)) }))
+  const setQuantity = (priceId: string, value: number) => {
+    setQuantities((prev) => ({ ...prev, [priceId]: Math.max(0, Math.min(100, value)) }))
   }
 
   const onSubmit = async (data: InstallationFormData) => {
@@ -145,73 +143,23 @@ export function KlCloudInstallationForm({
         installationId = result.installationId
       }
 
-      // Step 2: Build tier allocations (only tiers with users > 0)
-      const tierAllocations = plans
-        .filter((plan) => (quantities[plan.id] || 0) > 0)
-        .map((plan) => ({
-          planId: plan.id,
-          quantity: quantities[plan.id],
-        }))
-
-      // Step 3: Create Razorpay order for the total amount
-      const order = await createInstallationOrder(installationId, tierAllocations)
-
-      // Step 4: Load Razorpay key
-      const key = await getRazorpayKey()
-
-      // Step 5: Open Razorpay Checkout for payment
-      const options = {
-        key: key,
-        order_id: order.razorpayOrderId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Kloudlite',
-        description: `${totalUsers} ${totalUsers === 1 ? 'user' : 'users'} — Kloudlite Cloud`,
-        theme: {
-          color: '#3B82F6',
-        },
-        handler: async (response: Record<string, string>) => {
-          try {
-            await verifyPaymentAndActivate(
-              installationId,
-              response.razorpay_order_id,
-              response.razorpay_payment_id,
-              response.razorpay_signature,
-            )
-            toast.success('Payment successful! Starting deployment...')
-            router.push('/installations/new/kloudlite-cloud')
-          } catch (err) {
-            console.error('[Billing] Payment verification failed:', err)
-            toast.error(getErrorMessage(err, 'Payment verification failed. Please contact support.'))
-            setCreating(false)
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            setCreating(false)
-            toast.info(
-              'Payment cancelled. Your installation has been created — you can subscribe from billing settings.',
-            )
-            router.push('/installations')
-          },
-        },
+      // Step 2: Build allocations with price IDs (include control plane + user tiers)
+      const allocations: { priceId: string; quantity: number }[] = [
+        { priceId: CONTROL_PLANE_PRICE_ID, quantity: 1 },
+      ]
+      for (const tier of TIER_CONFIG) {
+        const qty = quantities[tier.priceId] || 0
+        if (qty > 0) {
+          allocations.push({ priceId: tier.priceId, quantity: qty })
+        }
       }
 
-      console.log('[Billing] About to open checkout:', {
-        order_id: order.razorpayOrderId,
-        amount: order.amount,
-        currency: order.currency,
-        key: key ? `${key.slice(0, 8)}...` : 'MISSING',
-        razorpayLoaded,
-        windowRazorpay: !!window.Razorpay,
-      })
-
-      try {
-        openCheckout(options)
-      } catch (checkoutErr) {
-        console.error('Failed to open Razorpay checkout:', checkoutErr)
-        toast.error('Failed to open payment window. Please try again.')
-        setCreating(false)
+      // Step 3: Create Stripe Checkout Session and redirect
+      const { url } = await createCheckoutSession(installationId, allocations)
+      if (url) {
+        window.location.href = url
+      } else {
+        throw new Error('No checkout URL returned')
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to create installation'))
@@ -360,18 +308,18 @@ export function KlCloudInstallationForm({
                   </div>
                 </div>
                 <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {currencySymbol}{baseFee}/mo
+                  {formatCurrency(CONTROL_PLANE_PRICE, 'USD')}/mo
                 </span>
               </div>
 
               {/* Compute Size Cards */}
               <div className="space-y-3">
-                {plans.map((plan) => {
-                  const qty = quantities[plan.id] || 0
+                {TIER_CONFIG.map((tier) => {
+                  const qty = quantities[tier.priceId] || 0
                   const isActive = qty > 0
                   return (
                     <div
-                      key={plan.id}
+                      key={tier.priceId}
                       className={`rounded-lg border transition-colors ${
                         isActive
                           ? 'border-primary/40 bg-primary/[0.03]'
@@ -394,14 +342,14 @@ export function KlCloudInstallationForm({
                             <div className="min-w-0">
                               <div className="flex items-baseline gap-2">
                                 <h4 className="text-sm font-semibold text-foreground">
-                                  {plan.name}
+                                  {tier.name}
                                 </h4>
                                 <span className="text-xs text-muted-foreground">
-                                  {currencySymbol}{plan.amountPerUser / 100}/user/mo
+                                  {formatCurrency(tier.pricePerUnit, 'USD')}/user/mo
                                 </span>
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {plan.cpu} vCPU &middot; {plan.ram} RAM &middot; {plan.storage}
+                                {tier.cpu} &middot; {tier.ram} RAM &middot; {tier.storage}
                               </p>
                             </div>
                           </div>
@@ -410,10 +358,10 @@ export function KlCloudInstallationForm({
                           <div className="flex items-center gap-0 shrink-0">
                             <button
                               type="button"
-                              aria-label={`Decrease users for ${plan.name}`}
+                              aria-label={`Decrease users for ${tier.name}`}
                               className="flex size-8 items-center justify-center rounded-l-md border border-foreground/10 bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
                               disabled={qty <= 0 || creating}
-                              onClick={() => setQuantity(plan.id, qty - 1)}
+                              onClick={() => setQuantity(tier.priceId, qty - 1)}
                             >
                               <Minus className="size-3" />
                             </button>
@@ -423,17 +371,17 @@ export function KlCloudInstallationForm({
                               max={100}
                               value={qty}
                               onChange={(e) =>
-                                setQuantity(plan.id, parseInt(e.target.value) || 0)
+                                setQuantity(tier.priceId, parseInt(e.target.value) || 0)
                               }
                               className="h-8 w-12 border-y border-foreground/10 bg-background text-center font-mono text-sm text-foreground outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               disabled={creating}
                             />
                             <button
                               type="button"
-                              aria-label={`Increase users for ${plan.name}`}
+                              aria-label={`Increase users for ${tier.name}`}
                               className="flex size-8 items-center justify-center rounded-r-md border border-foreground/10 bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
                               disabled={qty >= 100 || creating}
-                              onClick={() => setQuantity(plan.id, qty + 1)}
+                              onClick={() => setQuantity(tier.priceId, qty + 1)}
                             >
                               <Plus className="size-3" />
                             </button>
@@ -444,17 +392,14 @@ export function KlCloudInstallationForm({
                         <div className="flex flex-wrap gap-x-1.5 gap-y-1 mt-3 ml-12">
                           <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
                             <Clock className="size-2.5" />
-                            {plan.monthlyHours} hrs/mo
+                            {tier.monthlyHours} hrs/mo
                           </span>
                           <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
                             <HardDrive className="size-2.5" />
-                            {plan.storage}
+                            {tier.storage}
                           </span>
                           <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
-                            {plan.autoSuspend} suspend
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
-                            +{currencySymbol}{(plan.overageRate / 100).toFixed(2)}/hr overage
+                            {tier.autoSuspend} suspend
                           </span>
                         </div>
                       </div>
@@ -474,21 +419,21 @@ export function KlCloudInstallationForm({
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Control Plane</span>
-                  <span className="text-foreground tabular-nums">{currencySymbol}{baseFee.toFixed(2)}</span>
+                  <span className="text-foreground tabular-nums">{formatCurrency(CONTROL_PLANE_PRICE, 'USD')}</span>
                 </div>
-                {tierCosts.map(({ plan, quantity: qty, lineTotal }) => (
-                  <div key={plan.id} className="flex items-center justify-between">
+                {tierCosts.map(({ tier, quantity: qty, lineTotal }) => (
+                  <div key={tier.priceId} className="flex items-center justify-between">
                     <span className="text-muted-foreground">
-                      {plan.name} ({plan.cpu} vCPU) &times; {qty}{' '}
+                      {tier.name} ({tier.cpu}) &times; {qty}{' '}
                       {qty === 1 ? 'user' : 'users'}
                     </span>
-                    <span className="text-foreground tabular-nums">{currencySymbol}{lineTotal.toFixed(2)}</span>
+                    <span className="text-foreground tabular-nums">{formatCurrency(lineTotal, 'USD')}</span>
                   </div>
                 ))}
                 {totalUsers === 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground italic">No users added yet</span>
-                    <span className="text-foreground tabular-nums">{currencySymbol}0.00</span>
+                    <span className="text-foreground tabular-nums">{formatCurrency(0, 'USD')}</span>
                   </div>
                 )}
               </div>
@@ -498,7 +443,7 @@ export function KlCloudInstallationForm({
                   Monthly total ({totalUsers} {totalUsers === 1 ? 'user' : 'users'})
                 </span>
                 <span className="text-lg font-bold text-foreground tabular-nums">
-                  {currencySymbol}{monthlyTotal.toFixed(2)}
+                  {formatCurrency(monthlyTotal, 'USD')}/mo
                 </span>
               </div>
             </div>
@@ -510,7 +455,6 @@ export function KlCloudInstallationForm({
                 size="lg"
                 disabled={
                   creating ||
-                  !razorpayLoaded ||
                   (!isSubscribeOnly && subdomainAvailable !== true) ||
                   totalUsers === 0
                 }
@@ -521,9 +465,9 @@ export function KlCloudInstallationForm({
                     {isSubscribeOnly ? 'Subscribing...' : 'Creating...'}
                   </>
                 ) : isSubscribeOnly ? (
-                  `Subscribe — ${currencySymbol}${monthlyTotal.toFixed(2)}/mo`
+                  `Subscribe — ${formatCurrency(monthlyTotal, 'USD')}/mo`
                 ) : (
-                  `Create & Subscribe — ${currencySymbol}${monthlyTotal.toFixed(2)}/mo`
+                  `Create & Subscribe — ${formatCurrency(monthlyTotal, 'USD')}/mo`
                 )}
               </Button>
             </div>
