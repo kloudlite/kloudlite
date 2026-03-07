@@ -64,21 +64,21 @@ export interface TierPricing {
 let cachedPricing: TierPricing[] | null = null
 
 /**
- * Get the bootstrapped pricing config. Returns cached result after first call.
- * Call `bootstrapStripeProducts()` first (done automatically via instrumentation).
+ * Get the bootstrapped pricing config. Lazily bootstraps if not yet cached
+ * (handles dev mode where modules are re-evaluated in different workers).
  */
-export function getStripePricing(): TierPricing[] {
+export async function getStripePricing(): Promise<TierPricing[]> {
   if (!cachedPricing) {
-    throw new Error('Stripe products not bootstrapped yet. Ensure bootstrapStripeProducts() ran at startup.')
+    await bootstrapStripeProducts()
   }
-  return cachedPricing
+  return cachedPricing ?? []
 }
 
 /**
  * Get pricing for a specific currency. Defaults to USD.
  */
-export function getTierConfig(currency: Currency = 'usd') {
-  const pricing = getStripePricing()
+export async function getTierConfig(currency: Currency = 'usd') {
+  const pricing = await getStripePricing()
   return pricing.map((tier) => ({
     tier: tier.tier,
     name: tier.name,
