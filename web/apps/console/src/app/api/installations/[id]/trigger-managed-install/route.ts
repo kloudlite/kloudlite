@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireOwnerPermission } from '@/lib/console/authorization'
-import { getInstallationById, updateInstallation, getSubscriptionsByInstallation } from '@/lib/console/storage'
+import { getInstallationById, updateInstallation, getStripeCustomer } from '@/lib/console/storage'
 import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
 
 const STALE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
@@ -17,10 +17,9 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       return apiError('Installation not found', 404)
     }
 
-    // Require at least one active subscription for this installation
-    const subs = await getSubscriptionsByInstallation(id)
-    const hasActive = subs.some((s) => ['active', 'authenticated'].includes(s.status))
-    if (!hasActive) {
+    // Require an active Stripe subscription for this installation
+    const customer = await getStripeCustomer(id)
+    if (!customer || customer.billingStatus !== 'active') {
       return apiError('Active subscription required to deploy Kloudlite Cloud', 403)
     }
 

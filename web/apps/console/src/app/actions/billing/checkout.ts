@@ -29,7 +29,7 @@ export async function createCheckoutSession(
 
   const stripe = getStripe()
 
-  let stripeCustomer = await getStripeCustomer(installationId)
+  const stripeCustomer = await getStripeCustomer(installationId)
   let customerId: string
 
   if (stripeCustomer?.stripeCustomerId) {

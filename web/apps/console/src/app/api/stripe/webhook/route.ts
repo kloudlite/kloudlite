@@ -72,13 +72,17 @@ async function handleCheckoutSessionCompleted(
     expand: ['items.data.price.product'],
   })
 
+  // Derive current_period_end from the first subscription item
+  const firstItem = subscription.items.data[0]
+  const periodEnd = firstItem?.current_period_end ?? null
+
   await upsertStripeCustomer({
     installationId,
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscriptionId,
     billingStatus: mapStripeStatus(subscription.status, subscription.cancel_at_period_end),
-    currentPeriodEnd: subscription.current_period_end
-      ? new Date(subscription.current_period_end * 1000).toISOString()
+    currentPeriodEnd: periodEnd
+      ? new Date(periodEnd * 1000).toISOString()
       : null,
   })
 
@@ -104,8 +108,10 @@ async function handleSubscriptionUpdated(
     subscription.status,
     subscription.cancel_at_period_end,
   )
-  const currentPeriodEnd = subscription.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
+  // Derive current_period_end from the first subscription item
+  const firstItemPeriodEnd = subscription.items.data[0]?.current_period_end ?? null
+  const currentPeriodEnd = firstItemPeriodEnd
+    ? new Date(firstItemPeriodEnd * 1000).toISOString()
     : null
 
   await updateBillingStatus(stripeCustomerId, billingStatus, currentPeriodEnd)

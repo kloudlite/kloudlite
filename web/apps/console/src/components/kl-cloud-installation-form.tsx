@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -60,7 +59,6 @@ export function KlCloudInstallationForm({
   existingInstallationId,
 }: KlCloudInstallationFormProps) {
   const isSubscribeOnly = !!existingInstallationId
-  const router = useRouter()
   const [creating, setCreating] = useState(false)
   const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
 
