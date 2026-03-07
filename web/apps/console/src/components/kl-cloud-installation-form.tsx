@@ -22,6 +22,7 @@ import { createCheckoutSession } from '@/app/actions/billing/checkout'
 import { formatCurrency } from '@/lib/billing-utils'
 import { getErrorMessage } from '@/lib/errors'
 import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
+import type { TierConfigItem } from '@/app/actions/billing/pricing'
 
 const installationSchema = z.object({
   name: z
@@ -42,30 +43,35 @@ const installationSchema = z.object({
 
 type InstallationFormData = z.infer<typeof installationSchema>
 
-const TIER_CONFIG = [
-  { tier: 1, name: 'Tier 1 — Light Workloads', priceId: 'price_tier1_seat', pricePerUnit: 2900, cpu: '1 vCPU', ram: '1 GB', storage: '5 GB', monthlyHours: '730', autoSuspend: '30m' },
-  { tier: 2, name: 'Tier 2 — Standard Workloads', priceId: 'price_tier2_seat', pricePerUnit: 4900, cpu: '2 vCPU', ram: '4 GB', storage: '20 GB', monthlyHours: '730', autoSuspend: '1h' },
-  { tier: 3, name: 'Tier 3 — Power Users', priceId: 'price_tier3_seat', pricePerUnit: 8900, cpu: '4 vCPU', ram: '8 GB', storage: '50 GB', monthlyHours: '730', autoSuspend: '2h' },
-] as const
-
-const CONTROL_PLANE_PRICE = 2900 // $29/mo in cents
-const CONTROL_PLANE_PRICE_ID = 'price_control_plane'
+// Tier resource specs (not pricing — pricing comes from Stripe via props)
+const TIER_SPECS: Record<number, { cpu: string; ram: string; storage: string; monthlyHours: string; autoSuspend: string }> = {
+  1: { cpu: '1 vCPU', ram: '1 GB', storage: '5 GB', monthlyHours: '730', autoSuspend: '30m' },
+  2: { cpu: '2 vCPU', ram: '4 GB', storage: '20 GB', monthlyHours: '730', autoSuspend: '1h' },
+  3: { cpu: '4 vCPU', ram: '8 GB', storage: '50 GB', monthlyHours: '730', autoSuspend: '2h' },
+}
 
 interface KlCloudInstallationFormProps {
   existingInstallationId?: string
+  tierConfig: TierConfigItem[]
+  currency: string
 }
 
 export function KlCloudInstallationForm({
   existingInstallationId,
+  tierConfig,
+  currency,
 }: KlCloudInstallationFormProps) {
   const isSubscribeOnly = !!existingInstallationId
   const [creating, setCreating] = useState(false)
   const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
 
+  const controlPlane = tierConfig.find((t) => t.fixed)
+  const seatTiers = tierConfig.filter((t) => !t.fixed)
+
   // Per-tier quantities
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {}
-    for (const tier of TIER_CONFIG) {
+    for (const tier of seatTiers) {
       initial[tier.priceId] = 0
     }
     return initial
@@ -74,19 +80,21 @@ export function KlCloudInstallationForm({
   const totalUsers = Object.values(quantities).reduce((sum, q) => sum + q, 0)
 
   // Calculate cost breakdown per tier
-  const tierCosts = TIER_CONFIG
+  const tierCosts = seatTiers
     .filter((tier) => (quantities[tier.priceId] || 0) > 0)
     .map((tier) => {
       const qty = quantities[tier.priceId] || 0
       return {
         tier,
+        specs: TIER_SPECS[tier.tier],
         quantity: qty,
         lineTotal: tier.pricePerUnit * qty,
       }
     })
 
   const userTotal = tierCosts.reduce((sum, t) => sum + t.lineTotal, 0)
-  const monthlyTotal = CONTROL_PLANE_PRICE + userTotal
+  const controlPlanePrice = controlPlane?.pricePerUnit ?? 0
+  const monthlyTotal = controlPlanePrice + userTotal
 
   const form = useForm<InstallationFormData>({
     resolver: zodResolver(installationSchema),
@@ -142,10 +150,11 @@ export function KlCloudInstallationForm({
       }
 
       // Step 2: Build allocations with price IDs (include control plane + user tiers)
-      const allocations: { priceId: string; quantity: number }[] = [
-        { priceId: CONTROL_PLANE_PRICE_ID, quantity: 1 },
-      ]
-      for (const tier of TIER_CONFIG) {
+      const allocations: { priceId: string; quantity: number }[] = []
+      if (controlPlane) {
+        allocations.push({ priceId: controlPlane.priceId, quantity: 1 })
+      }
+      for (const tier of seatTiers) {
         const qty = quantities[tier.priceId] || 0
         if (qty > 0) {
           allocations.push({ priceId: tier.priceId, quantity: qty })
@@ -293,28 +302,31 @@ export function KlCloudInstallationForm({
             </div>
             <div className="p-6 space-y-4">
               {/* Base Fee — compact inline */}
+              {controlPlane && (
               <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <Zap className="size-3.5 text-primary" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-foreground">Control Plane</span>
+                    <span className="text-sm font-medium text-foreground">{controlPlane.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      Dashboard, user management, billing
+                      {controlPlane.description}
                     </span>
                   </div>
                 </div>
                 <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {formatCurrency(CONTROL_PLANE_PRICE, 'USD')}/mo
+                  {formatCurrency(controlPlanePrice, currency)}/mo
                 </span>
               </div>
+              )}
 
               {/* Compute Size Cards */}
               <div className="space-y-3">
-                {TIER_CONFIG.map((tier) => {
+                {seatTiers.map((tier) => {
                   const qty = quantities[tier.priceId] || 0
                   const isActive = qty > 0
+                  const specs = TIER_SPECS[tier.tier]
                   return (
                     <div
                       key={tier.priceId}
@@ -343,12 +355,14 @@ export function KlCloudInstallationForm({
                                   {tier.name}
                                 </h4>
                                 <span className="text-xs text-muted-foreground">
-                                  {formatCurrency(tier.pricePerUnit, 'USD')}/user/mo
-                                </span>
-                              </div>
+                                   {formatCurrency(tier.pricePerUnit, currency)}/user/mo
+                                 </span>
+                               </div>
+                              {specs && (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {tier.cpu} &middot; {tier.ram} RAM &middot; {tier.storage}
-                              </p>
+                                 {specs.cpu} &middot; {specs.ram} RAM &middot; {specs.storage}
+                               </p>
+                              )}
                             </div>
                           </div>
 
@@ -387,19 +401,21 @@ export function KlCloudInstallationForm({
                         </div>
 
                         {/* Spec chips row */}
+                        {specs && (
                         <div className="flex flex-wrap gap-x-1.5 gap-y-1 mt-3 ml-12">
                           <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
                             <Clock className="size-2.5" />
-                            {tier.monthlyHours} hrs/mo
+                            {specs.monthlyHours} hrs/mo
                           </span>
                           <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
                             <HardDrive className="size-2.5" />
-                            {tier.storage}
+                            {specs.storage}
                           </span>
                           <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
-                            {tier.autoSuspend} suspend
+                            {specs.autoSuspend} suspend
                           </span>
                         </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -415,23 +431,25 @@ export function KlCloudInstallationForm({
             </div>
             <div className="px-6 py-4">
               <div className="space-y-2 text-sm">
+                {controlPlane && (
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Control Plane</span>
-                  <span className="text-foreground tabular-nums">{formatCurrency(CONTROL_PLANE_PRICE, 'USD')}</span>
+                  <span className="text-muted-foreground">{controlPlane.name}</span>
+                  <span className="text-foreground tabular-nums">{formatCurrency(controlPlanePrice, currency)}</span>
                 </div>
-                {tierCosts.map(({ tier, quantity: qty, lineTotal }) => (
+                )}
+                {tierCosts.map(({ tier, specs: tierSpecs, quantity: qty, lineTotal }) => (
                   <div key={tier.priceId} className="flex items-center justify-between">
                     <span className="text-muted-foreground">
-                      {tier.name} ({tier.cpu}) &times; {qty}{' '}
+                      {tier.name} {tierSpecs ? `(${tierSpecs.cpu})` : ''} &times; {qty}{' '}
                       {qty === 1 ? 'user' : 'users'}
                     </span>
-                    <span className="text-foreground tabular-nums">{formatCurrency(lineTotal, 'USD')}</span>
+                    <span className="text-foreground tabular-nums">{formatCurrency(lineTotal, currency)}</span>
                   </div>
                 ))}
                 {totalUsers === 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground italic">No users added yet</span>
-                    <span className="text-foreground tabular-nums">{formatCurrency(0, 'USD')}</span>
+                    <span className="text-foreground tabular-nums">{formatCurrency(0, currency)}</span>
                   </div>
                 )}
               </div>
@@ -441,7 +459,7 @@ export function KlCloudInstallationForm({
                   Monthly total ({totalUsers} {totalUsers === 1 ? 'user' : 'users'})
                 </span>
                 <span className="text-lg font-bold text-foreground tabular-nums">
-                  {formatCurrency(monthlyTotal, 'USD')}/mo
+                  {formatCurrency(monthlyTotal, currency)}/mo
                 </span>
               </div>
             </div>
@@ -463,9 +481,9 @@ export function KlCloudInstallationForm({
                     {isSubscribeOnly ? 'Subscribing...' : 'Creating...'}
                   </>
                 ) : isSubscribeOnly ? (
-                  `Subscribe — ${formatCurrency(monthlyTotal, 'USD')}/mo`
+                  `Subscribe — ${formatCurrency(monthlyTotal, currency)}/mo`
                 ) : (
-                  `Create & Subscribe — ${formatCurrency(monthlyTotal, 'USD')}/mo`
+                  `Create & Subscribe — ${formatCurrency(monthlyTotal, currency)}/mo`
                 )}
               </Button>
             </div>

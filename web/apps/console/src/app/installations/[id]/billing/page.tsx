@@ -7,6 +7,7 @@ import {
   getMemberRole,
   getInstallationById,
 } from '@/lib/console/storage'
+import { getTierConfig } from '@/lib/stripe-bootstrap'
 
 interface BillingPageProps {
   params: Promise<{ id: string }>
@@ -35,6 +36,10 @@ export default async function BillingPage({ params }: BillingPageProps) {
 
   const isOwner = role === 'owner'
 
+  // TODO: detect currency from user locale or installation region
+  const currency = 'usd'
+  const tierConfig = getTierConfig(currency)
+
   const [customer, items] = await Promise.all([
     getStripeCustomer(id),
     getSubscriptionItems(id),
@@ -53,6 +58,8 @@ export default async function BillingPage({ params }: BillingPageProps) {
           installationId={id}
           customer={customer}
           items={items}
+          tierConfig={tierConfig}
+          currency={currency}
           isOwner={isOwner}
         />
       </div>

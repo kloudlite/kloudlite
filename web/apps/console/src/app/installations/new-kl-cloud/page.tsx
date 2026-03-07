@@ -1,5 +1,6 @@
 import { getInstallationById } from '@/lib/console/storage'
 import { KlCloudInstallationForm } from '@/components/kl-cloud-installation-form'
+import { getTierConfig } from '@/lib/stripe-bootstrap'
 import { CheckCircle2 } from 'lucide-react'
 
 interface NewKlCloudPageProps {
@@ -96,6 +97,8 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
 
         <KlCloudInstallationForm
           existingInstallationId={existingInstallation?.id}
+          tierConfig={getTierConfig('usd')}
+          currency="usd"
         />
 
         {/* Help text */}

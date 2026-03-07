@@ -1,3 +1,5 @@
 export { createCheckoutSession, createPortalSession } from './billing/checkout'
 export { getStripePublishableKey, fetchBillingStatus } from './billing/queries'
 export { modifySubscription, cancelSubscription } from './billing/subscriptions'
+export { fetchTierPricing } from './billing/pricing'
+export type { TierConfigItem } from './billing/pricing'
