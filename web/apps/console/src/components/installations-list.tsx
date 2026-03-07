@@ -26,7 +26,7 @@ import {
 import { cn } from '@kloudlite/lib'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
-import type { Installation, Invoice, Subscription } from '@/lib/console/storage'
+import type { Installation, StripeCustomer } from '@/lib/console/storage'
 
 const providerConfig: Record<string, { label: string; className: string }> = {
   aws: {
@@ -63,20 +63,18 @@ function ProviderBadge({ provider }: { provider?: string }) {
 
 interface InstallationsListProps {
   installations: Installation[]
-  pendingInvoices: Record<string, Invoice>
-  activeSubscriptions?: Record<string, Subscription>
+  activeSubscriptions?: Record<string, StripeCustomer>
 }
 
-function isExpiringSoon(sub: Subscription | undefined): boolean {
-  if (!sub?.currentEnd || sub.status !== 'active') return false
-  const msUntilEnd = new Date(sub.currentEnd).getTime() - Date.now()
+function isExpiringSoon(customer: StripeCustomer | undefined): boolean {
+  if (!customer?.currentPeriodEnd || customer.billingStatus !== 'active') return false
+  const msUntilEnd = new Date(customer.currentPeriodEnd).getTime() - Date.now()
   const daysUntilEnd = Math.ceil(msUntilEnd / (24 * 60 * 60 * 1000))
   return daysUntilEnd <= 7 && daysUntilEnd > 0
 }
 
 export function InstallationsList({
   installations,
-  pendingInvoices,
   activeSubscriptions = {},
 }: InstallationsListProps) {
   const router = useRouter()
@@ -523,7 +521,7 @@ export function InstallationsList({
                               Expiring Soon
                             </span>
                           )}
-                          {pendingInvoices[installation.id] && (
+                          {activeSubscriptions[installation.id]?.paymentIssue && (
                             <span className="inline-flex items-center rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider whitespace-nowrap text-amber-700 uppercase dark:text-amber-400">
                               Payment Due
                             </span>

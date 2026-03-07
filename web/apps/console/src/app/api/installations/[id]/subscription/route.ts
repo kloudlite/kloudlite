@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
 import {
-  getSubscriptionsByInstallation,
-  getPlans,
+  getStripeCustomer,
+  getSubscriptionItems,
   getMemberRole,
   getInstallationById,
 } from '@/lib/console/storage'
@@ -28,10 +28,10 @@ export async function GET(
     return apiError('Forbidden', 403)
   }
 
-  const [subscriptions, plans] = await Promise.all([
-    getSubscriptionsByInstallation(id),
-    getPlans(),
+  const [customer, items] = await Promise.all([
+    getStripeCustomer(id),
+    getSubscriptionItems(id),
   ])
 
-  return NextResponse.json({ subscriptions, plans })
+  return NextResponse.json({ customer, items })
 }

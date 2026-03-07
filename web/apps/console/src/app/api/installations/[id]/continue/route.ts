@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, getSubscriptionsByInstallation } from '@/lib/console/storage'
+import { getInstallationById, getStripeCustomer } from '@/lib/console/storage'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 
@@ -71,20 +71,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   let redirectPath: string
 
   if (isKloudliteCloud) {
-    // Kloudlite Cloud — check subscription before deploy
-    const subs = await getSubscriptionsByInstallation(id)
-    const hasActiveSub = subs.some((s) =>
-      ['active', 'authenticated'].includes(s.status),
-    )
-
-    // Check for pending/created subscriptions (payment not completed yet)
-    const hasPendingSub = subs.some((s) => s.status === 'created')
+    // Kloudlite Cloud — check Stripe subscription before deploy
+    const customer = await getStripeCustomer(id)
+    const hasActiveSub = customer?.billingStatus === 'active'
+    const isIncomplete = customer?.billingStatus === 'incomplete'
 
     if (!hasActiveSub) {
       // No subscription yet — go back to plan/payment page with existing installation
       redirectPath = `/installations/new-kl-cloud?installation=${id}`
     } else if (!installation.deploymentReady) {
-      if (hasPendingSub) {
+      if (isIncomplete) {
         // Payment pending — go back to payment page to complete
         redirectPath = `/installations/new-kl-cloud?installation=${id}`
       } else {
