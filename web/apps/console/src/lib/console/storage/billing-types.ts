@@ -1,55 +1,23 @@
-import type { Database } from '../supabase-types'
-
-export type PlanRow = Database['public']['Tables']['subscription_plans']['Row']
-export type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row']
-export type InvoiceRow = Database['public']['Tables']['invoices']['Row']
-
-export interface Plan {
-  id: string
-  razorpayPlanId: string | null
-  tier: number
-  name: string
-  amountPerUser: number
-  baseFee: number
-  currency: string
-  monthlyHours: number
-  overageRate: number
-  cpu: number
-  ram: string
-  storage: string
-  autoSuspend: string
-  description: string | null
-  annualDiscountPct: number
-  createdAt: string
-}
-
-export interface Subscription {
+export interface StripeCustomer {
   id: string
   installationId: string
-  planId: string
-  razorpaySubscriptionId: string | null
-  razorpayCustomerId: string | null
-  status: 'created' | 'authenticated' | 'active' | 'paused' | 'cancelled' | 'expired'
-  quantity: number
-  billingPeriod: 'monthly' | 'annual'
-  scheduledBillingPeriod: 'monthly' | 'annual' | null
-  currentStart: string | null
-  currentEnd: string | null
+  stripeCustomerId: string
+  stripeSubscriptionId: string | null
+  billingStatus: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
+  paymentIssue: boolean
+  currentPeriodEnd: string | null
   createdAt: string
   updatedAt: string
 }
 
-export interface Invoice {
+export interface SubscriptionItem {
   id: string
-  subscriptionId: string
   installationId: string
-  razorpayInvoiceId: string | null
-  razorpayPaymentId: string | null
-  amount: number
-  currency: string
-  status: 'issued' | 'paid' | 'expired' | 'cancelled'
-  billingStart: string | null
-  billingEnd: string | null
-  paidAt: string | null
+  stripeSubscriptionItemId: string
+  stripePriceId: string
+  tier: number
+  productName: string
+  quantity: number
   createdAt: string
+  updatedAt: string
 }
