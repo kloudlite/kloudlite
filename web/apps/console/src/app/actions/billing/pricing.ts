@@ -20,5 +20,5 @@ export async function fetchTierPricing(currency: string = 'usd'): Promise<TierCo
   const curr = validCurrencies.includes(currency.toLowerCase() as typeof validCurrencies[number])
     ? (currency.toLowerCase() as typeof validCurrencies[number])
     : 'usd'
-  return getTierConfig(curr)
+  return await getTierConfig(curr)
 }

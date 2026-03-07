@@ -38,7 +38,7 @@ export default async function BillingPage({ params }: BillingPageProps) {
 
   // TODO: detect currency from user locale or installation region
   const currency = 'usd'
-  const tierConfig = getTierConfig(currency)
+  const tierConfig = await getTierConfig(currency)
 
   const [customer, items] = await Promise.all([
     getStripeCustomer(id),
