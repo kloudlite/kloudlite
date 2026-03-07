@@ -61,13 +61,14 @@ ALTER TABLE subscription_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stripe_webhook_events ENABLE ROW LEVEL SECURITY;
 
 -- RLS: stripe_customers readable by installation members
+-- user_id is TEXT, auth.uid() returns UUID — cast to TEXT
 CREATE POLICY stripe_customers_select ON stripe_customers
   FOR SELECT USING (
     installation_id IN (
-      SELECT id FROM installations WHERE user_id = auth.uid()
+      SELECT id FROM installations WHERE user_id = auth.uid()::text
     )
     OR installation_id IN (
-      SELECT installation_id FROM installation_members WHERE user_id = auth.uid()
+      SELECT installation_id FROM installation_members WHERE user_id = auth.uid()::text
     )
   );
 
@@ -75,9 +76,9 @@ CREATE POLICY stripe_customers_select ON stripe_customers
 CREATE POLICY subscription_items_select ON subscription_items
   FOR SELECT USING (
     installation_id IN (
-      SELECT id FROM installations WHERE user_id = auth.uid()
+      SELECT id FROM installations WHERE user_id = auth.uid()::text
     )
     OR installation_id IN (
-      SELECT installation_id FROM installation_members WHERE user_id = auth.uid()
+      SELECT installation_id FROM installation_members WHERE user_id = auth.uid()::text
     )
   );
