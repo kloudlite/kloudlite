@@ -1,11 +1,9 @@
 import { redirect } from 'next/navigation'
 import {
   getValidUserInstallations,
-  getPendingInvoicesByInstallationIds,
   getActiveSubscriptionsByInstallationIds,
   type Installation,
-  type Invoice,
-  type Subscription,
+  type StripeCustomer,
 } from '@/lib/console/storage'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { InstallationsList } from '@/components/installations-list'
@@ -24,16 +22,12 @@ export default async function InstallationsPage() {
 
   // Fetch user's valid (non-expired) installations from database
   let installations: Installation[] = []
-  let pendingInvoices: Record<string, Invoice> = {}
-  let activeSubscriptions: Record<string, Subscription> = {}
+  let activeSubscriptions: Record<string, StripeCustomer> = {}
   try {
     installations = await getValidUserInstallations(session.user.id)
     if (installations.length > 0) {
       const ids = installations.map((i) => i.id)
-      ;[pendingInvoices, activeSubscriptions] = await Promise.all([
-        getPendingInvoicesByInstallationIds(ids),
-        getActiveSubscriptionsByInstallationIds(ids),
-      ])
+      activeSubscriptions = await getActiveSubscriptionsByInstallationIds(ids)
     }
   } catch (error) {
     console.error('Error fetching installations:', error)
@@ -49,7 +43,6 @@ export default async function InstallationsPage() {
         <main className="mx-auto max-w-7xl px-6 lg:px-12 py-8">
           <InstallationsList
             installations={installations}
-            pendingInvoices={pendingInvoices}
             activeSubscriptions={activeSubscriptions}
           />
         </main>

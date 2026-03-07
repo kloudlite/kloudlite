@@ -33,7 +33,7 @@ export function SubscriptionConfigurator({
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {}
     for (const tier of TIER_CONFIG) {
-      if (tier.fixed) {
+      if ('fixed' in tier && tier.fixed) {
         initial[tier.priceId] = 1
       } else {
         const existing = items.find((i) => i.tier === tier.tier)
@@ -47,7 +47,7 @@ export function SubscriptionConfigurator({
     setQuantities((prev) => ({ ...prev, [priceId]: Math.max(0, Math.min(100, value)) }))
   }
 
-  const seatTiers = TIER_CONFIG.filter((t) => !t.fixed)
+  const seatTiers = TIER_CONFIG.filter((t) => !('fixed' in t && t.fixed))
   const totalUsers = seatTiers.reduce((sum, t) => sum + (quantities[t.priceId] || 0), 0)
 
   const monthlyTotal = TIER_CONFIG.reduce((sum, t) => {
