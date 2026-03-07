@@ -6,7 +6,6 @@ on:
       - master
       - development
     paths:
-      - 'supabase/functions/**'
       - 'web/apps/console/src/lib/console/migrations/**'
       - '.github/workflows/deploy-edge-functions.yml'
   workflow_dispatch:
@@ -83,44 +82,4 @@ jobs:
           echo ""
           echo "All migrations applied successfully"
 
-  deploy-functions:
-    name: Deploy Edge Functions
-    needs: [run-migrations]
-    if: |
-      always() &&
-      (needs.run-migrations.result == 'success' || needs.run-migrations.result == 'skipped')
-    runs-on: ubuntu-latest
-    environment: production
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Deploy billing-cron function
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase functions deploy billing-cron \
-            --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-
-      - name: Set function secrets
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase secrets set RAZORPAY_KEY_ID="${{ secrets.RAZORPAY_KEY_ID }}" --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          supabase secrets set RAZORPAY_KEY_SECRET="${{ secrets.RAZORPAY_KEY_SECRET }}" --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-
-      - name: Deployment Summary
-        run: |
-          echo "## Deployment Summary: Edge Functions" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Function** | billing-cron |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Project** | ${{ secrets.SUPABASE_PROJECT_REF }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Deployed at** | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY

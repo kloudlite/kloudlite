@@ -5,10 +5,10 @@ const currencySymbols: Record<string, string> = {
   GBP: '£',
 }
 
-export function getCurrencySymbol(currency: string = 'INR'): string {
+export function getCurrencySymbol(currency: string = 'USD'): string {
   return currencySymbols[currency.toUpperCase()] ?? currency
 }
 
-export function formatCurrency(amountInPaise: number, currency: string = 'INR'): string {
+export function formatCurrency(amountInPaise: number, currency: string = 'USD'): string {
   return `${getCurrencySymbol(currency)}${(amountInPaise / 100).toFixed(2)}`
 }
