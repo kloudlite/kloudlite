@@ -1,6 +1,5 @@
-import { getPlans, getInstallationById } from '@/lib/console/storage'
+import { getInstallationById } from '@/lib/console/storage'
 import { KlCloudInstallationForm } from '@/components/kl-cloud-installation-form'
-import { RazorpayProvider } from '@/components/razorpay-provider'
 import { CheckCircle2 } from 'lucide-react'
 
 interface NewKlCloudPageProps {
@@ -9,7 +8,6 @@ interface NewKlCloudPageProps {
 
 export default async function NewKlCloudPage({ searchParams }: NewKlCloudPageProps) {
   const params = await searchParams
-  const plans = await getPlans()
 
   // If continuing an existing installation, fetch it
   const existingInstallation = params.installation
@@ -96,12 +94,9 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
           </p>
         </div>
 
-        <RazorpayProvider>
-          <KlCloudInstallationForm
-            plans={plans}
-            existingInstallationId={existingInstallation?.id}
-          />
-        </RazorpayProvider>
+        <KlCloudInstallationForm
+          existingInstallationId={existingInstallation?.id}
+        />
 
         {/* Help text */}
         <div className="flex items-start gap-3 text-sm text-muted-foreground">

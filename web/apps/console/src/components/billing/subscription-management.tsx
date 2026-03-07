@@ -1,129 +1,105 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState } from 'react'
+import { ExternalLink } from 'lucide-react'
+import { Button } from '@kloudlite/ui'
 import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
-import { SubscriptionHeader } from '@/components/billing/subscription-header'
-import { PaymentDueBanner } from '@/components/billing/payment-due-banner'
-import { PastSubscriptions } from '@/components/billing/past-subscriptions'
+import { PaymentWarningBanner } from '@/components/billing/payment-warning-banner'
 import { useSubscriptionPayments } from '@/hooks/use-subscription-payments'
-import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
+import type { StripeCustomer, SubscriptionItem } from '@/lib/console/storage'
 
 interface SubscriptionManagementProps {
   installationId: string
-  plans: Plan[]
-  subscriptions: Subscription[]
-  invoices: Invoice[]
+  customer: StripeCustomer | null
+  items: SubscriptionItem[]
   isOwner: boolean
-  userEmail: string
-  userName: string
 }
 
 export function SubscriptionManagement({
   installationId,
-  plans,
-  subscriptions,
-  invoices,
+  customer,
+  items,
   isOwner,
-  userEmail,
-  userName,
 }: SubscriptionManagementProps) {
-  const activeSubs = useMemo(() => subscriptions.filter((s) =>
-    ['active', 'authenticated', 'paused'].includes(s.status),
-  ), [subscriptions])
-  const visibleActiveSubs = activeSubs.filter((s) => s.quantity > 0)
-  const hasActiveSubs = activeSubs.length > 0
-  const pendingInvoice = invoices.find((i) => i.status === 'issued')
-  const primarySub = visibleActiveSubs[0]
-
-  const initialQuantities = useMemo(() => {
-    const q: Record<string, number> = {}
-    for (const plan of plans) {
-      const sub = activeSubs.find((s) => s.planId === plan.id)
-      q[plan.id] = sub?.quantity ?? 0
-    }
-    return q
-  }, [plans, activeSubs])
+  const [editing, setEditing] = useState(false)
+  const hasActiveSubscription = customer?.billingStatus === 'active'
 
   const {
-    paying,
-    editing,
-    setEditing,
+    loading,
     handleSubscribe,
     handleModify,
-    handlePayNow,
-    handleCancelScheduledDowngrade,
-  } = useSubscriptionPayments({
-    installationId,
-    userEmail,
-    userName,
-    activeSubs,
-    pendingInvoice,
-  })
+    handleManageBilling,
+  } = useSubscriptionPayments({ installationId })
 
   return (
-    <>
-      {hasActiveSubs && primarySub && !editing && (
-        <SubscriptionHeader
-          primarySub={primarySub}
-          isOwner={isOwner}
-          onModify={() => setEditing(true)}
-        />
-      )}
-
-      {pendingInvoice && isOwner && (
-        <PaymentDueBanner
-          pendingInvoice={pendingInvoice}
-          paying={paying}
-          onPayNow={handlePayNow}
-        />
-      )}
-
-      {hasActiveSubs && !editing && (
-        <div className="space-y-6">
-          {visibleActiveSubs.map((sub) => {
-            const plan = plans.find((p) => p.id === sub.planId)
-            return (
-              <SubscriptionStatus
-                key={sub.id}
-                subscription={sub}
-                plan={plan}
-                onCancelScheduledDowngrade={
-                  isOwner && sub.scheduledBillingPeriod ? handleCancelScheduledDowngrade : undefined
-                }
-              />
-            )
-          })}
+    <div className="space-y-4">
+      {/* Header with Manage Billing button */}
+      {hasActiveSubscription && isOwner && (
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              Active
+            </span>
+            {customer?.currentPeriodEnd && (
+              <span className="ml-3 text-sm text-muted-foreground">
+                Next billing: {new Date(customer.currentPeriodEnd).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {!editing && (
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                Modify Plan
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleManageBilling} disabled={loading}>
+              Manage Billing <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       )}
 
-      {hasActiveSubs && editing && (
+      {/* Payment warning */}
+      {customer?.paymentIssue && isOwner && (
+        <PaymentWarningBanner onManageBilling={handleManageBilling} />
+      )}
+
+      {/* Current products */}
+      {hasActiveSubscription && !editing && items.length > 0 && (
+        <SubscriptionStatus items={items} />
+      )}
+
+      {/* Modify plan */}
+      {hasActiveSubscription && editing && (
         <SubscriptionConfigurator
-          plans={plans}
-          onSubscribe={async (allocations, billingPeriod) => {
-            await handleModify(allocations, billingPeriod)
+          items={items}
+          onSave={async (modifications) => {
+            await handleModify(modifications)
+            setEditing(false)
           }}
-          initialQuantities={initialQuantities}
-          initialBillingPeriod={activeSubs[0].billingPeriod}
-          mode="modify"
           onCancel={() => setEditing(false)}
-          installationId={installationId}
-          scheduledBillingPeriod={activeSubs[0].scheduledBillingPeriod}
-          currentEnd={activeSubs[0].currentEnd}
+          loading={loading}
+          mode="modify"
         />
       )}
 
-      {isOwner && !hasActiveSubs && (
-        <SubscriptionConfigurator plans={plans} onSubscribe={handleSubscribe} />
+      {/* No subscription — show subscribe form */}
+      {isOwner && !hasActiveSubscription && (
+        <SubscriptionConfigurator
+          items={[]}
+          onSave={handleSubscribe}
+          loading={loading}
+          mode="subscribe"
+        />
       )}
-
-      <PastSubscriptions subscriptions={subscriptions} plans={plans} />
 
       {!isOwner && (
         <p className="text-muted-foreground text-sm text-center py-4">
           Only the installation owner can manage billing.
         </p>
       )}
-    </>
+    </div>
   )
 }
