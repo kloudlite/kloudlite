@@ -253,202 +253,81 @@ export type Database = {
           role?: 'admin' | 'member' | 'viewer'
         }
       }
-      subscription_plans: {
+      stripe_customers: {
         Row: {
           id: string
-          razorpay_plan_id: string | null
-          tier: number
-          name: string
-          amount_per_user: number
-          base_fee: number
-          currency: string
-          monthly_hours: number
-          overage_rate: number
-          cpu: number
-          ram: string
-          storage: string
-          auto_suspend: string
-          description: string | null
-          annual_discount_pct: number
+          installation_id: string
+          stripe_customer_id: string
+          stripe_subscription_id: string | null
+          billing_status: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
+          payment_issue: boolean
+          current_period_end: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          razorpay_plan_id?: string | null
-          tier: number
-          name: string
-          amount_per_user: number
-          base_fee?: number
-          currency?: string
-          monthly_hours?: number
-          overage_rate?: number
-          cpu: number
-          ram: string
-          storage: string
-          auto_suspend: string
-          description?: string | null
-          annual_discount_pct?: number
+          installation_id: string
+          stripe_customer_id: string
+          stripe_subscription_id?: string | null
+          billing_status?: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
+          payment_issue?: boolean
+          current_period_end?: string | null
         }
         Update: {
-          razorpay_plan_id?: string | null
-          tier?: number
-          name?: string
-          amount_per_user?: number
-          base_fee?: number
-          currency?: string
-          monthly_hours?: number
-          overage_rate?: number
-          cpu?: number
-          ram?: string
-          storage?: string
-          auto_suspend?: string
-          description?: string | null
-          annual_discount_pct?: number
+          installation_id?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string | null
+          billing_status?: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
+          payment_issue?: boolean
+          current_period_end?: string | null
         }
       }
-      subscriptions: {
+      subscription_items: {
         Row: {
           id: string
           installation_id: string
-          plan_id: string
-          razorpay_subscription_id: string | null
-          razorpay_customer_id: string | null
-          status:
-            | 'created'
-            | 'authenticated'
-            | 'active'
-            | 'paused'
-            | 'cancelled'
-            | 'expired'
+          stripe_subscription_item_id: string
+          stripe_price_id: string
+          tier: number
+          product_name: string
           quantity: number
-          billing_period: 'monthly' | 'annual'
-          current_start: string | null
-          current_end: string | null
-          scheduled_billing_period: 'monthly' | 'annual' | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           installation_id: string
-          plan_id: string
-          razorpay_subscription_id?: string | null
-          razorpay_customer_id?: string | null
-          status?:
-            | 'created'
-            | 'authenticated'
-            | 'active'
-            | 'paused'
-            | 'cancelled'
-            | 'expired'
+          stripe_subscription_item_id: string
+          stripe_price_id: string
+          tier: number
+          product_name: string
           quantity?: number
-          billing_period?: 'monthly' | 'annual'
-          current_start?: string | null
-          current_end?: string | null
-          scheduled_billing_period?: 'monthly' | 'annual' | null
         }
         Update: {
-          plan_id?: string
-          razorpay_subscription_id?: string | null
-          razorpay_customer_id?: string | null
-          status?:
-            | 'created'
-            | 'authenticated'
-            | 'active'
-            | 'paused'
-            | 'cancelled'
-            | 'expired'
+          installation_id?: string
+          stripe_subscription_item_id?: string
+          stripe_price_id?: string
+          tier?: number
+          product_name?: string
           quantity?: number
-          billing_period?: 'monthly' | 'annual'
-          current_start?: string | null
-          current_end?: string | null
-          scheduled_billing_period?: 'monthly' | 'annual' | null
         }
       }
-      invoices: {
+      stripe_webhook_events: {
         Row: {
           id: string
-          subscription_id: string
-          installation_id: string
-          razorpay_invoice_id: string | null
-          razorpay_payment_id: string | null
-          amount: number
-          currency: string
-          status: 'issued' | 'paid' | 'expired' | 'cancelled'
-          billing_start: string | null
-          billing_end: string | null
-          paid_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          subscription_id: string
-          installation_id: string
-          razorpay_invoice_id?: string | null
-          razorpay_payment_id?: string | null
-          amount: number
-          currency?: string
-          status?: 'issued' | 'paid' | 'expired' | 'cancelled'
-          billing_start?: string | null
-          billing_end?: string | null
-          paid_at?: string | null
-        }
-        Update: {
-          razorpay_invoice_id?: string | null
-          razorpay_payment_id?: string | null
-          amount?: number
-          currency?: string
-          status?: 'issued' | 'paid' | 'expired' | 'cancelled'
-          billing_start?: string | null
-          billing_end?: string | null
-          paid_at?: string | null
-        }
-      }
-      renewal_jobs: {
-        Row: {
-          id: string
-          installation_id: string
-          job_type: 'renewal' | 'expire'
-          scheduled_at: string
-          status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
-          attempts: number
-          last_error: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          installation_id: string
-          job_type: 'renewal' | 'expire'
-          scheduled_at: string
-          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
-          attempts?: number
-          last_error?: string | null
-        }
-        Update: {
-          job_type?: 'renewal' | 'expire'
-          scheduled_at?: string
-          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
-          attempts?: number
-          last_error?: string | null
-        }
-      }
-      processed_webhook_events: {
-        Row: {
-          id: string
-          razorpay_event_id: string
+          stripe_event_id: string
           event_type: string
           processed_at: string
         }
         Insert: {
           id?: string
-          razorpay_event_id: string
+          stripe_event_id: string
           event_type: string
           processed_at?: string
         }
         Update: {
-          razorpay_event_id?: string
+          stripe_event_id?: string
           event_type?: string
           processed_at?: string
         }
