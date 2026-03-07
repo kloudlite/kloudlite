@@ -8,11 +8,14 @@ import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { PaymentWarningBanner } from '@/components/billing/payment-warning-banner'
 import { useSubscriptionPayments } from '@/hooks/use-subscription-payments'
 import type { StripeCustomer, SubscriptionItem } from '@/lib/console/storage'
+import type { TierConfigItem } from '@/app/actions/billing/pricing'
 
 interface SubscriptionManagementProps {
   installationId: string
   customer: StripeCustomer | null
   items: SubscriptionItem[]
+  tierConfig: TierConfigItem[]
+  currency: string
   isOwner: boolean
 }
 
@@ -20,6 +23,8 @@ export function SubscriptionManagement({
   installationId,
   customer,
   items,
+  tierConfig,
+  currency,
   isOwner,
 }: SubscriptionManagementProps) {
   const [editing, setEditing] = useState(false)
@@ -68,13 +73,15 @@ export function SubscriptionManagement({
 
       {/* Current products */}
       {hasActiveSubscription && !editing && items.length > 0 && (
-        <SubscriptionStatus items={items} />
+        <SubscriptionStatus items={items} tierConfig={tierConfig} currency={currency} />
       )}
 
       {/* Modify plan */}
       {hasActiveSubscription && editing && (
         <SubscriptionConfigurator
           items={items}
+          tierConfig={tierConfig}
+          currency={currency}
           onSave={async (modifications) => {
             await handleModify(modifications)
             setEditing(false)
@@ -89,6 +96,8 @@ export function SubscriptionManagement({
       {isOwner && !hasActiveSubscription && (
         <SubscriptionConfigurator
           items={[]}
+          tierConfig={tierConfig}
+          currency={currency}
           onSave={handleSubscribe}
           loading={loading}
           mode="subscribe"
