@@ -3,25 +3,23 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import {
-  getPlans,
-  getSubscriptionsByInstallation,
-  getInvoicesByInstallation,
+  getStripeCustomer,
+  getSubscriptionItems,
   getMemberRole,
   getInstallationById,
 } from '@/lib/console/storage'
-import type { Plan, Subscription, Invoice } from '@/lib/console/storage'
+import type { StripeCustomer, SubscriptionItem } from '@/lib/console/storage'
 
-export async function getRazorpayKey(): Promise<string> {
-  const keyId = process.env.RAZORPAY_KEY_ID
-  if (!keyId) throw new Error('RAZORPAY_KEY_ID not configured')
-  return keyId
+export async function getStripePublishableKey(): Promise<string> {
+  const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  if (!key) throw new Error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY not configured')
+  return key
 }
 
-export async function fetchPlans(): Promise<Plan[]> {
-  return getPlans()
-}
-
-export async function fetchSubscriptions(installationId: string): Promise<Subscription[]> {
+export async function fetchBillingStatus(installationId: string): Promise<{
+  customer: StripeCustomer | null
+  items: SubscriptionItem[]
+}> {
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
 
@@ -31,18 +29,10 @@ export async function fetchSubscriptions(installationId: string): Promise<Subscr
     throw new Error('Forbidden')
   }
 
-  return getSubscriptionsByInstallation(installationId)
-}
+  const [customer, items] = await Promise.all([
+    getStripeCustomer(installationId),
+    getSubscriptionItems(installationId),
+  ])
 
-export async function fetchInvoices(installationId: string): Promise<Invoice[]> {
-  const session = await getRegistrationSession()
-  if (!session?.user) redirect('/login')
-
-  const role = await getMemberRole(installationId, session.user.id)
-  const installation = await getInstallationById(installationId)
-  if (!role && installation?.userId !== session.user.id) {
-    throw new Error('Forbidden')
-  }
-
-  return getInvoicesByInstallation(installationId)
+  return { customer, items }
 }
