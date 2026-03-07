@@ -3,8 +3,19 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button, Input } from '@kloudlite/ui'
-import { MoreHorizontal, ExternalLink, Settings, Search, Loader2 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  Input,
+} from '@kloudlite/ui'
+import { MoreHorizontal, ExternalLink, Settings, Search, Loader2, Trash2, AlertTriangle } from 'lucide-react'
 import { NewInstallationButton } from '@/components/new-installation-button'
 import {
   DropdownMenu,
@@ -13,6 +24,8 @@ import {
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
+import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 import type { Installation, Invoice, Subscription } from '@/lib/console/storage'
 
 const providerConfig: Record<string, { label: string; className: string }> = {
@@ -70,6 +83,9 @@ export function InstallationsList({
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'installed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
+  const [deleteTarget, setDeleteTarget] = useState<Installation | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const allRef = useRef<HTMLButtonElement>(null)
   const pendingRef = useRef<HTMLButtonElement>(null)
@@ -194,6 +210,47 @@ export function InstallationsList({
   const handleViewSettings = useCallback(
     (installationId: string) => {
       router.push(`/installations/${installationId}`)
+    },
+    [router],
+  )
+
+  const handleDeleteInstallation = useCallback(
+    async (installation: Installation) => {
+      setDeleting(true)
+      const isManaged = installation.cloudProvider === 'oci' && !!installation.secretKey
+
+      try {
+        if (isManaged) {
+          const response = await fetch(`/api/installations/${installation.id}/trigger-managed-uninstall`, {
+            method: 'POST',
+          })
+          if (!response.ok) {
+            const data = await response.json()
+            throw new Error(data.error || 'Failed to trigger uninstall')
+          }
+          toast.success('Uninstall started — infrastructure is being torn down')
+          setDeleteOpen(false)
+          setDeleteTarget(null)
+          router.refresh()
+          return
+        }
+
+        const response = await fetch(`/api/installations/${installation.id}/delete`, {
+          method: 'DELETE',
+        })
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Failed to delete installation')
+        }
+        toast.success('Installation deleted successfully')
+        setDeleteOpen(false)
+        setDeleteTarget(null)
+        router.refresh()
+      } catch (err) {
+        toast.error(getErrorMessage(err, 'Failed to delete installation'))
+      } finally {
+        setDeleting(false)
+      }
     },
     [router],
   )
@@ -505,6 +562,16 @@ export function InstallationsList({
                                     Settings
                                   </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem
+                                  onSelect={() => {
+                                    setDeleteTarget(installation)
+                                    setDeleteOpen(true)
+                                  }}
+                                  className="text-red-600 focus:text-red-700 dark:text-red-400 dark:focus:text-red-300"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           )}
@@ -542,6 +609,61 @@ export function InstallationsList({
           </div>
         </div>
       )}
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open)
+          if (!open && !deleting) {
+            setDeleteTarget(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-destructive h-5 w-5" />
+              Delete Installation
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Are you sure you want to delete <strong>{deleteTarget?.name || 'this installation'}</strong>?
+                  This action cannot be undone.
+                </p>
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">
+                  <p className="text-sm text-red-900 dark:text-red-200">
+                    <strong>Warning:</strong> {deleteTarget?.cloudProvider === 'oci' && deleteTarget?.secretKey
+                      ? 'This will tear down all managed infrastructure (instance, load balancer, DNS, storage) and permanently delete the installation.'
+                      : 'This will permanently delete the installation. This action cannot be undone.'}
+                  </p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting || !deleteTarget}
+              onClick={(e) => {
+                e.preventDefault()
+                if (deleteTarget) {
+                  handleDeleteInstallation(deleteTarget)
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
