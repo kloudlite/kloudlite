@@ -176,6 +176,9 @@ export default function InstallPage() {
           }
 
           setSession(data)
+          if (data.installationId) {
+            setInstallationId(data.installationId)
+          }
         } else {
           router.push('/login')
         }
@@ -188,31 +191,6 @@ export default function InstallPage() {
     }
     checkSession()
   }, [router])
-
-  // Get installation ID from key verification
-  useEffect(() => {
-    if (!session?.installationKey) return
-
-    const verifyKey = async () => {
-      try {
-        const response = await fetch('/api/installations/verify-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ installationKey: session.installationKey }),
-        })
-        if (response.ok) {
-          const data = await response.json()
-          if (data.installationId) {
-            setInstallationId(data.installationId)
-          }
-        }
-      } catch {
-        // Non-critical — progress tracking just won't work
-      }
-    }
-
-    verifyKey()
-  }, [session])
 
   // Poll job-status for progress when we have an installation ID
   useEffect(() => {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-helpers'
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
+import { getInstallationByKey } from '@/lib/console/storage'
 
 export async function GET() {
   const cookieStore = await cookies()
@@ -14,6 +15,13 @@ export async function GET() {
   try {
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
     const { payload } = await jwtVerify(token, secret)
+    const installationKey = payload.installationKey as string | undefined
+    let installationId: string | undefined
+
+    if (installationKey) {
+      const installation = await getInstallationByKey(installationKey)
+      installationId = installation?.id
+    }
 
     const response = NextResponse.json({
       user: {
@@ -22,7 +30,8 @@ export async function GET() {
         image: payload.image as string,
       },
       provider: payload.provider,
-      installationKey: payload.installationKey as string,
+      installationKey,
+      installationId,
       subdomain: payload.subdomain as string | undefined,
     })
 
