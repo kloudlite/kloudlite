@@ -5,16 +5,12 @@ import { Button, Input } from '@kloudlite/ui'
 import { Loader2, Minus, Plus } from 'lucide-react'
 import { formatCurrency } from '@/lib/billing-utils'
 import type { SubscriptionItem } from '@/lib/console/storage'
-
-const TIER_CONFIG = [
-  { tier: 0, name: 'Control Plane', priceId: 'price_control_plane', pricePerUnit: 2900, fixed: true },
-  { tier: 1, name: 'Tier 1 — Light Workloads', priceId: 'price_tier1_seat', pricePerUnit: 2900 },
-  { tier: 2, name: 'Tier 2 — Standard Workloads', priceId: 'price_tier2_seat', pricePerUnit: 4900 },
-  { tier: 3, name: 'Tier 3 — Power Users', priceId: 'price_tier3_seat', pricePerUnit: 8900 },
-] as const
+import type { TierConfigItem } from '@/app/actions/billing/pricing'
 
 interface SubscriptionConfiguratorProps {
   items: SubscriptionItem[]
+  tierConfig: TierConfigItem[]
+  currency: string
   onSave: (allocations: { priceId: string; quantity: number }[]) => Promise<void>
   onCancel?: () => void
   loading: boolean
@@ -23,6 +19,8 @@ interface SubscriptionConfiguratorProps {
 
 export function SubscriptionConfigurator({
   items,
+  tierConfig,
+  currency,
   onSave,
   onCancel,
   loading,
@@ -32,8 +30,8 @@ export function SubscriptionConfigurator({
 
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {}
-    for (const tier of TIER_CONFIG) {
-      if ('fixed' in tier && tier.fixed) {
+    for (const tier of tierConfig) {
+      if (tier.fixed) {
         initial[tier.priceId] = 1
       } else {
         const existing = items.find((i) => i.tier === tier.tier)
@@ -47,10 +45,11 @@ export function SubscriptionConfigurator({
     setQuantities((prev) => ({ ...prev, [priceId]: Math.max(0, Math.min(100, value)) }))
   }
 
-  const seatTiers = TIER_CONFIG.filter((t) => !('fixed' in t && t.fixed))
+  const fixedTiers = tierConfig.filter((t) => t.fixed)
+  const seatTiers = tierConfig.filter((t) => !t.fixed)
   const totalUsers = seatTiers.reduce((sum, t) => sum + (quantities[t.priceId] || 0), 0)
 
-  const monthlyTotal = TIER_CONFIG.reduce((sum, t) => {
+  const monthlyTotal = tierConfig.reduce((sum, t) => {
     return sum + t.pricePerUnit * (quantities[t.priceId] || 0)
   }, 0)
 
@@ -62,7 +61,7 @@ export function SubscriptionConfigurator({
     : totalUsers > 0
 
   const handleSave = async () => {
-    const allocations = TIER_CONFIG
+    const allocations = tierConfig
       .filter((t) => (quantities[t.priceId] || 0) > 0)
       .map((t) => ({
         priceId: t.priceId,
@@ -74,18 +73,20 @@ export function SubscriptionConfigurator({
 
   return (
     <div>
-      {/* Control Plane — fixed row */}
-      <div className="border-b border-foreground/10 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-sm text-foreground">Control Plane</h3>
-            <p className="text-sm text-muted-foreground">Dashboard, user management, billing</p>
+      {/* Fixed items (Control Plane) */}
+      {fixedTiers.map((tier) => (
+        <div key={tier.priceId} className="border-b border-foreground/10 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-sm text-foreground">{tier.name}</h3>
+              <p className="text-sm text-muted-foreground">{tier.description}</p>
+            </div>
+            <span className="text-sm font-semibold tabular-nums text-foreground">
+              {formatCurrency(tier.pricePerUnit, currency)}/mo
+            </span>
           </div>
-          <span className="text-sm font-semibold tabular-nums text-foreground">
-            {formatCurrency(2900, 'USD')}/mo
-          </span>
         </div>
-      </div>
+      ))}
 
       {/* Seat tiers */}
       <div className="pt-4">
@@ -100,7 +101,7 @@ export function SubscriptionConfigurator({
                     <h4 className="font-semibold text-foreground text-sm">{tier.name}</h4>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {formatCurrency(tier.pricePerUnit, 'USD')}/user/mo
+                    {formatCurrency(tier.pricePerUnit, currency)}/user/mo
                   </p>
                 </div>
 
@@ -149,10 +150,14 @@ export function SubscriptionConfigurator({
           <h3 className="text-sm font-medium text-foreground">Monthly cost breakdown</h3>
 
           <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Control Plane (base fee)</span>
-              <span className="text-foreground tabular-nums">{formatCurrency(2900, 'USD')}</span>
-            </div>
+            {fixedTiers.map((tier) => (
+              <div key={tier.priceId} className="flex items-center justify-between">
+                <span className="text-muted-foreground">{tier.name} (base fee)</span>
+                <span className="text-foreground tabular-nums">
+                  {formatCurrency(tier.pricePerUnit, currency)}
+                </span>
+              </div>
+            ))}
             {seatTiers
               .filter((t) => (quantities[t.priceId] || 0) > 0)
               .map((tier) => {
@@ -161,10 +166,10 @@ export function SubscriptionConfigurator({
                   <div key={tier.priceId} className="flex items-center justify-between">
                     <span className="text-muted-foreground">
                       {tier.name} &mdash; {qty} {qty === 1 ? 'user' : 'users'} &times;{' '}
-                      {formatCurrency(tier.pricePerUnit, 'USD')}
+                      {formatCurrency(tier.pricePerUnit, currency)}
                     </span>
                     <span className="text-foreground tabular-nums">
-                      {formatCurrency(tier.pricePerUnit * qty, 'USD')}
+                      {formatCurrency(tier.pricePerUnit * qty, currency)}
                     </span>
                   </div>
                 )
@@ -172,7 +177,7 @@ export function SubscriptionConfigurator({
             {totalUsers === 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground italic">No users selected</span>
-                <span className="text-foreground tabular-nums">{formatCurrency(0, 'USD')}</span>
+                <span className="text-foreground tabular-nums">{formatCurrency(0, currency)}</span>
               </div>
             )}
           </div>
@@ -182,7 +187,7 @@ export function SubscriptionConfigurator({
               Total per month ({totalUsers} {totalUsers === 1 ? 'user' : 'users'})
             </span>
             <span className="text-lg font-bold text-foreground tabular-nums">
-              {formatCurrency(monthlyTotal, 'USD')}/mo
+              {formatCurrency(monthlyTotal, currency)}/mo
             </span>
           </div>
 
@@ -221,7 +226,7 @@ export function SubscriptionConfigurator({
           ) : isModify ? (
             'Apply Changes'
           ) : (
-            `Subscribe — ${formatCurrency(monthlyTotal, 'USD')}/mo`
+            `Subscribe — ${formatCurrency(monthlyTotal, currency)}/mo`
           )}
         </Button>
       </div>

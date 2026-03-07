@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname, '../../'),
   },
 
+  // Stripe SDK should not be bundled by webpack/turbopack
+  serverExternalPackages: ['stripe'],
+
   // Enable experimental features
   experimental: {
     // Optimize package imports
