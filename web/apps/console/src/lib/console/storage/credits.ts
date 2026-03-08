@@ -34,6 +34,7 @@ function mapToCreditTransaction(row: any): CreditTransaction {
     description: row.description,
     stripeInvoiceId: row.stripe_invoice_id,
     usagePeriodId: row.usage_period_id,
+    expiresAt: row.expires_at,
     createdAt: row.created_at,
   }
 }
