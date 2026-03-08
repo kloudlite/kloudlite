@@ -55,6 +55,7 @@ async function handleCheckoutSessionCompleted(
     return
   }
 
+  // Handle new subscription checkout
   const subscriptionId = session.subscription as string | null
   if (!subscriptionId) {
     console.error('checkout.session.completed: missing subscription ID')
