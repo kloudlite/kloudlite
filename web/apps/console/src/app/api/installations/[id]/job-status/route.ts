@@ -7,6 +7,7 @@ import {
   deleteInstallation,
   deleteIpRecords,
   deleteDomainReservation,
+  cancelStripeSubscriptionForInstallation,
 } from '@/lib/console/storage'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 import { getJobExecutionStatus } from '@/lib/console/aca-jobs'
@@ -34,6 +35,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       if (installation.acaJobOperation === 'uninstall' && installation.acaJobStatus === 'succeeded') {
         try {
           console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall (BYOC)`)
+          await cancelStripeSubscriptionForInstallation(id)
           const dnsRecordIds = await deleteIpRecords(id)
           if (dnsRecordIds.length > 0) {
             await deleteDnsRecords(dnsRecordIds)
@@ -80,6 +82,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     if (installation.acaJobOperation === 'uninstall' && result.status === 'succeeded') {
       try {
         console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall`)
+        await cancelStripeSubscriptionForInstallation(id)
         const dnsRecordIds = await deleteIpRecords(id)
         if (dnsRecordIds.length > 0) {
           await deleteDnsRecords(dnsRecordIds)

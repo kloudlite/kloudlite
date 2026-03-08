@@ -178,6 +178,34 @@ export async function syncSubscriptionItems(
   }
 }
 
+// --- Subscription Cancellation ---
+
+/**
+ * Cancel the Stripe subscription for an installation.
+ * Call this before deleting the installation to stop billing.
+ * Fails silently so deletion is not blocked by Stripe API errors.
+ */
+export async function cancelStripeSubscriptionForInstallation(
+  installationId: string,
+): Promise<void> {
+  try {
+    const customer = await getStripeCustomer(installationId)
+    if (!customer?.stripeSubscriptionId) return
+
+    const { getStripe } = await import('@/lib/stripe')
+    const stripe = getStripe()
+    await stripe.subscriptions.cancel(customer.stripeSubscriptionId)
+    console.log(
+      `[billing] Cancelled Stripe subscription ${customer.stripeSubscriptionId} for installation ${installationId}`,
+    )
+  } catch (err) {
+    console.error(
+      `[billing] Failed to cancel Stripe subscription for installation ${installationId}:`,
+      err,
+    )
+  }
+}
+
 // --- Webhook Idempotency ---
 
 export async function isWebhookEventProcessed(stripeEventId: string): Promise<boolean> {
