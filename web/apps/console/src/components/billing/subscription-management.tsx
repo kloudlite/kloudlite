@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ExternalLink } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
+import { toast } from 'sonner'
 import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { PaymentWarningBanner } from '@/components/billing/payment-warning-banner'
@@ -28,7 +30,18 @@ export function SubscriptionManagement({
   isOwner,
 }: SubscriptionManagementProps) {
   const [editing, setEditing] = useState(false)
+  const searchParams = useSearchParams()
   const hasActiveSubscription = customer?.billingStatus === 'active'
+
+  // Show toast when returning from Stripe payment
+  useEffect(() => {
+    const modified = searchParams.get('modified')
+    if (modified === 'success') {
+      toast.success('Subscription updated and payment confirmed.')
+    } else if (modified === 'cancelled') {
+      toast.info('Payment was cancelled. Your subscription was not changed.')
+    }
+  }, [searchParams])
 
   const {
     loading,
