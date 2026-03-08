@@ -237,13 +237,18 @@ ON CONFLICT (resource_type) DO NOTHING;
 
 INSERT INTO pricing_tiers (resource_type, display_name, hourly_rate, unit, category, specs)
 VALUES
-  ('workmachine.standard', 'Work Machine — Standard', 0.05, 'hour', 'compute', '{"vcpu": 2, "memory_gb": 4}')
-ON CONFLICT (resource_type) DO NOTHING;
+  ('workmachine.tier1', 'Tier 1 — Light', 0.18, 'hour', 'compute', '{"vcpu": 8, "memory_gb": 16, "storage_gb": 100, "suspend_minutes": 15}')
+ON CONFLICT (resource_type) DO UPDATE SET display_name = EXCLUDED.display_name, hourly_rate = EXCLUDED.hourly_rate, specs = EXCLUDED.specs;
 
 INSERT INTO pricing_tiers (resource_type, display_name, hourly_rate, unit, category, specs)
 VALUES
-  ('workmachine.performance', 'Work Machine — Performance', 0.12, 'hour', 'compute', '{"vcpu": 4, "memory_gb": 8}')
-ON CONFLICT (resource_type) DO NOTHING;
+  ('workmachine.tier2', 'Tier 2 — Standard', 0.30, 'hour', 'compute', '{"vcpu": 12, "memory_gb": 32, "storage_gb": 200, "suspend_minutes": 30}')
+ON CONFLICT (resource_type) DO UPDATE SET display_name = EXCLUDED.display_name, hourly_rate = EXCLUDED.hourly_rate, specs = EXCLUDED.specs;
+
+INSERT INTO pricing_tiers (resource_type, display_name, hourly_rate, unit, category, specs)
+VALUES
+  ('workmachine.tier3', 'Tier 3 — Power', 0.55, 'hour', 'compute', '{"vcpu": 16, "memory_gb": 64, "storage_gb": 500, "suspend_minutes": 60}')
+ON CONFLICT (resource_type) DO UPDATE SET display_name = EXCLUDED.display_name, hourly_rate = EXCLUDED.hourly_rate, specs = EXCLUDED.specs;
 
 INSERT INTO pricing_tiers (resource_type, display_name, hourly_rate, unit, category, specs)
 VALUES
