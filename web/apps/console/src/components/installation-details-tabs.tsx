@@ -1,6 +1,6 @@
 'use client'
 
-import { CreditCard, Users } from 'lucide-react'
+import { CreditCard } from 'lucide-react'
 import { NavTabs, type NavTab } from './nav-tabs'
 
 interface InstallationDetailsTabsProps {
@@ -14,12 +14,6 @@ export function InstallationDetailsTabs({ installationId, cloudProvider }: Insta
       id: 'overview',
       label: 'Overview',
       href: `/installations/${installationId}`,
-    },
-    {
-      id: 'team',
-      label: 'Team',
-      icon: Users,
-      href: `/installations/${installationId}/team`,
     },
   ]
 

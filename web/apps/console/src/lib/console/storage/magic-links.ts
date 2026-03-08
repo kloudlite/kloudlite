@@ -1,13 +1,14 @@
 /**
  * Magic link token storage and management
+ * Uses PII database for token storage
  */
 
-import { supabase } from '../supabase'
-import type { Database } from '../supabase-types'
+import { piiSupabase } from '../supabase-pii'
+import type { PiiDatabase } from '../supabase-pii-types'
 import { randomBytes } from 'crypto'
 
-type MagicLinkTokenInsert = Database['public']['Tables']['magic_link_tokens']['Insert']
-type MagicLinkTokenUpdate = Database['public']['Tables']['magic_link_tokens']['Update']
+type MagicLinkTokenInsert = PiiDatabase['public']['Tables']['magic_link_tokens']['Insert']
+type MagicLinkTokenUpdate = PiiDatabase['public']['Tables']['magic_link_tokens']['Update']
 
 const TOKEN_EXPIRATION_MINUTES = 15
 
@@ -43,7 +44,7 @@ export async function createMagicLinkToken(
     user_agent: userAgent || null,
   }
 
-  const { error } = await supabase
+  const { error } = await piiSupabase
     .from('magic_link_tokens')
     // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert(insertData)
@@ -68,7 +69,7 @@ export async function createMagicLinkToken(
 export async function verifyMagicLinkToken(
   token: string
 ): Promise<string | null> {
-  const { data, error } = await supabase
+  const { data, error } = await piiSupabase
     .from('magic_link_tokens')
     .select('*')
     .eq('token', token)
@@ -104,7 +105,7 @@ export async function markTokenAsUsed(token: string): Promise<void> {
     used_at: new Date().toISOString(),
   }
 
-  const { error } = await supabase
+  const { error } = await piiSupabase
     .from('magic_link_tokens')
     // @ts-expect-error — Supabase generic inference resolves mutations to never
     .update(updateData)
@@ -121,7 +122,7 @@ export async function markTokenAsUsed(token: string): Promise<void> {
  * Should be called periodically (e.g., via cron job)
  */
 export async function cleanupExpiredTokens(): Promise<void> {
-  const { error } = await supabase
+  const { error } = await piiSupabase
     .from('magic_link_tokens')
     .delete()
     .lt('expires_at', new Date().toISOString())

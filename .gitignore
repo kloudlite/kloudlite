@@ -52,3 +52,4 @@ devenv/k3s-config/
 *.test
 *.out
 CLAUDE.md
+test-results/

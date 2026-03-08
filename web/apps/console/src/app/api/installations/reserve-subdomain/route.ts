@@ -4,12 +4,13 @@ import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 import {
   reserveSubdomain,
-  getUserInstallations,
+  getOrgInstallations,
   createInstallation,
+  isOrgMember,
 } from '@/lib/console/storage'
 
 /**
- * Reserve subdomain for user's installation
+ * Reserve subdomain for an organization's installation
  */
 export async function POST(request: NextRequest) {
   try {
@@ -33,17 +34,27 @@ export async function POST(request: NextRequest) {
       return apiError('Invalid session', 401)
     }
 
-    // Get subdomain from request body
+    // Get subdomain and orgId from request body
     const body = await request.json()
-    const { subdomain } = body
+    const { subdomain, orgId } = body
 
     if (!subdomain) {
       return apiError('Subdomain is required', 400)
     }
 
+    if (!orgId) {
+      return apiError('Organization ID is required', 400)
+    }
+
+    // Verify user is a member of the organization
+    const isMember = await isOrgMember(orgId, userId)
+    if (!isMember) {
+      return apiError('Not a member of this organization', 403)
+    }
+
     // Determine which installation to use
     let installationId: string
-    const installations = await getUserInstallations(userId)
+    const installations = await getOrgInstallations(orgId)
 
     if (sessionInstallationKey) {
       // Use the installation from session
@@ -54,14 +65,14 @@ export async function POST(request: NextRequest) {
       installationId = installation.id
     } else {
       // Create a new installation if none exists
-      const incompleteInstallation = installations.find((i) => !i.hasCompletedInstallation)
+      const incompleteInstallation = installations.find((i) => !i.setupCompleted)
       if (incompleteInstallation) {
         installationId = incompleteInstallation.id
       } else {
         // Create new installation
         const generatedKey = crypto.randomUUID()
         const newInstallation = await createInstallation(
-          userId,
+          orgId,
           'My Installation',
           undefined,
           generatedKey,
@@ -82,7 +93,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       success: true,
       subdomain: reservation.subdomain,
-      url: `https://${reservation.subdomain}.kloudlite.io`,
+      url: `https://${reservation.subdomain}.${process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}`,
     })
 
     // Disable all caching

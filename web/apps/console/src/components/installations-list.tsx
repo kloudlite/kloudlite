@@ -26,7 +26,8 @@ import {
 import { cn } from '@kloudlite/lib'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
-import type { Installation, StripeCustomer } from '@/lib/console/storage'
+import { getInstallationStatus, hasActiveJob } from '@/lib/installation-status'
+import type { Installation, BillingAccount } from '@/lib/console/storage'
 
 const providerConfig: Record<string, { label: string; className: string }> = {
   aws: {
@@ -63,10 +64,10 @@ function ProviderBadge({ provider }: { provider?: string }) {
 
 interface InstallationsListProps {
   installations: Installation[]
-  activeSubscriptions?: Record<string, StripeCustomer>
+  activeSubscriptions?: Record<string, BillingAccount>
 }
 
-function isExpiringSoon(customer: StripeCustomer | undefined): boolean {
+function isExpiringSoon(customer: BillingAccount | undefined): boolean {
   if (!customer?.currentPeriodEnd || customer.billingStatus !== 'active') return false
   const msUntilEnd = new Date(customer.currentPeriodEnd).getTime() - Date.now()
   const daysUntilEnd = Math.ceil(msUntilEnd / (24 * 60 * 60 * 1000))
@@ -88,107 +89,14 @@ export function InstallationsList({
   const allRef = useRef<HTMLButtonElement>(null)
   const pendingRef = useRef<HTMLButtonElement>(null)
   const installedRef = useRef<HTMLButtonElement>(null)
-
-  // Check if an installation has an active job (running or pending)
-  const hasActiveJob = (installation: Installation) => {
-    return (
-      (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
-      (installation.acaJobOperation === 'install' || installation.acaJobOperation === 'uninstall')
-    )
-  }
-
-  // Helper function to get installation status
-  const getInstallationStatus = (installation: Installation) => {
-    // Uninstall operations: show UNINSTALLING until the record is auto-deleted
-    if (installation.acaJobOperation === 'uninstall') {
-      if (installation.acaJobStatus === 'failed') {
-        return {
-          status: 'UNINSTALL FAILED',
-          statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
-          isPending: false,
-          isActiveJob: false,
-          stepInfo: undefined,
-        }
-      }
-      return {
-        status: 'UNINSTALLING',
-        statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
-        isPending: false,
-        isActiveJob: true,
-        stepInfo:
-          installation.acaJobCurrentStep && installation.acaJobTotalSteps
-            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
-            : undefined,
-      }
-    }
-
-    // Check active install jobs
-    if (hasActiveJob(installation) && installation.acaJobOperation === 'install') {
-      return {
-        status: 'INSTALLING',
-        statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
-        isPending: false,
-        isActiveJob: true,
-        stepInfo:
-          installation.acaJobCurrentStep && installation.acaJobTotalSteps
-            ? `Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps}`
-            : undefined,
-      }
-    }
-
-    // Check for failed jobs (installation not ready and job failed)
-    if (installation.acaJobStatus === 'failed' && !installation.deploymentReady) {
-      return {
-        status: 'ERROR',
-        statusColor: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
-        isPending: true,
-        isActiveJob: false,
-        stepInfo: undefined,
-      }
-    }
-
-    if (!installation.secretKey) {
-      return {
-        status: 'NOT INSTALLED',
-        statusColor: 'bg-foreground/[0.06] text-foreground border border-foreground/10',
-        isPending: true,
-        isActiveJob: false,
-        stepInfo: undefined,
-      }
-    }
-    if (!installation.subdomain) {
-      return {
-        status: 'PENDING',
-        statusColor:
-          'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
-        isPending: true,
-        isActiveJob: false,
-        stepInfo: undefined,
-      }
-    }
-    if (!installation.deploymentReady) {
-      return {
-        status: 'CONFIGURING',
-        statusColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
-        isPending: true,
-        isActiveJob: false,
-        stepInfo: undefined,
-      }
-    }
-    return {
-      status: 'ACTIVE',
-      statusColor: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
-      isPending: false,
-      isActiveJob: false,
-      stepInfo: undefined,
-    }
-  }
+  const installationsRef = useRef(installations)
+  installationsRef.current = installations
 
   // Check if installation needs polling (active job or pending uninstall deletion)
   const needsPolling = useCallback((installation: Installation) => {
     return (
       hasActiveJob(installation) ||
-      (installation.acaJobOperation === 'uninstall' && installation.acaJobStatus !== 'failed')
+      (installation.deployJobOperation === 'uninstall' && installation.deployJobStatus !== 'failed')
     )
   }, [])
 
@@ -258,18 +166,17 @@ export function InstallationsList({
   useEffect(() => {
     if (!hasAnyActiveJob) return
     const interval = setInterval(async () => {
-      // Sync job status from ACA API → DB for active installations
-      for (const inst of installations) {
-        if (needsPolling(inst)) {
-          try {
-            await fetch(`/api/installations/${inst.id}/job-status`)
-          } catch {}
-        }
-      }
+      // Sync job status from ACA API → DB for active installations (parallel)
+      const pollingInstallations = installationsRef.current.filter(needsPolling)
+      await Promise.allSettled(
+        pollingInstallations.map((inst) =>
+          fetch(`/api/installations/${inst.id}/job-status`)
+        )
+      )
       router.refresh()
     }, 5000)
     return () => clearInterval(interval)
-  }, [hasAnyActiveJob, router, installations, needsPolling])
+  }, [hasAnyActiveJob, router, needsPolling])
 
   // Apply status filter
   let filteredInstallations = installations
@@ -359,9 +266,11 @@ export function InstallationsList({
 
       {/* Status Filter Tabs */}
       <div className="border-foreground/10 mb-5 border-b">
-        <div className="relative inline-flex gap-1">
+        <div className="relative inline-flex gap-1" role="tablist">
           <button
             ref={allRef}
+            role="tab"
+            aria-selected={statusFilter === 'all'}
             onClick={handleFilterAll}
             className={cn(
               'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
@@ -375,6 +284,8 @@ export function InstallationsList({
           </button>
           <button
             ref={pendingRef}
+            role="tab"
+            aria-selected={statusFilter === 'pending'}
             onClick={handleFilterPending}
             className={cn(
               'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
@@ -388,6 +299,8 @@ export function InstallationsList({
           </button>
           <button
             ref={installedRef}
+            role="tab"
+            aria-selected={statusFilter === 'installed'}
             onClick={handleFilterInstalled}
             className={cn(
               'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
@@ -521,7 +434,7 @@ export function InstallationsList({
                               Expiring Soon
                             </span>
                           )}
-                          {activeSubscriptions[installation.id]?.paymentIssue && (
+                          {activeSubscriptions[installation.id]?.hasPaymentIssue && (
                             <span className="inline-flex items-center rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider whitespace-nowrap text-amber-700 uppercase dark:text-amber-400">
                               Payment Due
                             </span>

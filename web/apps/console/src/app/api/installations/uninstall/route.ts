@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-helpers'
 import {
   getInstallationByKey,
-  deleteIpRecords,
+  deleteDnsConfigurations,
   deleteDomainReservation,
   resetInstallation,
 } from '@/lib/console/storage'
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     console.log(`Starting uninstall for installation: ${installation.id}`)
 
     // Step 1: Get all DNS record IDs and delete IP records
-    const dnsRecordIds = await deleteIpRecords(installation.id)
+    const dnsRecordIds = await deleteDnsConfigurations(installation.id)
     console.log(`Found ${dnsRecordIds.length} DNS records to delete`)
 
     // Step 2: Delete DNS records from Cloudflare
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       installationId: installation.id,
       subdomain: installation.subdomain,
       dnsRecordsDeleted: dnsDeleteCount,
-      ipRecordsDeleted: dnsRecordIds.length,
+      dnsConfigurationsDeleted: dnsRecordIds.length,
     })
 
     // Disable all caching

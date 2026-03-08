@@ -1,110 +1,89 @@
 import { NextResponse } from 'next/server'
-import { apiError } from '@/lib/api-helpers'
-import { getRegistrationSession } from '@/lib/console-auth'
-import { getStripe } from '@/lib/stripe'
+import { requireInstallationAccess } from '@/lib/console/authorization'
 import {
-  getStripeCustomer,
+  getBillingAccount,
   getSubscriptionItems,
+  upsertBillingAccount,
   syncSubscriptionItemsFromStripe,
-  getMemberRole,
-  getInstallationById,
 } from '@/lib/console/storage'
+import { getStripe } from '@/lib/stripe'
+import { apiCatchError } from '@/lib/api-helpers'
 
 export const runtime = 'nodejs'
 
+/**
+ * GET /api/installations/[id]/subscription
+ * Returns the billing account and subscription items for the org that owns
+ * the given installation. Used by the deploy page to verify an active
+ * subscription before triggering deployment.
+ *
+ * Includes a Stripe-direct fallback for the webhook race condition:
+ * after Stripe Checkout the redirect may land before the webhook fires,
+ * so we check Stripe directly if the DB still shows incomplete.
+ */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getRegistrationSession()
-  if (!session?.user) {
-    return apiError('Not authenticated', 401)
-  }
-
   const { id } = await params
 
-  // Verify user has access to this installation
-  const role = await getMemberRole(id, session.user.id)
-  const installation = await getInstallationById(id)
-  if (!role && installation?.userId !== session.user.id) {
-    return apiError('Forbidden', 403)
-  }
+  try {
+    const context = await requireInstallationAccess(id)
+    const orgId = context.orgId
+    let customer = await getBillingAccount(orgId)
 
-  const [customer, items] = await Promise.all([
-    getStripeCustomer(id),
-    getSubscriptionItems(id),
-  ])
+    // Handle webhook race condition: if billing account is incomplete,
+    // check Stripe directly for an active subscription
+    if (
+      customer?.stripeCustomerId &&
+      customer.billingStatus !== 'active' &&
+      customer.billingStatus !== 'cancelled'
+    ) {
+      try {
+        const stripe = getStripe()
+        const subs = await stripe.subscriptions.list({
+          customer: customer.stripeCustomerId,
+          status: 'active',
+          limit: 1,
+        })
 
-  return NextResponse.json({ customer, items })
-}
+        if (subs.data.length > 0) {
+          const subscription = subs.data[0]
+          const periodEnd = subscription.items.data[0]?.current_period_end
 
-/**
- * PATCH /api/installations/[id]/subscription
- * Modify subscription items (change quantities, add/remove tiers)
- */
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await getRegistrationSession()
-  if (!session?.user) {
-    return apiError('Not authenticated', 401)
-  }
+          await upsertBillingAccount({
+            orgId,
+            stripeCustomerId: customer.stripeCustomerId,
+            stripeSubscriptionId: subscription.id,
+            billingStatus: 'active',
+            currentPeriodEnd: periodEnd
+              ? new Date(periodEnd * 1000).toISOString()
+              : null,
+          })
 
-  const { id } = await params
+          // Sync subscription items from Stripe
+          await syncSubscriptionItemsFromStripe(orgId, subscription.id)
 
-  const installation = await getInstallationById(id)
-  if (!installation || installation.userId !== session.user.id) {
-    return apiError('Forbidden: only installation owner can modify billing', 403)
-  }
-
-  const stripeCustomer = await getStripeCustomer(id)
-  if (!stripeCustomer?.stripeSubscriptionId) {
-    return apiError('No active subscription found', 400)
-  }
-
-  const body = await request.json()
-  const modifications: Array<{ priceId: string; quantity: number }> = body.modifications
-  if (!modifications || !Array.isArray(modifications)) {
-    return apiError('Invalid request: modifications array required', 400)
-  }
-
-  const stripe = getStripe()
-  const subscription = await stripe.subscriptions.retrieve(stripeCustomer.stripeSubscriptionId)
-
-  const items: Array<{
-    id?: string
-    price?: string
-    quantity?: number
-    deleted?: boolean
-  }> = []
-
-  for (const mod of modifications) {
-    const existing = subscription.items.data.find((i) => i.price.id === mod.priceId)
-
-    if (existing) {
-      if (mod.quantity === 0) {
-        items.push({ id: existing.id, deleted: true })
-      } else {
-        items.push({ id: existing.id, quantity: mod.quantity })
+          // Re-fetch updated billing account
+          customer = await getBillingAccount(orgId)
+        }
+      } catch (err) {
+        console.error('[subscription] Failed to verify with Stripe:', err)
       }
-    } else if (mod.quantity > 0) {
-      items.push({ price: mod.priceId, quantity: mod.quantity })
     }
+
+    // If we have a subscription but no items in DB, sync them
+    let items = customer?.stripeSubscriptionId
+      ? await getSubscriptionItems(orgId)
+      : []
+
+    if (items.length === 0 && customer?.stripeSubscriptionId) {
+      await syncSubscriptionItemsFromStripe(orgId, customer.stripeSubscriptionId)
+      items = await getSubscriptionItems(orgId)
+    }
+
+    return NextResponse.json({ customer, items })
+  } catch (error) {
+    return apiCatchError(error, 'Failed to get subscription status')
   }
-
-  if (items.length === 0) {
-    return apiError('No changes to apply', 400)
-  }
-
-  // Apply the subscription change immediately
-  await stripe.subscriptions.update(stripeCustomer.stripeSubscriptionId, {
-    items,
-    proration_behavior: 'always_invoice',
-  })
-
-  // Sync updated items back to DB
-  await syncSubscriptionItemsFromStripe(id, stripeCustomer.stripeSubscriptionId)
-
-  return NextResponse.json({ success: true })
 }

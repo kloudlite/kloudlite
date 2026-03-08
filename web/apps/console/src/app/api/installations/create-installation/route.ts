@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { createInstallation, cleanupExpiredInstallations, updateInstallation } from '@/lib/console/storage'
+import { createInstallation, cleanupExpiredInstallations, updateInstallation, isOrgMember } from '@/lib/console/storage'
 import { SignJWT } from 'jose'
 import crypto from 'crypto'
 
@@ -19,14 +19,24 @@ export async function POST(request: Request) {
       return apiError('Not authenticated', 401)
     }
 
-    // Cleanup any expired installations for this user before creating a new one
-    const cleanedUp = await cleanupExpiredInstallations(session.user.id)
-    if (cleanedUp > 0) {
-      console.log(`Cleaned up ${cleanedUp} expired installation(s) for user ${session.user.id}`)
+    const body = await request.json()
+    const { name, description, subdomain, hostingType, orgId } = body
+
+    if (!orgId || typeof orgId !== 'string') {
+      return apiError('Organization ID is required', 400)
     }
 
-    const body = await request.json()
-    const { name, description, subdomain, hostingType } = body
+    // Verify user is a member of the organization
+    const isMember = await isOrgMember(orgId, session.user.id)
+    if (!isMember) {
+      return apiError('Not a member of this organization', 403)
+    }
+
+    // Cleanup any expired installations for this org before creating a new one
+    const cleanedUp = await cleanupExpiredInstallations(orgId)
+    if (cleanedUp > 0) {
+      console.log(`Cleaned up ${cleanedUp} expired installation(s) for org ${orgId}`)
+    }
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return apiError('Installation name is required', 400)
@@ -47,7 +57,7 @@ export async function POST(request: Request) {
 
     // Create the installation with subdomain
     const installation = await createInstallation(
-      session.user.id,
+      orgId,
       name.trim(),
       description?.trim() || undefined,
       installationKey,

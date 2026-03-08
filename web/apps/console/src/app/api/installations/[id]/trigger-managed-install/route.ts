@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { apiError, apiCatchError } from '@/lib/api-helpers'
-import { requireOwnerPermission } from '@/lib/console/authorization'
-import { getInstallationById, updateInstallation, getStripeCustomer } from '@/lib/console/storage'
+import { requireInstallationOwner } from '@/lib/console/authorization'
+import { getInstallationById, updateInstallation, getBillingAccount } from '@/lib/console/storage'
 import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
 
 const STALE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
@@ -10,15 +10,15 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const { id } = await params
 
   try {
-    await requireOwnerPermission(id)
+    const { orgId } = await requireInstallationOwner(id)
 
     const installation = await getInstallationById(id)
     if (!installation) {
       return apiError('Installation not found', 404)
     }
 
-    // Require an active Stripe subscription for this installation
-    const customer = await getStripeCustomer(id)
+    // Require an active Stripe subscription at the org level
+    const customer = await getBillingAccount(orgId)
     if (!customer || customer.billingStatus !== 'active') {
       return apiError('Active subscription required to deploy Kloudlite Cloud', 403)
     }
@@ -29,13 +29,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     // If a job is already running and not stale, return existing execution
     if (
-      (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
-      installation.acaJobStartedAt &&
-      Date.now() - new Date(installation.acaJobStartedAt).getTime() < STALE_TIMEOUT_MS
+      (installation.deployJobStatus === 'running' || installation.deployJobStatus === 'pending') &&
+      installation.deployJobStartedAt &&
+      Date.now() - new Date(installation.deployJobStartedAt).getTime() < STALE_TIMEOUT_MS
     ) {
       return NextResponse.json({
         success: true,
-        executionName: installation.acaJobExecutionName,
+        executionName: installation.deployJobExecutionName,
         message: 'Job already running',
       })
     }
@@ -64,17 +64,17 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     })
 
     await updateInstallation(id, {
-      acaJobExecutionName: result.executionName,
-      acaJobStatus: 'running',
-      acaJobStartedAt: new Date().toISOString(),
-      acaJobCompletedAt: undefined,
-      acaJobError: undefined,
+      deployJobExecutionName: result.executionName,
+      deployJobStatus: 'running',
+      deployJobStartedAt: new Date().toISOString(),
+      deployJobCompletedAt: undefined,
+      deployJobError: undefined,
       cloudProvider: 'oci',
       cloudLocation: ociRegion,
-      acaJobOperation: 'install',
-      acaJobCurrentStep: 0,
-      acaJobTotalSteps: 9,
-      acaJobStepDescription: 'Starting installation...',
+      deployJobOperation: 'install',
+      deployJobCurrentStep: 0,
+      deployJobTotalSteps: 9,
+      deployJobStepDescription: 'Starting installation...',
       deploymentReady: false,
     })
 

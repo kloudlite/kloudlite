@@ -3,7 +3,14 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button, Avatar, AvatarFallback, AvatarImage, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, KloudliteLogo, ThemeSwitcher } from '@kloudlite/ui'
-import { Settings, LogOut } from 'lucide-react'
+import { Settings, LogOut, UserCircle } from 'lucide-react'
+import { OrgSwitcher } from '@/components/org-switcher'
+
+interface Org {
+  id: string
+  name: string
+  slug: string
+}
 
 interface InstallationsHeaderProps {
   user: {
@@ -11,11 +18,13 @@ interface InstallationsHeaderProps {
     email: string
     image?: string
   }
+  orgs?: Org[]
+  currentOrgId?: string
   installationName?: string
   installationDomain?: string
 }
 
-export function InstallationsHeader({ user }: InstallationsHeaderProps) {
+export function InstallationsHeader({ user, orgs, currentOrgId }: InstallationsHeaderProps) {
   const router = useRouter()
 
   const getInitials = (name: string) => {
@@ -45,12 +54,18 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
               <span className="text-foreground text-sm font-bold tracking-wide">console</span>
             </div>
           </Link>
+          {orgs && currentOrgId && (
+            <>
+              <span className="text-muted-foreground text-sm font-light">/</span>
+              <OrgSwitcher orgs={orgs} currentOrgId={currentOrgId} />
+            </>
+          )}
         </div>
 
         {/* Theme & User Menu */}
         <div className="flex items-center gap-1">
           <ThemeSwitcher />
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 gap-2 px-2 hover:bg-muted/50 transition-colors">
               <Avatar className="h-8 w-8 ring-2 ring-foreground/10">
@@ -72,9 +87,15 @@ export function InstallationsHeader({ user }: InstallationsHeaderProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/profile">
+                <UserCircle className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="cursor-pointer">
               <Link href="/installations/settings">
                 <Settings className="mr-2 h-4 w-4" />
-                Account Settings
+                Settings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

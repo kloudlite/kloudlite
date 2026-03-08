@@ -33,9 +33,10 @@ type InstallationFormData = z.infer<typeof installationSchema>
 interface InstallationFormProps {
   hostingType: 'kloudlite' | 'byoc'
   redirectTo: string
+  orgId: string
 }
 
-export function InstallationForm({ hostingType, redirectTo }: InstallationFormProps) {
+export function InstallationForm({ hostingType, redirectTo, orgId }: InstallationFormProps) {
   const router = useRouter()
   const [creating, setCreating] = useState(false)
   const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
@@ -64,6 +65,7 @@ export function InstallationForm({ hostingType, redirectTo }: InstallationFormPr
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          orgId,
           name: data.name,
           description: data.description || undefined,
           subdomain: data.subdomain,

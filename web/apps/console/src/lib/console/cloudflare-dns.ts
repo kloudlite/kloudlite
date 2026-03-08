@@ -470,18 +470,18 @@ export async function deleteDnsRecords(recordIds: string[]): Promise<boolean> {
  * Create only CNAME records for domain routes (reuses existing SSH A record)
  * Used when routes change but SSH A record already exists
  *
- * @param domainRequestName - Name of the DomainRequest resource
+ * @param serviceName - Name of the DomainRequest resource
  * @param subdomain - Installation subdomain (e.g., "test")
  * @param domainRoutes - Array of domain routes to create CNAME records for
  * @returns Array of route CNAME record IDs
  */
 export async function createDomainRouteCnameRecords(
-  domainRequestName: string,
+  serviceName: string,
   subdomain: string,
   domainRoutes: Array<{ domain: string }>,
 ): Promise<string[]> {
   const routeRecordIds: string[] = []
-  const sshDomain = `ssh.${domainRequestName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
+  const sshDomain = `ssh.${serviceName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
 
   console.log(`Creating ${domainRoutes.length} CNAME records pointing to ${sshDomain}`)
 
@@ -502,14 +502,14 @@ export async function createDomainRouteCnameRecords(
  * Create DNS records for a DomainRequest
  * Creates an A record for SSH access and CNAME records for domain routes
  *
- * @param domainRequestName - Name of the DomainRequest resource
+ * @param serviceName - Name of the DomainRequest resource
  * @param subdomain - Installation subdomain (e.g., "test")
  * @param ip - Public IP address
  * @param domainRoutes - Array of domain routes to create CNAME records for
  * @returns Object containing SSH A record ID and array of route CNAME record IDs
  */
 export async function createDomainRequestDnsRecords(
-  domainRequestName: string,
+  serviceName: string,
   subdomain: string,
   ip: string,
   domainRoutes?: Array<{ domain: string }>,
@@ -517,7 +517,7 @@ export async function createDomainRequestDnsRecords(
   const routeRecordIds: string[] = []
 
   // Create A record for SSH access: ssh.{domainrequest-name}.{subdomain}.{domain} → IP (no proxy)
-  const sshDomain = `ssh.${domainRequestName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
+  const sshDomain = `ssh.${serviceName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
   const sshRecordId = await createDnsRecord(sshDomain, ip, false)
 
   if (!sshRecordId) {

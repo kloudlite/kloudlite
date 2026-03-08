@@ -15,16 +15,16 @@ import {
 } from '@kloudlite/ui'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
-import type { InstallationInvitation } from '@/lib/console/storage'
+import type { OrgInvitation } from '@/lib/console/storage'
 
 interface TeamInvitationsTableProps {
-  invitations: InstallationInvitation[]
-  installationId: string
+  invitations: OrgInvitation[]
+  orgId: string
 }
 
 export function TeamInvitationsTable({
   invitations,
-  installationId,
+  orgId,
 }: TeamInvitationsTableProps) {
   const router = useRouter()
   const [cancelingId, setCancelingId] = useState<string | null>(null)
@@ -37,7 +37,7 @@ export function TeamInvitationsTable({
     setCancelingId(invitationToCancel.id)
     try {
       const response = await fetch(
-        `/api/installations/${installationId}/team/invitations/${invitationToCancel.id}`,
+        `/api/orgs/${orgId}/invitations/${invitationToCancel.id}`,
         { method: 'DELETE' }
       )
 
@@ -123,7 +123,7 @@ export function TeamInvitationsTable({
             <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to cancel the invitation for <span className="font-semibold text-foreground">{invitationToCancel?.email}</span>?
-              They will not be able to join this installation.
+              They will not be able to join this organization.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

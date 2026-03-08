@@ -1,10 +1,10 @@
-export interface StripeCustomer {
+export interface BillingAccount {
   id: string
-  installationId: string
+  orgId: string
   stripeCustomerId: string
   stripeSubscriptionId: string | null
   billingStatus: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
-  paymentIssue: boolean
+  hasPaymentIssue: boolean
   currentPeriodEnd: string | null
   createdAt: string
   updatedAt: string
@@ -12,8 +12,9 @@ export interface StripeCustomer {
 
 export interface SubscriptionItem {
   id: string
-  installationId: string
-  stripeSubscriptionItemId: string
+  orgId: string
+  installationId: string | null
+  stripeItemId: string
   stripePriceId: string
   tier: number
   productName: string

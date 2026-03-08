@@ -3,19 +3,19 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import {
-  getStripeCustomerByCustomerId,
+  getBillingAccountByCustomerId,
   isWebhookEventProcessed,
   markWebhookEventProcessed,
   syncSubscriptionItems,
   updateBillingStatus,
-  upsertStripeCustomer,
+  upsertBillingAccount,
 } from '@/lib/console/storage'
-import type { StripeCustomer } from '@/lib/console/storage'
+import type { BillingAccount } from '@/lib/console/storage'
 
 function mapStripeStatus(
   status: string,
   cancelAtPeriodEnd: boolean,
-): StripeCustomer['billingStatus'] {
+): BillingAccount['billingStatus'] {
   if (cancelAtPeriodEnd) return 'cancelled'
   switch (status) {
     case 'active':
@@ -36,7 +36,7 @@ function extractSubscriptionItems(subscription: Stripe.Subscription) {
     const product = item.price.product as Stripe.Product
     const tier = product.metadata?.tier ? parseInt(product.metadata.tier, 10) : 0
     return {
-      stripeSubscriptionItemId: item.id,
+      stripeItemId: item.id,
       stripePriceId: item.price.id,
       tier,
       productName: product.name,
@@ -49,9 +49,9 @@ async function handleCheckoutSessionCompleted(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
 ) {
-  const installationId = session.metadata?.installation_id
-  if (!installationId) {
-    console.error('checkout.session.completed: missing installation_id in metadata')
+  const orgId = session.metadata?.org_id
+  if (!orgId) {
+    console.error('checkout.session.completed: missing org_id in metadata')
     return
   }
 
@@ -77,8 +77,8 @@ async function handleCheckoutSessionCompleted(
   const firstItem = subscription.items.data[0]
   const periodEnd = firstItem?.current_period_end ?? null
 
-  await upsertStripeCustomer({
-    installationId,
+  await upsertBillingAccount({
+    orgId,
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscriptionId,
     billingStatus: mapStripeStatus(subscription.status, subscription.cancel_at_period_end),
@@ -88,7 +88,7 @@ async function handleCheckoutSessionCompleted(
   })
 
   const items = extractSubscriptionItems(subscription)
-  await syncSubscriptionItems(installationId, items)
+  await syncSubscriptionItems(orgId, items)
 }
 
 async function handleSubscriptionUpdated(
@@ -96,7 +96,7 @@ async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription,
 ) {
   const stripeCustomerId = subscription.customer as string
-  const customer = await getStripeCustomerByCustomerId(stripeCustomerId)
+  const customer = await getBillingAccountByCustomerId(stripeCustomerId)
   if (!customer) {
     console.error(
       'customer.subscription.updated: no matching customer for stripe_customer_id',
@@ -123,12 +123,12 @@ async function handleSubscriptionUpdated(
   })
 
   const items = extractSubscriptionItems(fullSubscription)
-  await syncSubscriptionItems(customer.installationId, items)
+  await syncSubscriptionItems(customer.orgId, items)
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const stripeCustomerId = subscription.customer as string
-  const customer = await getStripeCustomerByCustomerId(stripeCustomerId)
+  const customer = await getBillingAccountByCustomerId(stripeCustomerId)
   if (!customer) {
     console.error(
       'customer.subscription.deleted: no matching customer for stripe_customer_id',
@@ -138,7 +138,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   }
 
   await updateBillingStatus(stripeCustomerId, 'cancelled')
-  await syncSubscriptionItems(customer.installationId, [])
+  await syncSubscriptionItems(customer.orgId, [])
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -148,7 +148,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     return
   }
 
-  const customer = await getStripeCustomerByCustomerId(stripeCustomerId)
+  const customer = await getBillingAccountByCustomerId(stripeCustomerId)
   if (!customer) {
     console.error(
       'invoice.payment_failed: no matching customer for stripe_customer_id',

@@ -1,8 +1,17 @@
-import { test as setup } from '@playwright/test'
+import { test } from '@playwright/test'
 
-// Warm up: hit login page then dev-login to trigger compilation
-setup('warm up console dev server', async ({ page }) => {
-  await page.goto('/login')
-  await page.goto('/api/dev-login')
-  await page.waitForURL('**/installations', { timeout: 15_000 })
+/**
+ * Global setup for console tests.
+ * Hits key pages to pre-compile Turbopack chunks before real tests run.
+ */
+test('warm up console', async ({ page }) => {
+  // Hit login page to trigger initial compilation
+  await page.goto('/login', { waitUntil: 'domcontentloaded' })
+
+  // Hit dev-login to compile auth routes
+  await page.goto('/api/dev-login', { waitUntil: 'domcontentloaded' })
+  await page.waitForURL('**/installations', { timeout: 30_000 })
+
+  // Hit the new-kl-cloud page to compile billing form
+  await page.goto('/installations/new-kl-cloud', { waitUntil: 'domcontentloaded' })
 })
