@@ -5,6 +5,7 @@
 import type { Database } from '../supabase-types'
 import { supabase } from '../supabase'
 import type { Organization, OrganizationRow } from './types'
+import { ensureCreditAccount } from './credits'
 
 function mapToOrganization(row: OrganizationRow): Organization {
   return {
@@ -128,6 +129,14 @@ export async function createOrganization(
     const orgId = rpcData as string
     const org = await getOrganizationById(orgId)
     if (!org) throw new Error('Organization not found after creation')
+
+    // Create a zero-balance credit account for the new org
+    try {
+      await ensureCreditAccount(orgId)
+    } catch (err) {
+      console.error('Failed to create credit account for new org:', err)
+    }
+
     return org
   }
 
@@ -165,6 +174,13 @@ export async function createOrganization(
 
     if (memberError) {
       console.error('Error adding owner to organization_members:', memberError)
+    }
+
+    // Create a zero-balance credit account for the new org
+    try {
+      await ensureCreditAccount(org.id)
+    } catch (err) {
+      console.error('Failed to create credit account for new org:', err)
     }
 
     return org
