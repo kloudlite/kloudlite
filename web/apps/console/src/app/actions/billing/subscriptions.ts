@@ -12,10 +12,8 @@ interface SubscriptionModification {
 
 export interface ModifyResult {
   success: boolean
-  /** If set, the client must confirm payment with this secret (3D Secure) */
-  clientSecret?: string
-  /** The payment intent status */
-  paymentStatus?: string
+  /** Redirect URL for payment (hosted invoice page) */
+  url?: string
 }
 
 export async function modifySubscription(
@@ -63,33 +61,36 @@ export async function modifySubscription(
     throw new Error('No changes to apply')
   }
 
-  // Use default_incomplete so we can handle 3DS if needed
+  // Update subscription — payment_behavior: 'default_incomplete' so the invoice
+  // isn't auto-charged. We'll redirect the user to pay via hosted invoice page.
   const updatedSubscription = await stripe.subscriptions.update(
     stripeCustomer.stripeSubscriptionId,
     {
       items,
       proration_behavior: 'always_invoice',
       payment_behavior: 'default_incomplete',
-      expand: ['latest_invoice.payment_intent'],
     },
   )
 
   // Sync updated items back to DB
   await syncSubscriptionItemsFromStripe(installationId, stripeCustomer.stripeSubscriptionId)
 
-  // Check if the latest invoice needs 3DS authentication
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const invoice = updatedSubscription.latest_invoice as any
-  if (invoice && typeof invoice !== 'string') {
-    const paymentIntent = invoice.payment_intent
-    if (paymentIntent && typeof paymentIntent !== 'string') {
-      if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_confirmation') {
-        return {
-          success: false,
-          clientSecret: paymentIntent.client_secret ?? undefined,
-          paymentStatus: paymentIntent.status,
-        }
-      }
+  // Get the latest invoice and redirect to its hosted payment page
+  const invoiceId = typeof updatedSubscription.latest_invoice === 'string'
+    ? updatedSubscription.latest_invoice
+    : updatedSubscription.latest_invoice?.id
+
+  if (invoiceId) {
+    const invoice = await stripe.invoices.retrieve(invoiceId)
+
+    // If the invoice is open (needs payment), redirect to the hosted page
+    if (invoice.status === 'open' && invoice.hosted_invoice_url) {
+      return { success: false, url: invoice.hosted_invoice_url }
+    }
+
+    // If amount due is 0 (e.g., downgrade with credit), it's already paid
+    if (invoice.status === 'paid' || invoice.amount_due === 0) {
+      return { success: true }
     }
   }
 
