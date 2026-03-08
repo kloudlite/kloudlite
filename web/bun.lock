@@ -26,7 +26,6 @@
         "@hookform/resolvers": "^5.2.2",
         "@kloudlite/lib": "workspace:*",
         "@kloudlite/ui": "workspace:*",
-        "@stripe/stripe-js": "^8.9.0",
         "@supabase/supabase-js": "^2.47.10",
         "@tailwindcss/postcss": "^4.0.0",
         "jose": "^5.0.0",
@@ -743,8 +742,6 @@
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
     "@standard-schema/utils": ["@standard-schema/utils@0.3.0", "", {}, "sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g=="],
-
-    "@stripe/stripe-js": ["@stripe/stripe-js@8.9.0", "", {}, "sha512-OJkXvUI5GAc56QdiSRimQDvWYEqn475J+oj8RzRtFTCPtkJNO2TWW619oDY+nn1ExR+2tCVTQuRQBbR4dRugww=="],
 
     "@supabase/auth-js": ["@supabase/auth-js@2.94.1", "", { "dependencies": { "tslib": "2.8.1" } }, "sha512-Wt/SdmAtNNiqrcBbPlzWojLcE1bQ9OYb8PTaYF6QccFX5JeXZI0sZ01MLNE+E83UK6cK0lw4YznX0D2g08UQng=="],
 
