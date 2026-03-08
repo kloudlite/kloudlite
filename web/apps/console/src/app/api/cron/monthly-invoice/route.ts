@@ -23,10 +23,10 @@ export async function POST(request: NextRequest) {
 
   try {
     // 1. Get all orgs with credit accounts that have a stripeCustomerId
-    const { data: creditAccounts, error: fetchError } = await supabase
+    const { data: creditAccounts, error: fetchError } = await (supabase as any)
       .from('credit_accounts')
       .select('org_id, stripe_customer_id')
-      .not('stripe_customer_id', 'is', null)
+      .not('stripe_customer_id', 'is', null) as { data: { org_id: string; stripe_customer_id: string }[] | null; error: any }
 
     if (fetchError || !creditAccounts || creditAccounts.length === 0) {
       return NextResponse.json({ success: true, invoicesCreated: 0 })
