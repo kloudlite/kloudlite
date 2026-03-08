@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, getStripeCustomer, upsertStripeCustomer } from '@/lib/console/storage'
+import { getInstallationById, getStripeCustomer, upsertStripeCustomer, syncSubscriptionItemsFromStripe, getSubscriptionItems } from '@/lib/console/storage'
 import { getStripe } from '@/lib/stripe'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
@@ -102,6 +102,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         }
       } catch (err) {
         console.error('[continue] Failed to verify subscription with Stripe:', err)
+      }
+    }
+
+    // Sync subscription items if DB is empty (webhook may not have fired yet)
+    if (hasActiveSub) {
+      const existingItems = await getSubscriptionItems(id)
+      if (existingItems.length === 0 && customer?.stripeSubscriptionId) {
+        await syncSubscriptionItemsFromStripe(id, customer.stripeSubscriptionId)
       }
     }
 

@@ -4,6 +4,7 @@ import { SubscriptionManagement } from '@/components/billing/subscription-manage
 import {
   getStripeCustomer,
   getSubscriptionItems,
+  syncSubscriptionItemsFromStripe,
   getMemberRole,
   getInstallationById,
 } from '@/lib/console/storage'
@@ -40,10 +41,14 @@ export default async function BillingPage({ params }: BillingPageProps) {
   const currency = 'usd'
   const tierConfig = await getTierConfig(currency)
 
-  const [customer, items] = await Promise.all([
-    getStripeCustomer(id),
-    getSubscriptionItems(id),
-  ])
+  const customer = await getStripeCustomer(id)
+  let items = await getSubscriptionItems(id)
+
+  // Sync items from Stripe if DB is empty but subscription is active (webhook may not have fired)
+  if (items.length === 0 && customer?.stripeSubscriptionId && customer.billingStatus === 'active') {
+    await syncSubscriptionItemsFromStripe(id, customer.stripeSubscriptionId)
+    items = await getSubscriptionItems(id)
+  }
 
   return (
     <div className="space-y-6">
