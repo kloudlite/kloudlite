@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type {
   CreditAccount,
@@ -31,7 +30,6 @@ interface UseCreditsReturn {
 }
 
 export function useCredits(orgId: string): UseCreditsReturn {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<CreditsData | null>(null)
 

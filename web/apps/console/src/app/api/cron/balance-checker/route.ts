@@ -30,10 +30,10 @@ export async function POST(request: NextRequest) {
 
   try {
     // 1. Query all orgs with active usage periods
-    const { data: activeOrgs } = await supabase
+    const { data: activeOrgs } = await (supabase as any)
       .from('usage_periods')
       .select('org_id')
-      .is('ended_at', null)
+      .is('ended_at', null) as { data: { org_id: string }[] | null }
 
     if (!activeOrgs || activeOrgs.length === 0) {
       return NextResponse.json({ success: true, orgsProcessed: 0 })
