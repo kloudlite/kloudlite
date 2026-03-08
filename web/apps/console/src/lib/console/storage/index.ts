@@ -4,16 +4,17 @@
  * Provides atomic operations using SQL transactions
  * No eventual consistency - ACID guarantees
  *
- * Updated to support multiple installations per user
+ * Organizations own installations, members, and billing
  */
 
 export * from './types'
 export * from './users'
+export * from './organizations'
+export * from './org-members'
+export * from './org-invitations'
 export * from './installations'
-export * from './ip-records'
+export * from './dns-configurations'
 export * from './domains'
-export * from './members'
-export * from './invitations'
 export * from './magic-links'
 export * from './billing-types'
 export * from './billing'

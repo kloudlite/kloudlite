@@ -20,36 +20,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@kloudlite/ui'
-import { MoreHorizontal, Shield, User, Eye } from 'lucide-react'
+import { MoreHorizontal, Shield } from 'lucide-react'
 import { toast } from 'sonner'
-import type { InstallationMember, MemberRole } from '@/lib/console/storage'
+import type { OrgMember, OrgRole } from '@/lib/console/storage'
 
 interface TeamMembersTableProps {
-  members: InstallationMember[]
+  members: OrgMember[]
   currentUserId: string
-  userRole: MemberRole
-  installationId: string
+  userRole: OrgRole
+  orgId: string
 }
 
-const roleIcons: Record<MemberRole, React.ComponentType<{ className?: string }>> = {
+const roleIcons: Record<OrgRole, React.ComponentType<{ className?: string }>> = {
   owner: Shield,
   admin: Shield,
-  member: User,
-  viewer: Eye,
 }
 
-const roleColors: Record<MemberRole, string> = {
+const roleColors: Record<OrgRole, string> = {
   owner: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20',
   admin: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
-  member: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
-  viewer: 'bg-foreground/[0.06] text-foreground border border-foreground/10',
 }
 
 export function TeamMembersTable({
   members,
   currentUserId,
   userRole,
-  installationId,
+  orgId,
 }: TeamMembersTableProps) {
   const router = useRouter()
   const [removingMember, setRemovingMember] = useState<string | null>(null)
@@ -57,50 +53,6 @@ export function TeamMembersTable({
   const [announcement, setAnnouncement] = useState('')
 
   const canManage = userRole === 'owner' || userRole === 'admin'
-
-  const handleChangeRole = useCallback(
-    async (memberId: string, newRole: MemberRole) => {
-      try {
-        const response = await fetch(
-          `/api/installations/${installationId}/team/members/${memberId}`,
-          {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role: newRole }),
-          },
-        )
-
-        if (!response.ok) throw new Error('Failed to update role')
-        setAnnouncement(`Member role updated to ${newRole}.`)
-        router.refresh()
-      } catch {
-        toast.error('Failed to update member role')
-        setAnnouncement('Failed to update member role.')
-      }
-    },
-    [installationId, router],
-  )
-
-  const handleChangeRoleToAdmin = useCallback(
-    (memberId: string) => {
-      handleChangeRole(memberId, 'admin')
-    },
-    [handleChangeRole],
-  )
-
-  const handleChangeRoleToMember = useCallback(
-    (memberId: string) => {
-      handleChangeRole(memberId, 'member')
-    },
-    [handleChangeRole],
-  )
-
-  const handleChangeRoleToViewer = useCallback(
-    (memberId: string) => {
-      handleChangeRole(memberId, 'viewer')
-    },
-    [handleChangeRole],
-  )
 
   const handleSetMemberToRemove = useCallback((memberId: string, memberName: string) => {
     setMemberToRemove({ id: memberId, name: memberName })
@@ -112,7 +64,7 @@ export function TeamMembersTable({
     setRemovingMember(memberToRemove.id)
     try {
       const response = await fetch(
-        `/api/installations/${installationId}/team/members/${memberToRemove.id}`,
+        `/api/orgs/${orgId}/members/${memberToRemove.id}`,
         { method: 'DELETE' },
       )
 
@@ -186,7 +138,7 @@ export function TeamMembersTable({
                     </span>
                   </td>
                   <td className="text-muted-foreground px-6 py-3.5 text-sm">
-                    {new Date(member.addedAt).toLocaleDateString()}
+                    {new Date(member.createdAt).toLocaleDateString()}
                   </td>
                   {canManage && (
                     <td className="px-6 py-3.5 text-right">
@@ -198,28 +150,6 @@ export function TeamMembersTable({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            {userRole === 'owner' && (
-                              <>
-                                <DropdownMenuItem
-                                  onClick={() => handleChangeRoleToAdmin(member.id)}
-                                  disabled={member.role === 'admin'}
-                                >
-                                  Change to Admin
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleChangeRoleToMember(member.id)}
-                                  disabled={member.role === 'member'}
-                                >
-                                  Change to Member
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleChangeRoleToViewer(member.id)}
-                                  disabled={member.role === 'viewer'}
-                                >
-                                  Change to Viewer
-                                </DropdownMenuItem>
-                              </>
-                            )}
                             <DropdownMenuItem
                               onClick={() =>
                                 handleSetMemberToRemove(member.id, member.userName || '')
@@ -254,7 +184,7 @@ export function TeamMembersTable({
             <AlertDialogDescription>
               Are you sure you want to remove{' '}
               <span className="text-foreground font-semibold">{memberToRemove?.name}</span> from
-              this installation? This action cannot be undone.
+              this organization? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

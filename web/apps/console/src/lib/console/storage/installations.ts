@@ -1,13 +1,51 @@
 /**
  * Installation Management Functions
+ * Installations belong to organizations (org_id), not users directly.
  */
 
 import type { Database } from '../supabase-types'
 import { supabase } from '../supabase'
-import type { Installation, InstallationRow, IPRecordRow } from './types'
+import type { Installation, InstallationRow, DnsConfigurationRow } from './types'
+
+function mapToInstallation(data: InstallationRow, dnsConfigurations: DnsConfigurationRow[] = []): Installation {
+  return {
+    id: data.id,
+    orgId: data.org_id,
+    name: data.name || undefined,
+    description: data.description || undefined,
+    installationKey: data.installation_key,
+    secretKey: data.secret_key || undefined,
+    setupCompleted: data.setup_completed,
+    subdomain: data.subdomain || undefined,
+    reservedAt: data.reserved_at || undefined,
+    deploymentReady: data.deployment_ready || undefined,
+    lastHealthCheck: data.last_health_check || undefined,
+    cloudProvider: data.cloud_provider || undefined,
+    cloudLocation: data.cloud_location || undefined,
+    deployJobExecutionName: data.deploy_job_execution_name || undefined,
+    deployJobStatus: data.deploy_job_status || undefined,
+    deployJobStartedAt: data.deploy_job_started_at || undefined,
+    deployJobCompletedAt: data.deploy_job_completed_at || undefined,
+    deployJobError: data.deploy_job_error || undefined,
+    deployJobOperation: data.deploy_job_operation || undefined,
+    deployJobCurrentStep: data.deploy_job_current_step ?? undefined,
+    deployJobTotalSteps: data.deploy_job_total_steps ?? undefined,
+    deployJobStepDescription: data.deploy_job_step_description || undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    dnsConfigurations: dnsConfigurations.map((ip) => ({
+      serviceName: ip.service_name,
+      ip: ip.ip,
+      sshRecordId: ip.ssh_record_id || undefined,
+      routeRecordIds: ip.route_record_ids || undefined,
+      routeRecordMap: ip.route_record_map || undefined,
+      domainRoutes: ip.domain_routes || undefined,
+    })),
+  }
+}
 
 /**
- * Get installation by ID with IP records
+ * Get installation by ID with dns_configurations
  */
 export async function getInstallationById(installationId: string): Promise<Installation | null> {
   const result = await supabase.from('installations').select('*').eq('id', installationId).single()
@@ -21,48 +59,12 @@ export async function getInstallationById(installationId: string): Promise<Insta
   const data = result.data as InstallationRow | null
   if (!data) return null
 
-  // Fetch IP records
   const ipResult = await supabase
-    .from('ip_records')
+    .from('dns_configurations')
     .select('*')
     .eq('installation_id', installationId)
 
-  return {
-    id: data.id,
-    userId: data.user_id,
-    name: data.name || undefined,
-    description: data.description || undefined,
-    installationKey: data.installation_key,
-    secretKey: data.secret_key || undefined,
-    hasCompletedInstallation: data.has_completed_installation,
-    subdomain: data.subdomain || undefined,
-    reservedAt: data.reserved_at || undefined,
-    deploymentReady: data.deployment_ready || undefined,
-    lastHealthCheck: data.last_health_check || undefined,
-    cloudProvider: data.cloud_provider || undefined,
-    cloudLocation: data.cloud_location || undefined,
-    acaJobExecutionName: data.aca_job_execution_name || undefined,
-    acaJobStatus: data.aca_job_status || undefined,
-    acaJobStartedAt: data.aca_job_started_at || undefined,
-    acaJobCompletedAt: data.aca_job_completed_at || undefined,
-    acaJobError: data.aca_job_error || undefined,
-    acaJobOperation: data.aca_job_operation || undefined,
-    acaJobCurrentStep: data.aca_job_current_step ?? undefined,
-    acaJobTotalSteps: data.aca_job_total_steps ?? undefined,
-    acaJobStepDescription: data.aca_job_step_description || undefined,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    ipRecords:
-      ((ipResult.data || []) as IPRecordRow[]).map((ip) => ({
-        domainRequestName: ip.domain_request_name,
-        ip: ip.ip,
-        configuredAt: ip.configured_at,
-        sshRecordId: ip.ssh_record_id || undefined,
-        routeRecordIds: ip.route_record_ids || undefined,
-        routeRecordMap: ip.route_record_map || undefined,
-        domainRoutes: ip.domain_routes || undefined,
-      })) || [],
-  }
+  return mapToInstallation(data, (ipResult.data || []) as DnsConfigurationRow[])
 }
 
 /**
@@ -111,148 +113,59 @@ export async function getInstallationBySecretKey(secretKey: string): Promise<Ins
 }
 
 /**
- * Get all installations for a user (owned + member of)
+ * Get all installations for an organization
  */
-export async function getUserInstallations(userId: string): Promise<Installation[]> {
-  // Get installations owned by the user
-  const ownedResult = await supabase
+export async function getOrgInstallations(orgId: string): Promise<Installation[]> {
+  const { data, error } = await supabase
     .from('installations')
     .select('*')
-    .eq('user_id', userId)
+    .eq('org_id', orgId)
     .order('created_at', { ascending: false })
 
-  if (ownedResult.error) {
-    console.error('Error getting owned installations:', ownedResult.error)
+  if (error) {
+    console.error('Error getting org installations:', error)
+    return []
   }
 
-  const ownedInstallations = (ownedResult.data || []) as InstallationRow[]
+  const installations = (data || []) as InstallationRow[]
 
-  // Get installation IDs where the user is a member
-  const memberResult = await supabase
-    .from('installation_members')
-    .select('installation_id')
-    .eq('user_id', userId)
-
-  if (memberResult.error) {
-    console.error('Error getting member installations:', memberResult.error)
-  }
-
-  const memberInstallationIds = (memberResult.data || []).map((m: { installation_id: string }) => m.installation_id)
-
-  // Get owned installation IDs
-  const ownedIds = new Set(ownedInstallations.map((i) => i.id))
-
-  // Filter to only IDs not already owned
-  const additionalIds = memberInstallationIds.filter((id: string) => !ownedIds.has(id))
-
-  // Fetch additional installations where user is a member but not owner
-  let memberInstallations: InstallationRow[] = []
-  if (additionalIds.length > 0) {
-    const additionalResult = await supabase
-      .from('installations')
-      .select('*')
-      .in('id', additionalIds)
-      .order('created_at', { ascending: false })
-
-    if (additionalResult.error) {
-      console.error('Error getting additional installations:', additionalResult.error)
-    } else {
-      memberInstallations = (additionalResult.data || []) as InstallationRow[]
-    }
-  }
-
-  // Combine owned and member installations
-  const allInstallations = [...ownedInstallations, ...memberInstallations]
-
-  // Fetch IP records for all installations in parallel
-  const installationsWithIpRecords = await Promise.all(
-    allInstallations.map(async (inst) => {
-      const ipResult = await supabase.from('ip_records').select('*').eq('installation_id', inst.id)
-
-      return {
-        id: inst.id,
-        userId: inst.user_id,
-        name: inst.name || undefined,
-        description: inst.description || undefined,
-        installationKey: inst.installation_key,
-        secretKey: inst.secret_key || undefined,
-        hasCompletedInstallation: inst.has_completed_installation,
-        subdomain: inst.subdomain || undefined,
-        reservedAt: inst.reserved_at || undefined,
-        deploymentReady: inst.deployment_ready || undefined,
-        lastHealthCheck: inst.last_health_check || undefined,
-        cloudProvider: inst.cloud_provider || undefined,
-        cloudLocation: inst.cloud_location || undefined,
-        acaJobExecutionName: inst.aca_job_execution_name || undefined,
-        acaJobStatus: inst.aca_job_status || undefined,
-        acaJobStartedAt: inst.aca_job_started_at || undefined,
-        acaJobCompletedAt: inst.aca_job_completed_at || undefined,
-        acaJobError: inst.aca_job_error || undefined,
-        acaJobOperation: inst.aca_job_operation || undefined,
-        acaJobCurrentStep: inst.aca_job_current_step ?? undefined,
-        acaJobTotalSteps: inst.aca_job_total_steps ?? undefined,
-        acaJobStepDescription: inst.aca_job_step_description || undefined,
-        createdAt: inst.created_at,
-        updatedAt: inst.updated_at,
-        ipRecords:
-          ((ipResult.data || []) as IPRecordRow[]).map((ip) => ({
-            domainRequestName: ip.domain_request_name,
-            ip: ip.ip,
-            configuredAt: ip.configured_at,
-            sshRecordId: ip.ssh_record_id || undefined,
-            routeRecordIds: ip.route_record_ids || undefined,
-            routeRecordMap: ip.route_record_map || undefined,
-            domainRoutes: ip.domain_routes || undefined,
-          })) || [],
-      }
+  // Fetch dns_configurations for all installations in parallel
+  return Promise.all(
+    installations.map(async (inst) => {
+      const ipResult = await supabase.from('dns_configurations').select('*').eq('installation_id', inst.id)
+      return mapToInstallation(inst, (ipResult.data || []) as DnsConfigurationRow[])
     }),
   )
-
-  return installationsWithIpRecords
 }
 
 /**
- * Get only valid (non-expired) installations for a user
+ * Get only valid (non-expired) installations for an organization
  */
-export async function getValidUserInstallations(userId: string): Promise<Installation[]> {
-  const allInstallations = await getUserInstallations(userId)
+export async function getValidOrgInstallations(orgId: string): Promise<Installation[]> {
+  const allInstallations = await getOrgInstallations(orgId)
   return allInstallations.filter(isInstallationValid)
 }
 
 /**
- * Cleanup expired installations for a user
+ * Cleanup expired installations for an organization
  * Deletes installations that:
  * 1. Are not deployment ready (domain not registered)
  * 2. Were created more than 15 minutes ago
  *
- * Also cleans up related records (domain_reservations, ip_records)
+ * Also cleans up related records (domain_reservations, dns_configurations)
  * Returns the number of installations deleted
  */
-export async function cleanupExpiredInstallations(userId: string): Promise<number> {
-  const allInstallations = await getUserInstallations(userId)
+export async function cleanupExpiredInstallations(orgId: string): Promise<number> {
+  const allInstallations = await getOrgInstallations(orgId)
   const expiredInstallations = allInstallations.filter(inst => !isInstallationValid(inst))
 
   let deletedCount = 0
 
   for (const installation of expiredInstallations) {
     try {
-      // Delete domain reservation
-      await supabase
-        .from('domain_reservations')
-        .delete()
-        .eq('installation_id', installation.id)
-
-      // Delete IP records
-      await supabase
-        .from('ip_records')
-        .delete()
-        .eq('installation_id', installation.id)
-
-      // Delete the installation itself
-      await supabase
-        .from('installations')
-        .delete()
-        .eq('id', installation.id)
+      await supabase.from('domain_reservations').delete().eq('installation_id', installation.id)
+      await supabase.from('dns_configurations').delete().eq('installation_id', installation.id)
+      await supabase.from('installations').delete().eq('id', installation.id)
 
       deletedCount++
       console.log(`Cleaned up expired installation: ${installation.id} (${installation.name})`)
@@ -265,10 +178,10 @@ export async function cleanupExpiredInstallations(userId: string): Promise<numbe
 }
 
 /**
- * Create a new installation
+ * Create a new installation within an organization
  */
 export async function createInstallation(
-  userId: string,
+  orgId: string,
   name: string,
   description: string | undefined,
   installationKey: string,
@@ -277,11 +190,11 @@ export async function createInstallation(
   type InstallationInsert = Database['public']['Tables']['installations']['Insert']
 
   const insertData: InstallationInsert = {
-    user_id: userId,
+    org_id: orgId,
     name: name,
     description: description,
     installation_key: installationKey,
-    has_completed_installation: false,
+    setup_completed: false,
     subdomain: subdomain || null,
   }
 
@@ -299,38 +212,7 @@ export async function createInstallation(
 
   const data = result.data as InstallationRow
 
-  // Add the creator as owner in installation_members
-  const memberResult = await supabase
-    .from('installation_members')
-    // @ts-expect-error — Supabase generic inference resolves mutations to never
-    .insert({
-      installation_id: data.id,
-      user_id: userId,
-      role: 'owner' as const,
-      added_by: userId,
-    })
-
-  if (memberResult.error) {
-    console.error('Error adding owner to installation_members:', memberResult.error)
-    // Don't throw - the installation is created, member just failed to be added
-  }
-
-  return {
-    id: data.id,
-    userId: data.user_id,
-    name: data.name || undefined,
-    description: data.description || undefined,
-    installationKey: data.installation_key,
-    secretKey: data.secret_key || undefined,
-    hasCompletedInstallation: data.has_completed_installation,
-    subdomain: data.subdomain || undefined,
-    reservedAt: data.reserved_at || undefined,
-    deploymentReady: data.deployment_ready || undefined,
-    lastHealthCheck: data.last_health_check || undefined,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    ipRecords: [],
-  }
+  return mapToInstallation(data)
 }
 
 /**
@@ -345,8 +227,8 @@ export async function updateInstallation(
   const updateData: InstallationUpdate = {}
 
   if (updates.secretKey !== undefined) updateData.secret_key = updates.secretKey || null
-  if (updates.hasCompletedInstallation !== undefined)
-    updateData.has_completed_installation = updates.hasCompletedInstallation
+  if (updates.setupCompleted !== undefined)
+    updateData.setup_completed = updates.setupCompleted
   if (updates.subdomain !== undefined) updateData.subdomain = updates.subdomain || null
   if (updates.reservedAt !== undefined) updateData.reserved_at = updates.reservedAt || null
   if (updates.deploymentReady !== undefined)
@@ -357,24 +239,24 @@ export async function updateInstallation(
     updateData.cloud_provider = updates.cloudProvider || null
   if (updates.cloudLocation !== undefined)
     updateData.cloud_location = updates.cloudLocation || null
-  if (updates.acaJobExecutionName !== undefined)
-    updateData.aca_job_execution_name = updates.acaJobExecutionName || null
-  if (updates.acaJobStatus !== undefined)
-    updateData.aca_job_status = updates.acaJobStatus || null
-  if (updates.acaJobStartedAt !== undefined)
-    updateData.aca_job_started_at = updates.acaJobStartedAt || null
-  if (updates.acaJobCompletedAt !== undefined)
-    updateData.aca_job_completed_at = updates.acaJobCompletedAt || null
-  if (updates.acaJobError !== undefined)
-    updateData.aca_job_error = updates.acaJobError || null
-  if (updates.acaJobOperation !== undefined)
-    updateData.aca_job_operation = updates.acaJobOperation || null
-  if (updates.acaJobCurrentStep !== undefined)
-    updateData.aca_job_current_step = updates.acaJobCurrentStep ?? null
-  if (updates.acaJobTotalSteps !== undefined)
-    updateData.aca_job_total_steps = updates.acaJobTotalSteps ?? null
-  if (updates.acaJobStepDescription !== undefined)
-    updateData.aca_job_step_description = updates.acaJobStepDescription || null
+  if (updates.deployJobExecutionName !== undefined)
+    updateData.deploy_job_execution_name = updates.deployJobExecutionName || null
+  if (updates.deployJobStatus !== undefined)
+    updateData.deploy_job_status = updates.deployJobStatus || null
+  if (updates.deployJobStartedAt !== undefined)
+    updateData.deploy_job_started_at = updates.deployJobStartedAt || null
+  if (updates.deployJobCompletedAt !== undefined)
+    updateData.deploy_job_completed_at = updates.deployJobCompletedAt || null
+  if (updates.deployJobError !== undefined)
+    updateData.deploy_job_error = updates.deployJobError || null
+  if (updates.deployJobOperation !== undefined)
+    updateData.deploy_job_operation = updates.deployJobOperation || null
+  if (updates.deployJobCurrentStep !== undefined)
+    updateData.deploy_job_current_step = updates.deployJobCurrentStep ?? null
+  if (updates.deployJobTotalSteps !== undefined)
+    updateData.deploy_job_total_steps = updates.deployJobTotalSteps ?? null
+  if (updates.deployJobStepDescription !== undefined)
+    updateData.deploy_job_step_description = updates.deployJobStepDescription || null
 
   const { error } = await supabase
     .from('installations')
@@ -394,11 +276,6 @@ export async function updateInstallation(
 }
 
 /**
- * Atomically acquire a job lock for an installation.
- * Uses a conditional UPDATE that only succeeds if no job is currently running/pending.
- * Returns true if the lock was acquired, false if a job is already running.
- */
-/**
  * Atomically mark installation complete with optional secret key
  */
 export async function markInstallationComplete(
@@ -406,7 +283,7 @@ export async function markInstallationComplete(
   secretKey?: string,
 ): Promise<Installation> {
   return updateInstallation(installationId, {
-    hasCompletedInstallation: true,
+    setupCompleted: true,
     secretKey,
   })
 }
@@ -421,21 +298,18 @@ export async function updateHealthCheck(installationId: string): Promise<Install
 }
 
 /**
- * Delete an installation and its related IP records
+ * Delete an installation and its related dns_configurations
  */
 export async function deleteInstallation(installationId: string): Promise<void> {
-  // First delete related IP records
   const { error: ipError } = await supabase
-    .from('ip_records')
+    .from('dns_configurations')
     .delete()
     .eq('installation_id', installationId)
 
   if (ipError) {
-    console.error('Error deleting IP records:', ipError)
-    // Continue anyway - we still want to try to delete the installation
+    console.error('Error deleting dns_configurations:', ipError)
   }
 
-  // Delete the installation
   const { error } = await supabase.from('installations').delete().eq('id', installationId)
 
   if (error) {
@@ -452,7 +326,6 @@ export async function markDeploymentReady(installationId: string, ready: boolean
 
 /**
  * Update root DNS info for an installation
- * Supports both CNAME (for load balancers) and A records (for direct IPs)
  */
 export async function updateInstallationRootDns(
   installationId: string,
@@ -489,7 +362,7 @@ export async function resetInstallation(installationId: string): Promise<void> {
       subdomain: null,
       reserved_at: null,
       secret_key: null,
-      has_completed_installation: false,
+      setup_completed: false,
       deployment_ready: false,
       last_health_check: null,
     })
@@ -505,16 +378,15 @@ const INSTALLATION_VALIDITY_MS = 15 * 60 * 1000
 
 /**
  * Check if an installation is still valid
- * An installation is valid if:
- * 1. It has completed deployment (deploymentReady === true), OR
- * 2. It was created within the last 15 minutes
  */
 function isInstallationValid(installation: Installation): boolean {
-  // If domain is registered and deployment is ready, it's always valid
   if (installation.deploymentReady) {
     return true
   }
-  // Otherwise, check if within 15-minute validity window
+  // Installations that have completed setup (paid) are always valid
+  if (installation.setupCompleted) {
+    return true
+  }
   const createdAt = new Date(installation.createdAt).getTime()
   const now = Date.now()
   return (now - createdAt) < INSTALLATION_VALIDITY_MS

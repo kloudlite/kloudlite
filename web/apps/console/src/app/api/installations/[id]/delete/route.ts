@@ -1,25 +1,25 @@
 import { NextResponse } from 'next/server'
 import { apiError, apiCatchError } from '@/lib/api-helpers'
-import { requireOwnerPermission } from '@/lib/console/authorization'
+import { requireInstallationOwner } from '@/lib/console/authorization'
 import {
   getInstallationById,
   deleteInstallation,
-  deleteIpRecords,
+  deleteDnsConfigurations,
   deleteDomainReservation,
-  cancelStripeSubscriptionForInstallation,
 } from '@/lib/console/storage'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 
 /**
  * Delete installation API route
  * Cleans up DNS records from Cloudflare before deleting from database
+ * Note: billing is managed at the org level — no subscription cancellation on installation delete
  */
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
     // Only owner can delete installation
-    await requireOwnerPermission(id)
+    await requireInstallationOwner(id)
 
     // Fetch the installation for DNS cleanup
     const installation = await getInstallationById(id)
@@ -29,8 +29,8 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     }
     // Guard against delete while uninstall is actively running
     if (
-      installation.acaJobOperation === 'uninstall' &&
-      (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending')
+      installation.deployJobOperation === 'uninstall' &&
+      (installation.deployJobStatus === 'running' || installation.deployJobStatus === 'pending')
     ) {
       return apiError('Cannot delete while uninstall is in progress', 409)
     }
@@ -38,7 +38,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     console.log(`Deleting installation: ${id}`)
 
     // Step 1: Get all DNS record IDs and delete IP records from database
-    const dnsRecordIds = await deleteIpRecords(id)
+    const dnsRecordIds = await deleteDnsConfigurations(id)
     console.log(`Found ${dnsRecordIds.length} DNS records to delete`)
 
     // Step 2: Delete DNS records from Cloudflare
@@ -60,10 +60,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
       // Continue anyway
     }
 
-    // Step 4: Cancel Stripe subscription (before deleting DB rows)
-    await cancelStripeSubscriptionForInstallation(id)
-
-    // Step 5: Delete the installation from database
+    // Step 4: Delete the installation from database
     await deleteInstallation(id)
     console.log(`Installation deleted: ${id}`)
 

@@ -1,11 +1,14 @@
 import { redirect } from 'next/navigation'
 import {
-  getValidUserInstallations,
-  getActiveSubscriptionsByInstallationIds,
+  getValidOrgInstallations,
+  getUserOrganizations,
+  getBillingAccount,
+  getUserPendingOrgInvitations,
   type Installation,
-  type StripeCustomer,
+  type BillingAccount,
 } from '@/lib/console/storage'
 import { getRegistrationSession } from '@/lib/console-auth'
+import { getSelectedOrg } from '@/lib/console/get-selected-org'
 import { InstallationsList } from '@/components/installations-list'
 import { InstallationsHeader } from '@/components/installations-header'
 import { PendingInvitationsBanner } from '@/components/pending-invitations-banner'
@@ -20,24 +23,38 @@ export default async function InstallationsPage() {
     redirect('/login')
   }
 
-  // Fetch user's valid (non-expired) installations from database
+  // Fetch pending invitations server-side
+  const pendingInvitations = await getUserPendingOrgInvitations(session.user.email)
+
+  // Get selected org (handles auto-creation for users with no orgs)
+  const currentOrg = await getSelectedOrg(session.user.id, session.user.name, session.user.email)
+  const orgs = await getUserOrganizations(session.user.id)
+
+  // Fetch installations for the selected org
   let installations: Installation[] = []
-  let activeSubscriptions: Record<string, StripeCustomer> = {}
-  try {
-    installations = await getValidUserInstallations(session.user.id)
-    if (installations.length > 0) {
-      const ids = installations.map((i) => i.id)
-      activeSubscriptions = await getActiveSubscriptionsByInstallationIds(ids)
+  let activeSubscriptions: Record<string, BillingAccount> = {}
+  if (currentOrg) {
+    try {
+      installations = await getValidOrgInstallations(currentOrg.id)
+      const billingAccount = await getBillingAccount(currentOrg.id)
+      if (billingAccount) {
+        installations.forEach((i) => {
+          activeSubscriptions[i.id] = billingAccount
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching installations:', error)
     }
-  } catch (error) {
-    console.error('Error fetching installations:', error)
-    installations = []
   }
 
   return (
     <div className="bg-background h-screen flex flex-col">
-      <InstallationsHeader user={session.user} />
-      <PendingInvitationsBanner />
+      <InstallationsHeader
+        user={session.user}
+        orgs={orgs.map((o) => ({ id: o.id, name: o.name, slug: o.slug }))}
+        currentOrgId={currentOrg?.id}
+      />
+      <PendingInvitationsBanner initialInvitations={pendingInvitations} />
 
       <ScrollArea className="flex-1">
         <main className="mx-auto max-w-7xl px-6 lg:px-12 py-8">

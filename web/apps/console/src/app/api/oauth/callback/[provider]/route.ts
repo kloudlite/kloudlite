@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { SignJWT } from 'jose'
 import {
-  saveUserRegistration,
+  saveUser,
   getUserByEmail,
-  type UserRegistration,
+  createOrganization,
+  type User,
 } from '@/lib/console/storage'
 
 // Use Node.js runtime for Supabase (uses Node.js APIs)
@@ -256,7 +257,7 @@ export async function GET(
   // Check if user already exists by email
   const existingUser = await getUserByEmail(email)
 
-  let userRegistration: UserRegistration
+  let user: User
 
   if (existingUser) {
     // User already exists
@@ -272,14 +273,14 @@ export async function GET(
       console.log('Adding new provider:', currentProvider)
 
       try {
-        await saveUserRegistration(existingUser)
+        await saveUser(existingUser)
         console.log('Updated providers array for:', email)
       } catch (error) {
         console.error('Failed to update providers:', error)
       }
     }
 
-    userRegistration = existingUser
+    user = existingUser
   } else {
     // New user - create user registration
     console.log('New user registration:', email)
@@ -288,19 +289,35 @@ export async function GET(
       | 'github'
       | 'google'
       | 'azure-ad'
-    userRegistration = {
+    user = {
       userId,
       email,
       name,
       providers: [normalizedProvider],
-      registeredAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
     try {
-      await saveUserRegistration(userRegistration)
+      await saveUser(user)
       console.log('Saved new user registration for:', email)
+
+      // Auto-create a default organization for new users
+      try {
+        const baseSlug = (user.name || user.email.split('@')[0])
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 50)
+        let slug = /^[a-z]/.test(baseSlug) ? baseSlug : `org-${baseSlug}`
+        if (slug.length < 3) slug = `${slug}-org`
+
+        await createOrganization(user.userId, `${user.name}'s Organization`, slug)
+      } catch (orgError) {
+        // Log but don't block login — org creation is best-effort on signup
+        console.error('Failed to auto-create organization:', orgError)
+      }
     } catch (error) {
       console.error('Failed to save user registration:', error)
       // Continue anyway - user can retry
@@ -311,11 +328,11 @@ export async function GET(
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
   const token = await new SignJWT({
     provider: provider, // Current provider used for login
-    providers: userRegistration.providers, // All providers user has used
-    email: userRegistration.email,
-    name: userRegistration.name,
+    providers: user.providers, // All providers user has used
+    email: user.email,
+    name: user.name,
     image: userInfo.avatar,
-    userId: userRegistration.userId,
+    userId: user.userId,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

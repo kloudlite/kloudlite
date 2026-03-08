@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       secretKey: updatedInstallation.secretKey,
       subdomain: updatedInstallation.subdomain,
       deploymentReady: updatedInstallation.deploymentReady || false,
-      ipRecords: updatedInstallation.ipRecords || [],
+      dnsConfigurations: updatedInstallation.dnsConfigurations || [],
       cloudProvider: updatedInstallation.cloudProvider || null,
     })
 

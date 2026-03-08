@@ -18,7 +18,6 @@ import {
 } from '@kloudlite/ui'
 import { Loader2, CheckCircle2, AlertCircle, Minus, Plus, Cpu, HardDrive, Clock, Zap } from 'lucide-react'
 import { toast } from 'sonner'
-import { createCheckoutSession } from '@/app/actions/billing/checkout'
 import { formatCurrency } from '@/lib/billing-utils'
 import { getErrorMessage } from '@/lib/errors'
 import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
@@ -51,12 +50,14 @@ const TIER_SPECS: Record<number, { cpu: string; ram: string; storage: string; mo
 }
 
 interface KlCloudInstallationFormProps {
+  orgId: string
   existingInstallationId?: string
   tierConfig: TierConfigItem[]
   currency: string
 }
 
 export function KlCloudInstallationForm({
+  orgId,
   existingInstallationId,
   tierConfig,
   currency,
@@ -133,6 +134,7 @@ export function KlCloudInstallationForm({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            orgId,
             name: data.name,
             description: data.description || undefined,
             subdomain: data.subdomain,
@@ -162,7 +164,18 @@ export function KlCloudInstallationForm({
       }
 
       // Step 3: Create Stripe Checkout Session and redirect
-      const { url } = await createCheckoutSession(installationId, allocations)
+      const checkoutRes = await fetch(`/api/orgs/${orgId}/billing/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ installationId, allocations }),
+      })
+
+      if (!checkoutRes.ok) {
+        const errorData = await checkoutRes.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to start checkout')
+      }
+
+      const { url } = await checkoutRes.json()
       if (url) {
         window.location.href = url
       } else {

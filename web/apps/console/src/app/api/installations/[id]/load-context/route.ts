@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, getMemberRole } from '@/lib/console/storage'
+import { requireInstallationAccess } from '@/lib/console/authorization'
+import { getInstallationById } from '@/lib/console/storage'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 
@@ -16,19 +17,15 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return apiError('Unauthorized', 401)
   }
 
+  // Verify user has access via org membership
+  const { role } = await requireInstallationAccess(id)
+  const isOwner = role === 'owner'
+
   // Fetch the installation
   const installation = await getInstallationById(id)
 
   if (!installation) {
     return apiError('Installation not found', 404)
-  }
-
-  // Check if user has access to this installation (owner or team member)
-  const isOwner = installation.userId === session.user.id
-  const userRole = await getMemberRole(id, session.user.id)
-
-  if (!isOwner && !userRole) {
-    return apiError('Access denied', 403)
   }
 
   // Update session cookie. Only owners get installationKey context for installer callbacks.

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { apiError, apiCatchError } from '@/lib/api-helpers'
-import { requireOwnerPermission } from '@/lib/console/authorization'
+import { requireInstallationOwner } from '@/lib/console/authorization'
 import { getInstallationById, updateInstallation } from '@/lib/console/storage'
 import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
 
@@ -10,7 +10,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const { id } = await params
 
   try {
-    await requireOwnerPermission(id)
+    await requireInstallationOwner(id)
 
     const installation = await getInstallationById(id)
     if (!installation) {
@@ -23,13 +23,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     // If a job is already running and not stale, return existing execution
     if (
-      (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
-      installation.acaJobStartedAt &&
-      Date.now() - new Date(installation.acaJobStartedAt).getTime() < STALE_TIMEOUT_MS
+      (installation.deployJobStatus === 'running' || installation.deployJobStatus === 'pending') &&
+      installation.deployJobStartedAt &&
+      Date.now() - new Date(installation.deployJobStartedAt).getTime() < STALE_TIMEOUT_MS
     ) {
       return NextResponse.json({
         success: true,
-        executionName: installation.acaJobExecutionName,
+        executionName: installation.deployJobExecutionName,
         message: 'Job already running',
       })
     }
@@ -58,15 +58,15 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     })
 
     await updateInstallation(id, {
-      acaJobExecutionName: result.executionName,
-      acaJobStatus: 'running',
-      acaJobStartedAt: new Date().toISOString(),
-      acaJobCompletedAt: undefined,
-      acaJobError: undefined,
-      acaJobOperation: 'uninstall',
-      acaJobCurrentStep: 0,
-      acaJobTotalSteps: 4,
-      acaJobStepDescription: 'Starting uninstallation...',
+      deployJobExecutionName: result.executionName,
+      deployJobStatus: 'running',
+      deployJobStartedAt: new Date().toISOString(),
+      deployJobCompletedAt: undefined,
+      deployJobError: undefined,
+      deployJobOperation: 'uninstall',
+      deployJobCurrentStep: 0,
+      deployJobTotalSteps: 4,
+      deployJobStepDescription: 'Starting uninstallation...',
     })
 
     return NextResponse.json({ success: true, executionName: result.executionName })

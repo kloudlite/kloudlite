@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, getStripeCustomer, upsertStripeCustomer, syncSubscriptionItemsFromStripe, getSubscriptionItems } from '@/lib/console/storage'
+import { requireInstallationAccess } from '@/lib/console/authorization'
+import { getInstallationById, getBillingAccount, upsertBillingAccount, syncSubscriptionItemsFromStripe, getSubscriptionItems } from '@/lib/console/storage'
 import { getStripe } from '@/lib/stripe'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
@@ -23,16 +24,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.redirect(new URL('/login', origin))
   }
 
+  // Verify user has access via org membership
+  let orgId: string
+  try {
+    const context = await requireInstallationAccess(id)
+    orgId = context.orgId
+  } catch {
+    return NextResponse.redirect(new URL('/installations', origin))
+  }
+
   // Fetch the installation
   const installation = await getInstallationById(id)
 
   if (!installation) {
     console.error('Installation not found:', id)
-    return NextResponse.redirect(new URL('/installations', origin))
-  }
-
-  // Verify user owns this installation
-  if (installation.userId !== session.user.id) {
     return NextResponse.redirect(new URL('/installations', origin))
   }
 
@@ -72,8 +77,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   let redirectPath: string
 
   if (isKloudliteCloud) {
-    // Kloudlite Cloud — check Stripe subscription before deploy
-    let customer = await getStripeCustomer(id)
+    // Kloudlite Cloud — check Stripe subscription at org level
+    let customer = await getBillingAccount(orgId)
     let hasActiveSub = customer?.billingStatus === 'active'
 
     // Handle webhook race condition: if DB still shows incomplete but
@@ -89,8 +94,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         if (subs.data.length > 0) {
           // Stripe confirms active — update local DB so webhook can catch up
           const periodEnd = subs.data[0].items.data[0]?.current_period_end
-          await upsertStripeCustomer({
-            installationId: id,
+          await upsertBillingAccount({
+            orgId,
             stripeCustomerId: customer.stripeCustomerId,
             stripeSubscriptionId: subs.data[0].id,
             billingStatus: 'active',
@@ -107,9 +112,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // Sync subscription items if DB is empty (webhook may not have fired yet)
     if (hasActiveSub) {
-      const existingItems = await getSubscriptionItems(id)
+      const existingItems = await getSubscriptionItems(orgId)
       if (existingItems.length === 0 && customer?.stripeSubscriptionId) {
-        await syncSubscriptionItemsFromStripe(id, customer.stripeSubscriptionId)
+        await syncSubscriptionItemsFromStripe(orgId, customer.stripeSubscriptionId)
       }
     }
 

@@ -6,9 +6,13 @@ export const runtime = 'nodejs'
 
 const require = createRequire(import.meta.url)
 
-function getSupabaseClient() {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+/**
+ * Get PII Supabase client for contact_messages table.
+ * Contact messages contain PII and live in the dedicated PII database.
+ */
+function getPiiSupabaseClient() {
+  const supabaseUrl = process.env.PII_SUPABASE_URL
+  const supabaseKey = process.env.PII_SUPABASE_KEY
   if (!supabaseUrl || !supabaseKey) {
     return null
   }
@@ -25,7 +29,7 @@ interface ContactSubmission {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = getSupabaseClient()
+  const supabase = getPiiSupabaseClient()
   if (!supabase) {
     return NextResponse.json(
       { error: 'Contact form is not configured' },
@@ -59,9 +63,9 @@ export async function POST(request: NextRequest) {
                'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
-    // Insert into database
+    // Insert into PII database
     const { data, error } = await supabase
-      .from('contact_submissions')
+      .from('contact_messages')
       .insert({
         name: body.name.trim(),
         email: body.email.trim().toLowerCase(),

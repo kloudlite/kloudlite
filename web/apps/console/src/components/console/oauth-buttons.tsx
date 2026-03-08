@@ -1,5 +1,3 @@
-'use client'
-
 import { Button } from '@kloudlite/ui'
 import { SiGithub, SiGoogle } from 'react-icons/si'
 

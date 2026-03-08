@@ -11,9 +11,8 @@ interface InstallationLayoutShellProps {
 
 export function InstallationLayoutShell({ children }: InstallationLayoutShellProps) {
   return (
-    <div className="bg-background h-screen flex flex-col">
-      <ScrollArea className="flex-1">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8">
+    <ScrollArea className="flex-1">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8">
           {/* Back button */}
           <div className="mb-8">
             <Link
@@ -31,7 +30,6 @@ export function InstallationLayoutShell({ children }: InstallationLayoutShellPro
           {/* Content */}
           {children}
         </div>
-      </ScrollArea>
-    </div>
+    </ScrollArea>
   )
 }

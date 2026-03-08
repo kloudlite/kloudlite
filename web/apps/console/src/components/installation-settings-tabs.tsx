@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@kloudlite/lib'
 
 const tabs = [
-  { id: 'profile', label: 'Profile', href: '/installations/settings/profile' },
+  { id: 'organization', label: 'Organization', href: '/installations/settings/organization' },
+  { id: 'billing', label: 'Billing', href: '/installations/settings/billing' },
 ]
 
 export function InstallationSettingsTabs() {
@@ -14,7 +15,7 @@ export function InstallationSettingsTabs() {
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
   const tabRefs = useRef<Map<string, HTMLAnchorElement>>(new Map())
 
-  const activeTab = tabs.find((tab) => pathname === tab.href)?.id || 'profile'
+  const activeTab = tabs.find((tab) => pathname === tab.href)?.id || 'organization'
 
   // Update underline position
   useEffect(() => {

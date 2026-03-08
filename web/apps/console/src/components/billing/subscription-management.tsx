@@ -7,12 +7,12 @@ import { SubscriptionConfigurator } from '@/components/billing/subscription-conf
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { PaymentWarningBanner } from '@/components/billing/payment-warning-banner'
 import { useSubscriptionPayments } from '@/hooks/use-subscription-payments'
-import type { StripeCustomer, SubscriptionItem } from '@/lib/console/storage'
+import type { BillingAccount, SubscriptionItem } from '@/lib/console/storage'
 import type { TierConfigItem } from '@/app/actions/billing/pricing'
 
 interface SubscriptionManagementProps {
-  installationId: string
-  customer: StripeCustomer | null
+  orgId: string
+  customer: BillingAccount | null
   items: SubscriptionItem[]
   tierConfig: TierConfigItem[]
   currency: string
@@ -20,7 +20,7 @@ interface SubscriptionManagementProps {
 }
 
 export function SubscriptionManagement({
-  installationId,
+  orgId,
   customer,
   items,
   tierConfig,
@@ -38,7 +38,7 @@ export function SubscriptionManagement({
     handleModify,
     handleCancel,
     handleManageBilling,
-  } = useSubscriptionPayments({ installationId })
+  } = useSubscriptionPayments({ orgId })
 
   return (
     <div className="space-y-4">
@@ -90,13 +90,22 @@ export function SubscriptionManagement({
       )}
 
       {/* Payment warning */}
-      {customer?.paymentIssue && isOwner && (
+      {customer?.hasPaymentIssue && isOwner && (
         <PaymentWarningBanner onManageBilling={handleManageBilling} />
       )}
 
       {/* Current products */}
       {(hasActiveSubscription || isCancelled) && !editing && items.length > 0 && (
         <SubscriptionStatus items={items} tierConfig={tierConfig} currency={currency} />
+      )}
+
+      {/* Active subscription but no items synced yet */}
+      {(hasActiveSubscription || isCancelled) && !editing && items.length === 0 && (
+        <div className="rounded-lg border border-foreground/10 p-4">
+          <p className="text-sm text-muted-foreground">
+            Your subscription is active. Subscription details will appear here once they are synced.
+          </p>
+        </div>
       )}
 
       {/* Modify plan */}
@@ -171,7 +180,7 @@ export function SubscriptionManagement({
 
       {!isOwner && (
         <p className="text-muted-foreground text-sm text-center py-4">
-          Only the installation owner can manage billing.
+          Only the organization owner can manage billing.
         </p>
       )}
     </div>

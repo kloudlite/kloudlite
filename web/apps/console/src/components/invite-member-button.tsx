@@ -12,25 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@kloudlite/ui'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@kloudlite/ui'
 import { UserPlus } from 'lucide-react'
 import { getErrorMessage } from '@/lib/errors'
 
 interface InviteMemberButtonProps {
-  installationId: string
+  orgId: string
 }
 
-export function InviteMemberButton({ installationId }: InviteMemberButtonProps) {
+export function InviteMemberButton({ orgId }: InviteMemberButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'admin' | 'member' | 'viewer'>('member')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,10 +32,10 @@ export function InviteMemberButton({ installationId }: InviteMemberButtonProps) 
     setError(null)
 
     try {
-      const response = await fetch(`/api/installations/${installationId}/team/invitations`, {
+      const response = await fetch(`/api/orgs/${orgId}/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ email, role: 'admin' }),
       })
 
       if (!response.ok) {
@@ -51,12 +43,8 @@ export function InviteMemberButton({ installationId }: InviteMemberButtonProps) 
         throw new Error(data.error || 'Failed to send invitation')
       }
 
-      // Reset and close
       setEmail('')
-      setRole('member')
       setOpen(false)
-
-      // Refresh to show new invitation
       router.refresh()
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to send invitation'))
@@ -78,8 +66,7 @@ export function InviteMemberButton({ installationId }: InviteMemberButtonProps) 
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
             <DialogDescription>
-              Send an invitation to join this installation. They will be able to accept after
-              logging in.
+              Send an invitation to join this organization. They will receive admin access after accepting.
             </DialogDescription>
           </DialogHeader>
 
@@ -97,22 +84,6 @@ export function InviteMemberButton({ installationId }: InviteMemberButtonProps) 
                 required
                 className="mt-2"
               />
-            </div>
-
-            <div>
-              <label htmlFor="role" className="text-base font-medium">
-                Role
-              </label>
-              <Select value={role} onValueChange={(value: string) => setRole(value as 'admin' | 'member' | 'viewer')}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin - Can manage members and settings</SelectItem>
-                  <SelectItem value="member">Member - Full access, can&apos;t manage</SelectItem>
-                  <SelectItem value="viewer">Viewer - Read-only access</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {error && (

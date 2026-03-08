@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { apiError } from '@/lib/api-helpers'
-import { getRegistrationSession } from '@/lib/console-auth'
+import { requireInstallationAccess } from '@/lib/console/authorization'
 import { getInstallationById, checkInstallationDomainStatus } from '@/lib/console/storage'
 
 /**
@@ -9,22 +9,22 @@ import { getInstallationById, checkInstallationDomainStatus } from '@/lib/consol
  */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const session = await getRegistrationSession()
 
-  if (!session?.user) {
-    return apiError('Unauthorized', 401)
+  // Verify access via org membership
+  try {
+    await requireInstallationAccess(id)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unauthorized'
+    if (message.includes('No session')) return apiError('Unauthorized', 401)
+    if (message.includes('Not found')) return apiError('Installation not found', 404)
+    return apiError('Forbidden', 403)
   }
 
-  // Fetch the installation
+  // Fetch the installation details
   const installation = await getInstallationById(id)
 
   if (!installation) {
     return apiError('Installation not found', 404)
-  }
-
-  // Verify user owns this installation
-  if (installation.userId !== session.user.id) {
-    return apiError('Forbidden', 403)
   }
 
   // If installation is already deployed (deploymentReady=true), domain is locked

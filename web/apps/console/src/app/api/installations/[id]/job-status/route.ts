@@ -5,9 +5,8 @@ import {
   getInstallationById,
   updateInstallation,
   deleteInstallation,
-  deleteIpRecords,
+  deleteDnsConfigurations,
   deleteDomainReservation,
-  cancelStripeSubscriptionForInstallation,
 } from '@/lib/console/storage'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 import { getJobExecutionStatus } from '@/lib/console/aca-jobs'
@@ -25,65 +24,63 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
     // For BYOC installations (AWS/GCP/Azure), there's no ACA job execution.
     // Progress is reported via the job-progress endpoint and stored directly in the DB.
-    if (!installation.acaJobExecutionName) {
+    if (!installation.deployJobExecutionName) {
       // If there's no ACA execution AND no progress data, return 404
-      if (!installation.acaJobStatus && !installation.acaJobOperation) {
+      if (!installation.deployJobStatus && !installation.deployJobOperation) {
         return apiError('No job execution found', 404)
       }
 
       // Auto-delete after successful uninstall (BYOC path)
-      if (installation.acaJobOperation === 'uninstall' && installation.acaJobStatus === 'succeeded') {
+      if (installation.deployJobOperation === 'uninstall' && installation.deployJobStatus === 'succeeded') {
         try {
           console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall (BYOC)`)
-          await cancelStripeSubscriptionForInstallation(id)
-          const dnsRecordIds = await deleteIpRecords(id)
-          if (dnsRecordIds.length > 0) {
-            await deleteDnsRecords(dnsRecordIds)
-          }
-          await deleteDomainReservation(id)
-          await deleteInstallation(id)
-          console.log(`[job-status] Installation ${id} auto-deleted (BYOC)`)
-        } catch (deleteErr) {
-          console.error(`[job-status] Failed to auto-delete installation ${id}:`, deleteErr)
+        const dnsRecordIds = await deleteDnsConfigurations(id)
+        if (dnsRecordIds.length > 0) {
+          await deleteDnsRecords(dnsRecordIds)
         }
-        return NextResponse.json({ status: 'succeeded', operation: 'uninstall', deleted: true })
+        await deleteDomainReservation(id)
+        await deleteInstallation(id)
+        console.log(`[job-status] Installation ${id} auto-deleted (BYOC)`)
+      } catch (deleteErr) {
+        console.error(`[job-status] Failed to auto-delete installation ${id}:`, deleteErr)
       }
+      return NextResponse.json({ status: 'succeeded', operation: 'uninstall', deleted: true })
+    }
 
-      // Return DB-stored progress for BYOC installations
-      return NextResponse.json({
-        status: installation.acaJobStatus || 'unknown',
-        startedAt: installation.acaJobStartedAt,
-        completedAt: installation.acaJobCompletedAt,
-        error: installation.acaJobError,
-        operation: installation.acaJobOperation,
-        currentStep: installation.acaJobCurrentStep,
-        totalSteps: installation.acaJobTotalSteps,
-        stepDescription: installation.acaJobStepDescription,
+    // Return DB-stored progress for BYOC installations
+    return NextResponse.json({
+      status: installation.deployJobStatus || 'unknown',
+      startedAt: installation.deployJobStartedAt,
+      completedAt: installation.deployJobCompletedAt,
+      error: installation.deployJobError,
+      operation: installation.deployJobOperation,
+      currentStep: installation.deployJobCurrentStep,
+      totalSteps: installation.deployJobTotalSteps,
+      stepDescription: installation.deployJobStepDescription,
       })
     }
 
-    const result = await getJobExecutionStatus(installation.acaJobExecutionName)
+    const result = await getJobExecutionStatus(installation.deployJobExecutionName)
 
     // Update installation if status changed
-    if (result.status !== installation.acaJobStatus) {
+    if (result.status !== installation.deployJobStatus) {
       const updates: Record<string, string | undefined> = {
-        acaJobStatus: result.status,
+        deployJobStatus: result.status,
       }
       if (result.completedAt) {
-        updates.acaJobCompletedAt = result.completedAt
+        updates.deployJobCompletedAt = result.completedAt
       }
       if (result.error) {
-        updates.acaJobError = result.error
+        updates.deployJobError = result.error
       }
       await updateInstallation(id, updates)
     }
 
     // Auto-delete after successful uninstall
-    if (installation.acaJobOperation === 'uninstall' && result.status === 'succeeded') {
+    if (installation.deployJobOperation === 'uninstall' && result.status === 'succeeded') {
       try {
         console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall`)
-        await cancelStripeSubscriptionForInstallation(id)
-        const dnsRecordIds = await deleteIpRecords(id)
+        const dnsRecordIds = await deleteDnsConfigurations(id)
         if (dnsRecordIds.length > 0) {
           await deleteDnsRecords(dnsRecordIds)
         }
@@ -101,14 +98,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
     return NextResponse.json({
       status: result.status,
-      executionName: installation.acaJobExecutionName,
-      startedAt: result.startedAt || installation.acaJobStartedAt,
-      completedAt: result.completedAt || installation.acaJobCompletedAt,
-      error: result.error || installation.acaJobError,
-      operation: updatedInstallation?.acaJobOperation || installation.acaJobOperation,
-      currentStep: updatedInstallation?.acaJobCurrentStep ?? installation.acaJobCurrentStep,
-      totalSteps: updatedInstallation?.acaJobTotalSteps ?? installation.acaJobTotalSteps,
-      stepDescription: updatedInstallation?.acaJobStepDescription || installation.acaJobStepDescription,
+      executionName: installation.deployJobExecutionName,
+      startedAt: result.startedAt || installation.deployJobStartedAt,
+      completedAt: result.completedAt || installation.deployJobCompletedAt,
+      error: result.error || installation.deployJobError,
+      operation: updatedInstallation?.deployJobOperation || installation.deployJobOperation,
+      currentStep: updatedInstallation?.deployJobCurrentStep ?? installation.deployJobCurrentStep,
+      totalSteps: updatedInstallation?.deployJobTotalSteps ?? installation.deployJobTotalSteps,
+      stepDescription: updatedInstallation?.deployJobStepDescription || installation.deployJobStepDescription,
     })
   } catch (error) {
     console.error('Error getting job status:', error)

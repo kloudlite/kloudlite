@@ -1,16 +1,17 @@
+export const runtime = 'nodejs'
+
 import { NextResponse } from 'next/server'
-import { apiError } from '@/lib/api-helpers'
-import { getErrorMessage } from '@/lib/errors'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { acceptInvitation } from '@/lib/console/storage'
+import { acceptOrgInvitation } from '@/lib/console/storage'
 
 /**
  * POST /api/invitations/[invitationId]/accept
- * Accept an invitation
+ * Accept an organization invitation
  */
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ invitationId: string }> }
+  { params }: { params: Promise<{ invitationId: string }> },
 ) {
   const { invitationId } = await params
   const session = await getRegistrationSession()
@@ -20,9 +21,9 @@ export async function POST(
   }
 
   try {
-    const member = await acceptInvitation(invitationId, session.user.id)
+    const member = await acceptOrgInvitation(invitationId, session.user.id, session.user.email)
     return NextResponse.json({ member })
   } catch (error) {
-    return apiError(getErrorMessage(error, 'Failed to accept invitation'), 400)
+    return apiCatchError(error, 'Failed to accept invitation')
   }
 }

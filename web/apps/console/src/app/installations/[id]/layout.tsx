@@ -3,7 +3,9 @@ import { ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, getMemberRole } from '@/lib/console/storage'
+import { cachedInstallationAccess, cachedInstallationById } from '@/lib/console/cached-queries'
+import { getSelectedOrg } from '@/lib/console/get-selected-org'
+import { getUserOrganizations } from '@/lib/console/storage'
 import { InstallationsHeader } from '@/components/installations-header'
 import { InstallationDetailsTabs } from '@/components/installation-details-tabs'
 import { ScrollArea } from '@kloudlite/ui'
@@ -21,32 +23,30 @@ export default async function InstallationLayout({ children, params }: LayoutPro
     redirect('/login')
   }
 
-  const installation = await getInstallationById(id)
-
-  if (!installation) {
+  try {
+    await cachedInstallationAccess(id)
+  } catch {
     redirect('/installations')
   }
 
-  // Check if user has access to this installation
-  // First check installation_members table, then fallback to checking if user is the owner
-  let userRole = await getMemberRole(id, session.user.id)
+  const installation = await cachedInstallationById(id)
 
-  // If not found in members table, check if user is the installation owner (legacy support)
-  if (!userRole && installation.userId === session.user.id) {
-    userRole = 'owner'
-  }
-
-  if (!userRole) {
+  if (!installation) {
     redirect('/installations')
   }
 
   const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
   const installationDomain = installation.subdomain ? `${installation.subdomain}.${domain}` : undefined
 
+  const currentOrg = await getSelectedOrg(session.user.id, session.user.name, session.user.email)
+  const orgs = await getUserOrganizations(session.user.id)
+
   return (
     <div className="bg-background h-screen flex flex-col">
       <InstallationsHeader
         user={session.user}
+        orgs={orgs.map((o) => ({ id: o.id, name: o.name, slug: o.slug }))}
+        currentOrgId={currentOrg?.id}
         installationName={installation.name}
         installationDomain={installationDomain}
       />
