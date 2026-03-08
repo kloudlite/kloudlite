@@ -62,52 +62,51 @@ export function InstallationsHeader({ user, orgs, currentOrgId }: InstallationsH
           )}
         </div>
 
-        {/* Theme & User Menu */}
+        {/* Theme, Settings & User Menu */}
         <div className="flex items-center gap-1">
           <ThemeSwitcher />
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 gap-2 px-2 hover:bg-muted/50 transition-colors">
-              <Avatar className="h-8 w-8 ring-2 ring-foreground/10">
-                <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">{getInitials(user.name)}</AvatarFallback>
-              </Avatar>
-              <div className="hidden sm:flex flex-col items-start text-left">
-                <span className="text-sm font-medium">{user.name}</span>
-                <span className="text-muted-foreground text-xs">{user.email}</span>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm leading-none font-semibold">{user.name}</p>
-                <p className="text-muted-foreground text-xs leading-none">{user.email}</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/profile">
-                <UserCircle className="mr-2 h-4 w-4" />
-                Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/installations/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="text-red-600 dark:text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-600 dark:focus:text-red-400 hover:bg-red-500/10"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <Button variant="ghost" size="icon" asChild className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/installations/settings" aria-label="Settings">
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 gap-2 px-2 hover:bg-muted/50 transition-colors">
+                <Avatar className="h-8 w-8 ring-2 ring-foreground/10">
+                  <AvatarImage src={user.image} alt={user.name} />
+                  <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">{getInitials(user.name)}</AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:flex flex-col items-start text-left">
+                  <span className="text-sm font-medium">{user.name}</span>
+                  <span className="text-muted-foreground text-xs">{user.email}</span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm leading-none font-semibold">{user.name}</p>
+                  <p className="text-muted-foreground text-xs leading-none">{user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/profile">
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-600 dark:text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-600 dark:focus:text-red-400 hover:bg-red-500/10"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
