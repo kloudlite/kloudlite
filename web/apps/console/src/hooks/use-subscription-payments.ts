@@ -1,8 +1,10 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { loadStripe } from '@stripe/stripe-js'
+import type { Stripe } from '@stripe/stripe-js'
 import { createCheckoutSession, createPortalSession } from '@/app/actions/billing/checkout'
 import { modifySubscription } from '@/app/actions/billing/subscriptions'
 
@@ -13,6 +15,16 @@ interface UseSubscriptionPaymentsOptions {
 export function useSubscriptionPayments({ installationId }: UseSubscriptionPaymentsOptions) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const stripeRef = useRef<Stripe | null>(null)
+
+  const getStripeClient = useCallback(async () => {
+    if (!stripeRef.current) {
+      const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+      if (!key) throw new Error('Stripe publishable key not configured')
+      stripeRef.current = await loadStripe(key)
+    }
+    return stripeRef.current
+  }, [])
 
   const handleSubscribe = useCallback(
     async (allocations: { priceId: string; quantity: number }[]) => {
@@ -34,9 +46,26 @@ export function useSubscriptionPayments({ installationId }: UseSubscriptionPayme
       try {
         const result = await modifySubscription(installationId, modifications)
 
-        if (result.url) {
-          // Redirect to Stripe hosted invoice page for payment
-          window.location.href = result.url
+        if (result.clientSecret) {
+          // Payment needed — use stripe.js to confirm and redirect
+          const stripe = await getStripeClient()
+          if (!stripe) throw new Error('Failed to load Stripe')
+
+          const returnUrl = `${window.location.origin}/installations/${installationId}/billing?modified=success`
+
+          const { error } = await stripe.confirmPayment({
+            clientSecret: result.clientSecret,
+            confirmParams: {
+              return_url: returnUrl,
+            },
+          })
+
+          // confirmPayment only returns here if there's an error
+          // (on success it redirects to return_url)
+          if (error) {
+            toast.error(error.message || 'Payment failed. Please try again.')
+            setLoading(false)
+          }
         } else {
           // No payment needed (e.g., downgrade with credit)
           toast.success('Subscription updated successfully.')
@@ -48,7 +77,7 @@ export function useSubscriptionPayments({ installationId }: UseSubscriptionPayme
         setLoading(false)
       }
     },
-    [installationId, router],
+    [installationId, router, getStripeClient],
   )
 
   const handleManageBilling = useCallback(async () => {
