@@ -11,10 +11,27 @@ import (
 	"time"
 )
 
+// RunningMachine represents a currently running WorkMachine for billing reporting.
+type RunningMachine struct {
+	MachineID   string `json:"machine_id"`
+	MachineType string `json:"machine_type"`
+	StartedAt   string `json:"started_at"`
+}
+
+// Volume represents an attached volume for billing reporting.
+type Volume struct {
+	VolumeID   string `json:"volume_id"`
+	VolumeType string `json:"volume_type"` // "vm" or "object"
+	SizeGB     int    `json:"size_gb"`
+	CreatedAt  string `json:"created_at"`
+}
+
 type VerifyInstallationRequest struct {
-	InstallationKey string `json:"installationKey"`
-	Provider        string `json:"provider,omitempty"`
-	Region          string `json:"region,omitempty"`
+	InstallationKey string           `json:"installationKey"`
+	Provider        string           `json:"provider,omitempty"`
+	Region          string           `json:"region,omitempty"`
+	RunningMachines []RunningMachine `json:"running_machines,omitempty"`
+	Volumes         []Volume         `json:"volumes,omitempty"`
 }
 
 type VerifyInstallationResponse struct {
@@ -32,8 +49,10 @@ type VerifyInstallationResult struct {
 
 // VerifyInstallationOptions contains optional parameters for verification
 type VerifyInstallationOptions struct {
-	Provider string // aws, gcp, azure
-	Region   string // cloud region/location
+	Provider        string           // aws, gcp, azure
+	Region          string           // cloud region/location
+	RunningMachines []RunningMachine // currently running WorkMachines
+	Volumes         []Volume         // attached volumes
 }
 
 func VerifyInstallation(ctx context.Context, installationKey string, opts *VerifyInstallationOptions) (*VerifyInstallationResult, error) {
@@ -50,6 +69,8 @@ func VerifyInstallation(ctx context.Context, installationKey string, opts *Verif
 	if opts != nil {
 		reqPayload.Provider = opts.Provider
 		reqPayload.Region = opts.Region
+		reqPayload.RunningMachines = opts.RunningMachines
+		reqPayload.Volumes = opts.Volumes
 	}
 	reqBody, err := json.Marshal(reqPayload)
 	if err != nil {
