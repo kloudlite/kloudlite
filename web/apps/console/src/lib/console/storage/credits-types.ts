@@ -20,6 +20,7 @@ export interface CreditTransaction {
   description: string | null
   stripeInvoiceId: string | null
   usagePeriodId: string | null
+  expiresAt: string | null
   createdAt: string
 }
 
