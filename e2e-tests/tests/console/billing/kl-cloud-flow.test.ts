@@ -206,19 +206,26 @@ test.describe.serial('KL Cloud Billing Flow (Pay-as-you-go Credits)', () => {
     })
     console.log('[test] Subdomain available')
 
-    // ==================== Step 3: Verify WorkMachine Configuration ====================
-    // The form should show the WorkMachine Configuration section with radio options
-    await expect(page.getByText('WorkMachine Configuration')).toBeVisible()
+    // ==================== Step 3: Verify billing section ====================
+    // The form should show the Billing section with control plane cost
+    await expect(page.getByText('Billing')).toBeVisible()
+    await expect(page.getByText(/Control Plane/)).toBeVisible()
+    console.log('[test] Billing section with control plane cost visible')
 
-    // Select the first compute tier (should already be selected by default)
-    const radioGroup = page.locator('[role="radiogroup"]')
-    await expect(radioGroup).toBeVisible()
-    console.log('[test] WorkMachine configuration visible')
+    // ==================== Step 4: Verify cost calculator (expandable) ====================
+    // Click to expand the cost calculator
+    const calculatorTrigger = page.getByText('Estimate full costs')
+    await expect(calculatorTrigger).toBeVisible()
+    await calculatorTrigger.click()
 
-    // ==================== Step 4: Verify cost summary ====================
-    await expect(page.getByText('Estimated Cost')).toBeVisible()
-    await expect(page.getByText('Estimated total')).toBeVisible()
-    console.log('[test] Cost summary visible')
+    // Should show 3 tiers with user count steppers and hours slider
+    await expect(page.getByText('Users by tier')).toBeVisible()
+    await expect(page.getByText(/Tier 1/)).toBeVisible()
+    await expect(page.getByText(/Tier 2/)).toBeVisible()
+    await expect(page.getByText(/Tier 3/)).toBeVisible()
+    await expect(page.getByText(/Avg\. working hours/)).toBeVisible()
+    await expect(page.getByText(/Estimated total/)).toBeVisible()
+    console.log('[test] Cost calculator expanded with 3 tiers visible')
 
     // ==================== Step 5: Verify balance and submit ====================
     // The form shows "Current balance:" with the amount
