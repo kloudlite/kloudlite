@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { Button } from '@kloudlite/ui'
-import { toast } from 'sonner'
 import { SubscriptionConfigurator } from '@/components/billing/subscription-configurator'
 import { SubscriptionStatus } from '@/components/billing/subscription-status'
 import { PaymentWarningBanner } from '@/components/billing/payment-warning-banner'
@@ -30,29 +28,21 @@ export function SubscriptionManagement({
   isOwner,
 }: SubscriptionManagementProps) {
   const [editing, setEditing] = useState(false)
-  const searchParams = useSearchParams()
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const hasActiveSubscription = customer?.billingStatus === 'active'
-
-  // Show toast when returning from Stripe payment
-  useEffect(() => {
-    const modified = searchParams.get('modified')
-    if (modified === 'success') {
-      toast.success('Subscription updated and payment confirmed.')
-    } else if (modified === 'cancelled') {
-      toast.info('Payment was cancelled. Your subscription was not changed.')
-    }
-  }, [searchParams])
+  const isCancelled = customer?.billingStatus === 'cancelled'
 
   const {
     loading,
     handleSubscribe,
     handleModify,
+    handleCancel,
     handleManageBilling,
   } = useSubscriptionPayments({ installationId })
 
   return (
     <div className="space-y-4">
-      {/* Header with Manage Billing button */}
+      {/* Active subscription header */}
       {hasActiveSubscription && isOwner && (
         <div className="flex items-center justify-between">
           <div>
@@ -79,13 +69,33 @@ export function SubscriptionManagement({
         </div>
       )}
 
+      {/* Cancelled subscription header */}
+      {isCancelled && isOwner && (
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+              Cancelling
+            </span>
+            {customer?.currentPeriodEnd && (
+              <span className="ml-3 text-sm text-muted-foreground">
+                Active until: {new Date(customer.currentPeriodEnd).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={handleManageBilling} disabled={loading}>
+            Manage Billing <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       {/* Payment warning */}
       {customer?.paymentIssue && isOwner && (
         <PaymentWarningBanner onManageBilling={handleManageBilling} />
       )}
 
       {/* Current products */}
-      {hasActiveSubscription && !editing && items.length > 0 && (
+      {(hasActiveSubscription || isCancelled) && !editing && items.length > 0 && (
         <SubscriptionStatus items={items} tierConfig={tierConfig} currency={currency} />
       )}
 
@@ -105,8 +115,50 @@ export function SubscriptionManagement({
         />
       )}
 
+      {/* Cancel subscription */}
+      {hasActiveSubscription && isOwner && !editing && (
+        <div className="border-t border-foreground/10 pt-4">
+          {!confirmCancel ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setConfirmCancel(true)}
+              disabled={loading}
+            >
+              Cancel Subscription
+            </Button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                Your subscription will remain active until the end of the current billing period.
+              </p>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={async () => {
+                  await handleCancel()
+                  setConfirmCancel(false)
+                }}
+                disabled={loading}
+              >
+                Confirm Cancel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmCancel(false)}
+                disabled={loading}
+              >
+                Keep Plan
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* No subscription — show subscribe form */}
-      {isOwner && !hasActiveSubscription && (
+      {isOwner && !hasActiveSubscription && !isCancelled && (
         <SubscriptionConfigurator
           items={[]}
           tierConfig={tierConfig}
