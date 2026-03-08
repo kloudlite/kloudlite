@@ -1,83 +1,102 @@
 /**
- * Supabase Database Type Definitions
+ * Supabase Database Type Definitions (Main DB — operational data)
+ * PII tables (users, magic_link_tokens, contact_messages) are in supabase-pii-types.ts
  */
 
 export type Database = {
   public: {
     Tables: {
-      user_registrations: {
+      organizations: {
         Row: {
-          user_id: string
-          email: string
+          id: string
           name: string
-          providers: ('github' | 'google' | 'azure-ad' | 'email')[]
-          registered_at: string
+          slug: string
+          created_by: string
           created_at: string
           updated_at: string
         }
         Insert: {
-          user_id: string
-          email: string
+          id?: string
           name: string
-          providers?: ('github' | 'google' | 'azure-ad' | 'email')[]
-          registered_at?: string
+          slug: string
+          created_by: string
         }
         Update: {
-          email?: string
           name?: string
-          providers?: ('github' | 'google' | 'azure-ad' | 'email')[]
-          registered_at?: string
+          slug?: string
         }
       }
-      magic_link_tokens: {
+      organization_members: {
         Row: {
           id: string
-          email: string
-          token: string
-          expires_at: string
-          used_at: string | null
+          org_id: string
+          user_id: string
+          role: 'owner' | 'admin'
+          added_by: string | null
           created_at: string
-          ip_address: string | null
-          user_agent: string | null
+          updated_at: string
         }
         Insert: {
           id?: string
-          email: string
-          token: string
-          expires_at: string
-          used_at?: string | null
-          created_at?: string
-          ip_address?: string | null
-          user_agent?: string | null
+          org_id: string
+          user_id: string
+          role: 'owner' | 'admin'
+          added_by?: string | null
         }
         Update: {
-          used_at?: string | null
+          role?: 'owner' | 'admin'
+        }
+      }
+      organization_invitations: {
+        Row: {
+          id: string
+          org_id: string
+          email: string
+          role: 'admin'
+          invited_by: string
+          status: 'pending' | 'accepted' | 'rejected' | 'expired'
+          expires_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          email: string
+          role: 'admin'
+          invited_by: string
+          status?: 'pending' | 'accepted' | 'rejected' | 'expired'
+          expires_at?: string
+        }
+        Update: {
+          status?: 'pending' | 'accepted' | 'rejected' | 'expired'
+          role?: 'admin'
         }
       }
       installations: {
         Row: {
           id: string
-          user_id: string
+          org_id: string
           name: string | null
           description: string | null
           installation_key: string
           secret_key: string | null
-          has_completed_installation: boolean
+          setup_completed: boolean
           subdomain: string | null
           reserved_at: string | null
           deployment_ready: boolean | null
           last_health_check: string | null
           cloud_provider: 'aws' | 'gcp' | 'azure' | 'oci' | null
           cloud_location: string | null
-          aca_job_execution_name: string | null
-          aca_job_status: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
-          aca_job_started_at: string | null
-          aca_job_completed_at: string | null
-          aca_job_error: string | null
-          aca_job_operation: 'install' | 'uninstall' | null
-          aca_job_current_step: number | null
-          aca_job_total_steps: number | null
-          aca_job_step_description: string | null
+          deploy_job_execution_name: string | null
+          deploy_job_status: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
+          deploy_job_started_at: string | null
+          deploy_job_completed_at: string | null
+          deploy_job_error: string | null
+          deploy_job_operation: 'install' | 'uninstall' | null
+          deploy_job_current_step: number | null
+          deploy_job_total_steps: number | null
+          deploy_job_step_description: string | null
           root_dns_target: string | null
           root_dns_type: 'cname' | 'a' | null
           root_dns_record_id: string | null
@@ -86,65 +105,64 @@ export type Database = {
         }
         Insert: {
           id?: string
-          user_id: string
+          org_id: string
           name?: string | null
           description?: string | null
           installation_key: string
           secret_key?: string | null
-          has_completed_installation?: boolean
+          setup_completed?: boolean
           subdomain?: string | null
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
           cloud_provider?: 'aws' | 'gcp' | 'azure' | 'oci' | null
           cloud_location?: string | null
-          aca_job_execution_name?: string | null
-          aca_job_status?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
-          aca_job_started_at?: string | null
-          aca_job_completed_at?: string | null
-          aca_job_error?: string | null
-          aca_job_operation?: 'install' | 'uninstall' | null
-          aca_job_current_step?: number | null
-          aca_job_total_steps?: number | null
-          aca_job_step_description?: string | null
+          deploy_job_execution_name?: string | null
+          deploy_job_status?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
+          deploy_job_started_at?: string | null
+          deploy_job_completed_at?: string | null
+          deploy_job_error?: string | null
+          deploy_job_operation?: 'install' | 'uninstall' | null
+          deploy_job_current_step?: number | null
+          deploy_job_total_steps?: number | null
+          deploy_job_step_description?: string | null
           root_dns_target?: string | null
           root_dns_type?: 'cname' | 'a' | null
           root_dns_record_id?: string | null
         }
         Update: {
-          user_id?: string
+          org_id?: string
           name?: string | null
           description?: string | null
           installation_key?: string
           secret_key?: string | null
-          has_completed_installation?: boolean
+          setup_completed?: boolean
           subdomain?: string | null
           reserved_at?: string | null
           deployment_ready?: boolean | null
           last_health_check?: string | null
           cloud_provider?: 'aws' | 'gcp' | 'azure' | 'oci' | null
           cloud_location?: string | null
-          aca_job_execution_name?: string | null
-          aca_job_status?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
-          aca_job_started_at?: string | null
-          aca_job_completed_at?: string | null
-          aca_job_error?: string | null
-          aca_job_operation?: 'install' | 'uninstall' | null
-          aca_job_current_step?: number | null
-          aca_job_total_steps?: number | null
-          aca_job_step_description?: string | null
+          deploy_job_execution_name?: string | null
+          deploy_job_status?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown' | null
+          deploy_job_started_at?: string | null
+          deploy_job_completed_at?: string | null
+          deploy_job_error?: string | null
+          deploy_job_operation?: 'install' | 'uninstall' | null
+          deploy_job_current_step?: number | null
+          deploy_job_total_steps?: number | null
+          deploy_job_step_description?: string | null
           root_dns_target?: string | null
           root_dns_type?: 'cname' | 'a' | null
           root_dns_record_id?: string | null
         }
       }
-      ip_records: {
+      dns_configurations: {
         Row: {
           id: number
           installation_id: string
-          domain_request_name: string
+          service_name: string
           ip: string
-          configured_at: string
           ssh_record_id: string | null
           route_record_ids: string[]
           route_record_map: Record<string, string> | null
@@ -154,9 +172,8 @@ export type Database = {
         }
         Insert: {
           installation_id: string
-          domain_request_name: string
+          service_name: string
           ip: string
-          configured_at?: string
           ssh_record_id?: string | null
           route_record_ids?: string[]
           route_record_map?: Record<string, string> | null
@@ -164,9 +181,8 @@ export type Database = {
         }
         Update: {
           installation_id?: string
-          domain_request_name?: string
+          service_name?: string
           ip?: string
-          configured_at?: string
           ssh_record_id?: string | null
           route_record_ids?: string[]
           route_record_map?: Record<string, string> | null
@@ -204,90 +220,42 @@ export type Database = {
           status?: 'reserved' | 'active' | 'cancelled'
         }
       }
-      installation_members: {
+      billing_accounts: {
         Row: {
           id: string
-          installation_id: string
-          user_id: string
-          role: 'owner' | 'admin' | 'member' | 'viewer'
-          added_by: string | null
-          added_at: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          installation_id: string
-          user_id: string
-          role: 'owner' | 'admin' | 'member' | 'viewer'
-          added_by?: string | null
-          added_at?: string
-        }
-        Update: {
-          role?: 'owner' | 'admin' | 'member' | 'viewer'
-        }
-      }
-      installation_invitations: {
-        Row: {
-          id: string
-          installation_id: string
-          email: string
-          role: 'admin' | 'member' | 'viewer'
-          invited_by: string
-          status: 'pending' | 'accepted' | 'rejected' | 'expired'
-          expires_at: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          installation_id: string
-          email: string
-          role: 'admin' | 'member' | 'viewer'
-          invited_by: string
-          status?: 'pending' | 'accepted' | 'rejected' | 'expired'
-          expires_at?: string
-        }
-        Update: {
-          status?: 'pending' | 'accepted' | 'rejected' | 'expired'
-          role?: 'admin' | 'member' | 'viewer'
-        }
-      }
-      stripe_customers: {
-        Row: {
-          id: string
-          installation_id: string
+          org_id: string
           stripe_customer_id: string
           stripe_subscription_id: string | null
           billing_status: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
-          payment_issue: boolean
+          has_payment_issue: boolean
           current_period_end: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          installation_id: string
+          org_id: string
           stripe_customer_id: string
           stripe_subscription_id?: string | null
           billing_status?: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
-          payment_issue?: boolean
+          has_payment_issue?: boolean
           current_period_end?: string | null
         }
         Update: {
-          installation_id?: string
+          org_id?: string
           stripe_customer_id?: string
           stripe_subscription_id?: string | null
           billing_status?: 'active' | 'past_due' | 'cancelled' | 'trialing' | 'incomplete'
-          payment_issue?: boolean
+          has_payment_issue?: boolean
           current_period_end?: string | null
         }
       }
       subscription_items: {
         Row: {
           id: string
-          installation_id: string
-          stripe_subscription_item_id: string
+          org_id: string
+          installation_id: string | null
+          stripe_item_id: string
           stripe_price_id: string
           tier: number
           product_name: string
@@ -297,23 +265,25 @@ export type Database = {
         }
         Insert: {
           id?: string
-          installation_id: string
-          stripe_subscription_item_id: string
+          org_id: string
+          installation_id?: string | null
+          stripe_item_id: string
           stripe_price_id: string
           tier: number
           product_name: string
           quantity?: number
         }
         Update: {
-          installation_id?: string
-          stripe_subscription_item_id?: string
+          org_id?: string
+          installation_id?: string | null
+          stripe_item_id?: string
           stripe_price_id?: string
           tier?: number
           product_name?: string
           quantity?: number
         }
       }
-      stripe_webhook_events: {
+      processed_webhook_events: {
         Row: {
           id: string
           stripe_event_id: string

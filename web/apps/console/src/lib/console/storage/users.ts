@@ -1,17 +1,18 @@
 /**
  * User Management Functions
+ * Uses PII database for user data storage
  */
 
-import type { Database } from '../supabase-types'
-import { supabase } from '../supabase'
-import type { UserRegistration, UserRegistrationRow } from './types'
+import type { PiiDatabase } from '../supabase-pii-types'
+import { piiSupabase } from '../supabase-pii'
+import type { User, UserRow } from './types'
 
 /**
  * Get user by userId
  */
-export async function getUserById(userId: string): Promise<UserRegistration | null> {
-  const result = await supabase
-    .from('user_registrations')
+export async function getUserById(userId: string): Promise<User | null> {
+  const result = await piiSupabase
+    .from('users')
     .select('*')
     .eq('user_id', userId)
     .single()
@@ -22,7 +23,7 @@ export async function getUserById(userId: string): Promise<UserRegistration | nu
     return null
   }
 
-  const data = result.data as UserRegistrationRow | null
+  const data = result.data as UserRow | null
   if (!data) return null
 
   return {
@@ -30,7 +31,6 @@ export async function getUserById(userId: string): Promise<UserRegistration | nu
     email: data.email,
     name: data.name,
     providers: data.providers || [],
-    registeredAt: data.registered_at,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   }
@@ -39,9 +39,9 @@ export async function getUserById(userId: string): Promise<UserRegistration | nu
 /**
  * Get user by email
  */
-export async function getUserByEmail(email: string): Promise<UserRegistration | null> {
-  const result = await supabase
-    .from('user_registrations')
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const result = await piiSupabase
+    .from('users')
     .select('*')
     .eq('email', email.toLowerCase())
     .single()
@@ -52,7 +52,7 @@ export async function getUserByEmail(email: string): Promise<UserRegistration | 
     return null
   }
 
-  const data = result.data as UserRegistrationRow | null
+  const data = result.data as UserRow | null
   if (!data) return null
 
   return {
@@ -60,52 +60,50 @@ export async function getUserByEmail(email: string): Promise<UserRegistration | 
     email: data.email,
     name: data.name,
     providers: data.providers || [],
-    registeredAt: data.registered_at,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   }
 }
 
 /**
- * Create or update user registration
+ * Create or update user
  */
-export async function saveUserRegistration(registration: UserRegistration): Promise<void> {
-  type UserRegistrationInsert = Database['public']['Tables']['user_registrations']['Insert']
-  type UserRegistrationUpdate = Database['public']['Tables']['user_registrations']['Update']
+export async function saveUser(user: User): Promise<void> {
+  type UserInsert = PiiDatabase['public']['Tables']['users']['Insert']
+  type UserUpdate = PiiDatabase['public']['Tables']['users']['Update']
 
-  const insertData: UserRegistrationInsert = {
-    user_id: registration.userId,
-    email: registration.email.toLowerCase(),
-    name: registration.name,
-    providers: registration.providers,
-    registered_at: registration.registeredAt,
+  const insertData: UserInsert = {
+    user_id: user.userId,
+    email: user.email.toLowerCase(),
+    name: user.name,
+    providers: user.providers,
   }
 
   // Try to insert first
-  const { error: insertError } = await supabase
-    .from('user_registrations')
+  const { error: insertError } = await piiSupabase
+    .from('users')
     // @ts-expect-error — Supabase generic inference resolves mutations to never
     .insert(insertData)
 
   // If user already exists (unique constraint violation), update instead
   if (insertError && insertError.code === '23505') {
-    const updateData: UserRegistrationUpdate = {
-      name: registration.name,
-      providers: registration.providers,
+    const updateData: UserUpdate = {
+      name: user.name,
+      providers: user.providers,
     }
 
-    const { error: updateError } = await supabase
-      .from('user_registrations')
+    const { error: updateError } = await piiSupabase
+      .from('users')
       // @ts-expect-error — Supabase generic inference resolves mutations to never
       .update(updateData)
-      .eq('user_id', registration.userId)
+      .eq('user_id', user.userId)
 
     if (updateError) {
-      console.error('Error updating user registration:', updateError)
-      throw new Error(`Failed to update user registration: ${updateError.message}`)
+      console.error('Error updating user:', updateError)
+      throw new Error(`Failed to update user: ${updateError.message}`)
     }
   } else if (insertError) {
-    console.error('Error saving user registration:', insertError)
-    throw new Error(`Failed to save user registration: ${insertError.message}`)
+    console.error('Error saving user:', insertError)
+    throw new Error(`Failed to save user: ${insertError.message}`)
   }
 }

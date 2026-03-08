@@ -10,9 +10,10 @@ import {
 } from '@/lib/console/storage/magic-links'
 import {
   getUserByEmail,
-  saveUserRegistration,
+  saveUser,
 } from '@/lib/console/storage/users'
-import type { UserRegistration } from '@/lib/console/storage/types'
+import { createOrganization } from '@/lib/console/storage'
+import type { User } from '@/lib/console/storage/types'
 import { SignJWT } from 'jose'
 
 const JWT_SECRET = new TextEncoder().encode(
@@ -22,7 +23,7 @@ const JWT_SECRET = new TextEncoder().encode(
 /**
  * Generate JWT session token
  */
-async function generateSessionToken(user: UserRegistration): Promise<string> {
+async function generateSessionToken(user: User): Promise<string> {
   const token = await new SignJWT({
     userId: user.userId,
     email: user.email,
@@ -87,17 +88,33 @@ export async function GET(request: NextRequest) {
         email,
         name: getDefaultName(email),
         providers: ['email'],
-        registeredAt: now,
         createdAt: now,
         updatedAt: now,
       }
 
-      await saveUserRegistration(user)
+      await saveUser(user)
+
+      // Auto-create a default organization for new users
+      try {
+        const baseSlug = (user.name || user.email.split('@')[0])
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 50)
+        let slug = /^[a-z]/.test(baseSlug) ? baseSlug : `org-${baseSlug}`
+        if (slug.length < 3) slug = `${slug}-org`
+
+        await createOrganization(user.userId, `${user.name}'s Organization`, slug)
+      } catch (orgError) {
+        // Log but don't block login — org creation is best-effort on signup
+        console.error('Failed to auto-create organization:', orgError)
+      }
     } else {
       // Add 'email' to providers if not already present
       if (!user.providers.includes('email')) {
         user.providers.push('email')
-        await saveUserRegistration(user)
+        await saveUser(user)
       }
     }
 

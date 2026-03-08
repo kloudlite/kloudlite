@@ -1,13 +1,22 @@
+import { redirect } from 'next/navigation'
 import { getInstallationById } from '@/lib/console/storage'
+import { getRegistrationSession } from '@/lib/console-auth'
+import { getSelectedOrg } from '@/lib/console/get-selected-org'
 import { KlCloudInstallationForm } from '@/components/kl-cloud-installation-form'
 import { getTierConfig } from '@/lib/stripe-bootstrap'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, AlertTriangle } from 'lucide-react'
 
 interface NewKlCloudPageProps {
-  searchParams: Promise<{ installation?: string }>
+  searchParams: Promise<{ installation?: string; checkout?: string }>
 }
 
 export default async function NewKlCloudPage({ searchParams }: NewKlCloudPageProps) {
+  const session = await getRegistrationSession()
+  if (!session?.user) redirect('/login')
+
+  const currentOrg = await getSelectedOrg(session.user.id, session.user.name, session.user.email)
+  if (!currentOrg) redirect('/installations')
+
   const params = await searchParams
 
   // If continuing an existing installation, fetch it
@@ -83,6 +92,16 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
 
       {/* Right Column - Form */}
       <div className="space-y-6 lg:flex-1 lg:min-w-0">
+        {/* Checkout cancelled banner */}
+        {params.checkout === 'cancelled' && (
+          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-4 py-3 text-sm">
+            <AlertTriangle className="size-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
+            <p className="text-foreground">
+              Checkout was cancelled. You can try again when you&apos;re ready.
+            </p>
+          </div>
+        )}
+
         {/* Header */}
         <div>
           <h1 className="text-foreground text-2xl font-semibold tracking-tight">
@@ -96,6 +115,7 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
         </div>
 
         <KlCloudInstallationForm
+          orgId={currentOrg.id}
           existingInstallationId={existingInstallation?.id}
           tierConfig={await getTierConfig('usd')}
           currency="usd"

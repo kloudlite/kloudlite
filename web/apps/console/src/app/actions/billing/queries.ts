@@ -1,14 +1,12 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { getRegistrationSession } from '@/lib/console-auth'
+import { requireOrgAccess } from '@/lib/console/authorization'
 import {
-  getStripeCustomer,
+  getBillingAccount,
   getSubscriptionItems,
-  getMemberRole,
-  getInstallationById,
 } from '@/lib/console/storage'
-import type { StripeCustomer, SubscriptionItem } from '@/lib/console/storage'
+import type { BillingAccount, SubscriptionItem } from '@/lib/console/storage'
 
 export async function getStripePublishableKey(): Promise<string> {
   const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -16,22 +14,19 @@ export async function getStripePublishableKey(): Promise<string> {
   return key
 }
 
-export async function fetchBillingStatus(installationId: string): Promise<{
-  customer: StripeCustomer | null
+export async function fetchBillingStatus(orgId: string): Promise<{
+  customer: BillingAccount | null
   items: SubscriptionItem[]
 }> {
-  const session = await getRegistrationSession()
-  if (!session?.user) redirect('/login')
-
-  const role = await getMemberRole(installationId, session.user.id)
-  const installation = await getInstallationById(installationId)
-  if (!role && installation?.userId !== session.user.id) {
-    throw new Error('Forbidden')
+  try {
+    await requireOrgAccess(orgId)
+  } catch {
+    redirect('/login')
   }
 
   const [customer, items] = await Promise.all([
-    getStripeCustomer(installationId),
-    getSubscriptionItems(installationId),
+    getBillingAccount(orgId),
+    getSubscriptionItems(orgId),
   ])
 
   return { customer, items }

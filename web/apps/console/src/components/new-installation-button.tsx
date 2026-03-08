@@ -14,7 +14,7 @@ export function NewInstallationButton() {
   const router = useRouter()
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button size="default">
           <Plus className="h-4 w-4" />

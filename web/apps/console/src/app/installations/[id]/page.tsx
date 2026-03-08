@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, checkInstallationDomainStatus, getMemberRole } from '@/lib/console/storage'
+import { checkInstallationDomainStatus } from '@/lib/console/storage'
+import { cachedInstallationAccess, cachedInstallationById } from '@/lib/console/cached-queries'
+import { getInstallationStatus, hasActiveJob } from '@/lib/installation-status'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import { InstallationDetailsCard } from '@/components/installation-details-card'
 import { InstallationJobProgress } from '@/components/installation-job-progress'
@@ -20,22 +22,17 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
     redirect('/login')
   }
 
-  const installation = await getInstallationById(id)
-
-  if (!installation) {
+  let userRole: string
+  try {
+    const { role } = await cachedInstallationAccess(id)
+    userRole = role
+  } catch {
     redirect('/installations')
   }
 
-  // Check if user has access to this installation (team member)
-  // First check installation_members table, then fallback to checking if user is the owner
-  let userRole = await getMemberRole(id, session.user.id)
+  const installation = await cachedInstallationById(id)
 
-  // If not found in members table, check if user is the installation owner (legacy support)
-  if (!userRole && installation.userId === session.user.id) {
-    userRole = 'owner'
-  }
-
-  if (!userRole) {
+  if (!installation) {
     redirect('/installations')
   }
 
@@ -50,73 +47,18 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
   }
 
   // Check if installation has an active job
-  const hasActiveJob =
-    (installation.acaJobStatus === 'running' || installation.acaJobStatus === 'pending') &&
-    (installation.acaJobOperation === 'install' || installation.acaJobOperation === 'uninstall')
+  const activeJob = hasActiveJob(installation)
 
   // Determine installation status
-  const isUninstalling = installation.acaJobOperation === 'uninstall' && installation.acaJobStatus !== 'failed'
+  const isUninstalling = installation.deployJobOperation === 'uninstall' && installation.deployJobStatus !== 'failed'
 
-  const getStatus = () => {
-    // Uninstall operations: show UNINSTALLING until the record is auto-deleted
-    if (installation.acaJobOperation === 'uninstall') {
-      if (installation.acaJobStatus === 'failed') {
-        return {
-          label: 'UNINSTALL FAILED',
-          color: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
-          description: 'Uninstall job failed. You can retry from the danger zone below.',
-        }
-      }
-      const stepInfo = installation.acaJobCurrentStep && installation.acaJobTotalSteps
-        ? ` (Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps})`
-        : ''
-      return {
-        label: 'UNINSTALLING',
-        color: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
-        description: `Infrastructure is being torn down${stepInfo}`,
-      }
-    }
-    if (hasActiveJob && installation.acaJobOperation === 'install') {
-      const stepInfo = installation.acaJobCurrentStep && installation.acaJobTotalSteps
-        ? ` (Step ${installation.acaJobCurrentStep}/${installation.acaJobTotalSteps})`
-        : ''
-      return {
-        label: 'INSTALLING',
-        color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
-        description: `Installation is in progress${stepInfo}`,
-      }
-    }
-
-    if (!installation.secretKey) {
-      return {
-        label: 'NOT INSTALLED',
-        color: 'bg-foreground/[0.06] text-foreground border border-foreground/10',
-        description: 'Installation has not been deployed yet',
-      }
-    }
-    if (!installation.subdomain) {
-      return {
-        label: 'PENDING',
-        color: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
-        description: 'Domain configuration is pending',
-      }
-    }
-    if (!installation.deploymentReady) {
-      return {
-        label: 'CONFIGURING',
-        color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20',
-        description: 'Installation is being configured',
-      }
-    }
-    return {
-      label: 'ACTIVE',
-      color: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
-      description: 'Installation is active and running',
-    }
+  const installationStatus = getInstallationStatus(installation)
+  const status = {
+    label: installationStatus.status,
+    color: installationStatus.statusColor,
+    description: installationStatus.description,
   }
-
-  const status = getStatus()
-  const domain = process.env.CLOUDFLARE_DNS_DOMAIN || 'khost.dev'
+  const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
   const installationUrl = installation.subdomain
     ? `https://${installation.subdomain}.${domain}`
     : null
@@ -124,7 +66,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       {/* Job Progress Banner */}
-      {(hasActiveJob || isUninstalling) && (
+      {(activeJob || isUninstalling) && (
         <InstallationJobProgress
           installationId={installation.id}
           initialActive={true}
@@ -152,7 +94,7 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
       )}
 
       {/* Danger Zone - Only for Owner, hidden during active jobs and uninstall */}
-      {userRole === 'owner' && !hasActiveJob && !isUninstalling && (
+      {userRole === 'owner' && !activeJob && !isUninstalling && (
         <div className="border border-red-500/20 rounded-lg p-6 bg-red-500/5">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-1">

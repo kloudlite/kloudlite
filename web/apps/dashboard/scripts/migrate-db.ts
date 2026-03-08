@@ -1,7 +1,11 @@
 #!/usr/bin/env tsx
 /**
- * Database Migration Script
- * Applies schema.sql to Supabase database using PostgreSQL connection
+ * Database Migration Script (Dashboard)
+ *
+ * Dashboard shares the same Supabase databases as Console.
+ * This script delegates to the console migration.
+ * Run `bun run --cwd ../console scripts/migrate-db.ts` instead,
+ * or use this wrapper which simply re-exports for convenience.
  */
 
 import { readFileSync } from 'fs'
@@ -10,87 +14,37 @@ import { fileURLToPath } from 'url'
 import { Pool } from 'pg'
 import dotenv from 'dotenv'
 
-// Get __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = join(__filename, '..')
 
 async function migrate() {
-  // Parse Supabase URL to get database connection info
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const databaseUrl = process.env.DATABASE_URL
 
-  if (!databaseUrl && !supabaseUrl) {
-    console.error('❌ Missing required environment variables:')
-    console.error('   Either provide:')
-    console.error('   - DATABASE_URL (PostgreSQL connection string)')
-    console.error('   Or:')
-    console.error('   - NEXT_PUBLIC_SUPABASE_URL')
-    console.error('')
-    console.error('💡 To get your DATABASE_URL from Supabase:')
-    console.error('   1. Go to Project Settings > Database')
-    console.error('   2. Copy the Connection String (URI format)')
-    console.error('   3. Replace [YOUR-PASSWORD] with your database password')
-    console.error('   4. Add to .env.local:')
-    console.error('      DATABASE_URL="postgresql://postgres:[PASSWORD]@..."')
+  if (!databaseUrl) {
+    console.error('❌ DATABASE_URL is required.')
+    console.error('   Get it from: Supabase Dashboard > Project Settings > Database > Connection String')
     process.exit(1)
   }
 
-  let connectionString: string
+  console.log('ℹ️  Dashboard shares the console database.')
+  console.log('   Run the console migration script for full schema management:')
+  console.log('   bun run --cwd web/apps/console scripts/migrate-db.ts')
+  console.log('')
+  console.log('   Verifying connection to main database...')
 
-  if (databaseUrl) {
-    connectionString = databaseUrl
-  } else {
-    // Try to construct from Supabase URL (won't work without password)
-    console.error('❌ DATABASE_URL is required. Please add it to your .env.local file.')
-    console.error(
-      '   Get it from: Supabase Dashboard > Project Settings > Database > Connection String',
-    )
-    process.exit(1)
-  }
-
-  console.log('🔌 Connecting to PostgreSQL database...')
-
-  const pool = new Pool({
-    connectionString,
-    ssl: {
-      rejectUnauthorized: false, // Required for Supabase
-    },
-  })
+  const pool = new Pool({ connectionString: databaseUrl, ssl: { rejectUnauthorized: false } })
 
   try {
-    // Test connection
     await pool.query('SELECT NOW()')
-    console.log('✅ Database connection established')
-
-    // Read schema.sql
-    const schemaPath = join(__dirname, '..', 'src', 'lib', 'registration', 'schema.sql')
-    console.log(`📄 Reading schema from: ${schemaPath}`)
-
-    const sql = readFileSync(schemaPath, 'utf-8')
-
-    console.log('')
-    console.log('🚀 Executing migration...')
-    console.log('   This will:')
-    console.log('   - Drop existing tables (if any)')
-    console.log('   - Create new tables with updated schema')
-    console.log('   - Set up triggers and indexes')
-    console.log('')
-
-    // Execute the migration
-    await pool.query(sql)
-
-    console.log('✅ Migration SQL executed successfully!')
-
-    // Verify tables were created
-    console.log('')
-    console.log('🔍 Verifying tables...')
+    console.log('✅ Database connection OK')
 
     const tables = [
-      'user_registrations',
       'installations',
-      'ip_records',
+      'dns_configurations',
       'domain_reservations',
-      'tls_certificates',
+      'installation_members',
+      'installation_invitations',
+      'billing_accounts',
     ]
 
     for (const table of tables) {
@@ -99,49 +53,28 @@ async function migrate() {
         [table],
       )
       const exists = result.rows[0].count > 0
-
       if (exists) {
         const countResult = await pool.query(`SELECT COUNT(*) FROM ${table}`)
-        const rowCount = countResult.rows[0].count
-        console.log(`   ✅ ${table} (${rowCount} rows)`)
+        console.log(`   ✅ ${table} (${countResult.rows[0].count} rows)`)
       } else {
-        console.error(`   ❌ ${table} not found`)
+        console.error(`   ❌ ${table} not found — run console migration first`)
       }
     }
-
-    console.log('')
-    console.log('✨ Database migration complete!')
-  } catch (error) {
-    console.error('')
-    console.error('❌ Migration failed:')
-    if (error instanceof Error) {
-      console.error(`   ${error.message}`)
-      if (error.stack) {
-        console.error('')
-        console.error('Stack trace:')
-        console.error(error.stack)
-      }
-    } else {
-      console.error(error)
-    }
-    process.exit(1)
   } finally {
     await pool.end()
   }
 }
 
-// Handle command line execution - check if this module is being run directly
 const isMainModule = import.meta.url === `file://${process.argv[1]}`
 
 if (isMainModule) {
-  // Load environment variables from .env.local
   dotenv.config({ path: join(__dirname, '..', '.env.local') })
   dotenv.config({ path: join(__dirname, '..', '.env') })
 
   migrate()
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error(error)
+      console.error('❌ Migration check failed:', error)
       process.exit(1)
     })
 }

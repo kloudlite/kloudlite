@@ -11,7 +11,7 @@ export const runtime = 'nodejs'
  * Called by the installer (OCI job or BYOC kli CLI) at each step to report progress.
  * Fire-and-forget from the Go side — errors are non-fatal.
  *
- * Also sets acaJobStatus to 'running' so the frontend detects active jobs.
+ * Also sets deployJobStatus to 'running' so the frontend detects active jobs.
  * For BYOC installations (AWS/GCP/Azure), this is the only way the job status gets set
  * since they don't use the trigger-managed-install/uninstall endpoints.
  */
@@ -29,20 +29,20 @@ export async function POST(request: Request) {
       return apiError('Installation not found', 404)
     }
 
-    // Set acaJobStatus to 'running' so the frontend shows INSTALLING/UNINSTALLING badges.
+    // Set deployJobStatus to 'running' so the frontend shows INSTALLING/UNINSTALLING badges.
     // For BYOC (AWS/GCP/Azure), this is the only signal that a job is active.
     // When completed=true, mark job as succeeded.
     const updates: Record<string, unknown> = {
-      acaJobOperation: operation,
-      acaJobCurrentStep: currentStep,
-      acaJobTotalSteps: totalSteps,
-      acaJobStepDescription: stepDescription || '',
-      acaJobStatus: completed ? 'succeeded' : 'running',
+      deployJobOperation: operation,
+      deployJobCurrentStep: currentStep,
+      deployJobTotalSteps: totalSteps,
+      deployJobStepDescription: stepDescription || '',
+      deployJobStatus: completed ? 'succeeded' : 'running',
     }
 
     // If this is the first progress report, record the start time and reset deploymentReady
-    if (!installation.acaJobStartedAt || installation.acaJobStatus !== 'running') {
-      updates.acaJobStartedAt = new Date().toISOString()
+    if (!installation.deployJobStartedAt || installation.deployJobStatus !== 'running') {
+      updates.deployJobStartedAt = new Date().toISOString()
       if (operation === 'install') {
         updates.deploymentReady = false
       }
@@ -50,12 +50,12 @@ export async function POST(request: Request) {
 
     // Record completion time and clear job fields after successful install
     if (completed) {
-      updates.acaJobCompletedAt = new Date().toISOString()
+      updates.deployJobCompletedAt = new Date().toISOString()
       if (operation === 'install') {
-        updates.acaJobOperation = null
-        updates.acaJobCurrentStep = null
-        updates.acaJobTotalSteps = null
-        updates.acaJobStepDescription = null
+        updates.deployJobOperation = null
+        updates.deployJobCurrentStep = null
+        updates.deployJobTotalSteps = null
+        updates.deployJobStepDescription = null
       }
     }
 

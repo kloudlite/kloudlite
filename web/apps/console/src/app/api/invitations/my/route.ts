@@ -1,11 +1,13 @@
+export const runtime = 'nodejs'
+
 import { NextResponse } from 'next/server'
-import { apiError } from '@/lib/api-helpers'
+import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getUserPendingInvitations } from '@/lib/console/storage'
+import { getUserPendingOrgInvitations } from '@/lib/console/storage'
 
 /**
  * GET /api/invitations/my
- * Get user's pending invitations
+ * Get current user's pending organization invitations
  */
 export async function GET() {
   const session = await getRegistrationSession()
@@ -15,9 +17,9 @@ export async function GET() {
   }
 
   try {
-    const invitations = await getUserPendingInvitations(session.user.email)
+    const invitations = await getUserPendingOrgInvitations(session.user.email)
     return NextResponse.json({ invitations })
-  } catch (_error) {
-    return apiError('Failed to get invitations', 500)
+  } catch (error) {
+    return apiCatchError(error, 'Failed to get invitations')
   }
 }

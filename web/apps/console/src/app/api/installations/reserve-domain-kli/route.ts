@@ -5,6 +5,7 @@ import {
   validateSubdomain,
   reserveSubdomain,
   getUserById,
+  getOrgMembers,
 } from '@/lib/console/storage'
 import { CLOUDFLARE_DNS_DOMAIN } from '@/lib/console/cloudflare-dns'
 
@@ -95,23 +96,34 @@ export async function POST(request: NextRequest) {
       return response
     }
 
-    // Get user info for reservation
-    const user = await getUserById(installation.userId)
+    // Always resolve user info from the org owner — never trust body-provided identity
+    const members = await getOrgMembers(installation.orgId)
+    const ownerMember = members.find((m) => m.role === 'owner')
+    if (!ownerMember) {
+      return NextResponse.json(
+        { success: false, error: 'Organization owner not found' },
+        { status: 404 }
+      )
+    }
+    const user = await getUserById(ownerMember.userId)
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
       )
     }
+    const reservationUserId = ownerMember.userId
+    const reservationEmail = user.email
+    const reservationName = user.name
 
     // Reserve the subdomain
     try {
       await reserveSubdomain(
         subdomain,
         installation.id,
-        installation.userId,
-        user.email,
-        user.name
+        reservationUserId,
+        reservationEmail,
+        reservationName
       )
     } catch (error) {
       // Handle race condition - subdomain was taken between check and reserve

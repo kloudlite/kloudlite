@@ -3,50 +3,60 @@
  */
 
 import type { Database } from '../supabase-types'
+import type { PiiDatabase } from '../supabase-pii-types'
 
-export type UserRegistrationRow = Database['public']['Tables']['user_registrations']['Row']
+export type UserRow = PiiDatabase['public']['Tables']['users']['Row']
+export type OrganizationRow = Database['public']['Tables']['organizations']['Row']
 export type InstallationRow = Database['public']['Tables']['installations']['Row']
-export type IPRecordRow = Database['public']['Tables']['ip_records']['Row']
+export type DnsConfigurationRow = Database['public']['Tables']['dns_configurations']['Row']
 export type DomainReservationRow = Database['public']['Tables']['domain_reservations']['Row']
 
-// Team & Member types
-export type MemberRole = 'owner' | 'admin' | 'member' | 'viewer'
+// Org roles
+export type OrgRole = 'owner' | 'admin'
+
+// Invitation status
 export type InvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired'
 
-export interface InstallationMember {
+export interface Organization {
   id: string
-  installationId: string
-  userId: string
-  role: MemberRole
-  addedBy: string | null
-  addedAt: string
+  name: string
+  slug: string
+  createdBy: string
   createdAt: string
   updatedAt: string
-  // Populated from join
-  userEmail?: string
-  userName?: string
-  userProviders?: string[]
 }
 
-export interface InstallationInvitation {
+export interface OrgMember {
   id: string
-  installationId: string
+  orgId: string
+  userId: string
+  role: OrgRole
+  addedBy: string | null
+  createdAt: string
+  updatedAt: string
+  // Populated from PII DB join
+  userEmail?: string
+  userName?: string
+}
+
+export interface OrgInvitation {
+  id: string
+  orgId: string
   email: string
-  role: Exclude<MemberRole, 'owner'> // owner can't be invited
+  role: 'admin'
   invitedBy: string
   status: InvitationStatus
   expiresAt: string
   createdAt: string
   updatedAt: string
-  // Populated from join
+  // Populated from PII DB join
   inviterName?: string
-  installationName?: string
+  orgName?: string
 }
 
-export interface IPRecord {
-  domainRequestName: string
+export interface DnsConfiguration {
+  serviceName: string
   ip: string
-  configuredAt: string
   sshRecordId?: string | null
   routeRecordIds?: string[] // Kept for backward compatibility
   routeRecordMap?: Record<string, string> // domain -> CNAME record ID
@@ -55,38 +65,37 @@ export interface IPRecord {
 
 export interface Installation {
   id: string
-  userId: string
+  orgId: string
   name?: string
   description?: string
   installationKey: string
   secretKey?: string
-  hasCompletedInstallation: boolean
+  setupCompleted: boolean
   subdomain?: string
   reservedAt?: string
-  ipRecords?: IPRecord[]
+  dnsConfigurations?: DnsConfiguration[]
   deploymentReady?: boolean
   lastHealthCheck?: string
   cloudProvider?: 'aws' | 'gcp' | 'azure' | 'oci'
   cloudLocation?: string
-  acaJobExecutionName?: string
-  acaJobStatus?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown'
-  acaJobStartedAt?: string
-  acaJobCompletedAt?: string
-  acaJobError?: string
-  acaJobOperation?: 'install' | 'uninstall'
-  acaJobCurrentStep?: number
-  acaJobTotalSteps?: number
-  acaJobStepDescription?: string
+  deployJobExecutionName?: string
+  deployJobStatus?: 'pending' | 'running' | 'succeeded' | 'failed' | 'unknown'
+  deployJobStartedAt?: string
+  deployJobCompletedAt?: string
+  deployJobError?: string
+  deployJobOperation?: 'install' | 'uninstall'
+  deployJobCurrentStep?: number
+  deployJobTotalSteps?: number
+  deployJobStepDescription?: string
   createdAt: string
   updatedAt: string
 }
 
-export interface UserRegistration {
+export interface User {
   userId: string
   email: string
   name: string
   providers: ('github' | 'google' | 'azure-ad' | 'email')[]
-  registeredAt: string
   createdAt: string
   updatedAt: string
 }

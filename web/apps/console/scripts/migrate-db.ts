@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Database Migration Script
- * Applies schema.sql to Supabase database using PostgreSQL connection
+ * Applies schema migrations to both Main and PII Supabase databases
  */
 
 import { readFileSync } from 'fs'
@@ -10,138 +10,104 @@ import { fileURLToPath } from 'url'
 import { Pool } from 'pg'
 import dotenv from 'dotenv'
 
-// Get __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = join(__filename, '..')
 
-async function migrate() {
-  // Parse Supabase URL to get database connection info
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const databaseUrl = process.env.DATABASE_URL
+async function runMigration(pool: Pool, schemaPath: string, label: string, tables: string[]) {
+  console.log(`\n📄 [${label}] Reading schema from: ${schemaPath}`)
+  const sql = readFileSync(schemaPath, 'utf-8')
 
-  if (!databaseUrl && !supabaseUrl) {
-    console.error('❌ Missing required environment variables:')
-    console.error('   Either provide:')
-    console.error('   - DATABASE_URL (PostgreSQL connection string)')
-    console.error('   Or:')
-    console.error('   - NEXT_PUBLIC_SUPABASE_URL')
-    console.error('')
-    console.error('💡 To get your DATABASE_URL from Supabase:')
-    console.error('   1. Go to Project Settings > Database')
-    console.error('   2. Copy the Connection String (URI format)')
-    console.error('   3. Replace [YOUR-PASSWORD] with your database password')
-    console.error('   4. Add to .env.local:')
-    console.error('      DATABASE_URL="postgresql://postgres:[PASSWORD]@..."')
-    process.exit(1)
-  }
+  console.log(`🚀 [${label}] Executing migration...`)
+  await pool.query(sql)
+  console.log(`✅ [${label}] Migration SQL executed successfully!`)
 
-  let connectionString: string
-
-  if (databaseUrl) {
-    connectionString = databaseUrl
-  } else {
-    // Try to construct from Supabase URL (won't work without password)
-    console.error('❌ DATABASE_URL is required. Please add it to your .env.local file.')
-    console.error(
-      '   Get it from: Supabase Dashboard > Project Settings > Database > Connection String',
+  console.log(`🔍 [${label}] Verifying tables...`)
+  for (const table of tables) {
+    const result = await pool.query(
+      `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+      [table],
     )
-    process.exit(1)
-  }
-
-  console.log('🔌 Connecting to PostgreSQL database...')
-
-  const pool = new Pool({
-    connectionString,
-    ssl: {
-      rejectUnauthorized: false, // Required for Supabase
-    },
-  })
-
-  try {
-    // Test connection
-    await pool.query('SELECT NOW()')
-    console.log('✅ Database connection established')
-
-    // Read schema.sql
-    const schemaPath = join(__dirname, '..', 'src', 'lib', 'registration', 'schema.sql')
-    console.log(`📄 Reading schema from: ${schemaPath}`)
-
-    const sql = readFileSync(schemaPath, 'utf-8')
-
-    console.log('')
-    console.log('🚀 Executing migration...')
-    console.log('   This will:')
-    console.log('   - Drop existing tables (if any)')
-    console.log('   - Create new tables with updated schema')
-    console.log('   - Set up triggers and indexes')
-    console.log('')
-
-    // Execute the migration
-    await pool.query(sql)
-
-    console.log('✅ Migration SQL executed successfully!')
-
-    // Verify tables were created
-    console.log('')
-    console.log('🔍 Verifying tables...')
-
-    const tables = [
-      'user_registrations',
-      'installations',
-      'ip_records',
-      'domain_reservations',
-      'tls_certificates',
-    ]
-
-    for (const table of tables) {
-      const result = await pool.query(
-        `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
-        [table],
-      )
-      const exists = result.rows[0].count > 0
-
-      if (exists) {
-        const countResult = await pool.query(`SELECT COUNT(*) FROM ${table}`)
-        const rowCount = countResult.rows[0].count
-        console.log(`   ✅ ${table} (${rowCount} rows)`)
-      } else {
-        console.error(`   ❌ ${table} not found`)
-      }
-    }
-
-    console.log('')
-    console.log('✨ Database migration complete!')
-  } catch (error) {
-    console.error('')
-    console.error('❌ Migration failed:')
-    if (error instanceof Error) {
-      console.error(`   ${error.message}`)
-      if (error.stack) {
-        console.error('')
-        console.error('Stack trace:')
-        console.error(error.stack)
-      }
+    const exists = result.rows[0].count > 0
+    if (exists) {
+      const countResult = await pool.query(`SELECT COUNT(*) FROM ${table}`)
+      const rowCount = countResult.rows[0].count
+      console.log(`   ✅ ${table} (${rowCount} rows)`)
     } else {
-      console.error(error)
+      console.error(`   ❌ ${table} not found`)
     }
-    process.exit(1)
-  } finally {
-    await pool.end()
   }
 }
 
-// Handle command line execution - check if this module is being run directly
+async function migrate() {
+  const databaseUrl = process.env.DATABASE_URL
+  const piiDatabaseUrl = process.env.PII_DATABASE_URL
+
+  if (!databaseUrl) {
+    console.error('❌ DATABASE_URL is required for the main database.')
+    console.error('   Get it from: Supabase Dashboard > Project Settings > Database > Connection String')
+    process.exit(1)
+  }
+
+  const migrationsDir = join(__dirname, '..', 'src', 'lib', 'console', 'migrations')
+
+  // --- Main DB ---
+  console.log('🔌 Connecting to Main database...')
+  const mainPool = new Pool({ connectionString: databaseUrl, ssl: { rejectUnauthorized: false } })
+
+  try {
+    await mainPool.query('SELECT NOW()')
+    console.log('✅ Main database connection established')
+
+    await runMigration(mainPool, join(migrationsDir, '001_schema.sql'), 'Main', [
+      'organizations',
+      'organization_members',
+      'organization_invitations',
+      'installations',
+      'dns_configurations',
+      'domain_reservations',
+      'billing_accounts',
+      'subscription_items',
+      'processed_webhook_events',
+    ])
+  } finally {
+    await mainPool.end()
+  }
+
+  // --- PII DB ---
+  if (piiDatabaseUrl) {
+    console.log('\n🔌 Connecting to PII database...')
+    const piiPool = new Pool({ connectionString: piiDatabaseUrl, ssl: { rejectUnauthorized: false } })
+
+    try {
+      await piiPool.query('SELECT NOW()')
+      console.log('✅ PII database connection established')
+
+      await runMigration(piiPool, join(migrationsDir, '001_pii_schema.sql'), 'PII', [
+        'users',
+        'magic_link_tokens',
+        'contact_messages',
+      ])
+    } finally {
+      await piiPool.end()
+    }
+  } else {
+    console.log('\n⚠️  PII_DATABASE_URL not set — skipping PII database migration.')
+    console.log('   Set PII_DATABASE_URL in .env.local to migrate the PII database.')
+  }
+
+  console.log('\n✨ Database migration complete!')
+}
+
 const isMainModule = import.meta.url === `file://${process.argv[1]}`
 
 if (isMainModule) {
-  // Load environment variables from .env.local
   dotenv.config({ path: join(__dirname, '..', '.env.local') })
   dotenv.config({ path: join(__dirname, '..', '.env') })
 
   migrate()
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error(error)
+      console.error('❌ Migration failed:', error)
       process.exit(1)
     })
 }
