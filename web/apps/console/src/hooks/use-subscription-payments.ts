@@ -58,6 +58,7 @@ export function useSubscriptionPayments({ installationId }: UseSubscriptionPayme
             confirmParams: {
               return_url: returnUrl,
             },
+            redirect: 'always',
           })
 
           // confirmPayment only returns here if there's an error

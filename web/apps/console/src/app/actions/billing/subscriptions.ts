@@ -75,22 +75,54 @@ export async function modifySubscription(
   // Sync updated items back to DB
   await syncSubscriptionItemsFromStripe(installationId, stripeCustomer.stripeSubscriptionId)
 
-  // Check the latest invoice for payment status
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const invoice = updatedSubscription.latest_invoice as any
-  if (invoice && typeof invoice !== 'string') {
-    // No payment needed (downgrade with credit, $0 invoice)
-    if (invoice.status === 'paid' || invoice.amount_due === 0) {
-      return { success: true }
-    }
+  // Get the latest invoice
+  const latestInvoiceId = typeof updatedSubscription.latest_invoice === 'string'
+    ? updatedSubscription.latest_invoice
+    : updatedSubscription.latest_invoice?.id
 
-    // Extract the PaymentIntent client_secret for client-side confirmation
-    const paymentIntent = invoice.payment_intent
-    if (paymentIntent && typeof paymentIntent !== 'string' && paymentIntent.client_secret) {
-      return {
-        success: false,
-        clientSecret: paymentIntent.client_secret,
-      }
+  if (!latestInvoiceId) {
+    return { success: true }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let invoice: any = await stripe.invoices.retrieve(latestInvoiceId)
+
+  // No payment needed (downgrade with credit, $0 invoice)
+  if (invoice.status === 'paid' || invoice.amount_due === 0) {
+    return { success: true }
+  }
+
+  // If the invoice is a draft, finalize it to make it payable
+  if (invoice.status === 'draft') {
+    invoice = await stripe.invoices.finalizeInvoice(latestInvoiceId)
+  }
+
+  // If the invoice is open but has no PaymentIntent, attempt to pay it
+  // This generates the PaymentIntent we need for client-side confirmation
+  if (invoice.status === 'open' && !invoice.payment_intent) {
+    try {
+      invoice = await stripe.invoices.pay(latestInvoiceId, {
+        expand: ['payment_intent'],
+      })
+    } catch {
+      // Pay attempt failed (e.g., requires_action for 3DS) — retrieve updated invoice
+      invoice = await stripe.invoices.retrieve(latestInvoiceId, {
+        expand: ['payment_intent'],
+      })
+    }
+  }
+
+  // If already paid after the pay attempt, we're done
+  if (invoice.status === 'paid') {
+    return { success: true }
+  }
+
+  // Extract the PaymentIntent client_secret for client-side confirmation
+  const paymentIntent = invoice.payment_intent
+  if (paymentIntent && typeof paymentIntent !== 'string' && paymentIntent.client_secret) {
+    return {
+      success: false,
+      clientSecret: paymentIntent.client_secret,
     }
   }
 
