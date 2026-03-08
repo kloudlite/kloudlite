@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createCheckoutSession, createPortalSession } from '@/app/actions/billing/checkout'
-import { modifySubscription, cancelSubscription } from '@/app/actions/billing/subscriptions'
+import { cancelSubscription } from '@/app/actions/billing/subscriptions'
 
 interface UseSubscriptionPaymentsOptions {
   installationId: string
@@ -32,7 +32,17 @@ export function useSubscriptionPayments({ installationId }: UseSubscriptionPayme
     async (modifications: { priceId: string; quantity: number }[]) => {
       setLoading(true)
       try {
-        await modifySubscription(installationId, modifications)
+        const res = await fetch(`/api/installations/${installationId}/subscription`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modifications }),
+        })
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new Error(data.error || `Failed to modify subscription (${res.status})`)
+        }
+
         toast.success('Subscription updated successfully. Proration applied to your next invoice.')
         router.refresh()
       } catch (error) {
