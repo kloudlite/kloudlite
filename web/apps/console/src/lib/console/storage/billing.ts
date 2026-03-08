@@ -178,6 +178,42 @@ export async function syncSubscriptionItems(
   }
 }
 
+// --- Sync Items from Stripe ---
+
+/**
+ * Fetch subscription items directly from Stripe and sync to DB.
+ * Useful when the webhook hasn't fired yet (e.g., after checkout redirect).
+ */
+export async function syncSubscriptionItemsFromStripe(
+  installationId: string,
+  stripeSubscriptionId: string,
+): Promise<void> {
+  try {
+    const { getStripe } = await import('@/lib/stripe')
+    const stripe = getStripe()
+    const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId, {
+      expand: ['items.data.price.product'],
+    })
+
+    const items = subscription.items.data.map((item) => {
+      const product = item.price.product as { name: string; metadata?: Record<string, string> }
+      const tier = product.metadata?.tier ? parseInt(product.metadata.tier, 10) : 0
+      return {
+        stripeSubscriptionItemId: item.id,
+        stripePriceId: item.price.id,
+        tier,
+        productName: product.name,
+        quantity: item.quantity ?? 1,
+      }
+    })
+
+    await syncSubscriptionItems(installationId, items)
+    console.log(`[billing] Synced ${items.length} subscription items from Stripe for installation ${installationId}`)
+  } catch (err) {
+    console.error(`[billing] Failed to sync subscription items from Stripe:`, err)
+  }
+}
+
 // --- Subscription Cancellation ---
 
 /**

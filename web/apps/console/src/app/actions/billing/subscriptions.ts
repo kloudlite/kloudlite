@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getStripe } from '@/lib/stripe'
-import { getStripeCustomer, getInstallationById } from '@/lib/console/storage'
+import { getStripeCustomer, getInstallationById, syncSubscriptionItemsFromStripe } from '@/lib/console/storage'
 
 interface SubscriptionModification {
   priceId: string
@@ -59,6 +59,9 @@ export async function modifySubscription(
     items,
     proration_behavior: 'always_invoice',
   })
+
+  // Sync updated items back to DB
+  await syncSubscriptionItemsFromStripe(installationId, stripeCustomer.stripeSubscriptionId)
 
   return { success: true }
 }
