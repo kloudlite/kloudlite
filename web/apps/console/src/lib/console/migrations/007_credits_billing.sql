@@ -35,10 +35,12 @@ CREATE TABLE IF NOT EXISTS credit_transactions (
   description TEXT,
   stripe_invoice_id TEXT,
   usage_period_id UUID,
+  expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_credit_transactions_org_id ON credit_transactions(org_id);
+CREATE INDEX IF NOT EXISTS idx_credit_transactions_expires_at ON credit_transactions(expires_at) WHERE expires_at IS NOT NULL AND type = 'topup';
 CREATE INDEX IF NOT EXISTS idx_credit_transactions_created_at ON credit_transactions(created_at);
 CREATE INDEX IF NOT EXISTS idx_credit_transactions_type ON credit_transactions(type);
 

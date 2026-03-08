@@ -18,6 +18,45 @@ export const runtime = 'nodejs'
  * Periodic cron job that debits accrued usage costs from org credit balances,
  * checks balance thresholds, and triggers auto top-ups when configured.
  */
+/**
+ * Expire promotional credits that have passed their expires_at date.
+ * Finds unexpired topup transactions with an expires_at in the past,
+ * debits the remaining credit amount, and marks them as expired.
+ */
+async function expireCredits() {
+  // Find all topup transactions with expires_at in the past that haven't been expired yet
+  const { data: expiredTopups } = await (supabase as any)
+    .from('credit_transactions')
+    .select('id, org_id, amount, description')
+    .eq('type', 'topup')
+    .not('expires_at', 'is', null)
+    .lt('expires_at', new Date().toISOString())
+    .not('description', 'like', '%[EXPIRED]%') as {
+    data: Array<{ id: string; org_id: string; amount: number; description: string }> | null
+  }
+
+  if (!expiredTopups || expiredTopups.length === 0) return
+
+  for (const topup of expiredTopups) {
+    // Debit the expired amount from the org's balance
+    await debitCredits(
+      topup.org_id,
+      topup.amount,
+      `Expired promotional credits: ${topup.description} [EXPIRED]`,
+    )
+
+    // Mark the original transaction as expired by appending to description
+    await (supabase as any)
+      .from('credit_transactions')
+      .update({ description: `${topup.description} [EXPIRED]` })
+      .eq('id', topup.id)
+
+    console.log(
+      `[Balance Checker] Expired $${topup.amount} promotional credits for org ${topup.org_id}`,
+    )
+  }
+}
+
 export async function POST(request: NextRequest) {
   // Auth: x-cron-secret must match CRON_SECRET (skip auth in dev mode if not set)
   const cronSecret = process.env.CRON_SECRET
@@ -38,6 +77,9 @@ export async function POST(request: NextRequest) {
     if (!activeOrgs || activeOrgs.length === 0) {
       return NextResponse.json({ success: true, orgsProcessed: 0 })
     }
+
+    // Check for expired promotional credits across all orgs
+    await expireCredits()
 
     // Deduplicate org_ids
     const orgIds = [...new Set(activeOrgs.map((row) => row.org_id))]
