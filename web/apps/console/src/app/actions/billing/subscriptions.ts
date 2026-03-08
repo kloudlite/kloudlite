@@ -10,10 +10,18 @@ interface SubscriptionModification {
   quantity: number
 }
 
+export interface ModifyResult {
+  success: boolean
+  /** If set, the client must confirm payment with this secret (3D Secure) */
+  clientSecret?: string
+  /** The payment intent status */
+  paymentStatus?: string
+}
+
 export async function modifySubscription(
   installationId: string,
   modifications: SubscriptionModification[],
-) {
+): Promise<ModifyResult> {
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
 
@@ -55,13 +63,35 @@ export async function modifySubscription(
     throw new Error('No changes to apply')
   }
 
-  await stripe.subscriptions.update(stripeCustomer.stripeSubscriptionId, {
-    items,
-    proration_behavior: 'always_invoice',
-  })
+  // Use default_incomplete so we can handle 3DS if needed
+  const updatedSubscription = await stripe.subscriptions.update(
+    stripeCustomer.stripeSubscriptionId,
+    {
+      items,
+      proration_behavior: 'always_invoice',
+      payment_behavior: 'default_incomplete',
+      expand: ['latest_invoice.payment_intent'],
+    },
+  )
 
   // Sync updated items back to DB
   await syncSubscriptionItemsFromStripe(installationId, stripeCustomer.stripeSubscriptionId)
+
+  // Check if the latest invoice needs 3DS authentication
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const invoice = updatedSubscription.latest_invoice as any
+  if (invoice && typeof invoice !== 'string') {
+    const paymentIntent = invoice.payment_intent
+    if (paymentIntent && typeof paymentIntent !== 'string') {
+      if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_confirmation') {
+        return {
+          success: false,
+          clientSecret: paymentIntent.client_secret ?? undefined,
+          paymentStatus: paymentIntent.status,
+        }
+      }
+    }
+  }
 
   return { success: true }
 }
