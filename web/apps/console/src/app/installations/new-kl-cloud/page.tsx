@@ -3,7 +3,6 @@ import { getInstallationById } from '@/lib/console/storage'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { getSelectedOrg } from '@/lib/console/get-selected-org'
 import { KlCloudInstallationForm } from '@/components/kl-cloud-installation-form'
-import { getTierConfig } from '@/lib/stripe-bootstrap'
 import { CheckCircle2, AlertTriangle } from 'lucide-react'
 
 interface NewKlCloudPageProps {
@@ -52,10 +51,10 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">2</div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {existingInstallation ? 'Subscribe & pay' : 'Configure installation'}
+                    {existingInstallation ? 'Add credits' : 'Configure installation'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {existingInstallation ? 'Choose compute sizes & payment' : 'Name, domain, plan & payment'}
+                    {existingInstallation ? 'Ensure sufficient credit balance' : 'Name, domain & compute configuration'}
                   </p>
                 </div>
               </div>
@@ -105,11 +104,11 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
         {/* Header */}
         <div>
           <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-            {existingInstallation ? 'Complete Subscription' : 'Create Installation'}
+            {existingInstallation ? 'Add Credits' : 'Create Installation'}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {existingInstallation
-              ? `Choose compute sizes and subscribe for "${existingInstallation.name}"`
+              ? `Add credits for "${existingInstallation.name}"`
               : 'Set up your Kloudlite Cloud installation'}
           </p>
         </div>
@@ -117,8 +116,6 @@ export default async function NewKlCloudPage({ searchParams }: NewKlCloudPagePro
         <KlCloudInstallationForm
           orgId={currentOrg.id}
           existingInstallationId={existingInstallation?.id}
-          tierConfig={await getTierConfig('usd')}
-          currency="usd"
         />
 
         {/* Help text */}

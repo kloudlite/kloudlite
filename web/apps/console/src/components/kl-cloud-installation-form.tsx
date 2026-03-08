@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import {
   Button,
   Input,
-  Textarea,
+  Slider,
   Form,
   FormControl,
   FormField,
@@ -15,13 +15,55 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
 } from '@kloudlite/ui'
-import { Loader2, CheckCircle2, AlertCircle, Minus, Plus, Cpu, HardDrive, Clock, Zap } from 'lucide-react'
+import { cn } from '@kloudlite/lib'
+import { Loader2, CheckCircle2, AlertCircle, Cpu, HardDrive, Wallet, Server } from 'lucide-react'
 import { toast } from 'sonner'
-import { formatCurrency } from '@/lib/billing-utils'
 import { getErrorMessage } from '@/lib/errors'
 import { useSubdomainCheck } from '@/hooks/use-subdomain-check'
-import type { TierConfigItem } from '@/app/actions/billing/pricing'
+import { useCredits } from '@/hooks/use-credits'
+import type { PricingTier } from '@/lib/console/storage/credits-types'
+
+// --- Pure helpers (no server imports) ---
+
+function calculateProjectedMonthlyCost(
+  tiers: PricingTier[],
+  selectedResources: Array<{
+    resourceType: string
+    quantity?: number
+    sizeGb?: number
+  }>,
+): number {
+  let total = 0
+  for (const resource of selectedResources) {
+    const tier = tiers.find((t) => t.resourceType === resource.resourceType)
+    if (!tier) continue
+    if (tier.category === 'storage') {
+      total += tier.hourlyRate * (resource.sizeGb ?? 0) * 24 * 30
+    } else {
+      total += tier.hourlyRate * (resource.quantity ?? 1) * 24 * 30
+    }
+  }
+  return total
+}
+
+function calculateMinimumTopup(projectedMonthlyCost: number, currentBalance: number): number {
+  const needed = projectedMonthlyCost - currentBalance
+  return Math.max(needed, 5)
+}
+
+function formatDollars(amount: number): string {
+  return `$${amount.toFixed(2)}`
+}
+
+function hourlyToMonthly(hourly: number): number {
+  return hourly * 24 * 30
+}
+
+// --- Schema ---
 
 const installationSchema = z.object({
   name: z
@@ -29,7 +71,6 @@ const installationSchema = z.object({
     .min(3, 'Name must be at least 3 characters')
     .max(50, 'Name must be less than 50 characters')
     .regex(/^[a-zA-Z0-9\s-]+$/, 'Name can only contain letters, numbers, spaces, and hyphens'),
-  description: z.string().max(200, 'Description must be less than 200 characters').optional(),
   subdomain: z
     .string()
     .min(3, 'Subdomain must be at least 3 characters')
@@ -42,81 +83,111 @@ const installationSchema = z.object({
 
 type InstallationFormData = z.infer<typeof installationSchema>
 
-// Tier resource specs (not pricing — pricing comes from Stripe via props)
-const TIER_SPECS: Record<number, { cpu: string; ram: string; storage: string; monthlyHours: string; autoSuspend: string }> = {
-  1: { cpu: '1 vCPU', ram: '1 GB', storage: '5 GB', monthlyHours: '730', autoSuspend: '30m' },
-  2: { cpu: '2 vCPU', ram: '4 GB', storage: '20 GB', monthlyHours: '730', autoSuspend: '1h' },
-  3: { cpu: '4 vCPU', ram: '8 GB', storage: '50 GB', monthlyHours: '730', autoSuspend: '2h' },
-}
+// --- Component ---
 
 interface KlCloudInstallationFormProps {
   orgId: string
   existingInstallationId?: string
-  tierConfig: TierConfigItem[]
-  currency: string
 }
 
 export function KlCloudInstallationForm({
   orgId,
   existingInstallationId,
-  tierConfig,
-  currency,
 }: KlCloudInstallationFormProps) {
   const isSubscribeOnly = !!existingInstallationId
   const [creating, setCreating] = useState(false)
-  const { checking: checkingSubdomain, available: subdomainAvailable, check: checkSubdomainAvailability } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>([])
+  const [pricingLoading, setPricingLoading] = useState(true)
 
-  const controlPlane = tierConfig.find((t) => t.fixed)
-  const seatTiers = tierConfig.filter((t) => !t.fixed)
+  const {
+    checking: checkingSubdomain,
+    available: subdomainAvailable,
+    check: checkSubdomainAvailability,
+  } = useSubdomainCheck({ endpoint: '/api/installations/check-domain-kli' })
 
-  // Per-tier quantities
-  const [quantities, setQuantities] = useState<Record<string, number>>(() => {
-    const initial: Record<string, number> = {}
-    for (const tier of seatTiers) {
-      initial[tier.priceId] = 0
-    }
-    return initial
-  })
+  const { loading: creditsLoading, data: creditsData, handleTopup } = useCredits(orgId)
 
-  const totalUsers = Object.values(quantities).reduce((sum, q) => sum + q, 0)
-
-  // Calculate cost breakdown per tier
-  const tierCosts = seatTiers
-    .filter((tier) => (quantities[tier.priceId] || 0) > 0)
-    .map((tier) => {
-      const qty = quantities[tier.priceId] || 0
-      return {
-        tier,
-        specs: TIER_SPECS[tier.tier],
-        quantity: qty,
-        lineTotal: tier.pricePerUnit * qty,
+  // Fetch pricing tiers
+  useEffect(() => {
+    async function fetchPricing() {
+      try {
+        const res = await fetch('/api/pricing')
+        if (!res.ok) throw new Error('Failed to fetch pricing')
+        const json = await res.json()
+        setPricingTiers(json.tiers ?? [])
+      } catch (err) {
+        console.error('Failed to fetch pricing tiers:', err)
+        toast.error('Failed to load pricing information')
+      } finally {
+        setPricingLoading(false)
       }
-    })
+    }
+    fetchPricing()
+  }, [])
 
-  const userTotal = tierCosts.reduce((sum, t) => sum + t.lineTotal, 0)
-  const controlPlanePrice = controlPlane?.pricePerUnit ?? 0
-  const monthlyTotal = controlPlanePrice + userTotal
+  // Derived tier lists
+  const controlPlaneTier = useMemo(
+    () => pricingTiers.find((t) => t.category === 'compute' && t.resourceType.includes('controlplane')),
+    [pricingTiers],
+  )
+  const computeTiers = useMemo(
+    () =>
+      pricingTiers.filter(
+        (t) => t.category === 'compute' && !t.resourceType.includes('controlplane'),
+      ),
+    [pricingTiers],
+  )
+  const storageTier = useMemo(
+    () => pricingTiers.find((t) => t.category === 'storage'),
+    [pricingTiers],
+  )
+
+  // Form state for new fields
+  const [selectedComputeType, setSelectedComputeType] = useState<string>('')
+  const [storageSize, setStorageSize] = useState(50)
+
+  // Set default compute selection when tiers load
+  useEffect(() => {
+    if (computeTiers.length > 0 && !selectedComputeType) {
+      setSelectedComputeType(computeTiers[0].resourceType)
+    }
+  }, [computeTiers, selectedComputeType])
+
+  const selectedComputeTier = useMemo(
+    () => computeTiers.find((t) => t.resourceType === selectedComputeType),
+    [computeTiers, selectedComputeType],
+  )
+
+  // Cost calculation
+  const projectedMonthlyCost = useMemo(() => {
+    const resources: Array<{ resourceType: string; quantity?: number; sizeGb?: number }> = []
+    if (controlPlaneTier) {
+      resources.push({ resourceType: controlPlaneTier.resourceType, quantity: 1 })
+    }
+    if (selectedComputeTier) {
+      resources.push({ resourceType: selectedComputeTier.resourceType, quantity: 1 })
+    }
+    if (storageTier) {
+      resources.push({ resourceType: storageTier.resourceType, sizeGb: storageSize })
+    }
+    return calculateProjectedMonthlyCost(pricingTiers, resources)
+  }, [pricingTiers, controlPlaneTier, selectedComputeTier, storageTier, storageSize])
+
+  const balance = creditsData?.account?.balance ?? 0
+  const hasEnoughCredits = balance >= projectedMonthlyCost
+  const minimumTopup = calculateMinimumTopup(projectedMonthlyCost, balance)
 
   const form = useForm<InstallationFormData>({
     resolver: zodResolver(installationSchema),
     defaultValues: {
       name: '',
-      description: '',
       subdomain: '',
     },
   })
 
-  const setQuantity = (priceId: string, value: number) => {
-    setQuantities((prev) => ({ ...prev, [priceId]: Math.max(0, Math.min(100, value)) }))
-  }
-
   const onSubmit = async (data: InstallationFormData) => {
     if (!isSubscribeOnly && subdomainAvailable !== true) {
       toast.error('Please choose an available subdomain')
-      return
-    }
-    if (totalUsers === 0) {
-      toast.error('Please add at least one user')
       return
     }
 
@@ -126,17 +197,14 @@ export function KlCloudInstallationForm({
       let installationId: string
 
       if (isSubscribeOnly) {
-        // Existing installation — skip creation
         installationId = existingInstallationId!
       } else {
-        // Step 1: Create the installation
         const response = await fetch('/api/installations/create-installation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orgId,
             name: data.name,
-            description: data.description || undefined,
             subdomain: data.subdomain,
             hostingType: 'kloudlite',
           }),
@@ -151,62 +219,44 @@ export function KlCloudInstallationForm({
         installationId = result.installationId
       }
 
-      // Step 2: Build allocations with price IDs (include control plane + user tiers)
-      const allocations: { priceId: string; quantity: number }[] = []
-      if (controlPlane) {
-        allocations.push({ priceId: controlPlane.priceId, quantity: 1 })
-      }
-      for (const tier of seatTiers) {
-        const qty = quantities[tier.priceId] || 0
-        if (qty > 0) {
-          allocations.push({ priceId: tier.priceId, quantity: qty })
-        }
-      }
-
-      // Step 3: Create Stripe Checkout Session and redirect
-      const checkoutRes = await fetch(`/api/orgs/${orgId}/billing/checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ installationId, allocations }),
-      })
-
-      if (!checkoutRes.ok) {
-        const errorData = await checkoutRes.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to start checkout')
-      }
-
-      const { url } = await checkoutRes.json()
-      if (url) {
-        window.location.href = url
-      } else {
-        throw new Error('No checkout URL returned')
-      }
+      // Redirect to deploy page — no subscription needed
+      window.location.href = `/api/installations/${installationId}/continue`
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to create installation'))
       setCreating(false)
     }
   }
 
+  const isLoading = pricingLoading || creditsLoading
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="text-muted-foreground size-6 animate-spin" />
+      </div>
+    )
+  }
+
   return (
-      <Form {...form}>
-        <form
-          onSubmit={
-            isSubscribeOnly
-              ? (e) => {
-                  e.preventDefault()
-                  onSubmit({ name: '', subdomain: '' })
-                }
-              : form.handleSubmit(onSubmit)
-          }
-          className="space-y-8"
-        >
-          {/* Section 1: Installation Details (hidden when subscribing to existing) */}
-          {!isSubscribeOnly && (
-          <div className="border border-foreground/10 rounded-lg bg-background">
-            <div className="px-6 py-4 border-b border-foreground/10">
+    <Form {...form}>
+      <form
+        onSubmit={
+          isSubscribeOnly
+            ? (e) => {
+                e.preventDefault()
+                onSubmit({ name: '', subdomain: '' })
+              }
+            : form.handleSubmit(onSubmit)
+        }
+        className="space-y-8"
+      >
+        {/* Section 1: Installation Details */}
+        {!isSubscribeOnly && (
+          <div className="rounded-lg border border-foreground/10 bg-background">
+            <div className="border-b border-foreground/10 px-6 py-4">
               <h3 className="font-medium text-foreground">Installation Details</h3>
             </div>
-            <div className="p-6 space-y-5">
+            <div className="space-y-5 p-6">
               <FormField
                 control={form.control}
                 name="name"
@@ -217,29 +267,6 @@ export function KlCloudInstallationForm({
                       <Input placeholder="e.g., Production" {...field} disabled={creating} />
                     </FormControl>
                     <FormDescription>A friendly name for this installation</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Description{' '}
-                      <span className="text-muted-foreground font-normal">(optional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Production deployment for our platform"
-                        {...field}
-                        disabled={creating}
-                        rows={3}
-                        className="resize-none"
-                      />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -286,7 +313,7 @@ export function KlCloudInstallationForm({
                         {field.value || 'your-subdomain'}.
                         {process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
                       </span>
-                      <span className="text-xs font-medium whitespace-nowrap">
+                      <span className="whitespace-nowrap text-xs font-medium">
                         {!checkingSubdomain && subdomainAvailable === false && (
                           <span className="text-destructive">This domain is already taken</span>
                         )}
@@ -303,205 +330,228 @@ export function KlCloudInstallationForm({
               />
             </div>
           </div>
-          )}
+        )}
 
-          {/* Section 2: Compute Sizes & Users */}
-          <div className="border border-foreground/10 rounded-lg bg-background">
-            <div className="px-6 py-4 border-b border-foreground/10">
-              <h3 className="font-medium text-foreground">Compute & Users</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Select a compute size and number of users for each
-              </p>
-            </div>
-            <div className="p-6 space-y-4">
-              {/* Base Fee — compact inline */}
-              {controlPlane && (
-              <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
-                    <Zap className="size-3.5 text-primary" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-foreground">{controlPlane.name}</span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {controlPlane.description}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {formatCurrency(controlPlanePrice, currency)}/mo
-                </span>
-              </div>
-              )}
-
-              {/* Compute Size Cards */}
-              <div className="space-y-3">
-                {seatTiers.map((tier) => {
-                  const qty = quantities[tier.priceId] || 0
-                  const isActive = qty > 0
-                  const specs = TIER_SPECS[tier.tier]
+        {/* Section 2: WorkMachine Configuration */}
+        <div className="rounded-lg border border-foreground/10 bg-background">
+          <div className="border-b border-foreground/10 px-6 py-4">
+            <h3 className="font-medium text-foreground">WorkMachine Configuration</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Select a compute size for your WorkMachines
+            </p>
+          </div>
+          <div className="p-6">
+            {computeTiers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No compute tiers available</p>
+            ) : (
+              <RadioGroup
+                value={selectedComputeType}
+                onValueChange={setSelectedComputeType}
+                className="space-y-3"
+              >
+                {computeTiers.map((tier) => {
+                  const specs = tier.specs as { vcpu?: number; ram_gb?: number }
+                  const isSelected = selectedComputeType === tier.resourceType
                   return (
-                    <div
-                      key={tier.priceId}
-                      className={`rounded-lg border transition-colors ${
-                        isActive
+                    <label
+                      key={tier.id}
+                      className={cn(
+                        'flex cursor-pointer items-center gap-4 rounded-lg border px-4 py-4 transition-colors',
+                        isSelected
                           ? 'border-primary/40 bg-primary/[0.03]'
-                          : 'border-foreground/10 bg-background'
-                      }`}
+                          : 'border-foreground/10 bg-background hover:border-foreground/20',
+                      )}
                     >
-                      <div className="px-4 py-4">
-                        {/* Top row: Name + Price + Stepper */}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div
-                              className={`flex size-9 items-center justify-center rounded-lg shrink-0 ${
-                                isActive
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'bg-foreground/[0.06] text-muted-foreground'
-                              }`}
-                            >
-                              <Cpu className="size-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-baseline gap-2">
-                                <h4 className="text-sm font-semibold text-foreground">
-                                  {tier.name}
-                                </h4>
-                                <span className="text-xs text-muted-foreground">
-                                   {formatCurrency(tier.pricePerUnit, currency)}/user/mo
-                                 </span>
-                               </div>
-                              {specs && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                 {specs.cpu} &middot; {specs.ram} RAM &middot; {specs.storage}
-                               </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Quantity stepper */}
-                          <div className="flex items-center gap-0 shrink-0">
-                            <button
-                              type="button"
-                              aria-label={`Decrease users for ${tier.name}`}
-                              className="flex size-8 items-center justify-center rounded-l-md border border-foreground/10 bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
-                              disabled={qty <= 0 || creating}
-                              onClick={() => setQuantity(tier.priceId, qty - 1)}
-                            >
-                              <Minus className="size-3" />
-                            </button>
-                            <input
-                              type="number"
-                              min={0}
-                              max={100}
-                              value={qty}
-                              onChange={(e) =>
-                                setQuantity(tier.priceId, parseInt(e.target.value) || 0)
-                              }
-                              className="h-8 w-12 border-y border-foreground/10 bg-background text-center font-mono text-sm text-foreground outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              disabled={creating}
-                            />
-                            <button
-                              type="button"
-                              aria-label={`Increase users for ${tier.name}`}
-                              className="flex size-8 items-center justify-center rounded-r-md border border-foreground/10 bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:pointer-events-none"
-                              disabled={qty >= 100 || creating}
-                              onClick={() => setQuantity(tier.priceId, qty + 1)}
-                            >
-                              <Plus className="size-3" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Spec chips row */}
-                        {specs && (
-                        <div className="flex flex-wrap gap-x-1.5 gap-y-1 mt-3 ml-12">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
-                            <Clock className="size-2.5" />
-                            {specs.monthlyHours} hrs/mo
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
-                            <HardDrive className="size-2.5" />
-                            {specs.storage}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] text-muted-foreground">
-                            {specs.autoSuspend} suspend
-                          </span>
-                        </div>
+                      <RadioGroupItem value={tier.resourceType} />
+                      <div
+                        className={cn(
+                          'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                          isSelected
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-foreground/[0.06] text-muted-foreground',
                         )}
+                      >
+                        <Cpu className="size-4" />
                       </div>
-                    </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-semibold text-foreground">
+                            {tier.displayName}
+                          </span>
+                          {specs.vcpu && specs.ram_gb && (
+                            <span className="text-xs text-muted-foreground">
+                              {specs.vcpu} vCPU / {specs.ram_gb} GB RAM
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                        {formatDollars(tier.hourlyRate)}/hr
+                      </span>
+                    </label>
                   )
                 })}
+              </RadioGroup>
+            )}
+          </div>
+        </div>
+
+        {/* Section 3: Storage Size */}
+        {storageTier && (
+          <div className="rounded-lg border border-foreground/10 bg-background">
+            <div className="border-b border-foreground/10 px-6 py-4">
+              <h3 className="font-medium text-foreground">Storage</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Configure initial volume size
+              </p>
+            </div>
+            <div className="space-y-4 p-6">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium text-foreground">Volume Size</Label>
+                <span className="text-sm tabular-nums text-muted-foreground">
+                  {formatDollars(storageTier.hourlyRate * 24 * 30)}/GB/mo
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <Slider
+                  value={[storageSize]}
+                  onValueChange={([val]) => setStorageSize(val)}
+                  min={50}
+                  max={1000}
+                  step={10}
+                  className="flex-1"
+                  disabled={creating}
+                />
+                <div className="flex items-center gap-1.5">
+                  <HardDrive className="size-3.5 text-muted-foreground" />
+                  <span className="w-20 text-right text-sm font-semibold tabular-nums text-foreground">
+                    {storageSize} GB
+                  </span>
+                </div>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Section 3: Cost Summary & Submit */}
-          <div className="border border-foreground/10 rounded-lg bg-background">
-            <div className="px-6 py-4 border-b border-foreground/10">
-              <h3 className="font-medium text-foreground">Summary</h3>
-            </div>
-            <div className="px-6 py-4">
-              <div className="space-y-2 text-sm">
-                {controlPlane && (
+        {/* Section 4: Cost Summary */}
+        <div className="rounded-lg border border-foreground/10 bg-background">
+          <div className="border-b border-foreground/10 px-6 py-4">
+            <h3 className="font-medium text-foreground">Estimated Cost</h3>
+          </div>
+          <div className="px-6 py-4">
+            <div className="space-y-2 text-sm">
+              {/* Control Plane */}
+              {controlPlaneTier && (
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{controlPlane.name}</span>
-                  <span className="text-foreground tabular-nums">{formatCurrency(controlPlanePrice, currency)}</span>
-                </div>
-                )}
-                {tierCosts.map(({ tier, specs: tierSpecs, quantity: qty, lineTotal }) => (
-                  <div key={tier.priceId} className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Server className="size-3.5" />
+                    Control Plane
+                  </span>
+                  <span className="tabular-nums text-foreground">
+                    {formatDollars(controlPlaneTier.hourlyRate)}/hr{' '}
                     <span className="text-muted-foreground">
-                      {tier.name} {tierSpecs ? `(${tierSpecs.cpu})` : ''} &times; {qty}{' '}
-                      {qty === 1 ? 'user' : 'users'}
+                      (~{formatDollars(hourlyToMonthly(controlPlaneTier.hourlyRate))}/mo)
                     </span>
-                    <span className="text-foreground tabular-nums">{formatCurrency(lineTotal, currency)}</span>
-                  </div>
-                ))}
-                {totalUsers === 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground italic">No users added yet</span>
-                    <span className="text-foreground tabular-nums">{formatCurrency(0, currency)}</span>
-                  </div>
-                )}
-              </div>
+                  </span>
+                </div>
+              )}
 
-              <div className="border-t border-foreground/10 mt-3 pt-3 flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">
-                  Monthly total ({totalUsers} {totalUsers === 1 ? 'user' : 'users'})
-                </span>
-                <span className="text-lg font-bold text-foreground tabular-nums">
-                  {formatCurrency(monthlyTotal, currency)}/mo
-                </span>
-              </div>
+              {/* Selected WorkMachine */}
+              {selectedComputeTier && (
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Cpu className="size-3.5" />
+                    1&times; {selectedComputeTier.displayName} WorkMachine
+                  </span>
+                  <span className="tabular-nums text-foreground">
+                    {formatDollars(selectedComputeTier.hourlyRate)}/hr{' '}
+                    <span className="text-muted-foreground">
+                      (~{formatDollars(hourlyToMonthly(selectedComputeTier.hourlyRate))}/mo)
+                    </span>
+                  </span>
+                </div>
+              )}
+
+              {/* Storage */}
+              {storageTier && (
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <HardDrive className="size-3.5" />
+                    Storage ({storageSize} GB)
+                  </span>
+                  <span className="tabular-nums text-foreground">
+                    ~{formatDollars(storageTier.hourlyRate * storageSize * 24 * 30)}/mo
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="border-t border-foreground/10 px-6 py-4">
+            {/* Total */}
+            <div className="mt-3 flex items-center justify-between border-t border-foreground/10 pt-3">
+              <span className="text-sm font-medium text-foreground">Estimated total</span>
+              <span className="text-lg font-bold tabular-nums text-foreground">
+                ~{formatDollars(projectedMonthlyCost)}/mo
+              </span>
+            </div>
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              Billed by actual usage. WorkMachines only charged while running.
+            </p>
+          </div>
+
+          {/* Section 5: Balance Gate + Submit */}
+          <div className="border-t border-foreground/10 px-6 py-4">
+            <div className="mb-4 flex items-center gap-2 text-sm">
+              <Wallet className="size-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Current balance:</span>
+              <span
+                className={cn(
+                  'font-semibold tabular-nums',
+                  hasEnoughCredits ? 'text-green-600 dark:text-green-500' : 'text-destructive',
+                )}
+              >
+                {formatDollars(balance)}
+              </span>
+            </div>
+
+            {hasEnoughCredits ? (
               <Button
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={
-                  creating ||
-                  (!isSubscribeOnly && subdomainAvailable !== true) ||
-                  totalUsers === 0
-                }
+                disabled={creating || (!isSubscribeOnly && subdomainAvailable !== true)}
               >
                 {creating ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
-                    {isSubscribeOnly ? 'Subscribing...' : 'Creating...'}
+                    Creating...
                   </>
-                ) : isSubscribeOnly ? (
-                  `Subscribe — ${formatCurrency(monthlyTotal, currency)}/mo`
                 ) : (
-                  `Create & Subscribe — ${formatCurrency(monthlyTotal, currency)}/mo`
+                  'Create Installation'
                 )}
               </Button>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-md border border-yellow-500/30 bg-yellow-500/5 px-4 py-3">
+                  <p className="text-sm font-medium text-foreground">Insufficient credits</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    You need at least {formatDollars(projectedMonthlyCost)} to cover 30 days of
+                    estimated usage. Current balance: {formatDollars(balance)}.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  className="w-full"
+                  size="lg"
+                  onClick={() => handleTopup(minimumTopup, existingInstallationId)}
+                >
+                  Add Credits ({formatDollars(minimumTopup)} minimum)
+                </Button>
+              </div>
+            )}
           </div>
-        </form>
-      </Form>
+        </div>
+      </form>
+    </Form>
   )
 }
