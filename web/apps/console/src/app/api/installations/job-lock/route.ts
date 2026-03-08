@@ -6,6 +6,7 @@ import {
   deleteInstallation,
   deleteIpRecords,
   deleteDomainReservation,
+  cancelStripeSubscriptionForInstallation,
 } from '@/lib/console/storage'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
       if (installation.acaJobOperation === 'uninstall' && finalStatus === 'succeeded') {
         try {
           console.log(`Auto-deleting installation ${installation.id} after successful uninstall`)
+          await cancelStripeSubscriptionForInstallation(installation.id)
           const dnsRecordIds = await deleteIpRecords(installation.id)
           if (dnsRecordIds.length > 0) {
             await deleteDnsRecords(dnsRecordIds)

@@ -6,6 +6,7 @@ import {
   deleteInstallation,
   deleteIpRecords,
   deleteDomainReservation,
+  cancelStripeSubscriptionForInstallation,
 } from '@/lib/console/storage'
 import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
 
@@ -59,7 +60,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
       // Continue anyway
     }
 
-    // Step 4: Delete the installation from database
+    // Step 4: Cancel Stripe subscription (before deleting DB rows)
+    await cancelStripeSubscriptionForInstallation(id)
+
+    // Step 5: Delete the installation from database
     await deleteInstallation(id)
     console.log(`Installation deleted: ${id}`)
 
