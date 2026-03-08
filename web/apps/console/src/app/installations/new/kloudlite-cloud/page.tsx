@@ -84,9 +84,7 @@ export default function KloudliteCloudPage() {
             return
           }
           const subData = await subRes.json()
-          const hasActive = subData.subscriptions?.some(
-            (s: { status: string }) => ['active', 'authenticated'].includes(s.status),
-          )
+          const hasActive = subData.customer?.billingStatus === 'active'
           if (!hasActive) {
             toast.error('No active subscription found. Please complete payment first.')
             router.push(`/installations/new-kl-cloud?installation=${instId}`)
