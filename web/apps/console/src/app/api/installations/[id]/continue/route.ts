@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
-import { getInstallationById, getStripeCustomer } from '@/lib/console/storage'
+import { getInstallationById, getStripeCustomer, upsertStripeCustomer } from '@/lib/console/storage'
+import { getStripe } from '@/lib/stripe'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 
@@ -72,21 +73,44 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   if (isKloudliteCloud) {
     // Kloudlite Cloud — check Stripe subscription before deploy
-    const customer = await getStripeCustomer(id)
-    const hasActiveSub = customer?.billingStatus === 'active'
-    const isIncomplete = customer?.billingStatus === 'incomplete'
+    let customer = await getStripeCustomer(id)
+    let hasActiveSub = customer?.billingStatus === 'active'
+
+    // Handle webhook race condition: if DB still shows incomplete but
+    // the customer has a subscription, check Stripe directly
+    if (!hasActiveSub && customer?.stripeCustomerId) {
+      try {
+        const stripe = getStripe()
+        const subs = await stripe.subscriptions.list({
+          customer: customer.stripeCustomerId,
+          status: 'active',
+          limit: 1,
+        })
+        if (subs.data.length > 0) {
+          // Stripe confirms active — update local DB so webhook can catch up
+          const periodEnd = subs.data[0].items.data[0]?.current_period_end
+          await upsertStripeCustomer({
+            installationId: id,
+            stripeCustomerId: customer.stripeCustomerId,
+            stripeSubscriptionId: subs.data[0].id,
+            billingStatus: 'active',
+            currentPeriodEnd: periodEnd
+              ? new Date(periodEnd * 1000).toISOString()
+              : null,
+          })
+          hasActiveSub = true
+        }
+      } catch (err) {
+        console.error('[continue] Failed to verify subscription with Stripe:', err)
+      }
+    }
 
     if (!hasActiveSub) {
-      // No subscription yet — go back to plan/payment page with existing installation
+      // No subscription yet — go back to plan/payment page
       redirectPath = `/installations/new-kl-cloud?installation=${id}`
     } else if (!installation.deploymentReady) {
-      if (isIncomplete) {
-        // Payment pending — go back to payment page to complete
-        redirectPath = `/installations/new-kl-cloud?installation=${id}`
-      } else {
-        // Subscribed and deployed — go to deploy page
-        redirectPath = '/installations/new/kloudlite-cloud'
-      }
+      // Subscribed — go to deploy page
+      redirectPath = '/installations/new/kloudlite-cloud'
     } else {
       redirectPath = '/installations'
     }
