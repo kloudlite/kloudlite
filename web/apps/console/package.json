@@ -14,6 +14,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@kloudlite/lib": "workspace:*",
     "@kloudlite/ui": "workspace:*",
+    "@stripe/stripe-js": "^8.9.0",
     "@supabase/supabase-js": "^2.47.10",
     "@tailwindcss/postcss": "^4.0.0",
     "jose": "^5.0.0",
