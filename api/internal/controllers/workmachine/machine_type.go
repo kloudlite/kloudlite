@@ -231,6 +231,14 @@ func (r *WorkMachineReconciler) changeMachineType(check *reconciler.Check[*v1.Wo
 	obj.Status.CurrentMachineType = newType
 	obj.Status.MachineTypeChangeMessage = fmt.Sprintf("Machine type changed to %s", newType)
 
+	r.usageReporter.ReportEvent(check.Context(), UsageEvent{
+		EventType:    "workmachine.resized",
+		ResourceID:   obj.Status.MachineID,
+		ResourceType: "workmachine." + newType,
+		Metadata:     map[string]interface{}{"old_type": oldType, "new_type": newType},
+		Timestamp:    time.Now(),
+	})
+
 	check.Logger().Info("Machine type changed successfully",
 		"oldType", oldType,
 		"newType", newType,

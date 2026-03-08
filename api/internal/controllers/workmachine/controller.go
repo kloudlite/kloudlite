@@ -3,12 +3,12 @@ package workmachine
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/codingconcepts/env"
 	"github.com/kloudlite/kloudlite/api/internal/controllerconfig"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/shared"
-	"go.uber.org/zap"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/aws"
 	"github.com/kloudlite/kloudlite/api/internal/controllers/workmachine/cloud/azure"
@@ -20,6 +20,7 @@ import (
 	fn "github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/kubectl"
 	"github.com/kloudlite/kloudlite/api/pkg/operator-toolkit/reconciler"
+	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -100,6 +101,7 @@ type WorkMachineReconciler struct {
 	// filled post initialization
 	env              Env
 	cloudProviderAPI cloud.Provider
+	usageReporter    *UsageReporter
 
 	// Cfg contains controller configuration
 	Cfg *controllerconfig.ControllerConfig
@@ -683,6 +685,19 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 		podDeletionTracker = shared.NewPodDeletionTracker(logger)
 		logger.Info("Initialized pod deletion tracker for race condition prevention")
+	}
+
+	// Initialize usage reporter for billing events
+	{
+		consoleBaseURL := os.Getenv("CONSOLE_BASE_URL")
+		if consoleBaseURL == "" {
+			consoleBaseURL = "https://console.kloudlite.io"
+		}
+		logger, err := zap.NewProduction()
+		if err != nil {
+			return errors.Wrap("failed to create logger for usage reporter", err)
+		}
+		r.usageReporter = NewUsageReporter(consoleBaseURL, r.env.KloudliteInstallationID, logger)
 	}
 
 	switch r.env.CloudProvider {
