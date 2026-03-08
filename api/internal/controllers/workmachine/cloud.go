@@ -156,6 +156,13 @@ func (r *WorkMachineReconciler) startMachine(check *reconciler.Check[*v1.WorkMac
 		return check.Failed(fmt.Errorf("failed to start machine: %w", err))
 	}
 
+	r.usageReporter.ReportEvent(check.Context(), UsageEvent{
+		EventType:    "workmachine.started",
+		ResourceID:   obj.Status.MachineID,
+		ResourceType: "workmachine." + obj.Spec.MachineType,
+		Timestamp:    time.Now(),
+	})
+
 	obj.Status.State = v1.MachineStateStarting
 	obj.Status.StartedAt = &metav1.Time{Time: time.Now()}
 	return check.UpdateMsg("Starting machine").RequeueAfter(r.Cfg.WorkMachine.CloudMachineStartRetryInterval)
@@ -193,6 +200,13 @@ func (r *WorkMachineReconciler) stopMachineGracefully(check *reconciler.Check[*v
 	if err := r.cloudProviderAPI.StopMachine(check.Context(), obj.Status.MachineID); err != nil {
 		return check.Failed(fmt.Errorf("failed to stop machine: %w", err))
 	}
+
+	r.usageReporter.ReportEvent(check.Context(), UsageEvent{
+		EventType:    "workmachine.stopped",
+		ResourceID:   obj.Status.MachineID,
+		ResourceType: "workmachine." + obj.Spec.MachineType,
+		Timestamp:    time.Now(),
+	})
 
 	obj.Status.State = v1.MachineStateStopping
 	obj.Status.StoppedAt = &metav1.Time{Time: time.Now()}
@@ -562,11 +576,20 @@ func (r *WorkMachineReconciler) deleteKubernetesNode(check *reconciler.Check[*v1
 
 // deleteCloudMachine deletes the cloud machine via the cloud provider API
 func (r *WorkMachineReconciler) deleteCloudMachine(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
-	if err := r.cloudProviderAPI.DeleteMachine(check.Context(), obj.Status.MachineID); err != nil {
-		return check.Failed(fmt.Errorf("failed to delete cloud machine %s: %w", obj.Status.MachineID, err))
+	machineID := obj.Status.MachineID
+
+	if err := r.cloudProviderAPI.DeleteMachine(check.Context(), machineID); err != nil {
+		return check.Failed(fmt.Errorf("failed to delete cloud machine %s: %w", machineID, err))
 	}
 
+	r.usageReporter.ReportEvent(check.Context(), UsageEvent{
+		EventType:    "workmachine.stopped",
+		ResourceID:   machineID,
+		ResourceType: "workmachine." + obj.Spec.MachineType,
+		Timestamp:    time.Now(),
+	})
+
 	obj.Status.MachineInfo = v1.MachineInfo{}
-	check.Logger().Info("successfully deleted cloud machine", "machineID", obj.Status.MachineID)
+	check.Logger().Info("successfully deleted cloud machine", "machineID", machineID)
 	return check.Passed()
 }
