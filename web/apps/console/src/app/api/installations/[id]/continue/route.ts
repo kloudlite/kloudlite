@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { requireInstallationAccess } from '@/lib/console/authorization'
-import { getInstallationById, getBillingAccount, upsertBillingAccount, syncSubscriptionItemsFromStripe, getSubscriptionItems } from '@/lib/console/storage'
-import { getStripe } from '@/lib/stripe'
+import { getInstallationById } from '@/lib/console/storage'
+import { getCreditAccount } from '@/lib/console/storage/credits'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 
@@ -77,52 +77,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   let redirectPath: string
 
   if (isKloudliteCloud) {
-    // Kloudlite Cloud — check Stripe subscription at org level
-    let customer = await getBillingAccount(orgId)
-    let hasActiveSub = customer?.billingStatus === 'active'
+    // Kloudlite Cloud — check credit balance at org level
+    const creditAccount = await getCreditAccount(orgId)
+    const hasCredits = creditAccount != null && creditAccount.balance > 0
 
-    // Handle webhook race condition: if DB still shows incomplete but
-    // the customer has a subscription, check Stripe directly
-    if (!hasActiveSub && customer?.stripeCustomerId) {
-      try {
-        const stripe = getStripe()
-        const subs = await stripe.subscriptions.list({
-          customer: customer.stripeCustomerId,
-          status: 'active',
-          limit: 1,
-        })
-        if (subs.data.length > 0) {
-          // Stripe confirms active — update local DB so webhook can catch up
-          const periodEnd = subs.data[0].items.data[0]?.current_period_end
-          await upsertBillingAccount({
-            orgId,
-            stripeCustomerId: customer.stripeCustomerId,
-            stripeSubscriptionId: subs.data[0].id,
-            billingStatus: 'active',
-            currentPeriodEnd: periodEnd
-              ? new Date(periodEnd * 1000).toISOString()
-              : null,
-          })
-          hasActiveSub = true
-        }
-      } catch (err) {
-        console.error('[continue] Failed to verify subscription with Stripe:', err)
-      }
-    }
-
-    // Sync subscription items if DB is empty (webhook may not have fired yet)
-    if (hasActiveSub) {
-      const existingItems = await getSubscriptionItems(orgId)
-      if (existingItems.length === 0 && customer?.stripeSubscriptionId) {
-        await syncSubscriptionItemsFromStripe(orgId, customer.stripeSubscriptionId)
-      }
-    }
-
-    if (!hasActiveSub) {
-      // No subscription yet — go back to plan/payment page
+    if (!hasCredits) {
+      // No credits — redirect to top-up page
       redirectPath = `/installations/new-kl-cloud?installation=${id}`
     } else if (!installation.deploymentReady) {
-      // Subscribed — go to deploy page
+      // Has credits — go to deploy page
       redirectPath = '/installations/new/kloudlite-cloud'
     } else {
       redirectPath = '/installations'
