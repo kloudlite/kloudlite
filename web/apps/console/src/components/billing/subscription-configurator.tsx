@@ -62,10 +62,17 @@ export function SubscriptionConfigurator({
 
   const handleSave = async () => {
     const allocations = tierConfig
-      .filter((t) => (quantities[t.priceId] || 0) > 0)
+      .filter((t) => {
+        const qty = quantities[t.priceId] || 0
+        if (qty > 0) return true
+        // In modify mode, also include tiers set to 0 that previously had items
+        // so the server knows to remove them from the subscription
+        if (isModify && items.find((i) => i.tier === t.tier)) return true
+        return false
+      })
       .map((t) => ({
         priceId: t.priceId,
-        quantity: quantities[t.priceId],
+        quantity: quantities[t.priceId] || 0,
       }))
     if (allocations.length === 0) return
     await onSave(allocations)
