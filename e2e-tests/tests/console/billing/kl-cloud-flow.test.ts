@@ -5,160 +5,127 @@ import { TIMEOUTS, STRIPE_TEST_CARD } from '../../../lib/constants'
 test.use({ storageState: { cookies: [], origins: [] } })
 
 /**
- * End-to-end test for the KL Cloud billing flow:
- * Login → Create Installation → Stripe Checkout → Post-payment redirect → Deploy page → Billing Settings
+ * End-to-end test for the KL Cloud pay-as-you-go credits billing flow:
+ * Login → Add Credits (top-up via Stripe Invoice) → Create Installation → Verify billing state
  *
- * This test validates the critical post-checkout redirect fix where the success_url
- * now routes through /api/installations/{id}/continue instead of going to billing settings.
+ * This replaces the old subscription-based flow. Credits are added via Stripe hosted invoices
+ * (not Checkout Sessions), and installations are gated by credit balance rather than
+ * active subscriptions.
  */
-test.describe.serial('KL Cloud Billing Flow', () => {
+test.describe.serial('KL Cloud Billing Flow (Pay-as-you-go Credits)', () => {
   const testId = Date.now().toString(36)
   const installationName = `E2E Test ${testId}`
   const subdomain = `e2e-${testId}`
-  let installationId: string | null = null
 
-  test('create KL Cloud installation and complete Stripe checkout', async ({
-    page,
-  }) => {
-    test.setTimeout(120_000)
+  test('login and verify dashboard', async ({ page }) => {
+    test.setTimeout(30_000)
 
-    // ==================== Step 1: Login ====================
     await devLogin(page)
+
+    await expect(page).toHaveURL(/\/installations$/)
     await expect(
       page.getByRole('heading', { name: 'Installations' }),
     ).toBeVisible()
     console.log('[test] Logged in successfully')
+  })
 
-    // ==================== Step 2: Navigate to KL Cloud form ====================
-    await page.getByRole('button', { name: 'New Installation' }).click()
-    await page.getByText('Kloudlite Cloud').click()
-    await page.waitForURL('**/installations/new-kl-cloud')
+  test('navigate to billing settings and verify initial state', async ({
+    page,
+  }) => {
+    test.setTimeout(30_000)
 
-    await expect(
-      page.getByRole('heading', { name: 'Create Installation' }),
-    ).toBeVisible()
-    console.log('[test] On KL Cloud form')
+    await devLogin(page)
+    await page.goto('/installations/settings/billing')
+    await page.waitForLoadState('networkidle')
 
-    // ==================== Step 3: Fill installation details ====================
-    await page.getByPlaceholder('e.g., Production').fill(installationName)
-    await page.getByRole('textbox', { name: 'your-company' }).fill(subdomain)
-
-    // Wait for subdomain availability check
-    await expect(page.getByText('Domain is available')).toBeVisible({
+    // Billing page should show Credit Balance card
+    await expect(page.getByText('Credit Balance')).toBeVisible({
       timeout: TIMEOUTS.action,
     })
-    console.log('[test] Subdomain available')
+    console.log('[test] Credit Balance card visible')
 
-    // ==================== Step 4: Add 1 user (Tier 1) ====================
-    await page
-      .getByRole('button', { name: /increase users for tier 1/i })
-      .click()
+    // "Add Credits" button should exist
+    await expect(
+      page.getByRole('button', { name: /add credits/i }),
+    ).toBeVisible()
+    console.log('[test] Add Credits button visible')
 
-    // Verify summary updates (monthly total shows user count)
-    await expect(page.getByText(/Monthly total \(1 user\)/)).toBeVisible()
-    console.log('[test] Added 1 Tier 1 user')
+    // Transaction History section should exist (may show "No transactions yet")
+    await expect(page.getByText('Transaction History')).toBeVisible()
+    console.log('[test] Transaction History section visible')
 
-    // ==================== Step 5: Submit form ====================
-    const submitButton = page.getByRole('button', {
-      name: /create & subscribe/i,
+    // Active Usage section should exist
+    await expect(page.getByText('Active Usage')).toBeVisible()
+    console.log('[test] Billing settings initial state verified')
+  })
+
+  test('add credits via top-up through Stripe invoice', async ({ page }) => {
+    test.setTimeout(120_000)
+
+    await devLogin(page)
+    await page.goto('/installations/settings/billing')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for the credit balance to load
+    await expect(page.getByText('Credit Balance')).toBeVisible({
+      timeout: TIMEOUTS.action,
     })
-    await expect(submitButton).toBeEnabled()
 
-    // Intercept API calls
-    const createResponsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('/api/installations/create-installation') &&
-        resp.status() === 200,
-    )
+    // ==================== Step 1: Open Add Credits dialog ====================
+    await page.getByRole('button', { name: /add credits/i }).click()
 
-    await submitButton.click()
+    // Wait for dialog to appear
+    await expect(
+      page.getByRole('heading', { name: /add credits/i }),
+    ).toBeVisible()
+    console.log('[test] Add Credits dialog opened')
 
-    // Capture installation ID from creation response
-    const createResponse = await createResponsePromise
-    const createData = await createResponse.json()
-    installationId = createData.installationId
-    expect(installationId).toBeTruthy()
-    console.log(`[test] Installation created: ${installationId}`)
+    // ==================== Step 2: Enter top-up amount ====================
+    const amountInput = page.locator('#topup-amount')
+    await amountInput.clear()
+    await amountInput.fill('100')
+    console.log('[test] Entered top-up amount: $100')
 
-    // ==================== Step 6: Stripe Checkout ====================
-    await page.waitForURL(/checkout\.stripe\.com/, {
+    // ==================== Step 3: Submit — redirects to Stripe hosted invoice ====================
+    // Click the "Add $100.00" button in the dialog
+    const addButton = page
+      .getByRole('button', { name: /add \$100/i })
+    await expect(addButton).toBeEnabled()
+    await addButton.click()
+    console.log('[test] Clicked Add Credits, waiting for Stripe redirect...')
+
+    // ==================== Step 4: Handle Stripe hosted invoice page ====================
+    await page.waitForURL(/invoice\.stripe\.com/, {
       timeout: TIMEOUTS.stripeCheckout,
     })
-    console.log(`[test] On Stripe Checkout: ${page.url()}`)
+    console.log(`[test] On Stripe Invoice page: ${page.url()}`)
 
-    // Wait for Stripe checkout to render (don't use networkidle — Stripe keeps connections open)
+    // Wait for the invoice page to render
     await page.waitForLoadState('domcontentloaded')
 
-    // Stripe Checkout shows different UIs depending on customer state:
-    // - New customer: may show "Pay without Link" button
-    // - Returning customer: shows Link/Amazon buttons at top, then "OR" separator,
-    //   then payment method radio buttons (Card, Cash App Pay, Bank)
-    //
-    // We need to get to the Card form. Wait for the page to stabilize.
-    await page.waitForLoadState('domcontentloaded')
-
-    // Wait for either "Pay without Link" button or the payment method section
-    const payWithoutLink = page.getByRole('button', {
-      name: 'Pay without Link',
-    })
-    const paymentMethodHeading = page.getByText('Payment method')
-
-    await expect(
-      payWithoutLink.or(paymentMethodHeading).first(),
-    ).toBeVisible({ timeout: 20_000 })
-
-    if (await payWithoutLink.isVisible().catch(() => false)) {
-      await payWithoutLink.click()
-      console.log('[test] Clicked "Pay without Link"')
-      // Wait for payment methods to appear
-      await expect(paymentMethodHeading).toBeVisible({ timeout: 15_000 })
-    }
-    console.log('[test] Payment method section visible')
-
-    // Now we need to select Card and expand its form.
-    // Stripe uses radio buttons or accordion items for payment methods.
+    // Stripe hosted invoice page has a "Pay" button to expand the card form.
+    // Wait for either a "Pay" button or the card form to appear directly.
+    const payButton = page.getByRole('button', { name: /pay/i })
     const cardNumberField = page.getByPlaceholder('1234 1234 1234 1234')
-    if (
-      !(await cardNumberField.isVisible({ timeout: 3_000 }).catch(() => false))
-    ) {
-      // Click the Card radio/accordion item using force: true to bypass overlay interception
-      const cardAccordionButton = page.locator(
-        'button[data-testid="card-accordion-item-button"]',
-      )
-      if (
-        await cardAccordionButton
-          .isVisible({ timeout: 2_000 })
-          .catch(() => false)
-      ) {
-        await cardAccordionButton.click({ force: true })
-        console.log('[test] Clicked card accordion button (force)')
-      } else {
-        // Fallback: click the radio input for card
-        const cardRadio = page.locator(
-          'input[type="radio"][value="card"], input[name="paymentMethod"][value="card"]',
-        )
-        if (
-          await cardRadio.isVisible({ timeout: 1_000 }).catch(() => false)
-        ) {
-          await cardRadio.click({ force: true })
-          console.log('[test] Clicked card radio input')
-        } else {
-          // Last resort: click any element containing "Card" text near payment method
-          await page.getByText('Card', { exact: true }).first().click({
-            force: true,
-          })
-          console.log('[test] Clicked Card text (force)')
-        }
+
+    await expect(payButton.or(cardNumberField).first()).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // If there's a "Pay" button that needs to be clicked to reveal card form, click it
+    if (await payButton.isVisible().catch(() => false)) {
+      if (!(await cardNumberField.isVisible().catch(() => false))) {
+        await payButton.click()
+        console.log('[test] Clicked Pay button to expand card form')
       }
     }
 
-    // Wait for card number field to appear
+    // Wait for card form fields to appear
     await expect(cardNumberField).toBeVisible({ timeout: 15_000 })
     console.log('[test] Card form visible')
 
-    // ==================== Step 7: Fill card details ====================
-    // Stripe Checkout has card fields directly on the page (not in iframes).
-    // Use pressSequentially for card number — Stripe fields may need keystrokes.
+    // ==================== Step 5: Fill card details ====================
+    // Stripe invoice page has card fields directly on the page (similar to Checkout).
     await cardNumberField.click()
     await cardNumberField.pressSequentially(STRIPE_TEST_CARD.number, {
       delay: 50,
@@ -170,56 +137,136 @@ test.describe.serial('KL Cloud Billing Flow', () => {
     await expiryField.pressSequentially(STRIPE_TEST_CARD.expiry, { delay: 50 })
     console.log('[test] Filled expiry')
 
-    const cvcField = page.getByPlaceholder('CVC').or(page.getByRole('textbox', { name: 'CVC' })).first()
+    const cvcField = page
+      .getByPlaceholder('CVC')
+      .or(page.getByRole('textbox', { name: 'CVC' }))
+      .first()
     await cvcField.click()
     await cvcField.pressSequentially(STRIPE_TEST_CARD.cvc, { delay: 50 })
     console.log('[test] Filled CVC')
 
-    // Cardholder name
+    // Cardholder name (if present)
     const nameField = page.getByPlaceholder('Full name on card')
     if (await nameField.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await nameField.fill(STRIPE_TEST_CARD.name)
       console.log('[test] Filled cardholder name')
     }
 
-    // Country/region (should default to something, leave as-is)
+    // ==================== Step 6: Submit payment ====================
+    // On Stripe invoice page, the submit button says "Pay $X.XX"
+    const submitPayButton = page.getByRole('button', { name: /pay \$/i })
+    await expect(submitPayButton).toBeVisible({ timeout: 10_000 })
+    await submitPayButton.click()
+    console.log('[test] Clicked Pay, waiting for confirmation...')
 
-    // ==================== Step 8: Submit payment ====================
-    const subscribeButton = page.getByRole('button', { name: 'Subscribe' })
-    await expect(subscribeButton).toBeVisible()
-    await subscribeButton.click()
-    console.log('[test] Clicked Subscribe, waiting for redirect...')
-
-    // ==================== Step 9: Verify post-checkout redirect ====================
-    // After payment, Stripe redirects to our success_url which is:
-    // /api/installations/{id}/continue
-    // That route checks subscription status and redirects to the deploy page.
+    // ==================== Step 7: Wait for redirect back to app ====================
+    // After payment, Stripe redirects back to our app
     await page.waitForURL(
-      (url) => !url.href.includes('checkout.stripe.com'),
+      (url) => !url.href.includes('invoice.stripe.com'),
       { timeout: TIMEOUTS.stripeCheckout },
     )
 
-    const finalUrl = page.url()
-    console.log(`[test] Post-checkout redirect: ${finalUrl}`)
+    const returnUrl = page.url()
+    console.log(`[test] Returned to app: ${returnUrl}`)
 
-    // CRITICAL ASSERTION: Should NOT land on billing settings
-    expect(finalUrl).not.toContain('/installations/settings/billing')
+    // Should be back on the billing settings page or the app
+    // Wait for the page to settle and show updated balance
+    await page.waitForLoadState('networkidle')
 
-    // Should land on the deploy page or the installation form (if subscription needs
-    // to be verified) or installations list. The /continue route handles state-based routing.
-    const validDestinations = [
-      '/installations/new/kloudlite-cloud', // Deploy page (subscription confirmed)
-      '/installations/new-kl-cloud', // Form page (if subscription not yet synced)
-      '/installations', // List (if deployment already done)
-    ]
-    const landedOnValid = validDestinations.some((dest) =>
-      finalUrl.includes(dest),
-    )
-    expect(landedOnValid).toBe(true)
-    console.log('[test] Post-checkout redirect PASSED — correct destination')
+    // Verify credit balance has updated (should be ~$100)
+    // The balance text is inside a div with the formatted currency
+    await expect(page.getByText(/\$\d+\.\d{2}/)).toBeVisible({
+      timeout: TIMEOUTS.action,
+    })
+    console.log('[test] Credit balance visible after top-up')
   })
 
-  test('billing settings shows active subscription with line items', async ({
+  test('create new installation with sufficient balance', async ({ page }) => {
+    test.setTimeout(120_000)
+
+    await devLogin(page)
+
+    // ==================== Step 1: Navigate to KL Cloud form ====================
+    await page.getByRole('button', { name: 'New Installation' }).click()
+    await page.getByText('Kloudlite Cloud').click()
+    await page.waitForURL('**/installations/new-kl-cloud')
+
+    await expect(
+      page.getByRole('heading', { name: 'Create Installation' }),
+    ).toBeVisible()
+    console.log('[test] On KL Cloud form')
+
+    // ==================== Step 2: Fill installation details ====================
+    await page.getByPlaceholder('e.g., Production').fill(installationName)
+    await page.getByRole('textbox', { name: 'your-company' }).fill(subdomain)
+
+    // Wait for subdomain availability check
+    await expect(page.getByText('Domain is available')).toBeVisible({
+      timeout: TIMEOUTS.action,
+    })
+    console.log('[test] Subdomain available')
+
+    // ==================== Step 3: Verify WorkMachine Configuration ====================
+    // The form should show the WorkMachine Configuration section with radio options
+    await expect(page.getByText('WorkMachine Configuration')).toBeVisible()
+
+    // Select the first compute tier (should already be selected by default)
+    const radioGroup = page.locator('[role="radiogroup"]')
+    await expect(radioGroup).toBeVisible()
+    console.log('[test] WorkMachine configuration visible')
+
+    // ==================== Step 4: Verify cost summary ====================
+    await expect(page.getByText('Estimated Cost')).toBeVisible()
+    await expect(page.getByText('Estimated total')).toBeVisible()
+    console.log('[test] Cost summary visible')
+
+    // ==================== Step 5: Verify balance and submit ====================
+    // The form shows "Current balance:" with the amount
+    await expect(page.getByText('Current balance:')).toBeVisible()
+
+    // The "Create Installation" button should be enabled (sufficient balance)
+    const createButton = page.getByRole('button', {
+      name: /create installation/i,
+    })
+    await expect(createButton).toBeVisible({ timeout: TIMEOUTS.action })
+    await expect(createButton).toBeEnabled()
+    console.log('[test] Create Installation button is active (sufficient balance)')
+
+    // Intercept API call to capture installation ID
+    const createResponsePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/api/installations/create-installation') &&
+        resp.status() === 200,
+    )
+
+    await createButton.click()
+    console.log('[test] Clicked Create Installation')
+
+    // Capture installation ID from creation response
+    const createResponse = await createResponsePromise
+    const createData = await createResponse.json()
+    expect(createData.installationId).toBeTruthy()
+    console.log(`[test] Installation created: ${createData.installationId}`)
+
+    // ==================== Step 6: Verify redirect ====================
+    // After creation, the form redirects through /api/installations/{id}/continue
+    // which routes to the deploy page
+    await page.waitForURL(
+      (url) =>
+        url.href.includes('/installations/new/kloudlite-cloud') ||
+        url.href.includes('/installations'),
+      { timeout: TIMEOUTS.navigation },
+    )
+
+    const finalUrl = page.url()
+    console.log(`[test] Post-creation redirect: ${finalUrl}`)
+
+    // Should NOT land on billing settings (no subscription required)
+    expect(finalUrl).not.toContain('/installations/settings/billing')
+    console.log('[test] Installation created successfully, correct redirect')
+  })
+
+  test('verify billing settings after installation creation', async ({
     page,
   }) => {
     test.setTimeout(30_000)
@@ -228,113 +275,33 @@ test.describe.serial('KL Cloud Billing Flow', () => {
     await page.goto('/installations/settings/billing')
     await page.waitForLoadState('networkidle')
 
-    // Billing page heading
-    await expect(page.getByRole('heading', { name: /billing/i })).toBeVisible()
-
-    // Subscription should be active (synced from Stripe directly or via webhook)
-    await expect(page.getByText('Active', { exact: true })).toBeVisible({
-      timeout: TIMEOUTS.action,
-    })
-    console.log('[test] Subscription shows Active status')
-
-    // Should show the Control Plane line item
-    await expect(page.getByText(/control plane/i)).toBeVisible({
-      timeout: TIMEOUTS.action,
-    })
-    console.log('[test] Control Plane item visible')
-
-    // Should show "Manage Billing" button (for opening Stripe portal)
-    await expect(page.getByText(/manage billing/i)).toBeVisible()
-    console.log('[test] Billing settings page verified')
-  })
-
-  test('installation appears in list with Continue button', async ({
-    page,
-  }) => {
-    test.setTimeout(30_000)
-
-    await devLogin(page)
-    await page.goto('/installations')
-
-    // Installation should be visible — scope to the table row
-    const installationRow = page
-      .locator('tr')
-      .filter({ hasText: installationName })
-    await expect(installationRow).toBeVisible({
+    // ==================== Step 1: Verify credit balance unchanged ====================
+    // Credits are only deducted when resources actually run, not on installation creation
+    await expect(page.getByText('Credit Balance')).toBeVisible({
       timeout: TIMEOUTS.action,
     })
 
-    // Should have a Continue button within the row (not yet deployed)
-    const continueButton = installationRow.getByRole('button', {
-      name: 'Continue',
-    })
-    await expect(continueButton).toBeVisible()
-    console.log('[test] Installation in list with Continue button')
-  })
+    // Balance should still show a positive amount (the top-up amount)
+    // We can't assert the exact amount but we can verify it's visible and positive
+    const balanceElement = page.locator(
+      '.text-green-600, .text-green-400',
+    ).first()
+    await expect(balanceElement).toBeVisible({ timeout: TIMEOUTS.action })
+    console.log('[test] Credit balance still shows positive (not deducted on creation)')
 
-  test('continue button navigates to deploy page', async ({ page }) => {
-    test.setTimeout(30_000)
+    // ==================== Step 2: Verify transaction history ====================
+    await expect(page.getByText('Transaction History')).toBeVisible()
 
-    await devLogin(page)
-    await page.goto('/installations')
+    // Should show at least one top-up transaction from our earlier test
+    const topupBadge = page.getByText('Top-up', { exact: true }).first()
+    await expect(topupBadge).toBeVisible({ timeout: TIMEOUTS.action })
+    console.log('[test] Top-up transaction visible in history')
 
-    // Scope to the row for our test installation
-    const installationRow = page
-      .locator('tr')
-      .filter({ hasText: installationName })
-    await expect(installationRow).toBeVisible({ timeout: TIMEOUTS.action })
-
-    // Click Continue — should go through /api/installations/{id}/continue
-    // which verifies the active subscription and routes to deploy page
-    const continueButton = installationRow.getByRole('button', {
-      name: 'Continue',
-    })
-    await continueButton.click()
-
-    // Should land on the deploy page (subscription is active)
-    await page.waitForURL(/\/installations\/new\/kloudlite-cloud/, {
-      timeout: TIMEOUTS.navigation,
-    })
-
+    // ==================== Step 3: Verify billing management options ====================
+    await expect(page.getByText('Billing Management')).toBeVisible()
     await expect(
-      page.getByRole('heading', { name: /deploying kloudlite cloud/i }),
+      page.getByRole('button', { name: /manage payment methods/i }),
     ).toBeVisible()
-    console.log('[test] Continue button routes to deploy page correctly')
-  })
-
-  test('cleanup: delete test installation and cancel subscription', async ({
-    page,
-  }) => {
-    test.setTimeout(30_000)
-
-    if (!installationId) {
-      console.log('[cleanup] No installation to clean up')
-      return
-    }
-
-    await devLogin(page)
-
-    // Delete the test installation
-    const deleteResult = await page.evaluate(async (id: string) => {
-      const resp = await fetch(`/api/installations/${id}/delete`, {
-        method: 'DELETE',
-      })
-      return { status: resp.status, ok: resp.ok }
-    }, installationId)
-    console.log(
-      `[cleanup] Delete installation: ${deleteResult.status} (${deleteResult.ok ? 'ok' : 'failed'})`,
-    )
-
-    // Verify it's gone
-    await page.goto('/installations')
-    await expect(page.getByText(installationName)).not.toBeVisible({
-      timeout: TIMEOUTS.action,
-    })
-    console.log('[cleanup] Installation removed from list')
-
-    // Note: Stripe subscription is NOT cancelled here on purpose.
-    // The org still has an active subscription which is correct — billing is org-level.
-    // The subscription would be cancelled via the billing settings "Cancel Subscription" button
-    // in a real workflow.
+    console.log('[test] Billing settings verified after installation creation')
   })
 })
