@@ -11,6 +11,9 @@ import {
   upsertBillingAccount,
 } from '@/lib/console/storage'
 import type { BillingAccount } from '@/lib/console/storage'
+import { topupCredits } from '@/lib/console/storage/credits'
+
+// Legacy subscription handlers — will be removed after migration to credits billing
 
 function mapStripeStatus(
   status: string,
@@ -217,6 +220,18 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
         await handleInvoicePaymentFailed(invoice)
+        break
+      }
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice
+        if (invoice.metadata?.type === 'credit_topup') {
+          const orgId = invoice.metadata.org_id
+          const amount = (invoice.amount_paid || 0) / 100 // cents to dollars
+          if (orgId && amount > 0) {
+            await topupCredits(orgId, amount, `Top-up via Stripe Invoice ${invoice.id}`, invoice.id)
+            console.log(`[Webhook] Credited $${amount.toFixed(2)} to org ${orgId} from invoice ${invoice.id}`)
+          }
+        }
         break
       }
       default:
