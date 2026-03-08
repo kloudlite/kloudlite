@@ -58,7 +58,7 @@ export async function createCheckoutSession(
     customer: customerId,
     mode: 'subscription',
     line_items: lineItems,
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/installations/${installationId}?checkout=success`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/installations/${installationId}/continue`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/installations/${installationId}/billing?checkout=cancelled`,
     metadata: { installation_id: installationId },
     subscription_data: {
