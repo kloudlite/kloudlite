@@ -45,7 +45,7 @@ export default async function InstallPage({ params }: PageProps) {
     const balance = creditAccount?.balance ?? 0
 
     if (balance <= 0) {
-      return <CreditTopupPrompt orgId={orgId} installationId={id} />
+      return <CreditTopupPrompt installationId={id} />
     }
 
     const installationUrl = installation.subdomain
