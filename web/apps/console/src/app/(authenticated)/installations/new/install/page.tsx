@@ -11,7 +11,7 @@ export default async function InstallPage() {
   }
 
   if (!session.installationKey) {
-    redirect('/installations/new-byoc')
+    redirect('/installations/new')
   }
 
   // Look up the installation ID from the key

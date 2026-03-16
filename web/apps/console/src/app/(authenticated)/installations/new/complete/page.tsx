@@ -11,13 +11,13 @@ export default async function CompletePage() {
   }
 
   if (!session.installationKey) {
-    redirect('/installations/new-byoc')
+    redirect('/installations/new')
   }
 
   const installation = await getInstallationByKey(session.installationKey)
 
   if (!installation) {
-    redirect('/installations/new-byoc')
+    redirect('/installations/new')
   }
 
   const isValidSubdomain = installation.subdomain &&
