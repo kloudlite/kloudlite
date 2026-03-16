@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@kloudlite/ui'
+import { Tabs, TabsList, TabsTrigger } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
@@ -81,14 +82,10 @@ export function InstallationsList({
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'installed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
   const [deleteTarget, setDeleteTarget] = useState<Installation | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  const allRef = useRef<HTMLButtonElement>(null)
-  const pendingRef = useRef<HTMLButtonElement>(null)
-  const installedRef = useRef<HTMLButtonElement>(null)
   const installationsRef = useRef(installations)
   installationsRef.current = installations
 
@@ -99,11 +96,6 @@ export function InstallationsList({
       (installation.deployJobOperation === 'uninstall' && installation.deployJobStatus !== 'failed')
     )
   }, [])
-
-  // Filter change handlers
-  const handleFilterAll = useCallback(() => setStatusFilter('all'), [])
-  const handleFilterPending = useCallback(() => setStatusFilter('pending'), [])
-  const handleFilterInstalled = useCallback(() => setStatusFilter('installed'), [])
 
   // Installation navigation handlers
   const handleContinueInstallation = useCallback(
@@ -204,33 +196,6 @@ export function InstallationsList({
     })
   }
 
-  // Update underline position
-  useEffect(() => {
-    const updatePosition = () => {
-      let activeRef: HTMLButtonElement | null = null
-      if (statusFilter === 'all') activeRef = allRef.current
-      else if (statusFilter === 'pending') activeRef = pendingRef.current
-      else if (statusFilter === 'installed') activeRef = installedRef.current
-
-      if (activeRef) {
-        const fullWidth = activeRef.offsetWidth
-        const underlineWidth = fullWidth * 0.6 // 60% of button width
-        const leftOffset = activeRef.offsetLeft + (fullWidth - underlineWidth) / 2
-
-        setUnderlineStyle({
-          left: leftOffset,
-          width: underlineWidth,
-        })
-      }
-    }
-
-    // Small delay to ensure layout is ready
-    setTimeout(updatePosition, 10)
-
-    window.addEventListener('resize', updatePosition)
-    return () => window.removeEventListener('resize', updatePosition)
-  }, [statusFilter])
-
   const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
   const liveRegionMessage = useMemo(() => {
     const count = filteredInstallations.length
@@ -265,65 +230,14 @@ export function InstallationsList({
       </div>
 
       {/* Status Filter Tabs */}
-      <div className="border-foreground/10 mb-5 border-b">
-        <div className="relative inline-flex gap-1" role="tablist">
-          <button
-            ref={allRef}
-            role="tab"
-            aria-selected={statusFilter === 'all'}
-            onClick={handleFilterAll}
-            className={cn(
-              'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
-              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
-              statusFilter === 'all'
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            All
-          </button>
-          <button
-            ref={pendingRef}
-            role="tab"
-            aria-selected={statusFilter === 'pending'}
-            onClick={handleFilterPending}
-            className={cn(
-              'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
-              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
-              statusFilter === 'pending'
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            Pending
-          </button>
-          <button
-            ref={installedRef}
-            role="tab"
-            aria-selected={statusFilter === 'installed'}
-            onClick={handleFilterInstalled}
-            className={cn(
-              'relative cursor-pointer px-5 py-2 text-sm font-medium transition-all duration-200',
-              'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
-              statusFilter === 'installed'
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            Installed
-          </button>
-
-          {/* Animated underline with CSS transition */}
-          {underlineStyle.width > 0 && (
-            <div
-              className="bg-primary absolute bottom-0 h-[2px] transition-all duration-300 ease-out"
-              style={{
-                left: `${underlineStyle.left}px`,
-                width: `${underlineStyle.width}px`,
-              }}
-            />
-          )}
-        </div>
+      <div className="mb-5">
+        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'all' | 'pending' | 'installed')}>
+          <TabsList className="inline-flex gap-1 rounded-lg bg-muted/50 p-1">
+            <TabsTrigger value="all" className="rounded-md px-3.5 py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">All</TabsTrigger>
+            <TabsTrigger value="pending" className="rounded-md px-3.5 py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">Pending</TabsTrigger>
+            <TabsTrigger value="installed" className="rounded-md px-3.5 py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">Installed</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Table */}

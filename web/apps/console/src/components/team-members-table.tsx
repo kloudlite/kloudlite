@@ -82,7 +82,7 @@ export function TeamMembersTable({
   }
 
   return (
-    <div className="border-foreground/10 overflow-hidden rounded-lg border">
+    <div className="overflow-hidden">
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {announcement}
       </p>

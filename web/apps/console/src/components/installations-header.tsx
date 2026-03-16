@@ -44,7 +44,7 @@ export function InstallationsHeader({ user, orgs, currentOrgId }: InstallationsH
 
   return (
     <header className="bg-background border-b border-foreground/10 sticky top-0 z-50 backdrop-blur-sm bg-background/95">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 lg:px-12">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <Link href="/installations" className="flex items-center gap-3 transition-opacity hover:opacity-80">
