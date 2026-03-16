@@ -180,7 +180,7 @@ async function startWatch(config: WatchConfig): Promise<void> {
       },
       (err: unknown) => {
         const message = err instanceof Error ? err.message : String(err)
-        console.error(`[K8S-WATCHER] Watch error for ${watchKey}:`, message)
+        console.error('[K8S-WATCHER] Watch error for %s: %s', watchKey, message)
         activeWatches.set(watchKey, false)
         resourceStore.markStale(config.plural, config.namespace)
 
