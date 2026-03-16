@@ -162,7 +162,7 @@ test.describe.serial('KL Cloud Billing Flow (Pay-as-you-go Credits)', () => {
     // ==================== Step 7: Wait for redirect back to app ====================
     // After payment, Stripe redirects back to our app
     await page.waitForURL(
-      (url) => !url.href.includes('invoice.stripe.com'),
+      (url) => url.hostname !== 'invoice.stripe.com' && !url.hostname.endsWith('.stripe.com'),
       { timeout: TIMEOUTS.stripeCheckout },
     )
 
