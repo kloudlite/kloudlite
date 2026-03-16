@@ -26,5 +26,7 @@ export function InstallationDetailsTabs({ installationId, cloudProvider }: Insta
     })
   }
 
+  if (tabs.length <= 1) return null
+
   return <NavTabs tabs={tabs} />
 }

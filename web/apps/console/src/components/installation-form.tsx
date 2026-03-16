@@ -90,126 +90,133 @@ export function InstallationForm({ hostingType, redirectTo, orgId }: Installatio
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g., Production"
-                  {...field}
-                  disabled={creating}
-                />
-              </FormControl>
-              <FormDescription>
-                A friendly name for this installation
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="rounded-lg border border-foreground/10 bg-background">
+          <div className="border-b border-foreground/10 px-6 py-4">
+            <h3 className="font-medium text-foreground">Installation Details</h3>
+          </div>
+          <div className="space-y-5 p-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g., Production"
+                      {...field}
+                      disabled={creating}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    A friendly name for this installation
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Description <span className="text-muted-foreground font-normal">(optional)</span>
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Production deployment for our platform"
-                  {...field}
-                  disabled={creating}
-                  rows={4}
-                  className="resize-none"
-                />
-              </FormControl>
-              <FormDescription>
-                Optional context about this installation
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Description <span className="text-muted-foreground font-normal">(optional)</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Production deployment for our platform"
+                      {...field}
+                      disabled={creating}
+                      rows={4}
+                      className="resize-none"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Optional context about this installation
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="subdomain"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Domain</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    placeholder="your-company"
-                    {...field}
-                    disabled={creating}
-                    className="font-mono"
-                    onChange={(e) => {
-                      const value = e.target.value.toLowerCase()
-                      field.onChange(value)
-                      checkSubdomainAvailability(value)
-                    }}
-                  />
-                  {checkingSubdomain && (
-                    <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                      <Loader2 className="text-muted-foreground size-4 animate-spin" />
+            <FormField
+              control={form.control}
+              name="subdomain"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Domain</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        placeholder="your-company"
+                        {...field}
+                        disabled={creating}
+                        className="font-mono"
+                        onChange={(e) => {
+                          const value = e.target.value.toLowerCase()
+                          field.onChange(value)
+                          checkSubdomainAvailability(value)
+                        }}
+                      />
+                      {checkingSubdomain && (
+                        <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                          <Loader2 className="text-muted-foreground size-4 animate-spin" />
+                        </div>
+                      )}
+                      {!checkingSubdomain && subdomainAvailable === true && (
+                        <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                          <CheckCircle2 className="size-4 text-green-600" />
+                        </div>
+                      )}
+                      {!checkingSubdomain && subdomainAvailable === false && (
+                        <div className="absolute top-1/2 right-3 -translate-y-1/2">
+                          <AlertCircle className="text-destructive size-4" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {!checkingSubdomain && subdomainAvailable === true && (
-                    <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                      <CheckCircle2 className="size-4 text-green-600" />
-                    </div>
-                  )}
-                  {!checkingSubdomain && subdomainAvailable === false && (
-                    <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                      <AlertCircle className="text-destructive size-4" />
-                    </div>
-                  )}
-                </div>
-              </FormControl>
-              <FormDescription className="flex items-center justify-between gap-3">
-                <span className="font-mono">
-                  {field.value || 'your-subdomain'}.{process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
-                </span>
-                <span className="text-xs font-medium whitespace-nowrap">
-                  {!checkingSubdomain && subdomainAvailable === false && (
-                    <span className="text-destructive">
-                      This domain is already taken
+                  </FormControl>
+                  <FormDescription className="flex items-center justify-between gap-3">
+                    <span className="font-mono">
+                      {field.value || 'your-subdomain'}.{process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'}
                     </span>
-                  )}
-                  {!checkingSubdomain && subdomainAvailable === true && (
-                    <span className="text-green-600 dark:text-green-500">
-                      Domain is available
+                    <span className="text-xs font-medium whitespace-nowrap">
+                      {!checkingSubdomain && subdomainAvailable === false && (
+                        <span className="text-destructive">
+                          This domain is already taken
+                        </span>
+                      )}
+                      {!checkingSubdomain && subdomainAvailable === true && (
+                        <span className="text-green-600 dark:text-green-500">
+                          Domain is available
+                        </span>
+                      )}
                     </span>
-                  )}
-                </span>
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <div className="flex justify-end pt-4">
-          <Button
-            type="submit"
-            size="default"
-            disabled={creating || subdomainAvailable !== true}
-          >
-            {creating ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              'Continue to Installation'
-            )}
-          </Button>
+            <div className="flex justify-end pt-2">
+              <Button
+                type="submit"
+                size="default"
+                disabled={creating || subdomainAvailable !== true}
+              >
+                {creating ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Continue to Installation'
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </form>
     </Form>

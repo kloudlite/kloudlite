@@ -16,26 +16,27 @@ export async function GET() {
     return apiError('Not available in production', 403)
   }
 
-  const devUser = {
-    userId: 'dev-user-id',
-    email: 'karthik@kloudlite.io',
-    name: 'Karthik',
-  }
+  const devEmail = 'karthik@kloudlite.io'
+  const devName = 'Karthik'
 
-  // Ensure dev user exists in user_registrations table
-  const existingUser = await getUserByEmail(devUser.email)
-  console.log('Dev login - existing user:', existingUser)
+  // Always check PII DB first — use existing identity if present
+  const existingUser = await getUserByEmail(devEmail)
+
+  let userId: string
+  let name: string
+  let email: string
 
   if (existingUser) {
-    // User exists - use their existing userId instead
-    console.log('Using existing user with userId:', existingUser.userId)
-    devUser.userId = existingUser.userId
+    // Use all data from PII DB as source of truth
+    userId = existingUser.userId
+    name = existingUser.name
+    email = existingUser.email
 
-    // Check if existing user has orgs — if not, create one (handles pre-migration users)
+    // Ensure user has at least one org
     try {
-      const orgs = await getUserOrganizations(existingUser.userId)
+      const orgs = await getUserOrganizations(userId)
       if (orgs.length === 0) {
-        const baseSlug = (existingUser.name || existingUser.email.split('@')[0])
+        const baseSlug = (name || email.split('@')[0])
           .toLowerCase()
           .replace(/[^a-z0-9-]/g, '-')
           .replace(/-+/g, '-')
@@ -44,29 +45,30 @@ export async function GET() {
         let slug = /^[a-z]/.test(baseSlug) ? baseSlug : `org-${baseSlug}`
         if (slug.length < 3) slug = `${slug}-org`
 
-        await createOrganization(existingUser.userId, `${existingUser.name}'s Organization`, slug)
-        console.log('Auto-created organization for existing dev user')
+        await createOrganization(userId, `${name}'s Organization`, slug)
       }
     } catch (orgError) {
-      console.error('Failed to auto-create organization for existing dev user:', orgError)
+      console.error('Failed to auto-create organization for dev user:', orgError)
     }
   } else {
-    // Create new user
-    console.log('Creating new dev user with userId:', devUser.userId)
+    // No PII record — create one
+    userId = 'dev-user-id'
+    name = devName
+    email = devEmail
+
     try {
       await saveUser({
-        userId: devUser.userId,
-        email: devUser.email,
-        name: devUser.name,
+        userId,
+        email,
+        name,
         providers: ['github'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
-      console.log('Dev user created successfully')
 
-      // Auto-create a default organization for new users
+      // Auto-create a default organization
       try {
-        const baseSlug = (devUser.name || devUser.email.split('@')[0])
+        const baseSlug = (name || email.split('@')[0])
           .toLowerCase()
           .replace(/[^a-z0-9-]/g, '-')
           .replace(/-+/g, '-')
@@ -75,9 +77,8 @@ export async function GET() {
         let slug = /^[a-z]/.test(baseSlug) ? baseSlug : `org-${baseSlug}`
         if (slug.length < 3) slug = `${slug}-org`
 
-        await createOrganization(devUser.userId, `${devUser.name}'s Organization`, slug)
+        await createOrganization(userId, `${name}'s Organization`, slug)
       } catch (orgError) {
-        // Log but don't block login — org creation is best-effort on signup
         console.error('Failed to auto-create organization:', orgError)
       }
     } catch (error) {
@@ -87,11 +88,10 @@ export async function GET() {
 
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
 
-  // Create JWT token for karthik@kloudlite.io
   const token = await new SignJWT({
-    userId: devUser.userId,
-    email: devUser.email,
-    name: devUser.name,
+    userId,
+    email,
+    name,
     image: undefined,
     provider: 'development',
     installationKey: undefined,

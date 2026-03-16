@@ -65,7 +65,7 @@ export function NavTabs({ tabs, className }: NavTabsProps) {
             }}
             href={tab.href}
             className={cn(
-              'relative px-6 py-2.5 text-base font-medium transition-all duration-200 cursor-pointer flex items-center gap-2',
+              'relative px-6 py-2.5 text-sm font-medium transition-all duration-200 cursor-pointer flex items-center gap-2',
               'hover:bg-foreground/[0.03] active:bg-foreground/[0.05] rounded-sm',
               isActive
                 ? 'text-foreground'

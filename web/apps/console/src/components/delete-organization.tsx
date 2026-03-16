@@ -53,7 +53,7 @@ export function DeleteOrganization({ orgId, orgName }: DeleteOrganizationProps) 
   }
 
   return (
-    <div className="border border-destructive/30 rounded-lg p-6 bg-destructive/5">
+    <div className="border border-destructive/20 rounded-lg p-6 bg-destructive/[0.03]">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-destructive">Delete Organization</h3>

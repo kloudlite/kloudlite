@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { requireInstallationAccess } from '@/lib/console/authorization'
 import { getInstallationById } from '@/lib/console/storage'
-import { getCreditAccount } from '@/lib/console/storage/credits'
 import { SignJWT } from 'jose'
 import { cookies } from 'next/headers'
 
@@ -25,10 +24,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   // Verify user has access via org membership
-  let orgId: string
   try {
-    const context = await requireInstallationAccess(id)
-    orgId = context.orgId
+    await requireInstallationAccess(id)
   } catch {
     return NextResponse.redirect(new URL('/installations', origin))
   }
@@ -64,43 +61,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     maxAge: 30 * 24 * 60 * 60, // 30 days
   })
 
-  // Helper function to validate subdomain
-  const isValidSubdomain = (subdomain: string | null | undefined): boolean => {
-    if (!subdomain) return false
-    if (subdomain === '0.0.0.0') return false
-    if (subdomain.includes('0.0.0.0')) return false
-    return true
-  }
-
-  // Determine next step based on installation status and hosting type
-  const isKloudliteCloud = installation.cloudProvider === 'oci'
+  // Determine next step based on installation status
   let redirectPath: string
 
-  if (isKloudliteCloud) {
-    // Kloudlite Cloud — check credit balance at org level
-    const creditAccount = await getCreditAccount(orgId)
-    const hasCredits = creditAccount != null && creditAccount.balance > 0
-
-    if (!hasCredits) {
-      // No credits — redirect to top-up page
-      redirectPath = `/installations/new-kl-cloud?installation=${id}`
-    } else if (!installation.deploymentReady) {
-      // Has credits — go to deploy page
-      redirectPath = '/installations/new/kloudlite-cloud'
-    } else {
-      redirectPath = '/installations'
-    }
+  if (installation.deploymentReady) {
+    redirectPath = `/installations/${id}`
   } else {
-    // BYOC flow
-    if (!installation.secretKey) {
-      redirectPath = '/installations/new/install'
-    } else if (!isValidSubdomain(installation.subdomain)) {
-      redirectPath = '/installations/new/domain'
-    } else if (!installation.deploymentReady) {
-      redirectPath = '/installations/new/complete'
-    } else {
-      redirectPath = '/installations'
-    }
+    redirectPath = `/installations/${id}/install`
   }
 
   return NextResponse.redirect(new URL(redirectPath, origin))
