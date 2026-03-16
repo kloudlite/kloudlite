@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { cachedInstallationAccess, cachedInstallationById } from '@/lib/console/cached-queries'
-import { getSelectedOrg } from '@/lib/console/get-selected-org'
 import { getCreditAccount } from '@/lib/console/storage/credits'
 import { InstallCommands } from '@/components/install-commands'
 import { CompletionStatus } from '@/components/completion-status'
