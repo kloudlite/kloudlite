@@ -20,7 +20,7 @@ interface UseCreditsReturn {
   loading: boolean
   data: CreditsData | null
   refresh: () => Promise<void>
-  handleTopup: (amount: number, installationId?: string) => Promise<void>
+  handleTopup: (amount: number, returnUrl?: string) => Promise<void>
   handleManageBilling: () => Promise<void>
   handleUpdateAutoTopup: (
     enabled: boolean,
@@ -29,7 +29,7 @@ interface UseCreditsReturn {
   ) => Promise<void>
 }
 
-export function useCredits(orgId: string): UseCreditsReturn {
+export function useCredits(orgId: string, options?: { skipInitialFetch?: boolean }): UseCreditsReturn {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<CreditsData | null>(null)
 
@@ -49,17 +49,19 @@ export function useCredits(orgId: string): UseCreditsReturn {
   }, [orgId])
 
   useEffect(() => {
-    fetchCredits()
-  }, [fetchCredits])
+    if (!options?.skipInitialFetch) {
+      fetchCredits()
+    }
+  }, [fetchCredits, options?.skipInitialFetch])
 
   const handleTopup = useCallback(
-    async (amount: number, installationId?: string) => {
+    async (amount: number, returnUrl?: string) => {
       try {
         setLoading(true)
         const res = await fetch(`/api/orgs/${orgId}/billing/topup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, installationId }),
+          body: JSON.stringify({ amount, returnUrl }),
         })
         if (!res.ok) {
           const error = await res.json()

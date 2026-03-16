@@ -303,23 +303,22 @@ export function InstallCommands({ installationKey, installationId: initialInstal
 
         {/* Installation Commands Card */}
         <div className="border border-foreground/10 rounded-lg bg-background">
-          <div className="p-8">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Installation Command</h2>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Choose your cloud provider and run the command in your terminal
-              </p>
-            </div>
-            <div className="space-y-6">
+          <div className="border-b border-foreground/10 px-6 py-4">
+            <h3 className="font-medium text-foreground">Installation Command</h3>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Choose your cloud provider and run the command in your terminal
+            </p>
+          </div>
+          <div className="p-6 space-y-6">
           <Tabs value={selectedProvider} onValueChange={setSelectedProvider}>
-            <TabsList className="p-1 rounded-sm">
-              <TabsTrigger value="aws" className="text-sm font-medium rounded-sm">
+            <TabsList className="inline-flex gap-1 rounded-lg bg-muted/50 p-1">
+              <TabsTrigger value="aws" className="rounded-md px-3.5 py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 AWS
               </TabsTrigger>
-              <TabsTrigger value="gcp" className="text-sm font-medium rounded-sm">
+              <TabsTrigger value="gcp" className="rounded-md px-3.5 py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 GCP
               </TabsTrigger>
-              <TabsTrigger value="azure" className="text-sm font-medium rounded-sm">
+              <TabsTrigger value="azure" className="rounded-md px-3.5 py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 Azure
               </TabsTrigger>
             </TabsList>
@@ -478,11 +477,11 @@ export function InstallCommands({ installationKey, installationId: initialInstal
                   )}
 
                   <div>
-                    <p className="text-foreground mb-3 text-base font-semibold">Prerequisites:</p>
-                    <ul className="text-muted-foreground space-y-2 text-base leading-relaxed">
+                    <p className="text-foreground mb-2 text-sm font-medium">Prerequisites:</p>
+                    <ul className="text-muted-foreground space-y-1.5 text-sm">
                       {config.requirements.map((req) => (
-                        <li key={req} className="flex items-start gap-3">
-                          <div className="bg-muted-foreground mt-2 size-1.5 flex-shrink-0" />
+                        <li key={req} className="flex items-start gap-2">
+                          <div className="bg-muted-foreground mt-1.5 size-1.5 flex-shrink-0 rounded-full" />
                           <span>{req}</span>
                         </li>
                       ))}
@@ -490,12 +489,12 @@ export function InstallCommands({ installationKey, installationId: initialInstal
                   </div>
 
                   <div>
-                    <p className="text-foreground mb-3 text-base font-semibold">Run this command:</p>
+                    <p className="text-foreground mb-2 text-sm font-medium">Run this command:</p>
                     <div className="space-y-3">
                       {config.commands.map((cmd) => (
-                        <div key={cmd} className="bg-muted p-4">
+                        <div key={cmd} className="bg-muted rounded-lg p-4">
                           <div className="flex items-start justify-between gap-4">
-                            <code className="flex-1 font-mono text-base leading-relaxed break-all">
+                            <code className="flex-1 font-mono text-sm leading-relaxed break-all">
                               {cmd}
                             </code>
                             <Button
@@ -517,7 +516,6 @@ export function InstallCommands({ installationKey, installationId: initialInstal
               </TabsContent>
             ))}
           </Tabs>
-            </div>
           </div>
         </div>
 

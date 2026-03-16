@@ -204,7 +204,18 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        await handleCheckoutSessionCompleted(stripe, session)
+        if (session.metadata?.type === 'credit_topup') {
+          // Credit topup checkout
+          const orgId = session.metadata.org_id
+          const amount = (session.amount_total || 0) / 100
+          if (orgId && amount > 0) {
+            await topupCredits(orgId, amount, `Top-up via Stripe Checkout ${session.id}`, session.id)
+            console.log(`[Webhook] Credited $${amount.toFixed(2)} to org ${orgId} from checkout ${session.id}`)
+          }
+        } else {
+          // Legacy subscription checkout
+          await handleCheckoutSessionCompleted(stripe, session)
+        }
         break
       }
       case 'customer.subscription.updated': {

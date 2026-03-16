@@ -88,7 +88,7 @@ export function WebsiteHeader({ currentPage, alwaysShowBorder = false }: Website
                 key={link.key}
                 href={link.href}
                 className={cn(
-                  'relative pb-1 text-sm font-semibold transition-colors',
+                  'relative pb-1 text-base font-semibold transition-colors',
                   'after:bg-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:transition-all after:duration-300 hover:after:w-full',
                   currentPage === link.key
                     ? 'text-foreground after:w-full'
