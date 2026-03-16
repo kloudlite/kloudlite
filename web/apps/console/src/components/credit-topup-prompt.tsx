@@ -5,11 +5,10 @@ import { Wallet, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface CreditTopupPromptProps {
-  orgId: string
   installationId: string
 }
 
-export function CreditTopupPrompt({ orgId, installationId }: CreditTopupPromptProps) {
+export function CreditTopupPrompt({ installationId }: CreditTopupPromptProps) {
   const router = useRouter()
 
   return (
