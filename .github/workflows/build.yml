@@ -8,7 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - api-server
+          - platform-controller
           - tunnel-server
           - workmachine-node-manager
           - wm-ingress-controller
@@ -78,12 +78,12 @@ jobs:
           APP="${{ inputs.app }}"
 
           case "${APP}" in
-            api-server)
+            platform-controller)
               BUILD_TYPE="go"
               BUILD_CMD="CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/api-server ./cmd/server"
               DOCKERFILE="./api/Dockerfile"
               DOCKER_CONTEXT="./api"
-              IMAGE_SUFFIX="api-server"
+              IMAGE_SUFFIX="platform-controller"
               ;;
             tunnel-server)
               BUILD_TYPE="go"
