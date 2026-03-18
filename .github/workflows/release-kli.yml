@@ -1,30 +1,22 @@
 name: Release kli
 
 on:
-  push:
-    tags:
-      - 'kli-v*'
-  schedule:
-    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
-      release_type:
-        description: 'Release type'
-        required: true
-        type: choice
-        options:
-          - nightly
-          - stable
-        default: nightly
-      tag:
-        description: 'Tag to release (e.g., kli-v0.1.0) - only for stable releases'
-        required: false
+      version:
+        description: 'Base version (e.g. 1.2.0, without v prefix)'
         type: string
-      make_latest:
-        description: 'Mark as latest release (auto for nightly, custom for stable)'
-        required: false
+        required: true
+      make_nightly:
+        description: 'Publish nightly variant'
         type: boolean
-        default: true
+        required: true
+        default: false
+      make_latest:
+        description: 'Move kli/latest floating tag (stable releases only)'
+        type: boolean
+        required: true
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -74,45 +66,23 @@ jobs:
           go-version-file: 'api/go.mod'
           cache-dependency-path: 'api/go.sum'
 
-      - name: Get version from tag
+      - name: Compute version and tag
         id: version
         run: |
-          BASE_VERSION="0.1.0"
+          BASE_VERSION="${{ inputs.version }}"
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ "${{ inputs.release_type }}" = "nightly" ]; then
-              TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
-              SHORT_SHA="${GITHUB_SHA::7}"
-              VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
-              TAG="kli-v${VERSION}"
-            else
-              TAG="${{ inputs.tag }}"
-              if [ -z "${TAG}" ]; then
-                echo "::error::Tag is required for stable releases."
-                exit 1
-              fi
-              if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-                echo "::error::Invalid stable tag '${TAG}'. Expected format: kli-v0.1.0"
-                exit 1
-              fi
-              VERSION="${TAG#kli-v}"
-            fi
-          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-            if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-              echo "::error::Invalid pushed tag '${TAG}'. Expected format: kli-v0.1.0"
-              exit 1
-            fi
-            VERSION="${TAG#kli-v}"
-          else
+          if [ "${{ inputs.make_nightly }}" = "true" ]; then
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
-            SHORT_SHA="${GITHUB_SHA::7}"
-            VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
-            TAG="kli-v${VERSION}"
+            VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}"
+            TAG="kli/v${VERSION}"
+          else
+            VERSION="${BASE_VERSION}"
+            TAG="kli/v${VERSION}"
           fi
+
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Building version: ${VERSION}"
+          echo "Building version: ${VERSION} (tag: ${TAG})"
 
       - name: Build binary
         working-directory: ./api
@@ -148,42 +118,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get version from tag
+      - name: Compute version and tag
         id: version
         run: |
-          BASE_VERSION="0.1.0"
+          BASE_VERSION="${{ inputs.version }}"
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ "${{ inputs.release_type }}" = "nightly" ]; then
-              TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
-              SHORT_SHA="${GITHUB_SHA::7}"
-              VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
-              TAG="kli-v${VERSION}"
-            else
-              TAG="${{ inputs.tag }}"
-              if [ -z "${TAG}" ]; then
-                echo "::error::Tag is required for stable releases."
-                exit 1
-              fi
-              if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-                echo "::error::Invalid stable tag '${TAG}'. Expected format: kli-v0.1.0"
-                exit 1
-              fi
-              VERSION="${TAG#kli-v}"
-            fi
-          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-            if [[ ! "${TAG}" =~ ^kli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-              echo "::error::Invalid pushed tag '${TAG}'. Expected format: kli-v0.1.0"
-              exit 1
-            fi
-            VERSION="${TAG#kli-v}"
-          else
+          if [ "${{ inputs.make_nightly }}" = "true" ]; then
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
-            SHORT_SHA="${GITHUB_SHA::7}"
-            VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
-            TAG="kli-v${VERSION}"
+            VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}"
+            TAG="kli/v${VERSION}"
+          else
+            VERSION="${BASE_VERSION}"
+            TAG="kli/v${VERSION}"
           fi
+
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
 
@@ -282,15 +230,38 @@ jobs:
           For full documentation, see [api/cmd/kli/README.md](https://github.com/kloudlite/kloudlite/blob/${{ steps.version.outputs.tag }}/api/cmd/kli/README.md)
           EOF
 
+      - name: Create or move floating tags
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          TAG="${{ steps.version.outputs.tag }}"
+
+          # Create the immutable release tag
+          git tag "${TAG}"
+          git push origin "${TAG}"
+
+          if [ "${{ inputs.make_nightly }}" = "true" ]; then
+            # Always move kli/nightly floating tag for nightly releases
+            git tag -f "kli/nightly"
+            git push origin "kli/nightly" --force
+          else
+            # Stable release: optionally move kli/latest floating tag
+            if [ "${{ inputs.make_latest }}" = "true" ]; then
+              git tag -f "kli/latest"
+              git push origin "kli/latest" --force
+            fi
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: kli ${{ steps.version.outputs.version }}
+          name: kli v${{ steps.version.outputs.version }}
           body_path: release-notes.md
           draft: false
-          prerelease: ${{ contains(steps.version.outputs.version, '-nightly.') }}
-          make_latest: ${{ (github.event_name == 'workflow_dispatch' && inputs.release_type == 'stable' && inputs.make_latest) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/kli-v')) }}
+          prerelease: ${{ inputs.make_nightly }}
+          make_latest: ${{ inputs.make_nightly == false && inputs.make_latest }}
           files: |
             release-assets/*
         env:
