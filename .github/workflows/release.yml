@@ -1,8 +1,15 @@
-name: Release kli
+name: Release
 
 on:
   workflow_dispatch:
     inputs:
+      app:
+        description: 'Binary to release'
+        type: choice
+        required: true
+        options:
+          - kli
+          - kltun
       version:
         description: 'Base version (e.g. 1.2.0, without v prefix)'
         type: string
@@ -13,13 +20,13 @@ on:
         required: true
         default: false
       make_latest:
-        description: 'Move kli/latest floating tag (stable releases only)'
+        description: 'Move app/latest floating tag (stable releases only)'
         type: boolean
         required: true
         default: false
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.app }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -27,7 +34,7 @@ permissions:
 
 jobs:
   build:
-    name: Build kli binaries
+    name: Build ${{ inputs.app }} binaries
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,26 +42,26 @@ jobs:
           # Linux
           - goos: linux
             goarch: amd64
-            output: kli-linux-amd64
+            suffix: linux-amd64
           - goos: linux
             goarch: arm64
-            output: kli-linux-arm64
+            suffix: linux-arm64
 
           # macOS
           - goos: darwin
             goarch: amd64
-            output: kli-darwin-amd64
+            suffix: darwin-amd64
           - goos: darwin
             goarch: arm64
-            output: kli-darwin-arm64
+            suffix: darwin-arm64
 
           # Windows
           - goos: windows
             goarch: amd64
-            output: kli-windows-amd64.exe
+            suffix: windows-amd64.exe
           - goos: windows
             goarch: arm64
-            output: kli-windows-arm64.exe
+            suffix: windows-arm64.exe
 
     steps:
       - name: Checkout code
@@ -66,6 +73,17 @@ jobs:
           go-version-file: 'api/go.mod'
           cache-dependency-path: 'api/go.sum'
 
+      - name: Download wintun for Windows builds
+        if: inputs.app == 'kltun' && matrix.goos == 'windows'
+        run: |
+          # Download wintun DLLs for embedding
+          curl -LO https://www.wintun.net/builds/wintun-0.14.1.zip
+          unzip wintun-0.14.1.zip
+          mkdir -p api/cmd/kltun/pkg/wintun/dll
+          cp wintun/bin/amd64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_amd64.dll
+          cp wintun/bin/arm64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_arm64.dll
+          ls -la api/cmd/kltun/pkg/wintun/dll/
+
       - name: Compute version and tag
         id: version
         run: |
@@ -74,10 +92,10 @@ jobs:
           if [ "${{ inputs.make_nightly }}" = "true" ]; then
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
             VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}"
-            TAG="kli/v${VERSION}"
+            TAG="${{ inputs.app }}/v${VERSION}"
           else
             VERSION="${BASE_VERSION}"
-            TAG="kli/v${VERSION}"
+            TAG="${{ inputs.app }}/v${VERSION}"
           fi
 
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -92,22 +110,22 @@ jobs:
           CGO_ENABLED: 0
         run: |
           go build -v \
-            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/kli/cmd.Version=${{ steps.version.outputs.version }}" \
-            -o ../dist/${{ matrix.output }} \
-            ./cmd/kli
+            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/${{ inputs.app }}/cmd.Version=${{ steps.version.outputs.version }}" \
+            -o ../dist/${{ inputs.app }}-${{ matrix.suffix }} \
+            ./cmd/${{ inputs.app }}
 
       - name: Generate checksum
         working-directory: ./dist
         run: |
-          sha256sum ${{ matrix.output }} > ${{ matrix.output }}.sha256
+          sha256sum ${{ inputs.app }}-${{ matrix.suffix }} > ${{ inputs.app }}-${{ matrix.suffix }}.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.output }}
+          name: ${{ inputs.app }}-${{ matrix.suffix }}
           path: |
-            dist/${{ matrix.output }}
-            dist/${{ matrix.output }}.sha256
+            dist/${{ inputs.app }}-${{ matrix.suffix }}
+            dist/${{ inputs.app }}-${{ matrix.suffix }}.sha256
           retention-days: 1
 
   release:
@@ -126,10 +144,10 @@ jobs:
           if [ "${{ inputs.make_nightly }}" = "true" ]; then
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
             VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}"
-            TAG="kli/v${VERSION}"
+            TAG="${{ inputs.app }}/v${VERSION}"
           else
             VERSION="${BASE_VERSION}"
-            TAG="kli/v${VERSION}"
+            TAG="${{ inputs.app }}/v${VERSION}"
           fi
 
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -148,86 +166,66 @@ jobs:
 
       - name: Generate release notes
         id: release_notes
+        env:
+          APP: ${{ inputs.app }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          cat > release-notes.md << 'EOF'
-          # kli ${{ steps.version.outputs.version }}
+          cat > release-notes.md << EOF
+          # ${APP} ${VERSION}
 
           ## Installation
 
           ### Linux (AMD64)
-          ```bash
-          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-linux-amd64
-          chmod +x kli-linux-amd64
-          sudo mv kli-linux-amd64 /usr/local/bin/kli
-          ```
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-linux-amd64
+          chmod +x ${APP}-linux-amd64
+          sudo mv ${APP}-linux-amd64 /usr/local/bin/${APP}
+          \`\`\`
 
           ### Linux (ARM64)
-          ```bash
-          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-linux-arm64
-          chmod +x kli-linux-arm64
-          sudo mv kli-linux-arm64 /usr/local/bin/kli
-          ```
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-linux-arm64
+          chmod +x ${APP}-linux-arm64
+          sudo mv ${APP}-linux-arm64 /usr/local/bin/${APP}
+          \`\`\`
 
           ### macOS (Intel)
-          ```bash
-          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-darwin-amd64
-          chmod +x kli-darwin-amd64
-          sudo mv kli-darwin-amd64 /usr/local/bin/kli
-          ```
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-darwin-amd64
+          chmod +x ${APP}-darwin-amd64
+          sudo mv ${APP}-darwin-amd64 /usr/local/bin/${APP}
+          \`\`\`
 
           ### macOS (Apple Silicon)
-          ```bash
-          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-darwin-arm64
-          chmod +x kli-darwin-arm64
-          sudo mv kli-darwin-arm64 /usr/local/bin/kli
-          ```
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-darwin-arm64
+          chmod +x ${APP}-darwin-arm64
+          sudo mv ${APP}-darwin-arm64 /usr/local/bin/${APP}
+          \`\`\`
 
           ### Windows (AMD64)
-          Download [kli-windows-amd64.exe](https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-windows-amd64.exe) and add to your PATH.
+          Download [${APP}-windows-amd64.exe](https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-windows-amd64.exe) and add to your PATH.
 
           ### Windows (ARM64)
-          Download [kli-windows-arm64.exe](https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-windows-arm64.exe) and add to your PATH.
+          Download [${APP}-windows-arm64.exe](https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-windows-arm64.exe) and add to your PATH.
 
           ## Verify Checksums
 
           After downloading, verify the integrity of the binary:
 
-          ```bash
+          \`\`\`bash
           # Download checksum file
-          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${{ steps.version.outputs.tag }}/kli-linux-amd64.sha256
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-linux-amd64.sha256
 
           # Verify (Linux/macOS)
-          sha256sum -c kli-linux-amd64.sha256
+          sha256sum -c ${APP}-linux-amd64.sha256
 
           # Verify (macOS alternative)
-          shasum -a 256 -c kli-darwin-arm64.sha256
-          ```
+          shasum -a 256 -c ${APP}-darwin-arm64.sha256
+          \`\`\`
 
-          ## What's Included
-
-          - kli installer CLI with AWS support
-          - Multi-cloud provider support (AWS, GCP, Azure doctor commands)
-          - Comprehensive unit test coverage
-          - Automated K3s installation
-          - AWS Systems Manager (SSM) integration for secure access
-
-          ## Usage
-
-          ```bash
-          # Check version
-          kli version
-
-          # Check AWS prerequisites
-          kli aws doctor
-
-          # Install Kloudlite on AWS
-          kli aws install --installation-key myenv
-
-          # Uninstall
-          kli aws uninstall --installation-key myenv
-          ```
-
-          For full documentation, see [api/cmd/kli/README.md](https://github.com/kloudlite/kloudlite/blob/${{ steps.version.outputs.tag }}/api/cmd/kli/README.md)
+          For full documentation, see [api/cmd/${APP}/README.md](https://github.com/kloudlite/kloudlite/blob/${TAG}/api/cmd/${APP}/README.md)
           EOF
 
       - name: Create or move floating tags
@@ -242,14 +240,14 @@ jobs:
           git push origin "${TAG}"
 
           if [ "${{ inputs.make_nightly }}" = "true" ]; then
-            # Always move kli/nightly floating tag for nightly releases
-            git tag -f "kli/nightly"
-            git push origin "kli/nightly" --force
+            # Always move floating nightly tag for nightly releases
+            git tag -f "${{ inputs.app }}/nightly"
+            git push origin "${{ inputs.app }}/nightly" --force
           else
-            # Stable release: optionally move kli/latest floating tag
+            # Stable release: optionally move floating latest tag
             if [ "${{ inputs.make_latest }}" = "true" ]; then
-              git tag -f "kli/latest"
-              git push origin "kli/latest" --force
+              git tag -f "${{ inputs.app }}/latest"
+              git push origin "${{ inputs.app }}/latest" --force
             fi
           fi
 
@@ -257,7 +255,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: kli v${{ steps.version.outputs.version }}
+          name: ${{ inputs.app }} v${{ steps.version.outputs.version }}
           body_path: release-notes.md
           draft: false
           prerelease: ${{ inputs.make_nightly }}
