@@ -1,0 +1,178 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Application to deploy'
+        required: true
+        type: choice
+        options:
+          - api-server
+          - tunnel-server
+          - workmachine-node-manager
+          - wm-ingress-controller
+          - oci-installer
+          - k3s-backup
+          - code-analyzer
+          - workspace-base
+          - workspace-comprehensive
+          - web-console
+          - web-dashboard
+          - web-website
+          - edge-functions
+      version:
+        description: 'Exact image tag to deploy (e.g. v1.2.0)'
+        required: true
+        type: string
+      is_nightly:
+        description: 'Nightly build (informational only)'
+        required: true
+        type: boolean
+        default: false
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ inputs.app }}-${{ inputs.environment }}
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.app }} to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      # ── Input validation ──────────────────────────────────────────────
+      - name: Validate inputs
+        run: |
+          if [ -z "${{ inputs.version }}" ]; then
+            echo "::error::version input is required"
+            exit 1
+          fi
+
+      # ── Resolve image reference ───────────────────────────────────────
+      - name: Resolve image tag
+        id: image
+        run: |
+          IMAGE_TAG="${{ inputs.version }}"
+          APP="${{ inputs.app }}"
+
+          # edge-functions has no container image
+          if [ "${APP}" = "edge-functions" ]; then
+            echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+            echo "full_image=n/a" >> "$GITHUB_OUTPUT"
+            echo "Edge functions deploy — no container image"
+          else
+            FULL_IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/${APP}:${IMAGE_TAG}"
+            echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+            echo "full_image=${FULL_IMAGE}" >> "$GITHUB_OUTPUT"
+            echo "Image to deploy: ${FULL_IMAGE}"
+          fi
+
+      # ── Checkout (needed for edge-functions migrations) ───────────────
+      - name: Checkout code
+        if: inputs.app == 'edge-functions'
+        uses: actions/checkout@v4
+
+      # ── Deploy: OCI installer (Azure Container Apps) ──────────────────
+      - name: Azure Login
+        if: inputs.app == 'oci-installer'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy oci-installer to ACA Job
+        if: inputs.app == 'oci-installer'
+        run: |
+          IMAGE="${{ steps.image.outputs.full_image }}"
+          echo "Deploying OCI Installer..."
+          echo "Image: ${IMAGE}"
+
+          az containerapp job update \
+            --name job-oci-installer \
+            --resource-group rg-kloudlite \
+            --image "${IMAGE}" \
+            --output none
+
+          echo "ACA Job image updated successfully"
+
+      # ── Deploy: Edge functions (Supabase migrations) ──────────────────
+      - name: Run Supabase migrations
+        if: inputs.app == 'edge-functions'
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          MIGRATION_DIR="web/apps/console/src/lib/console/migrations"
+
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::SUPABASE_DATABASE_URL secret is not set"
+            exit 1
+          fi
+
+          echo "Running Supabase migrations..."
+
+          for file in $(ls -1 "$MIGRATION_DIR"/*.sql | sort); do
+            echo ""
+            echo "--- Applying: $(basename "$file") ---"
+            psql "$DATABASE_URL" -f "$file" 2>&1
+            if [ $? -ne 0 ]; then
+              echo "::error::Migration failed: $file"
+              exit 1
+            fi
+            echo "Applied: $(basename "$file")"
+          done
+
+          echo ""
+          echo "All migrations applied successfully"
+
+      # ── Deploy: All other apps (placeholder) ──────────────────────────
+      - name: Deploy handler
+        if: inputs.app != 'oci-installer' && inputs.app != 'edge-functions'
+        run: |
+          APP="${{ inputs.app }}"
+          ENV="${{ inputs.environment }}"
+          IMAGE="${{ steps.image.outputs.full_image }}"
+
+          echo "Deploy handler for ${APP} to ${ENV}: image ${IMAGE} ready. Manual deployment steps required."
+
+      # ── Deploy summary ────────────────────────────────────────────────
+      - name: Deploy summary
+        if: always()
+        run: |
+          APP="${{ inputs.app }}"
+          ENV="${{ inputs.environment }}"
+          TAG="${{ steps.image.outputs.tag }}"
+          IMAGE="${{ steps.image.outputs.full_image }}"
+          NIGHTLY="${{ inputs.is_nightly }}"
+
+          echo "### Deploy Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **App** | \`${APP}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Environment** | \`${ENV}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Image Tag** | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Nightly** | \`${NIGHTLY}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${APP}" = "edge-functions" ]; then
+            echo "| **Action** | Supabase migrations |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| **Image** | \`${IMAGE}\` |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "| **Timestamp** | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Triggered by** | \`${{ github.actor }}\` |" >> "$GITHUB_STEP_SUMMARY"
