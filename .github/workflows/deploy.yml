@@ -8,7 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - api-server
+          - platform-controller
           - tunnel-server
           - workmachine-node-manager
           - wm-ingress-controller
