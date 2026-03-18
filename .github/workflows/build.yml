@@ -1,0 +1,431 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Application to build'
+        required: true
+        type: choice
+        options:
+          - api-server
+          - tunnel-server
+          - workmachine-node-manager
+          - wm-ingress-controller
+          - oci-installer
+          - k3s-backup
+          - code-analyzer
+          - workspace-base
+          - workspace-comprehensive
+          - web-console
+          - web-dashboard
+          - web-website
+          - edge-functions
+      version:
+        description: 'Version tag (e.g. v1.2.0)'
+        required: true
+        type: string
+      is_nightly:
+        description: 'Nightly build'
+        required: true
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-${{ inputs.app }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: Build ${{ inputs.app }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # ── Input validation ──────────────────────────────────────────────
+      - name: Validate inputs
+        run: |
+          if [ -z "${{ inputs.version }}" ]; then
+            echo "::error::version input is required"
+            exit 1
+          fi
+
+      # ── Compute effective tag ─────────────────────────────────────────
+      - name: Resolve tag
+        id: tag
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [ "${{ inputs.is_nightly }}" = "true" ]; then
+            TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+            SHORT_SHA="${GITHUB_SHA:0:7}"
+            TAG="${VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
+          else
+            TAG="${VERSION}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Effective tag: ${TAG}"
+
+      # ── Resolve per-app build metadata ────────────────────────────────
+      - name: Resolve app config
+        id: app
+        run: |
+          APP="${{ inputs.app }}"
+
+          case "${APP}" in
+            api-server)
+              BUILD_TYPE="go"
+              BUILD_CMD="CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/api-server ./cmd/server"
+              DOCKERFILE="./api/Dockerfile"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="api-server"
+              ;;
+            tunnel-server)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/tunnel-server ./cmd/tunnel-server'
+              DOCKERFILE="./api/cmd/tunnel-server/Dockerfile"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="tunnel-server"
+              ;;
+            workmachine-node-manager)
+              BUILD_TYPE="go"
+              BUILD_CMD="CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/workmachine-node-manager ./cmd/workmachine-node-manager"
+              DOCKERFILE="./api/Dockerfile.workmachine-node-manager"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="workmachine-node-manager"
+              ;;
+            wm-ingress-controller)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/wm-ingress ./cmd/wm-ingress-controller'
+              DOCKERFILE="./api/cmd/wm-ingress-controller/Dockerfile"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="wm-ingress-controller"
+              ;;
+            oci-installer)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/oci-installer ./cmd/kli/oci-installer'
+              DOCKERFILE="./api/cmd/kli/oci-installer/Dockerfile"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="oci-installer"
+              ;;
+            code-analyzer)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/code-analyzer ./cmd/code-analyzer'
+              DOCKERFILE="./api/cmd/code-analyzer/Dockerfile"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="code-analyzer"
+              ;;
+            k3s-backup)
+              BUILD_TYPE="docker-only"
+              BUILD_CMD=""
+              DOCKERFILE="./api/Dockerfile.k3s-backup"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="k3s-backup"
+              ;;
+            workspace-base)
+              BUILD_TYPE="docker-only"
+              BUILD_CMD=""
+              DOCKERFILE="./api/workspace-images/base/Dockerfile"
+              DOCKER_CONTEXT="./api/workspace-images/base"
+              IMAGE_SUFFIX="workspace-base"
+              ;;
+            workspace-comprehensive)
+              BUILD_TYPE="workspace-comprehensive"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o bin/kl-linux cmd/kl/main.go'
+              DOCKERFILE="./api/workspace-images/comprehensive/Dockerfile"
+              DOCKER_CONTEXT="./api"
+              IMAGE_SUFFIX="workspace-comprehensive"
+              ;;
+            web-console)
+              BUILD_TYPE="web"
+              BUILD_CMD="bun run --filter console build"
+              DOCKERFILE="./web/apps/console/Dockerfile.runtime"
+              DOCKER_CONTEXT="./web/apps/console"
+              IMAGE_SUFFIX="web-console"
+              ;;
+            web-dashboard)
+              BUILD_TYPE="web"
+              BUILD_CMD="bun run --filter dashboard build"
+              DOCKERFILE="./web/apps/dashboard/Dockerfile.runtime"
+              DOCKER_CONTEXT="./web/apps/dashboard"
+              IMAGE_SUFFIX="web-dashboard"
+              ;;
+            web-website)
+              BUILD_TYPE="web"
+              BUILD_CMD="bun run --filter website build"
+              DOCKERFILE="./web/apps/website/Dockerfile.runtime"
+              DOCKER_CONTEXT="./web/apps/website"
+              IMAGE_SUFFIX="web-website"
+              ;;
+            edge-functions)
+              BUILD_TYPE="edge-functions"
+              BUILD_CMD=""
+              DOCKERFILE=""
+              DOCKER_CONTEXT=""
+              IMAGE_SUFFIX=""
+              ;;
+            *)
+              echo "::error::Unknown app: ${APP}"
+              exit 1
+              ;;
+          esac
+
+          echo "build_type=${BUILD_TYPE}" >> "$GITHUB_OUTPUT"
+          echo "build_cmd=${BUILD_CMD}" >> "$GITHUB_OUTPUT"
+          echo "dockerfile=${DOCKERFILE}" >> "$GITHUB_OUTPUT"
+          echo "docker_context=${DOCKER_CONTEXT}" >> "$GITHUB_OUTPUT"
+          echo "image_suffix=${IMAGE_SUFFIX}" >> "$GITHUB_OUTPUT"
+
+          echo "Build type: ${BUILD_TYPE}"
+          echo "Image: ${REGISTRY}/${{ github.repository }}/${IMAGE_SUFFIX}:${{ steps.tag.outputs.tag }}"
+
+      # ── Checkout ──────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Go setup (go, workspace-comprehensive) ───────────────────────
+      - name: Set up Go
+        if: steps.app.outputs.build_type == 'go' || steps.app.outputs.build_type == 'workspace-comprehensive'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: api/go.sum
+
+      - name: Build Go binary
+        if: steps.app.outputs.build_type == 'go'
+        run: |
+          cd api
+          mkdir -p bin
+          ${{ steps.app.outputs.build_cmd }}
+          echo "Binary built:"
+          ls -lh ./bin/
+
+      - name: Build kl binary
+        if: steps.app.outputs.build_type == 'workspace-comprehensive'
+        run: |
+          cd api
+          mkdir -p bin
+          ${{ steps.app.outputs.build_cmd }}
+          ls -lh bin/kl-linux
+
+      # ── Bun setup (web apps) ─────────────────────────────────────────
+      - name: Setup Bun
+        if: steps.app.outputs.build_type == 'web'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache node_modules
+        if: steps.app.outputs.build_type == 'web'
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/node_modules
+            web/apps/*/node_modules
+            web/packages/*/node_modules
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-v3-${{ hashFiles('web/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-v3-
+
+      - name: Install web dependencies
+        if: steps.app.outputs.build_type == 'web'
+        working-directory: web
+        run: bun install
+
+      # ── Web app environment files ────────────────────────────────────
+      - name: Create environment file for console
+        if: inputs.app == 'web-console'
+        run: |
+          cat > web/apps/console/.env.local << EOF
+          NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}
+          NEXT_PUBLIC_CONSOLE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}
+          NEXTAUTH_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}
+          NEXTAUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          MICROSOFT_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}
+          MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}
+          MICROSOFT_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}
+          PII_SUPABASE_URL=${{ secrets.PII_SUPABASE_URL }}
+          PII_SUPABASE_KEY=${{ secrets.PII_SUPABASE_KEY }}
+          CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
+          NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+          TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}
+          SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM_EMAIL=noreply@kloudlite.io
+          SENDGRID_FROM_NAME=Kloudlite
+          ANTHROPIC_AUTH_TOKEN=${{ secrets.ANTHROPIC_AUTH_TOKEN }}
+          ANTHROPIC_BASE_URL=${{ secrets.ANTHROPIC_BASE_URL }}
+          EOF
+
+      - name: Create environment file for dashboard
+        if: inputs.app == 'web-dashboard'
+        run: |
+          cat > web/apps/dashboard/.env.local << EOF
+          NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://register.kloudlite.io' }}
+          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+          AUTH_GITHUB_ID=${{ secrets.GH_CLIENT_ID }}
+          AUTH_GITHUB_SECRET=${{ secrets.GH_CLIENT_SECRET }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          AUTH_GOOGLE_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          AUTH_GOOGLE_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXT_PUBLIC_MICROSOFT_ENTRA_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}
+          NEXT_PUBLIC_MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
+          AUTH_MICROSOFT_ENTRA_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}
+          AUTH_MICROSOFT_ENTRA_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}
+          AUTH_MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          NEXTAUTH_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://register.kloudlite.io' }}
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN || 'khost.dev' }}
+          CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}
+          EOF
+
+      - name: Create environment file for website
+        if: inputs.app == 'web-website'
+        run: |
+          cat > web/apps/website/.env.local << EOF
+          NEXT_PUBLIC_BASE_URL=https://kloudlite.io
+          AUTH_SECRET=${{ secrets.AUTH_SECRET || 'build-time-secret-will-be-overridden-at-runtime' }}
+          NEXTAUTH_URL=https://kloudlite.io
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EOF
+
+      - name: Cache Next.js build
+        if: steps.app.outputs.build_type == 'web'
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/apps/${{ inputs.app == 'web-console' && 'console' || inputs.app == 'web-dashboard' && 'dashboard' || 'website' }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ inputs.app }}-${{ hashFiles('web/bun.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ inputs.app }}-${{ hashFiles('web/bun.lock') }}-
+
+      - name: Build web app
+        if: steps.app.outputs.build_type == 'web'
+        working-directory: web
+        run: ${{ steps.app.outputs.build_cmd }}
+        env:
+          NODE_ENV: production
+
+      # ── Edge functions (migrations) ──────────────────────────────────
+      - name: Run Supabase migrations
+        if: steps.app.outputs.build_type == 'edge-functions'
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          MIGRATION_DIR="web/apps/console/src/lib/console/migrations"
+
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::SUPABASE_DATABASE_URL secret is not set"
+            exit 1
+          fi
+
+          echo "Running Supabase migrations..."
+
+          for file in $(ls -1 "$MIGRATION_DIR"/*.sql | sort); do
+            echo ""
+            echo "--- Applying: $(basename "$file") ---"
+            psql "$DATABASE_URL" -f "$file" 2>&1
+            if [ $? -ne 0 ]; then
+              echo "::error::Migration failed: $file"
+              exit 1
+            fi
+            echo "Applied: $(basename "$file")"
+          done
+
+          echo ""
+          echo "All migrations applied successfully"
+
+      # ── Docker build+push (all except edge-functions) ────────────────
+      - name: Set up Docker Buildx
+        if: steps.app.outputs.build_type != 'edge-functions'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: steps.app.outputs.build_type != 'edge-functions'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: steps.app.outputs.build_type != 'edge-functions' && inputs.app != 'workspace-comprehensive'
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.app.outputs.docker_context }}
+          file: ${{ steps.app.outputs.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.app.outputs.image_suffix }}:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=${{ inputs.app }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.app }}
+          platforms: linux/amd64
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Build and push workspace-comprehensive image
+        if: inputs.app == 'workspace-comprehensive'
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.app.outputs.docker_context }}
+          file: ${{ steps.app.outputs.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.app.outputs.image_suffix }}:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=${{ inputs.app }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.app }}
+          platforms: linux/amd64
+          build-args: |
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:${{ steps.tag.outputs.tag }}
+            VERSION=${{ steps.tag.outputs.tag }}
+            BUILDKIT_INLINE_CACHE=1
+
+      # ── Build summary ────────────────────────────────────────────────
+      - name: Build summary
+        if: always()
+        run: |
+          APP="${{ inputs.app }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          BUILD_TYPE="${{ steps.app.outputs.build_type }}"
+          IMAGE_SUFFIX="${{ steps.app.outputs.image_suffix }}"
+
+          echo "### Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **App** | \`${APP}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Tag** | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Build type** | \`${BUILD_TYPE}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Nightly** | \`${{ inputs.is_nightly }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Commit** | \`${GITHUB_SHA:0:7}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${BUILD_TYPE}" != "edge-functions" ]; then
+            IMAGE_URL="${{ env.REGISTRY }}/${{ github.repository }}/${IMAGE_SUFFIX}:${TAG}"
+            echo "| **Image** | \`${IMAGE_URL}\` |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| **Action** | Supabase migrations applied |" >> "$GITHUB_STEP_SUMMARY"
+          fi
