@@ -1,4 +1,5 @@
 name: Release
+run-name: "Release ${{ inputs.version }}${{ inputs.make_nightly && ' (nightly)' || '' }}${{ inputs.kli && ' kli' || '' }}${{ inputs.kltun && ' kltun' || '' }}"
 
 on:
   workflow_dispatch:
