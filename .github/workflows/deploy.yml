@@ -3,30 +3,60 @@ name: Deploy
 on:
   workflow_dispatch:
     inputs:
-      app:
-        description: 'Application to deploy'
-        required: true
-        type: choice
-        options:
-          - platform-controller
-          - tunnel-server
-          - workmachine-node-manager
-          - wm-ingress-controller
-          - oci-installer
-          - k3s-backup
-          - code-analyzer
-          - workspace-base
-          - workspace-comprehensive
-          - web-console
-          - web-dashboard
-          - web-website
+      platform-controller:
+        description: 'Platform Controller'
+        type: boolean
+        default: false
+      tunnel-server:
+        description: 'Tunnel Server'
+        type: boolean
+        default: false
+      workmachine-node-manager:
+        description: 'WorkMachine Node Manager'
+        type: boolean
+        default: false
+      wm-ingress-controller:
+        description: 'WM Ingress Controller'
+        type: boolean
+        default: false
+      oci-installer:
+        description: 'OCI Installer'
+        type: boolean
+        default: false
+      k3s-backup:
+        description: 'K3s Backup'
+        type: boolean
+        default: false
+      code-analyzer:
+        description: 'Code Analyzer'
+        type: boolean
+        default: false
+      workspace-base:
+        description: 'Workspace Base'
+        type: boolean
+        default: false
+      workspace-comprehensive:
+        description: 'Workspace Comprehensive'
+        type: boolean
+        default: false
+      web-console:
+        description: 'Web Console'
+        type: boolean
+        default: false
+      web-dashboard:
+        description: 'Web Dashboard'
+        type: boolean
+        default: false
+      web-website:
+        description: 'Web Website'
+        type: boolean
+        default: false
       version:
         description: 'Exact image tag to deploy (e.g. v1.2.0)'
         required: true
         type: string
       is_nightly:
         description: 'Nightly build (informational only)'
-        required: true
         type: boolean
         default: false
       environment:
@@ -38,9 +68,6 @@ on:
           - staging
           - production
 
-concurrency:
-  group: deploy-${{ inputs.app }}-${{ inputs.environment }}
-
 permissions:
   contents: read
   packages: read
@@ -49,10 +76,49 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  prepare:
+    name: Build deploy matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_apps: ${{ steps.set-matrix.outputs.has_apps }}
+    steps:
+      - name: Build matrix from selected apps
+        id: set-matrix
+        run: |
+          APPS="[]"
+          if [ "${{ inputs.platform-controller }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["platform-controller"]'); fi
+          if [ "${{ inputs.tunnel-server }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["tunnel-server"]'); fi
+          if [ "${{ inputs.workmachine-node-manager }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workmachine-node-manager"]'); fi
+          if [ "${{ inputs.wm-ingress-controller }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["wm-ingress-controller"]'); fi
+          if [ "${{ inputs.oci-installer }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["oci-installer"]'); fi
+          if [ "${{ inputs.k3s-backup }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["k3s-backup"]'); fi
+          if [ "${{ inputs.code-analyzer }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["code-analyzer"]'); fi
+          if [ "${{ inputs.workspace-base }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workspace-base"]'); fi
+          if [ "${{ inputs.workspace-comprehensive }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workspace-comprehensive"]'); fi
+          if [ "${{ inputs.web-console }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-console"]'); fi
+          if [ "${{ inputs.web-dashboard }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-dashboard"]'); fi
+          if [ "${{ inputs.web-website }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-website"]'); fi
+
+          if [ "$APPS" = "[]" ]; then
+            echo "::error::No apps selected"
+            echo "has_apps=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_apps=true" >> "$GITHUB_OUTPUT"
+          echo "matrix={\"app\":$APPS}" >> "$GITHUB_OUTPUT"
+          echo "Selected apps: $APPS"
+
   deploy:
-    name: Deploy ${{ inputs.app }} to ${{ inputs.environment }}
+    name: Deploy ${{ matrix.app }} to ${{ inputs.environment }}
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+    strategy:
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+      fail-fast: false
 
     steps:
       # ── Input validation ──────────────────────────────────────────────
@@ -68,7 +134,7 @@ jobs:
         id: image
         run: |
           IMAGE_TAG="${{ inputs.version }}"
-          APP="${{ inputs.app }}"
+          APP="${{ matrix.app }}"
           FULL_IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/${APP}:${IMAGE_TAG}"
           echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
           echo "full_image=${FULL_IMAGE}" >> "$GITHUB_OUTPUT"
@@ -76,13 +142,13 @@ jobs:
 
       # ── Deploy: OCI installer (Azure Container Apps) ──────────────────
       - name: Azure Login
-        if: inputs.app == 'oci-installer'
+        if: matrix.app == 'oci-installer'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy oci-installer to ACA Job
-        if: inputs.app == 'oci-installer'
+        if: matrix.app == 'oci-installer'
         run: |
           IMAGE="${{ steps.image.outputs.full_image }}"
           echo "Deploying OCI Installer..."
@@ -98,9 +164,9 @@ jobs:
 
       # ── Deploy: All other apps (placeholder) ──────────────────────────
       - name: Deploy handler
-        if: inputs.app != 'oci-installer'
+        if: matrix.app != 'oci-installer'
         run: |
-          APP="${{ inputs.app }}"
+          APP="${{ matrix.app }}"
           ENV="${{ inputs.environment }}"
           IMAGE="${{ steps.image.outputs.full_image }}"
 
@@ -110,7 +176,7 @@ jobs:
       - name: Deploy summary
         if: always()
         run: |
-          APP="${{ inputs.app }}"
+          APP="${{ matrix.app }}"
           ENV="${{ inputs.environment }}"
           TAG="${{ steps.image.outputs.tag }}"
           IMAGE="${{ steps.image.outputs.full_image }}"
@@ -124,8 +190,6 @@ jobs:
           echo "| **Environment** | \`${ENV}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Image Tag** | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Nightly** | \`${NIGHTLY}\` |" >> "$GITHUB_STEP_SUMMARY"
-
           echo "| **Image** | \`${IMAGE}\` |" >> "$GITHUB_STEP_SUMMARY"
-
           echo "| **Timestamp** | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Triggered by** | \`${{ github.actor }}\` |" >> "$GITHUB_STEP_SUMMARY"
