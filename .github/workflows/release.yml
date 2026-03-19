@@ -3,13 +3,14 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      app:
-        description: 'Binary to release'
-        type: choice
-        required: true
-        options:
-          - kli
-          - kltun
+      kli:
+        description: 'kli'
+        type: boolean
+        default: false
+      kltun:
+        description: 'kltun'
+        type: boolean
+        default: false
       version:
         description: 'Base version (e.g. 1.2.0, without v prefix)'
         type: string
@@ -25,45 +26,66 @@ on:
         required: true
         default: false
 
-concurrency:
-  group: ${{ github.workflow }}-${{ inputs.app }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: write
 
 jobs:
+  # ── Prepare dynamic matrix ─────────────────────────────────────────
+  prepare:
+    name: Prepare release matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_apps: ${{ steps.set-matrix.outputs.has_apps }}
+    steps:
+      - name: Validate version
+        run: |
+          if [ -z "${{ inputs.version }}" ]; then
+            echo "::error::version input is required"
+            exit 1
+          fi
+
+      - name: Build matrix from selected apps
+        id: set-matrix
+        run: |
+          APPS="[]"
+          if [ "${{ inputs.kli }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["kli"]'); fi
+          if [ "${{ inputs.kltun }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["kltun"]'); fi
+
+          if [ "$APPS" = "[]" ]; then
+            echo "::error::No binaries selected"
+            echo "has_apps=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_apps=true" >> "$GITHUB_OUTPUT"
+          echo "matrix={\"app\":$APPS}" >> "$GITHUB_OUTPUT"
+          echo "Selected binaries: $APPS"
+
+  # ── Build binaries (per app × per OS/arch) ─────────────────────────
   build:
-    name: Build ${{ inputs.app }} binaries
+    name: Build ${{ matrix.app }} (${{ matrix.goos }}/${{ matrix.goarch }})
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        include:
-          # Linux
-          - goos: linux
-            goarch: amd64
-            suffix: linux-amd64
-          - goos: linux
-            goarch: arm64
-            suffix: linux-arm64
-
-          # macOS
-          - goos: darwin
-            goarch: amd64
-            suffix: darwin-amd64
-          - goos: darwin
-            goarch: arm64
-            suffix: darwin-arm64
-
-          # Windows
-          - goos: windows
-            goarch: amd64
-            suffix: windows-amd64.exe
-          - goos: windows
-            goarch: arm64
-            suffix: windows-arm64.exe
+        app: ${{ fromJson(needs.prepare.outputs.matrix).app }}
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
 
     steps:
+      - name: Set output name
+        id: meta
+        run: |
+          SUFFIX="${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            SUFFIX="${SUFFIX}.exe"
+          fi
+          echo "suffix=${SUFFIX}" >> "$GITHUB_OUTPUT"
+          echo "output=${{ matrix.app }}-${SUFFIX}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -74,64 +96,62 @@ jobs:
           cache-dependency-path: 'api/go.sum'
 
       - name: Download wintun for Windows builds
-        if: inputs.app == 'kltun' && matrix.goos == 'windows'
+        if: matrix.app == 'kltun' && matrix.goos == 'windows'
         run: |
-          # Download wintun DLLs for embedding
           curl -LO https://www.wintun.net/builds/wintun-0.14.1.zip
           unzip wintun-0.14.1.zip
           mkdir -p api/cmd/kltun/pkg/wintun/dll
           cp wintun/bin/amd64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_amd64.dll
           cp wintun/bin/arm64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_arm64.dll
-          ls -la api/cmd/kltun/pkg/wintun/dll/
 
-      - name: Compute version and tag
+      - name: Compute version
         id: version
         run: |
           BASE_VERSION="${{ inputs.version }}"
-
           if [ "${{ inputs.make_nightly }}" = "true" ]; then
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
             VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}"
-            TAG="${{ inputs.app }}/v${VERSION}"
           else
             VERSION="${BASE_VERSION}"
-            TAG="${{ inputs.app }}/v${VERSION}"
           fi
-
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Building version: ${VERSION} (tag: ${TAG})"
 
       - name: Build binary
         working-directory: ./api
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0
+          CGO_ENABLED: '0'
         run: |
           go build -v \
-            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/${{ inputs.app }}/cmd.Version=${{ steps.version.outputs.version }}" \
-            -o ../dist/${{ inputs.app }}-${{ matrix.suffix }} \
-            ./cmd/${{ inputs.app }}
+            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/${{ matrix.app }}/cmd.Version=${{ steps.version.outputs.version }}" \
+            -o ../dist/${{ steps.meta.outputs.output }} \
+            ./cmd/${{ matrix.app }}
 
       - name: Generate checksum
         working-directory: ./dist
-        run: |
-          sha256sum ${{ inputs.app }}-${{ matrix.suffix }} > ${{ inputs.app }}-${{ matrix.suffix }}.sha256
+        run: sha256sum ${{ steps.meta.outputs.output }} > ${{ steps.meta.outputs.output }}.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.app }}-${{ matrix.suffix }}
+          name: ${{ steps.meta.outputs.output }}
           path: |
-            dist/${{ inputs.app }}-${{ matrix.suffix }}
-            dist/${{ inputs.app }}-${{ matrix.suffix }}.sha256
+            dist/${{ steps.meta.outputs.output }}
+            dist/${{ steps.meta.outputs.output }}.sha256
           retention-days: 1
 
+  # ── Create GitHub Release (per app) ────────────────────────────────
   release:
-    name: Create GitHub Release
-    needs: build
+    name: Release ${{ matrix.app }}
+    needs: [prepare, build]
+    if: needs.prepare.outputs.has_apps == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.prepare.outputs.matrix).app }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -140,22 +160,20 @@ jobs:
         id: version
         run: |
           BASE_VERSION="${{ inputs.version }}"
-
           if [ "${{ inputs.make_nightly }}" = "true" ]; then
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
             VERSION="${BASE_VERSION}-nightly.${TIMESTAMP}"
-            TAG="${{ inputs.app }}/v${VERSION}"
           else
             VERSION="${BASE_VERSION}"
-            TAG="${{ inputs.app }}/v${VERSION}"
           fi
-
+          TAG="${{ matrix.app }}/v${VERSION}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
 
-      - name: Download all artifacts
+      - name: Download artifacts for ${{ matrix.app }}
         uses: actions/download-artifact@v4
         with:
+          pattern: ${{ matrix.app }}-*
           path: dist-artifacts
 
       - name: Prepare release assets
@@ -165,9 +183,8 @@ jobs:
           ls -lah release-assets/
 
       - name: Generate release notes
-        id: release_notes
         env:
-          APP: ${{ inputs.app }}
+          APP: ${{ matrix.app }}
           TAG: ${{ steps.version.outputs.tag }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -212,17 +229,9 @@ jobs:
 
           ## Verify Checksums
 
-          After downloading, verify the integrity of the binary:
-
           \`\`\`bash
-          # Download checksum file
           curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-linux-amd64.sha256
-
-          # Verify (Linux/macOS)
           sha256sum -c ${APP}-linux-amd64.sha256
-
-          # Verify (macOS alternative)
-          shasum -a 256 -c ${APP}-darwin-arm64.sha256
           \`\`\`
 
           For full documentation, see [api/cmd/${APP}/README.md](https://github.com/kloudlite/kloudlite/blob/${TAG}/api/cmd/${APP}/README.md)
@@ -235,19 +244,16 @@ jobs:
 
           TAG="${{ steps.version.outputs.tag }}"
 
-          # Create the immutable release tag
           git tag "${TAG}"
           git push origin "${TAG}"
 
           if [ "${{ inputs.make_nightly }}" = "true" ]; then
-            # Always move floating nightly tag for nightly releases
-            git tag -f "${{ inputs.app }}/nightly"
-            git push origin "${{ inputs.app }}/nightly" --force
+            git tag -f "${{ matrix.app }}/nightly"
+            git push origin "${{ matrix.app }}/nightly" --force
           else
-            # Stable release: optionally move floating latest tag
             if [ "${{ inputs.make_latest }}" = "true" ]; then
-              git tag -f "${{ inputs.app }}/latest"
-              git push origin "${{ inputs.app }}/latest" --force
+              git tag -f "${{ matrix.app }}/latest"
+              git push origin "${{ matrix.app }}/latest" --force
             fi
           fi
 
@@ -255,7 +261,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ inputs.app }} v${{ steps.version.outputs.version }}
+          name: ${{ matrix.app }} v${{ steps.version.outputs.version }}
           body_path: release-notes.md
           draft: false
           prerelease: ${{ inputs.make_nightly }}
