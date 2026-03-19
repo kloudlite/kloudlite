@@ -398,10 +398,10 @@ jobs:
 
       # ── Docker build+push ──────────────────────────────────────────
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -409,7 +409,7 @@ jobs:
 
       - name: Build and push Docker image
         if: matrix.app != 'workspace-comprehensive'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ steps.app.outputs.docker_context }}
           file: ${{ steps.app.outputs.dockerfile }}
@@ -424,7 +424,7 @@ jobs:
 
       - name: Build and push workspace-comprehensive image
         if: matrix.app == 'workspace-comprehensive'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ steps.app.outputs.docker_context }}
           file: ${{ steps.app.outputs.dockerfile }}
