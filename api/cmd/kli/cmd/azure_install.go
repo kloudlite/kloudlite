@@ -615,7 +615,11 @@ func runAzureInstall(cmd *cobra.Command, args []string) {
 	cyan.Printf("    az serial-console connect -g %s -n kl-%s-vm\n", cfg.ResourceGroup, azureInstallationKey)
 
 	// Save SSH private key to file
-	sshKeyPath := fmt.Sprintf("%s/.ssh/kl-%s", os.Getenv("HOME"), azureInstallationKey)
+	sshDir := fmt.Sprintf("%s/.ssh", os.Getenv("HOME"))
+	if err := os.MkdirAll(sshDir, 0700); err != nil {
+		yellow.Printf("\n  Warning: Could not create directory %s: %v\n", sshDir, err)
+	}
+	sshKeyPath := fmt.Sprintf("%s/kl-%s", sshDir, azureInstallationKey)
 	if err := os.WriteFile(sshKeyPath, []byte(sshKeyPair.PrivateKey), 0600); err != nil {
 		yellow.Printf("\n  Warning: Could not save SSH key to %s: %v\n", sshKeyPath, err)
 		fmt.Println()
