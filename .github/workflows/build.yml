@@ -1,4 +1,5 @@
 name: Build
+run-name: "Build ${{ inputs.version }}${{ inputs.is_nightly && ' (nightly)' || '' }}"
 
 on:
   workflow_dispatch:
