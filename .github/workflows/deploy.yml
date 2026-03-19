@@ -172,7 +172,7 @@ jobs:
               "NODE_ENV=production" \
               "PORT=3000" \
               "NEXTAUTH_URL=${{ steps.azure.outputs.base_url }}" \
-              "NEXTAUTH_SECRET=secretref:auth-secret" \
+              "NEXTAUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
               "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
               "NEXT_PUBLIC_BASE_URL=${{ steps.azure.outputs.base_url }}" \
               "NEXT_PUBLIC_CONSOLE_URL=${{ steps.azure.outputs.base_url }}" \
