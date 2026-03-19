@@ -1,5 +1,5 @@
 name: Build
-run-name: "Build ${{ inputs.version }}${{ inputs.is_nightly && ' (nightly)' || '' }} [${{ inputs.platform-controller && ' platform-controller' || '' }}${{ inputs.tunnel-server && ' tunnel-server' || '' }}${{ inputs.workmachine-node-manager && ' node-manager' || '' }}${{ inputs.wm-ingress-controller && ' wm-ingress' || '' }}${{ inputs.oci-installer && ' oci-installer' || '' }}${{ inputs.k3s-backup && ' k3s-backup' || '' }}${{ inputs.code-analyzer && ' code-analyzer' || '' }}${{ inputs.workspace-base && ' ws-base' || '' }}${{ inputs.workspace-comprehensive && ' ws-comprehensive' || '' }}${{ inputs.web-console && ' web-console' || '' }}${{ inputs.web-dashboard && ' web-dashboard' || '' }}${{ inputs.web-website && ' web-website' || '' }} ]"
+run-name: "Build ${{ inputs.version }}${{ inputs.is_nightly && ' (nightly)' || '' }} [${{ inputs.platform-controller && ' platform-controller' || '' }}${{ inputs.tunnel-server && ' tunnel-server' || '' }}${{ inputs.workmachine-node-manager && ' node-manager' || '' }}${{ inputs.wm-ingress-controller && ' wm-ingress' || '' }}${{ inputs.oci-installer && ' oci-installer' || '' }}${{ inputs.k3s-backup && ' k3s-backup' || '' }}${{ inputs.code-analyzer && ' code-analyzer' || '' }}${{ inputs.workspace-base && ' ws-base' || '' }}${{ inputs.workspace-comprehensive && ' ws-comprehensive' || '' }}${{ inputs.console && ' console' || '' }}${{ inputs.dashboard && ' dashboard' || '' }}${{ inputs.website && ' website' || '' }} ]"
 
 on:
   workflow_dispatch:
@@ -40,16 +40,16 @@ on:
         description: 'Workspace Comprehensive'
         type: boolean
         default: false
-      web-console:
-        description: 'Web Console'
+      console:
+        description: 'Console'
         type: boolean
         default: false
-      web-dashboard:
-        description: 'Web Dashboard'
+      dashboard:
+        description: 'Dashboard'
         type: boolean
         default: false
-      web-website:
-        description: 'Web Website'
+      website:
+        description: 'Website'
         type: boolean
         default: false
       version:
@@ -99,9 +99,9 @@ jobs:
           if [ "${{ inputs.code-analyzer }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["code-analyzer"]'); fi
           if [ "${{ inputs.workspace-base }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workspace-base"]'); fi
           if [ "${{ inputs.workspace-comprehensive }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workspace-comprehensive"]'); fi
-          if [ "${{ inputs.web-console }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-console"]'); fi
-          if [ "${{ inputs.web-dashboard }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-dashboard"]'); fi
-          if [ "${{ inputs.web-website }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-website"]'); fi
+          if [ "${{ inputs.console }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["console"]'); fi
+          if [ "${{ inputs.dashboard }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["dashboard"]'); fi
+          if [ "${{ inputs.website }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["website"]'); fi
 
           if [ "$APPS" = "[]" ]; then
             echo "::error::No apps selected"
@@ -215,26 +215,26 @@ jobs:
               DOCKER_CONTEXT="./api"
               IMAGE_SUFFIX="workspace-comprehensive"
               ;;
-            web-console)
+            console)
               BUILD_TYPE="web"
               BUILD_CMD="bun run --filter console build"
               DOCKERFILE="./web/apps/console/Dockerfile.runtime"
               DOCKER_CONTEXT="./web/apps/console"
-              IMAGE_SUFFIX="web-console"
+              IMAGE_SUFFIX="console"
               ;;
-            web-dashboard)
+            dashboard)
               BUILD_TYPE="web"
               BUILD_CMD="bun run --filter dashboard build"
               DOCKERFILE="./web/apps/dashboard/Dockerfile.runtime"
               DOCKER_CONTEXT="./web/apps/dashboard"
-              IMAGE_SUFFIX="web-dashboard"
+              IMAGE_SUFFIX="dashboard"
               ;;
-            web-website)
+            website)
               BUILD_TYPE="web"
               BUILD_CMD="bun run --filter website build"
               DOCKERFILE="./web/apps/website/Dockerfile.runtime"
               DOCKER_CONTEXT="./web/apps/website"
-              IMAGE_SUFFIX="web-website"
+              IMAGE_SUFFIX="website"
               ;;
             *)
               echo "::error::Unknown app: ${APP}"
@@ -307,7 +307,7 @@ jobs:
 
       # ── Web app environment files ────────────────────────────────────
       - name: Create environment file for console
-        if: matrix.app == 'web-console'
+        if: matrix.app == 'console'
         run: |
           cat > web/apps/console/.env.local << EOF
           NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://console.kloudlite.io' }}
@@ -339,7 +339,7 @@ jobs:
           EOF
 
       - name: Create environment file for dashboard
-        if: matrix.app == 'web-dashboard'
+        if: matrix.app == 'dashboard'
         run: |
           cat > web/apps/dashboard/.env.local << EOF
           NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || 'https://register.kloudlite.io' }}
@@ -368,7 +368,7 @@ jobs:
           EOF
 
       - name: Create environment file for website
-        if: matrix.app == 'web-website'
+        if: matrix.app == 'website'
         run: |
           cat > web/apps/website/.env.local << EOF
           NEXT_PUBLIC_BASE_URL=https://kloudlite.io
@@ -384,7 +384,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            web/apps/${{ matrix.app == 'web-console' && 'console' || matrix.app == 'web-dashboard' && 'dashboard' || 'website' }}/.next/cache
+            web/apps/${{ matrix.app }}/.next/cache
           key: ${{ runner.os }}-nextjs-${{ matrix.app }}-${{ hashFiles('web/bun.lock') }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ matrix.app }}-${{ hashFiles('web/bun.lock') }}-

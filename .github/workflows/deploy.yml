@@ -1,5 +1,5 @@
 name: Deploy
-run-name: "Deploy ${{ inputs.version }} → ${{ inputs.environment }}${{ inputs.is_nightly && ' (nightly)' || '' }} [${{ inputs.oci-installer && ' oci-installer' || '' }}${{ inputs.web-console && ' web-console' || '' }}${{ inputs.web-website && ' web-website' || '' }} ]"
+run-name: "Deploy ${{ inputs.version }} → ${{ inputs.environment }}${{ inputs.is_nightly && ' (nightly)' || '' }} [${{ inputs.oci-installer && ' oci-installer' || '' }}${{ inputs.console && ' console' || '' }}${{ inputs.website && ' website' || '' }} ]"
 
 on:
   workflow_dispatch:
@@ -8,12 +8,12 @@ on:
         description: 'OCI Installer'
         type: boolean
         default: false
-      web-console:
-        description: 'Web Console'
+      console:
+        description: 'Console'
         type: boolean
         default: false
-      web-website:
-        description: 'Web Website'
+      website:
+        description: 'Website'
         type: boolean
         default: false
       version:
@@ -41,6 +41,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # ── Prepare dynamic matrix ─────────────────────────────────────────
   prepare:
     name: Build deploy matrix
     runs-on: ubuntu-latest
@@ -53,8 +54,8 @@ jobs:
         run: |
           APPS="[]"
           if [ "${{ inputs.oci-installer }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["oci-installer"]'); fi
-          if [ "${{ inputs.web-console }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-console"]'); fi
-          if [ "${{ inputs.web-website }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["web-website"]'); fi
+          if [ "${{ inputs.console }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["console"]'); fi
+          if [ "${{ inputs.website }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["website"]'); fi
 
           if [ "$APPS" = "[]" ]; then
             echo "::error::No apps selected"
@@ -66,6 +67,7 @@ jobs:
           echo "matrix={\"app\":$APPS}" >> "$GITHUB_OUTPUT"
           echo "Selected apps: $APPS"
 
+  # ── Deploy each selected app ───────────────────────────────────────
   deploy:
     name: Deploy ${{ matrix.app }} to ${{ inputs.environment }}
     needs: prepare
@@ -77,7 +79,7 @@ jobs:
       fail-fast: false
 
     steps:
-      # ── Input validation ──────────────────────────────────────────────
+      # ── Input validation ────────────────────────────────────────────
       - name: Validate inputs
         run: |
           if [ -z "${{ inputs.version }}" ]; then
@@ -85,7 +87,63 @@ jobs:
             exit 1
           fi
 
-      # ── Resolve image reference ───────────────────────────────────────
+      # ── Resolve environment-specific Azure resource names ───────────
+      - name: Resolve Azure targets
+        id: azure
+        run: |
+          ENV="${{ inputs.environment }}"
+          APP="${{ matrix.app }}"
+
+          # Resource group per environment
+          case "$ENV" in
+            production)  RG="rg-kloudlite" ;;
+            development) RG="rg-kloudlite-dev" ;;
+            staging)     RG="rg-kloudlite-staging" ;;
+          esac
+
+          # Container App name per app per environment
+          case "$APP" in
+            console)
+              case "$ENV" in
+                production)  CA_NAME="ca-kloudlite-registration" ;;
+                *)           CA_NAME="console" ;;
+              esac
+              ;;
+            website)
+              case "$ENV" in
+                production)  CA_NAME="ca-kloudlite-website" ;;
+                *)           CA_NAME="website" ;;
+              esac
+              ;;
+            oci-installer)
+              CA_NAME="job-oci-installer"
+              ;;
+          esac
+
+          # Base URL per app per environment
+          case "$APP" in
+            console)
+              case "$ENV" in
+                production)  BASE_URL="https://console.kloudlite.io" ;;
+                development) BASE_URL="https://console-dev.kloudlite.io" ;;
+                staging)     BASE_URL="https://console-stg.kloudlite.io" ;;
+              esac
+              ;;
+            website)
+              case "$ENV" in
+                production)  BASE_URL="https://kloudlite.io" ;;
+                development) BASE_URL="https://website-dev.kloudlite.io" ;;
+                staging)     BASE_URL="https://website-stg.kloudlite.io" ;;
+              esac
+              ;;
+          esac
+
+          echo "rg=${RG}" >> "$GITHUB_OUTPUT"
+          echo "ca_name=${CA_NAME}" >> "$GITHUB_OUTPUT"
+          echo "base_url=${BASE_URL}" >> "$GITHUB_OUTPUT"
+          echo "Resolved: $APP → $CA_NAME in $RG"
+
+      # ── Resolve image reference ─────────────────────────────────────
       - name: Resolve image tag
         id: image
         run: |
@@ -96,39 +154,99 @@ jobs:
           echo "full_image=${FULL_IMAGE}" >> "$GITHUB_OUTPUT"
           echo "Image to deploy: ${FULL_IMAGE}"
 
-      # ── Deploy: OCI installer (Azure Container Apps) ──────────────────
+      # ── Azure Login ─────────────────────────────────────────────────
       - name: Azure Login
-        if: matrix.app == 'oci-installer'
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy oci-installer to ACA Job
-        if: matrix.app == 'oci-installer'
+      # ── Deploy: Console ─────────────────────────────────────────────
+      - name: Deploy Console
+        if: matrix.app == 'console'
         run: |
-          IMAGE="${{ steps.image.outputs.full_image }}"
-          echo "Deploying OCI Installer..."
-          echo "Image: ${IMAGE}"
-
-          az containerapp job update \
-            --name job-oci-installer \
-            --resource-group rg-kloudlite \
-            --image "${IMAGE}" \
+          az containerapp update \
+            --name "${{ steps.azure.outputs.ca_name }}" \
+            --resource-group "${{ steps.azure.outputs.rg }}" \
+            --image "${{ steps.image.outputs.full_image }}" \
+            --set-env-vars \
+              "NODE_ENV=production" \
+              "PORT=3000" \
+              "NEXTAUTH_URL=${{ steps.azure.outputs.base_url }}" \
+              "NEXTAUTH_SECRET=secretref:auth-secret" \
+              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "NEXT_PUBLIC_BASE_URL=${{ steps.azure.outputs.base_url }}" \
+              "NEXT_PUBLIC_CONSOLE_URL=${{ steps.azure.outputs.base_url }}" \
+              "NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN }}" \
+              "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+              "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" \
+              "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+              "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+              "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              "PII_SUPABASE_URL=${{ secrets.PII_SUPABASE_URL }}" \
+              "PII_SUPABASE_KEY=${{ secrets.PII_SUPABASE_KEY }}" \
+              "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              "CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}" \
+              "CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN }}" \
+              "CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}" \
+              "GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}" \
+              "GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}" \
+              "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" \
+              "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              "MICROSOFT_ENTRA_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}" \
+              "MICROSOFT_ENTRA_CLIENT_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}" \
+              "MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}" \
+              "ANTHROPIC_AUTH_TOKEN=${{ secrets.ANTHROPIC_AUTH_TOKEN }}" \
+              "ANTHROPIC_BASE_URL=${{ secrets.ANTHROPIC_BASE_URL }}" \
+              "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" \
+              "SENDGRID_FROM_EMAIL=support@kloudlite.io" \
+              "SENDGRID_FROM_NAME=Kloudlite" \
+              "NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
+              "TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              "AZURE_SUBSCRIPTION_ID=9941afe7-e220-492f-bfab-63f539dc0b69" \
+              "AZURE_RESOURCE_GROUP=${{ steps.azure.outputs.rg }}" \
+              "OCI_INSTALLER_JOB_NAME=job-oci-installer" \
             --output none
 
-          echo "ACA Job image updated successfully"
+          echo "Console deployed: ${{ steps.image.outputs.full_image }} → ${{ steps.azure.outputs.ca_name }}"
 
-      # ── Deploy: Web apps (placeholder) ─────────────────────────────────
-      - name: Deploy handler
-        if: matrix.app != 'oci-installer'
+      # ── Deploy: Website ─────────────────────────────────────────────
+      - name: Deploy Website
+        if: matrix.app == 'website'
         run: |
-          APP="${{ matrix.app }}"
-          ENV="${{ inputs.environment }}"
-          IMAGE="${{ steps.image.outputs.full_image }}"
+          az containerapp update \
+            --name "${{ steps.azure.outputs.ca_name }}" \
+            --resource-group "${{ steps.azure.outputs.rg }}" \
+            --image "${{ steps.image.outputs.full_image }}" \
+            --set-env-vars \
+              "NODE_ENV=production" \
+              "PORT=3000" \
+              "APP_MODE=website" \
+              "NEXTAUTH_URL=${{ steps.azure.outputs.base_url }}" \
+              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+              "NEXT_PUBLIC_BASE_URL=${{ steps.azure.outputs.base_url }}" \
+              "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+              "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" \
+              "NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
+              "TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              "ANTHROPIC_AUTH_TOKEN=${{ secrets.ANTHROPIC_AUTH_TOKEN }}" \
+              "ANTHROPIC_BASE_URL=${{ secrets.ANTHROPIC_BASE_URL }}" \
+            --output none
 
-          echo "Deploy handler for ${APP} to ${ENV}: image ${IMAGE} ready. Manual deployment steps required."
+          echo "Website deployed: ${{ steps.image.outputs.full_image }} → ${{ steps.azure.outputs.ca_name }}"
 
-      # ── Deploy summary ────────────────────────────────────────────────
+      # ── Deploy: OCI Installer ───────────────────────────────────────
+      - name: Deploy OCI Installer
+        if: matrix.app == 'oci-installer'
+        run: |
+          az containerapp job update \
+            --name "${{ steps.azure.outputs.ca_name }}" \
+            --resource-group "${{ steps.azure.outputs.rg }}" \
+            --image "${{ steps.image.outputs.full_image }}" \
+            --output none
+
+          echo "OCI Installer job updated: ${{ steps.image.outputs.full_image }} → ${{ steps.azure.outputs.ca_name }}"
+
+      # ── Deploy summary ──────────────────────────────────────────────
       - name: Deploy summary
         if: always()
         run: |
@@ -136,16 +254,19 @@ jobs:
           ENV="${{ inputs.environment }}"
           TAG="${{ steps.image.outputs.tag }}"
           IMAGE="${{ steps.image.outputs.full_image }}"
-          NIGHTLY="${{ inputs.is_nightly }}"
+          CA_NAME="${{ steps.azure.outputs.ca_name }}"
+          RG="${{ steps.azure.outputs.rg }}"
 
           echo "### Deploy Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| **App** | \`${APP}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Container App** | \`${CA_NAME}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Resource Group** | \`${RG}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Environment** | \`${ENV}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Image Tag** | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Nightly** | \`${NIGHTLY}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Image** | \`${IMAGE}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Nightly** | \`${{ inputs.is_nightly }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Timestamp** | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Triggered by** | \`${{ github.actor }}\` |" >> "$GITHUB_STEP_SUMMARY"
