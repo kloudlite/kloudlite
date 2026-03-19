@@ -9,7 +9,7 @@ data:
       "nodePathMap": [
         {
           "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
-          "paths": ["/var/lib/kloudlite/storage/environments"]
+          "paths": ["/var/lib/kloudlite/storage/environments", "/var/lib/kloudlite/storage/general"]
         }
       ],
       "storageClassConfig": {
