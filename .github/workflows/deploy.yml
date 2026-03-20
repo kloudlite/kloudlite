@@ -17,11 +17,11 @@ on:
         type: boolean
         default: false
       version:
-        description: 'Exact image tag to deploy (e.g. v1.2.0)'
+        description: 'Version to deploy (e.g. v1.2.0; nightly resolves to v1.2.0-nightly)'
         required: true
         type: string
       is_nightly:
-        description: 'Nightly build (informational only)'
+        description: 'Deploy nightly alias tag (<version>-nightly)'
         type: boolean
         default: false
       environment:
@@ -147,7 +147,20 @@ jobs:
       - name: Resolve image tag
         id: image
         run: |
-          IMAGE_TAG="${{ inputs.version }}"
+          VERSION="${{ inputs.version }}"
+          if [ "${{ inputs.is_nightly }}" = "true" ]; then
+            case "$VERSION" in
+              *-nightly|*-nightly.*)
+                IMAGE_TAG="$VERSION"
+                ;;
+              *)
+                IMAGE_TAG="${VERSION}-nightly"
+                ;;
+            esac
+          else
+            IMAGE_TAG="$VERSION"
+          fi
+
           APP="${{ matrix.app }}"
           FULL_IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/${APP}:${IMAGE_TAG}"
           echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"

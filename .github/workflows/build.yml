@@ -139,10 +139,13 @@ jobs:
             TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
             SHORT_SHA="${GITHUB_SHA:0:7}"
             TAG="${VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
+            DEPLOY_TAG="${VERSION}-nightly"
           else
             TAG="${VERSION}"
+            DEPLOY_TAG="${VERSION}"
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "deploy_tag=${DEPLOY_TAG}" >> "$GITHUB_OUTPUT"
           echo "Effective tag: ${TAG}"
 
       # ── Resolve per-app build metadata ────────────────────────────────
@@ -250,6 +253,22 @@ jobs:
 
           echo "Build type: ${BUILD_TYPE}"
           echo "Image: ${REGISTRY}/${{ github.repository }}/${IMAGE_SUFFIX}:${{ steps.tag.outputs.tag }}"
+
+      - name: Prepare docker tags
+        id: docker_tags
+        run: |
+          IMAGE_BASE="${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.app.outputs.image_suffix }}"
+          TAGS="${IMAGE_BASE}:${{ steps.tag.outputs.tag }}"
+
+          if [ "${{ inputs.is_nightly }}" = "true" ]; then
+            TAGS="${TAGS}"$'\n'"${IMAGE_BASE}:${{ steps.tag.outputs.deploy_tag }}"
+          fi
+
+          {
+            echo "tags<<EOF"
+            echo "${TAGS}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       # ── Checkout ──────────────────────────────────────────────────────
       - name: Checkout code
@@ -374,8 +393,7 @@ jobs:
           context: ${{ steps.app.outputs.docker_context }}
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.app.outputs.image_suffix }}:${{ steps.tag.outputs.tag }}
+          tags: ${{ steps.docker_tags.outputs.tags }}
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
           platforms: linux/amd64
@@ -389,8 +407,7 @@ jobs:
           context: ${{ steps.app.outputs.docker_context }}
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.app.outputs.image_suffix }}:${{ steps.tag.outputs.tag }}
+          tags: ${{ steps.docker_tags.outputs.tags }}
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
           platforms: linux/amd64
@@ -420,3 +437,8 @@ jobs:
 
           IMAGE_URL="${{ env.REGISTRY }}/${{ github.repository }}/${IMAGE_SUFFIX}:${TAG}"
           echo "| **Image** | \`${IMAGE_URL}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ inputs.is_nightly }}" = "true" ]; then
+            NIGHTLY_IMAGE_URL="${{ env.REGISTRY }}/${{ github.repository }}/${IMAGE_SUFFIX}:${{ steps.tag.outputs.deploy_tag }}"
+            echo "| **Nightly alias** | \`${NIGHTLY_IMAGE_URL}\` |" >> "$GITHUB_STEP_SUMMARY"
+          fi
