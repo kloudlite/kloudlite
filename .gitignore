@@ -53,3 +53,8 @@ devenv/k3s-config/
 *.out
 CLAUDE.md
 test-results/
+
+# Local tooling/state files
+.mcp.json
+.worktrees/
+.agents/
