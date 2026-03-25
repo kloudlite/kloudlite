@@ -1,0 +1,18 @@
+console:
+  replicas: 1
+  ingress:
+    host: console-dev.kloudlite.io
+  env:
+    NODE_ENV: development
+    PORT: "3000"
+    OCI_INSTALLER_JOB_NAME: oci-installer
+  secretRef: console-secrets
+
+website:
+  replicas: 1
+  ingress:
+    host: website-dev.kloudlite.io
+  env:
+    NODE_ENV: development
+    PORT: "3000"
+  secretRef: website-secrets

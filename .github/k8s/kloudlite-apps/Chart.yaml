@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kloudlite-apps
+description: Kloudlite application deployments (console, website, oci-installer)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

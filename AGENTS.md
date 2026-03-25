@@ -12,6 +12,7 @@ This monorepo is split by runtime:
 
 ### Go (api/)
 - **Build server:** `task api:build:server` (from repo root)
+- **Build tunnel server:** `task api:build:tunnel-server` (from repo root)
 - **Regenerate CRDs/deepcopy:** `task api:manifests`
 - **Run all Go tests:** `cd api && go test ./...`
 - **Run a single Go test:** `cd api && go test ./internal/services/ -run TestFunctionName -v`
@@ -28,7 +29,7 @@ This monorepo is split by runtime:
 - **Lint all:** `cd web && bun run lint`
 - **Format:** `cd web && bun run format`
 - **Run Vitest (package):** `cd web/packages/lib && bun run test` (or `test:run`, `test:coverage`)
-- **Run single Vitest test:** `cd web/packages/lib && bunx vitest run src/utils.test.ts`
+- **Run single Vitest test file:** `cd web/packages/lib && bunx vitest run src/utils.test.ts`
 - **Run single test by name:** `cd web/apps/console && bunx vitest run -t "test name pattern"`
 
 ### E2E Tests
@@ -69,17 +70,22 @@ import (
 - Environment config via struct tags (`envconfig` or `env` tags).
 - Controller-runtime reconciler pattern for K8s controllers (finalizers, owner refs, labels).
 - `//go:embed` for bundling YAML/static assets.
-- Formatting enforced by pre-commit hook (`.githooks/pre-commit.d/01-go-fmt.sh`).
+- Builds use `CGO_ENABLED=0` and `-ldflags='-s -w'` for static binaries.
 
-### Linting (.golangci.yml)
-Enabled linters: `revive`, `misspell`, `nilerr`, `nilnil`, `sloglint`, `depguard`, `iface`, `unparam`. The `reflect` package is denied via depguard. Slog style: snake_case keys, lowercased static messages, context required.
+### Linting (api/.golangci.yml)
+Enabled linters: `revive`, `misspell`, `nilerr`, `nilnil`, `sloglint`, `depguard`, `iface`, `unparam`.
+- The `reflect` package is **denied** via depguard — do not import it.
+- Slog style: snake_case keys, lowercased static messages, context required, KV-only (no mixed args).
+- Revive rules enforce: early-return, indent-error-flow, no duplicated imports, context-as-first-argument, use `any` not `interface{}`.
+- Formatting enforced by pre-commit hook (`.githooks/pre-commit.d/01-go-fmt.sh`).
 
 ## TypeScript/React Code Style
 
 ### Formatting & Linting
-- Single quotes everywhere. 2-space indentation. LF line endings.
+- **No semicolons.** Single quotes. 2-space indentation. LF line endings. Trailing commas everywhere.
+- Max line width: 100 characters.
+- Prettier with `prettier-plugin-tailwindcss` for class sorting (recognizes `cn` and `clsx` functions).
 - ESLint: `eslint-config-next/core-web-vitals` + `typescript`. Unused vars prefixed with `_` are allowed.
-- Prettier with `prettier-plugin-tailwindcss` for class sorting.
 
 ### Imports
 - Use `@/` path alias for project-local imports (resolves to `src/`).
@@ -122,4 +128,4 @@ Enabled linters: `revive`, `misspell`, `nilerr`, `nilnil`, `sloglint`, `depguard
 - UTF-8 charset, LF endings, final newline, trim trailing whitespace.
 - Go: tabs. TS/JS/JSON/YAML/MD: 2 spaces. Makefiles: tabs.
 - Markdown: no trailing whitespace trimming, max 120 chars.
-- TS/JS: max 100 chars per line.
+- TS/JS: max 100 chars per line, single quotes.

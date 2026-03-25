@@ -1,0 +1,105 @@
+{{- if .Values.console.enabled }}
+{{- $tag := .Values.console.image.tag | default .Values.global.imageTag }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: console
+  labels:
+    app: console
+    {{- include "kloudlite.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.console.replicas }}
+  selector:
+    matchLabels:
+      app: console
+  template:
+    metadata:
+      labels:
+        app: console
+    spec:
+      serviceAccountName: console
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: console
+      containers:
+        - name: console
+          image: "{{ .Values.console.image.repository }}:{{ $tag }}"
+          ports:
+            - containerPort: {{ .Values.console.port }}
+              name: http
+          resources:
+            {{- toYaml .Values.console.resources | nindent 12 }}
+          env:
+            {{- range $key, $val := .Values.console.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            - name: OCI_INSTALLER_IMAGE
+              value: "{{ .Values.ociInstaller.image.repository }}:{{ .Values.ociInstaller.image.tag | default .Values.global.imageTag }}"
+          {{- if .Values.console.secretRef }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.console.secretRef }}
+                optional: true
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.console.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.console.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: console
+  labels:
+    app: console
+    {{- include "kloudlite.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: console
+  ports:
+    - port: 80
+      targetPort: {{ .Values.console.port }}
+      protocol: TCP
+      name: http
+
+{{- if .Values.console.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: console
+  labels:
+    app: console
+    {{- include "kloudlite.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ .Values.console.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: console
+                port:
+                  number: 80
+{{- end }}
+{{- end }}
