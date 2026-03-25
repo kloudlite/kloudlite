@@ -179,3 +179,28 @@ jobs:
           echo "| **Cluster** | \`${{ secrets.AKS_CLUSTER_NAME }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Timestamp** | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Triggered by** | \`${{ github.actor }}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+          # App URLs by environment
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Access URLs" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          case "$ENV" in
+            production)
+              CONSOLE_URL="https://console.kloudlite.io"
+              WEBSITE_URL="https://kloudlite.io"
+              ;;
+            staging)
+              CONSOLE_URL="https://console-stg.kloudlite.io"
+              WEBSITE_URL="https://website-stg.kloudlite.io"
+              ;;
+            development)
+              CONSOLE_URL="https://console-dev.kloudlite.io"
+              WEBSITE_URL="https://website-dev.kloudlite.io"
+              ;;
+          esac
+          if [ "${{ inputs.console }}" = "true" ]; then
+            echo "- **Console**: ${CONSOLE_URL}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "${{ inputs.website }}" = "true" ]; then
+            echo "- **Website**: ${WEBSITE_URL}" >> "$GITHUB_STEP_SUMMARY"
+          fi
