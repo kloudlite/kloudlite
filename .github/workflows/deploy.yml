@@ -39,6 +39,8 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
+  AKS_CLUSTER: kloudlite
+  AKS_RG: rg-kloudlite
 
 jobs:
   deploy:
@@ -80,8 +82,8 @@ jobs:
       - name: Set up kubeconfig
         uses: azure/aks-set-context@v4
         with:
-          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
-          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          resource-group: ${{ env.AKS_RG }}
+          cluster-name: ${{ env.AKS_CLUSTER }}
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -176,7 +178,7 @@ jobs:
           echo "| **Website** | \`${{ inputs.website }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **OCI Installer** | \`${{ inputs.oci-installer }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Nightly** | \`${{ inputs.is_nightly }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Cluster** | \`${{ secrets.AKS_CLUSTER_NAME }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Cluster** | \`${{ env.AKS_CLUSTER }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Timestamp** | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Triggered by** | \`${{ github.actor }}\` |" >> "$GITHUB_STEP_SUMMARY"
 
@@ -199,8 +201,8 @@ jobs:
               ;;
           esac
           if [ "${{ inputs.console }}" = "true" ]; then
-            echo "- **Console**: ${CONSOLE_URL}" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Console**: <${CONSOLE_URL}>" >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "${{ inputs.website }}" = "true" ]; then
-            echo "- **Website**: ${WEBSITE_URL}" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Website**: <${WEBSITE_URL}>" >> "$GITHUB_STEP_SUMMARY"
           fi
