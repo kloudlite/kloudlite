@@ -1,23 +1,23 @@
 name: Deploy
-run-name: "Deploy ${{ inputs.version }} → ${{ inputs.environment }}${{ inputs.is_nightly && ' (nightly)' || '' }} [${{ inputs.oci-installer && ' oci-installer' || '' }}${{ inputs.console && ' console' || '' }}${{ inputs.website && ' website' || '' }} ]"
+run-name: "Deploy ${{ inputs.version }}${{ inputs.is_nightly && ' (nightly)' || '' }} → ${{ inputs.environment }} [${{ inputs.console && ' console' || '' }}${{ inputs.website && ' website' || '' }}${{ inputs.oci-installer && ' oci-installer' || '' }} ]"
 
 on:
   workflow_dispatch:
     inputs:
-      oci-installer:
-        description: 'OCI Installer'
-        type: boolean
-        default: false
       console:
         description: 'Console'
         type: boolean
-        default: false
+        default: true
       website:
         description: 'Website'
         type: boolean
-        default: false
+        default: true
+      oci-installer:
+        description: 'OCI Installer'
+        type: boolean
+        default: true
       version:
-        description: 'Version to deploy (e.g. v1.2.0; nightly resolves to v1.2.0-nightly)'
+        description: 'Image tag to deploy (e.g. v1.2.0)'
         required: true
         type: string
       is_nightly:
@@ -25,61 +25,28 @@ on:
         type: boolean
         default: false
       environment:
-        description: 'Target environment'
+        description: 'Target environment (maps to K8s namespace)'
         required: true
         type: choice
         options:
-          - development
-          - staging
           - production
+          - staging
+          - development
 
 permissions:
   contents: read
-  packages: read
+  id-token: write
 
 env:
   REGISTRY: ghcr.io
 
 jobs:
-  # ── Prepare dynamic matrix ─────────────────────────────────────────
-  prepare:
-    name: Build deploy matrix
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      has_apps: ${{ steps.set-matrix.outputs.has_apps }}
-    steps:
-      - name: Build matrix from selected apps
-        id: set-matrix
-        run: |
-          APPS="[]"
-          if [ "${{ inputs.oci-installer }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["oci-installer"]'); fi
-          if [ "${{ inputs.console }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["console"]'); fi
-          if [ "${{ inputs.website }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["website"]'); fi
-
-          if [ "$APPS" = "[]" ]; then
-            echo "::error::No apps selected"
-            echo "has_apps=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "has_apps=true" >> "$GITHUB_OUTPUT"
-          echo "matrix={\"app\":$APPS}" >> "$GITHUB_OUTPUT"
-          echo "Selected apps: $APPS"
-
-  # ── Deploy each selected app ───────────────────────────────────────
   deploy:
-    name: Deploy ${{ matrix.app }} to ${{ inputs.environment }}
-    needs: prepare
-    if: needs.prepare.outputs.has_apps == 'true'
+    name: Deploy to ${{ inputs.environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    strategy:
-      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-      fail-fast: false
 
     steps:
-      # ── Input validation ────────────────────────────────────────────
       - name: Validate inputs
         run: |
           if [ -z "${{ inputs.version }}" ]; then
@@ -87,199 +54,128 @@ jobs:
             exit 1
           fi
 
-      # ── Resolve environment-specific Azure resource names ───────────
-      - name: Resolve Azure targets
-        id: azure
-        run: |
-          ENV="${{ inputs.environment }}"
-          APP="${{ matrix.app }}"
-
-          # Resource group per environment
-          case "$ENV" in
-            production)  RG="rg-kloudlite" ;;
-            development) RG="rg-kloudlite-dev" ;;
-            staging)     RG="rg-kloudlite-staging" ;;
-          esac
-
-          # Container App name per app per environment
-          case "$APP" in
-            console)
-              case "$ENV" in
-                production)  CA_NAME="ca-kloudlite-registration" ;;
-                *)           CA_NAME="console" ;;
-              esac
-              ;;
-            website)
-              case "$ENV" in
-                production)  CA_NAME="ca-kloudlite-website" ;;
-                *)           CA_NAME="website" ;;
-              esac
-              ;;
-            oci-installer)
-              CA_NAME="job-oci-installer"
-              ;;
-          esac
-
-          # Base URL per app per environment
-          case "$APP" in
-            console)
-              case "$ENV" in
-                production)  BASE_URL="https://console.kloudlite.io" ;;
-                development) BASE_URL="https://console-dev.kloudlite.io" ;;
-                staging)     BASE_URL="https://console-stg.kloudlite.io" ;;
-              esac
-              ;;
-            website)
-              case "$ENV" in
-                production)  BASE_URL="https://kloudlite.io" ;;
-                development) BASE_URL="https://website-dev.kloudlite.io" ;;
-                staging)     BASE_URL="https://website-stg.kloudlite.io" ;;
-              esac
-              ;;
-          esac
-
-          echo "rg=${RG}" >> "$GITHUB_OUTPUT"
-          echo "ca_name=${CA_NAME}" >> "$GITHUB_OUTPUT"
-          echo "base_url=${BASE_URL}" >> "$GITHUB_OUTPUT"
-          echo "Resolved: $APP → $CA_NAME in $RG"
-
-      # ── Resolve image reference ─────────────────────────────────────
       - name: Resolve image tag
-        id: image
+        id: tag
         run: |
           VERSION="${{ inputs.version }}"
           if [ "${{ inputs.is_nightly }}" = "true" ]; then
             case "$VERSION" in
-              *-nightly|*-nightly.*)
-                IMAGE_TAG="$VERSION"
-                ;;
-              *)
-                IMAGE_TAG="${VERSION}-nightly"
-                ;;
+              *-nightly|*-nightly.*) IMAGE_TAG="$VERSION" ;;
+              *) IMAGE_TAG="${VERSION}-nightly" ;;
             esac
           else
             IMAGE_TAG="$VERSION"
           fi
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Image tag: ${IMAGE_TAG}"
 
-          APP="${{ matrix.app }}"
-          FULL_IMAGE="${{ env.REGISTRY }}/${{ github.repository }}/${APP}:${IMAGE_TAG}"
-          echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "full_image=${FULL_IMAGE}" >> "$GITHUB_OUTPUT"
-          echo "Image to deploy: ${FULL_IMAGE}"
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # ── Azure Login ─────────────────────────────────────────────────
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # ── Deploy: Console ─────────────────────────────────────────────
-      - name: Deploy Console
-        if: matrix.app == 'console'
+      - name: Set up kubeconfig
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Create namespace if needed
+        run: kubectl create namespace ${{ inputs.environment }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Ensure NGINX Ingress Controller
         run: |
-          az containerapp update \
-            --name "${{ steps.azure.outputs.ca_name }}" \
-            --resource-group "${{ steps.azure.outputs.rg }}" \
-            --image "${{ steps.image.outputs.full_image }}" \
-            --set-env-vars \
-              "NODE_ENV=production" \
-              "PORT=3000" \
-              "NEXTAUTH_URL=${{ steps.azure.outputs.base_url }}" \
-              "NEXTAUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
-              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
-              "NEXT_PUBLIC_BASE_URL=${{ steps.azure.outputs.base_url }}" \
-              "NEXT_PUBLIC_CONSOLE_URL=${{ steps.azure.outputs.base_url }}" \
-              "NEXT_PUBLIC_INSTALLATION_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN }}" \
-              "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
-              "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" \
-              "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
-              "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
-              "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-              "PII_SUPABASE_URL=${{ secrets.PII_SUPABASE_URL }}" \
-              "PII_SUPABASE_KEY=${{ secrets.PII_SUPABASE_KEY }}" \
-              "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-              "CLOUDFLARE_ZONE_ID=${{ secrets.CLOUDFLARE_ZONE_ID }}" \
-              "CLOUDFLARE_DNS_DOMAIN=${{ secrets.CLOUDFLARE_DNS_DOMAIN }}" \
-              "CLOUDFLARE_ORIGIN_CA_KEY=${{ secrets.CLOUDFLARE_ORIGIN_CA_KEY }}" \
-              "GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}" \
-              "GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}" \
-              "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" \
-              "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-              "MICROSOFT_ENTRA_CLIENT_ID=${{ secrets.MICROSOFT_ENTRA_CLIENT_ID }}" \
-              "MICROSOFT_ENTRA_CLIENT_SECRET=${{ secrets.MICROSOFT_ENTRA_CLIENT_SECRET }}" \
-              "MICROSOFT_ENTRA_TENANT_ID=${{ secrets.MICROSOFT_ENTRA_TENANT_ID }}" \
-              "ANTHROPIC_AUTH_TOKEN=${{ secrets.ANTHROPIC_AUTH_TOKEN }}" \
-              "ANTHROPIC_BASE_URL=${{ secrets.ANTHROPIC_BASE_URL }}" \
-              "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" \
-              "SENDGRID_FROM_EMAIL=support@kloudlite.io" \
-              "SENDGRID_FROM_NAME=Kloudlite" \
-              "NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
-              "TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}" \
-              "AZURE_SUBSCRIPTION_ID=9941afe7-e220-492f-bfab-63f539dc0b69" \
-              "AZURE_RESOURCE_GROUP=${{ steps.azure.outputs.rg }}" \
-              "OCI_INSTALLER_JOB_NAME=job-oci-installer" \
-            --output none
+          if helm status ingress-nginx --namespace ingress-nginx > /dev/null 2>&1; then
+            echo "Ingress controller already installed"
+          else
+            echo "Installing NGINX Ingress Controller"
+            helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+            helm repo update
+            helm install ingress-nginx ingress-nginx/ingress-nginx \
+              --namespace ingress-nginx \
+              --create-namespace \
+              --set controller.replicaCount=3 \
+              --set controller.service.type=LoadBalancer \
+              --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+              --set controller.admissionWebhooks.enabled=true \
+              --wait \
+              --timeout 5m
+          fi
 
-          echo "Console deployed: ${{ steps.image.outputs.full_image }} → ${{ steps.azure.outputs.ca_name }}"
-
-      # ── Deploy: Website ─────────────────────────────────────────────
-      - name: Deploy Website
-        if: matrix.app == 'website'
+      - name: Deploy via Helm
         run: |
-          az containerapp update \
-            --name "${{ steps.azure.outputs.ca_name }}" \
-            --resource-group "${{ steps.azure.outputs.rg }}" \
-            --image "${{ steps.image.outputs.full_image }}" \
-            --set-env-vars \
-              "NODE_ENV=production" \
-              "PORT=3000" \
-              "APP_MODE=website" \
-              "NEXTAUTH_URL=${{ steps.azure.outputs.base_url }}" \
-              "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
-              "NEXT_PUBLIC_BASE_URL=${{ steps.azure.outputs.base_url }}" \
-              "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
-              "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" \
-              "NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
-              "TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}" \
-              "ANTHROPIC_AUTH_TOKEN=${{ secrets.ANTHROPIC_AUTH_TOKEN }}" \
-              "ANTHROPIC_BASE_URL=${{ secrets.ANTHROPIC_BASE_URL }}" \
-            --output none
+          IMAGE_TAG="${{ steps.tag.outputs.image_tag }}"
+          ENV="${{ inputs.environment }}"
+          CHART_DIR=".github/k8s/kloudlite-apps"
 
-          echo "Website deployed: ${{ steps.image.outputs.full_image }} → ${{ steps.azure.outputs.ca_name }}"
+          # Only override image tags for selected apps; others keep existing tags
+          SET_ARGS=""
+          if [ "${{ inputs.console }}" = "true" ]; then
+            SET_ARGS="${SET_ARGS} --set console.enabled=true --set console.image.tag=${IMAGE_TAG}"
+          fi
+          if [ "${{ inputs.website }}" = "true" ]; then
+            SET_ARGS="${SET_ARGS} --set website.enabled=true --set website.image.tag=${IMAGE_TAG}"
+          fi
+          if [ "${{ inputs.oci-installer }}" = "true" ]; then
+            SET_ARGS="${SET_ARGS} --set ociInstaller.enabled=true --set ociInstaller.image.tag=${IMAGE_TAG}"
+          fi
 
-      # ── Deploy: OCI Installer ───────────────────────────────────────
-      - name: Deploy OCI Installer
-        if: matrix.app == 'oci-installer'
+          # First install: use values files to bootstrap all config
+          # Subsequent upgrades: reuse existing values, only override selected app tags
+          if helm status kloudlite-apps --namespace "$ENV" > /dev/null 2>&1; then
+            echo "Existing release found — upgrading with --reuse-values"
+            helm upgrade kloudlite-apps "${CHART_DIR}" \
+              --namespace "$ENV" \
+              --reuse-values \
+              ${SET_ARGS} \
+              --wait \
+              --timeout 5m
+          else
+            echo "No existing release — installing with full values files"
+            helm install kloudlite-apps "${CHART_DIR}" \
+              --namespace "$ENV" \
+              --values "${CHART_DIR}/values.yaml" \
+              --values "${CHART_DIR}/values-${ENV}.yaml" \
+              --set global.imageTag="${IMAGE_TAG}" \
+              --wait \
+              --timeout 5m
+          fi
+
+      - name: Verify deployment
         run: |
-          az containerapp job update \
-            --name "${{ steps.azure.outputs.ca_name }}" \
-            --resource-group "${{ steps.azure.outputs.rg }}" \
-            --image "${{ steps.image.outputs.full_image }}" \
-            --output none
+          echo "=== Pods ==="
+          kubectl get pods -n ${{ inputs.environment }} -l "app.kubernetes.io/part-of=kloudlite"
+          echo ""
+          echo "=== Services ==="
+          kubectl get svc -n ${{ inputs.environment }}
+          echo ""
+          echo "=== Ingress ==="
+          kubectl get ingress -n ${{ inputs.environment }}
 
-          echo "OCI Installer job updated: ${{ steps.image.outputs.full_image }} → ${{ steps.azure.outputs.ca_name }}"
-
-      # ── Deploy summary ──────────────────────────────────────────────
       - name: Deploy summary
         if: always()
         run: |
-          APP="${{ matrix.app }}"
           ENV="${{ inputs.environment }}"
-          TAG="${{ steps.image.outputs.tag }}"
-          IMAGE="${{ steps.image.outputs.full_image }}"
-          CA_NAME="${{ steps.azure.outputs.ca_name }}"
-          RG="${{ steps.azure.outputs.rg }}"
+          TAG="${{ steps.tag.outputs.image_tag }}"
 
-          echo "### Deploy Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "### AKS Deploy Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **App** | \`${APP}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Container App** | \`${CA_NAME}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Resource Group** | \`${RG}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Environment** | \`${ENV}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Image Tag** | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Image** | \`${IMAGE}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Console** | \`${{ inputs.console }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Website** | \`${{ inputs.website }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **OCI Installer** | \`${{ inputs.oci-installer }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Nightly** | \`${{ inputs.is_nightly }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Cluster** | \`${{ secrets.AKS_CLUSTER_NAME }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Timestamp** | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Triggered by** | \`${{ github.actor }}\` |" >> "$GITHUB_STEP_SUMMARY"
