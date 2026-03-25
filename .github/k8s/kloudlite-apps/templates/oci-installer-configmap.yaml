@@ -1,0 +1,42 @@
+{{- if .Values.ociInstaller.enabled }}
+{{- $tag := .Values.ociInstaller.image.tag | default .Values.global.imageTag }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oci-installer-job-template
+  labels:
+    app: oci-installer
+    {{- include "kloudlite.labels" . | nindent 4 }}
+data:
+  job-spec.yaml: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      labels:
+        app: oci-installer
+    spec:
+      backoffLimit: {{ .Values.ociInstaller.backoffLimit }}
+      ttlSecondsAfterFinished: {{ .Values.ociInstaller.ttlSecondsAfterFinished }}
+      template:
+        metadata:
+          labels:
+            app: oci-installer
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: oci-installer
+              image: "{{ .Values.ociInstaller.image.repository }}:{{ $tag }}"
+              resources:
+                requests:
+                  cpu: {{ .Values.ociInstaller.resources.requests.cpu }}
+                  memory: {{ .Values.ociInstaller.resources.requests.memory }}
+                limits:
+                  cpu: {{ .Values.ociInstaller.resources.limits.cpu }}
+                  memory: {{ .Values.ociInstaller.resources.limits.memory }}
+              env:
+                - name: JOB_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+{{- end }}
