@@ -1,0 +1,347 @@
+name: "Build Release"
+
+# Per-app tags: console/v1.2.0, platform-controller/v2.1.0, kli/v1.5.0
+# Manual dispatch: select apps + version (for UAT)
+run-name: "${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Build {0}', inputs.version) }}"
+
+on:
+  # Per-app releases: <app>/v<semver> tags
+  push:
+    tags:
+      - '*/v*'
+
+  # UAT manual builds: select apps and version
+  workflow_dispatch:
+    inputs:
+      platform-controller:
+        description: 'Platform Controller'
+        type: boolean
+        default: false
+      tunnel-server:
+        description: 'Tunnel Server'
+        type: boolean
+        default: false
+      workmachine-node-manager:
+        description: 'WorkMachine Node Manager'
+        type: boolean
+        default: false
+      wm-ingress-controller:
+        description: 'WM Ingress Controller'
+        type: boolean
+        default: false
+      oci-installer:
+        description: 'OCI Installer'
+        type: boolean
+        default: false
+      k3s-backup:
+        description: 'K3s Backup'
+        type: boolean
+        default: false
+      code-analyzer:
+        description: 'Code Analyzer'
+        type: boolean
+        default: false
+      workspace-base:
+        description: 'Workspace Base'
+        type: boolean
+        default: false
+      workspace-comprehensive:
+        description: 'Workspace Comprehensive'
+        type: boolean
+        default: false
+      console:
+        description: 'Console'
+        type: boolean
+        default: false
+      dashboard:
+        description: 'Dashboard'
+        type: boolean
+        default: false
+      website:
+        description: 'Website'
+        type: boolean
+        default: false
+      kli:
+        description: 'kli CLI'
+        type: boolean
+        default: false
+      kltun:
+        description: 'kltun CLI'
+        type: boolean
+        default: false
+      version:
+        description: 'Version tag (e.g. v1.2.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # ── Prepare: parse tag or manual inputs ──────────────────────────────
+  prepare:
+    name: Prepare build
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      app_name: ${{ steps.resolve.outputs.app_name }}
+      is_tag_push: ${{ steps.resolve.outputs.is_tag_push }}
+      is_docker: ${{ steps.resolve.outputs.is_docker }}
+      is_binary: ${{ steps.resolve.outputs.is_binary }}
+      # Per-app flags (for manual dispatch)
+      platform-controller: ${{ steps.apps.outputs.platform-controller }}
+      tunnel-server: ${{ steps.apps.outputs.tunnel-server }}
+      workmachine-node-manager: ${{ steps.apps.outputs.workmachine-node-manager }}
+      wm-ingress-controller: ${{ steps.apps.outputs.wm-ingress-controller }}
+      oci-installer: ${{ steps.apps.outputs.oci-installer }}
+      k3s-backup: ${{ steps.apps.outputs.k3s-backup }}
+      code-analyzer: ${{ steps.apps.outputs.code-analyzer }}
+      workspace-base: ${{ steps.apps.outputs.workspace-base }}
+      workspace-comprehensive: ${{ steps.apps.outputs.workspace-comprehensive }}
+      console: ${{ steps.apps.outputs.console }}
+      dashboard: ${{ steps.apps.outputs.dashboard }}
+      website: ${{ steps.apps.outputs.website }}
+      kli: ${{ steps.apps.outputs.kli }}
+      kltun: ${{ steps.apps.outputs.kltun }}
+      has_apps: ${{ steps.apps.outputs.has_apps }}
+    steps:
+      - name: Resolve version and tag
+        id: resolve
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            # Per-app tag: <app>/v<version>
+            FULL_TAG="${GITHUB_REF_NAME}"
+            APP_NAME="${FULL_TAG%%/v*}"
+            VERSION_TAG="${FULL_TAG#*/}"
+            VERSION="${VERSION_TAG#v}"
+            IS_TAG_PUSH="true"
+
+            # Classify app type
+            IS_DOCKER="false"
+            IS_BINARY="false"
+            case "$APP_NAME" in
+              kli|kltun) IS_BINARY="true" ;;
+              platform-controller|tunnel-server|workmachine-node-manager|wm-ingress-controller|oci-installer|k3s-backup|code-analyzer|workspace-base|workspace-comprehensive|console|dashboard|website)
+                IS_DOCKER="true" ;;
+              *)
+                echo "::error::Unknown app in tag: ${APP_NAME}"
+                exit 1 ;;
+            esac
+
+            echo "tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "app_name=${APP_NAME}" >> "$GITHUB_OUTPUT"
+            echo "is_tag_push=true" >> "$GITHUB_OUTPUT"
+            echo "is_docker=${IS_DOCKER}" >> "$GITHUB_OUTPUT"
+            echo "is_binary=${IS_BINARY}" >> "$GITHUB_OUTPUT"
+            echo "Releasing ${APP_NAME} at ${VERSION_TAG}"
+          else
+            # Manual dispatch
+            TAG="${{ inputs.version }}"
+            VERSION="${TAG#v}"
+            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "app_name=" >> "$GITHUB_OUTPUT"
+            echo "is_tag_push=false" >> "$GITHUB_OUTPUT"
+            echo "is_docker=false" >> "$GITHUB_OUTPUT"
+            echo "is_binary=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Determine apps to build
+        id: apps
+        run: |
+          IS_TAG_PUSH="${{ steps.resolve.outputs.is_tag_push }}"
+          APP_NAME="${{ steps.resolve.outputs.app_name }}"
+
+          ALL_APPS="platform-controller tunnel-server workmachine-node-manager wm-ingress-controller oci-installer k3s-backup code-analyzer workspace-base workspace-comprehensive console dashboard website kli kltun"
+
+          if [ "$IS_TAG_PUSH" = "true" ]; then
+            # Tag push: only the tagged app
+            for APP in $ALL_APPS; do
+              if [ "$APP" = "$APP_NAME" ]; then
+                echo "${APP}=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "${APP}=false" >> "$GITHUB_OUTPUT"
+              fi
+            done
+            echo "has_apps=true" >> "$GITHUB_OUTPUT"
+          else
+            # Manual dispatch: use checkbox inputs
+            HAS_APPS="false"
+            for APP in $ALL_APPS; do
+              VAL="false"
+              case "$APP" in
+                platform-controller) VAL="${{ inputs.platform-controller }}" ;;
+                tunnel-server) VAL="${{ inputs.tunnel-server }}" ;;
+                workmachine-node-manager) VAL="${{ inputs.workmachine-node-manager }}" ;;
+                wm-ingress-controller) VAL="${{ inputs.wm-ingress-controller }}" ;;
+                oci-installer) VAL="${{ inputs.oci-installer }}" ;;
+                k3s-backup) VAL="${{ inputs.k3s-backup }}" ;;
+                code-analyzer) VAL="${{ inputs.code-analyzer }}" ;;
+                workspace-base) VAL="${{ inputs.workspace-base }}" ;;
+                workspace-comprehensive) VAL="${{ inputs.workspace-comprehensive }}" ;;
+                console) VAL="${{ inputs.console }}" ;;
+                dashboard) VAL="${{ inputs.dashboard }}" ;;
+                website) VAL="${{ inputs.website }}" ;;
+                kli) VAL="${{ inputs.kli }}" ;;
+                kltun) VAL="${{ inputs.kltun }}" ;;
+              esac
+              echo "${APP}=${VAL}" >> "$GITHUB_OUTPUT"
+              if [ "$VAL" = "true" ]; then HAS_APPS="true"; fi
+            done
+            echo "has_apps=${HAS_APPS}" >> "$GITHUB_OUTPUT"
+
+            if [ "$HAS_APPS" = "false" ]; then
+              echo "::error::No apps selected"
+            fi
+          fi
+
+      - name: Summary
+        run: |
+          echo "### Release Build" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.resolve.outputs.is_tag_push }}" = "true" ]; then
+            echo "**App:** \`${{ steps.resolve.outputs.app_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Tag:** \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Type:** ${{ steps.resolve.outputs.is_docker == 'true' && 'Docker image' || 'Binary release' }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "**Manual dispatch** — version \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ── Docker: Go apps ──────────────────────────────────────────────────
+  platform-controller:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.platform-controller == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: platform-controller
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  tunnel-server:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.tunnel-server == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: tunnel-server
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  workmachine-node-manager:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.workmachine-node-manager == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workmachine-node-manager
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  wm-ingress-controller:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.wm-ingress-controller == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: wm-ingress-controller
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  oci-installer:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.oci-installer == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: oci-installer
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  code-analyzer:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.code-analyzer == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: code-analyzer
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  k3s-backup:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.k3s-backup == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: k3s-backup
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  workspace-base:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.workspace-base == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workspace-base
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  workspace-comprehensive:
+    needs: [prepare, workspace-base]
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.workspace-comprehensive == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workspace-comprehensive
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  # ── Docker: Web apps ─────────────────────────────────────────────────
+  console:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.console == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: console
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  dashboard:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.dashboard == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: dashboard
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  website:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.website == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: website
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  # ── Binaries: CLI tools ──────────────────────────────────────────────
+  kli:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.kli == 'true'
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kli
+      version: ${{ needs.prepare.outputs.version }}
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  kltun:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.kltun == 'true'
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kltun
+      version: ${{ needs.prepare.outputs.version }}
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  # ── GitHub Releases (only on per-app tag push for binaries) ──────────
+  release-kli:
+    needs: [prepare, kli]
+    if: needs.prepare.outputs.is_tag_push == 'true' && needs.prepare.outputs.app_name == 'kli'
+    uses: ./.github/workflows/_release-binary.yml
+    with:
+      app: kli
+      version: ${{ needs.prepare.outputs.version }}
+      make_latest: true
+
+  release-kltun:
+    needs: [prepare, kltun]
+    if: needs.prepare.outputs.is_tag_push == 'true' && needs.prepare.outputs.app_name == 'kltun'
+    uses: ./.github/workflows/_release-binary.yml
+    with:
+      app: kltun
+      version: ${{ needs.prepare.outputs.version }}
+      make_latest: true

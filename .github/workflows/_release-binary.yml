@@ -1,0 +1,138 @@
+name: "Create GitHub Release"
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: 'Binary to release (kli or kltun)'
+        required: true
+        type: string
+      version:
+        description: 'Version string (e.g. 1.2.0)'
+        required: true
+        type: string
+      is_nightly:
+        description: 'Whether this is a nightly release'
+        type: boolean
+        default: false
+      make_latest:
+        description: 'Move app/latest floating tag'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release ${{ inputs.app }} v${{ inputs.version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compute tag
+        id: tag
+        run: |
+          TAG="${{ inputs.app }}/v${{ inputs.version }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Download artifacts for ${{ inputs.app }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.app }}-*
+          path: dist-artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          find dist-artifacts -type f -exec cp {} release-assets/ \;
+          ls -lah release-assets/
+
+      - name: Generate release notes
+        env:
+          APP: ${{ inputs.app }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          cat > release-notes.md << EOF
+          # ${APP} ${VERSION}
+
+          ## Installation
+
+          ### Linux (AMD64)
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-linux-amd64
+          chmod +x ${APP}-linux-amd64
+          sudo mv ${APP}-linux-amd64 /usr/local/bin/${APP}
+          \`\`\`
+
+          ### Linux (ARM64)
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-linux-arm64
+          chmod +x ${APP}-linux-arm64
+          sudo mv ${APP}-linux-arm64 /usr/local/bin/${APP}
+          \`\`\`
+
+          ### macOS (Intel)
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-darwin-amd64
+          chmod +x ${APP}-darwin-amd64
+          sudo mv ${APP}-darwin-amd64 /usr/local/bin/${APP}
+          \`\`\`
+
+          ### macOS (Apple Silicon)
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-darwin-arm64
+          chmod +x ${APP}-darwin-arm64
+          sudo mv ${APP}-darwin-arm64 /usr/local/bin/${APP}
+          \`\`\`
+
+          ### Windows (AMD64)
+          Download [${APP}-windows-amd64.exe](https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-windows-amd64.exe) and add to your PATH.
+
+          ### Windows (ARM64)
+          Download [${APP}-windows-arm64.exe](https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-windows-arm64.exe) and add to your PATH.
+
+          ## Verify Checksums
+
+          \`\`\`bash
+          curl -LO https://github.com/kloudlite/kloudlite/releases/download/${TAG}/${APP}-linux-amd64.sha256
+          sha256sum -c ${APP}-linux-amd64.sha256
+          \`\`\`
+          EOF
+
+      - name: Create or move floating tags
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          git tag "${TAG}"
+          git push origin "${TAG}"
+
+          if [ "${{ inputs.is_nightly }}" = "true" ]; then
+            git tag -f "${{ inputs.app }}/nightly"
+            git push origin "${{ inputs.app }}/nightly" --force
+          else
+            if [ "${{ inputs.make_latest }}" = "true" ]; then
+              git tag -f "${{ inputs.app }}/latest"
+              git push origin "${{ inputs.app }}/latest" --force
+            fi
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ inputs.app }} v${{ inputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ inputs.is_nightly }}
+          make_latest: ${{ inputs.is_nightly == false && inputs.make_latest }}
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

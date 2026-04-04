@@ -1,64 +1,18 @@
-name: Build
-run-name: "Build ${{ inputs.version }}${{ inputs.is_nightly && ' (nightly)' || '' }} [${{ inputs.platform-controller && ' platform-controller' || '' }}${{ inputs.tunnel-server && ' tunnel-server' || '' }}${{ inputs.workmachine-node-manager && ' node-manager' || '' }}${{ inputs.wm-ingress-controller && ' wm-ingress' || '' }}${{ inputs.oci-installer && ' oci-installer' || '' }}${{ inputs.k3s-backup && ' k3s-backup' || '' }}${{ inputs.code-analyzer && ' code-analyzer' || '' }}${{ inputs.workspace-base && ' ws-base' || '' }}${{ inputs.workspace-comprehensive && ' ws-comprehensive' || '' }}${{ inputs.console && ' console' || '' }}${{ inputs.dashboard && ' dashboard' || '' }}${{ inputs.website && ' website' || '' }} ]"
+name: "Build Docker Image"
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      platform-controller:
-        description: 'Platform Controller'
-        type: boolean
-        default: false
-      tunnel-server:
-        description: 'Tunnel Server'
-        type: boolean
-        default: false
-      workmachine-node-manager:
-        description: 'WorkMachine Node Manager'
-        type: boolean
-        default: false
-      wm-ingress-controller:
-        description: 'WM Ingress Controller'
-        type: boolean
-        default: false
-      oci-installer:
-        description: 'OCI Installer'
-        type: boolean
-        default: false
-      k3s-backup:
-        description: 'K3s Backup'
-        type: boolean
-        default: false
-      code-analyzer:
-        description: 'Code Analyzer'
-        type: boolean
-        default: false
-      workspace-base:
-        description: 'Workspace Base'
-        type: boolean
-        default: false
-      workspace-comprehensive:
-        description: 'Workspace Comprehensive'
-        type: boolean
-        default: false
-      console:
-        description: 'Console'
-        type: boolean
-        default: false
-      dashboard:
-        description: 'Dashboard'
-        type: boolean
-        default: false
-      website:
-        description: 'Website'
-        type: boolean
-        default: false
-      version:
-        description: 'Version tag (e.g. v1.2.0)'
+      app:
+        description: 'App to build'
+        required: true
+        type: string
+      tag:
+        description: 'Image tag'
         required: true
         type: string
       is_nightly:
-        description: 'Nightly build'
-        required: true
+        description: 'Whether this is a nightly build'
         type: boolean
         default: false
 
@@ -70,89 +24,19 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # ── Job 1: Build dynamic matrix from selected checkboxes ───────────
-  prepare:
-    name: Prepare build matrix
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      has_apps: ${{ steps.set-matrix.outputs.has_apps }}
-    steps:
-      - name: Validate version
-        run: |
-          if [ -z "${{ inputs.version }}" ]; then
-            echo "::error::version input is required"
-            exit 1
-          fi
-
-      - name: Build matrix from selected apps
-        id: set-matrix
-        run: |
-          APPS="[]"
-
-          if [ "${{ inputs.platform-controller }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["platform-controller"]'); fi
-          if [ "${{ inputs.tunnel-server }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["tunnel-server"]'); fi
-          if [ "${{ inputs.workmachine-node-manager }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workmachine-node-manager"]'); fi
-          if [ "${{ inputs.wm-ingress-controller }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["wm-ingress-controller"]'); fi
-          if [ "${{ inputs.oci-installer }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["oci-installer"]'); fi
-          if [ "${{ inputs.k3s-backup }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["k3s-backup"]'); fi
-          if [ "${{ inputs.code-analyzer }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["code-analyzer"]'); fi
-          if [ "${{ inputs.workspace-base }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workspace-base"]'); fi
-          if [ "${{ inputs.workspace-comprehensive }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["workspace-comprehensive"]'); fi
-          if [ "${{ inputs.console }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["console"]'); fi
-          if [ "${{ inputs.dashboard }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["dashboard"]'); fi
-          if [ "${{ inputs.website }}" = "true" ]; then APPS=$(echo "$APPS" | jq -c '. + ["website"]'); fi
-
-          if [ "$APPS" = "[]" ]; then
-            echo "::error::No apps selected"
-            echo "has_apps=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "has_apps=true" >> "$GITHUB_OUTPUT"
-          echo "matrix={\"app\":$APPS}" >> "$GITHUB_OUTPUT"
-          echo "Selected apps: $APPS"
-
-  # ── Job 2: Build each selected app in parallel ────────────────────
   build:
-    name: Build ${{ matrix.app }}
-    needs: prepare
-    if: needs.prepare.outputs.has_apps == 'true'
+    name: Build ${{ inputs.app }}
     runs-on: ubuntu-latest
-    # No environment needed — secrets are injected at deploy time, not build time
-
-    strategy:
-      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-      fail-fast: false
 
     concurrency:
-      group: build-${{ matrix.app }}
+      group: docker-${{ inputs.app }}-${{ inputs.tag }}
       cancel-in-progress: true
 
     steps:
-      # ── Compute effective tag ─────────────────────────────────────────
-      - name: Resolve tag
-        id: tag
-        run: |
-          VERSION="${{ inputs.version }}"
-          if [ "${{ inputs.is_nightly }}" = "true" ]; then
-            TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
-            SHORT_SHA="${GITHUB_SHA:0:7}"
-            TAG="${VERSION}-nightly.${TIMESTAMP}.${SHORT_SHA}"
-            DEPLOY_TAG="${VERSION}-nightly"
-          else
-            TAG="${VERSION}"
-            DEPLOY_TAG="${VERSION}"
-          fi
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "deploy_tag=${DEPLOY_TAG}" >> "$GITHUB_OUTPUT"
-          echo "Effective tag: ${TAG}"
-
-      # ── Resolve per-app build metadata ────────────────────────────────
       - name: Resolve app config
         id: app
         run: |
-          APP="${{ matrix.app }}"
+          APP="${{ inputs.app }}"
 
           case "${APP}" in
             platform-controller)
@@ -251,17 +135,14 @@ jobs:
           echo "docker_context=${DOCKER_CONTEXT}" >> "$GITHUB_OUTPUT"
           echo "image_suffix=${IMAGE_SUFFIX}" >> "$GITHUB_OUTPUT"
 
-          echo "Build type: ${BUILD_TYPE}"
-          echo "Image: ${REGISTRY}/${{ github.repository }}/${IMAGE_SUFFIX}:${{ steps.tag.outputs.tag }}"
-
       - name: Prepare docker tags
         id: docker_tags
         run: |
           IMAGE_BASE="${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.app.outputs.image_suffix }}"
-          TAGS="${IMAGE_BASE}:${{ steps.tag.outputs.tag }}"
+          TAGS="${IMAGE_BASE}:${{ inputs.tag }}"
 
           if [ "${{ inputs.is_nightly }}" = "true" ]; then
-            TAGS="${TAGS}"$'\n'"${IMAGE_BASE}:${{ steps.tag.outputs.deploy_tag }}"
+            TAGS="${TAGS}"$'\n'"${IMAGE_BASE}:nightly"
           fi
 
           {
@@ -270,11 +151,10 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      # ── Checkout ──────────────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── Go setup (go, workspace-comprehensive) ───────────────────────
+      # ── Go setup ─────────────────────────────────────────────────────
       - name: Set up Go
         if: steps.app.outputs.build_type == 'go' || steps.app.outputs.build_type == 'workspace-comprehensive'
         uses: actions/setup-go@v5
@@ -288,7 +168,6 @@ jobs:
           cd api
           mkdir -p bin
           ${{ steps.app.outputs.build_cmd }}
-          echo "Binary built:"
           ls -lh ./bin/
 
       - name: Build kl binary
@@ -324,11 +203,10 @@ jobs:
         working-directory: web
         run: bun install
 
-      # ── Web app build-time env (NEXT_PUBLIC_* only — runtime secrets injected at deploy) ──
       - name: Create build-time env file
         if: steps.app.outputs.build_type == 'web'
         run: |
-          APP="${{ matrix.app }}"
+          APP="${{ inputs.app }}"
           case "$APP" in
             console)
               cat > web/apps/console/.env.local << 'EOF'
@@ -363,10 +241,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            web/apps/${{ matrix.app }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ matrix.app }}-${{ hashFiles('web/bun.lock') }}-${{ github.sha }}
+            web/apps/${{ inputs.app }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ inputs.app }}-${{ hashFiles('web/bun.lock') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ matrix.app }}-${{ hashFiles('web/bun.lock') }}-
+            ${{ runner.os }}-nextjs-${{ inputs.app }}-${{ hashFiles('web/bun.lock') }}-
 
       - name: Build web app
         if: steps.app.outputs.build_type == 'web'
@@ -387,58 +265,42 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: matrix.app != 'workspace-comprehensive'
+        if: inputs.app != 'workspace-comprehensive'
         uses: docker/build-push-action@v6
         with:
           context: ${{ steps.app.outputs.docker_context }}
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
-          cache-from: type=gha,scope=${{ matrix.app }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+          cache-from: type=gha,scope=${{ inputs.app }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.app }}
           platforms: linux/amd64
           build-args: |
             BUILDKIT_INLINE_CACHE=1
 
       - name: Build and push workspace-comprehensive image
-        if: matrix.app == 'workspace-comprehensive'
+        if: inputs.app == 'workspace-comprehensive'
         uses: docker/build-push-action@v6
         with:
           context: ${{ steps.app.outputs.docker_context }}
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
-          cache-from: type=gha,scope=${{ matrix.app }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+          cache-from: type=gha,scope=${{ inputs.app }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.app }}
           platforms: linux/amd64
           build-args: |
-            BASE_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:${{ steps.tag.outputs.tag }}
-            VERSION=${{ steps.tag.outputs.tag }}
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/workspace-base:${{ inputs.tag }}
+            VERSION=${{ inputs.tag }}
             BUILDKIT_INLINE_CACHE=1
 
-      # ── Build summary ────────────────────────────────────────────────
       - name: Build summary
         if: always()
         run: |
-          APP="${{ matrix.app }}"
-          TAG="${{ steps.tag.outputs.tag }}"
-          BUILD_TYPE="${{ steps.app.outputs.build_type }}"
-          IMAGE_SUFFIX="${{ steps.app.outputs.image_suffix }}"
-
-          echo "### Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Docker Build: ${{ inputs.app }}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **App** | \`${APP}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Tag** | \`${TAG}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Build type** | \`${BUILD_TYPE}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Nightly** | \`${{ inputs.is_nightly }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| **Commit** | \`${GITHUB_SHA:0:7}\` |" >> "$GITHUB_STEP_SUMMARY"
-
-          IMAGE_URL="${{ env.REGISTRY }}/${{ github.repository }}/${IMAGE_SUFFIX}:${TAG}"
-          echo "| **Image** | \`${IMAGE_URL}\` |" >> "$GITHUB_STEP_SUMMARY"
-
-          if [ "${{ inputs.is_nightly }}" = "true" ]; then
-            NIGHTLY_IMAGE_URL="${{ env.REGISTRY }}/${{ github.repository }}/${IMAGE_SUFFIX}:${{ steps.tag.outputs.deploy_tag }}"
-            echo "| **Nightly alias** | \`${NIGHTLY_IMAGE_URL}\` |" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          echo "| **App** | \`${{ inputs.app }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Tag** | \`${{ inputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Image** | \`${{ env.REGISTRY }}/${{ github.repository }}/${{ steps.app.outputs.image_suffix }}:${{ inputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,196 @@
+name: "Build on Push"
+
+run-name: "Build — ${{ github.ref_name }} (${{ github.sha }})"
+
+on:
+  push:
+    branches-ignore:
+      - master
+      - uat
+      - development
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # ── Detect which areas changed ───────────────────────────────────────
+  detect:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      console: ${{ steps.filter.outputs.console }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+      website: ${{ steps.filter.outputs.website }}
+      kli: ${{ steps.filter.outputs.kli }}
+      kltun: ${{ steps.filter.outputs.kltun }}
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'api/**'
+            console:
+              - 'web/apps/console/**'
+              - 'web/packages/**'
+            dashboard:
+              - 'web/apps/dashboard/**'
+              - 'web/packages/**'
+            website:
+              - 'web/apps/website/**'
+              - 'web/packages/**'
+            kli:
+              - 'api/cmd/kli/**'
+              - 'api/pkg/**'
+              - 'api/go.mod'
+              - 'api/go.sum'
+            kltun:
+              - 'api/cmd/kltun/**'
+              - 'api/pkg/**'
+              - 'api/go.mod'
+              - 'api/go.sum'
+
+      - name: Compute tag
+        id: tag
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          BRANCH_SAFE=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g' | cut -c1-50)
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          echo "tag=${BRANCH_SAFE}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        run: |
+          echo "### Change Detection" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Area | Changed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|---------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| api/ | ${{ steps.filter.outputs.api }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| console | ${{ steps.filter.outputs.console }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| dashboard | ${{ steps.filter.outputs.dashboard }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| website | ${{ steps.filter.outputs.website }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| kli | ${{ steps.filter.outputs.kli }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| kltun | ${{ steps.filter.outputs.kltun }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tag:** \`${{ steps.tag.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Docker: Go apps (all built when api/ changes) ────────────────────
+  platform-controller:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: platform-controller
+      tag: ${{ needs.detect.outputs.tag }}
+
+  tunnel-server:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: tunnel-server
+      tag: ${{ needs.detect.outputs.tag }}
+
+  workmachine-node-manager:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workmachine-node-manager
+      tag: ${{ needs.detect.outputs.tag }}
+
+  wm-ingress-controller:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: wm-ingress-controller
+      tag: ${{ needs.detect.outputs.tag }}
+
+  oci-installer:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: oci-installer
+      tag: ${{ needs.detect.outputs.tag }}
+
+  code-analyzer:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: code-analyzer
+      tag: ${{ needs.detect.outputs.tag }}
+
+  k3s-backup:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: k3s-backup
+      tag: ${{ needs.detect.outputs.tag }}
+
+  workspace-base:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workspace-base
+      tag: ${{ needs.detect.outputs.tag }}
+
+  workspace-comprehensive:
+    needs: [detect, workspace-base]
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workspace-comprehensive
+      tag: ${{ needs.detect.outputs.tag }}
+
+  # ── Docker: Web apps ─────────────────────────────────────────────────
+  console:
+    needs: detect
+    if: needs.detect.outputs.console == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: console
+      tag: ${{ needs.detect.outputs.tag }}
+
+  dashboard:
+    needs: detect
+    if: needs.detect.outputs.dashboard == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: dashboard
+      tag: ${{ needs.detect.outputs.tag }}
+
+  website:
+    needs: detect
+    if: needs.detect.outputs.website == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: website
+      tag: ${{ needs.detect.outputs.tag }}
+
+  # ── Binaries: CLI tools ──────────────────────────────────────────────
+  kli:
+    needs: detect
+    if: needs.detect.outputs.kli == 'true'
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kli
+      version: ${{ needs.detect.outputs.tag }}
+      tag: ${{ needs.detect.outputs.tag }}
+
+  kltun:
+    needs: detect
+    if: needs.detect.outputs.kltun == 'true'
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kltun
+      version: ${{ needs.detect.outputs.tag }}
+      tag: ${{ needs.detect.outputs.tag }}

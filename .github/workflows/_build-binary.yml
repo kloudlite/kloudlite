@@ -1,0 +1,95 @@
+name: "Build Binary"
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: 'Binary to build (kli or kltun)'
+        required: true
+        type: string
+      version:
+        description: 'Version string baked into binary'
+        required: true
+        type: string
+      tag:
+        description: 'Tag for artifact naming'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ inputs.app }} (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+
+    steps:
+      - name: Set output name
+        id: meta
+        run: |
+          SUFFIX="${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            SUFFIX="${SUFFIX}.exe"
+          fi
+          echo "suffix=${SUFFIX}" >> "$GITHUB_OUTPUT"
+          echo "output=${{ inputs.app }}-${SUFFIX}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'api/go.mod'
+          cache-dependency-path: 'api/go.sum'
+
+      - name: Download wintun for Windows builds
+        if: inputs.app == 'kltun' && matrix.goos == 'windows'
+        run: |
+          curl -LO https://www.wintun.net/builds/wintun-0.14.1.zip
+          unzip wintun-0.14.1.zip
+          mkdir -p api/cmd/kltun/pkg/wintun/dll
+          cp wintun/bin/amd64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_amd64.dll
+          cp wintun/bin/arm64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_arm64.dll
+
+      - name: Build binary
+        working-directory: ./api
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          go build -v \
+            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/${{ inputs.app }}/cmd.Version=${{ inputs.version }}" \
+            -o ../dist/${{ steps.meta.outputs.output }} \
+            ./cmd/${{ inputs.app }}
+
+      - name: Generate checksum
+        working-directory: ./dist
+        run: sha256sum ${{ steps.meta.outputs.output }} > ${{ steps.meta.outputs.output }}.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.output }}
+          path: |
+            dist/${{ steps.meta.outputs.output }}
+            dist/${{ steps.meta.outputs.output }}.sha256
+          retention-days: 1
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "### Binary Build: ${{ inputs.app }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Binary** | \`${{ steps.meta.outputs.output }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Version** | \`${{ inputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **OS/Arch** | \`${{ matrix.goos }}/${{ matrix.goarch }}\` |" >> "$GITHUB_STEP_SUMMARY"

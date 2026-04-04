@@ -1,0 +1,162 @@
+name: "Build Nightly"
+
+run-name: "Nightly — ${{ github.sha }}"
+
+on:
+  schedule:
+    # ~midnight IST (18:27 UTC), offset from :00/:30 to reduce fleet contention
+    - cron: '27 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  prepare:
+    name: Prepare nightly tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Compute tag
+        id: tag
+        run: |
+          DATE=$(date -u +%Y%m%d)
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          TAG="nightly-${DATE}-${SHORT_SHA}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=0.0.0-nightly.${DATE}" >> "$GITHUB_OUTPUT"
+
+  # ── Docker: Go apps ──────────────────────────────────────────────────
+  platform-controller:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: platform-controller
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  tunnel-server:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: tunnel-server
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  workmachine-node-manager:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workmachine-node-manager
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  wm-ingress-controller:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: wm-ingress-controller
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  oci-installer:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: oci-installer
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  code-analyzer:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: code-analyzer
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  k3s-backup:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: k3s-backup
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  workspace-base:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workspace-base
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  workspace-comprehensive:
+    needs: [prepare, workspace-base]
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workspace-comprehensive
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  # ── Docker: Web apps ─────────────────────────────────────────────────
+  console:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: console
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  dashboard:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: dashboard
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  website:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: website
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+
+  # ── Binaries: CLI tools ──────────────────────────────────────────────
+  kli:
+    needs: prepare
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kli
+      version: ${{ needs.prepare.outputs.version }}
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  kltun:
+    needs: prepare
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kltun
+      version: ${{ needs.prepare.outputs.version }}
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  # ── Release: nightly pre-releases ────────────────────────────────────
+  release-kli:
+    needs: [prepare, kli]
+    uses: ./.github/workflows/_release-binary.yml
+    with:
+      app: kli
+      version: ${{ needs.prepare.outputs.version }}
+      is_nightly: true
+
+  release-kltun:
+    needs: [prepare, kltun]
+    uses: ./.github/workflows/_release-binary.yml
+    with:
+      app: kltun
+      version: ${{ needs.prepare.outputs.version }}
+      is_nightly: true
