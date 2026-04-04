@@ -163,7 +163,6 @@ jobs:
 
   # ── Deploy to development after all Docker builds succeed ────────────
   deploy:
-    name: Trigger deploy to development
     needs:
       - prepare
       - platform-controller
@@ -177,23 +176,13 @@ jobs:
       - console
       - dashboard
       - website
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dispatch deploy to kloudlite-ci
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.DEPLOY_PAT }}" \
-            https://api.github.com/repos/kloudlite/kloudlite-ci/dispatches \
-            -d '{
-              "event_type": "deploy",
-              "client_payload": {
-                "version": "${{ needs.prepare.outputs.tag }}",
-                "environment": "development",
-                "console": true,
-                "website": true,
-                "oci_installer": true,
-                "is_nightly": true
-              }
-            }'
-          echo "Triggered deploy of ${{ needs.prepare.outputs.tag }} to development"
+    uses: kloudlite/kloudlite-ci/.github/workflows/deploy.yml@development
+    with:
+      version: ${{ needs.prepare.outputs.tag }}
+      environment: development
+      console: true
+      website: true
+      oci-installer: true
+      is_nightly: true
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
