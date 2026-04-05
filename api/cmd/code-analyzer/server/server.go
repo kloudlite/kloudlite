@@ -90,6 +90,19 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// isValidWorkspaceName checks that a workspace name does not contain path
+// traversal sequences or slashes that could escape the storage directory.
+func isValidWorkspaceName(name string) bool {
+	if name == "" || name == "." || name == ".." {
+		return false
+	}
+	if strings.ContainsAny(name, "/\\") {
+		return false
+	}
+	cleaned := filepath.Clean(name)
+	return cleaned == name && !strings.Contains(cleaned, "..")
+}
+
 // clearWorkspaceCache clears the findings cache and manifest for a workspace
 // This forces a full re-analysis on the next run
 func (s *Server) clearWorkspaceCache(workspace string) {
@@ -197,6 +210,10 @@ func (s *Server) handleReports(w http.ResponseWriter, r *http.Request) {
 	}
 
 	workspace := parts[0]
+	if !isValidWorkspaceName(workspace) {
+		http.Error(w, "Invalid workspace name", http.StatusBadRequest)
+		return
+	}
 	reportType := parts[1]
 
 	// Handle aggregated reports separately
@@ -284,6 +301,10 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Workspace name required", http.StatusBadRequest)
 		return
 	}
+	if !isValidWorkspaceName(workspace) {
+		http.Error(w, "Invalid workspace name", http.StatusBadRequest)
+		return
+	}
 
 	// Check if already in progress
 	if s.queue.IsInProgress(workspace) {
@@ -334,6 +355,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	workspace := strings.TrimPrefix(r.URL.Path, "/status/")
 	if workspace == "" {
 		http.Error(w, "Workspace name required", http.StatusBadRequest)
+		return
+	}
+	if !isValidWorkspaceName(workspace) {
+		http.Error(w, "Invalid workspace name", http.StatusBadRequest)
 		return
 	}
 

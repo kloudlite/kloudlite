@@ -174,11 +174,30 @@ func (s *Storage) GetBasePath() string {
 	return s.basePath
 }
 
+// safePath builds a path under basePath and verifies the result does not escape
+// the storage root. Returns an error if any component contains path traversal.
+func (s *Storage) safePath(components ...string) (string, error) {
+	for _, c := range components {
+		if c == "" || c == "." || c == ".." || strings.ContainsAny(c, "/\\") {
+			return "", fmt.Errorf("invalid path component: %q", c)
+		}
+	}
+	parts := append([]string{s.basePath}, components...)
+	joined := filepath.Join(parts...)
+	cleaned := filepath.Clean(joined)
+	if !strings.HasPrefix(cleaned, filepath.Clean(s.basePath)+string(filepath.Separator)) && cleaned != filepath.Clean(s.basePath) {
+		return "", fmt.Errorf("path escapes storage root: %q", joined)
+	}
+	return cleaned, nil
+}
+
 // SaveReport saves a report to storage
 func (s *Storage) SaveReport(workspace string, report *Report) error {
 	// Create workspace directory if needed
-	workspaceDir := filepath.Join(s.basePath, workspace)
-	reportDir := filepath.Join(workspaceDir, string(report.Type))
+	reportDir, err := s.safePath(workspace, string(report.Type))
+	if err != nil {
+		return fmt.Errorf("invalid workspace or report type: %w", err)
+	}
 
 	if err := os.MkdirAll(reportDir, 0755); err != nil {
 		return fmt.Errorf("failed to create report directory: %w", err)
@@ -222,7 +241,11 @@ func (s *Storage) SaveReport(workspace string, report *Report) error {
 
 // GetLatestReport retrieves the latest report for a workspace
 func (s *Storage) GetLatestReport(workspace string, reportType ReportType) (*Report, error) {
-	latestFile := filepath.Join(s.basePath, workspace, string(reportType), "latest.json")
+	reportDir, err := s.safePath(workspace, string(reportType))
+	if err != nil {
+		return nil, fmt.Errorf("invalid workspace or report type: %w", err)
+	}
+	latestFile := filepath.Join(reportDir, "latest.json")
 
 	data, err := os.ReadFile(latestFile)
 	if err != nil {
@@ -242,7 +265,10 @@ func (s *Storage) GetLatestReport(workspace string, reportType ReportType) (*Rep
 
 // GetReportHistory returns list of historical reports
 func (s *Storage) GetReportHistory(workspace string, reportType ReportType) ([]ReportInfo, error) {
-	reportDir := filepath.Join(s.basePath, workspace, string(reportType))
+	reportDir, err := s.safePath(workspace, string(reportType))
+	if err != nil {
+		return nil, fmt.Errorf("invalid workspace or report type: %w", err)
+	}
 
 	entries, err := os.ReadDir(reportDir)
 	if err != nil {
@@ -311,7 +337,11 @@ func (s *Storage) GetReport(workspace string, reportType ReportType, filename st
 
 // GetMetadata retrieves workspace metadata
 func (s *Storage) GetMetadata(workspace string) (*WorkspaceMetadata, error) {
-	metadataFile := filepath.Join(s.basePath, workspace, "metadata.json")
+	wsDir, err := s.safePath(workspace)
+	if err != nil {
+		return nil, fmt.Errorf("invalid workspace: %w", err)
+	}
+	metadataFile := filepath.Join(wsDir, "metadata.json")
 
 	data, err := os.ReadFile(metadataFile)
 	if err != nil {
@@ -358,8 +388,10 @@ func (s *Storage) DeleteWorkspaceReports(workspace string) error {
 // SaveAggregatedReport saves an aggregated report to storage
 func (s *Storage) SaveAggregatedReport(workspace string, report *AggregatedReport) error {
 	// Create workspace directory if needed
-	workspaceDir := filepath.Join(s.basePath, workspace)
-	reportDir := filepath.Join(workspaceDir, string(ReportTypeAggregated))
+	reportDir, err := s.safePath(workspace, string(ReportTypeAggregated))
+	if err != nil {
+		return fmt.Errorf("invalid workspace: %w", err)
+	}
 
 	if err := os.MkdirAll(reportDir, 0755); err != nil {
 		return fmt.Errorf("failed to create report directory: %w", err)
@@ -403,7 +435,11 @@ func (s *Storage) SaveAggregatedReport(workspace string, report *AggregatedRepor
 
 // GetLatestAggregatedReport retrieves the latest aggregated report for a workspace
 func (s *Storage) GetLatestAggregatedReport(workspace string) (*AggregatedReport, error) {
-	latestFile := filepath.Join(s.basePath, workspace, string(ReportTypeAggregated), "latest.json")
+	reportDir, err := s.safePath(workspace, string(ReportTypeAggregated))
+	if err != nil {
+		return nil, fmt.Errorf("invalid workspace: %w", err)
+	}
+	latestFile := filepath.Join(reportDir, "latest.json")
 
 	data, err := os.ReadFile(latestFile)
 	if err != nil {
@@ -442,7 +478,11 @@ func (s *Storage) updateAggregatedMetadata(workspace string, report *AggregatedR
 		return err
 	}
 
-	metadataFile := filepath.Join(s.basePath, workspace, "metadata.json")
+	wsDir, err := s.safePath(workspace)
+	if err != nil {
+		return fmt.Errorf("invalid workspace: %w", err)
+	}
+	metadataFile := filepath.Join(wsDir, "metadata.json")
 	return os.WriteFile(metadataFile, data, 0644)
 }
 
@@ -467,7 +507,11 @@ func (s *Storage) updateMetadata(workspace string, report *Report) error {
 		return err
 	}
 
-	metadataFile := filepath.Join(s.basePath, workspace, "metadata.json")
+	wsDir, err := s.safePath(workspace)
+	if err != nil {
+		return fmt.Errorf("invalid workspace: %w", err)
+	}
+	metadataFile := filepath.Join(wsDir, "metadata.json")
 	return os.WriteFile(metadataFile, data, 0644)
 }
 
