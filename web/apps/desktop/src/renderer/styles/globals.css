@@ -1,0 +1,22 @@
+@import '@kloudlite/ui/src/globals.css';
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+webview {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
