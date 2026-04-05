@@ -142,6 +142,15 @@ func extractTarGz(srcFile string, destDir string) error {
 			}
 			outFile.Close()
 		case tar.TypeSymlink:
+			// Validate symlink target stays within destDir
+			linkTarget := header.Linkname
+			if !filepath.IsAbs(linkTarget) {
+				linkTarget = filepath.Join(filepath.Dir(targetPath), linkTarget)
+			}
+			cleanTarget := filepath.Clean(linkTarget)
+			if !strings.HasPrefix(cleanTarget, filepath.Clean(destDir)+string(filepath.Separator)) && cleanTarget != filepath.Clean(destDir) {
+				return fmt.Errorf("symlink %s targets outside destination: %s", header.Name, header.Linkname)
+			}
 			// Ensure parent directory exists
 			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
 				return fmt.Errorf("failed to create parent directory: %w", err)
