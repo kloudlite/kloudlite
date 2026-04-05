@@ -17,6 +17,7 @@ interface TabStore {
   closeTab: (id: string) => void
   setActiveTab: (id: string) => void
   updateTab: (id: string, updates: Partial<Tab>) => void
+  moveTab: (fromIndex: number, toIndex: number) => void
 }
 
 let nextId = 1
@@ -74,5 +75,14 @@ export const useTabStore = create<TabStore>((set, get) => ({
     set((state) => ({
       tabs: state.tabs.map((t) => (t.id === id ? { ...t, ...updates } : t))
     }))
+  },
+
+  moveTab: (fromIndex: number, toIndex: number) => {
+    set((state) => {
+      const newTabs = [...state.tabs]
+      const [moved] = newTabs.splice(fromIndex, 1)
+      newTabs.splice(toIndex, 0, moved)
+      return { tabs: newTabs }
+    })
   }
 }))
