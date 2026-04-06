@@ -37,7 +37,7 @@ jobs:
       - name: Set version
         working-directory: web/apps/desktop
         run: |
-          bun pkg set version=${{ inputs.version }}
+          node -e "const p=require('./package.json');p.version='${{ inputs.version }}';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
 
       - name: Import Apple certificate
         env:
@@ -117,7 +117,7 @@ jobs:
       - name: Set version
         working-directory: web/apps/desktop
         run: |
-          bun pkg set version=${{ inputs.version }}
+          node -e "const p=require('./package.json');p.version='${{ inputs.version }}';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
 
       - name: Build
         working-directory: web/apps/desktop
