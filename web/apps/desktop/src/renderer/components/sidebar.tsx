@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { PanelLeft, ArrowLeft, ArrowRight, RotateCw } from 'lucide-react'
 import ViewPager from 'react-view-pager-touch'
 import { cn } from '@/lib/utils'
@@ -9,6 +9,7 @@ import { SidebarEnvironments } from './sidebar-environments'
 import { SidebarWorkspaces } from './sidebar-workspaces'
 import { SidebarBrowse } from './sidebar-browse'
 import { TrafficLights } from './traffic-lights'
+import { WorkMachineBar } from './workmachine-bar'
 
 const MODES: AppMode[] = ['environments', 'workspaces', 'browse']
 
@@ -32,6 +33,18 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
   const modeIndex = MODES.indexOf(mode)
 
   const viewPagerRef = useRef<any>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Update ViewPager width when sidebar resizes
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(() => {
+      viewPagerRef.current?.updateWidth?.()
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const wheelIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wheelActiveRef = useRef(false)
   const fakeXRef = useRef(0)
@@ -132,8 +145,11 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
         </div>
       </div>
 
+      {/* Mode tabs — top */}
+      <ModeTabs />
+
       {/* Swipeable sidebar content */}
-      <div className="min-h-0 flex-1 overflow-hidden" onWheel={handleWheel}>
+      <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden" onWheel={handleWheel}>
         <ViewPager
           ref={viewPagerRef}
           items={MODES}
@@ -152,8 +168,8 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
         />
       </div>
 
-      {/* Mode tabs — bottom */}
-      <ModeTabs />
+      {/* WorkMachine status bar */}
+      <WorkMachineBar />
     </div>
   )
 }

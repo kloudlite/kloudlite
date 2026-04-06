@@ -4,7 +4,7 @@ import { WebviewArea, type WebviewAreaHandle } from '@/components/webview-area'
 import { DashboardWebview, type DashboardWebviewHandle } from '@/components/dashboard-webview'
 import { NewTabBar } from '@/components/command-bar'
 import { useTabStore } from '@/store/tabs'
-import { useModeStore } from '@/store/mode'
+import { useModeStore, type AppMode } from '@/store/mode'
 import { EnvironmentContent, NewEnvironmentDialog } from '@/components/environment-content'
 import { EmptyState } from '@/components/empty-state'
 import { WorkspaceContent, NewWorkspaceDialog } from '@/components/workspace-content'
@@ -119,8 +119,18 @@ export function App() {
   useEffect(() => {
     window.electronAPI.onShortcut((action) => {
       const currentMode = useModeStore.getState().mode
+      const MODES: AppMode[] = ['environments', 'workspaces', 'browse']
 
       switch (action) {
+        case 'mode-1':
+          useModeStore.getState().setMode(MODES[0])
+          break
+        case 'mode-2':
+          useModeStore.getState().setMode(MODES[1])
+          break
+        case 'mode-3':
+          useModeStore.getState().setMode(MODES[2])
+          break
         case 'new-tab':
           if (currentMode === 'browse') {
             window.dispatchEvent(new CustomEvent('open-command-bar'))
