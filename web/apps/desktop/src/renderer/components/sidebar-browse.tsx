@@ -23,7 +23,7 @@ export function SidebarBrowse() {
         <div className="shrink-0 px-3 pb-2">
           <div className="relative">
             <button
-              className="no-drag flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-sidebar-foreground/70 transition-all duration-150 hover:bg-sidebar-foreground/[0.06]"
+              className="no-drag flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/70 transition-all duration-150 hover:bg-sidebar-foreground/[0.06]"
               onClick={() => setEnvPickerOpen(!envPickerOpen)}
             >
               <Globe className="h-3.5 w-3.5 shrink-0" />
@@ -68,11 +68,11 @@ export function SidebarBrowse() {
             <div className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 px-3 pb-1.5">
               Exposed Web Services
             </div>
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col">
               {selectedEnv.services.map((svc) => (
                 <button
                   key={svc.id}
-                  className="no-drag flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[12px] text-sidebar-foreground/65 transition-all duration-150 hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/90"
+                  className="no-drag flex h-9 w-full items-center gap-2.5 rounded-[10px] px-3 text-left text-[13px] text-sidebar-foreground/70 transition-all duration-150 hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/90"
                   onClick={() => addTab(svc.vpnUrl)}
                 >
                   <div className="h-2 w-2 shrink-0 rounded-full bg-emerald-400/60" />

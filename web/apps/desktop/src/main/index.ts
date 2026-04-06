@@ -131,6 +131,32 @@ function createAppMenu(): void {
       ]
     },
     {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Environments',
+          accelerator: 'CmdOrCtrl+1',
+          click: (_item, window) => {
+            window?.webContents.send('shortcut', 'mode-1')
+          }
+        },
+        {
+          label: 'Workspaces',
+          accelerator: 'CmdOrCtrl+2',
+          click: (_item, window) => {
+            window?.webContents.send('shortcut', 'mode-2')
+          }
+        },
+        {
+          label: 'Browse',
+          accelerator: 'CmdOrCtrl+3',
+          click: (_item, window) => {
+            window?.webContents.send('shortcut', 'mode-3')
+          }
+        },
+      ]
+    },
+    {
       label: 'Window',
       submenu: [
         { role: 'minimize' },
