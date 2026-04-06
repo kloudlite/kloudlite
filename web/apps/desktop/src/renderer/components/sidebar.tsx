@@ -185,7 +185,7 @@ export function Sidebar({ onNavigate, onGoBack, onGoForward, onReload, onToggleS
 
         {/* Tab list */}
         <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto py-1">
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {tabs.map((tab, i) => (
               <TabItem
                 key={tab.id}

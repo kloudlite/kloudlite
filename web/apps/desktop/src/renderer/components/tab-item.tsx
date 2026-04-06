@@ -115,7 +115,7 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
       <div
         ref={ref}
         className={cn(
-          'group flex h-9 cursor-pointer items-center gap-2.5 rounded-[10px] px-3 text-[13px] transition-all duration-150',
+          'group flex h-9 cursor-default items-center gap-2.5 rounded-[10px] px-3 text-[13px] transition-all duration-150',
           isActive
             ? 'bg-sidebar-foreground/[0.12] text-sidebar-foreground/90 font-medium'
             : 'text-sidebar-foreground/65 hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground/85',

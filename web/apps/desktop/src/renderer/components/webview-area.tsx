@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useTabStore } from '@/store/tabs'
+import { useHistoryStore, type PageMetadata } from '@/store/history'
 import { NavIndicator } from './nav-indicator'
 
 declare global {
@@ -47,6 +48,8 @@ interface WebviewAreaProps {
 
 export function WebviewArea({ onHandle }: WebviewAreaProps) {
   const { tabs, activeTabId, updateTab, addTab } = useTabStore()
+  const addHistoryEntry = useHistoryStore((s) => s.addEntry)
+  const updateHistoryMetadata = useHistoryStore((s) => s.updateMetadata)
   const webviewRefs = useRef<Map<string, WebviewElement>>(new Map())
   const readyRefs = useRef<Set<string>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
@@ -88,8 +91,18 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
   }, [activeTabId, getActiveWebview, onHandle, updateTab])
 
   // Listen for new-tab URLs from main process (webview popup interception)
+  // Debounce and deduplicate to prevent redirect chains creating multiple tabs
   useEffect(() => {
+    let lastUrl = ''
+    let lastTime = 0
     window.electronAPI.onOpenUrlInNewTab((url) => {
+      const now = Date.now()
+      // Skip if same URL within 1 second, or any URL within 300ms
+      if ((url === lastUrl && now - lastTime < 1000) || (now - lastTime < 300)) {
+        return
+      }
+      lastUrl = url
+      lastTime = now
       addTab(url)
     })
   }, [addTab])
@@ -136,10 +149,19 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
             if (readyRefs.current.has(tabId)) {
               if (direction === 'back') wv.goBack()
               else wv.goForward()
-              // Trigger flash — use counter to re-trigger even for same direction
               navFlashCounter.current++
               setNavFlash(direction)
               setTimeout(() => setNavFlash(null), 500)
+            }
+          } else if (e.channel === 'page-metadata') {
+            const metadata = e.args[0] as PageMetadata
+            const currentUrl = wv.getURL()
+            if (currentUrl && currentUrl !== 'about:blank') {
+              updateHistoryMetadata(currentUrl, metadata)
+              updateTab(tabId, {
+                siteName: metadata.siteName,
+                keywords: metadata.keywords
+              })
             }
           }
         }) as EventListener)
@@ -149,13 +171,18 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
         })
 
         wv.addEventListener('did-stop-loading', () => {
+          const currentUrl = wv.getURL()
+          const currentTitle = wv.getTitle() || currentUrl
           updateTab(tabId, {
             isLoading: false,
-            url: wv.getURL(),
-            title: wv.getTitle() || wv.getURL(),
+            url: currentUrl,
+            title: currentTitle,
             canGoBack: wv.canGoBack(),
             canGoForward: wv.canGoForward()
           })
+          // Record in history
+          const tab = useTabStore.getState().tabs.find(t => t.id === tabId)
+          addHistoryEntry(currentUrl, currentTitle, tab?.favicon || '')
         })
 
         wv.addEventListener('page-title-updated', ((e: any) => {

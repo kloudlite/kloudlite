@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Shield, ShieldAlert, ShieldCheck, ChevronRight, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -28,6 +28,12 @@ export function CertPopover({ url, anchorRect, onClose }: CertPopoverProps) {
   const [loading, setLoading] = useState(true)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [showDetails, setShowDetails] = useState(false)
+  const [exiting, setExiting] = useState(false)
+
+  const close = useCallback(() => {
+    setExiting(true)
+    setTimeout(onClose, 150)
+  }, [onClose])
 
   useEffect(() => {
     setLoading(true)
@@ -46,10 +52,10 @@ export function CertPopover({ url, anchorRect, onClose }: CertPopoverProps) {
     : { top: 80, left: 12 }
 
   return (
-    <div className="fixed inset-0 z-50" onClick={onClose}>
+    <div className="fixed inset-0 z-50" onClick={close}>
       <div
-        className="fixed w-[320px] origin-top-left animate-[popover-in_150ms_ease-out] overflow-hidden rounded-xl border border-border/50 bg-popover shadow-2xl shadow-black/20"
-        style={style}
+        className="fixed w-[320px] origin-top-left overflow-hidden rounded-xl border border-border/50 bg-popover shadow-2xl shadow-black/20"
+        style={{ ...style, animation: exiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -75,7 +81,7 @@ export function CertPopover({ url, anchorRect, onClose }: CertPopoverProps) {
           </div>
           <button
             className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-            onClick={onClose}
+            onClick={close}
           >
             <X className="h-3.5 w-3.5" />
           </button>

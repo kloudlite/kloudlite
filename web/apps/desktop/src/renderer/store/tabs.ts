@@ -8,6 +8,8 @@ export interface Tab {
   isLoading: boolean
   canGoBack: boolean
   canGoForward: boolean
+  siteName?: string
+  keywords?: string
 }
 
 interface TabStore {
