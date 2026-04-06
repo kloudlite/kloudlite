@@ -144,6 +144,14 @@ jobs:
       version: ${{ needs.prepare.outputs.version }}
       tag: ${{ needs.prepare.outputs.tag }}
 
+  desktop:
+    needs: prepare
+    uses: ./.github/workflows/_build-desktop.yml
+    with:
+      tag: ${{ needs.prepare.outputs.tag }}
+      version: ${{ needs.prepare.outputs.version }}
+    secrets: inherit
+
   # ── Release: nightly pre-releases ────────────────────────────────────
   release-kli:
     needs: [prepare, kli]

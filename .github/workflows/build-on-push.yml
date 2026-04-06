@@ -25,6 +25,7 @@ jobs:
       website: ${{ steps.filter.outputs.website }}
       kli: ${{ steps.filter.outputs.kli }}
       kltun: ${{ steps.filter.outputs.kltun }}
+      desktop: ${{ steps.filter.outputs.desktop }}
       tag: ${{ steps.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +55,8 @@ jobs:
               - 'api/pkg/**'
               - 'api/go.mod'
               - 'api/go.sum'
+            desktop:
+              - 'web/apps/desktop/**'
 
       - name: Compute tag
         id: tag
@@ -75,6 +78,7 @@ jobs:
           echo "| website | ${{ steps.filter.outputs.website }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| kli | ${{ steps.filter.outputs.kli }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| kltun | ${{ steps.filter.outputs.kltun }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| desktop | ${{ steps.filter.outputs.desktop }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Tag:** \`${{ steps.tag.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
 
@@ -194,3 +198,12 @@ jobs:
       app: kltun
       version: ${{ needs.detect.outputs.tag }}
       tag: ${{ needs.detect.outputs.tag }}
+
+  desktop:
+    needs: detect
+    if: needs.detect.outputs.desktop == 'true'
+    uses: ./.github/workflows/_build-desktop.yml
+    with:
+      tag: ${{ needs.detect.outputs.tag }}
+      version: 0.0.0-${{ needs.detect.outputs.tag }}
+    secrets: inherit
