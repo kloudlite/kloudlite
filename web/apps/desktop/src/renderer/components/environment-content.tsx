@@ -1,7 +1,8 @@
 import { cn } from '@/lib/utils'
-import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon, RotateCcw } from 'lucide-react'
+import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon } from 'lucide-react'
 import { useState } from 'react'
 import { CodeEditor } from './code-editor'
+import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 
 interface EnvironmentContentProps {
   envName: string
@@ -58,6 +59,60 @@ function CopyButton({ text }: { text: string }) {
       {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
     </button>
   )
+}
+
+// Dummy compositions
+const COMPOSITIONS: Record<string, string> = {
+  'a1b2c3': `version: "3.8"
+services:
+  frontend:
+    image: kloudlite/frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://api-server:8080
+  api-server:
+    image: kloudlite/api:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - postgres
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=<set-in-secret>`,
+  'd4e5f6': `version: "3.8"
+services:
+  web-app:
+    image: kloudlite/web:dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+  auth-service:
+    image: kloudlite/auth:dev
+    ports:
+      - "9090:9090"`,
+  'g7h8i9': `version: "3.8"
+services:
+  gateway:
+    image: kloudlite/gateway:stable
+    ports:
+      - "443:8443"
+      - "80:8080"
+  dashboard:
+    image: kloudlite/dashboard:stable
+    ports:
+      - "3000:3000"`,
 }
 
 function ServicesView({ envHash }: { envHash: string }) {
@@ -377,344 +432,10 @@ function ConfigsView({ envHash }: { envHash: string }) {
   )
 }
 
-// Snapshots — tree structure (restore + new snapshot = branch)
-interface Snapshot {
-  id: string
-  name: string
-  description: string
-  author: string
-  date: string
-  size: string
-  parentId: string | null
-  isHead?: boolean
-}
-
-// Tree node for rendering
-interface TreeNode {
-  snapshot: Snapshot
-  children: TreeNode[]
-  depth: number
-  isOnHeadPath: boolean
-}
-
-// Demo data generator — produces realistic snapshot trees
-function generateSnapshots(seed: string): Snapshot[] {
-  const hash = (s: string) => {
-    let h = 0
-    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0
-    return Math.abs(h)
-  }
-  const r = hash(seed)
-
-  const mainSteps = [
-    { name: 'Environment created', desc: 'Empty environment', size: '0.2 MB' },
-    { name: 'Initial service deployment', desc: '2 services, 3 envvars', size: '8.1 MB' },
-    { name: 'Add database service', desc: '3 services, 5 envvars', size: '10.2 MB' },
-    { name: 'Configure networking', desc: '3 services, 6 envvars', size: '11.0 MB' },
-    { name: 'Add caching layer', desc: '4 services, 7 envvars', size: '11.8 MB' },
-    { name: 'Production readiness', desc: '4 services, 8 envvars, 2 configs', size: '12.4 MB' },
-  ]
-
-  const branchSteps = [
-    ['Try alternative DB', 'Alternative DB tuning', 'Alternative DB migration'],
-    ['Different caching strategy', 'Cache cluster setup'],
-    ['Canary deployment test', 'Canary with traffic split'],
-    ['Minimal config experiment'],
-  ]
-
-  const authors = ['karthik', 'sohail']
-  const times = ['2 weeks ago', '10 days ago', '1 week ago', '5 days ago', '3 days ago', '1 day ago', '2 hours ago']
-
-  const count = 4 + (r % 3) // 4-6 main snapshots
-  const snapshots: Snapshot[] = []
-
-  // Main line
-  for (let i = 0; i < count && i < mainSteps.length; i++) {
-    snapshots.push({
-      id: `s${i + 1}`,
-      name: mainSteps[i].name,
-      description: mainSteps[i].desc,
-      author: authors[i % 2],
-      date: times[i] || `${i} days ago`,
-      size: mainSteps[i].size,
-      parentId: i === 0 ? null : `s${i}`,
-      isHead: i === count - 1,
-    })
-  }
-
-  // Branches — fork from various main-line points
-  const branchCount = 1 + (r % 3) // 1-3 branches
-  for (let b = 0; b < branchCount && b < branchSteps.length; b++) {
-    const forkPoint = 1 + ((r + b * 7) % (count - 2)) // fork from s2..s(n-1)
-    const steps = branchSteps[b]
-    for (let j = 0; j < steps.length; j++) {
-      const svcCount = 2 + ((r + b + j) % 3)
-      const envCount = 3 + ((r + b + j) % 4)
-      snapshots.push({
-        id: `b${b + 1}-${j + 1}`,
-        name: steps[j],
-        description: `${svcCount} services, ${envCount} envvars`,
-        author: authors[(b + j) % 2],
-        date: `${3 + b * 2 + j} days ago`,
-        size: `${(8 + b + j * 0.8).toFixed(1)} MB`,
-        parentId: j === 0 ? `s${forkPoint + 1}` : `b${b + 1}-${j}`,
-      })
-    }
-  }
-
-  return snapshots
-}
-
-const SNAPSHOTS: Record<string, Snapshot[]> = {
-  'a1b2c3': generateSnapshots('staging'),
-  'd4e5f6': generateSnapshots('dev'),
-  'g7h8i9': generateSnapshots('prod'),
-}
-
-function buildTree(snapshots: Snapshot[]): TreeNode | null {
-  const map = new Map<string, TreeNode>()
-  const headId = snapshots.find((s) => s.isHead)?.id
-
-  // Find head path
-  const headPath = new Set<string>()
-  if (headId) {
-    let current = headId
-    while (current) {
-      headPath.add(current)
-      const snap = snapshots.find((s) => s.id === current)
-      current = snap?.parentId ?? ''
-    }
-  }
-
-  for (const snap of snapshots) {
-    map.set(snap.id, { snapshot: snap, children: [], depth: 0, isOnHeadPath: headPath.has(snap.id) })
-  }
-
-  let root: TreeNode | null = null
-  for (const snap of snapshots) {
-    const node = map.get(snap.id)!
-    if (snap.parentId && map.has(snap.parentId)) {
-      const parent = map.get(snap.parentId)!
-      parent.children.push(node)
-      node.depth = parent.depth + 1
-    } else {
-      root = node
-    }
-  }
-  return root
-}
-
-interface FlatItem {
-  node: TreeNode
-  col: number       // which column this node is in
-  showFork: boolean  // show horizontal fork line from parent column
-  forkFromCol: number
-}
-
-function flattenTree(root: TreeNode): FlatItem[] {
-  const result: FlatItem[] = []
-
-  function walk(n: TreeNode, col: number, forkFromCol: number, showFork: boolean) {
-    result.push({ node: n, col, showFork, forkFromCol })
-
-    // Sort: head path first
-    const sorted = [...n.children].sort((a, b) => {
-      if (a.isOnHeadPath && !b.isOnHeadPath) return -1
-      if (!a.isOnHeadPath && b.isOnHeadPath) return 1
-      return 0
-    })
-
-    sorted.forEach((child, i) => {
-      if (i === 0) {
-        // First child continues in same column
-        walk(child, col, col, false)
-      } else {
-        // Additional children fork to a new column
-        walk(child, col + i, col, true)
-      }
-    })
-  }
-
-  walk(root, 0, 0, false)
-  return result
-}
-
+// Snapshots — uses shared SnapshotTree component
 function SnapshotsView({ envHash, envName }: { envHash: string; envName: string }) {
-  const snapshots = SNAPSHOTS[envHash] || []
-  const tree = buildTree(snapshots)
-  const flat = tree ? flattenTree(tree) : []
-  const COL_W = 28
-  const maxCol = Math.max(...flat.map((f) => f.col), 0)
-  const graphWidth = (maxCol + 1) * COL_W
-
-  function hasBelow(col: number, afterIdx: number): boolean {
-    for (let j = afterIdx + 1; j < flat.length; j++) {
-      if (flat[j].col === col) return true
-    }
-    return false
-  }
-
-  function hasAbove(col: number, beforeIdx: number): boolean {
-    for (let j = 0; j < beforeIdx; j++) {
-      if (flat[j].col === col) return true
-    }
-    return false
-  }
-
-  // Check if a column needs a passthrough line at a given row
-  // A column needs a line if there are nodes in that column both above and below
-  function needsPassthrough(col: number, rowIdx: number): boolean {
-    return hasAbove(col, rowIdx) && hasBelow(col, rowIdx)
-  }
-
-  // Check if this row's fork originates from a column that needs a line drawn down to it
-  function needsForkLine(col: number, rowIdx: number): boolean {
-    const item = flat[rowIdx]
-    if (!item.showFork) return false
-    // The fork comes from forkFromCol — we need a vertical line in that col from above down to this row
-    return true
-  }
-
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-[16px] font-semibold text-foreground">Snapshots</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">{snapshots.length} snapshots for {envName}</p>
-        </div>
-        <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-          <Plus className="h-3.5 w-3.5" />
-          Take Snapshot
-        </button>
-      </div>
-
-      <div className="mt-6">
-        {flat.map((item, i) => {
-          const { node: n, col, showFork, forkFromCol } = item
-          const snap = n.snapshot
-          const hasContinuation = hasBelow(col, i)
-
-          return (
-            <div key={snap.id} className="relative flex" style={{ minHeight: 72 }}>
-              {/* Graph area */}
-              <div className="relative shrink-0" style={{ width: graphWidth + 8 }}>
-                {/* Vertical lines for all columns */}
-                {Array.from({ length: maxCol + 1 }).map((_, c) => {
-                  const isCurrent = c === col
-                  const lineColor = (c === 0 || flat.find((f) => f.col === c)?.node.isOnHeadPath)
-                    ? 'var(--primary)' : 'var(--border)'
-                  const lineOpacity = (c === 0 || flat.find((f) => f.col === c)?.node.isOnHeadPath)
-                    ? 0.4 : 0.5
-
-                  if (isCurrent && !showFork) {
-                    // Current column: top half + bottom half around the dot
-                    return (
-                      <div key={c}>
-                        {hasAbove(c, i) && (
-                          <div className="absolute top-0 h-1/2" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
-                        )}
-                        {hasContinuation && (
-                          <div className="absolute bottom-0 h-1/2" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
-                        )}
-                      </div>
-                    )
-                  }
-
-                  // Passthrough: column has nodes above and below this row
-                  if (!isCurrent && needsPassthrough(c, i)) {
-                    return (
-                      <div key={c} className="absolute top-0 h-full" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
-                    )
-                  }
-
-                  // Fork source column: needs line from above down to the fork point
-                  if (!isCurrent && showFork && c === forkFromCol) {
-                    return (
-                      <div key={c} className="absolute top-0 h-1/2" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
-                    )
-                  }
-
-                  return <div key={c} />
-                })}
-
-                {/* Fork: horizontal line from parent column to this column + curve */}
-                {showFork && (
-                  <div
-                    className="absolute top-1/2 -translate-y-[1px] rounded-bl-lg"
-                    style={{
-                      left: forkFromCol * COL_W + 6,
-                      width: (col - forkFromCol) * COL_W,
-                      height: 2,
-                      backgroundColor: 'var(--border)',
-                      opacity: 0.5,
-                    }}
-                  />
-                )}
-
-                {/* Dot */}
-                <div
-                  className="absolute top-1/2 z-10 -translate-y-1/2"
-                  style={{ left: col * COL_W }}
-                >
-                  <div className={cn(
-                    'h-3 w-3 rounded-full',
-                    snap.isHead
-                      ? 'bg-primary ring-2 ring-primary/30 ring-offset-1 ring-offset-background'
-                      : n.isOnHeadPath
-                        ? 'bg-primary/60'
-                        : 'border-2 border-muted-foreground/30 bg-background'
-                  )} />
-                </div>
-              </div>
-
-              {/* Card */}
-              <div className={cn(
-                'mb-2 flex-1 rounded-xl border px-4 py-3 transition-colors',
-                snap.isHead
-                  ? 'border-primary/30 bg-primary/[0.03]'
-                  : n.isOnHeadPath
-                    ? 'border-primary/15 hover:bg-accent/20'
-                    : 'border-border/40 hover:bg-accent/20'
-              )}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-[13px] font-medium text-foreground">{snap.name}</p>
-                      {snap.isHead && (
-                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                          HEAD
-                        </span>
-                      )}
-                      {!n.isOnHeadPath && (
-                        <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          branch
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/70">{snap.description}</p>
-                    <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                      <span>{snap.author}</span>
-                      <span>·</span>
-                      <span>{snap.date}</span>
-                      <span>·</span>
-                      <span>{snap.size}</span>
-                    </div>
-                  </div>
-
-                  {!snap.isHead && (
-                    <button className="flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                      <RotateCcw className="h-3 w-3" />
-                      Restore
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
+  const snapshots = generateSnapshots(envHash)
+  return <SnapshotTree snapshots={snapshots} title="Snapshots" subtitle={`${snapshots.length} snapshots for ${envName}`} />
 }
 
 function SettingsView({ envName, envHash }: { envName: string; envHash: string }) {

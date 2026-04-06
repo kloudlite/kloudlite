@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { useTabStore } from '@/store/tabs'
 import { useHistoryStore, type PageMetadata } from '@/store/history'
 import { NavIndicator } from './nav-indicator'
+import { EmptyState } from './empty-state'
 
 declare global {
   interface Window {
@@ -235,9 +236,10 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
     <div ref={containerRef} className="relative h-full w-full">
       <NavIndicator direction={navFlash} />
       {tabs.length === 0 && (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          <p className="text-sm text-center">Select a service or press <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">Cmd+T</kbd> to browse</p>
-        </div>
+        <EmptyState
+          title="Browse Services"
+          description={<>Select a service from the sidebar or press <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">Cmd+T</kbd></>}
+        />
       )}
     </div>
   )

@@ -14,6 +14,7 @@ export interface ElectronAPI {
   onThemeChanged: (callback: (theme: 'dark' | 'light') => void) => void
   onOpenUrlInNewTab: (callback: (url: string) => void) => void
   getCertificate: (url: string) => Promise<any>
+  showPopupMenu: (items: { label: string; id: string; type?: string; danger?: boolean }[]) => Promise<string | null>
 }
 
 const api: ElectronAPI = {
@@ -26,7 +27,8 @@ const api: ElectronAPI = {
   getTheme: () => ipcRenderer.invoke('get-theme'),
   onThemeChanged: (callback) => ipcRenderer.on('theme-changed', (_event, theme) => callback(theme)),
   onOpenUrlInNewTab: (callback) => ipcRenderer.on('open-url-in-new-tab', (_event, url) => callback(url)),
-  getCertificate: (url) => ipcRenderer.invoke('get-certificate', url)
+  getCertificate: (url) => ipcRenderer.invoke('get-certificate', url),
+  showPopupMenu: (items) => ipcRenderer.invoke('show-popup-menu', items)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)

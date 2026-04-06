@@ -302,6 +302,30 @@ ipcMain.handle('show-context-menu', (event, webContentsId: number, x: number, y:
   menu.popup({ window })
 })
 
+// IPC: show a generic popup menu with custom items
+ipcMain.handle('show-popup-menu', (event, items: { label: string; id: string; type?: 'separator' | 'normal'; danger?: boolean }[]) => {
+  const window = BrowserWindow.fromWebContents(event.sender)
+  if (!window) return null
+
+  return new Promise<string | null>((resolve) => {
+    const menu = new Menu()
+    for (const item of items) {
+      if (item.type === 'separator') {
+        menu.append(new MenuItem({ type: 'separator' }))
+      } else {
+        menu.append(new MenuItem({
+          label: item.label,
+          click: () => resolve(item.id),
+        }))
+      }
+    }
+    menu.on('menu-will-close', () => {
+      setTimeout(() => resolve(null), 100)
+    })
+    menu.popup({ window })
+  })
+})
+
 // Handle new-window for webview guests — prevent popups, navigate in app instead
 app.on('web-contents-created', (_event, contents) => {
   if (contents.getType() === 'webview') {
