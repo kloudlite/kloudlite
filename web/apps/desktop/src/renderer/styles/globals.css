@@ -128,27 +128,6 @@ webview {
   border: none;
 }
 
-/* ViewPager */
-.view-pager {
-  overflow: hidden;
-  position: relative;
-  height: 100%;
-  width: 100%;
-}
-.view-pager-canvas {
-  white-space: nowrap;
-  height: 100%;
-}
-.view-pager-view {
-  display: inline-block;
-  vertical-align: top;
-  white-space: normal;
-  height: 100%;
-  width: 100%;
-}
-.view-pager .over {
-  display: none;
-}
 
 /* Custom scrollbar for sidebar */
 .sidebar-scroll::-webkit-scrollbar {
