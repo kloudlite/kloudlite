@@ -3,6 +3,11 @@
   "productName": "Kloudlite",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "name": "Kloudlite",
+    "email": "engineering@kloudlite.io"
+  },
+  "homepage": "https://kloudlite.io",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
