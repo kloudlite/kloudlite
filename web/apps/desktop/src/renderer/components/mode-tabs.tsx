@@ -10,64 +10,43 @@ const modes: { id: AppMode; label: string }[] = [
 
 export function ModeTabs() {
   const { mode, setMode } = useModeStore()
-  const accumulatorRef = useRef(0)
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lastSwipeRef = useRef(0)
-
-  function navigate(direction: 1 | -1) {
-    const now = Date.now()
-    if (now - lastSwipeRef.current < 400) return
-    lastSwipeRef.current = now
-
-    const currentMode = useModeStore.getState().mode
-    const currentIdx = modes.findIndex((m) => m.id === currentMode)
-    const nextIdx = currentIdx + direction
-    if (nextIdx >= 0 && nextIdx < modes.length) {
-      setMode(modes[nextIdx].id)
-    }
-  }
+  const accRef = useRef(0)
+  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lockRef = useRef(false)
 
   function handleWheel(e: React.WheelEvent) {
-    // Ignore vertical scrolls
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX) * 1.5) return
-    if (Math.abs(e.deltaX) < 1) return
-
-    accumulatorRef.current += e.deltaX
-
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
-    idleTimerRef.current = setTimeout(() => {
-      if (Math.abs(accumulatorRef.current) > 50) {
-        navigate(accumulatorRef.current > 0 ? 1 : -1)
+    if (Math.abs(e.deltaX) < 1 || lockRef.current) return
+    accRef.current += e.deltaX
+    if (idleRef.current) clearTimeout(idleRef.current)
+    idleRef.current = setTimeout(() => {
+      if (Math.abs(accRef.current) > 30) {
+        const dir = accRef.current > 0 ? 1 : -1
+        const idx = modes.findIndex((m) => m.id === useModeStore.getState().mode)
+        const next = idx + dir
+        if (next >= 0 && next < modes.length) {
+          lockRef.current = true
+          setMode(modes[next].id)
+          setTimeout(() => { lockRef.current = false }, 500)
+        }
       }
-      accumulatorRef.current = 0
-    }, 60)
+      accRef.current = 0
+    }, 50)
   }
 
   const activeIdx = modes.findIndex((m) => m.id === mode)
 
   return (
-    <div
-      className="no-drag relative shrink-0 px-3 pt-2 pb-3"
-      onWheel={handleWheel}
-    >
-      <div className="relative grid grid-cols-3 gap-0 rounded-[8px] bg-sidebar-foreground/[0.08] p-[3px]">
-        {/* Sliding indicator */}
-        <div
-          className="absolute top-[3px] bottom-[3px] rounded-[6px] bg-sidebar-foreground/[0.15] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-transform duration-200 ease-out"
-          style={{
-            width: `calc((100% - 6px) / 3)`,
-            left: '3px',
-            transform: `translateX(${activeIdx * 100}%)`
-          }}
-        />
+    <div className="no-drag shrink-0 px-3 pt-1 pb-2" onWheel={handleWheel}>
+      <div className="flex items-center rounded-lg bg-sidebar-foreground/[0.06] p-[2px]">
         {modes.map(({ id, label }) => (
           <button
             key={id}
             className={cn(
-              'relative z-10 py-[6px] text-center text-[11px] font-semibold tracking-wide transition-colors duration-150',
+              'relative flex-1 rounded-md py-1.5 text-center text-[11px] font-medium transition-all duration-200',
               mode === id
-                ? 'text-sidebar-foreground'
-                : 'text-sidebar-foreground/45 hover:text-sidebar-foreground/65'
+                ? 'bg-sidebar-foreground/[0.12] text-sidebar-foreground shadow-sm'
+                : 'text-sidebar-foreground/40 hover:text-sidebar-foreground/60'
             )}
             onClick={() => setMode(id)}
           >

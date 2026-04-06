@@ -6,6 +6,8 @@ import { NewTabBar } from '@/components/command-bar'
 import { useTabStore } from '@/store/tabs'
 import { useModeStore } from '@/store/mode'
 import { EnvironmentContent, NewEnvironmentDialog } from '@/components/environment-content'
+import { EmptyState } from '@/components/empty-state'
+import { WorkspaceContent, NewWorkspaceDialog } from '@/components/workspace-content'
 import { cn } from '@/lib/utils'
 
 const MIN_SIDEBAR_WIDTH = 200
@@ -19,7 +21,7 @@ export function App() {
   const envHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const wsHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const { addTab, closeTab, activeTabId, tabs, setActiveTab } = useTabStore()
-  const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog } = useModeStore()
+  const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog, selectedWsId, selectedWsName, wsActiveTab, showNewWsDialog, setShowNewWsDialog } = useModeStore()
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [sidebarPeeking, setSidebarPeeking] = useState(false)
@@ -321,17 +323,19 @@ export function App() {
                   activeTab={envActiveTab}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center bg-background">
-                  <p className="text-[13px] text-muted-foreground">Select an environment</p>
-                </div>
+                <EmptyState title="Select an environment" description="Choose an environment from the sidebar to view its details" />
               )}
             </div>
             <div className="absolute inset-0" style={{ display: mode === 'workspaces' ? 'block' : 'none' }}>
-              <DashboardWebview
-                url={`${DASHBOARD_BASE_URL}/workspaces`}
-                visible={mode === 'workspaces'}
-                onHandle={(h) => { wsHandleRef.current = h }}
-              />
+              {selectedWsId && selectedWsName ? (
+                <WorkspaceContent
+                  wsName={selectedWsName}
+                  wsId={selectedWsId}
+                  activeTab={wsActiveTab}
+                />
+              ) : (
+                <EmptyState title="Select a workspace" description="Choose a workspace from the sidebar to connect" />
+              )}
             </div>
             <div className="absolute inset-0" style={{ display: mode === 'browse' ? 'block' : 'none' }}>
               <WebviewArea onHandle={setHandle} />
@@ -356,6 +360,11 @@ export function App() {
     {/* New Environment dialog */}
     {showNewEnvDialog && (
       <NewEnvironmentDialog onClose={() => setShowNewEnvDialog(false)} />
+    )}
+
+    {/* New Workspace dialog */}
+    {showNewWsDialog && (
+      <NewWorkspaceDialog onClose={() => setShowNewWsDialog(false)} />
     )}
     </>
   )

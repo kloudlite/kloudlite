@@ -1,4 +1,4 @@
-import { ChevronLeft, Server, FileText, Settings, Plus, History } from 'lucide-react'
+import { ChevronLeft, Server, FileText, Settings, Plus, History, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModeStore } from '@/store/mode'
 
@@ -16,6 +16,32 @@ const ENV_TABS = [
   { id: 'snapshots', label: 'Snapshots', icon: History },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
+
+async function showEnvMenu() {
+  const action = await window.electronAPI.showPopupMenu([
+    { label: 'Fork Environment', id: 'fork' },
+    { label: '', id: '', type: 'separator' },
+    { label: 'Delete Environment', id: 'delete', danger: true },
+  ])
+  if (action === 'fork') {
+    // TODO: implement fork
+  } else if (action === 'delete') {
+    // TODO: implement delete
+  }
+}
+
+async function showEnvListMenu(envName: string) {
+  const action = await window.electronAPI.showPopupMenu([
+    { label: 'Fork Environment', id: 'fork' },
+    { label: '', id: '', type: 'separator' },
+    { label: `Delete "${envName}"`, id: 'delete', danger: true },
+  ])
+  if (action === 'fork') {
+    // TODO
+  } else if (action === 'delete') {
+    // TODO
+  }
+}
 
 export function SidebarEnvironments() {
   const { selectedEnvId, envActiveTab, selectEnvironment, setEnvActiveTab, clearSelectedEnv, setShowNewEnvDialog } = useModeStore()
@@ -41,7 +67,13 @@ export function SidebarEnvironments() {
               'h-2.5 w-2.5 shrink-0 rounded-full',
               selectedEnv.status === 'active' ? 'bg-emerald-400' : selectedEnv.status === 'error' ? 'bg-red-400' : 'bg-sidebar-foreground/25'
             )} />
-            <h2 className="text-[14px] font-semibold text-sidebar-foreground/90">{selectedEnv.name}</h2>
+            <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-sidebar-foreground/90">{selectedEnv.name}</h2>
+            <button
+              className="no-drag rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/70"
+              onClick={showEnvMenu}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
           </div>
           <p className="mt-0.5 pl-[18px] text-[11px] text-sidebar-foreground/40">{selectedEnv.owner} · {selectedEnv.visibility}</p>
         </div>
@@ -91,6 +123,10 @@ export function SidebarEnvironments() {
               key={env.id}
               className="no-drag flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[12px] transition-all duration-150 hover:bg-sidebar-foreground/[0.06]"
               onClick={() => selectEnvironment(env.id, env.hash, env.name)}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                showEnvListMenu(env.name)
+              }}
             >
               <div className={cn(
                 'h-2 w-2 shrink-0 rounded-full',
