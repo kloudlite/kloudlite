@@ -1,17 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Sidebar } from '@/components/sidebar'
 import { WebviewArea, type WebviewAreaHandle } from '@/components/webview-area'
+import { DashboardWebview, type DashboardWebviewHandle } from '@/components/dashboard-webview'
 import { NewTabBar } from '@/components/command-bar'
 import { useTabStore } from '@/store/tabs'
+import { useModeStore } from '@/store/mode'
+import { EnvironmentContent, NewEnvironmentDialog } from '@/components/environment-content'
 import { cn } from '@/lib/utils'
 
 const MIN_SIDEBAR_WIDTH = 200
 const MAX_SIDEBAR_WIDTH = 450
 const DEFAULT_SIDEBAR_WIDTH = 360
 
+const DASHBOARD_BASE_URL = 'https://dashboard.kloudlite.io'
+
 export function App() {
   const handleRef = useRef<WebviewAreaHandle | null>(null)
+  const envHandleRef = useRef<DashboardWebviewHandle | null>(null)
+  const wsHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const { addTab, closeTab, activeTabId, tabs, setActiveTab } = useTabStore()
+  const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog } = useModeStore()
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [sidebarPeeking, setSidebarPeeking] = useState(false)
@@ -26,6 +34,31 @@ export function App() {
   const setHandle = useCallback((handle: WebviewAreaHandle) => {
     handleRef.current = handle
   }, [])
+
+  // Get the active nav handle based on current mode
+  const handleDashboardNavigate = useCallback((path: string) => {
+    const url = `${DASHBOARD_BASE_URL}${path}`
+    if (mode === 'environments') envHandleRef.current?.navigate(url)
+    else if (mode === 'workspaces') wsHandleRef.current?.navigate(url)
+  }, [mode])
+
+  const getActiveGoBack = useCallback(() => {
+    if (mode === 'environments') envHandleRef.current?.goBack()
+    else if (mode === 'workspaces') wsHandleRef.current?.goBack()
+    else handleRef.current?.goBack()
+  }, [mode])
+
+  const getActiveGoForward = useCallback(() => {
+    if (mode === 'environments') envHandleRef.current?.goForward()
+    else if (mode === 'workspaces') wsHandleRef.current?.goForward()
+    else handleRef.current?.goForward()
+  }, [mode])
+
+  const getActiveReload = useCallback(() => {
+    if (mode === 'environments') envHandleRef.current?.reload()
+    else if (mode === 'workspaces') wsHandleRef.current?.reload()
+    else handleRef.current?.reload()
+  }, [mode])
 
   const HIDE_THRESHOLD = 120
 
@@ -83,46 +116,59 @@ export function App() {
   // Shortcuts from main process via IPC
   useEffect(() => {
     window.electronAPI.onShortcut((action) => {
+      const currentMode = useModeStore.getState().mode
+
       switch (action) {
         case 'new-tab':
-          window.dispatchEvent(new CustomEvent('open-command-bar'))
+          if (currentMode === 'browse') {
+            window.dispatchEvent(new CustomEvent('open-command-bar'))
+          }
           break
         case 'address-bar':
-          window.dispatchEvent(new CustomEvent('open-address-bar'))
+          // Address bar removed — Cmd+L now opens service picker in browse mode
+          if (currentMode === 'browse') {
+            window.dispatchEvent(new CustomEvent('open-command-bar'))
+          }
           break
         case 'close-tab': {
-          const { activeTabId: id } = useTabStore.getState()
-          if (id) closeTab(id)
+          if (currentMode === 'browse') {
+            const { activeTabId: id } = useTabStore.getState()
+            if (id) closeTab(id)
+          }
           break
         }
         case 'reload':
-          handleRef.current?.reload()
+          getActiveReload()
           break
         case 'go-back':
-          handleRef.current?.goBack()
+          getActiveGoBack()
           break
         case 'go-forward':
-          handleRef.current?.goForward()
+          getActiveGoForward()
           break
         case 'toggle-sidebar':
           setSidebarVisible((v) => !v)
           setSidebarPeeking(false)
           break
         case 'next-tab': {
-          const state = useTabStore.getState()
-          const idx = state.tabs.findIndex((t) => t.id === state.activeTabId)
-          if (idx >= 0 && state.tabs.length > 1) {
-            const nextIdx = (idx + 1) % state.tabs.length
-            setActiveTab(state.tabs[nextIdx].id)
+          if (currentMode === 'browse') {
+            const state = useTabStore.getState()
+            const idx = state.tabs.findIndex((t) => t.id === state.activeTabId)
+            if (idx >= 0 && state.tabs.length > 1) {
+              const nextIdx = (idx + 1) % state.tabs.length
+              setActiveTab(state.tabs[nextIdx].id)
+            }
           }
           break
         }
         case 'prev-tab': {
-          const state2 = useTabStore.getState()
-          const idx2 = state2.tabs.findIndex((t) => t.id === state2.activeTabId)
-          if (idx2 >= 0 && state2.tabs.length > 1) {
-            const prevIdx = (idx2 - 1 + state2.tabs.length) % state2.tabs.length
-            setActiveTab(state2.tabs[prevIdx].id)
+          if (currentMode === 'browse') {
+            const state2 = useTabStore.getState()
+            const idx2 = state2.tabs.findIndex((t) => t.id === state2.activeTabId)
+            if (idx2 >= 0 && state2.tabs.length > 1) {
+              const prevIdx = (idx2 - 1 + state2.tabs.length) % state2.tabs.length
+              setActiveTab(state2.tabs[prevIdx].id)
+            }
           }
           break
         }
@@ -130,14 +176,8 @@ export function App() {
     })
   }, [])
 
-  useEffect(() => {
-    if (tabs.length === 0) {
-      addTab('https://kloudlite.io')
-    }
-  }, [])
-
-  // Loading indicator with fade-out
-  const isActiveTabLoading = !!tabs.find(t => t.id === activeTabId)?.isLoading
+  // Loading indicator with fade-out (browse mode only)
+  const isActiveTabLoading = mode === 'browse' && !!tabs.find(t => t.id === activeTabId)?.isLoading
   useEffect(() => {
     if (isActiveTabLoading) {
       if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current)
@@ -155,7 +195,9 @@ export function App() {
   // Listen for open-command-bar at App level so it works when sidebar is hidden
   useEffect(() => {
     function handleOpenCommandBar() {
-      setNewTabOpen(true)
+      if (useModeStore.getState().mode === 'browse') {
+        setNewTabOpen(true)
+      }
     }
     window.addEventListener('open-command-bar', handleOpenCommandBar)
     return () => window.removeEventListener('open-command-bar', handleOpenCommandBar)
@@ -179,7 +221,6 @@ export function App() {
     if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current)
   }
 
-  const showSidebar = sidebarVisible || sidebarPeeking
 
   return (
     <>
@@ -192,9 +233,10 @@ export function App() {
         >
           <Sidebar
             onNavigate={(url) => handleRef.current?.navigate(url)}
-            onGoBack={() => handleRef.current?.goBack()}
-            onGoForward={() => handleRef.current?.goForward()}
-            onReload={() => handleRef.current?.reload()}
+            onDashboardNavigate={handleDashboardNavigate}
+            onGoBack={getActiveGoBack}
+            onGoForward={getActiveGoForward}
+            onReload={getActiveReload}
             onToggleSidebar={() => setSidebarVisible(false)}
           />
         </div>
@@ -215,9 +257,10 @@ export function App() {
         >
           <Sidebar
             onNavigate={(url) => handleRef.current?.navigate(url)}
-            onGoBack={() => handleRef.current?.goBack()}
-            onGoForward={() => handleRef.current?.goForward()}
-            onReload={() => handleRef.current?.reload()}
+            onDashboardNavigate={handleDashboardNavigate}
+            onGoBack={getActiveGoBack}
+            onGoForward={getActiveGoForward}
+            onReload={getActiveReload}
             onToggleSidebar={() => {
               setSidebarVisible(true)
               setSidebarPeeking(false)
@@ -256,6 +299,7 @@ export function App() {
         )}
 
         <div className="relative flex flex-1 flex-col overflow-hidden rounded-[10px] bg-background shadow-[0_0_20px_rgba(0,0,0,0.08),0_0_4px_rgba(0,0,0,0.04)]">
+          {/* Loading indicator — browse mode only */}
           {showLoading && (
             <div
               className="absolute inset-x-0 top-0 z-10 flex justify-center py-1"
@@ -266,13 +310,39 @@ export function App() {
               <div className="h-1 w-20 rounded-full bg-foreground/25" style={{ animation: 'loading-pill 1.2s ease-in-out infinite' }} />
             </div>
           )}
-          <WebviewArea onHandle={setHandle} />
+
+          {/* Content views — stacked absolute, visibility toggled */}
+          <div className="relative flex-1 overflow-hidden">
+            <div className="absolute inset-0" style={{ display: mode === 'environments' ? 'block' : 'none' }}>
+              {selectedEnvHash && selectedEnvName ? (
+                <EnvironmentContent
+                  envName={selectedEnvName}
+                  envHash={selectedEnvHash}
+                  activeTab={envActiveTab}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center bg-background">
+                  <p className="text-[13px] text-muted-foreground">Select an environment</p>
+                </div>
+              )}
+            </div>
+            <div className="absolute inset-0" style={{ display: mode === 'workspaces' ? 'block' : 'none' }}>
+              <DashboardWebview
+                url={`${DASHBOARD_BASE_URL}/workspaces`}
+                visible={mode === 'workspaces'}
+                onHandle={(h) => { wsHandleRef.current = h }}
+              />
+            </div>
+            <div className="absolute inset-0" style={{ display: mode === 'browse' ? 'block' : 'none' }}>
+              <WebviewArea onHandle={setHandle} />
+            </div>
+          </div>
         </div>
       </div>
 
     </div>
 
-    {/* New Tab overlay — always available, even when sidebar is hidden */}
+    {/* New Tab overlay — browse mode only */}
     {newTabOpen && (
       <NewTabBar
         onNavigate={(url) => handleRef.current?.navigate(url)}
@@ -281,6 +351,11 @@ export function App() {
           window.dispatchEvent(new CustomEvent('close-command-bar'))
         }}
       />
+    )}
+
+    {/* New Environment dialog */}
+    {showNewEnvDialog && (
+      <NewEnvironmentDialog onClose={() => setShowNewEnvDialog(false)} />
     )}
     </>
   )
