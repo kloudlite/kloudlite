@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/empty-state'
 import { WorkspaceContent, NewWorkspaceDialog } from '@/components/workspace-content'
 import { cn } from '@/lib/utils'
 
-const MIN_SIDEBAR_WIDTH = 200
+const MIN_SIDEBAR_WIDTH = 280
 const MAX_SIDEBAR_WIDTH = 450
 const DEFAULT_SIDEBAR_WIDTH = 360
 
