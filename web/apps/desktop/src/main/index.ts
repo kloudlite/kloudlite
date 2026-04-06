@@ -1,15 +1,25 @@
-import { app, BrowserWindow, globalShortcut, Menu, MenuItem, nativeTheme, shell, ipcMain, webContents } from 'electron'
+import { app, BrowserWindow, globalShortcut, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
 import { join } from 'path'
 import { connect as tlsConnect, type PeerCertificate } from 'tls'
 import { is } from '@electron-toolkit/utils'
 
+// Must be set before app ready for macOS dock label
+if (process.platform === 'darwin') {
+  app.setName('Kloudlite')
+}
+
 function createWindow(): BrowserWindow {
+  const iconPath = process.platform === 'darwin'
+    ? join(__dirname, '../../resources/icon.icns')
+    : join(__dirname, '../../resources/icon.png')
+
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 600,
     minHeight: 400,
     frame: false,
+    icon: iconPath,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -372,6 +382,15 @@ app.on('web-contents-created', (_event, contents) => {
 })
 
 app.whenReady().then(() => {
+  // Set dock icon (works in dev mode too)
+  if (process.platform === 'darwin') {
+    const iconPath = join(__dirname, '../../resources/icon.png')
+    const icon = nativeImage.createFromPath(iconPath)
+    if (!icon.isEmpty()) {
+      app.dock.setIcon(icon)
+    }
+  }
+
   createAppMenu()
   createWindow()
 
