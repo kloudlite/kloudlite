@@ -1,20 +1,14 @@
-import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Sidebar } from '@/components/sidebar'
 import { WebviewArea, type WebviewAreaHandle } from '@/components/webview-area'
 import { DashboardWebview, type DashboardWebviewHandle } from '@/components/dashboard-webview'
+import { NewTabBar } from '@/components/command-bar'
 import { useTabStore } from '@/store/tabs'
-import { useModeStore, type AppMode } from '@/store/mode'
-import { EmptyState } from '@/components/empty-state'
+import { useModeStore } from '@/store/mode'
+import { EnvironmentContent, NewEnvironmentDialog } from '@/components/environment-content'
 import { cn } from '@/lib/utils'
 
-// Lazy-load heavy components — only loaded when needed
-const NewTabBar = lazy(() => import('@/components/command-bar').then(m => ({ default: m.NewTabBar })))
-const EnvironmentContent = lazy(() => import('@/components/environment-content').then(m => ({ default: m.EnvironmentContent })))
-const NewEnvironmentDialog = lazy(() => import('@/components/environment-content').then(m => ({ default: m.NewEnvironmentDialog })))
-const WorkspaceContent = lazy(() => import('@/components/workspace-content').then(m => ({ default: m.WorkspaceContent })))
-const NewWorkspaceDialog = lazy(() => import('@/components/workspace-content').then(m => ({ default: m.NewWorkspaceDialog })))
-
-const MIN_SIDEBAR_WIDTH = 280
+const MIN_SIDEBAR_WIDTH = 200
 const MAX_SIDEBAR_WIDTH = 450
 const DEFAULT_SIDEBAR_WIDTH = 360
 
@@ -25,7 +19,7 @@ export function App() {
   const envHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const wsHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const { addTab, closeTab, activeTabId, tabs, setActiveTab } = useTabStore()
-  const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog, selectedWsId, selectedWsName, wsActiveTab, showNewWsDialog, setShowNewWsDialog } = useModeStore()
+  const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog } = useModeStore()
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [sidebarPeeking, setSidebarPeeking] = useState(false)
@@ -123,18 +117,8 @@ export function App() {
   useEffect(() => {
     window.electronAPI.onShortcut((action) => {
       const currentMode = useModeStore.getState().mode
-      const MODES: AppMode[] = ['environments', 'workspaces', 'browse']
 
       switch (action) {
-        case 'mode-1':
-          useModeStore.getState().setMode(MODES[0])
-          break
-        case 'mode-2':
-          useModeStore.getState().setMode(MODES[1])
-          break
-        case 'mode-3':
-          useModeStore.getState().setMode(MODES[2])
-          break
         case 'new-tab':
           if (currentMode === 'browse') {
             window.dispatchEvent(new CustomEvent('open-command-bar'))
@@ -331,29 +315,23 @@ export function App() {
           <div className="relative flex-1 overflow-hidden">
             <div className="absolute inset-0" style={{ display: mode === 'environments' ? 'block' : 'none' }}>
               {selectedEnvHash && selectedEnvName ? (
-                <Suspense fallback={<div className="h-full" />}>
-                  <EnvironmentContent
-                    envName={selectedEnvName}
-                    envHash={selectedEnvHash}
-                    activeTab={envActiveTab}
-                  />
-                </Suspense>
+                <EnvironmentContent
+                  envName={selectedEnvName}
+                  envHash={selectedEnvHash}
+                  activeTab={envActiveTab}
+                />
               ) : (
-                <EmptyState title="Select an environment" description="Choose an environment from the sidebar to view its details" />
+                <div className="flex h-full items-center justify-center bg-background">
+                  <p className="text-[13px] text-muted-foreground">Select an environment</p>
+                </div>
               )}
             </div>
             <div className="absolute inset-0" style={{ display: mode === 'workspaces' ? 'block' : 'none' }}>
-              {selectedWsId && selectedWsName ? (
-                <Suspense fallback={<div className="h-full" />}>
-                  <WorkspaceContent
-                    wsName={selectedWsName}
-                    wsId={selectedWsId}
-                    activeTab={wsActiveTab}
-                  />
-                </Suspense>
-              ) : (
-                <EmptyState title="Select a workspace" description="Choose a workspace from the sidebar to connect" />
-              )}
+              <DashboardWebview
+                url={`${DASHBOARD_BASE_URL}/workspaces`}
+                visible={mode === 'workspaces'}
+                onHandle={(h) => { wsHandleRef.current = h }}
+              />
             </div>
             <div className="absolute inset-0" style={{ display: mode === 'browse' ? 'block' : 'none' }}>
               <WebviewArea onHandle={setHandle} />
@@ -366,29 +344,18 @@ export function App() {
 
     {/* New Tab overlay — browse mode only */}
     {newTabOpen && (
-      <Suspense fallback={null}>
-        <NewTabBar
-          onNavigate={(url) => handleRef.current?.navigate(url)}
-          onClose={() => {
-            setNewTabOpen(false)
-            window.dispatchEvent(new CustomEvent('close-command-bar'))
-          }}
-        />
-      </Suspense>
+      <NewTabBar
+        onNavigate={(url) => handleRef.current?.navigate(url)}
+        onClose={() => {
+          setNewTabOpen(false)
+          window.dispatchEvent(new CustomEvent('close-command-bar'))
+        }}
+      />
     )}
 
     {/* New Environment dialog */}
     {showNewEnvDialog && (
-      <Suspense fallback={null}>
-        <NewEnvironmentDialog onClose={() => setShowNewEnvDialog(false)} />
-      </Suspense>
-    )}
-
-    {/* New Workspace dialog */}
-    {showNewWsDialog && (
-      <Suspense fallback={null}>
-        <NewWorkspaceDialog onClose={() => setShowNewWsDialog(false)} />
-      </Suspense>
+      <NewEnvironmentDialog onClose={() => setShowNewEnvDialog(false)} />
     )}
     </>
   )

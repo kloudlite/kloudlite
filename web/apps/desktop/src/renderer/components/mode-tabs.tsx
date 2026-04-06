@@ -1,59 +1,77 @@
 import { useRef } from 'react'
-import { Layers, Box, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModeStore, type AppMode } from '@/store/mode'
 
-const modes: { id: AppMode; label: string; icon: typeof Layers }[] = [
-  { id: 'environments', label: 'Envs', icon: Layers },
-  { id: 'workspaces', label: 'Workspaces', icon: Box },
-  { id: 'browse', label: 'Browse', icon: Globe },
+const modes: { id: AppMode; label: string }[] = [
+  { id: 'environments', label: 'Environments' },
+  { id: 'workspaces', label: 'Workspaces' },
+  { id: 'browse', label: 'Browse' },
 ]
 
 export function ModeTabs() {
   const { mode, setMode } = useModeStore()
-  const accRef = useRef(0)
-  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lockRef = useRef(false)
+  const accumulatorRef = useRef(0)
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastSwipeRef = useRef(0)
 
-  function handleWheel(e: React.WheelEvent) {
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) * 1.5) return
-    if (Math.abs(e.deltaX) < 1 || lockRef.current) return
-    accRef.current += e.deltaX
-    if (idleRef.current) clearTimeout(idleRef.current)
-    idleRef.current = setTimeout(() => {
-      if (Math.abs(accRef.current) > 30) {
-        const dir = accRef.current > 0 ? 1 : -1
-        const idx = modes.findIndex((m) => m.id === useModeStore.getState().mode)
-        const next = idx + dir
-        if (next >= 0 && next < modes.length) {
-          lockRef.current = true
-          setMode(modes[next].id)
-          setTimeout(() => { lockRef.current = false }, 500)
-        }
-      }
-      accRef.current = 0
-    }, 50)
+  function navigate(direction: 1 | -1) {
+    const now = Date.now()
+    if (now - lastSwipeRef.current < 400) return
+    lastSwipeRef.current = now
+
+    const currentMode = useModeStore.getState().mode
+    const currentIdx = modes.findIndex((m) => m.id === currentMode)
+    const nextIdx = currentIdx + direction
+    if (nextIdx >= 0 && nextIdx < modes.length) {
+      setMode(modes[nextIdx].id)
+    }
   }
 
+  function handleWheel(e: React.WheelEvent) {
+    // Ignore vertical scrolls
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) * 1.5) return
+    if (Math.abs(e.deltaX) < 1) return
+
+    accumulatorRef.current += e.deltaX
+
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    idleTimerRef.current = setTimeout(() => {
+      if (Math.abs(accumulatorRef.current) > 50) {
+        navigate(accumulatorRef.current > 0 ? 1 : -1)
+      }
+      accumulatorRef.current = 0
+    }, 60)
+  }
+
+  const activeIdx = modes.findIndex((m) => m.id === mode)
+
   return (
-    <div className="no-drag shrink-0 border-y border-sidebar-foreground/[0.06] px-2 py-2 mb-2.5" onWheel={handleWheel}>
-      <div className="grid grid-cols-3">
-        {modes.map(({ id, label, icon: Icon }, i) => (
+    <div
+      className="no-drag relative shrink-0 px-3 pt-2 pb-3"
+      onWheel={handleWheel}
+    >
+      <div className="relative grid grid-cols-3 gap-0 rounded-[8px] bg-sidebar-foreground/[0.08] p-[3px]">
+        {/* Sliding indicator */}
+        <div
+          className="absolute top-[3px] bottom-[3px] rounded-[6px] bg-sidebar-foreground/[0.15] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-transform duration-200 ease-out"
+          style={{
+            width: `calc((100% - 6px) / 3)`,
+            left: '3px',
+            transform: `translateX(${activeIdx * 100}%)`
+          }}
+        />
+        {modes.map(({ id, label }) => (
           <button
             key={id}
             className={cn(
-              'relative flex flex-col items-center gap-1 rounded-lg py-2 outline-none transition-all duration-150',
-              i > 0 && 'before:absolute before:left-0 before:top-1/2 before:h-5 before:w-px before:-translate-y-1/2 before:bg-sidebar-foreground/[0.08]',
+              'relative z-10 py-[6px] text-center text-[11px] font-semibold tracking-wide transition-colors duration-150',
               mode === id
                 ? 'text-sidebar-foreground'
-                : 'text-sidebar-foreground/30 hover:text-sidebar-foreground/50'
+                : 'text-sidebar-foreground/45 hover:text-sidebar-foreground/65'
             )}
             onClick={() => setMode(id)}
           >
-            <Icon className="h-5 w-5" strokeWidth={mode === id ? 2 : 1.5} />
-            <span className={cn('text-[11px] tracking-wide', mode === id ? 'font-semibold' : 'font-medium')}>
-              {label}
-            </span>
+            {label}
           </button>
         ))}
       </div>

@@ -1,10 +1,7 @@
 import { cn } from '@/lib/utils'
-import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon, RotateCcw } from 'lucide-react'
+import { useState } from 'react'
 import { CodeEditor } from './code-editor'
-import { SnapshotTree, generateSnapshots } from './snapshot-tree'
-import { ServicesGraph } from './services-graph'
-import { LogsViewer } from './services-graph/logs-viewer'
 
 interface EnvironmentContentProps {
   envName: string
@@ -12,95 +9,22 @@ interface EnvironmentContentProps {
   activeTab: string
 }
 
-// Dummy services data — port-level intercepts + volumes
-interface ServicePort {
-  port: number
-  targetPort: number
-  protocol: string
-  interceptedBy?: string  // workspace id if this port is intercepted
-}
-interface ServiceVolume {
-  name: string
-  mountPath: string
-  type: 'persistent' | 'config' | 'secret' | 'host'
-}
-interface ServiceData {
-  id: string
-  name: string
-  type: 'ClusterIP' | 'LoadBalancer' | 'NodePort'
-  clusterIP: string
-  ports: ServicePort[]
-  volumes: ServiceVolume[]
-  dns: string
-}
-const SERVICES: Record<string, ServiceData[]> = {
+// Dummy services data
+const SERVICES: Record<string, { name: string; type: string; clusterIP: string; ports: { port: number; targetPort: string; protocol: string }[]; dns: string }[]> = {
   'a1b2c3': [
-    { id: 'frontend', name: 'frontend', type: 'ClusterIP', clusterIP: '10.96.45.12', dns: 'frontend-a1b2c3.staging.local',
-      ports: [{ port: 3000, targetPort: 3000, protocol: 'TCP' }],
-      volumes: [{ name: 'static-assets', mountPath: '/usr/share/nginx/html', type: 'config' }] },
-    { id: 'api-server', name: 'api-server', type: 'ClusterIP', clusterIP: '10.96.45.13', dns: 'api-server-a1b2c3.staging.local',
-      ports: [
-        { port: 8080, targetPort: 8080, protocol: 'TCP', interceptedBy: 'ws-1' },
-        { port: 9090, targetPort: 9090, protocol: 'TCP' },
-        { port: 50051, targetPort: 50051, protocol: 'TCP' },
-      ],
-      volumes: [
-        { name: 'app-config', mountPath: '/etc/config', type: 'config' },
-        { name: 'tls-certs', mountPath: '/etc/tls', type: 'secret' },
-      ] },
-    { id: 'redis', name: 'redis', type: 'ClusterIP', clusterIP: '10.96.45.14', dns: 'redis-a1b2c3.staging.local',
-      ports: [{ port: 6379, targetPort: 6379, protocol: 'TCP' }],
-      volumes: [{ name: 'redis-data', mountPath: '/data', type: 'persistent' }] },
-    { id: 'postgres', name: 'postgres', type: 'ClusterIP', clusterIP: '10.96.45.15', dns: 'postgres-a1b2c3.staging.local',
-      ports: [{ port: 5432, targetPort: 5432, protocol: 'TCP', interceptedBy: 'ws-3' }],
-      volumes: [
-        { name: 'pg-data', mountPath: '/var/lib/postgresql/data', type: 'persistent' },
-        { name: 'pg-credentials', mountPath: '/etc/secrets', type: 'secret' },
-      ] },
+    { name: 'frontend', type: 'ClusterIP', clusterIP: '10.96.45.12', ports: [{ port: 3000, targetPort: '3000', protocol: 'TCP' }], dns: 'frontend-a1b2c3.staging.local' },
+    { name: 'api-server', type: 'ClusterIP', clusterIP: '10.96.45.13', ports: [{ port: 8080, targetPort: '8080', protocol: 'TCP' }], dns: 'api-server-a1b2c3.staging.local' },
+    { name: 'redis', type: 'ClusterIP', clusterIP: '10.96.45.14', ports: [{ port: 6379, targetPort: '6379', protocol: 'TCP' }], dns: 'redis-a1b2c3.staging.local' },
+    { name: 'postgres', type: 'ClusterIP', clusterIP: '10.96.45.15', ports: [{ port: 5432, targetPort: '5432', protocol: 'TCP' }], dns: 'postgres-a1b2c3.staging.local' },
   ],
   'd4e5f6': [
-    { id: 'web-app', name: 'web-app', type: 'ClusterIP', clusterIP: '10.96.50.10', dns: 'web-app-d4e5f6.dev.local',
-      ports: [
-        { port: 5173, targetPort: 5173, protocol: 'TCP', interceptedBy: 'ws-2' },
-        { port: 24678, targetPort: 24678, protocol: 'TCP' },
-      ],
-      volumes: [{ name: 'src', mountPath: '/app/src', type: 'host' }] },
-    { id: 'auth-service', name: 'auth-service', type: 'ClusterIP', clusterIP: '10.96.50.11', dns: 'auth-d4e5f6.dev.local',
-      ports: [{ port: 9090, targetPort: 9090, protocol: 'TCP' }],
-      volumes: [] },
+    { name: 'web-app', type: 'ClusterIP', clusterIP: '10.96.50.10', ports: [{ port: 5173, targetPort: '5173', protocol: 'TCP' }], dns: 'web-app-d4e5f6.dev.local' },
+    { name: 'auth-service', type: 'ClusterIP', clusterIP: '10.96.50.11', ports: [{ port: 9090, targetPort: '9090', protocol: 'TCP' }], dns: 'auth-d4e5f6.dev.local' },
   ],
   'g7h8i9': [
-    { id: 'gateway', name: 'gateway', type: 'LoadBalancer', clusterIP: '10.96.60.10', dns: 'gateway-g7h8i9.prod.local',
-      ports: [
-        { port: 443, targetPort: 8443, protocol: 'TCP' },
-        { port: 80, targetPort: 8080, protocol: 'TCP' },
-      ],
-      volumes: [
-        { name: 'tls-cert', mountPath: '/etc/ssl/certs', type: 'secret' },
-        { name: 'gateway-config', mountPath: '/etc/gateway', type: 'config' },
-      ] },
-    { id: 'dashboard', name: 'dashboard', type: 'ClusterIP', clusterIP: '10.96.60.11', dns: 'dashboard-g7h8i9.prod.local',
-      ports: [{ port: 3000, targetPort: 3000, protocol: 'TCP' }],
-      volumes: [] },
+    { name: 'gateway', type: 'LoadBalancer', clusterIP: '10.96.60.10', ports: [{ port: 443, targetPort: '8443', protocol: 'TCP' }, { port: 80, targetPort: '8080', protocol: 'TCP' }], dns: 'gateway-g7h8i9.prod.local' },
+    { name: 'dashboard', type: 'ClusterIP', clusterIP: '10.96.60.11', ports: [{ port: 3000, targetPort: '3000', protocol: 'TCP' }], dns: 'dashboard-g7h8i9.prod.local' },
   ],
-}
-
-// Workspaces connected to each environment
-interface ConnectedWorkspace {
-  id: string
-  name: string
-  owner: string
-  status: 'running' | 'stopped' | 'failed'
-}
-const ENV_WORKSPACES: Record<string, ConnectedWorkspace[]> = {
-  'a1b2c3': [
-    { id: 'ws-1', name: 'api-dev', owner: 'karthik', status: 'running' },
-    { id: 'ws-3', name: 'debug-session', owner: 'sohail', status: 'stopped' },
-  ],
-  'd4e5f6': [
-    { id: 'ws-2', name: 'frontend-dev', owner: 'karthik', status: 'running' },
-  ],
-  'g7h8i9': [],
 }
 
 // Dummy configs
@@ -136,77 +60,12 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-// Dummy compositions
-const COMPOSITIONS: Record<string, string> = {
-  'a1b2c3': `version: "3.8"
-services:
-  frontend:
-    image: kloudlite/frontend:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - API_URL=http://api-server:8080
-  api-server:
-    image: kloudlite/api:latest
-    ports:
-      - "8080:8080"
-    depends_on:
-      - redis
-      - postgres
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-  postgres:
-    image: postgres:16-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=app
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=<set-in-secret>`,
-  'd4e5f6': `version: "3.8"
-services:
-  web-app:
-    image: kloudlite/web:dev
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./src:/app/src
-  auth-service:
-    image: kloudlite/auth:dev
-    ports:
-      - "9090:9090"`,
-  'g7h8i9': `version: "3.8"
-services:
-  gateway:
-    image: kloudlite/gateway:stable
-    ports:
-      - "443:8443"
-      - "80:8080"
-  dashboard:
-    image: kloudlite/dashboard:stable
-    ports:
-      - "3000:3000"`,
-}
-
 function ServicesView({ envHash }: { envHash: string }) {
   const services = SERVICES[envHash] || []
-  const workspaces = ENV_WORKSPACES[envHash] || []
   const [compose, setCompose] = useState(COMPOSITIONS[envHash] || '')
   const [composeOpen, setComposeOpen] = useState(false)
   const [composeExiting, setComposeExiting] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [logsService, setLogsService] = useState<string | null>(null)
-
-  useEffect(() => {
-    function handler(e: Event) {
-      const detail = (e as CustomEvent).detail
-      setLogsService(detail.name)
-    }
-    window.addEventListener('open-service-logs', handler)
-    return () => window.removeEventListener('open-service-logs', handler)
-  }, [])
 
   function closeCompose() {
     setComposeExiting(true)
@@ -216,24 +75,12 @@ function ServicesView({ envHash }: { envHash: string }) {
     }, 150)
   }
 
-  const graphServices = services.map((s) => ({
-    id: s.id,
-    name: s.name,
-    dns: s.dns,
-    type: s.type,
-    ports: s.ports.map((p) => ({ port: p.port, targetPort: p.targetPort, interceptedBy: p.interceptedBy })),
-    volumes: s.volumes,
-  }))
-
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between px-6 pt-6 pb-4">
+    <div className="p-6">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">Services</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            {services.length} services · {workspaces.length} connected workspace{workspaces.length !== 1 ? 's' : ''}
-          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{services.length} services deployed</p>
         </div>
         <button
           className={cn(
@@ -250,7 +97,7 @@ function ServicesView({ envHash }: { envHash: string }) {
 
       {/* Composition editor */}
       {composeOpen && (
-        <div className="mx-6 mb-4 overflow-hidden rounded-xl border border-border/50" style={{ animation: composeExiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}>
+        <div className="mt-4 overflow-hidden rounded-xl border border-border/50" style={{ animation: composeExiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}>
           <div className="flex items-center justify-between border-b border-border/30 bg-card px-4 py-2">
             <span className="text-[11px] font-medium text-muted-foreground">docker-compose.yml</span>
             <div className="flex items-center gap-2">
@@ -274,17 +121,61 @@ function ServicesView({ envHash }: { envHash: string }) {
               </button>
             </div>
           </div>
-          <CodeEditor value={compose} onChange={setCompose} height="300px" />
+          <CodeEditor
+            value={compose}
+            onChange={setCompose}
+            height="300px"
+          />
         </div>
       )}
 
-      {/* Graph fills remaining space */}
-      <div className="min-h-0 flex-1">
-        <ServicesGraph services={graphServices} workspaces={workspaces} />
+      {/* Services table */}
+      <div className="mt-5">
+        <table className="w-full text-left text-[13px]">
+          <thead>
+            <tr className="border-b border-border/50 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+              <th className="pb-2.5 pr-4">Name</th>
+              <th className="pb-2.5 pr-4">DNS Hostname</th>
+              <th className="pb-2.5 pr-4">Cluster IP</th>
+              <th className="pb-2.5 pr-4">Ports</th>
+              <th className="pb-2.5">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {services.map((svc) => (
+              <tr key={svc.name} className="h-12 border-b border-border/30 transition-colors hover:bg-accent/30">
+                <td className="py-3 pr-4">
+                  <span className="font-medium text-foreground">{svc.name}</span>
+                </td>
+                <td className="py-3 pr-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">{svc.dns}</span>
+                    <CopyButton text={svc.dns} />
+                  </div>
+                </td>
+                <td className="py-3 pr-4 text-muted-foreground">{svc.clusterIP}</td>
+                <td className="py-3 pr-4">
+                  <div className="flex flex-wrap gap-1">
+                    {svc.ports.map((p) => (
+                      <span key={p.port} className="rounded bg-accent px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                        {p.port}→{p.targetPort}/{p.protocol}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td className="py-3">
+                  <span className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                    svc.type === 'LoadBalancer' ? 'bg-blue-500/10 text-blue-600' : 'bg-accent text-muted-foreground'
+                  )}>
+                    {svc.type}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      {/* Logs viewer */}
-      {logsService && <LogsViewer serviceName={logsService} onClose={() => setLogsService(null)} />}
     </div>
   )
 }
@@ -292,9 +183,9 @@ function ServicesView({ envHash }: { envHash: string }) {
 // Dummy envvars
 const ENVVARS: Record<string, { key: string; value: string; type: 'config' | 'secret' }[]> = {
   'a1b2c3': [
-    { key: 'DATABASE_URL', value: 'postgresql://admin:<set-in-secret>@postgres:5432/app', type: 'secret' },
+    { key: 'DATABASE_URL', value: 'postgresql://admin:secret@postgres:5432/app', type: 'secret' },
     { key: 'REDIS_URL', value: 'redis://redis:6379', type: 'config' },
-    { key: 'API_KEY', value: 'demo_api_key_value', type: 'secret' },
+    { key: 'API_KEY', value: 'sk-kloudlite-a1b2c3d4e5f6', type: 'secret' },
     { key: 'NODE_ENV', value: 'staging', type: 'config' },
     { key: 'LOG_LEVEL', value: 'debug', type: 'config' },
   ],
@@ -302,13 +193,13 @@ const ENVVARS: Record<string, { key: string; value: string; type: 'config' | 'se
     { key: 'DEBUG', value: 'true', type: 'config' },
     { key: 'LOG_LEVEL', value: 'verbose', type: 'config' },
     { key: 'PORT', value: '5173', type: 'config' },
-    { key: 'DB_PASSWORD', value: '<set-in-secret>', type: 'secret' },
+    { key: 'DB_PASSWORD', value: 'dev-secret-123', type: 'secret' },
   ],
   'g7h8i9': [
     { key: 'NODE_ENV', value: 'production', type: 'config' },
     { key: 'CDN_URL', value: 'https://cdn.kloudlite.io', type: 'config' },
-    { key: 'SENTRY_DSN', value: 'https://example@sentry.io/project-id', type: 'secret' },
-    { key: 'STRIPE_KEY', value: 'demo_stripe_key_value', type: 'secret' },
+    { key: 'SENTRY_DSN', value: 'https://abc@sentry.io/123', type: 'secret' },
+    { key: 'STRIPE_KEY', value: 'sk_live_kloudlite_prod', type: 'secret' },
   ],
 }
 
@@ -486,10 +377,344 @@ function ConfigsView({ envHash }: { envHash: string }) {
   )
 }
 
-// Snapshots — uses shared SnapshotTree component
+// Snapshots — tree structure (restore + new snapshot = branch)
+interface Snapshot {
+  id: string
+  name: string
+  description: string
+  author: string
+  date: string
+  size: string
+  parentId: string | null
+  isHead?: boolean
+}
+
+// Tree node for rendering
+interface TreeNode {
+  snapshot: Snapshot
+  children: TreeNode[]
+  depth: number
+  isOnHeadPath: boolean
+}
+
+// Demo data generator — produces realistic snapshot trees
+function generateSnapshots(seed: string): Snapshot[] {
+  const hash = (s: string) => {
+    let h = 0
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0
+    return Math.abs(h)
+  }
+  const r = hash(seed)
+
+  const mainSteps = [
+    { name: 'Environment created', desc: 'Empty environment', size: '0.2 MB' },
+    { name: 'Initial service deployment', desc: '2 services, 3 envvars', size: '8.1 MB' },
+    { name: 'Add database service', desc: '3 services, 5 envvars', size: '10.2 MB' },
+    { name: 'Configure networking', desc: '3 services, 6 envvars', size: '11.0 MB' },
+    { name: 'Add caching layer', desc: '4 services, 7 envvars', size: '11.8 MB' },
+    { name: 'Production readiness', desc: '4 services, 8 envvars, 2 configs', size: '12.4 MB' },
+  ]
+
+  const branchSteps = [
+    ['Try alternative DB', 'Alternative DB tuning', 'Alternative DB migration'],
+    ['Different caching strategy', 'Cache cluster setup'],
+    ['Canary deployment test', 'Canary with traffic split'],
+    ['Minimal config experiment'],
+  ]
+
+  const authors = ['karthik', 'sohail']
+  const times = ['2 weeks ago', '10 days ago', '1 week ago', '5 days ago', '3 days ago', '1 day ago', '2 hours ago']
+
+  const count = 4 + (r % 3) // 4-6 main snapshots
+  const snapshots: Snapshot[] = []
+
+  // Main line
+  for (let i = 0; i < count && i < mainSteps.length; i++) {
+    snapshots.push({
+      id: `s${i + 1}`,
+      name: mainSteps[i].name,
+      description: mainSteps[i].desc,
+      author: authors[i % 2],
+      date: times[i] || `${i} days ago`,
+      size: mainSteps[i].size,
+      parentId: i === 0 ? null : `s${i}`,
+      isHead: i === count - 1,
+    })
+  }
+
+  // Branches — fork from various main-line points
+  const branchCount = 1 + (r % 3) // 1-3 branches
+  for (let b = 0; b < branchCount && b < branchSteps.length; b++) {
+    const forkPoint = 1 + ((r + b * 7) % (count - 2)) // fork from s2..s(n-1)
+    const steps = branchSteps[b]
+    for (let j = 0; j < steps.length; j++) {
+      const svcCount = 2 + ((r + b + j) % 3)
+      const envCount = 3 + ((r + b + j) % 4)
+      snapshots.push({
+        id: `b${b + 1}-${j + 1}`,
+        name: steps[j],
+        description: `${svcCount} services, ${envCount} envvars`,
+        author: authors[(b + j) % 2],
+        date: `${3 + b * 2 + j} days ago`,
+        size: `${(8 + b + j * 0.8).toFixed(1)} MB`,
+        parentId: j === 0 ? `s${forkPoint + 1}` : `b${b + 1}-${j}`,
+      })
+    }
+  }
+
+  return snapshots
+}
+
+const SNAPSHOTS: Record<string, Snapshot[]> = {
+  'a1b2c3': generateSnapshots('staging'),
+  'd4e5f6': generateSnapshots('dev'),
+  'g7h8i9': generateSnapshots('prod'),
+}
+
+function buildTree(snapshots: Snapshot[]): TreeNode | null {
+  const map = new Map<string, TreeNode>()
+  const headId = snapshots.find((s) => s.isHead)?.id
+
+  // Find head path
+  const headPath = new Set<string>()
+  if (headId) {
+    let current = headId
+    while (current) {
+      headPath.add(current)
+      const snap = snapshots.find((s) => s.id === current)
+      current = snap?.parentId ?? ''
+    }
+  }
+
+  for (const snap of snapshots) {
+    map.set(snap.id, { snapshot: snap, children: [], depth: 0, isOnHeadPath: headPath.has(snap.id) })
+  }
+
+  let root: TreeNode | null = null
+  for (const snap of snapshots) {
+    const node = map.get(snap.id)!
+    if (snap.parentId && map.has(snap.parentId)) {
+      const parent = map.get(snap.parentId)!
+      parent.children.push(node)
+      node.depth = parent.depth + 1
+    } else {
+      root = node
+    }
+  }
+  return root
+}
+
+interface FlatItem {
+  node: TreeNode
+  col: number       // which column this node is in
+  showFork: boolean  // show horizontal fork line from parent column
+  forkFromCol: number
+}
+
+function flattenTree(root: TreeNode): FlatItem[] {
+  const result: FlatItem[] = []
+
+  function walk(n: TreeNode, col: number, forkFromCol: number, showFork: boolean) {
+    result.push({ node: n, col, showFork, forkFromCol })
+
+    // Sort: head path first
+    const sorted = [...n.children].sort((a, b) => {
+      if (a.isOnHeadPath && !b.isOnHeadPath) return -1
+      if (!a.isOnHeadPath && b.isOnHeadPath) return 1
+      return 0
+    })
+
+    sorted.forEach((child, i) => {
+      if (i === 0) {
+        // First child continues in same column
+        walk(child, col, col, false)
+      } else {
+        // Additional children fork to a new column
+        walk(child, col + i, col, true)
+      }
+    })
+  }
+
+  walk(root, 0, 0, false)
+  return result
+}
+
 function SnapshotsView({ envHash, envName }: { envHash: string; envName: string }) {
-  const snapshots = generateSnapshots(envHash)
-  return <SnapshotTree snapshots={snapshots} title="Snapshots" subtitle={`${snapshots.length} snapshots for ${envName}`} />
+  const snapshots = SNAPSHOTS[envHash] || []
+  const tree = buildTree(snapshots)
+  const flat = tree ? flattenTree(tree) : []
+  const COL_W = 28
+  const maxCol = Math.max(...flat.map((f) => f.col), 0)
+  const graphWidth = (maxCol + 1) * COL_W
+
+  function hasBelow(col: number, afterIdx: number): boolean {
+    for (let j = afterIdx + 1; j < flat.length; j++) {
+      if (flat[j].col === col) return true
+    }
+    return false
+  }
+
+  function hasAbove(col: number, beforeIdx: number): boolean {
+    for (let j = 0; j < beforeIdx; j++) {
+      if (flat[j].col === col) return true
+    }
+    return false
+  }
+
+  // Check if a column needs a passthrough line at a given row
+  // A column needs a line if there are nodes in that column both above and below
+  function needsPassthrough(col: number, rowIdx: number): boolean {
+    return hasAbove(col, rowIdx) && hasBelow(col, rowIdx)
+  }
+
+  // Check if this row's fork originates from a column that needs a line drawn down to it
+  function needsForkLine(col: number, rowIdx: number): boolean {
+    const item = flat[rowIdx]
+    if (!item.showFork) return false
+    // The fork comes from forkFromCol — we need a vertical line in that col from above down to this row
+    return true
+  }
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-[16px] font-semibold text-foreground">Snapshots</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">{snapshots.length} snapshots for {envName}</p>
+        </div>
+        <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+          <Plus className="h-3.5 w-3.5" />
+          Take Snapshot
+        </button>
+      </div>
+
+      <div className="mt-6">
+        {flat.map((item, i) => {
+          const { node: n, col, showFork, forkFromCol } = item
+          const snap = n.snapshot
+          const hasContinuation = hasBelow(col, i)
+
+          return (
+            <div key={snap.id} className="relative flex" style={{ minHeight: 72 }}>
+              {/* Graph area */}
+              <div className="relative shrink-0" style={{ width: graphWidth + 8 }}>
+                {/* Vertical lines for all columns */}
+                {Array.from({ length: maxCol + 1 }).map((_, c) => {
+                  const isCurrent = c === col
+                  const lineColor = (c === 0 || flat.find((f) => f.col === c)?.node.isOnHeadPath)
+                    ? 'var(--primary)' : 'var(--border)'
+                  const lineOpacity = (c === 0 || flat.find((f) => f.col === c)?.node.isOnHeadPath)
+                    ? 0.4 : 0.5
+
+                  if (isCurrent && !showFork) {
+                    // Current column: top half + bottom half around the dot
+                    return (
+                      <div key={c}>
+                        {hasAbove(c, i) && (
+                          <div className="absolute top-0 h-1/2" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
+                        )}
+                        {hasContinuation && (
+                          <div className="absolute bottom-0 h-1/2" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
+                        )}
+                      </div>
+                    )
+                  }
+
+                  // Passthrough: column has nodes above and below this row
+                  if (!isCurrent && needsPassthrough(c, i)) {
+                    return (
+                      <div key={c} className="absolute top-0 h-full" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
+                    )
+                  }
+
+                  // Fork source column: needs line from above down to the fork point
+                  if (!isCurrent && showFork && c === forkFromCol) {
+                    return (
+                      <div key={c} className="absolute top-0 h-1/2" style={{ left: c * COL_W + 5, width: 2, backgroundColor: lineColor, opacity: lineOpacity }} />
+                    )
+                  }
+
+                  return <div key={c} />
+                })}
+
+                {/* Fork: horizontal line from parent column to this column + curve */}
+                {showFork && (
+                  <div
+                    className="absolute top-1/2 -translate-y-[1px] rounded-bl-lg"
+                    style={{
+                      left: forkFromCol * COL_W + 6,
+                      width: (col - forkFromCol) * COL_W,
+                      height: 2,
+                      backgroundColor: 'var(--border)',
+                      opacity: 0.5,
+                    }}
+                  />
+                )}
+
+                {/* Dot */}
+                <div
+                  className="absolute top-1/2 z-10 -translate-y-1/2"
+                  style={{ left: col * COL_W }}
+                >
+                  <div className={cn(
+                    'h-3 w-3 rounded-full',
+                    snap.isHead
+                      ? 'bg-primary ring-2 ring-primary/30 ring-offset-1 ring-offset-background'
+                      : n.isOnHeadPath
+                        ? 'bg-primary/60'
+                        : 'border-2 border-muted-foreground/30 bg-background'
+                  )} />
+                </div>
+              </div>
+
+              {/* Card */}
+              <div className={cn(
+                'mb-2 flex-1 rounded-xl border px-4 py-3 transition-colors',
+                snap.isHead
+                  ? 'border-primary/30 bg-primary/[0.03]'
+                  : n.isOnHeadPath
+                    ? 'border-primary/15 hover:bg-accent/20'
+                    : 'border-border/40 hover:bg-accent/20'
+              )}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-[13px] font-medium text-foreground">{snap.name}</p>
+                      {snap.isHead && (
+                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          HEAD
+                        </span>
+                      )}
+                      {!n.isOnHeadPath && (
+                        <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          branch
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/70">{snap.description}</p>
+                    <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <span>{snap.author}</span>
+                      <span>·</span>
+                      <span>{snap.date}</span>
+                      <span>·</span>
+                      <span>{snap.size}</span>
+                    </div>
+                  </div>
+
+                  {!snap.isHead && (
+                    <button className="flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                      <RotateCcw className="h-3 w-3" />
+                      Restore
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function SettingsView({ envName, envHash }: { envName: string; envHash: string }) {
@@ -553,6 +778,60 @@ function SettingsView({ envName, envHash }: { envName: string; envHash: string }
       </div>
     </div>
   )
+}
+
+// Dummy compositions
+const COMPOSITIONS: Record<string, string> = {
+  'a1b2c3': `version: "3.8"
+services:
+  frontend:
+    image: kloudlite/frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://api-server:8080
+  api-server:
+    image: kloudlite/api:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - postgres
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret`,
+  'd4e5f6': `version: "3.8"
+services:
+  web-app:
+    image: kloudlite/web:dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+  auth-service:
+    image: kloudlite/auth:dev
+    ports:
+      - "9090:9090"`,
+  'g7h8i9': `version: "3.8"
+services:
+  gateway:
+    image: kloudlite/gateway:stable
+    ports:
+      - "443:8443"
+      - "80:8080"
+  dashboard:
+    image: kloudlite/dashboard:stable
+    ports:
+      - "3000:3000"`,
 }
 
 function CompositionView({ envHash }: { envHash: string }) {
@@ -668,18 +947,10 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
 }
 
 export function EnvironmentContent({ envName, envHash, activeTab }: EnvironmentContentProps) {
-  // Services view needs full height (graph), others get scrollable max-width
-  if (activeTab === 'services') {
-    return (
-      <div className="h-full bg-background">
-        <ServicesView envHash={envHash} />
-      </div>
-    )
-  }
-
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="mx-auto max-w-4xl">
+        {activeTab === 'services' && <ServicesView envHash={envHash} />}
         {activeTab === 'configs' && <ConfigsView envHash={envHash} />}
         {activeTab === 'snapshots' && <SnapshotsView envHash={envHash} envName={envName} />}
         {activeTab === 'settings' && <SettingsView envName={envName} envHash={envHash} />}
