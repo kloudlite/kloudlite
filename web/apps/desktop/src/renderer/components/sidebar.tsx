@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react'
 import { PanelLeft, ArrowLeft, ArrowRight, RotateCw } from 'lucide-react'
-import ViewPager from 'react-view-pager-touch'
 import { cn } from '@/lib/utils'
 import { useModeStore, type AppMode } from '@/store/mode'
 import { useTabStore } from '@/store/tabs'
@@ -32,69 +31,29 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
   const showNavButtons = mode === 'browse' && activeTab
   const modeIndex = MODES.indexOf(mode)
 
-  const viewPagerRef = useRef<any>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // Update ViewPager width when sidebar resizes
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const observer = new ResizeObserver(() => {
-      viewPagerRef.current?.updateWidth?.()
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-  const wheelIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const wheelActiveRef = useRef(false)
-  const fakeXRef = useRef(0)
-
-  function handlePageSelected(position: number) {
-    if (MODES[position]) {
-      setMode(MODES[position])
-    }
-  }
+  // Swipe detection for mode switching
+  const accRef = useRef(0)
+  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lockRef = useRef(false)
 
   function handleWheel(e: React.WheelEvent) {
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX) * 1.5) return
-    if (Math.abs(e.deltaX) < 1) return
-
-    const vp = viewPagerRef.current
-    if (!vp?.el) return
-
-    const rect = vp.el.getBoundingClientRect()
-    const centerY = rect.top + rect.height / 2
-
-    // Simulate touchstart on first wheel
-    if (!wheelActiveRef.current) {
-      wheelActiveRef.current = true
-      fakeXRef.current = rect.left + rect.width / 2
-
-      vp.el.dispatchEvent(new MouseEvent('mousedown', {
-        clientX: fakeXRef.current,
-        clientY: centerY,
-        bubbles: true
-      }))
-    }
-
-    // Simulate drag via mousemove
-    fakeXRef.current -= e.deltaX
-    document.dispatchEvent(new MouseEvent('mousemove', {
-      clientX: fakeXRef.current,
-      clientY: centerY,
-      bubbles: true
-    }))
-
-    // On idle, simulate mouseup to trigger snap
-    if (wheelIdleRef.current) clearTimeout(wheelIdleRef.current)
-    wheelIdleRef.current = setTimeout(() => {
-      wheelActiveRef.current = false
-      document.dispatchEvent(new MouseEvent('mouseup', {
-        clientX: fakeXRef.current,
-        clientY: centerY,
-        bubbles: true
-      }))
-    }, 80)
+    if (Math.abs(e.deltaX) < 1 || lockRef.current) return
+    accRef.current += e.deltaX
+    if (idleRef.current) clearTimeout(idleRef.current)
+    idleRef.current = setTimeout(() => {
+      if (Math.abs(accRef.current) > 50) {
+        const dir = accRef.current > 0 ? 1 : -1
+        const idx = MODES.indexOf(useModeStore.getState().mode)
+        const next = idx + dir
+        if (next >= 0 && next < MODES.length) {
+          lockRef.current = true
+          setMode(MODES[next])
+          setTimeout(() => { lockRef.current = false }, 500)
+        }
+      }
+      accRef.current = 0
+    }, 60)
   }
 
   return (
@@ -148,24 +107,25 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
       {/* Mode tabs — top */}
       <ModeTabs />
 
-      {/* Swipeable sidebar content */}
-      <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden" onWheel={handleWheel}>
-        <ViewPager
-          ref={viewPagerRef}
-          items={MODES}
-          currentPage={modeIndex}
-          onPageSelected={handlePageSelected}
-          renderItem={(item: AppMode, index: number) => {
-            const shouldRender = Math.abs(index - modeIndex) <= 1
-            return (
-              <div className="h-full">
-                {shouldRender && item === 'environments' && <SidebarEnvironments onNavigate={onDashboardNavigate} />}
-                {shouldRender && item === 'workspaces' && <SidebarWorkspaces />}
-                {shouldRender && item === 'browse' && <SidebarBrowse />}
-              </div>
-            )
+      {/* Sidebar content — CSS slide transition */}
+      <div className="min-h-0 flex-1 overflow-hidden" onWheel={handleWheel}>
+        <div
+          className="flex h-full transition-transform duration-250 ease-out"
+          style={{
+            width: `${MODES.length * 100}%`,
+            transform: `translateX(-${modeIndex * (100 / MODES.length)}%)`
           }}
-        />
+        >
+          <div className="h-full overflow-y-auto" style={{ width: `${100 / MODES.length}%` }}>
+            <SidebarEnvironments onNavigate={onDashboardNavigate} />
+          </div>
+          <div className="h-full overflow-y-auto" style={{ width: `${100 / MODES.length}%` }}>
+            <SidebarWorkspaces />
+          </div>
+          <div className="h-full overflow-y-auto" style={{ width: `${100 / MODES.length}%` }}>
+            <SidebarBrowse />
+          </div>
+        </div>
       </div>
 
       {/* WorkMachine status bar */}

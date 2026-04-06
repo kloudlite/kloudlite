@@ -37,12 +37,12 @@ export function ModeTabs() {
 
   return (
     <div className="no-drag shrink-0 border-y border-sidebar-foreground/[0.06] px-2 py-2 mb-2.5" onWheel={handleWheel}>
-      <div className="flex items-center gap-0.5">
+      <div className="grid grid-cols-3">
         {modes.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             className={cn(
-              'flex flex-1 flex-col items-center gap-1 rounded-lg py-2 outline-none transition-all duration-150',
+              'flex flex-col items-center gap-1 rounded-lg py-2 outline-none transition-all duration-150',
               mode === id
                 ? 'text-sidebar-foreground'
                 : 'text-sidebar-foreground/30 hover:text-sidebar-foreground/50'
