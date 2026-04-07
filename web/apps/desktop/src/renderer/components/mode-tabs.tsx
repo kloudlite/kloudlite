@@ -49,8 +49,8 @@ export function ModeTabs() {
             )}
             onClick={() => setMode(id)}
           >
-            <Icon className="h-[18px] w-[18px]" strokeWidth={mode === id ? 2 : 1.5} />
-            <span className={cn('text-[10px] tracking-wide', mode === id ? 'font-semibold' : 'font-medium')}>
+            <Icon className="h-5 w-5" strokeWidth={mode === id ? 2 : 1.5} />
+            <span className={cn('text-[11px] tracking-wide', mode === id ? 'font-semibold' : 'font-medium')}>
               {label}
             </span>
           </button>

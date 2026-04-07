@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Monitor, Globe, Terminal, Laptop, ExternalLink, Copy, Check, Package, GitBranch, Trash2, Plus } from 'lucide-react'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { EmptyState } from './empty-state'
+import { Dialog, FormField, TextInput } from './ui'
 
 interface WorkspaceContentProps {
   wsName: string
@@ -350,71 +351,14 @@ export function NewWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'shared'>('private')
   const [gitUrl, setGitUrl] = useState('')
-  const [exiting, setExiting] = useState(false)
-
-  function close() {
-    setExiting(true)
-    setTimeout(onClose, 150)
-  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={close}>
-      <div
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl"
-        style={{ animation: exiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-[16px] font-semibold text-foreground">Create Workspace</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">Set up a new development workspace</p>
-        </div>
-
-        <div className="flex flex-col gap-4 px-6 py-5">
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
-            <input
-              type="text"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
-              placeholder="e.g. api-dev, frontend-dev"
-              value={name}
-              onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">Visibility</label>
-            <div className="flex gap-2">
-              {(['private', 'shared'] as const).map((v) => (
-                <button
-                  key={v}
-                  className={cn(
-                    'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
-                    visibility === v
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:bg-accent'
-                  )}
-                  onClick={() => setVisibility(v)}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">Git Repository <span className="text-muted-foreground">(optional)</span></label>
-            <input
-              type="text"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
-              placeholder="github.com/org/repo"
-              value={gitUrl}
-              onChange={(e) => setGitUrl(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 border-t border-border/30 px-6 py-4">
+    <Dialog
+      title="Create Workspace"
+      description="Set up a new development workspace"
+      onClose={onClose}
+      footer={(close) => (
+        <>
           <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close}>
             Cancel
           </button>
@@ -425,8 +369,45 @@ export function NewWorkspaceDialog({ onClose }: { onClose: () => void }) {
           >
             Create Workspace
           </button>
-        </div>
+        </>
+      )}
+    >
+      <div className="flex flex-col gap-4">
+        <FormField label="Name">
+          <TextInput
+            placeholder="e.g. api-dev, frontend-dev"
+            value={name}
+            onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+            autoFocus
+          />
+        </FormField>
+
+        <FormField label="Visibility">
+          <div className="flex gap-2">
+            {(['private', 'shared'] as const).map((v) => (
+              <button
+                key={v}
+                className={
+                  visibility === v
+                    ? 'flex-1 rounded-lg border border-primary bg-primary/10 px-3 py-2 text-[12px] font-medium capitalize text-primary transition-colors'
+                    : 'flex-1 rounded-lg border border-border px-3 py-2 text-[12px] font-medium capitalize text-muted-foreground transition-colors hover:bg-accent'
+                }
+                onClick={() => setVisibility(v)}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </FormField>
+
+        <FormField label="Git Repository" optional>
+          <TextInput
+            placeholder="github.com/org/repo"
+            value={gitUrl}
+            onChange={(e) => setGitUrl(e.target.value)}
+          />
+        </FormField>
       </div>
-    </div>
+    </Dialog>
   )
 }

@@ -1,3 +1,4 @@
+import 'v8-compile-cache'
 import { contextBridge, ipcRenderer } from 'electron'
 import { join } from 'path'
 
