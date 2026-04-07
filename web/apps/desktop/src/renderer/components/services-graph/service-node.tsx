@@ -81,27 +81,51 @@ export function ServiceNode({ data, selected }: NodeProps) {
         {d.ports.map((p, i) => {
           const intercepted = !!p.interceptedBy
           const wsName = p.interceptedBy ? d.workspaceMap[p.interceptedBy] : null
+          // When any port is intercepted, the workload stops — disabled ports are unreachable
+          const disabled = hasIntercepts && !intercepted
           return (
             <div
               key={p.port}
               className={cn(
                 'relative flex items-center gap-2 border-t px-3.5 py-2 transition-colors',
-                intercepted ? 'border-amber-500/20 bg-amber-500/[0.06]' : 'border-border/30',
+                intercepted
+                  ? 'border-amber-500/20 bg-amber-500/[0.06]'
+                  : disabled
+                    ? 'border-border/30 bg-muted/10'
+                    : 'border-border/30',
                 i === 0 && 'border-t-border/40'
               )}
             >
               <span className={cn(
                 'flex h-1.5 w-1.5 rounded-full',
-                intercepted ? 'bg-amber-500' : 'bg-emerald-400/70'
+                intercepted
+                  ? 'bg-amber-500'
+                  : disabled
+                    ? 'bg-muted-foreground/25'
+                    : 'bg-emerald-400/70'
               )} />
-              <span className="font-mono text-[12px] font-medium text-foreground/85">:{p.port}</span>
-              <ArrowRight className="h-2.5 w-2.5 text-muted-foreground/40" strokeWidth={2.5} />
-              <span className="font-mono text-[11px] text-muted-foreground">:{p.targetPort}</span>
+              <span className={cn(
+                'font-mono text-[12px] font-medium',
+                disabled ? 'text-muted-foreground/40 line-through' : 'text-foreground/85'
+              )}>:{p.port}</span>
+              <ArrowRight className={cn(
+                'h-2.5 w-2.5',
+                disabled ? 'text-muted-foreground/20' : 'text-muted-foreground/40'
+              )} strokeWidth={2.5} />
+              <span className={cn(
+                'font-mono text-[11px]',
+                disabled ? 'text-muted-foreground/30 line-through' : 'text-muted-foreground'
+              )}>:{p.targetPort}</span>
               {intercepted && (
                 <>
                   <Zap className="ml-auto h-3 w-3 text-amber-500" strokeWidth={2.5} />
                   <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">{wsName}</span>
                 </>
+              )}
+              {disabled && (
+                <span className="ml-auto rounded-sm bg-muted/40 px-1.5 py-px text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">
+                  Unreachable
+                </span>
               )}
 
               <Handle

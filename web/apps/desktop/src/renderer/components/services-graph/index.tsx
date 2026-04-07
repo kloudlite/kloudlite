@@ -140,7 +140,7 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
             target: `ws-${p.interceptedBy}`,
             type: 'smoothstep',
             animated: true,
-            label: `:${p.port}`,
+            label: `:${p.port} → :${p.targetPort}`,
             labelStyle: { fontSize: 11, fontWeight: 600, fill: '#d97706', fontFamily: 'SF Mono, Menlo, monospace' },
             labelBgStyle: { fill: '#fef3c7', fillOpacity: 0.95 },
             labelBgPadding: [4, 8] as [number, number],
