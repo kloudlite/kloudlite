@@ -1,4 +1,11 @@
-import { useRef, useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { EditorView, basicSetup } from 'codemirror'
+import { EditorState } from '@codemirror/state'
+import { yaml } from '@codemirror/lang-yaml'
+import { oneDark } from '@codemirror/theme-one-dark'
+import { indentUnit, indentOnInput } from '@codemirror/language'
+import { indentWithTab } from '@codemirror/commands'
+import { keymap } from '@codemirror/view'
 
 interface CodeEditorProps {
   value: string
@@ -7,43 +14,51 @@ interface CodeEditorProps {
   readOnly?: boolean
 }
 
+const FONT = 'SF Mono, Fira Code, JetBrains Mono, Menlo, Consolas, monospace'
+
 export function CodeEditor({ value, onChange, height = '300px', readOnly = false }: CodeEditorProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const lineCountRef = useRef<HTMLDivElement>(null)
-  const lines = value.split('\n')
+  const containerRef = useRef<HTMLDivElement>(null)
+  const viewRef = useRef<EditorView | null>(null)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
 
-  function handleScroll() {
-    if (textareaRef.current && lineCountRef.current) {
-      lineCountRef.current.scrollTop = textareaRef.current.scrollTop
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const state = EditorState.create({
+      doc: value,
+      extensions: [
+        basicSetup,
+        yaml(),
+        oneDark,
+        indentUnit.of('  '),
+        indentOnInput(),
+        keymap.of([indentWithTab]),
+        EditorState.tabSize.of(2),
+        EditorView.theme({
+          '&': { height, fontSize: '12px' },
+          '.cm-scroller': { fontFamily: FONT, overflow: 'auto' },
+          '.cm-gutters': { borderRight: 'none' },
+          '.cm-content': { padding: '8px 0' },
+        }),
+        ...(readOnly ? [EditorState.readOnly.of(true)] : []),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged && onChangeRef.current) {
+            onChangeRef.current(update.state.doc.toString())
+          }
+        }),
+      ],
+    })
+
+    const view = new EditorView({ state, parent: container })
+    viewRef.current = view
+
+    return () => {
+      view.destroy()
+      viewRef.current = null
     }
-  }
+  }, [])
 
-  return (
-    <div className="flex overflow-hidden" style={{ height, fontFamily: 'SF Mono, Fira Code, JetBrains Mono, Menlo, Consolas, monospace' }}>
-      {/* Line numbers */}
-      <div
-        ref={lineCountRef}
-        className="shrink-0 select-none overflow-hidden bg-[#282c34] py-3 pr-3 text-right"
-        style={{ width: '48px' }}
-      >
-        {lines.map((_, i) => (
-          <div key={i} className="text-[12px] leading-[20px] text-[#636d83]">
-            {i + 1}
-          </div>
-        ))}
-      </div>
-
-      {/* Editor */}
-      <textarea
-        ref={textareaRef}
-        className="w-full resize-none bg-[#282c34] py-3 pl-3 pr-4 text-[12px] leading-[20px] text-[#abb2bf] outline-none"
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-        onScroll={handleScroll}
-        readOnly={readOnly}
-        spellCheck={false}
-        style={{ tabSize: 2 }}
-      />
-    </div>
-  )
+  return <div ref={containerRef} className="overflow-hidden rounded-b-xl" />
 }
