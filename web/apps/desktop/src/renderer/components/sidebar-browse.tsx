@@ -72,7 +72,7 @@ export function SidebarBrowse() {
               {selectedEnv.services.map((svc) => (
                 <button
                   key={svc.id}
-                  className="no-drag flex h-9 w-full items-center gap-2.5 rounded-[10px] px-3 text-left text-[13px] text-sidebar-foreground/70 transition-all duration-150 hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/90"
+                  className="no-drag flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-left text-[14px] text-sidebar-foreground/70 transition-all duration-150 hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/90"
                   onClick={() => addTab(svc.vpnUrl)}
                 >
                   <div className="h-2 w-2 shrink-0 rounded-full bg-emerald-400/60" />

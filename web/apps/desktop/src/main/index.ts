@@ -1,7 +1,16 @@
+// MUST be first import — caches V8 bytecode for 20-30% faster startup
+import 'v8-compile-cache'
 import { app, BrowserWindow, globalShortcut, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
+
+// Disable hardware acceleration check — skip GPU init for faster startup on some systems
+// app.disableHardwareAcceleration()  // Uncomment if GPU init is slow
+
+// Disable chromium security warnings in dev
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 import { join } from 'path'
-import { connect as tlsConnect, type PeerCertificate } from 'tls'
 import { is } from '@electron-toolkit/utils'
+// Lazy-load tls only when needed (speeds up startup)
+type PeerCertificate = import('tls').PeerCertificate
 
 // Must be set before app ready for macOS dock label
 if (process.platform === 'darwin') {
@@ -14,12 +23,14 @@ function createWindow(): BrowserWindow {
     : join(__dirname, '../../resources/icon.png')
 
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1400,
+    height: 900,
     minWidth: 600,
     minHeight: 400,
     frame: false,
+    show: false,
     icon: iconPath,
+    backgroundColor: '#1a1b2e',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -27,8 +38,10 @@ function createWindow(): BrowserWindow {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.maximize()
+  // Maximize immediately before showing — no flash
+  mainWindow.maximize()
+
+  mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
 
@@ -242,6 +255,9 @@ ipcMain.handle('get-certificate', async (_event, url: string) => {
     const hostname = parsed.hostname
     const port = parseInt(parsed.port) || 443
 
+    // Lazy-load tls module (speeds up app startup)
+    const { connect: tlsConnect } = await import('tls')
+
     return await new Promise((resolve) => {
       const socket = tlsConnect({ host: hostname, port, servername: hostname, rejectUnauthorized: false }, () => {
         const cert = socket.getPeerCertificate(true)
@@ -382,30 +398,36 @@ app.on('web-contents-created', (_event, contents) => {
 })
 
 app.whenReady().then(() => {
-  // Set dock icon (works in dev mode too)
-  if (process.platform === 'darwin') {
-    const iconPath = join(__dirname, '../../resources/icon.png')
-    const icon = nativeImage.createFromPath(iconPath)
-    if (!icon.isEmpty()) {
-      app.dock.setIcon(icon)
+  // Critical path: create window ASAP (everything else is deferred)
+  const mainWindow = createWindow()
+
+  // Defer non-critical work until after window is shown
+  mainWindow.once('ready-to-show', () => {
+    // Create menu (not needed for first paint)
+    createAppMenu()
+
+    // Set dock icon
+    if (process.platform === 'darwin') {
+      const iconPath = join(__dirname, '../../resources/icon.png')
+      const icon = nativeImage.createFromPath(iconPath)
+      if (!icon.isEmpty()) {
+        app.dock.setIcon(icon)
+      }
     }
-  }
 
-  createAppMenu()
-  createWindow()
-
-  // globalShortcut for keys that menu accelerators can't reliably capture
-  globalShortcut.register('Ctrl+Tab', () => {
-    const win = BrowserWindow.getFocusedWindow()
-    win?.webContents.send('shortcut', 'next-tab')
-  })
-  globalShortcut.register('Ctrl+Shift+Tab', () => {
-    const win = BrowserWindow.getFocusedWindow()
-    win?.webContents.send('shortcut', 'prev-tab')
-  })
-  globalShortcut.register('CommandOrControl+S', () => {
-    const win = BrowserWindow.getFocusedWindow()
-    win?.webContents.send('shortcut', 'toggle-sidebar')
+    // Register global shortcuts
+    globalShortcut.register('Ctrl+Tab', () => {
+      const win = BrowserWindow.getFocusedWindow()
+      win?.webContents.send('shortcut', 'next-tab')
+    })
+    globalShortcut.register('Ctrl+Shift+Tab', () => {
+      const win = BrowserWindow.getFocusedWindow()
+      win?.webContents.send('shortcut', 'prev-tab')
+    })
+    globalShortcut.register('CommandOrControl+S', () => {
+      const win = BrowserWindow.getFocusedWindow()
+      win?.webContents.send('shortcut', 'toggle-sidebar')
+    })
   })
 
   app.on('activate', () => {

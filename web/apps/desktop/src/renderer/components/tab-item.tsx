@@ -115,7 +115,7 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
       <div
         ref={ref}
         className={cn(
-          'group flex h-9 cursor-default items-center gap-2.5 rounded-[10px] px-3 text-[13px] transition-all duration-150',
+          'group flex h-10 cursor-default items-center gap-3 rounded-[10px] px-3 text-[14px] transition-all duration-150',
           isActive
             ? 'bg-sidebar-foreground/[0.12] text-sidebar-foreground/90 font-medium'
             : 'text-sidebar-foreground/65 hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground/85',
@@ -130,11 +130,11 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
         onClick={onSelect}
       >
         {tab.isLoading ? (
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-50" />
+          <Loader2 className="h-5 w-5 shrink-0 animate-spin opacity-50" />
         ) : tab.favicon ? (
-          <img src={tab.favicon} alt="" className="h-4 w-4 shrink-0 rounded-sm" draggable={false} />
+          <img src={tab.favicon} alt="" className="h-5 w-5 shrink-0 rounded-sm" draggable={false} />
         ) : (
-          <div className="h-4 w-4 shrink-0 rounded-full bg-sidebar-foreground/15" />
+          <div className="h-5 w-5 shrink-0 rounded-full bg-sidebar-foreground/15" />
         )}
         <span className="min-w-0 flex-1 truncate">
           {tab.title || 'New Tab'}

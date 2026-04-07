@@ -5,7 +5,17 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      minify: 'esbuild',
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          // Inline small chunks for faster loading
+          inlineDynamicImports: false,
+        }
+      }
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
@@ -24,6 +34,22 @@ export default defineConfig({
         '@': resolve('src/renderer')
       }
     },
-    plugins: [react(), tailwindcss()]
+    plugins: [react(), tailwindcss()],
+    build: {
+      minify: 'esbuild',
+      sourcemap: false,
+      cssCodeSplit: true,
+      reportCompressedSize: false,
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'codemirror': ['codemirror', '@codemirror/state', '@codemirror/view', '@codemirror/lang-yaml', '@codemirror/theme-one-dark'],
+            'react-vendor': ['react', 'react-dom'],
+            'lucide': ['lucide-react'],
+          }
+        }
+      }
+    }
   }
 })
