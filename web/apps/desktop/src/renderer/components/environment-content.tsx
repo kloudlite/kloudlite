@@ -1,8 +1,10 @@
 import { cn } from '@/lib/utils'
 import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CodeEditor } from './code-editor'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
+import { ServicesGraph } from './services-graph'
+import { LogsViewer } from './services-graph/logs-viewer'
 
 interface EnvironmentContentProps {
   envName: string
@@ -10,22 +12,95 @@ interface EnvironmentContentProps {
   activeTab: string
 }
 
-// Dummy services data
-const SERVICES: Record<string, { name: string; type: string; clusterIP: string; ports: { port: number; targetPort: string; protocol: string }[]; dns: string }[]> = {
+// Dummy services data — port-level intercepts + volumes
+interface ServicePort {
+  port: number
+  targetPort: number
+  protocol: string
+  interceptedBy?: string  // workspace id if this port is intercepted
+}
+interface ServiceVolume {
+  name: string
+  mountPath: string
+  type: 'persistent' | 'config' | 'secret' | 'host'
+}
+interface ServiceData {
+  id: string
+  name: string
+  type: 'ClusterIP' | 'LoadBalancer' | 'NodePort'
+  clusterIP: string
+  ports: ServicePort[]
+  volumes: ServiceVolume[]
+  dns: string
+}
+const SERVICES: Record<string, ServiceData[]> = {
   'a1b2c3': [
-    { name: 'frontend', type: 'ClusterIP', clusterIP: '10.96.45.12', ports: [{ port: 3000, targetPort: '3000', protocol: 'TCP' }], dns: 'frontend-a1b2c3.staging.local' },
-    { name: 'api-server', type: 'ClusterIP', clusterIP: '10.96.45.13', ports: [{ port: 8080, targetPort: '8080', protocol: 'TCP' }], dns: 'api-server-a1b2c3.staging.local' },
-    { name: 'redis', type: 'ClusterIP', clusterIP: '10.96.45.14', ports: [{ port: 6379, targetPort: '6379', protocol: 'TCP' }], dns: 'redis-a1b2c3.staging.local' },
-    { name: 'postgres', type: 'ClusterIP', clusterIP: '10.96.45.15', ports: [{ port: 5432, targetPort: '5432', protocol: 'TCP' }], dns: 'postgres-a1b2c3.staging.local' },
+    { id: 'frontend', name: 'frontend', type: 'ClusterIP', clusterIP: '10.96.45.12', dns: 'frontend-a1b2c3.staging.local',
+      ports: [{ port: 3000, targetPort: 3000, protocol: 'TCP' }],
+      volumes: [{ name: 'static-assets', mountPath: '/usr/share/nginx/html', type: 'config' }] },
+    { id: 'api-server', name: 'api-server', type: 'ClusterIP', clusterIP: '10.96.45.13', dns: 'api-server-a1b2c3.staging.local',
+      ports: [
+        { port: 8080, targetPort: 8080, protocol: 'TCP', interceptedBy: 'ws-1' },
+        { port: 9090, targetPort: 9090, protocol: 'TCP' },
+        { port: 50051, targetPort: 50051, protocol: 'TCP' },
+      ],
+      volumes: [
+        { name: 'app-config', mountPath: '/etc/config', type: 'config' },
+        { name: 'tls-certs', mountPath: '/etc/tls', type: 'secret' },
+      ] },
+    { id: 'redis', name: 'redis', type: 'ClusterIP', clusterIP: '10.96.45.14', dns: 'redis-a1b2c3.staging.local',
+      ports: [{ port: 6379, targetPort: 6379, protocol: 'TCP' }],
+      volumes: [{ name: 'redis-data', mountPath: '/data', type: 'persistent' }] },
+    { id: 'postgres', name: 'postgres', type: 'ClusterIP', clusterIP: '10.96.45.15', dns: 'postgres-a1b2c3.staging.local',
+      ports: [{ port: 5432, targetPort: 5432, protocol: 'TCP', interceptedBy: 'ws-3' }],
+      volumes: [
+        { name: 'pg-data', mountPath: '/var/lib/postgresql/data', type: 'persistent' },
+        { name: 'pg-credentials', mountPath: '/etc/secrets', type: 'secret' },
+      ] },
   ],
   'd4e5f6': [
-    { name: 'web-app', type: 'ClusterIP', clusterIP: '10.96.50.10', ports: [{ port: 5173, targetPort: '5173', protocol: 'TCP' }], dns: 'web-app-d4e5f6.dev.local' },
-    { name: 'auth-service', type: 'ClusterIP', clusterIP: '10.96.50.11', ports: [{ port: 9090, targetPort: '9090', protocol: 'TCP' }], dns: 'auth-d4e5f6.dev.local' },
+    { id: 'web-app', name: 'web-app', type: 'ClusterIP', clusterIP: '10.96.50.10', dns: 'web-app-d4e5f6.dev.local',
+      ports: [
+        { port: 5173, targetPort: 5173, protocol: 'TCP', interceptedBy: 'ws-2' },
+        { port: 24678, targetPort: 24678, protocol: 'TCP' },
+      ],
+      volumes: [{ name: 'src', mountPath: '/app/src', type: 'host' }] },
+    { id: 'auth-service', name: 'auth-service', type: 'ClusterIP', clusterIP: '10.96.50.11', dns: 'auth-d4e5f6.dev.local',
+      ports: [{ port: 9090, targetPort: 9090, protocol: 'TCP' }],
+      volumes: [] },
   ],
   'g7h8i9': [
-    { name: 'gateway', type: 'LoadBalancer', clusterIP: '10.96.60.10', ports: [{ port: 443, targetPort: '8443', protocol: 'TCP' }, { port: 80, targetPort: '8080', protocol: 'TCP' }], dns: 'gateway-g7h8i9.prod.local' },
-    { name: 'dashboard', type: 'ClusterIP', clusterIP: '10.96.60.11', ports: [{ port: 3000, targetPort: '3000', protocol: 'TCP' }], dns: 'dashboard-g7h8i9.prod.local' },
+    { id: 'gateway', name: 'gateway', type: 'LoadBalancer', clusterIP: '10.96.60.10', dns: 'gateway-g7h8i9.prod.local',
+      ports: [
+        { port: 443, targetPort: 8443, protocol: 'TCP' },
+        { port: 80, targetPort: 8080, protocol: 'TCP' },
+      ],
+      volumes: [
+        { name: 'tls-cert', mountPath: '/etc/ssl/certs', type: 'secret' },
+        { name: 'gateway-config', mountPath: '/etc/gateway', type: 'config' },
+      ] },
+    { id: 'dashboard', name: 'dashboard', type: 'ClusterIP', clusterIP: '10.96.60.11', dns: 'dashboard-g7h8i9.prod.local',
+      ports: [{ port: 3000, targetPort: 3000, protocol: 'TCP' }],
+      volumes: [] },
   ],
+}
+
+// Workspaces connected to each environment
+interface ConnectedWorkspace {
+  id: string
+  name: string
+  owner: string
+  status: 'running' | 'stopped' | 'failed'
+}
+const ENV_WORKSPACES: Record<string, ConnectedWorkspace[]> = {
+  'a1b2c3': [
+    { id: 'ws-1', name: 'api-dev', owner: 'karthik', status: 'running' },
+    { id: 'ws-3', name: 'debug-session', owner: 'sohail', status: 'stopped' },
+  ],
+  'd4e5f6': [
+    { id: 'ws-2', name: 'frontend-dev', owner: 'karthik', status: 'running' },
+  ],
+  'g7h8i9': [],
 }
 
 // Dummy configs
@@ -117,10 +192,21 @@ services:
 
 function ServicesView({ envHash }: { envHash: string }) {
   const services = SERVICES[envHash] || []
+  const workspaces = ENV_WORKSPACES[envHash] || []
   const [compose, setCompose] = useState(COMPOSITIONS[envHash] || '')
   const [composeOpen, setComposeOpen] = useState(false)
   const [composeExiting, setComposeExiting] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [logsService, setLogsService] = useState<string | null>(null)
+
+  useEffect(() => {
+    function handler(e: Event) {
+      const detail = (e as CustomEvent).detail
+      setLogsService(detail.name)
+    }
+    window.addEventListener('open-service-logs', handler)
+    return () => window.removeEventListener('open-service-logs', handler)
+  }, [])
 
   function closeCompose() {
     setComposeExiting(true)
@@ -130,12 +216,24 @@ function ServicesView({ envHash }: { envHash: string }) {
     }, 150)
   }
 
+  const graphServices = services.map((s) => ({
+    id: s.id,
+    name: s.name,
+    dns: s.dns,
+    type: s.type,
+    ports: s.ports.map((p) => ({ port: p.port, targetPort: p.targetPort, interceptedBy: p.interceptedBy })),
+    volumes: s.volumes,
+  }))
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between px-6 pt-6 pb-4">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">Services</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">{services.length} services deployed</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            {services.length} services · {workspaces.length} connected workspace{workspaces.length !== 1 ? 's' : ''}
+          </p>
         </div>
         <button
           className={cn(
@@ -152,7 +250,7 @@ function ServicesView({ envHash }: { envHash: string }) {
 
       {/* Composition editor */}
       {composeOpen && (
-        <div className="mt-4 overflow-hidden rounded-xl border border-border/50" style={{ animation: composeExiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}>
+        <div className="mx-6 mb-4 overflow-hidden rounded-xl border border-border/50" style={{ animation: composeExiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}>
           <div className="flex items-center justify-between border-b border-border/30 bg-card px-4 py-2">
             <span className="text-[11px] font-medium text-muted-foreground">docker-compose.yml</span>
             <div className="flex items-center gap-2">
@@ -176,61 +274,17 @@ function ServicesView({ envHash }: { envHash: string }) {
               </button>
             </div>
           </div>
-          <CodeEditor
-            value={compose}
-            onChange={setCompose}
-            height="300px"
-          />
+          <CodeEditor value={compose} onChange={setCompose} height="300px" />
         </div>
       )}
 
-      {/* Services table */}
-      <div className="mt-5">
-        <table className="w-full text-left text-[13px]">
-          <thead>
-            <tr className="border-b border-border/50 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-              <th className="pb-2.5 pr-4">Name</th>
-              <th className="pb-2.5 pr-4">DNS Hostname</th>
-              <th className="pb-2.5 pr-4">Cluster IP</th>
-              <th className="pb-2.5 pr-4">Ports</th>
-              <th className="pb-2.5">Type</th>
-            </tr>
-          </thead>
-          <tbody>
-            {services.map((svc) => (
-              <tr key={svc.name} className="h-12 border-b border-border/30 transition-colors hover:bg-accent/30">
-                <td className="py-3 pr-4">
-                  <span className="font-medium text-foreground">{svc.name}</span>
-                </td>
-                <td className="py-3 pr-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-muted-foreground">{svc.dns}</span>
-                    <CopyButton text={svc.dns} />
-                  </div>
-                </td>
-                <td className="py-3 pr-4 text-muted-foreground">{svc.clusterIP}</td>
-                <td className="py-3 pr-4">
-                  <div className="flex flex-wrap gap-1">
-                    {svc.ports.map((p) => (
-                      <span key={p.port} className="rounded bg-accent px-1.5 py-0.5 text-[11px] text-muted-foreground">
-                        {p.port}→{p.targetPort}/{p.protocol}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="py-3">
-                  <span className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-medium',
-                    svc.type === 'LoadBalancer' ? 'bg-blue-500/10 text-blue-600' : 'bg-accent text-muted-foreground'
-                  )}>
-                    {svc.type}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Graph fills remaining space */}
+      <div className="min-h-0 flex-1">
+        <ServicesGraph services={graphServices} workspaces={workspaces} />
       </div>
+
+      {/* Logs viewer */}
+      {logsService && <LogsViewer serviceName={logsService} onClose={() => setLogsService(null)} />}
     </div>
   )
 }
@@ -615,10 +669,18 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
 }
 
 export function EnvironmentContent({ envName, envHash, activeTab }: EnvironmentContentProps) {
+  // Services view needs full height (graph), others get scrollable max-width
+  if (activeTab === 'services') {
+    return (
+      <div className="h-full bg-background">
+        <ServicesView envHash={envHash} />
+      </div>
+    )
+  }
+
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="mx-auto max-w-4xl">
-        {activeTab === 'services' && <ServicesView envHash={envHash} />}
         {activeTab === 'configs' && <ConfigsView envHash={envHash} />}
         {activeTab === 'snapshots' && <SnapshotsView envHash={envHash} envName={envName} />}
         {activeTab === 'settings' && <SettingsView envName={envName} envHash={envHash} />}
