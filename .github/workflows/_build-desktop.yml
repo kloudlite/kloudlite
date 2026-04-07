@@ -152,3 +152,58 @@ jobs:
             web/apps/desktop/dist/kloudlite-desktop-*
           if-no-files-found: error
           retention-days: 7
+
+  build-win:
+    name: Desktop (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: web/apps/desktop
+        shell: bash
+        run: bun install
+
+      - name: Set version
+        working-directory: web/apps/desktop
+        shell: bash
+        run: |
+          node -e "const p=require('./package.json');p.version='${{ inputs.version }}';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+
+      - name: Build
+        working-directory: web/apps/desktop
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bun run build
+          npx electron-builder --win --publish never
+
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          cd web/apps/desktop/dist
+          for f in *.exe; do
+            [ -f "$f" ] && mv "$f" "kloudlite-desktop-${{ inputs.tag }}-windows-x64.exe"
+          done
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          cd web/apps/desktop/dist
+          for f in kloudlite-desktop-*.exe; do
+            [ -f "$f" ] && sha256sum "$f" > "${f}.sha256"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kloudlite-desktop-windows
+          path: |
+            web/apps/desktop/dist/kloudlite-desktop-*
+          if-no-files-found: error
+          retention-days: 7
