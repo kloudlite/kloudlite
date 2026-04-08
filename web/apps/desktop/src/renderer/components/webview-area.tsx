@@ -232,11 +232,11 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
   }, [activeTabId])
 
   return (
-    <div ref={containerRef} className="relative flex-1">
+    <div ref={containerRef} className="relative h-full w-full">
       <NavIndicator direction={navFlash} />
       {tabs.length === 0 && (
         <div className="flex h-full items-center justify-center text-muted-foreground">
-          <p className="text-sm">Press <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">Cmd+T</kbd> to open a new tab</p>
+          <p className="text-sm text-center">Select a service or press <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">Cmd+T</kbd> to browse</p>
         </div>
       )}
     </div>
