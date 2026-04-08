@@ -170,6 +170,13 @@ jobs:
       version: ${{ needs.prepare.outputs.version }}
       is_nightly: true
 
+  release-desktop:
+    needs: [prepare, desktop]
+    uses: ./.github/workflows/_release-desktop.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      is_nightly: true
+
   # ── Deploy to development after all Docker builds succeed ────────────
   deploy:
     needs:

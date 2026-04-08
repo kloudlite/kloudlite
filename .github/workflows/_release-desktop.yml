@@ -1,0 +1,93 @@
+name: "Create Desktop Release"
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version string (e.g. 1.2.0)'
+        required: true
+        type: string
+      is_nightly:
+        description: 'Whether this is a nightly release'
+        type: boolean
+        default: false
+      make_latest:
+        description: 'Move desktop/latest floating tag'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release desktop v${{ inputs.version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compute tag
+        id: tag
+        run: |
+          TAG="desktop/v${{ inputs.version }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Download desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: kloudlite-desktop-*
+          path: dist-artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          find dist-artifacts -type f -exec cp {} release-assets/ \;
+          ls -lah release-assets/
+
+      - name: Generate release notes
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          cat > release-notes.md << EOF
+          # Kloudlite Desktop ${VERSION}
+
+          Download the installer for your platform from the assets below.
+
+          ## Checksums
+
+          SHA256 checksum files are published alongside every desktop artifact.
+          EOF
+
+      - name: Create or move floating tags
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          git tag "${TAG}"
+          git push origin "${TAG}"
+
+          if [ "${{ inputs.is_nightly }}" = "true" ]; then
+            git tag -f "desktop/nightly"
+            git push origin "desktop/nightly" --force
+          elif [ "${{ inputs.make_latest }}" = "true" ]; then
+            git tag -f "desktop/latest"
+            git push origin "desktop/latest" --force
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: desktop v${{ inputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ inputs.is_nightly }}
+          make_latest: ${{ inputs.is_nightly == false && inputs.make_latest }}
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
