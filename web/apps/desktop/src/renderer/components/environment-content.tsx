@@ -555,60 +555,6 @@ function SettingsView({ envName, envHash }: { envName: string; envHash: string }
   )
 }
 
-// Dummy compositions
-const COMPOSITIONS: Record<string, string> = {
-  'a1b2c3': `version: "3.8"
-services:
-  frontend:
-    image: kloudlite/frontend:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - API_URL=http://api-server:8080
-  api-server:
-    image: kloudlite/api:latest
-    ports:
-      - "8080:8080"
-    depends_on:
-      - redis
-      - postgres
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-  postgres:
-    image: postgres:16-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=app
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=<set-in-secret>`,
-  'd4e5f6': `version: "3.8"
-services:
-  web-app:
-    image: kloudlite/web:dev
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./src:/app/src
-  auth-service:
-    image: kloudlite/auth:dev
-    ports:
-      - "9090:9090"`,
-  'g7h8i9': `version: "3.8"
-services:
-  gateway:
-    image: kloudlite/gateway:stable
-    ports:
-      - "443:8443"
-      - "80:8080"
-  dashboard:
-    image: kloudlite/dashboard:stable
-    ports:
-      - "3000:3000"`,
-}
-
 function CompositionView({ envHash }: { envHash: string }) {
   const [compose, setCompose] = useState(COMPOSITIONS[envHash] || '')
   const [saved, setSaved] = useState(false)
