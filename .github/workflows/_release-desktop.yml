@@ -74,8 +74,14 @@ jobs:
 
           TAG="${{ steps.tag.outputs.tag }}"
 
-          git tag "${TAG}"
-          git push origin "${TAG}"
+          git fetch --tags origin
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists on origin; reusing it"
+          else
+            git tag "${TAG}"
+            git push origin "${TAG}"
+          fi
 
           if [ "${{ inputs.is_nightly }}" = "true" ]; then
             git tag -f "desktop/nightly"
