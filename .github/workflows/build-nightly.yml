@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write
 
 jobs:
   prepare:
@@ -20,11 +21,16 @@ jobs:
       tag: ${{ steps.tag.outputs.tag }}
       version: ${{ steps.tag.outputs.version }}
     steps:
+      - name: Checkout development
+        uses: actions/checkout@v4
+        with:
+          ref: development
+
       - name: Compute tag
         id: tag
         run: |
           DATE=$(date -u +%Y%m%d)
-          SHORT_SHA="${GITHUB_SHA:0:7}"
+          SHORT_SHA="$(git rev-parse --short=7 HEAD)"
           TAG="nightly-${DATE}-${SHORT_SHA}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=0.0.0-nightly.${DATE}" >> "$GITHUB_OUTPUT"
@@ -37,6 +43,7 @@ jobs:
       app: platform-controller
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   tunnel-server:
     needs: prepare
@@ -45,6 +52,7 @@ jobs:
       app: tunnel-server
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   workmachine-node-manager:
     needs: prepare
@@ -53,6 +61,7 @@ jobs:
       app: workmachine-node-manager
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   wm-ingress-controller:
     needs: prepare
@@ -61,6 +70,7 @@ jobs:
       app: wm-ingress-controller
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   oci-installer:
     needs: prepare
@@ -69,6 +79,7 @@ jobs:
       app: oci-installer
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   code-analyzer:
     needs: prepare
@@ -77,6 +88,7 @@ jobs:
       app: code-analyzer
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   k3s-backup:
     needs: prepare
@@ -85,6 +97,7 @@ jobs:
       app: k3s-backup
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   workspace-base:
     needs: prepare
@@ -93,6 +106,7 @@ jobs:
       app: workspace-base
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   workspace-comprehensive:
     needs: [prepare, workspace-base]
@@ -101,6 +115,7 @@ jobs:
       app: workspace-comprehensive
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   # ── Docker: Web apps ─────────────────────────────────────────────────
   console:
@@ -110,6 +125,7 @@ jobs:
       app: console
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   dashboard:
     needs: prepare
@@ -118,6 +134,7 @@ jobs:
       app: dashboard
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   website:
     needs: prepare
@@ -126,6 +143,7 @@ jobs:
       app: website
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
+      ref: development
 
   # ── Binaries: CLI tools ──────────────────────────────────────────────
   kli:
@@ -135,6 +153,7 @@ jobs:
       app: kli
       version: ${{ needs.prepare.outputs.version }}
       tag: ${{ needs.prepare.outputs.tag }}
+      ref: development
 
   kltun:
     needs: prepare
@@ -143,6 +162,7 @@ jobs:
       app: kltun
       version: ${{ needs.prepare.outputs.version }}
       tag: ${{ needs.prepare.outputs.tag }}
+      ref: development
 
   desktop:
     needs: prepare
@@ -150,6 +170,7 @@ jobs:
     with:
       tag: ${{ needs.prepare.outputs.tag }}
       version: ${{ needs.prepare.outputs.version }}
+      ref: development
     secrets: inherit
 
   # ── Release: nightly pre-releases ────────────────────────────────────
@@ -160,6 +181,7 @@ jobs:
       app: kli
       version: ${{ needs.prepare.outputs.version }}
       is_nightly: true
+      ref: development
 
   release-kltun:
     needs: [prepare, kltun]
@@ -168,6 +190,15 @@ jobs:
       app: kltun
       version: ${{ needs.prepare.outputs.version }}
       is_nightly: true
+      ref: development
+
+  release-desktop:
+    needs: [prepare, desktop]
+    uses: ./.github/workflows/_release-desktop.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      is_nightly: true
+      ref: development
 
   # ── Deploy to development after all Docker builds succeed ────────────
   deploy:
@@ -184,7 +215,7 @@ jobs:
       - console
       - dashboard
       - website
-    uses: kloudlite/kloudlite-ci/.github/workflows/deploy.yml@development
+    uses: kloudlite/kloudlite-ci/.github/workflows/deploy.yml@master
     with:
       version: ${{ needs.prepare.outputs.tag }}
       environment: development
