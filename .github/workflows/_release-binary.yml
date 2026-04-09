@@ -136,6 +136,17 @@ jobs:
             fi
           fi
 
+      - name: Reset existing nightly release
+        if: ${{ inputs.is_nightly }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --yes --cleanup-tag=false
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
