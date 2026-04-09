@@ -1,0 +1,220 @@
+name: "Build Desktop App"
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag for the build artifacts'
+        required: true
+        type: string
+      version:
+        description: 'Version string (e.g. 0.1.0)'
+        required: false
+        type: string
+        default: '0.0.0-dev'
+      ref:
+        description: 'Git ref to checkout for the build'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build-mac:
+    name: Desktop (macOS)
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: web/apps/desktop
+        run: bun install
+
+      - name: Set version
+        working-directory: web/apps/desktop
+        run: |
+          node -e "const p=require('./package.json');p.version='${{ inputs.version }}';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+
+      - name: Import Apple certificate
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "$APPLE_CERTIFICATE" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 \
+            -k "$KEYCHAIN_PATH" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+      - name: Build, sign, and notarize
+        working-directory: web/apps/desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          bun run build
+          npx electron-builder --mac --${{ matrix.arch }} --publish never
+
+      - name: Rename artifacts
+        run: |
+          cd web/apps/desktop/dist
+          for f in *.dmg; do
+            [ -f "$f" ] && mv "$f" "kloudlite-desktop-${{ inputs.tag }}-darwin-${{ matrix.arch }}.dmg"
+          done
+          for f in *.zip; do
+            [ -f "$f" ] && mv "$f" "kloudlite-desktop-${{ inputs.tag }}-darwin-${{ matrix.arch }}.zip"
+          done
+
+      - name: Generate checksums
+        run: |
+          cd web/apps/desktop/dist
+          for f in kloudlite-desktop-*; do
+            [ -f "$f" ] && shasum -a 256 "$f" > "${f}.sha256"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kloudlite-desktop-darwin-${{ matrix.arch }}
+          path: |
+            web/apps/desktop/dist/kloudlite-desktop-*
+          if-no-files-found: error
+          retention-days: 7
+
+  build-linux:
+    name: Desktop (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: web/apps/desktop
+        run: bun install
+
+      - name: Set version
+        working-directory: web/apps/desktop
+        run: |
+          node -e "const p=require('./package.json');p.version='${{ inputs.version }}';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+
+      - name: Build
+        working-directory: web/apps/desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bun run build
+          npx electron-builder --linux --publish never
+
+      - name: Rename artifacts
+        run: |
+          cd web/apps/desktop/dist
+          for f in *.AppImage; do
+            [ -f "$f" ] && mv "$f" "kloudlite-desktop-${{ inputs.tag }}-linux-amd64.AppImage"
+          done
+          for f in *.deb; do
+            [ -f "$f" ] && mv "$f" "kloudlite-desktop-${{ inputs.tag }}-linux-amd64.deb"
+          done
+
+      - name: Generate checksums
+        run: |
+          cd web/apps/desktop/dist
+          for f in kloudlite-desktop-*; do
+            [ -f "$f" ] && sha256sum "$f" > "${f}.sha256"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kloudlite-desktop-linux
+          path: |
+            web/apps/desktop/dist/kloudlite-desktop-*
+          if-no-files-found: error
+          retention-days: 7
+
+  build-win:
+    name: Desktop (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: web/apps/desktop
+        shell: bash
+        run: bun install
+
+      - name: Set version
+        working-directory: web/apps/desktop
+        shell: bash
+        run: |
+          node -e "const p=require('./package.json');p.version='${{ inputs.version }}';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+
+      - name: Build
+        working-directory: web/apps/desktop
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bun run build
+          npx electron-builder --win --publish never
+
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          cd web/apps/desktop/dist
+          for f in *.exe; do
+            [ -f "$f" ] && mv "$f" "kloudlite-desktop-${{ inputs.tag }}-windows-x64.exe"
+          done
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          cd web/apps/desktop/dist
+          for f in kloudlite-desktop-*.exe; do
+            [ -f "$f" ] && sha256sum "$f" > "${f}.sha256"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kloudlite-desktop-windows
+          path: |
+            web/apps/desktop/dist/kloudlite-desktop-*
+          if-no-files-found: error
+          retention-days: 7
