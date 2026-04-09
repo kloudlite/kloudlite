@@ -136,7 +136,7 @@ jobs:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: ${{ inputs.app }} v${{ inputs.version }}
           body_path: release-notes.md
-          draft: false
+          draft: ${{ inputs.is_nightly }}
           prerelease: ${{ inputs.is_nightly }}
           make_latest: ${{ inputs.is_nightly == false && inputs.make_latest }}
           files: |
