@@ -12,6 +12,11 @@ on:
         required: false
         type: string
         default: '0.0.0-dev'
+      ref:
+        description: 'Git ref to checkout for the build'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -25,6 +30,8 @@ jobs:
         arch: [x64, arm64]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -105,6 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -158,6 +167,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - uses: oven-sh/setup-bun@v2
         with:
