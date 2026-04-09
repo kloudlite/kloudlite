@@ -19,6 +19,11 @@ on:
         description: 'Move app/latest floating tag'
         type: boolean
         default: false
+      ref:
+        description: 'Git ref to checkout before tagging'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -31,6 +36,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - name: Compute tag
         id: tag
