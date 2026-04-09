@@ -215,13 +215,31 @@ jobs:
       - console
       - dashboard
       - website
-    uses: kloudlite/kloudlite-ci/.github/workflows/deploy.yml@master
-    with:
-      version: ${{ needs.prepare.outputs.tag }}
-      environment: development
-      console: true
-      website: true
-      oci-installer: true
-      is_nightly: true
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy in kloudlite-ci
+        env:
+          DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
+        run: |
+          if [ -z "$DEPLOY_PAT" ]; then
+            echo "::error::Missing required secret: DEPLOY_PAT"
+            exit 1
+          fi
+
+          curl -fsSL -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${DEPLOY_PAT}" \
+            https://api.github.com/repos/kloudlite/kloudlite-ci/dispatches \
+            -d @- <<EOF
+          {
+            "event_type": "deploy",
+            "client_payload": {
+              "version": "${{ needs.prepare.outputs.tag }}",
+              "environment": "development",
+              "console": true,
+              "website": true,
+              "oci_installer": true,
+              "is_nightly": true
+            }
+          }
+          EOF
