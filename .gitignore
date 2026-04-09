@@ -29,6 +29,7 @@ dist
 testbin
 .release
 .tmp
+supabase/.temp/
 .kube
 .out
 bin/
