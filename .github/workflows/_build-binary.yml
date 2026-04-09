@@ -15,6 +15,11 @@ on:
         description: 'Tag for artifact naming'
         required: true
         type: string
+      ref:
+        description: 'Git ref to checkout for the build'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -42,6 +47,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
