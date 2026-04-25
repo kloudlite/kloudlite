@@ -1,5 +1,3 @@
-import { useId } from 'react'
-
 interface IconProps {
   className?: string
 }
@@ -104,9 +102,8 @@ export function JetBrainsIcon({ className = 'h-4 w-4' }: IconProps) {
 }
 
 export function AntigravityIcon({ className = 'h-4 w-4' }: IconProps) {
-  const id = useId()
-  const clipId = `antigravity-clip-${id}`
-  const filterId = (n: number) => `filter${n}-${id}`
+  const clipId = 'antigravity-clip'
+  const filterId = (n: number) => `antigravity-filter-${n}`
 
   return (
     <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
