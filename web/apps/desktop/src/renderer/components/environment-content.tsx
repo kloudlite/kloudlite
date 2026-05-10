@@ -89,7 +89,7 @@ services:
     environment:
       - POSTGRES_DB=app
       - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secret`,
+      - POSTGRES_PASSWORD=<set-in-secret>`,
   'd4e5f6': `version: "3.8"
 services:
   web-app:
@@ -238,9 +238,9 @@ function ServicesView({ envHash }: { envHash: string }) {
 // Dummy envvars
 const ENVVARS: Record<string, { key: string; value: string; type: 'config' | 'secret' }[]> = {
   'a1b2c3': [
-    { key: 'DATABASE_URL', value: 'postgresql://admin:secret@postgres:5432/app', type: 'secret' },
+    { key: 'DATABASE_URL', value: 'postgresql://admin:<set-in-secret>@postgres:5432/app', type: 'secret' },
     { key: 'REDIS_URL', value: 'redis://redis:6379', type: 'config' },
-    { key: 'API_KEY', value: 'sk-kloudlite-a1b2c3d4e5f6', type: 'secret' },
+    { key: 'API_KEY', value: 'demo_api_key_value', type: 'secret' },
     { key: 'NODE_ENV', value: 'staging', type: 'config' },
     { key: 'LOG_LEVEL', value: 'debug', type: 'config' },
   ],
@@ -248,13 +248,13 @@ const ENVVARS: Record<string, { key: string; value: string; type: 'config' | 'se
     { key: 'DEBUG', value: 'true', type: 'config' },
     { key: 'LOG_LEVEL', value: 'verbose', type: 'config' },
     { key: 'PORT', value: '5173', type: 'config' },
-    { key: 'DB_PASSWORD', value: 'dev-secret-123', type: 'secret' },
+    { key: 'DB_PASSWORD', value: '<set-in-secret>', type: 'secret' },
   ],
   'g7h8i9': [
     { key: 'NODE_ENV', value: 'production', type: 'config' },
     { key: 'CDN_URL', value: 'https://cdn.kloudlite.io', type: 'config' },
-    { key: 'SENTRY_DSN', value: 'https://abc@sentry.io/123', type: 'secret' },
-    { key: 'STRIPE_KEY', value: 'sk_live_kloudlite_prod', type: 'secret' },
+    { key: 'SENTRY_DSN', value: 'https://example@sentry.io/project-id', type: 'secret' },
+    { key: 'STRIPE_KEY', value: 'demo_stripe_key_value', type: 'secret' },
   ],
 }
 
