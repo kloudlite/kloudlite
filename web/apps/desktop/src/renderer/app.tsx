@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { Sidebar } from '@/components/sidebar'
 import { WebviewArea, type WebviewAreaHandle } from '@/components/webview-area'
 import { DashboardWebview, type DashboardWebviewHandle } from '@/components/dashboard-webview'
-import { NewTabBar } from '@/components/command-bar'
 import { useTabStore } from '@/store/tabs'
-import { useModeStore } from '@/store/mode'
-import { EnvironmentContent, NewEnvironmentDialog } from '@/components/environment-content'
+import { useModeStore, type AppMode } from '@/store/mode'
 import { EmptyState } from '@/components/empty-state'
-import { WorkspaceContent, NewWorkspaceDialog } from '@/components/workspace-content'
 import { cn } from '@/lib/utils'
 
-const MIN_SIDEBAR_WIDTH = 200
+// Lazy-load heavy components — only loaded when needed
+const NewTabBar = lazy(() => import('@/components/command-bar').then(m => ({ default: m.NewTabBar })))
+const EnvironmentContent = lazy(() => import('@/components/environment-content').then(m => ({ default: m.EnvironmentContent })))
+const NewEnvironmentDialog = lazy(() => import('@/components/environment-content').then(m => ({ default: m.NewEnvironmentDialog })))
+const WorkspaceContent = lazy(() => import('@/components/workspace-content').then(m => ({ default: m.WorkspaceContent })))
+const NewWorkspaceDialog = lazy(() => import('@/components/workspace-content').then(m => ({ default: m.NewWorkspaceDialog })))
+
+const MIN_SIDEBAR_WIDTH = 280
 const MAX_SIDEBAR_WIDTH = 450
 const DEFAULT_SIDEBAR_WIDTH = 360
 
@@ -119,8 +123,18 @@ export function App() {
   useEffect(() => {
     window.electronAPI.onShortcut((action) => {
       const currentMode = useModeStore.getState().mode
+      const MODES: AppMode[] = ['environments', 'workspaces', 'browse']
 
       switch (action) {
+        case 'mode-1':
+          useModeStore.getState().setMode(MODES[0])
+          break
+        case 'mode-2':
+          useModeStore.getState().setMode(MODES[1])
+          break
+        case 'mode-3':
+          useModeStore.getState().setMode(MODES[2])
+          break
         case 'new-tab':
           if (currentMode === 'browse') {
             window.dispatchEvent(new CustomEvent('open-command-bar'))
@@ -317,22 +331,26 @@ export function App() {
           <div className="relative flex-1 overflow-hidden">
             <div className="absolute inset-0" style={{ display: mode === 'environments' ? 'block' : 'none' }}>
               {selectedEnvHash && selectedEnvName ? (
-                <EnvironmentContent
-                  envName={selectedEnvName}
-                  envHash={selectedEnvHash}
-                  activeTab={envActiveTab}
-                />
+                <Suspense fallback={<div className="h-full" />}>
+                  <EnvironmentContent
+                    envName={selectedEnvName}
+                    envHash={selectedEnvHash}
+                    activeTab={envActiveTab}
+                  />
+                </Suspense>
               ) : (
                 <EmptyState title="Select an environment" description="Choose an environment from the sidebar to view its details" />
               )}
             </div>
             <div className="absolute inset-0" style={{ display: mode === 'workspaces' ? 'block' : 'none' }}>
               {selectedWsId && selectedWsName ? (
-                <WorkspaceContent
-                  wsName={selectedWsName}
-                  wsId={selectedWsId}
-                  activeTab={wsActiveTab}
-                />
+                <Suspense fallback={<div className="h-full" />}>
+                  <WorkspaceContent
+                    wsName={selectedWsName}
+                    wsId={selectedWsId}
+                    activeTab={wsActiveTab}
+                  />
+                </Suspense>
               ) : (
                 <EmptyState title="Select a workspace" description="Choose a workspace from the sidebar to connect" />
               )}
@@ -348,23 +366,29 @@ export function App() {
 
     {/* New Tab overlay — browse mode only */}
     {newTabOpen && (
-      <NewTabBar
-        onNavigate={(url) => handleRef.current?.navigate(url)}
-        onClose={() => {
-          setNewTabOpen(false)
-          window.dispatchEvent(new CustomEvent('close-command-bar'))
-        }}
-      />
+      <Suspense fallback={null}>
+        <NewTabBar
+          onNavigate={(url) => handleRef.current?.navigate(url)}
+          onClose={() => {
+            setNewTabOpen(false)
+            window.dispatchEvent(new CustomEvent('close-command-bar'))
+          }}
+        />
+      </Suspense>
     )}
 
     {/* New Environment dialog */}
     {showNewEnvDialog && (
-      <NewEnvironmentDialog onClose={() => setShowNewEnvDialog(false)} />
+      <Suspense fallback={null}>
+        <NewEnvironmentDialog onClose={() => setShowNewEnvDialog(false)} />
+      </Suspense>
     )}
 
     {/* New Workspace dialog */}
     {showNewWsDialog && (
-      <NewWorkspaceDialog onClose={() => setShowNewWsDialog(false)} />
+      <Suspense fallback={null}>
+        <NewWorkspaceDialog onClose={() => setShowNewWsDialog(false)} />
+      </Suspense>
     )}
     </>
   )

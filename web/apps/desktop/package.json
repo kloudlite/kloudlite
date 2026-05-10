@@ -1,7 +1,7 @@
 {
   "name": "desktop",
   "productName": "Kloudlite",
-  "version": "0.0.0-feat-desktop-browser-922ef92",
+  "version": "0.1.0",
   "private": true,
   "author": {
     "name": "Kloudlite",
@@ -36,17 +36,11 @@
       "target": [
         {
           "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         },
         {
           "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         }
       ],
       "hardenedRuntime": true,
@@ -72,17 +66,12 @@
     },
     "linux": {
       "icon": "resources/icon.png",
-      "target": [
-        "AppImage",
-        "deb"
-      ],
+      "target": ["AppImage", "deb"],
       "category": "Development"
     },
     "win": {
       "icon": "resources/icon.png",
-      "target": [
-        "nsis"
-      ]
+      "target": ["nsis"]
     },
     "publish": {
       "provider": "github",

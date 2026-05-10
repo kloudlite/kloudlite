@@ -1,11 +1,12 @@
 import { useRef } from 'react'
+import { Layers, Box, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModeStore, type AppMode } from '@/store/mode'
 
-const modes: { id: AppMode; label: string }[] = [
-  { id: 'environments', label: 'Environments' },
-  { id: 'workspaces', label: 'Workspaces' },
-  { id: 'browse', label: 'Browse' },
+const modes: { id: AppMode; label: string; icon: typeof Layers }[] = [
+  { id: 'environments', label: 'Envs', icon: Layers },
+  { id: 'workspaces', label: 'Workspaces', icon: Box },
+  { id: 'browse', label: 'Browse', icon: Globe },
 ]
 
 export function ModeTabs() {
@@ -34,23 +35,25 @@ export function ModeTabs() {
     }, 50)
   }
 
-  const activeIdx = modes.findIndex((m) => m.id === mode)
-
   return (
-    <div className="no-drag shrink-0 px-3 pt-1 pb-2" onWheel={handleWheel}>
-      <div className="flex items-center rounded-lg bg-sidebar-foreground/[0.06] p-[2px]">
-        {modes.map(({ id, label }) => (
+    <div className="no-drag shrink-0 border-y border-sidebar-foreground/[0.06] px-2 py-2 mb-2.5" onWheel={handleWheel}>
+      <div className="grid grid-cols-3">
+        {modes.map(({ id, label, icon: Icon }, i) => (
           <button
             key={id}
             className={cn(
-              'relative flex-1 rounded-md py-1.5 text-center text-[11px] font-medium transition-all duration-200',
+              'relative flex flex-col items-center gap-1 rounded-lg py-2 outline-none transition-all duration-150',
+              i > 0 && 'before:absolute before:left-0 before:top-1/2 before:h-5 before:w-px before:-translate-y-1/2 before:bg-sidebar-foreground/[0.08]',
               mode === id
-                ? 'bg-sidebar-foreground/[0.12] text-sidebar-foreground shadow-sm'
-                : 'text-sidebar-foreground/40 hover:text-sidebar-foreground/60'
+                ? 'text-sidebar-foreground'
+                : 'text-sidebar-foreground/30 hover:text-sidebar-foreground/50'
             )}
             onClick={() => setMode(id)}
           >
-            {label}
+            <Icon className="h-5 w-5" strokeWidth={mode === id ? 2 : 1.5} />
+            <span className={cn('text-[11px] tracking-wide', mode === id ? 'font-semibold' : 'font-medium')}>
+              {label}
+            </span>
           </button>
         ))}
       </div>
