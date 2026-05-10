@@ -15,6 +15,11 @@ on:
         description: 'Move desktop/latest floating tag'
         type: boolean
         default: false
+      ref:
+        description: 'Git ref to checkout before tagging'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -27,6 +32,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - name: Compute tag
         id: tag
@@ -67,8 +74,14 @@ jobs:
 
           TAG="${{ steps.tag.outputs.tag }}"
 
-          git tag "${TAG}"
-          git push origin "${TAG}"
+          git fetch --tags origin
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists on origin; reusing it"
+          else
+            git tag "${TAG}"
+            git push origin "${TAG}"
+          fi
 
           if [ "${{ inputs.is_nightly }}" = "true" ]; then
             git tag -f "desktop/nightly"
@@ -78,13 +91,24 @@ jobs:
             git push origin "desktop/latest" --force
           fi
 
+      - name: Reset existing nightly release
+        if: ${{ inputs.is_nightly }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --yes --cleanup-tag=false
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: desktop v${{ inputs.version }}
           body_path: release-notes.md
-          draft: false
+          draft: ${{ inputs.is_nightly }}
           prerelease: ${{ inputs.is_nightly }}
           make_latest: ${{ inputs.is_nightly == false && inputs.make_latest }}
           files: |
