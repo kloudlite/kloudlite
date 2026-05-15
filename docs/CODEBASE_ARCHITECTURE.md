@@ -65,7 +65,6 @@ Controller-section binaries are documented below; CLI binaries in the CLI sectio
 - **`server`** — Control-plane HTTPS server on `:8443`. Runs two things in the same process: (1) the controller-runtime manager (see Controllers), (2) a Gin router for Kubernetes admission webhooks + health. Entry: `api/cmd/server/main.go` → `internal/server/server.go`. Config via `kelseyhightower/envconfig` in `internal/config/config.go`. Installs `ValidatingWebhookConfiguration` / `MutatingWebhookConfiguration` on startup using an embedded `internal/services/webhook_configs.yaml`.
 - **`tunnel-server`** — TLS WebSocket on `:443`, WireGuard peer relay. DNS proxy via `miekg/dns`. Watches Workspace/Environment CRDs with controller-runtime client.
 - **`wm-ingress-controller`** — HTTP/HTTPS router (`:8000`/`:8443`) for per-environment hostnames. Reconciles core Kubernetes `Ingress` objects (not a CRD). Has its own `Taskfile.yml` include at the repo root.
-- **`code-analyzer`** — Watches `/var/lib/kloudlite/home/workspaces` and serves analysis reports on `:8082` with a debounced (~45s) work queue; output at `/var/lib/kloudlite/code-analysis`.
 - **`workmachine-node-manager`** — Host-level daemon on each WorkMachine node. Watches `PackageRequest` / `Snapshot` CRDs; manages the shared home filesystem at `/var/lib/kloudlite/home` (UID/GID 1001). Finalizers: `workspaces.kloudlite.io/directory-cleanup`, `workspaces.kloudlite.io/package-cleanup`.
 
 ### `internal/` layout

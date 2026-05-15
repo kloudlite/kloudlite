@@ -37,10 +37,6 @@ on:
         description: 'K3s Backup'
         type: boolean
         default: false
-      code-analyzer:
-        description: 'Code Analyzer'
-        type: boolean
-        default: false
       workspace-base:
         description: 'Workspace Base'
         type: boolean
@@ -97,7 +93,6 @@ jobs:
       wm-ingress-controller: ${{ steps.apps.outputs.wm-ingress-controller }}
       oci-installer: ${{ steps.apps.outputs.oci-installer }}
       k3s-backup: ${{ steps.apps.outputs.k3s-backup }}
-      code-analyzer: ${{ steps.apps.outputs.code-analyzer }}
       workspace-base: ${{ steps.apps.outputs.workspace-base }}
       workspace-comprehensive: ${{ steps.apps.outputs.workspace-comprehensive }}
       console: ${{ steps.apps.outputs.console }}
@@ -123,7 +118,7 @@ jobs:
             IS_BINARY="false"
             case "$APP_NAME" in
               kli|kltun) IS_BINARY="true" ;;
-              platform-controller|tunnel-server|workmachine-node-manager|wm-ingress-controller|oci-installer|k3s-backup|code-analyzer|workspace-base|workspace-comprehensive|console|dashboard|website)
+              platform-controller|tunnel-server|workmachine-node-manager|wm-ingress-controller|oci-installer|k3s-backup|workspace-base|workspace-comprehensive|console|dashboard|website)
                 IS_DOCKER="true" ;;
               *)
                 echo "::error::Unknown app in tag: ${APP_NAME}"
@@ -155,7 +150,7 @@ jobs:
           IS_TAG_PUSH="${{ steps.resolve.outputs.is_tag_push }}"
           APP_NAME="${{ steps.resolve.outputs.app_name }}"
 
-          ALL_APPS="platform-controller tunnel-server workmachine-node-manager wm-ingress-controller oci-installer k3s-backup code-analyzer workspace-base workspace-comprehensive console dashboard website kli kltun"
+          ALL_APPS="platform-controller tunnel-server workmachine-node-manager wm-ingress-controller oci-installer k3s-backup workspace-base workspace-comprehensive console dashboard website kli kltun"
 
           if [ "$IS_TAG_PUSH" = "true" ]; then
             # Tag push: only the tagged app
@@ -179,7 +174,6 @@ jobs:
                 wm-ingress-controller) VAL="${{ inputs.wm-ingress-controller }}" ;;
                 oci-installer) VAL="${{ inputs.oci-installer }}" ;;
                 k3s-backup) VAL="${{ inputs.k3s-backup }}" ;;
-                code-analyzer) VAL="${{ inputs.code-analyzer }}" ;;
                 workspace-base) VAL="${{ inputs.workspace-base }}" ;;
                 workspace-comprehensive) VAL="${{ inputs.workspace-comprehensive }}" ;;
                 console) VAL="${{ inputs.console }}" ;;
@@ -249,14 +243,6 @@ jobs:
     uses: ./.github/workflows/_build-docker.yml
     with:
       app: oci-installer
-      tag: ${{ needs.prepare.outputs.tag }}
-
-  code-analyzer:
-    needs: prepare
-    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.code-analyzer == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: code-analyzer
       tag: ${{ needs.prepare.outputs.tag }}
 
   k3s-backup:

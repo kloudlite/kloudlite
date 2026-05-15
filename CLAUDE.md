@@ -55,7 +55,6 @@ Moved to [kloudlite/kloudlite-ci](https://github.com/kloudlite/kloudlite-ci). Ru
 - `kltun` — WireGuard tunnel client (runs on developer's local machine)
 - `workmachine-node-manager` — Host-level daemon managing Nix packages on work machine nodes
 - `wm-ingress-controller` — Custom ingress controller for work machine routing
-- `code-analyzer` — Static analysis service
 
 **Kubernetes Controllers** (`api/internal/controllers/`):
 - `workspace/` — Workspace pod lifecycle (create, start, stop, delete)
@@ -115,7 +114,7 @@ Builds happen in this repo. Deployments and e2e tests live in [kloudlite/kloudli
 #### Docker Images
 
 All pushed to `ghcr.io/kloudlite/kloudlite/<app>:<tag>`:
-- **Go:** platform-controller, tunnel-server, workmachine-node-manager, wm-ingress-controller, oci-installer, code-analyzer, k3s-backup, workspace-base, workspace-comprehensive
+- **Go:** platform-controller, tunnel-server, workmachine-node-manager, wm-ingress-controller, oci-installer, k3s-backup, workspace-base, workspace-comprehensive
 - **Web:** console, dashboard, website
 
 #### CLI Binaries

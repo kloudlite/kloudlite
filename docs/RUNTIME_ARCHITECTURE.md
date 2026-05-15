@@ -22,7 +22,6 @@ flowchart TB
     IC[wm-ingress-controller]
     DD[docker-dind]
     TS[tunnel-server]
-    CA[code-analyzer]
     AUX[SSH keys / sshd_config / TLS secret / RBAC / NetworkPolicy]
   end
 
@@ -36,7 +35,6 @@ flowchart TB
   WMC --> IC
   WMC --> DD
   WMC --> TS
-  WMC --> CA
   WMC --> AUX
 
   WSC --> WP
@@ -68,7 +66,6 @@ flowchart TB
 - `wm-ingress-controller`
 - `docker-dind`
 - `tunnel-server`
-- `code-analyzer`
 - support resources: network policy, TLS secret sync, SSH host keys, `sshd_config`, RBAC
 
 ### Per Workspace

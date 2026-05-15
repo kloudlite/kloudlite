@@ -123,14 +123,6 @@ jobs:
       app: oci-installer
       tag: ${{ needs.detect.outputs.tag }}
 
-  code-analyzer:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: code-analyzer
-      tag: ${{ needs.detect.outputs.tag }}
-
   k3s-backup:
     needs: detect
     if: needs.detect.outputs.api == 'true'

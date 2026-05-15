@@ -79,13 +79,6 @@ jobs:
               DOCKER_CONTEXT="./api"
               IMAGE_SUFFIX="oci-installer"
               ;;
-            code-analyzer)
-              BUILD_TYPE="go"
-              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/code-analyzer ./cmd/code-analyzer'
-              DOCKERFILE="./api/cmd/code-analyzer/Dockerfile"
-              DOCKER_CONTEXT="./api"
-              IMAGE_SUFFIX="code-analyzer"
-              ;;
             k3s-backup)
               BUILD_TYPE="docker-only"
               BUILD_CMD=""

@@ -14,7 +14,6 @@ This repository uses artifact-scoped version tags.
 - `kli-v*`
 - `kltun-v*`
 - `api-server-v*`
-- `code-analyzer-v*`
 - `k3s-backup-v*`
 - `nix-image-v*`
 - `workmachine-node-manager-v*`
