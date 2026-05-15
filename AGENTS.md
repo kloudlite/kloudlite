@@ -33,3 +33,12 @@
 ## Local Setup Reality
 - `SETUP.md` is centered on `devenv/` and a local K3s stack, not just `go test` / `bun dev`.
 - The documented bring-up order is: `task web:install` -> `docker-compose up k3s pre-app` -> `task api:dev` -> `docker-compose up post-app` -> `task web:dev`.
+
+## Project Agent Workflow
+- Engineering agents work from their own persistent worktree, not the shared checkout.
+- Before editing, engineers switch their worktree to `development`, update it, then create a fresh `engineering/<role>/<task>` branch.
+- PRs must come from `engineering/*` branches, never directly from `development`.
+- After a PR is merged, switch that engineer's worktree back to `development` and update it before the next task.
+- Engineers edit only their assigned area: API agents stay in `api/`, web agents stay in `web/`, Kubernetes agents stay in controller/operator/CRD/host-management areas plus generated manifests when regenerated.
+- If a task needs cross-module changes, stop and route it through the coordinator instead of editing outside scope.
+- Do not mutate deployed environments without explicit human approval. Read-only diagnosis such as `kubectl get`, `kubectl describe`, and logs is allowed with approval.

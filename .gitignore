@@ -59,4 +59,7 @@ test-results/
 # Local tooling/state files
 .mcp.json
 .worktrees/
+.working-trees/
 .agents/
+docs/plans/
+docs/superpowers/
