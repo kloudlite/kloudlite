@@ -9,6 +9,10 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/config"
 	"github.com/kloudlite/kloudlite/api/k8s"
+	"github.com/kloudlite/kloudlite/api/resources/registry"
+	"github.com/kloudlite/kloudlite/api/resources/service"
+	"github.com/kloudlite/kloudlite/api/resources/store"
+	"github.com/kloudlite/kloudlite/api/resources/watch"
 	"github.com/kloudlite/kloudlite/api/services"
 	"github.com/kloudlite/kloudlite/controllers"
 	"go.uber.org/zap"
@@ -20,6 +24,7 @@ type Server struct {
 	config              *config.Config
 	k8sClient           *k8s.Client
 	controllerManager   *controllers.Manager
+	watchManager        *watch.Manager
 	controllerCtx       context.Context
 	controllerCtxCancel context.CancelFunc
 }
@@ -45,8 +50,13 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		logger.Fatal("Failed to create controller manager", zap.Error(err))
 	}
 
-	// Setup minimal router for webhooks and VPN only
-	router := setupWebhookRouter(cfg, logger, k8sClient)
+	resourceRegistry := registry.Default()
+	resourceStore := store.New()
+	resourceService := service.New(resourceRegistry, resourceStore, k8sClient.RuntimeClient)
+	watchManager := watch.NewManager(resourceRegistry, resourceStore, k8sClient.RuntimeClient, logger)
+
+	// Setup router for webhooks, resource routes, and VPN endpoints.
+	router := setupWebhookRouter(cfg, logger, k8sClient, resourceService, resourceRegistry)
 
 	// Create cancellable context for controller manager
 	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
@@ -60,13 +70,14 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		config:              cfg,
 		k8sClient:           k8sClient,
 		controllerManager:   controllerManager,
+		watchManager:        watchManager,
 		controllerCtx:       controllerCtx,
 		controllerCtxCancel: controllerCtxCancel,
 	}
 }
 
 func (s *Server) Start() error {
-	s.logger.Info("Starting Kloudlite API server (controllers + webhooks only)")
+	s.logger.Info("Starting Kloudlite API server (controllers + webhooks + resources)")
 
 	// Start controller manager first
 	go func() {
@@ -86,11 +97,24 @@ func (s *Server) Start() error {
 		}
 	}()
 
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				s.logger.Error("Resource watch manager panicked",
+					zap.Any("panic", r),
+					zap.Stack("stack"))
+			}
+		}()
+
+		s.logger.Info("Starting resource watch manager")
+		s.watchManager.StartClusterScoped(s.controllerCtx)
+	}()
+
 	// Start HTTPS webhook server
 	go func() {
-		s.logger.Info("Starting HTTPS webhook server", zap.String("addr", s.httpsServer.Addr))
+		s.logger.Info("Starting HTTPS API server", zap.String("addr", s.httpsServer.Addr))
 		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
-			s.logger.Error("HTTPS server stopped with error", zap.Error(err))
+			s.logger.Error("HTTPS API server stopped with error", zap.Error(err))
 		}
 	}()
 
@@ -112,7 +136,7 @@ func (s *Server) Start() error {
 	}
 
 	s.logger.Info("API server started successfully",
-		zap.String("mode", "controllers+webhooks"),
+		zap.String("mode", "controllers+webhooks+resources"),
 		zap.String("webhook_addr", s.httpsServer.Addr))
 
 	// Keep the main goroutine alive
