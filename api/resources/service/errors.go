@@ -14,6 +14,7 @@ const (
 	ErrNotFound        ErrorKind = "not_found"
 	ErrCacheNotReady   ErrorKind = "cache_not_ready"
 	ErrBadRequest      ErrorKind = "bad_request"
+	ErrNotImplemented  ErrorKind = "not_implemented"
 )
 
 type Error struct {
@@ -52,6 +53,8 @@ func HTTPStatus(err error) int {
 		return http.StatusBadRequest
 	case ErrCacheNotReady:
 		return http.StatusServiceUnavailable
+	case ErrNotImplemented:
+		return http.StatusNotImplemented
 	default:
 		return http.StatusInternalServerError
 	}

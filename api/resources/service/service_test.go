@@ -207,14 +207,14 @@ func TestCreateRejectsNilObject(t *testing.T) {
 	}
 }
 
-func TestPatchAndDeleteReturnPlannedErrors(t *testing.T) {
+func TestPatchAndDeleteReturnNotImplementedErrors(t *testing.T) {
 	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().Build())
 
-	if _, err := svc.Patch(context.Background(), "configmaps", "default", "app", &corev1.ConfigMap{}); !IsKind(err, ErrBadRequest) {
-		t.Fatalf("expected bad request error from patch, got %v", err)
+	if _, err := svc.Patch(context.Background(), "configmaps", "default", "app", &corev1.ConfigMap{}); !IsKind(err, ErrNotImplemented) {
+		t.Fatalf("expected not implemented error from patch, got %v", err)
 	}
-	if err := svc.Delete(context.Background(), "configmaps", "default", "app"); !IsKind(err, ErrBadRequest) {
-		t.Fatalf("expected bad request error from delete, got %v", err)
+	if err := svc.Delete(context.Background(), "configmaps", "default", "app"); !IsKind(err, ErrNotImplemented) {
+		t.Fatalf("expected not implemented error from delete, got %v", err)
 	}
 }
 
@@ -229,6 +229,7 @@ func TestHTTPStatusMapsServiceErrors(t *testing.T) {
 		{name: "not found", err: NewError(ErrNotFound, "not found", nil), want: http.StatusNotFound},
 		{name: "bad request", err: NewError(ErrBadRequest, "bad request", nil), want: http.StatusBadRequest},
 		{name: "cache not ready", err: NewError(ErrCacheNotReady, "cache not ready", nil), want: http.StatusServiceUnavailable},
+		{name: "not implemented", err: NewError(ErrNotImplemented, "not implemented", nil), want: http.StatusNotImplemented},
 		{name: "unknown error", err: errors.New("boom"), want: http.StatusInternalServerError},
 	}
 

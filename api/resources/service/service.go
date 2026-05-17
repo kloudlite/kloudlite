@@ -77,12 +77,12 @@ func (s *Service) Create(ctx context.Context, alias string, namespace string, ob
 
 func (s *Service) Patch(ctx context.Context, alias string, namespace string, name string, object client.Object) (client.Object, error) {
 	_, _, _, _, _ = ctx, alias, namespace, name, object
-	return nil, NewError(ErrBadRequest, "patch is not implemented", nil)
+	return nil, NewError(ErrNotImplemented, "patch is not implemented", nil)
 }
 
 func (s *Service) Delete(ctx context.Context, alias string, namespace string, name string) error {
 	_, _, _, _ = ctx, alias, namespace, name
-	return NewError(ErrBadRequest, "delete is not implemented", nil)
+	return NewError(ErrNotImplemented, "delete is not implemented", nil)
 }
 
 func (s *Service) resolve(alias string) (registry.Resource, error) {

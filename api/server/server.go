@@ -56,7 +56,7 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 	watchManager := watch.NewManager(resourceRegistry, resourceStore, k8sClient.RuntimeClient, logger)
 
 	// Setup router for webhooks, resource routes, and VPN endpoints.
-	router := setupWebhookRouter(cfg, logger, k8sClient, resourceService, resourceRegistry)
+	router := setupWebhookRouter(cfg, logger, k8sClient, resourceService, resourceRegistry, watchManager)
 
 	// Create cancellable context for controller manager
 	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
@@ -111,15 +111,13 @@ func (s *Server) Start() error {
 	}()
 
 	// Start HTTPS webhook server
-	go func() {
-		s.logger.Info("Starting HTTPS API server", zap.String("addr", s.httpsServer.Addr))
-		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
-			s.logger.Error("HTTPS API server stopped with error", zap.Error(err))
-		}
-	}()
+	httpsErrCh := s.startHTTPSServer()
 
 	// Give webhook server a moment to start listening
-	time.Sleep(2 * time.Second)
+	if err := waitForHTTPSStartup(httpsErrCh, 2*time.Second); err != nil {
+		s.controllerCtxCancel()
+		return err
+	}
 
 	// Install webhook configurations now that the server is ready
 	s.logger.Info("Installing webhook configurations...")
@@ -141,6 +139,27 @@ func (s *Server) Start() error {
 
 	// Keep the main goroutine alive
 	select {}
+}
+
+func (s *Server) startHTTPSServer() <-chan error {
+	errCh := make(chan error, 1)
+	go func() {
+		s.logger.Info("Starting HTTPS API server", zap.String("addr", s.httpsServer.Addr))
+		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
+			s.logger.Error("HTTPS API server stopped with error", zap.Error(err))
+			errCh <- err
+		}
+	}()
+	return errCh
+}
+
+func waitForHTTPSStartup(errCh <-chan error, delay time.Duration) error {
+	select {
+	case err := <-errCh:
+		return err
+	case <-time.After(delay):
+		return nil
+	}
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
