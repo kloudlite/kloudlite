@@ -83,6 +83,20 @@ func TestGetRequiresReadyCacheAndReturnsCachedObject(t *testing.T) {
 	}
 }
 
+func TestGetReturnsNotFoundWhenCachedObjectIsAbsent(t *testing.T) {
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", nil)
+	svc := New(registry.Default(), st, fake.NewClientBuilder().Build())
+
+	_, err := svc.Get(context.Background(), "configmaps", "default", "missing")
+	if !IsKind(err, ErrNotFound) {
+		t.Fatalf("expected not found error, got %v", err)
+	}
+	if got := HTTPStatus(err); got != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, got)
+	}
+}
+
 func TestUnknownResourceAliasReturnsTypedError(t *testing.T) {
 	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().Build())
 
@@ -169,6 +183,21 @@ func TestCreateSetsGVKWhenMissing(t *testing.T) {
 	}
 }
 
+func TestCreateRejectsObjectWithMismatchedGVK(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().WithScheme(scheme).Build())
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "app"}}
+	secret.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Version: "v1", Kind: "Secret"})
+
+	_, err := svc.Create(context.Background(), "configmaps", "default", secret)
+	if !IsKind(err, ErrBadRequest) {
+		t.Fatalf("expected bad request error, got %v", err)
+	}
+}
+
 func TestCreateRejectsNilObject(t *testing.T) {
 	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().Build())
 
@@ -197,6 +226,7 @@ func TestHTTPStatusMapsServiceErrors(t *testing.T) {
 	}{
 		{name: "unknown resource", err: UnknownResource("missing"), want: http.StatusNotFound},
 		{name: "wrong scope", err: NewError(ErrWrongScope, "wrong scope", nil), want: http.StatusBadRequest},
+		{name: "not found", err: NewError(ErrNotFound, "not found", nil), want: http.StatusNotFound},
 		{name: "bad request", err: NewError(ErrBadRequest, "bad request", nil), want: http.StatusBadRequest},
 		{name: "cache not ready", err: NewError(ErrCacheNotReady, "cache not ready", nil), want: http.StatusServiceUnavailable},
 		{name: "unknown error", err: errors.New("boom"), want: http.StatusInternalServerError},

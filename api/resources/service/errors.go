@@ -11,6 +11,7 @@ type ErrorKind string
 const (
 	ErrUnknownResource ErrorKind = "unknown_resource"
 	ErrWrongScope      ErrorKind = "wrong_scope"
+	ErrNotFound        ErrorKind = "not_found"
 	ErrCacheNotReady   ErrorKind = "cache_not_ready"
 	ErrBadRequest      ErrorKind = "bad_request"
 )
@@ -45,7 +46,7 @@ func HTTPStatus(err error) int {
 	}
 
 	switch serviceErr.Kind {
-	case ErrUnknownResource:
+	case ErrUnknownResource, ErrNotFound:
 		return http.StatusNotFound
 	case ErrWrongScope, ErrBadRequest:
 		return http.StatusBadRequest
