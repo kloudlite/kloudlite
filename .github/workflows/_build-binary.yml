@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       app:
-        description: 'Binary to build (kli or kltun)'
+        description: 'Binary to build (kloudlite, kli, or kltun)'
         required: true
         type: string
       version:
@@ -53,29 +53,29 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'api/go.mod'
-          cache-dependency-path: 'api/go.sum'
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
 
       - name: Download wintun for Windows builds
         if: inputs.app == 'kltun' && matrix.goos == 'windows'
         run: |
           curl -LO https://www.wintun.net/builds/wintun-0.14.1.zip
           unzip wintun-0.14.1.zip
-          mkdir -p api/cmd/kltun/pkg/wintun/dll
-          cp wintun/bin/amd64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_amd64.dll
-          cp wintun/bin/arm64/wintun.dll api/cmd/kltun/pkg/wintun/dll/wintun_arm64.dll
+          mkdir -p cli/kltun/pkg/wintun/dll
+          cp wintun/bin/amd64/wintun.dll cli/kltun/pkg/wintun/dll/wintun_amd64.dll
+          cp wintun/bin/arm64/wintun.dll cli/kltun/pkg/wintun/dll/wintun_arm64.dll
 
       - name: Build binary
-        working-directory: ./api
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: '0'
         run: |
+          mkdir -p dist
           go build -v \
-            -ldflags="-s -w -X github.com/kloudlite/kloudlite/api/cmd/${{ inputs.app }}/cmd.Version=${{ inputs.version }}" \
-            -o ../dist/${{ steps.meta.outputs.output }} \
-            ./cmd/${{ inputs.app }}
+            -ldflags="-s -w -X github.com/kloudlite/kloudlite/cli/${{ inputs.app }}/cmd.Version=${{ inputs.version }}" \
+            -o dist/${{ steps.meta.outputs.output }} \
+            ./cli/${{ inputs.app }}
 
       - name: Generate checksum
         working-directory: ./dist

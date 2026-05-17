@@ -108,15 +108,18 @@ Kloudlite eliminates build and deploy from your inner loop. You write code in a 
 ## Project Structure
 
 ```
-api/
-├── cmd/server/                    # Control plane API server
-├── cmd/kl/                        # CLI (runs inside workspace)
-├── cmd/workmachine-node-manager/  # Host-level Nix package management
-├── internal/controllers/          # K8s controllers
-│   ├── workspace/                 # Workspace lifecycle
-│   ├── environment/               # Environment management
-│   └── serviceintercept/          # Traffic interception
-└── manifests/                     # CRDs and RBAC
+cli/
+├── server/                        # Control plane API server
+├── kl/                            # CLI (runs inside workspace)
+└── workmachine-node-manager/      # Host-level Nix package management
+
+controllers/                       # K8s controllers
+├── workspace/                     # Workspace lifecycle
+└── environment/                   # Environment management
+
+api/                               # Backend API domain packages
+pkg/                               # Reusable Go packages
+manifests/                         # CRDs and RBAC
 
 web/                               # Next.js dashboard
 devenv/                            # Local K3s development setup

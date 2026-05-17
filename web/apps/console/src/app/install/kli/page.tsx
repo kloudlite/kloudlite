@@ -179,7 +179,7 @@ kli aws uninstall --installation-key myenv`}</code>
           <p className="text-gray-600">
             For full documentation, visit{' '}
             <a
-              href="https://github.com/kloudlite/kloudlite/tree/development/api/cmd/kli"
+              href="https://github.com/kloudlite/kloudlite/tree/development/cli/kli"
               className="text-blue-600 hover:underline"
               target="_blank"
               rel="noopener noreferrer"

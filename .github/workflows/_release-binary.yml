@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       app:
-        description: 'Binary to release (kli or kltun)'
+        description: 'Binary to release (kloudlite, kli, or kltun)'
         required: true
         type: string
       version:

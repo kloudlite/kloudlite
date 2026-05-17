@@ -86,13 +86,13 @@ Foundation for migrating Kubernetes CRUD operations from Go API server to Next.j
 
 **Name**: `api-server`
 **Namespace**: `kloudlite`
-**Location**: `api/cmd/kli/internal/manifests/api-server-rbac.yaml`
+**Location**: `cli/kli/internal/manifests/api-server-rbac.yaml`
 
 **Permissions**: Full admin access (all verbs on all resources)
 
 ### Required Deployment Change
 
-Add to `api/cmd/kli/internal/manifests/frontend.yaml`:
+Add to `cli/kli/internal/manifests/frontend.yaml`:
 
 ```yaml
 spec:

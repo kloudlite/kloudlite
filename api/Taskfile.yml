@@ -1,37 +1,30 @@
 version: 3
 
 tasks:
-  build:server:
+  build:kloudlite:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build -ldflags='-s -w' -o bin/api-server ./cmd/server/
+      - go build -ldflags='-s -w' -o bin/kloudlite ./cli/kloudlite/
+
+  build:server:
+    cmds:
+      - task: build:kloudlite
 
   build:tunnel-server:
-    env:
-      CGO_ENABLED: 0
     cmds:
-      - go build -ldflags='-s -w' -o bin/tunnel-server ./cmd/tunnel-server/
+      - task: build:kloudlite
 
   build:oci-installer:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build -ldflags='-s -w' -o bin/oci-installer ./cmd/kli/oci-installer/
-
-  build:image-tunnel-server:
-    env:
-      IMAGE: "ghcr.io/kloudlite/kloudlite/tunnel-server:development"
-    cmds:
-      - task: build:tunnel-server
-      - docker build -t $IMAGE -f ./cmd/tunnel-server/Dockerfile .
-      - docker push $IMAGE
-
+      - go build -ldflags='-s -w' -o bin/oci-installer ./cli/kli/oci-installer/
 
   manifests:
     cmds:
       # generate CRDs from type definitions
-      - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=../manifests
+      - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=manifests
 
       # generate deep copy go files
       - controller-gen object paths="./..."
@@ -40,15 +33,5 @@ tasks:
   consolidate-crds:
     desc: Consolidate all CRD manifests into single file for kli
     cmds:
-      - cat ../manifests/*.yaml > cmd/kli/internal/manifests/crds.yaml
-      - echo "Consolidated CRDs into cmd/kli/internal/manifests/crds.yaml"
-
-  build:image:
-    env:
-      IMAGE: "ghcr.io/kloudlite/kloudlite/api-server:development"
-    # deps:
-    #   - task: build:server
-    cmds:
-      - docker build -t $IMAGE .
-      - docker push $IMAGE
-
+      - cat manifests/*.yaml > cli/kli/internal/manifests/crds.yaml
+      - echo "Consolidated CRDs into cli/kli/internal/manifests/crds.yaml"

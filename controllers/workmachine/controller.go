@@ -1,0 +1,935 @@
+package workmachine
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/codingconcepts/env"
+	"github.com/kloudlite/kloudlite/controllers/controllerconfig"
+	"github.com/kloudlite/kloudlite/controllers/shared"
+	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud"
+	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud/aws"
+	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud/azure"
+	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud/gcp"
+	ocicloud "github.com/kloudlite/kloudlite/controllers/workmachine/cloud/oci"
+	"github.com/kloudlite/kloudlite/pkg/errors"
+	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
+	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/kubectl"
+	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
+	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
+	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+type Env struct {
+	KloudliteInstallationID string `env:"INSTALLATION_KEY" required:"true"`
+	InstallationSecret      string `env:"INSTALLATION_SECRET" required:"true"`
+
+	K3sVersion    string `env:"K3S_VERSION" required:"true"`
+	K3sServerURL  string `env:"K3S_SERVER_URL" required:"true"`
+	K3sAgentToken string `env:"K3S_AGENT_TOKEN" required:"true"`
+
+	CloudProvider v1.CloudProvider `env:"CLOUD_PROVIDER" required:"true"`
+
+	HostManagerImage  string `env:"HOST_MANAGER_IMAGE" required:"true"`
+	TunnelServerImage string `env:"TUNNEL_SERVER_IMAGE" required:"true"`
+	CodeAnalyzerImage string `env:"CODE_ANALYZER_IMAGE" required:"true"`
+
+	// JWT secret for tunnel server authentication (shared with API server and frontend)
+	JWTSecret string `env:"JWT_SECRET" required:"true"`
+
+	// HostedSubdomain is the full subdomain (e.g., "subdomain.khost.dev") used for DNS resolution
+	HostedSubdomain string `env:"HOSTED_SUBDOMAIN" required:"true"`
+
+	// Snapshot registry configuration for the host-manager
+	SnapshotRegistryEndpoint string `env:"SNAPSHOT_REGISTRY_ENDPOINT" default:"image-registry.kloudlite.svc.cluster.local:5000"`
+	SnapshotRegistryPrefix   string `env:"SNAPSHOT_REGISTRY_PREFIX" default:"snapshots"`
+	SnapshotRegistryInsecure string `env:"SNAPSHOT_REGISTRY_INSECURE" default:"true"`
+}
+
+type awsProviderEnv struct {
+	AWS_VPC_ID            string `env:"AWS_VPC_ID" required:"true"`
+	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
+	AWS_REGION            string `env:"AWS_REGION" required:"true"`
+}
+
+type azureProviderEnv struct {
+	AZURE_SUBSCRIPTION_ID string `env:"AZURE_SUBSCRIPTION_ID" required:"true"`
+	AZURE_RESOURCE_GROUP  string `env:"AZURE_RESOURCE_GROUP" required:"true"`
+	AZURE_LOCATION        string `env:"AZURE_LOCATION" required:"true"`
+	AZURE_SUBNET_ID       string `env:"AZURE_SUBNET_ID" required:"true"`
+	AZURE_NSG_ID          string `env:"AZURE_NSG_ID"`
+}
+
+type gcpProviderEnv struct {
+	GCP_PROJECT    string `env:"GCP_PROJECT" required:"true"`
+	GCP_REGION     string `env:"GCP_REGION" required:"true"`
+	GCP_ZONE       string `env:"GCP_ZONE" required:"true"`
+	GCP_NETWORK    string `env:"GCP_NETWORK" required:"true"`
+	GCP_SUBNETWORK string `env:"GCP_SUBNETWORK" required:"true"`
+}
+
+type ociProviderEnv struct {
+	OCI_COMPARTMENT string `env:"OCI_COMPARTMENT" required:"true"`
+	OCI_REGION      string `env:"OCI_REGION" required:"true"`
+	OCI_SUBNET_ID   string `env:"OCI_SUBNET_ID" required:"true"`
+	OCI_NSG_ID      string `env:"OCI_NSG_ID" required:"true"`
+}
+
+// WorkMachineReconciler reconciles a WorkMachine object
+type WorkMachineReconciler struct {
+	client.Client
+	Scheme *runtime.Scheme
+
+	YAMLClient kubectl.YAMLClient
+
+	// filled post initialization
+	env              Env
+	cloudProviderAPI cloud.Provider
+	usageReporter    *UsageReporter
+
+	// Cfg contains controller configuration
+	Cfg *controllerconfig.ControllerConfig
+}
+
+const (
+	WorkMachineFinalizerName = "workmachine.machines.kloudlite.io/cleanup"
+
+	// Node labels for caching IP addresses
+	NodeLabelPublicIP  = "kloudlite.io/public-ip"
+	NodeLabelPrivateIP = "kloudlite.io/private-ip"
+)
+
+// SSH Configuration Constants
+const (
+	// SSHUserName is the username for the SSH server
+	SSHUserName = "kloudlite"
+
+	wmIngressControllerImage = "ghcr.io/kloudlite/kloudlite/wm-ingress-controller:development"
+)
+
+// Reconcile handles WorkMachine CR reconciliation
+func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+	req, err := reconciler.NewRequest(ctx, r.Client, request.NamespacedName, &v1.WorkMachine{})
+	if err != nil {
+		return reconcile.Result{}, client.IgnoreNotFound(err)
+	}
+
+	return reconciler.ReconcileSteps(req, []reconciler.Step[*v1.WorkMachine]{
+		{
+			Name:     "setup-namespace",
+			Title:    "Setup a kubernetes namespace for workmachine resources",
+			OnCreate: r.createNamespace,
+			OnDelete: r.deleteNamespace,
+		},
+		{
+			Name:     "ensure-network-policy",
+			Title:    "Ensure network policy for namespace isolation",
+			OnCreate: r.ensureNetworkPolicy,
+			OnDelete: r.cleanupNetworkPolicy,
+		},
+		{
+			Name:     "sync-wildcard-cert-secret",
+			Title:    "Sync wildcard TLS certificate secret to workmachine namespace",
+			OnCreate: r.syncWildcardCertSecret,
+			OnDelete: nil,
+		},
+		{
+			Name:     "setup-host-manager-RBAC",
+			Title:    "Setup RBAC resources for workmachine-node-manager (host manager)",
+			OnCreate: r.createHostManagerRBAC,
+			OnDelete: nil,
+		},
+		{
+			Name:     "ensure-ssh-host-keys",
+			Title:    "Ensure SSH host keys secret",
+			OnCreate: r.createSSHHostKeysSecret,
+			OnDelete: nil,
+		},
+		{
+			Name:     "ensure-sshd-config",
+			Title:    "Ensure sshd_config ConfigMap",
+			OnCreate: r.ensureSSHDConfigMapStep,
+			OnDelete: nil,
+		},
+		{
+			Name:  "when-running/ensure-wm-ingress-controller",
+			Title: "Ensure Workmachine Ingress Controller",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureWorkmachineIngressController,
+			OnDelete: r.cleanupWorkmachineIngressController,
+		},
+		{
+			Name:  "when-stopped/cleanup-wm-ingress-controller",
+			Title: "Cleanup Workmachine Ingress Controller when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping
+			},
+			OnCreate: r.cleanupWorkmachineIngressController,
+			OnDelete: nil,
+		},
+		{
+			Name:  "when-running/ensure-host-manager",
+			Title: "Ensure host manager pod is running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureHostManagerPod,
+			OnDelete: r.cleanupHostManagerPod,
+		},
+		{
+			Name:  "when-stopped/cleanup-host-manager",
+			Title: "Cleanup host manager when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupHostManagerPod,
+			OnDelete: nil,
+		},
+		{
+			Name:  "when-running/ensure-buildkit",
+			Title: "Ensure BuildKit is running for container image builds",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureBuildKit,
+			OnDelete: r.cleanupBuildKit,
+		},
+		{
+			Name:  "when-stopped/cleanup-buildkit",
+			Title: "Cleanup BuildKit when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupBuildKit,
+			OnDelete: nil,
+		},
+		{
+			Name:     "handle-machine-type-change",
+			Title:    "Handle machine type changes",
+			OnCreate: r.handleMachineTypeChange,
+			OnDelete: nil,
+		},
+		{
+			Name:     "handle-node-reboot-request",
+			Title:    "Handle node reboot requests for driver installation",
+			OnCreate: r.handleNodeRebootRequest,
+			OnDelete: nil,
+		},
+		{
+			Name:  "when-running/ensure-tunnel-server",
+			Title: "Ensure tunnel server is running for WireGuard connectivity",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning && obj.Status.PublicIP != ""
+			},
+			OnCreate: r.ensureTunnelServer,
+			OnDelete: r.cleanupTunnelServer,
+		},
+		{
+			Name:  "when-stopped/cleanup-tunnel-server",
+			Title: "Cleanup tunnel server when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupTunnelServer,
+			OnDelete: nil,
+		},
+		{
+			Name:  "when-running/ensure-code-analyzer",
+			Title: "Ensure code analyzer is running for code analysis",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateRunning
+			},
+			OnCreate: r.ensureCodeAnalyzer,
+			OnDelete: r.cleanupCodeAnalyzer,
+		},
+		{
+			Name:  "when-stopped/cleanup-code-analyzer",
+			Title: "Cleanup code analyzer when machine is not running",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				return obj.Spec.State == v1.MachineStateStopped ||
+					obj.Spec.State == v1.MachineStateStopping ||
+					obj.Spec.State == v1.MachineStateDisabled
+			},
+			OnCreate: r.cleanupCodeAnalyzer,
+			OnDelete: nil,
+		},
+		{
+			Name:  "check-auto-shutdown",
+			Title: "Check if WorkMachine should auto-shutdown due to idle workspaces",
+			ShouldRun: func(obj *v1.WorkMachine) bool {
+				// Only run when:
+				// 1. Machine is running (both spec and status)
+				// 2. AutoShutdown is configured and enabled
+				return obj.Spec.State == v1.MachineStateRunning &&
+					obj.Status.State == v1.MachineStateRunning &&
+					obj.Spec.AutoShutdown != nil &&
+					obj.Spec.AutoShutdown.Enabled
+			},
+			OnCreate: r.checkAutoShutdown,
+			OnDelete: nil,
+		},
+		{
+			Name:     "setup cloud machine",
+			Title:    "Setup Cloud Machine",
+			OnCreate: r.setupCloudMachine,
+			OnDelete: r.cleanupCloudMachine,
+		},
+	})
+}
+
+func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	deploymentName := "wm-ingress-controller"
+	serviceAccountName := "wm-ingress-controller"
+	clusterRoleName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+	clusterRoleBindingName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+
+	labels := map[string]string{
+		"app":                      "wm-ingress-controller",
+		"kloudlite.io/workmachine": obj.Name,
+	}
+
+	// Create ServiceAccount
+	serviceAccount := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceAccountName,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, serviceAccount, func() error {
+		if !fn.IsOwner(serviceAccount, obj) {
+			serviceAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		serviceAccount.Labels = labels
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller service account: %w", err))
+	}
+
+	// Create ClusterRole
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRole, func() error {
+		if !fn.IsOwner(clusterRole, obj) {
+			clusterRole.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		clusterRole.Labels = labels
+		clusterRole.Rules = []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"networking.k8s.io"},
+				Resources: []string{"ingresses"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller cluster role: %w", err))
+	}
+
+	// Create ClusterRoleBinding
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleBindingName,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRoleBinding, func() error {
+		if !fn.IsOwner(clusterRoleBinding, obj) {
+			clusterRoleBinding.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		clusterRoleBinding.Labels = labels
+		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     clusterRoleName,
+		}
+		clusterRoleBinding.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      serviceAccountName,
+				Namespace: obj.Spec.TargetNamespace,
+			},
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller cluster role binding: %w", err))
+	}
+
+	// Create StatefulSet
+	statefulSet := &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deploymentName,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
+		if !fn.IsOwner(statefulSet, obj) {
+			statefulSet.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+
+		statefulSet.Labels = labels
+
+		statefulSet.Spec = appsv1.StatefulSetSpec{
+			Replicas:            fn.Ptr(int32(1)),
+			ServiceName:         deploymentName,
+			PodManagementPolicy: appsv1.ParallelPodManagement,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName:            serviceAccountName,
+					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
+					NodeSelector: map[string]string{
+						"kloudlite.io/workmachine": obj.Name,
+					},
+					Tolerations: []corev1.Toleration{
+						{
+							Key:      "kloudlite.io/workmachine",
+							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
+						{
+							Key:               "node.kubernetes.io/not-ready",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
+						{
+							Key:               "node.kubernetes.io/unreachable",
+							Operator:          corev1.TolerationOpExists,
+							Effect:            corev1.TaintEffectNoExecute,
+							TolerationSeconds: fn.Ptr(int64(0)),
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:            "wm-ingress-controller",
+							Image:           wmIngressControllerImage,
+							ImagePullPolicy: "Always",
+							Args: []string{
+								"--http-port",
+								"80",
+								"--https-port",
+								"443",
+								"--health-probe-bind-address",
+								":17777",
+								// Use local namespace secret instead of cross-namespace access
+								"--wildcard-secret-namespace",
+								obj.Spec.TargetNamespace,
+								"--own-namespace",
+								obj.Spec.TargetNamespace,
+							},
+							Env: []corev1.EnvVar{
+								{
+									// REGISTRY_USERNAME restricts registry write access to /v2/{username}/*
+									Name:  "REGISTRY_USERNAME",
+									Value: obj.Spec.OwnedBy,
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "http",
+									ContainerPort: 80,
+									Protocol:      corev1.ProtocolTCP,
+								},
+								{
+									Name:          "https",
+									ContainerPort: 443,
+									Protocol:      corev1.ProtocolTCP,
+								},
+								{
+									Name:          "health",
+									ContainerPort: 17777,
+									Protocol:      corev1.ProtocolTCP,
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/healthz",
+										Port: intstr.FromInt(17777),
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       5,
+								TimeoutSeconds:      2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/healthz",
+										Port: intstr.FromInt(17777),
+									},
+								},
+								InitialDelaySeconds: 10,
+								PeriodSeconds:       30,
+								TimeoutSeconds:      5,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller statefulset: %w", err))
+	}
+
+	// Now ensure the service exists
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wm-ingress-controller",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, service, func() error {
+		if !fn.IsOwner(service, obj) {
+			service.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+
+		service.Labels = labels
+
+		service.Spec = corev1.ServiceSpec{
+			Type:     corev1.ServiceTypeClusterIP,
+			Selector: labels,
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Port:       80,
+					TargetPort: intstr.FromInt(80),
+					Protocol:   corev1.ProtocolTCP,
+				},
+				{
+					Name:       "https",
+					Port:       443,
+					TargetPort: intstr.FromInt(443),
+					Protocol:   corev1.ProtocolTCP,
+				},
+			},
+		}
+
+		return nil
+	}); err != nil {
+		return check.Failed(fmt.Errorf("failed to create/update wm-ingress-controller service: %w", err))
+	}
+
+	return check.Passed()
+}
+
+func (r *WorkMachineReconciler) cleanupWorkmachineIngressController(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	deploymentName := "wm-ingress-controller"
+	clusterRoleName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+	clusterRoleBindingName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
+
+	// Delete StatefulSet
+	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deploymentName,
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller statefulset: %w", err))
+		}
+	}
+
+	// Delete Service
+	if err := r.Delete(check.Context(), &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wm-ingress-controller",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller service: %w", err))
+		}
+	}
+
+	// Delete ClusterRoleBinding
+	if err := r.Delete(check.Context(), &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleBindingName,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller cluster role binding: %w", err))
+		}
+	}
+
+	// Delete ClusterRole
+	if err := r.Delete(check.Context(), &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller cluster role: %w", err))
+		}
+	}
+
+	// Delete ServiceAccount
+	if err := r.Delete(check.Context(), &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wm-ingress-controller",
+			Namespace: obj.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(fmt.Errorf("failed to delete wm-ingress-controller service account: %w", err))
+		}
+	}
+
+	return check.Passed()
+}
+
+// handleNodeRebootRequest checks if the node associated with this WorkMachine has requested a reboot
+// (typically for loading NVIDIA drivers after installation) and reboots the instance if needed
+func (r *WorkMachineReconciler) handleNodeRebootRequest(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+	// Only handle reboot requests if machine is created and running
+	if obj.Status.MachineID == "" {
+		return check.Passed()
+	}
+
+	// Get the node with the same name as the WorkMachine
+	var node corev1.Node
+	if err := r.Get(check.Context(), client.ObjectKey{Name: obj.Name}, &node); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			// Node doesn't exist yet, nothing to do
+			return check.Passed()
+		}
+		return check.Failed(fmt.Errorf("failed to get node: %w", err))
+	}
+
+	// Check if node has reboot requested annotation
+	rebootRequested, exists := node.Annotations["kloudlite.io/workmachine-reboot-requested"]
+	if !exists || rebootRequested != "true" {
+		// No reboot requested
+		return check.Passed()
+	}
+
+	check.Logger().Info("node reboot requested, rebooting instance", "node", node.Name, "machineID", obj.Status.MachineID)
+
+	// Reboot the instance using cloud provider API
+	if err := r.cloudProviderAPI.RebootMachine(check.Context(), obj.Status.MachineID); err != nil {
+		return check.Failed(fmt.Errorf("failed to reboot machine: %w", err))
+	}
+
+	// Remove the reboot annotation from the node
+	delete(node.Annotations, "kloudlite.io/workmachine-reboot-requested")
+	if err := r.Update(check.Context(), &node); err != nil {
+		return check.Failed(fmt.Errorf("failed to remove reboot annotation from node: %w", err))
+	}
+
+	check.Logger().Info("instance rebooted successfully, waiting for node to rejoin", "node", node.Name, "machineID", obj.Status.MachineID)
+
+	return check.Passed()
+}
+
+// SetupWithManager sets up the controller with the Manager
+func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := env.Set(&r.env); err != nil {
+		return errors.Wrap("failed to load env vars", err)
+	}
+
+	// Initialize the global pod deletion tracker if not already initialized
+	// This is shared with the workspace controller to prevent race conditions
+	if podDeletionTracker == nil {
+		logger, err := zap.NewProduction()
+		if err != nil {
+			return errors.Wrap("failed to create logger for pod deletion tracker", err)
+		}
+		podDeletionTracker = shared.NewPodDeletionTracker(logger)
+		logger.Info("Initialized pod deletion tracker for race condition prevention")
+	}
+
+	// Initialize usage reporter for billing events
+	{
+		consoleBaseURL := os.Getenv("CONSOLE_BASE_URL")
+		if consoleBaseURL == "" {
+			consoleBaseURL = "https://console.kloudlite.io"
+		}
+		logger, err := zap.NewProduction()
+		if err != nil {
+			return errors.Wrap("failed to create logger for usage reporter", err)
+		}
+		r.usageReporter = NewUsageReporter(consoleBaseURL, r.env.KloudliteInstallationID, logger)
+	}
+
+	switch r.env.CloudProvider {
+	case v1.AWS:
+		{
+
+			var awsEnv awsProviderEnv
+			if err := env.Set(&awsEnv); err != nil {
+				return errors.Wrap("failed to load env vars", err)
+			}
+
+			ctx, cf := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cf()
+			p, err := aws.NewProvider(ctx, aws.ProviderArgs{
+				Region:          awsEnv.AWS_REGION,
+				VPC:             awsEnv.AWS_VPC_ID,
+				SecurityGroupID: awsEnv.AWS_SECURITY_GROUP_ID,
+				ResourceTags: []aws.Tag{
+					{
+						Key:   "kloudlite.io/installation-id",
+						Value: r.env.KloudliteInstallationID,
+					},
+				},
+
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
+			})
+			if err != nil {
+				return errors.Wrap("failed to create aws provider client", err)
+			}
+
+			if err := p.ValidatePermissions(ctx); err != nil {
+				return err
+			}
+
+			r.cloudProviderAPI = p
+		}
+	case v1.Azure:
+		{
+			var azureEnv azureProviderEnv
+			if err := env.Set(&azureEnv); err != nil {
+				return errors.Wrap("failed to load Azure env vars", err)
+			}
+
+			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cf()
+			p, err := azure.NewProvider(ctx, azure.ProviderArgs{
+				SubscriptionID:         azureEnv.AZURE_SUBSCRIPTION_ID,
+				ResourceGroup:          azureEnv.AZURE_RESOURCE_GROUP,
+				Location:               azureEnv.AZURE_LOCATION,
+				SubnetID:               azureEnv.AZURE_SUBNET_ID,
+				NetworkSecurityGroupID: azureEnv.AZURE_NSG_ID,
+				ResourceTags: []azure.Tag{
+					{
+						Key:   "kloudlite-installation-id",
+						Value: r.env.KloudliteInstallationID,
+					},
+				},
+
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
+			})
+			if err != nil {
+				return errors.Wrap("failed to create Azure provider client", err)
+			}
+
+			if err := p.ValidatePermissions(ctx); err != nil {
+				return err
+			}
+
+			r.cloudProviderAPI = p
+		}
+	case v1.GCP:
+		{
+			var gcpEnv gcpProviderEnv
+			if err := env.Set(&gcpEnv); err != nil {
+				return errors.Wrap("failed to load GCP env vars", err)
+			}
+
+			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cf()
+			p, err := gcp.NewProvider(ctx, gcp.ProviderArgs{
+				Project:    gcpEnv.GCP_PROJECT,
+				Region:     gcpEnv.GCP_REGION,
+				Zone:       gcpEnv.GCP_ZONE,
+				Network:    gcpEnv.GCP_NETWORK,
+				Subnetwork: gcpEnv.GCP_SUBNETWORK,
+				ResourceTags: []gcp.Tag{
+					{
+						Key:   "kloudlite-installation-id",
+						Value: r.env.KloudliteInstallationID,
+					},
+				},
+
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
+			})
+			if err != nil {
+				return errors.Wrap("failed to create GCP provider client", err)
+			}
+
+			if err := p.ValidatePermissions(ctx); err != nil {
+				return err
+			}
+
+			r.cloudProviderAPI = p
+		}
+	case v1.OCI:
+		{
+			var ociEnv ociProviderEnv
+			if err := env.Set(&ociEnv); err != nil {
+				return errors.Wrap("failed to load OCI env vars", err)
+			}
+
+			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cf()
+			p, err := ocicloud.NewProvider(ctx, ocicloud.ProviderArgs{
+				CompartmentID: ociEnv.OCI_COMPARTMENT,
+				Region:        ociEnv.OCI_REGION,
+				SubnetID:      ociEnv.OCI_SUBNET_ID,
+				NSGID:         ociEnv.OCI_NSG_ID,
+				ResourceTags: []ocicloud.Tag{
+					{
+						Key:   "installation-id",
+						Value: r.env.KloudliteInstallationID,
+					},
+				},
+
+				K3sVersion:      r.env.K3sVersion,
+				K3sURL:          r.env.K3sServerURL,
+				K3sToken:        r.env.K3sAgentToken,
+				HostedSubdomain: r.env.HostedSubdomain,
+			})
+			if err != nil {
+				return errors.Wrap("failed to create OCI provider client", err)
+			}
+
+			if err := p.ValidatePermissions(ctx); err != nil {
+				return err
+			}
+
+			r.cloudProviderAPI = p
+		}
+	default:
+		{
+			return errors.New(fmt.Sprintf("unsupported cloud provider (%s)", r.env.CloudProvider))
+		}
+	}
+
+	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine")
+	builder.Owns(&corev1.Namespace{})
+	builder.Owns(&appsv1.StatefulSet{})
+	builder.Owns(&appsv1.Deployment{})
+	builder.Owns(&corev1.ServiceAccount{})
+	builder.Owns(&rbacv1.ClusterRole{})
+	builder.Owns(&rbacv1.ClusterRoleBinding{})
+	builder.Owns(&networkingv1.NetworkPolicy{})
+	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor("workmachine")))
+
+	// Watch for workspaces and trigger reconciliation of their owning WorkMachine
+	builder.Watches(
+		&workspacev1.Workspace{},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			workspace, ok := obj.(*workspacev1.Workspace)
+			if !ok {
+				return nil
+			}
+
+			// Use the WorkmachineName directly from the workspace spec
+			if workspace.Spec.WorkmachineName == "" {
+				return nil
+			}
+
+			return []reconcile.Request{
+				{NamespacedName: client.ObjectKey{Name: workspace.Spec.WorkmachineName}},
+			}
+		}),
+	)
+
+	// Watch for Nodes to trigger reconciliation when node joins/updates
+	// The reconciler will fetch fresh IPs from AWS when Node Ready state changes
+	builder.Watches(
+		&corev1.Node{},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			node, ok := obj.(*corev1.Node)
+			if !ok {
+				return nil
+			}
+
+			// Node name matches WorkMachine name
+			// Trigger reconciliation to update WorkMachine status
+			return []reconcile.Request{
+				{NamespacedName: client.ObjectKey{Name: node.Name}},
+			}
+		}),
+	)
+
+	// Watch for host-manager Pods to recreate them if they crash
+	builder.Watches(
+		&corev1.Pod{},
+		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+			pod, ok := obj.(*corev1.Pod)
+			if !ok {
+				return nil
+			}
+
+			// Get WorkMachine name from pod label (host-manager pods are labeled with workmachine name)
+			workmachineName, exists := pod.Labels["kloudlite.io/workmachine"]
+			if !exists {
+				return nil
+			}
+
+			// Trigger reconciliation to check and recreate pod if needed
+			return []reconcile.Request{
+				{NamespacedName: client.ObjectKey{Name: workmachineName}},
+			}
+		}),
+	)
+
+	// Add indexer for pod.spec.nodeName to efficiently query pods by node name
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, "spec.nodeName", func(obj client.Object) []string {
+		pod := obj.(*corev1.Pod)
+		return []string{pod.Spec.NodeName}
+	}); err != nil {
+		return errors.Wrap("failed to setup field indexer for pod.spec.nodeName", err)
+	}
+
+	return builder.Complete(r)
+}

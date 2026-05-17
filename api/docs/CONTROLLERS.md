@@ -4,7 +4,7 @@ Controllers watch Kubernetes resources and reconcile actual state with desired s
 
 ## User Controller
 
-**File**: `internal/controllers/user/user_controller.go`
+**File**: `controllers/user/user_controller.go`
 
 ### What It Does
 - Hashes passwords when `PasswordString` is set
@@ -28,7 +28,7 @@ When `user.Spec.PasswordString` is set:
 
 ## Environment Controller
 
-**File**: `internal/controllers/environment/environment_controller.go`
+**File**: `controllers/environment/environment_controller.go`
 
 ### What It Does
 - Creates/manages Kubernetes namespaces
@@ -59,7 +59,7 @@ Automatically runs before status update:
 
 ## WorkMachine Controller
 
-**File**: `internal/controllers/workmachine/workmachine_controller.go`
+**File**: `controllers/workmachine/workmachine_controller.go`
 
 ### What It Does
 - Manages WorkMachine pod lifecycle based on `DesiredState`
@@ -84,7 +84,7 @@ Applies WorkMachine's `spec.nodeSelector` to host-manager deployment:
 
 ## Workspace Controller
 
-**File**: `internal/controllers/workspace/workspace_controller.go`
+**File**: `controllers/workspace/workspace_controller.go`
 
 ### What It Does
 - Manages workspace pod lifecycle
@@ -113,7 +113,7 @@ When `AutoSuspend` is configured:
 - Updates status to "suspended"
 
 ### Cleanup on Deletion
-**Files**: `internal/controllers/workspace/cleanup.go`
+**Files**: `controllers/workspace/cleanup.go`
 
 #### Host Directory Deletion
 Uses cleanup pod pattern:
@@ -138,7 +138,7 @@ Uses cleanup pod pattern:
 
 ## Composition Controller
 
-**File**: `internal/controllers/composition/composition_controller.go`
+**File**: `controllers/composition/composition_controller.go`
 
 ### What It Does
 - Converts docker-compose to Kubernetes resources
@@ -176,7 +176,7 @@ Tracks:
 
 ## ServiceIntercept Controller
 
-**File**: `internal/controllers/serviceintercept/serviceintercept_controller.go`
+**File**: `controllers/serviceintercept/serviceintercept_controller.go`
 
 ### What It Does
 Routes traffic from production services to workspace pods using SOCAT.

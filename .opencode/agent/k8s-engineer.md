@@ -18,7 +18,7 @@ Scope:
 Rules:
 - Keep reconciliation idempotent and conservative.
 - Be careful with finalizers, owner refs, status updates, retries, RBAC, and destructive host actions.
-- Run `gofmt`, focused Go tests from `api/`, and `task api:manifests` when CRDs change.
+- Run `gofmt`, focused Go tests from the repository root, and `task api:manifests` when CRDs change.
 - Read-only deployed-cluster diagnosis is allowed with approval; mutating live resources requires explicit human approval.
 - Prepare the branch for PR, then hand off to `reviewer`.
 - After PR merge and coordinator confirmation, return your worktree to `development`.
