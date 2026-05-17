@@ -129,6 +129,10 @@ func (h *Handler) create(c *gin.Context, scope registry.Scope, namespace string)
 		h.error(c, err)
 		return
 	}
+	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
+		h.error(c, err)
+		return
+	}
 
 	object, err := decodeObject(c)
 	if err != nil {
@@ -153,6 +157,10 @@ func (h *Handler) patch(c *gin.Context, scope registry.Scope, namespace string) 
 		h.error(c, err)
 		return
 	}
+	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
+		h.error(c, err)
+		return
+	}
 
 	object, err := decodeObject(c)
 	if err != nil {
@@ -170,6 +178,10 @@ func (h *Handler) patch(c *gin.Context, scope registry.Scope, namespace string) 
 func (h *Handler) delete(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
 	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
 		h.error(c, err)
 		return
 	}

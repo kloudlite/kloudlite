@@ -140,7 +140,8 @@ func TestGetNamespacedResourceSurfacesTypedEnsurerError(t *testing.T) {
 }
 
 func TestCreateNamespacedResourceForcesPathNamespace(t *testing.T) {
-	router, kube := newTestRouter(t, store.New())
+	ensurer := &recordingEnsurer{}
+	router, kube := newTestRouter(t, store.New(), ensurer)
 	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app","namespace":"body"}}`)
 
 	response := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
@@ -156,6 +157,7 @@ func TestCreateNamespacedResourceForcesPathNamespace(t *testing.T) {
 	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "body", Name: "app"}, &bodyNamespace); err == nil {
 		t.Fatal("did not expect configmap to be created in body namespace")
 	}
+	ensurer.expectCalled(t, "configmaps", "default")
 }
 
 func TestCreateRejectsInvalidJSONBody(t *testing.T) {
@@ -180,18 +182,22 @@ func TestCreateRejectsTrailingJSONBody(t *testing.T) {
 }
 
 func TestPatchAndDeleteReturnNotImplemented(t *testing.T) {
-	router, _ := newTestRouter(t, store.New())
+	ensurer := &recordingEnsurer{}
+	router, _ := newTestRouter(t, store.New(), ensurer)
 	patchBody := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}`)
 
 	patchResponse := performRequest(router, http.MethodPatch, "/api/v1/namespaces/default/resources/configmaps/app", patchBody)
 	if patchResponse.Code != http.StatusNotImplemented {
 		t.Fatalf("expected patch status %d, got %d: %s", http.StatusNotImplemented, patchResponse.Code, patchResponse.Body.String())
 	}
+	ensurer.expectCalled(t, "configmaps", "default")
+	ensurer.reset()
 
 	deleteResponse := performRequest(router, http.MethodDelete, "/api/v1/namespaces/default/resources/configmaps/app", nil)
 	if deleteResponse.Code != http.StatusNotImplemented {
 		t.Fatalf("expected delete status %d, got %d: %s", http.StatusNotImplemented, deleteResponse.Code, deleteResponse.Body.String())
 	}
+	ensurer.expectCalled(t, "configmaps", "default")
 }
 
 func newTestRouter(t *testing.T, st *store.Store, ensurers ...NamespaceEnsurer) (*gin.Engine, client.Client) {
@@ -235,6 +241,12 @@ func (e *recordingEnsurer) expectCalled(t *testing.T, alias string, namespace st
 	if e.calls != 1 || e.alias != alias || e.namespace != namespace {
 		t.Fatalf("expected one ensure call for %s/%s, got calls=%d alias=%q namespace=%q", alias, namespace, e.calls, e.alias, e.namespace)
 	}
+}
+
+func (e *recordingEnsurer) reset() {
+	e.calls = 0
+	e.alias = ""
+	e.namespace = ""
 }
 
 func performRequest(router http.Handler, method string, path string, body []byte) *httptest.ResponseRecorder {
