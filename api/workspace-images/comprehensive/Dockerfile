@@ -10,8 +10,8 @@ FROM ${BASE_IMAGE}
 USER root
 
 # Copy pre-built kl binary (built outside Docker)
-# Build the binary with: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/kl-linux cmd/kl/main.go
-COPY ../../bin/kl-linux /usr/local/bin/kl
+# Build the binary with: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/kl-linux cli/kl/main.go
+COPY bin/kl-linux /usr/local/bin/kl
 RUN chmod +x /usr/local/bin/kl
 
 # Install system dependencies including shells first with apt cache mount
@@ -137,19 +137,19 @@ USER root
 
 # Create kloudlite config directory with shell initialization scripts
 RUN mkdir -p /etc/kloudlite
-COPY workspace-images/comprehensive/starship.toml /etc/kloudlite/starship.toml
-COPY workspace-images/comprehensive/kl-shell-init.sh /etc/kloudlite/shell-init.sh
-COPY workspace-images/comprehensive/kl-shell-init.zsh /etc/kloudlite/shell-init.zsh
-COPY workspace-images/comprehensive/kl-shell-init.fish /etc/kloudlite/shell-init.fish
-COPY workspace-images/comprehensive/kloudlite-context.sh /etc/kloudlite/kloudlite-context.sh
-COPY workspace-images/comprehensive/init-shell-configs.sh /etc/kloudlite/init-shell-configs.sh
-COPY workspace-images/comprehensive/claude-workspace-instructions.md /etc/kloudlite/CLAUDE.md
+COPY api/workspace-images/comprehensive/starship.toml /etc/kloudlite/starship.toml
+COPY api/workspace-images/comprehensive/kl-shell-init.sh /etc/kloudlite/shell-init.sh
+COPY api/workspace-images/comprehensive/kl-shell-init.zsh /etc/kloudlite/shell-init.zsh
+COPY api/workspace-images/comprehensive/kl-shell-init.fish /etc/kloudlite/shell-init.fish
+COPY api/workspace-images/comprehensive/kloudlite-context.sh /etc/kloudlite/kloudlite-context.sh
+COPY api/workspace-images/comprehensive/init-shell-configs.sh /etc/kloudlite/init-shell-configs.sh
+COPY api/workspace-images/comprehensive/claude-workspace-instructions.md /etc/kloudlite/CLAUDE.md
 RUN chmod +x /etc/kloudlite/kloudlite-context.sh /etc/kloudlite/init-shell-configs.sh
 
 # Disable Ubuntu's default MOTD scripts and install custom Kloudlite MOTD
 RUN chmod -x /etc/update-motd.d/* && \
   rm -f /etc/legal /etc/update-motd.d/60-unminimize
-COPY workspace-images/comprehensive/kloudlite-motd.sh /etc/update-motd.d/00-kloudlite-motd
+COPY api/workspace-images/comprehensive/kloudlite-motd.sh /etc/update-motd.d/00-kloudlite-motd
 RUN chmod +x /etc/update-motd.d/00-kloudlite-motd
 
 # Note: Shell configurations (.bashrc, .zshrc, config.fish) are managed by
@@ -158,7 +158,7 @@ RUN chmod +x /etc/update-motd.d/00-kloudlite-motd
 
 # Create supervisor configuration
 RUN mkdir -p /etc/supervisor/conf.d
-COPY workspace-images/comprehensive/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY api/workspace-images/comprehensive/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose all required ports
 EXPOSE 22 8080 7681 7682 7683 7684

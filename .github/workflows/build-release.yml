@@ -1,6 +1,6 @@
 name: "Build Release"
 
-# Per-app tags: console/v1.2.0, platform-controller/v2.1.0, kli/v1.5.0
+# Per-app tags: console/v1.2.0, kloudlite/v2.1.0, kli/v1.5.0
 # Manual dispatch: select apps + version (for UAT)
 run-name: "${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Build {0}', inputs.version) }}"
 
@@ -13,20 +13,8 @@ on:
   # UAT manual builds: select apps and version
   workflow_dispatch:
     inputs:
-      platform-controller:
-        description: 'Platform Controller'
-        type: boolean
-        default: false
-      tunnel-server:
-        description: 'Tunnel Server'
-        type: boolean
-        default: false
-      workmachine-node-manager:
-        description: 'WorkMachine Node Manager'
-        type: boolean
-        default: false
-      wm-ingress-controller:
-        description: 'WM Ingress Controller'
+      kloudlite:
+        description: 'Kloudlite server binary'
         type: boolean
         default: false
       oci-installer:
@@ -91,10 +79,7 @@ jobs:
       is_docker: ${{ steps.resolve.outputs.is_docker }}
       is_binary: ${{ steps.resolve.outputs.is_binary }}
       # Per-app flags (for manual dispatch)
-      platform-controller: ${{ steps.apps.outputs.platform-controller }}
-      tunnel-server: ${{ steps.apps.outputs.tunnel-server }}
-      workmachine-node-manager: ${{ steps.apps.outputs.workmachine-node-manager }}
-      wm-ingress-controller: ${{ steps.apps.outputs.wm-ingress-controller }}
+      kloudlite: ${{ steps.apps.outputs.kloudlite }}
       oci-installer: ${{ steps.apps.outputs.oci-installer }}
       k3s-backup: ${{ steps.apps.outputs.k3s-backup }}
       code-analyzer: ${{ steps.apps.outputs.code-analyzer }}
@@ -122,8 +107,8 @@ jobs:
             IS_DOCKER="false"
             IS_BINARY="false"
             case "$APP_NAME" in
-              kli|kltun) IS_BINARY="true" ;;
-              platform-controller|tunnel-server|workmachine-node-manager|wm-ingress-controller|oci-installer|k3s-backup|code-analyzer|workspace-base|workspace-comprehensive|console|dashboard|website)
+              kloudlite|kli|kltun) IS_BINARY="true" ;;
+              oci-installer|k3s-backup|code-analyzer|workspace-base|workspace-comprehensive|console|dashboard|website)
                 IS_DOCKER="true" ;;
               *)
                 echo "::error::Unknown app in tag: ${APP_NAME}"
@@ -155,7 +140,7 @@ jobs:
           IS_TAG_PUSH="${{ steps.resolve.outputs.is_tag_push }}"
           APP_NAME="${{ steps.resolve.outputs.app_name }}"
 
-          ALL_APPS="platform-controller tunnel-server workmachine-node-manager wm-ingress-controller oci-installer k3s-backup code-analyzer workspace-base workspace-comprehensive console dashboard website kli kltun"
+          ALL_APPS="kloudlite oci-installer k3s-backup code-analyzer workspace-base workspace-comprehensive console dashboard website kli kltun"
 
           if [ "$IS_TAG_PUSH" = "true" ]; then
             # Tag push: only the tagged app
@@ -173,10 +158,7 @@ jobs:
             for APP in $ALL_APPS; do
               VAL="false"
               case "$APP" in
-                platform-controller) VAL="${{ inputs.platform-controller }}" ;;
-                tunnel-server) VAL="${{ inputs.tunnel-server }}" ;;
-                workmachine-node-manager) VAL="${{ inputs.workmachine-node-manager }}" ;;
-                wm-ingress-controller) VAL="${{ inputs.wm-ingress-controller }}" ;;
+                kloudlite) VAL="${{ inputs.kloudlite }}" ;;
                 oci-installer) VAL="${{ inputs.oci-installer }}" ;;
                 k3s-backup) VAL="${{ inputs.k3s-backup }}" ;;
                 code-analyzer) VAL="${{ inputs.code-analyzer }}" ;;
@@ -210,39 +192,7 @@ jobs:
             echo "**Manual dispatch** — version \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  # ── Docker: Go apps ──────────────────────────────────────────────────
-  platform-controller:
-    needs: prepare
-    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.platform-controller == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: platform-controller
-      tag: ${{ needs.prepare.outputs.tag }}
-
-  tunnel-server:
-    needs: prepare
-    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.tunnel-server == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: tunnel-server
-      tag: ${{ needs.prepare.outputs.tag }}
-
-  workmachine-node-manager:
-    needs: prepare
-    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.workmachine-node-manager == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workmachine-node-manager
-      tag: ${{ needs.prepare.outputs.tag }}
-
-  wm-ingress-controller:
-    needs: prepare
-    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.wm-ingress-controller == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: wm-ingress-controller
-      tag: ${{ needs.prepare.outputs.tag }}
-
+  # ── Docker: support images ───────────────────────────────────────────
   oci-installer:
     needs: prepare
     if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.oci-installer == 'true'
@@ -308,7 +258,16 @@ jobs:
       app: website
       tag: ${{ needs.prepare.outputs.tag }}
 
-  # ── Binaries: CLI tools ──────────────────────────────────────────────
+  # ── Binaries ─────────────────────────────────────────────────────────
+  kloudlite:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.kloudlite == 'true'
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kloudlite
+      version: ${{ needs.prepare.outputs.version }}
+      tag: ${{ needs.prepare.outputs.tag }}
+
   kli:
     needs: prepare
     if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.kli == 'true'
@@ -328,6 +287,15 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
 
   # ── GitHub Releases (only on per-app tag push for binaries) ──────────
+  release-kloudlite:
+    needs: [prepare, kloudlite]
+    if: needs.prepare.outputs.is_tag_push == 'true' && needs.prepare.outputs.app_name == 'kloudlite'
+    uses: ./.github/workflows/_release-binary.yml
+    with:
+      app: kloudlite
+      version: ${{ needs.prepare.outputs.version }}
+      make_latest: true
+
   release-kli:
     needs: [prepare, kli]
     if: needs.prepare.outputs.is_tag_push == 'true' && needs.prepare.outputs.app_name == 'kli'

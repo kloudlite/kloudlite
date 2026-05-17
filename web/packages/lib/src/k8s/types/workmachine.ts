@@ -1,6 +1,6 @@
 /**
  * WorkMachine CRD type definitions
- * Based on: api/internal/controllers/workmachine/v1/workmachine_types.go
+ * Based on: types/workmachine/v1/workmachine_types.go
  */
 
 import type { K8sResource, K8sList, Condition, Toleration } from './common';

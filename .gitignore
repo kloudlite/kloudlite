@@ -53,6 +53,15 @@ devenv/k3s-config/
 *.dylib
 *.test
 *.out
+/cli/code-analyzer/code-analyzer
+/cli/kl/kl
+/cli/kl-tun-proxy/kl-tun-proxy
+/cli/kli/kli
+/cli/kli/dist/
+/cli/kli/oci-installer/oci-installer
+/cli/kltun/kltun
+/cli/kloudlite/kloudlite
+/cli/workmachine-node-manager/workmachine-node-manager
 CLAUDE.md
 test-results/
 
