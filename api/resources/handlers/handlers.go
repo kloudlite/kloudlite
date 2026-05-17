@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,14 +17,18 @@ import (
 type Handler struct {
 	service  *service.Service
 	registry *registry.Registry
+	ensurer  NamespaceEnsurer
 }
 
-func New(svc *service.Service, registries ...*registry.Registry) *Handler {
-	reg := registry.Default()
-	if len(registries) > 0 && registries[0] != nil {
-		reg = registries[0]
+type NamespaceEnsurer interface {
+	EnsureNamespaced(ctx context.Context, alias string, namespace string) error
+}
+
+func New(svc *service.Service, reg *registry.Registry, ensurer NamespaceEnsurer) *Handler {
+	if reg == nil {
+		reg = registry.Default()
 	}
-	return &Handler{service: svc, registry: reg}
+	return &Handler{service: svc, registry: reg, ensurer: ensurer}
 }
 
 func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
@@ -84,6 +91,10 @@ func (h *Handler) list(c *gin.Context, scope registry.Scope, namespace string) {
 		h.error(c, err)
 		return
 	}
+	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
+		h.error(c, err)
+		return
+	}
 
 	items, err := h.service.List(c.Request.Context(), alias, namespace, store.Selector{})
 	if err != nil {
@@ -96,6 +107,10 @@ func (h *Handler) list(c *gin.Context, scope registry.Scope, namespace string) {
 func (h *Handler) get(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
 	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
 		h.error(c, err)
 		return
 	}
@@ -177,6 +192,13 @@ func (h *Handler) requireScope(alias string, scope registry.Scope) error {
 	return nil
 }
 
+func (h *Handler) ensureNamespaced(c *gin.Context, alias string, scope registry.Scope, namespace string) error {
+	if scope != registry.Namespaced || h.ensurer == nil {
+		return nil
+	}
+	return h.ensurer.EnsureNamespaced(c.Request.Context(), alias, namespace)
+}
+
 func (h *Handler) error(c *gin.Context, err error) {
 	c.JSON(service.HTTPStatus(err), gin.H{"error": err.Error()})
 }
@@ -185,6 +207,9 @@ func decodeObject(c *gin.Context) (*unstructured.Unstructured, error) {
 	object := &unstructured.Unstructured{}
 	decoder := json.NewDecoder(c.Request.Body)
 	if err := decoder.Decode(object); err != nil {
+		return nil, service.NewError(service.ErrBadRequest, "invalid JSON body", err)
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		return nil, service.NewError(service.ErrBadRequest, "invalid JSON body", err)
 	}
 	return object, nil

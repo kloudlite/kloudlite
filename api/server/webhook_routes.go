@@ -9,13 +9,14 @@ import (
 	resourcehandlers "github.com/kloudlite/kloudlite/api/resources/handlers"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/service"
+	"github.com/kloudlite/kloudlite/api/resources/watch"
 	"github.com/kloudlite/kloudlite/api/webhooks"
 	pkglogger "github.com/kloudlite/kloudlite/pkg/logger"
 	"go.uber.org/zap"
 )
 
 // setupWebhookRouter creates a router with webhooks, health checks, and API resource routes.
-func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.Client, resourceService *service.Service, resourceRegistry *registry.Registry) *gin.Engine {
+func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.Client, resourceService *service.Service, resourceRegistry *registry.Registry, watchManager *watch.Manager) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -70,7 +71,7 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 	// TODO: Consider moving VPN to a separate service or removing if not needed
 	v1 := router.Group("/api/v1")
 	{
-		resourcehandlers.New(resourceService, resourceRegistry).RegisterRoutes(v1)
+		resourcehandlers.New(resourceService, resourceRegistry, watchManager).RegisterRoutes(v1)
 
 		// VPN endpoints are currently disabled - uncomment if VPN service is re-enabled
 		// vpnHandlers := handlers.NewVPNHandlers(vpnService, logger, cfg.Auth.JWTSecret)

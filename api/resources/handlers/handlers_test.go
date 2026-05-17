@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -73,7 +74,8 @@ func TestGetNamespacedResourceReturnsCachedObjectWhenReady(t *testing.T) {
 	st.ReplaceScope("configmaps", "default", []client.Object{
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}, Data: map[string]string{"key": "value"}},
 	})
-	router, _ := newTestRouter(t, st)
+	ensurer := &recordingEnsurer{}
+	router, _ := newTestRouter(t, st, ensurer)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps/app", nil)
 
@@ -87,6 +89,7 @@ func TestGetNamespacedResourceReturnsCachedObjectWhenReady(t *testing.T) {
 	if object.Name != "app" || object.Data["key"] != "value" {
 		t.Fatalf("unexpected object response: %#v", object)
 	}
+	ensurer.expectCalled(t, "configmaps", "default")
 }
 
 func TestListNamespacedResourceReturnsItemsWhenReady(t *testing.T) {
@@ -94,7 +97,8 @@ func TestListNamespacedResourceReturnsItemsWhenReady(t *testing.T) {
 	st.ReplaceScope("configmaps", "default", []client.Object{
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
 	})
-	router, _ := newTestRouter(t, st)
+	ensurer := &recordingEnsurer{}
+	router, _ := newTestRouter(t, st, ensurer)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps", nil)
 
@@ -110,6 +114,29 @@ func TestListNamespacedResourceReturnsItemsWhenReady(t *testing.T) {
 	if len(payload.Items) != 1 || payload.Items[0].Name != "app" {
 		t.Fatalf("unexpected list response: %#v", payload.Items)
 	}
+	ensurer.expectCalled(t, "configmaps", "default")
+}
+
+func TestListNamespacedResourceSurfacesEnsurerError(t *testing.T) {
+	router, _ := newTestRouter(t, store.New(), &recordingEnsurer{err: errors.New("sync failed")})
+
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps", nil)
+
+	if response.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusInternalServerError, response.Code, response.Body.String())
+	}
+}
+
+func TestGetNamespacedResourceSurfacesTypedEnsurerError(t *testing.T) {
+	ensurer := &recordingEnsurer{err: service.NewError(service.ErrBadRequest, "bad ensure", nil)}
+	router, _ := newTestRouter(t, store.New(), ensurer)
+
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps/app", nil)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, response.Code, response.Body.String())
+	}
+	ensurer.expectCalled(t, "configmaps", "default")
 }
 
 func TestCreateNamespacedResourceForcesPathNamespace(t *testing.T) {
@@ -141,7 +168,33 @@ func TestCreateRejectsInvalidJSONBody(t *testing.T) {
 	}
 }
 
-func newTestRouter(t *testing.T, st *store.Store) (*gin.Engine, client.Client) {
+func TestCreateRejectsTrailingJSONBody(t *testing.T) {
+	router, _ := newTestRouter(t, store.New())
+	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}{"metadata":{"name":"other"}}`)
+
+	response := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, response.Code, response.Body.String())
+	}
+}
+
+func TestPatchAndDeleteReturnNotImplemented(t *testing.T) {
+	router, _ := newTestRouter(t, store.New())
+	patchBody := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}`)
+
+	patchResponse := performRequest(router, http.MethodPatch, "/api/v1/namespaces/default/resources/configmaps/app", patchBody)
+	if patchResponse.Code != http.StatusNotImplemented {
+		t.Fatalf("expected patch status %d, got %d: %s", http.StatusNotImplemented, patchResponse.Code, patchResponse.Body.String())
+	}
+
+	deleteResponse := performRequest(router, http.MethodDelete, "/api/v1/namespaces/default/resources/configmaps/app", nil)
+	if deleteResponse.Code != http.StatusNotImplemented {
+		t.Fatalf("expected delete status %d, got %d: %s", http.StatusNotImplemented, deleteResponse.Code, deleteResponse.Body.String())
+	}
+}
+
+func newTestRouter(t *testing.T, st *store.Store, ensurers ...NamespaceEnsurer) (*gin.Engine, client.Client) {
 	t.Helper()
 	ginMode := gin.Mode()
 	gin.SetMode(gin.TestMode)
@@ -154,8 +207,34 @@ func newTestRouter(t *testing.T, st *store.Store) (*gin.Engine, client.Client) {
 	kube := fake.NewClientBuilder().WithScheme(scheme).Build()
 	svc := service.New(registry.Default(), st, kube)
 	router := gin.New()
-	New(svc).RegisterRoutes(router.Group("/api/v1"))
+	var ensurer NamespaceEnsurer
+	if len(ensurers) > 0 {
+		ensurer = ensurers[0]
+	}
+	New(svc, registry.Default(), ensurer).RegisterRoutes(router.Group("/api/v1"))
 	return router, kube
+}
+
+type recordingEnsurer struct {
+	calls     int
+	alias     string
+	namespace string
+	err       error
+}
+
+func (e *recordingEnsurer) EnsureNamespaced(ctx context.Context, alias string, namespace string) error {
+	_ = ctx
+	e.calls++
+	e.alias = alias
+	e.namespace = namespace
+	return e.err
+}
+
+func (e *recordingEnsurer) expectCalled(t *testing.T, alias string, namespace string) {
+	t.Helper()
+	if e.calls != 1 || e.alias != alias || e.namespace != namespace {
+		t.Fatalf("expected one ensure call for %s/%s, got calls=%d alias=%q namespace=%q", alias, namespace, e.calls, e.alias, e.namespace)
+	}
 }
 
 func performRequest(router http.Handler, method string, path string, body []byte) *httptest.ResponseRecorder {
