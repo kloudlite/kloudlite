@@ -64,6 +64,22 @@ func TestStoreGetReturnsCopy(t *testing.T) {
 	}
 }
 
+func TestStoreUpsertCopiesOriginalObject(t *testing.T) {
+	s := New()
+	cm := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default", Labels: map[string]string{"app": "demo"}}}
+
+	s.Upsert("configmaps", cm)
+	cm.SetLabels(map[string]string{"app": "mutated"})
+
+	got, ok := s.Get("configmaps", "default", "app")
+	if !ok {
+		t.Fatal("expected configmap to exist")
+	}
+	if got.GetLabels()["app"] != "demo" {
+		t.Fatalf("expected cached labels to be unchanged, got %#v", got.GetLabels())
+	}
+}
+
 func TestStoreReplaceScopeReplacesObjectsAndMarksReady(t *testing.T) {
 	s := New()
 	s.Upsert("configmaps", &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "old", Namespace: "default"}})
@@ -80,5 +96,21 @@ func TestStoreReplaceScopeReplacesObjectsAndMarksReady(t *testing.T) {
 	}
 	if _, ok := s.Get("configmaps", "default", "new"); !ok {
 		t.Fatal("expected new object to exist")
+	}
+}
+
+func TestStoreReplaceScopeCopiesOriginalObjects(t *testing.T) {
+	s := New()
+	cm := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default", Labels: map[string]string{"app": "demo"}}}
+
+	s.ReplaceScope("configmaps", "default", []client.Object{cm})
+	cm.SetLabels(map[string]string{"app": "mutated"})
+
+	got, ok := s.Get("configmaps", "default", "app")
+	if !ok {
+		t.Fatal("expected configmap to exist")
+	}
+	if got.GetLabels()["app"] != "demo" {
+		t.Fatalf("expected cached labels to be unchanged, got %#v", got.GetLabels())
 	}
 }
