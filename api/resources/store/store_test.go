@@ -114,3 +114,24 @@ func TestStoreReplaceScopeCopiesOriginalObjects(t *testing.T) {
 		t.Fatalf("expected cached labels to be unchanged, got %#v", got.GetLabels())
 	}
 }
+
+func TestStoreGetAfterReplaceScopeReturnsCopy(t *testing.T) {
+	s := New()
+	s.ReplaceScope("configmaps", "default", []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default", Labels: map[string]string{"app": "demo"}}},
+	})
+
+	got, ok := s.Get("configmaps", "default", "app")
+	if !ok {
+		t.Fatal("expected configmap to exist")
+	}
+	got.SetLabels(map[string]string{"app": "mutated"})
+
+	got, ok = s.Get("configmaps", "default", "app")
+	if !ok {
+		t.Fatal("expected configmap to exist")
+	}
+	if got.GetLabels()["app"] != "demo" {
+		t.Fatalf("expected cached labels to be unchanged, got %#v", got.GetLabels())
+	}
+}
