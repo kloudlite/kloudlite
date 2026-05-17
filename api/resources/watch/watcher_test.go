@@ -86,6 +86,28 @@ func TestEnsureNamespacedDoesNothingWhenScopeAlreadyReady(t *testing.T) {
 	}
 }
 
+func TestNamespacedSyncRejectsEmptyNamespaceBeforeList(t *testing.T) {
+	st := store.New()
+	counting := &countingClient{WithWatch: newFakeClient(t, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}})}
+	reg := registry.Default()
+	mgr := NewManager(reg, st, counting, zap.NewNop())
+	resource := mustResource(t, reg, "configmaps")
+
+	if err := mgr.SyncOnce(context.Background(), resource, ""); err == nil {
+		t.Fatal("expected empty namespace sync to fail")
+	}
+	if err := mgr.EnsureNamespaced(context.Background(), "configmaps", ""); err == nil {
+		t.Fatal("expected empty namespace ensure to fail")
+	}
+
+	if counting.listCalls != 0 {
+		t.Fatalf("expected no list calls, got %d", counting.listCalls)
+	}
+	if st.Ready("configmaps", "") {
+		t.Fatal("expected configmaps empty namespace scope to remain not ready")
+	}
+}
+
 func TestEnsureNamespacedRejectsUnknownAliasAndClusterScopedAlias(t *testing.T) {
 	reg := newTestRegistry(t)
 	mgr := NewManager(reg, store.New(), newFakeClient(t), zap.NewNop())
