@@ -40,7 +40,7 @@ func (s *Service) Get(ctx context.Context, alias string, namespace string, name 
 	}
 	object, ok := s.store.Get(alias, namespace, name)
 	if !ok {
-		return nil, NewError(ErrBadRequest, fmt.Sprintf("resource %q named %q was not found", alias, name), nil)
+		return nil, NewError(ErrNotFound, fmt.Sprintf("resource %q named %q was not found", alias, name), nil)
 	}
 	return object, nil
 }
@@ -55,8 +55,12 @@ func (s *Service) Create(ctx context.Context, alias string, namespace string, ob
 	}
 
 	created := object.DeepCopyObject().(client.Object)
-	if created.GetObjectKind().GroupVersionKind().Empty() {
+	gvk := created.GetObjectKind().GroupVersionKind()
+	resourceGVK := resource.GroupVersionKind()
+	if gvk.Empty() {
 		created.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
+	} else if gvk != resourceGVK {
+		return nil, NewError(ErrBadRequest, fmt.Sprintf("object GVK %s does not match resource %q GVK %s", gvk, alias, resourceGVK), nil)
 	}
 	if resource.Scope == registry.Namespaced {
 		created.SetNamespace(namespace)
