@@ -26,6 +26,10 @@ func NewManager(reg *registry.Registry, st *store.Store, kube client.WithWatch, 
 }
 
 func (m *Manager) SyncOnce(ctx context.Context, resource registry.Resource, namespace string) error {
+	if resource.Scope == registry.Namespaced && namespace == "" {
+		return fmt.Errorf("namespace is required for namespaced resource %q", resource.Alias)
+	}
+
 	list := resource.NewList()
 	objectList, ok := list.(client.ObjectList)
 	if !ok {
@@ -79,6 +83,9 @@ func (m *Manager) EnsureNamespaced(ctx context.Context, alias string, namespace 
 	}
 	if resource.Scope != registry.Namespaced {
 		return fmt.Errorf("resource %q is %s-scoped, not %s-scoped", alias, resource.Scope, registry.Namespaced)
+	}
+	if namespace == "" {
+		return fmt.Errorf("namespace is required for namespaced resource %q", alias)
 	}
 	if m.store.Ready(alias, namespace) {
 		return nil
