@@ -1,0 +1,191 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/api/resources/registry"
+	"github.com/kloudlite/kloudlite/api/resources/service"
+	"github.com/kloudlite/kloudlite/api/resources/store"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+)
+
+type Handler struct {
+	service  *service.Service
+	registry *registry.Registry
+}
+
+func New(svc *service.Service, registries ...*registry.Registry) *Handler {
+	reg := registry.Default()
+	if len(registries) > 0 && registries[0] != nil {
+		reg = registries[0]
+	}
+	return &Handler{service: svc, registry: reg}
+}
+
+func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
+	group.GET("/resources/:resource", h.listCluster)
+	group.GET("/resources/:resource/:name", h.getCluster)
+	group.POST("/resources/:resource", h.createCluster)
+	group.PATCH("/resources/:resource/:name", h.patchCluster)
+	group.DELETE("/resources/:resource/:name", h.deleteCluster)
+
+	group.GET("/namespaces/:namespace/resources/:resource", h.listNamespaced)
+	group.GET("/namespaces/:namespace/resources/:resource/:name", h.getNamespaced)
+	group.POST("/namespaces/:namespace/resources/:resource", h.createNamespaced)
+	group.PATCH("/namespaces/:namespace/resources/:resource/:name", h.patchNamespaced)
+	group.DELETE("/namespaces/:namespace/resources/:resource/:name", h.deleteNamespaced)
+}
+
+func (h *Handler) listCluster(c *gin.Context) {
+	h.list(c, registry.Cluster, "")
+}
+
+func (h *Handler) getCluster(c *gin.Context) {
+	h.get(c, registry.Cluster, "")
+}
+
+func (h *Handler) createCluster(c *gin.Context) {
+	h.create(c, registry.Cluster, "")
+}
+
+func (h *Handler) patchCluster(c *gin.Context) {
+	h.patch(c, registry.Cluster, "")
+}
+
+func (h *Handler) deleteCluster(c *gin.Context) {
+	h.delete(c, registry.Cluster, "")
+}
+
+func (h *Handler) listNamespaced(c *gin.Context) {
+	h.list(c, registry.Namespaced, c.Param("namespace"))
+}
+
+func (h *Handler) getNamespaced(c *gin.Context) {
+	h.get(c, registry.Namespaced, c.Param("namespace"))
+}
+
+func (h *Handler) createNamespaced(c *gin.Context) {
+	h.create(c, registry.Namespaced, c.Param("namespace"))
+}
+
+func (h *Handler) patchNamespaced(c *gin.Context) {
+	h.patch(c, registry.Namespaced, c.Param("namespace"))
+}
+
+func (h *Handler) deleteNamespaced(c *gin.Context) {
+	h.delete(c, registry.Namespaced, c.Param("namespace"))
+}
+
+func (h *Handler) list(c *gin.Context, scope registry.Scope, namespace string) {
+	alias := c.Param("resource")
+	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+
+	items, err := h.service.List(c.Request.Context(), alias, namespace, store.Selector{})
+	if err != nil {
+		h.error(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": items})
+}
+
+func (h *Handler) get(c *gin.Context, scope registry.Scope, namespace string) {
+	alias := c.Param("resource")
+	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+
+	object, err := h.service.Get(c.Request.Context(), alias, namespace, c.Param("name"))
+	if err != nil {
+		h.error(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, object)
+}
+
+func (h *Handler) create(c *gin.Context, scope registry.Scope, namespace string) {
+	alias := c.Param("resource")
+	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+
+	object, err := decodeObject(c)
+	if err != nil {
+		h.error(c, err)
+		return
+	}
+	if scope == registry.Namespaced {
+		object.SetNamespace(namespace)
+	}
+
+	created, err := h.service.Create(c.Request.Context(), alias, namespace, object)
+	if err != nil {
+		h.error(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, created)
+}
+
+func (h *Handler) patch(c *gin.Context, scope registry.Scope, namespace string) {
+	alias := c.Param("resource")
+	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+
+	object, err := decodeObject(c)
+	if err != nil {
+		h.error(c, err)
+		return
+	}
+	patched, err := h.service.Patch(c.Request.Context(), alias, namespace, c.Param("name"), object)
+	if err != nil {
+		h.error(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, patched)
+}
+
+func (h *Handler) delete(c *gin.Context, scope registry.Scope, namespace string) {
+	alias := c.Param("resource")
+	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+
+	if err := h.service.Delete(c.Request.Context(), alias, namespace, c.Param("name")); err != nil {
+		h.error(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) requireScope(alias string, scope registry.Scope) error {
+	resource, ok := h.registry.Get(alias)
+	if !ok {
+		return service.UnknownResource(alias)
+	}
+	if resource.Scope != scope {
+		return service.NewError(service.ErrWrongScope, "resource \""+alias+"\" is "+string(resource.Scope)+"-scoped, not "+string(scope)+"-scoped", nil)
+	}
+	return nil
+}
+
+func (h *Handler) error(c *gin.Context, err error) {
+	c.JSON(service.HTTPStatus(err), gin.H{"error": err.Error()})
+}
+
+func decodeObject(c *gin.Context) (*unstructured.Unstructured, error) {
+	object := &unstructured.Unstructured{}
+	decoder := json.NewDecoder(c.Request.Body)
+	if err := decoder.Decode(object); err != nil {
+		return nil, service.NewError(service.ErrBadRequest, "invalid JSON body", err)
+	}
+	return object, nil
+}

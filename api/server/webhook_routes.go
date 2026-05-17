@@ -6,14 +6,16 @@ import (
 	"github.com/kloudlite/kloudlite/api/handlers"
 	"github.com/kloudlite/kloudlite/api/k8s"
 	"github.com/kloudlite/kloudlite/api/middleware"
+	resourcehandlers "github.com/kloudlite/kloudlite/api/resources/handlers"
+	"github.com/kloudlite/kloudlite/api/resources/registry"
+	"github.com/kloudlite/kloudlite/api/resources/service"
 	"github.com/kloudlite/kloudlite/api/webhooks"
 	pkglogger "github.com/kloudlite/kloudlite/pkg/logger"
 	"go.uber.org/zap"
 )
 
-// setupWebhookRouter creates a minimal router with only webhooks and VPN endpoints
-// All CRUD operations are now handled by Next.js Server Actions
-func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.Client) *gin.Engine {
+// setupWebhookRouter creates a router with webhooks, health checks, and API resource routes.
+func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.Client, resourceService *service.Service, resourceRegistry *registry.Registry) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -68,6 +70,8 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 	// TODO: Consider moving VPN to a separate service or removing if not needed
 	v1 := router.Group("/api/v1")
 	{
+		resourcehandlers.New(resourceService, resourceRegistry).RegisterRoutes(v1)
+
 		// VPN endpoints are currently disabled - uncomment if VPN service is re-enabled
 		// vpnHandlers := handlers.NewVPNHandlers(vpnService, logger, cfg.Auth.JWTSecret)
 		// vpn := v1.Group("/vpn")
@@ -82,11 +86,11 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 			c.JSON(200, gin.H{
 				"service": "kloudlite-api",
 				"mode":    "controllers+webhooks",
-				"message": "CRUD operations are handled by Next.js Server Actions",
+				"message": "resource operations are served by kloudlite-api",
 			})
 		})
 	}
 
-	logger.Info("Webhook router initialized (webhooks + health checks only)")
+	logger.Info("Webhook router initialized (webhooks + health checks + resource routes)")
 	return router
 }
