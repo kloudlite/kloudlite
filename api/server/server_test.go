@@ -12,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/kloudlite/kloudlite/api/config"
 	"github.com/kloudlite/kloudlite/api/k8s"
+	"github.com/kloudlite/kloudlite/api/resources/events"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/service"
 	"github.com/kloudlite/kloudlite/api/resources/store"
@@ -118,9 +119,10 @@ func newWebhookTestRouter(t *testing.T, auth config.AuthConfig) http.Handler {
 	kube := newServerFakeClient(t)
 	st := store.New()
 	reg := registry.Default()
-	svc := service.New(reg, st, kube)
-	watchManager := watch.NewManager(reg, st, kube, zap.NewNop())
-	return setupWebhookRouter(&config.Config{Auth: auth}, zap.NewNop(), &k8s.Client{RuntimeClient: kube}, svc, reg, watchManager)
+	broker := events.NewBroker()
+	svc := service.NewWithEvents(reg, st, kube, broker)
+	watchManager := watch.NewManagerWithEvents(reg, st, kube, zap.NewNop(), broker)
+	return setupWebhookRouter(&config.Config{Auth: auth}, zap.NewNop(), &k8s.Client{RuntimeClient: kube}, svc, reg, st, watchManager, broker)
 }
 
 func newServerFakeClient(t *testing.T, objects ...client.Object) client.WithWatch {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/kloudlite/kloudlite/api/resources/events"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,10 +17,15 @@ type Service struct {
 	registry *registry.Registry
 	store    *store.Store
 	kube     client.Client
+	broker   *events.Broker
 }
 
 func New(reg *registry.Registry, st *store.Store, kube client.Client) *Service {
 	return &Service{registry: reg, store: st, kube: kube}
+}
+
+func NewWithEvents(reg *registry.Registry, st *store.Store, kube client.Client, broker *events.Broker) *Service {
+	return &Service{registry: reg, store: st, kube: kube, broker: broker}
 }
 
 func (s *Service) List(ctx context.Context, alias string, namespace string, selector store.Selector) ([]client.Object, error) {
@@ -75,6 +81,7 @@ func (s *Service) Create(ctx context.Context, alias string, namespace string, ob
 		return nil, mapClientError(err)
 	}
 	created.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
+	s.markDirty(resource, created.GetNamespace(), created.GetName(), events.DirtyReasonPendingCreate, created.GetLabels())
 	return created.DeepCopyObject().(client.Object), nil
 }
 
@@ -114,6 +121,7 @@ func (s *Service) Patch(ctx context.Context, alias string, namespace string, nam
 		return nil, mapClientError(err)
 	}
 	current.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
+	s.markDirty(resource, current.GetNamespace(), current.GetName(), events.DirtyReasonPendingPatch, current.GetLabels())
 	return current.DeepCopyObject().(client.Object), nil
 }
 
@@ -132,10 +140,25 @@ func (s *Service) Delete(ctx context.Context, alias string, namespace string, na
 	} else {
 		object.SetNamespace("")
 	}
+	labels := map[string]string(nil)
+	if cached, ok := s.store.Get(resource.Alias, object.GetNamespace(), object.GetName()); ok {
+		labels = cached.GetLabels()
+	}
 	if err := s.kube.Delete(ctx, object); err != nil {
 		return mapClientError(err)
 	}
+	s.markDirty(resource, object.GetNamespace(), object.GetName(), events.DirtyReasonPendingDelete, labels)
 	return nil
+}
+
+func (s *Service) markDirty(resource registry.Resource, namespace string, name string, reason events.DirtyReason, labels map[string]string) {
+	if resource.Scope == registry.Cluster {
+		namespace = ""
+	}
+	dirty := s.store.MarkDirty(resource.Alias, namespace, name, reason, labels)
+	if s.broker != nil {
+		s.broker.Publish(events.Event{Type: events.EventDirty, Resource: resource.Alias, Namespace: namespace, Name: name, Dirty: &dirty})
+	}
 }
 
 func (s *Service) resolve(alias string) (registry.Resource, error) {

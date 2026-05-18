@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kloudlite/kloudlite/api/resources/events"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	"go.uber.org/zap"
@@ -20,6 +21,7 @@ type Manager struct {
 	store        *store.Store
 	client       client.WithWatch
 	logger       *zap.Logger
+	broker       *events.Broker
 	mu           sync.Mutex
 	started      map[string]struct{}
 	lifecycleCtx context.Context
@@ -30,6 +32,12 @@ func NewManager(reg *registry.Registry, st *store.Store, kube client.WithWatch, 
 		logger = zap.NewNop()
 	}
 	return &Manager{registry: reg, store: st, client: kube, logger: logger, started: map[string]struct{}{}}
+}
+
+func NewManagerWithEvents(reg *registry.Registry, st *store.Store, kube client.WithWatch, logger *zap.Logger, broker *events.Broker) *Manager {
+	m := NewManager(reg, st, kube, logger)
+	m.broker = broker
+	return m
 }
 
 func (m *Manager) SyncOnce(ctx context.Context, resource registry.Resource, namespace string) error {
@@ -207,15 +215,49 @@ func (m *Manager) consume(ctx context.Context, resource registry.Resource, watch
 			}
 			switch event.Type {
 			case k8swatch.Added, k8swatch.Modified:
+				previousLabels := map[string]string(nil)
+				previousNamespace := object.GetNamespace()
+				if resource.Scope == registry.Cluster {
+					previousNamespace = ""
+				}
+				if previous, ok := m.store.Get(resource.Alias, previousNamespace, object.GetName()); ok {
+					previousLabels = previous.GetLabels()
+				}
 				m.store.Upsert(resource.Alias, object)
+				namespace := object.GetNamespace()
+				if resource.Scope == registry.Cluster {
+					namespace = ""
+				}
+				eventType := events.EventModified
+				if event.Type == k8swatch.Added {
+					eventType = events.EventAdded
+				}
+				m.publish(events.Event{Type: eventType, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Object: object.DeepCopyObject(), PreviousLabels: previousLabels})
+				if dirty, ok := m.store.ClearDirty(resource.Alias, namespace, object.GetName()); ok {
+					m.publish(events.Event{Type: events.EventClean, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Dirty: &dirty})
+				}
 			case k8swatch.Deleted:
 				namespace := object.GetNamespace()
 				if resource.Scope == registry.Cluster {
 					namespace = ""
 				}
+				previousLabels := object.GetLabels()
+				if previous, ok := m.store.Get(resource.Alias, namespace, object.GetName()); ok {
+					previousLabels = previous.GetLabels()
+				}
 				m.store.Delete(resource.Alias, namespace, object.GetName())
+				m.publish(events.Event{Type: events.EventDeleted, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Object: object.DeepCopyObject(), PreviousLabels: previousLabels})
+				if dirty, ok := m.store.ClearDirty(resource.Alias, namespace, object.GetName()); ok {
+					m.publish(events.Event{Type: events.EventClean, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Dirty: &dirty})
+				}
 			}
 		}
+	}
+}
+
+func (m *Manager) publish(event events.Event) {
+	if m.broker != nil {
+		m.broker.Publish(event)
 	}
 }
 

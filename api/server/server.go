@@ -9,6 +9,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/config"
 	"github.com/kloudlite/kloudlite/api/k8s"
+	"github.com/kloudlite/kloudlite/api/resources/events"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/service"
 	"github.com/kloudlite/kloudlite/api/resources/store"
@@ -52,11 +53,12 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 
 	resourceRegistry := registry.Default()
 	resourceStore := store.New()
-	resourceService := service.New(resourceRegistry, resourceStore, k8sClient.RuntimeClient)
-	watchManager := watch.NewManager(resourceRegistry, resourceStore, k8sClient.RuntimeClient, logger)
+	resourceBroker := events.NewBroker()
+	resourceService := service.NewWithEvents(resourceRegistry, resourceStore, k8sClient.RuntimeClient, resourceBroker)
+	watchManager := watch.NewManagerWithEvents(resourceRegistry, resourceStore, k8sClient.RuntimeClient, logger, resourceBroker)
 
 	// Setup router for webhooks, resource routes, and VPN endpoints.
-	router := setupWebhookRouter(cfg, logger, k8sClient, resourceService, resourceRegistry, watchManager)
+	router := setupWebhookRouter(cfg, logger, k8sClient, resourceService, resourceRegistry, resourceStore, watchManager, resourceBroker)
 
 	// Create cancellable context for controller manager
 	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
