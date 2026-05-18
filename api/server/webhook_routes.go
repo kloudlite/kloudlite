@@ -71,7 +71,9 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 	// TODO: Consider moving VPN to a separate service or removing if not needed
 	v1 := router.Group("/api/v1")
 	{
-		resourcehandlers.New(resourceService, resourceRegistry, watchManager).RegisterRoutes(v1)
+		resourceRoutes := v1.Group("")
+		resourceRoutes.Use(middleware.JWTAuth(cfg.Auth, logger))
+		resourcehandlers.New(resourceService, resourceRegistry, watchManager).RegisterRoutes(resourceRoutes)
 
 		// VPN endpoints are currently disabled - uncomment if VPN service is re-enabled
 		// vpnHandlers := handlers.NewVPNHandlers(vpnService, logger, cfg.Auth.JWTSecret)
