@@ -177,6 +177,10 @@ func (m *Manager) consume(ctx context.Context, resource registry.Resource, watch
 				m.logger.Info("resource watch closed", zap.String("resource", resource.Alias))
 				return
 			}
+			if event.Type == k8swatch.Error {
+				m.logger.Error("resource watch error", zap.String("resource", resource.Alias), zap.Any("status", event.Object))
+				return
+			}
 			object, ok := event.Object.(client.Object)
 			if !ok {
 				m.logger.Error("watch event object is not a client object", zap.String("resource", resource.Alias), zap.String("event", string(event.Type)))
