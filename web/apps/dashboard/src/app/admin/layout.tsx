@@ -16,7 +16,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const userRoles = session.user?.roles || []
-  const hasUserRole = userRoles.includes('user')
   const hasAdminRole = userRoles.includes('admin') || userRoles.includes('super-admin')
   const isSuperAdmin = userRoles.includes('super-admin')
 
@@ -51,11 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
 
             {/* User Dropdown */}
-            <AdminProfileDropdown
-              name={session.user?.name}
-              email={session.user?.email}
-              hasUserRole={hasUserRole}
-            />
+            <AdminProfileDropdown name={session.user?.name} email={session.user?.email} />
           </div>
         </div>
       </header>
