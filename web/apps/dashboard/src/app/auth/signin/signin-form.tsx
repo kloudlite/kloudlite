@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
+import { getSession, signIn } from 'next-auth/react'
 import { Button, Input, Label, KloudliteLogo } from '@kloudlite/ui'
 import { AlertCircle } from 'lucide-react'
 import { cn } from '@kloudlite/lib'
@@ -54,7 +54,15 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
       }
 
       if (result?.ok) {
-        router.push('/')
+        const session = await getSession()
+        const roles = session?.user?.roles || []
+        const hasAdminRole = roles.includes('admin') || roles.includes('super-admin')
+
+        router.push(
+          hasAdminRole
+            ? '/admin'
+            : '/auth/error?error=AccessDenied&message=This%20dashboard%20is%20for%20administrators%20only.',
+        )
         router.refresh()
         return
       }
@@ -72,7 +80,7 @@ export function SignInForm({ enabledProviders }: SignInFormProps) {
   const handleOAuthLogin = async (provider: string) => {
     setLoadingAction(provider)
     try {
-      await signIn(provider, { callbackUrl: '/' })
+      await signIn(provider, { callbackUrl: '/auth/signin' })
     } catch (error) {
       console.error(`OAuth login error with ${provider}:`, error)
       setError(`Failed to sign in with ${provider}`)
