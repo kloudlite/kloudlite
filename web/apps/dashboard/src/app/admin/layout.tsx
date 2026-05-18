@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
                 <KloudliteLogo className="text-lg font-medium" />
-                <span className="text-muted-foreground text-lg font-medium">Admin</span>
+                <span className="text-muted-foreground text-sm font-medium">Admin</span>
               </div>
 
               {/* Admin Navigation */}

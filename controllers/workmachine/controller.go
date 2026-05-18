@@ -634,7 +634,6 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return errors.Wrap("failed to create logger for pod deletion tracker", err)
 		}
 		podDeletionTracker = shared.NewPodDeletionTracker(logger)
-		logger.Info("Initialized pod deletion tracker for race condition prevention")
 	}
 
 	// Initialize usage reporter for billing events

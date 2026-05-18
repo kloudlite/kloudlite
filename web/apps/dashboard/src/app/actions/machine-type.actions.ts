@@ -1,10 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { machineTypeRepository } from '@kloudlite/lib/k8s'
-import type { MachineType } from '@kloudlite/lib/k8s'
 import type { MachineTypeCreateRequest, MachineTypeUpdateRequest } from '@kloudlite/types'
-import { resourceStore } from '@/lib/resource-store'
+import type { MachineType as DashboardMachineType } from '@/types/machine'
+import { getPlatformApiClient, type KubernetesResource } from '@/lib/platform-api'
+
+type MachineType = DashboardMachineType & KubernetesResource<DashboardMachineType['spec']>
 
 /**
  * Server action to list all machine types
@@ -13,8 +14,8 @@ import { resourceStore } from '@/lib/resource-store'
 export async function listMachineTypes() {
   try {
     console.log('[STORE] listMachineTypes')
-    await resourceStore.waitForReady('machinetypes')
-    const items = resourceStore.listCluster<MachineType>('machinetypes')
+    const client = await getPlatformApiClient()
+    const items = await client.listClusterResources<MachineType>('machinetypes')
     return { success: true, data: items }
   } catch (err) {
     console.error('List machine types error:', err)
@@ -32,11 +33,8 @@ export async function listMachineTypes() {
 export async function getMachineType(name: string) {
   try {
     console.log('[STORE] getMachineType:', name)
-    await resourceStore.waitForReady('machinetypes')
-    const result = resourceStore.getCluster<MachineType>('machinetypes', name)
-    if (!result) {
-      return { success: false, error: 'Machine type not found' }
-    }
+    const client = await getPlatformApiClient()
+    const result = await client.getClusterResource<MachineType>('machinetypes', name)
     return { success: true, data: result }
   } catch (err) {
     console.error('Get machine type error:', err)
@@ -75,7 +73,8 @@ export async function createMachineType(data: MachineTypeCreateRequest) {
     }
 
     console.log('[K8S-API] createMachineType:', name)
-    const result = await machineTypeRepository.create(machineType)
+    const client = await getPlatformApiClient()
+    const result = await client.createClusterResource<MachineType>('machinetypes', machineType)
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -118,7 +117,8 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
 
     // Use patch for partial updates
     console.log('[K8S-API] updateMachineType:', name)
-    const result = await machineTypeRepository.patch(name, {
+    const client = await getPlatformApiClient()
+    const result = await client.patchClusterResource<MachineType>('machinetypes', name, {
       spec: specUpdate,
     })
     revalidatePath('/admin/machine-configs')
@@ -139,7 +139,8 @@ export async function updateMachineType(name: string, data: MachineTypeUpdateReq
 export async function deleteMachineType(name: string) {
   try {
     console.log('[K8S-API] deleteMachineType:', name)
-    await machineTypeRepository.delete(name)
+    const client = await getPlatformApiClient()
+    await client.deleteClusterResource('machinetypes', name)
     revalidatePath('/admin/machine-configs')
     return { success: true }
   } catch (err) {
@@ -158,7 +159,8 @@ export async function deleteMachineType(name: string) {
 export async function activateMachineType(name: string) {
   try {
     console.log('[K8S-API] activateMachineType:', name)
-    const result = await machineTypeRepository.activate(name)
+    const client = await getPlatformApiClient()
+    const result = await client.patchClusterResource<MachineType>('machinetypes', name, { spec: { active: true } })
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -177,7 +179,8 @@ export async function activateMachineType(name: string) {
 export async function deactivateMachineType(name: string) {
   try {
     console.log('[K8S-API] deactivateMachineType:', name)
-    const result = await machineTypeRepository.deactivate(name)
+    const client = await getPlatformApiClient()
+    const result = await client.patchClusterResource<MachineType>('machinetypes', name, { spec: { active: false } })
     revalidatePath('/admin/machine-configs')
     return { success: true, data: result }
   } catch (err) {
@@ -196,7 +199,8 @@ export async function deactivateMachineType(name: string) {
 export async function setMachineTypeAsDefault(name: string) {
   try {
     console.log('[K8S-API] setMachineTypeAsDefault:', name)
-    const result = await machineTypeRepository.setDefault(name)
+    const client = await getPlatformApiClient()
+    const result = await client.patchClusterResource<MachineType>('machinetypes', name, { spec: { isDefault: true } })
     revalidatePath('/admin/machine-configs')
     revalidatePath('/')
     return { success: true, data: result }

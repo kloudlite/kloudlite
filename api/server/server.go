@@ -2,9 +2,7 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/config"
@@ -27,6 +25,7 @@ type Server struct {
 	k8sClient           *k8s.Client
 	controllerManager   *controllers.Manager
 	watchManager        *watch.Manager
+	webhookCABundle     []byte
 	controllerCtx       context.Context
 	controllerCtxCancel context.CancelFunc
 }
@@ -44,6 +43,7 @@ func New(cfg *config.Config, logger *zap.Logger) *Server {
 		k8sClient:           runtime.k8sClient,
 		controllerManager:   runtime.controllerManager,
 		watchManager:        runtime.watchManager,
+		webhookCABundle:     runtime.webhookCABundle,
 		controllerCtx:       runtime.controllerCtx,
 		controllerCtxCancel: runtime.controllerCtxCancel,
 	}
@@ -92,15 +92,9 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	// Install webhook configurations now that the server is ready
-	s.logger.Info("installing platform-api webhook configurations")
-	caBundle, err := os.ReadFile(s.config.TLS.CertFile)
-	if err != nil {
-		s.logger.Error("Failed to read webhook CA certificate", zap.Error(err))
-		return fmt.Errorf("failed to read webhook CA certificate: %w", err)
-	}
-
-	webhookInstaller := services.NewWebhookInstaller(s.k8sClient.RuntimeClient, s.logger, caBundle)
+	// Ensure webhook configurations now that the server is ready
+	s.logger.Info("ensuring platform-api admission webhook configurations")
+	webhookInstaller := services.NewWebhookInstaller(s.k8sClient.RuntimeClient, s.logger, s.webhookCABundle)
 	if err := webhookInstaller.InstallWebhooks(context.Background()); err != nil {
 		s.logger.Error("Failed to install webhook configurations", zap.Error(err))
 		s.logger.Warn("Continuing without webhook configurations")
@@ -118,7 +112,7 @@ func (s *Server) startHTTPSServer() <-chan error {
 	errCh := make(chan error, 1)
 	go func() {
 		s.logger.Info("starting platform-api HTTPS server", zap.String("addr", s.httpsServer.Addr))
-		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
+		if err := s.httpsServer.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 			s.logger.Error("HTTPS API server stopped with error", zap.Error(err))
 			errCh <- err
 		}

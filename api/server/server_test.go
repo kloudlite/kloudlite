@@ -53,14 +53,21 @@ func TestWaitForHTTPSStartupContinuesAfterDelay(t *testing.T) {
 func TestNewPlatformRuntimeComponentsCreatesHTTPSAndResourceWatch(t *testing.T) {
 	cfg := &config.Config{Auth: config.AuthConfig{SkipAuthentication: true}}
 	kube := &k8s.Client{RuntimeClient: newServerFakeClient(t)}
+	tlsBundle, err := generateWebhookTLSBundle(webhookTLSOptions{Namespace: "kloudlite", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("generate TLS bundle: %v", err)
+	}
 
-	runtime := newPlatformRuntimeComponents(cfg, zap.NewNop(), kube, nil)
+	runtime := newPlatformRuntimeComponents(cfg, zap.NewNop(), kube, nil, tlsBundle)
 
 	if runtime.httpsServer == nil {
 		t.Fatal("expected HTTPS server")
 	}
 	if runtime.httpsServer.Addr != ":9443" {
 		t.Fatalf("expected HTTPS addr :9443, got %q", runtime.httpsServer.Addr)
+	}
+	if runtime.httpsServer.TLSConfig == nil || len(runtime.httpsServer.TLSConfig.Certificates) != 1 {
+		t.Fatal("expected HTTPS server to use in-memory TLS certificate")
 	}
 	if runtime.watchManager == nil {
 		t.Fatal("expected resource watch manager")
