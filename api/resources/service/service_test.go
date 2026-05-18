@@ -208,6 +208,24 @@ func TestCreateRejectsNilObject(t *testing.T) {
 	}
 }
 
+func TestCreateDuplicateMapsToConflict(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
+	).Build())
+
+	_, err := svc.Create(context.Background(), "configmaps", "default", &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app"}})
+	if !IsKind(err, ErrConflict) {
+		t.Fatalf("expected conflict error, got %v", err)
+	}
+	if got := HTTPStatus(err); got != http.StatusConflict {
+		t.Fatalf("expected status %d, got %d", http.StatusConflict, got)
+	}
+}
+
 func TestPatchWritesThroughKubernetesWithoutOptimisticStoreMutation(t *testing.T) {
 	scheme := runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {

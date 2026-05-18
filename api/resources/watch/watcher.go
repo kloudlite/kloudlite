@@ -15,12 +15,13 @@ import (
 )
 
 type Manager struct {
-	registry *registry.Registry
-	store    *store.Store
-	client   client.WithWatch
-	logger   *zap.Logger
-	mu       sync.Mutex
-	started  map[string]struct{}
+	registry     *registry.Registry
+	store        *store.Store
+	client       client.WithWatch
+	logger       *zap.Logger
+	mu           sync.Mutex
+	started      map[string]struct{}
+	lifecycleCtx context.Context
 }
 
 func NewManager(reg *registry.Registry, st *store.Store, kube client.WithWatch, logger *zap.Logger) *Manager {
@@ -71,6 +72,10 @@ func (m *Manager) SyncOnce(ctx context.Context, resource registry.Resource, name
 }
 
 func (m *Manager) StartClusterScoped(ctx context.Context) {
+	m.mu.Lock()
+	m.lifecycleCtx = ctx
+	m.mu.Unlock()
+
 	for _, resource := range m.registry.All() {
 		if resource.Scope != registry.Cluster {
 			continue
@@ -154,6 +159,10 @@ func (m *Manager) startScope(ctx context.Context, resource registry.Resource, na
 		m.mu.Unlock()
 		return
 	}
+	watchCtx := ctx
+	if m.lifecycleCtx != nil {
+		watchCtx = m.lifecycleCtx
+	}
 	m.started[key] = struct{}{}
 	m.mu.Unlock()
 
@@ -163,7 +172,7 @@ func (m *Manager) startScope(ctx context.Context, resource registry.Resource, na
 			delete(m.started, key)
 			m.mu.Unlock()
 		}()
-		m.RunScope(ctx, resource, namespace)
+		m.RunScope(watchCtx, resource, namespace)
 	}()
 }
 

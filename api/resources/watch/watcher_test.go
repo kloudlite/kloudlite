@@ -96,6 +96,49 @@ func TestEnsureNamespacedStartsOneContinuousWatchForReadyScope(t *testing.T) {
 	}
 }
 
+func TestEnsureNamespacedWatchOutlivesRequestContext(t *testing.T) {
+	fakeWatcher := k8swatch.NewFake()
+	st := store.New()
+	reg, err := registry.New([]registry.Resource{
+		{
+			Alias:     "configmaps",
+			Group:     corev1.SchemeGroupVersion.Group,
+			Version:   corev1.SchemeGroupVersion.Version,
+			Kind:      "ConfigMap",
+			Plural:    "configmaps",
+			Scope:     registry.Namespaced,
+			NewObject: func() runtime.Object { return &corev1.ConfigMap{} },
+			NewList:   func() runtime.Object { return &corev1.ConfigMapList{} },
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	watching := &watchingClient{WithWatch: newFakeClient(t), watcher: fakeWatcher}
+	mgr := NewManager(reg, st, watching, zap.NewNop())
+	lifecycleCtx, stopLifecycle := context.WithCancel(context.Background())
+	mgr.StartClusterScoped(lifecycleCtx)
+	requestCtx, cancelRequest := context.WithCancel(context.Background())
+
+	if err := mgr.EnsureNamespaced(requestCtx, "configmaps", "default"); err != nil {
+		t.Fatalf("ensure namespaced failed: %v", err)
+	}
+	waitFor(t, func() bool { return watching.watchCalls.Load() == 1 })
+	cancelRequest()
+
+	fakeWatcher.Add(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "after-request", Namespace: "default"}})
+	waitFor(t, func() bool {
+		_, ok := st.Get("configmaps", "default", "after-request")
+		return ok
+	})
+	if !mgr.scopeStarted("configmaps/default") {
+		t.Fatal("expected namespaced watch to remain started after request context cancellation")
+	}
+
+	stopLifecycle()
+	waitFor(t, func() bool { return !mgr.scopeStarted("configmaps/default") })
+}
+
 func TestNamespacedSyncRejectsEmptyNamespaceBeforeList(t *testing.T) {
 	st := store.New()
 	counting := &countingClient{WithWatch: newFakeClient(t, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}})}
@@ -116,6 +159,13 @@ func TestNamespacedSyncRejectsEmptyNamespaceBeforeList(t *testing.T) {
 	if st.Ready("configmaps", "") {
 		t.Fatal("expected configmaps empty namespace scope to remain not ready")
 	}
+}
+
+func (m *Manager) scopeStarted(key string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	_, ok := m.started[key]
+	return ok
 }
 
 func TestEnsureNamespacedRejectsUnknownAliasAndClusterScopedAlias(t *testing.T) {
