@@ -331,7 +331,7 @@ func newTestRouter(t *testing.T, st *store.Store, ensurers ...NamespaceEnsurer) 
 	if len(ensurers) > 0 {
 		ensurer = ensurers[0]
 	}
-	New(svc, registry.Default(), ensurer).RegisterRoutes(router.Group("/api/v1"))
+	New(svc, registry.Default(), st, ensurer).RegisterRoutes(router.Group("/api/v1"))
 	return router, kube
 }
 

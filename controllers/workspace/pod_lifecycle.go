@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kloudlite/kloudlite/pkg/intercepts"
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	machinesv1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
@@ -133,48 +134,15 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 		}
 	}
 
-	// Get active service intercepts from Environment's ComposeStatus
-	// Format: [{serviceName: "web", portMappings: [{servicePort: 80, workspacePort: 8080}]}, ...]
-	type portMappingInfo struct {
-		ServicePort   int32 `json:"servicePort"`
-		WorkspacePort int32 `json:"workspacePort"`
-	}
-	type interceptInfo struct {
-		ServiceName  string            `json:"serviceName"`
-		PortMappings []portMappingInfo `json:"portMappings"`
-	}
-	intercepts := []interceptInfo{}
+	activeIntercepts := []intercepts.ContextEntry{}
 	if workspace.Spec.EnvironmentConnection != nil {
 		env := &environmentv1.Environment{}
 		err := r.Get(ctx, client.ObjectKey{
 			Namespace: workspace.Spec.EnvironmentConnection.EnvironmentRef.Namespace,
 			Name:      workspace.Spec.EnvironmentConnection.EnvironmentRef.Name,
 		}, env)
-		if err == nil && env.Status.ComposeStatus != nil {
-			for _, activeIntercept := range env.Status.ComposeStatus.ActiveIntercepts {
-				// Only include intercepts for this workspace
-				if activeIntercept.WorkspaceName == workspace.Name {
-					// Find port mappings from spec
-					var mappings []portMappingInfo
-					if env.Spec.Compose != nil {
-						for _, specIntercept := range env.Spec.Compose.Intercepts {
-							if specIntercept.ServiceName == activeIntercept.ServiceName {
-								for _, pm := range specIntercept.PortMappings {
-									mappings = append(mappings, portMappingInfo{
-										ServicePort:   pm.ServicePort,
-										WorkspacePort: pm.WorkspacePort,
-									})
-								}
-								break
-							}
-						}
-					}
-					intercepts = append(intercepts, interceptInfo{
-						ServiceName:  activeIntercept.ServiceName,
-						PortMappings: mappings,
-					})
-				}
-			}
+		if err == nil {
+			activeIntercepts = intercepts.ContextForWorkspace(env, workspace.Name)
 		} else if err != nil {
 			logger.Warn("Failed to get environment for intercept status", zap.Error(err))
 		}
@@ -183,7 +151,7 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 	// Build JSON content
 	contextData := map[string]interface{}{
 		"environment": envName,
-		"intercepts":  intercepts,
+		"intercepts":  activeIntercepts,
 	}
 
 	jsonBytes, err := json.Marshal(contextData)
@@ -201,7 +169,7 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 	logger.Info("Successfully updated Kloudlite context file in running pod",
 		zap.String("workspace", workspace.Name),
 		zap.String("environment", envName),
-		zap.Int("interceptCount", len(intercepts)))
+		zap.Int("interceptCount", len(activeIntercepts)))
 
 	return nil
 }

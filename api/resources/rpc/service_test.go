@@ -20,6 +20,61 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+func TestMachineTypesListUsesProviderDefaults(t *testing.T) {
+	t.Setenv("CLOUD_PROVIDER", "aws")
+	server := newTestConnectServer(t, store.New())
+	defer server.Close()
+
+	list := connect.NewClient[ListResourcesRequest, ListResourcesResponse](server.Client(), server.URL+ProcedureList, connect.WithCodec(jsonCodec{}))
+	resp, err := list.CallUnary(context.Background(), connect.NewRequest(&ListResourcesRequest{Resource: "machinetypes"}))
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if len(resp.Msg.Items) == 0 {
+		t.Fatal("expected machine type defaults")
+	}
+	if resp.Msg.Items[0].JSON["kind"] != "MachineType" {
+		t.Fatalf("expected MachineType object, got %#v", resp.Msg.Items[0].JSON)
+	}
+}
+
+func TestMachineTypesGetUsesProviderDefaults(t *testing.T) {
+	t.Setenv("CLOUD_PROVIDER", "aws")
+	server := newTestConnectServer(t, store.New())
+	defer server.Close()
+
+	get := connect.NewClient[GetResourceRequest, GetResourceResponse](server.Client(), server.URL+ProcedureGet, connect.WithCodec(jsonCodec{}))
+	resp, err := get.CallUnary(context.Background(), connect.NewRequest(&GetResourceRequest{Resource: "machinetypes", Name: "aws-t3-medium"}))
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	metadata, ok := resp.Msg.Object.JSON["metadata"].(map[string]any)
+	if !ok || metadata["name"] != "aws-t3-medium" {
+		t.Fatalf("expected aws-t3-medium, got %#v", resp.Msg.Object.JSON)
+	}
+}
+
+func TestMachineTypesMutationsAreReadOnly(t *testing.T) {
+	t.Setenv("CLOUD_PROVIDER", "aws")
+	server := newTestConnectServer(t, store.New())
+	defer server.Close()
+
+	create := connect.NewClient[MutateResourceRequest, MutateResourceResponse](server.Client(), server.URL+ProcedureCreate, connect.WithCodec(jsonCodec{}))
+	if _, err := create.CallUnary(context.Background(), connect.NewRequest(&MutateResourceRequest{Resource: "machinetypes"})); connect.CodeOf(err) != connect.CodeUnimplemented {
+		t.Fatalf("expected unimplemented create error, got %v", err)
+	}
+
+	patch := connect.NewClient[MutateResourceRequest, MutateResourceResponse](server.Client(), server.URL+ProcedurePatch, connect.WithCodec(jsonCodec{}))
+	if _, err := patch.CallUnary(context.Background(), connect.NewRequest(&MutateResourceRequest{Resource: "machinetypes", Name: "aws-t3-medium"})); connect.CodeOf(err) != connect.CodeUnimplemented {
+		t.Fatalf("expected unimplemented patch error, got %v", err)
+	}
+
+	deleteClient := connect.NewClient[DeleteResourceRequest, DeleteResourceResponse](server.Client(), server.URL+ProcedureDelete, connect.WithCodec(jsonCodec{}))
+	if _, err := deleteClient.CallUnary(context.Background(), connect.NewRequest(&DeleteResourceRequest{Resource: "machinetypes", Name: "aws-t3-medium"})); connect.CodeOf(err) != connect.CodeUnimplemented {
+		t.Fatalf("expected unimplemented delete error, got %v", err)
+	}
+}
+
 func TestConnectCreateMarksOnlyObjectDirtyAndListReportsMetadata(t *testing.T) {
 	st := store.New()
 	st.ReplaceScope("configmaps", "default", []client.Object{

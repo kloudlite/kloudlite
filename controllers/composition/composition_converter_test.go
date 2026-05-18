@@ -146,6 +146,54 @@ func TestCommandEntrypointHandling(t *testing.T) {
 	}
 }
 
+func TestCompositionOwnershipLabelsAndNodePlacement(t *testing.T) {
+	env := &compositionsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{Name: "dev", Namespace: "wm-alice"},
+		Spec: compositionsv1.EnvironmentSpec{
+			TargetNamespace: "env-dev",
+			NodeName:        "worker-1",
+		},
+	}
+	composition := &compositionsv1.Composition{ObjectMeta: metav1.ObjectMeta{Name: "dev"}}
+
+	labels := CompositionOwnershipLabels(composition, env)
+	if labels["kloudlite.io/docker-composition"] != "dev" {
+		t.Fatalf("expected docker composition label, got %#v", labels)
+	}
+	if labels["kloudlite.io/environment-namespace"] != "wm-alice" {
+		t.Fatalf("expected environment namespace label, got %#v", labels)
+	}
+
+	placement := EnvironmentNodePlacement(env)
+	if placement.NodeSelector["kubernetes.io/hostname"] != "worker-1" {
+		t.Fatalf("expected node selector for worker-1, got %#v", placement.NodeSelector)
+	}
+	if len(placement.Tolerations) != 1 || placement.Tolerations[0].Value != "worker-1" {
+		t.Fatalf("expected workmachine toleration for worker-1, got %#v", placement.Tolerations)
+	}
+}
+
+func TestApplyEnvironmentOwnershipLabelsPreservesExistingLabels(t *testing.T) {
+	env := &compositionsv1.Environment{ObjectMeta: metav1.ObjectMeta{Name: "dev", Namespace: "wm-alice"}}
+
+	labels := ApplyEnvironmentOwnershipLabels(map[string]string{"app": "api"}, env)
+
+	assert.Equal(t, "api", labels["app"])
+	assert.Equal(t, "dev", labels[DockerCompositionLabel])
+	assert.Equal(t, "wm-alice", labels[EnvironmentNamespaceLabel])
+}
+
+func TestApplyEnvironmentOwnershipLabelsHandlesNilLabels(t *testing.T) {
+	env := &compositionsv1.Environment{ObjectMeta: metav1.ObjectMeta{Name: "dev", Namespace: "wm-alice"}}
+
+	labels := ApplyEnvironmentOwnershipLabels(nil, env)
+
+	assert.Equal(t, map[string]string{
+		DockerCompositionLabel:    "dev",
+		EnvironmentNamespaceLabel: "wm-alice",
+	}, labels)
+}
+
 func TestConvertComposeToK8s_CommandEntrypoint(t *testing.T) {
 	tests := []struct {
 		name        string

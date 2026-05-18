@@ -34,8 +34,20 @@ type Manager struct {
 	logger *zap.Logger
 }
 
+func PlatformAPIControllerNames() []string {
+	return []string{"user", "workmachine"}
+}
+
 // NewManager creates a new controller manager with all controllers
 func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
+	return newManager(cfg, installationCfg, authCfg, logger, false)
+}
+
+func NewPlatformAPIManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
+	return newManager(cfg, installationCfg, authCfg, logger, true)
+}
+
+func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger, platformAPIOnly bool) (*Manager, error) {
 	// Setup scheme
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -111,6 +123,18 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to load controller configuration: %w", err)
 	}
 
+	if err := workmachine.Register(mgr, controllerCfg); err != nil {
+		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
+	}
+
+	if platformAPIOnly {
+		logger.Info("Controllers initialized successfully", zap.Strings("controllers", PlatformAPIControllerNames()))
+		return &Manager{
+			mgr:    mgr,
+			logger: logger,
+		}, nil
+	}
+
 	// Setup Environment controller
 	environmentReconciler := &environment.EnvironmentReconciler{
 		Client: mgr.GetClient(),
@@ -121,10 +145,6 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 
 	if err = environmentReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create Environment controller: %w", err)
-	}
-
-	if err := workmachine.Register(mgr, controllerCfg); err != nil {
-		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
 	}
 
 	// Setup Workspace controller

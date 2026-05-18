@@ -7,6 +7,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/kloudlite/kloudlite/api/resources/events"
+	"github.com/kloudlite/kloudlite/api/resources/operations"
+	"github.com/kloudlite/kloudlite/api/resources/projection"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/service"
 	"github.com/kloudlite/kloudlite/api/resources/store"
@@ -20,6 +22,7 @@ type ResourceServer struct {
 	store    *store.Store
 	broker   *events.Broker
 	ensurer  namespaceEnsurer
+	ops      *operations.Operations
 }
 
 type namespaceEnsurer interface {
@@ -33,7 +36,7 @@ func NewResourceServer(svc *service.Service, reg *registry.Registry, st *store.S
 	if reg == nil {
 		reg = registry.Default()
 	}
-	return &ResourceServer{service: svc, registry: reg, store: st, broker: broker, ensurer: ensurer}
+	return &ResourceServer{service: svc, registry: reg, store: st, broker: broker, ensurer: ensurer, ops: operations.New(svc, reg, st, ensurer)}
 }
 
 func Register(mux interface{ Handle(string, http.Handler) }, server *ResourceServer, opts ...connect.HandlerOption) {
@@ -70,6 +73,13 @@ func Handler(procedure string, server *ResourceServer, opts ...connect.HandlerOp
 }
 
 func (s *ResourceServer) Get(ctx context.Context, req *connect.Request[GetResourceRequest]) (*connect.Response[GetResourceResponse], error) {
+	if req.Msg.Resource == "machinetypes" {
+		result, err := s.ops.Get(ctx, operations.GetRequest{Resource: req.Msg.Resource, Name: req.Msg.Name, Scope: registry.Cluster})
+		if err != nil {
+			return nil, connectError(err)
+		}
+		return connect.NewResponse(&GetResourceResponse{Object: mustResourceObject(result.Object)}), nil
+	}
 	if err := s.ensure(ctx, req.Msg.Resource, req.Msg.Namespace); err != nil {
 		return nil, connectError(err)
 	}
@@ -81,6 +91,17 @@ func (s *ResourceServer) Get(ctx context.Context, req *connect.Request[GetResour
 }
 
 func (s *ResourceServer) List(ctx context.Context, req *connect.Request[ListResourcesRequest]) (*connect.Response[ListResourcesResponse], error) {
+	if req.Msg.Resource == "machinetypes" {
+		result, err := s.ops.List(ctx, operations.ListRequest{Resource: req.Msg.Resource, Scope: registry.Cluster})
+		if err != nil {
+			return nil, connectError(err)
+		}
+		items := make([]ResourceObject, 0, len(result.Items))
+		for _, item := range result.Items {
+			items = append(items, mustResourceObject(item))
+		}
+		return connect.NewResponse(&ListResourcesResponse{Items: items}), nil
+	}
 	if err := s.ensure(ctx, req.Msg.Resource, req.Msg.Namespace); err != nil {
 		return nil, connectError(err)
 	}
@@ -97,6 +118,10 @@ func (s *ResourceServer) List(ctx context.Context, req *connect.Request[ListReso
 }
 
 func (s *ResourceServer) Create(ctx context.Context, req *connect.Request[MutateResourceRequest]) (*connect.Response[MutateResourceResponse], error) {
+	if req.Msg.Resource == "machinetypes" {
+		_, err := s.ops.Create(ctx, operations.MutateRequest{Resource: req.Msg.Resource, Scope: registry.Cluster, Object: unstructuredFromRaw(req.Msg.Object)})
+		return nil, connectError(err)
+	}
 	if err := s.ensure(ctx, req.Msg.Resource, req.Msg.Namespace); err != nil {
 		return nil, connectError(err)
 	}
@@ -108,6 +133,10 @@ func (s *ResourceServer) Create(ctx context.Context, req *connect.Request[Mutate
 }
 
 func (s *ResourceServer) Patch(ctx context.Context, req *connect.Request[MutateResourceRequest]) (*connect.Response[MutateResourceResponse], error) {
+	if req.Msg.Resource == "machinetypes" {
+		_, err := s.ops.Patch(ctx, operations.MutateRequest{Resource: req.Msg.Resource, Name: req.Msg.Name, Scope: registry.Cluster, Object: unstructuredFromRaw(req.Msg.Object)})
+		return nil, connectError(err)
+	}
 	if err := s.ensure(ctx, req.Msg.Resource, req.Msg.Namespace); err != nil {
 		return nil, connectError(err)
 	}
@@ -119,6 +148,10 @@ func (s *ResourceServer) Patch(ctx context.Context, req *connect.Request[MutateR
 }
 
 func (s *ResourceServer) Delete(ctx context.Context, req *connect.Request[DeleteResourceRequest]) (*connect.Response[DeleteResourceResponse], error) {
+	if req.Msg.Resource == "machinetypes" {
+		_, err := s.ops.Delete(ctx, operations.DeleteRequest{Resource: req.Msg.Resource, Name: req.Msg.Name, Scope: registry.Cluster})
+		return nil, connectError(err)
+	}
 	if err := s.ensure(ctx, req.Msg.Resource, req.Msg.Namespace); err != nil {
 		return nil, connectError(err)
 	}
@@ -129,16 +162,33 @@ func (s *ResourceServer) Delete(ctx context.Context, req *connect.Request[Delete
 }
 
 func (s *ResourceServer) WatchObject(ctx context.Context, req *connect.Request[WatchObjectRequest], stream *connect.ServerStream[ResourceEvent]) error {
+	if req.Msg.Resource == "machinetypes" {
+		result, err := s.ops.Get(ctx, operations.GetRequest{Resource: req.Msg.Resource, Name: req.Msg.Name, Scope: registry.Cluster})
+		if err != nil && !service.IsKind(err, service.ErrNotFound) {
+			return connectError(err)
+		}
+		event := ResourceEvent{Type: events.EventInitialState}
+		if err == nil {
+			object := mustResourceObject(result.Object)
+			event.Object = &object
+		}
+		if err := stream.Send(&event); err != nil {
+			return err
+		}
+		<-ctx.Done()
+		return ctx.Err()
+	}
 	if err := s.ensure(ctx, req.Msg.Resource, req.Msg.Namespace); err != nil {
 		return connectError(err)
 	}
 	ch := s.broker.Subscribe(ctx)
 	object, err := s.service.Get(ctx, req.Msg.Resource, req.Msg.Namespace, req.Msg.Name)
 	if err == nil {
-		initial := ResourceEvent{Type: events.EventInitialState, Object: ptr(mustResourceObject(object))}
+		var dirtyPtr *events.DirtyObject
 		if dirty, ok := s.store.DirtyForObject(req.Msg.Resource, req.Msg.Namespace, req.Msg.Name); ok {
-			initial.Dirty = &dirty
+			dirtyPtr = &dirty
 		}
+		initial := resourceEventFromObjectState(projection.ObjectInitialState(object, dirtyPtr))
 		if err := stream.Send(&initial); err != nil {
 			return err
 		}
@@ -153,6 +203,21 @@ func (s *ResourceServer) WatchObject(ctx context.Context, req *connect.Request[W
 }
 
 func (s *ResourceServer) WatchList(ctx context.Context, req *connect.Request[WatchListRequest], stream *connect.ServerStream[ResourceEvent]) error {
+	if req.Msg.Resource == "machinetypes" {
+		result, err := s.ops.List(ctx, operations.ListRequest{Resource: req.Msg.Resource, Scope: registry.Cluster})
+		if err != nil {
+			return connectError(err)
+		}
+		items := make([]ResourceObject, 0, len(result.Items))
+		for _, item := range result.Items {
+			items = append(items, mustResourceObject(item))
+		}
+		if err := sendInitialList(stream, &ListResourcesResponse{Items: items}); err != nil {
+			return err
+		}
+		<-ctx.Done()
+		return ctx.Err()
+	}
 	if err := s.ensure(ctx, req.Msg.Resource, req.Msg.Namespace); err != nil {
 		return connectError(err)
 	}
@@ -161,7 +226,7 @@ func (s *ResourceServer) WatchList(ctx context.Context, req *connect.Request[Wat
 	if err != nil {
 		return err
 	}
-	if err := stream.Send(&ResourceEvent{Type: events.EventInitialState, List: list.Msg}); err != nil {
+	if err := sendInitialList(stream, list.Msg); err != nil {
 		return err
 	}
 	for _, dirty := range list.Msg.Cache.Dirty {
@@ -219,6 +284,19 @@ func (s *ResourceServer) cacheForObject(resource string, namespace string, name 
 	return CacheInfo{}
 }
 
+func resourceEventFromObjectState(state projection.ObjectState) ResourceEvent {
+	event := ResourceEvent{Type: events.EventInitialState, Dirty: state.Dirty}
+	if state.Object != nil {
+		object := mustResourceObject(state.Object)
+		event.Object = &object
+	}
+	return event
+}
+
+func sendInitialList(stream *connect.ServerStream[ResourceEvent], list *ListResourcesResponse) error {
+	return stream.Send(&ResourceEvent{Type: events.EventInitialState, List: list})
+}
+
 func mustResourceObject(object client.Object) ResourceObject {
 	data, err := json.Marshal(object)
 	if err != nil {
@@ -238,24 +316,6 @@ func unstructuredFromRaw(raw jsonRawResource) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any(raw)}
 }
 
-func ptr[T any](v T) *T { return &v }
-
-func objectMatches(object client.Object, selector store.Selector) bool {
-	return labelsMatch(object.GetLabels(), selector)
-}
-
-func labelsMatch(labels map[string]string, selector store.Selector) bool {
-	if selector.Hash != "" && labels["kloudlite.io/hash"] != selector.Hash {
-		return false
-	}
-	for key, value := range selector.Labels {
-		if labels[key] != value {
-			return false
-		}
-	}
-	return true
-}
-
 func connectError(err error) error {
 	switch service.HTTPStatus(err) {
 	case http.StatusBadRequest:
@@ -268,6 +328,8 @@ func connectError(err error) error {
 		return connect.NewError(connect.CodeAlreadyExists, err)
 	case http.StatusServiceUnavailable:
 		return connect.NewError(connect.CodeUnavailable, err)
+	case http.StatusNotImplemented:
+		return connect.NewError(connect.CodeUnimplemented, err)
 	default:
 		return connect.NewError(connect.CodeInternal, err)
 	}

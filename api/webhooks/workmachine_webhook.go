@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kloudlite/kloudlite/api/config"
+	"github.com/kloudlite/kloudlite/api/resources/machinetypes"
 	"github.com/kloudlite/kloudlite/pkg/logger"
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
@@ -257,15 +258,8 @@ func (w *WorkMachineWebhook) handleMutation(
 			}
 		}
 
-		var defaultMachineType string
-		for _, mt := range machineTypeList.Items {
-			if mt.Spec.IsDefault {
-				defaultMachineType = mt.Name
-				break
-			}
-		}
-
-		if defaultMachineType == "" {
+		defaultMachineType, ok := machinetypes.DefaultName(machineTypeList.Items)
+		if !ok {
 			return &admissionv1.AdmissionResponse{
 				Allowed: false,
 				Result: &metav1.Status{
@@ -340,8 +334,8 @@ func (w *WorkMachineWebhook) validateWorkMachine(
 			return fmt.Errorf("machine type %s not found", machine.Spec.MachineType)
 		}
 
-		if !machineType.Spec.Active {
-			return fmt.Errorf("machine type %s is not active", machine.Spec.MachineType)
+		if err := machinetypes.ValidateUsable(machine.Spec.MachineType, *machineType); err != nil {
+			return err
 		}
 	}
 

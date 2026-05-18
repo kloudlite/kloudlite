@@ -1,17 +1,25 @@
 version: 3
 
 tasks:
+  build:platform-api:
+    desc: Build the unified kloudlite binary used by platform-api
+    cmds:
+      - task: build:kloudlite
+
   build:kloudlite:
+    desc: Build the unified kloudlite backend binary
     env:
       CGO_ENABLED: 0
     cmds:
       - go build -ldflags='-s -w' -o bin/kloudlite ./cli/kloudlite/
 
   build:server:
+    desc: Compatibility alias for build:kloudlite
     cmds:
       - task: build:kloudlite
 
   build:tunnel-server:
+    desc: Compatibility alias for build:kloudlite
     cmds:
       - task: build:kloudlite
 
@@ -22,9 +30,11 @@ tasks:
       - go build -ldflags='-s -w' -o bin/oci-installer ./cli/kli/oci-installer/
 
   manifests:
+    desc: Generate CRDs, embedded CRD assets, and deepcopy files
     cmds:
       # generate CRDs from type definitions
       - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=manifests
+      - go run api/crds/assets/generate.go -manifests manifests -output api/crds/assets/generated.go
 
       # generate deep copy go files
       - controller-gen object paths="./..."
@@ -35,3 +45,14 @@ tasks:
     cmds:
       - cat manifests/*.yaml > cli/kli/internal/manifests/crds.yaml
       - echo "Consolidated CRDs into cli/kli/internal/manifests/crds.yaml"
+
+  verify:backend-roadmap:
+    desc: Run focused backend roadmap verification tests
+    cmds:
+      - go test ./api/crds/... ./api/config ./api/k8s ./api/server ./api/resources/... ./pkg/intercepts ./controllers/composition ./controllers/environment ./controllers/workmachine ./controllers/workspace ./cli/kl/cmd ./cli/kl/pkg/workspace ./cli/kloudlite/cmd -v
+
+  verify:platform-api:
+    desc: Build the platform-api binary and run focused platform-api tests
+    cmds:
+      - task: build:platform-api
+      - go test ./api/crds/... ./api/config ./api/k8s ./api/server ./api/resources/... ./cli/kloudlite/cmd -v

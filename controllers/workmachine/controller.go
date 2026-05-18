@@ -4,16 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/codingconcepts/env"
 	"github.com/kloudlite/kloudlite/controllers/controllerconfig"
 	"github.com/kloudlite/kloudlite/controllers/shared"
 	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud"
-	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud/aws"
-	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud/azure"
-	"github.com/kloudlite/kloudlite/controllers/workmachine/cloud/gcp"
-	ocicloud "github.com/kloudlite/kloudlite/controllers/workmachine/cloud/oci"
 	"github.com/kloudlite/kloudlite/pkg/errors"
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
 	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/kubectl"
@@ -62,35 +57,6 @@ type Env struct {
 	SnapshotRegistryInsecure string `env:"SNAPSHOT_REGISTRY_INSECURE" default:"true"`
 }
 
-type awsProviderEnv struct {
-	AWS_VPC_ID            string `env:"AWS_VPC_ID" required:"true"`
-	AWS_SECURITY_GROUP_ID string `env:"AWS_SECURITY_GROUP_ID" required:"true"`
-	AWS_REGION            string `env:"AWS_REGION" required:"true"`
-}
-
-type azureProviderEnv struct {
-	AZURE_SUBSCRIPTION_ID string `env:"AZURE_SUBSCRIPTION_ID" required:"true"`
-	AZURE_RESOURCE_GROUP  string `env:"AZURE_RESOURCE_GROUP" required:"true"`
-	AZURE_LOCATION        string `env:"AZURE_LOCATION" required:"true"`
-	AZURE_SUBNET_ID       string `env:"AZURE_SUBNET_ID" required:"true"`
-	AZURE_NSG_ID          string `env:"AZURE_NSG_ID"`
-}
-
-type gcpProviderEnv struct {
-	GCP_PROJECT    string `env:"GCP_PROJECT" required:"true"`
-	GCP_REGION     string `env:"GCP_REGION" required:"true"`
-	GCP_ZONE       string `env:"GCP_ZONE" required:"true"`
-	GCP_NETWORK    string `env:"GCP_NETWORK" required:"true"`
-	GCP_SUBNETWORK string `env:"GCP_SUBNETWORK" required:"true"`
-}
-
-type ociProviderEnv struct {
-	OCI_COMPARTMENT string `env:"OCI_COMPARTMENT" required:"true"`
-	OCI_REGION      string `env:"OCI_REGION" required:"true"`
-	OCI_SUBNET_ID   string `env:"OCI_SUBNET_ID" required:"true"`
-	OCI_NSG_ID      string `env:"OCI_NSG_ID" required:"true"`
-}
-
 // WorkMachineReconciler reconciles a WorkMachine object
 type WorkMachineReconciler struct {
 	client.Client
@@ -130,7 +96,11 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	return reconciler.ReconcileSteps(req, []reconciler.Step[*v1.WorkMachine]{
+	return reconciler.ReconcileSteps(req, r.lifecycleSteps())
+}
+
+func (r *WorkMachineReconciler) lifecycleSteps() []reconciler.Step[*v1.WorkMachine] {
+	return []reconciler.Step[*v1.WorkMachine]{
 		{
 			Name:     "setup-namespace",
 			Title:    "Setup a kubernetes namespace for workmachine resources",
@@ -299,7 +269,7 @@ func (r *WorkMachineReconciler) Reconcile(ctx context.Context, request reconcile
 			OnCreate: r.setupCloudMachine,
 			OnDelete: r.cleanupCloudMachine,
 		},
-	})
+	}
 }
 
 func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
@@ -418,28 +388,8 @@ func (r *WorkMachineReconciler) ensureWorkmachineIngressController(check *reconc
 				Spec: corev1.PodSpec{
 					ServiceAccountName:            serviceAccountName,
 					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
-					NodeSelector: map[string]string{
-						"kloudlite.io/workmachine": obj.Name,
-					},
-					Tolerations: []corev1.Toleration{
-						{
-							Key:      "kloudlite.io/workmachine",
-							Operator: corev1.TolerationOpExists,
-							Effect:   corev1.TaintEffectNoSchedule,
-						},
-						{
-							Key:               "node.kubernetes.io/not-ready",
-							Operator:          corev1.TolerationOpExists,
-							Effect:            corev1.TaintEffectNoExecute,
-							TolerationSeconds: fn.Ptr(int64(0)),
-						},
-						{
-							Key:               "node.kubernetes.io/unreachable",
-							Operator:          corev1.TolerationOpExists,
-							Effect:            corev1.TaintEffectNoExecute,
-							TolerationSeconds: fn.Ptr(int64(0)),
-						},
-					},
+					NodeSelector:                  workMachineAddOnPlacement(obj.Name).NodeSelector,
+					Tolerations:                   workMachineAddOnPlacement(obj.Name).Tolerations,
 					Containers: []corev1.Container{
 						{
 							Name:            "wm-ingress-controller",
@@ -700,158 +650,11 @@ func (r *WorkMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.usageReporter = NewUsageReporter(consoleBaseURL, r.env.KloudliteInstallationID, logger)
 	}
 
-	switch r.env.CloudProvider {
-	case v1.AWS:
-		{
-
-			var awsEnv awsProviderEnv
-			if err := env.Set(&awsEnv); err != nil {
-				return errors.Wrap("failed to load env vars", err)
-			}
-
-			ctx, cf := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cf()
-			p, err := aws.NewProvider(ctx, aws.ProviderArgs{
-				Region:          awsEnv.AWS_REGION,
-				VPC:             awsEnv.AWS_VPC_ID,
-				SecurityGroupID: awsEnv.AWS_SECURITY_GROUP_ID,
-				ResourceTags: []aws.Tag{
-					{
-						Key:   "kloudlite.io/installation-id",
-						Value: r.env.KloudliteInstallationID,
-					},
-				},
-
-				K3sVersion:      r.env.K3sVersion,
-				K3sURL:          r.env.K3sServerURL,
-				K3sToken:        r.env.K3sAgentToken,
-				HostedSubdomain: r.env.HostedSubdomain,
-			})
-			if err != nil {
-				return errors.Wrap("failed to create aws provider client", err)
-			}
-
-			if err := p.ValidatePermissions(ctx); err != nil {
-				return err
-			}
-
-			r.cloudProviderAPI = p
-		}
-	case v1.Azure:
-		{
-			var azureEnv azureProviderEnv
-			if err := env.Set(&azureEnv); err != nil {
-				return errors.Wrap("failed to load Azure env vars", err)
-			}
-
-			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cf()
-			p, err := azure.NewProvider(ctx, azure.ProviderArgs{
-				SubscriptionID:         azureEnv.AZURE_SUBSCRIPTION_ID,
-				ResourceGroup:          azureEnv.AZURE_RESOURCE_GROUP,
-				Location:               azureEnv.AZURE_LOCATION,
-				SubnetID:               azureEnv.AZURE_SUBNET_ID,
-				NetworkSecurityGroupID: azureEnv.AZURE_NSG_ID,
-				ResourceTags: []azure.Tag{
-					{
-						Key:   "kloudlite-installation-id",
-						Value: r.env.KloudliteInstallationID,
-					},
-				},
-
-				K3sVersion:      r.env.K3sVersion,
-				K3sURL:          r.env.K3sServerURL,
-				K3sToken:        r.env.K3sAgentToken,
-				HostedSubdomain: r.env.HostedSubdomain,
-			})
-			if err != nil {
-				return errors.Wrap("failed to create Azure provider client", err)
-			}
-
-			if err := p.ValidatePermissions(ctx); err != nil {
-				return err
-			}
-
-			r.cloudProviderAPI = p
-		}
-	case v1.GCP:
-		{
-			var gcpEnv gcpProviderEnv
-			if err := env.Set(&gcpEnv); err != nil {
-				return errors.Wrap("failed to load GCP env vars", err)
-			}
-
-			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cf()
-			p, err := gcp.NewProvider(ctx, gcp.ProviderArgs{
-				Project:    gcpEnv.GCP_PROJECT,
-				Region:     gcpEnv.GCP_REGION,
-				Zone:       gcpEnv.GCP_ZONE,
-				Network:    gcpEnv.GCP_NETWORK,
-				Subnetwork: gcpEnv.GCP_SUBNETWORK,
-				ResourceTags: []gcp.Tag{
-					{
-						Key:   "kloudlite-installation-id",
-						Value: r.env.KloudliteInstallationID,
-					},
-				},
-
-				K3sVersion:      r.env.K3sVersion,
-				K3sURL:          r.env.K3sServerURL,
-				K3sToken:        r.env.K3sAgentToken,
-				HostedSubdomain: r.env.HostedSubdomain,
-			})
-			if err != nil {
-				return errors.Wrap("failed to create GCP provider client", err)
-			}
-
-			if err := p.ValidatePermissions(ctx); err != nil {
-				return err
-			}
-
-			r.cloudProviderAPI = p
-		}
-	case v1.OCI:
-		{
-			var ociEnv ociProviderEnv
-			if err := env.Set(&ociEnv); err != nil {
-				return errors.Wrap("failed to load OCI env vars", err)
-			}
-
-			ctx, cf := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cf()
-			p, err := ocicloud.NewProvider(ctx, ocicloud.ProviderArgs{
-				CompartmentID: ociEnv.OCI_COMPARTMENT,
-				Region:        ociEnv.OCI_REGION,
-				SubnetID:      ociEnv.OCI_SUBNET_ID,
-				NSGID:         ociEnv.OCI_NSG_ID,
-				ResourceTags: []ocicloud.Tag{
-					{
-						Key:   "installation-id",
-						Value: r.env.KloudliteInstallationID,
-					},
-				},
-
-				K3sVersion:      r.env.K3sVersion,
-				K3sURL:          r.env.K3sServerURL,
-				K3sToken:        r.env.K3sAgentToken,
-				HostedSubdomain: r.env.HostedSubdomain,
-			})
-			if err != nil {
-				return errors.Wrap("failed to create OCI provider client", err)
-			}
-
-			if err := p.ValidatePermissions(ctx); err != nil {
-				return err
-			}
-
-			r.cloudProviderAPI = p
-		}
-	default:
-		{
-			return errors.New(fmt.Sprintf("unsupported cloud provider (%s)", r.env.CloudProvider))
-		}
+	provider, err := setupCloudProvider(context.Background(), r.env)
+	if err != nil {
+		return err
 	}
+	r.cloudProviderAPI = provider
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine")
 	builder.Owns(&corev1.Namespace{})

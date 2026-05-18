@@ -11,6 +11,7 @@ import (
 	"time"
 
 	fzf "github.com/junegunn/fzf/src"
+	"github.com/kloudlite/kloudlite/pkg/intercepts"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
 	"github.com/spf13/cobra"
@@ -290,18 +291,7 @@ func removeWorkspaceIntercepts(ctx context.Context, targetNamespace, workspaceNa
 
 	var removedCount int
 	for _, comp := range compList.Items {
-		// Find intercepts belonging to this workspace
-		var newIntercepts []environmentsv1.ServiceInterceptConfig
-		var removed []string
-		for _, intercept := range comp.Spec.Intercepts {
-			if intercept.WorkspaceRef != nil &&
-				intercept.WorkspaceRef.Name == workspaceName &&
-				intercept.WorkspaceRef.Namespace == workspaceNamespace {
-				removed = append(removed, intercept.ServiceName)
-				continue
-			}
-			newIntercepts = append(newIntercepts, intercept)
-		}
+		newIntercepts, removed := intercepts.RemoveForWorkspace(comp.Spec.Intercepts, workspaceName, workspaceNamespace)
 
 		// Update composition if any intercepts were removed
 		if len(removed) > 0 {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/cli/kl/pkg/devbox"
 	"github.com/kloudlite/kloudlite/cli/kl/pkg/workspace"
+	"github.com/kloudlite/kloudlite/pkg/intercepts"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/types/workspace/v1"
@@ -935,18 +936,7 @@ func (s *MCPServer) handleInterceptStart(ctx context.Context, args map[string]in
 		},
 	}
 
-	// Check if intercept already exists
-	found := false
-	for i, existing := range targetComp.Spec.Intercepts {
-		if existing.ServiceName == serviceName {
-			targetComp.Spec.Intercepts[i] = interceptConfig
-			found = true
-			break
-		}
-	}
-	if !found {
-		targetComp.Spec.Intercepts = append(targetComp.Spec.Intercepts, interceptConfig)
-	}
+	targetComp.Spec.Intercepts, _ = intercepts.UpsertConfig(targetComp.Spec.Intercepts, interceptConfig)
 
 	if err := s.client.K8sClient.Update(ctx, targetComp); err != nil {
 		return "", fmt.Errorf("failed to update composition: %w", err)

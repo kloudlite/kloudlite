@@ -6,6 +6,11 @@ vars:
   LDFLAGS: -s -w -X github.com/kloudlite/kloudlite/cli/kli/cmd.Version={{.VERSION}}
 
 tasks:
+  cli:build:
+    desc: Named alias for building kli for current platform
+    cmds:
+      - task: build
+
   build:
     desc: Build kli for current platform
     cmds:
