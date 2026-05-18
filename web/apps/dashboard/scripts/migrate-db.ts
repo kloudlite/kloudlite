@@ -8,7 +8,6 @@
  * or use this wrapper which simply re-exports for convenience.
  */
 
-import { readFileSync } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { Pool } from 'pg'

@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { ChevronDown, User, LogOut, Home } from 'lucide-react'
+import { ChevronDown, User, LogOut } from 'lucide-react'
 import {
   Button,
   DropdownMenu,
@@ -16,10 +15,9 @@ import { signOutAction } from '@/app/actions/auth'
 interface AdminProfileDropdownProps {
   name?: string | null
   email?: string | null
-  hasUserRole: boolean
 }
 
-export function AdminProfileDropdown({ name, email, hasUserRole }: AdminProfileDropdownProps) {
+export function AdminProfileDropdown({ name, email }: AdminProfileDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,17 +35,6 @@ export function AdminProfileDropdown({ name, email, hasUserRole }: AdminProfileD
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {hasUserRole && (
-          <>
-            <DropdownMenuItem asChild>
-              <Link href="/" className="cursor-pointer">
-                <Home className="mr-2 h-4 w-4" />
-                Dashboard
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
         <DropdownMenuItem
           onClick={() => signOutAction()}
           className="text-destructive focus:text-destructive cursor-pointer"
