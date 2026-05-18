@@ -18,7 +18,7 @@ spec:
       targetPort: 8080
     - name: https
       port: 443
-      targetPort: 8443
+      targetPort: 9443
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -43,7 +43,7 @@ spec:
           ports:
             - containerPort: 8080
               name: http
-            - containerPort: 8443
+            - containerPort: 9443
               name: https
           envFrom:
             - configMapRef:
@@ -68,10 +68,6 @@ spec:
               value: "snapshots"
             - name: SNAPSHOT_REGISTRY_INSECURE
               value: "true"
-          volumeMounts:
-            - name: webhook-certs
-              mountPath: /etc/webhook/certs
-              readOnly: true
           resources:
             requests:
               memory: "256Mi"
@@ -82,18 +78,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8443
+              port: 9443
               scheme: HTTPS
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health
-              port: 8443
+              port: 9443
               scheme: HTTPS
             initialDelaySeconds: 5
             periodSeconds: 5
-      volumes:
-        - name: webhook-certs
-          secret:
-            secretName: webhook-server-cert
