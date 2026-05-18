@@ -42,6 +42,8 @@ spec:
               value: "8001"
             - name: NEXT_PUBLIC_API_URL
               value: "https://api-server.kloudlite.svc.cluster.local"
+            - name: NODE_EXTRA_CA_CERTS
+              value: "/etc/platform-api-tls/tls.crt"
             - name: PORT
               value: "3000"
             - name: APP_MODE
@@ -80,6 +82,10 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "1000m"
+          volumeMounts:
+            - name: platform-api-tls
+              mountPath: /etc/platform-api-tls
+              readOnly: true
           startupProbe:
             httpGet:
               path: /api/health
@@ -129,3 +135,8 @@ spec:
               drop:
                 - ALL
             readOnlyRootFilesystem: true
+      volumes:
+        - name: platform-api-tls
+          secret:
+            secretName: platform-api-tls
+            optional: true
