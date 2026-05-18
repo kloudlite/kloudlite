@@ -63,11 +63,7 @@ func ConvertComposeToK8s(
 		ServiceNames: make([]string, 0),
 	}
 
-	// Common labels for all resources
-	commonLabels := map[string]string{
-		"kloudlite.io/docker-composition": composition.Name,
-		"kloudlite.io/managed":            "true",
-	}
+	commonLabels := CompositionOwnershipLabels(composition, environment)
 
 	// Convert volumes first (they need to exist before StatefulSets)
 	for volumeName, volume := range project.Volumes {
@@ -296,22 +292,10 @@ func convertServiceToStatefulSet(
 		Volumes:    volumes,
 	}
 
-	// Apply node selector and tolerations from environment if available
-	// Note: This code path is typically overridden in deployment.go when WorkMachine is used
-	// But we keep it here for compatibility with environments that set NodeName directly
-	if environment != nil && environment.Spec.NodeName != "" {
-		podSpec.NodeSelector = map[string]string{
-			"kubernetes.io/hostname": environment.Spec.NodeName,
-		}
-		// Add toleration for workmachine taint
-		podSpec.Tolerations = []corev1.Toleration{
-			{
-				Key:      "kloudlite.io/workmachine",
-				Operator: corev1.TolerationOpEqual,
-				Value:    environment.Spec.NodeName,
-				Effect:   corev1.TaintEffectNoSchedule,
-			},
-		}
+	placement := EnvironmentNodePlacement(environment)
+	if len(placement.NodeSelector) > 0 {
+		podSpec.NodeSelector = placement.NodeSelector
+		podSpec.Tolerations = placement.Tolerations
 	}
 
 	// Create StatefulSet

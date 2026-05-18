@@ -60,13 +60,10 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("failed to get REST config: %w", err)
 	}
 
-	// Optimize REST config for better performance
-	config.QPS = 50.0                 // Increased QPS for higher throughput
-	config.Burst = 100                // Increased burst capacity
-	config.Timeout = 30 * time.Second // Reasonable timeout
+	requestConfig, watchConfig := clientConfigs(config)
 
 	// Create standard Kubernetes clientset with optimized transport
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := kubernetes.NewForConfig(requestConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes clientset: %w", err)
 	}
@@ -106,7 +103,7 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 
 	// Create controller-runtime client with Watch support
 	// Note: Don't pass custom HTTPClient - it bypasses the rate limiter from config.QPS/Burst
-	runtimeClient, err := client.NewWithWatch(config, client.Options{
+	runtimeClient, err := client.NewWithWatch(watchConfig, client.Options{
 		Scheme: scheme,
 	})
 	if err != nil {
@@ -116,8 +113,20 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	return &Client{
 		Clientset:     clientset,
 		RuntimeClient: runtimeClient,
-		Config:        config,
+		Config:        requestConfig,
 	}, nil
+}
+
+func clientConfigs(config *rest.Config) (*rest.Config, *rest.Config) {
+	requestConfig := rest.CopyConfig(config)
+	requestConfig.QPS = 50.0
+	requestConfig.Burst = 100
+	requestConfig.Timeout = 30 * time.Second
+
+	watchConfig := rest.CopyConfig(requestConfig)
+	watchConfig.Timeout = 0
+
+	return requestConfig, watchConfig
 }
 
 // getRestConfig creates a REST config from various sources

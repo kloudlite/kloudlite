@@ -12,6 +12,7 @@ import (
 	"time"
 
 	fzf "github.com/junegunn/fzf/src"
+	"github.com/kloudlite/kloudlite/pkg/intercepts"
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -436,18 +437,7 @@ func handleInterceptStartWithService(ctx context.Context, env *environmentv1.Env
 		},
 	}
 
-	// Check if intercept config already exists (but was disabled) and update it
-	found := false
-	for i, existing := range env.Spec.Compose.Intercepts {
-		if existing.ServiceName == svc.ServiceName {
-			env.Spec.Compose.Intercepts[i] = interceptConfig
-			found = true
-			break
-		}
-	}
-	if !found {
-		env.Spec.Compose.Intercepts = append(env.Spec.Compose.Intercepts, interceptConfig)
-	}
+	env.Spec.Compose.Intercepts, _ = intercepts.UpsertConfig(env.Spec.Compose.Intercepts, interceptConfig)
 
 	// Update environment
 	if err := WsClient.K8sClient.Update(ctx, env); err != nil {
@@ -528,25 +518,18 @@ type ActiveIntercept struct {
 
 // listActiveInterceptsFromEnv lists all active intercepts from an environment's compose status
 func listActiveInterceptsFromEnv(env *environmentv1.Environment, workspaceName string) []ActiveIntercept {
-	if env.Status.ComposeStatus == nil {
-		return nil
-	}
-
-	var intercepts []ActiveIntercept
-	for _, intercept := range env.Status.ComposeStatus.ActiveIntercepts {
-		// Filter by workspace name if specified
-		if workspaceName != "" && intercept.WorkspaceName != workspaceName {
-			continue
-		}
-		intercepts = append(intercepts, ActiveIntercept{
-			EnvironmentName: env.Name,
-			ServiceName:     intercept.ServiceName,
-			Phase:           intercept.Phase,
-			Message:         intercept.Message,
+	statuses := intercepts.ActiveStatuses(env, workspaceName)
+	activeIntercepts := make([]ActiveIntercept, 0, len(statuses))
+	for _, status := range statuses {
+		activeIntercepts = append(activeIntercepts, ActiveIntercept{
+			EnvironmentName: status.EnvironmentName,
+			ServiceName:     status.ServiceName,
+			Phase:           status.Phase,
+			Message:         status.Message,
 		})
 	}
 
-	return intercepts
+	return activeIntercepts
 }
 
 func handleInterceptStop(serviceName string) error {
@@ -592,16 +575,7 @@ func handleInterceptStopWithEnv(ctx context.Context, env *environmentv1.Environm
 		return fmt.Errorf("environment has no compose configuration")
 	}
 
-	// Find and disable/remove the intercept from compose spec
-	found := false
-	newIntercepts := []environmentv1.ServiceInterceptConfig{}
-	for _, intercept := range env.Spec.Compose.Intercepts {
-		if intercept.ServiceName == serviceName {
-			found = true
-			continue // Skip this intercept (remove it)
-		}
-		newIntercepts = append(newIntercepts, intercept)
-	}
+	newIntercepts, found := intercepts.RemoveService(env.Spec.Compose.Intercepts, serviceName)
 
 	if !found {
 		return fmt.Errorf("no active intercept found for service '%s'", serviceName)

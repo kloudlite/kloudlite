@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/api/resources/machinetypes"
 	"github.com/kloudlite/kloudlite/pkg/logger"
 	machinesv1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	admissionv1 "k8s.io/api/admission/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -305,37 +304,8 @@ func (w *MachineTypeGinWebhook) handleMutation(req *admissionv1.AdmissionRequest
 func (w *MachineTypeGinWebhook) validateCreate(machineType *machinesv1.MachineType) error {
 	ctx := context.Background()
 
-	// Validate name format
-	if !isValidMachineTypeName(machineType.Name) {
-		return fmt.Errorf("invalid machine type name: must be lowercase alphanumeric with hyphens")
-	}
-
-	// Validate DisplayName is provided (required field)
-	if machineType.Spec.DisplayName == "" {
-		return fmt.Errorf("displayName is required")
-	}
-
-	// Validate category is provided
-	if machineType.Spec.Category == "" {
-		return fmt.Errorf("category is required")
-	}
-
-	// Validate category value
-	validCategories := []string{"general", "compute-optimized", "memory-optimized", "gpu", "development"}
-	isValidCategory := false
-	for _, valid := range validCategories {
-		if machineType.Spec.Category == valid {
-			isValidCategory = true
-			break
-		}
-	}
-	if !isValidCategory {
-		return fmt.Errorf("invalid category: must be one of %v", validCategories)
-	}
-
-	// Validate resources
-	if err := w.validateResources(&machineType.Spec.Resources); err != nil {
-		return fmt.Errorf("invalid resources: %v", err)
+	if err := machinetypes.ValidateDefinition(*machineType); err != nil {
+		return err
 	}
 
 	// Check for duplicate display names among active types
@@ -345,12 +315,8 @@ func (w *MachineTypeGinWebhook) validateCreate(machineType *machinesv1.MachineTy
 			return fmt.Errorf("failed to list machine types: %v", err)
 		}
 
-		for _, existing := range existingTypes.Items {
-			if existing.Spec.Active &&
-				existing.Spec.DisplayName == machineType.Spec.DisplayName &&
-				existing.Name != machineType.Name {
-				return fmt.Errorf("active machine type with display name %s already exists", machineType.Spec.DisplayName)
-			}
+		if err := machinetypes.ValidateActiveDisplayNameUnique(*machineType, existingTypes.Items); err != nil {
+			return err
 		}
 	}
 
@@ -363,32 +329,8 @@ func (w *MachineTypeGinWebhook) validateCreate(machineType *machinesv1.MachineTy
 func (w *MachineTypeGinWebhook) validateUpdate(machineType *machinesv1.MachineType) error {
 	ctx := context.Background()
 
-	// Validate DisplayName is provided (required field)
-	if machineType.Spec.DisplayName == "" {
-		return fmt.Errorf("displayName is required")
-	}
-
-	// Validate category is provided
-	if machineType.Spec.Category == "" {
-		return fmt.Errorf("category is required")
-	}
-
-	// Validate category value
-	validCategories := []string{"general", "compute-optimized", "memory-optimized", "gpu", "development"}
-	isValidCategory := false
-	for _, valid := range validCategories {
-		if machineType.Spec.Category == valid {
-			isValidCategory = true
-			break
-		}
-	}
-	if !isValidCategory {
-		return fmt.Errorf("invalid category: must be one of %v", validCategories)
-	}
-
-	// Validate resources
-	if err := w.validateResources(&machineType.Spec.Resources); err != nil {
-		return fmt.Errorf("invalid resources: %v", err)
+	if err := machinetypes.ValidateDefinition(*machineType); err != nil {
+		return err
 	}
 
 	// Check for duplicate display names if becoming active
@@ -398,12 +340,8 @@ func (w *MachineTypeGinWebhook) validateUpdate(machineType *machinesv1.MachineTy
 			return fmt.Errorf("failed to list machine types: %v", err)
 		}
 
-		for _, existing := range existingTypes.Items {
-			if existing.Spec.Active &&
-				existing.Spec.DisplayName == machineType.Spec.DisplayName &&
-				existing.Name != machineType.Name {
-				return fmt.Errorf("active machine type with display name %s already exists", machineType.Spec.DisplayName)
-			}
+		if err := machinetypes.ValidateActiveDisplayNameUnique(*machineType, existingTypes.Items); err != nil {
+			return err
 		}
 	}
 
@@ -438,41 +376,6 @@ func (w *MachineTypeGinWebhook) validateDelete(machineType *machinesv1.MachineTy
 			// If there are more than 5, just show the count and first few
 			return fmt.Errorf("cannot delete machine type '%s': %d work machines are using it (including: %v...). Please delete or update these work machines first",
 				machineType.Name, len(workMachinesUsing), workMachinesUsing[:5])
-		}
-	}
-
-	return nil
-}
-
-// Helper functions
-
-func isValidMachineTypeName(name string) bool {
-	// Must be lowercase alphanumeric with hyphens, start and end with alphanumeric
-	validName := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
-	return validName.MatchString(name)
-}
-
-func (w *MachineTypeGinWebhook) validateResources(resources *machinesv1.MachineResources) error {
-	// Validate CPU is provided (required field)
-	if resources.CPU == "" {
-		return fmt.Errorf("CPU is required")
-	}
-	if _, err := resource.ParseQuantity(resources.CPU); err != nil {
-		return fmt.Errorf("invalid CPU quantity: %v", err)
-	}
-
-	// Validate Memory is provided (required field)
-	if resources.Memory == "" {
-		return fmt.Errorf("memory is required")
-	}
-	if _, err := resource.ParseQuantity(resources.Memory); err != nil {
-		return fmt.Errorf("invalid memory quantity: %v", err)
-	}
-
-	// Validate GPU if specified (optional field)
-	if resources.GPU != "" {
-		if _, err := resource.ParseQuantity(resources.GPU); err != nil {
-			return fmt.Errorf("invalid GPU quantity: %v", err)
 		}
 	}
 

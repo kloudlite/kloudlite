@@ -9,7 +9,6 @@ func TestDefaultRegistryFindsKnownResources(t *testing.T) {
 		"users":           Cluster,
 		"userpreferences": Cluster,
 		"workmachines":    Cluster,
-		"machinetypes":    Cluster,
 		"workspaces":      Namespaced,
 		"environments":    Namespaced,
 		"snapshots":       Namespaced,

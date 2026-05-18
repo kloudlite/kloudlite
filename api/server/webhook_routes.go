@@ -18,15 +18,39 @@ import (
 	"go.uber.org/zap"
 )
 
+type routeDependencies struct {
+	cfg              *config.Config
+	logger           *zap.Logger
+	k8sClient        *k8s.Client
+	resourceService  *service.Service
+	resourceRegistry *registry.Registry
+	resourceStore    *store.Store
+	watchManager     *watch.Manager
+	resourceBroker   *events.Broker
+}
+
 // setupWebhookRouter creates a router with webhooks, health checks, and API resource routes.
 func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.Client, resourceService *service.Service, resourceRegistry *registry.Registry, resourceStore *store.Store, watchManager *watch.Manager, resourceBroker *events.Broker) *gin.Engine {
+	return newPlatformRouter(routeDependencies{
+		cfg:              cfg,
+		logger:           logger,
+		k8sClient:        k8sClient,
+		resourceService:  resourceService,
+		resourceRegistry: resourceRegistry,
+		resourceStore:    resourceStore,
+		watchManager:     watchManager,
+		resourceBroker:   resourceBroker,
+	})
+}
+
+func newPlatformRouter(deps routeDependencies) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
 
 	// Middleware
 	router.Use(gin.Recovery())
-	router.Use(middleware.Logger(logger))
+	router.Use(middleware.Logger(deps.logger))
 	router.Use(middleware.CORS())
 
 	// Health check endpoints
@@ -34,16 +58,16 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 	router.GET("/ready", handlers.ReadinessCheck)
 
 	// Webhook handlers
-	appLogger := pkglogger.NewZapLogger(logger)
-	userWebhook := webhooks.NewUserWebhook(appLogger, k8sClient.RuntimeClient)
-	environmentWebhook := webhooks.NewEnvironmentWebhook(appLogger, k8sClient.RuntimeClient, nil)
-	machineTypeWebhook := webhooks.NewMachineTypeGinWebhook(appLogger, k8sClient.RuntimeClient)
-	workMachineWebhook := webhooks.NewWorkMachineWebhook(appLogger, k8sClient.RuntimeClient, cfg)
-	workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, k8sClient.RuntimeClient)
-	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, k8sClient.RuntimeClient)
-	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, k8sClient.RuntimeClient)
-	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, k8sClient.RuntimeClient)
-	snapshotWebhook := webhooks.NewSnapshotWebhook(appLogger, k8sClient.RuntimeClient)
+	appLogger := pkglogger.NewZapLogger(deps.logger)
+	userWebhook := webhooks.NewUserWebhook(appLogger, deps.k8sClient.RuntimeClient)
+	environmentWebhook := webhooks.NewEnvironmentWebhook(appLogger, deps.k8sClient.RuntimeClient, nil)
+	machineTypeWebhook := webhooks.NewMachineTypeGinWebhook(appLogger, deps.k8sClient.RuntimeClient)
+	workMachineWebhook := webhooks.NewWorkMachineWebhook(appLogger, deps.k8sClient.RuntimeClient, deps.cfg)
+	workspaceWebhook := webhooks.NewWorkspaceWebhook(appLogger, deps.k8sClient.RuntimeClient)
+	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, deps.k8sClient.RuntimeClient)
+	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, deps.k8sClient.RuntimeClient)
+	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, deps.k8sClient.RuntimeClient)
+	snapshotWebhook := webhooks.NewSnapshotWebhook(appLogger, deps.k8sClient.RuntimeClient)
 
 	// Webhook endpoints (for Kubernetes admission controllers)
 	webhooksGroup := router.Group("/webhooks")
@@ -75,9 +99,9 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 	v1 := router.Group("/api/v1")
 	{
 		resourceRoutes := v1.Group("")
-		resourceRoutes.Use(middleware.JWTAuth(cfg.Auth, logger))
-		resourcehandlers.New(resourceService, resourceRegistry, watchManager).RegisterRoutes(resourceRoutes)
-		registerResourceRPC(resourceRoutes, resourcerpc.NewResourceServer(resourceService, resourceRegistry, resourceStore, resourceBroker, watchManager))
+		resourceRoutes.Use(middleware.JWTAuth(deps.cfg.Auth, deps.logger))
+		resourcehandlers.New(deps.resourceService, deps.resourceRegistry, deps.resourceStore, deps.watchManager).RegisterRoutes(resourceRoutes)
+		registerResourceRPC(resourceRoutes, resourcerpc.NewResourceServer(deps.resourceService, deps.resourceRegistry, deps.resourceStore, deps.resourceBroker, deps.watchManager))
 
 		// VPN endpoints are currently disabled - uncomment if VPN service is re-enabled
 		// vpnHandlers := handlers.NewVPNHandlers(vpnService, logger, cfg.Auth.JWTSecret)
@@ -98,7 +122,7 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 		})
 	}
 
-	logger.Info("Webhook router initialized (webhooks + health checks + resource routes)")
+	deps.logger.Info("Webhook router initialized (webhooks + health checks + resource routes)")
 	return router
 }
 

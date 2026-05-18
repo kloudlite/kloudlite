@@ -9,14 +9,15 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/config"
 	"github.com/kloudlite/kloudlite/api/k8s"
-	"github.com/kloudlite/kloudlite/api/resources/events"
-	"github.com/kloudlite/kloudlite/api/resources/registry"
-	"github.com/kloudlite/kloudlite/api/resources/service"
-	"github.com/kloudlite/kloudlite/api/resources/store"
 	"github.com/kloudlite/kloudlite/api/resources/watch"
 	"github.com/kloudlite/kloudlite/api/services"
 	"github.com/kloudlite/kloudlite/controllers"
 	"go.uber.org/zap"
+)
+
+const (
+	platformAPIStartMessage = "starting platform-api (controllers + webhooks + resources)"
+	platformAPIStartedMode  = "platform-api:controllers+webhooks+resources"
 )
 
 type Server struct {
@@ -31,55 +32,25 @@ type Server struct {
 }
 
 func New(cfg *config.Config, logger *zap.Logger) *Server {
-	ctx := context.Background()
-
-	// Initialize Kubernetes client
-	k8sClientOptions := &k8s.ClientOptions{
-		KubeconfigPath: cfg.Kubernetes.KubeconfigPath,
-		Context:        cfg.Kubernetes.Context,
-		MasterURL:      cfg.Kubernetes.MasterURL,
-	}
-
-	k8sClient, err := k8s.NewClient(ctx, k8sClientOptions)
+	runtime, err := newPlatformRuntime(context.Background(), cfg, logger)
 	if err != nil {
-		logger.Fatal("Failed to create Kubernetes client", zap.Error(err))
+		logger.Fatal("Failed to create platform-api runtime", zap.Error(err))
 	}
-
-	// Initialize controller manager
-	controllerManager, err := controllers.NewManager(k8sClient.Config, &cfg.Installation, &cfg.Auth, logger)
-	if err != nil {
-		logger.Fatal("Failed to create controller manager", zap.Error(err))
-	}
-
-	resourceRegistry := registry.Default()
-	resourceStore := store.New()
-	resourceBroker := events.NewBroker()
-	resourceService := service.NewWithEvents(resourceRegistry, resourceStore, k8sClient.RuntimeClient, resourceBroker)
-	watchManager := watch.NewManagerWithEvents(resourceRegistry, resourceStore, k8sClient.RuntimeClient, logger, resourceBroker)
-
-	// Setup router for webhooks, resource routes, and VPN endpoints.
-	router := setupWebhookRouter(cfg, logger, k8sClient, resourceService, resourceRegistry, resourceStore, watchManager, resourceBroker)
-
-	// Create cancellable context for controller manager
-	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
 
 	return &Server{
-		httpsServer: &http.Server{
-			Addr:    ":8443",
-			Handler: router,
-		},
+		httpsServer:         runtime.httpsServer,
 		logger:              logger,
 		config:              cfg,
-		k8sClient:           k8sClient,
-		controllerManager:   controllerManager,
-		watchManager:        watchManager,
-		controllerCtx:       controllerCtx,
-		controllerCtxCancel: controllerCtxCancel,
+		k8sClient:           runtime.k8sClient,
+		controllerManager:   runtime.controllerManager,
+		watchManager:        runtime.watchManager,
+		controllerCtx:       runtime.controllerCtx,
+		controllerCtxCancel: runtime.controllerCtxCancel,
 	}
 }
 
 func (s *Server) Start() error {
-	s.logger.Info("Starting Kloudlite API server (controllers + webhooks + resources)")
+	s.logger.Info(platformAPIStartMessage)
 
 	// Start controller manager first
 	go func() {
@@ -91,7 +62,7 @@ func (s *Server) Start() error {
 			}
 		}()
 
-		s.logger.Info("Starting controller manager")
+		s.logger.Info("starting platform-api controller manager")
 		if err := s.controllerManager.Start(s.controllerCtx); err != nil {
 			if s.controllerCtx.Err() == nil {
 				s.logger.Error("Controller manager stopped with error", zap.Error(err))
@@ -108,7 +79,7 @@ func (s *Server) Start() error {
 			}
 		}()
 
-		s.logger.Info("Starting resource watch manager")
+		s.logger.Info("starting platform-api resource watch manager")
 		s.watchManager.StartClusterScoped(s.controllerCtx)
 	}()
 
@@ -122,7 +93,7 @@ func (s *Server) Start() error {
 	}
 
 	// Install webhook configurations now that the server is ready
-	s.logger.Info("Installing webhook configurations...")
+	s.logger.Info("installing platform-api webhook configurations")
 	caBundle, err := os.ReadFile(s.config.TLS.CertFile)
 	if err != nil {
 		s.logger.Error("Failed to read webhook CA certificate", zap.Error(err))
@@ -135,8 +106,8 @@ func (s *Server) Start() error {
 		s.logger.Warn("Continuing without webhook configurations")
 	}
 
-	s.logger.Info("API server started successfully",
-		zap.String("mode", "controllers+webhooks+resources"),
+	s.logger.Info("platform-api started successfully",
+		zap.String("mode", platformAPIStartedMode),
 		zap.String("webhook_addr", s.httpsServer.Addr))
 
 	// Keep the main goroutine alive
@@ -146,7 +117,7 @@ func (s *Server) Start() error {
 func (s *Server) startHTTPSServer() <-chan error {
 	errCh := make(chan error, 1)
 	go func() {
-		s.logger.Info("Starting HTTPS API server", zap.String("addr", s.httpsServer.Addr))
+		s.logger.Info("starting platform-api HTTPS server", zap.String("addr", s.httpsServer.Addr))
 		if err := s.httpsServer.ListenAndServeTLS(s.config.TLS.CertFile, s.config.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
 			s.logger.Error("HTTPS API server stopped with error", zap.Error(err))
 			errCh <- err

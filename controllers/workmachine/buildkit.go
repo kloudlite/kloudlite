@@ -121,28 +121,8 @@ echo "CA certificate installed for %s"
 					TerminationGracePeriodSeconds: fn.Ptr(int64(30)),
 					HostAliases:                   hostAliases,
 					InitContainers:                initContainers,
-					NodeSelector: map[string]string{
-						"kloudlite.io/workmachine": obj.Name,
-					},
-					Tolerations: []corev1.Toleration{
-						{
-							Key:      "kloudlite.io/workmachine",
-							Operator: corev1.TolerationOpExists,
-							Effect:   corev1.TaintEffectNoSchedule,
-						},
-						{
-							Key:               "node.kubernetes.io/not-ready",
-							Operator:          corev1.TolerationOpExists,
-							Effect:            corev1.TaintEffectNoExecute,
-							TolerationSeconds: fn.Ptr(int64(0)),
-						},
-						{
-							Key:               "node.kubernetes.io/unreachable",
-							Operator:          corev1.TolerationOpExists,
-							Effect:            corev1.TaintEffectNoExecute,
-							TolerationSeconds: fn.Ptr(int64(0)),
-						},
-					},
+					NodeSelector:                  workMachineAddOnPlacement(obj.Name).NodeSelector,
+					Tolerations:                   workMachineAddOnPlacement(obj.Name).Tolerations,
 					Containers: []corev1.Container{
 						{
 							Name:            dockerDindName,

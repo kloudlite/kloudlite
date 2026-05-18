@@ -4,15 +4,11 @@ import (
 	"sync"
 
 	"github.com/kloudlite/kloudlite/api/resources/events"
+	"github.com/kloudlite/kloudlite/api/resources/projection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const hashLabel = "kloudlite.io/hash"
-
-type Selector struct {
-	Labels map[string]string
-	Hash   string
-}
+type Selector = projection.Selector
 
 type Store struct {
 	mu      sync.RWMutex
@@ -77,7 +73,7 @@ func (s *Store) List(alias string, namespace string, selector Selector) []client
 
 	items := []client.Object{}
 	for _, object := range s.objects[scopeKey(alias, namespace)] {
-		if matches(object, selector) {
+		if projection.MatchesObject(object, selector) {
 			items = append(items, copyObject(object))
 		}
 	}
@@ -97,7 +93,7 @@ func (s *Store) MarkDirty(alias string, namespace string, name string, reason ev
 	if s.dirty[key] == nil {
 		s.dirty[key] = map[string]events.DirtyObject{}
 	}
-	dirty := events.DirtyObject{Resource: alias, Namespace: namespace, Name: name, Reason: reason, Labels: cloneLabels(labels)}
+	dirty := projection.NewDirtyObject(alias, namespace, name, reason, labels)
 	s.dirty[key][name] = dirty
 	return dirty
 }
@@ -127,8 +123,8 @@ func (s *Store) DirtyForList(alias string, namespace string, selector Selector) 
 	dirty := []events.DirtyObject{}
 	for name, item := range s.dirty[key] {
 		object, hasObject := s.objects[key][name]
-		cachedMatches := hasObject && matches(object, selector)
-		dirtyMatches := labelsMatch(item.Labels, selector)
+		cachedMatches := hasObject && projection.MatchesObject(object, selector)
+		dirtyMatches := projection.MatchesLabels(item.Labels, selector)
 		if !cachedMatches && !dirtyMatches {
 			continue
 		}
@@ -137,46 +133,10 @@ func (s *Store) DirtyForList(alias string, namespace string, selector Selector) 
 	return dirty
 }
 
-func cloneLabels(labels map[string]string) map[string]string {
-	if len(labels) == 0 {
-		return nil
-	}
-	clone := make(map[string]string, len(labels))
-	for key, value := range labels {
-		clone[key] = value
-	}
-	return clone
-}
-
-func labelsMatch(labels map[string]string, selector Selector) bool {
-	if selector.Hash != "" && labels[hashLabel] != selector.Hash {
-		return false
-	}
-	for key, value := range selector.Labels {
-		if labels[key] != value {
-			return false
-		}
-	}
-	return true
-}
-
 func scopeKey(alias string, namespace string) string {
 	return alias + "/" + namespace
 }
 
 func copyObject(object client.Object) client.Object {
 	return object.DeepCopyObject().(client.Object)
-}
-
-func matches(object client.Object, selector Selector) bool {
-	labels := object.GetLabels()
-	if selector.Hash != "" && labels[hashLabel] != selector.Hash {
-		return false
-	}
-	for key, value := range selector.Labels {
-		if labels[key] != value {
-			return false
-		}
-	}
-	return true
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kloudlite/kloudlite/api/resources/operations"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/service"
 	"github.com/kloudlite/kloudlite/api/resources/store"
@@ -19,20 +19,16 @@ import (
 )
 
 type Handler struct {
-	service  *service.Service
-	registry *registry.Registry
-	ensurer  NamespaceEnsurer
+	ops *operations.Operations
 }
 
-type NamespaceEnsurer interface {
-	EnsureNamespaced(ctx context.Context, alias string, namespace string) error
-}
+type NamespaceEnsurer = operations.NamespaceEnsurer
 
-func New(svc *service.Service, reg *registry.Registry, ensurer NamespaceEnsurer) *Handler {
+func New(svc *service.Service, reg *registry.Registry, st *store.Store, ensurer NamespaceEnsurer) *Handler {
 	if reg == nil {
 		reg = registry.Default()
 	}
-	return &Handler{service: svc, registry: reg, ensurer: ensurer}
+	return &Handler{ops: operations.New(svc, reg, st, ensurer)}
 }
 
 func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
@@ -91,10 +87,6 @@ func (h *Handler) deleteNamespaced(c *gin.Context) {
 
 func (h *Handler) list(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
-	if err := h.requireScope(alias, scope); err != nil {
-		h.error(c, err)
-		return
-	}
 	if err := validatePathParams(scope, namespace, ""); err != nil {
 		h.error(c, err)
 		return
@@ -104,53 +96,31 @@ func (h *Handler) list(c *gin.Context, scope registry.Scope, namespace string) {
 		h.error(c, err)
 		return
 	}
-	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
-		h.error(c, err)
-		return
-	}
-
-	items, err := h.service.List(c.Request.Context(), alias, namespace, selector)
+	result, err := h.ops.List(c.Request.Context(), operations.ListRequest{Resource: alias, Namespace: namespace, Scope: scope, Selector: selector})
 	if err != nil {
 		h.error(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"items": items})
+	c.JSON(http.StatusOK, gin.H{"items": result.Items})
 }
 
 func (h *Handler) get(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
-	if err := h.requireScope(alias, scope); err != nil {
-		h.error(c, err)
-		return
-	}
 	if err := validatePathParams(scope, namespace, c.Param("name")); err != nil {
 		h.error(c, err)
 		return
 	}
-	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
-		h.error(c, err)
-		return
-	}
-
-	object, err := h.service.Get(c.Request.Context(), alias, namespace, c.Param("name"))
+	result, err := h.ops.Get(c.Request.Context(), operations.GetRequest{Resource: alias, Namespace: namespace, Name: c.Param("name"), Scope: scope})
 	if err != nil {
 		h.error(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, object)
+	c.JSON(http.StatusOK, result.Object)
 }
 
 func (h *Handler) create(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
-	if err := h.requireScope(alias, scope); err != nil {
-		h.error(c, err)
-		return
-	}
 	if err := validatePathParams(scope, namespace, ""); err != nil {
-		h.error(c, err)
-		return
-	}
-	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
 		h.error(c, err)
 		return
 	}
@@ -164,25 +134,17 @@ func (h *Handler) create(c *gin.Context, scope registry.Scope, namespace string)
 		object.SetNamespace(namespace)
 	}
 
-	created, err := h.service.Create(c.Request.Context(), alias, namespace, object)
+	created, err := h.ops.Create(c.Request.Context(), operations.MutateRequest{Resource: alias, Namespace: namespace, Scope: scope, Object: object})
 	if err != nil {
 		h.error(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
+	c.JSON(http.StatusCreated, created.Object)
 }
 
 func (h *Handler) patch(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
-	if err := h.requireScope(alias, scope); err != nil {
-		h.error(c, err)
-		return
-	}
 	if err := validatePathParams(scope, namespace, c.Param("name")); err != nil {
-		h.error(c, err)
-		return
-	}
-	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
 		h.error(c, err)
 		return
 	}
@@ -192,52 +154,25 @@ func (h *Handler) patch(c *gin.Context, scope registry.Scope, namespace string) 
 		h.error(c, err)
 		return
 	}
-	patched, err := h.service.Patch(c.Request.Context(), alias, namespace, c.Param("name"), object)
+	patched, err := h.ops.Patch(c.Request.Context(), operations.MutateRequest{Resource: alias, Namespace: namespace, Name: c.Param("name"), Scope: scope, Object: object})
 	if err != nil {
 		h.error(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, patched)
+	c.JSON(http.StatusOK, patched.Object)
 }
 
 func (h *Handler) delete(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
-	if err := h.requireScope(alias, scope); err != nil {
-		h.error(c, err)
-		return
-	}
 	if err := validatePathParams(scope, namespace, c.Param("name")); err != nil {
 		h.error(c, err)
 		return
 	}
-	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
-		h.error(c, err)
-		return
-	}
-
-	if err := h.service.Delete(c.Request.Context(), alias, namespace, c.Param("name")); err != nil {
+	if _, err := h.ops.Delete(c.Request.Context(), operations.DeleteRequest{Resource: alias, Namespace: namespace, Name: c.Param("name"), Scope: scope}); err != nil {
 		h.error(c, err)
 		return
 	}
 	c.Status(http.StatusNoContent)
-}
-
-func (h *Handler) requireScope(alias string, scope registry.Scope) error {
-	resource, ok := h.registry.Get(alias)
-	if !ok {
-		return service.UnknownResource(alias)
-	}
-	if resource.Scope != scope {
-		return service.NewError(service.ErrWrongScope, "resource \""+alias+"\" is "+string(resource.Scope)+"-scoped, not "+string(scope)+"-scoped", nil)
-	}
-	return nil
-}
-
-func (h *Handler) ensureNamespaced(c *gin.Context, alias string, scope registry.Scope, namespace string) error {
-	if scope != registry.Namespaced || h.ensurer == nil {
-		return nil
-	}
-	return h.ensurer.EnsureNamespaced(c.Request.Context(), alias, namespace)
 }
 
 func (h *Handler) error(c *gin.Context, err error) {

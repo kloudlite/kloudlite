@@ -1,7 +1,14 @@
 package environment
 
 import (
+	"context"
 	"testing"
+
+	"github.com/kloudlite/kloudlite/controllers/composition"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // TestMakeStringSet tests the makeStringSet helper
@@ -43,6 +50,65 @@ func TestMakeStringSet(t *testing.T) {
 				if result[k] != v {
 					t.Errorf("expected %s: %v, got %v", k, v, result[k])
 				}
+			}
+		})
+	}
+}
+
+func TestFindEnvironmentForComposeResourceUsesOwnershipLabels(t *testing.T) {
+	reconciler := &EnvironmentReconciler{}
+	resource := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "api-config",
+			Namespace: "env-dev",
+			Labels: map[string]string{
+				composition.DockerCompositionLabel:    "dev",
+				composition.EnvironmentNamespaceLabel: "wm-alice",
+			},
+		},
+	}
+
+	requests := reconciler.findEnvironmentForComposeResource(context.Background(), resource)
+
+	if len(requests) != 1 {
+		t.Fatalf("expected one reconcile request, got %#v", requests)
+	}
+	if requests[0] != (reconcile.Request{NamespacedName: types.NamespacedName{Name: "dev", Namespace: "wm-alice"}}) {
+		t.Fatalf("expected request for owning environment, got %#v", requests[0])
+	}
+}
+
+func TestFindEnvironmentForComposeResourceIgnoresUnownedResources(t *testing.T) {
+	reconciler := &EnvironmentReconciler{}
+
+	tests := []struct {
+		name     string
+		resource *corev1.ConfigMap
+	}{
+		{
+			name: "no labels",
+			resource: &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+				Name:      "api-config",
+				Namespace: "env-dev",
+			}},
+		},
+		{
+			name: "missing environment namespace label",
+			resource: &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+				Name:      "api-config",
+				Namespace: "env-dev",
+				Labels: map[string]string{
+					composition.DockerCompositionLabel: "dev",
+				},
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requests := reconciler.findEnvironmentForComposeResource(context.Background(), tt.resource)
+			if len(requests) != 0 {
+				t.Fatalf("expected no reconcile requests, got %#v", requests)
 			}
 		})
 	}

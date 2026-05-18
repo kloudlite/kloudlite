@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/api/resources/events"
+	"github.com/kloudlite/kloudlite/api/resources/projection"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	"go.uber.org/zap"
@@ -216,42 +217,35 @@ func (m *Manager) consume(ctx context.Context, resource registry.Resource, watch
 			switch event.Type {
 			case k8swatch.Added, k8swatch.Modified:
 				previousLabels := map[string]string(nil)
-				previousNamespace := object.GetNamespace()
-				if resource.Scope == registry.Cluster {
-					previousNamespace = ""
-				}
+				previousNamespace := projection.ScopedNamespace(resource.Scope == registry.Cluster, object.GetNamespace())
 				if previous, ok := m.store.Get(resource.Alias, previousNamespace, object.GetName()); ok {
 					previousLabels = previous.GetLabels()
 				}
 				m.store.Upsert(resource.Alias, object)
-				namespace := object.GetNamespace()
-				if resource.Scope == registry.Cluster {
-					namespace = ""
-				}
+				namespace := projection.ScopedNamespace(resource.Scope == registry.Cluster, object.GetNamespace())
 				eventType := events.EventModified
 				if event.Type == k8swatch.Added {
 					eventType = events.EventAdded
 				}
 				m.publish(events.Event{Type: eventType, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Object: object.DeepCopyObject(), PreviousLabels: previousLabels})
-				if dirty, ok := m.store.ClearDirty(resource.Alias, namespace, object.GetName()); ok {
-					m.publish(events.Event{Type: events.EventClean, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Dirty: &dirty})
-				}
+				m.publishCleanIfDirty(resource.Alias, namespace, object.GetName())
 			case k8swatch.Deleted:
-				namespace := object.GetNamespace()
-				if resource.Scope == registry.Cluster {
-					namespace = ""
-				}
+				namespace := projection.ScopedNamespace(resource.Scope == registry.Cluster, object.GetNamespace())
 				previousLabels := object.GetLabels()
 				if previous, ok := m.store.Get(resource.Alias, namespace, object.GetName()); ok {
 					previousLabels = previous.GetLabels()
 				}
 				m.store.Delete(resource.Alias, namespace, object.GetName())
 				m.publish(events.Event{Type: events.EventDeleted, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Object: object.DeepCopyObject(), PreviousLabels: previousLabels})
-				if dirty, ok := m.store.ClearDirty(resource.Alias, namespace, object.GetName()); ok {
-					m.publish(events.Event{Type: events.EventClean, Resource: resource.Alias, Namespace: namespace, Name: object.GetName(), Dirty: &dirty})
-				}
+				m.publishCleanIfDirty(resource.Alias, namespace, object.GetName())
 			}
 		}
+	}
+}
+
+func (m *Manager) publishCleanIfDirty(alias string, namespace string, name string) {
+	if dirty, ok := m.store.ClearDirty(alias, namespace, name); ok {
+		m.publish(projection.CleanEvent(alias, namespace, name, dirty))
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kloudlite/controllers/shared"
+	"github.com/kloudlite/kloudlite/pkg/intercepts"
 	"github.com/kloudlite/kloudlite/pkg/pagination"
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	snapshotv1 "github.com/kloudlite/kloudlite/types/snapshot/v1"
@@ -215,23 +216,13 @@ func (r *WorkspaceReconciler) cleanupWorkspaceIntercepts(ctx context.Context, wo
 		return nil
 	}
 
-	// Check if any intercepts reference this workspace
-	interceptsToKeep := make([]environmentv1.ServiceInterceptConfig, 0, len(env.Spec.Compose.Intercepts))
-	interceptsCleaned := 0
+	interceptsToKeep, removedIntercepts := intercepts.RemoveForWorkspace(env.Spec.Compose.Intercepts, workspace.Name, workspace.Namespace)
+	interceptsCleaned := len(removedIntercepts)
 
-	for _, intercept := range env.Spec.Compose.Intercepts {
-		if intercept.WorkspaceRef != nil &&
-			intercept.WorkspaceRef.Name == workspace.Name &&
-			intercept.WorkspaceRef.Namespace == workspace.Namespace {
-			// This intercept references the workspace being deleted, skip it
-			interceptsCleaned++
-			logger.Info("Removing intercept from Environment",
-				zap.String("environment", env.Name),
-				zap.String("serviceName", intercept.ServiceName))
-		} else {
-			// Keep this intercept
-			interceptsToKeep = append(interceptsToKeep, intercept)
-		}
+	for _, serviceName := range removedIntercepts {
+		logger.Info("Removing intercept from Environment",
+			zap.String("environment", env.Name),
+			zap.String("serviceName", serviceName))
 	}
 
 	if interceptsCleaned > 0 {

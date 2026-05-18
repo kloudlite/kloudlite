@@ -50,6 +50,61 @@ func TestWaitForHTTPSStartupContinuesAfterDelay(t *testing.T) {
 	}
 }
 
+func TestNewPlatformRuntimeComponentsCreatesHTTPSAndResourceWatch(t *testing.T) {
+	cfg := &config.Config{Auth: config.AuthConfig{SkipAuthentication: true}}
+	kube := &k8s.Client{RuntimeClient: newServerFakeClient(t)}
+
+	runtime := newPlatformRuntimeComponents(cfg, zap.NewNop(), kube, nil)
+
+	if runtime.httpsServer == nil {
+		t.Fatal("expected HTTPS server")
+	}
+	if runtime.httpsServer.Addr != ":9443" {
+		t.Fatalf("expected HTTPS addr :9443, got %q", runtime.httpsServer.Addr)
+	}
+	if runtime.watchManager == nil {
+		t.Fatal("expected resource watch manager")
+	}
+	if runtime.resourceRegistry == nil {
+		t.Fatal("expected resource registry")
+	}
+	if runtime.resourceStore == nil {
+		t.Fatal("expected resource store")
+	}
+}
+
+func TestNewPlatformRouterRegistersHealthWebhookAndResourceRoutes(t *testing.T) {
+	router := newPlatformRouter(newRouteTestDependencies(t, config.AuthConfig{SkipAuthentication: true}))
+
+	tests := []struct {
+		method string
+		path   string
+		body   []byte
+	}{
+		{method: http.MethodGet, path: "/health"},
+		{method: http.MethodGet, path: "/api/v1/namespaces/default/resources/configmaps"},
+		{method: http.MethodPost, path: "/webhooks/validate/users", body: webhookUserAdmissionBody(t)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			response := performServerRequest(router, tt.method, tt.path, tt.body, "")
+			if response.Code == http.StatusNotFound {
+				t.Fatalf("expected route %s %s to be registered", tt.method, tt.path)
+			}
+		})
+	}
+}
+
+func TestPlatformAPIRuntimeNamesAreExplicit(t *testing.T) {
+	if platformAPIStartMessage != "starting platform-api (controllers + webhooks + resources)" {
+		t.Fatalf("unexpected start message %q", platformAPIStartMessage)
+	}
+	if platformAPIStartedMode != "platform-api:controllers+webhooks+resources" {
+		t.Fatalf("unexpected started mode %q", platformAPIStartedMode)
+	}
+}
+
 func TestWebhookRouterRequiresAuthForResourceRoutes(t *testing.T) {
 	router := newWebhookTestRouter(t, config.AuthConfig{JWTSecret: "secret"})
 
@@ -116,13 +171,27 @@ func TestWebhookRouterLeavesHealthWebhookAndInfoUnauthenticated(t *testing.T) {
 
 func newWebhookTestRouter(t *testing.T, auth config.AuthConfig) http.Handler {
 	t.Helper()
+	return newPlatformRouter(newRouteTestDependencies(t, auth))
+}
+
+func newRouteTestDependencies(t *testing.T, auth config.AuthConfig) routeDependencies {
+	t.Helper()
 	kube := newServerFakeClient(t)
 	st := store.New()
 	reg := registry.Default()
 	broker := events.NewBroker()
 	svc := service.NewWithEvents(reg, st, kube, broker)
 	watchManager := watch.NewManagerWithEvents(reg, st, kube, zap.NewNop(), broker)
-	return setupWebhookRouter(&config.Config{Auth: auth}, zap.NewNop(), &k8s.Client{RuntimeClient: kube}, svc, reg, st, watchManager, broker)
+	return routeDependencies{
+		cfg:              &config.Config{Auth: auth},
+		logger:           zap.NewNop(),
+		k8sClient:        &k8s.Client{RuntimeClient: kube},
+		resourceService:  svc,
+		resourceRegistry: reg,
+		resourceStore:    st,
+		watchManager:     watchManager,
+		resourceBroker:   broker,
+	}
 }
 
 func newServerFakeClient(t *testing.T, objects ...client.Object) client.WithWatch {

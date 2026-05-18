@@ -84,10 +84,10 @@ type InstallationConfig struct {
 
 type TLSConfig struct {
 	// CertFile is the path to the TLS certificate file
-	CertFile string `envconfig:"CERT_FILE" default:"/etc/webhook/certs/tls.crt"`
+	CertFile string `envconfig:"CERT_FILE" default:"/etc/kloudlite/tls.crt"`
 
 	// KeyFile is the path to the TLS private key file
-	KeyFile string `envconfig:"KEY_FILE" default:"/etc/webhook/certs/tls.key"`
+	KeyFile string `envconfig:"KEY_FILE" default:"/etc/kloudlite/tls.key"`
 
 	// Enable TLS/HTTPS (default true - required for Kubernetes webhooks)
 	Enabled bool `envconfig:"ENABLED" default:"true"`

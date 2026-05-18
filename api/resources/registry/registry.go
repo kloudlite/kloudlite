@@ -71,7 +71,6 @@ func Default() *Registry {
 		newResource("users", userv1alpha1.GroupVersion, "User", Cluster, func() runtime.Object { return &userv1alpha1.User{} }, func() runtime.Object { return &userv1alpha1.UserList{} }),
 		newResource("userpreferences", userv1alpha1.GroupVersion, "UserPreferences", Cluster, func() runtime.Object { return &userv1alpha1.UserPreferences{} }, func() runtime.Object { return &userv1alpha1.UserPreferencesList{} }),
 		newResource("workmachines", workmachinev1.GroupVersion, "WorkMachine", Cluster, func() runtime.Object { return &workmachinev1.WorkMachine{} }, func() runtime.Object { return &workmachinev1.WorkMachineList{} }),
-		newResource("machinetypes", workmachinev1.GroupVersion, "MachineType", Cluster, func() runtime.Object { return &workmachinev1.MachineType{} }, func() runtime.Object { return &workmachinev1.MachineTypeList{} }),
 		newResource("workspaces", workspacev1.GroupVersion, "Workspace", Namespaced, func() runtime.Object { return &workspacev1.Workspace{} }, func() runtime.Object { return &workspacev1.WorkspaceList{} }),
 		newResource("environments", environmentv1.SchemeGroupVersion, "Environment", Namespaced, func() runtime.Object { return &environmentv1.Environment{} }, func() runtime.Object { return &environmentv1.EnvironmentList{} }),
 		newResource("snapshots", snapshotv1.SchemeGroupVersion, "Snapshot", Namespaced, func() runtime.Object { return &snapshotv1.Snapshot{} }, func() runtime.Object { return &snapshotv1.SnapshotList{} }),

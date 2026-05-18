@@ -20,12 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	// Labels and annotations for compose resources
-	dockerCompositionLabel     = "kloudlite.io/docker-composition"
-	environmentNamespaceLabel  = "kloudlite.io/environment-namespace"
-	originalReplicasAnnotation = "kloudlite.io/original-replicas"
-)
+const originalReplicasAnnotation = "kloudlite.io/original-replicas"
 
 // reconcileCompose handles compose deployment for the environment
 // Returns true if compose was reconciled, false if no compose spec is set
@@ -311,14 +306,7 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 	// Instead, we use labels to track ownership and rely on the Environment's finalizer
 	// to clean up the target namespace (which cascades to all resources in it).
 
-	// Ensure the docker-composition and environment-namespace labels are set
-	labels := resource.GetLabels()
-	if labels == nil {
-		labels = make(map[string]string)
-	}
-	labels[dockerCompositionLabel] = environment.Name
-	labels[environmentNamespaceLabel] = environment.Namespace
-	resource.SetLabels(labels)
+	resource.SetLabels(composition.ApplyEnvironmentOwnershipLabels(resource.GetLabels(), environment))
 
 	// Try to get existing resource
 	existing := resource.DeepCopyObject().(client.Object)
@@ -681,7 +669,7 @@ func (r *EnvironmentReconciler) getWorkMachine(ctx context.Context, name string)
 // cleanupComposeResources removes all compose resources for an environment
 func (r *EnvironmentReconciler) cleanupComposeResources(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	namespace := environment.Spec.TargetNamespace
-	labelSelector := client.MatchingLabels{dockerCompositionLabel: environment.Name}
+	labelSelector := client.MatchingLabels{composition.DockerCompositionLabel: environment.Name}
 
 	var errors []error
 

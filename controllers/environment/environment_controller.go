@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/kloudlite/controllers/composition"
 	"github.com/kloudlite/kloudlite/controllers/controllerconfig"
 	"github.com/kloudlite/kloudlite/pkg/pagination"
 	"github.com/kloudlite/kloudlite/pkg/statusutil"
@@ -416,12 +417,12 @@ func (r *EnvironmentReconciler) findEnvironmentForComposeResource(ctx context.Co
 		return nil
 	}
 
-	envName, ok := labels[dockerCompositionLabel]
+	envName, ok := labels[composition.DockerCompositionLabel]
 	if !ok {
 		return nil
 	}
 
-	envNamespace, ok := labels[environmentNamespaceLabel]
+	envNamespace, ok := labels[composition.EnvironmentNamespaceLabel]
 	if !ok {
 		return nil
 	}
