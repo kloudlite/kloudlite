@@ -83,12 +83,13 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 	if err != nil {
 		return nil, err
 	}
+	rotationID := time.Now().UTC().Format(time.RFC3339Nano)
 	secret = &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      webhookTLSSecretName,
 			Namespace: opts.Namespace,
 			Annotations: map[string]string{
-				webhookTLSRotationAnnotation: time.Now().UTC().Format(time.RFC3339Nano),
+				webhookTLSRotationAnnotation: rotationID,
 			},
 		},
 		Type: corev1.SecretTypeTLS,
@@ -96,6 +97,9 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 	}
 	if err := kube.Create(ctx, secret); err != nil {
 		return nil, fmt.Errorf("create webhook TLS secret: %w", err)
+	}
+	if err := restartFrontendForWebhookTLSRotation(ctx, kube, opts.Namespace, rotationID); err != nil {
+		return nil, err
 	}
 	bundle.Source = webhookTLSSecretCreated
 	return bundle, nil

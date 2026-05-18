@@ -142,6 +142,29 @@ func TestEnsureWebhookTLSSecretRestartsFrontendWhenReplacingSecret(t *testing.T)
 	}
 }
 
+func TestEnsureWebhookTLSSecretRestartsFrontendWhenCreatingSecret(t *testing.T) {
+	frontend := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "frontend", Namespace: "kloudlite"},
+	}
+	kube := newServerFakeClient(t, frontend)
+
+	bundle, err := ensureWebhookTLSSecret(context.Background(), kube, webhookTLSOptions{Namespace: "kloudlite", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("ensure webhook TLS secret: %v", err)
+	}
+	if bundle.Source != webhookTLSSecretCreated {
+		t.Fatalf("expected source %q, got %q", webhookTLSSecretCreated, bundle.Source)
+	}
+
+	updated := &appsv1.Deployment{}
+	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "kloudlite", Name: "frontend"}, updated); err != nil {
+		t.Fatalf("get frontend deployment: %v", err)
+	}
+	if updated.Spec.Template.Annotations[frontendTLSRestartAnnotation] == "" {
+		t.Fatal("expected frontend deployment restart annotation after TLS secret creation")
+	}
+}
+
 func TestEnsureWebhookTLSSecretRetriesPendingFrontendRestart(t *testing.T) {
 	bundle, err := generateWebhookTLSBundle(webhookTLSOptions{Namespace: "kloudlite", ServiceName: "api-server"})
 	if err != nil {
