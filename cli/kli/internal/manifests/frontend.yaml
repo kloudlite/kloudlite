@@ -139,4 +139,3 @@ spec:
         - name: platform-api-tls
           secret:
             secretName: platform-api-tls
-            optional: true
