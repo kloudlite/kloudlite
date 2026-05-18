@@ -34,13 +34,13 @@ export default async function SignInPage() {
   // Check if user is already authenticated
   const session = await getSession()
 
-  // Only redirect if user has a valid session with roles
-  // (prevents redirect loop when OAuth creates a session without roles)
+  // Only redirect administrators into the admin dashboard.
+  // Non-admin users stay on the sign-in page instead of looping through `/`.
   if (session?.user) {
     const roles = session.user.roles || []
-    const hasValidRole = roles.includes('user') || roles.includes('admin') || roles.includes('super-admin')
-    if (hasValidRole) {
-      redirect('/')
+    const hasAdminRole = roles.includes('admin') || roles.includes('super-admin')
+    if (hasAdminRole) {
+      redirect('/admin')
     }
   }
 
