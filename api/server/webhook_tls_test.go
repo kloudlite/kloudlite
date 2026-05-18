@@ -137,8 +137,46 @@ func TestEnsureWebhookTLSSecretRestartsFrontendWhenReplacingSecret(t *testing.T)
 	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "kloudlite", Name: "frontend"}, updated); err != nil {
 		t.Fatalf("get frontend deployment: %v", err)
 	}
-	if updated.Spec.Template.Annotations["kloudlite.io/platform-api-tls-restarted-at"] == "" {
+	if updated.Spec.Template.Annotations[frontendTLSRestartAnnotation] == "" {
 		t.Fatal("expected frontend deployment restart annotation after TLS secret replacement")
+	}
+}
+
+func TestEnsureWebhookTLSSecretRetriesPendingFrontendRestart(t *testing.T) {
+	bundle, err := generateWebhookTLSBundle(webhookTLSOptions{Namespace: "kloudlite", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("generate bundle: %v", err)
+	}
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      webhookTLSSecretName,
+			Namespace: "kloudlite",
+			Annotations: map[string]string{
+				webhookTLSRotationAnnotation: "rotation-1",
+			},
+		},
+		Type: corev1.SecretTypeTLS,
+		Data: webhookTLSSecretData(bundle),
+	}
+	frontend := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "frontend", Namespace: "kloudlite"},
+	}
+	kube := newServerFakeClient(t, secret, frontend)
+
+	reused, err := ensureWebhookTLSSecret(context.Background(), kube, webhookTLSOptions{Namespace: "kloudlite", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("ensure webhook TLS secret: %v", err)
+	}
+	if reused.Source != webhookTLSSecretReused {
+		t.Fatalf("expected source %q, got %q", webhookTLSSecretReused, reused.Source)
+	}
+
+	updated := &appsv1.Deployment{}
+	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "kloudlite", Name: "frontend"}, updated); err != nil {
+		t.Fatalf("get frontend deployment: %v", err)
+	}
+	if updated.Spec.Template.Annotations[frontendTLSRestartAnnotation] != "rotation-1" {
+		t.Fatalf("expected frontend restart annotation %q, got %q", "rotation-1", updated.Spec.Template.Annotations[frontendTLSRestartAnnotation])
 	}
 }
 
