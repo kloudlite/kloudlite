@@ -9,6 +9,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -207,14 +208,81 @@ func TestCreateRejectsNilObject(t *testing.T) {
 	}
 }
 
-func TestPatchAndDeleteReturnNotImplementedErrors(t *testing.T) {
-	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().Build())
-
-	if _, err := svc.Patch(context.Background(), "configmaps", "default", "app", &corev1.ConfigMap{}); !IsKind(err, ErrNotImplemented) {
-		t.Fatalf("expected not implemented error from patch, got %v", err)
+func TestPatchWritesThroughKubernetesWithoutOptimisticStoreMutation(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
 	}
-	if err := svc.Delete(context.Background(), "configmaps", "default", "app"); !IsKind(err, ErrNotImplemented) {
-		t.Fatalf("expected not implemented error from delete, got %v", err)
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}, Data: map[string]string{"key": "cached"}},
+	})
+	kube := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}, Data: map[string]string{"key": "old"}},
+	).Build()
+	svc := New(registry.Default(), st, kube)
+	patch := &corev1.ConfigMap{Data: map[string]string{"key": "new"}}
+
+	patched, err := svc.Patch(context.Background(), "configmaps", "default", "app", patch)
+	if err != nil {
+		t.Fatalf("patch failed: %v", err)
+	}
+	if patched.(*corev1.ConfigMap).Data["key"] != "new" {
+		t.Fatalf("expected patched response data, got %#v", patched)
+	}
+
+	var live corev1.ConfigMap
+	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "app"}, &live); err != nil {
+		t.Fatalf("expected patched configmap in fake client: %v", err)
+	}
+	if live.Data["key"] != "new" {
+		t.Fatalf("expected live object to be patched, got %#v", live.Data)
+	}
+	cached, ok := st.Get("configmaps", "default", "app")
+	if !ok || cached.(*corev1.ConfigMap).Data["key"] != "cached" {
+		t.Fatalf("store should not be updated optimistically, got %#v", cached)
+	}
+}
+
+func TestDeleteWritesThroughKubernetesWithoutOptimisticStoreMutation(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
+	})
+	kube := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
+	).Build()
+	svc := New(registry.Default(), st, kube)
+
+	if err := svc.Delete(context.Background(), "configmaps", "default", "app"); err != nil {
+		t.Fatalf("delete failed: %v", err)
+	}
+
+	var live corev1.ConfigMap
+	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "app"}, &live); !apierrors.IsNotFound(err) {
+		t.Fatalf("expected live object to be deleted, got %v", err)
+	}
+	if _, ok := st.Get("configmaps", "default", "app"); !ok {
+		t.Fatal("store should not be updated optimistically")
+	}
+}
+
+func TestPatchAndDeleteMapNotFoundErrors(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().WithScheme(scheme).Build())
+
+	if _, err := svc.Patch(context.Background(), "configmaps", "default", "missing", &corev1.ConfigMap{}); !IsKind(err, ErrNotFound) {
+		t.Fatalf("expected not found error from patch, got %v", err)
+	}
+	if err := svc.Delete(context.Background(), "configmaps", "default", "missing"); !IsKind(err, ErrNotFound) {
+		t.Fatalf("expected not found error from delete, got %v", err)
 	}
 }
 
@@ -228,6 +296,7 @@ func TestHTTPStatusMapsServiceErrors(t *testing.T) {
 		{name: "wrong scope", err: NewError(ErrWrongScope, "wrong scope", nil), want: http.StatusBadRequest},
 		{name: "not found", err: NewError(ErrNotFound, "not found", nil), want: http.StatusNotFound},
 		{name: "bad request", err: NewError(ErrBadRequest, "bad request", nil), want: http.StatusBadRequest},
+		{name: "conflict", err: NewError(ErrConflict, "conflict", nil), want: http.StatusConflict},
 		{name: "cache not ready", err: NewError(ErrCacheNotReady, "cache not ready", nil), want: http.StatusServiceUnavailable},
 		{name: "not implemented", err: NewError(ErrNotImplemented, "not implemented", nil), want: http.StatusNotImplemented},
 		{name: "unknown error", err: errors.New("boom"), want: http.StatusInternalServerError},

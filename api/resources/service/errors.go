@@ -14,6 +14,7 @@ const (
 	ErrNotFound        ErrorKind = "not_found"
 	ErrCacheNotReady   ErrorKind = "cache_not_ready"
 	ErrBadRequest      ErrorKind = "bad_request"
+	ErrConflict        ErrorKind = "conflict"
 	ErrNotImplemented  ErrorKind = "not_implemented"
 )
 
@@ -51,6 +52,8 @@ func HTTPStatus(err error) int {
 		return http.StatusNotFound
 	case ErrWrongScope, ErrBadRequest:
 		return http.StatusBadRequest
+	case ErrConflict:
+		return http.StatusConflict
 	case ErrCacheNotReady:
 		return http.StatusServiceUnavailable
 	case ErrNotImplemented:

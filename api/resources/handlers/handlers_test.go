@@ -181,21 +181,39 @@ func TestCreateRejectsTrailingJSONBody(t *testing.T) {
 	}
 }
 
-func TestPatchAndDeleteReturnNotImplemented(t *testing.T) {
+func TestPatchAndDeleteWriteThroughKubernetes(t *testing.T) {
 	ensurer := &recordingEnsurer{}
-	router, _ := newTestRouter(t, store.New(), ensurer)
-	patchBody := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}`)
+	router, kube := newTestRouter(t, store.New(), ensurer)
+	createBody := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"},"data":{"key":"old"}}`)
+	patchBody := []byte(`{"apiVersion":"v1","kind":"ConfigMap","data":{"key":"new"}}`)
+
+	createResponse := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", createBody)
+	if createResponse.Code != http.StatusCreated {
+		t.Fatalf("expected create status %d, got %d: %s", http.StatusCreated, createResponse.Code, createResponse.Body.String())
+	}
+	ensurer.reset()
 
 	patchResponse := performRequest(router, http.MethodPatch, "/api/v1/namespaces/default/resources/configmaps/app", patchBody)
-	if patchResponse.Code != http.StatusNotImplemented {
-		t.Fatalf("expected patch status %d, got %d: %s", http.StatusNotImplemented, patchResponse.Code, patchResponse.Body.String())
+	if patchResponse.Code != http.StatusOK {
+		t.Fatalf("expected patch status %d, got %d: %s", http.StatusOK, patchResponse.Code, patchResponse.Body.String())
+	}
+	var patched corev1.ConfigMap
+	if err := json.Unmarshal(patchResponse.Body.Bytes(), &patched); err != nil {
+		t.Fatalf("decode patch response: %v", err)
+	}
+	if patched.Data["key"] != "new" {
+		t.Fatalf("expected patched data, got %#v", patched.Data)
 	}
 	ensurer.expectCalled(t, "configmaps", "default")
 	ensurer.reset()
 
 	deleteResponse := performRequest(router, http.MethodDelete, "/api/v1/namespaces/default/resources/configmaps/app", nil)
-	if deleteResponse.Code != http.StatusNotImplemented {
-		t.Fatalf("expected delete status %d, got %d: %s", http.StatusNotImplemented, deleteResponse.Code, deleteResponse.Body.String())
+	if deleteResponse.Code != http.StatusNoContent {
+		t.Fatalf("expected delete status %d, got %d: %s", http.StatusNoContent, deleteResponse.Code, deleteResponse.Body.String())
+	}
+	var live corev1.ConfigMap
+	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "app"}, &live); err == nil {
+		t.Fatal("expected configmap to be deleted from fake client")
 	}
 	ensurer.expectCalled(t, "configmaps", "default")
 }

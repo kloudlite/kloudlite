@@ -3,11 +3,14 @@ package watch
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/meta"
+	k8swatch "k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -16,13 +19,15 @@ type Manager struct {
 	store    *store.Store
 	client   client.WithWatch
 	logger   *zap.Logger
+	mu       sync.Mutex
+	started  map[string]struct{}
 }
 
 func NewManager(reg *registry.Registry, st *store.Store, kube client.WithWatch, logger *zap.Logger) *Manager {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
-	return &Manager{registry: reg, store: st, client: kube, logger: logger}
+	return &Manager{registry: reg, store: st, client: kube, logger: logger, started: map[string]struct{}{}}
 }
 
 func (m *Manager) SyncOnce(ctx context.Context, resource registry.Resource, namespace string) error {
@@ -70,9 +75,53 @@ func (m *Manager) StartClusterScoped(ctx context.Context) {
 		if resource.Scope != registry.Cluster {
 			continue
 		}
-		if err := m.SyncOnce(ctx, resource, ""); err != nil {
-			m.logger.Error("sync cluster resource", zap.String("resource", resource.Alias), zap.Error(err))
+		m.startScope(ctx, resource, "")
+	}
+}
+
+func (m *Manager) RunScope(ctx context.Context, resource registry.Resource, namespace string) {
+	if resource.Scope == registry.Namespaced && namespace == "" {
+		m.logger.Error("run namespaced resource watch", zap.String("resource", resource.Alias), zap.Error(fmt.Errorf("namespace is required")))
+		return
+	}
+
+	for ctx.Err() == nil {
+		if err := m.SyncOnce(ctx, resource, namespace); err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			m.logger.Error("sync resource before watch", zap.String("resource", resource.Alias), zap.String("namespace", namespace), zap.Error(err))
+			if !sleep(ctx, time.Second) {
+				return
+			}
+			continue
 		}
+
+		list, ok := resource.NewList().(client.ObjectList)
+		if !ok {
+			m.logger.Error("resource list is not a client object list", zap.String("resource", resource.Alias))
+			return
+		}
+
+		options := []client.ListOption{}
+		if resource.Scope == registry.Namespaced {
+			options = append(options, client.InNamespace(namespace))
+		}
+
+		watcher, err := m.client.Watch(ctx, list, options...)
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			m.logger.Error("watch resource", zap.String("resource", resource.Alias), zap.String("namespace", namespace), zap.Error(err))
+			if !sleep(ctx, time.Second) {
+				return
+			}
+			continue
+		}
+
+		m.consume(ctx, resource, watcher)
+		watcher.Stop()
 	}
 }
 
@@ -88,7 +137,72 @@ func (m *Manager) EnsureNamespaced(ctx context.Context, alias string, namespace 
 		return fmt.Errorf("namespace is required for namespaced resource %q", alias)
 	}
 	if m.store.Ready(alias, namespace) {
+		m.startScope(ctx, resource, namespace)
 		return nil
 	}
-	return m.SyncOnce(ctx, resource, namespace)
+	if err := m.SyncOnce(ctx, resource, namespace); err != nil {
+		return err
+	}
+	m.startScope(ctx, resource, namespace)
+	return nil
+}
+
+func (m *Manager) startScope(ctx context.Context, resource registry.Resource, namespace string) {
+	key := resource.Alias + "/" + namespace
+	m.mu.Lock()
+	if _, ok := m.started[key]; ok {
+		m.mu.Unlock()
+		return
+	}
+	m.started[key] = struct{}{}
+	m.mu.Unlock()
+
+	go func() {
+		defer func() {
+			m.mu.Lock()
+			delete(m.started, key)
+			m.mu.Unlock()
+		}()
+		m.RunScope(ctx, resource, namespace)
+	}()
+}
+
+func (m *Manager) consume(ctx context.Context, resource registry.Resource, watcher k8swatch.Interface) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-watcher.ResultChan():
+			if !ok {
+				m.logger.Info("resource watch closed", zap.String("resource", resource.Alias))
+				return
+			}
+			object, ok := event.Object.(client.Object)
+			if !ok {
+				m.logger.Error("watch event object is not a client object", zap.String("resource", resource.Alias), zap.String("event", string(event.Type)))
+				continue
+			}
+			switch event.Type {
+			case k8swatch.Added, k8swatch.Modified:
+				m.store.Upsert(resource.Alias, object)
+			case k8swatch.Deleted:
+				namespace := object.GetNamespace()
+				if resource.Scope == registry.Cluster {
+					namespace = ""
+				}
+				m.store.Delete(resource.Alias, namespace, object.GetName())
+			}
+		}
+	}
+}
+
+func sleep(ctx context.Context, duration time.Duration) bool {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
 }
