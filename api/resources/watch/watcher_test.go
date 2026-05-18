@@ -2,6 +2,7 @@ package watch
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -65,27 +66,33 @@ func TestSyncOnceReplacesOldStoreContents(t *testing.T) {
 	}
 }
 
-func TestEnsureNamespacedDoesNothingWhenScopeAlreadyReady(t *testing.T) {
+func TestEnsureNamespacedStartsOneContinuousWatchForReadyScope(t *testing.T) {
+	fakeWatcher := k8swatch.NewFake()
 	st := store.New()
 	st.ReplaceScope("configmaps", "default", []client.Object{
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cached", Namespace: "default"}},
 	})
-	kube := newFakeClient(t, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "live", Namespace: "default"}})
-	counting := &countingClient{WithWatch: kube}
-	mgr := NewManager(registry.Default(), st, counting, zap.NewNop())
+	watching := &watchingClient{WithWatch: newFakeClient(t), watcher: fakeWatcher}
+	mgr := NewManager(registry.Default(), st, watching, zap.NewNop())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	if err := mgr.EnsureNamespaced(context.Background(), "configmaps", "default"); err != nil {
+	if err := mgr.EnsureNamespaced(ctx, "configmaps", "default"); err != nil {
 		t.Fatalf("ensure namespaced failed: %v", err)
 	}
+	if err := mgr.EnsureNamespaced(ctx, "configmaps", "default"); err != nil {
+		t.Fatalf("ensure namespaced failed second time: %v", err)
+	}
+	waitFor(t, func() bool { return watching.watchCalls.Load() == 1 })
+	assertStable(t, func() bool { return watching.watchCalls.Load() == 1 })
 
-	if counting.listCalls != 0 {
-		t.Fatalf("expected no list calls, got %d", counting.listCalls)
-	}
-	if _, ok := st.Get("configmaps", "default", "cached"); !ok {
-		t.Fatal("expected existing cached configmap to remain")
-	}
-	if _, ok := st.Get("configmaps", "default", "live"); ok {
-		t.Fatal("expected live configmap not to be loaded")
+	fakeWatcher.Add(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}})
+	waitFor(t, func() bool {
+		_, ok := st.Get("configmaps", "default", "app")
+		return ok
+	})
+	if _, ok := st.Get("configmaps", "default", "cached"); ok {
+		t.Fatal("expected continuous watch startup sync to replace stale cached object")
 	}
 }
 
@@ -183,28 +190,37 @@ func TestRunScopeAppliesWatchEventsUntilContextCancellation(t *testing.T) {
 	}
 }
 
-func TestEnsureNamespacedStartsOneContinuousWatchForReadyScope(t *testing.T) {
-	fakeWatcher := k8swatch.NewFake()
+func TestRunScopeRetriesAfterWatchErrorEvent(t *testing.T) {
+	firstWatcher := k8swatch.NewFake()
+	secondWatcher := k8swatch.NewFake()
 	st := store.New()
-	st.ReplaceScope("configmaps", "default", nil)
-	watching := &watchingClient{WithWatch: newFakeClient(t), watcher: fakeWatcher}
+	watching := newSequenceWatchingClient(t, firstWatcher, secondWatcher)
 	mgr := NewManager(registry.Default(), st, watching, zap.NewNop())
+	resource := mustResource(t, registry.Default(), "configmaps")
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	if err := mgr.EnsureNamespaced(ctx, "configmaps", "default"); err != nil {
-		t.Fatalf("ensure namespaced failed: %v", err)
-	}
-	if err := mgr.EnsureNamespaced(ctx, "configmaps", "default"); err != nil {
-		t.Fatalf("ensure namespaced failed second time: %v", err)
-	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		mgr.RunScope(ctx, resource, "default")
+	}()
+
 	waitFor(t, func() bool { return watching.watchCalls.Load() == 1 })
+	firstWatcher.Error(&metav1.Status{Reason: metav1.StatusReasonInternalError, Message: "boom"})
+	waitFor(t, func() bool { return watching.watchCalls.Load() == 2 && watching.listCalls.Load() >= 2 })
 
-	fakeWatcher.Add(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}})
+	secondWatcher.Add(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "after-error", Namespace: "default"}})
 	waitFor(t, func() bool {
-		_, ok := st.Get("configmaps", "default", "app")
+		_, ok := st.Get("configmaps", "default", "after-error")
 		return ok
 	})
+
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("expected RunScope to stop after context cancellation")
+	}
 }
 
 type countingClient struct {
@@ -231,6 +247,37 @@ func (c *watchingClient) Watch(ctx context.Context, list client.ObjectList, opts
 	return c.watcher, nil
 }
 
+type sequenceWatchingClient struct {
+	client.WithWatch
+	watchers   []*k8swatch.FakeWatcher
+	mu         sync.Mutex
+	watchCalls atomic.Int32
+	listCalls  atomic.Int32
+}
+
+func newSequenceWatchingClient(t *testing.T, watchers ...*k8swatch.FakeWatcher) *sequenceWatchingClient {
+	t.Helper()
+	return &sequenceWatchingClient{WithWatch: newFakeClient(t), watchers: watchers}
+}
+
+func (c *sequenceWatchingClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	c.listCalls.Add(1)
+	return c.WithWatch.List(ctx, list, opts...)
+}
+
+func (c *sequenceWatchingClient) Watch(ctx context.Context, list client.ObjectList, opts ...client.ListOption) (k8swatch.Interface, error) {
+	_ = ctx
+	_ = list
+	_ = opts
+	call := int(c.watchCalls.Add(1))
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if call <= len(c.watchers) {
+		return c.watchers[call-1], nil
+	}
+	return k8swatch.NewFake(), nil
+}
+
 func waitFor(t *testing.T, condition func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(time.Second)
@@ -241,6 +288,17 @@ func waitFor(t *testing.T, condition func() bool) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	t.Fatal("condition was not met before timeout")
+}
+
+func assertStable(t *testing.T, condition func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(50 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		if !condition() {
+			t.Fatal("condition did not remain stable")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
 }
 
 func newFakeClient(t *testing.T, objects ...client.Object) client.WithWatch {
