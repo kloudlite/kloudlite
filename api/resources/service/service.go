@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -76,13 +79,58 @@ func (s *Service) Create(ctx context.Context, alias string, namespace string, ob
 }
 
 func (s *Service) Patch(ctx context.Context, alias string, namespace string, name string, object client.Object) (client.Object, error) {
-	_, _, _, _, _ = ctx, alias, namespace, name, object
-	return nil, NewError(ErrNotImplemented, "patch is not implemented", nil)
+	resource, err := s.resolve(alias)
+	if err != nil {
+		return nil, err
+	}
+	if object == nil {
+		return nil, NewError(ErrBadRequest, "object is required", nil)
+	}
+
+	current, err := newClientObject(resource)
+	if err != nil {
+		return nil, err
+	}
+	current.SetName(name)
+	if resource.Scope == registry.Namespaced {
+		current.SetNamespace(namespace)
+	} else {
+		current.SetNamespace("")
+	}
+	if err := s.kube.Get(ctx, client.ObjectKeyFromObject(current), current); err != nil {
+		return nil, mapClientError(err)
+	}
+
+	patchBytes, err := json.Marshal(object)
+	if err != nil {
+		return nil, NewError(ErrBadRequest, "invalid patch object", err)
+	}
+	if err := s.kube.Patch(ctx, current, client.RawPatch(types.MergePatchType, patchBytes)); err != nil {
+		return nil, mapClientError(err)
+	}
+	current.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
+	return current.DeepCopyObject().(client.Object), nil
 }
 
 func (s *Service) Delete(ctx context.Context, alias string, namespace string, name string) error {
-	_, _, _, _ = ctx, alias, namespace, name
-	return NewError(ErrNotImplemented, "delete is not implemented", nil)
+	resource, err := s.resolve(alias)
+	if err != nil {
+		return err
+	}
+	object, err := newClientObject(resource)
+	if err != nil {
+		return err
+	}
+	object.SetName(name)
+	if resource.Scope == registry.Namespaced {
+		object.SetNamespace(namespace)
+	} else {
+		object.SetNamespace("")
+	}
+	if err := s.kube.Delete(ctx, object); err != nil {
+		return mapClientError(err)
+	}
+	return nil
 }
 
 func (s *Service) resolve(alias string) (registry.Resource, error) {
@@ -91,4 +139,26 @@ func (s *Service) resolve(alias string) (registry.Resource, error) {
 		return registry.Resource{}, UnknownResource(alias)
 	}
 	return resource, nil
+}
+
+func newClientObject(resource registry.Resource) (client.Object, error) {
+	object, ok := resource.NewObject().(client.Object)
+	if !ok {
+		return nil, NewError(ErrBadRequest, fmt.Sprintf("resource %q object is not a client object", resource.Alias), nil)
+	}
+	object.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
+	return object, nil
+}
+
+func mapClientError(err error) error {
+	switch {
+	case apierrors.IsNotFound(err):
+		return NewError(ErrNotFound, "resource was not found", err)
+	case apierrors.IsConflict(err):
+		return NewError(ErrConflict, "resource update conflict", err)
+	case apierrors.IsInvalid(err), apierrors.IsBadRequest(err):
+		return NewError(ErrBadRequest, "invalid resource request", err)
+	default:
+		return err
+	}
 }

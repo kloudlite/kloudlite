@@ -2,7 +2,9 @@ package watch
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
@@ -10,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8swatch "k8s.io/apimachinery/pkg/watch"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -125,11 +128,11 @@ func TestStartClusterScopedSyncsClusterScopedResources(t *testing.T) {
 	st := store.New()
 	mgr := NewManager(reg, st, newFakeClient(t, &corev1.Node{ObjectMeta: metav1.ObjectMeta{Name: "worker"}}), zap.NewNop())
 
-	mgr.StartClusterScoped(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	mgr.StartClusterScoped(ctx)
+	waitFor(t, func() bool { return st.Ready("nodes", "") })
 
-	if !st.Ready("nodes", "") {
-		t.Fatal("expected nodes cluster scope to be ready")
-	}
 	items := st.List("nodes", "", store.Selector{})
 	if len(items) != 1 || items[0].GetName() != "worker" {
 		t.Fatalf("unexpected cached nodes: %#v", items)
@@ -137,6 +140,71 @@ func TestStartClusterScopedSyncsClusterScopedResources(t *testing.T) {
 	if st.Ready("configmaps", "") {
 		t.Fatal("did not expect namespaced configmaps to be synced as cluster-scoped")
 	}
+}
+
+func TestRunScopeAppliesWatchEventsUntilContextCancellation(t *testing.T) {
+	fakeWatcher := k8swatch.NewFake()
+	st := store.New()
+	watching := &watchingClient{WithWatch: newFakeClient(t), watcher: fakeWatcher}
+	mgr := NewManager(registry.Default(), st, watching, zap.NewNop())
+	resource := mustResource(t, registry.Default(), "configmaps")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		mgr.RunScope(ctx, resource, "default")
+	}()
+
+	waitFor(t, func() bool { return watching.watchCalls.Load() == 1 && st.Ready("configmaps", "default") })
+	fakeWatcher.Add(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}, Data: map[string]string{"version": "one"}})
+	waitFor(t, func() bool {
+		object, ok := st.Get("configmaps", "default", "app")
+		return ok && object.(*corev1.ConfigMap).Data["version"] == "one"
+	})
+
+	fakeWatcher.Modify(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}, Data: map[string]string{"version": "two"}})
+	waitFor(t, func() bool {
+		object, ok := st.Get("configmaps", "default", "app")
+		return ok && object.(*corev1.ConfigMap).Data["version"] == "two"
+	})
+
+	fakeWatcher.Delete(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}})
+	waitFor(t, func() bool {
+		_, ok := st.Get("configmaps", "default", "app")
+		return !ok
+	})
+
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("expected RunScope to stop after context cancellation")
+	}
+}
+
+func TestEnsureNamespacedStartsOneContinuousWatchForReadyScope(t *testing.T) {
+	fakeWatcher := k8swatch.NewFake()
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", nil)
+	watching := &watchingClient{WithWatch: newFakeClient(t), watcher: fakeWatcher}
+	mgr := NewManager(registry.Default(), st, watching, zap.NewNop())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := mgr.EnsureNamespaced(ctx, "configmaps", "default"); err != nil {
+		t.Fatalf("ensure namespaced failed: %v", err)
+	}
+	if err := mgr.EnsureNamespaced(ctx, "configmaps", "default"); err != nil {
+		t.Fatalf("ensure namespaced failed second time: %v", err)
+	}
+	waitFor(t, func() bool { return watching.watchCalls.Load() == 1 })
+
+	fakeWatcher.Add(&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}})
+	waitFor(t, func() bool {
+		_, ok := st.Get("configmaps", "default", "app")
+		return ok
+	})
 }
 
 type countingClient struct {
@@ -147,6 +215,32 @@ type countingClient struct {
 func (c *countingClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	c.listCalls++
 	return c.WithWatch.List(ctx, list, opts...)
+}
+
+type watchingClient struct {
+	client.WithWatch
+	watcher    *k8swatch.FakeWatcher
+	watchCalls atomic.Int32
+}
+
+func (c *watchingClient) Watch(ctx context.Context, list client.ObjectList, opts ...client.ListOption) (k8swatch.Interface, error) {
+	_ = ctx
+	_ = list
+	_ = opts
+	c.watchCalls.Add(1)
+	return c.watcher, nil
+}
+
+func waitFor(t *testing.T, condition func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		if condition() {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("condition was not met before timeout")
 }
 
 func newFakeClient(t *testing.T, objects ...client.Object) client.WithWatch {
