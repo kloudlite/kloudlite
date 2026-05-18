@@ -41,7 +41,7 @@ spec:
             - name: KUBERNETES_SERVICE_PORT
               value: "8001"
             - name: NEXT_PUBLIC_API_URL
-              value: "http://api-server.kloudlite.svc.cluster.local"
+              value: "https://api-server.kloudlite.svc.cluster.local"
             - name: PORT
               value: "3000"
             - name: APP_MODE

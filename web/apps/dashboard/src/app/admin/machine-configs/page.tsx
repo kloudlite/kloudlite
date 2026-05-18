@@ -50,7 +50,6 @@ export default async function MachineConfigsPage() {
   // Check if user has admin or super-admin role
   const userRoles = session.user?.roles || []
   const hasAdminAccess = userRoles.includes('admin') || userRoles.includes('super-admin')
-  const isSuperAdmin = userRoles.includes('super-admin')
 
   if (!hasAdminAccess) {
     redirect('/')
@@ -69,12 +68,12 @@ export default async function MachineConfigsPage() {
       <div>
         <h1 className="text-foreground text-2xl font-semibold">Machine Configurations</h1>
         <p className="mt-1.5 text-muted-foreground text-sm">
-          Define machine types and resource allocations
+          View machine types and resource allocations
         </p>
       </div>
 
       {/* Machine Configs List Component */}
-      <MachineConfigsList configs={transformedConfigs} isReadOnly={!isSuperAdmin} />
+      <MachineConfigsList configs={transformedConfigs} isReadOnly />
     </div>
   )
 }
