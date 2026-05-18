@@ -42,7 +42,7 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 	secret := &corev1.Secret{}
 	key := client.ObjectKey{Namespace: opts.Namespace, Name: webhookTLSSecretName}
 	if err := kube.Get(ctx, key, secret); err == nil {
-		bundle, bundleErr := webhookTLSBundleFromSecret(secret)
+		bundle, bundleErr := webhookTLSBundleFromSecret(secret, opts)
 		if bundleErr == nil {
 			bundle.Source = webhookTLSSecretReused
 			return bundle, nil
@@ -79,14 +79,38 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 	return bundle, nil
 }
 
-func webhookTLSBundleFromSecret(secret *corev1.Secret) (*webhookTLSBundle, error) {
+func webhookTLSBundleFromSecret(secret *corev1.Secret, opts webhookTLSOptions) (*webhookTLSBundle, error) {
 	certPEM := secret.Data[corev1.TLSCertKey]
 	keyPEM := secret.Data[corev1.TLSPrivateKeyKey]
 	certificate, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
 		return nil, err
 	}
+	leaf, err := parseWebhookTLSLeaf(certPEM)
+	if err != nil {
+		return nil, err
+	}
+	if time.Now().After(leaf.NotAfter) {
+		return nil, fmt.Errorf("webhook TLS certificate expired at %s", leaf.NotAfter.Format(time.RFC3339))
+	}
+	for _, name := range webhookTLSDNSNames(opts) {
+		if err := leaf.VerifyHostname(name); err != nil {
+			return nil, fmt.Errorf("webhook TLS certificate missing DNS name %q: %w", name, err)
+		}
+	}
 	return &webhookTLSBundle{CertPEM: certPEM, KeyPEM: keyPEM, Certificate: certificate}, nil
+}
+
+func parseWebhookTLSLeaf(certPEM []byte) (*x509.Certificate, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return nil, fmt.Errorf("parse webhook TLS certificate: missing PEM block")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse webhook TLS certificate: %w", err)
+	}
+	return cert, nil
 }
 
 func webhookTLSSecretData(bundle *webhookTLSBundle) map[string][]byte {
@@ -107,12 +131,7 @@ func generateWebhookTLSBundle(opts webhookTLSOptions) (*webhookTLSBundle, error)
 		return nil, fmt.Errorf("generate webhook TLS serial: %w", err)
 	}
 
-	dnsNames := []string{
-		opts.ServiceName,
-		fmt.Sprintf("%s.%s", opts.ServiceName, opts.Namespace),
-		fmt.Sprintf("%s.%s.svc", opts.ServiceName, opts.Namespace),
-		fmt.Sprintf("%s.%s.svc.cluster.local", opts.ServiceName, opts.Namespace),
-	}
+	dnsNames := webhookTLSDNSNames(opts)
 	template := x509.Certificate{
 		SerialNumber: serial,
 		Subject: pkix.Name{
@@ -138,4 +157,13 @@ func generateWebhookTLSBundle(opts webhookTLSOptions) (*webhookTLSBundle, error)
 		return nil, fmt.Errorf("load generated webhook TLS key pair: %w", err)
 	}
 	return &webhookTLSBundle{CertPEM: certPEM, KeyPEM: keyPEM, Certificate: certificate}, nil
+}
+
+func webhookTLSDNSNames(opts webhookTLSOptions) []string {
+	return []string{
+		opts.ServiceName,
+		fmt.Sprintf("%s.%s", opts.ServiceName, opts.Namespace),
+		fmt.Sprintf("%s.%s.svc", opts.ServiceName, opts.Namespace),
+		fmt.Sprintf("%s.%s.svc.cluster.local", opts.ServiceName, opts.Namespace),
+	}
 }

@@ -85,6 +85,33 @@ func TestEnsureWebhookTLSSecretReplacesInvalidSecret(t *testing.T) {
 	}
 }
 
+func TestEnsureWebhookTLSSecretReplacesSecretForWrongServiceDNS(t *testing.T) {
+	wrongBundle, err := generateWebhookTLSBundle(webhookTLSOptions{Namespace: "default", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("generate wrong namespace bundle: %v", err)
+	}
+	stale := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: webhookTLSSecretName, Namespace: "kloudlite"},
+		Type:       corev1.SecretTypeTLS,
+		Data:       webhookTLSSecretData(wrongBundle),
+	}
+	kube := newServerFakeClient(t, stale)
+
+	bundle, err := ensureWebhookTLSSecret(context.Background(), kube, webhookTLSOptions{Namespace: "kloudlite", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("ensure webhook TLS secret: %v", err)
+	}
+
+	if string(bundle.CertPEM) == string(wrongBundle.CertPEM) {
+		t.Fatal("expected secret with wrong service DNS to be replaced")
+	}
+	if bundle.Source != webhookTLSSecretReplaced {
+		t.Fatalf("expected source %q, got %q", webhookTLSSecretReplaced, bundle.Source)
+	}
+	parsed := parseFirstCertificate(t, bundle.CertPEM)
+	assertDNSName(t, parsed.DNSNames, "api-server.kloudlite.svc.cluster.local")
+}
+
 func parseFirstCertificate(t *testing.T, certPEM []byte) *x509.Certificate {
 	t.Helper()
 	block, _ := pem.Decode(certPEM)
