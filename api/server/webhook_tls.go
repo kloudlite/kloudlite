@@ -20,6 +20,8 @@ import (
 )
 
 const webhookTLSSecretName = "platform-api-tls"
+const webhookTLSRotationAnnotation = "kloudlite.io/platform-api-tls-rotation-id"
+const frontendTLSRestartAnnotation = "kloudlite.io/platform-api-tls-restarted-at"
 
 const (
 	webhookTLSSecretCreated  = "created"
@@ -45,6 +47,11 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 	if err := kube.Get(ctx, key, secret); err == nil {
 		bundle, bundleErr := webhookTLSBundleFromSecret(secret, opts)
 		if bundleErr == nil {
+			if rotationID := secret.Annotations[webhookTLSRotationAnnotation]; rotationID != "" {
+				if err := restartFrontendForWebhookTLSRotation(ctx, kube, opts.Namespace, rotationID); err != nil {
+					return nil, err
+				}
+			}
 			bundle.Source = webhookTLSSecretReused
 			return bundle, nil
 		}
@@ -54,11 +61,16 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 			return nil, err
 		}
 		secret.Type = corev1.SecretTypeTLS
+		if secret.Annotations == nil {
+			secret.Annotations = map[string]string{}
+		}
+		rotationID := time.Now().UTC().Format(time.RFC3339Nano)
+		secret.Annotations[webhookTLSRotationAnnotation] = rotationID
 		secret.Data = webhookTLSSecretData(bundle)
 		if err := kube.Update(ctx, secret); err != nil {
 			return nil, fmt.Errorf("update webhook TLS secret: %w", err)
 		}
-		if err := restartFrontendForWebhookTLSRotation(ctx, kube, opts.Namespace); err != nil {
+		if err := restartFrontendForWebhookTLSRotation(ctx, kube, opts.Namespace, rotationID); err != nil {
 			return nil, err
 		}
 		bundle.Source = webhookTLSSecretReplaced
@@ -72,9 +84,15 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 		return nil, err
 	}
 	secret = &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: webhookTLSSecretName, Namespace: opts.Namespace},
-		Type:       corev1.SecretTypeTLS,
-		Data:       webhookTLSSecretData(bundle),
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      webhookTLSSecretName,
+			Namespace: opts.Namespace,
+			Annotations: map[string]string{
+				webhookTLSRotationAnnotation: time.Now().UTC().Format(time.RFC3339Nano),
+			},
+		},
+		Type: corev1.SecretTypeTLS,
+		Data: webhookTLSSecretData(bundle),
 	}
 	if err := kube.Create(ctx, secret); err != nil {
 		return nil, fmt.Errorf("create webhook TLS secret: %w", err)
@@ -83,7 +101,7 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 	return bundle, nil
 }
 
-func restartFrontendForWebhookTLSRotation(ctx context.Context, kube client.Client, namespace string) error {
+func restartFrontendForWebhookTLSRotation(ctx context.Context, kube client.Client, namespace, rotationID string) error {
 	deployment := &appsv1.Deployment{}
 	key := client.ObjectKey{Namespace: namespace, Name: "frontend"}
 	if err := kube.Get(ctx, key, deployment); err != nil {
@@ -96,7 +114,10 @@ func restartFrontendForWebhookTLSRotation(ctx context.Context, kube client.Clien
 	if patched.Spec.Template.Annotations == nil {
 		patched.Spec.Template.Annotations = map[string]string{}
 	}
-	patched.Spec.Template.Annotations["kloudlite.io/platform-api-tls-restarted-at"] = time.Now().UTC().Format(time.RFC3339Nano)
+	if patched.Spec.Template.Annotations[frontendTLSRestartAnnotation] == rotationID {
+		return nil
+	}
+	patched.Spec.Template.Annotations[frontendTLSRestartAnnotation] = rotationID
 	if err := kube.Patch(ctx, patched, client.MergeFrom(deployment)); err != nil {
 		return fmt.Errorf("restart frontend deployment for webhook TLS rotation: %w", err)
 	}
