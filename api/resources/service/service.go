@@ -86,6 +86,11 @@ func (s *Service) Patch(ctx context.Context, alias string, namespace string, nam
 	if object == nil {
 		return nil, NewError(ErrBadRequest, "object is required", nil)
 	}
+	gvk := object.GetObjectKind().GroupVersionKind()
+	resourceGVK := resource.GroupVersionKind()
+	if !gvk.Empty() && gvk != resourceGVK {
+		return nil, NewError(ErrBadRequest, fmt.Sprintf("object GVK %s does not match resource %q GVK %s", gvk, alias, resourceGVK), nil)
+	}
 
 	current, err := newClientObject(resource)
 	if err != nil {

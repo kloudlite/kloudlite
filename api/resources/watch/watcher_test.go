@@ -273,9 +273,63 @@ func TestRunScopeRetriesAfterWatchErrorEvent(t *testing.T) {
 	}
 }
 
+func TestRunScopeStartsWatchFromListResourceVersion(t *testing.T) {
+	st := store.New()
+	recording := &resourceVersionClient{WithWatch: newFakeClient(t), watcher: k8swatch.NewFake(), resourceVersion: "rv-123"}
+	mgr := NewManager(registry.Default(), st, recording, zap.NewNop())
+	resource := mustResource(t, registry.Default(), "configmaps")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		mgr.RunScope(ctx, resource, "default")
+	}()
+
+	waitFor(t, func() bool { return recording.watchCalls.Load() == 1 })
+	if got := recording.watchResourceVersion.Load(); got != "rv-123" {
+		t.Fatalf("expected watch resourceVersion %q, got %q", "rv-123", got)
+	}
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("expected RunScope to stop after context cancellation")
+	}
+}
+
 type countingClient struct {
 	client.WithWatch
 	listCalls int
+}
+
+type resourceVersionClient struct {
+	client.WithWatch
+	watcher              *k8swatch.FakeWatcher
+	resourceVersion      string
+	watchCalls           atomic.Int32
+	watchResourceVersion atomic.Value
+}
+
+func (c *resourceVersionClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	if err := c.WithWatch.List(ctx, list, opts...); err != nil {
+		return err
+	}
+	list.SetResourceVersion(c.resourceVersion)
+	return nil
+}
+
+func (c *resourceVersionClient) Watch(ctx context.Context, list client.ObjectList, opts ...client.ListOption) (k8swatch.Interface, error) {
+	_ = ctx
+	_ = list
+	options := (&client.ListOptions{}).ApplyOptions(opts)
+	resourceVersion := ""
+	if options.Raw != nil {
+		resourceVersion = options.Raw.ResourceVersion
+	}
+	c.watchResourceVersion.Store(resourceVersion)
+	c.watchCalls.Add(1)
+	return c.watcher, nil
 }
 
 func (c *countingClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
