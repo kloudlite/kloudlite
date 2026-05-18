@@ -72,7 +72,7 @@ func (s *Service) Create(ctx context.Context, alias string, namespace string, ob
 	}
 
 	if err := s.kube.Create(ctx, created); err != nil {
-		return nil, err
+		return nil, mapClientError(err)
 	}
 	created.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
 	return created.DeepCopyObject().(client.Object), nil
@@ -154,7 +154,7 @@ func mapClientError(err error) error {
 	switch {
 	case apierrors.IsNotFound(err):
 		return NewError(ErrNotFound, "resource was not found", err)
-	case apierrors.IsConflict(err):
+	case apierrors.IsAlreadyExists(err), apierrors.IsConflict(err):
 		return NewError(ErrConflict, "resource update conflict", err)
 	case apierrors.IsInvalid(err), apierrors.IsBadRequest(err):
 		return NewError(ErrBadRequest, "invalid resource request", err)

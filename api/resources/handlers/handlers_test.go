@@ -181,6 +181,20 @@ func TestCreateRejectsTrailingJSONBody(t *testing.T) {
 	}
 }
 
+func TestCreateDuplicateReturnsConflict(t *testing.T) {
+	router, _ := newTestRouter(t, store.New())
+	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}`)
+
+	firstResponse := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
+	if firstResponse.Code != http.StatusCreated {
+		t.Fatalf("expected first create status %d, got %d: %s", http.StatusCreated, firstResponse.Code, firstResponse.Body.String())
+	}
+	secondResponse := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
+	if secondResponse.Code != http.StatusConflict {
+		t.Fatalf("expected duplicate create status %d, got %d: %s", http.StatusConflict, secondResponse.Code, secondResponse.Body.String())
+	}
+}
+
 func TestPatchAndDeleteWriteThroughKubernetes(t *testing.T) {
 	ensurer := &recordingEnsurer{}
 	router, kube := newTestRouter(t, store.New(), ensurer)
