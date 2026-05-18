@@ -3,32 +3,9 @@ import { ThemeSwitcher } from '@kloudlite/ui'
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/get-session'
 import { setThemeCookie } from '@/app/actions/theme'
-import { getOAuthConfig } from '@/lib/oauth-config'
 
 // Force dynamic rendering - this page reads OAuth config
 export const dynamic = 'force-dynamic'
-
-interface EnabledProvider {
-  type: string
-  enabled: boolean
-}
-
-function getEnabledProviders(): EnabledProvider[] {
-  const config = getOAuthConfig()
-  const providers: EnabledProvider[] = []
-
-  if (config.google.enabled && config.google.clientId) {
-    providers.push({ type: 'google', enabled: true })
-  }
-  if (config.github.enabled && config.github.clientId) {
-    providers.push({ type: 'github', enabled: true })
-  }
-  if (config.microsoft.enabled && config.microsoft.clientId) {
-    providers.push({ type: 'microsoft', enabled: true })
-  }
-
-  return providers
-}
 
 export default async function SignInPage() {
   // Check if user is already authenticated
@@ -44,7 +21,7 @@ export default async function SignInPage() {
     }
   }
 
-  const enabledProviders = getEnabledProviders()
+  const allowDevSuperAdmin = process.env.ALLOW_DEV_SUPERADMIN === 'true'
 
   return (
     <div className="bg-background min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
@@ -74,7 +51,7 @@ export default async function SignInPage() {
       </div>
 
       {/* Login card */}
-      <SignInForm enabledProviders={enabledProviders} />
+      <SignInForm allowDevSuperAdmin={allowDevSuperAdmin} />
 
       {/* Bottom branding */}
       <div className="absolute bottom-6 left-0 right-0 text-center">
