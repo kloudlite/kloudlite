@@ -12,9 +12,6 @@ type Config struct {
 	Environment string `envconfig:"ENVIRONMENT" default:"development"`
 	LogLevel    string `envconfig:"LOG_LEVEL" default:"info"`
 
-	// TLS configuration for HTTPS
-	TLS TLSConfig `envconfig:"TLS"`
-
 	// JWT Authentication configuration
 	Auth AuthConfig `envconfig:"AUTH"`
 
@@ -80,17 +77,6 @@ type InstallationConfig struct {
 
 	// PollingIntervalSeconds is the interval to poll for subdomain configuration
 	PollingIntervalSeconds int `envconfig:"POLLING_INTERVAL_SECONDS" default:"30"`
-}
-
-type TLSConfig struct {
-	// CertFile is the path to the TLS certificate file
-	CertFile string `envconfig:"CERT_FILE" default:"/etc/kloudlite/tls.crt"`
-
-	// KeyFile is the path to the TLS private key file
-	KeyFile string `envconfig:"KEY_FILE" default:"/etc/kloudlite/tls.key"`
-
-	// Enable TLS/HTTPS (default true - required for Kubernetes webhooks)
-	Enabled bool `envconfig:"ENABLED" default:"true"`
 }
 
 func Load() (*Config, error) {

@@ -8,6 +8,7 @@ func TestDefaultRegistryFindsKnownResources(t *testing.T) {
 	expected := map[string]Scope{
 		"users":           Cluster,
 		"userpreferences": Cluster,
+		"machinetypes":    Cluster,
 		"workmachines":    Cluster,
 		"workspaces":      Namespaced,
 		"environments":    Namespaced,

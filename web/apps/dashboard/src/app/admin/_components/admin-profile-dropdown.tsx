@@ -21,7 +21,7 @@ export function AdminProfileDropdown({ name, email }: AdminProfileDropdownProps)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1">
+        <Button variant="ghost" size="sm" className="gap-1 text-sm">
           <User className="h-4 w-4" />
           <span className="hidden sm:inline">{name || 'User'}</span>
           <ChevronDown className="h-3 w-3" />
