@@ -1,6 +1,6 @@
 /**
  * Snapshot CRD type definitions
- * Based on: api/internal/controllers/snapshot/v1/types.go
+ * Based on: types/snapshot/v1/types.go
  */
 
 import type { K8sResource, K8sList } from './common';

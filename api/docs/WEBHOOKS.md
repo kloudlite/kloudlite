@@ -12,7 +12,7 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 
 ## User Webhook
 
-**File**: `internal/webhooks/user_webhook.go`
+**File**: `api/webhooks/user_webhook.go`
 
 ### Validation
 - Email format and uniqueness
@@ -27,7 +27,7 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 
 ## Environment Webhook
 
-**File**: `internal/webhooks/environment_webhook.go`
+**File**: `api/webhooks/environment_webhook.go`
 
 ### Validation
 - DisplayName length (max 100 chars)
@@ -48,7 +48,7 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 
 ## MachineType Webhook
 
-**File**: `internal/webhooks/machinetype_webhook_gin.go`
+**File**: `api/webhooks/machinetype_webhook_gin.go`
 
 ### Validation
 #### CREATE/UPDATE
@@ -73,7 +73,7 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 
 ## WorkMachine Webhook
 
-**File**: `internal/webhooks/workmachine_webhook.go`
+**File**: `api/webhooks/workmachine_webhook.go`
 
 ### Validation
 - OwnedBy required
@@ -102,7 +102,7 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 
 ## Workspace Webhook
 
-**File**: `internal/webhooks/workspace_webhook.go`
+**File**: `api/webhooks/workspace_webhook.go`
 
 ### Validation
 - DisplayName and description length
@@ -119,7 +119,7 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 
 ## Composition Webhook
 
-**File**: `internal/webhooks/composition_webhook.go`
+**File**: `api/webhooks/composition_webhook.go`
 
 ### Validation
 - DisplayName required (max 100 chars)
@@ -137,7 +137,7 @@ kubectl apply → Mutation Webhook → Validation Webhook → Persist to etcd �
 
 ## ServiceIntercept Webhook
 
-**File**: `internal/webhooks/serviceintercept_webhook.go`
+**File**: `api/webhooks/serviceintercept_webhook.go`
 
 ### Validation
 - Service exists

@@ -135,19 +135,24 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  // Preserve original host in x-forwarded-host for Next.js Server Actions
+  // Preserve the external request coordinates for Next.js/Auth.js redirects.
+  // The TCP connection is forwarded to the internal standalone server below,
+  // but the application must still see the browser-facing host/protocol.
   const originalHost = req.headers.host
   if (originalHost && !forwardHeaders['x-forwarded-host']) {
     forwardHeaders['x-forwarded-host'] = originalHost
   }
 
-  // Set x-forwarded-proto if not already set
+  // Set x-forwarded-proto if not already set. Local dev and port-forwarded
+  // traffic reaches this proxy over HTTP; ingress/controllers can provide
+  // x-forwarded-proto=https when TLS terminates before the pod.
   if (!forwardHeaders['x-forwarded-proto']) {
-    forwardHeaders['x-forwarded-proto'] = 'https'
+    forwardHeaders['x-forwarded-proto'] = 'http'
   }
 
-  // Set host header for internal routing to Next.js
-  forwardHeaders['host'] = `127.0.0.1:${nextPort}`
+  if (originalHost) {
+    forwardHeaders['host'] = originalHost
+  }
 
   const options = {
     hostname: '127.0.0.1',

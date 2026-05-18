@@ -189,14 +189,14 @@ spec:
           # /var/run/secrets/kubernetes.io/serviceaccount/token
 ```
 
-**Note**: To enable K8s client in the frontend deployment, add `serviceAccountName: api-server` to the frontend deployment spec in `api/cmd/kli/internal/manifests/frontend.yaml`.
+**Note**: To enable K8s client in the frontend deployment, add `serviceAccountName: api-server` to the frontend deployment spec in `cli/kli/internal/manifests/frontend.yaml`.
 
 ## RBAC Permissions
 
 The dashboard reuses the existing `api-server` ServiceAccount in the `kloudlite` namespace, which already has full admin permissions to all Kubernetes resources.
 
 **ServiceAccount**: `api-server` (namespace: `kloudlite`)
-**Location**: `api/cmd/kli/internal/manifests/api-server-rbac.yaml`
+**Location**: `cli/kli/internal/manifests/api-server-rbac.yaml`
 
 No additional RBAC configuration needed - the existing ServiceAccount has all required permissions.
 

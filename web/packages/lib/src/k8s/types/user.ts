@@ -1,6 +1,6 @@
 /**
  * User and UserPreferences CRD type definitions
- * Based on: api/internal/controllers/user/v1alpha1/user_types.go
+ * Based on: types/user/v1alpha1/user_types.go
  */
 
 import type { K8sResource, K8sList, Condition } from './common';

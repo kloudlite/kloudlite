@@ -19,7 +19,7 @@ Handlers manage HTTP API endpoints, handling business logic, authorization, and 
 
 ## User Handlers
 
-**File**: `internal/handlers/user_handlers.go`
+**File**: `api/handlers/user_handlers.go`
 
 ### Authorization Model
 - **SuperAdmin**: Full access to all operations
@@ -56,7 +56,7 @@ Handlers manage HTTP API endpoints, handling business logic, authorization, and 
 
 ## WorkMachine Handlers
 
-**File**: `internal/handlers/workmachine_handlers.go`
+**File**: `api/handlers/workmachine_handlers.go`
 
 ### **CRITICAL BUSINESS RULE: ONE WORKMACHINE PER USER**
 
@@ -88,7 +88,7 @@ This constraint is enforced in handlers, NOT webhooks, because it's an applicati
 
 ## MachineType Handlers
 
-**File**: `internal/handlers/machinetype_handlers.go`
+**File**: `api/handlers/machinetype_handlers.go`
 
 ### Authorization
 All create/update/delete operations require authentication. Admin check TODO.
@@ -119,7 +119,7 @@ All create/update/delete operations require authentication. Admin check TODO.
 
 ## Environment Handlers
 
-**File**: `internal/handlers/environment_handlers.go`
+**File**: `api/handlers/environment_handlers.go`
 
 ### Key Endpoints
 
@@ -147,7 +147,7 @@ All create/update/delete operations require authentication. Admin check TODO.
 
 ## Workspace Handlers
 
-**File**: `internal/handlers/workspace_handlers.go`
+**File**: `api/handlers/workspace_handlers.go`
 
 ### Key Endpoints
 
@@ -181,7 +181,7 @@ All create/update/delete operations require authentication. Admin check TODO.
 
 ## Composition Handlers
 
-**File**: `internal/handlers/composition_handlers.go`
+**File**: `api/handlers/composition_handlers.go`
 
 ### Key Endpoints
 
@@ -207,7 +207,7 @@ All create/update/delete operations require authentication. Admin check TODO.
 
 ## ServiceIntercept Handlers
 
-**File**: `internal/handlers/serviceintercept_handlers.go`
+**File**: `api/handlers/serviceintercept_handlers.go`
 
 ### Key Endpoints
 
@@ -228,7 +228,7 @@ All create/update/delete operations require authentication. Admin check TODO.
 
 ## Environment Config Handlers
 
-**File**: `internal/handlers/environment_config_handlers.go`
+**File**: `api/handlers/environment_config_handlers.go`
 
 ### Legacy Config/Secret Management
 

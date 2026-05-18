@@ -35,43 +35,7 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=0.0.0-nightly.${DATE}" >> "$GITHUB_OUTPUT"
 
-  # ── Docker: Go apps ──────────────────────────────────────────────────
-  platform-controller:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: platform-controller
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  tunnel-server:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: tunnel-server
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  workmachine-node-manager:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workmachine-node-manager
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  wm-ingress-controller:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: wm-ingress-controller
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
+  # ── Docker: support images ───────────────────────────────────────────
   oci-installer:
     needs: prepare
     uses: ./.github/workflows/_build-docker.yml
@@ -145,7 +109,16 @@ jobs:
       is_nightly: true
       ref: development
 
-  # ── Binaries: CLI tools ──────────────────────────────────────────────
+  # ── Binaries ─────────────────────────────────────────────────────────
+  kloudlite:
+    needs: prepare
+    uses: ./.github/workflows/_build-binary.yml
+    with:
+      app: kloudlite
+      version: ${{ needs.prepare.outputs.version }}
+      tag: ${{ needs.prepare.outputs.tag }}
+      ref: development
+
   kli:
     needs: prepare
     uses: ./.github/workflows/_build-binary.yml
@@ -174,6 +147,15 @@ jobs:
     secrets: inherit
 
   # ── Release: nightly pre-releases ────────────────────────────────────
+  release-kloudlite:
+    needs: [prepare, kloudlite]
+    uses: ./.github/workflows/_release-binary.yml
+    with:
+      app: kloudlite
+      version: ${{ needs.prepare.outputs.version }}
+      is_nightly: true
+      ref: development
+
   release-kli:
     needs: [prepare, kli]
     uses: ./.github/workflows/_release-binary.yml
@@ -200,14 +182,11 @@ jobs:
       is_nightly: true
       ref: development
 
-  # ── Deploy to development after all Docker builds succeed ────────────
+  # ── Deploy to development after build artifacts are ready ────────────
   deploy:
     needs:
       - prepare
-      - platform-controller
-      - tunnel-server
-      - workmachine-node-manager
-      - wm-ingress-controller
+      - kloudlite
       - oci-installer
       - code-analyzer
       - k3s-backup

@@ -1,0 +1,450 @@
+package composition
+
+import (
+	"fmt"
+	"math"
+	"sort"
+	"strconv"
+	"strings"
+
+	composego "github.com/compose-spec/compose-go/v2/types"
+	compositionsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+)
+
+// sanitizeK8sName converts a name to a valid Kubernetes resource name
+// Kubernetes names must be lowercase RFC 1123 subdomains: lowercase alphanumeric, '-' or '.'
+func sanitizeK8sName(name string) string {
+	// Replace underscores with dashes
+	name = strings.ReplaceAll(name, "_", "-")
+	// Convert to lowercase
+	name = strings.ToLower(name)
+	return name
+}
+
+// ComposeResources holds all Kubernetes resources converted from docker-compose
+type ComposeResources struct {
+	StatefulSets []*appsv1.StatefulSet
+	Services     []*corev1.Service
+	ConfigMaps   []*corev1.ConfigMap
+	Secrets      []*corev1.Secret
+	PVCs         []*corev1.PersistentVolumeClaim
+	ServiceNames []string
+}
+
+// EnvironmentData holds environment configuration data
+type EnvironmentData struct {
+	// EnvVars from environment ConfigMap (env-envvars)
+	EnvVars map[string]string
+	// Secrets from environment Secret (env-envvars)
+	Secrets map[string]string
+	// ConfigFiles from environment ConfigMap (env-config-files)
+	ConfigFiles map[string]string
+}
+
+// ConvertComposeToK8s converts a docker-compose project to Kubernetes resources
+func ConvertComposeToK8s(
+	project *composego.Project,
+	composition *compositionsv1.Composition,
+	namespace string,
+	envData *EnvironmentData,
+	environment *compositionsv1.Environment,
+) (*ComposeResources, error) {
+	resources := &ComposeResources{
+		StatefulSets: make([]*appsv1.StatefulSet, 0),
+		Services:     make([]*corev1.Service, 0),
+		ConfigMaps:   make([]*corev1.ConfigMap, 0),
+		Secrets:      make([]*corev1.Secret, 0),
+		PVCs:         make([]*corev1.PersistentVolumeClaim, 0),
+		ServiceNames: make([]string, 0),
+	}
+
+	commonLabels := CompositionOwnershipLabels(composition, environment)
+
+	// Convert volumes first (they need to exist before StatefulSets)
+	for volumeName, volume := range project.Volumes {
+		pvc := convertVolumeToPVC(volumeName, volume, composition, namespace, commonLabels, environment)
+		resources.PVCs = append(resources.PVCs, pvc)
+	}
+
+	// Convert each service
+	for serviceName, service := range project.Services {
+		resources.ServiceNames = append(resources.ServiceNames, serviceName)
+
+		// Create StatefulSet
+		statefulSet, err := convertServiceToStatefulSet(
+			serviceName,
+			service,
+			composition,
+			namespace,
+			commonLabels,
+			envData,
+			environment,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert service %s: %w", serviceName, err)
+		}
+		resources.StatefulSets = append(resources.StatefulSets, statefulSet)
+
+		// Always create a Service (headless for StatefulSet DNS)
+		// StatefulSets require a headless service for stable network identities
+		k8sService := convertServiceToK8sService(
+			serviceName,
+			service,
+			composition,
+			namespace,
+			commonLabels,
+		)
+		resources.Services = append(resources.Services, k8sService)
+	}
+
+	return resources, nil
+}
+
+// convertServiceToStatefulSet converts a docker-compose service to a Kubernetes StatefulSet
+func convertServiceToStatefulSet(
+	serviceName string,
+	service composego.ServiceConfig,
+	composition *compositionsv1.Composition,
+	namespace string,
+	commonLabels map[string]string,
+	envData *EnvironmentData,
+	environment *compositionsv1.Environment,
+) (*appsv1.StatefulSet, error) {
+	// Service-specific labels
+	labels := make(map[string]string)
+	for k, v := range commonLabels {
+		labels[k] = v
+	}
+	labels["kloudlite.io/service"] = serviceName
+
+	// Determine replicas - default to 1
+	replicas := int32(1)
+
+	// Use service-level replicas from docker-compose deploy section
+	if service.Deploy != nil && service.Deploy.Replicas != nil {
+		replicas = int32(*service.Deploy.Replicas)
+	}
+
+	// Check for resource overrides (highest priority)
+	if override, ok := composition.Spec.ResourceOverrides[serviceName]; ok {
+		if override.Replicas != nil {
+			replicas = *override.Replicas
+		}
+	}
+
+	// Build container
+	container := corev1.Container{
+		Name:  serviceName,
+		Image: service.Image,
+	}
+
+	if len(service.Entrypoint) > 0 {
+		container.Command = service.Entrypoint
+		if len(service.Command) > 0 {
+			container.Args = service.Command
+		}
+	} else if len(service.Command) > 0 {
+		container.Command = service.Command
+	}
+
+	// Add environment variables from service definition
+	// Variables have already been resolved by the compose parser
+	// IMPORTANT: Sort keys to ensure deterministic ordering - Go maps iterate in random order
+	// Without sorting, every reconciliation could produce different env var order,
+	// causing statefulset spec changes and unnecessary pod restarts
+	envVars := make([]corev1.EnvVar, 0)
+	serviceEnvKeys := make([]string, 0, len(service.Environment))
+	for key := range service.Environment {
+		serviceEnvKeys = append(serviceEnvKeys, key)
+	}
+	sort.Strings(serviceEnvKeys)
+	for _, key := range serviceEnvKeys {
+		val := service.Environment[key]
+		if val != nil {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  key,
+				Value: *val,
+			})
+		}
+	}
+	// Add composition-level env vars (sorted for deterministic ordering)
+	compEnvKeys := make([]string, 0, len(composition.Spec.EnvVars))
+	for key := range composition.Spec.EnvVars {
+		compEnvKeys = append(compEnvKeys, key)
+	}
+	sort.Strings(compEnvKeys)
+	for _, key := range compEnvKeys {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  key,
+			Value: composition.Spec.EnvVars[key],
+		})
+	}
+	container.Env = envVars
+
+	// Add ports
+	containerPorts := make([]corev1.ContainerPort, 0)
+	for _, port := range service.Ports {
+		if port.Target != 0 {
+			containerPorts = append(containerPorts, corev1.ContainerPort{
+				ContainerPort: int32(port.Target),
+				Protocol:      corev1.ProtocolTCP,
+			})
+		}
+	}
+	container.Ports = containerPorts
+
+	// Add resource limits
+	resources := corev1.ResourceRequirements{
+		Limits:   corev1.ResourceList{},
+		Requests: corev1.ResourceList{},
+	}
+
+	if service.Deploy != nil && service.Deploy.Resources.Limits != nil {
+		if service.Deploy.Resources.Limits.NanoCPUs > 0 {
+			cpuLimit := convertCPU(float64(service.Deploy.Resources.Limits.NanoCPUs))
+			resources.Limits[corev1.ResourceCPU] = resource.MustParse(cpuLimit)
+		}
+		if service.Deploy.Resources.Limits.MemoryBytes != 0 {
+			resources.Limits[corev1.ResourceMemory] = *resource.NewQuantity(
+				int64(service.Deploy.Resources.Limits.MemoryBytes),
+				resource.BinarySI,
+			)
+		}
+	}
+
+	// Apply resource overrides
+	if override, ok := composition.Spec.ResourceOverrides[serviceName]; ok {
+		if override.CPU != "" {
+			resources.Limits[corev1.ResourceCPU] = resource.MustParse(override.CPU)
+		}
+		if override.Memory != "" {
+			resources.Limits[corev1.ResourceMemory] = resource.MustParse(override.Memory)
+		}
+	}
+
+	container.Resources = resources
+
+	// Add volume mounts
+	volumeMounts := make([]corev1.VolumeMount, 0)
+	volumes := make([]corev1.Volume, 0)
+
+	for _, vol := range service.Volumes {
+		if vol.Source != "" {
+			// Check if source is a file mount from environment: /files/filename
+			if strings.HasPrefix(vol.Source, "/files/") && envData != nil && envData.ConfigFiles != nil {
+				// Extract filename from /files/filename
+				filename := strings.TrimPrefix(vol.Source, "/files/")
+
+				if _, exists := envData.ConfigFiles[filename]; exists {
+					// Create a volume for this specific file's ConfigMap
+					// Replace dots with dashes in volume names (K8s requirement)
+					safeFilename := strings.ReplaceAll(filename, ".", "-")
+					volumeName := fmt.Sprintf("env-file-%s", safeFilename)
+					configMapName := fmt.Sprintf("env-file-%s", filename)
+
+					volumeMounts = append(volumeMounts, corev1.VolumeMount{
+						Name:      volumeName,
+						MountPath: vol.Target,
+						SubPath:   filename,
+					})
+
+					volumes = append(volumes, corev1.Volume{
+						Name: volumeName,
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: configMapName,
+								},
+							},
+						},
+					})
+				}
+			} else if vol.Type == "volume" {
+				// Named volume - reference the PVC directly
+				// Sanitize volume name for Kubernetes
+				k8sVolName := sanitizeK8sName(vol.Source)
+				volumeMounts = append(volumeMounts, corev1.VolumeMount{
+					Name:      k8sVolName,
+					MountPath: vol.Target,
+				})
+				volumes = append(volumes, corev1.Volume{
+					Name: k8sVolName,
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: k8sVolName,
+						},
+					},
+				})
+			}
+		}
+	}
+
+	container.VolumeMounts = volumeMounts
+
+	// Build PodSpec
+	podSpec := corev1.PodSpec{
+		Containers: []corev1.Container{container},
+		Volumes:    volumes,
+	}
+
+	placement := EnvironmentNodePlacement(environment)
+	if len(placement.NodeSelector) > 0 {
+		podSpec.NodeSelector = placement.NodeSelector
+		podSpec.Tolerations = placement.Tolerations
+	}
+
+	// Create StatefulSet
+	statefulSet := &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceName,
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: appsv1.StatefulSetSpec{
+			ServiceName: serviceName, // Required: points to headless service for DNS
+			Replicas:    &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: podSpec,
+			},
+		},
+	}
+
+	return statefulSet, nil
+}
+
+// convertServiceToK8sService converts docker-compose service ports to Kubernetes Service
+// Creates a headless service (ClusterIP: None) if no ports are exposed
+func convertServiceToK8sService(
+	serviceName string,
+	service composego.ServiceConfig,
+	composition *compositionsv1.Composition,
+	namespace string,
+	commonLabels map[string]string,
+) *corev1.Service {
+	labels := make(map[string]string)
+	for k, v := range commonLabels {
+		labels[k] = v
+	}
+	labels["kloudlite.io/service"] = serviceName
+
+	ports := make([]corev1.ServicePort, 0)
+	for i, port := range service.Ports {
+		publishedPort := port.Target
+		if port.Published != "" {
+			// Parse Published port string to uint32
+			pubInt, err := strconv.ParseUint(port.Published, 10, 32)
+			if err == nil {
+				publishedPort = uint32(pubInt)
+			}
+		}
+
+		servicePort := corev1.ServicePort{
+			Name:       fmt.Sprintf("port-%d", i),
+			Port:       int32(publishedPort),
+			TargetPort: intstr.FromInt(int(port.Target)),
+			Protocol:   corev1.ProtocolTCP,
+		}
+		ports = append(ports, servicePort)
+	}
+
+	// Determine ClusterIP based on whether ports are exposed
+	clusterIP := "" // Default: Kubernetes assigns an IP
+
+	// If no ports are exposed, create a headless service for DNS resolution
+	if len(ports) == 0 {
+		clusterIP = "None"
+	}
+
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceName,
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector:  labels,
+			Ports:     ports,
+			ClusterIP: clusterIP,
+		},
+	}
+}
+
+// convertVolumeToPVC converts docker-compose volume to PersistentVolumeClaim
+func convertVolumeToPVC(
+	volumeName string,
+	volume composego.VolumeConfig,
+	composition *compositionsv1.Composition,
+	namespace string,
+	commonLabels map[string]string,
+	environment *compositionsv1.Environment,
+) *corev1.PersistentVolumeClaim {
+	// Sanitize volume name for Kubernetes
+	k8sVolumeName := sanitizeK8sName(volumeName)
+
+	labels := make(map[string]string)
+	for k, v := range commonLabels {
+		labels[k] = v
+	}
+	labels["kloudlite.io/volume"] = volumeName // Keep original name in label
+
+	// Default size
+	size := resource.MustParse("1Gi")
+
+	// Add selected-node annotation for WaitForFirstConsumer binding
+	// This allows PVCs to be provisioned immediately on the correct node
+	annotations := make(map[string]string)
+	if environment != nil && environment.Spec.WorkMachineName != "" {
+		annotations["volume.kubernetes.io/selected-node"] = environment.Spec.WorkMachineName
+	}
+
+	return &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        k8sVolumeName,
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: size,
+				},
+			},
+		},
+	}
+}
+
+// convertCPU converts docker-compose CPU format to Kubernetes format
+func convertCPU(nanoCPUs float64) string {
+	// NanoCPUs format: 0.5 means 0.5 CPU cores
+	// Kubernetes format: "500m" means 500 millicores (0.5 cores)
+	if nanoCPUs <= 0 || math.IsNaN(nanoCPUs) || math.IsInf(nanoCPUs, 0) {
+		return "1"
+	}
+
+	// Convert to millicores
+	millicoresFloat := nanoCPUs * 1000
+	nearestMillicore := math.Round(millicoresFloat)
+	if math.Abs(millicoresFloat-nearestMillicore) < 1e-3 {
+		millicoresFloat = nearestMillicore
+	}
+	millicores := int(math.Ceil(millicoresFloat))
+	if millicores > math.MaxInt32 {
+		millicores = math.MaxInt32
+	}
+	return fmt.Sprintf("%dm", millicores)
+}

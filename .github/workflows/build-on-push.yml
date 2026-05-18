@@ -36,6 +36,12 @@ jobs:
           filters: |
             api:
               - 'api/**'
+              - 'controllers/**'
+              - 'pkg/**'
+              - 'types/**'
+              - 'cli/**'
+              - 'go.mod'
+              - 'go.sum'
             console:
               - 'web/apps/console/**'
               - 'web/packages/**'
@@ -46,15 +52,15 @@ jobs:
               - 'web/apps/website/**'
               - 'web/packages/**'
             kli:
-              - 'api/cmd/kli/**'
-              - 'api/pkg/**'
-              - 'api/go.mod'
-              - 'api/go.sum'
+              - 'cli/kli/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
             kltun:
-              - 'api/cmd/kltun/**'
-              - 'api/pkg/**'
-              - 'api/go.mod'
-              - 'api/go.sum'
+              - 'cli/kltun/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
             desktop:
               - 'web/apps/desktop/**'
 
@@ -82,38 +88,17 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Tag:** \`${{ steps.tag.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
 
-  # ── Docker: Go apps (all built when api/ changes) ────────────────────
-  platform-controller:
+  # ── Binary: Go backend ───────────────────────────────────────────────
+  kloudlite:
     needs: detect
     if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
+    uses: ./.github/workflows/_build-binary.yml
     with:
-      app: platform-controller
+      app: kloudlite
+      version: ${{ needs.detect.outputs.tag }}
       tag: ${{ needs.detect.outputs.tag }}
 
-  tunnel-server:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: tunnel-server
-      tag: ${{ needs.detect.outputs.tag }}
-
-  workmachine-node-manager:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workmachine-node-manager
-      tag: ${{ needs.detect.outputs.tag }}
-
-  wm-ingress-controller:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: wm-ingress-controller
-      tag: ${{ needs.detect.outputs.tag }}
+  # ── Docker: non-runtime support images ───────────────────────────────
 
   oci-installer:
     needs: detect
