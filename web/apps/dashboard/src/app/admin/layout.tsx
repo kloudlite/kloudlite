@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Admin section - only allow admin/super-admin access
   if (!hasAdminRole) {
-    redirect('/')
+    redirect('/auth/error?error=AccessDenied&message=This%20dashboard%20is%20for%20administrators%20only.')
   }
 
   // Check if system is configured
