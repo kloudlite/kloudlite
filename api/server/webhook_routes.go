@@ -6,9 +6,12 @@ import (
 	"github.com/kloudlite/kloudlite/api/handlers"
 	"github.com/kloudlite/kloudlite/api/k8s"
 	"github.com/kloudlite/kloudlite/api/middleware"
+	"github.com/kloudlite/kloudlite/api/resources/events"
 	resourcehandlers "github.com/kloudlite/kloudlite/api/resources/handlers"
 	"github.com/kloudlite/kloudlite/api/resources/registry"
+	resourcerpc "github.com/kloudlite/kloudlite/api/resources/rpc"
 	"github.com/kloudlite/kloudlite/api/resources/service"
+	"github.com/kloudlite/kloudlite/api/resources/store"
 	"github.com/kloudlite/kloudlite/api/resources/watch"
 	"github.com/kloudlite/kloudlite/api/webhooks"
 	pkglogger "github.com/kloudlite/kloudlite/pkg/logger"
@@ -16,7 +19,7 @@ import (
 )
 
 // setupWebhookRouter creates a router with webhooks, health checks, and API resource routes.
-func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.Client, resourceService *service.Service, resourceRegistry *registry.Registry, watchManager *watch.Manager) *gin.Engine {
+func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.Client, resourceService *service.Service, resourceRegistry *registry.Registry, resourceStore *store.Store, watchManager *watch.Manager, resourceBroker *events.Broker) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -74,6 +77,7 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 		resourceRoutes := v1.Group("")
 		resourceRoutes.Use(middleware.JWTAuth(cfg.Auth, logger))
 		resourcehandlers.New(resourceService, resourceRegistry, watchManager).RegisterRoutes(resourceRoutes)
+		registerResourceRPC(resourceRoutes, resourcerpc.NewResourceServer(resourceService, resourceRegistry, resourceStore, resourceBroker, watchManager))
 
 		// VPN endpoints are currently disabled - uncomment if VPN service is re-enabled
 		// vpnHandlers := handlers.NewVPNHandlers(vpnService, logger, cfg.Auth.JWTSecret)
@@ -96,4 +100,20 @@ func setupWebhookRouter(cfg *config.Config, logger *zap.Logger, k8sClient *k8s.C
 
 	logger.Info("Webhook router initialized (webhooks + health checks + resource routes)")
 	return router
+}
+
+func registerResourceRPC(group *gin.RouterGroup, server *resourcerpc.ResourceServer) {
+	for _, procedure := range []string{
+		resourcerpc.ProcedureGet,
+		resourcerpc.ProcedureList,
+		resourcerpc.ProcedureCreate,
+		resourcerpc.ProcedurePatch,
+		resourcerpc.ProcedureDelete,
+		resourcerpc.ProcedureWatchObject,
+		resourcerpc.ProcedureWatchList,
+	} {
+		procedure := procedure
+		handler := resourcerpc.Handler(procedure, server)
+		group.Any(procedure, gin.WrapH(handler))
+	}
 }

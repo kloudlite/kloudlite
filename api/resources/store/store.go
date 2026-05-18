@@ -3,6 +3,7 @@ package store
 import (
 	"sync"
 
+	"github.com/kloudlite/kloudlite/api/resources/events"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -17,10 +18,11 @@ type Store struct {
 	mu      sync.RWMutex
 	objects map[string]map[string]client.Object
 	ready   map[string]bool
+	dirty   map[string]map[string]events.DirtyObject
 }
 
 func New() *Store {
-	return &Store{objects: map[string]map[string]client.Object{}, ready: map[string]bool{}}
+	return &Store{objects: map[string]map[string]client.Object{}, ready: map[string]bool{}, dirty: map[string]map[string]events.DirtyObject{}}
 }
 
 func (s *Store) SetReady(alias string, namespace string, ready bool) {
@@ -86,6 +88,76 @@ func (s *Store) Delete(alias string, namespace string, name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.objects[scopeKey(alias, namespace)], name)
+}
+
+func (s *Store) MarkDirty(alias string, namespace string, name string, reason events.DirtyReason, labels map[string]string) events.DirtyObject {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	key := scopeKey(alias, namespace)
+	if s.dirty[key] == nil {
+		s.dirty[key] = map[string]events.DirtyObject{}
+	}
+	dirty := events.DirtyObject{Resource: alias, Namespace: namespace, Name: name, Reason: reason, Labels: cloneLabels(labels)}
+	s.dirty[key][name] = dirty
+	return dirty
+}
+
+func (s *Store) ClearDirty(alias string, namespace string, name string) (events.DirtyObject, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	key := scopeKey(alias, namespace)
+	dirty, ok := s.dirty[key][name]
+	if ok {
+		delete(s.dirty[key], name)
+	}
+	return dirty, ok
+}
+
+func (s *Store) DirtyForObject(alias string, namespace string, name string) (events.DirtyObject, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	dirty, ok := s.dirty[scopeKey(alias, namespace)][name]
+	return dirty, ok
+}
+
+func (s *Store) DirtyForList(alias string, namespace string, selector Selector) []events.DirtyObject {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	key := scopeKey(alias, namespace)
+	dirty := []events.DirtyObject{}
+	for name, item := range s.dirty[key] {
+		object, hasObject := s.objects[key][name]
+		cachedMatches := hasObject && matches(object, selector)
+		dirtyMatches := labelsMatch(item.Labels, selector)
+		if !cachedMatches && !dirtyMatches {
+			continue
+		}
+		dirty = append(dirty, item)
+	}
+	return dirty
+}
+
+func cloneLabels(labels map[string]string) map[string]string {
+	if len(labels) == 0 {
+		return nil
+	}
+	clone := make(map[string]string, len(labels))
+	for key, value := range labels {
+		clone[key] = value
+	}
+	return clone
+}
+
+func labelsMatch(labels map[string]string, selector Selector) bool {
+	if selector.Hash != "" && labels[hashLabel] != selector.Hash {
+		return false
+	}
+	for key, value := range selector.Labels {
+		if labels[key] != value {
+			return false
+		}
+	}
+	return true
 }
 
 func scopeKey(alias string, namespace string) string {
