@@ -117,6 +117,66 @@ func TestListNamespacedResourceReturnsItemsWhenReady(t *testing.T) {
 	ensurer.expectCalled(t, "configmaps", "default")
 }
 
+func TestListNamespacedResourceFiltersByExactLabelSelector(t *testing.T) {
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "api", Namespace: "default", Labels: map[string]string{"app": "api"}}},
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "web", Namespace: "default", Labels: map[string]string{"app": "web"}}},
+	})
+	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps?labelSelector=app%3Dapi", nil)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
+	}
+	var payload struct {
+		Items []corev1.ConfigMap `json:"items"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(payload.Items) != 1 || payload.Items[0].Name != "api" {
+		t.Fatalf("unexpected filtered list response: %#v", payload.Items)
+	}
+}
+
+func TestListNamespacedResourceFiltersByHash(t *testing.T) {
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "match", Namespace: "default", Labels: map[string]string{"kloudlite.io/hash": "abc"}}},
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "other", Namespace: "default", Labels: map[string]string{"kloudlite.io/hash": "def"}}},
+	})
+	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps?hash=abc", nil)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
+	}
+	var payload struct {
+		Items []corev1.ConfigMap `json:"items"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(payload.Items) != 1 || payload.Items[0].Name != "match" {
+		t.Fatalf("unexpected hash filtered list response: %#v", payload.Items)
+	}
+}
+
+func TestListRejectsUnsupportedLabelSelector(t *testing.T) {
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", nil)
+	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps?labelSelector=app%20in%20%28api%29", nil)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, response.Code, response.Body.String())
+	}
+}
+
 func TestListNamespacedResourceSurfacesEnsurerError(t *testing.T) {
 	router, _ := newTestRouter(t, store.New(), &recordingEnsurer{err: errors.New("sync failed")})
 
@@ -175,6 +235,28 @@ func TestCreateRejectsTrailingJSONBody(t *testing.T) {
 	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}{"metadata":{"name":"other"}}`)
 
 	response := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, response.Code, response.Body.String())
+	}
+}
+
+func TestNamespacedRoutesRejectInvalidNamespace(t *testing.T) {
+	router, _ := newTestRouter(t, store.New(), &recordingEnsurer{})
+
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/Bad_Namespace/resources/configmaps", nil)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, response.Code, response.Body.String())
+	}
+}
+
+func TestResourceRoutesRejectInvalidName(t *testing.T) {
+	st := store.New()
+	st.ReplaceScope("configmaps", "default", nil)
+	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps/Bad_Name", nil)
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, response.Code, response.Body.String())

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -12,6 +13,9 @@ import (
 	"github.com/kloudlite/kloudlite/api/resources/service"
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+	utilvalidation "k8s.io/apimachinery/pkg/util/validation"
 )
 
 type Handler struct {
@@ -91,12 +95,21 @@ func (h *Handler) list(c *gin.Context, scope registry.Scope, namespace string) {
 		h.error(c, err)
 		return
 	}
+	if err := validatePathParams(scope, namespace, ""); err != nil {
+		h.error(c, err)
+		return
+	}
+	selector, err := parseSelector(c)
+	if err != nil {
+		h.error(c, err)
+		return
+	}
 	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
 		h.error(c, err)
 		return
 	}
 
-	items, err := h.service.List(c.Request.Context(), alias, namespace, store.Selector{})
+	items, err := h.service.List(c.Request.Context(), alias, namespace, selector)
 	if err != nil {
 		h.error(c, err)
 		return
@@ -107,6 +120,10 @@ func (h *Handler) list(c *gin.Context, scope registry.Scope, namespace string) {
 func (h *Handler) get(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
 	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+	if err := validatePathParams(scope, namespace, c.Param("name")); err != nil {
 		h.error(c, err)
 		return
 	}
@@ -126,6 +143,10 @@ func (h *Handler) get(c *gin.Context, scope registry.Scope, namespace string) {
 func (h *Handler) create(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
 	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+	if err := validatePathParams(scope, namespace, ""); err != nil {
 		h.error(c, err)
 		return
 	}
@@ -157,6 +178,10 @@ func (h *Handler) patch(c *gin.Context, scope registry.Scope, namespace string) 
 		h.error(c, err)
 		return
 	}
+	if err := validatePathParams(scope, namespace, c.Param("name")); err != nil {
+		h.error(c, err)
+		return
+	}
 	if err := h.ensureNamespaced(c, alias, scope, namespace); err != nil {
 		h.error(c, err)
 		return
@@ -178,6 +203,10 @@ func (h *Handler) patch(c *gin.Context, scope registry.Scope, namespace string) 
 func (h *Handler) delete(c *gin.Context, scope registry.Scope, namespace string) {
 	alias := c.Param("resource")
 	if err := h.requireScope(alias, scope); err != nil {
+		h.error(c, err)
+		return
+	}
+	if err := validatePathParams(scope, namespace, c.Param("name")); err != nil {
 		h.error(c, err)
 		return
 	}
@@ -213,6 +242,58 @@ func (h *Handler) ensureNamespaced(c *gin.Context, alias string, scope registry.
 
 func (h *Handler) error(c *gin.Context, err error) {
 	c.JSON(service.HTTPStatus(err), gin.H{"error": err.Error()})
+}
+
+func parseSelector(c *gin.Context) (store.Selector, error) {
+	selector := store.Selector{}
+	if hash := c.Query("hash"); hash != "" {
+		selector.Hash = hash
+	} else if hash := c.Query("kloudlite.io/hash"); hash != "" {
+		selector.Hash = hash
+	}
+
+	labelSelector := c.Query("labelSelector")
+	if labelSelector == "" {
+		return selector, nil
+	}
+	parsed, err := labels.Parse(labelSelector)
+	if err != nil {
+		return selector, service.NewError(service.ErrBadRequest, "invalid labelSelector", err)
+	}
+	requirements, selectable := parsed.Requirements()
+	if !selectable {
+		return selector, service.NewError(service.ErrBadRequest, "unsupported labelSelector", nil)
+	}
+	selector.Labels = map[string]string{}
+	for _, requirement := range requirements {
+		if requirement.Operator() != selection.Equals && requirement.Operator() != selection.DoubleEquals {
+			return selector, service.NewError(service.ErrBadRequest, fmt.Sprintf("unsupported labelSelector requirement %q", requirement.String()), nil)
+		}
+		values := requirement.ValuesUnsorted()
+		if len(values) != 1 {
+			return selector, service.NewError(service.ErrBadRequest, fmt.Sprintf("unsupported labelSelector requirement %q", requirement.String()), nil)
+		}
+		selector.Labels[requirement.Key()] = values[0]
+	}
+	return selector, nil
+}
+
+func validatePathParams(scope registry.Scope, namespace string, name string) error {
+	if scope == registry.Namespaced {
+		if namespace == "" {
+			return service.NewError(service.ErrBadRequest, "namespace is required", nil)
+		}
+		if errs := utilvalidation.IsDNS1123Label(namespace); len(errs) > 0 {
+			return service.NewError(service.ErrBadRequest, "invalid namespace: "+errs[0], nil)
+		}
+	}
+	if name == "" {
+		return nil
+	}
+	if errs := utilvalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
+		return service.NewError(service.ErrBadRequest, "invalid name: "+errs[0], nil)
+	}
+	return nil
 }
 
 func decodeObject(c *gin.Context) (*unstructured.Unstructured, error) {

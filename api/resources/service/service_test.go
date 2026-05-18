@@ -262,6 +262,24 @@ func TestPatchWritesThroughKubernetesWithoutOptimisticStoreMutation(t *testing.T
 	}
 }
 
+func TestPatchRejectsObjectWithMismatchedGVK(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	kube := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
+	).Build()
+	svc := New(registry.Default(), store.New(), kube)
+	patch := &corev1.Secret{}
+	patch.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Version: "v1", Kind: "Secret"})
+
+	_, err := svc.Patch(context.Background(), "configmaps", "default", "app", patch)
+	if !IsKind(err, ErrBadRequest) {
+		t.Fatalf("expected bad request error, got %v", err)
+	}
+}
+
 func TestDeleteWritesThroughKubernetesWithoutOptimisticStoreMutation(t *testing.T) {
 	scheme := runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {

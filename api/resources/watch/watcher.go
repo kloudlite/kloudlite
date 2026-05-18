@@ -10,6 +10,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8swatch "k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -32,14 +33,19 @@ func NewManager(reg *registry.Registry, st *store.Store, kube client.WithWatch, 
 }
 
 func (m *Manager) SyncOnce(ctx context.Context, resource registry.Resource, namespace string) error {
+	_, err := m.syncOnce(ctx, resource, namespace)
+	return err
+}
+
+func (m *Manager) syncOnce(ctx context.Context, resource registry.Resource, namespace string) (string, error) {
 	if resource.Scope == registry.Namespaced && namespace == "" {
-		return fmt.Errorf("namespace is required for namespaced resource %q", resource.Alias)
+		return "", fmt.Errorf("namespace is required for namespaced resource %q", resource.Alias)
 	}
 
 	list := resource.NewList()
 	objectList, ok := list.(client.ObjectList)
 	if !ok {
-		return fmt.Errorf("resource %q list is not a client object list", resource.Alias)
+		return "", fmt.Errorf("resource %q list is not a client object list", resource.Alias)
 	}
 
 	storeNamespace := ""
@@ -50,25 +56,25 @@ func (m *Manager) SyncOnce(ctx context.Context, resource registry.Resource, name
 	}
 
 	if err := m.client.List(ctx, objectList, options...); err != nil {
-		return err
+		return "", err
 	}
 
 	items, err := meta.ExtractList(list)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	objects := make([]client.Object, 0, len(items))
 	for _, item := range items {
 		object, ok := item.(client.Object)
 		if !ok {
-			return fmt.Errorf("resource %q list item is not a client object", resource.Alias)
+			return "", fmt.Errorf("resource %q list item is not a client object", resource.Alias)
 		}
 		objects = append(objects, object)
 	}
 
 	m.store.ReplaceScope(resource.Alias, storeNamespace, objects)
-	return nil
+	return objectList.GetResourceVersion(), nil
 }
 
 func (m *Manager) StartClusterScoped(ctx context.Context) {
@@ -91,7 +97,8 @@ func (m *Manager) RunScope(ctx context.Context, resource registry.Resource, name
 	}
 
 	for ctx.Err() == nil {
-		if err := m.SyncOnce(ctx, resource, namespace); err != nil {
+		resourceVersion, err := m.syncOnce(ctx, resource, namespace)
+		if err != nil {
 			if ctx.Err() != nil {
 				return
 			}
@@ -111,6 +118,9 @@ func (m *Manager) RunScope(ctx context.Context, resource registry.Resource, name
 		options := []client.ListOption{}
 		if resource.Scope == registry.Namespaced {
 			options = append(options, client.InNamespace(namespace))
+		}
+		if resourceVersion != "" {
+			options = append(options, &client.ListOptions{Raw: &metav1.ListOptions{ResourceVersion: resourceVersion}})
 		}
 
 		watcher, err := m.client.Watch(ctx, list, options...)
