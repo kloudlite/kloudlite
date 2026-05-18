@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"testing"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -110,6 +111,35 @@ func TestEnsureWebhookTLSSecretReplacesSecretForWrongServiceDNS(t *testing.T) {
 	}
 	parsed := parseFirstCertificate(t, bundle.CertPEM)
 	assertDNSName(t, parsed.DNSNames, "api-server.kloudlite.svc.cluster.local")
+}
+
+func TestEnsureWebhookTLSSecretRestartsFrontendWhenReplacingSecret(t *testing.T) {
+	wrongBundle, err := generateWebhookTLSBundle(webhookTLSOptions{Namespace: "default", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("generate wrong namespace bundle: %v", err)
+	}
+	stale := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: webhookTLSSecretName, Namespace: "kloudlite"},
+		Type:       corev1.SecretTypeTLS,
+		Data:       webhookTLSSecretData(wrongBundle),
+	}
+	frontend := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "frontend", Namespace: "kloudlite"},
+	}
+	kube := newServerFakeClient(t, stale, frontend)
+
+	_, err = ensureWebhookTLSSecret(context.Background(), kube, webhookTLSOptions{Namespace: "kloudlite", ServiceName: "api-server"})
+	if err != nil {
+		t.Fatalf("ensure webhook TLS secret: %v", err)
+	}
+
+	updated := &appsv1.Deployment{}
+	if err := kube.Get(context.Background(), client.ObjectKey{Namespace: "kloudlite", Name: "frontend"}, updated); err != nil {
+		t.Fatalf("get frontend deployment: %v", err)
+	}
+	if updated.Spec.Template.Annotations["kloudlite.io/platform-api-tls-restarted-at"] == "" {
+		t.Fatal("expected frontend deployment restart annotation after TLS secret replacement")
+	}
 }
 
 func parseFirstCertificate(t *testing.T, certPEM []byte) *x509.Certificate {

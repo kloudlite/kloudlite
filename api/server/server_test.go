@@ -25,6 +25,7 @@ import (
 	workspacesv1 "github.com/kloudlite/kloudlite/types/workspace/v1"
 	"go.uber.org/zap"
 	admissionv1 "k8s.io/api/admission/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -206,6 +207,7 @@ func newServerFakeClient(t *testing.T, objects ...client.Object) client.WithWatc
 	scheme := runtime.NewScheme()
 	for _, add := range []func(*runtime.Scheme) error{
 		clientgoscheme.AddToScheme,
+		appsv1.AddToScheme,
 		platformv1alpha1.AddToScheme,
 		environmentsv1.AddToScheme,
 		machinesv1.AddToScheme,

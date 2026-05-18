@@ -12,6 +12,7 @@ import (
 	"math/big"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +58,9 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 		if err := kube.Update(ctx, secret); err != nil {
 			return nil, fmt.Errorf("update webhook TLS secret: %w", err)
 		}
+		if err := restartFrontendForWebhookTLSRotation(ctx, kube, opts.Namespace); err != nil {
+			return nil, err
+		}
 		bundle.Source = webhookTLSSecretReplaced
 		return bundle, nil
 	} else if !apierrors.IsNotFound(err) {
@@ -77,6 +81,26 @@ func ensureWebhookTLSSecret(ctx context.Context, kube client.Client, opts webhoo
 	}
 	bundle.Source = webhookTLSSecretCreated
 	return bundle, nil
+}
+
+func restartFrontendForWebhookTLSRotation(ctx context.Context, kube client.Client, namespace string) error {
+	deployment := &appsv1.Deployment{}
+	key := client.ObjectKey{Namespace: namespace, Name: "frontend"}
+	if err := kube.Get(ctx, key, deployment); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("get frontend deployment for webhook TLS rotation: %w", err)
+	}
+	patched := deployment.DeepCopy()
+	if patched.Spec.Template.Annotations == nil {
+		patched.Spec.Template.Annotations = map[string]string{}
+	}
+	patched.Spec.Template.Annotations["kloudlite.io/platform-api-tls-restarted-at"] = time.Now().UTC().Format(time.RFC3339Nano)
+	if err := kube.Patch(ctx, patched, client.MergeFrom(deployment)); err != nil {
+		return fmt.Errorf("restart frontend deployment for webhook TLS rotation: %w", err)
+	}
+	return nil
 }
 
 func webhookTLSBundleFromSecret(secret *corev1.Secret, opts webhookTLSOptions) (*webhookTLSBundle, error) {
