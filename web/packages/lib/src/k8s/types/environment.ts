@@ -1,6 +1,6 @@
 /**
  * Environment CRD type definitions
- * Based on: api/internal/controllers/environment/v1/types.go
+ * Based on: types/environment/v1/types.go
  */
 
 import type { K8sResource, K8sList, Condition, LabelSelector } from './common';

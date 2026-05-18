@@ -1,6 +1,6 @@
 /**
  * PackageRequest CRD type definitions
- * Based on: api/internal/controllers/packages/v1/packagerequest_types.go
+ * Based on: types/packages/v1/packagerequest_types.go
  */
 
 import type { K8sResource, K8sList } from './common';

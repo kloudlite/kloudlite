@@ -16,13 +16,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const userRoles = session.user?.roles || []
-  const hasUserRole = userRoles.includes('user')
   const hasAdminRole = userRoles.includes('admin') || userRoles.includes('super-admin')
   const isSuperAdmin = userRoles.includes('super-admin')
 
   // Admin section - only allow admin/super-admin access
   if (!hasAdminRole) {
-    redirect('/')
+    redirect('/auth/error?error=AccessDenied&message=This%20dashboard%20is%20for%20administrators%20only.')
   }
 
   // Check if system is configured
@@ -43,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
                 <KloudliteLogo className="text-lg font-medium" />
-                <span className="text-muted-foreground text-lg font-medium">Admin</span>
+                <span className="text-muted-foreground text-sm font-medium">Admin</span>
               </div>
 
               {/* Admin Navigation */}
@@ -51,11 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
 
             {/* User Dropdown */}
-            <AdminProfileDropdown
-              name={session.user?.name}
-              email={session.user?.email}
-              hasUserRole={hasUserRole}
-            />
+            <AdminProfileDropdown name={session.user?.name} email={session.user?.email} />
           </div>
         </div>
       </header>

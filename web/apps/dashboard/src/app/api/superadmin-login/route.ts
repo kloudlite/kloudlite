@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { signIn } from '@/lib/auth'
 
+function redirectTo(path: string) {
+  return new NextResponse(null, {
+    status: 303,
+    headers: {
+      Location: path,
+    },
+  })
+}
+
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
 
   if (!token) {
-    return NextResponse.redirect(new URL('/superadmin-login?error=missing', request.url))
+    return redirectTo('/superadmin-login?error=missing')
   }
 
   try {
@@ -25,11 +34,9 @@ export async function GET(request: NextRequest) {
       throw error
     }
     // Auth failed — redirect back to login page with error
-    return NextResponse.redirect(
-      new URL(`/superadmin-login?token=${encodeURIComponent(token)}&error=1`, request.url)
-    )
+    return redirectTo(`/superadmin-login?token=${encodeURIComponent(token)}&error=1`)
   }
 
   // Fallback (shouldn't reach here)
-  return NextResponse.redirect(new URL('/admin', request.url))
+  return redirectTo('/admin')
 }

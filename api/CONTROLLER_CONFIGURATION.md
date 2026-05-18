@@ -1,10 +1,12 @@
 # Controller Configuration
 
-This document describes the configurable values for Kloudlite controllers. All values can be set via environment variables to customize behavior for different deployment environments.
+This document describes the configurable values for Kloudlite controller packages embedded in `kloudlite server api`. All values can be set via environment variables to customize behavior for different deployment environments.
+
+> Backend delivery is moving to the unified `kloudlite` binary. Legacy installer/deployment image settings are still documented where they exist in current deployment code, but their final shape is pending the binary-distribution deployment redesign.
 
 ## Configuration Loading
 
-Configuration is loaded from environment variables using the `github.com/codingconcepts/env` package. The configuration structure is defined in `/api/internal/controllers/config.go`.
+Configuration is loaded from environment variables using the `github.com/codingconcepts/env` package. The configuration structure is defined in `/controllers/config.go`.
 
 ## Environment Variables
 
@@ -39,7 +41,7 @@ Configuration is loaded from environment variables using the `github.com/codingc
 
 | Variable | Default | Description |
 |-----------|----------|-------------|
-| `WORKMACHINE_WM_INGRESS_CONTROLLER_IMAGE` | `ghcr.io/kloudlite/kloudlite/wm-ingress-controller:development` | Image for the wm-ingress-controller |
+| `WORKMACHINE_WM_INGRESS_CONTROLLER_IMAGE` | `ghcr.io/kloudlite/kloudlite/wm-ingress-controller:development` | Legacy deployment image setting for wm-ingress-controller; pending binary-distribution deployment redesign |
 | `WORKMACHINE_SSH_USERNAME` | `kloudlite` | Username for SSH access to workmachine nodes |
 | `WORKMACHINE_DEFAULT_WILDCARD_CERT_NAME` | `kloudlite-wildcard-cert-tls` | Default wildcard TLS certificate secret name |
 | `WORKMACHINE_CLOUD_OPERATION_RETRY_INTERVAL` | `5s` | How long to wait between cloud operation retries |
@@ -77,7 +79,7 @@ For production deployments, replace `:latest` tags with specific version tags:
 - `WORKSPACE_KUBECTL_IMAGE`: Use a specific version like `bitnami/kubectl:1.31.0`
 - `WORKSPACE_GIT_IMAGE`: Use a specific version like `alpine/git:2.45.2`
 - `WORKSPACE_ALPINE_IMAGE`: Use a specific version like `alpine:3.19`
-- `WORKMACHINE_WM_INGRESS_CONTROLLER_IMAGE`: Use a production tag like `ghcr.io/kloudlite/kloudlite/wm-ingress-controller:latest`
+- `WORKMACHINE_WM_INGRESS_CONTROLLER_IMAGE`: Legacy installer/deployment setting pending binary-distribution redesign
 
 ### Timeout Values
 Adjust timeout values based on your infrastructure:
@@ -117,7 +119,7 @@ WMINGRESS_FORCE_FULL_REBUILD="true"
 WORKSPACE_KUBECTL_IMAGE="bitnami/kubectl:1.31.0"
 WORKSPACE_GIT_IMAGE="alpine/git:2.45.2"
 WORKSPACE_ALPINE_IMAGE="alpine:3.19"
-WORKMACHINE_WM_INGRESS_CONTROLLER_IMAGE="ghcr.io/kloudlite/kloudlite/wm-ingress-controller:latest"
+# WORKMACHINE_WM_INGRESS_CONTROLLER_IMAGE is a legacy deployment setting pending binary-distribution redesign.
 
 # Longer timeouts for production infrastructure
 WORKMACHINE_MACHINE_STARTUP_RETRY_INTERVAL="30s"

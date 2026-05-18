@@ -1,0 +1,206 @@
+package cmd
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	workspacesv1 "github.com/kloudlite/kloudlite/types/workspace/v1"
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var configCmd = &cobra.Command{
+	Use:     "config",
+	Aliases: []string{"cfg", "c"},
+	Short:   "Manage workspace configuration",
+	Long:    `View and update workspace configuration settings including display name and environment variables.`,
+	Example: `  # View all configuration
+  kl config get
+  kl c get
+
+  # View specific key
+  kl config get display-name
+  kl c get idle-timeout
+
+  # Update configuration
+  kl config set display-name "My Workspace"
+  kl c set env.NODE_ENV production`,
+}
+
+var configGetCmd = &cobra.Command{
+	Use:   "get [key]",
+	Short: "View workspace configuration",
+	Long: `Display workspace configuration. When called without arguments, shows all configuration.
+When called with a key, shows only that specific value.`,
+	Example: `  # View all configuration
+  kl config get
+  kl c get
+
+  # View specific values
+  kl config get display-name
+  kl c get idle-timeout
+  kl c get env.NODE_ENV`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return handleConfigGet(args)
+	},
+}
+
+var configSetCmd = &cobra.Command{
+	Use:   "set <key> <value>",
+	Short: "Update workspace configuration",
+	Long: `Update a workspace configuration value.
+
+Supported keys:
+  - display-name
+  - idle-timeout
+  - startup-script
+  - env.<VAR_NAME>`,
+	Example: `  kl config set display-name "Development Workspace"
+  kl c set idle-timeout 30
+  kl c set startup-script "echo hello"
+  kl c set env.NODE_ENV production`,
+	Args: cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return handleConfigSet(args)
+	},
+}
+
+func init() {
+	configCmd.AddCommand(configGetCmd)
+	configCmd.AddCommand(configSetCmd)
+}
+
+func handleConfigGet(args []string) error {
+	if err := InitClient(); err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	// If a specific key is requested
+	if len(args) > 0 {
+		key := args[0]
+		return getConfigValue(workspace, key)
+	}
+
+	// Otherwise, display all configuration
+	fmt.Println("Workspace Configuration:")
+	fmt.Printf("  Display Name: %s\n", workspace.Spec.DisplayName)
+	fmt.Printf("  Owner: %s\n", workspace.Spec.OwnedBy)
+	fmt.Printf("  VS Code Version: %s\n", workspace.Spec.VSCodeVersion)
+
+	if workspace.Spec.Settings != nil {
+		fmt.Println("\nSettings:")
+		if workspace.Spec.Settings.IdleTimeout > 0 {
+			fmt.Printf("  Idle Timeout: %d minutes\n", workspace.Spec.Settings.IdleTimeout)
+		}
+		if workspace.Spec.Settings.StartupScript != "" {
+			fmt.Printf("  Startup Script: %s\n", workspace.Spec.Settings.StartupScript)
+		}
+
+		if len(workspace.Spec.Settings.EnvironmentVariables) > 0 {
+			fmt.Println("\nEnvironment Variables:")
+			for k, v := range workspace.Spec.Settings.EnvironmentVariables {
+				fmt.Printf("  %s: %s\n", k, v)
+			}
+		}
+	}
+
+	return nil
+}
+
+func getConfigValue(workspace *workspacesv1.Workspace, key string) error {
+	switch key {
+	case "display-name":
+		fmt.Println(workspace.Spec.DisplayName)
+	case "owner":
+		fmt.Println(workspace.Spec.OwnedBy)
+	case "vscode-version":
+		fmt.Println(workspace.Spec.VSCodeVersion)
+	case "idle-timeout":
+		if workspace.Spec.Settings != nil {
+			fmt.Println(workspace.Spec.Settings.IdleTimeout)
+		}
+	case "startup-script":
+		if workspace.Spec.Settings != nil {
+			fmt.Println(workspace.Spec.Settings.StartupScript)
+		}
+	default:
+		// Check if it's an environment variable
+		if strings.HasPrefix(key, "env.") {
+			envKey := strings.TrimPrefix(key, "env.")
+			if workspace.Spec.Settings != nil {
+				if val, ok := workspace.Spec.Settings.EnvironmentVariables[envKey]; ok {
+					fmt.Println(val)
+					return nil
+				}
+			}
+			return fmt.Errorf("environment variable %s not found", envKey)
+		}
+		return fmt.Errorf("unknown config key: %s", key)
+	}
+	return nil
+}
+
+func handleConfigSet(args []string) error {
+	if err := InitClient(); err != nil {
+		return err
+	}
+
+	key := args[0]
+	value := args[1]
+
+	ctx := context.Background()
+	workspace, err := WsClient.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Ensure settings is initialized
+	if workspace.Spec.Settings == nil {
+		workspace.Spec.Settings = &workspacesv1.WorkspaceSettings{}
+	}
+
+	// Update the configuration based on key
+	switch key {
+	case "display-name":
+		workspace.Spec.DisplayName = value
+	case "startup-script":
+		workspace.Spec.Settings.StartupScript = value
+	default:
+		// Check if it's an environment variable
+		if strings.HasPrefix(key, "env.") {
+			envKey := strings.TrimPrefix(key, "env.")
+			if workspace.Spec.Settings.EnvironmentVariables == nil {
+				workspace.Spec.Settings.EnvironmentVariables = make(map[string]string)
+			}
+			workspace.Spec.Settings.EnvironmentVariables[envKey] = value
+		} else {
+			return fmt.Errorf("unknown config key: %s", key)
+		}
+	}
+
+	// Apply the update using a JSON patch to avoid conflicts
+	patchData, err := json.Marshal(map[string]interface{}{
+		"spec": workspace.Spec,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal patch: %w", err)
+	}
+
+	patch := client.RawPatch(types.MergePatchType, patchData)
+	if err := WsClient.Patch(ctx, workspace, patch); err != nil {
+		return fmt.Errorf("failed to patch workspace: %w", err)
+	}
+
+	fmt.Printf("Configuration updated: %s = %s\n", key, value)
+
+	return nil
+}

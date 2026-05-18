@@ -16,7 +16,7 @@ function validateEnv() {
   // In development or build time, warn but allow localhost fallback
   if ((process.env.NODE_ENV === 'development' || isBuildTime) && !apiUrl) {
     if (!isBuildTime) {
-      console.warn('⚠️  NEXT_PUBLIC_API_URL is not set. Falling back to http://localhost:8080')
+      console.warn('⚠️  NEXT_PUBLIC_API_URL is not set. Falling back to https://localhost:9443')
     }
   }
 
@@ -27,7 +27,7 @@ function validateEnv() {
   }
 
   return {
-    apiUrl: apiUrl || 'http://localhost:8080',
+    apiUrl: apiUrl || 'https://localhost:9443',
     webUrl: webUrl || 'http://localhost:3000',
     env: process.env.NEXT_PUBLIC_ENV || 'development',
     isDevelopment: process.env.NODE_ENV === 'development',

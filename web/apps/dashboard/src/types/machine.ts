@@ -29,6 +29,7 @@ export interface MachineTypeSpec {
 
   // Status
   active?: boolean
+  isDefault?: boolean
 
   // Display
   description?: string

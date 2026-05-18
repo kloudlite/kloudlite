@@ -44,53 +44,25 @@ jobs:
           APP="${{ inputs.app }}"
 
           case "${APP}" in
-            platform-controller)
-              BUILD_TYPE="go"
-              BUILD_CMD="CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/api-server ./cmd/server"
-              DOCKERFILE="./api/Dockerfile"
-              DOCKER_CONTEXT="./api"
-              IMAGE_SUFFIX="platform-controller"
-              ;;
-            tunnel-server)
-              BUILD_TYPE="go"
-              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/tunnel-server ./cmd/tunnel-server'
-              DOCKERFILE="./api/cmd/tunnel-server/Dockerfile"
-              DOCKER_CONTEXT="./api"
-              IMAGE_SUFFIX="tunnel-server"
-              ;;
-            workmachine-node-manager)
-              BUILD_TYPE="go"
-              BUILD_CMD="CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/workmachine-node-manager ./cmd/workmachine-node-manager"
-              DOCKERFILE="./api/Dockerfile.workmachine-node-manager"
-              DOCKER_CONTEXT="./api"
-              IMAGE_SUFFIX="workmachine-node-manager"
-              ;;
-            wm-ingress-controller)
-              BUILD_TYPE="go"
-              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/wm-ingress ./cmd/wm-ingress-controller'
-              DOCKERFILE="./api/cmd/wm-ingress-controller/Dockerfile"
-              DOCKER_CONTEXT="./api"
-              IMAGE_SUFFIX="wm-ingress-controller"
-              ;;
             oci-installer)
               BUILD_TYPE="go"
-              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/oci-installer ./cmd/kli/oci-installer'
-              DOCKERFILE="./api/cmd/kli/oci-installer/Dockerfile"
-              DOCKER_CONTEXT="./api"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/oci-installer ./cli/kli/oci-installer'
+              DOCKERFILE="./cli/kli/oci-installer/Dockerfile"
+              DOCKER_CONTEXT="."
               IMAGE_SUFFIX="oci-installer"
               ;;
             code-analyzer)
               BUILD_TYPE="go"
-              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/code-analyzer ./cmd/code-analyzer'
-              DOCKERFILE="./api/cmd/code-analyzer/Dockerfile"
-              DOCKER_CONTEXT="./api"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/code-analyzer ./cli/code-analyzer'
+              DOCKERFILE="./cli/code-analyzer/Dockerfile"
+              DOCKER_CONTEXT="."
               IMAGE_SUFFIX="code-analyzer"
               ;;
             k3s-backup)
               BUILD_TYPE="docker-only"
               BUILD_CMD=""
               DOCKERFILE="./api/Dockerfile.k3s-backup"
-              DOCKER_CONTEXT="./api"
+              DOCKER_CONTEXT="."
               IMAGE_SUFFIX="k3s-backup"
               ;;
             workspace-base)
@@ -102,9 +74,9 @@ jobs:
               ;;
             workspace-comprehensive)
               BUILD_TYPE="workspace-comprehensive"
-              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o bin/kl-linux cmd/kl/main.go'
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o bin/kl-linux cli/kl/main.go'
               DOCKERFILE="./api/workspace-images/comprehensive/Dockerfile"
-              DOCKER_CONTEXT="./api"
+              DOCKER_CONTEXT="."
               IMAGE_SUFFIX="workspace-comprehensive"
               ;;
             console)
@@ -167,12 +139,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache-dependency-path: api/go.sum
+          cache-dependency-path: go.sum
 
       - name: Build Go binary
         if: steps.app.outputs.build_type == 'go'
         run: |
-          cd api
           mkdir -p bin
           ${{ steps.app.outputs.build_cmd }}
           ls -lh ./bin/
@@ -180,7 +151,6 @@ jobs:
       - name: Build kl binary
         if: steps.app.outputs.build_type == 'workspace-comprehensive'
         run: |
-          cd api
           mkdir -p bin
           ${{ steps.app.outputs.build_cmd }}
           ls -lh bin/kl-linux
