@@ -8,10 +8,10 @@ The workspace-comprehensive image includes the `kl` CLI tool built outside of Do
 
 ### Automated Build (Recommended)
 
-Use the provided build script:
+Use the central build task:
 
 ```bash
-./build.sh
+task build-sys:image:workspace-comprehensive
 ```
 
 This script will:
@@ -31,7 +31,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 
 # 2. Build the Docker image
 docker build \
-  -f api/workspace-images/comprehensive/Dockerfile \
+  -f build-sys/images/workspace-comprehensive/Dockerfile \
   -t kloudlite/workspace-comprehensive:latest \
   --build-arg BASE_IMAGE=kloudlite/workspace-base:latest \
   .
@@ -45,10 +45,10 @@ For ARM64 support:
 # Build for both amd64 and arm64
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -f Dockerfile \
+  -f build-sys/images/workspace-comprehensive/Dockerfile \
   -t kloudlite/workspace-comprehensive:latest \
   --push \
-  ../..
+  .
 ```
 
 **Note**: For multi-arch builds, you'll need to build separate binaries for each architecture and modify the Dockerfile to copy the appropriate binary based on `TARGETARCH`.
@@ -68,7 +68,7 @@ In GitHub Actions or other CI systems:
 - name: Build Docker image
   run: |
     docker build \
-      -f api/workspace-images/comprehensive/Dockerfile \
+      -f build-sys/images/workspace-comprehensive/Dockerfile \
       -t kloudlite/workspace-comprehensive:latest \
       .
 ```
@@ -88,8 +88,8 @@ In GitHub Actions or other CI systems:
 If you get an error about `bin/kl-linux` not found:
 
 ```bash
-# Make sure you're in the api directory when building
-cd /path/to/api
+# Make sure you're in the repository root when building
+cd /path/to/kloudlite
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/kl-linux cli/kl/main.go
 ```
 
