@@ -1,14 +1,15 @@
-package workmachine
+package machinescoped
 
 import (
+	"context"
 	"fmt"
 
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
-	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -20,7 +21,8 @@ import (
 // - Nodes (cluster-wide) - to update GPU status
 // - Environments (cluster-wide) - for garbage collection of orphaned storage
 // - Secrets (in workmachine namespace) - to manage SSH keys
-func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) createHostManagerRBAC(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	serviceAccountName := "host-manager"
 
 	// Create ServiceAccount in target namespace
@@ -31,13 +33,13 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svcAccount, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svcAccount, func() error {
 		if !fn.IsOwner(svcAccount, obj) {
 			svcAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 	}
 
 	// Create ClusterRole for host manager
@@ -47,7 +49,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRole, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
 		clusterRole.SetLabels(fn.MapMerge(clusterRole.GetLabels(), map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
@@ -123,7 +125,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 	}
 
 	// Create ClusterRoleBinding
@@ -133,7 +135,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRoleBinding, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
 		clusterRoleBinding.SetLabels(fn.MapMerge(clusterRoleBinding.GetLabels(), map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
@@ -158,7 +160,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 	}
 
 	// Create Role in target namespace for Secrets access
@@ -169,7 +171,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, role, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, role, func() error {
 		role.SetLabels(fn.MapMerge(role.GetLabels(), map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
@@ -189,7 +191,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 	}
 
 	// Create RoleBinding in target namespace
@@ -200,7 +202,7 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, roleBinding, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, roleBinding, func() error {
 		roleBinding.SetLabels(fn.MapMerge(roleBinding.GetLabels(), map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
@@ -225,14 +227,15 @@ func (r *WorkMachineReconciler) createHostManagerRBAC(check *reconciler.Check[*v
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionHostManagerRBACReady, "host manager RBAC is ready")
 }
 
 // createClusterRBAC creates cluster-level RBAC resources
-func (r *WorkMachineReconciler) createClusterRBAC(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) createClusterRBAC(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespaceName := obj.Spec.TargetNamespace
 	serviceAccountName := obj.Name
 
@@ -243,7 +246,7 @@ func (r *WorkMachineReconciler) createClusterRBAC(check *reconciler.Check[*v1.Wo
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRole, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
 		clusterRole.SetLabels(fn.MapMerge(clusterRole.GetLabels(), map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
@@ -277,7 +280,7 @@ func (r *WorkMachineReconciler) createClusterRBAC(check *reconciler.Check[*v1.Wo
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 	}
 
 	// Create ClusterRoleBinding
@@ -287,7 +290,7 @@ func (r *WorkMachineReconciler) createClusterRBAC(check *reconciler.Check[*v1.Wo
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRoleBinding, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
 		clusterRoleBinding.SetLabels(fn.MapMerge(clusterRoleBinding.GetLabels(), map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": "true",
@@ -312,8 +315,8 @@ func (r *WorkMachineReconciler) createClusterRBAC(check *reconciler.Check[*v1.Wo
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionHostManagerRBACReady, "cluster RBAC is ready")
 }

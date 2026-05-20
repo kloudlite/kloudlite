@@ -9,7 +9,8 @@ import (
 	"github.com/kloudlite/kloudlite/controllers/environment"
 	"github.com/kloudlite/kloudlite/controllers/snapshot"
 	"github.com/kloudlite/kloudlite/controllers/user"
-	"github.com/kloudlite/kloudlite/controllers/workmachine"
+	"github.com/kloudlite/kloudlite/controllers/workmachine/machinescoped"
+	"github.com/kloudlite/kloudlite/controllers/workmachine/platformscoped"
 	"github.com/kloudlite/kloudlite/controllers/workspace"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
@@ -35,7 +36,7 @@ type Manager struct {
 }
 
 func PlatformAPIControllerNames() []string {
-	return []string{"user", "workmachine"}
+	return []string{"user", "workmachine-platform-scoped"}
 }
 
 // NewManager creates a new controller manager with all controllers
@@ -45,6 +46,48 @@ func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 
 func NewPlatformAPIManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
 	return newManager(cfg, installationCfg, authCfg, logger, true)
+}
+
+func NewMachineScopedManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
+	return newMachineScopedManager(cfg, installationCfg, authCfg, logger)
+}
+
+func newMachineScopedManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(platformv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(machinesv1.AddToScheme(scheme))
+	utilruntime.Must(environmentsv1.AddToScheme(scheme))
+	utilruntime.Must(workspacev1.AddToScheme(scheme))
+	utilruntime.Must(packagesv1.AddToScheme(scheme))
+	utilruntime.Must(snapshotv1.AddToScheme(scheme))
+	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
+
+	ctrl.SetLogger(zapr.NewLogger(logger))
+
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:                 scheme,
+		HealthProbeBindAddress: "",
+		Metrics:                server.Options{BindAddress: "0"},
+		LeaderElection:         false,
+		LeaderElectionID:       "kloudlite-workmachine-manager",
+		WebhookServer:          nil,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to create workmachine-manager: %w", err)
+	}
+
+	controllerCfg, err := LoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("unable to load controller configuration: %w", err)
+	}
+
+	if err := machinescoped.Register(mgr, controllerCfg); err != nil {
+		return nil, fmt.Errorf("unable to setup WorkMachine manager controller: %w", err)
+	}
+
+	logger.Info("Controllers initialized successfully", zap.Strings("controllers", []string{"workmachine-manager"}))
+	return &Manager{mgr: mgr, logger: logger}, nil
 }
 
 func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger, platformAPIOnly bool) (*Manager, error) {
@@ -123,8 +166,17 @@ func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to load controller configuration: %w", err)
 	}
 
-	if err := workmachine.Register(mgr, controllerCfg); err != nil {
-		return nil, fmt.Errorf("unable to setup WorkMachine controller: %w", err)
+	if platformAPIOnly {
+		if err := platformscoped.Register(mgr, controllerCfg); err != nil {
+			return nil, fmt.Errorf("unable to setup platform-scoped WorkMachine controller: %w", err)
+		}
+	} else {
+		if err := platformscoped.Register(mgr, controllerCfg); err != nil {
+			return nil, fmt.Errorf("unable to setup platform-scoped WorkMachine controller: %w", err)
+		}
+		if err := machinescoped.Register(mgr, controllerCfg); err != nil {
+			return nil, fmt.Errorf("unable to setup WorkMachine manager controller: %w", err)
+		}
 	}
 
 	if platformAPIOnly {

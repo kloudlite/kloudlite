@@ -52,6 +52,7 @@ type ServiceInterceptConfig struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories={kloudlite,environments},shortName=comp
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Services",type=integer,JSONPath=`.status.servicesCount`
 // +kubebuilder:printcolumn:name="Running",type=integer,JSONPath=`.status.runningCount`

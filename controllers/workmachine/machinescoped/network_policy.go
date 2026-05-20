@@ -1,15 +1,17 @@
-package workmachine
+package machinescoped
 
 import (
+	"context"
 	"fmt"
 
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -20,7 +22,8 @@ const (
 
 // ensureNetworkPolicy creates or updates the NetworkPolicy for the workmachine namespace
 // This ensures only the owner's environments, shared environments, and system namespaces can access pods in the workmachine namespace
-func (r *WorkMachineReconciler) ensureNetworkPolicy(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) ensureNetworkPolicy(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	policy := &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wmNetworkPolicyName,
@@ -29,9 +32,9 @@ func (r *WorkMachineReconciler) ensureNetworkPolicy(check *reconciler.Check[*v1.
 	}
 
 	// Find environments shared with this workmachine's owner
-	sharedEnvNamespaces := r.findSharedEnvironmentNamespaces(check, obj.Spec.OwnedBy)
+	sharedEnvNamespaces := r.findSharedEnvironmentNamespaces(ctx, obj.Spec.OwnedBy)
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, policy, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, policy, func() error {
 		policy.Labels = map[string]string{
 			"kloudlite.io/managed":     "true",
 			"kloudlite.io/workmachine": obj.Name,
@@ -44,14 +47,14 @@ func (r *WorkMachineReconciler) ensureNetworkPolicy(check *reconciler.Check[*v1.
 		policy.Spec = r.buildWorkmachineNetworkPolicySpec(obj, sharedEnvNamespaces)
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update network policy: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionNetworkPolicyReady, fmt.Errorf("failed to create/update network policy: %w", err))
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionNetworkPolicyReady, "network policy is ready")
 }
 
 // buildWorkmachineNetworkPolicySpec builds the NetworkPolicy spec for a workmachine namespace
-func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMachine, sharedEnvNamespaces []string) networkingv1.NetworkPolicySpec {
+func (r *MachineScopedReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMachine, sharedEnvNamespaces []string) networkingv1.NetworkPolicySpec {
 	var ingressRules []networkingv1.NetworkPolicyIngressRule
 
 	// Rule 1: Allow from system namespaces (kube-system, kloudlite)
@@ -170,7 +173,8 @@ func (r *WorkMachineReconciler) buildWorkmachineNetworkPolicySpec(obj *v1.WorkMa
 }
 
 // cleanupNetworkPolicy removes the NetworkPolicy when workmachine is being deleted
-func (r *WorkMachineReconciler) cleanupNetworkPolicy(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) cleanupNetworkPolicy(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	policy := &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wmNetworkPolicyName,
@@ -178,24 +182,24 @@ func (r *WorkMachineReconciler) cleanupNetworkPolicy(check *reconciler.Check[*v1
 		},
 	}
 
-	if err := r.Delete(check.Context(), policy); err != nil {
+	if err := r.Delete(ctx, policy); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete network policy: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionNetworkPolicyReady, fmt.Errorf("failed to delete network policy: %w", err))
 		}
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionNetworkPolicyReady, "network policy is cleaned up")
 }
 
 // findSharedEnvironmentNamespaces finds all environment namespaces where the given user is in the sharedWith list
 // This allows the workmachine to receive traffic from environments shared with its owner
-func (r *WorkMachineReconciler) findSharedEnvironmentNamespaces(check *reconciler.Check[*v1.WorkMachine], owner string) []string {
+func (r *MachineScopedReconciler) findSharedEnvironmentNamespaces(ctx context.Context, owner string) []string {
 	if owner == "" {
 		return nil
 	}
 
 	var envList environmentsv1.EnvironmentList
-	if err := r.List(check.Context(), &envList, client.InNamespace("")); err != nil {
+	if err := r.List(ctx, &envList, client.InNamespace("")); err != nil {
 		return nil
 	}
 

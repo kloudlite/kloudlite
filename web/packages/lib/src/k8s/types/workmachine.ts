@@ -79,21 +79,9 @@ export interface MachineInfo {
   gpuModel?: string;
 }
 
-export interface ReconcilerStatus {
-  isReady?: boolean;
-  message?: Record<string, string>;
-  checkList?: string[];
-  lastReconcileTime?: string;
-  resources?: {
-    checkList?: string[];
-    lastReconcileTime?: string;
-  }[];
-}
-
 export interface WorkMachineStatus extends MachineInfo {
-  status?: ReconcilerStatus;
-  isReady?: boolean;
-  checkList?: string[];
+  conditions?: Condition[];
+  observedGeneration?: number;
   lastReconcileTime?: string;
   startedAt?: string;
   stoppedAt?: string;

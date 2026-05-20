@@ -45,8 +45,9 @@ tasks:
     desc: Generate CRDs, embedded CRD assets, and deepcopy files
     cmds:
       # generate CRDs from type definitions
-      - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=manifests
+      - controller-gen crd paths="./types/..." output:crd:artifacts:config=manifests
       - go run api/crds/assets/generate.go -manifests manifests -output api/crds/assets/generated.go
+      - task: consolidate-crds
 
       # generate deep copy go files
       - controller-gen object paths="./..."

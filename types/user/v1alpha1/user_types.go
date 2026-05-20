@@ -108,6 +108,7 @@ type UserStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,shortName=usr
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Username",type="string",JSONPath=".metadata.name"
 // +kubebuilder:printcolumn:name="Email",type="string",JSONPath=".spec.email"
 // +kubebuilder:printcolumn:name="DisplayName",type="string",JSONPath=".spec.displayName"

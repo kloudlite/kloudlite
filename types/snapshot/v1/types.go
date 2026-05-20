@@ -13,6 +13,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Size",type=string,JSONPath=`.status.sizeHuman`
@@ -191,6 +192,7 @@ type SnapshotList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.nodeName`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
@@ -298,6 +300,7 @@ type SnapshotRequestList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
 // +kubebuilder:printcolumn:name="Target",type=string,JSONPath=`.spec.targetPath`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
@@ -386,6 +389,7 @@ type SnapshotRestoreList struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
 // +kubebuilder:printcolumn:name="ConfigMaps",type=integer,JSONPath=`.status.configMapCount`
 // +kubebuilder:printcolumn:name="Secrets",type=integer,JSONPath=`.status.secretCount`

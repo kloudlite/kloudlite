@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -12,12 +11,13 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.ownedBy`
 // +kubebuilder:printcolumn:name="Machine Type",type=string,JSONPath=`.spec.machineType`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Started At",type=date,JSONPath=`.status.startedAt`
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=`.status.conditions[?(@.type=="Ready")].status`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // WorkMachine represents a user's personal development machine
@@ -27,10 +27,6 @@ type WorkMachine struct {
 
 	Spec   WorkMachineSpec   `json:"spec,omitempty"`
 	Status WorkMachineStatus `json:"status,omitempty"`
-}
-
-func (wm *WorkMachine) GetStatus() *reconciler.Status {
-	return &wm.Status.Status
 }
 
 // WorkMachineSpec defines the desired state of WorkMachine
@@ -196,7 +192,17 @@ type GPUInfo struct {
 
 // WorkMachineStatus defines the observed state of WorkMachine
 type WorkMachineStatus struct {
-	reconciler.Status `json:",inline"`
+	// Conditions represent the latest available observations of WorkMachine state.
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// ObservedGeneration is the latest metadata.generation reconciled into status.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// LastReconcileTime is the most recent time either WorkMachine controller reconciled this object.
+	// +optional
+	LastReconcileTime *metav1.Time `json:"lastReconcileTime,omitempty"`
 
 	MachineInfo `json:",inline"`
 
