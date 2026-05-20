@@ -36,6 +36,7 @@ type UserPreferencesStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster,shortName=uprefs
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Pinned Workspaces",type="integer",JSONPath=".spec.pinnedWorkspaces",description="Number of pinned workspaces"
 // +kubebuilder:printcolumn:name="Pinned Environments",type="integer",JSONPath=".spec.pinnedEnvironments",description="Number of pinned environments"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"

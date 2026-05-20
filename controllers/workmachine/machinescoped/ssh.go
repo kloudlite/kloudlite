@@ -1,6 +1,7 @@
-package workmachine
+package machinescoped
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -8,17 +9,28 @@ import (
 	"fmt"
 	"strings"
 
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
-	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // createSSHHostKeysSecret ensures the SSH host keys secret exists
-func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) ensureSSH(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	if result, err := r.createSSHHostKeysSecret(ctx, session); err != nil || !isZeroMachineResult(result) {
+		return result, err
+	}
+	if result, err := r.ensureSSHDConfigMapStep(ctx, session); err != nil || !isZeroMachineResult(result) {
+		return result, err
+	}
+	return markMachineReady(session, workmachineshared.ConditionSSHReady, "ssh resources are ready")
+}
+
+func (r *MachineScopedReconciler) createSSHHostKeysSecret(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 	secretName := "ssh-host-keys"
 
@@ -51,7 +63,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, secret, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
 		secret.Labels = fn.MapMerge(secret.Labels, map[string]string{
 			"kloudlite.io/ssh-host-keys": "true",
 			"kloudlite.io/workmachine":   obj.Name,
@@ -102,7 +114,7 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionSSHReady, err)
 	}
 
 	// Update status with SSH public key from the secret
@@ -110,11 +122,12 @@ func (r *WorkMachineReconciler) createSSHHostKeysSecret(check *reconciler.Check[
 		obj.Status.SSHPublicKey = strings.TrimSpace(string(publicKey))
 	}
 
-	return check.Passed()
+	return ctrl.Result{}, nil
 }
 
 // ensureSSHDConfigMapStep ensures the sshd_config ConfigMap exists for workspace pods
-func (r *WorkMachineReconciler) ensureSSHDConfigMapStep(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) ensureSSHDConfigMapStep(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 	configMapName := "sshd-config"
 
@@ -163,7 +176,7 @@ Subsystem sftp /usr/lib/ssh/sftp-server
 
 	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, cfgMap, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfgMap, func() error {
 		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
 			"kloudlite.io/ssh-config":       "true",
 			"kloudlite.io/workspace-config": "true",
@@ -175,8 +188,8 @@ Subsystem sftp /usr/lib/ssh/sftp-server
 		cfgMap.Data["sshd_config"] = sshdConfig
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return markMachineFailed(session, workmachineshared.ConditionSSHReady, err)
 	}
 
-	return check.Passed()
+	return ctrl.Result{}, nil
 }

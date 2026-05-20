@@ -10,6 +10,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="CPU",type=string,JSONPath=`.spec.resources.cpu`
 // +kubebuilder:printcolumn:name="Memory",type=string,JSONPath=`.spec.resources.memory`
 // +kubebuilder:printcolumn:name="GPU",type=string,JSONPath=`.spec.resources.gpu`

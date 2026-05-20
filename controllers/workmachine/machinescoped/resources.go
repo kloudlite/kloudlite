@@ -1,22 +1,25 @@
-package workmachine
+package machinescoped
 
 import (
+	"context"
 	"fmt"
 
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
+
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
-	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // ensureHostManagerPod ensures the workmachine-host-manager StatefulSet exists
 // This function is called when the WorkMachine is in running state
-func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) ensureHostManagerPod(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 	hostManagerName := "host-manager"
 
@@ -34,7 +37,7 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
 		statefulSet.SetLabels(fn.MapMerge(statefulSet.GetLabels(), labels))
 
 		if !fn.IsOwner(statefulSet, obj) {
@@ -55,8 +58,8 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 				Spec: corev1.PodSpec{
 					ServiceAccountName:            "host-manager",
 					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
-					NodeSelector:                  workMachineAddOnPlacement(obj.Name).NodeSelector,
-					Tolerations:                   workMachineAddOnPlacement(obj.Name).Tolerations,
+					NodeSelector:                  workmachineshared.WorkMachineAddOnPlacement(obj.Name).NodeSelector,
+					Tolerations:                   workmachineshared.WorkMachineAddOnPlacement(obj.Name).Tolerations,
 					HostPID:                       true,
 					InitContainers: []corev1.Container{
 						{
@@ -210,7 +213,7 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update host-manager statefulset: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerReady, fmt.Errorf("failed to create/update host-manager statefulset: %w", err))
 	}
 
 	// Create Service for SSH access
@@ -221,7 +224,7 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svc, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
 		svc.SetLabels(fn.MapMerge(svc.GetLabels(), labels))
 
 		if !fn.IsOwner(svc, obj) {
@@ -240,41 +243,42 @@ func (r *WorkMachineReconciler) ensureHostManagerPod(check *reconciler.Check[*v1
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update host-manager service: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionHostManagerReady, fmt.Errorf("failed to create/update host-manager service: %w", err))
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionHostManagerReady, "host manager is ready")
 }
 
 // cleanupHostManagerPod deletes the host-manager StatefulSet and service
 // This function is called when the WorkMachine is not in running state
-func (r *WorkMachineReconciler) cleanupHostManagerPod(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) cleanupHostManagerPod(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 	hostManagerName := "host-manager"
 
 	// Delete StatefulSet if it exists (this will cascade delete pods)
-	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
+	if err := r.Delete(ctx, &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      hostManagerName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete host-manager statefulset: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionHostManagerReady, fmt.Errorf("failed to delete host-manager statefulset: %w", err))
 		}
 	}
 
 	// Delete service
-	if err := r.Delete(check.Context(), &corev1.Service{
+	if err := r.Delete(ctx, &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      hostManagerName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete host-manager service: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionHostManagerReady, fmt.Errorf("failed to delete host-manager service: %w", err))
 		}
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionHostManagerReady, "host manager is cleaned up")
 }

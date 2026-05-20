@@ -1,11 +1,12 @@
-package workmachine
+package machinescoped
 
 import (
+	"context"
 	"fmt"
 
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
+
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
-	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -25,7 +27,8 @@ const (
 )
 
 // ensureTunnelServer ensures the tunnel-server StatefulSet exists for WireGuard connectivity
-func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) ensureTunnelServer(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 	clusterRoleName := fmt.Sprintf("%s-%s", tunnelServerName, obj.Name)
 	clusterRoleBindingName := fmt.Sprintf("%s-%s", tunnelServerName, obj.Name)
@@ -43,14 +46,14 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, serviceAccount, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, serviceAccount, func() error {
 		if !fn.IsOwner(serviceAccount, obj) {
 			serviceAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 		serviceAccount.Labels = labels
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update tunnel-server service account: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to create/update tunnel-server service account: %w", err))
 	}
 
 	// Create ClusterRole
@@ -60,7 +63,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRole, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
 		if !fn.IsOwner(clusterRole, obj) {
 			clusterRole.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
@@ -99,7 +102,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update tunnel-server cluster role: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to create/update tunnel-server cluster role: %w", err))
 	}
 
 	// Create ClusterRoleBinding
@@ -109,7 +112,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, clusterRoleBinding, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
 		if !fn.IsOwner(clusterRoleBinding, obj) {
 			clusterRoleBinding.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
@@ -128,7 +131,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update tunnel-server cluster role binding: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to create/update tunnel-server cluster role binding: %w", err))
 	}
 
 	// Create StatefulSet for tunnel-server
@@ -139,7 +142,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
 		statefulSet.SetLabels(fn.MapMerge(statefulSet.GetLabels(), labels))
 
 		if !fn.IsOwner(statefulSet, obj) {
@@ -160,8 +163,8 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 				Spec: corev1.PodSpec{
 					ServiceAccountName:            tunnelServerName,
 					TerminationGracePeriodSeconds: fn.Ptr(int64(10)),
-					NodeSelector:                  workMachineAddOnPlacement(obj.Name).NodeSelector,
-					Tolerations:                   workMachineAddOnPlacement(obj.Name).Tolerations,
+					NodeSelector:                  workmachineshared.WorkMachineAddOnPlacement(obj.Name).NodeSelector,
+					Tolerations:                   workmachineshared.WorkMachineAddOnPlacement(obj.Name).Tolerations,
 					Containers: []corev1.Container{
 						{
 							Name:            tunnelServerName,
@@ -306,7 +309,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update tunnel-server statefulset: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to create/update tunnel-server statefulset: %w", err))
 	}
 
 	// Create Service for tunnel-server
@@ -317,7 +320,7 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svc, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
 		svc.SetLabels(fn.MapMerge(svc.GetLabels(), labels))
 
 		if !fn.IsOwner(svc, obj) {
@@ -355,75 +358,76 @@ func (r *WorkMachineReconciler) ensureTunnelServer(check *reconciler.Check[*v1.W
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update tunnel-server service: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to create/update tunnel-server service: %w", err))
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionTunnelServerReady, "tunnel server is ready")
 }
 
 // cleanupTunnelServer deletes the tunnel-server StatefulSet, service, and RBAC resources
-func (r *WorkMachineReconciler) cleanupTunnelServer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) cleanupTunnelServer(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 	clusterRoleName := fmt.Sprintf("%s-%s", tunnelServerName, obj.Name)
 	clusterRoleBindingName := fmt.Sprintf("%s-%s", tunnelServerName, obj.Name)
 
 	// Delete StatefulSet if it exists
-	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
+	if err := r.Delete(ctx, &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tunnelServerName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete tunnel-server statefulset: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to delete tunnel-server statefulset: %w", err))
 		}
 	}
 
 	// Delete service
-	if err := r.Delete(check.Context(), &corev1.Service{
+	if err := r.Delete(ctx, &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tunnelServerName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete tunnel-server service: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to delete tunnel-server service: %w", err))
 		}
 	}
 
 	// Delete ClusterRoleBinding
-	if err := r.Delete(check.Context(), &rbacv1.ClusterRoleBinding{
+	if err := r.Delete(ctx, &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleBindingName,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete tunnel-server cluster role binding: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to delete tunnel-server cluster role binding: %w", err))
 		}
 	}
 
 	// Delete ClusterRole
-	if err := r.Delete(check.Context(), &rbacv1.ClusterRole{
+	if err := r.Delete(ctx, &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleName,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete tunnel-server cluster role: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to delete tunnel-server cluster role: %w", err))
 		}
 	}
 
 	// Delete ServiceAccount
-	if err := r.Delete(check.Context(), &corev1.ServiceAccount{
+	if err := r.Delete(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tunnelServerName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete tunnel-server service account: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionTunnelServerReady, fmt.Errorf("failed to delete tunnel-server service account: %w", err))
 		}
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionTunnelServerReady, "tunnel server is cleaned up")
 }

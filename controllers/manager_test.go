@@ -5,7 +5,7 @@ import (
 )
 
 func TestPlatformAPIControllerNames(t *testing.T) {
-	want := []string{"user", "workmachine"}
+	want := []string{"user", "workmachine-platform-scoped"}
 	got := PlatformAPIControllerNames()
 
 	if len(got) != len(want) {

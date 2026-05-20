@@ -18,6 +18,10 @@ func TestNewRootCommandIncludesServerModes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "api", apiCmd.Use)
 
+	workMachineManagerCmd, _, err := root.Find([]string{"server", "workmachine-manager"})
+	require.NoError(t, err)
+	require.Equal(t, "workmachine-manager", workMachineManagerCmd.Use)
+
 	tunnelCmd, _, err := root.Find([]string{"server", "tunnel"})
 	require.NoError(t, err)
 	require.Equal(t, "tunnel", tunnelCmd.Use)

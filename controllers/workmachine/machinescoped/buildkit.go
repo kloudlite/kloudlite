@@ -1,12 +1,13 @@
-package workmachine
+package machinescoped
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
 	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -24,7 +26,8 @@ const (
 )
 
 // ensureBuildKit ensures the Docker dind StatefulSet exists for container image builds
-func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) ensureBuildKit(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 
 	labels := map[string]string{
@@ -49,7 +52,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 	// Get the wm-ingress-controller service ClusterIP for /etc/hosts entry
 	var ingressControllerIP string
 	ingressSvc := &corev1.Service{}
-	if err := r.Get(check.Context(), fn.NN(namespace, "wm-ingress-controller"), ingressSvc); err == nil {
+	if err := r.Get(ctx, fn.NN(namespace, "wm-ingress-controller"), ingressSvc); err == nil {
 		ingressControllerIP = ingressSvc.Spec.ClusterIP
 	}
 
@@ -72,7 +75,7 @@ func (r *WorkMachineReconciler) ensureBuildKit(check *reconciler.Check[*v1.WorkM
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
 		statefulSet.SetLabels(fn.MapMerge(statefulSet.GetLabels(), labels))
 
 		if !fn.IsOwner(statefulSet, obj) {
@@ -121,8 +124,8 @@ echo "CA certificate installed for %s"
 					TerminationGracePeriodSeconds: fn.Ptr(int64(30)),
 					HostAliases:                   hostAliases,
 					InitContainers:                initContainers,
-					NodeSelector:                  workMachineAddOnPlacement(obj.Name).NodeSelector,
-					Tolerations:                   workMachineAddOnPlacement(obj.Name).Tolerations,
+					NodeSelector:                  workmachineshared.WorkMachineAddOnPlacement(obj.Name).NodeSelector,
+					Tolerations:                   workmachineshared.WorkMachineAddOnPlacement(obj.Name).Tolerations,
 					Containers: []corev1.Container{
 						{
 							Name:            dockerDindName,
@@ -238,7 +241,7 @@ echo "CA certificate installed for %s"
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update docker-dind statefulset: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionBuildKitReady, fmt.Errorf("failed to create/update docker-dind statefulset: %w", err))
 	}
 
 	// Create Service for docker dind
@@ -249,7 +252,7 @@ echo "CA certificate installed for %s"
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, svc, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
 		svc.SetLabels(fn.MapMerge(svc.GetLabels(), labels))
 
 		if !fn.IsOwner(svc, obj) {
@@ -269,21 +272,21 @@ echo "CA certificate installed for %s"
 
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update docker-dind service: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionBuildKitReady, fmt.Errorf("failed to create/update docker-dind service: %w", err))
 	}
 
 	// Cleanup old buildkitd resources if they exist
-	r.cleanupOldBuildKit(check, obj)
+	r.cleanupOldBuildKit(ctx, obj)
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionBuildKitReady, "buildkit is ready")
 }
 
 // cleanupOldBuildKit cleans up old buildkitd resources from the previous implementation
-func (r *WorkMachineReconciler) cleanupOldBuildKit(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) {
+func (r *MachineScopedReconciler) cleanupOldBuildKit(ctx context.Context, obj *v1.WorkMachine) {
 	namespace := obj.Spec.TargetNamespace
 
 	// Delete old buildkitd StatefulSet if it exists
-	_ = r.Delete(check.Context(), &appsv1.StatefulSet{
+	_ = r.Delete(ctx, &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "buildkitd",
 			Namespace: namespace,
@@ -291,7 +294,7 @@ func (r *WorkMachineReconciler) cleanupOldBuildKit(check *reconciler.Check[*v1.W
 	})
 
 	// Delete old buildkitd service if it exists
-	_ = r.Delete(check.Context(), &corev1.Service{
+	_ = r.Delete(ctx, &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "buildkitd",
 			Namespace: namespace,
@@ -300,35 +303,36 @@ func (r *WorkMachineReconciler) cleanupOldBuildKit(check *reconciler.Check[*v1.W
 }
 
 // cleanupBuildKit deletes the Docker dind StatefulSet and service
-func (r *WorkMachineReconciler) cleanupBuildKit(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) cleanupBuildKit(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 
 	// Delete StatefulSet if it exists
-	if err := r.Delete(check.Context(), &appsv1.StatefulSet{
+	if err := r.Delete(ctx, &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dockerDindName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete docker-dind statefulset: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionBuildKitReady, fmt.Errorf("failed to delete docker-dind statefulset: %w", err))
 		}
 	}
 
 	// Delete service
-	if err := r.Delete(check.Context(), &corev1.Service{
+	if err := r.Delete(ctx, &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dockerDindName,
 			Namespace: namespace,
 		},
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return check.Failed(fmt.Errorf("failed to delete docker-dind service: %w", err))
+			return markMachineFailed(session, workmachineshared.ConditionBuildKitReady, fmt.Errorf("failed to delete docker-dind service: %w", err))
 		}
 	}
 
 	// Also cleanup old buildkitd resources
-	r.cleanupOldBuildKit(check, obj)
+	r.cleanupOldBuildKit(ctx, obj)
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionBuildKitReady, "buildkit is cleaned up")
 }

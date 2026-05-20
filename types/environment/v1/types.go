@@ -9,6 +9,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="TargetNamespace",type=string,JSONPath=`.spec.targetNamespace`
 // +kubebuilder:printcolumn:name="Activated",type=boolean,JSONPath=`.spec.activated`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
@@ -415,6 +416,7 @@ type EnvironmentList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environmentName`
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
@@ -535,6 +537,7 @@ type EnvironmentSnapshotRequestList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environmentName`
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
@@ -663,6 +666,7 @@ type EnvironmentSnapshotRestoreList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="NewEnv",type=string,JSONPath=`.spec.newEnvironmentName`
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.sourceSnapshot.snapshotName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`

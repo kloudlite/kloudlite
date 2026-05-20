@@ -1,16 +1,18 @@
-package workmachine
+package machinescoped
 
 import (
+	"context"
 	"fmt"
 
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
+
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
-	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/reconciler"
-	v1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -20,7 +22,8 @@ const (
 )
 
 // ensureCodeAnalyzer ensures the code-analyzer StatefulSet exists
-func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) ensureCodeAnalyzer(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 
 	labels := map[string]string{
@@ -36,14 +39,14 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, serviceAccount, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, serviceAccount, func() error {
 		if !fn.IsOwner(serviceAccount, obj) {
 			serviceAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 		serviceAccount.Labels = labels
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update code-analyzer service account: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionCodeAnalyzerReady, fmt.Errorf("failed to create/update code-analyzer service account: %w", err))
 	}
 
 	// Create StatefulSet
@@ -54,7 +57,7 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, statefulSet, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
 		statefulSet.SetLabels(fn.MapMerge(statefulSet.GetLabels(), labels))
 
 		if !fn.IsOwner(statefulSet, obj) {
@@ -75,8 +78,8 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 				Spec: corev1.PodSpec{
 					ServiceAccountName:            codeAnalyzerName,
 					TerminationGracePeriodSeconds: fn.Ptr(int64(30)),
-					NodeSelector:                  workMachineAddOnPlacement(obj.Name).NodeSelector,
-					Tolerations:                   workMachineAddOnPlacement(obj.Name).Tolerations,
+					NodeSelector:                  workmachineshared.WorkMachineAddOnPlacement(obj.Name).NodeSelector,
+					Tolerations:                   workmachineshared.WorkMachineAddOnPlacement(obj.Name).Tolerations,
 					Containers: []corev1.Container{
 						{
 							Name:            codeAnalyzerName,
@@ -177,7 +180,7 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update code-analyzer statefulset: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionCodeAnalyzerReady, fmt.Errorf("failed to create/update code-analyzer statefulset: %w", err))
 	}
 
 	// Create Service
@@ -188,7 +191,7 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 		},
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(check.Context(), r.Client, service, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, service, func() error {
 		service.SetLabels(fn.MapMerge(service.GetLabels(), labels))
 
 		if !fn.IsOwner(service, obj) {
@@ -208,14 +211,15 @@ func (r *WorkMachineReconciler) ensureCodeAnalyzer(check *reconciler.Check[*v1.W
 		}
 		return nil
 	}); err != nil {
-		return check.Failed(fmt.Errorf("failed to create/update code-analyzer service: %w", err))
+		return markMachineFailed(session, workmachineshared.ConditionCodeAnalyzerReady, fmt.Errorf("failed to create/update code-analyzer service: %w", err))
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionCodeAnalyzerReady, "code analyzer is ready")
 }
 
 // cleanupCodeAnalyzer removes the code-analyzer resources
-func (r *WorkMachineReconciler) cleanupCodeAnalyzer(check *reconciler.Check[*v1.WorkMachine], obj *v1.WorkMachine) reconciler.StepResult {
+func (r *MachineScopedReconciler) cleanupCodeAnalyzer(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
 	namespace := obj.Spec.TargetNamespace
 
 	// Delete Service
@@ -225,8 +229,8 @@ func (r *WorkMachineReconciler) cleanupCodeAnalyzer(check *reconciler.Check[*v1.
 			Namespace: namespace,
 		},
 	}
-	if err := r.Client.Delete(check.Context(), service); err != nil && !apiErrors.IsNotFound(err) {
-		return check.Failed(fmt.Errorf("failed to delete code-analyzer service: %w", err))
+	if err := r.Client.Delete(ctx, service); err != nil && !apiErrors.IsNotFound(err) {
+		return markMachineFailed(session, workmachineshared.ConditionCodeAnalyzerReady, fmt.Errorf("failed to delete code-analyzer service: %w", err))
 	}
 
 	// Delete StatefulSet
@@ -236,8 +240,8 @@ func (r *WorkMachineReconciler) cleanupCodeAnalyzer(check *reconciler.Check[*v1.
 			Namespace: namespace,
 		},
 	}
-	if err := r.Client.Delete(check.Context(), statefulSet); err != nil && !apiErrors.IsNotFound(err) {
-		return check.Failed(fmt.Errorf("failed to delete code-analyzer statefulset: %w", err))
+	if err := r.Client.Delete(ctx, statefulSet); err != nil && !apiErrors.IsNotFound(err) {
+		return markMachineFailed(session, workmachineshared.ConditionCodeAnalyzerReady, fmt.Errorf("failed to delete code-analyzer statefulset: %w", err))
 	}
 
 	// Delete ServiceAccount
@@ -247,9 +251,9 @@ func (r *WorkMachineReconciler) cleanupCodeAnalyzer(check *reconciler.Check[*v1.
 			Namespace: namespace,
 		},
 	}
-	if err := r.Client.Delete(check.Context(), serviceAccount); err != nil && !apiErrors.IsNotFound(err) {
-		return check.Failed(fmt.Errorf("failed to delete code-analyzer service account: %w", err))
+	if err := r.Client.Delete(ctx, serviceAccount); err != nil && !apiErrors.IsNotFound(err) {
+		return markMachineFailed(session, workmachineshared.ConditionCodeAnalyzerReady, fmt.Errorf("failed to delete code-analyzer service account: %w", err))
 	}
 
-	return check.Passed()
+	return markMachineReady(session, workmachineshared.ConditionCodeAnalyzerReady, "code analyzer is cleaned up")
 }

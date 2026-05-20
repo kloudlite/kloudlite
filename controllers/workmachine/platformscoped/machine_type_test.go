@@ -1,4 +1,4 @@
-package workmachine
+package platformscoped
 
 import (
 	"testing"
@@ -100,7 +100,7 @@ func TestIsNodeReady(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &WorkMachineReconciler{}
+			r := &PlatformScopedReconciler{}
 			result := r.isNodeReady(tt.node)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -109,7 +109,7 @@ func TestIsNodeReady(t *testing.T) {
 
 // TestCountActiveWorkspaces tests the countActiveWorkspaces helper function
 func TestCountActiveWorkspaces(t *testing.T) {
-	r := &WorkMachineReconciler{}
+	r := &PlatformScopedReconciler{}
 
 	tests := []struct {
 		name            string
@@ -230,7 +230,7 @@ func TestCountActiveWorkspaces(t *testing.T) {
 
 // TestCountActiveEnvironments tests the countActiveEnvironments helper function
 func TestCountActiveEnvironments(t *testing.T) {
-	r := &WorkMachineReconciler{}
+	r := &PlatformScopedReconciler{}
 
 	tests := []struct {
 		name            string
@@ -390,7 +390,7 @@ func TestHasMachineTypeChanged(t *testing.T) {
 				},
 			}
 
-			r := &WorkMachineReconciler{}
+			r := &PlatformScopedReconciler{}
 			changed := r.hasMachineTypeChanged(obj)
 
 			assert.Equal(t, tt.expectedChanged, changed, "hasMachineTypeChanged result")
@@ -432,7 +432,7 @@ func TestMarkMachineTypeChangeComplete(t *testing.T) {
 		},
 	}
 
-	r := &WorkMachineReconciler{}
+	r := &PlatformScopedReconciler{}
 	r.markMachineTypeChangeComplete(obj, node)
 
 	assert.Equal(t, v1.MachineStateRunning, obj.Status.State, "State should be Running")
