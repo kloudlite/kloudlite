@@ -17,6 +17,14 @@ on:
         description: 'Kloudlite server binary'
         type: boolean
         default: false
+      api-server:
+        description: 'API Server image'
+        type: boolean
+        default: false
+      workmachine-manager:
+        description: 'WorkMachine Manager image'
+        type: boolean
+        default: false
       oci-installer:
         description: 'OCI Installer'
         type: boolean
@@ -80,6 +88,8 @@ jobs:
       is_binary: ${{ steps.resolve.outputs.is_binary }}
       # Per-app flags (for manual dispatch)
       kloudlite: ${{ steps.apps.outputs.kloudlite }}
+      api-server: ${{ steps.apps.outputs.api-server }}
+      workmachine-manager: ${{ steps.apps.outputs.workmachine-manager }}
       oci-installer: ${{ steps.apps.outputs.oci-installer }}
       k3s-backup: ${{ steps.apps.outputs.k3s-backup }}
       code-analyzer: ${{ steps.apps.outputs.code-analyzer }}
@@ -108,7 +118,7 @@ jobs:
             IS_BINARY="false"
             case "$APP_NAME" in
               kloudlite|kli|kltun) IS_BINARY="true" ;;
-              oci-installer|k3s-backup|code-analyzer|workspace-base|workspace-comprehensive|console|dashboard|website)
+              api-server|workmachine-manager|oci-installer|k3s-backup|code-analyzer|workspace-base|workspace-comprehensive|console|dashboard|website)
                 IS_DOCKER="true" ;;
               *)
                 echo "::error::Unknown app in tag: ${APP_NAME}"
@@ -140,7 +150,7 @@ jobs:
           IS_TAG_PUSH="${{ steps.resolve.outputs.is_tag_push }}"
           APP_NAME="${{ steps.resolve.outputs.app_name }}"
 
-          ALL_APPS="kloudlite oci-installer k3s-backup code-analyzer workspace-base workspace-comprehensive console dashboard website kli kltun"
+          ALL_APPS="kloudlite api-server workmachine-manager oci-installer k3s-backup code-analyzer workspace-base workspace-comprehensive console dashboard website kli kltun"
 
           if [ "$IS_TAG_PUSH" = "true" ]; then
             # Tag push: only the tagged app
@@ -159,6 +169,8 @@ jobs:
               VAL="false"
               case "$APP" in
                 kloudlite) VAL="${{ inputs.kloudlite }}" ;;
+                api-server) VAL="${{ inputs.api-server }}" ;;
+                workmachine-manager) VAL="${{ inputs.workmachine-manager }}" ;;
                 oci-installer) VAL="${{ inputs.oci-installer }}" ;;
                 k3s-backup) VAL="${{ inputs.k3s-backup }}" ;;
                 code-analyzer) VAL="${{ inputs.code-analyzer }}" ;;
@@ -193,6 +205,22 @@ jobs:
           fi
 
   # ── Docker: support images ───────────────────────────────────────────
+  api-server:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.api-server == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: api-server
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  workmachine-manager:
+    needs: prepare
+    if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.workmachine-manager == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workmachine-manager
+      tag: ${{ needs.prepare.outputs.tag }}
+
   oci-installer:
     needs: prepare
     if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.oci-installer == 'true'

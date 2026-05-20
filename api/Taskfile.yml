@@ -21,19 +21,21 @@ tasks:
       - go build -ldflags='-s -w' -o bin/workmachine-manager ./cli/kloudlite/
 
   build:kloudlite:
-    desc: Compatibility alias for build:api-server
+    desc: Build the unified kloudlite backend binary
+    env:
+      CGO_ENABLED: 0
     cmds:
-      - task: build:api-server
+      - go build -ldflags='-s -w' -o bin/kloudlite ./cli/kloudlite/
 
   build:server:
-    desc: Compatibility alias for build:api-server
+    desc: Compatibility alias for build:kloudlite
     cmds:
-      - task: build:api-server
+      - task: build:kloudlite
 
   build:tunnel-server:
-    desc: Compatibility alias for build:api-server
+    desc: Compatibility alias for build:kloudlite
     cmds:
-      - task: build:api-server
+      - task: build:kloudlite
 
   build:oci-installer:
     env:
@@ -62,7 +64,7 @@ tasks:
   verify:backend-roadmap:
     desc: Run focused backend roadmap verification tests
     cmds:
-      - go test ./api/crds/... ./api/config ./api/k8s ./api/server ./api/resources/... ./pkg/intercepts ./controllers/composition ./controllers/environment ./controllers/workmachine ./controllers/workspace ./cli/kl/cmd ./cli/kl/pkg/workspace ./cli/kloudlite/cmd -v
+      - go test ./api/crds/... ./api/config ./api/k8s ./api/server ./api/resources/... ./pkg/intercepts ./controllers/composition ./controllers/environment ./controllers/workmachine/... ./controllers/workspace ./cli/kl/cmd ./cli/kl/pkg/workspace ./cli/kloudlite/cmd -v
 
   verify:platform-api:
     desc: Build the platform-api binary and run focused platform-api tests
