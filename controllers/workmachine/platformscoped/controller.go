@@ -107,6 +107,7 @@ func (r *PlatformScopedReconciler) lifecycleSteps() []platformLifecycleStep {
 		{
 			Name:     "ensure-workmachine-manager",
 			OnCreate: r.ensureWorkMachineManager,
+			OnDelete: r.cleanupWorkMachineManager,
 		},
 	}
 }
@@ -182,7 +183,7 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 	serviceAccount := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: r.env.PodNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, serviceAccount, func() error {
 		serviceAccount.Labels = labels
-		return nil
+		return controllerutil.SetControllerReference(obj, serviceAccount, r.Scheme)
 	}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to ensure workmachine-manager service account: %w", err)
 	}
@@ -192,7 +193,7 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 		clusterRoleBinding.Labels = labels
 		clusterRoleBinding.RoleRef = rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: "cluster-admin"}
 		clusterRoleBinding.Subjects = []rbacv1.Subject{{Kind: "ServiceAccount", Name: name, Namespace: r.env.PodNamespace}}
-		return nil
+		return controllerutil.SetControllerReference(obj, clusterRoleBinding, r.Scheme)
 	}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to ensure workmachine-manager cluster role binding: %w", err)
 	}
@@ -224,11 +225,25 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 				{Name: "POD_NAMESPACE", Value: r.env.PodNamespace},
 			},
 		}}
-		return nil
+		return controllerutil.SetControllerReference(obj, statefulSet, r.Scheme)
 	}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to ensure workmachine-manager statefulset: %w", err)
 	}
 
+	return ctrl.Result{}, nil
+}
+
+func (r *PlatformScopedReconciler) cleanupWorkMachineManager(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	name := workMachineManagerName(session.Object().Name)
+	if err := r.Delete(ctx, &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: r.env.PodNamespace}}); err != nil && !apiErrors.IsNotFound(err) {
+		return ctrl.Result{}, fmt.Errorf("failed to delete workmachine-manager statefulset %s: %w", name, err)
+	}
+	if err := r.Delete(ctx, &rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: name}}); err != nil && !apiErrors.IsNotFound(err) {
+		return ctrl.Result{}, fmt.Errorf("failed to delete workmachine-manager cluster role binding %s: %w", name, err)
+	}
+	if err := r.Delete(ctx, &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: r.env.PodNamespace}}); err != nil && !apiErrors.IsNotFound(err) {
+		return ctrl.Result{}, fmt.Errorf("failed to delete workmachine-manager service account %s: %w", name, err)
+	}
 	return ctrl.Result{}, nil
 }
 
