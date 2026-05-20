@@ -263,7 +263,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.DEPLOY_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         if: inputs.app != 'workspace-comprehensive'
@@ -273,6 +273,10 @@ jobs:
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ inputs.tag }}
           cache-from: type=gha,scope=${{ inputs.app }}
           cache-to: type=gha,mode=max,scope=${{ inputs.app }}
           platforms: linux/amd64
@@ -287,6 +291,10 @@ jobs:
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ inputs.tag }}
           cache-from: type=gha,scope=${{ inputs.app }}
           cache-to: type=gha,mode=max,scope=${{ inputs.app }}
           platforms: linux/amd64
