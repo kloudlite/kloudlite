@@ -4,6 +4,9 @@ includes:
   api:
     taskfile: ./api/Taskfile.yml
     dir: .
+  build-sys:
+    taskfile: ./build-sys/Taskfile.yml
+    dir: .
 
 tasks:
   backend:build:platform-api:

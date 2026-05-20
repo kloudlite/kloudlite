@@ -25,7 +25,7 @@ cd "$REPO_ROOT"
 
 # Build the Docker image
 docker build \
-  -f api/workspace-images/comprehensive/Dockerfile \
+  -f build-sys/images/workspace-comprehensive/Dockerfile \
   -t kloudlite/workspace-comprehensive:latest \
   --build-arg BASE_IMAGE=kloudlite/workspace-base:latest \
   .
