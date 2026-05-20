@@ -106,6 +106,22 @@ jobs:
 
   # ── Docker: non-runtime support images ───────────────────────────────
 
+  api-server:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: api-server
+      tag: ${{ needs.detect.outputs.tag }}
+
+  workmachine-manager:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workmachine-manager
+      tag: ${{ needs.detect.outputs.tag }}
+
   oci-installer:
     needs: detect
     if: needs.detect.outputs.api == 'true'

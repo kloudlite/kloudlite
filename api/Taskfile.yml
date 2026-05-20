@@ -2,26 +2,38 @@ version: 3
 
 tasks:
   build:platform-api:
-    desc: Build the unified kloudlite binary used by platform-api
+    desc: Build the api-server binary
     cmds:
-      - task: build:kloudlite
+      - task: build:api-server
 
-  build:kloudlite:
-    desc: Build the unified kloudlite backend binary
+  build:api-server:
+    desc: Build the api-server binary
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build -ldflags='-s -w' -o bin/kloudlite ./cli/kloudlite/
+      - go build -ldflags='-s -w' -o bin/api-server ./cli/kloudlite/
+
+  build:workmachine-manager:
+    desc: Build the workmachine-manager binary
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags='-s -w' -o bin/workmachine-manager ./cli/kloudlite/
+
+  build:kloudlite:
+    desc: Compatibility alias for build:api-server
+    cmds:
+      - task: build:api-server
 
   build:server:
-    desc: Compatibility alias for build:kloudlite
+    desc: Compatibility alias for build:api-server
     cmds:
-      - task: build:kloudlite
+      - task: build:api-server
 
   build:tunnel-server:
-    desc: Compatibility alias for build:kloudlite
+    desc: Compatibility alias for build:api-server
     cmds:
-      - task: build:kloudlite
+      - task: build:api-server
 
   build:oci-installer:
     env:

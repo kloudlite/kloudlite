@@ -36,6 +36,24 @@ jobs:
           echo "version=0.0.0-nightly.${DATE}" >> "$GITHUB_OUTPUT"
 
   # ── Docker: support images ───────────────────────────────────────────
+  api-server:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: api-server
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+      ref: development
+
+  workmachine-manager:
+    needs: prepare
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workmachine-manager
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_nightly: true
+      ref: development
+
   oci-installer:
     needs: prepare
     uses: ./.github/workflows/_build-docker.yml

@@ -44,6 +44,20 @@ jobs:
           APP="${{ inputs.app }}"
 
           case "${APP}" in
+            api-server)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/api-server ./cli/kloudlite'
+              DOCKERFILE="./build-sys/images/api-server/Dockerfile"
+              DOCKER_CONTEXT="."
+              IMAGE_SUFFIX="api-server"
+              ;;
+            workmachine-manager)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/workmachine-manager ./cli/kloudlite'
+              DOCKERFILE="./build-sys/images/workmachine-manager/Dockerfile"
+              DOCKER_CONTEXT="."
+              IMAGE_SUFFIX="workmachine-manager"
+              ;;
             oci-installer)
               BUILD_TYPE="go"
               BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/oci-installer ./cli/kli/oci-installer'
