@@ -75,5 +75,6 @@ test-results/
 .worktrees/
 .working-trees/
 .agents/
+.antigravitycli/
 docs/plans/
 docs/superpowers/
