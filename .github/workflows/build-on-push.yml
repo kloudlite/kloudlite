@@ -113,7 +113,6 @@ jobs:
     with:
       app: api-server
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   workmachine-manager:
     needs: detect
@@ -122,7 +121,6 @@ jobs:
     with:
       app: workmachine-manager
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   oci-installer:
     needs: detect
@@ -131,7 +129,6 @@ jobs:
     with:
       app: oci-installer
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   code-analyzer:
     needs: detect
@@ -140,7 +137,6 @@ jobs:
     with:
       app: code-analyzer
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   k3s-backup:
     needs: detect
@@ -149,7 +145,6 @@ jobs:
     with:
       app: k3s-backup
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   workspace-base:
     needs: detect
@@ -158,7 +153,6 @@ jobs:
     with:
       app: workspace-base
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   workspace-comprehensive:
     needs: [detect, workspace-base]
@@ -167,7 +161,6 @@ jobs:
     with:
       app: workspace-comprehensive
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   # ── Docker: Web apps ─────────────────────────────────────────────────
   console:
@@ -177,7 +170,6 @@ jobs:
     with:
       app: console
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   dashboard:
     needs: detect
@@ -186,7 +178,6 @@ jobs:
     with:
       app: dashboard
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   website:
     needs: detect
@@ -195,7 +186,6 @@ jobs:
     with:
       app: website
       tag: ${{ needs.detect.outputs.tag }}
-    secrets: inherit
 
   # ── Binaries: CLI tools ──────────────────────────────────────────────
   kli:
