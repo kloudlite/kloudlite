@@ -212,7 +212,6 @@ jobs:
     with:
       app: api-server
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   workmachine-manager:
     needs: prepare
@@ -221,7 +220,6 @@ jobs:
     with:
       app: workmachine-manager
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   oci-installer:
     needs: prepare
@@ -230,7 +228,6 @@ jobs:
     with:
       app: oci-installer
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   code-analyzer:
     needs: prepare
@@ -239,7 +236,6 @@ jobs:
     with:
       app: code-analyzer
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   k3s-backup:
     needs: prepare
@@ -248,7 +244,6 @@ jobs:
     with:
       app: k3s-backup
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   workspace-base:
     needs: prepare
@@ -257,7 +252,6 @@ jobs:
     with:
       app: workspace-base
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   workspace-comprehensive:
     needs: [prepare, workspace-base]
@@ -266,7 +260,6 @@ jobs:
     with:
       app: workspace-comprehensive
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   # ── Docker: Web apps ─────────────────────────────────────────────────
   console:
@@ -276,7 +269,6 @@ jobs:
     with:
       app: console
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   dashboard:
     needs: prepare
@@ -285,7 +277,6 @@ jobs:
     with:
       app: dashboard
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   website:
     needs: prepare
@@ -294,7 +285,6 @@ jobs:
     with:
       app: website
       tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
 
   # ── Binaries ─────────────────────────────────────────────────────────
   kloudlite:

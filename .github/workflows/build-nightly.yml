@@ -44,7 +44,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   workmachine-manager:
     needs: prepare
@@ -54,7 +53,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   oci-installer:
     needs: prepare
@@ -64,7 +62,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   code-analyzer:
     needs: prepare
@@ -74,7 +71,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   k3s-backup:
     needs: prepare
@@ -84,7 +80,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   workspace-base:
     needs: prepare
@@ -94,7 +89,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   workspace-comprehensive:
     needs: [prepare, workspace-base]
@@ -104,7 +98,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   # ── Docker: Web apps ─────────────────────────────────────────────────
   console:
@@ -115,7 +108,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   dashboard:
     needs: prepare
@@ -125,7 +117,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   website:
     needs: prepare
@@ -135,7 +126,6 @@ jobs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_nightly: true
       ref: development
-    secrets: inherit
 
   # ── Binaries ─────────────────────────────────────────────────────────
   kloudlite:
