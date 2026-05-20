@@ -155,6 +155,16 @@ jobs:
           go-version: '1.24'
           cache-dependency-path: go.sum
 
+      - name: Generate CRD assets
+        if: steps.app.outputs.build_type == 'go' || steps.app.outputs.build_type == 'workspace-comprehensive'
+        run: |
+          go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0
+          controller-gen crd paths="./types/..." output:crd:artifacts:config=manifests
+          go run api/crds/assets/generate.go -manifests manifests -output api/crds/assets/generated.go
+          mkdir -p cli/kli/internal/manifests
+          cat manifests/*.yaml > cli/kli/internal/manifests/crds.yaml
+          controller-gen object paths="./..."
+
       - name: Build Go binary
         if: steps.app.outputs.build_type == 'go'
         run: |
