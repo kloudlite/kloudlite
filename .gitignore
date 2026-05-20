@@ -35,6 +35,11 @@ supabase/.temp/
 .out
 bin/
 
+# Generated CRD artifacts
+manifests/*.yaml
+api/crds/assets/generated.go
+cli/kli/internal/manifests/crds.yaml
+
 # Kubernetes configs
 kubeconfig/
 *.kubeconfig
