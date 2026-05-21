@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/kloudlite/kloudlite/controllers/testutil"
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
@@ -17,6 +18,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -125,6 +128,8 @@ func TestWorkspaceReconcilerScopedGetWorkMachineRejectsOtherWorkMachine(t *testi
 
 func TestWorkspaceReconcilerReconcileSkipsOutOfScopeWorkspaceWithoutMutation(t *testing.T) {
 	scheme := testutil.NewTestScheme()
+	t.Cleanup(func() { cfg = nil })
+
 	workspace := &workspacev1.Workspace{
 		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-bob"},
 		Spec: workspacev1.WorkspaceSpec{
@@ -133,16 +138,38 @@ func TestWorkspaceReconcilerReconcileSkipsOutOfScopeWorkspaceWithoutMutation(t *
 			WorkmachineName: "bob-dev",
 		},
 	}
-	k8sClient := testutil.NewFakeClient(scheme, workspace).
+	orphanedClusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "orphaned-workspace-role",
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      "deleted-ws",
+				"kloudlite.io/workspace-namespace": "wm-bob",
+			},
+		},
+	}
+	orphanedClusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "orphaned-workspace-role-binding",
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      "deleted-ws",
+				"kloudlite.io/workspace-namespace": "wm-bob",
+			},
+		},
+	}
+	k8sClient := testutil.NewFakeClient(scheme, workspace, orphanedClusterRole, orphanedClusterRoleBinding).
 		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
 		Build()
 	reconciler := &WorkspaceReconciler{
 		Client:          k8sClient,
 		Scheme:          scheme,
 		Logger:          zaptest.NewLogger(t),
+		Cfg:             &ControllerConfig{},
 		OwnNamespace:    "wm-alice",
 		WorkMachineName: "alice-dev",
 	}
+	reconciler.Cfg.Workspace.RBACCleanupIntervalMinutes = 1
 
 	result, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "ws", Namespace: "wm-bob"}})
 
@@ -152,6 +179,14 @@ func TestWorkspaceReconcilerReconcileSkipsOutOfScopeWorkspaceWithoutMutation(t *
 	require.NoError(t, k8sClient.Get(context.Background(), types.NamespacedName{Name: "ws", Namespace: "wm-bob"}, updated))
 	assert.Empty(t, updated.Finalizers)
 	assert.Empty(t, updated.Labels["kloudlite.io/hash"])
+	assert.Never(t, func() bool {
+		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: "orphaned-workspace-role"}, &rbacv1.ClusterRole{})
+		return apierrors.IsNotFound(err)
+	}, 200*time.Millisecond, 10*time.Millisecond)
+	assert.Never(t, func() bool {
+		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: "orphaned-workspace-role-binding"}, &rbacv1.ClusterRoleBinding{})
+		return apierrors.IsNotFound(err)
+	}, 200*time.Millisecond, 10*time.Millisecond)
 }
 
 func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
