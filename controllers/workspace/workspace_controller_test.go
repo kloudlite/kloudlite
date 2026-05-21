@@ -49,6 +49,80 @@ func TestWorkspaceReconciler_Reconcile_NotFound(t *testing.T) {
 	assert.False(t, result.Requeue)
 }
 
+func TestWorkspaceReconcilerScopeAllowsCurrentWorkMachineWorkspace(t *testing.T) {
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if !reconciler.shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned false, want true")
+	}
+}
+
+func TestWorkspaceReconcilerScopeSkipsWrongNamespace(t *testing.T) {
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-bob"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if reconciler.shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true for workspace in another namespace")
+	}
+}
+
+func TestWorkspaceReconcilerScopeSkipsWrongWorkMachine(t *testing.T) {
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "bob-dev"},
+	}
+
+	if reconciler.shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true for workspace on another WorkMachine")
+	}
+}
+
+func TestWorkspaceReconcilerScopeFailsClosedWhenConfiguredIncomplete(t *testing.T) {
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if (&WorkspaceReconciler{OwnNamespace: "wm-alice"}).shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true with missing WorkMachineName")
+	}
+	if (&WorkspaceReconciler{WorkMachineName: "alice-dev"}).shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true with missing OwnNamespace")
+	}
+}
+
+func TestWorkspaceReconcilerUnscopedAllowsLegacyController(t *testing.T) {
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if !(&WorkspaceReconciler{}).shouldReconcileWorkspace(workspace) {
+		t.Fatalf("unscoped shouldReconcileWorkspace returned false, want true")
+	}
+}
+
+func TestWorkspaceReconcilerScopedGetWorkMachineRejectsOtherWorkMachine(t *testing.T) {
+	reconciler := &WorkspaceReconciler{WorkMachineName: "alice-dev"}
+
+	_, err := reconciler.getWorkMachine(context.Background(), "bob-dev")
+
+	if err == nil {
+		t.Fatalf("getWorkMachine returned nil error for another WorkMachine")
+	}
+	if !strings.Contains(err.Error(), "outside controller scope") {
+		t.Fatalf("error = %v, want outside controller scope", err)
+	}
+}
+
 func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
