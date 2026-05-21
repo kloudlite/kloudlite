@@ -61,6 +61,23 @@ func NewMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 	return newMachineScopedManager(cfg, installationCfg, authCfg, logger)
 }
 
+func machineScopedRuntimeScope() (namespace string, workMachineName string, err error) {
+	namespace = os.Getenv("POD_NAMESPACE")
+	if namespace == "" {
+		namespace = os.Getenv("NAMESPACE")
+	}
+	if namespace == "" {
+		return "", "", fmt.Errorf("machine-scoped manager requires namespace from POD_NAMESPACE or NAMESPACE")
+	}
+
+	workMachineName = os.Getenv("WORKMACHINE_NAME")
+	if workMachineName == "" {
+		return "", "", fmt.Errorf("machine-scoped manager requires WORKMACHINE_NAME")
+	}
+
+	return namespace, workMachineName, nil
+}
+
 func newMachineScopedManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -90,6 +107,10 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 	if err != nil {
 		return nil, fmt.Errorf("unable to load controller configuration: %w", err)
 	}
+	machineNamespace, workMachineName, err := machineScopedRuntimeScope()
+	if err != nil {
+		return nil, err
+	}
 	ingressReconciler := &wmingress.IngressReconciler{
 		Client:                  mgr.GetClient(),
 		Scheme:                  mgr.GetScheme(),
@@ -116,13 +137,13 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		ingressReconciler.WildcardSecretNamespace = os.Getenv("WM_INGRESS_WILDCARD_SECRET_NAMESPACE")
 	}
 	if ingressReconciler.WildcardSecretNamespace == "" {
-		ingressReconciler.WildcardSecretNamespace = os.Getenv("POD_NAMESPACE")
+		ingressReconciler.WildcardSecretNamespace = machineNamespace
 	}
 	if ingressReconciler.OwnNamespace == "" {
 		ingressReconciler.OwnNamespace = os.Getenv("WM_INGRESS_OWN_NAMESPACE")
 	}
 	if ingressReconciler.OwnNamespace == "" {
-		ingressReconciler.OwnNamespace = os.Getenv("POD_NAMESPACE")
+		ingressReconciler.OwnNamespace = machineNamespace
 	}
 	if ingressReconciler.RegistryUsername == "" {
 		ingressReconciler.RegistryUsername = os.Getenv("REGISTRY_USERNAME")
@@ -136,11 +157,8 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		Scheme:          mgr.GetScheme(),
 		Logger:          logger.With(zap.String("controller", "environment")),
 		Cfg:             controllerCfg,
-		OwnNamespace:    os.Getenv("POD_NAMESPACE"),
-		WorkMachineName: os.Getenv("WORKMACHINE_NAME"),
-	}
-	if environmentReconciler.OwnNamespace == "" {
-		environmentReconciler.OwnNamespace = os.Getenv("NAMESPACE")
+		OwnNamespace:    machineNamespace,
+		WorkMachineName: workMachineName,
 	}
 	if err := environmentReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to setup scoped Environment controller: %w", err)
@@ -170,11 +188,8 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		Clientset:       clientset,
 		JWTSecret:       authCfg.JWTSecret,
 		Cfg:             workspaceCfg,
-		OwnNamespace:    os.Getenv("POD_NAMESPACE"),
-		WorkMachineName: os.Getenv("WORKMACHINE_NAME"),
-	}
-	if workspaceReconciler.OwnNamespace == "" {
-		workspaceReconciler.OwnNamespace = os.Getenv("NAMESPACE")
+		OwnNamespace:    machineNamespace,
+		WorkMachineName: workMachineName,
 	}
 	if err := workspaceReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to setup scoped Workspace controller: %w", err)
