@@ -476,8 +476,8 @@ func (r *WorkspaceReconciler) cleanupWorkspaceSnapshots(ctx context.Context, wor
 // Returns the number of successfully deleted resources and a slice of errors encountered.
 func (r *WorkspaceReconciler) cleanupOrphanedRBACResources(ctx context.Context, logger *zap.Logger) (int, []error) {
 	logger.Info("Starting orphaned RBAC resource cleanup with pagination")
-	if r.scopeConfigured() && r.OwnNamespace == "" {
-		logger.Warn("Skipping orphaned RBAC cleanup because scoped controller has no OwnNamespace")
+	if r.scopeConfigured() && (r.OwnNamespace == "" || r.WorkMachineName == "") {
+		logger.Warn("Skipping orphaned RBAC cleanup because controller scope is incomplete")
 		return 0, nil
 	}
 
