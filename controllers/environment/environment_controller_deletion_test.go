@@ -22,6 +22,8 @@ func TestEnvironmentReconciler_HandleDeletion(t *testing.T) {
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "deleting-env",
+			Namespace:         "wm-alice",
+			UID:               types.UID("deleting-env-uid"),
 			DeletionTimestamp: &now,
 			Finalizers:        []string{environmentFinalizer},
 		},
@@ -36,6 +38,7 @@ func TestEnvironmentReconciler_HandleDeletion(t *testing.T) {
 			Name: "deleting-namespace",
 		},
 	}
+	applyEnvironmentNamespaceOwnership(namespace, env)
 
 	k8sClient := testutil.NewFakeClient(scheme, env, namespace).Build()
 
@@ -48,7 +51,8 @@ func TestEnvironmentReconciler_HandleDeletion(t *testing.T) {
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
-			Name: "deleting-env",
+			Name:      "deleting-env",
+			Namespace: "wm-alice",
 		},
 	}
 
@@ -64,6 +68,8 @@ func TestEnvironmentReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "deleting-env",
+			Namespace:         "wm-alice",
+			UID:               types.UID("deleting-env-uid"),
 			DeletionTimestamp: &now,
 			Finalizers:        []string{environmentFinalizer},
 		},
@@ -85,7 +91,8 @@ func TestEnvironmentReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
-			Name: "deleting-env",
+			Name:      "deleting-env",
+			Namespace: "wm-alice",
 		},
 	}
 
@@ -95,7 +102,7 @@ func TestEnvironmentReconciler_HandleDeletion_NamespaceAlreadyDeleted(t *testing
 
 	// Verify finalizer was removed
 	updatedEnv := &environmentsv1.Environment{}
-	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "deleting-env"}, updatedEnv)
+	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "deleting-env", Namespace: "wm-alice"}, updatedEnv)
 	// Environment might be deleted by fake client
 	if err == nil {
 		assert.NotContains(t, updatedEnv.Finalizers, environmentFinalizer)
@@ -109,6 +116,7 @@ func TestEnvironmentReconciler_HandleDeletion_CleanupFailure(t *testing.T) {
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "deleting-env",
+			Namespace:         "wm-alice",
 			DeletionTimestamp: &now,
 			Finalizers:        []string{environmentFinalizer},
 		},
@@ -123,6 +131,7 @@ func TestEnvironmentReconciler_HandleDeletion_CleanupFailure(t *testing.T) {
 			Name: "deleting-namespace",
 		},
 	}
+	applyEnvironmentNamespaceOwnership(namespace, env)
 
 	// Create fake client that will return error on Update
 	k8sClient := testutil.NewFakeClient(scheme, env, namespace).Build()
@@ -135,13 +144,36 @@ func TestEnvironmentReconciler_HandleDeletion_CleanupFailure(t *testing.T) {
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
-			Name: "deleting-env",
+			Name:      "deleting-env",
+			Namespace: "wm-alice",
 		},
 	}
 
 	_, err := reconciler.Reconcile(context.Background(), req)
 	// With fake client, cleanup should succeed (no workspaces to clean up)
 	assert.NoError(t, err)
+}
+
+func TestEnvironmentReconciler_Delete_DoesNotDeleteUnownedNamespace(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	now := metav1.Now()
+	env := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-env", Namespace: "wm-alice", UID: types.UID("env-uid"), Finalizers: []string{environmentFinalizer}, DeletionTimestamp: &now},
+		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "shared-namespace", OwnedBy: "alice", Activated: true},
+	}
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared-namespace"}}
+	k8sClient := testutil.NewFakeClient(scheme, env, ns).WithStatusSubresource(&environmentsv1.Environment{}).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop()}
+
+	_, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "test-env", Namespace: "wm-alice"}})
+	if err == nil {
+		t.Fatalf("Reconcile returned nil error, want ownership mismatch")
+	}
+
+	remaining := &corev1.Namespace{}
+	if getErr := k8sClient.Get(context.Background(), types.NamespacedName{Name: "shared-namespace"}, remaining); getErr != nil {
+		t.Fatalf("namespace was deleted or inaccessible, get error: %v", getErr)
+	}
 }
 
 func TestJoinErrors(t *testing.T) {

@@ -49,24 +49,6 @@ type ServiceInterceptConfig struct {
 	WorkspaceRef *corev1.ObjectReference `json:"workspaceRef,omitempty"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced,categories={kloudlite,environments},shortName=comp
-// +kubebuilder:storageversion
-// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
-// +kubebuilder:printcolumn:name="Services",type=integer,JSONPath=`.status.servicesCount`
-// +kubebuilder:printcolumn:name="Running",type=integer,JSONPath=`.status.runningCount`
-// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
-
-// Composition represents a Docker Compose application deployed in an environment
-type Composition struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   CompositionSpec   `json:"spec,omitempty"`
-	Status CompositionStatus `json:"status,omitempty"`
-}
-
 // CompositionSpec defines the desired state of Composition
 type CompositionSpec struct {
 	// DisplayName is the human-readable name for the composition
@@ -322,13 +304,4 @@ type DeployedResources struct {
 	// NetworkPolicies created
 	// +optional
 	NetworkPolicies []string `json:"networkPolicies,omitempty"`
-}
-
-// +kubebuilder:object:root=true
-
-// CompositionList contains a list of Composition
-type CompositionList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Composition `json:"items"`
 }

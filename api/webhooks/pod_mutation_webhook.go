@@ -83,13 +83,11 @@ func (w *PodMutationWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 		}
 	}
 
-	// List all Compositions in the pod's namespace (intercepts are now part of Composition)
-	compositionList := &environmentsv1.CompositionList{}
-	err := w.client.List(context.TODO(), compositionList,
-		client.InNamespace(req.Namespace))
-
+	// List environments and find those whose embedded compose resources run in this pod's namespace.
+	environmentList := &environmentsv1.EnvironmentList{}
+	err := w.client.List(context.TODO(), environmentList)
 	if err != nil {
-		w.logger.Error("Failed to list Compositions: " + err.Error())
+		w.logger.Error("failed to list environments: " + err.Error())
 		// Allow the pod to proceed without modification on error
 		return &admissionv1.AdmissionResponse{
 			Allowed: true,
@@ -99,18 +97,16 @@ func (w *PodMutationWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 	// Check if this pod matches any active intercept's original selector
 	var matchedInterceptName string
 
-	for _, composition := range compositionList.Items {
-		// Only consider compositions that are not being deleted
-		if composition.DeletionTimestamp != nil {
+	for _, environment := range environmentList.Items {
+		if environment.DeletionTimestamp != nil || environment.Spec.TargetNamespace != req.Namespace {
 			continue
 		}
 
-		// Check all active intercepts in this composition
-		for _, activeIntercept := range composition.Status.ActiveIntercepts {
+		for _, activeIntercept := range environment.Status.ComposeStatus.ActiveIntercepts {
 			// Check if pod labels match the original service selector
 			if activeIntercept.OriginalServiceSelector != nil {
 				if podMatchesSelector(&pod, activeIntercept.OriginalServiceSelector) {
-					matchedInterceptName = fmt.Sprintf("%s/%s", composition.Name, activeIntercept.ServiceName)
+					matchedInterceptName = fmt.Sprintf("%s/%s", environment.Name, activeIntercept.ServiceName)
 					break
 				}
 			}

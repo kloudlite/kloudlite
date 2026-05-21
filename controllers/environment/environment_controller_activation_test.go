@@ -11,8 +11,38 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+type statusCountingClient struct {
+	client.Client
+	statusUpdates int
+	statusPatches int
+}
+
+func (c *statusCountingClient) Status() client.SubResourceWriter {
+	return &statusCountingWriter{writer: c.Client.Status(), counter: c}
+}
+
+type statusCountingWriter struct {
+	writer  client.SubResourceWriter
+	counter *statusCountingClient
+}
+
+func (w *statusCountingWriter) Create(ctx context.Context, obj client.Object, subResource client.Object, opts ...client.SubResourceCreateOption) error {
+	return w.writer.Create(ctx, obj, subResource, opts...)
+}
+
+func (w *statusCountingWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+	w.counter.statusUpdates++
+	return w.writer.Update(ctx, obj, opts...)
+}
+
+func (w *statusCountingWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
+	w.counter.statusPatches++
+	return w.writer.Patch(ctx, obj, patch, opts...)
+}
 
 func TestEnvironmentReconciler_Reconcile_ActiveEnvironment(t *testing.T) {
 	scheme := testutil.NewTestScheme()
@@ -99,6 +129,7 @@ func TestEnvironmentReconciler_ActivationStatusUpdate(t *testing.T) {
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-env",
+			UID:        types.UID("test-env-uid"),
 			Finalizers: []string{environmentFinalizer},
 		},
 		Spec: environmentsv1.EnvironmentSpec{
@@ -116,6 +147,7 @@ func TestEnvironmentReconciler_ActivationStatusUpdate(t *testing.T) {
 			Name: "test-namespace",
 		},
 	}
+	applyEnvironmentNamespaceOwnership(namespace, env)
 
 	k8sClient := testutil.NewFakeClient(scheme, env, namespace).
 		WithStatusSubresource(env).
@@ -147,12 +179,67 @@ func TestEnvironmentReconciler_ActivationStatusUpdate(t *testing.T) {
 	assert.NotNil(t, updatedEnv.Status.LastActivatedTime)
 }
 
+func TestEnvironmentReconciler_ActivationUsesLifecycleStatusPatch(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+
+	env := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-env",
+			UID:        types.UID("test-env-uid"),
+			Finalizers: []string{environmentFinalizer},
+		},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: "test-namespace",
+			OwnedBy:         "admin@example.com",
+			Activated:       true,
+		},
+		Status: environmentsv1.EnvironmentStatus{
+			State: environmentsv1.EnvironmentStateInactive,
+		},
+	}
+
+	namespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-namespace",
+		},
+	}
+	applyEnvironmentNamespaceOwnership(namespace, env)
+
+	baseClient := testutil.NewFakeClient(scheme, env, namespace).
+		WithStatusSubresource(env).
+		Build()
+	countingClient := &statusCountingClient{Client: baseClient}
+
+	logger, _ := zap.NewDevelopment()
+	reconciler := &EnvironmentReconciler{
+		Client: countingClient,
+		Scheme: scheme,
+		Logger: logger,
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), reconcile.Request{
+		NamespacedName: types.NamespacedName{Name: "test-env"},
+	})
+	assert.NoError(t, err)
+	assert.False(t, result.Requeue)
+
+	updatedEnv := &environmentsv1.Environment{}
+	err = countingClient.Get(context.Background(), types.NamespacedName{Name: "test-env"}, updatedEnv)
+	assert.NoError(t, err)
+	assert.Equal(t, environmentsv1.EnvironmentStateActive, updatedEnv.Status.State)
+	assert.Equal(t, "Environment is active", updatedEnv.Status.Message)
+	assert.NotNil(t, updatedEnv.Status.LastActivatedTime)
+	assert.Zero(t, countingClient.statusUpdates)
+	assert.Positive(t, countingClient.statusPatches)
+}
+
 func TestEnvironmentReconciler_DeactivationStatusUpdate(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-env",
+			UID:        types.UID("test-env-uid"),
 			Finalizers: []string{environmentFinalizer},
 		},
 		Spec: environmentsv1.EnvironmentSpec{
@@ -170,6 +257,7 @@ func TestEnvironmentReconciler_DeactivationStatusUpdate(t *testing.T) {
 			Name: "test-namespace",
 		},
 	}
+	applyEnvironmentNamespaceOwnership(namespace, env)
 
 	k8sClient := testutil.NewFakeClient(scheme, env, namespace).
 		WithStatusSubresource(env).

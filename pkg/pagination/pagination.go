@@ -3,6 +3,7 @@ package pagination
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -83,6 +84,12 @@ func ListAll(ctx context.Context, c client.Reader, list client.ObjectList, opts 
 
 		// List with pagination
 		if err := c.List(ctx, list, paginatedOpts...); err != nil {
+			if isUnsupportedCachePaginationError(err) {
+				if err := c.List(ctx, list, opts...); err != nil {
+					return fmt.Errorf("failed to list items: %w", err)
+				}
+				return nil
+			}
 			return fmt.Errorf("failed to list items: %w", err)
 		}
 
@@ -95,6 +102,12 @@ func ListAll(ctx context.Context, c client.Reader, list client.ObjectList, opts 
 	}
 
 	return nil
+}
+
+func isUnsupportedCachePaginationError(err error) bool {
+	message := err.Error()
+	return strings.Contains(message, "continue list option is not supported by the cache") ||
+		strings.Contains(message, "limit list option is not supported by the cache")
 }
 
 // ListWithPagination lists items with pagination support

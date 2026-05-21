@@ -49,7 +49,8 @@ type EnvironmentData struct {
 // ConvertComposeToK8s converts a docker-compose project to Kubernetes resources
 func ConvertComposeToK8s(
 	project *composego.Project,
-	composition *compositionsv1.Composition,
+	compositionName string,
+	compositionSpec *compositionsv1.CompositionSpec,
 	namespace string,
 	envData *EnvironmentData,
 	environment *compositionsv1.Environment,
@@ -63,11 +64,11 @@ func ConvertComposeToK8s(
 		ServiceNames: make([]string, 0),
 	}
 
-	commonLabels := CompositionOwnershipLabels(composition, environment)
+	commonLabels := CompositionOwnershipLabels(compositionName, environment)
 
 	// Convert volumes first (they need to exist before StatefulSets)
 	for volumeName, volume := range project.Volumes {
-		pvc := convertVolumeToPVC(volumeName, volume, composition, namespace, commonLabels, environment)
+		pvc := convertVolumeToPVC(volumeName, volume, namespace, commonLabels, environment)
 		resources.PVCs = append(resources.PVCs, pvc)
 	}
 
@@ -79,7 +80,7 @@ func ConvertComposeToK8s(
 		statefulSet, err := convertServiceToStatefulSet(
 			serviceName,
 			service,
-			composition,
+			compositionSpec,
 			namespace,
 			commonLabels,
 			envData,
@@ -95,7 +96,6 @@ func ConvertComposeToK8s(
 		k8sService := convertServiceToK8sService(
 			serviceName,
 			service,
-			composition,
 			namespace,
 			commonLabels,
 		)
@@ -109,7 +109,7 @@ func ConvertComposeToK8s(
 func convertServiceToStatefulSet(
 	serviceName string,
 	service composego.ServiceConfig,
-	composition *compositionsv1.Composition,
+	compositionSpec *compositionsv1.CompositionSpec,
 	namespace string,
 	commonLabels map[string]string,
 	envData *EnvironmentData,
@@ -131,9 +131,11 @@ func convertServiceToStatefulSet(
 	}
 
 	// Check for resource overrides (highest priority)
-	if override, ok := composition.Spec.ResourceOverrides[serviceName]; ok {
-		if override.Replicas != nil {
-			replicas = *override.Replicas
+	if compositionSpec != nil && compositionSpec.ResourceOverrides != nil {
+		if override, ok := compositionSpec.ResourceOverrides[serviceName]; ok {
+			if override.Replicas != nil {
+				replicas = *override.Replicas
+			}
 		}
 	}
 
@@ -173,16 +175,18 @@ func convertServiceToStatefulSet(
 		}
 	}
 	// Add composition-level env vars (sorted for deterministic ordering)
-	compEnvKeys := make([]string, 0, len(composition.Spec.EnvVars))
-	for key := range composition.Spec.EnvVars {
-		compEnvKeys = append(compEnvKeys, key)
-	}
-	sort.Strings(compEnvKeys)
-	for _, key := range compEnvKeys {
-		envVars = append(envVars, corev1.EnvVar{
-			Name:  key,
-			Value: composition.Spec.EnvVars[key],
-		})
+	if compositionSpec != nil {
+		compEnvKeys := make([]string, 0, len(compositionSpec.EnvVars))
+		for key := range compositionSpec.EnvVars {
+			compEnvKeys = append(compEnvKeys, key)
+		}
+		sort.Strings(compEnvKeys)
+		for _, key := range compEnvKeys {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  key,
+				Value: compositionSpec.EnvVars[key],
+			})
+		}
 	}
 	container.Env = envVars
 
@@ -218,12 +222,14 @@ func convertServiceToStatefulSet(
 	}
 
 	// Apply resource overrides
-	if override, ok := composition.Spec.ResourceOverrides[serviceName]; ok {
-		if override.CPU != "" {
-			resources.Limits[corev1.ResourceCPU] = resource.MustParse(override.CPU)
-		}
-		if override.Memory != "" {
-			resources.Limits[corev1.ResourceMemory] = resource.MustParse(override.Memory)
+	if compositionSpec != nil && compositionSpec.ResourceOverrides != nil {
+		if override, ok := compositionSpec.ResourceOverrides[serviceName]; ok {
+			if override.CPU != "" {
+				resources.Limits[corev1.ResourceCPU] = resource.MustParse(override.CPU)
+			}
+			if override.Memory != "" {
+				resources.Limits[corev1.ResourceMemory] = resource.MustParse(override.Memory)
+			}
 		}
 	}
 
@@ -328,7 +334,6 @@ func convertServiceToStatefulSet(
 func convertServiceToK8sService(
 	serviceName string,
 	service composego.ServiceConfig,
-	composition *compositionsv1.Composition,
 	namespace string,
 	commonLabels map[string]string,
 ) *corev1.Service {
@@ -384,7 +389,6 @@ func convertServiceToK8sService(
 func convertVolumeToPVC(
 	volumeName string,
 	volume composego.VolumeConfig,
-	composition *compositionsv1.Composition,
 	namespace string,
 	commonLabels map[string]string,
 	environment *compositionsv1.Environment,

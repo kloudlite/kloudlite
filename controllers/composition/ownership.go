@@ -16,9 +16,9 @@ type NodePlacement struct {
 	Tolerations  []corev1.Toleration
 }
 
-func CompositionOwnershipLabels(comp *compositionsv1.Composition, env *compositionsv1.Environment) map[string]string {
+func CompositionOwnershipLabels(compositionName string, env *compositionsv1.Environment) map[string]string {
 	labels := map[string]string{
-		DockerCompositionLabel: comp.Name,
+		DockerCompositionLabel: compositionName,
 		ManagedLabel:           "true",
 	}
 	if env != nil {
@@ -30,6 +30,13 @@ func CompositionOwnershipLabels(comp *compositionsv1.Composition, env *compositi
 func ApplyEnvironmentOwnershipLabels(labels map[string]string, env *compositionsv1.Environment) map[string]string {
 	if labels == nil {
 		labels = map[string]string{}
+	}
+	if env == nil {
+		copiedLabels := make(map[string]string, len(labels))
+		for key, value := range labels {
+			copiedLabels[key] = value
+		}
+		return copiedLabels
 	}
 	labels[DockerCompositionLabel] = env.Name
 	labels[EnvironmentNamespaceLabel] = env.Namespace
