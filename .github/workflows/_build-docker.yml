@@ -44,59 +44,73 @@ jobs:
           APP="${{ inputs.app }}"
 
           case "${APP}" in
+            api-server)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/api-server ./cli/kloudlite'
+              DOCKERFILE="./build-sys/images/api-server/Dockerfile"
+              DOCKER_CONTEXT="."
+              IMAGE_SUFFIX="api-server"
+              ;;
+            workmachine-manager)
+              BUILD_TYPE="go"
+              BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/workmachine-manager ./cli/kloudlite'
+              DOCKERFILE="./build-sys/images/workmachine-manager/Dockerfile"
+              DOCKER_CONTEXT="."
+              IMAGE_SUFFIX="workmachine-manager"
+              ;;
             oci-installer)
               BUILD_TYPE="go"
               BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/oci-installer ./cli/kli/oci-installer'
-              DOCKERFILE="./cli/kli/oci-installer/Dockerfile"
+              DOCKERFILE="./build-sys/images/oci-installer/Dockerfile"
               DOCKER_CONTEXT="."
               IMAGE_SUFFIX="oci-installer"
               ;;
             code-analyzer)
               BUILD_TYPE="go"
               BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./bin/code-analyzer ./cli/code-analyzer'
-              DOCKERFILE="./cli/code-analyzer/Dockerfile"
+              DOCKERFILE="./build-sys/images/code-analyzer/Dockerfile"
               DOCKER_CONTEXT="."
               IMAGE_SUFFIX="code-analyzer"
               ;;
             k3s-backup)
               BUILD_TYPE="docker-only"
               BUILD_CMD=""
-              DOCKERFILE="./api/Dockerfile.k3s-backup"
+              DOCKERFILE="./build-sys/images/k3s-backup/Dockerfile"
               DOCKER_CONTEXT="."
               IMAGE_SUFFIX="k3s-backup"
               ;;
             workspace-base)
               BUILD_TYPE="docker-only"
               BUILD_CMD=""
-              DOCKERFILE="./api/workspace-images/base/Dockerfile"
+              DOCKERFILE="./build-sys/images/workspace-base/Dockerfile"
               DOCKER_CONTEXT="./api/workspace-images/base"
               IMAGE_SUFFIX="workspace-base"
               ;;
             workspace-comprehensive)
               BUILD_TYPE="workspace-comprehensive"
               BUILD_CMD='CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o bin/kl-linux cli/kl/main.go'
-              DOCKERFILE="./api/workspace-images/comprehensive/Dockerfile"
+              DOCKERFILE="./build-sys/images/workspace-comprehensive/Dockerfile"
               DOCKER_CONTEXT="."
               IMAGE_SUFFIX="workspace-comprehensive"
               ;;
             console)
               BUILD_TYPE="web"
               BUILD_CMD="bun run --filter console build"
-              DOCKERFILE="./web/apps/console/Dockerfile.runtime"
+              DOCKERFILE="./build-sys/images/web-console/Dockerfile.runtime"
               DOCKER_CONTEXT="./web/apps/console"
               IMAGE_SUFFIX="console"
               ;;
             dashboard)
               BUILD_TYPE="web"
               BUILD_CMD="bun run --filter dashboard build"
-              DOCKERFILE="./web/apps/dashboard/Dockerfile.runtime"
+              DOCKERFILE="./build-sys/images/web-dashboard/Dockerfile.runtime"
               DOCKER_CONTEXT="./web/apps/dashboard"
               IMAGE_SUFFIX="dashboard"
               ;;
             website)
               BUILD_TYPE="web"
               BUILD_CMD="bun run --filter website build"
-              DOCKERFILE="./web/apps/website/Dockerfile.runtime"
+              DOCKERFILE="./build-sys/images/web-website/Dockerfile.runtime"
               DOCKER_CONTEXT="./web/apps/website"
               IMAGE_SUFFIX="website"
               ;;
@@ -140,6 +154,16 @@ jobs:
         with:
           go-version: '1.24'
           cache-dependency-path: go.sum
+
+      - name: Generate CRD assets
+        if: steps.app.outputs.build_type == 'go' || steps.app.outputs.build_type == 'workspace-comprehensive'
+        run: |
+          go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0
+          controller-gen crd paths="./types/..." output:crd:artifacts:config=manifests
+          go run api/crds/assets/generate.go -manifests manifests -output api/crds/assets/generated.go
+          mkdir -p cli/kli/internal/manifests
+          cat manifests/*.yaml > cli/kli/internal/manifests/crds.yaml
+          controller-gen object paths="./..."
 
       - name: Build Go binary
         if: steps.app.outputs.build_type == 'go'
@@ -249,6 +273,10 @@ jobs:
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ inputs.tag }}
           cache-from: type=gha,scope=${{ inputs.app }}
           cache-to: type=gha,mode=max,scope=${{ inputs.app }}
           platforms: linux/amd64
@@ -263,6 +291,10 @@ jobs:
           file: ${{ steps.app.outputs.dockerfile }}
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ inputs.tag }}
           cache-from: type=gha,scope=${{ inputs.app }}
           cache-to: type=gha,mode=max,scope=${{ inputs.app }}
           platforms: linux/amd64

@@ -68,20 +68,19 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 		}
 	}
 
-	// Check if there's an active intercept for this service in any Composition
-	compositionList := &environmentsv1.CompositionList{}
-	err := w.client.List(context.TODO(), compositionList,
-		client.InNamespace(req.Namespace))
-
+	// Check if there's an active intercept for this service in any Environment whose
+	// embedded compose resources run in this service's namespace.
+	environmentList := &environmentsv1.EnvironmentList{}
+	err := w.client.List(context.TODO(), environmentList)
 	if err != nil {
 		// Handle TLS/certificate errors gracefully for development environments
 		if isTLSError(err) {
-			w.logger.Warn("TLS error when checking Compositions (development mode), allowing service to proceed: " + err.Error())
+			w.logger.Warn("tls error when checking environments (development mode), allowing service to proceed: " + err.Error())
 			return &admissionv1.AdmissionResponse{
 				Allowed: true,
 			}
 		}
-		w.logger.Error("Failed to list Compositions: " + err.Error())
+		w.logger.Error("failed to list environments: " + err.Error())
 		// Allow the service to proceed without interception on error
 		return &admissionv1.AdmissionResponse{
 			Allowed: true,
@@ -90,14 +89,12 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 
 	// Find an active intercept for this service
 	var hasActiveIntercept bool
-	for _, composition := range compositionList.Items {
-		// Skip compositions being deleted
-		if composition.DeletionTimestamp != nil {
+	for _, environment := range environmentList.Items {
+		if environment.DeletionTimestamp != nil || environment.Spec.TargetNamespace != req.Namespace {
 			continue
 		}
 
-		// Check if any active intercept matches this service
-		for _, activeIntercept := range composition.Status.ActiveIntercepts {
+		for _, activeIntercept := range environment.Status.ComposeStatus.ActiveIntercepts {
 			if activeIntercept.ServiceName == service.Name {
 				hasActiveIntercept = true
 				break

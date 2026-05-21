@@ -9,6 +9,7 @@ func newServerCommand() *cobra.Command {
 	}
 
 	serverCmd.AddCommand(newAPIServerCommand())
+	serverCmd.AddCommand(newWorkMachineManagerCommand())
 	serverCmd.AddCommand(newTunnelServerCommand())
 	return serverCmd
 }

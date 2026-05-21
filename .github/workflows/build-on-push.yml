@@ -35,6 +35,7 @@ jobs:
         with:
           filters: |
             api:
+              - 'build-sys/**'
               - 'api/**'
               - 'controllers/**'
               - 'pkg/**'
@@ -43,20 +44,25 @@ jobs:
               - 'go.mod'
               - 'go.sum'
             console:
+              - 'build-sys/**'
               - 'web/apps/console/**'
               - 'web/packages/**'
             dashboard:
+              - 'build-sys/**'
               - 'web/apps/dashboard/**'
               - 'web/packages/**'
             website:
+              - 'build-sys/**'
               - 'web/apps/website/**'
               - 'web/packages/**'
             kli:
+              - 'build-sys/**'
               - 'cli/kli/**'
               - 'pkg/**'
               - 'go.mod'
               - 'go.sum'
             kltun:
+              - 'build-sys/**'
               - 'cli/kltun/**'
               - 'pkg/**'
               - 'go.mod'
@@ -99,6 +105,22 @@ jobs:
       tag: ${{ needs.detect.outputs.tag }}
 
   # ── Docker: non-runtime support images ───────────────────────────────
+
+  api-server:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: api-server
+      tag: ${{ needs.detect.outputs.tag }}
+
+  workmachine-manager:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    uses: ./.github/workflows/_build-docker.yml
+    with:
+      app: workmachine-manager
+      tag: ${{ needs.detect.outputs.tag }}
 
   oci-installer:
     needs: detect

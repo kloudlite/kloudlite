@@ -30,3 +30,28 @@ func TestAPIServerCommandExposesInstallCRDsFlag(t *testing.T) {
 	require.Contains(t, buf.String(), "--install-crds")
 	require.Contains(t, buf.String(), "--crds-dir")
 }
+
+func TestWorkMachineManagerCommandRunsInjectedRunner(t *testing.T) {
+	called := false
+	cmd := newWorkMachineManagerCommandWithRunner(func(ctx context.Context) error {
+		called = true
+		return nil
+	})
+
+	cmd.SetArgs([]string{})
+	require.NoError(t, cmd.ExecuteContext(context.Background()))
+	require.True(t, called)
+}
+
+func TestServerCommandExposesWorkMachineManagerSubcommand(t *testing.T) {
+	cmd := newServerCommand()
+
+	var found bool
+	for _, child := range cmd.Commands() {
+		if child.Name() == "workmachine-manager" {
+			found = true
+		}
+		require.NotEqual(t, "machine-scoped", child.Name())
+	}
+	require.True(t, found)
+}

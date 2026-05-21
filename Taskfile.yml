@@ -4,10 +4,13 @@ includes:
   api:
     taskfile: ./api/Taskfile.yml
     dir: .
+  build-sys:
+    taskfile: ./build-sys/Taskfile.yml
+    dir: .
 
 tasks:
   backend:build:platform-api:
-    desc: Build the unified kloudlite binary used by platform-api
+    desc: Build the api-server binary used by platform-api
     cmds:
       - task: api:build:platform-api
 

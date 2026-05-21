@@ -8,7 +8,7 @@ import (
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
 	"go.uber.org/zap"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -56,12 +56,13 @@ func (r *EnvironmentReconciler) handleDeletion(ctx context.Context, environment 
 	// All cleanup complete, remove finalizer
 	logger.Info("All cleanup complete, removing finalizer from environment")
 
-	if controllerutil.ContainsFinalizer(environment, environmentFinalizer) {
-		controllerutil.RemoveFinalizer(environment, environmentFinalizer)
-		if err := r.Update(ctx, environment); err != nil {
-			logger.Error("Failed to remove finalizer", zap.Error(err))
-			return reconcile.Result{}, err
-		}
+	result, err := removeEnvironmentFinalizer(ctx, r.Client, client.ObjectKeyFromObject(environment))
+	if err != nil {
+		logger.Error("Failed to remove finalizer", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+	if !result.IsZero() {
+		return result, nil
 	}
 
 	logger.Info("Environment cleanup completed successfully")
@@ -79,7 +80,7 @@ func (r *EnvironmentReconciler) cleanupWorkspaceConnections(ctx context.Context,
 	environmentName := environment.Name
 	environmentNamespace := environment.Namespace
 	if environmentNamespace == "" {
-		environmentNamespace = "default"
+		return fmt.Errorf("environment namespace is required for workspace cleanup")
 	}
 
 	cleanedCount := 0

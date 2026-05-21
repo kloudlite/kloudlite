@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -64,6 +65,76 @@ func TestEnvironmentReconciler_Reconcile_CreateNamespace(t *testing.T) {
 	assert.Equal(t, "test@example.com", namespace.Annotations["kloudlite.io/created-by"])
 }
 
+func TestEnvironmentReconciler_ScopeAllowsCurrentWorkMachineEnvironment(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	env := scopedEnvironment("test-env", "wm-karthik-dev", "karthik-dev", "env-test-env")
+	k8sClient := testutil.NewFakeClient(scheme, env).WithStatusSubresource(&environmentsv1.Environment{}).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop(), OwnNamespace: "wm-karthik-dev", WorkMachineName: "karthik-dev"}
+
+	_, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "test-env", Namespace: "wm-karthik-dev"}})
+	assert.NoError(t, err)
+	_, err = reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "test-env", Namespace: "wm-karthik-dev"}})
+	assert.NoError(t, err)
+
+	namespace := &corev1.Namespace{}
+	err = reconciler.Get(context.Background(), types.NamespacedName{Name: "env-test-env"}, namespace)
+	assert.NoError(t, err)
+}
+
+func TestEnvironmentReconciler_ScopeSkipsWrongNamespace(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	env := scopedEnvironment("test-env", "wm-other", "karthik-dev", "env-test-env")
+	k8sClient := testutil.NewFakeClient(scheme, env).WithStatusSubresource(&environmentsv1.Environment{}).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop(), OwnNamespace: "wm-karthik-dev", WorkMachineName: "karthik-dev"}
+
+	_, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "test-env", Namespace: "wm-other"}})
+	assert.NoError(t, err)
+
+	namespace := &corev1.Namespace{}
+	err = reconciler.Get(context.Background(), types.NamespacedName{Name: "env-test-env"}, namespace)
+	assert.True(t, apierrors.IsNotFound(err), "expected wrong namespace environment to be skipped, got %v", err)
+}
+
+func TestEnvironmentReconciler_ScopeSkipsWrongWorkMachine(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	env := scopedEnvironment("test-env", "wm-karthik-dev", "other-machine", "env-test-env")
+	k8sClient := testutil.NewFakeClient(scheme, env).WithStatusSubresource(&environmentsv1.Environment{}).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop(), OwnNamespace: "wm-karthik-dev", WorkMachineName: "karthik-dev"}
+
+	_, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "test-env", Namespace: "wm-karthik-dev"}})
+	assert.NoError(t, err)
+
+	namespace := &corev1.Namespace{}
+	err = reconciler.Get(context.Background(), types.NamespacedName{Name: "env-test-env"}, namespace)
+	assert.True(t, apierrors.IsNotFound(err), "expected wrong workmachine environment to be skipped, got %v", err)
+}
+
+func TestEnvironmentReconciler_ScopeFailsClosedWhenConfiguredIncomplete(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	env := scopedEnvironment("test-env", "wm-karthik-dev", "karthik-dev", "env-test-env")
+	k8sClient := testutil.NewFakeClient(scheme, env).WithStatusSubresource(&environmentsv1.Environment{}).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop(), OwnNamespace: "wm-karthik-dev"}
+
+	_, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "test-env", Namespace: "wm-karthik-dev"}})
+	assert.NoError(t, err)
+
+	namespace := &corev1.Namespace{}
+	err = reconciler.Get(context.Background(), types.NamespacedName{Name: "env-test-env"}, namespace)
+	assert.True(t, apierrors.IsNotFound(err), "expected incomplete scope to skip reconciliation, got %v", err)
+}
+
+func scopedEnvironment(name, namespace, workMachineName, targetNamespace string) *environmentsv1.Environment {
+	return &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, UID: types.UID(name + "-uid")},
+		Spec: environmentsv1.EnvironmentSpec{
+			TargetNamespace: targetNamespace,
+			WorkMachineName: workMachineName,
+			OwnedBy:         "karthik",
+			Activated:       true,
+		},
+	}
+}
+
 func TestEnvironmentReconciler_Reconcile_EnvironmentNotFound(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
@@ -93,6 +164,7 @@ func TestEnvironmentReconciler_Reconcile_ExistingNamespace(t *testing.T) {
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test-env",
+			UID:        types.UID("test-uid-existing"),
 			Finalizers: []string{environmentFinalizer},
 		},
 		Spec: environmentsv1.EnvironmentSpec{
@@ -107,6 +179,7 @@ func TestEnvironmentReconciler_Reconcile_ExistingNamespace(t *testing.T) {
 			Name: "existing-namespace",
 		},
 	}
+	applyEnvironmentNamespaceOwnership(existingNamespace, env)
 
 	k8sClient := testutil.NewFakeClient(scheme, env, existingNamespace).Build()
 
@@ -277,16 +350,72 @@ func TestEnvironmentReconciler_Reconcile_ExistingNamespaceWithNilLabels(t *testi
 	}
 
 	result, err := reconciler.Reconcile(context.Background(), req)
-	// Should succeed and create labels/annotations
-	assert.NoError(t, err)
+	// Existing unmarked namespaces must not be adopted.
+	assert.Error(t, err)
 	assert.False(t, result.Requeue)
 
-	// Verify labels and annotations were created
+	// Verify labels and annotations were not added.
 	updatedNs := &corev1.Namespace{}
 	err = k8sClient.Get(context.Background(), types.NamespacedName{Name: "test-namespace"}, updatedNs)
 	assert.NoError(t, err)
-	assert.NotNil(t, updatedNs.Labels)
-	assert.NotNil(t, updatedNs.Annotations)
+	assert.Nil(t, updatedNs.Labels)
+	assert.Nil(t, updatedNs.Annotations)
+}
+
+func TestEnvironmentReconciler_Reconcile_RejectsUnownedExistingNamespace(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	env := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-env", Namespace: "wm-alice", UID: types.UID("env-uid"), Finalizers: []string{environmentFinalizer}},
+		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "existing-namespace", OwnedBy: "alice", Activated: true},
+	}
+	existingNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "existing-namespace"}}
+	k8sClient := testutil.NewFakeClient(scheme, env, existingNamespace).WithStatusSubresource(&environmentsv1.Environment{}).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop()}
+
+	_, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "test-env", Namespace: "wm-alice"}})
+	if err == nil {
+		t.Fatalf("Reconcile returned nil error, want ownership mismatch")
+	}
+
+	ns := &corev1.Namespace{}
+	if getErr := k8sClient.Get(context.Background(), types.NamespacedName{Name: "existing-namespace"}, ns); getErr != nil {
+		t.Fatalf("get namespace: %v", getErr)
+	}
+	if ns.Labels[environmentNameLabel] == "test-env" {
+		t.Fatalf("namespace was adopted despite missing ownership markers: %#v", ns.Labels)
+	}
+}
+
+func TestEnvironmentReconciler_CreateNamespaceRejectsUnownedAlreadyExists(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	env := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-env", Namespace: "wm-alice", UID: types.UID("env-uid")},
+		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "existing-namespace", OwnedBy: "alice"},
+	}
+	existingNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "existing-namespace"}}
+	k8sClient := testutil.NewFakeClient(scheme, existingNamespace).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop()}
+
+	err := reconciler.createNamespace(context.Background(), env, zap.NewNop())
+	if err == nil {
+		t.Fatalf("createNamespace returned nil error, want ownership mismatch")
+	}
+}
+
+func TestEnvironmentReconciler_CreateNamespaceForForkingRejectsUnownedAlreadyExists(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	env := &environmentsv1.Environment{
+		ObjectMeta: metav1.ObjectMeta{Name: "fork-env", Namespace: "wm-alice", UID: types.UID("fork-env-uid")},
+		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "fork-namespace", OwnedBy: "alice"},
+	}
+	existingNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "fork-namespace"}}
+	k8sClient := testutil.NewFakeClient(scheme, existingNamespace).Build()
+	reconciler := &EnvironmentReconciler{Client: k8sClient, Scheme: scheme, Logger: zap.NewNop()}
+
+	err := reconciler.createNamespaceForForking(context.Background(), env, "source-env", zap.NewNop())
+	if err == nil {
+		t.Fatalf("createNamespaceForForking returned nil error, want ownership mismatch")
+	}
 }
 
 func TestEnvironmentReconciler_Reconcile_AddFinalizerError(t *testing.T) {

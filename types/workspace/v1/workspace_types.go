@@ -391,6 +391,7 @@ type SnapshotRestoreStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,categories={kloudlite,workspaces}
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Display Name",type=string,JSONPath=`.spec.displayName`
 // +kubebuilder:printcolumn:name="Owner",type=string,JSONPath=`.spec.owner`
 // +kubebuilder:printcolumn:name="WorkMachine",type=string,JSONPath=`.spec.workmachine`

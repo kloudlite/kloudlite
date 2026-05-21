@@ -2,15 +2,32 @@ version: 3
 
 tasks:
   build:platform-api:
-    desc: Build the unified kloudlite binary used by platform-api
+    desc: Build the api-server binary
     cmds:
-      - task: build:kloudlite
+      - task: build:api-server
+
+  build:api-server:
+    desc: Build the api-server binary
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - task: manifests
+      - go build -ldflags='-s -w' -o bin/api-server ./cli/kloudlite/
+
+  build:workmachine-manager:
+    desc: Build the workmachine-manager binary
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - task: manifests
+      - go build -ldflags='-s -w' -o bin/workmachine-manager ./cli/kloudlite/
 
   build:kloudlite:
     desc: Build the unified kloudlite backend binary
     env:
       CGO_ENABLED: 0
     cmds:
+      - task: manifests
       - go build -ldflags='-s -w' -o bin/kloudlite ./cli/kloudlite/
 
   build:server:
@@ -33,8 +50,9 @@ tasks:
     desc: Generate CRDs, embedded CRD assets, and deepcopy files
     cmds:
       # generate CRDs from type definitions
-      - controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=manifests
+      - controller-gen crd paths="./types/..." output:crd:artifacts:config=manifests
       - go run api/crds/assets/generate.go -manifests manifests -output api/crds/assets/generated.go
+      - task: consolidate-crds
 
       # generate deep copy go files
       - controller-gen object paths="./..."
@@ -49,7 +67,7 @@ tasks:
   verify:backend-roadmap:
     desc: Run focused backend roadmap verification tests
     cmds:
-      - go test ./api/crds/... ./api/config ./api/k8s ./api/server ./api/resources/... ./pkg/intercepts ./controllers/composition ./controllers/environment ./controllers/workmachine ./controllers/workspace ./cli/kl/cmd ./cli/kl/pkg/workspace ./cli/kloudlite/cmd -v
+      - go test ./api/crds/... ./api/config ./api/k8s ./api/server ./api/resources/... ./pkg/intercepts ./controllers/composition ./controllers/environment ./controllers/workmachine/... ./controllers/workspace ./cli/kl/cmd ./cli/kl/pkg/workspace ./cli/kloudlite/cmd -v
 
   verify:platform-api:
     desc: Build the platform-api binary and run focused platform-api tests
