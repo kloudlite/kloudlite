@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -363,30 +364,34 @@ func (r *PlatformScopedReconciler) updateNodeIPLabels(ctx context.Context, obj *
 		return
 	}
 
-	needsUpdate := false
-	if node.Labels == nil {
-		node.Labels = make(map[string]string)
-	}
-
-	// Update labels only if changed
-	if node.Labels[NodeLabelPublicIP] != machineInfo.PublicIP {
-		node.Labels[NodeLabelPublicIP] = machineInfo.PublicIP
-		needsUpdate = true
-	}
-	if node.Labels[NodeLabelPrivateIP] != machineInfo.PrivateIP {
-		node.Labels[NodeLabelPrivateIP] = machineInfo.PrivateIP
-		needsUpdate = true
-	}
-
-	if needsUpdate {
-		if err := r.Update(ctx, node); err != nil {
-			ctrl.LoggerFrom(ctx).Error(err, "failed to update node IP labels")
-			// Don't fail reconciliation for label updates
-		} else {
-			ctrl.LoggerFrom(ctx).Info("updated node IP labels",
-				"publicIP", machineInfo.PublicIP,
-				"privateIP", machineInfo.PrivateIP)
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		nodeForUpdate := &corev1.Node{}
+		if err := r.Get(ctx, client.ObjectKey{Name: node.Name}, nodeForUpdate); err != nil {
+			return err
 		}
+
+		needsUpdate := false
+		if nodeForUpdate.Labels == nil {
+			nodeForUpdate.Labels = make(map[string]string)
+		}
+		if nodeForUpdate.Labels[NodeLabelPublicIP] != machineInfo.PublicIP {
+			nodeForUpdate.Labels[NodeLabelPublicIP] = machineInfo.PublicIP
+			needsUpdate = true
+		}
+		if nodeForUpdate.Labels[NodeLabelPrivateIP] != machineInfo.PrivateIP {
+			nodeForUpdate.Labels[NodeLabelPrivateIP] = machineInfo.PrivateIP
+			needsUpdate = true
+		}
+		if !needsUpdate {
+			return nil
+		}
+		return r.Update(ctx, nodeForUpdate)
+	}); err != nil {
+		ctrl.LoggerFrom(ctx).Error(err, "failed to update node IP labels")
+	} else {
+		ctrl.LoggerFrom(ctx).Info("updated node IP labels",
+			"publicIP", machineInfo.PublicIP,
+			"privateIP", machineInfo.PrivateIP)
 	}
 }
 
@@ -437,14 +442,18 @@ func (r *PlatformScopedReconciler) verifyNodeReadiness(ctx context.Context, sess
 // clearNodeIPLabels removes IP labels from a node that is not ready
 // This forces a fresh lookup on next reconciliation
 func (r *PlatformScopedReconciler) clearNodeIPLabels(ctx context.Context, node *corev1.Node) {
-	if node.Labels == nil || (node.Labels[NodeLabelPublicIP] == "" && node.Labels[NodeLabelPrivateIP] == "") {
-		return
-	}
-
-	delete(node.Labels, NodeLabelPublicIP)
-	delete(node.Labels, NodeLabelPrivateIP)
-
-	if err := r.Update(ctx, node); err != nil {
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		nodeForUpdate := &corev1.Node{}
+		if err := r.Get(ctx, client.ObjectKey{Name: node.Name}, nodeForUpdate); err != nil {
+			return err
+		}
+		if nodeForUpdate.Labels == nil || (nodeForUpdate.Labels[NodeLabelPublicIP] == "" && nodeForUpdate.Labels[NodeLabelPrivateIP] == "") {
+			return nil
+		}
+		delete(nodeForUpdate.Labels, NodeLabelPublicIP)
+		delete(nodeForUpdate.Labels, NodeLabelPrivateIP)
+		return r.Update(ctx, nodeForUpdate)
+	}); err != nil {
 		ctrl.LoggerFrom(ctx).Error(err, "failed to remove IP labels from not-ready node")
 	} else {
 		ctrl.LoggerFrom(ctx).Info("removed IP labels from not-ready node")

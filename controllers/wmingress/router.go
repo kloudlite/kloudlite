@@ -559,14 +559,20 @@ func (r *Router) calculateMatchScore(route *Route, host, path string) int {
 
 // StartHTTP starts the HTTP server
 func (r *Router) StartHTTP(ctx context.Context, port int) error {
+	addr := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("failed to listen on %s: %w", addr, err)
+	}
+
 	r.httpServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr:    addr,
 		Handler: r,
 	}
 
 	go func() {
 		r.logger.Info("Starting HTTP server", zap.Int("port", port))
-		if err := r.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := r.httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
 			r.logger.Error("HTTP server error", zap.Error(err))
 		}
 	}()
@@ -575,7 +581,7 @@ func (r *Router) StartHTTP(ctx context.Context, port int) error {
 	go func() {
 		<-ctx.Done()
 		r.logger.Info("Shutting down HTTP server")
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := r.httpServer.Shutdown(shutdownCtx); err != nil {
 			r.logger.Error("HTTP server shutdown error", zap.Error(err))
@@ -587,13 +593,19 @@ func (r *Router) StartHTTP(ctx context.Context, port int) error {
 
 // StartHTTPS starts the HTTPS server
 func (r *Router) StartHTTPS(ctx context.Context, port int, tlsManager *TLSManager) error {
+	addr := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("failed to listen on %s: %w", addr, err)
+	}
+
 	tlsConfig := tlsManager.GetTLSConfig()
 	// Disable HTTP/2 to allow WebSocket connections
 	// WebSocket requires HTTP/1.1 for the upgrade handshake
 	tlsConfig.NextProtos = []string{"http/1.1"}
 
 	r.httpsServer = &http.Server{
-		Addr:      fmt.Sprintf(":%d", port),
+		Addr:      addr,
 		Handler:   r,
 		TLSConfig: tlsConfig,
 	}
@@ -601,7 +613,7 @@ func (r *Router) StartHTTPS(ctx context.Context, port int, tlsManager *TLSManage
 	go func() {
 		r.logger.Info("Starting HTTPS server", zap.Int("port", port))
 		// Empty cert/key files since we're using TLSConfig
-		if err := r.httpsServer.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+		if err := r.httpsServer.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
 			r.logger.Error("HTTPS server error", zap.Error(err))
 		}
 	}()
@@ -610,7 +622,7 @@ func (r *Router) StartHTTPS(ctx context.Context, port int, tlsManager *TLSManage
 	go func() {
 		<-ctx.Done()
 		r.logger.Info("Shutting down HTTPS server")
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := r.httpsServer.Shutdown(shutdownCtx); err != nil {
 			r.logger.Error("HTTPS server shutdown error", zap.Error(err))

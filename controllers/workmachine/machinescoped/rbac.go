@@ -8,8 +8,10 @@ import (
 	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -23,23 +25,21 @@ import (
 // - Secrets (in workmachine namespace) - to manage SSH keys
 func (r *MachineScopedReconciler) createHostManagerRBAC(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
 	obj := session.Object()
-	serviceAccountName := "host-manager"
+	serviceAccountName := fmt.Sprintf("workmachine-manager-%s", obj.Name)
+	serviceAccountNamespace := obj.Spec.TargetNamespace
 
-	// Create ServiceAccount in target namespace
-	svcAccount := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      serviceAccountName,
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svcAccount, func() error {
-		if !fn.IsOwner(svcAccount, obj) {
-			svcAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+	// The integrated host-manager runtime now runs in the platform-scoped
+	// workmachine-manager pod. Remove the legacy target-namespace service account
+	// when present, but don't block reconciliation if it is already gone.
+	legacyServiceAccount := &corev1.ServiceAccount{}
+	if err := r.Get(ctx, client.ObjectKey{Name: "host-manager", Namespace: obj.Spec.TargetNamespace}, legacyServiceAccount); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
 		}
-		return nil
-	}); err != nil {
-		return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
+	} else if fn.IsOwner(legacyServiceAccount, obj) {
+		if err := r.Delete(ctx, legacyServiceAccount); err != nil {
+			return markMachineFailed(session, workmachineshared.ConditionHostManagerRBACReady, err)
+		}
 	}
 
 	// Create ClusterRole for host manager
@@ -151,7 +151,7 @@ func (r *MachineScopedReconciler) createHostManagerRBAC(ctx context.Context, ses
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
-				Namespace: obj.Spec.TargetNamespace,
+				Namespace: serviceAccountNamespace,
 			},
 		}
 
@@ -222,7 +222,7 @@ func (r *MachineScopedReconciler) createHostManagerRBAC(ctx context.Context, ses
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
-				Namespace: obj.Spec.TargetNamespace,
+				Namespace: serviceAccountNamespace,
 			},
 		}
 		return nil

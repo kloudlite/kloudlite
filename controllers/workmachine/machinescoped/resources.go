@@ -16,6 +16,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func (r *MachineScopedReconciler) ensureIntegratedHostManager(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	if r.Client == nil {
+		return markMachineReady(session, workmachineshared.ConditionHostManagerReady, "host manager runs inside workmachine-manager")
+	}
+	result, err := r.cleanupHostManagerPod(ctx, session)
+	if err != nil || !isZeroMachineResult(result) {
+		return result, err
+	}
+	return markMachineReady(session, workmachineshared.ConditionHostManagerReady, "host manager runs inside workmachine-manager")
+}
+
 // ensureHostManagerPod ensures the workmachine-host-manager StatefulSet exists
 // This function is called when the WorkMachine is in running state
 func (r *MachineScopedReconciler) ensureHostManagerPod(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {

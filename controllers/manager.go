@@ -3,12 +3,14 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/go-logr/zapr"
 	"github.com/kloudlite/kloudlite/api/config"
 	"github.com/kloudlite/kloudlite/controllers/environment"
 	"github.com/kloudlite/kloudlite/controllers/snapshot"
 	"github.com/kloudlite/kloudlite/controllers/user"
+	"github.com/kloudlite/kloudlite/controllers/wmingress"
 	"github.com/kloudlite/kloudlite/controllers/workmachine/machinescoped"
 	"github.com/kloudlite/kloudlite/controllers/workmachine/platformscoped"
 	"github.com/kloudlite/kloudlite/controllers/workspace"
@@ -31,8 +33,11 @@ import (
 )
 
 type Manager struct {
-	mgr    ctrl.Manager
-	logger *zap.Logger
+	mgr               ctrl.Manager
+	logger            *zap.Logger
+	ingressReconciler interface {
+		StartServers(context.Context) error
+	}
 }
 
 func PlatformAPIControllerNames() []string {
@@ -81,13 +86,68 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 	if err != nil {
 		return nil, fmt.Errorf("unable to load controller configuration: %w", err)
 	}
+	ingressReconciler := &wmingress.IngressReconciler{
+		Client:                  mgr.GetClient(),
+		Scheme:                  mgr.GetScheme(),
+		Logger:                  logger.With(zap.String("controller", "wm-ingress")),
+		HTTPPort:                controllerCfg.WMIngress.HTTPPort,
+		HTTPSPort:               controllerCfg.WMIngress.HTTPSPort,
+		WildcardDomain:          controllerCfg.WMIngress.WildcardDomain,
+		WildcardSecretName:      controllerCfg.WMIngress.WildcardSecretName,
+		WildcardSecretNamespace: controllerCfg.WMIngress.WildcardSecretNamespace,
+		OwnNamespace:            os.Getenv("POD_NAMESPACE"),
+		RegistryUsername:        controllerCfg.WMIngress.RegistryUsername,
+		ForceFullRebuild:        controllerCfg.WMIngress.ForceFullRebuild,
+	}
+	if ingressReconciler.HTTPPort == 0 {
+		ingressReconciler.HTTPPort = 80
+	}
+	if ingressReconciler.HTTPSPort == 0 {
+		ingressReconciler.HTTPSPort = 443
+	}
+	if ingressReconciler.WildcardSecretName == "" {
+		ingressReconciler.WildcardSecretName = "kloudlite-wildcard-cert-tls"
+	}
+	if ingressReconciler.WildcardSecretNamespace == "" {
+		ingressReconciler.WildcardSecretNamespace = os.Getenv("WM_INGRESS_WILDCARD_SECRET_NAMESPACE")
+	}
+	if ingressReconciler.WildcardSecretNamespace == "" {
+		ingressReconciler.WildcardSecretNamespace = os.Getenv("POD_NAMESPACE")
+	}
+	if ingressReconciler.OwnNamespace == "" {
+		ingressReconciler.OwnNamespace = os.Getenv("WM_INGRESS_OWN_NAMESPACE")
+	}
+	if ingressReconciler.OwnNamespace == "" {
+		ingressReconciler.OwnNamespace = os.Getenv("POD_NAMESPACE")
+	}
+	if ingressReconciler.RegistryUsername == "" {
+		ingressReconciler.RegistryUsername = os.Getenv("REGISTRY_USERNAME")
+	}
+	if err := ingressReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to setup integrated wm-ingress controller: %w", err)
+	}
+
+	environmentReconciler := &environment.EnvironmentReconciler{
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		Logger:          logger.With(zap.String("controller", "environment")),
+		Cfg:             controllerCfg,
+		OwnNamespace:    os.Getenv("POD_NAMESPACE"),
+		WorkMachineName: os.Getenv("WORKMACHINE_NAME"),
+	}
+	if environmentReconciler.OwnNamespace == "" {
+		environmentReconciler.OwnNamespace = os.Getenv("NAMESPACE")
+	}
+	if err := environmentReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to setup scoped Environment controller: %w", err)
+	}
 
 	if err := machinescoped.Register(mgr, controllerCfg); err != nil {
 		return nil, fmt.Errorf("unable to setup WorkMachine manager controller: %w", err)
 	}
 
-	logger.Info("Controllers initialized successfully", zap.Strings("controllers", []string{"workmachine-manager"}))
-	return &Manager{mgr: mgr, logger: logger}, nil
+	logger.Info("controllers initialized successfully", zap.Strings("controllers", []string{"workmachine-manager", "environment"}))
+	return &Manager{mgr: mgr, logger: logger, ingressReconciler: ingressReconciler}, nil
 }
 
 func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger, platformAPIOnly bool) (*Manager, error) {
@@ -180,7 +240,7 @@ func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 	}
 
 	if platformAPIOnly {
-		logger.Info("Controllers initialized successfully", zap.Strings("controllers", PlatformAPIControllerNames()))
+		logger.Info("controllers initialized successfully", zap.Strings("controllers", PlatformAPIControllerNames()))
 		return &Manager{
 			mgr:    mgr,
 			logger: logger,
@@ -270,7 +330,7 @@ func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to create EnvironmentForkRequest controller: %w", err)
 	}
 
-	logger.Info("Controllers initialized successfully")
+	logger.Info("controllers initialized successfully")
 
 	return &Manager{
 		mgr:    mgr,
@@ -280,8 +340,15 @@ func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 
 // Start starts the controller manager
 func (m *Manager) Start(ctx context.Context) error {
-	m.logger.Info("Starting controller manager")
+	m.logger.Info("starting controller manager")
 	return m.mgr.Start(ctx)
+}
+
+func (m *Manager) StartIngressServers(ctx context.Context) error {
+	if m.ingressReconciler == nil {
+		return nil
+	}
+	return m.ingressReconciler.StartServers(ctx)
 }
 
 // GetClient returns the controller-runtime client
