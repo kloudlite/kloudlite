@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -44,7 +43,7 @@ func (r *EnvironmentReconciler) ensureNetworkPolicy(ctx context.Context, environ
 
 	if apierrors.IsNotFound(err) {
 		// Create new policy
-		logger.Info("Creating network policy",
+		logger.Info("creating network policy",
 			zap.String("namespace", environment.Spec.TargetNamespace),
 			zap.String("visibility", environment.Spec.Visibility))
 
@@ -55,7 +54,7 @@ func (r *EnvironmentReconciler) ensureNetworkPolicy(ctx context.Context, environ
 		return fmt.Errorf("failed to get existing network policy: %w", err)
 	} else {
 		// Update existing policy
-		logger.Info("Updating network policy",
+		logger.Info("updating network policy",
 			zap.String("namespace", environment.Spec.TargetNamespace),
 			zap.String("visibility", environment.Spec.Visibility))
 
@@ -65,10 +64,6 @@ func (r *EnvironmentReconciler) ensureNetworkPolicy(ctx context.Context, environ
 			return fmt.Errorf("failed to update network policy: %w", err)
 		}
 	}
-
-	// Update condition
-	r.addOrUpdateCondition(environment, environmentsv1.EnvironmentConditionNetworkPolicyApplied,
-		metav1.ConditionTrue, "NetworkPolicyApplied", "Network policy has been applied")
 
 	return nil
 }
@@ -98,7 +93,7 @@ func (r *EnvironmentReconciler) buildNetworkPolicy(ctx context.Context, environm
 	// Rule 2: Visibility-based rule
 	visibilityRule, err := r.buildVisibilityIngressRule(ctx, environment, logger)
 	if err != nil {
-		logger.Warn("Failed to build visibility ingress rule", zap.Error(err))
+		logger.Warn("failed to build visibility ingress rule", zap.Error(err))
 		// Continue without visibility rule rather than failing
 	}
 	if visibilityRule != nil {
@@ -328,52 +323,10 @@ func (r *EnvironmentReconciler) deleteNetworkPolicy(ctx context.Context, environ
 		return err
 	}
 
-	logger.Info("Deleting network policy", zap.String("namespace", environment.Spec.TargetNamespace))
+	logger.Info("deleting network policy", zap.String("namespace", environment.Spec.TargetNamespace))
 	if err := r.Delete(ctx, policy); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
-
-	// Update condition
-	r.addOrUpdateCondition(environment, environmentsv1.EnvironmentConditionNetworkPolicyApplied,
-		metav1.ConditionFalse, "NetworkPolicyRemoved", "Network policy has been removed")
-
-	return nil
-}
-
-// ensureNetworkPolicyWithOwner creates or updates the NetworkPolicy with owner reference
-// Network policies are enabled by default; only skip if explicitly disabled
-func (r *EnvironmentReconciler) ensureNetworkPolicyWithOwner(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
-	// Skip only if network policies are explicitly disabled
-	if environment.Spec.NetworkPolicies != nil && !environment.Spec.NetworkPolicies.Enabled {
-		return r.deleteNetworkPolicy(ctx, environment, logger)
-	}
-
-	policy := &networkingv1.NetworkPolicy{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      networkPolicyName,
-			Namespace: environment.Spec.TargetNamespace,
-		},
-	}
-
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, policy, func() error {
-		// Build the full policy spec
-		builtPolicy, err := r.buildNetworkPolicy(ctx, environment, logger)
-		if err != nil {
-			return err
-		}
-
-		policy.Labels = builtPolicy.Labels
-		policy.Spec = builtPolicy.Spec
-
-		return nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to create or update network policy: %w", err)
-	}
-
-	r.addOrUpdateCondition(environment, environmentsv1.EnvironmentConditionNetworkPolicyApplied,
-		metav1.ConditionTrue, "NetworkPolicyApplied", "Network policy has been applied")
 
 	return nil
 }

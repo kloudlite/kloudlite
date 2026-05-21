@@ -1,0 +1,94 @@
+version: 3
+
+vars:
+  REGISTRY: '{{.REGISTRY | default "ghcr.io/kloudlite/kloudlite"}}'
+  TAG: '{{.TAG | default "dev-local"}}'
+  PLATFORM: '{{.PLATFORM | default "linux/amd64"}}'
+
+tasks:
+  image:api-server:
+    desc: Build api-server image
+    cmds:
+      - task: :api:build:api-server
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/api-server/Dockerfile -t {{.REGISTRY}}/api-server:{{.TAG}} --load .
+
+  image:workmachine-manager:
+    desc: Build workmachine-manager image
+    cmds:
+      - task: :api:build:workmachine-manager
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/workmachine-manager/Dockerfile -t {{.REGISTRY}}/workmachine-manager:{{.TAG}} --load .
+
+  image:nix:
+    desc: Build nix helper image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/nix/Dockerfile -t {{.REGISTRY}}/nix:{{.TAG}} --load .
+
+  image:nix-serve:
+    desc: Build nix-serve image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/nix-serve/Dockerfile -t {{.REGISTRY}}/nix-serve:{{.TAG}} --load .
+
+  image:k3s-backup:
+    desc: Build k3s-backup image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/k3s-backup/Dockerfile -t {{.REGISTRY}}/k3s-backup:{{.TAG}} --load .
+
+  image:workspace-base:
+    desc: Build workspace-base image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/workspace-base/Dockerfile -t {{.REGISTRY}}/workspace-base:{{.TAG}} --load api/workspace-images/base
+
+  image:workspace-comprehensive:
+    desc: Build workspace-comprehensive image
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -trimpath -o bin/kl-linux cli/kl/main.go
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/workspace-comprehensive/Dockerfile --build-arg BASE_IMAGE={{.REGISTRY}}/workspace-base:{{.TAG}} --build-arg VERSION={{.TAG}} -t {{.REGISTRY}}/workspace-comprehensive:{{.TAG}} --load .
+
+  image:code-analyzer:
+    desc: Build code-analyzer image
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o ./bin/code-analyzer ./cli/code-analyzer
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/code-analyzer/Dockerfile -t {{.REGISTRY}}/code-analyzer:{{.TAG}} --load .
+
+  image:oci-installer:
+    desc: Build oci-installer image
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o ./bin/oci-installer ./cli/kli/oci-installer
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/oci-installer/Dockerfile -t {{.REGISTRY}}/oci-installer:{{.TAG}} --load .
+
+  image:kl-tun-proxy:
+    desc: Build kl-tun-proxy image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/kl-tun-proxy/Dockerfile -t {{.REGISTRY}}/kl-tun-proxy:{{.TAG}} --load .
+
+  image:console:
+    desc: Build console runtime image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/web-console/Dockerfile.runtime -t {{.REGISTRY}}/console:{{.TAG}} --load web/apps/console
+
+  image:dashboard:
+    desc: Build dashboard runtime image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/web-dashboard/Dockerfile.runtime -t {{.REGISTRY}}/dashboard:{{.TAG}} --load web/apps/dashboard
+
+  image:website:
+    desc: Build website runtime image
+    cmds:
+      - docker buildx build --platform {{.PLATFORM}} -f build-sys/images/web-website/Dockerfile.runtime -t {{.REGISTRY}}/website:{{.TAG}} --load web/apps/website
+
+  image:all:
+    desc: Build all Docker images
+    cmds:
+      - task: image:api-server
+      - task: image:workmachine-manager
+      - task: image:nix
+      - task: image:nix-serve
+      - task: image:k3s-backup
+      - task: image:workspace-base
+      - task: image:workspace-comprehensive
+      - task: image:code-analyzer
+      - task: image:oci-installer
+      - task: image:kl-tun-proxy
+      - task: image:console
+      - task: image:dashboard
+      - task: image:website

@@ -105,16 +105,7 @@ func TestCommandEntrypointHandling(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create minimal composition and environment for the conversion
-			composition := &compositionsv1.Composition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-composition",
-					Namespace: "test-namespace",
-				},
-				Spec: compositionsv1.CompositionSpec{
-					EnvVars: make(map[string]string),
-				},
-			}
+			compositionSpec := &compositionsv1.CompositionSpec{EnvVars: make(map[string]string)}
 
 			envData := &EnvironmentData{
 				EnvVars:     make(map[string]string),
@@ -125,7 +116,7 @@ func TestCommandEntrypointHandling(t *testing.T) {
 			statefulSet, err := convertServiceToStatefulSet(
 				tt.serviceName,
 				tt.service,
-				composition,
+				compositionSpec,
 				"test-namespace",
 				map[string]string{},
 				envData,
@@ -154,9 +145,7 @@ func TestCompositionOwnershipLabelsAndNodePlacement(t *testing.T) {
 			NodeName:        "worker-1",
 		},
 	}
-	composition := &compositionsv1.Composition{ObjectMeta: metav1.ObjectMeta{Name: "dev"}}
-
-	labels := CompositionOwnershipLabels(composition, env)
+	labels := CompositionOwnershipLabels("dev", env)
 	if labels["kloudlite.io/docker-composition"] != "dev" {
 		t.Fatalf("expected docker composition label, got %#v", labels)
 	}
@@ -192,6 +181,14 @@ func TestApplyEnvironmentOwnershipLabelsHandlesNilLabels(t *testing.T) {
 		DockerCompositionLabel:    "dev",
 		EnvironmentNamespaceLabel: "wm-alice",
 	}, labels)
+}
+
+func TestApplyEnvironmentOwnershipLabelsHandlesNilEnvironment(t *testing.T) {
+	labels := ApplyEnvironmentOwnershipLabels(map[string]string{"app": "api"}, nil)
+
+	assert.Equal(t, map[string]string{"app": "api"}, labels)
+	assert.NotContains(t, labels, DockerCompositionLabel)
+	assert.NotContains(t, labels, EnvironmentNamespaceLabel)
 }
 
 func TestConvertComposeToK8s_CommandEntrypoint(t *testing.T) {
@@ -279,15 +276,7 @@ services:
 			}
 			assert.NoError(t, err)
 
-			composition := &compositionsv1.Composition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-composition",
-					Namespace: "test-namespace",
-				},
-				Spec: compositionsv1.CompositionSpec{
-					EnvVars: make(map[string]string),
-				},
-			}
+			compositionSpec := &compositionsv1.CompositionSpec{EnvVars: make(map[string]string)}
 
 			envData := &EnvironmentData{
 				EnvVars:     make(map[string]string),
@@ -295,7 +284,7 @@ services:
 				ConfigFiles: make(map[string]string),
 			}
 
-			resources, err := ConvertComposeToK8s(project, composition, "test-namespace", envData, nil)
+			resources, err := ConvertComposeToK8s(project, "test-composition", compositionSpec, "test-namespace", envData, nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, resources)
 
@@ -558,15 +547,7 @@ services:
 			project, err := ParseComposeFile(tt.composeYAML, "test-project", nil)
 			assert.NoError(t, err)
 
-			composition := &compositionsv1.Composition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-composition",
-					Namespace: "test-namespace",
-				},
-				Spec: compositionsv1.CompositionSpec{
-					EnvVars: make(map[string]string),
-				},
-			}
+			compositionSpec := &compositionsv1.CompositionSpec{EnvVars: make(map[string]string)}
 
 			envData := &EnvironmentData{
 				EnvVars:     make(map[string]string),
@@ -574,7 +555,7 @@ services:
 				ConfigFiles: make(map[string]string),
 			}
 
-			resources, err := ConvertComposeToK8s(project, composition, "test-namespace", envData, nil)
+			resources, err := ConvertComposeToK8s(project, "test-composition", compositionSpec, "test-namespace", envData, nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, resources)
 
@@ -655,15 +636,7 @@ services:
 			project, err := ParseComposeFile(tt.composeYAML, "test-project", nil)
 			assert.NoError(t, err)
 
-			composition := &compositionsv1.Composition{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-composition",
-					Namespace: "test-namespace",
-				},
-				Spec: compositionsv1.CompositionSpec{
-					EnvVars: make(map[string]string),
-				},
-			}
+			compositionSpec := &compositionsv1.CompositionSpec{EnvVars: make(map[string]string)}
 
 			envData := &EnvironmentData{
 				EnvVars:     make(map[string]string),
@@ -671,7 +644,7 @@ services:
 				ConfigFiles: make(map[string]string),
 			}
 
-			resources, err := ConvertComposeToK8s(project, composition, "test-namespace", envData, nil)
+			resources, err := ConvertComposeToK8s(project, "test-composition", compositionSpec, "test-namespace", envData, nil)
 			assert.NoError(t, err)
 
 			// Find the target service's StatefulSet

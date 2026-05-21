@@ -15,7 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -27,14 +26,28 @@ const originalReplicasAnnotation = "kloudlite.io/original-replicas"
 func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) (bool, error) {
 	// Skip if no compose spec
 	if environment.Spec.Compose == nil || environment.Spec.Compose.ComposeContent == "" {
-		// Clean up compose status if it exists
+		if err := r.cleanupComposeResources(ctx, environment, logger); err != nil {
+			return false, fmt.Errorf("failed to cleanup compose resources: %w", err)
+		}
+
 		if environment.Status.ComposeStatus != nil {
+			if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				latest := &environmentsv1.Environment{}
+				if err := r.Get(ctx, client.ObjectKeyFromObject(environment), latest); err != nil {
+					return err
+				}
+				latest.Status.ComposeStatus = nil
+				return r.Status().Update(ctx, latest)
+			}); err != nil {
+				return false, fmt.Errorf("failed to clear compose status: %w", err)
+			}
+
 			environment.Status.ComposeStatus = nil
 		}
 		return false, nil
 	}
 
-	logger.Info("Reconciling compose deployment")
+	logger.Info("reconciling compose deployment")
 
 	// Initialize compose status if needed
 	if environment.Status.ComposeStatus == nil {
@@ -73,7 +86,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	// Fetch environment data
 	envData, err := r.fetchEnvironmentData(ctx, environment.Spec.TargetNamespace, logger)
 	if err != nil {
-		logger.Warn("Failed to fetch environment data", zap.Error(err))
+		logger.Warn("failed to fetch environment data", zap.Error(err))
 		envData = &composition.EnvironmentData{
 			EnvVars:     make(map[string]string),
 			Secrets:     make(map[string]string),
@@ -84,35 +97,26 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	// Parse the compose file
 	project, err := composition.ParseComposeFile(environment.Spec.Compose.ComposeContent, environment.Name, envData)
 	if err != nil {
-		logger.Error("Failed to parse compose file", zap.Error(err))
+		logger.Error("failed to parse compose file", zap.Error(err))
 		environment.Status.ComposeStatus.State = environmentsv1.CompositionStateFailed
 		environment.Status.ComposeStatus.Message = fmt.Sprintf("Parse error: %v", err)
-		return true, nil
+		return true, fmt.Errorf("parse compose: %w", err)
 	}
 
-	logger.Info("Parsed compose file",
+	logger.Info("parsed compose file",
 		zap.Int("services", len(project.Services)),
 		zap.Int("named_volumes", len(project.Volumes)))
 
-	// Create a temporary Composition object for the converter
-	tempComposition := &environmentsv1.Composition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      environment.Name,
-			Namespace: environment.Spec.TargetNamespace,
-		},
-		Spec: *environment.Spec.Compose,
-	}
-
 	// Convert to Kubernetes resources
-	resources, err := composition.ConvertComposeToK8s(project, tempComposition, environment.Spec.TargetNamespace, envData, environment)
+	resources, err := composition.ConvertComposeToK8s(project, environment.Name, environment.Spec.Compose, environment.Spec.TargetNamespace, envData, environment)
 	if err != nil {
-		logger.Error("Failed to convert to Kubernetes resources", zap.Error(err))
+		logger.Error("failed to convert to kubernetes resources", zap.Error(err))
 		environment.Status.ComposeStatus.State = environmentsv1.CompositionStateFailed
 		environment.Status.ComposeStatus.Message = fmt.Sprintf("Conversion error: %v", err)
-		return true, nil
+		return true, fmt.Errorf("convert compose to Kubernetes resources: %w", err)
 	}
 
-	logger.Info("Converted to Kubernetes resources",
+	logger.Info("converted to kubernetes resources",
 		zap.Int("statefulsets", len(resources.StatefulSets)),
 		zap.Int("services", len(resources.Services)),
 		zap.Int("pvcs", len(resources.PVCs)))
@@ -121,8 +125,8 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	for _, pvc := range resources.PVCs {
 		if err := r.applyComposeResource(ctx, pvc, environment, logger); err != nil {
 			environment.Status.ComposeStatus.State = environmentsv1.CompositionStateFailed
-			environment.Status.ComposeStatus.Message = fmt.Sprintf("Failed to apply PVC %s: %v", pvc.Name, err)
-			return true, nil
+			environment.Status.ComposeStatus.Message = fmt.Sprintf("failed to apply pvc %s: %v", pvc.Name, err)
+			return true, fmt.Errorf("failed to apply pvc %s: %w", pvc.Name, err)
 		}
 	}
 
@@ -133,7 +137,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		if environment.Spec.WorkMachineName != "" {
 			wm, err := r.getWorkMachine(ctx, environment.Spec.WorkMachineName)
 			if err != nil {
-				logger.Warn("Failed to get WorkMachine for node assignment",
+				logger.Warn("failed to get workmachine for node assignment",
 					zap.String("workmachine", environment.Spec.WorkMachineName),
 					zap.Error(err))
 			} else {
@@ -157,7 +161,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		existsInCluster := true
 		if err := r.Get(ctx, client.ObjectKey{Name: statefulSet.Name, Namespace: statefulSet.Namespace}, existingSts); err != nil {
 			if !apierrors.IsNotFound(err) {
-				logger.Warn("Failed to fetch existing StatefulSet for replica check",
+				logger.Warn("failed to fetch existing statefulset for replica check",
 					zap.String("name", statefulSet.Name),
 					zap.Error(err))
 			}
@@ -197,8 +201,8 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 
 		if err := r.applyComposeResource(ctx, statefulSet, environment, logger); err != nil {
 			environment.Status.ComposeStatus.State = environmentsv1.CompositionStateFailed
-			environment.Status.ComposeStatus.Message = fmt.Sprintf("Failed to apply StatefulSet %s: %v", statefulSet.Name, err)
-			return true, nil
+			environment.Status.ComposeStatus.Message = fmt.Sprintf("failed to apply statefulset %s: %v", statefulSet.Name, err)
+			return true, fmt.Errorf("failed to apply statefulset %s: %w", statefulSet.Name, err)
 		}
 		deployedStatefulSets = append(deployedStatefulSets, statefulSet.Name)
 	}
@@ -208,8 +212,8 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	for _, service := range resources.Services {
 		if err := r.applyComposeResource(ctx, service, environment, logger); err != nil {
 			environment.Status.ComposeStatus.State = environmentsv1.CompositionStateFailed
-			environment.Status.ComposeStatus.Message = fmt.Sprintf("Failed to apply Service %s: %v", service.Name, err)
-			return true, nil
+			environment.Status.ComposeStatus.Message = fmt.Sprintf("failed to apply service %s: %v", service.Name, err)
+			return true, fmt.Errorf("failed to apply service %s: %w", service.Name, err)
 		}
 		deployedServices = append(deployedServices, service.Name)
 	}
@@ -222,7 +226,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 
 	// Cleanup removed resources - now properly handles errors
 	if err := r.cleanupRemovedComposeResources(ctx, environment, oldDeployedResources, deployedStatefulSets, deployedServices, deployedPVCs, logger); err != nil {
-		logger.Error("Failed to cleanup removed resources", zap.Error(err))
+		logger.Error("failed to cleanup removed resources", zap.Error(err))
 		// Return error to indicate partial failure, allowing the reconcile loop to retry
 		return false, fmt.Errorf("failed to cleanup removed resources: %w", err)
 	}
@@ -247,7 +251,7 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		environment.Status.ComposeStatus.RunningCount = healthResult.RunningCount
 	}
 
-	logger.Info("Compose deployment completed",
+	logger.Info("compose deployment completed",
 		zap.Int("statefulsets", len(deployedStatefulSets)),
 		zap.Int("services", len(deployedServices)),
 		zap.String("state", string(environment.Status.ComposeStatus.State)))
@@ -258,13 +262,14 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 	composeStatus := environment.Status.ComposeStatus.DeepCopy()
 	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		// Refetch to get latest version
-		if err := r.Get(ctx, client.ObjectKeyFromObject(environment), environment); err != nil {
+		latest := &environmentsv1.Environment{}
+		if err := r.Get(ctx, client.ObjectKeyFromObject(environment), latest); err != nil {
 			return err
 		}
-		environment.Status.ComposeStatus = composeStatus
-		return r.Status().Update(ctx, environment)
+		latest.Status.ComposeStatus = composeStatus
+		return r.Status().Update(ctx, latest)
 	}); err != nil {
-		logger.Warn("Failed to persist compose status", zap.Error(err))
+		logger.Warn("failed to persist compose status", zap.Error(err))
 		// Don't fail - the status will be updated on next reconcile
 	}
 
@@ -313,7 +318,7 @@ func (r *EnvironmentReconciler) applyComposeResource(ctx context.Context, resour
 	err := r.Get(ctx, client.ObjectKeyFromObject(resource), existing)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Info("Creating resource",
+			logger.Info("creating resource",
 				zap.String("name", resource.GetName()),
 				zap.String("namespace", resource.GetNamespace()))
 			return r.Create(ctx, resource)
@@ -411,12 +416,9 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 	// Delete removed StatefulSets
 	for _, name := range oldResources.StatefulSets {
 		if !currentStatefulSetSet[name] {
-			logger.Info("Deleting removed StatefulSet", zap.String("name", name))
-			if err := r.Delete(ctx, &appsv1.StatefulSet{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			}); err != nil && !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete removed StatefulSet", zap.String("name", name), zap.Error(err))
-				errors = append(errors, fmt.Errorf("StatefulSet %s: %w", name, err))
+			if err := r.deleteRemovedComposeResource(ctx, environment, &appsv1.StatefulSet{}, namespace, name, "statefulset", logger); err != nil {
+				logger.Error("failed to delete removed statefulset", zap.String("name", name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("statefulset %s: %w", name, err))
 			}
 		}
 	}
@@ -424,12 +426,9 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 	// Delete removed services
 	for _, name := range oldResources.Services {
 		if !currentServiceSet[name] {
-			logger.Info("Deleting removed service", zap.String("name", name))
-			if err := r.Delete(ctx, &corev1.Service{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			}); err != nil && !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete removed service", zap.String("name", name), zap.Error(err))
-				errors = append(errors, fmt.Errorf("Service %s: %w", name, err))
+			if err := r.deleteRemovedComposeResource(ctx, environment, &corev1.Service{}, namespace, name, "service", logger); err != nil {
+				logger.Error("failed to delete removed service", zap.String("name", name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("service %s: %w", name, err))
 			}
 		}
 	}
@@ -437,12 +436,9 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 	// Delete removed PVCs
 	for _, name := range oldResources.PVCs {
 		if !currentPVCSet[name] {
-			logger.Info("Deleting removed PVC", zap.String("name", name))
-			if err := r.Delete(ctx, &corev1.PersistentVolumeClaim{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-			}); err != nil && !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete removed PVC", zap.String("name", name), zap.Error(err))
-				errors = append(errors, fmt.Errorf("PVC %s: %w", name, err))
+			if err := r.deleteRemovedComposeResource(ctx, environment, &corev1.PersistentVolumeClaim{}, namespace, name, "pvc", logger); err != nil {
+				logger.Error("failed to delete removed pvc", zap.String("name", name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("pvc %s: %w", name, err))
 			}
 		}
 	}
@@ -453,6 +449,44 @@ func (r *EnvironmentReconciler) cleanupRemovedComposeResources(ctx context.Conte
 	}
 
 	return nil
+}
+
+func (r *EnvironmentReconciler) deleteRemovedComposeResource(ctx context.Context, environment *environmentsv1.Environment, obj client.Object, namespace, name, resourceType string, logger *zap.Logger) error {
+	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, obj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	if !isOwnedComposeResource(obj, environment) {
+		logger.Warn("skipping removed compose resource with mismatched ownership labels",
+			zap.String("resource_type", resourceType),
+			zap.String("name", name),
+			zap.String("namespace", namespace))
+		return nil
+	}
+
+	logger.Info("deleting removed compose resource",
+		zap.String("resource_type", resourceType),
+		zap.String("name", name))
+	if err := r.Delete(ctx, obj); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
+func composeOwnershipLabels(environment *environmentsv1.Environment) client.MatchingLabels {
+	return client.MatchingLabels{
+		composition.DockerCompositionLabel:    environment.Name,
+		composition.EnvironmentNamespaceLabel: environment.Namespace,
+	}
+}
+
+func isOwnedComposeResource(obj client.Object, environment *environmentsv1.Environment) bool {
+	labels := obj.GetLabels()
+	return labels[composition.DockerCompositionLabel] == environment.Name &&
+		labels[composition.EnvironmentNamespaceLabel] == environment.Namespace
 }
 
 // checkComposeStatefulSetHealth checks the health of compose StatefulSets
@@ -669,20 +703,20 @@ func (r *EnvironmentReconciler) getWorkMachine(ctx context.Context, name string)
 // cleanupComposeResources removes all compose resources for an environment
 func (r *EnvironmentReconciler) cleanupComposeResources(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	namespace := environment.Spec.TargetNamespace
-	labelSelector := client.MatchingLabels{composition.DockerCompositionLabel: environment.Name}
+	labelSelector := composeOwnershipLabels(environment)
 
 	var errors []error
 
 	// Delete StatefulSets using pagination
 	stsList := &appsv1.StatefulSetList{}
 	if err := pagination.ListAll(ctx, r, stsList, client.InNamespace(namespace), labelSelector); err != nil {
-		logger.Error("Failed to list StatefulSets for cleanup", zap.Error(err))
-		errors = append(errors, fmt.Errorf("failed to list StatefulSets: %w", err))
+		logger.Error("failed to list statefulsets for cleanup", zap.Error(err))
+		errors = append(errors, fmt.Errorf("failed to list statefulsets: %w", err))
 	} else {
 		for _, s := range stsList.Items {
 			if err := r.Delete(ctx, &s); err != nil && !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete StatefulSet", zap.String("name", s.Name), zap.Error(err))
-				errors = append(errors, fmt.Errorf("StatefulSet %s: %w", s.Name, err))
+				logger.Error("failed to delete statefulset", zap.String("name", s.Name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("statefulset %s: %w", s.Name, err))
 			}
 		}
 	}
@@ -690,13 +724,13 @@ func (r *EnvironmentReconciler) cleanupComposeResources(ctx context.Context, env
 	// Delete services using pagination
 	serviceList := &corev1.ServiceList{}
 	if err := pagination.ListAll(ctx, r, serviceList, client.InNamespace(namespace), labelSelector); err != nil {
-		logger.Error("Failed to list Services for cleanup", zap.Error(err))
-		errors = append(errors, fmt.Errorf("failed to list Services: %w", err))
+		logger.Error("failed to list services for cleanup", zap.Error(err))
+		errors = append(errors, fmt.Errorf("failed to list services: %w", err))
 	} else {
 		for _, s := range serviceList.Items {
 			if err := r.Delete(ctx, &s); err != nil && !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete Service", zap.String("name", s.Name), zap.Error(err))
-				errors = append(errors, fmt.Errorf("Service %s: %w", s.Name, err))
+				logger.Error("failed to delete service", zap.String("name", s.Name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("service %s: %w", s.Name, err))
 			}
 		}
 	}
@@ -704,13 +738,13 @@ func (r *EnvironmentReconciler) cleanupComposeResources(ctx context.Context, env
 	// Delete PVCs (including those created by VolumeClaimTemplates) using pagination
 	pvcList := &corev1.PersistentVolumeClaimList{}
 	if err := pagination.ListAll(ctx, r, pvcList, client.InNamespace(namespace), labelSelector); err != nil {
-		logger.Error("Failed to list PVCs for cleanup", zap.Error(err))
-		errors = append(errors, fmt.Errorf("failed to list PVCs: %w", err))
+		logger.Error("failed to list pvcs for cleanup", zap.Error(err))
+		errors = append(errors, fmt.Errorf("failed to list pvcs: %w", err))
 	} else {
 		for _, p := range pvcList.Items {
 			if err := r.Delete(ctx, &p); err != nil && !apierrors.IsNotFound(err) {
-				logger.Error("Failed to delete PVC", zap.String("name", p.Name), zap.Error(err))
-				errors = append(errors, fmt.Errorf("PVC %s: %w", p.Name, err))
+				logger.Error("failed to delete pvc", zap.String("name", p.Name), zap.Error(err))
+				errors = append(errors, fmt.Errorf("pvc %s: %w", p.Name, err))
 			}
 		}
 	}

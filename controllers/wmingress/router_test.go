@@ -1,8 +1,11 @@
 package wmingress
 
 import (
+	"context"
 	"fmt"
+	"net"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -246,4 +249,46 @@ func TestRouterGetRoutesImmutability(t *testing.T) {
 	if routesAgain[0].BackendURL == "http://modified:9999" {
 		t.Error("GetRoutes returned a mutable reference - modification affected internal state")
 	}
+}
+
+func TestRouterStartHTTPReturnsBindError(t *testing.T) {
+	listener, port := reserveTCPPort(t)
+	defer listener.Close()
+
+	router := NewRouter(zap.NewNop(), "")
+	err := router.StartHTTP(context.Background(), port)
+	if err == nil {
+		t.Fatal("StartHTTP error = nil, want bind error for occupied port")
+	}
+	if !strings.Contains(err.Error(), "failed to listen") {
+		t.Fatalf("StartHTTP error = %v, want failed to listen", err)
+	}
+}
+
+func TestRouterStartHTTPSReturnsBindError(t *testing.T) {
+	listener, port := reserveTCPPort(t)
+	defer listener.Close()
+
+	router := NewRouter(zap.NewNop(), "")
+	err := router.StartHTTPS(context.Background(), port, NewTLSManager(zap.NewNop()))
+	if err == nil {
+		t.Fatal("StartHTTPS error = nil, want bind error for occupied port")
+	}
+	if !strings.Contains(err.Error(), "failed to listen") {
+		t.Fatalf("StartHTTPS error = %v, want failed to listen", err)
+	}
+}
+
+func reserveTCPPort(t *testing.T) (net.Listener, int) {
+	t.Helper()
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatalf("reserve tcp port: %v", err)
+	}
+	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		listener.Close()
+		t.Fatalf("listener addr = %T, want *net.TCPAddr", listener.Addr())
+	}
+	return listener, tcpAddr.Port
 }

@@ -648,24 +648,72 @@ func (p *provider) DeleteMachine(ctx context.Context, machineID string) error {
 		return fmt.Errorf("must provide machineID, got (%s)", machineID)
 	}
 
-	vmName := extractVMNameFromID(machineID)
+	names := workMachineAzureResourceNames(machineID)
 
-	// Delete VM (NIC and Public IP will be deleted automatically due to DeleteOption)
-	poller, err := p.vmClient.BeginDelete(ctx, p.resourceGroup, vmName, nil)
+	poller, err := p.vmClient.BeginDelete(ctx, p.resourceGroup, names.vm, nil)
 	if err != nil {
-		// Ignore not found errors
-		if strings.Contains(err.Error(), "ResourceNotFound") || strings.Contains(err.Error(), "NotFound") {
-			return nil
+		if !isAzureNotFound(err) {
+			return fmt.Errorf("failed to delete machine: %w", err)
 		}
-		return fmt.Errorf("failed to delete machine: %w", err)
-	}
-
-	_, err = poller.PollUntilDone(ctx, nil)
-	if err != nil {
+	} else if _, err = poller.PollUntilDone(ctx, nil); err != nil {
 		return fmt.Errorf("failed to wait for machine deletion: %w", err)
 	}
 
+	if err := p.deleteNetworkInterface(ctx, names.nic); err != nil {
+		return err
+	}
+	if err := p.deletePublicIP(ctx, names.publicIP); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+type azureResourceNames struct {
+	vm       string
+	nic      string
+	publicIP string
+}
+
+func workMachineAzureResourceNames(machineID string) azureResourceNames {
+	vmName := extractVMNameFromID(machineID)
+	return azureResourceNames{
+		vm:       vmName,
+		nic:      vmName + "-nic",
+		publicIP: vmName + "-pip",
+	}
+}
+
+func (p *provider) deleteNetworkInterface(ctx context.Context, name string) error {
+	poller, err := p.nicClient.BeginDelete(ctx, p.resourceGroup, name, nil)
+	if err != nil {
+		if isAzureNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to delete network interface %s: %w", name, err)
+	}
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
+		return fmt.Errorf("failed to wait for network interface %s deletion: %w", name, err)
+	}
+	return nil
+}
+
+func (p *provider) deletePublicIP(ctx context.Context, name string) error {
+	poller, err := p.publicIPClient.BeginDelete(ctx, p.resourceGroup, name, nil)
+	if err != nil {
+		if isAzureNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to delete public IP %s: %w", name, err)
+	}
+	if _, err := poller.PollUntilDone(ctx, nil); err != nil {
+		return fmt.Errorf("failed to wait for public IP %s deletion: %w", name, err)
+	}
+	return nil
+}
+
+func isAzureNotFound(err error) bool {
+	return strings.Contains(err.Error(), "ResourceNotFound") || strings.Contains(err.Error(), "NotFound")
 }
 
 func (p *provider) IncreaseVolumeSize(ctx context.Context, machineID string, newSize int32) error {

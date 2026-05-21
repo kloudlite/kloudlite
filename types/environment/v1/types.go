@@ -9,6 +9,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="TargetNamespace",type=string,JSONPath=`.spec.targetNamespace`
 // +kubebuilder:printcolumn:name="Activated",type=boolean,JSONPath=`.spec.activated`
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
@@ -204,7 +205,7 @@ type EnvironmentStatus struct {
 
 	// Conditions represent the latest available observations of the environment's state
 	// +optional
-	Conditions []EnvironmentCondition `json:"conditions,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	// ObservedGeneration is the generation observed by the controller
 	// +optional
@@ -355,27 +356,6 @@ type SnapshotRestoreStatus struct {
 	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
-// EnvironmentCondition represents a condition of the environment
-type EnvironmentCondition struct {
-	// Type of condition
-	Type EnvironmentConditionType `json:"type"`
-
-	// Status of the condition (True, False, Unknown)
-	Status metav1.ConditionStatus `json:"status"`
-
-	// LastTransitionTime is the last time the condition changed
-	// +optional
-	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
-
-	// Reason is a unique, one-word, CamelCase reason for the condition's last transition
-	// +optional
-	Reason string `json:"reason,omitempty"`
-
-	// Message is a human-readable message about the last transition
-	// +optional
-	Message string `json:"message,omitempty"`
-}
-
 // EnvironmentConditionType represents types of environment conditions
 type EnvironmentConditionType string
 
@@ -383,14 +363,20 @@ const (
 	// EnvironmentConditionReady indicates the environment is ready
 	EnvironmentConditionReady EnvironmentConditionType = "Ready"
 
+	// EnvironmentConditionNamespaceReady indicates the namespace is ready
+	EnvironmentConditionNamespaceReady EnvironmentConditionType = "NamespaceReady"
+
 	// EnvironmentConditionNamespaceCreated indicates the namespace has been created
-	EnvironmentConditionNamespaceCreated EnvironmentConditionType = "NamespaceCreated"
+	EnvironmentConditionNamespaceCreated EnvironmentConditionType = EnvironmentConditionNamespaceReady
 
 	// EnvironmentConditionResourceQuotaApplied indicates resource quotas have been applied
 	EnvironmentConditionResourceQuotaApplied EnvironmentConditionType = "ResourceQuotaApplied"
 
+	// EnvironmentConditionNetworkPolicyReady indicates network policies are ready
+	EnvironmentConditionNetworkPolicyReady EnvironmentConditionType = "NetworkPolicyReady"
+
 	// EnvironmentConditionNetworkPolicyApplied indicates network policies have been applied
-	EnvironmentConditionNetworkPolicyApplied EnvironmentConditionType = "NetworkPolicyApplied"
+	EnvironmentConditionNetworkPolicyApplied EnvironmentConditionType = EnvironmentConditionNetworkPolicyReady
 
 	// EnvironmentConditionForked indicates resources have been forked from source environment
 	EnvironmentConditionForked EnvironmentConditionType = "Forked"
@@ -415,6 +401,7 @@ type EnvironmentList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environmentName`
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
@@ -535,6 +522,7 @@ type EnvironmentSnapshotRequestList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environmentName`
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
@@ -663,6 +651,7 @@ type EnvironmentSnapshotRestoreList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="NewEnv",type=string,JSONPath=`.spec.newEnvironmentName`
 // +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.sourceSnapshot.snapshotName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
