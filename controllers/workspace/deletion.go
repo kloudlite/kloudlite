@@ -476,6 +476,10 @@ func (r *WorkspaceReconciler) cleanupWorkspaceSnapshots(ctx context.Context, wor
 // Returns the number of successfully deleted resources and a slice of errors encountered.
 func (r *WorkspaceReconciler) cleanupOrphanedRBACResources(ctx context.Context, logger *zap.Logger) (int, []error) {
 	logger.Info("Starting orphaned RBAC resource cleanup with pagination")
+	if r.scopeConfigured() && r.OwnNamespace == "" {
+		logger.Warn("Skipping orphaned RBAC cleanup because scoped controller has no OwnNamespace")
+		return 0, nil
+	}
 
 	// List all ClusterRoles with workspace labels using pagination
 	// Page size of 100 prevents API server overload in large clusters
@@ -499,6 +503,9 @@ func (r *WorkspaceReconciler) cleanupOrphanedRBACResources(ctx context.Context, 
 		if workspaceName == "" || namespace == "" {
 			logger.Warn("ClusterRole missing workspace labels, skipping",
 				zap.String("clusterRole", cr.Name))
+			continue
+		}
+		if r.scopeConfigured() && namespace != r.OwnNamespace {
 			continue
 		}
 
@@ -552,6 +559,9 @@ func (r *WorkspaceReconciler) cleanupOrphanedRBACResources(ctx context.Context, 
 		if workspaceName == "" || namespace == "" {
 			logger.Warn("ClusterRoleBinding missing workspace labels, skipping",
 				zap.String("clusterRoleBinding", crb.Name))
+			continue
+		}
+		if r.scopeConfigured() && namespace != r.OwnNamespace {
 			continue
 		}
 
