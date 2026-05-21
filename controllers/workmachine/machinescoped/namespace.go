@@ -163,20 +163,19 @@ func (r *MachineScopedReconciler) deleteNamespace(ctx context.Context, session *
 			return markMachineError(session, workmachineshared.ConditionMachineNamespaceReady, err)
 		}
 
-		// Remove finalizer from workspace to allow it to be deleted immediately
-		if ws.DeletionTimestamp == nil {
-			// Workspace not being deleted yet, delete it
-			if err := r.Delete(ctx, &ws); err != nil && !apiErrors.IsNotFound(err) {
-				return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete workspace %s: %w", ws.Name, err))
-			}
-		} else {
-			// Workspace is being deleted but stuck on finalizer, remove it
-			if controllerutil.ContainsFinalizer(&ws, "workspaces.kloudlite.io/finalizer") {
-				controllerutil.RemoveFinalizer(&ws, "workspaces.kloudlite.io/finalizer")
-				if err := r.Update(ctx, &ws); err != nil && !apiErrors.IsNotFound(err) {
-					return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from workspace %s: %w", ws.Name, err))
+		// Remove finalizer before delete so WorkMachine deletion does not depend on
+		// workspace controller cleanup after the machine is going away.
+		if controllerutil.ContainsFinalizer(&ws, "workspaces.kloudlite.io/finalizer") {
+			controllerutil.RemoveFinalizer(&ws, "workspaces.kloudlite.io/finalizer")
+			if err := r.Update(ctx, &ws); err != nil {
+				if apiErrors.IsNotFound(err) {
+					continue
 				}
+				return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from workspace %s: %w", ws.Name, err))
 			}
+		}
+		if err := r.Delete(ctx, &ws); err != nil && !apiErrors.IsNotFound(err) {
+			return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete workspace %s: %w", ws.Name, err))
 		}
 	}
 
@@ -193,9 +192,15 @@ func (r *MachineScopedReconciler) deleteNamespace(ctx context.Context, session *
 		// Remove the package-cleanup finalizer added by node-manager
 		if controllerutil.ContainsFinalizer(&pkgReq, "workspaces.kloudlite.io/package-cleanup") {
 			controllerutil.RemoveFinalizer(&pkgReq, "workspaces.kloudlite.io/package-cleanup")
-			if err := r.Update(ctx, &pkgReq); err != nil && !apiErrors.IsNotFound(err) {
+			if err := r.Update(ctx, &pkgReq); err != nil {
+				if apiErrors.IsNotFound(err) {
+					continue
+				}
 				return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from PackageRequest %s: %w", pkgReq.Name, err))
 			}
+		}
+		if err := r.Delete(ctx, &pkgReq); err != nil && !apiErrors.IsNotFound(err) {
+			return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete PackageRequest %s: %w", pkgReq.Name, err))
 		}
 	}
 
@@ -216,56 +221,27 @@ func (r *MachineScopedReconciler) deleteNamespace(ctx context.Context, session *
 				}
 			}
 
-			// Remove finalizer from environment to allow it to be deleted immediately
-			if env.DeletionTimestamp == nil {
-				// Environment not being deleted yet, delete it
-				if err := r.Delete(ctx, &env); err != nil && !apiErrors.IsNotFound(err) {
-					return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete environment %s: %w", env.Name, err))
-				}
-			} else {
-				// Environment is being deleted but stuck on finalizer, remove it
-				if controllerutil.ContainsFinalizer(&env, "environments.kloudlite.io/finalizer") {
-					controllerutil.RemoveFinalizer(&env, "environments.kloudlite.io/finalizer")
-					if err := r.Update(ctx, &env); err != nil && !apiErrors.IsNotFound(err) {
-						return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from environment %s: %w", env.Name, err))
+			// Remove finalizer before delete so environment cleanup cannot block
+			// WorkMachine deletion after the machine-scoped controller shuts down.
+			if controllerutil.ContainsFinalizer(&env, "environments.kloudlite.io/finalizer") {
+				controllerutil.RemoveFinalizer(&env, "environments.kloudlite.io/finalizer")
+				if err := r.Update(ctx, &env); err != nil {
+					if apiErrors.IsNotFound(err) {
+						continue
 					}
+					return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from environment %s: %w", env.Name, err))
 				}
+			}
+			if err := r.Delete(ctx, &env); err != nil && !apiErrors.IsNotFound(err) {
+				return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete environment %s: %w", env.Name, err))
 			}
 		}
 	}
 
-	// Host-manager StatefulSet and Service are created in the workmachine namespace (namespaceName)
-	// They will be automatically cleaned up when the namespace is deleted
-
-	// Proceed with namespace deletion
-	namespace := &corev1.Namespace{}
-	err := r.Get(ctx, client.ObjectKey{Name: namespaceName}, namespace)
-	if err == nil {
-		// Namespace still exists
-		if namespace.DeletionTimestamp != nil {
-			// Namespace is being deleted - remove our finalizer to allow it to complete
-			if controllerutil.RemoveFinalizer(namespace, WorkMachineFinalizerName) {
-				if err := r.Update(ctx, namespace); err != nil {
-					return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, err)
-				}
-			}
-			return markMachineWaiting(session, workmachineshared.ConditionMachineNamespaceReady, "Namespace is being deleted, waiting for completion", 0)
-		}
-
-		// Delete the namespace
-		if err := r.Delete(ctx, namespace); err != nil && !apiErrors.IsNotFound(err) {
-			return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, err)
-		}
-
-		return markMachineWaiting(session, workmachineshared.ConditionMachineNamespaceReady, "Namespace deletion initiated, waiting for completion", 0)
-	}
-
-	if !apiErrors.IsNotFound(err) {
-		return markMachineError(session, workmachineshared.ConditionMachineNamespaceReady, err)
-	}
-
-	// Namespace is deleted
-	return markMachineReady(session, workmachineshared.ConditionMachineNamespaceReady, "machine namespace is deleted")
+	// The platform-scoped controller owns WorkMachine namespace deletion. The
+	// machine-scoped controller runs inside that namespace, so deleting it here
+	// can remove the cleanup actor before it records MachineScopedCleanupComplete.
+	return markMachineReady(session, workmachineshared.ConditionMachineNamespaceReady, "machine namespace child resources are cleaned up")
 }
 
 // sanitizeForLabel sanitizes a string (like email) for use as a Kubernetes label value

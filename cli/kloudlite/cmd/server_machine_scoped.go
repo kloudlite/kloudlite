@@ -8,6 +8,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/config"
 	"github.com/kloudlite/kloudlite/api/k8s"
+	workmachinenodemanager "github.com/kloudlite/kloudlite/cli/workmachine-node-manager"
 	"github.com/kloudlite/kloudlite/controllers"
 	"github.com/kloudlite/kloudlite/pkg/logger"
 	"github.com/spf13/cobra"
@@ -48,10 +49,22 @@ func runWorkMachineManager(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if err := mgr.StartIngressServers(ctx); err != nil {
+		return err
+	}
 
 	managerErr := make(chan error, 1)
 	go func() {
 		managerErr <- mgr.Start(ctx)
+	}()
+	go func() {
+		managerErr <- workmachinenodemanager.Start(ctx, workmachinenodemanager.Config{
+			Namespace:                os.Getenv("NAMESPACE"),
+			WorkMachineName:          os.Getenv("WORKMACHINE_NAME"),
+			SnapshotRegistryEndpoint: os.Getenv("SNAPSHOT_REGISTRY_ENDPOINT"),
+			SnapshotRegistryPrefix:   os.Getenv("SNAPSHOT_REGISTRY_PREFIX"),
+			SnapshotRegistryInsecure: os.Getenv("SNAPSHOT_REGISTRY_INSECURE"),
+		})
 	}()
 
 	quit := make(chan os.Signal, 1)

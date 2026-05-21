@@ -1,8 +1,8 @@
-package main
+package workmachinenodemanager
 
 import (
+	"context"
 	"fmt"
-	"os"
 	"time"
 
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
@@ -32,7 +32,15 @@ const (
 	workspaceCleanupFinalizer = "workspaces.kloudlite.io/directory-cleanup"
 )
 
-func main() {
+type Config struct {
+	Namespace                string
+	WorkMachineName          string
+	SnapshotRegistryEndpoint string
+	SnapshotRegistryPrefix   string
+	SnapshotRegistryInsecure string
+}
+
+func Start(ctx context.Context, cfg Config) error {
 	// Setup logger using controller-runtime's zap logger
 	opts := zap.Options{
 		Development: false,
@@ -43,8 +51,7 @@ func main() {
 	// Create a native zap logger for our own use
 	zapLogger, err := zap2.NewProduction()
 	if err != nil {
-		fmt.Printf("Failed to create logger: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to create logger: %w", err)
 	}
 	defer zapLogger.Sync()
 
@@ -53,38 +60,35 @@ func main() {
 
 	// Setup workspace home directory with correct ownership (system-level operation)
 	if err := setupWorkspaceHome(zapLogger, fs); err != nil {
-		zapLogger.Fatal("Failed to setup workspace home directory", zap2.Error(err))
+		return fmt.Errorf("failed to setup workspace home directory: %w", err)
 	}
 
 	// Setup SSH config directory
 	if err := setupSSHConfigDirectory(zapLogger, fs); err != nil {
-		zapLogger.Fatal("Failed to setup SSH config directory", zap2.Error(err))
+		return fmt.Errorf("failed to setup SSH config directory: %w", err)
 	}
 
-	// Get namespace from environment
-	namespace := os.Getenv("NAMESPACE")
+	namespace := cfg.Namespace
 	if namespace == "" {
 		zapLogger.Info("NAMESPACE not set, running in system setup mode only (not watching PackageRequests)")
-		// Keep running but don't start the controller
-		select {} // Block forever
+		<-ctx.Done()
+		return nil
 	}
 
-	// Get WorkMachine name from environment
-	workmachineName := os.Getenv("WORKMACHINE_NAME")
+	workmachineName := cfg.WorkMachineName
 	if workmachineName == "" {
-		zapLogger.Fatal("WORKMACHINE_NAME environment variable not set")
+		return fmt.Errorf("WORKMACHINE_NAME is required")
 	}
 
-	// Get snapshot registry configuration from environment
-	registryEndpoint := os.Getenv("SNAPSHOT_REGISTRY_ENDPOINT")
+	registryEndpoint := cfg.SnapshotRegistryEndpoint
 	if registryEndpoint == "" {
 		registryEndpoint = "image-registry.kloudlite.svc.cluster.local:5000" // Default
 	}
-	registryPrefix := os.Getenv("SNAPSHOT_REGISTRY_PREFIX")
+	registryPrefix := cfg.SnapshotRegistryPrefix
 	if registryPrefix == "" {
 		registryPrefix = "snapshots" // Default
 	}
-	registryInsecure := os.Getenv("SNAPSHOT_REGISTRY_INSECURE")
+	registryInsecure := cfg.SnapshotRegistryInsecure
 	if registryInsecure == "" {
 		registryInsecure = "true" // Default
 	}
@@ -99,25 +103,25 @@ func main() {
 	// Setup scheme
 	scheme := runtime.NewScheme()
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {
-		zapLogger.Fatal("Failed to add client-go scheme", zap2.Error(err))
+		return fmt.Errorf("failed to add client-go scheme: %w", err)
 	}
 	if err := workspacev1.AddToScheme(scheme); err != nil {
-		zapLogger.Fatal("Failed to add workspace v1 scheme", zap2.Error(err))
+		return fmt.Errorf("failed to add workspace v1 scheme: %w", err)
 	}
 	if err := packagesv1.AddToScheme(scheme); err != nil {
-		zapLogger.Fatal("Failed to add packages v1 scheme", zap2.Error(err))
+		return fmt.Errorf("failed to add packages v1 scheme: %w", err)
 	}
 	if err := snapshotv1.AddToScheme(scheme); err != nil {
-		zapLogger.Fatal("Failed to add snapshot v1 scheme", zap2.Error(err))
+		return fmt.Errorf("failed to add snapshot v1 scheme: %w", err)
 	}
 	if err := environmentv1.AddToScheme(scheme); err != nil {
-		zapLogger.Fatal("Failed to add environment v1 scheme", zap2.Error(err))
+		return fmt.Errorf("failed to add environment v1 scheme: %w", err)
 	}
 
 	// Get in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		zapLogger.Fatal("Failed to get in-cluster config", zap2.Error(err))
+		return fmt.Errorf("failed to get in-cluster config: %w", err)
 	}
 
 	// Create manager watching namespace-scoped resources in namespace and cluster-scoped resources (Nodes)
@@ -163,7 +167,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		zapLogger.Fatal("Failed to create manager", zap2.Error(err))
+		return fmt.Errorf("failed to create manager: %w", err)
 	}
 
 	// Setup command executor for Nix operations
@@ -183,7 +187,7 @@ func main() {
 	}
 
 	if err := packageReconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup package controller", zap2.Error(err))
+		return fmt.Errorf("failed to setup package controller: %w", err)
 	}
 
 	// Setup SSH config reconciler
@@ -195,7 +199,7 @@ func main() {
 	}
 
 	if err := sshConfigReconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup SSH config controller", zap2.Error(err))
+		return fmt.Errorf("failed to setup SSH config controller: %w", err)
 	}
 
 	// Setup workspace cleanup reconciler (manages btrfs subvolumes for workspaces)
@@ -207,7 +211,7 @@ func main() {
 	}
 
 	if err := workspaceCleanupReconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup workspace cleanup controller", zap2.Error(err))
+		return fmt.Errorf("failed to setup workspace cleanup controller: %w", err)
 	}
 
 	// Setup GPU status reconciler
@@ -221,7 +225,7 @@ func main() {
 	}
 
 	if err := gpuStatusReconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup GPU status controller", zap2.Error(err))
+		return fmt.Errorf("failed to setup GPU status controller: %w", err)
 	}
 
 	// Parse registry insecure setting
@@ -239,7 +243,7 @@ func main() {
 	}
 
 	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup snapshot request controller", zap2.Error(err))
+		return fmt.Errorf("failed to setup snapshot request controller: %w", err)
 	}
 
 	// Setup snapshot restore reconciler (handles btrfs restore on this node)
@@ -252,14 +256,11 @@ func main() {
 	}
 
 	if err := snapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
-		zapLogger.Fatal("Failed to setup snapshot restore controller", zap2.Error(err))
+		return fmt.Errorf("failed to setup snapshot restore controller: %w", err)
 	}
 
 	zapLogger.Info("All reconcilers configured",
 		zap2.String("nodeName", nodeName))
-
-	// Setup signal handler once
-	ctx := ctrl.SetupSignalHandler()
 
 	// Start storage garbage collector in a goroutine
 	// Use GetAPIReader() to bypass cache - avoids needing watch permissions
@@ -285,6 +286,7 @@ func main() {
 
 	zapLogger.Info("Starting manager")
 	if err := mgr.Start(ctx); err != nil {
-		zapLogger.Fatal("Failed to start manager", zap2.Error(err))
+		return fmt.Errorf("failed to start manager: %w", err)
 	}
+	return nil
 }

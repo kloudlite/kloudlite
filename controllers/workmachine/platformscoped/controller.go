@@ -40,6 +40,9 @@ func (r *PlatformScopedReconciler) Reconcile(ctx context.Context, request reconc
 	if obj.GetDeletionTimestamp() == nil && !controllerutil.ContainsFinalizer(obj, reconciler.Finalizer) {
 		controllerutil.AddFinalizer(obj, reconciler.Finalizer)
 		if err := r.Update(ctx, obj); err != nil {
+			if apiErrors.IsConflict(err) {
+				return ctrl.Result{RequeueAfter: 500 * time.Millisecond}, nil
+			}
 			return ctrl.Result{}, err
 		}
 	}
@@ -109,6 +112,11 @@ func (r *PlatformScopedReconciler) lifecycleSteps() []platformLifecycleStep {
 			OnCreate: r.ensureWorkMachineManager,
 			OnDelete: r.cleanupWorkMachineManager,
 		},
+		{
+			Name:      "wait-machine-scoped-cleanup",
+			Condition: workmachineshared.ConditionMachineScopedCleanupComplete,
+			OnDelete:  r.waitForMachineScopedCleanup,
+		},
 	}
 }
 
@@ -173,6 +181,7 @@ func markError(session *workmachineshared.StatusSession, conditionType string, e
 
 func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
 	obj := session.Object()
+	managerNamespace := workMachineManagerNamespace(obj)
 	labels := map[string]string{
 		"app":                           "workmachine-manager",
 		"kloudlite.io/workmachine":      obj.Name,
@@ -180,7 +189,7 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 	}
 	name := workMachineManagerName(obj.Name)
 
-	serviceAccount := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: r.env.PodNamespace}}
+	serviceAccount := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: managerNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, serviceAccount, func() error {
 		serviceAccount.Labels = labels
 		return controllerutil.SetControllerReference(obj, serviceAccount, r.Scheme)
@@ -192,13 +201,13 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
 		clusterRoleBinding.Labels = labels
 		clusterRoleBinding.RoleRef = rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: "cluster-admin"}
-		clusterRoleBinding.Subjects = []rbacv1.Subject{{Kind: "ServiceAccount", Name: name, Namespace: r.env.PodNamespace}}
+		clusterRoleBinding.Subjects = []rbacv1.Subject{{Kind: "ServiceAccount", Name: name, Namespace: managerNamespace}}
 		return controllerutil.SetControllerReference(obj, clusterRoleBinding, r.Scheme)
 	}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to ensure workmachine-manager cluster role binding: %w", err)
 	}
 
-	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: r.env.PodNamespace}}
+	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: managerNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
 		replicas := int32(1)
 		statefulSet.Labels = labels
@@ -208,26 +217,78 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 		statefulSet.Spec.Selector = &metav1.LabelSelector{MatchLabels: labels}
 		statefulSet.Spec.Template.Labels = labels
 		statefulSet.Spec.Template.Spec.ServiceAccountName = name
+		statefulSet.Spec.Template.Spec.HostPID = true
 		statefulSet.Spec.Template.Spec.NodeSelector = workmachineshared.WorkMachineAddOnPlacement(obj.Name).NodeSelector
 		statefulSet.Spec.Template.Spec.Tolerations = workmachineshared.WorkMachineAddOnPlacement(obj.Name).Tolerations
+		statefulSet.Spec.Template.Spec.InitContainers = []corev1.Container{{
+			Name:            "setup-nix",
+			Image:           r.env.WorkMachineManagerImage,
+			ImagePullPolicy: corev1.PullAlways,
+			Command:         []string{"sh", "-c", "if [ -z \"$(ls -A /nix-shared)\" ]; then echo 'Nix store is empty, copying...'; cp -r /nix/* /nix-shared/; else echo 'Nix store already exists, skipping copy'; fi"},
+			SecurityContext: &corev1.SecurityContext{Privileged: boolPtr(true)},
+			VolumeMounts:    []corev1.VolumeMount{{Name: "nix-store", MountPath: "/nix-shared"}},
+		}}
 		statefulSet.Spec.Template.Spec.Containers = []corev1.Container{{
 			Name:            "workmachine-manager",
 			Image:           r.env.WorkMachineManagerImage,
 			ImagePullPolicy: corev1.PullAlways,
-			EnvFrom: []corev1.EnvFromSource{
-				{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "api-server-config"}}},
-				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: "api-server-secret"}}},
+			SecurityContext: &corev1.SecurityContext{Privileged: boolPtr(true)},
+			Ports: []corev1.ContainerPort{
+				{Name: "http", ContainerPort: 80, Protocol: corev1.ProtocolTCP},
+				{Name: "https", ContainerPort: 443, Protocol: corev1.ProtocolTCP},
+				{Name: "ingress-health", ContainerPort: 17777, Protocol: corev1.ProtocolTCP},
+				{Name: "host-metrics", ContainerPort: 8081, Protocol: corev1.ProtocolTCP},
 			},
 			Command: []string{"/app/workmachine-manager"},
 			Args:    []string{"server", "workmachine-manager"},
 			Env: []corev1.EnvVar{
 				{Name: "NODE_NAME", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "spec.nodeName"}}},
-				{Name: "POD_NAMESPACE", Value: r.env.PodNamespace},
+				{Name: "POD_NAMESPACE", Value: managerNamespace},
+				{Name: "NAMESPACE", Value: managerNamespace},
+				{Name: "WORKMACHINE_NAME", Value: obj.Name},
+				{Name: "INSTALLATION_KEY", Value: r.env.KloudliteInstallationID},
+				{Name: "INSTALLATION_SECRET", Value: r.env.InstallationSecret},
+				{Name: "JWT_SECRET", Value: r.env.JWTSecret},
+				{Name: "HOSTED_SUBDOMAIN", Value: r.env.HostedSubdomain},
+				{Name: "HOST_MANAGER_IMAGE", Value: r.env.HostManagerImage},
+				{Name: "TUNNEL_SERVER_IMAGE", Value: r.env.TunnelServerImage},
+				{Name: "CODE_ANALYZER_IMAGE", Value: r.env.CodeAnalyzerImage},
+				{Name: "SNAPSHOT_REGISTRY_ENDPOINT", Value: r.env.SnapshotRegistryEndpoint},
+				{Name: "SNAPSHOT_REGISTRY_PREFIX", Value: r.env.SnapshotRegistryPrefix},
+				{Name: "SNAPSHOT_REGISTRY_INSECURE", Value: r.env.SnapshotRegistryInsecure},
+				{Name: "REGISTRY_USERNAME", Value: obj.Spec.OwnedBy},
+				{Name: "WM_INGRESS_HTTP_PORT", Value: "80"},
+				{Name: "WM_INGRESS_HTTPS_PORT", Value: "443"},
+				{Name: "WM_INGRESS_WILDCARD_SECRET_NAME", Value: "kloudlite-wildcard-cert-tls"},
+				{Name: "WM_INGRESS_WILDCARD_SECRET_NAMESPACE", Value: obj.Spec.TargetNamespace},
+				{Name: "WM_INGRESS_OWN_NAMESPACE", Value: obj.Spec.TargetNamespace},
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{Name: "nix-store", MountPath: "/nix"},
+				{Name: "kloudlite-data", MountPath: "/var/lib/kloudlite"},
+				{Name: "host-sys", MountPath: "/host/sys", ReadOnly: true},
+				{Name: "host-dev", MountPath: "/host/dev", ReadOnly: true},
+				{Name: "host-proc", MountPath: "/host/proc", ReadOnly: true},
+				{Name: "host-lib-modules", MountPath: "/lib/modules", ReadOnly: true},
 			},
 		}}
+		statefulSet.Spec.Template.Spec.Volumes = []corev1.Volume{
+			hostPathVolume("nix-store", "/var/lib/kloudlite/nix-store", corev1.HostPathDirectoryOrCreate),
+			hostPathVolume("kloudlite-data", "/var/lib/kloudlite", corev1.HostPathDirectoryOrCreate),
+			hostPathVolume("host-sys", "/sys", corev1.HostPathDirectory),
+			hostPathVolume("host-dev", "/dev", corev1.HostPathDirectory),
+			hostPathVolume("host-proc", "/proc", corev1.HostPathDirectory),
+			hostPathVolume("host-lib-modules", "/lib/modules", corev1.HostPathDirectory),
+		}
 		return controllerutil.SetControllerReference(obj, statefulSet, r.Scheme)
 	}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to ensure workmachine-manager statefulset: %w", err)
+	}
+
+	if r.env.PodNamespace != managerNamespace {
+		if err := r.deleteWorkMachineManagerNamespacedResources(ctx, name, r.env.PodNamespace); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to clean legacy workmachine-manager resources: %w", err)
+		}
 	}
 
 	return ctrl.Result{}, nil
@@ -235,16 +296,63 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 
 func (r *PlatformScopedReconciler) cleanupWorkMachineManager(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
 	name := workMachineManagerName(session.Object().Name)
-	if err := r.Delete(ctx, &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: r.env.PodNamespace}}); err != nil && !apiErrors.IsNotFound(err) {
-		return ctrl.Result{}, fmt.Errorf("failed to delete workmachine-manager statefulset %s: %w", name, err)
+	managerNamespace := workMachineManagerNamespace(session.Object())
+	if err := r.deleteWorkMachineManagerNamespacedResources(ctx, name, managerNamespace); err != nil {
+		return ctrl.Result{}, err
+	}
+	if r.env.PodNamespace != managerNamespace {
+		if err := r.deleteWorkMachineManagerNamespacedResources(ctx, name, r.env.PodNamespace); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 	if err := r.Delete(ctx, &rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: name}}); err != nil && !apiErrors.IsNotFound(err) {
 		return ctrl.Result{}, fmt.Errorf("failed to delete workmachine-manager cluster role binding %s: %w", name, err)
 	}
-	if err := r.Delete(ctx, &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: r.env.PodNamespace}}); err != nil && !apiErrors.IsNotFound(err) {
-		return ctrl.Result{}, fmt.Errorf("failed to delete workmachine-manager service account %s: %w", name, err)
-	}
 	return ctrl.Result{}, nil
+}
+
+func (r *PlatformScopedReconciler) waitForMachineScopedCleanup(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	if machineScopedCleanupComplete(session.Object()) {
+		return ctrl.Result{}, nil
+	}
+	managerExists, err := r.workMachineManagerExists(ctx, session.Object())
+	if err != nil {
+		return markError(session, workmachineshared.ConditionMachineScopedCleanupComplete, err)
+	}
+	if !managerExists {
+		return ctrl.Result{}, nil
+	}
+	return markBlocked(session, workmachineshared.ConditionMachineScopedCleanupComplete, workmachineshared.ReasonDeleting, "waiting for machine-scoped cleanup to complete", 5*time.Second)
+}
+
+func (r *PlatformScopedReconciler) workMachineManagerExists(ctx context.Context, obj *v1.WorkMachine) (bool, error) {
+	managerNamespace := workMachineManagerNamespace(obj)
+	namespace := &corev1.Namespace{}
+	if err := r.Get(ctx, client.ObjectKey{Name: managerNamespace}, namespace); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to get workmachine-manager namespace %s: %w", managerNamespace, err)
+	}
+
+	statefulSet := &appsv1.StatefulSet{}
+	if err := r.Get(ctx, client.ObjectKey{Name: workMachineManagerName(obj.Name), Namespace: managerNamespace}, statefulSet); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to get workmachine-manager statefulset %s/%s: %w", managerNamespace, workMachineManagerName(obj.Name), err)
+	}
+	return true, nil
+}
+
+func (r *PlatformScopedReconciler) deleteWorkMachineManagerNamespacedResources(ctx context.Context, name, namespace string) error {
+	if err := r.Delete(ctx, &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}); err != nil && !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete workmachine-manager statefulset %s/%s: %w", namespace, name, err)
+	}
+	if err := r.Delete(ctx, &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}); err != nil && !apiErrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete workmachine-manager service account %s/%s: %w", namespace, name, err)
+	}
+	return nil
 }
 
 func (r *PlatformScopedReconciler) cleanupWorkMachineNamespace(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
@@ -274,12 +382,33 @@ func workMachineManagerName(workMachineName string) string {
 	return fmt.Sprintf("workmachine-manager-%s", workMachineName)
 }
 
+func workMachineManagerNamespace(obj *v1.WorkMachine) string {
+	return obj.Spec.TargetNamespace
+}
+
+func boolPtr(v bool) *bool { return &v }
+
+func hostPathVolume(name, path string, pathType corev1.HostPathType) corev1.Volume {
+	return corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+			Path: path,
+			Type: &pathType,
+		}},
+	}
+}
+
 func machineScopedControllerName(workMachineName string) string {
 	return fmt.Sprintf("workmachine-machine-scoped-%s", workMachineName)
 }
 
 func machineScopedWorkloadsReady(obj *v1.WorkMachine) bool {
 	condition := meta.FindStatusCondition(obj.Status.Conditions, workmachineshared.ConditionMachineWorkloadsReady)
+	return condition != nil && condition.Status == metav1.ConditionTrue && condition.ObservedGeneration == obj.Generation
+}
+
+func machineScopedCleanupComplete(obj *v1.WorkMachine) bool {
+	condition := meta.FindStatusCondition(obj.Status.Conditions, workmachineshared.ConditionMachineScopedCleanupComplete)
 	return condition != nil && condition.Status == metav1.ConditionTrue && condition.ObservedGeneration == obj.Generation
 }
 

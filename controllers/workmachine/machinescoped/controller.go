@@ -116,14 +116,10 @@ func (r *MachineScopedReconciler) lifecycleSteps() []machineLifecycleStep {
 			OnDelete: r.cleanupWorkmachineIngressController,
 		},
 		{
-			Name:      "ensure-host-manager",
+			Name:      "mark-integrated-host-manager",
 			Condition: workmachineshared.ConditionHostManagerReady,
-			ShouldRun: func(obj *v1.WorkMachine) bool {
-				return obj.Spec.State == v1.MachineStateRunning
-			},
-			OnCreate: r.ensureHostManagerPod,
-			OnSkip:   r.cleanupHostManagerPod,
-			OnDelete: r.cleanupHostManagerPod,
+			OnCreate:  r.ensureIntegratedHostManager,
+			OnDelete:  r.cleanupHostManagerPod,
 		},
 		{
 			Name:      "ensure-buildkit",
@@ -257,203 +253,21 @@ func markMachineWaiting(session *workmachineshared.StatusSession, conditionType,
 
 func (r *MachineScopedReconciler) ensureWorkmachineIngressController(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
 	obj := session.Object()
-	deploymentName := "wm-ingress-controller"
-	serviceAccountName := "wm-ingress-controller"
-	clusterRoleName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
-	clusterRoleBindingName := fmt.Sprintf("wm-ingress-controller-%s", obj.Name)
 
-	labels := map[string]string{
+	serviceLabels := map[string]string{
 		"app":                      "wm-ingress-controller",
 		"kloudlite.io/workmachine": obj.Name,
 	}
-
-	// Create ServiceAccount
-	serviceAccount := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      serviceAccountName,
-			Namespace: obj.Spec.TargetNamespace,
-		},
+	managerSelector := map[string]string{
+		"app":                      "workmachine-manager",
+		"kloudlite.io/workmachine": obj.Name,
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, serviceAccount, func() error {
-		if !fn.IsOwner(serviceAccount, obj) {
-			serviceAccount.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-		serviceAccount.Labels = labels
-		return nil
-	}); err != nil {
-		return markMachineFailed(session, workmachineshared.ConditionIngressControllerReady, fmt.Errorf("failed to create/update wm-ingress-controller service account: %w", err))
+	legacyStatefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: "wm-ingress-controller", Namespace: obj.Spec.TargetNamespace}}
+	if err := r.Delete(ctx, legacyStatefulSet); err != nil && !apiErrors.IsNotFound(err) {
+		return markMachineFailed(session, workmachineshared.ConditionIngressControllerReady, fmt.Errorf("failed to delete legacy wm-ingress-controller statefulset: %w", err))
 	}
 
-	// Create ClusterRole
-	clusterRole := &rbacv1.ClusterRole{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterRoleName,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
-		if !fn.IsOwner(clusterRole, obj) {
-			clusterRole.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-		clusterRole.Labels = labels
-		clusterRole.Rules = []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{"networking.k8s.io"},
-				Resources: []string{"ingresses"},
-				Verbs:     []string{"get", "list", "watch"},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"secrets"},
-				Verbs:     []string{"get", "list", "watch"},
-			},
-		}
-		return nil
-	}); err != nil {
-		return markMachineFailed(session, workmachineshared.ConditionIngressControllerReady, fmt.Errorf("failed to create/update wm-ingress-controller cluster role: %w", err))
-	}
-
-	// Create ClusterRoleBinding
-	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterRoleBindingName,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
-		if !fn.IsOwner(clusterRoleBinding, obj) {
-			clusterRoleBinding.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-		clusterRoleBinding.Labels = labels
-		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     clusterRoleName,
-		}
-		clusterRoleBinding.Subjects = []rbacv1.Subject{
-			{
-				Kind:      "ServiceAccount",
-				Name:      serviceAccountName,
-				Namespace: obj.Spec.TargetNamespace,
-			},
-		}
-		return nil
-	}); err != nil {
-		return markMachineFailed(session, workmachineshared.ConditionIngressControllerReady, fmt.Errorf("failed to create/update wm-ingress-controller cluster role binding: %w", err))
-	}
-
-	// Create StatefulSet
-	statefulSet := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      deploymentName,
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
-		if !fn.IsOwner(statefulSet, obj) {
-			statefulSet.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-
-		statefulSet.Labels = labels
-
-		statefulSet.Spec = appsv1.StatefulSetSpec{
-			Replicas:            fn.Ptr(int32(1)),
-			ServiceName:         deploymentName,
-			PodManagementPolicy: appsv1.ParallelPodManagement,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
-				},
-				Spec: corev1.PodSpec{
-					ServiceAccountName:            serviceAccountName,
-					TerminationGracePeriodSeconds: fn.Ptr(int64(5)),
-					NodeSelector:                  workmachineshared.WorkMachineAddOnPlacement(obj.Name).NodeSelector,
-					Tolerations:                   workmachineshared.WorkMachineAddOnPlacement(obj.Name).Tolerations,
-					Containers: []corev1.Container{
-						{
-							Name:            "wm-ingress-controller",
-							Image:           wmIngressControllerImage,
-							ImagePullPolicy: "Always",
-							Args: []string{
-								"--http-port",
-								"80",
-								"--https-port",
-								"443",
-								"--health-probe-bind-address",
-								":17777",
-								// Use local namespace secret instead of cross-namespace access
-								"--wildcard-secret-namespace",
-								obj.Spec.TargetNamespace,
-								"--own-namespace",
-								obj.Spec.TargetNamespace,
-							},
-							Env: []corev1.EnvVar{
-								{
-									// REGISTRY_USERNAME restricts registry write access to /v2/{username}/*
-									Name:  "REGISTRY_USERNAME",
-									Value: obj.Spec.OwnedBy,
-								},
-							},
-							Ports: []corev1.ContainerPort{
-								{
-									Name:          "http",
-									ContainerPort: 80,
-									Protocol:      corev1.ProtocolTCP,
-								},
-								{
-									Name:          "https",
-									ContainerPort: 443,
-									Protocol:      corev1.ProtocolTCP,
-								},
-								{
-									Name:          "health",
-									ContainerPort: 17777,
-									Protocol:      corev1.ProtocolTCP,
-								},
-							},
-							ReadinessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/healthz",
-										Port: intstr.FromInt(17777),
-									},
-								},
-								InitialDelaySeconds: 5,
-								PeriodSeconds:       5,
-								TimeoutSeconds:      2,
-								SuccessThreshold:    1,
-								FailureThreshold:    3,
-							},
-							LivenessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/healthz",
-										Port: intstr.FromInt(17777),
-									},
-								},
-								InitialDelaySeconds: 10,
-								PeriodSeconds:       30,
-								TimeoutSeconds:      5,
-								SuccessThreshold:    1,
-								FailureThreshold:    3,
-							},
-						},
-					},
-				},
-			},
-		}
-
-		return nil
-	}); err != nil {
-		return markMachineFailed(session, workmachineshared.ConditionIngressControllerReady, fmt.Errorf("failed to create/update wm-ingress-controller statefulset: %w", err))
-	}
-
-	// Now ensure the service exists
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "wm-ingress-controller",
@@ -466,11 +280,11 @@ func (r *MachineScopedReconciler) ensureWorkmachineIngressController(ctx context
 			service.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
 
-		service.Labels = labels
+		service.Labels = serviceLabels
 
 		service.Spec = corev1.ServiceSpec{
 			Type:     corev1.ServiceTypeClusterIP,
-			Selector: labels,
+			Selector: managerSelector,
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
