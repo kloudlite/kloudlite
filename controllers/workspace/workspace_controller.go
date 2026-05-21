@@ -134,22 +134,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 
 	logger.Info("Reconciling Workspace")
 
-	// Periodically run orphaned RBAC cleanup (every rbacCleanupIntervalMinutes)
-	// We use a simple counter approach by checking if this is the first workspace in the list
-	// This avoids running cleanup on every reconciliation
-	if shouldRunRBACCleanup() {
-		go func() {
-			r.Logger.Info("Running periodic orphaned RBAC cleanup")
-			deletedCount, errors := r.cleanupOrphanedRBACResources(ctx, r.Logger)
-			if len(errors) > 0 {
-				r.Logger.Warn("Periodic RBAC cleanup encountered errors",
-					zap.Int("deletedCount", deletedCount),
-					zap.Int("errorCount", len(errors)),
-					zap.String("errors", fmt.Sprintf("%v", errors)))
-			}
-		}()
-	}
-
 	// Fetch the Workspace instance (namespaced)
 	workspace := &workspacev1.Workspace{}
 	err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, workspace)
@@ -168,6 +152,22 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 			zap.String("workspace_namespace", workspace.Namespace),
 			zap.String("workspace_workmachine", workspace.Spec.WorkmachineName))
 		return reconcile.Result{}, nil
+	}
+
+	// Periodically run orphaned RBAC cleanup (every rbacCleanupIntervalMinutes)
+	// We use a simple counter approach by checking if this is the first workspace in the list
+	// This avoids running cleanup on every reconciliation
+	if shouldRunRBACCleanup() {
+		go func() {
+			r.Logger.Info("Running periodic orphaned RBAC cleanup")
+			deletedCount, errors := r.cleanupOrphanedRBACResources(ctx, r.Logger)
+			if len(errors) > 0 {
+				r.Logger.Warn("Periodic RBAC cleanup encountered errors",
+					zap.Int("deletedCount", deletedCount),
+					zap.Int("errorCount", len(errors)),
+					zap.String("errors", fmt.Sprintf("%v", errors)))
+			}
+		}()
 	}
 
 	// Check if workspace is being deleted
