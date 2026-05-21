@@ -32,8 +32,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&Environment{},
 		&EnvironmentList{},
-		&Composition{},
-		&CompositionList{},
 		&EnvironmentSnapshotRequest{},
 		&EnvironmentSnapshotRequestList{},
 		&EnvironmentSnapshotRestore{},

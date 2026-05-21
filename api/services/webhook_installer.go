@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 	admissionv1 "k8s.io/api/admissionregistration/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -105,12 +106,11 @@ func (wi *WebhookInstaller) createOrUpdateValidatingWebhook(ctx context.Context,
 		return err
 	}
 
-	// Update existing
-	if validatingWebhookCABundleValid(existing, wi.caBundle) {
-		wi.logger.Info("validating webhook configuration already trusts current TLS secret", zap.String("name", vwc.Name))
+	if validatingWebhookMatches(existing, vwc, wi.caBundle) {
+		wi.logger.Info("validating webhook configuration already matches desired configuration", zap.String("name", vwc.Name))
 		return nil
 	}
-	wi.logger.Info("updating validating webhook configuration CA bundle to match current TLS secret", zap.String("name", vwc.Name))
+	wi.logger.Info("updating validating webhook configuration to match desired configuration", zap.String("name", vwc.Name))
 	vwc.ResourceVersion = existing.ResourceVersion
 	return wi.k8sClient.Update(ctx, vwc)
 }
@@ -126,14 +126,21 @@ func (wi *WebhookInstaller) createOrUpdateMutatingWebhook(ctx context.Context, m
 		return err
 	}
 
-	// Update existing
-	if mutatingWebhookCABundleValid(existing, wi.caBundle) {
-		wi.logger.Info("mutating webhook configuration already trusts current TLS secret", zap.String("name", mwc.Name))
+	if mutatingWebhookMatches(existing, mwc, wi.caBundle) {
+		wi.logger.Info("mutating webhook configuration already matches desired configuration", zap.String("name", mwc.Name))
 		return nil
 	}
-	wi.logger.Info("updating mutating webhook configuration CA bundle to match current TLS secret", zap.String("name", mwc.Name))
+	wi.logger.Info("updating mutating webhook configuration to match desired configuration", zap.String("name", mwc.Name))
 	mwc.ResourceVersion = existing.ResourceVersion
 	return wi.k8sClient.Update(ctx, mwc)
+}
+
+func validatingWebhookMatches(existing, desired *admissionv1.ValidatingWebhookConfiguration, caBundle []byte) bool {
+	return validatingWebhookCABundleValid(existing, caBundle) && equality.Semantic.DeepEqual(existing.Webhooks, desired.Webhooks)
+}
+
+func mutatingWebhookMatches(existing, desired *admissionv1.MutatingWebhookConfiguration, caBundle []byte) bool {
+	return mutatingWebhookCABundleValid(existing, caBundle) && equality.Semantic.DeepEqual(existing.Webhooks, desired.Webhooks)
 }
 
 func validatingWebhookCABundleValid(vwc *admissionv1.ValidatingWebhookConfiguration, caBundle []byte) bool {

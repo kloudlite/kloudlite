@@ -39,7 +39,7 @@ webhooks:
         resources: ["environments"]
     admissionReviewVersions: ["v1"]
     sideEffects: None
-    failurePolicy: Fail
+    failurePolicy: Ignore  # Do not block finalizer cleanup if webhook is unavailable
 
   # MachineType validation
   - name: machinetypes.kloudlite.io
@@ -93,25 +93,7 @@ webhooks:
         resources: ["workspaces"]
     admissionReviewVersions: ["v1"]
     sideEffects: None
-    failurePolicy: Fail
-
-  # Composition validation
-  - name: compositions.kloudlite.io
-    clientConfig:
-      service:
-        name: api-server
-        namespace: kloudlite
-        path: /webhooks/validate/compositions
-        port: 443
-      caBundle: ""
-    rules:
-      - operations: ["CREATE", "UPDATE"]
-        apiGroups: ["environments.kloudlite.io"]
-        apiVersions: ["v1"]
-        resources: ["compositions"]
-    admissionReviewVersions: ["v1"]
-    sideEffects: None
-    failurePolicy: Fail
+    failurePolicy: Ignore  # Do not block finalizer cleanup if webhook is unavailable
 
   # PackageRequest validation
   - name: packagerequests.kloudlite.io
@@ -344,7 +326,7 @@ webhooks:
         resources: ["environments"]
     admissionReviewVersions: ["v1"]
     sideEffects: None
-    failurePolicy: Fail
+    failurePolicy: Ignore  # Do not block finalizer cleanup if webhook is unavailable
 
   # MachineType mutation
   - name: machinetypes.kloudlite.io
@@ -398,25 +380,7 @@ webhooks:
         resources: ["workspaces"]
     admissionReviewVersions: ["v1"]
     sideEffects: None
-    failurePolicy: Fail
-
-  # Composition mutation
-  - name: compositions.kloudlite.io
-    clientConfig:
-      service:
-        name: api-server
-        namespace: kloudlite
-        path: /webhooks/mutate/compositions
-        port: 443
-      caBundle: ""
-    rules:
-      - operations: ["CREATE", "UPDATE"]
-        apiGroups: ["environments.kloudlite.io"]
-        apiVersions: ["v1"]
-        resources: ["compositions"]
-    admissionReviewVersions: ["v1"]
-    sideEffects: None
-    failurePolicy: Fail
+    failurePolicy: Ignore  # Do not block finalizer cleanup if webhook is unavailable
 
   # PackageRequest mutation
   - name: packagerequests.kloudlite.io

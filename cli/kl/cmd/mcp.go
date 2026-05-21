@@ -830,24 +830,31 @@ func (s *MCPServer) handleInterceptList(ctx context.Context) (string, error) {
 
 	targetNs := ws.Status.ConnectedEnvironment.TargetNamespace
 
-	// List compositions in the environment
-	compList := &environmentsv1.CompositionList{}
-	if err := s.client.K8sClient.List(ctx, compList, client.InNamespace(targetNs)); err != nil {
-		return "", fmt.Errorf("failed to list compositions: %w", err)
+	// List environments whose embedded compose resources run in the connected namespace.
+	envList := &environmentsv1.EnvironmentList{}
+	if err := s.client.K8sClient.List(ctx, envList); err != nil {
+		return "", fmt.Errorf("failed to list environments: %w", err)
 	}
 
-	if len(compList.Items) == 0 {
+	var environments []environmentsv1.Environment
+	for _, env := range envList.Items {
+		if env.Spec.TargetNamespace == targetNs && env.Spec.Compose != nil {
+			environments = append(environments, env)
+		}
+	}
+
+	if len(environments) == 0 {
 		return "No services found in the connected environment.", nil
 	}
 
 	var sb strings.Builder
 	sb.WriteString("Available services for interception:\n\n")
-	for _, comp := range compList.Items {
-		sb.WriteString(fmt.Sprintf("Composition: %s\n", comp.Name))
-		if comp.Status.Services != nil {
-			for _, svc := range comp.Status.Services {
+	for _, env := range environments {
+		sb.WriteString(fmt.Sprintf("Environment: %s\n", env.Name))
+		if env.Status.ComposeStatus.Services != nil {
+			for _, svc := range env.Status.ComposeStatus.Services {
 				intercepted := ""
-				for _, intercept := range comp.Status.ActiveIntercepts {
+				for _, intercept := range env.Status.ComposeStatus.ActiveIntercepts {
 					if intercept.ServiceName == svc.Name {
 						intercepted = fmt.Sprintf(" [INTERCEPTED by %s]", intercept.WorkspaceName)
 						break
@@ -893,33 +900,36 @@ func (s *MCPServer) handleInterceptStart(ctx context.Context, args map[string]in
 
 	targetNs := ws.Status.ConnectedEnvironment.TargetNamespace
 
-	// Find the composition containing the service
-	compList := &environmentsv1.CompositionList{}
-	if err := s.client.K8sClient.List(ctx, compList, client.InNamespace(targetNs)); err != nil {
-		return "", fmt.Errorf("failed to list compositions: %w", err)
+	// Find the environment compose containing the service.
+	envList := &environmentsv1.EnvironmentList{}
+	if err := s.client.K8sClient.List(ctx, envList); err != nil {
+		return "", fmt.Errorf("failed to list environments: %w", err)
 	}
 
-	var targetComp *environmentsv1.Composition
-	for i := range compList.Items {
-		comp := &compList.Items[i]
-		if comp.Status.Services != nil {
-			for _, svc := range comp.Status.Services {
+	var targetEnv *environmentsv1.Environment
+	for i := range envList.Items {
+		env := &envList.Items[i]
+		if env.Spec.TargetNamespace != targetNs || env.Spec.Compose == nil {
+			continue
+		}
+		if env.Status.ComposeStatus.Services != nil {
+			for _, svc := range env.Status.ComposeStatus.Services {
 				if svc.Name == serviceName {
-					targetComp = comp
+					targetEnv = env
 					break
 				}
 			}
 		}
-		if targetComp != nil {
+		if targetEnv != nil {
 			break
 		}
 	}
 
-	if targetComp == nil {
-		return "", fmt.Errorf("service '%s' not found in any composition", serviceName)
+	if targetEnv == nil {
+		return "", fmt.Errorf("service '%s' not found in connected environment compose", serviceName)
 	}
 
-	// Add intercept to composition
+	// Add intercept to embedded environment compose
 	interceptConfig := environmentsv1.ServiceInterceptConfig{
 		ServiceName: serviceName,
 		Enabled:     true,
@@ -936,10 +946,10 @@ func (s *MCPServer) handleInterceptStart(ctx context.Context, args map[string]in
 		},
 	}
 
-	targetComp.Spec.Intercepts, _ = intercepts.UpsertConfig(targetComp.Spec.Intercepts, interceptConfig)
+	targetEnv.Spec.Compose.Intercepts, _ = intercepts.UpsertConfig(targetEnv.Spec.Compose.Intercepts, interceptConfig)
 
-	if err := s.client.K8sClient.Update(ctx, targetComp); err != nil {
-		return "", fmt.Errorf("failed to update composition: %w", err)
+	if err := s.client.K8sClient.Update(ctx, targetEnv); err != nil {
+		return "", fmt.Errorf("failed to update environment compose: %w", err)
 	}
 
 	return fmt.Sprintf("Intercept started for service '%s'. Traffic on port %d will be forwarded to workspace port %d.", serviceName, servicePort, workspacePort), nil
@@ -962,19 +972,22 @@ func (s *MCPServer) handleInterceptStop(ctx context.Context, args map[string]int
 
 	targetNs := ws.Status.ConnectedEnvironment.TargetNamespace
 
-	// Find and update composition
-	compList := &environmentsv1.CompositionList{}
-	if err := s.client.K8sClient.List(ctx, compList, client.InNamespace(targetNs)); err != nil {
-		return "", fmt.Errorf("failed to list compositions: %w", err)
+	// Find and update the embedded environment compose.
+	envList := &environmentsv1.EnvironmentList{}
+	if err := s.client.K8sClient.List(ctx, envList); err != nil {
+		return "", fmt.Errorf("failed to list environments: %w", err)
 	}
 
-	for i := range compList.Items {
-		comp := &compList.Items[i]
-		for j, intercept := range comp.Spec.Intercepts {
+	for i := range envList.Items {
+		env := &envList.Items[i]
+		if env.Spec.TargetNamespace != targetNs || env.Spec.Compose == nil {
+			continue
+		}
+		for j, intercept := range env.Spec.Compose.Intercepts {
 			if intercept.ServiceName == serviceName {
-				comp.Spec.Intercepts[j].Enabled = false
-				if err := s.client.K8sClient.Update(ctx, comp); err != nil {
-					return "", fmt.Errorf("failed to update composition: %w", err)
+				env.Spec.Compose.Intercepts[j].Enabled = false
+				if err := s.client.K8sClient.Update(ctx, env); err != nil {
+					return "", fmt.Errorf("failed to update environment compose: %w", err)
 				}
 				return fmt.Sprintf("Intercept stopped for service '%s'.", serviceName), nil
 			}
@@ -996,17 +1009,20 @@ func (s *MCPServer) handleInterceptStatus(ctx context.Context) (string, error) {
 
 	targetNs := ws.Status.ConnectedEnvironment.TargetNamespace
 
-	compList := &environmentsv1.CompositionList{}
-	if err := s.client.K8sClient.List(ctx, compList, client.InNamespace(targetNs)); err != nil {
-		return "", fmt.Errorf("failed to list compositions: %w", err)
+	envList := &environmentsv1.EnvironmentList{}
+	if err := s.client.K8sClient.List(ctx, envList); err != nil {
+		return "", fmt.Errorf("failed to list environments: %w", err)
 	}
 
 	var sb strings.Builder
 	sb.WriteString("Intercept Status:\n\n")
 	hasIntercepts := false
 
-	for _, comp := range compList.Items {
-		for _, status := range comp.Status.ActiveIntercepts {
+	for _, env := range envList.Items {
+		if env.Spec.TargetNamespace != targetNs {
+			continue
+		}
+		for _, status := range env.Status.ComposeStatus.ActiveIntercepts {
 			if status.WorkspaceName == ws.Name {
 				hasIntercepts = true
 				sb.WriteString(fmt.Sprintf("- %s [%s]\n", status.ServiceName, status.Phase))

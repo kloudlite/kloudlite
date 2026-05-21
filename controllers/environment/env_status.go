@@ -30,6 +30,28 @@ func generateHash(input string) string {
 	return hex.EncodeToString(h[:])[:8]
 }
 
+func setHashAndSubdomain(environment *environmentsv1.Environment, logger *zap.Logger) {
+	hash := generateHash(fmt.Sprintf("%s-%s", environment.Name, environment.Spec.OwnedBy))
+	subdomain := os.Getenv("HOSTED_SUBDOMAIN")
+	if subdomain == "" {
+		logger.Debug("HOSTED_SUBDOMAIN env var not set, subdomain will be empty")
+	}
+	environment.Status.Hash = hash
+	environment.Status.Subdomain = subdomain
+}
+
+func setEnvironmentStatus(environment *environmentsv1.Environment, state environmentsv1.EnvironmentState, message string) {
+	environment.Status.State = state
+	environment.Status.Message = message
+
+	now := metav1.Now()
+	if state == environmentsv1.EnvironmentStateActive {
+		environment.Status.LastActivatedTime = &now
+	} else if state == environmentsv1.EnvironmentStateInactive {
+		environment.Status.LastDeactivatedTime = &now
+	}
+}
+
 // updateHashAndSubdomain computes and sets the hash and subdomain in environment status
 func (r *EnvironmentReconciler) updateHashAndSubdomain(ctx context.Context, environment *environmentsv1.Environment, logger *zap.Logger) error {
 	// Compute hash from envName-owner
@@ -47,8 +69,7 @@ func (r *EnvironmentReconciler) updateHashAndSubdomain(ctx context.Context, envi
 	}
 
 	return statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
-		environment.Status.Hash = hash
-		environment.Status.Subdomain = subdomain
+		setHashAndSubdomain(environment, logger)
 		return nil
 	}, logger)
 }
@@ -56,47 +77,15 @@ func (r *EnvironmentReconciler) updateHashAndSubdomain(ctx context.Context, envi
 // updateEnvironmentStatus safely updates environment status with retry logic
 func (r *EnvironmentReconciler) updateEnvironmentStatus(ctx context.Context, environment *environmentsv1.Environment, state environmentsv1.EnvironmentState, message string, logger *zap.Logger) error {
 	return statusutil.UpdateStatusWithRetry(ctx, r.Client, environment, func() error {
-		environment.Status.State = state
-		environment.Status.Message = message
-
-		now := metav1.Now()
-		if state == environmentsv1.EnvironmentStateActive {
-			environment.Status.LastActivatedTime = &now
-		} else if state == environmentsv1.EnvironmentStateInactive {
-			environment.Status.LastDeactivatedTime = &now
-		}
-
+		setEnvironmentStatus(environment, state, message)
 		return nil
 	}, logger)
 }
 
 // addOrUpdateCondition adds or updates a condition in the environment status
 func (r *EnvironmentReconciler) addOrUpdateCondition(environment *environmentsv1.Environment, conditionType environmentsv1.EnvironmentConditionType, status metav1.ConditionStatus, reason, message string) {
-	if environment.Status.Conditions == nil {
-		environment.Status.Conditions = []environmentsv1.EnvironmentCondition{}
-	}
-
-	now := metav1.Now()
-	newCondition := environmentsv1.EnvironmentCondition{
-		Type:               conditionType,
-		Status:             status,
-		LastTransitionTime: &now,
-		Reason:             reason,
-		Message:            message,
-	}
-
-	// Find and update existing condition or add new one
-	found := false
-	for i, condition := range environment.Status.Conditions {
-		if condition.Type == conditionType {
-			environment.Status.Conditions[i] = newCondition
-			found = true
-			break
-		}
-	}
-	if !found {
-		environment.Status.Conditions = append(environment.Status.Conditions, newCondition)
-	}
+	session := NewEnvironmentStatusSession(environment)
+	session.set(string(conditionType), status, reason, message)
 }
 
 // handleSnapshotRestore handles environment creation from a snapshot

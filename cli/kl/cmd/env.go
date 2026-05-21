@@ -282,22 +282,25 @@ func handleEnvDisconnect() error {
 	return nil
 }
 
-// removeWorkspaceIntercepts removes all intercepts for a workspace from all compositions
+// removeWorkspaceIntercepts removes all intercepts for a workspace from embedded environment compose specs.
 func removeWorkspaceIntercepts(ctx context.Context, targetNamespace, workspaceName, workspaceNamespace string) error {
-	compList := &environmentsv1.CompositionList{}
-	if err := WsClient.K8sClient.List(ctx, compList, client.InNamespace(targetNamespace)); err != nil {
-		return fmt.Errorf("failed to list compositions: %w", err)
+	envList := &environmentsv1.EnvironmentList{}
+	if err := WsClient.K8sClient.List(ctx, envList); err != nil {
+		return fmt.Errorf("failed to list environments: %w", err)
 	}
 
 	var removedCount int
-	for _, comp := range compList.Items {
-		newIntercepts, removed := intercepts.RemoveForWorkspace(comp.Spec.Intercepts, workspaceName, workspaceNamespace)
+	for _, env := range envList.Items {
+		if env.Spec.TargetNamespace != targetNamespace || env.Spec.Compose == nil {
+			continue
+		}
 
-		// Update composition if any intercepts were removed
+		newIntercepts, removed := intercepts.RemoveForWorkspace(env.Spec.Compose.Intercepts, workspaceName, workspaceNamespace)
+
 		if len(removed) > 0 {
-			comp.Spec.Intercepts = newIntercepts
-			if err := WsClient.K8sClient.Update(ctx, &comp); err != nil {
-				return fmt.Errorf("failed to update composition %s: %w", comp.Name, err)
+			env.Spec.Compose.Intercepts = newIntercepts
+			if err := WsClient.K8sClient.Update(ctx, &env); err != nil {
+				return fmt.Errorf("failed to update environment %s/%s: %w", env.Namespace, env.Name, err)
 			}
 			for _, svc := range removed {
 				fmt.Printf("[✓] Removed intercept for service '%s'\n", svc)
