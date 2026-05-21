@@ -230,6 +230,45 @@ func TestWorkspaceReconcilerCleanupOrphanedRBACSkipsOtherScopedNamespaces(t *tes
 	require.NoError(t, k8sClient.Get(context.Background(), types.NamespacedName{Name: orphanedClusterRoleBinding.Name}, &rbacv1.ClusterRoleBinding{}))
 }
 
+func TestWorkspaceReconcilerCleanupOrphanedRBACFailsClosedWhenScopedNamespaceMissingWorkMachine(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	logger, _ := zap.NewDevelopment()
+	orphanedClusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "alice-orphaned-workspace-role",
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      "deleted-ws",
+				"kloudlite.io/workspace-namespace": "wm-alice",
+			},
+		},
+	}
+	orphanedClusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "alice-orphaned-workspace-role-binding",
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      "deleted-ws",
+				"kloudlite.io/workspace-namespace": "wm-alice",
+			},
+		},
+	}
+	k8sClient := testutil.NewFakeClient(scheme, orphanedClusterRole, orphanedClusterRoleBinding).Build()
+	reconciler := &WorkspaceReconciler{
+		Client:       k8sClient,
+		Scheme:       scheme,
+		Logger:       logger,
+		OwnNamespace: "wm-alice",
+	}
+
+	deleted, errs := reconciler.cleanupOrphanedRBACResources(context.Background(), logger)
+
+	require.Empty(t, errs)
+	assert.Equal(t, 0, deleted)
+	require.NoError(t, k8sClient.Get(context.Background(), types.NamespacedName{Name: orphanedClusterRole.Name}, &rbacv1.ClusterRole{}))
+	require.NoError(t, k8sClient.Get(context.Background(), types.NamespacedName{Name: orphanedClusterRoleBinding.Name}, &rbacv1.ClusterRoleBinding{}))
+}
+
 func TestWorkspaceReconciler_validateHostPath(t *testing.T) {
 	tests := []struct {
 		name          string
