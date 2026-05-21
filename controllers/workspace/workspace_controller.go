@@ -97,12 +97,28 @@ func shouldRunRBACCleanup() bool {
 // WorkspaceReconciler reconciles Workspace objects and manages VS Code server pods
 type WorkspaceReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Logger    *zap.Logger
-	Config    *rest.Config
-	Clientset *kubernetes.Clientset
-	JWTSecret string            // JWT secret (kept for compatibility, no longer used for registry)
-	Cfg       *ControllerConfig // Controller configuration
+	Scheme          *runtime.Scheme
+	Logger          *zap.Logger
+	Config          *rest.Config
+	Clientset       *kubernetes.Clientset
+	JWTSecret       string            // JWT secret (kept for compatibility, no longer used for registry)
+	Cfg             *ControllerConfig // Controller configuration
+	OwnNamespace    string
+	WorkMachineName string
+}
+
+func (r *WorkspaceReconciler) scopeConfigured() bool {
+	return r.OwnNamespace != "" || r.WorkMachineName != ""
+}
+
+func (r *WorkspaceReconciler) shouldReconcileWorkspace(workspace *workspacev1.Workspace) bool {
+	if !r.scopeConfigured() {
+		return true
+	}
+	if r.OwnNamespace == "" || r.WorkMachineName == "" {
+		return false
+	}
+	return workspace.Namespace == r.OwnNamespace && workspace.Spec.WorkmachineName == r.WorkMachineName
 }
 
 // Reconcile handles Workspace events and ensures the workspace pod exists
