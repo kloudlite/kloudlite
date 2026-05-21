@@ -123,6 +123,37 @@ func TestWorkspaceReconcilerScopedGetWorkMachineRejectsOtherWorkMachine(t *testi
 	}
 }
 
+func TestWorkspaceReconcilerReconcileSkipsOutOfScopeWorkspaceWithoutMutation(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-bob"},
+		Spec: workspacev1.WorkspaceSpec{
+			DisplayName:     "Bob Workspace",
+			OwnedBy:         "bob@example.com",
+			WorkmachineName: "bob-dev",
+		},
+	}
+	k8sClient := testutil.NewFakeClient(scheme, workspace).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
+		Build()
+	reconciler := &WorkspaceReconciler{
+		Client:          k8sClient,
+		Scheme:          scheme,
+		Logger:          zaptest.NewLogger(t),
+		OwnNamespace:    "wm-alice",
+		WorkMachineName: "alice-dev",
+	}
+
+	result, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "ws", Namespace: "wm-bob"}})
+
+	require.NoError(t, err)
+	assert.False(t, result.Requeue)
+	updated := &workspacev1.Workspace{}
+	require.NoError(t, k8sClient.Get(context.Background(), types.NamespacedName{Name: "ws", Namespace: "wm-bob"}, updated))
+	assert.Empty(t, updated.Finalizers)
+	assert.Empty(t, updated.Labels["kloudlite.io/hash"])
+}
+
 func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 
