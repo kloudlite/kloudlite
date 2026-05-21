@@ -176,8 +176,8 @@ func (r *WorkspaceReconciler) updateKloudliteContextFile(ctx context.Context, wo
 
 // getWorkMachine fetches the WorkMachine resource by name
 func (r *WorkspaceReconciler) getWorkMachine(ctx context.Context, name string) (*machinesv1.WorkMachine, error) {
-	if r.scopeConfigured() && r.WorkMachineName == "" {
-		return nil, fmt.Errorf("incomplete controller scope: WorkMachineName is required")
+	if r.scopeConfigured() && (r.OwnNamespace == "" || r.WorkMachineName == "") {
+		return nil, fmt.Errorf("incomplete controller scope: OwnNamespace and WorkMachineName are required")
 	}
 	if r.WorkMachineName != "" && name != r.WorkMachineName {
 		return nil, fmt.Errorf("workmachine %s is outside controller scope %s", name, r.WorkMachineName)

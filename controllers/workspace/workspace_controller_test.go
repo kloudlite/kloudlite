@@ -114,7 +114,7 @@ func TestWorkspaceReconcilerUnscopedAllowsLegacyController(t *testing.T) {
 }
 
 func TestWorkspaceReconcilerScopedGetWorkMachineRejectsOtherWorkMachine(t *testing.T) {
-	reconciler := &WorkspaceReconciler{WorkMachineName: "alice-dev"}
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
 
 	_, err := reconciler.getWorkMachine(context.Background(), "bob-dev")
 
@@ -123,6 +123,28 @@ func TestWorkspaceReconcilerScopedGetWorkMachineRejectsOtherWorkMachine(t *testi
 	}
 	if !strings.Contains(err.Error(), "outside controller scope") {
 		t.Fatalf("error = %v, want outside controller scope", err)
+	}
+}
+
+func TestWorkspaceReconcilerScopedGetWorkMachineFailsClosedWhenScopedWorkMachineMissingNamespace(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{Name: "alice-dev"},
+	}
+	k8sClient := testutil.NewFakeClient(scheme, workMachine).Build()
+	reconciler := &WorkspaceReconciler{
+		Client:          k8sClient,
+		Scheme:          scheme,
+		WorkMachineName: "alice-dev",
+	}
+
+	_, err := reconciler.getWorkMachine(context.Background(), "alice-dev")
+
+	if err == nil {
+		t.Fatalf("getWorkMachine returned nil error with missing OwnNamespace")
+	}
+	if !strings.Contains(err.Error(), "incomplete controller scope") && !strings.Contains(err.Error(), "outside controller scope") {
+		t.Fatalf("error = %v, want incomplete controller scope or outside controller scope", err)
 	}
 }
 
