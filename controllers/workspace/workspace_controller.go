@@ -161,6 +161,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 		logger.Error("Failed to get Workspace", zap.Error(err))
 		return reconcile.Result{}, err
 	}
+	if !r.shouldReconcileWorkspace(workspace) {
+		logger.Info("skipping workspace outside controller scope",
+			zap.String("own_namespace", r.OwnNamespace),
+			zap.String("workmachine_name", r.WorkMachineName),
+			zap.String("workspace_namespace", workspace.Namespace),
+			zap.String("workspace_workmachine", workspace.Spec.WorkmachineName))
+		return reconcile.Result{}, nil
+	}
 
 	// Check if workspace is being deleted
 	if workspace.DeletionTimestamp != nil {
@@ -620,6 +628,9 @@ func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, 
 
 	var requests []reconcile.Request
 	for _, ws := range workspaces.Items {
+		if !r.shouldReconcileWorkspace(&ws) {
+			continue
+		}
 		if ws.Spec.EnvironmentConnection != nil &&
 			ws.Spec.EnvironmentConnection.EnvironmentRef.Name == env.Name {
 			r.Logger.Info("findWorkspacesForEnvironment: workspace connected to deactivated environment",
