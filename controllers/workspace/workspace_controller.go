@@ -581,9 +581,11 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // This ensures leaked resources are cleaned up promptly
 func (r *WorkspaceReconciler) enqueueForRBACCleanup(ctx context.Context, obj client.Object) []reconcile.Request {
 	// Run orphaned RBAC cleanup in the background
+	// Use context.Background() because the map function context has a short lifetime
+	// and would be canceled before cleanup completes
 	go func() {
 		r.Logger.Info("Triggering orphaned RBAC cleanup")
-		deletedCount, errors := r.cleanupOrphanedRBACResources(ctx, r.Logger)
+		deletedCount, errors := r.cleanupOrphanedRBACResources(context.Background(), r.Logger)
 		if len(errors) > 0 {
 			r.Logger.Warn("Triggered RBAC cleanup encountered errors",
 				zap.Int("deletedCount", deletedCount),
