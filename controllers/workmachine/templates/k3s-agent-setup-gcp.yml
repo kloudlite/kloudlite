@@ -16,7 +16,7 @@ mounts:
   - ["/dev/sdb", "/var/lib/kloudlite/storage", "btrfs", "noatime,compress=zstd", "0", "0"]
 
 runcmd:
-  - mkdir -p /var/lib/kloudlite/storage/{environments,workspaces,.snapshots}
+  - [mkdir, -p, /var/lib/kloudlite/storage/environments, /var/lib/kloudlite/storage/workspaces, /var/lib/kloudlite/storage/.snapshots]
   - swapoff -a
   - sed -i '/ swap / s/^/#/' /etc/fstab
   - mkdir -p /etc/rancher/k3s
