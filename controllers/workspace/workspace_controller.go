@@ -97,12 +97,29 @@ func shouldRunRBACCleanup() bool {
 // WorkspaceReconciler reconciles Workspace objects and manages VS Code server pods
 type WorkspaceReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Logger    *zap.Logger
-	Config    *rest.Config
-	Clientset *kubernetes.Clientset
-	JWTSecret string            // JWT secret (kept for compatibility, no longer used for registry)
-	Cfg       *ControllerConfig // Controller configuration
+	Scheme          *runtime.Scheme
+	Logger          *zap.Logger
+	Config          *rest.Config
+	Clientset       *kubernetes.Clientset
+	JWTSecret       string            // JWT secret (kept for compatibility, no longer used for registry)
+	Cfg             *ControllerConfig // Controller configuration
+	OwnNamespace    string
+	WorkMachineName string
+	CmdExec         CommandExecutor // For host-level commands (btrfs subvolume management)
+}
+
+func (r *WorkspaceReconciler) scopeConfigured() bool {
+	return r.OwnNamespace != "" || r.WorkMachineName != ""
+}
+
+func (r *WorkspaceReconciler) shouldReconcileWorkspace(workspace *workspacev1.Workspace) bool {
+	if !r.scopeConfigured() {
+		return true
+	}
+	if r.OwnNamespace == "" || r.WorkMachineName == "" {
+		return false
+	}
+	return workspace.Namespace == r.OwnNamespace && workspace.Spec.WorkmachineName == r.WorkMachineName
 }
 
 // Reconcile handles Workspace events and ensures the workspace pod exists
@@ -118,6 +135,26 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 
 	logger.Info("Reconciling Workspace")
 
+	// Fetch the Workspace instance (namespaced)
+	workspace := &workspacev1.Workspace{}
+	err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, workspace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("Workspace not found, likely deleted")
+			return reconcile.Result{}, nil
+		}
+		logger.Error("Failed to get Workspace", zap.Error(err))
+		return reconcile.Result{}, err
+	}
+	if !r.shouldReconcileWorkspace(workspace) {
+		logger.Info("skipping workspace outside controller scope",
+			zap.String("own_namespace", r.OwnNamespace),
+			zap.String("workmachine_name", r.WorkMachineName),
+			zap.String("workspace_namespace", workspace.Namespace),
+			zap.String("workspace_workmachine", workspace.Spec.WorkmachineName))
+		return reconcile.Result{}, nil
+	}
+
 	// Periodically run orphaned RBAC cleanup (every rbacCleanupIntervalMinutes)
 	// We use a simple counter approach by checking if this is the first workspace in the list
 	// This avoids running cleanup on every reconciliation
@@ -132,18 +169,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req reconcile.Reque
 					zap.String("errors", fmt.Sprintf("%v", errors)))
 			}
 		}()
-	}
-
-	// Fetch the Workspace instance (namespaced)
-	workspace := &workspacev1.Workspace{}
-	err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, workspace)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logger.Info("Workspace not found, likely deleted")
-			return reconcile.Result{}, nil
-		}
-		logger.Error("Failed to get Workspace", zap.Error(err))
-		return reconcile.Result{}, err
 	}
 
 	// Check if workspace is being deleted
@@ -556,9 +581,11 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // This ensures leaked resources are cleaned up promptly
 func (r *WorkspaceReconciler) enqueueForRBACCleanup(ctx context.Context, obj client.Object) []reconcile.Request {
 	// Run orphaned RBAC cleanup in the background
+	// Use context.Background() because the map function context has a short lifetime
+	// and would be canceled before cleanup completes
 	go func() {
 		r.Logger.Info("Triggering orphaned RBAC cleanup")
-		deletedCount, errors := r.cleanupOrphanedRBACResources(ctx, r.Logger)
+		deletedCount, errors := r.cleanupOrphanedRBACResources(context.Background(), r.Logger)
 		if len(errors) > 0 {
 			r.Logger.Warn("Triggered RBAC cleanup encountered errors",
 				zap.Int("deletedCount", deletedCount),
@@ -604,6 +631,9 @@ func (r *WorkspaceReconciler) findWorkspacesForEnvironment(ctx context.Context, 
 
 	var requests []reconcile.Request
 	for _, ws := range workspaces.Items {
+		if !r.shouldReconcileWorkspace(&ws) {
+			continue
+		}
 		if ws.Spec.EnvironmentConnection != nil &&
 			ws.Spec.EnvironmentConnection.EnvironmentRef.Name == env.Name {
 			r.Logger.Info("findWorkspacesForEnvironment: workspace connected to deactivated environment",

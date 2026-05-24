@@ -327,9 +327,21 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		}
 	}
 
-	// Directory cleanup is now handled by workmachine-node-manager via the
-	// "workspaces.kloudlite.io/directory-cleanup" finalizer, so we don't need
-	// to create cleanup pods anymore
+	// Clean up btrfs subvolume and remove directory-cleanup finalizer
+	if controllerutil.ContainsFinalizer(workspace, workspaceCleanupFinalizer) {
+		if r.CmdExec != nil {
+			if err := r.deleteBtrfsSubvolume(workspace, logger); err != nil {
+				logger.Error("Failed to delete btrfs subvolume, will retry", zap.Error(err))
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+		}
+		controllerutil.RemoveFinalizer(workspace, workspaceCleanupFinalizer)
+		if err := r.Update(ctx, workspace); err != nil {
+			logger.Error("Failed to remove directory-cleanup finalizer", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		logger.Info("Removed directory-cleanup finalizer after btrfs cleanup")
+	}
 
 	// Delete ClusterRole and ClusterRoleBinding for environments access
 	// These cannot have owner references so must be deleted manually
@@ -476,6 +488,10 @@ func (r *WorkspaceReconciler) cleanupWorkspaceSnapshots(ctx context.Context, wor
 // Returns the number of successfully deleted resources and a slice of errors encountered.
 func (r *WorkspaceReconciler) cleanupOrphanedRBACResources(ctx context.Context, logger *zap.Logger) (int, []error) {
 	logger.Info("Starting orphaned RBAC resource cleanup with pagination")
+	if r.scopeConfigured() && (r.OwnNamespace == "" || r.WorkMachineName == "") {
+		logger.Warn("Skipping orphaned RBAC cleanup because controller scope is incomplete")
+		return 0, nil
+	}
 
 	// List all ClusterRoles with workspace labels using pagination
 	// Page size of 100 prevents API server overload in large clusters
@@ -499,6 +515,9 @@ func (r *WorkspaceReconciler) cleanupOrphanedRBACResources(ctx context.Context, 
 		if workspaceName == "" || namespace == "" {
 			logger.Warn("ClusterRole missing workspace labels, skipping",
 				zap.String("clusterRole", cr.Name))
+			continue
+		}
+		if r.scopeConfigured() && namespace != r.OwnNamespace {
 			continue
 		}
 
@@ -552,6 +571,9 @@ func (r *WorkspaceReconciler) cleanupOrphanedRBACResources(ctx context.Context, 
 		if workspaceName == "" || namespace == "" {
 			logger.Warn("ClusterRoleBinding missing workspace labels, skipping",
 				zap.String("clusterRoleBinding", crb.Name))
+			continue
+		}
+		if r.scopeConfigured() && namespace != r.OwnNamespace {
 			continue
 		}
 
