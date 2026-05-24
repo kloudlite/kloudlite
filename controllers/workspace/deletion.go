@@ -327,9 +327,21 @@ func (r *WorkspaceReconciler) handleDeletion(ctx context.Context, workspace *wor
 		}
 	}
 
-	// Directory cleanup is now handled by workmachine-node-manager via the
-	// "workspaces.kloudlite.io/directory-cleanup" finalizer, so we don't need
-	// to create cleanup pods anymore
+	// Clean up btrfs subvolume and remove directory-cleanup finalizer
+	if controllerutil.ContainsFinalizer(workspace, workspaceCleanupFinalizer) {
+		if r.CmdExec != nil {
+			if err := r.deleteBtrfsSubvolume(workspace, logger); err != nil {
+				logger.Error("Failed to delete btrfs subvolume, will retry", zap.Error(err))
+				return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+		}
+		controllerutil.RemoveFinalizer(workspace, workspaceCleanupFinalizer)
+		if err := r.Update(ctx, workspace); err != nil {
+			logger.Error("Failed to remove directory-cleanup finalizer", zap.Error(err))
+			return reconcile.Result{}, err
+		}
+		logger.Info("Removed directory-cleanup finalizer after btrfs cleanup")
+	}
 
 	// Delete ClusterRole and ClusterRoleBinding for environments access
 	// These cannot have owner references so must be deleted manually

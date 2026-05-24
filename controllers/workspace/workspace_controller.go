@@ -105,6 +105,7 @@ type WorkspaceReconciler struct {
 	Cfg             *ControllerConfig // Controller configuration
 	OwnNamespace    string
 	WorkMachineName string
+	CmdExec         CommandExecutor // For host-level commands (btrfs subvolume management)
 }
 
 func (r *WorkspaceReconciler) scopeConfigured() bool {

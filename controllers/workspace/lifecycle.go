@@ -3,6 +3,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"time"
 
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
@@ -180,6 +181,14 @@ func (r *WorkspaceReconciler) handleActiveWorkspace(ctx context.Context, workspa
 	}
 
 	// Pod doesn't exist, create it
+	// Ensure btrfs subvolume exists before pod creation
+	if r.CmdExec != nil {
+		if err := r.ensureBtrfsSubvolume(workspace, logger); err != nil {
+			logger.Error("Failed to ensure btrfs subvolume", zap.Error(err))
+			return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+	}
+
 	logger.Info("Creating workspace pod", zap.String("pod", podName))
 
 	// Ensure Docker config Secret exists for image registry authentication
