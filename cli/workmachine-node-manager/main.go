@@ -28,8 +28,7 @@ const (
 	workspaceUserGID          = 1001
 	sshConfigPath             = "/var/lib/kloudlite/ssh-config"
 	authorizedKeysFile        = "authorized_keys"
-	packageRequestFinalizer   = "workspaces.kloudlite.io/package-cleanup"
-	workspaceCleanupFinalizer = "workspaces.kloudlite.io/directory-cleanup"
+	packageRequestFinalizer = "workspaces.kloudlite.io/package-cleanup"
 )
 
 type Config struct {
@@ -38,6 +37,17 @@ type Config struct {
 	SnapshotRegistryEndpoint string
 	SnapshotRegistryPrefix   string
 	SnapshotRegistryInsecure string
+}
+
+func nodeManagerReconcilerNames() []string {
+	return []string{
+		"package",
+		"ssh-config",
+		"gpu-status",
+		"snapshot-request",
+		"snapshot-restore",
+		"storage-gc",
+	}
 }
 
 func Start(ctx context.Context, cfg Config) error {
@@ -200,18 +210,6 @@ func Start(ctx context.Context, cfg Config) error {
 
 	if err := sshConfigReconciler.SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("failed to setup SSH config controller: %w", err)
-	}
-
-	// Setup workspace cleanup reconciler (manages btrfs subvolumes for workspaces)
-	workspaceCleanupReconciler := &WorkspaceCleanupReconciler{
-		Client:  mgr.GetClient(),
-		Logger:  zapLogger,
-		FS:      fs,
-		CmdExec: &HostCommandExecutor{}, // Use host executor for btrfs commands
-	}
-
-	if err := workspaceCleanupReconciler.SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("failed to setup workspace cleanup controller: %w", err)
 	}
 
 	// Setup GPU status reconciler

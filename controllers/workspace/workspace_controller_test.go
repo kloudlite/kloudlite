@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/kloudlite/kloudlite/controllers/testutil"
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
@@ -17,6 +18,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -47,6 +50,187 @@ func TestWorkspaceReconciler_Reconcile_NotFound(t *testing.T) {
 	result, err := reconciler.Reconcile(context.Background(), req)
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
+}
+
+func TestWorkspaceReconcilerScopeAllowsCurrentWorkMachineWorkspace(t *testing.T) {
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if !reconciler.shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned false, want true")
+	}
+}
+
+func TestWorkspaceReconcilerScopeSkipsWrongNamespace(t *testing.T) {
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-bob"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if reconciler.shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true for workspace in another namespace")
+	}
+}
+
+func TestWorkspaceReconcilerScopeSkipsWrongWorkMachine(t *testing.T) {
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "bob-dev"},
+	}
+
+	if reconciler.shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true for workspace on another WorkMachine")
+	}
+}
+
+func TestWorkspaceReconcilerScopeFailsClosedWhenConfiguredIncomplete(t *testing.T) {
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if (&WorkspaceReconciler{OwnNamespace: "wm-alice"}).shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true with missing WorkMachineName")
+	}
+	if (&WorkspaceReconciler{WorkMachineName: "alice-dev"}).shouldReconcileWorkspace(workspace) {
+		t.Fatalf("shouldReconcileWorkspace returned true with missing OwnNamespace")
+	}
+}
+
+func TestWorkspaceReconcilerUnscopedAllowsLegacyController(t *testing.T) {
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-alice"},
+		Spec:       workspacev1.WorkspaceSpec{WorkmachineName: "alice-dev"},
+	}
+
+	if !(&WorkspaceReconciler{}).shouldReconcileWorkspace(workspace) {
+		t.Fatalf("unscoped shouldReconcileWorkspace returned false, want true")
+	}
+}
+
+func TestWorkspaceReconcilerScopedGetWorkMachineRejectsOtherWorkMachine(t *testing.T) {
+	reconciler := &WorkspaceReconciler{OwnNamespace: "wm-alice", WorkMachineName: "alice-dev"}
+
+	_, err := reconciler.getWorkMachine(context.Background(), "bob-dev")
+
+	if err == nil {
+		t.Fatalf("getWorkMachine returned nil error for another WorkMachine")
+	}
+	if !strings.Contains(err.Error(), "outside controller scope") {
+		t.Fatalf("error = %v, want outside controller scope", err)
+	}
+}
+
+func TestWorkspaceReconcilerScopedGetWorkMachineFailsClosedWhenScopedWorkMachineMissingNamespace(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{Name: "alice-dev"},
+	}
+	k8sClient := testutil.NewFakeClient(scheme, workMachine).Build()
+	reconciler := &WorkspaceReconciler{
+		Client:          k8sClient,
+		Scheme:          scheme,
+		WorkMachineName: "alice-dev",
+	}
+
+	_, err := reconciler.getWorkMachine(context.Background(), "alice-dev")
+
+	if err == nil {
+		t.Fatalf("getWorkMachine returned nil error with missing OwnNamespace")
+	}
+	if !strings.Contains(err.Error(), "incomplete controller scope") && !strings.Contains(err.Error(), "outside controller scope") {
+		t.Fatalf("error = %v, want incomplete controller scope or outside controller scope", err)
+	}
+}
+
+func TestWorkspaceReconcilerScopedGetWorkMachineFailsClosedWhenScopedNamespaceMissingWorkMachine(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	workMachine := &machinesv1.WorkMachine{
+		ObjectMeta: metav1.ObjectMeta{Name: "alice-dev"},
+	}
+	k8sClient := testutil.NewFakeClient(scheme, workMachine).Build()
+	reconciler := &WorkspaceReconciler{
+		Client:       k8sClient,
+		Scheme:       scheme,
+		OwnNamespace: "wm-alice",
+	}
+
+	_, err := reconciler.getWorkMachine(context.Background(), "alice-dev")
+
+	if err == nil {
+		t.Fatalf("getWorkMachine returned nil error with missing WorkMachineName")
+	}
+	if !strings.Contains(err.Error(), "incomplete controller scope") && !strings.Contains(err.Error(), "outside controller scope") {
+		t.Fatalf("error = %v, want incomplete controller scope or outside controller scope", err)
+	}
+}
+
+func TestWorkspaceReconcilerReconcileSkipsOutOfScopeWorkspaceWithoutMutation(t *testing.T) {
+	scheme := testutil.NewTestScheme()
+	t.Cleanup(func() { cfg = nil })
+
+	workspace := &workspacev1.Workspace{
+		ObjectMeta: metav1.ObjectMeta{Name: "ws", Namespace: "wm-bob"},
+		Spec: workspacev1.WorkspaceSpec{
+			DisplayName:     "Bob Workspace",
+			OwnedBy:         "bob@example.com",
+			WorkmachineName: "bob-dev",
+		},
+	}
+	orphanedClusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "orphaned-workspace-role",
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      "deleted-ws",
+				"kloudlite.io/workspace-namespace": "wm-bob",
+			},
+		},
+	}
+	orphanedClusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "orphaned-workspace-role-binding",
+			Labels: map[string]string{
+				"kloudlite.io/workspace-rbac":      "true",
+				"kloudlite.io/workspace-name":      "deleted-ws",
+				"kloudlite.io/workspace-namespace": "wm-bob",
+			},
+		},
+	}
+	k8sClient := testutil.NewFakeClient(scheme, workspace, orphanedClusterRole, orphanedClusterRoleBinding).
+		WithStatusSubresource(&packagesv1.PackageRequest{}, &workspacev1.Workspace{}).
+		Build()
+	reconciler := &WorkspaceReconciler{
+		Client:          k8sClient,
+		Scheme:          scheme,
+		Logger:          zaptest.NewLogger(t),
+		Cfg:             &ControllerConfig{},
+		OwnNamespace:    "wm-alice",
+		WorkMachineName: "alice-dev",
+	}
+	reconciler.Cfg.Workspace.RBACCleanupIntervalMinutes = 1
+
+	result, err := reconciler.Reconcile(context.Background(), reconcile.Request{NamespacedName: types.NamespacedName{Name: "ws", Namespace: "wm-bob"}})
+
+	require.NoError(t, err)
+	assert.False(t, result.Requeue)
+	updated := &workspacev1.Workspace{}
+	require.NoError(t, k8sClient.Get(context.Background(), types.NamespacedName{Name: "ws", Namespace: "wm-bob"}, updated))
+	assert.Empty(t, updated.Finalizers)
+	assert.Empty(t, updated.Labels["kloudlite.io/hash"])
+	assert.Never(t, func() bool {
+		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: "orphaned-workspace-role"}, &rbacv1.ClusterRole{})
+		return apierrors.IsNotFound(err)
+	}, 200*time.Millisecond, 10*time.Millisecond)
+	assert.Never(t, func() bool {
+		err := k8sClient.Get(context.Background(), types.NamespacedName{Name: "orphaned-workspace-role-binding"}, &rbacv1.ClusterRoleBinding{})
+		return apierrors.IsNotFound(err)
+	}, 200*time.Millisecond, 10*time.Millisecond)
 }
 
 func TestWorkspaceReconciler_Reconcile_AddFinalizer(t *testing.T) {

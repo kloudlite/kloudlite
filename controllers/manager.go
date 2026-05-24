@@ -44,6 +44,10 @@ func PlatformAPIControllerNames() []string {
 	return []string{"user", "workmachine-platform-scoped"}
 }
 
+func MachineScopedControllerNames() []string {
+	return []string{"workmachine-manager", "environment", "workspace"}
+}
+
 // NewManager creates a new controller manager with all controllers
 func NewManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
 	return newManager(cfg, installationCfg, authCfg, logger, false)
@@ -55,6 +59,23 @@ func NewPlatformAPIManager(cfg *rest.Config, installationCfg *config.Installatio
 
 func NewMachineScopedManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
 	return newMachineScopedManager(cfg, installationCfg, authCfg, logger)
+}
+
+func machineScopedRuntimeScope() (namespace string, workMachineName string, err error) {
+	namespace = os.Getenv("POD_NAMESPACE")
+	if namespace == "" {
+		namespace = os.Getenv("NAMESPACE")
+	}
+	if namespace == "" {
+		return "", "", fmt.Errorf("machine-scoped manager requires namespace from POD_NAMESPACE or NAMESPACE")
+	}
+
+	workMachineName = os.Getenv("WORKMACHINE_NAME")
+	if workMachineName == "" {
+		return "", "", fmt.Errorf("machine-scoped manager requires WORKMACHINE_NAME")
+	}
+
+	return namespace, workMachineName, nil
 }
 
 func newMachineScopedManager(cfg *rest.Config, installationCfg *config.InstallationConfig, authCfg *config.AuthConfig, logger *zap.Logger) (*Manager, error) {
@@ -86,6 +107,10 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 	if err != nil {
 		return nil, fmt.Errorf("unable to load controller configuration: %w", err)
 	}
+	machineNamespace, workMachineName, err := machineScopedRuntimeScope()
+	if err != nil {
+		return nil, err
+	}
 	ingressReconciler := &wmingress.IngressReconciler{
 		Client:                  mgr.GetClient(),
 		Scheme:                  mgr.GetScheme(),
@@ -112,13 +137,13 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		ingressReconciler.WildcardSecretNamespace = os.Getenv("WM_INGRESS_WILDCARD_SECRET_NAMESPACE")
 	}
 	if ingressReconciler.WildcardSecretNamespace == "" {
-		ingressReconciler.WildcardSecretNamespace = os.Getenv("POD_NAMESPACE")
+		ingressReconciler.WildcardSecretNamespace = machineNamespace
 	}
 	if ingressReconciler.OwnNamespace == "" {
 		ingressReconciler.OwnNamespace = os.Getenv("WM_INGRESS_OWN_NAMESPACE")
 	}
 	if ingressReconciler.OwnNamespace == "" {
-		ingressReconciler.OwnNamespace = os.Getenv("POD_NAMESPACE")
+		ingressReconciler.OwnNamespace = machineNamespace
 	}
 	if ingressReconciler.RegistryUsername == "" {
 		ingressReconciler.RegistryUsername = os.Getenv("REGISTRY_USERNAME")
@@ -132,21 +157,50 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		Scheme:          mgr.GetScheme(),
 		Logger:          logger.With(zap.String("controller", "environment")),
 		Cfg:             controllerCfg,
-		OwnNamespace:    os.Getenv("POD_NAMESPACE"),
-		WorkMachineName: os.Getenv("WORKMACHINE_NAME"),
-	}
-	if environmentReconciler.OwnNamespace == "" {
-		environmentReconciler.OwnNamespace = os.Getenv("NAMESPACE")
+		OwnNamespace:    machineNamespace,
+		WorkMachineName: workMachineName,
 	}
 	if err := environmentReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to setup scoped Environment controller: %w", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create kubernetes clientset: %w", err)
+	}
+
+	workspaceCfg := &workspace.ControllerConfig{}
+	workspaceCfg.Workspace.DefaultIdleTimeoutMinutes = controllerCfg.Workspace.DefaultIdleTimeoutMinutes
+	workspaceCfg.Workspace.RequeueIntervalMinutes = controllerCfg.Workspace.RequeueIntervalMinutes
+	workspaceCfg.Workspace.RBACCleanupIntervalMinutes = controllerCfg.Workspace.RBACCleanupIntervalMinutes
+	workspaceCfg.Workspace.KubectlImage = controllerCfg.Workspace.KubectlImage
+	workspaceCfg.Workspace.GitImage = controllerCfg.Workspace.GitImage
+	workspaceCfg.Workspace.AlpineImage = controllerCfg.Workspace.AlpineImage
+	workspaceCfg.Workspace.CleanupPodTTLSeconds = controllerCfg.Workspace.CleanupPodTTLSeconds
+	workspaceCfg.Workspace.VSCodeVersion = controllerCfg.Workspace.VSCodeVersion
+	workspaceCfg.Environment.LifecycleRetryInterval = controllerCfg.Environment.LifecycleRetryInterval
+
+	workspaceReconciler := &workspace.WorkspaceReconciler{
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		Logger:          logger.With(zap.String("controller", "workspace")),
+		Config:          cfg,
+		Clientset:       clientset,
+		JWTSecret:       authCfg.JWTSecret,
+		Cfg:             workspaceCfg,
+		OwnNamespace:    machineNamespace,
+		WorkMachineName: workMachineName,
+		CmdExec:         &workspace.HostCommandExecutor{},
+	}
+	if err := workspaceReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to setup scoped Workspace controller: %w", err)
 	}
 
 	if err := machinescoped.Register(mgr, controllerCfg); err != nil {
 		return nil, fmt.Errorf("unable to setup WorkMachine manager controller: %w", err)
 	}
 
-	logger.Info("controllers initialized successfully", zap.Strings("controllers", []string{"workmachine-manager", "environment"}))
+	logger.Info("controllers initialized successfully", zap.Strings("controllers", MachineScopedControllerNames()))
 	return &Manager{mgr: mgr, logger: logger, ingressReconciler: ingressReconciler}, nil
 }
 
@@ -257,25 +311,6 @@ func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 
 	if err = environmentReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to create Environment controller: %w", err)
-	}
-
-	// Setup Workspace controller
-	clientset, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create kubernetes clientset: %w", err)
-	}
-
-	workspaceReconciler := &workspace.WorkspaceReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		Logger:    logger.With(zap.String("controller", "workspace")),
-		Config:    cfg,
-		Clientset: clientset,
-		JWTSecret: authCfg.JWTSecret,
-	}
-
-	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create Workspace controller: %w", err)
 	}
 
 	// Setup Snapshot controller with operator for registry operations
