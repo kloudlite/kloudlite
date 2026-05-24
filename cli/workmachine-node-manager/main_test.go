@@ -180,6 +180,10 @@ func TestPackageManagerReconciler_SetupWithManager(t *testing.T) {
 	assert.NotNil(t, reconciler)
 }
 
+func TestNodeManagerDoesNotRegisterWorkspaceCleanupReconciler(t *testing.T) {
+	assert.NotContains(t, nodeManagerReconcilerNames(), "workspace-cleanup")
+}
+
 func TestPackageManagerReconciler_UpdateEventFilter_Ready(t *testing.T) {
 	pkgReqOld := &packagesv1.PackageRequest{
 		ObjectMeta: metav1.ObjectMeta{

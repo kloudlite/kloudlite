@@ -190,6 +190,7 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		Cfg:             workspaceCfg,
 		OwnNamespace:    machineNamespace,
 		WorkMachineName: workMachineName,
+		CmdExec:         &workspace.HostCommandExecutor{},
 	}
 	if err := workspaceReconciler.SetupWithManager(mgr); err != nil {
 		return nil, fmt.Errorf("unable to setup scoped Workspace controller: %w", err)
