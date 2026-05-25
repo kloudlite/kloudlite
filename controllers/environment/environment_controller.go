@@ -327,10 +327,7 @@ func (r *EnvironmentReconciler) hasActiveSnapshotOperation(ctx context.Context, 
 	}
 
 	for _, cp := range checkpoints.Items {
-		if cp.Spec.EnvironmentName != environment.Name || cp.Namespace != environment.Spec.TargetNamespace {
-			continue
-		}
-		if cp.Spec.EnvironmentNamespace != environment.Namespace {
+		if cp.Spec.EnvironmentName != environment.Name || cp.Spec.EnvironmentNamespace != environment.Namespace {
 			continue
 		}
 		// Check if checkpoint is in-progress (not completed or failed)
@@ -347,10 +344,7 @@ func (r *EnvironmentReconciler) hasActiveSnapshotOperation(ctx context.Context, 
 	}
 
 	for _, restore := range restores.Items {
-		if restore.Spec.EnvironmentName != environment.Name || restore.Namespace != environment.Spec.TargetNamespace {
-			continue
-		}
-		if restore.Spec.EnvironmentNamespace != environment.Namespace {
+		if restore.Spec.EnvironmentName != environment.Name || restore.Spec.EnvironmentNamespace != environment.Namespace {
 			continue
 		}
 		// Check if restore is in-progress (not completed or failed)

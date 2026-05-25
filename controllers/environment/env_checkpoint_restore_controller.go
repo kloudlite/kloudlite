@@ -205,7 +205,7 @@ func (r *EnvironmentCheckpointRestoreReconciler) handleWaitingForPods(
 	cpRestore := &checkpointv1.CheckpointRestore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      checkpointRestoreName,
-			Namespace: env.Spec.TargetNamespace,
+			Namespace: restore.Spec.EnvironmentNamespace,
 			Labels: map[string]string{
 				"kloudlite.io/owned-by":                env.Spec.OwnedBy,
 				"checkpoints.kloudlite.io/environment": env.Name,
@@ -244,7 +244,7 @@ func (r *EnvironmentCheckpointRestoreReconciler) handleRestoreInProgress(
 	cpRestore := &checkpointv1.CheckpointRestore{}
 	if err := r.Get(ctx, client.ObjectKey{
 		Name:      restore.Status.CheckpointRestoreName,
-		Namespace: env.Spec.TargetNamespace,
+		Namespace: restore.Spec.EnvironmentNamespace,
 	}, cpRestore); err != nil {
 		if apierrors.IsNotFound(err) {
 			return r.setFailed(ctx, restore, env, "CheckpointRestore not found", logger)

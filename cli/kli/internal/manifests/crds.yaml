@@ -4,6 +4,584 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
+  name: checkpointrestores.checkpoints.kloudlite.io
+spec:
+  group: checkpoints.kloudlite.io
+  names:
+    kind: CheckpointRestore
+    listKind: CheckpointRestoreList
+    plural: checkpointrestores
+    singular: checkpointrestore
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.checkpointName
+      name: Checkpoint
+      type: string
+    - jsonPath: .spec.targetPath
+      name: Target
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: CheckpointRestore requests restoration of a checkpoint to a target
+          path
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CheckpointRestoreSpec defines the restore operation
+            properties:
+              checkpointName:
+                description: CheckpointName is the checkpoint to restore
+                type: string
+              includeArtifacts:
+                description: IncludeArtifacts lists which artifacts to include in
+                  response (empty = all)
+                items:
+                  type: string
+                type: array
+              nodeName:
+                description: NodeName is the node where to perform the restore
+                type: string
+              targetPath:
+                description: TargetPath is where to restore the checkpoint
+                type: string
+            required:
+            - checkpointName
+            - nodeName
+            - targetPath
+            type: object
+          status:
+            description: CheckpointRestoreStatus defines restore progress
+            properties:
+              artifacts:
+                additionalProperties:
+                  type: string
+                description: Artifacts contains the retrieved artifact data
+                type: object
+              completedAt:
+                description: CompletedAt is when the restore completed
+                format: date-time
+                type: string
+              message:
+                description: Message provides status details
+                type: string
+              phase:
+                default: Pending
+                description: Phase is the current restore phase
+                type: string
+              restoredPath:
+                description: RestoredPath is the actual path where data was restored
+                type: string
+              startedAt:
+                description: StartedAt is when the restore started
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: checkpoints.checkpoints.kloudlite.io
+spec:
+  group: checkpoints.kloudlite.io
+  names:
+    kind: Checkpoint
+    listKind: CheckpointList
+    plural: checkpoints
+    singular: checkpoint
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.owner
+      name: Owner
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.sizeHuman
+      name: Size
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Checkpoint represents a point-in-time snapshot of a btrfs subvolume.
+          When uploaded to an OCI registry, the data is stored as a compressed layer.
+          Checkpoints are namespaced and can be owned by workspaces or environments.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CheckpointSpec defines the checkpoint parameters
+            properties:
+              artifacts:
+                description: Artifacts define metadata stored alongside the checkpoint
+                items:
+                  description: ArtifactSpec defines a metadata artifact stored with
+                    the checkpoint
+                  properties:
+                    data:
+                      description: Data is the artifact content (base64 encoded for
+                        binary safety)
+                      type: string
+                    name:
+                      description: Name identifies this artifact (e.g., "k8s-resources",
+                        "app-config")
+                      type: string
+                    type:
+                      default: raw
+                      description: Type hints at how to handle this artifact during
+                        restore
+                      enum:
+                      - kubernetes-manifests
+                      - json
+                      - yaml
+                      - sql
+                      - raw
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              description:
+                description: Description is a human-readable description
+                type: string
+              nodeName:
+                description: NodeName is the Kubernetes node where the btrfs subvolume
+                  exists
+                type: string
+              owner:
+                description: Owner identifies who owns this checkpoint (e.g., username)
+                type: string
+              retentionPolicy:
+                description: RetentionPolicy defines automatic deletion rules
+                properties:
+                  expiresAt:
+                    description: ExpiresAt is when this checkpoint should be automatically
+                      deleted
+                    format: date-time
+                    type: string
+                  keepForDays:
+                    description: KeepForDays is the number of days to keep the checkpoint
+                    format: int32
+                    minimum: 1
+                    type: integer
+                type: object
+              sourcePath:
+                description: SourcePath is the btrfs subvolume path to snapshot
+                type: string
+            required:
+            - nodeName
+            - owner
+            - sourcePath
+            type: object
+          status:
+            description: CheckpointStatus defines the observed state of Checkpoint
+            properties:
+              artifacts:
+                description: Artifacts lists the stored artifacts and their status
+                items:
+                  description: ArtifactStatus tracks a stored artifact
+                  properties:
+                    name:
+                      type: string
+                    sizeBytes:
+                      format: int64
+                      type: integer
+                    stored:
+                      type: boolean
+                    type:
+                      description: ArtifactType represents the type of artifact
+                      type: string
+                  required:
+                  - name
+                  - stored
+                  - type
+                  type: object
+                type: array
+              completedAt:
+                description: CompletedAt is when processing completed (success or
+                  failure)
+                format: date-time
+                type: string
+              contentHash:
+                description: ContentHash is the MD5 hash of the snapshot content (used
+                  for deduplication and as OCI tag)
+                type: string
+              layer:
+                description: Layer contains OCI registry storage information for the
+                  uploaded data
+                properties:
+                  compressedSize:
+                    description: CompressedSize is the compressed size in bytes
+                    format: int64
+                    type: integer
+                  digest:
+                    description: Digest is the image manifest digest (sha256:...)
+                    type: string
+                  imageRef:
+                    description: ImageRef is the full image reference (registry/repo:tag)
+                    type: string
+                  pushedAt:
+                    description: PushedAt is when the layer was pushed to registry
+                    format: date-time
+                    type: string
+                required:
+                - imageRef
+                type: object
+              localPath:
+                description: LocalPath is the cached btrfs snapshot path on disk
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              phase:
+                default: Pending
+                description: Phase is the current phase of the checkpoint
+                type: string
+              sizeBytes:
+                description: SizeBytes is the uncompressed size in bytes
+                format: int64
+                type: integer
+              sizeHuman:
+                description: SizeHuman is the human-readable size (e.g., "1.5 GB")
+                type: string
+              startedAt:
+                description: StartedAt is when processing started
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: environmentcheckpointrestores.environments.kloudlite.io
+spec:
+  group: environments.kloudlite.io
+  names:
+    kind: EnvironmentCheckpointRestore
+    listKind: EnvironmentCheckpointRestoreList
+    plural: environmentcheckpointrestores
+    singular: environmentcheckpointrestore
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.environmentName
+      name: Environment
+      type: string
+    - jsonPath: .spec.checkpointName
+      name: Checkpoint
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          EnvironmentCheckpointRestore orchestrates restoring an environment from a checkpoint.
+          It stops workloads, restores the data, applies artifacts, and activates the environment.
+          Lives in the environment's targetNamespace (e.g., env-{envName}-{random6}).
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EnvironmentCheckpointRestoreSpec defines the restore parameters
+            properties:
+              activateAfterRestore:
+                default: true
+                description: ActivateAfterRestore determines whether to activate the
+                  environment after restore
+                type: boolean
+              checkpointName:
+                description: CheckpointName is the name of the checkpoint to restore
+                  from
+                type: string
+              environmentName:
+                description: EnvironmentName is the name of the environment to restore
+                  to
+                type: string
+              environmentNamespace:
+                description: |-
+                  EnvironmentNamespace is the namespace where the Environment resource lives
+                  This is the WorkMachine namespace (e.g., wm-{username})
+                  Required because EnvironmentCheckpointRestore lives in the environment's targetNamespace
+                type: string
+              sourceNamespace:
+                description: |-
+                  SourceNamespace is the namespace where the source checkpoint exists
+                  This is typically the target namespace of the source environment
+                type: string
+            required:
+            - checkpointName
+            - environmentName
+            - environmentNamespace
+            - sourceNamespace
+            type: object
+          status:
+            description: EnvironmentCheckpointRestoreStatus defines the observed state
+            properties:
+              checkpointRestoreName:
+                description: CheckpointRestoreName is the name of the created CheckpointRestore
+                  CR
+                type: string
+              completionTime:
+                description: CompletionTime is when the restore completed (success
+                  or failure)
+                format: date-time
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              phase:
+                default: Pending
+                description: Phase is the current phase of the restore
+                type: string
+              restoredArtifacts:
+                description: RestoredArtifacts lists the K8s resources that were restored
+                properties:
+                  configMapsRestored:
+                    description: ConfigMapsRestored is the number of configmaps restored
+                    format: int32
+                    type: integer
+                  secretsRestored:
+                    description: SecretsRestored is the number of secrets restored
+                    format: int32
+                    type: integer
+                type: object
+              startTime:
+                description: StartTime is when the restore started processing
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: environmentcheckpoints.environments.kloudlite.io
+spec:
+  group: environments.kloudlite.io
+  names:
+    kind: EnvironmentCheckpoint
+    listKind: EnvironmentCheckpointList
+    plural: environmentcheckpoints
+    singular: environmentcheckpoint
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.environmentName
+      name: Environment
+      type: string
+    - jsonPath: .spec.checkpointName
+      name: Checkpoint
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          EnvironmentCheckpoint orchestrates creating a checkpoint for an environment.
+          It stops workloads, creates the checkpoint, captures K8s artifacts, and restores the environment state.
+          Lives in the environment's targetNamespace (e.g., env-{envName}-{random6}).
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EnvironmentCheckpointSpec defines the checkpoint request
+              parameters
+            properties:
+              checkpointName:
+                description: CheckpointName is the desired name for the checkpoint
+                type: string
+              description:
+                description: Description is a human-readable description of the checkpoint
+                type: string
+              environmentName:
+                description: EnvironmentName is the name of the environment to checkpoint
+                type: string
+              environmentNamespace:
+                description: |-
+                  EnvironmentNamespace is the namespace where the Environment resource lives
+                  This is the WorkMachine namespace (e.g., wm-{username})
+                  Required because EnvironmentCheckpoint lives in the environment's targetNamespace
+                type: string
+              retentionDays:
+                description: RetentionDays specifies how long to keep the checkpoint
+                  (0 = forever)
+                format: int32
+                type: integer
+            required:
+            - checkpointName
+            - environmentName
+            - environmentNamespace
+            type: object
+          status:
+            description: EnvironmentCheckpointStatus defines the observed state
+            properties:
+              artifacts:
+                description: |-
+                  Artifacts stores captured K8s resources (ConfigMaps, Secrets, EnvironmentSpec)
+                  Folded in from the old SnapshotArtifacts CRD
+                properties:
+                  configMapCount:
+                    description: ConfigMapCount is the number of configmaps captured
+                    format: int32
+                    type: integer
+                  configMaps:
+                    description: ConfigMaps contains serialized ConfigMap resources
+                      (YAML, base64 encoded)
+                    type: string
+                  environmentSpec:
+                    description: |-
+                      EnvironmentSpec contains the full Environment spec (JSON, base64 encoded)
+                      Used to capture the complete environment configuration at checkpoint time
+                    type: string
+                  secretCount:
+                    description: SecretCount is the number of secrets captured
+                    format: int32
+                    type: integer
+                  secrets:
+                    description: Secrets contains serialized Secret resources (YAML,
+                      base64 encoded)
+                    type: string
+                type: object
+              completionTime:
+                description: CompletionTime is when the request completed (success
+                  or failure)
+                format: date-time
+                type: string
+              createdCheckpointName:
+                description: CreatedCheckpointName is the name of the successfully
+                  created Checkpoint
+                type: string
+              message:
+                description: Message provides human-readable status information
+                type: string
+              phase:
+                default: Pending
+                description: Phase is the current phase of the request
+                type: string
+              previousEnvironmentState:
+                description: |-
+                  PreviousEnvironmentState stores the environment state before checkpointing
+                  Used to restore the environment after checkpoint completes
+                type: string
+              startTime:
+                description: StartTime is when the request started processing
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: environmentforkrequests.environments.kloudlite.io
 spec:
   group: environments.kloudlite.io
@@ -436,26 +1014,6 @@ spec:
                 required:
                 - composeContent
                 - displayName
-                type: object
-              fromSnapshot:
-                description: |-
-                  FromSnapshot specifies a pushed snapshot to create this environment from
-                  Only snapshots with status.registryStatus.pushed=true can be used
-                  This field is automatically cleared after successful restoration
-                properties:
-                  snapshotName:
-                    description: |-
-                      SnapshotName is the name of the snapshot resource to fork from
-                      The snapshot must have status.registryStatus.pushed=true
-                    type: string
-                  sourceNamespace:
-                    description: |-
-                      SourceNamespace is the namespace where the source snapshot exists
-                      This is typically the target namespace of the source environment
-                    type: string
-                required:
-                - snapshotName
-                - sourceNamespace
                 type: object
               labels:
                 additionalProperties:
@@ -910,25 +1468,16 @@ spec:
                   was deactivated
                 format: date-time
                 type: string
-              lastRestoredSnapshot:
+              lastRestoredCheckpoint:
                 description: |-
-                  LastRestoredSnapshot tracks the current snapshot for this environment
-                  Updated when a snapshot is restored OR when a new snapshot is created
-                  Used for automatic parent lineage tracking when new snapshots are created
+                  LastRestoredCheckpoint tracks the current checkpoint for this environment
+                  Updated when a checkpoint is restored OR when a new checkpoint is created
                 properties:
-                  lineage:
-                    description: |-
-                      Lineage is the full chain of snapshot ancestors (root first, immediate parent last)
-                      Includes the restored snapshot itself as the last element
-                      All snapshots in the lineage have their refCount incremented when restored
-                    items:
-                      type: string
-                    type: array
                   name:
-                    description: Name is the name of the snapshot that was restored
+                    description: Name is the name of the checkpoint that was restored
                     type: string
                   restoredAt:
-                    description: RestoredAt is when the snapshot was restored
+                    description: RestoredAt is when the checkpoint was restored
                     format: date-time
                     type: string
                 required:
@@ -965,44 +1514,6 @@ spec:
                   statefulsets:
                     format: int32
                     type: integer
-                type: object
-              snapshotRestoreStatus:
-                description: SnapshotRestoreStatus tracks the progress of creating
-                  environment from a registry snapshot
-                properties:
-                  completionTime:
-                    description: CompletionTime when restoration completed (success
-                      or failure)
-                    format: date-time
-                    type: string
-                  errorMessage:
-                    description: ErrorMessage if restoration failed
-                    type: string
-                  imageRef:
-                    description: ImageRef is the registry image reference being pulled
-                    type: string
-                  message:
-                    description: Message provides additional information about the
-                      current state
-                    type: string
-                  phase:
-                    description: Phase represents the current phase of snapshot restoration
-                    enum:
-                    - Pending
-                    - Pulling
-                    - Restoring
-                    - DataRestoring
-                    - Completed
-                    - Failed
-                    type: string
-                  sourceSnapshot:
-                    description: SourceSnapshot is the name of the snapshot being
-                      restored from
-                    type: string
-                  startTime:
-                    description: StartTime when restoration started
-                    format: date-time
-                    type: string
                 type: object
               state:
                 description: State represents the current state of the environment
