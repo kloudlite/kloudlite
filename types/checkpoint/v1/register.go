@@ -7,7 +7,7 @@ import (
 )
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: "environments.kloudlite.io", Version: "v1"}
+var SchemeGroupVersion = schema.GroupVersion{Group: "checkpoints.kloudlite.io", Version: "v1"}
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind
 func Kind(kind string) schema.GroupKind {
@@ -30,12 +30,11 @@ var (
 // Adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Environment{},
-		&EnvironmentList{},
-		&EnvironmentCheckpoint{},
-		&EnvironmentCheckpointList{},
-		&EnvironmentCheckpointRestore{},
-		&EnvironmentCheckpointRestoreList{},
+		&Checkpoint{},
+		&CheckpointList{},
+
+		&CheckpointRestore{},
+		&CheckpointRestoreList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

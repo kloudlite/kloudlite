@@ -8,7 +8,7 @@ import (
 	"time"
 
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
-	snapshotv1 "github.com/kloudlite/kloudlite/types/snapshot/v1"
+	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	zap2 "go.uber.org/zap"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -49,8 +49,8 @@ func (gc *StorageGarbageCollector) collectGarbage(ctx context.Context) {
 	// Clean up orphaned environment directories
 	gc.cleanupOrphanedEnvironments(ctx)
 
-	// Clean up orphaned snapshot cache directories
-	gc.cleanupOrphanedSnapshotCache(ctx)
+	// Clean up orphaned checkpoint cache directories
+	gc.cleanupOrphanedCheckpointCache(ctx)
 }
 
 // cleanupOrphanedEnvironments removes environment directories that don't have a corresponding Environment CR
@@ -112,15 +112,15 @@ func (gc *StorageGarbageCollector) cleanupOrphanedEnvironments(ctx context.Conte
 	}
 }
 
-// cleanupOrphanedSnapshotCache removes snapshot cache directories that don't have a corresponding Snapshot CR
-func (gc *StorageGarbageCollector) cleanupOrphanedSnapshotCache(ctx context.Context) {
-	snapshotCachePath := "/var/lib/kloudlite/storage/.snapshots"
+// cleanupOrphanedCheckpointCache removes checkpoint cache directories that don't have a corresponding Checkpoint CR
+func (gc *StorageGarbageCollector) cleanupOrphanedCheckpointCache(ctx context.Context) {
+	checkpointCachePath := checkpointStoragePath
 
 	// List directories on disk
-	listCmd := fmt.Sprintf("ls -1 %s 2>/dev/null || true", snapshotCachePath)
+	listCmd := fmt.Sprintf("ls -1 %s 2>/dev/null || true", checkpointCachePath)
 	output, err := gc.HostCmdExec.Execute(listCmd)
 	if err != nil {
-		gc.Logger.Error("Failed to list snapshot cache directories", zap2.Error(err))
+		gc.Logger.Error("Failed to list checkpoint cache directories", zap2.Error(err))
 		return
 	}
 
@@ -129,17 +129,17 @@ func (gc *StorageGarbageCollector) cleanupOrphanedSnapshotCache(ctx context.Cont
 		return
 	}
 
-	// Get all existing snapshots
-	snapshotList := &snapshotv1.SnapshotList{}
-	if err := gc.Reader.List(ctx, snapshotList); err != nil {
-		gc.Logger.Error("Failed to list snapshots", zap2.Error(err))
+	// Get all existing checkpoints
+	checkpointList := &checkpointv1.CheckpointList{}
+	if err := gc.Reader.List(ctx, checkpointList); err != nil {
+		gc.Logger.Error("Failed to list checkpoints", zap2.Error(err))
 		return
 	}
 
-	// Build set of valid snapshot names
-	validSnapshots := make(map[string]bool)
-	for _, snap := range snapshotList.Items {
-		validSnapshots[snap.Name] = true
+	// Build set of valid checkpoint names
+	validCheckpoints := make(map[string]bool)
+	for _, cp := range checkpointList.Items {
+		validCheckpoints[cp.Name] = true
 	}
 
 	// Check each directory
@@ -148,19 +148,19 @@ func (gc *StorageGarbageCollector) cleanupOrphanedSnapshotCache(ctx context.Cont
 			continue
 		}
 
-		// Check if this directory has a corresponding Snapshot
-		if !validSnapshots[dir] {
-			gc.Logger.Info("Found orphaned snapshot cache directory", zap2.String("dir", dir))
+		// Check if this directory has a corresponding Checkpoint
+		if !validCheckpoints[dir] {
+			gc.Logger.Info("Found orphaned checkpoint cache directory", zap2.String("dir", dir))
 
 			// Delete the btrfs subvolume
-			dirPath := filepath.Join(snapshotCachePath, dir)
+			dirPath := filepath.Join(checkpointCachePath, dir)
 			deleteCmd := fmt.Sprintf("btrfs subvolume delete %s 2>/dev/null || rm -rf %s", dirPath, dirPath)
 			if _, err := gc.HostCmdExec.Execute(deleteCmd); err != nil {
-				gc.Logger.Error("Failed to delete orphaned snapshot cache directory",
+				gc.Logger.Error("Failed to delete orphaned checkpoint cache directory",
 					zap2.String("dir", dir),
 					zap2.Error(err))
 			} else {
-				gc.Logger.Info("Deleted orphaned snapshot cache directory", zap2.String("dir", dir))
+				gc.Logger.Info("Deleted orphaned checkpoint cache directory", zap2.String("dir", dir))
 			}
 		}
 	}
