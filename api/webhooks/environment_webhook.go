@@ -14,8 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kloudlite/kloudlite/pkg/logger"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
-	snapshotv1 "github.com/kloudlite/kloudlite/types/snapshot/v1"
-	platformv1alpha1 "github.com/kloudlite/kloudlite/types/user/v1alpha1"
+platformv1alpha1 "github.com/kloudlite/kloudlite/types/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -413,25 +412,6 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 		}
 	}
 
-	// Validate snapshot exists and is ready when fromSnapshot is set
-	if env.Spec.FromSnapshot != nil && operation == admissionv1.Create {
-		// Fetch the snapshot to validate it exists and is ready
-		var snapshot snapshotv1.Snapshot
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.FromSnapshot.SnapshotName, Namespace: env.Spec.FromSnapshot.SourceNamespace}, &snapshot); err != nil {
-			return fmt.Errorf("snapshot '%s' not found in namespace '%s'", env.Spec.FromSnapshot.SnapshotName, env.Spec.FromSnapshot.SourceNamespace)
-		}
-
-		// Validate snapshot is ready
-		if snapshot.Status.State != snapshotv1.SnapshotStateReady {
-			return fmt.Errorf("snapshot '%s' is not ready (current state: %s). Only ready snapshots can be used to create environments", env.Spec.FromSnapshot.SnapshotName, snapshot.Status.State)
-		}
-
-		// Validate snapshot is pushed to registry
-		if snapshot.Status.Registry == nil || snapshot.Status.Registry.ImageRef == "" {
-			return fmt.Errorf("snapshot '%s' is not pushed to registry. Only pushed snapshots can be used to create environments", env.Spec.FromSnapshot.SnapshotName)
-		}
-	}
-
 	// Validate targetNamespace is unique across Environments and not used by WorkMachines
 	if env.Spec.TargetNamespace != "" && (operation == admissionv1.Create || operation == admissionv1.Update) {
 		// Check if any other Environment is using this targetNamespace (using label selector)
@@ -502,21 +482,6 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 	if env.Spec.NetworkPolicies != nil {
 		if err := w.validateNetworkPolicies(env.Spec.NetworkPolicies); err != nil {
 			return fmt.Errorf("invalid network policies: %w", err)
-		}
-	}
-
-	// For deletion operations, fetch the current environment to check status
-	if operation == admissionv1.Delete {
-		// Fetch current environment to check restore status (namespaced lookup)
-		var currentEnv environmentsv1.Environment
-		if err := w.k8sClient.Get(ctx, client.ObjectKey{Namespace: env.Namespace, Name: env.Name}, &currentEnv); err == nil {
-			// Check if environment is being restored from snapshot
-			if currentEnv.Status.SnapshotRestoreStatus != nil {
-				phase := currentEnv.Status.SnapshotRestoreStatus.Phase
-				if phase != environmentsv1.SnapshotRestorePhaseCompleted && phase != environmentsv1.SnapshotRestorePhaseFailed {
-					return fmt.Errorf("cannot delete environment during snapshot restore. Current phase: %s. Please wait for restore to complete or fail", phase)
-				}
-			}
 		}
 	}
 

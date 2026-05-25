@@ -76,9 +76,6 @@ func (s *EnvironmentStatusSession) ComputeReady() {
 	if s.obj.Spec.Compose != nil && s.obj.Spec.Compose.ComposeContent != "" {
 		required = append(required, EnvironmentConditionComposeReady)
 	}
-	if s.obj.Spec.FromSnapshot != nil || s.obj.Status.SnapshotRestoreStatus != nil {
-		required = append(required, EnvironmentConditionSnapshotRestoreReady)
-	}
 	for _, conditionType := range required {
 		condition := meta.FindStatusCondition(s.obj.Status.Conditions, conditionType)
 		if condition == nil || condition.Status != metav1.ConditionTrue || condition.ObservedGeneration != s.obj.Generation {

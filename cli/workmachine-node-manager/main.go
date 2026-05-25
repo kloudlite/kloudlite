@@ -7,7 +7,7 @@ import (
 
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
-	snapshotv1 "github.com/kloudlite/kloudlite/types/snapshot/v1"
+	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -44,8 +44,8 @@ func nodeManagerReconcilerNames() []string {
 		"package",
 		"ssh-config",
 		"gpu-status",
-		"snapshot-request",
-		"snapshot-restore",
+		"checkpoint",
+		"checkpoint-restore",
 		"storage-gc",
 	}
 }
@@ -121,8 +121,8 @@ func Start(ctx context.Context, cfg Config) error {
 	if err := packagesv1.AddToScheme(scheme); err != nil {
 		return fmt.Errorf("failed to add packages v1 scheme: %w", err)
 	}
-	if err := snapshotv1.AddToScheme(scheme); err != nil {
-		return fmt.Errorf("failed to add snapshot v1 scheme: %w", err)
+	if err := checkpointv1.AddToScheme(scheme); err != nil {
+		return fmt.Errorf("failed to add checkpoint v1 scheme: %w", err)
 	}
 	if err := environmentv1.AddToScheme(scheme); err != nil {
 		return fmt.Errorf("failed to add environment v1 scheme: %w", err)
@@ -152,20 +152,14 @@ func Start(ctx context.Context, cfg Config) error {
 						workmachineName: {},
 					},
 				},
-				// Watch SnapshotRequests globally (all namespaces) since they can be in any env namespace
-				&snapshotv1.SnapshotRequest{}: {
+				// Watch Checkpoints globally (all namespaces) since they can be in any env namespace
+				&checkpointv1.Checkpoint{}: {
 					Namespaces: map[string]cache.Config{
 						cache.AllNamespaces: {},
 					},
 				},
-				// Watch SnapshotRestores globally (all namespaces) since they can be in any env namespace
-				&snapshotv1.SnapshotRestore{}: {
-					Namespaces: map[string]cache.Config{
-						cache.AllNamespaces: {},
-					},
-				},
-				// Watch Snapshots globally (all namespaces) since they are now namespaced
-				&snapshotv1.Snapshot{}: {
+				// Watch CheckpointRestores globally (all namespaces) since they can be in any env namespace
+				&checkpointv1.CheckpointRestore{}: {
 					Namespaces: map[string]cache.Config{
 						cache.AllNamespaces: {},
 					},
@@ -229,32 +223,32 @@ func Start(ctx context.Context, cfg Config) error {
 	// Parse registry insecure setting
 	registryInsecureBool := registryInsecure == "true"
 
-	// Setup snapshot request reconciler (handles btrfs snapshots on this node)
-	snapshotRequestReconciler := &SnapshotRequestReconciler{
+	// Setup checkpoint reconciler (handles btrfs checkpoints on this node)
+	checkpointReconciler := &CheckpointReconciler{
 		Client:           mgr.GetClient(),
 		Logger:           zapLogger,
-		HostCmdExec:      &HostCommandExecutor{}, // For btrfs commands on host
+		HostCmdExec:      &HostCommandExecutor{},
 		NodeName:         nodeName,
 		RegistryEndpoint: registryEndpoint,
 		RegistryPrefix:   registryPrefix,
 		RegistryInsecure: registryInsecureBool,
 	}
 
-	if err := snapshotRequestReconciler.SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("failed to setup snapshot request controller: %w", err)
+	if err := checkpointReconciler.SetupWithManager(mgr); err != nil {
+		return fmt.Errorf("failed to setup checkpoint controller: %w", err)
 	}
 
-	// Setup snapshot restore reconciler (handles btrfs restore on this node)
-	snapshotRestoreReconciler := &SnapshotRestoreReconciler{
+	// Setup checkpoint restore reconciler (handles btrfs restore on this node)
+	checkpointRestoreReconciler := &CheckpointRestoreReconciler{
 		Client:           mgr.GetClient(),
 		Logger:           zapLogger,
-		HostCmdExec:      &HostCommandExecutor{}, // For btrfs commands on host
+		HostCmdExec:      &HostCommandExecutor{},
 		NodeName:         nodeName,
 		RegistryInsecure: registryInsecureBool,
 	}
 
-	if err := snapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("failed to setup snapshot restore controller: %w", err)
+	if err := checkpointRestoreReconciler.SetupWithManager(mgr); err != nil {
+		return fmt.Errorf("failed to setup checkpoint restore controller: %w", err)
 	}
 
 	zapLogger.Info("All reconcilers configured",

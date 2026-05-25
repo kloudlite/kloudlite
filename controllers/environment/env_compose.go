@@ -69,13 +69,6 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		environment.Status.State == environmentsv1.EnvironmentStateSnapping ||
 		environment.Status.State == environmentsv1.EnvironmentStateDeactivating
 
-	// Also suspend if snapshot restore is in progress
-	if environment.Status.SnapshotRestoreStatus != nil {
-		phase := environment.Status.SnapshotRestoreStatus.Phase
-		if phase != "" && phase != environmentsv1.SnapshotRestorePhaseCompleted {
-			shouldSuspend = true
-		}
-	}
 
 	// Save old deployed resources for cleanup comparison
 	var oldDeployedResources *environmentsv1.DeployedResources

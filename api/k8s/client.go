@@ -9,7 +9,7 @@ import (
 
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
-	snapshotv1 "github.com/kloudlite/kloudlite/types/snapshot/v1"
+	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/types/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/types/workspace/v1"
@@ -97,8 +97,8 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	if err := packagesv1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add packages scheme: %w", err)
 	}
-	if err := snapshotv1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add snapshot scheme: %w", err)
+	if err := checkpointv1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add checkpoint scheme: %w", err)
 	}
 
 	// Create controller-runtime client with Watch support

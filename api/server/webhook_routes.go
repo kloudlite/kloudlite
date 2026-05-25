@@ -67,7 +67,7 @@ func newPlatformRouter(deps routeDependencies) *gin.Engine {
 	envVarWebhook := webhooks.NewEnvVarWebhook(appLogger, deps.k8sClient.RuntimeClient)
 	serviceMutationWebhook := webhooks.NewServiceMutationWebhook(appLogger, deps.k8sClient.RuntimeClient)
 	podMutationWebhook := webhooks.NewPodMutationWebhook(appLogger, deps.k8sClient.RuntimeClient)
-	snapshotWebhook := webhooks.NewSnapshotWebhook(appLogger, deps.k8sClient.RuntimeClient)
+	checkpointWebhook := webhooks.NewCheckpointWebhook(appLogger, deps.k8sClient.RuntimeClient)
 
 	// Webhook endpoints (for Kubernetes admission controllers)
 	webhooksGroup := router.Group("/webhooks")
@@ -86,11 +86,10 @@ func newPlatformRouter(deps routeDependencies) *gin.Engine {
 		webhooksGroup.POST("/validate/secrets", envVarWebhook.ValidateSecret)
 		webhooksGroup.POST("/mutate/services", serviceMutationWebhook.MutateService)
 		webhooksGroup.POST("/mutate/pods", podMutationWebhook.MutatePod)
-		webhooksGroup.POST("/validate/snapshotrequests", snapshotWebhook.ValidateSnapshotRequest)
-		webhooksGroup.POST("/validate/snapshotrestores", snapshotWebhook.ValidateSnapshotRestore)
-		webhooksGroup.POST("/validate/environmentsnapshotrequests", snapshotWebhook.ValidateEnvironmentSnapshotRequest)
-		webhooksGroup.POST("/validate/environmentsnapshotrestores", snapshotWebhook.ValidateEnvironmentSnapshotRestore)
-		webhooksGroup.POST("/validate/snapshots", snapshotWebhook.ValidateSnapshot)
+		webhooksGroup.POST("/validate/checkpoints", checkpointWebhook.ValidateCheckpoint)
+		webhooksGroup.POST("/validate/checkpointrestores", checkpointWebhook.ValidateCheckpointRestore)
+		webhooksGroup.POST("/validate/environmentcheckpoints", checkpointWebhook.ValidateEnvironmentCheckpoint)
+		webhooksGroup.POST("/validate/environmentcheckpointrestores", checkpointWebhook.ValidateEnvironmentCheckpointRestore)
 	}
 
 	// VPN connection endpoints (used by kltun CLI)

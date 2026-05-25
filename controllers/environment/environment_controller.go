@@ -157,13 +157,6 @@ func (r *EnvironmentReconciler) Reconcile(ctx context.Context, req reconcile.Req
 			}
 		}
 
-		// Handle environment creation from snapshot if fromSnapshot is set
-		// Snapshot restore takes precedence over normal environment reconciliation
-		if environment.Spec.FromSnapshot != nil {
-			logger.Info("environment has fromSnapshot set, handling snapshot restore",
-				zap.String("snapshotName", environment.Spec.FromSnapshot.SnapshotName))
-			return r.handleSnapshotRestore(ctx, environment, logger)
-		}
 	}
 
 	original := environment.DeepCopy()
@@ -324,36 +317,36 @@ func (r *EnvironmentReconciler) waitForPodsTerminated(ctx context.Context, names
 	return true
 }
 
-// hasActiveSnapshotOperation checks if there are any in-progress snapshot operations
-// (EnvironmentSnapshotRequest or EnvironmentSnapshotRestore) for this environment
+// hasActiveSnapshotOperation checks if there are any in-progress checkpoint operations
+// (EnvironmentCheckpoint or EnvironmentCheckpointRestore) for this environment
 func (r *EnvironmentReconciler) hasActiveSnapshotOperation(ctx context.Context, environment *environmentsv1.Environment) (bool, error) {
-	// Check for active EnvironmentSnapshotRequests
-	snapshotRequests := &environmentsv1.EnvironmentSnapshotRequestList{}
-	if err := pagination.ListAll(ctx, r, snapshotRequests); err != nil {
+	// Check for active EnvironmentCheckpoints
+	checkpoints := &environmentsv1.EnvironmentCheckpointList{}
+	if err := pagination.ListAll(ctx, r, checkpoints); err != nil {
 		return false, err
 	}
 
-	for _, req := range snapshotRequests.Items {
-		if req.Spec.EnvironmentName != environment.Name || req.Namespace != environment.Spec.TargetNamespace {
+	for _, cp := range checkpoints.Items {
+		if cp.Spec.EnvironmentName != environment.Name || cp.Namespace != environment.Spec.TargetNamespace {
 			continue
 		}
-		if req.Spec.EnvironmentNamespace != environment.Namespace {
+		if cp.Spec.EnvironmentNamespace != environment.Namespace {
 			continue
 		}
-		// Check if request is in-progress (not completed or failed)
-		if req.Status.Phase != environmentsv1.EnvironmentSnapshotRequestPhaseCompleted &&
-			req.Status.Phase != environmentsv1.EnvironmentSnapshotRequestPhaseFailed {
+		// Check if checkpoint is in-progress (not completed or failed)
+		if cp.Status.Phase != environmentsv1.EnvironmentCheckpointPhaseCompleted &&
+			cp.Status.Phase != environmentsv1.EnvironmentCheckpointPhaseFailed {
 			return true, nil
 		}
 	}
 
-	// Check for active EnvironmentSnapshotRestores
-	snapshotRestores := &environmentsv1.EnvironmentSnapshotRestoreList{}
-	if err := pagination.ListAll(ctx, r, snapshotRestores); err != nil {
+	// Check for active EnvironmentCheckpointRestores
+	restores := &environmentsv1.EnvironmentCheckpointRestoreList{}
+	if err := pagination.ListAll(ctx, r, restores); err != nil {
 		return false, err
 	}
 
-	for _, restore := range snapshotRestores.Items {
+	for _, restore := range restores.Items {
 		if restore.Spec.EnvironmentName != environment.Name || restore.Namespace != environment.Spec.TargetNamespace {
 			continue
 		}
@@ -361,8 +354,8 @@ func (r *EnvironmentReconciler) hasActiveSnapshotOperation(ctx context.Context, 
 			continue
 		}
 		// Check if restore is in-progress (not completed or failed)
-		if restore.Status.Phase != environmentsv1.EnvironmentSnapshotRestorePhaseCompleted &&
-			restore.Status.Phase != environmentsv1.EnvironmentSnapshotRestorePhaseFailed {
+		if restore.Status.Phase != environmentsv1.EnvironmentCheckpointRestorePhaseCompleted &&
+			restore.Status.Phase != environmentsv1.EnvironmentCheckpointRestorePhaseFailed {
 			return true, nil
 		}
 	}
