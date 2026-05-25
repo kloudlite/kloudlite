@@ -399,7 +399,8 @@ func (w *EnvironmentWebhook) validateEnvironment(env *environmentsv1.Environment
 	}
 
 	// Prevent activating environment when WorkMachine is stopped
-	if env.Spec.Activated && env.Spec.WorkMachineName != "" {
+	// Skip this check if the environment is being deleted (DeletionTimestamp is set)
+	if env.Spec.Activated && env.Spec.WorkMachineName != "" && env.DeletionTimestamp == nil {
 		var workMachine machinesv1.WorkMachine
 		if err := w.k8sClient.Get(ctx, client.ObjectKey{Name: env.Spec.WorkMachineName}, &workMachine); err == nil {
 			if workMachine.Spec.State == "stopped" || workMachine.Spec.State == "disabled" {
