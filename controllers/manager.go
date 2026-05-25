@@ -200,17 +200,6 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		return nil, fmt.Errorf("unable to setup WorkMachine manager controller: %w", err)
 	}
 
-	// Setup Checkpoint controller with operator for registry operations
-	checkpointOperator := checkpoint.NewDefaultCheckpointOperator(logger.With(zap.String("component", "checkpoint-operator")))
-	checkpointReconciler := &checkpoint.CheckpointReconciler{
-		Client:             mgr.GetClient(),
-		Logger:             logger.With(zap.String("controller", "checkpoint")),
-		CheckpointOperator: checkpointOperator,
-	}
-	if err := checkpointReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create Checkpoint controller: %w", err)
-	}
-
 	// Setup EnvironmentCheckpoint controller
 	envCheckpointReconciler := &environment.EnvironmentCheckpointReconciler{
 		Client: mgr.GetClient(),

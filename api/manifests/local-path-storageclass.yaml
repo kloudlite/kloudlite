@@ -7,6 +7,6 @@ metadata:
 provisioner: rancher.io/local-path
 parameters:
   nodePath: /var/lib/kloudlite/storage/environments
-  pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}"
+  pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}/{{ .PVName }}"
 volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Delete

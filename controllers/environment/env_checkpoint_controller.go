@@ -174,7 +174,7 @@ func (r *EnvironmentCheckpointReconciler) handleWaitingForPods(
 	checkpoint := &checkpointv1.Checkpoint{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Spec.CheckpointName,
-			Namespace: env.Spec.TargetNamespace,
+			Namespace: req.Spec.EnvironmentNamespace,
 			Labels: map[string]string{
 				"kloudlite.io/owned-by":                env.Spec.OwnedBy,
 				"checkpoints.kloudlite.io/environment": env.Name,
@@ -228,7 +228,7 @@ func (r *EnvironmentCheckpointReconciler) handleCheckpointInProgress(
 	checkpoint := &checkpointv1.Checkpoint{}
 	if err := r.Get(ctx, client.ObjectKey{
 		Name:      req.Spec.CheckpointName,
-		Namespace: env.Spec.TargetNamespace,
+		Namespace: req.Spec.EnvironmentNamespace,
 	}, checkpoint); err != nil {
 		if apierrors.IsNotFound(err) {
 			return r.setFailed(ctx, req, "Checkpoint not found", logger)
