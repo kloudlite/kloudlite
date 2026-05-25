@@ -94,6 +94,10 @@ func (w *ServiceMutationWebhook) handleMutation(req *admissionv1.AdmissionReques
 			continue
 		}
 
+		if environment.Status.ComposeStatus == nil {
+			continue
+		}
+
 		for _, activeIntercept := range environment.Status.ComposeStatus.ActiveIntercepts {
 			if activeIntercept.ServiceName == service.Name {
 				hasActiveIntercept = true

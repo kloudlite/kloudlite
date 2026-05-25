@@ -102,6 +102,10 @@ func (w *PodMutationWebhook) handleMutation(req *admissionv1.AdmissionRequest) *
 			continue
 		}
 
+		if environment.Status.ComposeStatus == nil {
+			continue
+		}
+
 		for _, activeIntercept := range environment.Status.ComposeStatus.ActiveIntercepts {
 			// Check if pod labels match the original service selector
 			if activeIntercept.OriginalServiceSelector != nil {
