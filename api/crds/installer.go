@@ -9,6 +9,7 @@ import (
 
 	"github.com/kloudlite/kloudlite/api/crds/assets"
 	"github.com/kloudlite/kloudlite/api/k8s"
+	"github.com/kloudlite/kloudlite/api/manifests"
 	apixv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apixclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,6 +36,11 @@ func Install(ctx context.Context, opts *k8s.ClientOptions, dir string) error {
 			return fmt.Errorf("apply CRD %q: %w", crds[i].Name, err)
 		}
 	}
+
+	if err := manifests.Install(ctx, opts); err != nil {
+		return fmt.Errorf("install cluster manifests: %w", err)
+	}
+
 	return nil
 }
 
