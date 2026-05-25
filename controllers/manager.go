@@ -200,6 +200,39 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		return nil, fmt.Errorf("unable to setup WorkMachine manager controller: %w", err)
 	}
 
+	// Setup Checkpoint controller with operator for registry operations
+	checkpointOperator := checkpoint.NewDefaultCheckpointOperator(logger.With(zap.String("component", "checkpoint-operator")))
+	checkpointReconciler := &checkpoint.CheckpointReconciler{
+		Client:             mgr.GetClient(),
+		Logger:             logger.With(zap.String("controller", "checkpoint")),
+		CheckpointOperator: checkpointOperator,
+	}
+	if err := checkpointReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create Checkpoint controller: %w", err)
+	}
+
+	// Setup EnvironmentCheckpoint controller
+	envCheckpointReconciler := &environment.EnvironmentCheckpointReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "environmentcheckpoint")),
+		Cfg:    controllerCfg,
+	}
+	if err := envCheckpointReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create EnvironmentCheckpoint controller: %w", err)
+	}
+
+	// Setup EnvironmentCheckpointRestore controller
+	envCheckpointRestoreReconciler := &environment.EnvironmentCheckpointRestoreReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "environmentcheckpointrestore")),
+		Cfg:    controllerCfg,
+	}
+	if err := envCheckpointRestoreReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create EnvironmentCheckpointRestore controller: %w", err)
+	}
+
 	logger.Info("controllers initialized successfully", zap.Strings("controllers", MachineScopedControllerNames()))
 	return &Manager{mgr: mgr, logger: logger, ingressReconciler: ingressReconciler}, nil
 }
