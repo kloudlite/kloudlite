@@ -78,12 +78,6 @@ type EnvironmentSpec struct {
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
 
-	// FromSnapshot specifies a pushed snapshot to create this environment from
-	// Only snapshots with status.registryStatus.pushed=true can be used
-	// This field is automatically cleared after successful restoration
-	// +optional
-	FromSnapshot *FromSnapshotRef `json:"fromSnapshot,omitempty"`
-
 	// NodeName specifies the node where all environment resources should run
 	// This is set from the WorkMachine's node assignment
 	// +optional
@@ -211,10 +205,6 @@ type EnvironmentStatus struct {
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
-	// SnapshotRestoreStatus tracks the progress of creating environment from a registry snapshot
-	// +optional
-	SnapshotRestoreStatus *SnapshotRestoreStatus `json:"snapshotRestoreStatus,omitempty"`
-
 	// Hash is an 8-character hash derived from environment name and owner for DNS-safe hostnames
 	// Format: hash(envName-owner)
 	// +optional
@@ -224,32 +214,25 @@ type EnvironmentStatus struct {
 	// +optional
 	Subdomain string `json:"subdomain,omitempty"`
 
-	// LastRestoredSnapshot tracks the current snapshot for this environment
-	// Updated when a snapshot is restored OR when a new snapshot is created
-	// Used for automatic parent lineage tracking when new snapshots are created
+	// LastRestoredCheckpoint tracks the current checkpoint for this environment
+	// Updated when a checkpoint is restored OR when a new checkpoint is created
 	// +optional
-	LastRestoredSnapshot *LastRestoredSnapshotInfo `json:"lastRestoredSnapshot,omitempty"`
+	LastRestoredCheckpoint *LastRestoredCheckpointInfo `json:"lastRestoredCheckpoint,omitempty"`
 
 	// ComposeStatus tracks the status of the compose deployment
 	// +optional
 	ComposeStatus *CompositionStatus `json:"composeStatus,omitempty"`
 }
 
-// LastRestoredSnapshotInfo tracks the last restored snapshot for lineage
-type LastRestoredSnapshotInfo struct {
-	// Name is the name of the snapshot that was restored
+// LastRestoredCheckpointInfo tracks the last restored checkpoint
+type LastRestoredCheckpointInfo struct {
+	// Name is the name of the checkpoint that was restored
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 
-	// RestoredAt is when the snapshot was restored
+	// RestoredAt is when the checkpoint was restored
 	// +kubebuilder:validation:Required
 	RestoredAt metav1.Time `json:"restoredAt"`
-
-	// Lineage is the full chain of snapshot ancestors (root first, immediate parent last)
-	// Includes the restored snapshot itself as the last element
-	// All snapshots in the lineage have their refCount incremented when restored
-	// +optional
-	Lineage []string `json:"lineage,omitempty"`
 }
 
 // EnvironmentState represents the state of an environment
@@ -268,7 +251,7 @@ const (
 	// EnvironmentStateDeactivating means the environment is being deactivated
 	EnvironmentStateDeactivating EnvironmentState = "deactivating"
 
-	// EnvironmentStateSnapping means the environment is being deactivated for a snapshot
+	// EnvironmentStateSnapping means the environment is being deactivated for a checkpoint
 	EnvironmentStateSnapping EnvironmentState = "snapping"
 
 	// EnvironmentStateDeleting means the environment is being deleted
@@ -286,74 +269,6 @@ type ResourceCount struct {
 	ConfigMaps   int32 `json:"configmaps,omitempty"`
 	Secrets      int32 `json:"secrets,omitempty"`
 	PVCs         int32 `json:"pvcs,omitempty"`
-}
-
-// FromSnapshotRef specifies a pushed snapshot to create the environment from
-type FromSnapshotRef struct {
-	// SnapshotName is the name of the snapshot resource to fork from
-	// The snapshot must have status.registryStatus.pushed=true
-	// +kubebuilder:validation:Required
-	SnapshotName string `json:"snapshotName"`
-
-	// SourceNamespace is the namespace where the source snapshot exists
-	// This is typically the target namespace of the source environment
-	// +kubebuilder:validation:Required
-	SourceNamespace string `json:"sourceNamespace"`
-}
-
-// SnapshotRestorePhase represents the current phase of snapshot restoration
-type SnapshotRestorePhase string
-
-const (
-	// SnapshotRestorePhasePending indicates restoration is pending to start
-	SnapshotRestorePhasePending SnapshotRestorePhase = "Pending"
-
-	// SnapshotRestorePhasePulling indicates snapshot is being pulled from registry
-	SnapshotRestorePhasePulling SnapshotRestorePhase = "Pulling"
-
-	// SnapshotRestorePhaseRestoring indicates K8s resources are being restored
-	SnapshotRestorePhaseRestoring SnapshotRestorePhase = "Restoring"
-
-	// SnapshotRestorePhaseDataRestoring indicates PVC data is being restored from snapshot
-	SnapshotRestorePhaseDataRestoring SnapshotRestorePhase = "DataRestoring"
-
-	// SnapshotRestorePhaseCompleted indicates restoration completed successfully
-	SnapshotRestorePhaseCompleted SnapshotRestorePhase = "Completed"
-
-	// SnapshotRestorePhaseFailed indicates restoration failed
-	SnapshotRestorePhaseFailed SnapshotRestorePhase = "Failed"
-)
-
-// SnapshotRestoreStatus tracks the progress of creating environment from a registry snapshot
-type SnapshotRestoreStatus struct {
-	// Phase represents the current phase of snapshot restoration
-	// +kubebuilder:validation:Enum=Pending;Pulling;Restoring;DataRestoring;Completed;Failed
-	// +optional
-	Phase SnapshotRestorePhase `json:"phase,omitempty"`
-
-	// Message provides additional information about the current state
-	// +optional
-	Message string `json:"message,omitempty"`
-
-	// SourceSnapshot is the name of the snapshot being restored from
-	// +optional
-	SourceSnapshot string `json:"sourceSnapshot,omitempty"`
-
-	// ImageRef is the registry image reference being pulled
-	// +optional
-	ImageRef string `json:"imageRef,omitempty"`
-
-	// StartTime when restoration started
-	// +optional
-	StartTime *metav1.Time `json:"startTime,omitempty"`
-
-	// CompletionTime when restoration completed (success or failure)
-	// +optional
-	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
-
-	// ErrorMessage if restoration failed
-	// +optional
-	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
 // EnvironmentConditionType represents types of environment conditions
@@ -377,9 +292,6 @@ const (
 
 	// EnvironmentConditionNetworkPolicyApplied indicates network policies have been applied
 	EnvironmentConditionNetworkPolicyApplied EnvironmentConditionType = EnvironmentConditionNetworkPolicyReady
-
-	// EnvironmentConditionForked indicates resources have been forked from source environment
-	EnvironmentConditionForked EnvironmentConditionType = "Forked"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -393,7 +305,7 @@ type EnvironmentList struct {
 }
 
 // ============================================================================
-// EnvironmentSnapshotRequest - Orchestrates creating a snapshot for an environment
+// EnvironmentCheckpoint - Orchestrates creating a checkpoint for an environment
 // ============================================================================
 
 // +genclient
@@ -403,97 +315,78 @@ type EnvironmentList struct {
 // +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environmentName`
-// +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
+// +kubebuilder:printcolumn:name="Checkpoint",type=string,JSONPath=`.spec.checkpointName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// EnvironmentSnapshotRequest orchestrates creating a snapshot for an environment.
-// It stops workloads, creates the snapshot, and restores the environment state.
+// EnvironmentCheckpoint orchestrates creating a checkpoint for an environment.
+// It stops workloads, creates the checkpoint, captures K8s artifacts, and restores the environment state.
 // Lives in the environment's targetNamespace (e.g., env-{envName}-{random6}).
-type EnvironmentSnapshotRequest struct {
+type EnvironmentCheckpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EnvironmentSnapshotRequestSpec   `json:"spec,omitempty"`
-	Status EnvironmentSnapshotRequestStatus `json:"status,omitempty"`
+	Spec   EnvironmentCheckpointSpec   `json:"spec,omitempty"`
+	Status EnvironmentCheckpointStatus `json:"status,omitempty"`
 }
 
-// EnvironmentSnapshotRequestSpec defines the snapshot request parameters
-type EnvironmentSnapshotRequestSpec struct {
-	// EnvironmentName is the name of the environment to snapshot
+// EnvironmentCheckpointSpec defines the checkpoint request parameters
+type EnvironmentCheckpointSpec struct {
+	// EnvironmentName is the name of the environment to checkpoint
 	// +kubebuilder:validation:Required
 	EnvironmentName string `json:"environmentName"`
 
 	// EnvironmentNamespace is the namespace where the Environment resource lives
 	// This is the WorkMachine namespace (e.g., wm-{username})
-	// Required because EnvironmentSnapshotRequest lives in the environment's targetNamespace
+	// Required because EnvironmentCheckpoint lives in the environment's targetNamespace
 	// +kubebuilder:validation:Required
 	EnvironmentNamespace string `json:"environmentNamespace"`
 
-	// SnapshotName is the desired name for the snapshot
+	// CheckpointName is the desired name for the checkpoint
 	// +kubebuilder:validation:Required
-	SnapshotName string `json:"snapshotName"`
+	CheckpointName string `json:"checkpointName"`
 
-	// Description is a human-readable description of the snapshot
+	// Description is a human-readable description of the checkpoint
 	// +optional
 	Description string `json:"description,omitempty"`
 
-	// RetentionDays specifies how long to keep the snapshot (0 = forever)
+	// RetentionDays specifies how long to keep the checkpoint (0 = forever)
 	// +optional
 	RetentionDays int32 `json:"retentionDays,omitempty"`
 }
 
-// EnvironmentSnapshotRequestPhase represents the current phase
-type EnvironmentSnapshotRequestPhase string
+// EnvironmentCheckpointPhase represents the current phase
+type EnvironmentCheckpointPhase string
 
 const (
-	// EnvironmentSnapshotRequestPhasePending - Request created, waiting to start
-	EnvironmentSnapshotRequestPhasePending EnvironmentSnapshotRequestPhase = "Pending"
-
-	// EnvironmentSnapshotRequestPhaseStoppingWorkloads - Stopping environment workloads
-	EnvironmentSnapshotRequestPhaseStoppingWorkloads EnvironmentSnapshotRequestPhase = "StoppingWorkloads"
-
-	// EnvironmentSnapshotRequestPhaseWaitingForPods - Waiting for pods to terminate
-	EnvironmentSnapshotRequestPhaseWaitingForPods EnvironmentSnapshotRequestPhase = "WaitingForPods"
-
-	// EnvironmentSnapshotRequestPhaseCreatingSnapshot - Creating the btrfs snapshot
-	EnvironmentSnapshotRequestPhaseCreatingSnapshot EnvironmentSnapshotRequestPhase = "CreatingSnapshot"
-
-	// EnvironmentSnapshotRequestPhaseUploadingSnapshot - Uploading snapshot to registry
-	EnvironmentSnapshotRequestPhaseUploadingSnapshot EnvironmentSnapshotRequestPhase = "UploadingSnapshot"
-
-	// EnvironmentSnapshotRequestPhaseRestoringEnvironment - Restoring environment to previous state
-	EnvironmentSnapshotRequestPhaseRestoringEnvironment EnvironmentSnapshotRequestPhase = "RestoringEnvironment"
-
-	// EnvironmentSnapshotRequestPhaseCompleted - Snapshot created successfully
-	EnvironmentSnapshotRequestPhaseCompleted EnvironmentSnapshotRequestPhase = "Completed"
-
-	// EnvironmentSnapshotRequestPhaseFailed - Snapshot creation failed
-	EnvironmentSnapshotRequestPhaseFailed EnvironmentSnapshotRequestPhase = "Failed"
+	EnvironmentCheckpointPhasePending              EnvironmentCheckpointPhase = "Pending"
+	EnvironmentCheckpointPhaseStoppingWorkloads    EnvironmentCheckpointPhase = "StoppingWorkloads"
+	EnvironmentCheckpointPhaseWaitingForPods       EnvironmentCheckpointPhase = "WaitingForPods"
+	EnvironmentCheckpointPhaseCreatingCheckpoint   EnvironmentCheckpointPhase = "CreatingCheckpoint"
+	EnvironmentCheckpointPhaseUploadingCheckpoint  EnvironmentCheckpointPhase = "UploadingCheckpoint"
+	EnvironmentCheckpointPhaseRestoringEnvironment EnvironmentCheckpointPhase = "RestoringEnvironment"
+	EnvironmentCheckpointPhaseCompleted            EnvironmentCheckpointPhase = "Completed"
+	EnvironmentCheckpointPhaseFailed               EnvironmentCheckpointPhase = "Failed"
 )
 
-// EnvironmentSnapshotRequestStatus defines the observed state
-type EnvironmentSnapshotRequestStatus struct {
+// EnvironmentCheckpointStatus defines the observed state
+type EnvironmentCheckpointStatus struct {
 	// Phase is the current phase of the request
 	// +kubebuilder:default=Pending
-	Phase EnvironmentSnapshotRequestPhase `json:"phase,omitempty"`
+	Phase EnvironmentCheckpointPhase `json:"phase,omitempty"`
 
 	// Message provides human-readable status information
 	// +optional
 	Message string `json:"message,omitempty"`
 
-	// PreviousEnvironmentState stores the environment state before snapshotting
-	// Used to restore the environment after snapshot completes
+	// PreviousEnvironmentState stores the environment state before checkpointing
+	// Used to restore the environment after checkpoint completes
 	// +optional
 	PreviousEnvironmentState EnvironmentState `json:"previousEnvironmentState,omitempty"`
 
-	// SnapshotRequestName is the name of the created SnapshotRequest CR
+	// CreatedCheckpointName is the name of the successfully created Checkpoint
 	// +optional
-	SnapshotRequestName string `json:"snapshotRequestName,omitempty"`
-
-	// CreatedSnapshotName is the name of the successfully created Snapshot
-	// +optional
-	CreatedSnapshotName string `json:"createdSnapshotName,omitempty"`
+	CreatedCheckpointName string `json:"createdCheckpointName,omitempty"`
 
 	// StartTime is when the request started processing
 	// +optional
@@ -502,19 +395,48 @@ type EnvironmentSnapshotRequestStatus struct {
 	// CompletionTime is when the request completed (success or failure)
 	// +optional
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
+
+	// Artifacts stores captured K8s resources (ConfigMaps, Secrets, EnvironmentSpec)
+	// Folded in from the old SnapshotArtifacts CRD
+	// +optional
+	Artifacts *CapturedArtifacts `json:"artifacts,omitempty"`
+}
+
+// CapturedArtifacts stores K8s resources captured during environment checkpoint creation
+type CapturedArtifacts struct {
+	// ConfigMaps contains serialized ConfigMap resources (YAML, base64 encoded)
+	// +optional
+	ConfigMaps string `json:"configMaps,omitempty"`
+
+	// Secrets contains serialized Secret resources (YAML, base64 encoded)
+	// +optional
+	Secrets string `json:"secrets,omitempty"`
+
+	// EnvironmentSpec contains the full Environment spec (JSON, base64 encoded)
+	// Used to capture the complete environment configuration at checkpoint time
+	// +optional
+	EnvironmentSpec string `json:"environmentSpec,omitempty"`
+
+	// ConfigMapCount is the number of configmaps captured
+	// +optional
+	ConfigMapCount int32 `json:"configMapCount,omitempty"`
+
+	// SecretCount is the number of secrets captured
+	// +optional
+	SecretCount int32 `json:"secretCount,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// EnvironmentSnapshotRequestList contains a list of EnvironmentSnapshotRequest
-type EnvironmentSnapshotRequestList struct {
+// EnvironmentCheckpointList contains a list of EnvironmentCheckpoint
+type EnvironmentCheckpointList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EnvironmentSnapshotRequest `json:"items"`
+	Items           []EnvironmentCheckpoint `json:"items"`
 }
 
 // ============================================================================
-// EnvironmentSnapshotRestore - Orchestrates restoring an environment from a snapshot
+// EnvironmentCheckpointRestore - Orchestrates restoring an environment from a checkpoint
 // ============================================================================
 
 // +genclient
@@ -524,38 +446,38 @@ type EnvironmentSnapshotRequestList struct {
 // +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Environment",type=string,JSONPath=`.spec.environmentName`
-// +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.snapshotName`
+// +kubebuilder:printcolumn:name="Checkpoint",type=string,JSONPath=`.spec.checkpointName`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
-// EnvironmentSnapshotRestore orchestrates restoring an environment from a snapshot.
+// EnvironmentCheckpointRestore orchestrates restoring an environment from a checkpoint.
 // It stops workloads, restores the data, applies artifacts, and activates the environment.
 // Lives in the environment's targetNamespace (e.g., env-{envName}-{random6}).
-type EnvironmentSnapshotRestore struct {
+type EnvironmentCheckpointRestore struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EnvironmentSnapshotRestoreSpec   `json:"spec,omitempty"`
-	Status EnvironmentSnapshotRestoreStatus `json:"status,omitempty"`
+	Spec   EnvironmentCheckpointRestoreSpec   `json:"spec,omitempty"`
+	Status EnvironmentCheckpointRestoreStatus `json:"status,omitempty"`
 }
 
-// EnvironmentSnapshotRestoreSpec defines the restore parameters
-type EnvironmentSnapshotRestoreSpec struct {
+// EnvironmentCheckpointRestoreSpec defines the restore parameters
+type EnvironmentCheckpointRestoreSpec struct {
 	// EnvironmentName is the name of the environment to restore to
 	// +kubebuilder:validation:Required
 	EnvironmentName string `json:"environmentName"`
 
 	// EnvironmentNamespace is the namespace where the Environment resource lives
 	// This is the WorkMachine namespace (e.g., wm-{username})
-	// Required because EnvironmentSnapshotRestore lives in the environment's targetNamespace
+	// Required because EnvironmentCheckpointRestore lives in the environment's targetNamespace
 	// +kubebuilder:validation:Required
 	EnvironmentNamespace string `json:"environmentNamespace"`
 
-	// SnapshotName is the name of the snapshot to restore from
+	// CheckpointName is the name of the checkpoint to restore from
 	// +kubebuilder:validation:Required
-	SnapshotName string `json:"snapshotName"`
+	CheckpointName string `json:"checkpointName"`
 
-	// SourceNamespace is the namespace where the source snapshot exists
+	// SourceNamespace is the namespace where the source checkpoint exists
 	// This is typically the target namespace of the source environment
 	// +kubebuilder:validation:Required
 	SourceNamespace string `json:"sourceNamespace"`
@@ -565,51 +487,34 @@ type EnvironmentSnapshotRestoreSpec struct {
 	ActivateAfterRestore bool `json:"activateAfterRestore,omitempty"`
 }
 
-// EnvironmentSnapshotRestorePhase represents the current phase
-type EnvironmentSnapshotRestorePhase string
+// EnvironmentCheckpointRestorePhase represents the current phase
+type EnvironmentCheckpointRestorePhase string
 
 const (
-	// EnvironmentSnapshotRestorePhasePending - Request created, waiting to start
-	EnvironmentSnapshotRestorePhasePending EnvironmentSnapshotRestorePhase = "Pending"
-
-	// EnvironmentSnapshotRestorePhaseStoppingWorkloads - Stopping environment workloads
-	EnvironmentSnapshotRestorePhaseStoppingWorkloads EnvironmentSnapshotRestorePhase = "StoppingWorkloads"
-
-	// EnvironmentSnapshotRestorePhaseWaitingForPods - Waiting for pods to terminate
-	EnvironmentSnapshotRestorePhaseWaitingForPods EnvironmentSnapshotRestorePhase = "WaitingForPods"
-
-	// EnvironmentSnapshotRestorePhaseDownloading - Downloading snapshot from registry
-	EnvironmentSnapshotRestorePhaseDownloading EnvironmentSnapshotRestorePhase = "Downloading"
-
-	// EnvironmentSnapshotRestorePhaseRestoringData - Restoring btrfs data
-	EnvironmentSnapshotRestorePhaseRestoringData EnvironmentSnapshotRestorePhase = "RestoringData"
-
-	// EnvironmentSnapshotRestorePhaseApplyingArtifacts - Applying K8s artifacts (Compositions, ConfigMaps, Secrets)
-	EnvironmentSnapshotRestorePhaseApplyingArtifacts EnvironmentSnapshotRestorePhase = "ApplyingArtifacts"
-
-	// EnvironmentSnapshotRestorePhaseActivating - Activating the environment
-	EnvironmentSnapshotRestorePhaseActivating EnvironmentSnapshotRestorePhase = "Activating"
-
-	// EnvironmentSnapshotRestorePhaseCompleted - Restore completed successfully
-	EnvironmentSnapshotRestorePhaseCompleted EnvironmentSnapshotRestorePhase = "Completed"
-
-	// EnvironmentSnapshotRestorePhaseFailed - Restore failed
-	EnvironmentSnapshotRestorePhaseFailed EnvironmentSnapshotRestorePhase = "Failed"
+	EnvironmentCheckpointRestorePhasePending           EnvironmentCheckpointRestorePhase = "Pending"
+	EnvironmentCheckpointRestorePhaseStoppingWorkloads EnvironmentCheckpointRestorePhase = "StoppingWorkloads"
+	EnvironmentCheckpointRestorePhaseWaitingForPods    EnvironmentCheckpointRestorePhase = "WaitingForPods"
+	EnvironmentCheckpointRestorePhaseDownloading       EnvironmentCheckpointRestorePhase = "Downloading"
+	EnvironmentCheckpointRestorePhaseRestoringData     EnvironmentCheckpointRestorePhase = "RestoringData"
+	EnvironmentCheckpointRestorePhaseApplyingArtifacts EnvironmentCheckpointRestorePhase = "ApplyingArtifacts"
+	EnvironmentCheckpointRestorePhaseActivating        EnvironmentCheckpointRestorePhase = "Activating"
+	EnvironmentCheckpointRestorePhaseCompleted         EnvironmentCheckpointRestorePhase = "Completed"
+	EnvironmentCheckpointRestorePhaseFailed            EnvironmentCheckpointRestorePhase = "Failed"
 )
 
-// EnvironmentSnapshotRestoreStatus defines the observed state
-type EnvironmentSnapshotRestoreStatus struct {
+// EnvironmentCheckpointRestoreStatus defines the observed state
+type EnvironmentCheckpointRestoreStatus struct {
 	// Phase is the current phase of the restore
 	// +kubebuilder:default=Pending
-	Phase EnvironmentSnapshotRestorePhase `json:"phase,omitempty"`
+	Phase EnvironmentCheckpointRestorePhase `json:"phase,omitempty"`
 
 	// Message provides human-readable status information
 	// +optional
 	Message string `json:"message,omitempty"`
 
-	// SnapshotRestoreName is the name of the created SnapshotRestore CR
+	// CheckpointRestoreName is the name of the created CheckpointRestore CR
 	// +optional
-	SnapshotRestoreName string `json:"snapshotRestoreName,omitempty"`
+	CheckpointRestoreName string `json:"checkpointRestoreName,omitempty"`
 
 	// StartTime is when the restore started processing
 	// +optional
@@ -635,144 +540,9 @@ type RestoredArtifactsInfo struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// EnvironmentSnapshotRestoreList contains a list of EnvironmentSnapshotRestore
-type EnvironmentSnapshotRestoreList struct {
+// EnvironmentCheckpointRestoreList contains a list of EnvironmentCheckpointRestore
+type EnvironmentCheckpointRestoreList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EnvironmentSnapshotRestore `json:"items"`
-}
-
-// ============================================================================
-// EnvironmentForkRequest - Orchestrates forking an environment from a snapshot
-// ============================================================================
-
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced
-// +kubebuilder:storageversion
-// +kubebuilder:printcolumn:name="NewEnv",type=string,JSONPath=`.spec.newEnvironmentName`
-// +kubebuilder:printcolumn:name="Snapshot",type=string,JSONPath=`.spec.sourceSnapshot.snapshotName`
-// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
-// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
-
-// EnvironmentForkRequest orchestrates creating a new environment from a snapshot.
-// It reads the stored EnvironmentSpec from the snapshot's artifacts and creates
-// a new Environment with that spec. The snapshot data is then restored to the
-// new environment's target namespace.
-// Lives in the WorkMachine namespace (e.g., wm-{username}).
-type EnvironmentForkRequest struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   EnvironmentForkRequestSpec   `json:"spec,omitempty"`
-	Status EnvironmentForkRequestStatus `json:"status,omitempty"`
-}
-
-// EnvironmentForkRequestSpec defines the fork request parameters
-type EnvironmentForkRequestSpec struct {
-	// NewEnvironmentName is the name for the forked environment
-	// The environment will be created in the same namespace as this request
-	// +kubebuilder:validation:Required
-	NewEnvironmentName string `json:"newEnvironmentName"`
-
-	// SourceSnapshot references the snapshot to fork from
-	// +kubebuilder:validation:Required
-	SourceSnapshot SourceSnapshotRef `json:"sourceSnapshot"`
-
-	// Overrides allows overriding specific fields from the stored spec
-	// +optional
-	Overrides *EnvironmentSpecOverrides `json:"overrides,omitempty"`
-}
-
-// SourceSnapshotRef references a snapshot in a specific namespace
-type SourceSnapshotRef struct {
-	// SnapshotName is the name of the snapshot to fork from
-	// +kubebuilder:validation:Required
-	SnapshotName string `json:"snapshotName"`
-
-	// SourceNamespace is the namespace where the source snapshot exists
-	// This is typically the target namespace of the source environment
-	// +kubebuilder:validation:Required
-	SourceNamespace string `json:"sourceNamespace"`
-}
-
-// EnvironmentSpecOverrides allows overriding specific fields when forking
-type EnvironmentSpecOverrides struct {
-	// Visibility overrides the visibility from the stored spec
-	// +kubebuilder:validation:Enum=private;shared;open
-	// +optional
-	Visibility string `json:"visibility,omitempty"`
-
-	// OwnedBy overrides the owner from the stored spec
-	// +optional
-	OwnedBy string `json:"ownedBy,omitempty"`
-
-	// Labels are merged with labels from the stored spec
-	// +optional
-	Labels map[string]string `json:"labels,omitempty"`
-
-	// Annotations are merged with annotations from the stored spec
-	// +optional
-	Annotations map[string]string `json:"annotations,omitempty"`
-
-	// ResourceQuotas overrides the resource quotas from the stored spec
-	// +optional
-	ResourceQuotas *ResourceQuotas `json:"resourceQuotas,omitempty"`
-}
-
-// EnvironmentForkRequestStatus defines the observed state
-type EnvironmentForkRequestStatus struct {
-	// Phase is the current phase of the fork request
-	// +kubebuilder:default=Pending
-	Phase EnvironmentForkRequestPhase `json:"phase,omitempty"`
-
-	// Message provides human-readable status information
-	// +optional
-	Message string `json:"message,omitempty"`
-
-	// CreatedEnvironment is the name of the environment that was created
-	// +optional
-	CreatedEnvironment string `json:"createdEnvironment,omitempty"`
-
-	// StartTime is when the fork request started processing
-	// +optional
-	StartTime *metav1.Time `json:"startTime,omitempty"`
-
-	// CompletionTime is when the fork request completed (success or failure)
-	// +optional
-	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
-}
-
-// EnvironmentForkRequestPhase represents the current phase
-type EnvironmentForkRequestPhase string
-
-const (
-	// EnvironmentForkRequestPhasePending - Request created, waiting to start
-	EnvironmentForkRequestPhasePending EnvironmentForkRequestPhase = "Pending"
-
-	// EnvironmentForkRequestPhaseValidating - Validating snapshot and artifacts exist
-	EnvironmentForkRequestPhaseValidating EnvironmentForkRequestPhase = "Validating"
-
-	// EnvironmentForkRequestPhaseCreatingEnvironment - Creating the new environment
-	EnvironmentForkRequestPhaseCreatingEnvironment EnvironmentForkRequestPhase = "CreatingEnvironment"
-
-	// EnvironmentForkRequestPhaseWaitingForRestore - Waiting for snapshot restore to complete
-	EnvironmentForkRequestPhaseWaitingForRestore EnvironmentForkRequestPhase = "WaitingForRestore"
-
-	// EnvironmentForkRequestPhaseCompleted - Fork completed successfully
-	EnvironmentForkRequestPhaseCompleted EnvironmentForkRequestPhase = "Completed"
-
-	// EnvironmentForkRequestPhaseFailed - Fork failed
-	EnvironmentForkRequestPhaseFailed EnvironmentForkRequestPhase = "Failed"
-)
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// EnvironmentForkRequestList contains a list of EnvironmentForkRequest
-type EnvironmentForkRequestList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EnvironmentForkRequest `json:"items"`
+	Items           []EnvironmentCheckpointRestore `json:"items"`
 }

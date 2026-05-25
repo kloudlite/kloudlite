@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-logr/zapr"
 	"github.com/kloudlite/kloudlite/api/config"
+	"github.com/kloudlite/kloudlite/controllers/checkpoint"
 	"github.com/kloudlite/kloudlite/controllers/environment"
-	"github.com/kloudlite/kloudlite/controllers/snapshot"
 	"github.com/kloudlite/kloudlite/controllers/user"
 	"github.com/kloudlite/kloudlite/controllers/wmingress"
 	"github.com/kloudlite/kloudlite/controllers/workmachine/machinescoped"
@@ -16,7 +16,7 @@ import (
 	"github.com/kloudlite/kloudlite/controllers/workspace"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
-	snapshotv1 "github.com/kloudlite/kloudlite/types/snapshot/v1"
+	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/types/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
@@ -86,7 +86,7 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(packagesv1.AddToScheme(scheme))
-	utilruntime.Must(snapshotv1.AddToScheme(scheme))
+	utilruntime.Must(checkpointv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
 	ctrl.SetLogger(zapr.NewLogger(logger))
@@ -213,7 +213,7 @@ func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 	utilruntime.Must(environmentsv1.AddToScheme(scheme))
 	utilruntime.Must(workspacev1.AddToScheme(scheme))
 	utilruntime.Must(packagesv1.AddToScheme(scheme))
-	utilruntime.Must(snapshotv1.AddToScheme(scheme))
+	utilruntime.Must(checkpointv1.AddToScheme(scheme))
 	utilruntime.Must(metricsv1beta1.AddToScheme(scheme))
 
 	// Set controller-runtime logger to use our zap logger
@@ -313,56 +313,40 @@ func newManager(cfg *rest.Config, installationCfg *config.InstallationConfig, au
 		return nil, fmt.Errorf("unable to create Environment controller: %w", err)
 	}
 
-	// Setup Snapshot controller with operator for registry operations
-	snapshotOperator := snapshot.NewDefaultSnapshotOperator(logger.With(zap.String("component", "snapshot-operator")))
-	snapshotReconciler := &snapshot.SnapshotReconciler{
-		Client:           mgr.GetClient(),
-		Logger:           logger.With(zap.String("controller", "snapshot")),
-		SnapshotOperator: snapshotOperator,
+	// Setup Checkpoint controller with operator for registry operations
+	checkpointOperator := checkpoint.NewDefaultCheckpointOperator(logger.With(zap.String("component", "checkpoint-operator")))
+	checkpointReconciler := &checkpoint.CheckpointReconciler{
+		Client:             mgr.GetClient(),
+		Logger:             logger.With(zap.String("controller", "checkpoint")),
+		CheckpointOperator: checkpointOperator,
 	}
 
-	if err = snapshotReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create Snapshot controller: %w", err)
+	if err = checkpointReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create Checkpoint controller: %w", err)
 	}
 
-	// Setup SnapshotRestore controller
-	snapshotRestoreReconciler := &snapshot.SnapshotRestoreReconciler{
+	// Setup EnvironmentCheckpoint controller
+	envCheckpointReconciler := &environment.EnvironmentCheckpointReconciler{
 		Client: mgr.GetClient(),
-		Logger: logger.With(zap.String("controller", "snapshotrestore")),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "environmentcheckpoint")),
+		Cfg:    controllerCfg,
 	}
 
-	if err = snapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create SnapshotRestore controller: %w", err)
+	if err = envCheckpointReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create EnvironmentCheckpoint controller: %w", err)
 	}
 
-	// Setup EnvironmentSnapshotRequest controller
-	envSnapshotRequestReconciler := &environment.EnvironmentSnapshotRequestReconciler{
+	// Setup EnvironmentCheckpointRestore controller
+	envCheckpointRestoreReconciler := &environment.EnvironmentCheckpointRestoreReconciler{
 		Client: mgr.GetClient(),
-		Logger: logger.With(zap.String("controller", "environmentsnapshotrequest")),
+		Scheme: mgr.GetScheme(),
+		Logger: logger.With(zap.String("controller", "environmentcheckpointrestore")),
+		Cfg:    controllerCfg,
 	}
 
-	if err = envSnapshotRequestReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create EnvironmentSnapshotRequest controller: %w", err)
-	}
-
-	// Setup EnvironmentSnapshotRestore controller
-	envSnapshotRestoreReconciler := &environment.EnvironmentSnapshotRestoreReconciler{
-		Client: mgr.GetClient(),
-		Logger: logger.With(zap.String("controller", "environmentsnapshotrestore")),
-	}
-
-	if err = envSnapshotRestoreReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create EnvironmentSnapshotRestore controller: %w", err)
-	}
-
-	// Setup EnvironmentForkRequest controller
-	envForkRequestReconciler := &environment.EnvironmentForkRequestReconciler{
-		Client: mgr.GetClient(),
-		Logger: logger.With(zap.String("controller", "environmentforkrequest")),
-	}
-
-	if err = envForkRequestReconciler.SetupWithManager(mgr); err != nil {
-		return nil, fmt.Errorf("unable to create EnvironmentForkRequest controller: %w", err)
+	if err = envCheckpointRestoreReconciler.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("unable to create EnvironmentCheckpointRestore controller: %w", err)
 	}
 
 	logger.Info("controllers initialized successfully")
