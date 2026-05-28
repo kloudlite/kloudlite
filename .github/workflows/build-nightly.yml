@@ -51,7 +51,7 @@ jobs:
           ref: development
 
       - name: Install Dagger
-        uses: dagger/dagger-for-github@v8
+        uses: dagger/dagger-for-github@v7
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -89,7 +89,7 @@ jobs:
           ref: development
 
       - name: Install Dagger
-        uses: dagger/dagger-for-github@v8
+        uses: dagger/dagger-for-github@v7
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
