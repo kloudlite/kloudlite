@@ -4,14 +4,18 @@ run-name: "Nightly — ${{ github.sha }}"
 
 on:
   schedule:
-    # ~midnight IST (18:27 UTC), offset from :00/:30 to reduce fleet contention
-    - cron: '27 18 * * *'
+    # ~midnight IST (18:30 UTC)
+    - cron: '30 18 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
   packages: write
   id-token: write
+
+env:
+  REGISTRY: ghcr.io/kloudlite/kloudlite
+  DAGGER_VERSION: "0.21.0"
 
 jobs:
   prepare:
@@ -35,127 +39,74 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=0.0.0-nightly.${DATE}" >> "$GITHUB_OUTPUT"
 
-  # ── Docker: support images ───────────────────────────────────────────
-  api-server:
+  # -- Publish all Docker images via Dagger ---------------------------
+  publish-all:
+    name: Publish all images
     needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: api-server
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development
+        uses: actions/checkout@v4
+        with:
+          ref: development
 
-  workmachine-manager:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workmachine-manager
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
+      - name: Install Dagger
+        uses: dagger/dagger-for-github@v8
+        with:
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
-  oci-installer:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: oci-installer
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
+      - name: Publish all images
+        working-directory: build-sys
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          dagger call publish-all-images \
+            --source .. \
+            --tag "$TAG" \
+            --registry "${{ env.REGISTRY }}" \
+            --registry-username "${{ github.actor }}" \
+            --registry-token env:GITHUB_TOKEN
 
-  code-analyzer:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: code-analyzer
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
+      - name: Build summary
+        run: |
+          echo "### Nightly Build" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Tag** | \`${{ needs.prepare.outputs.tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Version** | \`${{ needs.prepare.outputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
 
-  k3s-backup:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: k3s-backup
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  workspace-base:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workspace-base
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  workspace-comprehensive:
-    needs: [prepare, workspace-base]
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workspace-comprehensive
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  # ── Docker: Web apps ─────────────────────────────────────────────────
-  console:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: console
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  dashboard:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: dashboard
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  website:
-    needs: prepare
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: website
-      tag: ${{ needs.prepare.outputs.tag }}
-      is_nightly: true
-      ref: development
-
-  # ── Binaries ─────────────────────────────────────────────────────────
-  kloudlite:
-    needs: prepare
-    uses: ./.github/workflows/_build-binary.yml
-    with:
-      app: kloudlite
-      version: ${{ needs.prepare.outputs.version }}
-      tag: ${{ needs.prepare.outputs.tag }}
-      ref: development
-
-  kli:
-    needs: prepare
-    uses: ./.github/workflows/_build-binary.yml
-    with:
-      app: kli
-      version: ${{ needs.prepare.outputs.version }}
-      tag: ${{ needs.prepare.outputs.tag }}
-      ref: development
-
+  # -- kltun binary (for nightly release) -----------------------------
   kltun:
+    name: Build kltun
     needs: prepare
-    uses: ./.github/workflows/_build-binary.yml
-    with:
-      app: kltun
-      version: ${{ needs.prepare.outputs.version }}
-      tag: ${{ needs.prepare.outputs.tag }}
-      ref: development
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development
+        uses: actions/checkout@v4
+        with:
+          ref: development
 
+      - name: Install Dagger
+        uses: dagger/dagger-for-github@v8
+        with:
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Build kltun binary
+        working-directory: build-sys
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          dagger call build-app \
+            --source .. \
+            --app kltun \
+            --version "$TAG"
+
+  # -- desktop build (unchanged, native runners) ----------------------
   desktop:
+    name: Desktop
     needs: prepare
     uses: ./.github/workflows/_build-desktop.yml
     with:
@@ -164,35 +115,9 @@ jobs:
       ref: development
     secrets: inherit
 
-  # ── Release: nightly pre-releases ────────────────────────────────────
-  release-kloudlite:
-    needs: [prepare, kloudlite]
-    uses: ./.github/workflows/_release-binary.yml
-    with:
-      app: kloudlite
-      version: ${{ needs.prepare.outputs.version }}
-      is_nightly: true
-      ref: development
-
-  release-kli:
-    needs: [prepare, kli]
-    uses: ./.github/workflows/_release-binary.yml
-    with:
-      app: kli
-      version: ${{ needs.prepare.outputs.version }}
-      is_nightly: true
-      ref: development
-
-  release-kltun:
-    needs: [prepare, kltun]
-    uses: ./.github/workflows/_release-binary.yml
-    with:
-      app: kltun
-      version: ${{ needs.prepare.outputs.version }}
-      is_nightly: true
-      ref: development
-
+  # -- Nightly releases -----------------------------------------------
   release-desktop:
+    name: Release desktop nightly
     needs: [prepare, desktop]
     uses: ./.github/workflows/_release-desktop.yml
     with:
@@ -200,18 +125,12 @@ jobs:
       is_nightly: true
       ref: development
 
-  # ── Deploy to development after build artifacts are ready ────────────
+  # -- Deploy to development ------------------------------------------
   deploy:
+    name: Deploy to development
     needs:
       - prepare
-      - kloudlite
-      - oci-installer
-      - code-analyzer
-      - k3s-backup
-      - workspace-comprehensive
-      - console
-      - dashboard
-      - website
+      - publish-all
     runs-on: ubuntu-latest
     steps:
       - name: Trigger deploy in kloudlite-ci
@@ -233,9 +152,6 @@ jobs:
             "client_payload": {
               "version": "${{ needs.prepare.outputs.tag }}",
               "environment": "development",
-              "console": true,
-              "website": true,
-              "oci_installer": true,
               "is_nightly": true
             }
           }

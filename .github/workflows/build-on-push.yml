@@ -1,6 +1,6 @@
-name: "Build on Push"
+name: "Checks & Tests"
 
-run-name: "Build — ${{ github.ref_name }} (${{ github.sha }})"
+run-name: "Checks — ${{ github.ref_name }} (${{ github.sha }})"
 
 on:
   push:
@@ -11,206 +11,73 @@ on:
 
 permissions:
   contents: read
-  packages: write
+
+env:
+  DAGGER_VERSION: "0.21.0"
 
 jobs:
-  # ── Detect which areas changed ───────────────────────────────────────
-  detect:
-    name: Detect changes
+  # -- Go: format + build + test (batched, shared caches) -------------
+  go:
+    name: Go checks
     runs-on: ubuntu-latest
-    outputs:
-      api: ${{ steps.filter.outputs.api }}
-      console: ${{ steps.filter.outputs.console }}
-      dashboard: ${{ steps.filter.outputs.dashboard }}
-      website: ${{ steps.filter.outputs.website }}
-      kli: ${{ steps.filter.outputs.kli }}
-      kltun: ${{ steps.filter.outputs.kltun }}
-      desktop: ${{ steps.filter.outputs.desktop }}
-      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dorny/paths-filter@v3
-        id: filter
+      # Restore Go module and build caches from previous runs.
+      - uses: actions/cache@v4
+        id: go-cache
         with:
-          filters: |
-            api:
-              - 'build-sys/**'
-              - 'api/**'
-              - 'controllers/**'
-              - 'pkg/**'
-              - 'types/**'
-              - 'cli/**'
-              - 'go.mod'
-              - 'go.sum'
-            console:
-              - 'build-sys/**'
-              - 'web/apps/console/**'
-              - 'web/packages/**'
-            dashboard:
-              - 'build-sys/**'
-              - 'web/apps/dashboard/**'
-              - 'web/packages/**'
-            website:
-              - 'build-sys/**'
-              - 'web/apps/website/**'
-              - 'web/packages/**'
-            kli:
-              - 'build-sys/**'
-              - 'cli/kli/**'
-              - 'pkg/**'
-              - 'go.mod'
-              - 'go.sum'
-            kltun:
-              - 'build-sys/**'
-              - 'cli/kltun/**'
-              - 'pkg/**'
-              - 'go.mod'
-              - 'go.sum'
-            desktop:
-              - 'web/apps/desktop/**'
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ runner.os }}-${{ hashFiles('go.sum') }}
 
-      - name: Compute tag
-        id: tag
+      - name: Install Dagger
+        uses: dagger/dagger-for-github@v8
+        with:
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Run Go checks (fmt -> build -> test)
+        working-directory: build-sys
         run: |
-          BRANCH="${GITHUB_REF_NAME}"
-          BRANCH_SAFE=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g' | cut -c1-50)
-          SHORT_SHA="${GITHUB_SHA:0:7}"
-          echo "tag=${BRANCH_SAFE}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          SEED=""
+          if [ "${{ steps.go-cache.outputs.cache-hit }}" = "true" ]; then
+            SEED="--go-mod-seed $HOME/go/pkg/mod --go-build-seed $HOME/.cache/go-build"
+          fi
+          # shellcheck disable=SC2086
+          dagger call run-go-checks --source .. $SEED container
 
-      - name: Summary
+  # -- Web: lint + build per app (batched, shared node_modules) -------
+  web:
+    name: Web checks (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [console, dashboard, website]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Restore node_modules from a previous run.
+      - uses: actions/cache@v4
+        id: bun-cache
+        with:
+          path: web/node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('web/bun.lock') }}
+
+      - name: Install Dagger
+        uses: dagger/dagger-for-github@v8
+        with:
+          version: ${{ env.DAGGER_VERSION }}
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Run web checks (lint -> build)
+        working-directory: build-sys
         run: |
-          echo "### Change Detection" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Area | Changed |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|------|---------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| api/ | ${{ steps.filter.outputs.api }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| console | ${{ steps.filter.outputs.console }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| dashboard | ${{ steps.filter.outputs.dashboard }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| website | ${{ steps.filter.outputs.website }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| kli | ${{ steps.filter.outputs.kli }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| kltun | ${{ steps.filter.outputs.kltun }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| desktop | ${{ steps.filter.outputs.desktop }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Tag:** \`${{ steps.tag.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
-
-  # ── Binary: Go backend ───────────────────────────────────────────────
-  kloudlite:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-binary.yml
-    with:
-      app: kloudlite
-      version: ${{ needs.detect.outputs.tag }}
-      tag: ${{ needs.detect.outputs.tag }}
-
-  # ── Docker: non-runtime support images ───────────────────────────────
-
-  api-server:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: api-server
-      tag: ${{ needs.detect.outputs.tag }}
-
-  workmachine-manager:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workmachine-manager
-      tag: ${{ needs.detect.outputs.tag }}
-
-  oci-installer:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: oci-installer
-      tag: ${{ needs.detect.outputs.tag }}
-
-  code-analyzer:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: code-analyzer
-      tag: ${{ needs.detect.outputs.tag }}
-
-  k3s-backup:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: k3s-backup
-      tag: ${{ needs.detect.outputs.tag }}
-
-  workspace-base:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workspace-base
-      tag: ${{ needs.detect.outputs.tag }}
-
-  workspace-comprehensive:
-    needs: [detect, workspace-base]
-    if: needs.detect.outputs.api == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: workspace-comprehensive
-      tag: ${{ needs.detect.outputs.tag }}
-
-  # ── Docker: Web apps ─────────────────────────────────────────────────
-  console:
-    needs: detect
-    if: needs.detect.outputs.console == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: console
-      tag: ${{ needs.detect.outputs.tag }}
-
-  dashboard:
-    needs: detect
-    if: needs.detect.outputs.dashboard == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: dashboard
-      tag: ${{ needs.detect.outputs.tag }}
-
-  website:
-    needs: detect
-    if: needs.detect.outputs.website == 'true'
-    uses: ./.github/workflows/_build-docker.yml
-    with:
-      app: website
-      tag: ${{ needs.detect.outputs.tag }}
-
-  # ── Binaries: CLI tools ──────────────────────────────────────────────
-  kli:
-    needs: detect
-    if: needs.detect.outputs.kli == 'true'
-    uses: ./.github/workflows/_build-binary.yml
-    with:
-      app: kli
-      version: ${{ needs.detect.outputs.tag }}
-      tag: ${{ needs.detect.outputs.tag }}
-
-  kltun:
-    needs: detect
-    if: needs.detect.outputs.kltun == 'true'
-    uses: ./.github/workflows/_build-binary.yml
-    with:
-      app: kltun
-      version: ${{ needs.detect.outputs.tag }}
-      tag: ${{ needs.detect.outputs.tag }}
-
-  desktop:
-    needs: detect
-    if: needs.detect.outputs.desktop == 'true'
-    uses: ./.github/workflows/_build-desktop.yml
-    with:
-      tag: ${{ needs.detect.outputs.tag }}
-      version: 0.0.0-${{ needs.detect.outputs.tag }}
-    secrets: inherit
+          SEED=""
+          if [ "${{ steps.bun-cache.outputs.cache-hit }}" = "true" ]; then
+            SEED="--node-modules-seed ../web/node_modules"
+          fi
+          # shellcheck disable=SC2086
+          dagger call run-web-checks --source .. --app ${{ matrix.app }} $SEED container
