@@ -33,7 +33,7 @@ jobs:
           key: go-${{ runner.os }}-${{ hashFiles('go.sum') }}
 
       - name: Install Dagger
-        uses: dagger/dagger-for-github@v8
+        uses: dagger/dagger-for-github@v7
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
@@ -67,7 +67,7 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('web/bun.lock') }}
 
       - name: Install Dagger
-        uses: dagger/dagger-for-github@v8
+        uses: dagger/dagger-for-github@v7
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
