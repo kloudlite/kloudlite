@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon, Loader2 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CodeEditor } from './code-editor'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { ServicesGraph } from './services-graph'
@@ -192,6 +192,41 @@ services:
       - "3000:3000"`,
 }
 
+// Simple compose YAML parser to extract service names and ports
+function parseComposeServices(composeYaml: string): ServiceData[] {
+  const services: ServiceData[] = []
+  const lines = composeYaml.split('\n')
+  let currentSvc: string | null = null
+  let ports: number[] = []
+  for (const line of lines) {
+    const svcMatch = line.match(/^\s{2}(\w[\w-]*):/)
+    const portMatch = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
+    if (svcMatch) {
+      if (currentSvc) {
+        services.push({
+          id: currentSvc, name: currentSvc,
+          type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
+          ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
+          volumes: []
+        })
+      }
+      currentSvc = svcMatch[1]
+      ports = []
+    } else if (portMatch) {
+      ports.push(parseInt(portMatch[1]))
+    }
+  }
+  if (currentSvc) {
+    services.push({
+      id: currentSvc, name: currentSvc,
+      type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
+      ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
+      volumes: []
+    })
+  }
+  return services
+}
+
 function ServicesView({ envHash, envName }: { envHash: string; envName: string }) {
   const [services, setServices] = useState<ServiceData[]>([])
   const [workspaces, setWorkspaces] = useState<ConnectedWorkspace[]>([])
@@ -203,6 +238,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [logsService, setLogsService] = useState<string | null>(null)
+  const appliedRef = useRef(false)
 
   // Fetch environment data from API
   useEffect(() => {
@@ -214,7 +250,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
         e.metadata?.name === envHash || e.metadata?.name === envName
       )
       if (!env) {
-        // Fallback to dummy data
         setServices(SERVICES[envHash] || [])
         setWorkspaces(ENV_WORKSPACES[envHash] || [])
         setCompose(COMPOSITIONS[envHash] || '')
@@ -223,7 +258,8 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       }
 
       const cs = env.status?.composeStatus
-      if (cs?.services) {
+      if (cs?.services && cs.services.length > 0) {
+        // Real compose status from API — use it
         const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
           id: s.name || `svc-${i}`,
           name: s.name || `svc-${i}`,
@@ -236,13 +272,19 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           volumes: [],
         }))
         setServices(svcs)
-      } else if (!cs && services.length === 0) {
-        // Only fall back to dummy data on initial load when no services yet
-        setServices(SERVICES[envHash] || [])
+        setWorkspaces(ENV_WORKSPACES[envHash] || [])
+        appliedRef.current = false // reset after we got real data
+      } else if (appliedRef.current && services.length === 0) {
+        // Compose was applied but composeStatus not ready yet — restore from compose content
+        const parsed = parseComposeServices(compose)
+        if (parsed.length > 0) {
+          setServices(parsed)
+        }
+      } else {
+        if (services.length === 0) setServices(SERVICES[envHash] || [])
+        setWorkspaces(ENV_WORKSPACES[envHash] || [])
       }
-      // else: keep existing services (don't clear on background refresh)
 
-      setWorkspaces(ENV_WORKSPACES[envHash] || [])
       if (!compose || cs) {
         setCompose(cs ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
           `  ${s.name}:\n    image: ${s.image}\n    ports:\n` +
@@ -339,7 +381,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                   if (saving || !compose.trim()) return
                   setSaving(true)
                   try {
-                    const result = await window.electronAPI.patchResource(
+                    await window.electronAPI.patchResource(
                       'wm-karthik-dev',
                       'environments',
                       envName,
@@ -357,39 +399,10 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       }
                     )
 
-                    // Parse applied compose to populate services immediately
-                    const appliedCompose = result?.spec?.compose?.composeContent || compose
-                    const appliedServices: ServiceData[] = []
-                    const lines = appliedCompose.split('\n')
-                    let currentSvc: string | null = null
-                    let ports: number[] = []
-                    for (const line of lines) {
-                      const svcMatch = line.match(/^\s{2}(\w[\w-]*):/)
-                      const portMatch = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
-                      if (svcMatch) {
-                        if (currentSvc) {
-                          appliedServices.push({
-                            id: currentSvc, name: currentSvc,
-                            type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${envName}.svc.cluster.local`,
-                            ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
-                            volumes: []
-                          })
-                        }
-                        currentSvc = svcMatch[1]
-                        ports = []
-                      } else if (portMatch) {
-                        ports.push(parseInt(portMatch[1]))
-                      }
-                    }
-                    if (currentSvc) {
-                      appliedServices.push({
-                        id: currentSvc, name: currentSvc,
-                        type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${envName}.svc.cluster.local`,
-                        ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
-                        volumes: []
-                      })
-                    }
-                    setServices(appliedServices)
+                    // Parse and show services immediately
+                    appliedRef.current = true
+                    const parsed = parseComposeServices(compose)
+                    if (parsed.length > 0) setServices(parsed)
                     closeCompose(true)
                     setRefreshKey((k) => k + 1)
                   } catch (err) {
