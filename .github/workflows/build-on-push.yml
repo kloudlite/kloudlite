@@ -23,15 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Restore Go module and build caches from previous runs.
-      - uses: actions/cache@v4
-        id: go-cache
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: go-${{ runner.os }}-${{ hashFiles('go.sum') }}
-
       - name: Install Dagger
         uses: dagger/dagger-for-github@v7
         with:
@@ -41,28 +32,7 @@ jobs:
       - name: Run Go checks (fmt -> build -> test)
         working-directory: build-sys
         run: |
-          SEED=""
-          if [ "${{ steps.go-cache.outputs.cache-hit }}" = "true" ]; then
-            SEED="--go-mod-seed $HOME/go/pkg/mod --go-build-seed $HOME/.cache/go-build"
-          fi
-          # shellcheck disable=SC2086
-          dagger call run-go-checks --source .. $SEED container
-
-      # Extract the updated caches from Dagger back to the host so
-      # actions/cache can persist them for the next run.
-      - name: Save Go mod cache
-        if: always()
-        working-directory: build-sys
-        run: |
-          mkdir -p "$HOME/go/pkg/mod" "$HOME/.cache/go-build"
-          SEED=""
-          if [ "${{ steps.go-cache.outputs.cache-hit }}" = "true" ]; then
-            SEED="--go-mod-seed $HOME/go/pkg/mod --go-build-seed $HOME/.cache/go-build"
-          fi
-          # shellcheck disable=SC2086
-          dagger call extract-go-mod-cache --source .. $SEED --output "$HOME/go/pkg/mod"
-          # shellcheck disable=SC2086
-          dagger call extract-go-build-cache --source .. $SEED --output "$HOME/.cache/go-build"
+          dagger call run-go-checks --source .. container
 
   # -- Web: build per app (batched, shared node_modules) --------------
   web:
@@ -75,13 +45,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Restore node_modules from a previous run.
-      - uses: actions/cache@v4
-        id: bun-cache
-        with:
-          path: web/node_modules
-          key: bun-${{ runner.os }}-${{ hashFiles('web/bun.lock') }}
-
       - name: Install Dagger
         uses: dagger/dagger-for-github@v7
         with:
@@ -91,21 +54,4 @@ jobs:
       - name: Run web checks (build)
         working-directory: build-sys
         run: |
-          SEED=""
-          if [ "${{ steps.bun-cache.outputs.cache-hit }}" = "true" ]; then
-            SEED="--node-modules-seed ../web/node_modules"
-          fi
-          # shellcheck disable=SC2086
-          dagger call run-web-checks --source .. --app ${{ matrix.app }} $SEED container
-
-      # Extract updated node_modules back to host for caching.
-      - name: Save node_modules cache
-        if: always()
-        working-directory: build-sys
-        run: |
-          SEED=""
-          if [ "${{ steps.bun-cache.outputs.cache-hit }}" = "true" ]; then
-            SEED="--node-modules-seed ../web/node_modules"
-          fi
-          # shellcheck disable=SC2086
-          dagger call extract-node-modules --source .. $SEED --output ../web/node_modules
+          dagger call run-web-checks --source .. --app ${{ matrix.app }} container
