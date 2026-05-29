@@ -126,6 +126,9 @@ export const platformAPI = {
   deleteEnvironment: (namespace: string, name: string) =>
     apiRequest('DELETE', resourcePath(namespace, 'environments', name)) as Promise<void>,
 
+  patchResource: (namespace: string | null, resource: string, name: string, patch: Record<string, unknown>) =>
+    apiRequest('PATCH', resourcePath(namespace, resource, name), patch) as Promise<Record<string, unknown>>,
+
   // Workspaces
   listWorkspaces: (namespace: string) =>
     apiRequest('GET', resourcePath(namespace, 'workspaces')) as Promise<{ items: Record<string, unknown>[] }>,
