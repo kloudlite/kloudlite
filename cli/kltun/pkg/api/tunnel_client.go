@@ -29,7 +29,7 @@ func NewTunnelClient(endpoint string, token string) *TunnelClient {
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					// #nosec G402 - tunnel server uses self-signed cert in controlled env
-					InsecureSkipVerify: true,
+					InsecureSkipVerify: true, // #nosec G402 -- internal tunnel server
 					MinVersion:         tls.VersionTLS13,
 				},
 			},

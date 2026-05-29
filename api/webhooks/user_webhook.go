@@ -287,7 +287,7 @@ func (w *UserWebhook) handleMutation(req *admissionv1.AdmissionRequest) *admissi
 
 	// Handle password hashing with change detection
 	if user.Spec.PasswordString != "" {
-		// CodeQL: sha256 used for password change detection only, not for storage.
+		// #nosec G401 -- sha256 used for password change detection only, not for storage.
 		// Actual password hashing uses bcrypt before storage.
 		newPasswordHash := sha256.Sum256([]byte(user.Spec.PasswordString))
 		newPasswordHashStr := base64.StdEncoding.EncodeToString(newPasswordHash[:])
