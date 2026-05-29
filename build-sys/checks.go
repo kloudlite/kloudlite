@@ -36,7 +36,7 @@ func (m *Kloudlite) goDevContainer(
 	goBuildSeed *dagger.Directory,
 ) *dagger.Container {
 	ctr := dag.Container().
-		From("golang:1.24-alpine").
+		From("golang:1.25-alpine").
 		WithExec([]string{"apk", "add", "--no-cache", "git", "curl", "build-base"}).
 		WithMountedCache("/go/pkg/mod", dag.CacheVolume("go-mod-v1")).
 		WithMountedCache("/root/.cache/go-build", dag.CacheVolume("go-build-v1"))
