@@ -27,6 +27,7 @@ declare global {
       listWorkspaces: (namespace: string) => Promise<{ items: Record<string, unknown>[]; error?: string }>
       createWorkspace: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<Record<string, unknown>>
       listWorkMachines: () => Promise<{ items: Record<string, unknown>[]; error?: string }>
+      patchResource: (namespace: string | null, resource: string, name: string, patch: Record<string, unknown>) => Promise<Record<string, unknown>>
     }
   }
 }

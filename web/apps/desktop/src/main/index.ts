@@ -443,6 +443,15 @@ ipcMain.handle('api:list-workmachines', async () => {
   }
 })
 
+// IPC: Platform API — patch resource (e.g., update compose on environment)
+ipcMain.handle('api:patch-resource', async (_event, namespace: string | null, resource: string, name: string, patch: Record<string, unknown>) => {
+  try {
+    return await platformAPI.patchResource(namespace, resource, name, patch)
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
 // Handle new-window for webview guests — prevent popups, navigate in app instead
 app.on('web-contents-created', (_event, contents) => {
   if (contents.getType() === 'webview') {

@@ -201,6 +201,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
   const [composeOpen, setComposeOpen] = useState(false)
   const [composeExiting, setComposeExiting] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [logsService, setLogsService] = useState<string | null>(null)
 
   // Fetch environment data from API
@@ -328,13 +329,37 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 Cancel
               </button>
               <button
-                className="rounded-md bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                onClick={() => {
-                  setSaved(true)
-                  setTimeout(() => setSaved(false), 2000)
+                className="rounded-md bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                disabled={saving}
+                onClick={async () => {
+                  if (saving || !compose.trim()) return
+                  setSaving(true)
+                  try {
+                    await window.electronAPI.patchResource(
+                      'wm-karthik-dev',
+                      'environments',
+                      envName,
+                      {
+                        spec: {
+                          compose: {
+                            displayName: 'Compose App',
+                            composeContent: compose,
+                            composeFormat: 'v3.8'
+                          }
+                        }
+                      }
+                    )
+                    setSaved(true)
+                    setTimeout(() => setSaved(false), 2000)
+                    closeCompose()
+                  } catch (err) {
+                    console.error('Failed to apply compose:', err)
+                  } finally {
+                    setSaving(false)
+                  }
                 }}
               >
-                {saved ? 'Saved!' : 'Apply'}
+                {saving ? 'Saving...' : saved ? 'Saved!' : 'Apply'}
               </button>
             </div>
           </div>
