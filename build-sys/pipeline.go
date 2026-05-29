@@ -59,7 +59,7 @@ func (m *Kloudlite) ImageApp(
 	app App,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	switch app {
@@ -94,7 +94,7 @@ func (m *Kloudlite) ImageApp(
 // +---------------------------------------+
 
 // PublishImage builds and pushes a specific Docker image to a container registry.
-// Returns the published image reference string (e.g. ghcr.io/kloudlite/kloudlite/api-server:dev-local).
+// Returns the published image reference string (e.g. ghcr.io/kloudlite/api-server:dev-local).
 // Registry auth is handled via Dagger engine configuration (dagger.json env or CI secrets).
 func (m *Kloudlite) PublishImage(
 	ctx context.Context,
@@ -103,7 +103,7 @@ func (m *Kloudlite) PublishImage(
 	app App,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 	// Optional registry username for basic auth.
 	// +optional
@@ -134,7 +134,7 @@ func (m *Kloudlite) PublishAllImages(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 	// Optional registry username for basic auth.
 	// +optional
@@ -183,7 +183,7 @@ func (m *Kloudlite) BuildAndDeployApp(
 	kubeConfig *dagger.File,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 	// +default="kloudlite"
 	namespace string,

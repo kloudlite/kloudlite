@@ -94,7 +94,7 @@ func (m *Kloudlite) ImageConsole(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 	// +optional
 	nextBuild *dagger.Directory,
@@ -115,7 +115,7 @@ func (m *Kloudlite) ImageDashboard(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 	// +optional
 	nextBuild *dagger.Directory,
@@ -146,7 +146,7 @@ func (m *Kloudlite) ImageWebsite(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 	// +optional
 	nextBuild *dagger.Directory,

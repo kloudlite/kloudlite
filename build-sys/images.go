@@ -16,7 +16,7 @@ func (m *Kloudlite) ImageAPIServer(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	bin := m.BuildKloudlite(ctx, source, "linux", "amd64", "")
@@ -34,7 +34,7 @@ func (m *Kloudlite) ImageWorkmachineManager(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	bin := m.BuildKloudlite(ctx, source, "linux", "amd64", "")
@@ -64,7 +64,7 @@ func (m *Kloudlite) ImageWorkspaceBase(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	return dag.Container().
@@ -88,7 +88,7 @@ func (m *Kloudlite) ImageWorkspaceComprehensive(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 	// +optional
 	baseImage *dagger.Container,
@@ -167,7 +167,7 @@ func (m *Kloudlite) ImageOciInstaller(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	bin := m.BuildOciInstaller(ctx, source, "linux", "amd64")
@@ -186,7 +186,7 @@ func (m *Kloudlite) ImageCodeAnalyzer(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	bin := m.BuildCodeAnalyzer(ctx, source, "linux", "amd64")
@@ -206,7 +206,7 @@ func (m *Kloudlite) ImageK3sBackup(
 	ctx context.Context,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	return dag.Container().
@@ -260,7 +260,7 @@ func (m *Kloudlite) ImageKlTunProxy(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	bin := m.BuildKlTunProxy(ctx, source, "linux", "amd64")
@@ -278,7 +278,7 @@ func (m *Kloudlite) ImageTunnelServer(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite/kloudlite"
+	// +default="ghcr.io/kloudlite"
 	registry string,
 ) *dagger.Container {
 	bin := m.BuildKloudlite(ctx, source, "linux", "amd64", "")
