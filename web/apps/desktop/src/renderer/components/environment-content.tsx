@@ -263,7 +263,12 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     return () => window.removeEventListener('open-service-logs', handler)
   }, [])
 
-  function closeCompose() {
+  function closeCompose(immediate?: boolean) {
+    if (immediate) {
+      setComposeOpen(false)
+      setComposeExiting(false)
+      return
+    }
     setComposeExiting(true)
     setTimeout(() => {
       setComposeOpen(false)
@@ -319,10 +324,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
             <div className="flex items-center gap-2">
               <button
                 className="rounded-md px-3 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent"
-                onClick={() => {
-                  setCompose(COMPOSITIONS[envHash] || '')
-                  closeCompose()
-                }}
+                onClick={() => closeCompose()}
               >
                 Cancel
               </button>
@@ -332,6 +334,41 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 onClick={async () => {
                   if (saving || !compose.trim()) return
                   setSaving(true)
+
+                  // Parse compose to show optimistic services immediately
+                  const parsedServices: ServiceData[] = []
+                  const lines = compose.split('\n')
+                  let currentSvc: string | null = null
+                  let ports: number[] = []
+                  for (const line of lines) {
+                    const svcMatch = line.match(/^\s{2}(\w[\w-]*):/)
+                    const portMatch = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
+                    if (svcMatch) {
+                      if (currentSvc) {
+                        parsedServices.push({
+                          id: currentSvc, name: currentSvc,
+                          type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
+                          ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
+                          volumes: []
+                        })
+                      }
+                      currentSvc = svcMatch[1]
+                      ports = []
+                    } else if (portMatch) {
+                      ports.push(parseInt(portMatch[1]))
+                    }
+                  }
+                  if (currentSvc) {
+                    parsedServices.push({
+                      id: currentSvc, name: currentSvc,
+                      type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
+                      ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
+                      volumes: []
+                    })
+                  }
+
+                  // Show optimistic services + send to API
+                  setServices(parsedServices)
                   try {
                     await window.electronAPI.patchResource(
                       'wm-karthik-dev',
@@ -352,8 +389,8 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                     )
                     setSaved(true)
                     setTimeout(() => setSaved(false), 2000)
+                    closeCompose(true)
                     setRefreshKey((k) => k + 1)
-                    closeCompose()
                   } catch (err) {
                     console.error('Failed to apply compose:', err)
                   } finally {
