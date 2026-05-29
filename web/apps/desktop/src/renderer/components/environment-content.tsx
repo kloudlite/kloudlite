@@ -192,41 +192,6 @@ services:
       - "3000:3000"`,
 }
 
-// Simple compose YAML parser to extract service names and ports
-function parseComposeServices(composeYaml: string): ServiceData[] {
-  const services: ServiceData[] = []
-  const lines = composeYaml.split('\n')
-  let currentSvc: string | null = null
-  let ports: number[] = []
-  for (const line of lines) {
-    const svcMatch = line.match(/^\s{2}(\w[\w-]*):/)
-    const portMatch = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
-    if (svcMatch) {
-      if (currentSvc) {
-        services.push({
-          id: currentSvc, name: currentSvc,
-          type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
-          ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
-          volumes: []
-        })
-      }
-      currentSvc = svcMatch[1]
-      ports = []
-    } else if (portMatch) {
-      ports.push(parseInt(portMatch[1]))
-    }
-  }
-  if (currentSvc) {
-    services.push({
-      id: currentSvc, name: currentSvc,
-      type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
-      ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
-      volumes: []
-    })
-  }
-  return services
-}
-
 function ServicesView({ envHash, envName }: { envHash: string; envName: string }) {
   const [services, setServices] = useState<ServiceData[]>([])
   const [workspaces, setWorkspaces] = useState<ConnectedWorkspace[]>([])
@@ -257,31 +222,22 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       }
 
       const cs = env.status?.composeStatus
-      if (cs?.services && cs.services.length > 0) {
-        const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
+      if (cs?.services?.length > 0) {
+        setServices(cs.services.map((s: any, i: number) => ({
           id: s.name || `svc-${i}`,
           name: s.name || `svc-${i}`,
           type: 'ClusterIP' as const,
           clusterIP: '',
           dns: `${s.name}.${env.spec?.targetNamespace || ''}.svc.cluster.local`,
-          ports: (s.ports || []).map((p: number) => ({
-            port: p, targetPort: p, protocol: 'TCP'
-          })),
+          ports: (s.ports || []).map((p: number) => ({ port: p, targetPort: p, protocol: 'TCP' })),
           volumes: [],
-        }))
-        setServices(svcs)
-        setWorkspaces(ENV_WORKSPACES[envHash] || [])
-      } else {
-        if (services.length === 0) setServices(SERVICES[envHash] || [])
-        setWorkspaces(ENV_WORKSPACES[envHash] || [])
+        })))
       }
-
-      if (!compose || cs) {
-        setCompose(cs ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
-          `  ${s.name}:\n    image: ${s.image}\n    ports:\n` +
-          (s.ports || []).map((p: number) => `      - "${p}:${p}"\n`).join('')
-        ).join('') : COMPOSITIONS[envHash] || '')
-      }
+      setWorkspaces(ENV_WORKSPACES[envHash] || [])
+      setCompose(cs && cs.services ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
+        `  ${s.name}:\n    image: ${s.image}\n    ports:\n` +
+        (s.ports || []).map((p: number) => `      - "${p}:${p}"\n`).join('')
+      ).join('') : COMPOSITIONS[envHash] || '')
       setLoading(false)
     }).catch(() => {
       setServices(SERVICES[envHash] || [])
@@ -392,50 +348,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       }
                     )
 
-                    window.electronAPI.debugLog('[compose] PATCH succeeded, starting poll...')
-                    // Poll API until composeStatus appears (source of truth)
-                    let pollAttempts = 0
-                    const poll = async (): Promise<void> => {
-                      try {
-                        window.electronAPI.debugLog(`[compose] Poll #${pollAttempts}`)
-                        const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
-                        const items = result?.items || []
-                        window.electronAPI.debugLog(`[compose] got ${items.length} envs`)
-                        const env = items.find(
-                          (e: any) => e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
-                        )
-                        window.electronAPI.debugLog(`[compose] env found: ${!!env}, name="${envName}"`)
-                        const cs = env?.status?.composeStatus
-                        window.electronAPI.debugLog(`[compose] composeStatus: ${cs ? 'yes services=' + (cs.services?.length || 0) : 'null'}`)
-                        if (cs?.services?.length > 0) {
-                          const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
-                            id: s.name || `svc-${i}`,
-                            name: s.name || `svc-${i}`,
-                            type: 'ClusterIP' as const,
-                            clusterIP: '',
-                            dns: `${s.name}.${env?.spec?.targetNamespace || ''}.svc.cluster.local`,
-                            ports: (s.ports || []).map((p: number) => ({
-                              port: p, targetPort: p, protocol: 'TCP'
-                            })),
-                            volumes: [],
-                          }))
-                          window.electronAPI.debugLog(`[compose] setting ${svcs.length} services`)
-                          setServices(svcs)
-                          return
-                        }
-                      } catch (e) {
-                        window.electronAPI.debugLog('[compose] Poll error: ' + String(e))
-                      }
-                      if (pollAttempts < 20) {
-                        pollAttempts++
-                        await new Promise((r) => setTimeout(r, 2000))
-                        return poll()
-                      }
-                      window.electronAPI.debugLog('[compose] Poll exhausted, giving up')
-                    }
-                    await poll()
-                    window.electronAPI.debugLog('[compose] Poll done')
+                    window.electronAPI.debugLog('[compose] PATCH succeeded, triggering refresh')
                     closeCompose(true)
+                    setRefreshKey((k) => k + 1)
                   } catch (err) {
                     window.electronAPI.debugLog('[compose] PATCH failed: ' + String(err))
                   } finally {
