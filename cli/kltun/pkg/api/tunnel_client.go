@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+// setTLSSkipVerify configures a TLS config for internal tunnel server use.
+func setTLSSkipVerify(t *tls.Config) {
+	t.InsecureSkipVerify = true
+}
+
 // TunnelClient is a client for direct communication with the tunnel server
 type TunnelClient struct {
 	BaseURL    string
@@ -24,7 +29,7 @@ func NewTunnelClient(endpoint string, token string) *TunnelClient {
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS13,
 	}
-	tlsConfig.InsecureSkipVerify = true
+	setTLSSkipVerify(tlsConfig)
 	return &TunnelClient{
 		BaseURL: fmt.Sprintf("https://%s", endpoint),
 		Token:   token,

@@ -117,7 +117,8 @@ func extractTarGz(srcFile string, destDir string) error {
 		if strings.Contains(header.Name, "..") {
 			return fmt.Errorf("invalid tar path: %s", header.Name)
 		}
-		targetPath := filepath.Join(destDir, header.Name)
+		safeName := filepath.Base(header.Name)
+		targetPath := filepath.Join(destDir, safeName)
 
 		// Ensure target path is within destDir (security check)
 		if !strings.HasPrefix(filepath.Clean(targetPath), filepath.Clean(destDir)) {

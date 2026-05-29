@@ -19,6 +19,11 @@ import (
 	"go.uber.org/zap"
 )
 
+// setTLSSkipVerify configures a TLS config for internal tunnel server use.
+func setTLSSkipVerify(t *tls.Config) {
+	t.InsecureSkipVerify = true
+}
+
 // runVPNConnectionWithResult runs a VPN connection and sends result on channel after initial setup
 // New architecture: Dashboard only provides tunnel endpoint, all other calls go directly to tunnel server
 func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, server, token string, done chan struct{}, resultChan chan<- VPNConnectionSetupResult) {
@@ -112,7 +117,7 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS13,
 	}
-	tlsConfig.InsecureSkipVerify = true
+	setTLSSkipVerify(tlsConfig)
 	// Add Authorization header for WebSocket connection (using permanent token)
 	wsHeaders := http.Header{
 		"Authorization": []string{"Bearer " + permanentToken},
@@ -386,7 +391,7 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS13,
 	}
-	tlsConfig.InsecureSkipVerify = true
+	setTLSSkipVerify(tlsConfig)
 	// Add Authorization header for WebSocket connection (using permanent token)
 	wsHeaders := http.Header{
 		"Authorization": []string{"Bearer " + permanentToken},
@@ -663,7 +668,7 @@ func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error 
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS13,
 	}
-	tlsConfig.InsecureSkipVerify = true
+	setTLSSkipVerify(tlsConfig)
 	wsHeaders := http.Header{
 		"Authorization": []string{"Bearer " + conn.PermanentToken},
 	}
