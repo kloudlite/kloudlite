@@ -141,6 +141,21 @@ func (r *Router) GetMetrics() map[string]interface{} {
 	}
 }
 
+// Tunnel-server endpoints are internal management endpoints NOT managed by
+// workspace ingress route configuration. They run in the workmachine-manager
+// process on a dedicated internal port and must be intercepted here before
+// the workspace route lookup, which would otherwise reject them as 404.
+var tunnelServerURL = &url.URL{Scheme: "http", Host: "127.0.0.1:8444"}
+
+func isTunnelServerPath(path string) bool {
+	return path == "/ws" ||
+		strings.HasPrefix(path, "/wg/") ||
+		strings.HasPrefix(path, "/ca-cert") ||
+		strings.HasPrefix(path, "/tls-cert") ||
+		strings.HasPrefix(path, "/hosts") ||
+		path == "/health"
+}
+
 // isWebSocketRequest checks if the request is a WebSocket upgrade request
 func isWebSocketRequest(req *http.Request) bool {
 	return strings.EqualFold(req.Header.Get("Upgrade"), "websocket") &&
@@ -158,6 +173,45 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			zap.String("error", err.Error()),
 		)
 		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
+	// Tunnel-server endpoints run inline on 127.0.0.1:8444
+	if isTunnelServerPath(req.URL.Path) {
+		if isWebSocketRequest(req) {
+			r.proxyWebSocket(w, req, tunnelServerURL)
+			return
+		}
+		proxy := httputil.NewSingleHostReverseProxy(tunnelServerURL)
+		originalDirector := proxy.Director
+		proxy.Director = func(proxyReq *http.Request) {
+			originalHost := proxyReq.Host
+			originalDirector(proxyReq)
+			proxyReq.Header.Set("X-Forwarded-Host", originalHost)
+			proxyReq.Header.Set("X-Forwarded-Proto", "https")
+			proxyReq.Host = originalHost
+		}
+		proxy.FlushInterval = -1
+		proxy.Transport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			ForceAttemptHTTP2:     false,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+		proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+			r.logger.Error("Proxy error for tunnel-server",
+				zap.String("path", req.URL.Path),
+				zap.Error(err),
+			)
+			http.Error(w, "Bad gateway", http.StatusBadGateway)
+		}
+		proxy.ServeHTTP(w, req)
 		return
 	}
 
