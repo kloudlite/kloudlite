@@ -238,7 +238,8 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
       {tabs.length === 0 && (
         <EmptyState
           title="Browse Services"
-          description={<>Select a service from the sidebar or press <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">Cmd+T</kbd></>}
+          description={<>Press <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono">Cmd+T</kbd> or select a service from the sidebar to open a tab</>}
+          action={{ label: 'New Tab', onClick: () => addTab() }}
         />
       )}
     </div>
