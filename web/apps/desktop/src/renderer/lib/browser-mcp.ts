@@ -81,12 +81,13 @@ export async function executeBrowserCommand(command: string, args: Record<string
       if (!selector) return 'No selector provided'
       const handle = getHandle(args.tabId as string)
       if (!handle) return 'No browser tab available'
+      const sel_ = JSON.stringify(selector)
       await handle.executeJavaScript(`
         (() => {
-          const el = document.querySelector(${JSON.stringify(selector)})
-          if (!el) throw new Error('Element not found: ${selector}')
+          const el = document.querySelector(${sel_})
+          if (!el) throw new Error('Element not found: ' + ${sel_})
           el.click()
-          return 'Clicked ' + ${JSON.stringify(selector)}
+          return 'Clicked ' + ${sel_}
         })()
       `)
       return `Clicked ${selector}`
@@ -98,17 +99,19 @@ export async function executeBrowserCommand(command: string, args: Record<string
       if (!selector || value === undefined) return 'Missing selector or value'
       const handle = getHandle(args.tabId as string)
       if (!handle) return 'No browser tab available'
+      const sel_ = JSON.stringify(selector)
+      const val_ = JSON.stringify(value)
       await handle.executeJavaScript(`
         (() => {
-          const el = document.querySelector(${JSON.stringify(selector)})
-          if (!el) throw new Error('Element not found: ${selector}')
+          const el = document.querySelector(${sel_})
+          if (!el) throw new Error('Element not found: ' + ${sel_})
           if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-            el.value = ${JSON.stringify(value)}
+            el.value = ${val_}
             el.dispatchEvent(new Event('input', { bubbles: true }))
             el.dispatchEvent(new Event('change', { bubbles: true }))
-            return 'Filled ' + ${JSON.stringify(selector)}
+            return 'Filled ' + ${sel_}
           }
-          throw new Error('Element is not an input: ${selector}')
+          throw new Error('Element is not an input: ' + ${sel_})
         })()
       `)
       return `Filled ${selector}`
@@ -118,16 +121,13 @@ export async function executeBrowserCommand(command: string, args: Record<string
       const selector = args.selector as string
       const handle = getHandle(args.tabId as string)
       if (!handle) return 'No browser tab available'
-      const result = await handle.executeJavaScript(`
-        (() => {
-          ${selector
-            ? `const el = document.querySelector(${JSON.stringify(selector)})
-               if (!el) throw new Error('Element not found: ${selector}')
-               return el.innerText || el.textContent || ''`
-            : 'return document.body.innerText || document.body.textContent || \'\''
-          }
-        })()
-      `)
+      const sel_ = selector ? JSON.stringify(selector) : null
+      const js = sel_
+        ? `const el = document.querySelector(${sel_});
+           if (!el) throw new Error('Element not found: ' + ${sel_});
+           return el.innerText || el.textContent || '';`
+        : `return document.body.innerText || document.body.textContent || '';`
+      const result = await handle.executeJavaScript(`(() => { ${js} })()`)
       return String(result)
     }
 
