@@ -1,0 +1,5 @@
+name: "Kloudlite CodeQL configuration"
+
+paths-ignore:
+  # Dagger CI module — separate Go module, not application code
+  - build-sys/**
