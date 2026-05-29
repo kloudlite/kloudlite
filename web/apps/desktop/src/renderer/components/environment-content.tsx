@@ -340,6 +340,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       'environments',
                       envName,
                       {
+                        apiVersion: 'environments.kloudlite.io/v1',
+                        kind: 'Environment',
+                        metadata: { name: envName, namespace: 'wm-karthik-dev' },
                         spec: {
                           compose: {
                             displayName: 'Compose App',
