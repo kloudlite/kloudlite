@@ -21,7 +21,7 @@ env:
 jobs:
   prepare:
     name: Prepare nightly tag
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       version: ${{ steps.tag.outputs.version }}
@@ -44,7 +44,7 @@ jobs:
   publish-all:
     name: Publish all images
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     steps:
       - name: Checkout development
         uses: actions/checkout@v4
@@ -83,7 +83,7 @@ jobs:
   kltun:
     name: Build kltun
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     steps:
       - name: Checkout development
         uses: actions/checkout@v4
@@ -134,7 +134,7 @@ jobs:
     needs:
       - prepare
       - publish-all
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     steps:
       - name: Trigger deploy in kloudlite-ci
         env:

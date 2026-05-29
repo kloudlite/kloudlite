@@ -20,7 +20,7 @@ jobs:
   # -- Go: format + build + test (batched, shared caches) -------------
   go:
     name: Go checks
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     steps:
       - uses: actions/checkout@v4
 
@@ -39,7 +39,7 @@ jobs:
   # -- Web: build per app (batched, shared node_modules) --------------
   web:
     name: Web checks (${{ matrix.app }})
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     strategy:
       fail-fast: false
       matrix:
