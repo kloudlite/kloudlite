@@ -22,11 +22,10 @@ type Env struct {
 	HostedSubdomain         string           `env:"HOSTED_SUBDOMAIN" required:"true"`
 	InstallationSecret      string           `env:"INSTALLATION_SECRET" required:"true"`
 	JWTSecret               string           `env:"JWT_SECRET" required:"true"`
-	HostManagerImage        string           `env:"HOST_MANAGER_IMAGE" default:"ghcr.io/kloudlite/host-manager:dev-local"`
 	TunnelServerImage       string           `env:"TUNNEL_SERVER_IMAGE" required:"true"`
 	CodeAnalyzerImage       string           `env:"CODE_ANALYZER_IMAGE" required:"true"`
 
-	WorkMachineManagerImage string `env:"WORKMACHINE_MANAGER_IMAGE" default:"ghcr.io/kloudlite/kloudlite/workmachine-manager:development"`
+	WorkMachineManagerImage string `env:"WORKMACHINE_MANAGER_IMAGE" required:"true"`
 	PodNamespace            string `env:"POD_NAMESPACE" default:"kloudlite"`
 
 	SnapshotRegistryEndpoint string `env:"SNAPSHOT_REGISTRY_ENDPOINT" default:"image-registry.kloudlite.svc.cluster.local:5000"`
