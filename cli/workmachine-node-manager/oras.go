@@ -146,34 +146,24 @@ func extractTarGz(srcFile string, destDir string) error {
 				return fmt.Errorf("failed to write file: %w", err)
 			}
 			outFile.Close()
-		case tar.TypeSymlink:
-			// Validate symlink target stays within destDir
-			linkTarget := header.Linkname
-			if !filepath.IsAbs(linkTarget) {
-				linkTarget = filepath.Join(filepath.Dir(targetPath), linkTarget)
+		case tar.TypeSymlink, tar.TypeLink:
+			resolvedTarget := filepath.Clean(header.Linkname)
+			if !filepath.IsAbs(resolvedTarget) {
+				resolvedTarget = filepath.Join(filepath.Dir(targetPath), filepath.Base(header.Linkname))
 			}
-			cleanTarget := filepath.Clean(linkTarget)
-			if !strings.HasPrefix(cleanTarget, filepath.Clean(destDir)+string(filepath.Separator)) && cleanTarget != filepath.Clean(destDir) {
-				return fmt.Errorf("symlink %s targets outside destination: %s", header.Name, header.Linkname)
+			cleaned := filepath.Clean(resolvedTarget)
+			if !strings.HasPrefix(cleaned, filepath.Clean(destDir)+string(filepath.Separator)) && cleaned != filepath.Clean(destDir) {
+				return fmt.Errorf("link %s targets outside destination", header.Name)
 			}
-			// Ensure parent directory exists
-			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
 				return fmt.Errorf("failed to create parent directory: %w", err)
 			}
-			// Resolve relative symlink against the target path to prevent linkname
-			// traversal attacks, then create the symlink using a safe relative path
-			if !filepath.IsAbs(header.Linkname) {
-				rel, err := filepath.Rel(filepath.Dir(targetPath), cleanTarget)
-				if err != nil {
-					return fmt.Errorf("failed to compute symlink target: %w", err)
-				}
-				if err := os.Symlink(rel, targetPath); err != nil {
-					return fmt.Errorf("failed to create symlink: %w", err)
-				}
-			} else {
-				if err := os.Symlink(cleanTarget, targetPath); err != nil {
-					return fmt.Errorf("failed to create symlink: %w", err)
-				}
+			data, err := os.ReadFile(cleaned)
+			if err != nil {
+				return fmt.Errorf("failed to read link target: %w", err)
+			}
+			if err := os.WriteFile(targetPath, data, os.FileMode(header.Mode)); err != nil {
+				return fmt.Errorf("failed to write file: %w", err)
 			}
 		}
 	}
