@@ -1,4 +1,5 @@
 export { StatusDot } from './status-dot'
+export { DotGrid } from './dot-grid'
 export { IconButton } from './icon-button'
 export { Badge } from './badge'
 export { DataTable, type Column } from './data-table'

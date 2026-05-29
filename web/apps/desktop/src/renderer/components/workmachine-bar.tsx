@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Cpu, Power, ChevronUp, ChevronDown, HardDrive } from 'lucide-react'
+import { Cpu, Power, ChevronUp, ChevronDown, HardDrive, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DotGrid } from './ui/dot-grid'
+import { IconButton } from './ui/icon-button'
 
 // Dummy workmachine state
 const WORKMACHINE = {
@@ -35,9 +37,11 @@ export function WorkMachineBar() {
           <HardDrive className="h-4 w-4 text-sidebar-foreground/70" />
           <div className={cn('absolute -bottom-0.5 -right-0.5 h-[6px] w-[6px] rounded-full', config.color)} />
         </div>
+
         <div className="min-w-0 flex-1 text-left">
           <span className="block truncate text-[13px] font-medium text-sidebar-foreground/90">WorkMachine</span>
         </div>
+
         <span className={cn('text-[11px] font-medium', config.textColor)}>{config.label}</span>
         {expanded ? <ChevronDown className="h-3 w-3 text-sidebar-foreground/30" /> : <ChevronUp className="h-3 w-3 text-sidebar-foreground/30" />}
       </button>
@@ -45,60 +49,45 @@ export function WorkMachineBar() {
       {/* Expanded details */}
       <div
         className="overflow-hidden transition-all duration-200 ease-out"
-        style={{ maxHeight: expanded ? '200px' : '0px', opacity: expanded ? 1 : 0 }}
+        style={{ maxHeight: expanded ? '220px' : '0px', opacity: expanded ? 1 : 0 }}
       >
-        <div className="px-4 pb-4 pt-1">
-          {/* Specs */}
-          <div className="mb-3.5 flex items-center gap-2 text-[11px] text-sidebar-foreground/60">
+        <div className="space-y-3 px-4 pb-4 pt-1">
+          {/* Specs row */}
+          <div className="flex items-center gap-2 text-[11px] text-sidebar-foreground/60">
             <Cpu className="h-3 w-3" />
             <span>{wm.type}</span>
             <span>·</span>
             <span>Up {wm.uptime}</span>
           </div>
 
-          {/* CPU bar */}
-          <div className="mb-2.5">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-sidebar-foreground/60">CPU</span>
-              <span className="font-medium text-sidebar-foreground/80">{wm.cpu}%</span>
+          {/* CPU & Memory side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg border border-sidebar-foreground/[0.06] bg-sidebar-foreground/[0.02] px-3 py-2.5">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-sidebar-foreground/70">CPU</span>
+                <span className="font-mono text-[13px] font-semibold text-sidebar-foreground/90">{wm.cpu}%</span>
+              </div>
+              <DotGrid value={wm.cpu} total={10} size={8} />
             </div>
-            <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-sidebar-foreground/[0.08]">
-              <div
-                className={cn('h-full rounded-full transition-all', wm.cpu > 80 ? 'bg-red-400' : wm.cpu > 60 ? 'bg-amber-400' : 'bg-emerald-400')}
-                style={{ width: `${wm.cpu}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Memory bar */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-sidebar-foreground/60">Memory</span>
-              <span className="font-medium text-sidebar-foreground/80">{wm.memory}%</span>
-            </div>
-            <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-sidebar-foreground/[0.08]">
-              <div
-                className={cn('h-full rounded-full transition-all', wm.memory > 80 ? 'bg-red-400' : wm.memory > 60 ? 'bg-amber-400' : 'bg-emerald-400')}
-                style={{ width: `${wm.memory}%` }}
-              />
+            <div className="rounded-lg border border-sidebar-foreground/[0.06] bg-sidebar-foreground/[0.02] px-3 py-2.5">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-sidebar-foreground/70">Memory</span>
+                <span className="font-mono text-[13px] font-semibold text-sidebar-foreground/90">{wm.memory}%</span>
+              </div>
+              <DotGrid value={wm.memory} total={10} size={8} />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-medium transition-colors',
-                wm.status === 'running'
-                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
-                  : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-              )}
+          <div className="flex items-center justify-end gap-1">
+            <IconButton
+              variant={wm.status === 'running' ? 'danger' : 'muted'}
+              onClick={() => {}}
             >
-              <Power className="h-3 w-3" />
-              {wm.status === 'running' ? 'Stop' : 'Start'}
-            </button>
-            <button
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-sidebar-foreground/[0.06] py-1.5 text-[11px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1]"
+              <Power className="h-3.5 w-3.5" />
+            </IconButton>
+            <IconButton
+              variant="muted"
               onClick={() => window.electronAPI.showPopupMenu([
                 { label: 'Change Machine Type', id: 'type' },
                 { label: 'SSH Keys', id: 'ssh' },
@@ -107,8 +96,8 @@ export function WorkMachineBar() {
                 { label: 'Restart', id: 'restart' },
               ])}
             >
-              Settings
-            </button>
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </IconButton>
           </div>
         </div>
       </div>
