@@ -371,8 +371,10 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 onClick={async () => {
                   if (saving || !compose.trim()) return
                   setSaving(true)
+                  console.log('[compose] Starting PATCH...')
                   try {
-                    await window.electronAPI.patchResource(
+                    console.log('[compose] Calling patchResource...', envName)
+                    const patchResult = await window.electronAPI.patchResource(
                       'wm-karthik-dev',
                       'environments',
                       envName,
@@ -390,6 +392,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       }
                     )
 
+                    console.log('[compose] PATCH succeeded, starting poll...', JSON.stringify(patchResult).slice(0, 100))
                     // Poll API until composeStatus appears (source of truth)
                     let pollAttempts = 0
                     const poll = async (): Promise<void> => {
