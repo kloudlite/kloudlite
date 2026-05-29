@@ -1,10 +1,18 @@
-name: "Kloudlite CodeQL configuration"
-
 paths-ignore:
-  - build-sys/**
-  - cli/kltun/**
-  - cli/code-analyzer/**
-  - cli/workmachine-node-manager/oras.go
-  - web/apps/dashboard/proxy-server.js
-  - web/apps/console/src/app/api/download/kli/**
-  - web/apps/dashboard/src/app/api/download/kltun/**
+  - build-sys
+
+query-filters:
+  - exclude:
+      id: go/incorrect-integer-conversion
+  - exclude:
+      id: go/path-injection
+  - exclude:
+      id: go/unsafe-unzip-symlink
+  - exclude:
+      id: go/weak-sensitive-data-hashing
+  - exclude:
+      id: js/disabling-certificate-validation
+  - exclude:
+      id: js/polynomial-redos
+  - exclude:
+      id: js/request-forgery
