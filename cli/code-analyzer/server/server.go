@@ -106,6 +106,7 @@ func isValidWorkspaceName(name string) bool {
 // clearWorkspaceCache clears the findings cache and manifest for a workspace
 // This forces a full re-analysis on the next run
 func (s *Server) clearWorkspaceCache(workspace string) {
+	workspace = filepath.Base(workspace)
 	if !isValidWorkspaceName(workspace) {
 		s.logger.Warn("Invalid workspace name for cache clear", zap.String("workspace", workspace))
 		return
