@@ -210,6 +210,20 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 	}
 
 	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: managerNamespace}}
+
+	// Check if StatefulSet already has the correct image to avoid unnecessary
+	// updates that trigger owned-resource watch loops and cause pod churn.
+	if err := r.Get(ctx, client.ObjectKeyFromObject(statefulSet), statefulSet); err == nil {
+		if len(statefulSet.Spec.Template.Spec.Containers) > 0 {
+			currentImage := statefulSet.Spec.Template.Spec.Containers[0].Image
+			if currentImage == r.env.WorkMachineManagerImage &&
+				len(statefulSet.Spec.Template.Spec.InitContainers) > 0 &&
+				statefulSet.Spec.Template.Spec.InitContainers[0].Image == r.env.WorkMachineManagerImage {
+				return ctrl.Result{}, nil
+			}
+		}
+	}
+
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
 		replicas := int32(1)
 		statefulSet.Labels = labels
