@@ -247,6 +247,7 @@ func (s *Storage) GetLatestReport(workspace string, reportType ReportType) (*Rep
 	}
 	latestFile := filepath.Join(reportDir, "latest.json")
 
+	// #nosec G304 -- path validated by safePath above
 	data, err := os.ReadFile(latestFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -270,6 +271,7 @@ func (s *Storage) GetReportHistory(workspace string, reportType ReportType) ([]R
 		return nil, fmt.Errorf("invalid workspace or report type: %w", err)
 	}
 
+	// #nosec G304 -- path validated by safePath above
 	entries, err := os.ReadDir(reportDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -446,6 +448,7 @@ func (s *Storage) GetLatestAggregatedReport(workspace string) (*AggregatedReport
 		return nil, fmt.Errorf("invalid workspace: %w", err)
 	}
 	latestFile := filepath.Join(reportDir, "latest.json")
+	// #nosec G304 -- path validated by safePath above
 
 	data, err := os.ReadFile(latestFile)
 	if err != nil {

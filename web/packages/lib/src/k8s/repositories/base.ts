@@ -288,9 +288,9 @@ export abstract class BaseRepository<T extends K8sResource> {
         throw new Error("Invalid arguments for patch operation");
       }
 
-      validateK8sUrl(url, baseUrl);
+      const validatedUrl = validateK8sUrl(url, baseUrl);
 
-      const response = await fetch(url, {
+      const response = await fetch(validatedUrl, {
         method: "PATCH",
         headers: {
           "Content-Type": contentType,
@@ -344,9 +344,9 @@ export abstract class BaseRepository<T extends K8sResource> {
         throw new Error("Invalid arguments for updateStatus operation");
       }
 
-      validateK8sUrl(url, baseUrl);
+      const validatedUrl = validateK8sUrl(url, baseUrl);
 
-      const response = await fetch(url, {
+      const response = await fetch(validatedUrl, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/merge-patch+json",

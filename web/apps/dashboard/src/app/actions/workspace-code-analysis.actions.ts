@@ -31,8 +31,8 @@ export async function getCodeAnalysis(
     }
 
     const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/code-analysis`
-    validateApiUrl(url, env.apiUrl)
-    const response = await fetch(url, {
+    const validatedUrl = validateApiUrl(url, env.apiUrl)
+    const response = await fetch(validatedUrl, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -77,8 +77,8 @@ export async function triggerCodeAnalysis(workspaceName: string, namespace: stri
     }
 
     const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/code-analysis`
-    validateApiUrl(url, env.apiUrl)
-    const response = await fetch(url, {
+    const validatedUrl = validateApiUrl(url, env.apiUrl)
+    const response = await fetch(validatedUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
