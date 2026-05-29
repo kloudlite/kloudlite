@@ -150,7 +150,7 @@ func (m *Kloudlite) buildGoBinary(
 	goBuildCache := dag.CacheVolume("go-build-v1")
 
 	ctr := dag.Container().
-		From("golang:1.24-alpine").
+		From("golang:1.25-alpine").
 		WithExec([]string{"apk", "add", "--no-cache", "git", "curl", "bash", "build-base"}).
 		WithMountedCache("/go/pkg/mod", goModCache).
 		WithMountedCache("/root/.cache/go-build", goBuildCache).
