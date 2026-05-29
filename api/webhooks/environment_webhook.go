@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kloudlite/kloudlite/pkg/logger"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
-platformv1alpha1 "github.com/kloudlite/kloudlite/types/user/v1alpha1"
+	platformv1alpha1 "github.com/kloudlite/kloudlite/types/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
