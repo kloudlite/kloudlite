@@ -19,7 +19,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -396,6 +398,16 @@ func workMachineManagerNamespace(obj *v1.WorkMachine) string {
 	return obj.Spec.TargetNamespace
 }
 
+// getNodeCondition returns the status of a specific node condition, or empty string if not found.
+func getNodeCondition(node *corev1.Node, conditionType corev1.NodeConditionType) corev1.ConditionStatus {
+	for _, c := range node.Status.Conditions {
+		if c.Type == conditionType {
+			return c.Status
+		}
+	}
+	return ""
+}
+
 func boolPtr(v bool) *bool { return &v }
 
 func hostPathVolume(name, path string, pathType corev1.HostPathType) corev1.Volume {
@@ -490,6 +502,7 @@ func (r *PlatformScopedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// Watch for Nodes to trigger reconciliation when node joins/updates
 	// The reconciler will fetch fresh IPs from the configured cloud provider when Node Ready state changes.
+	// Filter out label-only changes to prevent reconcile storms from updateNodeIPLabels.
 	builder.Watches(
 		&corev1.Node{},
 		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
@@ -504,7 +517,28 @@ func (r *PlatformScopedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				{NamespacedName: client.ObjectKey{Name: node.Name}},
 			}
 		}),
-	)
+	).WithEventFilter(predicate.Funcs{
+		UpdateFunc: func(ev event.UpdateEvent) bool {
+			// Only trigger on generation (pod template spec) or Ready condition changes.
+			// Filter out label-only updates to avoid infinite reconcile loops.
+			if ev.ObjectNew.GetGeneration() != ev.ObjectOld.GetGeneration() {
+				return true
+			}
+			// Check if Ready condition changed
+			oldReady := getNodeCondition(ev.ObjectOld.(*corev1.Node), corev1.NodeReady)
+			newReady := getNodeCondition(ev.ObjectNew.(*corev1.Node), corev1.NodeReady)
+			if oldReady != newReady {
+				return true
+			}
+			return false
+		},
+		CreateFunc: func(ev event.CreateEvent) bool {
+			return true
+		},
+		DeleteFunc: func(ev event.DeleteEvent) bool {
+			return true
+		},
+	})
 
 	// Add indexer for pod.spec.nodeName to efficiently query pods by node name
 	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, "spec.nodeName", func(obj client.Object) []string {
