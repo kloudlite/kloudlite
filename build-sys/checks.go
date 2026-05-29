@@ -173,8 +173,9 @@ func (m *Kloudlite) webBuildEnv(app string) string {
 // |   extract without running checks)     |
 // +---------------------------------------+
 
-// ExtractGoModCache runs go build and returns the updated /go/pkg/mod directory
-// for saving back to GitHub Actions cache.
+// ExtractGoModCache returns the /go/pkg/mod directory from a Go dev container.
+// Use this after RunGoChecks to export the updated cache back to the host.
+// Shares the same CacheVolume as RunGoChecks within the same engine session.
 func (m *Kloudlite) ExtractGoModCache(
 	ctx context.Context,
 	// +defaultPath="/"
@@ -185,11 +186,12 @@ func (m *Kloudlite) ExtractGoModCache(
 	goBuildSeed *dagger.Directory,
 ) *dagger.Directory {
 	ctr := m.goDevContainer(source, goModSeed, goBuildSeed)
-	ctr = ctr.WithExec([]string{"go", "build", "./..."})
+	// No-op command just to ensure the cache mount is resolved.
+	ctr = ctr.WithExec([]string{"true"})
 	return ctr.Directory("/go/pkg/mod")
 }
 
-// ExtractGoBuildCache runs go build and returns the updated /root/.cache/go-build directory.
+// ExtractGoBuildCache returns the /root/.cache/go-build directory.
 func (m *Kloudlite) ExtractGoBuildCache(
 	ctx context.Context,
 	// +defaultPath="/"
@@ -200,7 +202,7 @@ func (m *Kloudlite) ExtractGoBuildCache(
 	goBuildSeed *dagger.Directory,
 ) *dagger.Directory {
 	ctr := m.goDevContainer(source, goModSeed, goBuildSeed)
-	ctr = ctr.WithExec([]string{"go", "build", "./..."})
+	ctr = ctr.WithExec([]string{"true"})
 	return ctr.Directory("/root/.cache/go-build")
 }
 

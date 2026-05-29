@@ -48,7 +48,23 @@ jobs:
           # shellcheck disable=SC2086
           dagger call run-go-checks --source .. $SEED container
 
-  # -- Web: lint + build per app (batched, shared node_modules) -------
+      # Extract the updated caches from Dagger back to the host so
+      # actions/cache can persist them for the next run.
+      - name: Save Go mod cache
+        if: always()
+        working-directory: build-sys
+        run: |
+          mkdir -p "$HOME/go/pkg/mod" "$HOME/.cache/go-build"
+          SEED=""
+          if [ "${{ steps.go-cache.outputs.cache-hit }}" = "true" ]; then
+            SEED="--go-mod-seed $HOME/go/pkg/mod --go-build-seed $HOME/.cache/go-build"
+          fi
+          # shellcheck disable=SC2086
+          dagger call extract-go-mod-cache --source .. $SEED --output "$HOME/go/pkg/mod"
+          # shellcheck disable=SC2086
+          dagger call extract-go-build-cache --source .. $SEED --output "$HOME/.cache/go-build"
+
+  # -- Web: build per app (batched, shared node_modules) --------------
   web:
     name: Web checks (${{ matrix.app }})
     runs-on: ubuntu-latest
@@ -72,7 +88,7 @@ jobs:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
-      - name: Run web checks (lint -> build)
+      - name: Run web checks (build)
         working-directory: build-sys
         run: |
           SEED=""
@@ -81,3 +97,15 @@ jobs:
           fi
           # shellcheck disable=SC2086
           dagger call run-web-checks --source .. --app ${{ matrix.app }} $SEED container
+
+      # Extract updated node_modules back to host for caching.
+      - name: Save node_modules cache
+        if: always()
+        working-directory: build-sys
+        run: |
+          SEED=""
+          if [ "${{ steps.bun-cache.outputs.cache-hit }}" = "true" ]; then
+            SEED="--node-modules-seed ../web/node_modules"
+          fi
+          # shellcheck disable=SC2086
+          dagger call extract-node-modules --source .. $SEED --output ../web/node_modules
