@@ -1,15 +1,9 @@
-import { ChevronLeft, Server, FileText, Settings, Plus, History, MoreHorizontal } from 'lucide-react'
+import { useRef, useEffect } from 'react'
+import { ChevronLeft, Server, FileText, Settings, Plus, History, MoreHorizontal, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModeStore } from '@/store/mode'
+import { useEnvironmentStore } from '@/store/environments'
 import { SidebarListItem } from './sidebar-list-item'
-
-const DUMMY_ENVS = [
-  { id: 'env-1', hash: 'a1b2c3', name: 'Staging', owner: 'karthik', status: 'active' as const, services: 4, visibility: 'shared' },
-  { id: 'env-2', hash: 'd4e5f6', name: 'Development', owner: 'karthik', status: 'active' as const, services: 2, visibility: 'private' },
-  { id: 'env-3', hash: 'g7h8i9', name: 'Production', owner: 'karthik', status: 'active' as const, services: 2, visibility: 'shared' },
-  { id: 'env-4', hash: 'j1k2l3', name: 'QA Testing', owner: 'sohail', status: 'inactive' as const, services: 3, visibility: 'open' },
-  { id: 'env-5', hash: 'm4n5o6', name: 'Demo', owner: 'karthik', status: 'error' as const, services: 1, visibility: 'private' },
-]
 
 const ENV_TABS = [
   { id: 'services', label: 'Services', icon: Server },
@@ -18,35 +12,61 @@ const ENV_TABS = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
-async function showEnvMenu() {
+const USER_NAMESPACE = 'wm-karthik-dev'
+
+async function showEnvMenu(envId: string, envName: string) {
   const action = await window.electronAPI.showPopupMenu([
-    { label: 'Fork Environment', id: 'fork' },
-    { label: '', id: '', type: 'separator' },
     { label: 'Delete Environment', id: 'delete', danger: true },
   ])
-  if (action === 'fork') {
-    // TODO: implement fork
-  } else if (action === 'delete') {
-    // TODO: implement delete
+  if (action === 'delete') {
+    await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
   }
 }
 
 async function showEnvListMenu(envName: string) {
   const action = await window.electronAPI.showPopupMenu([
-    { label: 'Fork Environment', id: 'fork' },
-    { label: '', id: '', type: 'separator' },
     { label: `Delete "${envName}"`, id: 'delete', danger: true },
   ])
-  if (action === 'fork') {
-    // TODO
-  } else if (action === 'delete') {
-    // TODO
+  if (action === 'delete') {
+    await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
   }
 }
 
 export function SidebarEnvironments() {
   const { selectedEnvId, envActiveTab, selectEnvironment, setEnvActiveTab, clearSelectedEnv, setShowNewEnvDialog } = useModeStore()
-  const selectedEnv = DUMMY_ENVS.find((e) => e.id === selectedEnvId)
+  const { environments: envs, loading, error, fetchEnvironments } = useEnvironmentStore()
+  const selectedEnv = envs.find((e) => e.id === selectedEnvId)
+
+  // Fetch environments on mount
+  const fetchedRef = useRef(false)
+  useEffect(() => {
+    if (!fetchedRef.current) {
+      fetchedRef.current = true
+      fetchEnvironments(USER_NAMESPACE)
+    }
+  }, [fetchEnvironments])
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-sidebar-foreground/40" />
+        <p className="mt-2 text-[12px] text-sidebar-foreground/40">Loading environments...</p>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6">
+        <p className="text-center text-[12px] text-red-400">{error}</p>
+        <button className="no-drag mt-3 rounded-lg border border-border px-4 py-1.5 text-[11px] text-sidebar-foreground/60" onClick={() => fetchEnvironments(USER_NAMESPACE)}>
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   // Detail view
   if (selectedEnv) {
@@ -71,12 +91,12 @@ export function SidebarEnvironments() {
             <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-sidebar-foreground/90">{selectedEnv.name}</h2>
             <button
               className="no-drag rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/70"
-              onClick={showEnvMenu}
+              onClick={() => showEnvMenu(selectedEnv.id, selectedEnv.name)}
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-0.5 pl-[18px] text-[11px] text-sidebar-foreground/40">{selectedEnv.owner} · {selectedEnv.visibility}</p>
+          <p className="mt-0.5 pl-[18px] text-[11px] text-sidebar-foreground/40">{selectedEnv.ownedBy || 'unknown'} · {selectedEnv.namespace}</p>
         </div>
 
         <div className="flex flex-col gap-0.5 px-3">
@@ -113,7 +133,12 @@ export function SidebarEnvironments() {
       </div>
       <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-0.5 px-3">
-          {DUMMY_ENVS.map((env) => (
+          {envs.length === 0 && !loading && (
+            <div className="px-3 py-8 text-center text-[12px] text-sidebar-foreground/40">
+              No environments yet
+            </div>
+          )}
+          {envs.map((env) => (
             <SidebarListItem
               key={env.id}
               icon={
@@ -123,8 +148,7 @@ export function SidebarEnvironments() {
                 )} />
               }
               label={env.name}
-              right={<span className="text-[12px] font-medium text-sidebar-foreground/50">{env.services}</span>}
-              onClick={() => selectEnvironment(env.id, env.hash, env.name)}
+              onClick={() => selectEnvironment(env.id, env.name, env.name)}
               onContextMenu={(e) => {
                 e.preventDefault()
                 showEnvListMenu(env.name)

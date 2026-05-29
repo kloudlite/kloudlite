@@ -18,6 +18,13 @@ export interface ElectronAPI {
   showPopupMenu: (items: { label: string; id: string; type?: string; danger?: boolean }[]) => Promise<string | null>
   onMCPCommand: (callback: (command: { requestId: string; command: string; args: Record<string, unknown> }) => void) => void
   sendMCPResult: (requestId: string, result: unknown, error: string | null) => void
+  // Platform API
+  listEnvironments: (namespace: string) => Promise<{ items: Record<string, unknown>[]; error?: string }>
+  createEnvironment: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<Record<string, unknown>>
+  deleteEnvironment: (namespace: string, name: string) => Promise<{ success?: boolean; error?: string }>
+  listWorkspaces: (namespace: string) => Promise<{ items: Record<string, unknown>[]; error?: string }>
+  createWorkspace: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<Record<string, unknown>>
+  listWorkMachines: () => Promise<{ items: Record<string, unknown>[]; error?: string }>
 }
 
 const api: ElectronAPI = {
@@ -33,7 +40,13 @@ const api: ElectronAPI = {
   getCertificate: (url) => ipcRenderer.invoke('get-certificate', url),
   showPopupMenu: (items) => ipcRenderer.invoke('show-popup-menu', items),
   onMCPCommand: (callback) => ipcRenderer.on('mcp-command', (_event, data) => callback(data)),
-  sendMCPResult: (requestId, result, error) => ipcRenderer.send('mcp-browser-result', { requestId, result, error })
+  sendMCPResult: (requestId, result, error) => ipcRenderer.send('mcp-browser-result', { requestId, result, error }),
+  listEnvironments: (namespace) => ipcRenderer.invoke('api:list-environments', namespace),
+  createEnvironment: (namespace, name, spec) => ipcRenderer.invoke('api:create-environment', namespace, name, spec),
+  deleteEnvironment: (namespace, name) => ipcRenderer.invoke('api:delete-environment', namespace, name),
+  listWorkspaces: (namespace) => ipcRenderer.invoke('api:list-workspaces', namespace),
+  createWorkspace: (namespace, name, spec) => ipcRenderer.invoke('api:create-workspace', namespace, name, spec),
+  listWorkMachines: () => ipcRenderer.invoke('api:list-workmachines')
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
