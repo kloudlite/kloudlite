@@ -394,11 +394,15 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                     let pollAttempts = 0
                     const poll = async (): Promise<void> => {
                       try {
+                        console.log(`[compose] Poll #${pollAttempts}: fetching environments...`)
                         const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
+                        console.log(`[compose] list result:`, JSON.stringify(result).slice(0, 200))
                         const env = (result?.items || []).find(
                           (e: any) => e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
                         )
+                        console.log(`[compose] env found:`, !!env, `name="${envName}"`)
                         const cs = env?.status?.composeStatus
+                        console.log(`[compose] composeStatus:`, cs ? `services=${cs.services?.length}` : 'null')
                         if (cs?.services?.length > 0) {
                           const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
                             id: s.name || `svc-${i}`,
@@ -411,19 +415,22 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                             })),
                             volumes: [],
                           }))
+                          console.log(`[compose] setting ${svcs.length} services from composeStatus`)
                           setServices(svcs)
                           return
                         }
                       } catch (e) {
-                        console.warn('Poll failed, retrying...', e)
+                        console.warn('[compose] Poll failed, retrying...', e)
                       }
                       if (pollAttempts < 20) {
                         pollAttempts++
                         await new Promise((r) => setTimeout(r, 2000))
                         return poll()
                       }
+                      console.warn('[compose] Poll exhausted after 20 attempts, giving up')
                     }
                     await poll()
+                    console.log('[compose] Poll done, closing editor')
                     closeCompose(true)
                   } catch (err) {
                     console.error('Failed to apply compose:', err)

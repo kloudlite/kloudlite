@@ -389,8 +389,12 @@ ipcMain.on('mcp-browser-result', (_event, { requestId, result, error }) => {
 ipcMain.handle('api:list-environments', async (_event, namespace: string) => {
   try {
     const result = await platformAPI.listEnvironments(namespace)
+    const count = result.items?.length || 0
+    const names = (result.items || []).map((i: any) => i.metadata?.name).join(', ')
+    console.log(`[api] list-environments: ${count} items: ${names}`)
     return { items: result.items }
   } catch (err) {
+    console.error(`[api] list-environments error:`, (err as Error).message)
     return { error: (err as Error).message }
   }
 })
