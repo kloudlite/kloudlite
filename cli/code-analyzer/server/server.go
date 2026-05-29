@@ -122,14 +122,14 @@ func (s *Server) clearWorkspaceCache(workspace string) {
 
 	// Remove findings cache
 	// #nosec G304 -- path validated above
-	findingsCachePath := filepath.Join(workspaceDir, "findings-cache.json")
+	findingsCachePath := filepath.Join(filepath.Clean(workspaceDir), "findings-cache.json")
 	if err := os.Remove(findingsCachePath); err != nil && !os.IsNotExist(err) {
 		s.logger.Warn("Failed to remove findings cache", zap.String("workspace", workspace), zap.Error(err))
 	}
 
 	// #nosec G304 -- path validated above
 	// Remove manifest
-	manifestPath := filepath.Join(workspaceDir, "manifest.json")
+	manifestPath := filepath.Join(filepath.Clean(workspaceDir), "manifest.json")
 	if err := os.Remove(manifestPath); err != nil && !os.IsNotExist(err) {
 		s.logger.Warn("Failed to remove manifest", zap.String("workspace", workspace), zap.Error(err))
 	}
