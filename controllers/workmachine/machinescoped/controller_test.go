@@ -165,8 +165,11 @@ func TestEnsureWorkmachineIngressControllerTargetsIntegratedManager(t *testing.T
 			t.Fatalf("service selector[%s] = %q, want %q; full selector=%#v", key, got, want, service.Spec.Selector)
 		}
 	}
-	assertServicePort(t, service, "http", 8080)
+	assertServicePort(t, service, "http", 9090)
 	assertServicePort(t, service, "https", 443)
+	assertServicePort(t, service, "wireguard", 51820)
+	assertServicePort(t, service, "dns-udp", 53)
+	assertServicePort(t, service, "dns-tcp", 53)
 
 	statefulSet := &appsv1.StatefulSet{}
 	if err := r.Get(context.Background(), types.NamespacedName{Name: "wm-ingress-controller", Namespace: "wm-test"}, statefulSet); !apiErrors.IsNotFound(err) {

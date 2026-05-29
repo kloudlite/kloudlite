@@ -249,7 +249,7 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 			ImagePullPolicy: corev1.PullAlways,
 			SecurityContext: &corev1.SecurityContext{Privileged: boolPtr(true)},
 			Ports: []corev1.ContainerPort{
-				{Name: "http", ContainerPort: 8080, Protocol: corev1.ProtocolTCP},
+				{Name: "http", ContainerPort: 9090, Protocol: corev1.ProtocolTCP},
 				{Name: "https", ContainerPort: 8443, Protocol: corev1.ProtocolTCP},
 				{Name: "tunnel-ws", ContainerPort: 443, Protocol: corev1.ProtocolTCP},
 				{Name: "ingress-health", ContainerPort: 17777, Protocol: corev1.ProtocolTCP},
