@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
+	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	zap2 "go.uber.org/zap"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
