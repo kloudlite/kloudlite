@@ -390,9 +390,37 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       }
                     )
 
-                    // Parse and show services immediately from the applied compose
-                    const parsed = parseComposeServices(compose)
-                    if (parsed.length > 0) setServices(parsed)
+                    // Poll API until composeStatus appears (source of truth)
+                    let pollAttempts = 0
+                    const poll = async (): Promise<void> => {
+                      const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
+                      if (result.error) return
+                      const env = (result.items || []).find(
+                        (e: any) => e.metadata?.name === envName
+                      )
+                      const cs = env?.status?.composeStatus
+                      if (cs?.services?.length > 0) {
+                        const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
+                          id: s.name || `svc-${i}`,
+                          name: s.name || `svc-${i}`,
+                          type: 'ClusterIP' as const,
+                          clusterIP: '',
+                          dns: `${s.name}.${env?.spec?.targetNamespace || ''}.svc.cluster.local`,
+                          ports: (s.ports || []).map((p: number) => ({
+                            port: p, targetPort: p, protocol: 'TCP'
+                          })),
+                          volumes: [],
+                        }))
+                        setServices(svcs)
+                        return
+                      }
+                      if (pollAttempts < 15) {
+                        pollAttempts++
+                        await new Promise((r) => setTimeout(r, 2000))
+                        return poll()
+                      }
+                    }
+                    await poll()
                     closeCompose(true)
                   } catch (err) {
                     console.error('Failed to apply compose:', err)
