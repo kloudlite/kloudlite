@@ -3,6 +3,8 @@ import { useTabStore } from '@/store/tabs'
 
 function getHandle(tabId?: string) {
   if (tabId) return webviewRegistry.get(tabId)
+  const activeId = useTabStore.getState().activeTabId
+  if (activeId) return webviewRegistry.get(activeId)
   return webviewRegistry.getFirst()
 }
 
