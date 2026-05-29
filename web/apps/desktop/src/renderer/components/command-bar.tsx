@@ -89,6 +89,15 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
         const svc = availableServices[selectedIndex - filteredOpenTabs.length]
         addTab(svc.vpnUrl)
         close()
+      } else if (query.trim()) {
+        const raw = query.trim()
+        const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(raw)
+        const url = hasScheme ? raw : `https://${raw}`
+        addTab(url)
+        close()
+      } else {
+        addTab()
+        close()
       }
     } else if (e.key === 'Escape') {
       close()
@@ -188,9 +197,14 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
           </div>
         )}
 
-        {totalItems === 0 && query && (
-          <div className="border-t border-border/30 px-5 py-6 text-center text-[13px] text-muted-foreground/50">
-            No matching services found
+        {totalItems === 0 && (
+          <div
+            className="flex cursor-pointer items-center gap-3 border-t border-border/30 px-5 py-4 text-[13px] text-muted-foreground/50 transition-colors hover:bg-accent/30"
+            onClick={() => { addTab(); close() }}
+          >
+            <Globe className="h-4 w-4" />
+            <span>{query ? `Search "${query}"` : 'New Tab'}</span>
+            <span className="ml-auto font-mono text-[10px] text-muted-foreground/30">⏎</span>
           </div>
         )}
       </div>
