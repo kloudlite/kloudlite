@@ -3,6 +3,8 @@ import { useTabStore } from '@/store/tabs'
 import { useHistoryStore, type PageMetadata } from '@/store/history'
 import { NavIndicator } from './nav-indicator'
 import { EmptyState } from './empty-state'
+import { webviewRegistry } from '@/lib/webview-registry'
+import { executeBrowserCommand } from '@/lib/browser-mcp'
 
 declare global {
   interface Window {
@@ -17,6 +19,8 @@ declare global {
       onThemeChanged: (callback: (theme: 'dark' | 'light') => void) => void
       onOpenUrlInNewTab: (callback: (url: string) => void) => void
       getCertificate: (url: string) => Promise<any>
+      onMCPCommand: (callback: (command: { requestId: string; command: string; args: Record<string, unknown> }) => void) => void
+      sendMCPResult: (requestId: string, result: unknown, error: string | null) => void
     }
   }
 }
@@ -32,6 +36,8 @@ interface WebviewElement extends HTMLElement {
   getURL: () => string
   getTitle: () => string
   getWebContentsId: () => number
+  executeJavaScript: (code: string) => Promise<unknown>
+  capturePage: () => Promise<{ toPNG: () => Buffer; toDataURL: (quality?: number) => string }>
   addEventListener: HTMLElement['addEventListener']
   removeEventListener: HTMLElement['removeEventListener']
 }
@@ -91,6 +97,18 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
     })
   }, [activeTabId, getActiveWebview, onHandle, updateTab])
 
+  // Listen for MCP browser commands from main process (AI control)
+  useEffect(() => {
+    window.electronAPI.onMCPCommand(async ({ requestId, command, args }) => {
+      try {
+        const result = await executeBrowserCommand(command, args)
+        window.electronAPI.sendMCPResult(requestId, result, null)
+      } catch (err) {
+        window.electronAPI.sendMCPResult(requestId, null, (err as Error).message)
+      }
+    })
+  }, [])
+
   // Listen for new-tab URLs from main process (webview popup interception)
   // Debounce and deduplicate to prevent redirect chains creating multiple tabs
   useEffect(() => {
@@ -122,6 +140,7 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
           container.removeChild(wv)
           webviewRefs.current.delete(id)
           readyRefs.current.delete(id)
+          webviewRegistry.unregister(id)
         }
       }
     }
@@ -247,6 +266,22 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
 
         container.appendChild(wv as unknown as Node)
         webviewRefs.current.set(tabId, wv)
+        webviewRegistry.register(tabId, {
+          navigate: (url) => tab.url ? wv.loadURL(url) : Promise.resolve(),
+          goBack: () => wv.goBack(),
+          goForward: () => wv.goForward(),
+          reload: () => wv.reload(),
+          executeJavaScript: (code) => wv.executeJavaScript(code),
+          capturePage: async () => {
+            const img = await wv.capturePage()
+            return img.toDataURL()
+          },
+          getURL: () => wv.getURL(),
+          getTitle: () => wv.getTitle(),
+          canGoBack: () => wv.canGoBack(),
+          canGoForward: () => wv.canGoForward(),
+          getWebContentsId: () => wv.getWebContentsId(),
+        })
       }
     }
   }, [tabs, updateTab])

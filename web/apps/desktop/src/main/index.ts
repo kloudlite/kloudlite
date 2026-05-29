@@ -9,6 +9,7 @@ import { app, BrowserWindow, globalShortcut, Menu, MenuItem, nativeImage, native
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
+import { startMCPServer, stopMCPServer, receiveMCPResult } from './mcp-server'
 // Lazy-load tls only when needed (speeds up startup)
 type PeerCertificate = import('tls').PeerCertificate
 
@@ -378,6 +379,11 @@ ipcMain.handle('show-popup-menu', (event, items: { label: string; id: string; ty
   })
 })
 
+// IPC: receive MCP browser command results from renderer
+ipcMain.on('mcp-browser-result', (_event, { requestId, result, error }) => {
+  receiveMCPResult(requestId, result, error)
+})
+
 // Handle new-window for webview guests — prevent popups, navigate in app instead
 app.on('web-contents-created', (_event, contents) => {
   if (contents.getType() === 'webview') {
@@ -415,6 +421,9 @@ app.whenReady().then(() => {
       }
     }
 
+    // Start browser MCP server for AI control
+    startMCPServer()
+
     // Register global shortcuts
     globalShortcut.register('Ctrl+Tab', () => {
       const win = BrowserWindow.getFocusedWindow()
@@ -436,7 +445,12 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  stopMCPServer()
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('before-quit', () => {
+  stopMCPServer()
 })
