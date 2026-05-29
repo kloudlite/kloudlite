@@ -84,7 +84,7 @@ export async function updateOAuthProvider(
     return { success: true }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    console.error(`[OAUTH] Failed to update provider ${type}:`, msg)
+    console.error('[OAUTH] Failed to update provider %s:', type, msg)
     return { success: false, error: msg }
   }
 }

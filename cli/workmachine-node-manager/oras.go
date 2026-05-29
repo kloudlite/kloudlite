@@ -155,8 +155,20 @@ func extractTarGz(srcFile string, destDir string) error {
 			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
 				return fmt.Errorf("failed to create parent directory: %w", err)
 			}
-			if err := os.Symlink(header.Linkname, targetPath); err != nil {
-				return fmt.Errorf("failed to create symlink: %w", err)
+			// Resolve relative symlink against the target path to prevent linkname
+			// traversal attacks, then create the symlink using a safe relative path
+			if !filepath.IsAbs(header.Linkname) {
+				rel, err := filepath.Rel(filepath.Dir(targetPath), cleanTarget)
+				if err != nil {
+					return fmt.Errorf("failed to compute symlink target: %w", err)
+				}
+				if err := os.Symlink(rel, targetPath); err != nil {
+					return fmt.Errorf("failed to create symlink: %w", err)
+				}
+			} else {
+				if err := os.Symlink(cleanTarget, targetPath); err != nil {
+					return fmt.Errorf("failed to create symlink: %w", err)
+				}
 			}
 		}
 	}

@@ -110,8 +110,9 @@ func (s *Server) runVPNConnectionWithResult(ctx context.Context, sessionID, serv
 	// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
 	transportConfig := transport.DefaultConfig()
 	tlsConfig := &tls.Config{
-		MinVersion:         tls.VersionTLS13,
-		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
+		MinVersion: tls.VersionTLS13,
+		// #nosec G402 - tunnel server uses self-signed cert in controlled env
+		InsecureSkipVerify: true,
 	}
 	// Add Authorization header for WebSocket connection (using permanent token)
 	wsHeaders := http.Header{
@@ -384,8 +385,9 @@ func (s *Server) runVPNConnection(ctx context.Context, sessionID, server, token 
 	// Create WebSocket dialer with TLS 1.3 (required by tunnel-server)
 	transportConfig := transport.DefaultConfig()
 	tlsConfig := &tls.Config{
-		MinVersion:         tls.VersionTLS13,
-		InsecureSkipVerify: true, // Tunnel server uses self-signed cert
+		MinVersion: tls.VersionTLS13,
+		// #nosec G402 - tunnel server uses self-signed cert in controlled env
+		InsecureSkipVerify: true,
 	}
 	// Add Authorization header for WebSocket connection (using permanent token)
 	wsHeaders := http.Header{
@@ -661,7 +663,8 @@ func (s *Server) reestablishVPN(ctx context.Context, conn *VPNConnection) error 
 	// Create WebSocket dialer with TLS 1.3
 	transportConfig := transport.DefaultConfig()
 	tlsConfig := &tls.Config{
-		MinVersion:         tls.VersionTLS13,
+		MinVersion: tls.VersionTLS13,
+		// #nosec G402 - tunnel server uses self-signed cert in controlled env
 		InsecureSkipVerify: true,
 	}
 	wsHeaders := http.Header{

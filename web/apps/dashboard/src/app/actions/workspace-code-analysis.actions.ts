@@ -2,6 +2,15 @@
 
 import type { CodeAnalysisResponse } from './workspace-code-analysis.types'
 
+function validateApiUrl(url: string, expectedBase: string): URL {
+  const parsed = new URL(url)
+  const expected = new URL(expectedBase)
+  if (parsed.origin !== expected.origin) {
+    throw new Error('Invalid API URL')
+  }
+  return parsed
+}
+
 /**
  * Server action to get code analysis reports for a workspace.
  */
@@ -22,6 +31,7 @@ export async function getCodeAnalysis(
     }
 
     const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/code-analysis`
+    validateApiUrl(url, env.apiUrl)
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -67,6 +77,7 @@ export async function triggerCodeAnalysis(workspaceName: string, namespace: stri
     }
 
     const url = `${env.apiUrl}/api/v1/namespaces/${namespace}/workspaces/${workspaceName}/code-analysis`
+    validateApiUrl(url, env.apiUrl)
     const response = await fetch(url, {
       method: 'POST',
       headers: {

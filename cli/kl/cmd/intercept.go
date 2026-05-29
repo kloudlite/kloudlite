@@ -360,6 +360,9 @@ func handleInterceptStartWithService(ctx context.Context, env *environmentv1.Env
 				if err != nil {
 					return fmt.Errorf("invalid port number: %s", input)
 				}
+				if parsedPort < 0 || parsedPort > 65535 {
+					return fmt.Errorf("port number out of range: %d", parsedPort)
+				}
 				workspacePort = int32(parsedPort)
 			}
 

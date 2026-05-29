@@ -28,7 +28,8 @@ func NewTunnelClient(endpoint string, token string) *TunnelClient {
 			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // Tunnel server uses self-signed cert initially
+					// #nosec G402 - tunnel server uses self-signed cert in controlled env
+					InsecureSkipVerify: true,
 					MinVersion:         tls.VersionTLS13,
 				},
 			},

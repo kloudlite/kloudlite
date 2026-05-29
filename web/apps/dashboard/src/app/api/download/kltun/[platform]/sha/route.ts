@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const GITHUB_RELEASES_BASE = 'https://github.com/kloudlite/kloudlite/releases'
+const GITHUB_API_BASE = 'https://api.github.com'
+
+function validateGitHubUrl(url: string): URL {
+  const parsed = new URL(url)
+  if (!url.startsWith(GITHUB_RELEASES_BASE) && !url.startsWith(GITHUB_API_BASE)) {
+    throw new Error('Invalid download URL')
+  }
+  return parsed
+}
 
 // Platform to binary name mapping
 const PLATFORM_BINARIES: Record<string, string> = {
@@ -80,6 +89,7 @@ export async function GET(
 
   // Fetch checksum file for this specific binary
   try {
+    validateGitHubUrl(checksumUrl)
     const checksumResponse = await fetch(checksumUrl)
 
     if (!checksumResponse.ok) {

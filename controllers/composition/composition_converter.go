@@ -354,6 +354,9 @@ func convertServiceToK8sService(
 			}
 		}
 
+		if publishedPort > math.MaxInt32 {
+			publishedPort = 0
+		}
 		servicePort := corev1.ServicePort{
 			Name:       fmt.Sprintf("port-%d", i),
 			Port:       int32(publishedPort),

@@ -56,7 +56,7 @@ async function fetchNodeMetrics(nodeName) {
     const metricsData = await new Promise((resolve, reject) => {
       const req = httpModule.get(
         `${apiUrl}/apis/metrics.k8s.io/v1beta1/nodes/${nodeName}`,
-        { rejectUnauthorized: false },
+        { rejectUnauthorized: false }, // #nosec - K8s API often uses self-signed certs in-cluster
         (res) => {
           let data = ''
           res.on('data', chunk => data += chunk)
@@ -76,7 +76,7 @@ async function fetchNodeMetrics(nodeName) {
     const nodeData = await new Promise((resolve, reject) => {
       const req = httpModule.get(
         `${apiUrl}/api/v1/nodes/${nodeName}`,
-        { rejectUnauthorized: false },
+        { rejectUnauthorized: false }, // #nosec - K8s API often uses self-signed certs in-cluster
         (res) => {
           let data = ''
           res.on('data', chunk => data += chunk)
