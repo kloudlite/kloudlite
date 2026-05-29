@@ -131,8 +131,8 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
         const wv = document.createElement('webview') as unknown as WebviewElement
         wv.setAttribute('style', 'width:100%;height:100%;border:none;position:absolute;inset:0;')
         wv.setAttribute('allowpopups', '')
-        wv.setAttribute('scrollbounce', '')
         wv.setAttribute('preload', `file://${window.electronAPI.webviewPreload}`)
+        wv.setAttribute('scrollbounce', 'true')
 
         const tabId = tab.id
 
