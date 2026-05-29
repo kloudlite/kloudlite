@@ -165,7 +165,7 @@ func TestEnsureWorkmachineIngressControllerTargetsIntegratedManager(t *testing.T
 			t.Fatalf("service selector[%s] = %q, want %q; full selector=%#v", key, got, want, service.Spec.Selector)
 		}
 	}
-	assertServicePort(t, service, "http", 80)
+	assertServicePort(t, service, "http", 8080)
 	assertServicePort(t, service, "https", 443)
 
 	statefulSet := &appsv1.StatefulSet{}
@@ -388,14 +388,14 @@ func assertSingleSubject(t *testing.T, subjects []rbacv1.Subject, namespace, nam
 	}
 }
 
-func assertServicePort(t *testing.T, service *corev1.Service, name string, port int32) {
+func assertServicePort(t *testing.T, service *corev1.Service, name string, targetPort int32) {
 	t.Helper()
 	for _, servicePort := range service.Spec.Ports {
-		if servicePort.Name == name && servicePort.Port == port {
+		if servicePort.Name == name && servicePort.TargetPort.IntVal == targetPort {
 			return
 		}
 	}
-	t.Fatalf("expected service port %s=%d, got %#v", name, port, service.Spec.Ports)
+	t.Fatalf("expected service port %s targetPort=%d, got %#v", name, targetPort, service.Spec.Ports)
 }
 
 func controllerHasFinalizer(obj client.Object, finalizer string) bool {
