@@ -125,10 +125,10 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		ForceFullRebuild:        controllerCfg.WMIngress.ForceFullRebuild,
 	}
 	if ingressReconciler.HTTPPort == 0 {
-		ingressReconciler.HTTPPort = 80
+		ingressReconciler.HTTPPort = 8080
 	}
 	if ingressReconciler.HTTPSPort == 0 {
-		ingressReconciler.HTTPSPort = 443
+		ingressReconciler.HTTPSPort = 8443
 	}
 	if ingressReconciler.WildcardSecretName == "" {
 		ingressReconciler.WildcardSecretName = "kloudlite-wildcard-cert-tls"
