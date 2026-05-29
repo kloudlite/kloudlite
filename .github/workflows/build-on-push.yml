@@ -8,6 +8,9 @@ on:
       - master
       - uat
       - development
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: read
