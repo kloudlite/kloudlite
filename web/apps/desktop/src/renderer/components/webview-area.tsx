@@ -197,21 +197,39 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
           }
         }) as EventListener)
 
-        wv.addEventListener('did-navigate', () => {
-          updateTab(tabId, {
-            url: wv.getURL(),
-            canGoBack: wv.canGoBack(),
-            canGoForward: wv.canGoForward()
-          })
-        })
+        function onNavigate() {
+          const newUrl = wv.getURL()
+          if (!newUrl || newUrl === 'about:blank') return
 
-        wv.addEventListener('did-navigate-in-page', () => {
+          const tab = useTabStore.getState().tabs.find(t => t.id === tabId)
+          if (!tab) return
+
+          const stack = [...tab.navStack]
+          let index = tab.navIndex
+
+          // If navigating to a URL that's adjacent in the stack, it's a back/forward
+          if (index > 0 && stack[index - 1] === newUrl) {
+            index--
+          } else if (index < stack.length - 1 && stack[index + 1] === newUrl) {
+            index++
+          } else if (stack[index] !== newUrl) {
+            // New navigation — truncate forward history
+            stack.splice(index + 1)
+            stack.push(newUrl)
+            index = stack.length - 1
+          }
+
           updateTab(tabId, {
-            url: wv.getURL(),
+            url: newUrl,
             canGoBack: wv.canGoBack(),
-            canGoForward: wv.canGoForward()
+            canGoForward: wv.canGoForward(),
+            navStack: stack,
+            navIndex: index
           })
-        })
+        }
+
+        wv.addEventListener('did-navigate', onNavigate)
+        wv.addEventListener('did-navigate-in-page', onNavigate)
 
         // Set initial src — webview needs a src to initialize
         if (tab.url) {

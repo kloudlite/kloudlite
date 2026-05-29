@@ -10,6 +10,8 @@ export interface Tab {
   canGoForward: boolean
   siteName?: string
   keywords?: string
+  navStack: string[]
+  navIndex: number
 }
 
 interface TabStore {
@@ -32,7 +34,9 @@ function createTab(url = 'https://google.com'): Tab {
     favicon: '',
     isLoading: false,
     canGoBack: false,
-    canGoForward: false
+    canGoForward: false,
+    navStack: url ? [url] : [],
+    navIndex: url ? 0 : -1
   }
 }
 
