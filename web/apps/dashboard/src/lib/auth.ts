@@ -1,12 +1,6 @@
 import NextAuth from 'next-auth'
-import Google from 'next-auth/providers/google'
-import GitHub from 'next-auth/providers/github'
-import MicrosoftEntraId from 'next-auth/providers/microsoft-entra-id'
 import Credentials from 'next-auth/providers/credentials'
 import type { NextAuthConfig, NextAuthResult } from 'next-auth'
-import { authenticateUser } from '@/app/actions/user-auth.actions'
-import { getOAuthConfig } from '@/lib/oauth-config'
-import bcrypt from 'bcryptjs'
 import { createHmac } from 'crypto'
 import type { NextRequest } from 'next/server'
 
@@ -20,47 +14,12 @@ interface SuperAdminTokenPayload {
 }
 
 function buildAuthConfig(): NextAuthConfig {
-  const oauthConfig = getOAuthConfig()
-
-  // Build OAuth providers conditionally based on config
-  const oauthProviders = []
-
-  if (oauthConfig.google.clientId && oauthConfig.google.clientSecret) {
-    oauthProviders.push(
-      Google({
-        clientId: oauthConfig.google.clientId,
-        clientSecret: oauthConfig.google.clientSecret,
-      })
-    )
-  }
-
-  if (oauthConfig.github.clientId && oauthConfig.github.clientSecret) {
-    oauthProviders.push(
-      GitHub({
-        clientId: oauthConfig.github.clientId,
-        clientSecret: oauthConfig.github.clientSecret,
-      })
-    )
-  }
-
-  if (oauthConfig.microsoft.clientId && oauthConfig.microsoft.clientSecret) {
-    oauthProviders.push(
-      MicrosoftEntraId({
-        clientId: oauthConfig.microsoft.clientId,
-        clientSecret: oauthConfig.microsoft.clientSecret,
-        issuer: `https://login.microsoftonline.com/${oauthConfig.microsoft.tenantId || 'common'}/v2.0`,
-      })
-    )
-  }
-
   return {
     trustHost: true,
     providers: [
       Credentials({
-        name: 'credentials',
+        name: 'super-admin-token',
         credentials: {
-          email: { label: 'Email', type: 'email' },
-          password: { label: 'Password', type: 'password' },
           superadminToken: { label: 'Super Admin Token', type: 'text' },
         },
         async authorize(credentials) {
@@ -139,74 +98,16 @@ function buildAuthConfig(): NextAuthConfig {
             }
           }
 
-          // Handle normal email/password login
-          if (!credentials?.email || !credentials?.password) {
-            return null
-          }
-
-          try {
-            // Dynamic import K8s client (only loads in Node.js/Bun runtime, not Edge Runtime)
-            const { userRepository } = await import('@kloudlite/lib/k8s')
-
-            // Get user from Kubernetes by email
-            let user
-            try {
-              user = await userRepository.getByEmail(credentials.email as string)
-            } catch (error) {
-              console.error('User lookup failed for:', credentials.email, error)
-              return null
-            }
-
-            // Check if user is active
-            if (!user.spec.active) {
-              console.error('User is not active:', credentials.email)
-              return null
-            }
-
-            // Verify password hash
-            const passwordHash = user.spec.password
-            if (!passwordHash) {
-              console.error('User has no password set:', credentials.email)
-              return null
-            }
-
-            // Decode base64 password hash
-            const passwordHashBuffer = Buffer.from(passwordHash, 'base64')
-            const passwordHashString = passwordHashBuffer.toString('utf-8')
-
-            // Compare password with bcrypt hash
-            const isPasswordValid = await bcrypt.compare(
-              credentials.password as string,
-              passwordHashString
-            )
-
-            if (!isPasswordValid) {
-              return null
-            }
-
-            // Return user object - NextAuth will generate JWT
-            return {
-              id: user.spec.email,
-              email: user.spec.email,
-              name: user.spec.displayName || user.metadata!.name || user.spec.email,
-              username: user.metadata!.name!,
-              roles: user.spec.roles || ['user'],
-              isActive: user.spec.active,
-            }
-          } catch (error) {
-            console.error('Login error:', error)
-            return null
-          }
+          return null
         },
       }),
-      ...oauthProviders,
     ],
     pages: {
       signIn: '/auth/signin',
       error: '/auth/error',
     },
     callbacks: {
-      async jwt({ token, user, account }) {
+      async jwt({ token, user }) {
         if (user) {
           // Store user info in JWT
           if ('username' in user) {
@@ -221,37 +122,6 @@ function buildAuthConfig(): NextAuthConfig {
           // Handle super-admin provider from credentials
           if ('provider' in user && user.provider === 'superadmin-login') {
             token.provider = 'superadmin-login'
-          }
-
-          // For OAuth providers, fetch user info from K8s
-          if (account && account.provider !== 'credentials' && user.email) {
-            token.provider = account.provider
-            token.providerId = account.providerAccountId
-
-            try {
-              const { userRepository } = await import('@kloudlite/lib/k8s')
-              const k8sUser = await userRepository.getByEmail(user.email)
-              token.username = k8sUser.metadata?.name || user.email
-              token.roles = k8sUser.spec?.roles || ['user']
-              token.isActive = k8sUser.spec?.active ?? true
-            } catch (error) {
-              console.error('Failed to get user from K8s:', error)
-            }
-          }
-
-          // Fetch and cache work machine namespace (only on initial login, skip for superadmin)
-          const username = token.username as string
-          if (username && !token.namespace && token.provider !== 'superadmin-login') {
-            try {
-              const { workMachineRepository } = await import('@kloudlite/lib/k8s')
-              const workMachine = await workMachineRepository.getByOwner(username)
-              if (workMachine) {
-                token.namespace = workMachine.spec?.targetNamespace || 'default'
-                token.workMachineName = workMachine.metadata?.name
-              }
-            } catch (error) {
-              console.error('Failed to fetch work machine for session:', error)
-            }
           }
         }
         return token
@@ -279,37 +149,8 @@ function buildAuthConfig(): NextAuthConfig {
         }
         return session
       },
-      async signIn({ user, account }) {
-        // For credentials provider, we've already authenticated in authorize()
-        if (account?.provider === 'credentials') {
-          return true
-        }
-
-        // For OAuth providers, check if user exists in backend
-        if (!user.email || !account) {
-          console.error('Sign-in failed: Missing email or account information')
-          return false
-        }
-
-        console.log(`Sign-in attempt: ${user.email} via ${account.provider}`)
-
-        const result = await authenticateUser({
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          provider: account.provider,
-          providerId: account.providerAccountId,
-        })
-
-        // Only allow sign-in if user exists in backend
-        if (!result.success) {
-          console.warn(`Sign-in blocked: ${user.email} - ${result.error}`)
-          // Redirect to error page with specific error
-          return `/auth/error?error=AccessDenied&message=${encodeURIComponent(result.error || 'User not found')}`
-        }
-
-        console.log(`Sign-in successful: ${user.email} via ${account.provider}`)
-        return true
+      async signIn({ account }) {
+        return account?.provider === 'credentials'
       },
       async redirect({ url, baseUrl }) {
         // Allows relative callback URLs
@@ -341,7 +182,7 @@ function getNextAuth(): NextAuthResult {
 
 /**
  * Invalidate the cached NextAuth instance.
- * Call after saving OAuth config so the next request rebuilds with fresh providers.
+ * Call after changing auth-related runtime configuration.
  */
 export function invalidateAuth() {
   globalThis.__nextAuthInstance = undefined

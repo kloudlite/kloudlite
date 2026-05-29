@@ -13,14 +13,11 @@ This repository uses artifact-scoped version tags.
 
 - `kli-v*`
 - `kltun-v*`
-- `api-server-v*`
+- `kloudlite-v*`
 - `code-analyzer-v*`
 - `k3s-backup-v*`
 - `nix-image-v*`
-- `workmachine-node-manager-v*`
 - `oci-installer-v*`
-- `tunnel-server-v*`
-- `wm-ingress-controller-v*`
 - `workspace-images-v*`
 - `web-console-v*`
 - `web-dashboard-v*`
@@ -30,7 +27,7 @@ This repository uses artifact-scoped version tags.
 
 - `kli-v0.1.0`
 - `kltun-v0.1.1`
-- `api-server-v0.2.0`
+- `kloudlite-v0.2.0`
 - `web-website-v0.1.3`
 
 ## Notes

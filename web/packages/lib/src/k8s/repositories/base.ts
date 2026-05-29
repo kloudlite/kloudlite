@@ -4,6 +4,15 @@ import { getK8sApiUrl } from "../auth";
 import { parseK8sError, NotFoundError } from "../errors";
 import type { K8sResource, K8sList } from "../types/common";
 
+function validateK8sUrl(url: string, baseUrl: string): URL {
+  const parsed = new URL(url);
+  const expectedBase = new URL(baseUrl);
+  if (parsed.origin !== expectedBase.origin) {
+    throw new Error("Invalid K8s API URL");
+  }
+  return parsed;
+}
+
 /**
  * Options for list operations
  */
@@ -279,7 +288,9 @@ export abstract class BaseRepository<T extends K8sResource> {
         throw new Error("Invalid arguments for patch operation");
       }
 
-      const response = await fetch(url, {
+      const validatedUrl = validateK8sUrl(url, baseUrl);
+
+      const response = await fetch(validatedUrl, {
         method: "PATCH",
         headers: {
           "Content-Type": contentType,
@@ -333,7 +344,9 @@ export abstract class BaseRepository<T extends K8sResource> {
         throw new Error("Invalid arguments for updateStatus operation");
       }
 
-      const response = await fetch(url, {
+      const validatedUrl = validateK8sUrl(url, baseUrl);
+
+      const response = await fetch(validatedUrl, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/merge-patch+json",

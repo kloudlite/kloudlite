@@ -1,0 +1,7 @@
+{
+  "name": "kloudlite",
+  "engineVersion": "v0.21.0",
+  "sdk": {
+    "source": "go"
+  }
+}

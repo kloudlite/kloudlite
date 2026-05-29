@@ -1,6 +1,6 @@
 /**
  * Workspace CRD type definitions
- * Based on: api/internal/controllers/workspace/v1/workspace_types.go
+ * Based on: types/workspace/v1/workspace_types.go
  */
 
 import type { K8sResource, K8sList, Condition } from './common';

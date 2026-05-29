@@ -1,0 +1,263 @@
+package machinescoped
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/kloudlite/kloudlite/controllers/shared"
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
+	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
+	environmentV1 "github.com/kloudlite/kloudlite/types/environment/v1"
+	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
+	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+)
+
+// Global pod deletion tracker shared with workspace controller to prevent race conditions
+var podDeletionTracker *shared.PodDeletionTracker
+
+// createNamespace creates or updates the target namespace for the WorkMachine
+func (r *MachineScopedReconciler) createNamespace(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
+		labels := map[string]string{
+			"kloudlite.io/managed":     "true",
+			"kloudlite.io/workmachine": "true",
+		}
+		// Add owned-by label for network policy (enables cross-namespace communication)
+		if obj.Spec.OwnedBy != "" {
+			labels["kloudlite.io/owned-by"] = sanitizeForLabel(obj.Spec.OwnedBy)
+		}
+		ns.SetLabels(fn.MapMerge(ns.GetLabels(), labels))
+
+		if !fn.IsOwner(ns, obj) {
+			// Check if namespace already has other owners
+			if len(ns.GetOwnerReferences()) > 0 {
+				return fmt.Errorf("namespace %s already owned by another resource", ns.Name)
+			}
+			ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		if !controllerutil.ContainsFinalizer(ns, WorkMachineFinalizerName) {
+			ns.SetFinalizers(append(ns.GetFinalizers(), WorkMachineFinalizerName))
+		}
+		return nil
+	}); err != nil {
+		return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, err)
+	}
+
+	return markMachineReady(session, workmachineshared.ConditionMachineNamespaceReady, "machine namespace is ready")
+}
+
+const (
+	wildcardCertSecretName      = "kloudlite-wildcard-cert-tls"
+	wildcardCertSourceNamespace = "kloudlite"
+)
+
+// syncWildcardCertSecret copies the wildcard TLS certificate secret from kloudlite
+// to the workmachine namespace for use by tunnel-server, wm-ingress-controller, and workspace pods
+func (r *MachineScopedReconciler) syncWildcardCertSecret(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
+	targetNamespace := obj.Spec.TargetNamespace
+
+	// Get the source secret from kloudlite namespace
+	sourceSecret := &corev1.Secret{}
+	if err := r.Get(ctx, client.ObjectKey{
+		Name:      wildcardCertSecretName,
+		Namespace: wildcardCertSourceNamespace,
+	}, sourceSecret); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return markMachineFailed(session, workmachineshared.ConditionWildcardCertSynced, fmt.Errorf("wildcard certificate secret %s not found in namespace %s", wildcardCertSecretName, wildcardCertSourceNamespace))
+		}
+		return markMachineError(session, workmachineshared.ConditionWildcardCertSynced, err)
+	}
+
+	// Create or update the secret in the target namespace
+	targetSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      wildcardCertSecretName,
+			Namespace: targetNamespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, targetSecret, func() error {
+		targetSecret.Type = sourceSecret.Type
+		targetSecret.Data = sourceSecret.Data
+
+		targetSecret.SetLabels(fn.MapMerge(targetSecret.GetLabels(), map[string]string{
+			"kloudlite.io/managed":       "true",
+			"kloudlite.io/synced-from":   wildcardCertSourceNamespace,
+			"kloudlite.io/source-secret": wildcardCertSecretName,
+		}))
+
+		if !fn.IsOwner(targetSecret, obj) {
+			targetSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		}
+		return nil
+	}); err != nil {
+		return markMachineFailed(session, workmachineshared.ConditionWildcardCertSynced, fmt.Errorf("failed to sync wildcard certificate secret: %w", err))
+	}
+
+	return markMachineReady(session, workmachineshared.ConditionWildcardCertSynced, "wildcard certificate secret is synced")
+}
+
+// deleteNamespace handles namespace deletion when WorkMachine is being deleted
+func (r *MachineScopedReconciler) deleteNamespace(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
+	namespaceName := obj.Spec.TargetNamespace
+
+	// Check for active Workspaces in the target namespace
+	var envList environmentV1.EnvironmentList
+	if err := r.List(ctx, &envList); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return markMachineError(session, workmachineshared.ConditionMachineNamespaceReady, err)
+		}
+	}
+
+	// Delete workspace pods directly (bypass finalizers for faster cleanup)
+	// When WorkMachine is being deleted, we don't need graceful workspace cleanup
+	workspaceList := &workspacev1.WorkspaceList{}
+	if err := r.List(ctx, workspaceList); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return markMachineError(session, workmachineshared.ConditionMachineNamespaceReady, err)
+		}
+	}
+
+	// Filter workspaces owned by this WorkMachine
+	var ownedWorkspaces []workspacev1.Workspace
+	for _, ws := range workspaceList.Items {
+		if ws.Spec.WorkmachineName == obj.Name {
+			ownedWorkspaces = append(ownedWorkspaces, ws)
+		}
+	}
+
+	// Directly delete workspace pods to speed up cleanup
+	// Use shared tracker to prevent race conditions with workspace controller
+	for _, ws := range ownedWorkspaces {
+		// Delete the workspace pod directly
+		podName := fmt.Sprintf("workspace-%s", ws.Name)
+		pod := &corev1.Pod{}
+		err := r.Get(ctx, client.ObjectKey{Name: podName, Namespace: namespaceName}, pod)
+		if err == nil {
+			// Check if another controller is already deleting this pod
+			if !podDeletionTracker.TryStartDeletion(pod.UID, podName, namespaceName, "workmachine") {
+				ctrl.LoggerFrom(ctx).Info("Pod deletion already in progress by another controller, skipping",
+					"pod", podName,
+					"namespace", namespaceName)
+			} else {
+				// Ensure we mark the deletion as complete when we exit
+				defer podDeletionTracker.CompleteDeletion(pod.UID, podName, namespaceName, nil)
+
+				// Pod exists, delete it
+				if err := r.Delete(ctx, pod); err != nil && !apiErrors.IsNotFound(err) {
+					return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete workspace pod %s: %w", podName, err))
+				}
+			}
+		} else if !apiErrors.IsNotFound(err) {
+			return markMachineError(session, workmachineshared.ConditionMachineNamespaceReady, err)
+		}
+
+		// Remove finalizer before delete so WorkMachine deletion does not depend on
+		// workspace controller cleanup after the machine is going away.
+		if controllerutil.ContainsFinalizer(&ws, "workspaces.kloudlite.io/finalizer") {
+			controllerutil.RemoveFinalizer(&ws, "workspaces.kloudlite.io/finalizer")
+			if err := r.Update(ctx, &ws); err != nil {
+				if apiErrors.IsNotFound(err) {
+					continue
+				}
+				return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from workspace %s: %w", ws.Name, err))
+			}
+		}
+		if err := r.Delete(ctx, &ws); err != nil && !apiErrors.IsNotFound(err) {
+			return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete workspace %s: %w", ws.Name, err))
+		}
+	}
+
+	// Clean up PackageRequests in the workmachine namespace
+	// The node-manager adds finalizers to these, but it's gone when workmachine is deleted
+	packageRequestList := &packagesv1.PackageRequestList{}
+	if err := r.List(ctx, packageRequestList, client.InNamespace(namespaceName)); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return markMachineError(session, workmachineshared.ConditionMachineNamespaceReady, err)
+		}
+	}
+
+	for _, pkgReq := range packageRequestList.Items {
+		// Remove the package-cleanup finalizer added by node-manager
+		if controllerutil.ContainsFinalizer(&pkgReq, "workspaces.kloudlite.io/package-cleanup") {
+			controllerutil.RemoveFinalizer(&pkgReq, "workspaces.kloudlite.io/package-cleanup")
+			if err := r.Update(ctx, &pkgReq); err != nil {
+				if apiErrors.IsNotFound(err) {
+					continue
+				}
+				return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from PackageRequest %s: %w", pkgReq.Name, err))
+			}
+		}
+		if err := r.Delete(ctx, &pkgReq); err != nil && !apiErrors.IsNotFound(err) {
+			return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete PackageRequest %s: %w", pkgReq.Name, err))
+		}
+	}
+
+	// Delete environment namespaces directly (bypass finalizers for faster cleanup)
+	for _, env := range envList.Items {
+		if env.Spec.WorkMachineName == obj.Name {
+			// Delete the environment namespace directly if it exists
+			if env.Spec.TargetNamespace != "" {
+				envNs := &corev1.Namespace{}
+				err := r.Get(ctx, client.ObjectKey{Name: env.Spec.TargetNamespace}, envNs)
+				if err == nil {
+					// Namespace exists, delete it
+					if err := r.Delete(ctx, envNs); err != nil && !apiErrors.IsNotFound(err) {
+						return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete environment namespace %s: %w", env.Spec.TargetNamespace, err))
+					}
+				} else if !apiErrors.IsNotFound(err) {
+					return markMachineError(session, workmachineshared.ConditionMachineNamespaceReady, err)
+				}
+			}
+
+			// Remove finalizer before delete so environment cleanup cannot block
+			// WorkMachine deletion after the machine-scoped controller shuts down.
+			if controllerutil.ContainsFinalizer(&env, "environments.kloudlite.io/finalizer") {
+				controllerutil.RemoveFinalizer(&env, "environments.kloudlite.io/finalizer")
+				if err := r.Update(ctx, &env); err != nil {
+					if apiErrors.IsNotFound(err) {
+						continue
+					}
+					return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to remove finalizer from environment %s: %w", env.Name, err))
+				}
+			}
+			if err := r.Delete(ctx, &env); err != nil && !apiErrors.IsNotFound(err) {
+				return markMachineFailed(session, workmachineshared.ConditionMachineNamespaceReady, fmt.Errorf("failed to delete environment %s: %w", env.Name, err))
+			}
+		}
+	}
+
+	// The platform-scoped controller owns WorkMachine namespace deletion. The
+	// machine-scoped controller runs inside that namespace, so deleting it here
+	// can remove the cleanup actor before it records MachineScopedCleanupComplete.
+	return markMachineReady(session, workmachineshared.ConditionMachineNamespaceReady, "machine namespace child resources are cleaned up")
+}
+
+// sanitizeForLabel sanitizes a string (like email) for use as a Kubernetes label value
+func sanitizeForLabel(value string) string {
+	if value == "" {
+		return ""
+	}
+	// Replace special characters with safe alternatives
+	sanitized := strings.ReplaceAll(value, "@", "-at-")
+	sanitized = strings.ReplaceAll(sanitized, ".", "-dot-")
+	sanitized = strings.ReplaceAll(sanitized, "_", "-")
+	sanitized = strings.ToLower(sanitized)
+	// Trim to 63 chars (k8s label limit)
+	if len(sanitized) > 63 {
+		sanitized = sanitized[:63]
+	}
+	sanitized = strings.Trim(sanitized, "-")
+	return sanitized
+}

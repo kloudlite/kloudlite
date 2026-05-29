@@ -3,9 +3,23 @@ version: 3
 includes:
   api:
     taskfile: ./api/Taskfile.yml
-    dir: ./api
+    dir: .
+  build-sys:
+    taskfile: ./build-sys/Taskfile.yml
+    dir: .
 
-  wm-ingress:
-    taskfile: ./api/cmd/wm-ingress-controller/Taskfile.yml
-    dir: ./api/cmd/wm-ingress-controller
+tasks:
+  backend:build:platform-api:
+    desc: Build the api-server binary used by platform-api
+    cmds:
+      - task: api:build:platform-api
 
+  backend:verify:roadmap:
+    desc: Run focused backend roadmap verification tests
+    cmds:
+      - task: api:verify:backend-roadmap
+
+  backend:verify:platform-api:
+    desc: Build platform-api and run focused platform-api tests
+    cmds:
+      - task: api:verify:platform-api

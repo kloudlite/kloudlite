@@ -32,20 +32,21 @@ export interface WorkMachineSpec {
 
 export type MachineState = 'starting' | 'running' | 'stopping' | 'stopped' | 'disabled' | 'errored'
 
+export interface WorkMachineCondition {
+  type: string
+  status: 'True' | 'False' | 'Unknown'
+  observedGeneration?: number
+  lastTransitionTime?: string
+  reason?: string
+  message?: string
+}
+
 export interface WorkMachineStatus {
-  isReady?: boolean
   state?: MachineState
-  conditions?: Array<{
-    type: string
-    status: string
-    lastTransitionTime?: string
-    reason?: string
-    message?: string
-  }>
-  checks?: Record<string, {
-    status: boolean
-    message?: string
-  }>
+  conditions?: WorkMachineCondition[]
+  observedGeneration?: number
+  lastReconcileTime?: string
+  message?: string
   startedAt?: string
   stoppedAt?: string
   uptime?: string

@@ -1,9 +1,16 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { userRepository, workMachineRepository } from '@kloudlite/lib/k8s'
-import type { User } from '@kloudlite/lib/k8s'
-import { resourceStore } from '@/lib/resource-store'
+import { getPlatformApiClient, type KubernetesResource } from '@/lib/platform-api'
+
+type User = KubernetesResource<{
+  email?: string
+  displayName?: string
+  roles?: string[]
+  active?: boolean
+  passwordString?: string
+  lastLoginAt?: string
+}>
 
 export interface ProviderAccount {
   provider: string
@@ -28,8 +35,8 @@ export interface UserData {
 export async function getUserByEmail(email: string) {
   try {
     console.log('[STORE] getUserByEmail:', email)
-    await resourceStore.waitForReady('users')
-    const users = resourceStore.listCluster<User>('users')
+    const client = await getPlatformApiClient()
+    const users = await client.listClusterResources<User>('users')
     const user = users.find((u) => u.spec?.email === email) || null
     if (!user) {
       return { success: false, error: 'User not found' }
@@ -50,7 +57,10 @@ export async function getUserByEmail(email: string) {
 export async function updateUserLastLogin(username: string) {
   try {
     console.log('[K8S-API] updateUserLastLogin:', username)
-    const updated = await userRepository.updateLastLogin(username)
+    const client = await getPlatformApiClient()
+    const updated = await client.patchClusterResource<User>('users', username, {
+      spec: { lastLoginAt: new Date().toISOString() },
+    })
     return { success: true, data: updated }
   } catch (err) {
     console.error('Update last login error:', err)
@@ -69,7 +79,8 @@ export async function resetUserPassword(username: string, newPassword: string) {
   try {
     // Set passwordString - the mutation webhook will hash it with bcrypt
     // and store the result in spec.password
-    const updated = await userRepository.patch(username, {
+    const client = await getPlatformApiClient()
+    const updated = await client.patchClusterResource<User>('users', username, {
       spec: {
         passwordString: newPassword,
       },
@@ -92,8 +103,13 @@ export async function resetUserPassword(username: string, newPassword: string) {
  */
 export async function checkUsernameAvailability(username: string) {
   try {
-    await resourceStore.waitForReady('users')
-    const user = resourceStore.getCluster<User>('users', username)
+    const client = await getPlatformApiClient()
+    let user: User | null = null
+    try {
+      user = await client.getClusterResource<User>('users', username)
+    } catch {
+      user = null
+    }
     return {
       success: true,
       data: {
@@ -116,8 +132,8 @@ export async function checkUsernameAvailability(username: string) {
 export async function listUsers() {
   try {
     console.log('[STORE] listUsers')
-    await resourceStore.waitForReady('users')
-    const items = resourceStore.listCluster<User>('users')
+    const client = await getPlatformApiClient()
+    const items = await client.listClusterResources<User>('users')
     return { success: true, data: items }
   } catch (err) {
     console.error('List users error:', err)
@@ -138,8 +154,8 @@ export const getAllUsers = listUsers
 export async function getUser(username: string) {
   try {
     console.log('[STORE] getUser:', username)
-    await resourceStore.waitForReady('users')
-    const user = resourceStore.getCluster<User>('users', username)
+    const client = await getPlatformApiClient()
+    const user = await client.getClusterResource<User>('users', username)
     if (!user) {
       return { success: false, error: 'User not found' }
     }
@@ -180,8 +196,9 @@ export async function createUser(userData: {
       },
     }
 
-    console.log('[K8S-API] createUser:', userData.username)
-    const created = await userRepository.create(user as User)
+    console.log('[PLATFORM-API] createUser:', userData.username)
+    const client = await getPlatformApiClient()
+    const created = await client.createClusterResource<User>('users', user)
     revalidatePath('/admin/users')
     return { success: true, data: created }
   } catch (err) {
@@ -207,8 +224,9 @@ export async function updateUser(
   }
 ) {
   try {
-    console.log('[K8S-API] updateUser:', username)
-    const updated = await userRepository.patch(username, {
+    console.log('[PLATFORM-API] updateUser:', username)
+    const client = await getPlatformApiClient()
+    const updated = await client.patchClusterResource<User>('users', username, {
       spec: {
         email: updates.email,
         displayName: updates.displayName,
@@ -234,21 +252,9 @@ export async function updateUser(
  */
 export async function deleteUser(username: string) {
   try {
-    console.log('[K8S-API] deleteUser:', username)
-
-    // Delete user's work machine if it exists
-    try {
-      const workMachine = await workMachineRepository.getByOwner(username)
-      if (workMachine?.metadata?.name) {
-        console.log('[K8S-API] deleting work machine:', workMachine.metadata.name)
-        await workMachineRepository.delete(workMachine.metadata.name)
-      }
-    } catch (_err) {
-      // Work machine may not exist for this user, that's fine
-      console.log('[K8S-API] no work machine found for user:', username)
-    }
-
-    await userRepository.delete(username)
+    console.log('[PLATFORM-API] deleteUser:', username)
+    const client = await getPlatformApiClient()
+    await client.deleteClusterResource('users', username)
     revalidatePath('/admin/users')
     return { success: true }
   } catch (err) {
@@ -267,7 +273,8 @@ export async function deleteUser(username: string) {
 export async function activateUser(username: string) {
   try {
     console.log('[K8S-API] activateUser:', username)
-    const updated = await userRepository.activate(username)
+    const client = await getPlatformApiClient()
+    const updated = await client.patchClusterResource<User>('users', username, { spec: { active: true } })
     revalidatePath('/admin/users')
     return { success: true, data: updated }
   } catch (err) {
@@ -286,7 +293,8 @@ export async function activateUser(username: string) {
 export async function deactivateUser(username: string) {
   try {
     console.log('[K8S-API] deactivateUser:', username)
-    const updated = await userRepository.deactivate(username)
+    const client = await getPlatformApiClient()
+    const updated = await client.patchClusterResource<User>('users', username, { spec: { active: false } })
     revalidatePath('/admin/users')
     return { success: true, data: updated }
   } catch (err) {

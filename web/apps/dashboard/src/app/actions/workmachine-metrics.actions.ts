@@ -2,6 +2,7 @@
 
 import type { WorkMachine } from '@kloudlite/lib/k8s'
 import { resourceStore } from '@/lib/resource-store'
+import { isWorkMachineReady, workMachineStatusMessage } from '@/lib/work-machine-status'
 
 /**
  * Get WorkMachine status
@@ -24,9 +25,9 @@ export async function getWorkMachineStatus(name: string) {
       data: {
         name: workMachine.metadata.name,
         state: workMachine.status?.state || workMachine.spec.state,
-        isReady: workMachine.status?.isReady ?? false,
+        isReady: isWorkMachineReady(workMachine),
         publicIP: workMachine.status?.publicIP,
-        message: workMachine.status?.message,
+        message: workMachineStatusMessage(workMachine),
         lastUpdated: new Date().toISOString(),
       },
     }

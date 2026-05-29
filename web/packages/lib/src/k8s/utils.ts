@@ -156,7 +156,8 @@ export function formatBytes(bytes: number): string {
  * Parse Kubernetes quantity string to number (e.g., "100m" -> 0.1, "2Gi" -> 2147483648)
  */
 export function parseQuantity(quantity: string): number {
-  const match = quantity.match(/^(\d+(?:\.\d+)?)(.*?)$/);
+  if (quantity.length > 50) return 0;
+  const match = quantity.match(/^(\d+(?:\.\d+)?)(.*)$/);
   if (!match) return 0;
 
   const [, value, unit] = match;

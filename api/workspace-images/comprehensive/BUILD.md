@@ -8,10 +8,10 @@ The workspace-comprehensive image includes the `kl` CLI tool built outside of Do
 
 ### Automated Build (Recommended)
 
-Use the provided build script:
+Use the central build task:
 
 ```bash
-./build.sh
+task build-sys:image:workspace-comprehensive
 ```
 
 This script will:
@@ -23,20 +23,18 @@ This script will:
 If you need more control:
 
 ```bash
-# 1. Build the kl binary
-cd ../../  # Go to api root
+# 1. Build the kl binary from the repository root
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
   -ldflags="-s -w" \
   -o bin/kl-linux \
-  cmd/kl/main.go
+  cli/kl/main.go
 
 # 2. Build the Docker image
-cd workspace-images/comprehensive
 docker build \
-  -f Dockerfile \
+  -f build-sys/images/workspace-comprehensive/Dockerfile \
   -t kloudlite/workspace-comprehensive:latest \
   --build-arg BASE_IMAGE=kloudlite/workspace-base:latest \
-  ../..
+  .
 ```
 
 ### Multi-Architecture Build
@@ -47,10 +45,10 @@ For ARM64 support:
 # Build for both amd64 and arm64
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -f Dockerfile \
+  -f build-sys/images/workspace-comprehensive/Dockerfile \
   -t kloudlite/workspace-comprehensive:latest \
   --push \
-  ../..
+  .
 ```
 
 **Note**: For multi-arch builds, you'll need to build separate binaries for each architecture and modify the Dockerfile to copy the appropriate binary based on `TARGETARCH`.
@@ -62,19 +60,17 @@ In GitHub Actions or other CI systems:
 ```yaml
 - name: Build kl binary
   run: |
-    cd api
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
       -ldflags="-s -w" \
       -o bin/kl-linux \
-      cmd/kl/main.go
+      cli/kl/main.go
 
 - name: Build Docker image
   run: |
-    cd api/workspace-images/comprehensive
     docker build \
-      -f Dockerfile \
+      -f build-sys/images/workspace-comprehensive/Dockerfile \
       -t kloudlite/workspace-comprehensive:latest \
-      ../..
+      .
 ```
 
 ## Benefits of External Build
@@ -92,9 +88,9 @@ In GitHub Actions or other CI systems:
 If you get an error about `bin/kl-linux` not found:
 
 ```bash
-# Make sure you're in the api directory when building
-cd /path/to/api
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/kl-linux cmd/kl/main.go
+# Make sure you're in the repository root when building
+cd /path/to/kloudlite
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/kl-linux cli/kl/main.go
 ```
 
 ### Permission Denied

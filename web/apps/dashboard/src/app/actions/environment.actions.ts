@@ -8,6 +8,7 @@ import { environmentService } from '@/lib/services/environment.service'
 import { getSession } from '@/lib/get-session'
 import { resourceStore } from '@/lib/resource-store'
 import { watchNamespace, watchResourceInNamespace } from '@/lib/k8s-watcher'
+import { isWorkMachineReady } from '@/lib/work-machine-status'
 import type { K8sService } from '@kloudlite/types'
 import {
   environmentCreateSchema,
@@ -117,7 +118,7 @@ export async function getEnvironmentsListFull() {
 
     // Check if work machine is running
     const workMachineRunning = workMachineResult?.status?.state === 'running' &&
-      workMachineResult?.status?.isReady === true
+      isWorkMachineReady(workMachineResult)
 
     return {
       success: true,

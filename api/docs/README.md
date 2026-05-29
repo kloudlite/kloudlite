@@ -123,9 +123,9 @@ Resource lifecycle managed by controllers watching for changes.
 
 ```bash
 # Run tests
-go test ./internal/handlers/... -v
-go test ./internal/webhooks/... -v
-go test ./internal/controllers/... -v
+go test ./api/handlers/... -v
+go test ./api/webhooks/... -v
+go test ./controllers/... -v
 ```
 
 ### Debugging

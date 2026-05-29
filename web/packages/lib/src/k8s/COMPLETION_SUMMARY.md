@@ -200,7 +200,7 @@ await packageRequestRepository.addPackage('my-namespace', 'package-req-name', {
 ## 📋 Next Steps for Frontend Integration
 
 ### 1. Enable ServiceAccount in Deployment
-Add to `api/cmd/kli/internal/manifests/frontend.yaml`:
+Add to `cli/kli/internal/manifests/frontend.yaml`:
 
 ```yaml
 spec:
@@ -258,9 +258,9 @@ bun run dev:dashboard
 - [ ] Performance benchmarks vs Go API
 
 ### 6. Go API Cleanup (After verification)
-- [ ] Remove Go API handlers (`api/internal/handlers/*`)
-- [ ] Remove Go repositories (`api/internal/repository/*`)
-- [ ] Keep only controllers (`api/internal/controllers/`)
+- [ ] Remove Go API handlers (`api/handlers/*`)
+- [ ] Remove Go repositories (`api/repository/*`)
+- [ ] Keep only controllers (`controllers/`)
 - [ ] Update API server to only run controllers
 
 ---
