@@ -381,7 +381,9 @@ ipcMain.handle('show-popup-menu', (event, items: { label: string; id: string; ty
 // Handle new-window for webview guests — prevent popups, navigate in app instead
 app.on('web-contents-created', (_event, contents) => {
   if (contents.getType() === 'webview') {
-    contents.setScrollBounceEnabled(true)
+    try {
+      (contents as any).scrollBounceEnabled = true
+    } catch {}
     contents.setWindowOpenHandler(({ url, disposition }) => {
       const win = BrowserWindow.getAllWindows()[0]
       if (win) {

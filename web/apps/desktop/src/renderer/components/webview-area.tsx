@@ -132,7 +132,9 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
         wv.setAttribute('style', 'width:100%;height:100%;border:none;position:absolute;inset:0;')
         wv.setAttribute('allowpopups', '')
         wv.setAttribute('preload', `file://${window.electronAPI.webviewPreload}`)
-        wv.setAttribute('scrollbounce', 'true')
+
+        // Enable rubber-band scrolling on macOS
+        ;(wv as any).scrollbounce = true
 
         const tabId = tab.id
 
