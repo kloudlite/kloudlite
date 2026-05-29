@@ -16,6 +16,8 @@ export interface ElectronAPI {
   onOpenUrlInNewTab: (callback: (url: string) => void) => void
   getCertificate: (url: string) => Promise<any>
   showPopupMenu: (items: { label: string; id: string; type?: string; danger?: boolean }[]) => Promise<string | null>
+  onMCPCommand: (callback: (command: { requestId: string; command: string; args: Record<string, unknown> }) => void) => void
+  sendMCPResult: (requestId: string, result: unknown, error: string | null) => void
 }
 
 const api: ElectronAPI = {
@@ -29,7 +31,9 @@ const api: ElectronAPI = {
   onThemeChanged: (callback) => ipcRenderer.on('theme-changed', (_event, theme) => callback(theme)),
   onOpenUrlInNewTab: (callback) => ipcRenderer.on('open-url-in-new-tab', (_event, url) => callback(url)),
   getCertificate: (url) => ipcRenderer.invoke('get-certificate', url),
-  showPopupMenu: (items) => ipcRenderer.invoke('show-popup-menu', items)
+  showPopupMenu: (items) => ipcRenderer.invoke('show-popup-menu', items),
+  onMCPCommand: (callback) => ipcRenderer.on('mcp-command', (_event, data) => callback(data)),
+  sendMCPResult: (requestId, result, error) => ipcRenderer.send('mcp-browser-result', { requestId, result, error })
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
