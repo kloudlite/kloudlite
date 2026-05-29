@@ -192,10 +192,11 @@ func (s *Storage) reportPath(components ...string) string {
 // safePath builds a path under basePath and verifies the result does not escape
 // the storage root. Returns an error if any component contains path traversal.
 func (s *Storage) safePath(components ...string) (string, error) {
-	for _, c := range components {
+	for i, c := range components {
 		if err := s.validatePathComponent(c); err != nil {
 			return "", err
 		}
+		components[i] = filepath.Base(c)
 	}
 	joined := s.reportPath(components...)
 	cleaned := filepath.Clean(joined)
