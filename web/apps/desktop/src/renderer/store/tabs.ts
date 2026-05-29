@@ -24,7 +24,7 @@ interface TabStore {
 
 let nextId = 1
 
-function createTab(url = ''): Tab {
+function createTab(url = 'https://google.com'): Tab {
   return {
     id: String(nextId++),
     url,
