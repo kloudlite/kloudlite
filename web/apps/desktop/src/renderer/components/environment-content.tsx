@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon, Loader2 } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { CodeEditor } from './code-editor'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { ServicesGraph } from './services-graph'
@@ -197,7 +197,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
   const [workspaces, setWorkspaces] = useState<ConnectedWorkspace[]>([])
   const [compose, setCompose] = useState('')
   const [loading, setLoading] = useState(true)
-  const fetchedRef = useRef(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [composeOpen, setComposeOpen] = useState(false)
   const [composeExiting, setComposeExiting] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -206,8 +206,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
   // Fetch environment data from API
   useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
     setLoading(true)
 
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
@@ -254,7 +252,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       setCompose(COMPOSITIONS[envHash] || '')
       setLoading(false)
     })
-  }, [envHash, envName])
+  }, [envHash, envName, refreshKey])
 
   useEffect(() => {
     function handler(e: Event) {
@@ -354,6 +352,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                     )
                     setSaved(true)
                     setTimeout(() => setSaved(false), 2000)
+                    setRefreshKey((k) => k + 1)
                     closeCompose()
                   } catch (err) {
                     console.error('Failed to apply compose:', err)
