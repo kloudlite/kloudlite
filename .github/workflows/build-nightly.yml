@@ -16,6 +16,7 @@ permissions:
 env:
   REGISTRY: ghcr.io/kloudlite/kloudlite
   DAGGER_VERSION: "0.21.0"
+  DAGGER_ENGINE_IMAGE: ghcr.io/kloudlite/kloudlite/dagger-engine:v0.21.0
 
 jobs:
   prepare:
@@ -55,6 +56,7 @@ jobs:
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          dagger-flags: --progress plain --engine-image ${{ env.DAGGER_ENGINE_IMAGE }}
 
       - name: Publish all images
         working-directory: build-sys
@@ -93,6 +95,7 @@ jobs:
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          dagger-flags: --progress plain --engine-image ${{ env.DAGGER_ENGINE_IMAGE }}
 
       - name: Build kltun binary
         working-directory: build-sys

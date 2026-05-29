@@ -14,6 +14,7 @@ permissions:
 
 env:
   DAGGER_VERSION: "0.21.0"
+  DAGGER_ENGINE_IMAGE: ghcr.io/kloudlite/kloudlite/dagger-engine:v0.21.0
 
 jobs:
   # -- Go: format + build + test (batched, shared caches) -------------
@@ -28,6 +29,7 @@ jobs:
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          dagger-flags: --progress plain --engine-image ${{ env.DAGGER_ENGINE_IMAGE }}
 
       - name: Run Go checks (fmt -> build -> test)
         working-directory: build-sys
@@ -50,6 +52,7 @@ jobs:
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          dagger-flags: --progress plain --engine-image ${{ env.DAGGER_ENGINE_IMAGE }}
 
       - name: Run web checks (build)
         working-directory: build-sys
