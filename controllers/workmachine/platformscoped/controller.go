@@ -339,29 +339,43 @@ func (r *PlatformScopedReconciler) cleanupWorkMachineManager(ctx context.Context
 	return ctrl.Result{}, nil
 }
 
-// ensureLocalStorageClass creates the local-path-simple StorageClass if it
+// ensureLocalStorageClass creates a default local-path StorageClass if it
 // doesn't exist. This is used by per-workmachine workloads (docker-dind, etc.)
 // that require local node storage.
 func ensureLocalStorageClass(ctx context.Context, cl client.Client) error {
 	reclaimDelete := corev1.PersistentVolumeReclaimDelete
 	waitForFirstConsumer := storagev1.VolumeBindingWaitForFirstConsumer
 
-	sc := &storagev1.StorageClass{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "local-path-simple",
-		},
-	}
-	_, err := controllerutil.CreateOrUpdate(ctx, cl, sc, func() error {
-		sc.Provisioner = "rancher.io/local-path"
-		sc.ReclaimPolicy = &reclaimDelete
-		sc.VolumeBindingMode = &waitForFirstConsumer
-		sc.Parameters = map[string]string{
-			"nodePath":    "/var/lib/kloudlite/storage/default",
-			"pathPattern": "{{ .PVC.Namespace }}/{{ .PVC.Name }}",
+	sc := &storagev1.StorageClass{}
+	if err := cl.Get(ctx, client.ObjectKey{Name: "local-path"}, sc); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
 		}
-		return nil
-	})
-	return err
+		// Create — set everything including immutable fields
+		sc = &storagev1.StorageClass{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "local-path",
+				Annotations: map[string]string{
+					"storageclass.kubernetes.io/is-default-class": "true",
+				},
+			},
+			Provisioner:       "rancher.io/local-path",
+			ReclaimPolicy:     &reclaimDelete,
+			VolumeBindingMode: &waitForFirstConsumer,
+			Parameters: map[string]string{
+				"nodePath":    "/var/lib/kloudlite/storage/general",
+				"pathPattern": "{{ .PVC.Namespace }}/{{ .PVC.Name }}/",
+			},
+		}
+		return cl.Create(ctx, sc)
+	}
+
+	// Already exists — only update annotations (immutable fields can't change)
+	if sc.Annotations == nil {
+		sc.Annotations = make(map[string]string)
+	}
+	sc.Annotations["storageclass.kubernetes.io/is-default-class"] = "true"
+	return cl.Update(ctx, sc)
 }
 
 func (r *PlatformScopedReconciler) waitForMachineScopedCleanup(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
@@ -546,7 +560,7 @@ func (r *PlatformScopedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.cloudProviderAPI = provider
 
 	// Ensure local-path-simple StorageClass for per-workmachine storage (docker-dind, etc.)
-	if err := ensureLocalStorageClass(context.Background(), r.Client); err != nil {
+	if err := ensureLocalStorageClass(context.Background(), r.DirectClient); err != nil {
 		return errors.Wrap("failed to ensure local-path-simple StorageClass", err)
 	}
 
