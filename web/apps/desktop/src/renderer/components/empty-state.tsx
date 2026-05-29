@@ -31,7 +31,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
         )}
         {action && (
           <button
-            className="mt-5 rounded-lg bg-primary px-5 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-5 cursor-pointer rounded-lg border border-border bg-muted px-5 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             onClick={action.onClick}
           >
             {action.label}
