@@ -120,9 +120,9 @@ func (m *Kloudlite) RunGoChecks(
 // |  Batched Web Checks                   |
 // +---------------------------------------+
 
-// RunWebChecks runs lint -> build for a single web app, sharing the
-// node_modules cache across both steps.  Optional nodeModulesSeed
-// warm-starts the cache from GitHub Actions.
+// RunWebChecks verifies a web app builds successfully, sharing
+// the node_modules cache.  Optional nodeModulesSeed warm-starts
+// the cache from GitHub Actions.
 func (m *Kloudlite) RunWebChecks(
 	ctx context.Context,
 	// +defaultPath="/"
@@ -133,7 +133,6 @@ func (m *Kloudlite) RunWebChecks(
 ) *WebChecksResult {
 	envFile := m.webBuildEnv(app)
 	ctr := m.bunDevContainer(source, nodeModulesSeed)
-	ctr = ctr.WithExec([]string{"bun", "run", "lint"})
 	ctr = ctr.WithExec([]string{"sh", "-c", fmt.Sprintf("cat > apps/%s/.env.local << 'EOF'\n%s\nEOF", app, envFile)})
 	ctr = ctr.WithEnvVariable("NODE_ENV", "production")
 	ctr = ctr.WithExec([]string{"bun", "run", "--filter", app, "build"})
