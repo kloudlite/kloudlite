@@ -21,31 +21,32 @@ interface SidebarProps {
   onToggleSidebar: () => void
 }
 
-function useLongPress(callback: () => void, ms = 500) {
+function useLongPress(onLongPress: () => void, ms = 500) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const firingRef = useRef(false)
+  const cbRef = useRef(onLongPress)
+  cbRef.current = onLongPress
 
-  const onMouseDown = useCallback(() => {
+  const start = useCallback(() => {
     firingRef.current = false
     timerRef.current = setTimeout(() => {
       firingRef.current = true
-      callback()
+      cbRef.current()
     }, ms)
-  }, [callback, ms])
+  }, [ms])
 
-  const onMouseUp = useCallback(() => {
+  const cancel = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = null
   }, [])
 
-  const onMouseLeave = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = null
+  const wasTriggered = useCallback(() => {
+    const result = firingRef.current
+    firingRef.current = false
+    return result
   }, [])
 
-  const wasTriggered = useCallback(() => firingRef.current, [])
-
-  return { onMouseDown, onMouseUp, onMouseLeave, wasTriggered }
+  return { start, cancel, wasTriggered }
 }
 
 interface NavPopoverProps {
@@ -125,7 +126,6 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
   const [navPopover, setNavPopover] = useState<'back' | 'forward' | null>(null)
   const backRef = useRef<HTMLButtonElement>(null)
   const forwardRef = useRef<HTMLButtonElement>(null)
-
   const backLongPress = useLongPress(() => setNavPopover('back'))
   const forwardLongPress = useLongPress(() => setNavPopover('forward'))
 
@@ -165,15 +165,13 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
     : []
 
   function handleBackClick() {
-    if (!backLongPress.wasTriggered()) {
-      onGoBack()
-    }
+    if (backLongPress.wasTriggered()) return
+    onGoBack()
   }
 
   function handleForwardClick() {
-    if (!forwardLongPress.wasTriggered()) {
-      onGoForward()
-    }
+    if (forwardLongPress.wasTriggered()) return
+    onGoForward()
   }
 
   return (
@@ -201,9 +199,9 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
             )}
             onClick={handleBackClick}
             disabled={!showNavButtons || !activeTab?.canGoBack}
-            {...backLongPress.onMouseDown}
-            {...backLongPress.onMouseUp}
-            {...backLongPress.onMouseLeave}
+            onMouseDown={backLongPress.start}
+            onMouseUp={backLongPress.cancel}
+            onMouseLeave={backLongPress.cancel}
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -217,9 +215,9 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
             )}
             onClick={handleForwardClick}
             disabled={!showNavButtons || !activeTab?.canGoForward}
-            {...forwardLongPress.onMouseDown}
-            {...forwardLongPress.onMouseUp}
-            {...forwardLongPress.onMouseLeave}
+            onMouseDown={forwardLongPress.start}
+            onMouseUp={forwardLongPress.cancel}
+            onMouseLeave={forwardLongPress.cancel}
           >
             <ArrowRight className="h-5 w-5" />
           </button>
