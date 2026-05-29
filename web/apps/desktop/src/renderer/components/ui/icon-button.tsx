@@ -16,8 +16,8 @@ export function IconButton({ children, onClick, variant = 'muted', size = 'sm', 
       className={cn(
         'flex shrink-0 items-center justify-center rounded transition-colors',
         size === 'sm' ? 'h-6 w-6' : 'h-7 w-7',
-        variant === 'muted' && 'text-muted-foreground/40 hover:bg-accent hover:text-muted-foreground',
-        variant === 'danger' && 'text-muted-foreground/40 hover:bg-red-500/10 hover:text-red-500',
+        variant === 'muted' && 'text-muted-foreground/60 hover:bg-accent hover:text-muted-foreground',
+        variant === 'danger' && 'text-red-500/70 hover:bg-red-500/15 hover:text-red-500',
         disabled && 'pointer-events-none opacity-40',
         className
       )}
