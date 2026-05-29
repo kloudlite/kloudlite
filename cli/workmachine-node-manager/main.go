@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	environmentv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
-	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	workspacev1 "github.com/kloudlite/kloudlite/types/workspace/v1"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -22,12 +22,12 @@ import (
 )
 
 const (
-	nixStorePath              = "/nix"
-	workspaceHomePath         = "/var/lib/kloudlite/home"
-	workspaceUserUID          = 1001
-	workspaceUserGID          = 1001
-	sshConfigPath             = "/var/lib/kloudlite/ssh-config"
-	authorizedKeysFile        = "authorized_keys"
+	nixStorePath            = "/nix"
+	workspaceHomePath       = "/var/lib/kloudlite/home"
+	workspaceUserUID        = 1001
+	workspaceUserGID        = 1001
+	sshConfigPath           = "/var/lib/kloudlite/ssh-config"
+	authorizedKeysFile      = "authorized_keys"
 	packageRequestFinalizer = "workspaces.kloudlite.io/package-cleanup"
 )
 
