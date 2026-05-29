@@ -75,6 +75,7 @@ permissions:
 env:
   REGISTRY: ghcr.io/kloudlite/kloudlite
   DAGGER_VERSION: "0.21.0"
+  DAGGER_ENGINE_IMAGE: ghcr.io/kloudlite/kloudlite/dagger-engine:v0.21.0
 
 jobs:
   # -- Prepare: parse tag or manual inputs -----------------------------
@@ -113,7 +114,6 @@ jobs:
           IS_TAG_PUSH="${{ github.ref_type == 'tag' && 'true' || 'false' }}"
           APP_NAME="${{ steps.resolve.outputs.app_name }}"
 
-          # Docker image apps that dagger publish-image supports
           ALL_DOCKER="api-server workmachine-manager tunnel-server oci-installer code-analyzer k3s-backup workspace-base workspace-comprehensive console dashboard website"
 
           if [ "$IS_TAG_PUSH" = "true" ]; then
@@ -133,7 +133,6 @@ jobs:
             echo "has_apps=true" >> "$GITHUB_OUTPUT"
 
           else
-            # Manual dispatch — map user-facing names to dagger app names
             SELECTED=()
             HAS_KLtun="false"
 
@@ -174,7 +173,6 @@ jobs:
             echo "**Tag:** \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "**Manual dispatch** — version \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
-            echo "**Selected:** \`${{ steps.apps.outputs.apps_json }}\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   # -- Docker images (built via Dagger) ---------------------------------
@@ -195,6 +193,7 @@ jobs:
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          dagger-flags: --progress plain --engine-image ${{ env.DAGGER_ENGINE_IMAGE }}
 
       - name: Build and publish ${{ matrix.app }}
         working-directory: build-sys
@@ -223,6 +222,7 @@ jobs:
         with:
           version: ${{ env.DAGGER_VERSION }}
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          dagger-flags: --progress plain --engine-image ${{ env.DAGGER_ENGINE_IMAGE }}
 
       - name: Release kltun binaries
         working-directory: build-sys
