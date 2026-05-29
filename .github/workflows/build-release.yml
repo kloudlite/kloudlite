@@ -1,7 +1,7 @@
 name: "Build Release"
 
 # Per-app tags: <app>/v<semver>
-# Manual dispatch: select apps + version (for UAT)
+# Manual dispatch: select apps grouped by plane + version
 run-name: "${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Build {0}', inputs.version) }}"
 
 on:
@@ -11,54 +11,58 @@ on:
 
   workflow_dispatch:
     inputs:
-      api-server:
-        description: 'API Server image'
-        type: boolean
-        default: false
-      workmachine-manager:
-        description: 'WorkMachine Manager image'
-        type: boolean
-        default: false
-      tunnel-server:
-        description: 'Tunnel Server image'
-        type: boolean
-        default: false
-      oci-installer:
-        description: 'OCI Installer'
-        type: boolean
-        default: false
-      code-analyzer:
-        description: 'Code Analyzer'
-        type: boolean
-        default: false
-      k3s-backup:
-        description: 'K3s Backup'
-        type: boolean
-        default: false
-      workspace-base:
-        description: 'Workspace Base'
-        type: boolean
-        default: false
-      workspace-comprehensive:
-        description: 'Workspace Comprehensive'
-        type: boolean
-        default: false
+      # -- kloudlite-plane ------------------------------------------------
       console:
-        description: 'Console'
-        type: boolean
-        default: false
-      dashboard:
-        description: 'Dashboard'
+        description: 'console — Web app (kloudlite-plane)'
         type: boolean
         default: false
       website:
-        description: 'Website'
+        description: 'website — Web app (kloudlite-plane)'
         type: boolean
         default: false
-      kltun:
-        description: 'kltun CLI'
+      oci-installer:
+        description: 'oci-installer — Go binary image (kloudlite-plane)'
         type: boolean
         default: false
+
+      # -- platform-plane -------------------------------------------------
+      dashboard:
+        description: 'dashboard — Web app (platform-plane)'
+        type: boolean
+        default: false
+      api-server:
+        description: 'api-server — Go binary image (platform-plane)'
+        type: boolean
+        default: false
+
+      # -- user -----------------------------------------------------------
+      kltun-golang:
+        description: 'kltun — Go CLI binary (user)'
+        type: boolean
+        default: false
+
+      # -- workmachine-plane ----------------------------------------------
+      workmachine-manager:
+        description: 'workmachine-manager — Go binary image (workmachine-plane)'
+        type: boolean
+        default: false
+      workspace:
+        description: 'workspace — base + comprehensive images (workmachine-plane)'
+        type: boolean
+        default: false
+      tunnel-server:
+        description: 'tunnel-server — WireGuard tunnel image (workmachine-plane)'
+        type: boolean
+        default: false
+      code-analyzer:
+        description: 'code-analyzer — Semgrep image (workmachine-plane)'
+        type: boolean
+        default: false
+      k3s-backup:
+        description: 'k3s-backup — AWS CLI backup image (workmachine-plane)'
+        type: boolean
+        default: false
+
       version:
         description: 'Version tag (e.g. v1.2.0)'
         required: true
@@ -80,8 +84,6 @@ jobs:
     outputs:
       tag: ${{ steps.resolve.outputs.tag }}
       version: ${{ steps.resolve.outputs.version }}
-      app_name: ${{ steps.resolve.outputs.app_name }}
-      is_tag_push: ${{ steps.resolve.outputs.is_tag_push }}
       apps_json: ${{ steps.apps.outputs.apps_json }}
       has_apps: ${{ steps.apps.outputs.has_apps }}
       has_kltun: ${{ steps.apps.outputs.has_kltun }}
@@ -97,72 +99,65 @@ jobs:
             echo "tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "app_name=${APP_NAME}" >> "$GITHUB_OUTPUT"
-            echo "is_tag_push=true" >> "$GITHUB_OUTPUT"
             echo "Releasing ${APP_NAME} at ${VERSION_TAG}"
           else
             TAG="${{ inputs.version }}"
             VERSION="${TAG#v}"
             echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            echo "app_name=" >> "$GITHUB_OUTPUT"
-            echo "is_tag_push=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Determine apps to build
         id: apps
         run: |
-          IS_TAG_PUSH="${{ steps.resolve.outputs.is_tag_push }}"
+          IS_TAG_PUSH="${{ github.ref_type == 'tag' && 'true' || 'false' }}"
           APP_NAME="${{ steps.resolve.outputs.app_name }}"
 
-          ALL_DOCKER_APPS="api-server workmachine-manager tunnel-server oci-installer code-analyzer k3s-backup workspace-base workspace-comprehensive console dashboard website"
-
-          SELECTED=()
+          # Docker image apps that dagger publish-image supports
+          ALL_DOCKER="api-server workmachine-manager tunnel-server oci-installer code-analyzer k3s-backup workspace-base workspace-comprehensive console dashboard website"
 
           if [ "$IS_TAG_PUSH" = "true" ]; then
+            SELECTED=()
+            HAS_KLtun="false"
             case "$APP_NAME" in
-              kltun)
-                echo "has_kltun=true" >> "$GITHUB_OUTPUT"
-                echo "apps_json=[]" >> "$GITHUB_OUTPUT"
-                ;;
+              kltun)        HAS_KLTUN="true" ;;
+              workspace)    SELECTED=("workspace-base" "workspace-comprehensive") ;;
               *)
-                for APP in $ALL_DOCKER_APPS; do
-                  if [ "$APP" = "$APP_NAME" ]; then
-                    SELECTED+=("$APP")
-                    break
-                  fi
+                for APP in $ALL_DOCKER; do
+                  [ "$APP" = "$APP_NAME" ] && SELECTED+=("$APP") && break
                 done
-                echo "has_kltun=false" >> "$GITHUB_OUTPUT"
-                echo "apps_json=$(printf '%s\n' "${SELECTED[@]}" | jq -R . | jq -s .)" >> "$GITHUB_OUTPUT"
                 ;;
             esac
+            echo "has_kltun=${HAS_KLTUN:-false}" >> "$GITHUB_OUTPUT"
+            echo "apps_json=$(printf '%s\n' "${SELECTED[@]}" | jq -R . | jq -s .)" >> "$GITHUB_OUTPUT"
             echo "has_apps=true" >> "$GITHUB_OUTPUT"
 
           else
-            for APP in $ALL_DOCKER_APPS; do
-              VAL="false"
-              case "$APP" in
-                api-server)             VAL="${{ inputs.api-server }}" ;;
-                workmachine-manager)    VAL="${{ inputs.workmachine-manager }}" ;;
-                tunnel-server)          VAL="${{ inputs.tunnel-server }}" ;;
-                oci-installer)          VAL="${{ inputs.oci-installer }}" ;;
-                code-analyzer)          VAL="${{ inputs.code-analyzer }}" ;;
-                k3s-backup)             VAL="${{ inputs.k3s-backup }}" ;;
-                workspace-base)         VAL="${{ inputs.workspace-base }}" ;;
-                workspace-comprehensive) VAL="${{ inputs.workspace-comprehensive }}" ;;
-                console)                VAL="${{ inputs.console }}" ;;
-                dashboard)              VAL="${{ inputs.dashboard }}" ;;
-                website)                VAL="${{ inputs.website }}" ;;
-              esac
-              if [ "$VAL" = "true" ]; then
-                SELECTED+=("$APP")
-              fi
-            done
+            # Manual dispatch — map user-facing names to dagger app names
+            SELECTED=()
+            HAS_KLtun="false"
 
-            echo "has_kltun=${{ inputs.kltun }}" >> "$GITHUB_OUTPUT"
+            [ "${{ inputs.console }}" = "true" ] && SELECTED+=("console")
+            [ "${{ inputs.website }}" = "true" ] && SELECTED+=("website")
+            [ "${{ inputs.oci-installer }}" = "true" ] && SELECTED+=("oci-installer")
+            [ "${{ inputs.dashboard }}" = "true" ] && SELECTED+=("dashboard")
+            [ "${{ inputs.api-server }}" = "true" ] && SELECTED+=("api-server")
+            [ "${{ inputs.workmachine-manager }}" = "true" ] && SELECTED+=("workmachine-manager")
+            [ "${{ inputs.tunnel-server }}" = "true" ] && SELECTED+=("tunnel-server")
+            [ "${{ inputs.code-analyzer }}" = "true" ] && SELECTED+=("code-analyzer")
+            [ "${{ inputs.k3s-backup }}" = "true" ] && SELECTED+=("k3s-backup")
+            if [ "${{ inputs.workspace }}" = "true" ]; then
+              SELECTED+=("workspace-base" "workspace-comprehensive")
+            fi
+            if [ "${{ inputs.kltun-golang }}" = "true" ]; then
+              HAS_KLTUN="true"
+            fi
+
+            echo "has_kltun=${HAS_KLTUN:-false}" >> "$GITHUB_OUTPUT"
             echo "apps_json=$(printf '%s\n' "${SELECTED[@]}" | jq -R . | jq -s .)" >> "$GITHUB_OUTPUT"
             HAS_APPS="false"
             [ "${#SELECTED[@]}" -gt 0 ] && HAS_APPS="true"
-            [ "${{ inputs.kltun }}" = "true" ] && HAS_APPS="true"
+            [ "${HAS_KLTUN:-false}" = "true" ] && HAS_APPS="true"
             echo "has_apps=${HAS_APPS}" >> "$GITHUB_OUTPUT"
 
             if [ "$HAS_APPS" = "false" ]; then
@@ -174,15 +169,16 @@ jobs:
         run: |
           echo "### Release Build" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ steps.resolve.outputs.is_tag_push }}" = "true" ]; then
+          if [ "${{ github.ref_type }}" = "tag" ]; then
             echo "**App:** \`${{ steps.resolve.outputs.app_name }}\`" >> "$GITHUB_STEP_SUMMARY"
             echo "**Tag:** \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "**Manual dispatch** -- version \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Manual dispatch** — version \`${{ steps.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Selected:** \`${{ steps.apps.outputs.apps_json }}\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   # -- Docker images (built via Dagger) ---------------------------------
-  dagger-build:
+  docker:
     name: Publish ${{ matrix.app }}
     needs: prepare
     if: needs.prepare.outputs.has_apps == 'true' && fromJSON(needs.prepare.outputs.apps_json)[0] != null
