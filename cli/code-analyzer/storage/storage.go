@@ -174,16 +174,30 @@ func (s *Storage) GetBasePath() string {
 	return s.basePath
 }
 
+// validatePathComponent ensures a single path component does not contain
+// path traversal sequences that could escape the storage root.
+func (s *Storage) validatePathComponent(c string) error {
+	if c == "" || c == "." || c == ".." || strings.ContainsAny(c, "/\\") {
+		return fmt.Errorf("invalid path component: %q", c)
+	}
+	return nil
+}
+
+// reportPath builds a safe report directory path from validated components.
+func (s *Storage) reportPath(components ...string) string {
+	parts := append([]string{s.basePath}, components...)
+	return filepath.Join(parts...)
+}
+
 // safePath builds a path under basePath and verifies the result does not escape
 // the storage root. Returns an error if any component contains path traversal.
 func (s *Storage) safePath(components ...string) (string, error) {
 	for _, c := range components {
-		if c == "" || c == "." || c == ".." || strings.ContainsAny(c, "/\\") {
-			return "", fmt.Errorf("invalid path component: %q", c)
+		if err := s.validatePathComponent(c); err != nil {
+			return "", err
 		}
 	}
-	parts := append([]string{s.basePath}, components...)
-	joined := filepath.Join(parts...)
+	joined := s.reportPath(components...)
 	cleaned := filepath.Clean(joined)
 	if !strings.HasPrefix(cleaned, filepath.Clean(s.basePath)+string(filepath.Separator)) && cleaned != filepath.Clean(s.basePath) {
 		return "", fmt.Errorf("path escapes storage root: %q", joined)
@@ -211,13 +225,13 @@ func (s *Storage) SaveReport(workspace string, report *Report) error {
 
 	// Save with timestamp filename
 	timestamp := report.AnalyzedAt.Format("2006-01-02T15-04-05")
-	timestampFile := filepath.Join(reportDir, fmt.Sprintf("%s.json", timestamp))
+	timestampFile := filepath.Join(filepath.Clean(reportDir), fmt.Sprintf("%s.json", timestamp))
 	if err := os.WriteFile(timestampFile, data, 0644); err != nil {
 		return fmt.Errorf("failed to write timestamp report: %w", err)
 	}
 
 	// Also save as latest.json
-	latestFile := filepath.Join(reportDir, "latest.json")
+	latestFile := filepath.Join(filepath.Clean(reportDir), "latest.json")
 	if err := os.WriteFile(latestFile, data, 0644); err != nil {
 		return fmt.Errorf("failed to write latest report: %w", err)
 	}
@@ -245,7 +259,7 @@ func (s *Storage) GetLatestReport(workspace string, reportType ReportType) (*Rep
 	if err != nil {
 		return nil, fmt.Errorf("invalid workspace or report type: %w", err)
 	}
-	latestFile := filepath.Join(reportDir, "latest.json")
+	latestFile := filepath.Join(filepath.Clean(reportDir), "latest.json")
 
 	// #nosec G304 -- path validated by safePath above
 	data, err := os.ReadFile(latestFile)
@@ -272,7 +286,7 @@ func (s *Storage) GetReportHistory(workspace string, reportType ReportType) ([]R
 	}
 
 	// #nosec G304 -- path validated by safePath above
-	entries, err := os.ReadDir(reportDir)
+	entries, err := os.ReadDir(filepath.Clean(reportDir))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []ReportInfo{}, nil
@@ -413,13 +427,13 @@ func (s *Storage) SaveAggregatedReport(workspace string, report *AggregatedRepor
 
 	// Save with timestamp filename
 	timestamp := report.AnalyzedAt.Format("2006-01-02T15-04-05")
-	timestampFile := filepath.Join(reportDir, fmt.Sprintf("%s.json", timestamp))
+	timestampFile := filepath.Join(filepath.Clean(reportDir), fmt.Sprintf("%s.json", timestamp))
 	if err := os.WriteFile(timestampFile, data, 0644); err != nil {
 		return fmt.Errorf("failed to write timestamp report: %w", err)
 	}
 
 	// Also save as latest.json
-	latestFile := filepath.Join(reportDir, "latest.json")
+	latestFile := filepath.Join(filepath.Clean(reportDir), "latest.json")
 	if err := os.WriteFile(latestFile, data, 0644); err != nil {
 		return fmt.Errorf("failed to write latest report: %w", err)
 	}
@@ -447,7 +461,7 @@ func (s *Storage) GetLatestAggregatedReport(workspace string) (*AggregatedReport
 	if err != nil {
 		return nil, fmt.Errorf("invalid workspace: %w", err)
 	}
-	latestFile := filepath.Join(reportDir, "latest.json")
+	latestFile := filepath.Join(filepath.Clean(reportDir), "latest.json")
 	// #nosec G304 -- path validated by safePath above
 
 	data, err := os.ReadFile(latestFile)
@@ -525,7 +539,7 @@ func (s *Storage) updateMetadata(workspace string, report *Report) error {
 }
 
 func (s *Storage) cleanupOldReports(reportDir string, keep int) {
-	entries, err := os.ReadDir(reportDir)
+	entries, err := os.ReadDir(filepath.Clean(reportDir))
 	if err != nil {
 		return
 	}

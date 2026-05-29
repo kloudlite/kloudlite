@@ -113,6 +113,10 @@ func extractTarGz(srcFile string, destDir string) error {
 			return fmt.Errorf("failed to read tar header: %w", err)
 		}
 
+		// #nosec G304 -- validated below
+		if strings.Contains(header.Name, "..") {
+			return fmt.Errorf("invalid tar path: %s", header.Name)
+		}
 		targetPath := filepath.Join(destDir, header.Name)
 
 		// Ensure target path is within destDir (security check)
