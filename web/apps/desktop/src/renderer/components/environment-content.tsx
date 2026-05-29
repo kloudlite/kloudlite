@@ -236,9 +236,11 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           volumes: [],
         }))
         setServices(svcs)
-      } else {
+      } else if (!cs && services.length === 0) {
+        // Only fall back to dummy data on initial load when no services yet
         setServices(SERVICES[envHash] || [])
       }
+      // else: keep existing services (don't clear on background refresh)
 
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
       setCompose(cs ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
