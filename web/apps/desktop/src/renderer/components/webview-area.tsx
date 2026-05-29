@@ -207,16 +207,22 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
           const stack = [...tab.navStack]
           let index = tab.navIndex
 
-          // If navigating to a URL that's adjacent in the stack, it's a back/forward
           if (index > 0 && stack[index - 1] === newUrl) {
             index--
           } else if (index < stack.length - 1 && stack[index + 1] === newUrl) {
             index++
-          } else if (stack[index] !== newUrl) {
-            // New navigation — truncate forward history
-            stack.splice(index + 1)
-            stack.push(newUrl)
-            index = stack.length - 1
+          } else {
+            // Look for the URL anywhere in the existing stack
+            // (e.g. jumping 2+ steps back/forward via history popover)
+            const existingIdx = stack.indexOf(newUrl)
+            if (existingIdx >= 0) {
+              index = existingIdx
+            } else if (stack[index] !== newUrl) {
+              // New navigation — truncate forward history
+              stack.splice(index + 1)
+              stack.push(newUrl)
+              index = stack.length - 1
+            }
           }
 
           updateTab(tabId, {
