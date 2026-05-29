@@ -211,27 +211,27 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 
 	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: managerNamespace}}
 
-	// Check if StatefulSet already has the correct image to avoid unnecessary
-	// updates that trigger owned-resource watch loops and cause pod churn.
-	if err := r.Get(ctx, client.ObjectKeyFromObject(statefulSet), statefulSet); err == nil {
-		if len(statefulSet.Spec.Template.Spec.Containers) > 0 {
-			currentImage := statefulSet.Spec.Template.Spec.Containers[0].Image
-			if currentImage == r.env.WorkMachineManagerImage &&
-				len(statefulSet.Spec.Template.Spec.InitContainers) > 0 &&
-				statefulSet.Spec.Template.Spec.InitContainers[0].Image == r.env.WorkMachineManagerImage {
-				return ctrl.Result{}, nil
-			}
-		}
-	}
-
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
 		replicas := int32(1)
-		statefulSet.Labels = labels
+		// Merge labels to preserve K8s-added labels (e.g. statefulset revision labels).
+		// Replacing them entirely triggers unnecessary rolling updates every reconciliation.
+		if statefulSet.Labels == nil {
+			statefulSet.Labels = make(map[string]string)
+		}
+		for k, v := range labels {
+			statefulSet.Labels[k] = v
+		}
 		statefulSet.Spec.Replicas = &replicas
 		statefulSet.Spec.ServiceName = name
 		statefulSet.Spec.PodManagementPolicy = appsv1.ParallelPodManagement
 		statefulSet.Spec.Selector = &metav1.LabelSelector{MatchLabels: labels}
-		statefulSet.Spec.Template.Labels = labels
+		// Same for pod-template labels — merge, don't replace
+		if statefulSet.Spec.Template.Labels == nil {
+			statefulSet.Spec.Template.Labels = make(map[string]string)
+		}
+		for k, v := range labels {
+			statefulSet.Spec.Template.Labels[k] = v
+		}
 		statefulSet.Spec.Template.Spec.ServiceAccountName = name
 		statefulSet.Spec.Template.Spec.HostPID = true
 		statefulSet.Spec.Template.Spec.NodeSelector = workmachineshared.WorkMachineAddOnPlacement(obj.Name).NodeSelector
