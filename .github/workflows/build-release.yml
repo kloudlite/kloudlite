@@ -81,7 +81,7 @@ jobs:
   # -- Prepare: parse tag or manual inputs -----------------------------
   prepare:
     name: Prepare build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     outputs:
       tag: ${{ steps.resolve.outputs.tag }}
       version: ${{ steps.resolve.outputs.version }}
@@ -184,7 +184,7 @@ jobs:
       fail-fast: false
       matrix:
         app: ${{ fromJSON(needs.prepare.outputs.apps_json) }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     steps:
       - uses: actions/checkout@v4
 
@@ -213,7 +213,7 @@ jobs:
     name: Release kltun
     needs: prepare
     if: needs.prepare.outputs.has_apps == 'true' && needs.prepare.outputs.has_kltun == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, dagger]
     steps:
       - uses: actions/checkout@v4
 
