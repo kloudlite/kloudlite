@@ -335,6 +335,12 @@ func (r *PlatformScopedReconciler) workMachineManagerExists(ctx context.Context,
 		return false, fmt.Errorf("failed to get workmachine-manager namespace %s: %w", managerNamespace, err)
 	}
 
+	// If the namespace is being deleted, consider the manager as non-existent
+	// so the platform controller can proceed with cleanup.
+	if namespace.DeletionTimestamp != nil {
+		return false, nil
+	}
+
 	statefulSet := &appsv1.StatefulSet{}
 	if err := r.Get(ctx, client.ObjectKey{Name: workMachineManagerName(obj.Name), Namespace: managerNamespace}, statefulSet); err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -373,9 +379,13 @@ func (r *PlatformScopedReconciler) cleanupWorkMachineNamespace(ctx context.Conte
 		if err := r.Delete(ctx, namespace); err != nil && !apiErrors.IsNotFound(err) {
 			return ctrl.Result{}, fmt.Errorf("failed to delete workmachine namespace %s: %w", obj.Spec.TargetNamespace, err)
 		}
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	// Namespace is already being deleted. If it's stuck (e.g., due to leftover
+	// finalizers), this will block indefinitely. Return success here and let the
+	// WorkMachine finalizer be removed. The garbage collector will finish the job.
+	return ctrl.Result{}, nil
 }
 
 func workMachineManagerName(workMachineName string) string {
