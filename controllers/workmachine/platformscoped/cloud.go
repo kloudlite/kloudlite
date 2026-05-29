@@ -417,23 +417,6 @@ func (r *PlatformScopedReconciler) verifyNodeReadiness(ctx context.Context, sess
 		return markBlocked(session, workmachineshared.ConditionNodeJoined, workmachineshared.ReasonWaitingForNodeJoin, "waiting for node to join cluster", r.Cfg.WorkMachine.NodeJoinCheckInterval)
 	}
 
-	// Verify the found node actually belongs to this workmachine by checking its
-	// private IP matches the cloud VM's private IP. This prevents the controller
-	// from using a stale or mislabeled control-plane node.
-	if machineInfo.PrivateIP != "" {
-		nodeIP := r.getNodeInternalIP(node)
-		if nodeIP != machineInfo.PrivateIP {
-			ctrl.LoggerFrom(ctx).Info("found node with mismatched IP, waiting for correct node to join",
-				"node", node.Name,
-				"nodeIP", nodeIP,
-				"expectedPrivateIP", machineInfo.PrivateIP,
-			)
-			obj.Status.State = v1.MachineStateStarting
-			obj.Status.Message = "Node IP mismatch, waiting for correct node"
-			return markBlocked(session, workmachineshared.ConditionNodeJoined, workmachineshared.ReasonWaitingForNodeJoin, "node IP mismatch, waiting for correct node", r.Cfg.WorkMachine.NodeJoinCheckInterval)
-		}
-	}
-
 	session.MarkTrue(workmachineshared.ConditionNodeJoined, workmachineshared.ReasonReconciled, "node joined cluster")
 
 	// Node joined but not ready yet

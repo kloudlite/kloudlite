@@ -208,10 +208,9 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 	}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to ensure workmachine-manager cluster role binding: %w", err)
 	}
-
 	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: managerNamespace}}
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, statefulSet, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.DirectClient, statefulSet, func() error {
 		replicas := int32(1)
 		// Merge labels to preserve K8s-added labels (e.g. statefulset revision labels).
 		// Replacing them entirely triggers unnecessary rolling updates every reconciliation.
@@ -266,7 +265,6 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 				{Name: "INSTALLATION_SECRET", Value: r.env.InstallationSecret},
 				{Name: "JWT_SECRET", Value: r.env.JWTSecret},
 				{Name: "HOSTED_SUBDOMAIN", Value: r.env.HostedSubdomain},
-				{Name: "TUNNEL_SERVER_IMAGE", Value: r.env.TunnelServerImage},
 				{Name: "CODE_ANALYZER_IMAGE", Value: r.env.CodeAnalyzerImage},
 				{Name: "SNAPSHOT_REGISTRY_ENDPOINT", Value: r.env.SnapshotRegistryEndpoint},
 				{Name: "SNAPSHOT_REGISTRY_PREFIX", Value: r.env.SnapshotRegistryPrefix},
@@ -294,6 +292,9 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 			hostPathVolume("host-dev", "/dev", corev1.HostPathDirectory),
 			hostPathVolume("host-proc", "/proc", corev1.HostPathDirectory),
 			hostPathVolume("host-lib-modules", "/lib/modules", corev1.HostPathDirectory),
+		}
+		statefulSet.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+			{Name: "ghcr-pull-secret"},
 		}
 		return controllerutil.SetControllerReference(obj, statefulSet, r.Scheme)
 	}); err != nil {
