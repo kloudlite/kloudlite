@@ -113,7 +113,10 @@ func (m *Kloudlite) BuildAllBinaries(
 	version string,
 ) *dagger.Directory {
 	out := dag.Directory()
-	type appDef struct{ name, suffix string; genCRD bool }
+	type appDef struct {
+		name, suffix string
+		genCRD       bool
+	}
 	apps := []appDef{
 		{"kloudlite", "kloudlite", true},
 		{"kli", "kli", false},

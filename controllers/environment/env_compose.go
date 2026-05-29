@@ -69,7 +69,6 @@ func (r *EnvironmentReconciler) reconcileCompose(ctx context.Context, environmen
 		environment.Status.State == environmentsv1.EnvironmentStateSnapping ||
 		environment.Status.State == environmentsv1.EnvironmentStateDeactivating
 
-
 	// Save old deployed resources for cleanup comparison
 	var oldDeployedResources *environmentsv1.DeployedResources
 	if environment.Status.ComposeStatus.DeployedResources != nil {
