@@ -246,7 +246,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
       if (result.error) return
       const env = (result.items || []).find((e: any) =>
-        e.metadata?.name === envHash || e.metadata?.name === envName
+        e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
       )
       if (!env) {
         setServices(SERVICES[envHash] || [])
@@ -393,28 +393,31 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                     // Poll API until composeStatus appears (source of truth)
                     let pollAttempts = 0
                     const poll = async (): Promise<void> => {
-                      const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
-                      if (result.error) return
-                      const env = (result.items || []).find(
-                        (e: any) => e.metadata?.name === envName
-                      )
-                      const cs = env?.status?.composeStatus
-                      if (cs?.services?.length > 0) {
-                        const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
-                          id: s.name || `svc-${i}`,
-                          name: s.name || `svc-${i}`,
-                          type: 'ClusterIP' as const,
-                          clusterIP: '',
-                          dns: `${s.name}.${env?.spec?.targetNamespace || ''}.svc.cluster.local`,
-                          ports: (s.ports || []).map((p: number) => ({
-                            port: p, targetPort: p, protocol: 'TCP'
-                          })),
-                          volumes: [],
-                        }))
-                        setServices(svcs)
-                        return
+                      try {
+                        const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
+                        const env = (result?.items || []).find(
+                          (e: any) => e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
+                        )
+                        const cs = env?.status?.composeStatus
+                        if (cs?.services?.length > 0) {
+                          const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
+                            id: s.name || `svc-${i}`,
+                            name: s.name || `svc-${i}`,
+                            type: 'ClusterIP' as const,
+                            clusterIP: '',
+                            dns: `${s.name}.${env?.spec?.targetNamespace || ''}.svc.cluster.local`,
+                            ports: (s.ports || []).map((p: number) => ({
+                              port: p, targetPort: p, protocol: 'TCP'
+                            })),
+                            volumes: [],
+                          }))
+                          setServices(svcs)
+                          return
+                        }
+                      } catch (e) {
+                        console.warn('Poll failed, retrying...', e)
                       }
-                      if (pollAttempts < 15) {
+                      if (pollAttempts < 20) {
                         pollAttempts++
                         await new Promise((r) => setTimeout(r, 2000))
                         return poll()
