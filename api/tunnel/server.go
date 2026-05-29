@@ -242,6 +242,16 @@ func Run(ctx context.Context, args []string) error {
 		}
 	}()
 
+	// Internal non-TLS listener for the ingress proxy running on the same pod.
+	// The ingress proxy cannot connect to the TLS listener with certificate
+	// validation for loopback, so we serve the same mux on a loopback address.
+	go func() {
+		logger.Info("starting internal HTTP listener for ingress proxy", zap.String("addr", "127.0.0.1:8444"))
+		if err := http.ListenAndServe("127.0.0.1:8444", mux); err != nil {
+			logger.Error("internal HTTP listener error", zap.Error(err))
+		}
+	}()
+
 	// Create and start DNS server
 	dnsServer := handlers.NewDNSServer(logger, hostsCache, handlers.DNSServerConfig{
 		ListenAddr:  cfg.DNSListenAddr,
