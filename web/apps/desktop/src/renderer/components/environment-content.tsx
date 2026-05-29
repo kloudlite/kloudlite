@@ -1,10 +1,12 @@
 import { cn } from '@/lib/utils'
-import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 import { CodeEditor } from './code-editor'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { ServicesGraph } from './services-graph'
 import { LogsViewer } from './services-graph/logs-viewer'
+
+const API_NAMESPACE = 'wm-karthik-dev'
 
 interface EnvironmentContentProps {
   envName: string
@@ -190,14 +192,68 @@ services:
       - "3000:3000"`,
 }
 
-function ServicesView({ envHash }: { envHash: string }) {
-  const services = SERVICES[envHash] || []
-  const workspaces = ENV_WORKSPACES[envHash] || []
-  const [compose, setCompose] = useState(COMPOSITIONS[envHash] || '')
+function ServicesView({ envHash, envName }: { envHash: string; envName: string }) {
+  const [services, setServices] = useState<ServiceData[]>([])
+  const [workspaces, setWorkspaces] = useState<ConnectedWorkspace[]>([])
+  const [compose, setCompose] = useState('')
+  const [loading, setLoading] = useState(true)
+  const fetchedRef = useRef(false)
   const [composeOpen, setComposeOpen] = useState(false)
   const [composeExiting, setComposeExiting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [logsService, setLogsService] = useState<string | null>(null)
+
+  // Fetch environment data from API
+  useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+    setLoading(true)
+
+    window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
+      if (result.error) return
+      const env = (result.items || []).find((e: any) =>
+        e.metadata?.name === envHash || e.metadata?.name === envName
+      )
+      if (!env) {
+        // Fallback to dummy data
+        setServices(SERVICES[envHash] || [])
+        setWorkspaces(ENV_WORKSPACES[envHash] || [])
+        setCompose(COMPOSITIONS[envHash] || '')
+        setLoading(false)
+        return
+      }
+
+      const cs = env.status?.composeStatus
+      if (cs?.services) {
+        const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
+          id: s.name || `svc-${i}`,
+          name: s.name || `svc-${i}`,
+          type: 'ClusterIP' as const,
+          clusterIP: '',
+          dns: `${s.name}.${env.spec?.targetNamespace || ''}.svc.cluster.local`,
+          ports: (s.ports || []).map((p: number) => ({
+            port: p, targetPort: p, protocol: 'TCP'
+          })),
+          volumes: [],
+        }))
+        setServices(svcs)
+      } else {
+        setServices(SERVICES[envHash] || [])
+      }
+
+      setWorkspaces(ENV_WORKSPACES[envHash] || [])
+      setCompose(cs ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
+        `  ${s.name}:\n    image: ${s.image}\n    ports:\n` +
+        (s.ports || []).map((p: number) => `      - "${p}:${p}"\n`).join('')
+      ).join('') : COMPOSITIONS[envHash] || '')
+      setLoading(false)
+    }).catch(() => {
+      setServices(SERVICES[envHash] || [])
+      setWorkspaces(ENV_WORKSPACES[envHash] || [])
+      setCompose(COMPOSITIONS[envHash] || '')
+      setLoading(false)
+    })
+  }, [envHash, envName])
 
   useEffect(() => {
     function handler(e: Event) {
@@ -214,6 +270,14 @@ function ServicesView({ envHash }: { envHash: string }) {
       setComposeOpen(false)
       setComposeExiting(false)
     }, 150)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/50" />
+      </div>
+    )
   }
 
   const graphServices = services.map((s) => ({
@@ -672,7 +736,7 @@ export function EnvironmentContent({ envName, envHash, activeTab }: EnvironmentC
   if (activeTab === 'services') {
     return (
       <div className="h-full bg-background">
-        <ServicesView envHash={envHash} />
+        <ServicesView envHash={envHash} envName={envName} />
       </div>
     )
   }
