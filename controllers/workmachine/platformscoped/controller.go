@@ -307,9 +307,6 @@ func (r *PlatformScopedReconciler) ensureWorkMachineManager(ctx context.Context,
 				},
 			},
 		}
-		statefulSet.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
-			{Name: "ghcr-pull-secret"},
-		}
 		return controllerutil.SetControllerReference(obj, statefulSet, r.Scheme)
 	}); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to ensure workmachine-manager statefulset: %w", err)

@@ -115,9 +115,11 @@ func TestEnsureWorkMachineManagerCreatesPerWorkMachineStatefulSet(t *testing.T) 
 	}
 	wm.Status.MachineID = "machine-id"
 	session := workmachineshared.NewStatusSession(wm)
+	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sourceAPIConfig(), sourceAPISecret()).Build()
 	r := &PlatformScopedReconciler{
-		Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(sourceAPIConfig(), sourceAPISecret()).Build(),
-		Scheme: scheme,
+		Client:       fakeClient,
+		DirectClient: fakeClient,
+		Scheme:       scheme,
 		env: Env{
 			KloudliteInstallationID:  "installation-id",
 			InstallationSecret:       "installation-secret",
@@ -236,11 +238,14 @@ func TestEnsureWorkMachineManagerCreatesPerWorkMachineStatefulSet(t *testing.T) 
 	if !hasEnv(container.Env, "WM_INGRESS_OWN_NAMESPACE", "wm-test") {
 		t.Fatalf("expected WM_INGRESS_OWN_NAMESPACE env, got %#v", container.Env)
 	}
-	if !hasContainerPort(container.Ports, "http", 80) {
+	if !hasContainerPort(container.Ports, "http", 8080) {
 		t.Fatalf("expected integrated ingress http port, got %#v", container.Ports)
 	}
-	if !hasContainerPort(container.Ports, "https", 443) {
+	if !hasContainerPort(container.Ports, "https", 8443) {
 		t.Fatalf("expected integrated ingress https port, got %#v", container.Ports)
+	}
+	if !hasContainerPort(container.Ports, "tunnel-ws", 443) {
+		t.Fatalf("expected tunnel-server ws port, got %#v", container.Ports)
 	}
 	if !hasContainerPort(container.Ports, "ingress-health", 17777) {
 		t.Fatalf("expected integrated ingress health port, got %#v", container.Ports)
@@ -279,13 +284,15 @@ func TestEnsureWorkMachineManagerDeletesLegacyPlatformNamespaceResources(t *test
 		Spec:       workmachinev1.WorkMachineSpec{TargetNamespace: "wm-test"},
 	}
 	wm.Status.MachineID = "machine-id"
+	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+		&appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: managerName, Namespace: "kloudlite"}},
+		&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: managerName, Namespace: "kloudlite"}},
+	).Build()
 	r := &PlatformScopedReconciler{
-		Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(
-			&appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: managerName, Namespace: "kloudlite"}},
-			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: managerName, Namespace: "kloudlite"}},
-		).Build(),
-		Scheme: scheme,
-		env:    Env{PodNamespace: "kloudlite", WorkMachineManagerImage: "workmachine-manager:test"},
+		Client:       fakeClient,
+		DirectClient: fakeClient,
+		Scheme:       scheme,
+		env:          Env{PodNamespace: "kloudlite", WorkMachineManagerImage: "workmachine-manager:test"},
 	}
 
 	result, err := r.ensureWorkMachineManager(context.Background(), workmachineshared.NewStatusSession(wm))
