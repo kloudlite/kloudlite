@@ -238,7 +238,7 @@ func TestEnsureWorkMachineManagerCreatesPerWorkMachineStatefulSet(t *testing.T) 
 	if !hasEnv(container.Env, "WM_INGRESS_OWN_NAMESPACE", "wm-test") {
 		t.Fatalf("expected WM_INGRESS_OWN_NAMESPACE env, got %#v", container.Env)
 	}
-	if !hasContainerPort(container.Ports, "http", 8080) {
+	if !hasContainerPort(container.Ports, "http", 9090) {
 		t.Fatalf("expected integrated ingress http port, got %#v", container.Ports)
 	}
 	if !hasContainerPort(container.Ports, "https", 8443) {

@@ -44,7 +44,8 @@ func (m *Kloudlite) ImageWorkmachineManager(
 		WithMountedCache("/var/cache/apt", aptCache).
 		WithExec([]string{"apt-get", "update"}).
 		WithExec([]string{"apt-get", "install", "-y", "--no-install-recommends",
-			"bash", "btrfs-progs", "ca-certificates", "coreutils", "curl", "git", "tar", "util-linux", "xz-utils"}).
+			"bash", "btrfs-progs", "ca-certificates", "coreutils", "curl", "git", "tar", "util-linux", "xz-utils",
+			"wireguard-tools", "iptables", "iproute2"}).
 		WithExec([]string{"rm", "-rf", "/var/lib/apt/lists/*"}).
 		WithExec([]string{"mkdir", "-m", "0755", "/nix"}).
 		WithExec([]string{"groupadd", "-g", "30000", "nixbld"}).

@@ -125,7 +125,7 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		ForceFullRebuild:        controllerCfg.WMIngress.ForceFullRebuild,
 	}
 	if ingressReconciler.HTTPPort == 0 {
-		ingressReconciler.HTTPPort = 8080
+		ingressReconciler.HTTPPort = 9090 // internal HTTP, not 8080 (conflicts with metrics server)
 	}
 	if ingressReconciler.HTTPSPort == 0 {
 		ingressReconciler.HTTPSPort = 8443

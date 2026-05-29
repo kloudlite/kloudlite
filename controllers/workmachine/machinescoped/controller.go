@@ -289,7 +289,7 @@ func (r *MachineScopedReconciler) ensureWorkmachineIngressController(ctx context
 				{
 					Name:       "http",
 					Port:       80,
-					TargetPort: intstr.FromInt(8080),
+					TargetPort: intstr.FromInt(9090),
 					Protocol:   corev1.ProtocolTCP,
 				},
 				{
