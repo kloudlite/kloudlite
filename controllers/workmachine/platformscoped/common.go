@@ -22,7 +22,7 @@ type Env struct {
 	HostedSubdomain         string           `env:"HOSTED_SUBDOMAIN" required:"true"`
 	InstallationSecret      string           `env:"INSTALLATION_SECRET" required:"true"`
 	JWTSecret               string           `env:"JWT_SECRET" required:"true"`
-	HostManagerImage        string           `env:"HOST_MANAGER_IMAGE" required:"true"`
+	HostManagerImage        string           `env:"HOST_MANAGER_IMAGE" default:"ghcr.io/kloudlite/host-manager:dev-local"`
 	TunnelServerImage       string           `env:"TUNNEL_SERVER_IMAGE" required:"true"`
 	CodeAnalyzerImage       string           `env:"CODE_ANALYZER_IMAGE" required:"true"`
 
