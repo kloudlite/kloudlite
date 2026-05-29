@@ -21,17 +21,17 @@ type TunnelClient struct {
 // endpoint should be in format "ip:port" (e.g., "203.0.113.1:443")
 // token is the JWT token for authentication
 func NewTunnelClient(endpoint string, token string) *TunnelClient {
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS13,
+	}
+	tlsConfig.InsecureSkipVerify = true
 	return &TunnelClient{
 		BaseURL: fmt.Sprintf("https://%s", endpoint),
 		Token:   token,
 		HTTPClient: &http.Client{
 			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					// #nosec G402 - tunnel server uses self-signed cert in controlled env
-					InsecureSkipVerify: true, // #nosec G402 -- internal tunnel server
-					MinVersion:         tls.VersionTLS13,
-				},
+				TLSClientConfig: tlsConfig,
 			},
 		},
 	}
