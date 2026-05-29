@@ -7,7 +7,9 @@ import (
 	"syscall"
 
 	"github.com/kloudlite/kloudlite/api/config"
+	"go.uber.org/zap"
 	"github.com/kloudlite/kloudlite/api/k8s"
+	"github.com/kloudlite/kloudlite/api/tunnel"
 	workmachinenodemanager "github.com/kloudlite/kloudlite/cli/workmachine-node-manager"
 	"github.com/kloudlite/kloudlite/controllers"
 	"github.com/kloudlite/kloudlite/pkg/logger"
@@ -65,6 +67,26 @@ func runWorkMachineManager(ctx context.Context) error {
 			SnapshotRegistryPrefix:   os.Getenv("SNAPSHOT_REGISTRY_PREFIX"),
 			SnapshotRegistryInsecure: os.Getenv("SNAPSHOT_REGISTRY_INSECURE"),
 		})
+	}()
+	go func() {
+		tunnelArgs := []string{
+			"--listen", ":443",
+			"--tls-secret", "kloudlite-wildcard-cert-tls",
+			"--ca-cert-secret", "kloudlite-wildcard-cert-tls",
+			"--kltun-tls-secret", "kloudlite-wildcard-cert-tls",
+			"--wireguard-target", "127.0.0.1:51820",
+			"--watch-config",
+			"--config-path", "/etc/wireguard/wg0.conf",
+			"--namespace", os.Getenv("NAMESPACE"),
+			"--router-service", "wm-ingress-controller",
+			"--dns-listen", ":53",
+			"--upstream-dns", "10.43.0.10:53",
+		}
+		appLogger.Info("starting tunnel-server (inline)", zap.Any("config", tunnelArgs))
+		if err := tunnel.Run(ctx, tunnelArgs); err != nil {
+			appLogger.Error("failed to start tunnel-server", zap.Error(err))
+			managerErr <- err
+		}
 	}()
 
 	quit := make(chan os.Signal, 1)
