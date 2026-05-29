@@ -45,20 +45,22 @@ function apiRequest(
     const token = generateToken('karthik')
     const payload = body ? JSON.stringify(body) : undefined
 
-    const options = {
-      hostname: url.hostname,
-      port: url.port || 443,
-      path: url.pathname + url.search,
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(payload ? { 'Content-Type': 'application/json' } : {}),
-      } as Record<string, string>,
-      rejectUnauthorized: false,
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    }
+    if (payload) {
+      headers['Content-Type'] = 'application/json'
+      headers['Content-Length'] = String(Buffer.byteLength(payload))
     }
 
-    if (payload) {
-      options.headers['Content-Length'] = String(Buffer.byteLength(payload))
+    const options = {
+      hostname: url.hostname,
+      port: parseInt(url.port) || 443,
+      path: url.pathname + url.search,
+      method,
+      headers,
+      rejectUnauthorized: false,
+      timeout: 10000,
     }
 
     const lib = API_BASE.startsWith('https') ? https : http
@@ -70,13 +72,13 @@ function apiRequest(
         try {
           const parsed = JSON.parse(raw)
           if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error(parsed.error || `HTTP ${res.statusCode}`))
+            reject(new Error(parsed.error || `HTTP ${res.statusCode}: ${raw.slice(0, 200)}`))
           } else {
             resolve(parsed)
           }
         } catch {
           if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error(`HTTP ${res.statusCode}`))
+            reject(new Error(`HTTP ${res.statusCode}: ${raw.slice(0, 200)}`))
           } else {
             resolve(raw)
           }
@@ -85,6 +87,7 @@ function apiRequest(
     })
 
     req.on('error', reject)
+    req.on('timeout', () => { req.destroy(); reject(new Error(`Request timed out: ${method} ${path}`)) })
     if (payload) req.write(payload)
     req.end()
   })
