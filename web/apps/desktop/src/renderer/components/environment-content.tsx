@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon, Loader2 } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { CodeEditor } from './code-editor'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { ServicesGraph } from './services-graph'
@@ -238,7 +238,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [logsService, setLogsService] = useState<string | null>(null)
-  const appliedRef = useRef(false)
 
   // Fetch environment data from API
   useEffect(() => {
@@ -259,7 +258,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       const cs = env.status?.composeStatus
       if (cs?.services && cs.services.length > 0) {
-        // Real compose status from API — use it
         const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
           id: s.name || `svc-${i}`,
           name: s.name || `svc-${i}`,
@@ -273,13 +271,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
         }))
         setServices(svcs)
         setWorkspaces(ENV_WORKSPACES[envHash] || [])
-        appliedRef.current = false // reset after we got real data
-      } else if (appliedRef.current && services.length === 0) {
-        // Compose was applied but composeStatus not ready yet — restore from compose content
-        const parsed = parseComposeServices(compose)
-        if (parsed.length > 0) {
-          setServices(parsed)
-        }
       } else {
         if (services.length === 0) setServices(SERVICES[envHash] || [])
         setWorkspaces(ENV_WORKSPACES[envHash] || [])
@@ -399,12 +390,10 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       }
                     )
 
-                    // Parse and show services immediately
-                    appliedRef.current = true
+                    // Parse and show services immediately from the applied compose
                     const parsed = parseComposeServices(compose)
                     if (parsed.length > 0) setServices(parsed)
                     closeCompose(true)
-                    setRefreshKey((k) => k + 1)
                   } catch (err) {
                     console.error('Failed to apply compose:', err)
                   } finally {
