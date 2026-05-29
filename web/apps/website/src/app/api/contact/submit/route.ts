@@ -49,6 +49,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate email format
+    if (body.email.length > 254) {
+      return NextResponse.json(
+        { error: 'Invalid email address' },
+        { status: 400 }
+      )
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(body.email)) {
       return NextResponse.json(

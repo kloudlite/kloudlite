@@ -317,7 +317,10 @@ func (s *Storage) GetReportHistory(workspace string, reportType ReportType) ([]R
 
 // GetReport retrieves a specific report by filename
 func (s *Storage) GetReport(workspace string, reportType ReportType, filename string) (*Report, error) {
-	reportFile := filepath.Join(s.basePath, workspace, string(reportType), filename)
+	reportFile, err := s.safePath(workspace, string(reportType), filename)
+	if err != nil {
+		return nil, fmt.Errorf("invalid workspace, report type, or filename: %w", err)
+	}
 
 	data, err := os.ReadFile(reportFile)
 	if err != nil {
@@ -381,7 +384,10 @@ func (s *Storage) ListWorkspaces() ([]string, error) {
 
 // DeleteWorkspaceReports deletes all reports for a workspace
 func (s *Storage) DeleteWorkspaceReports(workspace string) error {
-	workspaceDir := filepath.Join(s.basePath, workspace)
+	workspaceDir, err := s.safePath(workspace)
+	if err != nil {
+		return fmt.Errorf("invalid workspace: %w", err)
+	}
 	return os.RemoveAll(workspaceDir)
 }
 

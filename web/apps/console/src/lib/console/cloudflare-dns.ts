@@ -203,14 +203,14 @@ export async function createCnameRecord(
         }
       }
 
-      console.error(`DNS CNAME CREATE failed for ${name}:`, JSON.stringify(result.errors))
+      console.error('DNS CNAME CREATE failed for %s:', name, JSON.stringify(result.errors))
       return null
     }
 
     console.log(`DNS CNAME record created successfully: ${name} → ${target} (ID: ${result.result.id})`)
     return result.result.id
   } catch (error) {
-    console.error(`DNS CNAME CREATE error for ${name}:`, error)
+    console.error('DNS CNAME CREATE error for %s:', name, error)
     return null
   }
 }
@@ -328,7 +328,7 @@ export async function getDnsRecord(name: string, type: string = 'A'): Promise<Dn
 
     return result.result[0]
   } catch (error) {
-    console.error(`DNS GET error for ${name}:`, error)
+    console.error('DNS GET error for %s:', name, error)
     return null
   }
 }
@@ -361,7 +361,7 @@ export async function getAllDnsRecords(name: string): Promise<DnsRecord[]> {
 
     return result.result
   } catch (error) {
-    console.error(`DNS GET ALL error for ${name}:`, error)
+    console.error('DNS GET ALL error for %s:', name, error)
     return []
   }
 }

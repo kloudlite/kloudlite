@@ -262,7 +262,7 @@ func (r *Router) proxyWebSocket(w http.ResponseWriter, req *http.Request, backen
 
 	if backendURL.Scheme == "https" || backendURL.Scheme == "wss" {
 		backendConn, err = tls.Dial("tcp", backendHost, &tls.Config{
-			InsecureSkipVerify: true, // Backend is internal, skip verification
+			InsecureSkipVerify: false,
 		})
 	} else {
 		backendConn, err = net.DialTimeout("tcp", backendHost, 30*time.Second)

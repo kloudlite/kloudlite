@@ -106,8 +106,19 @@ func isValidWorkspaceName(name string) bool {
 // clearWorkspaceCache clears the findings cache and manifest for a workspace
 // This forces a full re-analysis on the next run
 func (s *Server) clearWorkspaceCache(workspace string) {
+	if !isValidWorkspaceName(workspace) {
+		s.logger.Warn("Invalid workspace name for cache clear", zap.String("workspace", workspace))
+		return
+	}
+
 	basePath := s.storage.GetBasePath()
-	workspaceDir := filepath.Join(basePath, workspace)
+	workspaceDir := filepath.Clean(filepath.Join(basePath, workspace))
+
+	// Ensure we don't escape the base path
+	if !strings.HasPrefix(workspaceDir, filepath.Clean(basePath)+string(filepath.Separator)) && workspaceDir != filepath.Clean(basePath) {
+		s.logger.Warn("Workspace path escapes storage root", zap.String("workspace", workspace))
+		return
+	}
 
 	// Remove findings cache
 	findingsCachePath := filepath.Join(workspaceDir, "findings-cache.json")
