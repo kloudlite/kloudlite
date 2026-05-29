@@ -123,7 +123,6 @@ func TestEnsureWorkMachineManagerCreatesPerWorkMachineStatefulSet(t *testing.T) 
 			InstallationSecret:       "installation-secret",
 			JWTSecret:                "jwt-secret",
 			HostedSubdomain:          "apps.test",
-			HostManagerImage:         "host-manager:test",
 			TunnelServerImage:        "tunnel-server:test",
 			CodeAnalyzerImage:        "code-analyzer:test",
 			PodNamespace:             "kloudlite",
@@ -207,9 +206,6 @@ func TestEnsureWorkMachineManagerCreatesPerWorkMachineStatefulSet(t *testing.T) 
 	}
 	if !hasEnv(container.Env, "HOSTED_SUBDOMAIN", "apps.test") {
 		t.Fatalf("expected HOSTED_SUBDOMAIN env from Env, got %#v", container.Env)
-	}
-	if !hasEnv(container.Env, "HOST_MANAGER_IMAGE", "host-manager:test") {
-		t.Fatalf("expected HOST_MANAGER_IMAGE env from Env, got %#v", container.Env)
 	}
 	if !hasEnv(container.Env, "TUNNEL_SERVER_IMAGE", "tunnel-server:test") {
 		t.Fatalf("expected TUNNEL_SERVER_IMAGE env from Env, got %#v", container.Env)
