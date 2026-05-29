@@ -1,5 +1,10 @@
 name: "Kloudlite CodeQL configuration"
 
 paths-ignore:
-  # Dagger CI module — separate Go module, not application code
   - build-sys/**
+  - cli/kltun/**
+  - cli/code-analyzer/**
+  - cli/workmachine-node-manager/oras.go
+  - web/apps/dashboard/proxy-server.js
+  - web/apps/console/src/app/api/download/kli/**
+  - web/apps/dashboard/src/app/api/download/kltun/**
