@@ -243,10 +243,12 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       // else: keep existing services (don't clear on background refresh)
 
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
-      setCompose(cs ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
-        `  ${s.name}:\n    image: ${s.image}\n    ports:\n` +
-        (s.ports || []).map((p: number) => `      - "${p}:${p}"\n`).join('')
-      ).join('') : COMPOSITIONS[envHash] || '')
+      if (!compose || cs) {
+        setCompose(cs ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
+          `  ${s.name}:\n    image: ${s.image}\n    ports:\n` +
+          (s.ports || []).map((p: number) => `      - "${p}:${p}"\n`).join('')
+        ).join('') : COMPOSITIONS[envHash] || '')
+      }
       setLoading(false)
     }).catch(() => {
       setServices(SERVICES[envHash] || [])
@@ -278,7 +280,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     }, 150)
   }
 
-  if (loading) {
+  if (loading && services.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/50" />
@@ -336,41 +338,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 onClick={async () => {
                   if (saving || !compose.trim()) return
                   setSaving(true)
-
-                  // Parse compose to show optimistic services immediately
-                  const parsedServices: ServiceData[] = []
-                  const lines = compose.split('\n')
-                  let currentSvc: string | null = null
-                  let ports: number[] = []
-                  for (const line of lines) {
-                    const svcMatch = line.match(/^\s{2}(\w[\w-]*):/)
-                    const portMatch = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
-                    if (svcMatch) {
-                      if (currentSvc) {
-                        parsedServices.push({
-                          id: currentSvc, name: currentSvc,
-                          type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
-                          ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
-                          volumes: []
-                        })
-                      }
-                      currentSvc = svcMatch[1]
-                      ports = []
-                    } else if (portMatch) {
-                      ports.push(parseInt(portMatch[1]))
-                    }
-                  }
-                  if (currentSvc) {
-                    parsedServices.push({
-                      id: currentSvc, name: currentSvc,
-                      type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`,
-                      ports: ports.map((p) => ({ port: p, targetPort: p, protocol: 'TCP' })),
-                      volumes: []
-                    })
-                  }
-
-                  // Show optimistic services + send to API
-                  setServices(parsedServices)
                   try {
                     await window.electronAPI.patchResource(
                       'wm-karthik-dev',
@@ -389,8 +356,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
-                    setSaved(true)
-                    setTimeout(() => setSaved(false), 2000)
                     closeCompose(true)
                     setRefreshKey((k) => k + 1)
                   } catch (err) {
