@@ -26,6 +26,7 @@ export interface ElectronAPI {
   createWorkspace: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<Record<string, unknown>>
   listWorkMachines: () => Promise<{ items: Record<string, unknown>[]; error?: string }>
   patchResource: (namespace: string | null, resource: string, name: string, patch: Record<string, unknown>) => Promise<Record<string, unknown>>
+  debugLog: (...args: unknown[]) => void
 }
 
 const api: ElectronAPI = {
@@ -48,7 +49,8 @@ const api: ElectronAPI = {
   listWorkspaces: (namespace) => ipcRenderer.invoke('api:list-workspaces', namespace),
   createWorkspace: (namespace, name, spec) => ipcRenderer.invoke('api:create-workspace', namespace, name, spec),
   listWorkMachines: () => ipcRenderer.invoke('api:list-workmachines'),
-  patchResource: (namespace, resource, name, patch) => ipcRenderer.invoke('api:patch-resource', namespace, resource, name, patch)
+  patchResource: (namespace, resource, name, patch) => ipcRenderer.invoke('api:patch-resource', namespace, resource, name, patch),
+  debugLog: (msg) => ipcRenderer.send('debug-log', msg)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)

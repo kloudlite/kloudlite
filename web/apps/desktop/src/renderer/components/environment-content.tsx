@@ -371,9 +371,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 onClick={async () => {
                   if (saving || !compose.trim()) return
                   setSaving(true)
-                  console.log('[compose] Starting PATCH...')
+                  window.electronAPI.debugLog('[compose] Starting PATCH...')
                   try {
-                    console.log('[compose] Calling patchResource...', envName)
+                    window.electronAPI.debugLog('[compose] Calling patchResource... ' + envName)
                     const patchResult = await window.electronAPI.patchResource(
                       'wm-karthik-dev',
                       'environments',
@@ -392,20 +392,21 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       }
                     )
 
-                    console.log('[compose] PATCH succeeded, starting poll...', JSON.stringify(patchResult).slice(0, 100))
+                    window.electronAPI.debugLog('[compose] PATCH succeeded, starting poll...')
                     // Poll API until composeStatus appears (source of truth)
                     let pollAttempts = 0
                     const poll = async (): Promise<void> => {
                       try {
-                        console.log(`[compose] Poll #${pollAttempts}: fetching environments...`)
+                        window.electronAPI.debugLog(`[compose] Poll #${pollAttempts}`)
                         const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
-                        console.log(`[compose] list result:`, JSON.stringify(result).slice(0, 200))
-                        const env = (result?.items || []).find(
+                        const items = result?.items || []
+                        window.electronAPI.debugLog(`[compose] got ${items.length} envs`)
+                        const env = items.find(
                           (e: any) => e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
                         )
-                        console.log(`[compose] env found:`, !!env, `name="${envName}"`)
+                        window.electronAPI.debugLog(`[compose] env found: ${!!env}, name="${envName}"`)
                         const cs = env?.status?.composeStatus
-                        console.log(`[compose] composeStatus:`, cs ? `services=${cs.services?.length}` : 'null')
+                        window.electronAPI.debugLog(`[compose] composeStatus: ${cs ? 'yes services=' + (cs.services?.length || 0) : 'null'}`)
                         if (cs?.services?.length > 0) {
                           const svcs: ServiceData[] = cs.services.map((s: any, i: number) => ({
                             id: s.name || `svc-${i}`,
@@ -418,25 +419,25 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                             })),
                             volumes: [],
                           }))
-                          console.log(`[compose] setting ${svcs.length} services from composeStatus`)
+                          window.electronAPI.debugLog(`[compose] setting ${svcs.length} services`)
                           setServices(svcs)
                           return
                         }
                       } catch (e) {
-                        console.warn('[compose] Poll failed, retrying...', e)
+                        window.electronAPI.debugLog('[compose] Poll error: ' + String(e))
                       }
                       if (pollAttempts < 20) {
                         pollAttempts++
                         await new Promise((r) => setTimeout(r, 2000))
                         return poll()
                       }
-                      console.warn('[compose] Poll exhausted after 20 attempts, giving up')
+                      window.electronAPI.debugLog('[compose] Poll exhausted, giving up')
                     }
                     await poll()
-                    console.log('[compose] Poll done, closing editor')
+                    window.electronAPI.debugLog('[compose] Poll done')
                     closeCompose(true)
                   } catch (err) {
-                    console.error('Failed to apply compose:', err)
+                    window.electronAPI.debugLog('[compose] PATCH failed: ' + String(err))
                   } finally {
                     setSaving(false)
                   }

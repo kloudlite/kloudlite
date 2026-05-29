@@ -380,6 +380,11 @@ ipcMain.handle('show-popup-menu', (event, items: { label: string; id: string; ty
   })
 })
 
+// IPC: debug log from renderer
+ipcMain.on('debug-log', (_event, ...args: unknown[]) => {
+  console.log('[renderer]', ...args)
+})
+
 // IPC: receive MCP browser command results from renderer
 ipcMain.on('mcp-browser-result', (_event, { requestId, result, error }) => {
   receiveMCPResult(requestId, result, error)
