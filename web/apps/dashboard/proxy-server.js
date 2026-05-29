@@ -1,6 +1,7 @@
 // Proxy server that handles WebSocket and forwards HTTP to Next.js standalone
 const http = require('http')
 const https = require('https')
+const fs = require('fs')
 const { WebSocket, WebSocketServer } = require('ws')
 
 const port = parseInt(process.env.PORT || '3000', 10)
@@ -12,6 +13,28 @@ const apiUrlParsed = new URL(apiUrl)
 const wsTargetBase = apiUrlParsed.protocol === 'https:'
   ? `wss://${apiUrlParsed.host}`
   : `ws://${apiUrlParsed.host}`
+
+function getHttpsOptions() {
+  if (apiUrlParsed.protocol !== 'https:') return {}
+
+  // When running inside Kubernetes, use the service account CA cert
+  // mounted at the standard in-cluster path
+  try {
+    const caCertPath = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+    if (fs.existsSync(caCertPath)) {
+      return { ca: fs.readFileSync(caCertPath) }
+    }
+  } catch {
+    // Not in-cluster or no access to CA cert
+  }
+
+  // Allow explicit opt-in for self-signed certs in development
+  if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+    return { rejectUnauthorized: false }
+  }
+
+  return {}
+}
 
 // Helper functions for Kubernetes metrics
 function parseCPU(cpuString) {
@@ -56,7 +79,7 @@ async function fetchNodeMetrics(nodeName) {
     const metricsData = await new Promise((resolve, reject) => {
       const req = httpModule.get(
         `${apiUrl}/apis/metrics.k8s.io/v1beta1/nodes/${nodeName}`,
-        { rejectUnauthorized: false },
+        getHttpsOptions(),
         (res) => {
           let data = ''
           res.on('data', chunk => data += chunk)
@@ -76,7 +99,7 @@ async function fetchNodeMetrics(nodeName) {
     const nodeData = await new Promise((resolve, reject) => {
       const req = httpModule.get(
         `${apiUrl}/api/v1/nodes/${nodeName}`,
-        { rejectUnauthorized: false },
+        getHttpsOptions(),
         (res) => {
           let data = ''
           res.on('data', chunk => data += chunk)
@@ -135,19 +158,24 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  // Preserve original host in x-forwarded-host for Next.js Server Actions
+  // Preserve the external request coordinates for Next.js/Auth.js redirects.
+  // The TCP connection is forwarded to the internal standalone server below,
+  // but the application must still see the browser-facing host/protocol.
   const originalHost = req.headers.host
   if (originalHost && !forwardHeaders['x-forwarded-host']) {
     forwardHeaders['x-forwarded-host'] = originalHost
   }
 
-  // Set x-forwarded-proto if not already set
+  // Set x-forwarded-proto if not already set. Local dev and port-forwarded
+  // traffic reaches this proxy over HTTP; ingress/controllers can provide
+  // x-forwarded-proto=https when TLS terminates before the pod.
   if (!forwardHeaders['x-forwarded-proto']) {
-    forwardHeaders['x-forwarded-proto'] = 'https'
+    forwardHeaders['x-forwarded-proto'] = 'http'
   }
 
-  // Set host header for internal routing to Next.js
-  forwardHeaders['host'] = `127.0.0.1:${nextPort}`
+  if (originalHost) {
+    forwardHeaders['host'] = originalHost
+  }
 
   const options = {
     hostname: '127.0.0.1',

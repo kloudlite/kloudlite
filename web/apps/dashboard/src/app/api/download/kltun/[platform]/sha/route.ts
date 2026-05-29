@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const GITHUB_RELEASES_BASE = 'https://github.com/kloudlite/kloudlite/releases'
+const GITHUB_API_BASE = 'https://api.github.com'
+
+function validateGitHubUrl(url: string): URL {
+  const parsed = new URL(url)
+  const releasesOrigin = new URL(GITHUB_RELEASES_BASE).origin
+  const apiOrigin = new URL(GITHUB_API_BASE).origin
+
+  if (parsed.origin !== releasesOrigin && parsed.origin !== apiOrigin) {
+    throw new Error('Invalid download URL: unexpected origin')
+  }
+
+  if (parsed.origin === releasesOrigin && !parsed.pathname.startsWith('/kloudlite/kloudlite/releases')) {
+    throw new Error('Invalid download URL: unexpected release path')
+  }
+
+  return parsed
+}
 
 // Platform to binary name mapping
 const PLATFORM_BINARIES: Record<string, string> = {
@@ -80,7 +97,8 @@ export async function GET(
 
   // Fetch checksum file for this specific binary
   try {
-    const checksumResponse = await fetch(checksumUrl)
+    const validatedChecksumUrl = validateGitHubUrl(checksumUrl)
+    const checksumResponse = await fetch(validatedChecksumUrl)
 
     if (!checksumResponse.ok) {
       return NextResponse.json({ error: 'Checksum file not found' }, { status: 404 })

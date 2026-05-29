@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const GITHUB_REPO = 'kloudlite/kloudlite';
+const GITHUB_API_BASE = 'https://api.github.com';
+
+function validateGitHubUrl(url: string): URL {
+  const parsed = new URL(url);
+  if (parsed.origin !== new URL(GITHUB_API_BASE).origin) {
+    throw new Error('Invalid GitHub API URL');
+  }
+  if (!parsed.pathname.startsWith(`/repos/${GITHUB_REPO}/releases`)) {
+    throw new Error('Invalid GitHub API path');
+  }
+  return parsed;
+}
+
 const VALID_PLATFORMS = [
   'linux-amd64',
   'linux-arm64',
@@ -55,9 +68,9 @@ async function getKliReleaseByVersion(
 ): Promise<GitHubRelease | null> {
   try {
     const tag = version.startsWith('kli-v') ? version : `kli-v${version}`;
-    const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${tag}`,
-      {
+    const releaseUrl = `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${tag}`;
+    const validatedUrl = validateGitHubUrl(releaseUrl);
+    const response = await fetch(validatedUrl, {
         headers: {
           Accept: 'application/vnd.github.v3+json',
           ...(process.env.GITHUB_TOKEN && {

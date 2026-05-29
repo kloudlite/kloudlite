@@ -23,6 +23,11 @@ export function generateUsernameFromEmail(email: string): string {
   // Remove any invalid characters (keep only lowercase alphanumeric and hyphens)
   username = username.replace(/[^a-z0-9-]/g, '')
 
+  // Guard against ReDoS - limit input length before regex operations
+  if (username.length > 128) {
+    username = username.substring(0, 128)
+  }
+
   // Ensure it starts and ends with alphanumeric
   username = username.replace(/^-+|-+$/g, '')
 

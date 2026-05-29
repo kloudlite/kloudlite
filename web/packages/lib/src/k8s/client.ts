@@ -1,5 +1,5 @@
 import * as k8s from "@kubernetes/client-node";
-import { isInCluster, getK8sApiUrl } from "./auth";
+import { isInCluster, getK8sApiUrl, loadServiceAccountToken } from "./auth";
 
 /**
  * Kubernetes client singleton
@@ -31,30 +31,31 @@ class K8sClient {
   }
 
   private configureInCluster() {
-    // Always use kube-proxy sidecar (bun can't handle mTLS)
     const apiUrl = getK8sApiUrl();
+    const token = loadServiceAccountToken();
 
     const cluster: k8s.Cluster = {
-      name: "kube-proxy",
+      name: "in-cluster",
       server: apiUrl,
-      skipTLSVerify: true, // kube-proxy doesn't use TLS
+      skipTLSVerify: true,
     };
 
     const user: k8s.User = {
-      name: "kube-proxy-user",
+      name: "in-cluster-user",
+      token: token || undefined,
     };
 
     const context: k8s.Context = {
-      name: "kube-proxy",
-      cluster: "kube-proxy",
-      user: "kube-proxy-user",
+      name: "in-cluster",
+      cluster: "in-cluster",
+      user: "in-cluster-user",
     };
 
     this.kc.loadFromOptions({
       clusters: [cluster],
       users: [user],
       contexts: [context],
-      currentContext: "kube-proxy",
+      currentContext: "in-cluster",
     });
   }
 

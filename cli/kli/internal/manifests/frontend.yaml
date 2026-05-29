@@ -1,0 +1,141 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: kloudlite
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: kloudlite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      serviceAccountName: frontend
+      containers:
+        - name: frontend
+          image: ghcr.io/kloudlite/kloudlite/web-dashboard:development
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: KUBERNETES_SERVICE_HOST
+              value: "127.0.0.1"
+            - name: KUBERNETES_SERVICE_PORT
+              value: "8001"
+            - name: NEXT_PUBLIC_API_URL
+              value: "https://api-server.kloudlite.svc.cluster.local"
+            - name: NODE_EXTRA_CA_CERTS
+              value: "/etc/platform-api-tls/tls.crt"
+            - name: PORT
+              value: "3000"
+            - name: APP_MODE
+              value: "dashboard"
+            - name: NEXT_PUBLIC_APP_MODE
+              value: "dashboard"
+            - name: AUTH_TRUST_HOST
+              value: "true"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: frontend-secrets
+                  key: jwt-secret
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: frontend-secrets
+                  key: jwt-secret
+            - name: INSTALLATION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: frontend-secrets
+                  key: installation-secret
+            - name: NEXT_PUBLIC_AUTH_COOKIE_DOMAIN
+              value: "${AUTH_COOKIE_DOMAIN}"
+            - name: CLOUDFLARE_DNS_DOMAIN
+              value: "${CLOUDFLARE_DNS_DOMAIN}"
+            - name: INSTALLATION_TYPE
+              value: "${INSTALLATION_TYPE}"
+            - name: HOSTED_SUBDOMAIN
+              value: "${AUTH_COOKIE_DOMAIN}"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: platform-api-tls
+              mountPath: /etc/platform-api-tls
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30  # 5 + (30 * 5) = 155 seconds max startup time
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+        - name: kube-proxy
+          image: bitnami/kubectl:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              kubectl proxy --address=0.0.0.0 --port=8001 --accept-hosts='^localhost$,^127\.0\.0\.1$,^::1$'
+          ports:
+            - containerPort: 8001
+              name: kube-proxy
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+      volumes:
+        - name: platform-api-tls
+          secret:
+            secretName: platform-api-tls

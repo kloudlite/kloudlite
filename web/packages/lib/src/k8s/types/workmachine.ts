@@ -1,6 +1,6 @@
 /**
  * WorkMachine CRD type definitions
- * Based on: api/internal/controllers/workmachine/v1/workmachine_types.go
+ * Based on: types/workmachine/v1/workmachine_types.go
  */
 
 import type { K8sResource, K8sList, Condition, Toleration } from './common';
@@ -79,21 +79,9 @@ export interface MachineInfo {
   gpuModel?: string;
 }
 
-export interface ReconcilerStatus {
-  isReady?: boolean;
-  message?: Record<string, string>;
-  checkList?: string[];
-  lastReconcileTime?: string;
-  resources?: {
-    checkList?: string[];
-    lastReconcileTime?: string;
-  }[];
-}
-
 export interface WorkMachineStatus extends MachineInfo {
-  status?: ReconcilerStatus;
-  isReady?: boolean;
-  checkList?: string[];
+  conditions?: Condition[];
+  observedGeneration?: number;
   lastReconcileTime?: string;
   startedAt?: string;
   stoppedAt?: string;

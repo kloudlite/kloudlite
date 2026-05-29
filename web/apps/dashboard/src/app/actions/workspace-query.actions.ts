@@ -4,6 +4,7 @@ import type { PackageRequest, Workspace, UserPreferences } from '@kloudlite/lib/
 import { watchNamespace } from '@/lib/k8s-watcher'
 import { resourceStore } from '@/lib/resource-store'
 import { getSession } from '@/lib/get-session'
+import { isWorkMachineReady } from '@/lib/work-machine-status'
 import { getWorkMachineForUser } from './workspace.actions.shared'
 
 /**
@@ -31,7 +32,7 @@ export async function getWorkspacesListFull() {
       preferencesResult?.spec?.pinnedWorkspaces?.map((ws) => `${ws.namespace}/${ws.name}`) || []
 
     const workMachineRunning =
-      workMachineResult?.status?.state === 'running' && workMachineResult?.status?.isReady === true
+      workMachineResult?.status?.state === 'running' && isWorkMachineReady(workMachineResult)
 
     return {
       success: true,
@@ -98,7 +99,7 @@ export async function getWorkspaceByHash(hashOrName: string) {
         workspace.metadata!.name!,
       )[0] || null
 
-    const workMachineRunning = workMachine?.status?.state === 'running' && workMachine?.status?.isReady === true
+    const workMachineRunning = workMachine?.status?.state === 'running' && isWorkMachineReady(workMachine)
     return { success: true, data: { workspace, packageRequest, workMachineRunning } }
   } catch (err) {
     console.error('Get workspace by hash error:', err)

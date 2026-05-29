@@ -1,0 +1,195 @@
+package machinescoped
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"strings"
+
+	workmachineshared "github.com/kloudlite/kloudlite/controllers/workmachine/shared"
+	fn "github.com/kloudlite/kloudlite/pkg/operator-toolkit/functions"
+	"golang.org/x/crypto/ssh"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+)
+
+// createSSHHostKeysSecret ensures the SSH host keys secret exists
+func (r *MachineScopedReconciler) ensureSSH(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	if result, err := r.createSSHHostKeysSecret(ctx, session); err != nil || !isZeroMachineResult(result) {
+		return result, err
+	}
+	if result, err := r.ensureSSHDConfigMapStep(ctx, session); err != nil || !isZeroMachineResult(result) {
+		return result, err
+	}
+	return markMachineReady(session, workmachineshared.ConditionSSHReady, "ssh resources are ready")
+}
+
+func (r *MachineScopedReconciler) createSSHHostKeysSecret(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
+	namespace := obj.Spec.TargetNamespace
+	secretName := "ssh-host-keys"
+
+	// Defer key generation until we know if we need it (performance optimization)
+	var rsaPrivateBytes, rsaPublicBytes []byte
+
+	// Build authorized_keys content from WorkMachine spec
+	var authorizedKeys strings.Builder
+	for _, key := range obj.Spec.SSHPublicKeys {
+		trimmedKey := strings.TrimSpace(key)
+		if trimmedKey == "" {
+			continue
+		}
+
+		// Validate SSH key format
+		if _, _, _, _, err := ssh.ParseAuthorizedKey([]byte(trimmedKey)); err != nil {
+			// Skip invalid keys but don't fail the entire reconciliation
+			continue
+		}
+
+		authorizedKeys.WriteString(trimmedKey)
+		authorizedKeys.WriteString("\n")
+	}
+
+	// Create or update secret with all host keys and authorized_keys
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+		},
+	}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
+		secret.Labels = fn.MapMerge(secret.Labels, map[string]string{
+			"kloudlite.io/ssh-host-keys": "true",
+			"kloudlite.io/workmachine":   obj.Name,
+		})
+
+		// Set owner reference for cascade deletion
+		secret.SetOwnerReferences([]metav1.OwnerReference{
+			{
+				APIVersion: obj.APIVersion,
+				Kind:       obj.Kind,
+				Name:       obj.Name,
+				UID:        obj.UID,
+			},
+		})
+
+		secret.Type = corev1.SecretTypeOpaque
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
+		}
+
+		// Only set host keys if they don't exist (preserve existing keys)
+		if _, exists := secret.Data["ssh_host_rsa_key"]; !exists {
+			// Generate keys only when needed (performance optimization)
+			if len(rsaPrivateBytes) == 0 {
+				rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
+				if err != nil {
+					return fmt.Errorf("failed to generate RSA key: %w", err)
+				}
+
+				// Marshal RSA key
+				rsaPrivateBytes = pem.EncodeToMemory(&pem.Block{
+					Type:  "RSA PRIVATE KEY",
+					Bytes: x509.MarshalPKCS1PrivateKey(rsaKey),
+				})
+
+				rsaSSHPublicKey, err := ssh.NewPublicKey(&rsaKey.PublicKey)
+				if err != nil {
+					return fmt.Errorf("failed to create RSA SSH public key: %w", err)
+				}
+				rsaPublicBytes = ssh.MarshalAuthorizedKey(rsaSSHPublicKey)
+			}
+			secret.Data["ssh_host_rsa_key"] = rsaPrivateBytes
+			secret.Data["ssh_host_rsa_key.pub"] = rsaPublicBytes
+		}
+
+		// Always update authorized_keys (can change when user updates SSH keys)
+		secret.Data["authorized_keys"] = []byte(authorizedKeys.String())
+
+		return nil
+	}); err != nil {
+		return markMachineFailed(session, workmachineshared.ConditionSSHReady, err)
+	}
+
+	// Update status with SSH public key from the secret
+	if publicKey, exists := secret.Data["ssh_host_rsa_key.pub"]; exists {
+		obj.Status.SSHPublicKey = strings.TrimSpace(string(publicKey))
+	}
+
+	return ctrl.Result{}, nil
+}
+
+// ensureSSHDConfigMapStep ensures the sshd_config ConfigMap exists for workspace pods
+func (r *MachineScopedReconciler) ensureSSHDConfigMapStep(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
+	obj := session.Object()
+	namespace := obj.Spec.TargetNamespace
+	configMapName := "sshd-config"
+
+	// Full sshd_config for workspace pods
+	sshdConfig := `# Kloudlite Workspace SSH Configuration
+# This configuration provides secure SSH access to workspace containers
+
+# Network Configuration
+Port 22
+ListenAddress 0.0.0.0
+
+# Authentication
+PermitRootLogin no
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+AuthorizedKeysFile /var/lib/kloudlite/ssh-config/authorized_keys
+
+# Host Keys
+HostKey /var/lib/kloudlite/ssh-config/ssh_host_rsa_key
+HostKeyAlgorithms rsa-sha2-512,rsa-sha2-256
+
+# SSH Configuration
+AllowTcpForwarding yes
+X11Forwarding no
+PermitTTY yes
+AllowAgentForwarding yes
+
+# Security
+StrictModes no
+MaxAuthTries 3
+MaxSessions 10
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Environment
+AcceptEnv LANG LC_*
+SetEnv TERM=xterm-256color
+
+# Subsystems
+Subsystem sftp /usr/lib/ssh/sftp-server
+`
+
+	cfgMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configMapName, Namespace: namespace}}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfgMap, func() error {
+		cfgMap.SetLabels(fn.MapMerge(cfgMap.GetLabels(), map[string]string{
+			"kloudlite.io/ssh-config":       "true",
+			"kloudlite.io/workspace-config": "true",
+		}))
+		if cfgMap.Data == nil {
+			cfgMap.Data = make(map[string]string, 1)
+		}
+
+		cfgMap.Data["sshd_config"] = sshdConfig
+		return nil
+	}); err != nil {
+		return markMachineFailed(session, workmachineshared.ConditionSSHReady, err)
+	}
+
+	return ctrl.Result{}, nil
+}

@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         errors.push(`Error creating record for ${record.name}: ${errorMessage}`)
-        console.error(`Error creating ACM validation record ${record.name}:`, error)
+        console.error('Error creating ACM validation record %s:', record.name, error)
       }
     }
 
