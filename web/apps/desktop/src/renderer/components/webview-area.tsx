@@ -21,6 +21,12 @@ declare global {
       getCertificate: (url: string) => Promise<any>
       onMCPCommand: (callback: (command: { requestId: string; command: string; args: Record<string, unknown> }) => void) => void
       sendMCPResult: (requestId: string, result: unknown, error: string | null) => void
+      listEnvironments: (namespace: string) => Promise<{ items: Record<string, unknown>[]; error?: string }>
+      createEnvironment: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<Record<string, unknown>>
+      deleteEnvironment: (namespace: string, name: string) => Promise<{ success?: boolean; error?: string }>
+      listWorkspaces: (namespace: string) => Promise<{ items: Record<string, unknown>[]; error?: string }>
+      createWorkspace: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<Record<string, unknown>>
+      listWorkMachines: () => Promise<{ items: Record<string, unknown>[]; error?: string }>
     }
   }
 }

@@ -10,6 +10,7 @@ process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { startMCPServer, stopMCPServer, receiveMCPResult } from './mcp-server'
+import { platformAPI } from './platform-api'
 // Lazy-load tls only when needed (speeds up startup)
 type PeerCertificate = import('tls').PeerCertificate
 
@@ -382,6 +383,64 @@ ipcMain.handle('show-popup-menu', (event, items: { label: string; id: string; ty
 // IPC: receive MCP browser command results from renderer
 ipcMain.on('mcp-browser-result', (_event, { requestId, result, error }) => {
   receiveMCPResult(requestId, result, error)
+})
+
+// IPC: Platform API — list environments
+ipcMain.handle('api:list-environments', async (_event, namespace: string) => {
+  try {
+    const result = await platformAPI.listEnvironments(namespace)
+    return { items: result.items }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — create environment
+ipcMain.handle('api:create-environment', async (_event, namespace: string, name: string, spec: Record<string, unknown>) => {
+  try {
+    return await platformAPI.createEnvironment(namespace, name, spec)
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — delete environment
+ipcMain.handle('api:delete-environment', async (_event, namespace: string, name: string) => {
+  try {
+    await platformAPI.deleteEnvironment(namespace, name)
+    return { success: true }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — list workspaces
+ipcMain.handle('api:list-workspaces', async (_event, namespace: string) => {
+  try {
+    const result = await platformAPI.listWorkspaces(namespace)
+    return { items: result.items }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — create workspace
+ipcMain.handle('api:create-workspace', async (_event, namespace: string, name: string, spec: Record<string, unknown>) => {
+  try {
+    return await platformAPI.createWorkspace(namespace, name, spec)
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — list work machines
+ipcMain.handle('api:list-workmachines', async () => {
+  try {
+    const result = await platformAPI.listWorkMachines()
+    return { items: result.items }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
 })
 
 // Handle new-window for webview guests — prevent popups, navigate in app instead
