@@ -1,9 +1,12 @@
 package platformscoped
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/kloudlite/controllers/controllerconfig"
 	"github.com/kloudlite/kloudlite/pkg/operator-toolkit/kubectl"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -14,14 +17,19 @@ func Register(mgr ctrl.Manager, cfg *controllerconfig.ControllerConfig) error {
 		return err
 	}
 
-	return newPlatformScopedReconciler(mgr.GetClient(), mgr.GetScheme(), yamlClient, cfg).SetupWithManager(mgr)
+	return newPlatformScopedReconciler(mgr.GetClient(), mgr.GetScheme(), yamlClient, mgr.GetConfig(), cfg).SetupWithManager(mgr)
 }
 
-func newPlatformScopedReconciler(client client.Client, scheme *runtime.Scheme, yamlClient kubectl.YAMLClient, cfg *controllerconfig.ControllerConfig) *PlatformScopedReconciler {
+func newPlatformScopedReconciler(runtimeClient client.Client, scheme *runtime.Scheme, yamlClient kubectl.YAMLClient, restCfg *rest.Config, cfg *controllerconfig.ControllerConfig) *PlatformScopedReconciler {
+	directClient, err := client.New(restCfg, client.Options{Scheme: scheme})
+	if err != nil {
+		panic(fmt.Errorf("failed to create direct client: %w", err))
+	}
 	return &PlatformScopedReconciler{
-		Client:     client,
-		Scheme:     scheme,
-		YAMLClient: yamlClient,
-		Cfg:        cfg,
+		Client:       runtimeClient,
+		Scheme:       scheme,
+		YAMLClient:   yamlClient,
+		DirectClient: directClient,
+		Cfg:          cfg,
 	}
 }

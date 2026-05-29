@@ -13,7 +13,6 @@ import (
 type Env struct {
 	InstallationSecret string `env:"INSTALLATION_SECRET" required:"true"`
 
-	TunnelServerImage string `env:"TUNNEL_SERVER_IMAGE" required:"true"`
 	CodeAnalyzerImage string `env:"CODE_ANALYZER_IMAGE" required:"true"`
 
 	WorkMachineName string `env:"WORKMACHINE_NAME"`
