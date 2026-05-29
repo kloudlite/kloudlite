@@ -72,7 +72,14 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
 
   createEnvironment: async (namespace, name, spec) => {
     try {
-      await window.electronAPI.createEnvironment(namespace, name, spec)
+      const fullSpec = {
+        ownedBy: 'karthik',
+        workmachineName: 'karthik-dev',
+        activated: true,
+        visibility: 'private',
+        ...spec,
+      }
+      await window.electronAPI.createEnvironment(namespace, name, fullSpec)
       await get().fetchEnvironments(namespace)
       return true
     } catch (err) {
