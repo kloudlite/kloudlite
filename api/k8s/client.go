@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
+	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	environmentsv1 "github.com/kloudlite/kloudlite/types/environment/v1"
 	packagesv1 "github.com/kloudlite/kloudlite/types/packages/v1"
-	checkpointv1 "github.com/kloudlite/kloudlite/types/checkpoint/v1"
 	platformv1alpha1 "github.com/kloudlite/kloudlite/types/user/v1alpha1"
 	machinesv1 "github.com/kloudlite/kloudlite/types/workmachine/v1"
 	workspacesv1 "github.com/kloudlite/kloudlite/types/workspace/v1"
