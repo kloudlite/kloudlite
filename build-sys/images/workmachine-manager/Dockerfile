@@ -12,7 +12,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       git \
       tar \
       util-linux \
-      xz-utils && \
+      xz-utils \
+      wireguard-tools \
+      iptables \
+      iproute2 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -m 0755 /nix && \
