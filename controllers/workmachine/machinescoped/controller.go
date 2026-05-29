@@ -289,13 +289,31 @@ func (r *MachineScopedReconciler) ensureWorkmachineIngressController(ctx context
 				{
 					Name:       "http",
 					Port:       80,
-					TargetPort: intstr.FromInt(80),
+					TargetPort: intstr.FromInt(8080),
 					Protocol:   corev1.ProtocolTCP,
 				},
 				{
 					Name:       "https",
 					Port:       443,
 					TargetPort: intstr.FromInt(443),
+					Protocol:   corev1.ProtocolTCP,
+				},
+				{
+					Name:       "wireguard",
+					Port:       51820,
+					TargetPort: intstr.FromInt(51820),
+					Protocol:   corev1.ProtocolUDP,
+				},
+				{
+					Name:       "dns-udp",
+					Port:       53,
+					TargetPort: intstr.FromInt(53),
+					Protocol:   corev1.ProtocolUDP,
+				},
+				{
+					Name:       "dns-tcp",
+					Port:       53,
+					TargetPort: intstr.FromInt(53),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
