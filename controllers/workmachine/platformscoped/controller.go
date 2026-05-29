@@ -508,7 +508,9 @@ func (r *PlatformScopedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.cloudProviderAPI = provider
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine-platform-scoped")
-	builder.Owns(&appsv1.StatefulSet{})
+	// NOTE: not using Owns(&appsv1.StatefulSet{}) — the StatefulSet's Owns watch
+	// creates a reconcile loop because every pod status change triggers an update.
+	// The controller already runs on periodic reconciliation via the WorkMachine CR.
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.ClusterRoleBinding{})
 	builder.WithEventFilter(reconciler.ReconcileFilter(mgr.GetEventRecorderFor("workmachine-platform-scoped")))
