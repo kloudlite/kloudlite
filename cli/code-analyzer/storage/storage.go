@@ -208,6 +208,7 @@ func (s *Storage) safePath(components ...string) (string, error) {
 
 // SaveReport saves a report to storage
 func (s *Storage) SaveReport(workspace string, report *Report) error {
+	workspace = filepath.Base(workspace)
 	// Create workspace directory if needed
 	reportDir, err := s.safePath(workspace, string(report.Type))
 	if err != nil {
@@ -256,6 +257,7 @@ func (s *Storage) SaveReport(workspace string, report *Report) error {
 
 // GetLatestReport retrieves the latest report for a workspace
 func (s *Storage) GetLatestReport(workspace string, reportType ReportType) (*Report, error) {
+	workspace = filepath.Base(workspace)
 	reportDir, err := s.safePath(workspace, string(reportType))
 	if err != nil {
 		return nil, fmt.Errorf("invalid workspace or report type: %w", err)
@@ -281,6 +283,7 @@ func (s *Storage) GetLatestReport(workspace string, reportType ReportType) (*Rep
 
 // GetReportHistory returns list of historical reports
 func (s *Storage) GetReportHistory(workspace string, reportType ReportType) ([]ReportInfo, error) {
+	workspace = filepath.Base(workspace)
 	reportDir, err := s.safePath(workspace, string(reportType))
 	if err != nil {
 		return nil, fmt.Errorf("invalid workspace or report type: %w", err)
@@ -334,6 +337,7 @@ func (s *Storage) GetReportHistory(workspace string, reportType ReportType) ([]R
 
 // GetReport retrieves a specific report by filename
 func (s *Storage) GetReport(workspace string, reportType ReportType, filename string) (*Report, error) {
+	workspace = filepath.Base(workspace)
 	reportFile, err := s.safePath(workspace, string(reportType), filename)
 	if err != nil {
 		return nil, fmt.Errorf("invalid workspace, report type, or filename: %w", err)
@@ -357,6 +361,7 @@ func (s *Storage) GetReport(workspace string, reportType ReportType, filename st
 
 // GetMetadata retrieves workspace metadata
 func (s *Storage) GetMetadata(workspace string) (*WorkspaceMetadata, error) {
+	workspace = filepath.Base(workspace)
 	wsDir, err := s.safePath(workspace)
 	if err != nil {
 		return nil, fmt.Errorf("invalid workspace: %w", err)
@@ -401,6 +406,7 @@ func (s *Storage) ListWorkspaces() ([]string, error) {
 
 // DeleteWorkspaceReports deletes all reports for a workspace
 func (s *Storage) DeleteWorkspaceReports(workspace string) error {
+	workspace = filepath.Base(workspace)
 	workspaceDir, err := s.safePath(workspace)
 	if err != nil {
 		return fmt.Errorf("invalid workspace: %w", err)
@@ -410,6 +416,7 @@ func (s *Storage) DeleteWorkspaceReports(workspace string) error {
 
 // SaveAggregatedReport saves an aggregated report to storage
 func (s *Storage) SaveAggregatedReport(workspace string, report *AggregatedReport) error {
+	workspace = filepath.Base(workspace)
 	// Create workspace directory if needed
 	reportDir, err := s.safePath(workspace, string(ReportTypeAggregated))
 	if err != nil {
@@ -458,6 +465,7 @@ func (s *Storage) SaveAggregatedReport(workspace string, report *AggregatedRepor
 
 // GetLatestAggregatedReport retrieves the latest aggregated report for a workspace
 func (s *Storage) GetLatestAggregatedReport(workspace string) (*AggregatedReport, error) {
+	workspace = filepath.Base(workspace)
 	reportDir, err := s.safePath(workspace, string(ReportTypeAggregated))
 	if err != nil {
 		return nil, fmt.Errorf("invalid workspace: %w", err)
@@ -483,6 +491,7 @@ func (s *Storage) GetLatestAggregatedReport(workspace string) (*AggregatedReport
 
 // GetAggregatedReportHistory returns list of historical aggregated reports
 func (s *Storage) GetAggregatedReportHistory(workspace string) ([]ReportInfo, error) {
+	workspace = filepath.Base(workspace)
 	return s.GetReportHistory(workspace, ReportTypeAggregated)
 }
 
