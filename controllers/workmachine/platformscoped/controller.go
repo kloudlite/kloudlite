@@ -13,6 +13,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -338,6 +339,31 @@ func (r *PlatformScopedReconciler) cleanupWorkMachineManager(ctx context.Context
 	return ctrl.Result{}, nil
 }
 
+// ensureLocalStorageClass creates the local-path-simple StorageClass if it
+// doesn't exist. This is used by per-workmachine workloads (docker-dind, etc.)
+// that require local node storage.
+func ensureLocalStorageClass(ctx context.Context, cl client.Client) error {
+	reclaimDelete := corev1.PersistentVolumeReclaimDelete
+	waitForFirstConsumer := storagev1.VolumeBindingWaitForFirstConsumer
+
+	sc := &storagev1.StorageClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "local-path-simple",
+		},
+	}
+	_, err := controllerutil.CreateOrUpdate(ctx, cl, sc, func() error {
+		sc.Provisioner = "rancher.io/local-path"
+		sc.ReclaimPolicy = &reclaimDelete
+		sc.VolumeBindingMode = &waitForFirstConsumer
+		sc.Parameters = map[string]string{
+			"nodePath":    "/var/lib/kloudlite/storage/default",
+			"pathPattern": "{{ .PVC.Namespace }}/{{ .PVC.Name }}",
+		}
+		return nil
+	})
+	return err
+}
+
 func (r *PlatformScopedReconciler) waitForMachineScopedCleanup(ctx context.Context, session *workmachineshared.StatusSession) (ctrl.Result, error) {
 	if machineScopedCleanupComplete(session.Object()) {
 		return ctrl.Result{}, nil
@@ -518,6 +544,11 @@ func (r *PlatformScopedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 	r.cloudProviderAPI = provider
+
+	// Ensure local-path-simple StorageClass for per-workmachine storage (docker-dind, etc.)
+	if err := ensureLocalStorageClass(context.Background(), r.Client); err != nil {
+		return errors.Wrap("failed to ensure local-path-simple StorageClass", err)
+	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.WorkMachine{}).Named("workmachine-platform-scoped")
 	// NOTE: not using Owns(&appsv1.StatefulSet{}) — the StatefulSet's Owns watch
