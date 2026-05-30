@@ -17,16 +17,25 @@ import (
 type Service struct {
 	registry *registry.Registry
 	store    *store.Store
-	kube     client.Client
+	kube     client.Client // used for writes (Create/Patch/Delete)
+	kubeRead client.Client // non-cached, used for reads (Get/List)
 	broker   *events.Broker
 }
 
 func New(reg *registry.Registry, st *store.Store, kube client.Client) *Service {
-	return &Service{registry: reg, store: st, kube: kube}
+	return &Service{registry: reg, store: st, kube: kube, kubeRead: kube}
 }
 
 func NewWithEvents(reg *registry.Registry, st *store.Store, kube client.Client, broker *events.Broker) *Service {
-	return &Service{registry: reg, store: st, kube: kube, broker: broker}
+	return &Service{registry: reg, store: st, kube: kube, kubeRead: kube, broker: broker}
+}
+
+func NewWithReadClient(reg *registry.Registry, st *store.Store, kube client.Client, kubeRead client.Client) *Service {
+	return &Service{registry: reg, store: st, kube: kube, kubeRead: kubeRead}
+}
+
+func NewWithEventsAndReadClient(reg *registry.Registry, st *store.Store, kube client.Client, kubeRead client.Client, broker *events.Broker) *Service {
+	return &Service{registry: reg, store: st, kube: kube, kubeRead: kubeRead, broker: broker}
 }
 
 func (s *Service) List(ctx context.Context, alias string, namespace string, _ store.Selector) ([]client.Object, error) {
@@ -46,7 +55,7 @@ func (s *Service) List(ctx context.Context, alias string, namespace string, _ st
 		opts = append(opts, client.InNamespace(namespace))
 	}
 
-	if err := s.kube.List(ctx, objectList, opts...); err != nil {
+	if err := s.kubeRead.List(ctx, objectList, opts...); err != nil {
 		return nil, mapClientError(err)
 	}
 
@@ -82,7 +91,7 @@ func (s *Service) Get(ctx context.Context, alias string, namespace string, name 
 	}
 	obj.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
 
-	if err := s.kube.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
+	if err := s.kubeRead.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
 		return nil, mapClientError(err)
 	}
 	return obj, nil
@@ -143,7 +152,7 @@ func (s *Service) Patch(ctx context.Context, alias string, namespace string, nam
 	} else {
 		current.SetNamespace("")
 	}
-	if err := s.kube.Get(ctx, client.ObjectKeyFromObject(current), current); err != nil {
+	if err := s.kubeRead.Get(ctx, client.ObjectKeyFromObject(current), current); err != nil {
 		return nil, mapClientError(err)
 	}
 
@@ -175,7 +184,7 @@ func (s *Service) Delete(ctx context.Context, alias string, namespace string, na
 		object.SetNamespace("")
 	}
 	// Fetch current state to get labels for dirty tracking
-	if err := s.kube.Get(ctx, client.ObjectKeyFromObject(object), object); err != nil {
+	if err := s.kubeRead.Get(ctx, client.ObjectKeyFromObject(object), object); err != nil {
 		return mapClientError(err)
 	}
 	labels := object.GetLabels()

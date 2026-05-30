@@ -16,6 +16,10 @@ import (
 	"github.com/kloudlite/kloudlite/api/resources/watch"
 	"github.com/kloudlite/kloudlite/controllers"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const platformAPIServiceName = "api-server"
@@ -64,7 +68,15 @@ func newPlatformRuntimeComponents(cfg *config.Config, logger *zap.Logger, k8sCli
 	resourceRegistry := registry.Default()
 	resourceStore := store.New()
 	resourceBroker := events.NewBroker()
-	resourceService := service.NewWithEvents(resourceRegistry, resourceStore, k8sClient.RuntimeClient, resourceBroker)
+
+	// Create a non-cached client for direct reads (no informer cache staleness)
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	kubeDirect, err := client.New(k8sClient.Config, client.Options{Scheme: scheme})
+	if err != nil {
+		panic(fmt.Sprintf("create direct k8s client: %v", err))
+	}
+	resourceService := service.NewWithEventsAndReadClient(resourceRegistry, resourceStore, k8sClient.RuntimeClient, kubeDirect, resourceBroker)
 	watchManager := watch.NewManagerWithEvents(resourceRegistry, resourceStore, k8sClient.RuntimeClient, logger, resourceBroker)
 	router := setupWebhookRouter(cfg, logger, k8sClient, resourceService, resourceRegistry, resourceStore, watchManager, resourceBroker)
 	controllerCtx, controllerCtxCancel := context.WithCancel(context.Background())
