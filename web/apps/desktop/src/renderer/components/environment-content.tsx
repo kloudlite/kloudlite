@@ -233,7 +233,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       }
       // Always update compose from spec
       const cc = env.spec?.compose?.composeContent
-      if (cc) setCompose(cc)
+      if (cc && !composeOpen) setCompose(cc)
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
       setLoading(false)
     }).catch(() => {
