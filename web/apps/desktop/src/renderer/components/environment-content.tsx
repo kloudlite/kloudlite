@@ -334,7 +334,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 disabled={saving}
                 onClick={async () => {
                   if (saving || !compose.trim()) return
-                  console.log('[compose] Apply clicked, compose length:', compose.length)
+                  window.electronAPI.debugLog?.('[compose] Apply clicked, compose length: ' + compose.length)
                   setSaving(true)
                   try {
                     await window.electronAPI.patchResource(
@@ -354,10 +354,11 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
+                    window.electronAPI.debugLog?.('[compose] PATCH succeeded, refreshing')
                     closeCompose(true)
                     setRefreshKey((k) => k + 1)
                   } catch (e) {
-                    console.error('[compose] PATCH failed:', e)
+                    window.electronAPI.debugLog?.('[compose] PATCH failed: ' + String(e))
                   } finally {
                     setSaving(false)
                   }
