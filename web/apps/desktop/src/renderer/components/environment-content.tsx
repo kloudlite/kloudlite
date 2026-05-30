@@ -209,22 +209,16 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     setLoading(true)
 
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
-      if (result.error) { window.electronAPI.debugLog?.('[fetch] ERROR: ' + result.error); return }
+      if (result.error) return
       const env = (result.items || []).find((e: any) =>
         e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
       )
       if (!env) {
-        window.electronAPI.debugLog?.('[fetch] env "' + envName + '" not found')
         setServices(SERVICES[envHash] || [])
         setWorkspaces(ENV_WORKSPACES[envHash] || [])
         setLoading(false)
         return
       }
-      const cs = env.status?.composeStatus
-      const svcCount = cs?.services?.length || 0
-      const svcNames = cs?.services?.map((s: any) => s.name).join(',') || ''
-      window.electronAPI.debugLog?.('[fetch] env "' + envName + '" composeStatus: ' + svcCount + ' services=[' + svcNames + ']')
-
       const cs = env.status?.composeStatus
       if (cs?.services?.length > 0) {
         setServices(cs.services.map((s: any, i: number) => ({
@@ -343,7 +337,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 disabled={saving}
                 onClick={async () => {
                   if (saving || !compose.trim()) return
-                  window.electronAPI.debugLog?.('[compose] Apply clicked, compose length: ' + compose.length)
                   setSaving(true)
                   try {
                     await window.electronAPI.patchResource(
@@ -363,11 +356,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
-                    window.electronAPI.debugLog?.('[compose] PATCH succeeded, refreshing')
                     closeCompose(true)
                     setRefreshKey((k) => k + 1)
-                  } catch (e) {
-                    window.electronAPI.debugLog?.('[compose] PATCH failed: ' + String(e))
+                  } catch {
                   } finally {
                     setSaving(false)
                   }
