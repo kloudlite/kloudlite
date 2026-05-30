@@ -220,30 +220,12 @@ function ToolButton({ children, onClick, active, tooltip }: { children: React.Re
   )
 }
 
-export function ServicesGraph({ services }: ServicesGraphProps) {
-  if (services.length === 0) return (
-    <div className="flex h-full items-center justify-center text-[12px] text-muted-foreground/50">
-      No services
-    </div>
-  )
+export function ServicesGraph({ services, workspaces }: ServicesGraphProps) {
   return (
-    <div className="flex h-full flex-col gap-2 overflow-y-auto p-6">
-      {services.map((svc) => (
-        <div key={svc.id} className="rounded-xl border border-border/50 bg-card p-4">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-emerald-400" />
-            <span className="font-medium text-foreground">{svc.name}</span>
-            <span className="text-[11px] text-muted-foreground/60">{svc.dns}</span>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {svc.ports.map((p) => (
-              <span key={p.port} className="rounded-md border border-border/40 bg-muted px-2 py-0.5 text-[11px] font-mono text-muted-foreground">
-                :{p.port}
-              </span>
-            ))}
-          </div>
-        </div>
-      ))}
+    <div className="h-full w-full">
+      <ReactFlowProvider>
+        <GraphInner key={`g-${services.length}`} services={services} workspaces={workspaces} />
+      </ReactFlowProvider>
     </div>
   )
 }
