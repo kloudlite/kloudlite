@@ -103,7 +103,6 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
           interceptedCount: interceptedPorts.length,
           workspaceMap: Object.fromEntries(workspaces.map((w) => [w.id, w.name])),
         },
-        draggable: true,
       }
       cursorY += getServiceHeight(svc) + ROW_GAP
       return node
@@ -128,7 +127,6 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
           status: ws.status,
           interceptCount,
         },
-        draggable: true,
       }
     })
 
@@ -167,8 +165,10 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
       onEdgesChange={onEdgesChange}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
+      nodesDraggable={false}
+      nodesConnectable={false}
+      elementsSelectable={false}
       fitView
-      deleteKeyCode="Delete"
       fitViewOptions={{ padding: 0.1, maxZoom: 1, minZoom: MIN_ZOOM }}
       minZoom={MIN_ZOOM}
       maxZoom={MAX_ZOOM}
