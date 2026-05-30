@@ -356,9 +356,41 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                       }
                     )
 
-                    window.electronAPI.debugLog('[compose] PATCH succeeded, triggering refresh')
+                    window.electronAPI.debugLog('[compose] PATCH succeeded, polling for status change')
+                    // Save snapshot of current services to detect change
+                    const oldServices = services.map(s => s.id).sort().join(',')
+                    // Poll until composeStatus changes or we have services
+                    let pollAttempts = 0
+                    const poll = async (): Promise<void> => {
+                      try {
+                        const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
+                        const env = (result?.items || []).find((e: any) =>
+                          e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
+                        )
+                        const cs = env?.status?.composeStatus
+                        const newServices = (cs?.services || []).map((s: any) => s.name).sort().join(',')
+                        if (cs?.services?.length > 0 && newServices !== oldServices) {
+                          // ComposeStatus has changed — use it
+                          setServices(cs.services.map((s: any, i: number) => ({
+                            id: s.name || `svc-${i}`,
+                            name: s.name || `svc-${i}`,
+                            type: 'ClusterIP' as const,
+                            clusterIP: '',
+                            dns: `${s.name}.${env?.spec?.targetNamespace || ''}.svc.cluster.local`,
+                            ports: (s.ports || []).map((p: number) => ({ port: p, targetPort: p, protocol: 'TCP' })),
+                            volumes: [],
+                          })))
+                          return
+                        }
+                      } catch { /* retry */ }
+                      if (pollAttempts < 15) {
+                        pollAttempts++
+                        await new Promise((r) => setTimeout(r, 2000))
+                        return poll()
+                      }
+                    }
+                    await poll()
                     closeCompose(true)
-                    setRefreshKey((k) => k + 1)
                   } catch (err) {
                     window.electronAPI.debugLog('[compose] PATCH failed: ' + String(err))
                   } finally {
