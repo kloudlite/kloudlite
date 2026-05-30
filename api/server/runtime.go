@@ -16,9 +16,6 @@ import (
 	"github.com/kloudlite/kloudlite/api/resources/watch"
 	"github.com/kloudlite/kloudlite/controllers"
 	"go.uber.org/zap"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -70,9 +67,7 @@ func newPlatformRuntimeComponents(cfg *config.Config, logger *zap.Logger, k8sCli
 	resourceBroker := events.NewBroker()
 
 	// Create a non-cached client for direct reads (no informer cache staleness)
-	scheme := runtime.NewScheme()
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	kubeDirect, err := client.New(k8sClient.Config, client.Options{Scheme: scheme})
+	kubeDirect, err := client.New(k8sClient.Config, client.Options{Scheme: k8sClient.Scheme})
 	if err != nil {
 		panic(fmt.Sprintf("create direct k8s client: %v", err))
 	}
