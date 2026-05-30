@@ -116,7 +116,6 @@ func (s *Service) Create(ctx context.Context, alias string, namespace string, ob
 	}
 	created.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
 	s.markDirty(resource, created.GetNamespace(), created.GetName(), events.DirtyReasonPendingCreate, created.GetLabels())
-	s.store.Upsert(resource.Alias, created)
 	return created.DeepCopyObject().(client.Object), nil
 }
 
@@ -157,7 +156,6 @@ func (s *Service) Patch(ctx context.Context, alias string, namespace string, nam
 	}
 	current.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
 	s.markDirty(resource, current.GetNamespace(), current.GetName(), events.DirtyReasonPendingPatch, current.GetLabels())
-	s.store.Upsert(resource.Alias, current)
 	return current.DeepCopyObject().(client.Object), nil
 }
 
@@ -176,15 +174,15 @@ func (s *Service) Delete(ctx context.Context, alias string, namespace string, na
 	} else {
 		object.SetNamespace("")
 	}
-	labels := map[string]string(nil)
-	if cached, ok := s.store.Get(resource.Alias, object.GetNamespace(), object.GetName()); ok {
-		labels = cached.GetLabels()
+	// Fetch current state to get labels for dirty tracking
+	if err := s.kube.Get(ctx, client.ObjectKeyFromObject(object), object); err != nil {
+		return mapClientError(err)
 	}
+	labels := object.GetLabels()
 	if err := s.kube.Delete(ctx, object); err != nil {
 		return mapClientError(err)
 	}
 	s.markDirty(resource, object.GetNamespace(), object.GetName(), events.DirtyReasonPendingDelete, labels)
-	s.store.Delete(resource.Alias, object.GetNamespace(), object.GetName())
 	return nil
 }
 

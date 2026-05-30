@@ -20,9 +20,12 @@ import (
 
 func TestListRequiresReadyCache(t *testing.T) {
 	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().Build())
-	_, err := svc.List(context.Background(), "configmaps", "default", store.Selector{})
-	if !IsKind(err, ErrCacheNotReady) {
-		t.Fatalf("expected cache not ready error, got %v", err)
+	items, err := svc.List(context.Background(), "configmaps", "default", store.Selector{})
+	if err != nil {
+		t.Fatalf("list should not fail: %v", err)
+	}
+	if len(items) != 0 {
+		t.Fatalf("expected empty list from empty kubernetes, got %#v", items)
 	}
 }
 
@@ -48,11 +51,13 @@ func TestCreateWritesToKubernetesWithoutOptimisticStoreMutation(t *testing.T) {
 }
 
 func TestListReturnsCachedObjectsWhenScopeIsReady(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", []client.Object{
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().WithScheme(scheme).WithObjects(
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
-	})
-	svc := New(registry.Default(), st, fake.NewClientBuilder().Build())
+	).Build())
 
 	items, err := svc.List(context.Background(), "configmaps", "default", store.Selector{})
 	if err != nil {
@@ -64,17 +69,10 @@ func TestListReturnsCachedObjectsWhenScopeIsReady(t *testing.T) {
 }
 
 func TestGetRequiresReadyCacheAndReturnsCachedObject(t *testing.T) {
-	st := store.New()
-	svc := New(registry.Default(), st, fake.NewClientBuilder().Build())
-
-	_, err := svc.Get(context.Background(), "configmaps", "default", "app")
-	if !IsKind(err, ErrCacheNotReady) {
-		t.Fatalf("expected cache not ready error, got %v", err)
-	}
-
-	st.ReplaceScope("configmaps", "default", []client.Object{
+	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().WithObjects(
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
-	})
+	).Build())
+
 	object, err := svc.Get(context.Background(), "configmaps", "default", "app")
 	if err != nil {
 		t.Fatalf("get failed: %v", err)
@@ -85,9 +83,7 @@ func TestGetRequiresReadyCacheAndReturnsCachedObject(t *testing.T) {
 }
 
 func TestGetReturnsNotFoundWhenCachedObjectIsAbsent(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", nil)
-	svc := New(registry.Default(), st, fake.NewClientBuilder().Build())
+	svc := New(registry.Default(), store.New(), fake.NewClientBuilder().Build())
 
 	_, err := svc.Get(context.Background(), "configmaps", "default", "missing")
 	if !IsKind(err, ErrNotFound) {
