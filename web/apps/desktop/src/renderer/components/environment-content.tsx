@@ -219,20 +219,24 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
         setLoading(false)
         return
       }
-      const cs = env.status?.composeStatus
-      if (cs?.services?.length > 0) {
-        setServices(cs.services.map((s: any, i: number) => ({
-          id: s.name || `svc-${i}`,
-          name: s.name || `svc-${i}`,
-          type: 'ClusterIP' as const,
-          clusterIP: '',
-          dns: `${s.name}.${env.spec?.targetNamespace || ''}.svc.cluster.local`,
-          ports: (s.ports || []).map((p: number) => ({ port: p, targetPort: p, protocol: 'TCP' })),
-          volumes: [],
-        })))
-      }
-      // Always update compose from spec
+      // Parse services from spec.compose.composeContent (source of truth)
       const cc = env.spec?.compose?.composeContent
+      if (cc) {
+        const parsed: ServiceData[] = []
+        const lines = cc.split('\n')
+        let currentSvc: string | null = null
+        let ports: number[] = []
+        for (const line of lines) {
+          const sm = line.match(/^\s{2}(\w[\w-]*):/)
+          const pm = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
+          if (sm) {
+            if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
+            currentSvc = sm[1]; ports = []
+          } else if (pm) { ports.push(parseInt(pm[1])) }
+        }
+        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
+        if (parsed.length > 0) setServices(parsed)
+      }
       if (cc && !composeOpen) setCompose(cc)
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
       setLoading(false)
