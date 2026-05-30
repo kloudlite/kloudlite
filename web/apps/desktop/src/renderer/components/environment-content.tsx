@@ -335,10 +335,8 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                 onClick={async () => {
                   if (saving || !compose.trim()) return
                   setSaving(true)
-                  window.electronAPI.debugLog('[compose] Starting PATCH...')
                   try {
-                    window.electronAPI.debugLog('[compose] Calling patchResource... ' + envName)
-                    const patchResult = await window.electronAPI.patchResource(
+                    await window.electronAPI.patchResource(
                       'wm-karthik-dev',
                       'environments',
                       envName,
@@ -355,8 +353,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
-
-                    window.electronAPI.debugLog('[compose] PATCH succeeded, triggering refresh')
                     closeCompose(true)
                     setRefreshKey((k) => k + 1)
                   } catch (err) {

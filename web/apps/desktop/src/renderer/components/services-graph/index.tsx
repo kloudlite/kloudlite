@@ -156,7 +156,6 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
 
     setNodes([...serviceNodes, ...wsNodes])
     setEdges(interceptEdges)
-    window.electronAPI?.debugLog?.('[reactflow] setNodes: ' + serviceNodes.length + ' service + ' + wsNodes.length + ' workspace, ' + interceptEdges.length + ' edges')
   }, [services, workspaces])
 
 
