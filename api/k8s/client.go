@@ -32,6 +32,9 @@ type Client struct {
 	// Uses WithWatch to support Kubernetes watch functionality
 	RuntimeClient client.WithWatch
 
+	// Scheme used to create the RuntimeClient, for building additional clients
+	Scheme *runtime.Scheme
+
 	// REST config
 	Config *rest.Config
 }
@@ -113,6 +116,7 @@ func NewClient(ctx context.Context, opts *ClientOptions) (*Client, error) {
 	return &Client{
 		Clientset:     clientset,
 		RuntimeClient: runtimeClient,
+		Scheme:        scheme,
 		Config:        requestConfig,
 	}, nil
 }
