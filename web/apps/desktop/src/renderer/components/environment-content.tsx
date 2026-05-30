@@ -380,6 +380,16 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       {/* Graph fills remaining space */}
       <div className="min-h-0 flex-1">
+        {services.length > 0 && (
+          <div className="absolute bottom-2 left-2 z-10 flex gap-2 rounded-lg border border-border bg-background/90 px-3 py-1.5 text-[11px] text-muted-foreground backdrop-blur-sm">
+            {services.map((s) => (
+              <span key={s.id} className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                {s.name}:{s.ports.map(p => p.port).join(',')}
+              </span>
+            ))}
+          </div>
+        )}
         <ServicesGraph
           key={'g-' + services.map(s => s.id).join('-') + '-p' + services.map(s => s.ports.map(p => p.port).join(',')).join('-')}
           services={graphServices}
