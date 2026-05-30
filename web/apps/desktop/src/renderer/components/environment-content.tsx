@@ -371,7 +371,12 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       )}
 
       {/* Graph fills remaining space */}
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 relative" key={`svc-${services.length}-${services.map(s => s.id).join('-')}`}>
+        {services.length > 0 && (
+          <div className="absolute top-2 left-2 z-10 rounded-lg border border-border bg-background/90 px-3 py-1.5 text-[11px] text-foreground backdrop-blur-sm">
+            {services.length} service{services.length !== 1 ? 's' : ''}: {services.map(s => s.name).join(', ')}
+          </div>
+        )}
         <ServicesGraph
           key={'g-' + services.map(s => s.id).join('-') + '-p' + services.map(s => s.ports.map(p => p.port).join(',')).join('-')}
           services={graphServices}
