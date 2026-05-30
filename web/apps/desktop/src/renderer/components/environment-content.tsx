@@ -209,12 +209,11 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     setLoading(true)
 
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
-      if (result.error) { window.electronAPI.debugLog('[fetch] error: ' + result.error); return }
+      if (result.error) return
       const env = (result.items || []).find((e: any) =>
         e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
       )
-      window.electronAPI.debugLog('[fetch] env found: ' + !!env + ' name=' + envName)
-      if (!env) {
+        if (!env) {
         setServices(SERVICES[envHash] || [])
         setWorkspaces(ENV_WORKSPACES[envHash] || [])
         setCompose(COMPOSITIONS[envHash] || '')
@@ -223,10 +222,8 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       }
 
       const cs = env.status?.composeStatus
-      const specCompose = env.spec?.compose?.composeContent ? 'yes' : 'no'
-      window.electronAPI.debugLog('[fetch] spec.compose: ' + specCompose + ', composeStatus.services: ' + (cs?.services?.length || 0) + ', spec.workmachineName: ' + (env.spec?.workmachineName || '?'))
       if (cs?.services?.length > 0) {
-        const svcs = cs.services.map((s: any, i: number) => ({
+        setServices(cs.services.map((s: any, i: number) => ({
           id: s.name || `svc-${i}`,
           name: s.name || `svc-${i}`,
           type: 'ClusterIP' as const,
@@ -234,9 +231,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           dns: `${s.name}.${env.spec?.targetNamespace || ''}.svc.cluster.local`,
           ports: (s.ports || []).map((p: number) => ({ port: p, targetPort: p, protocol: 'TCP' })),
           volumes: [],
-        }))
-        window.electronAPI.debugLog('[fetch] setting services: ' + svcs.map((s:any) => s.name + ':' + s.ports.map((p:any) => p.port).join(',')).join(' '))
-        setServices(svcs)
+        })))
       }
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
       setLoading(false)
@@ -341,7 +336,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                   if (saving || !compose.trim()) return
                   setSaving(true)
                   try {
-                    const result = await window.electronAPI.patchResource(
+                    await window.electronAPI.patchResource(
                       'wm-karthik-dev',
                       'environments',
                       envName,
@@ -358,26 +353,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
-                    // Parse services from the PATCH response spec.compose
-                    const cc = result?.spec?.compose?.composeContent || compose
-                    const parsed: ServiceData[] = []
-                    const lines = cc.split('\n')
-                    let currentSvc: string | null = null
-                    let ports: number[] = []
-                    for (const line of lines) {
-                      const svcMatch = line.match(/^\s{2}(\w[\w-]*):/)
-                      const portMatch = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
-                      if (svcMatch) {
-                        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
-                        currentSvc = svcMatch[1]; ports = []
-                      } else if (portMatch) { ports.push(parseInt(portMatch[1])) }
-                    }
-                    if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
-                    if (parsed.length > 0) setServices(parsed)
-                    window.electronAPI.debugLog('[compose] PATCH done, showing ' + parsed.length + ' services from response')
                     closeCompose(true)
-                  } catch (err) {
-                    window.electronAPI.debugLog('[compose] PATCH failed: ' + String(err))
+                    setRefreshKey((k) => k + 1)
+                  } catch {
                   } finally {
                     setSaving(false)
                   }
@@ -393,16 +371,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       {/* Graph fills remaining space */}
       <div className="min-h-0 flex-1">
-        {services.length > 0 && (
-          <div className="absolute bottom-2 left-2 z-10 flex gap-2 rounded-lg border border-border bg-background/90 px-3 py-1.5 text-[11px] text-muted-foreground backdrop-blur-sm">
-            {services.map((s) => (
-              <span key={s.id} className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                {s.name}:{s.ports.map(p => p.port).join(',')}
-              </span>
-            ))}
-          </div>
-        )}
         <ServicesGraph
           key={'g-' + services.map(s => s.id).join('-') + '-p' + services.map(s => s.ports.map(p => p.port).join(',')).join('-')}
           services={graphServices}
