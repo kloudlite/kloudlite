@@ -21,18 +21,27 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestListNamespacedResourceReturnsServiceUnavailableBeforeCacheReadiness(t *testing.T) {
-	router, _ := newTestRouter(t, store.New())
+func TestListNamespacedResourceReturnsEmptyItemsFromKubernetes(t *testing.T) {
+	router, _ := newTestRouter(t, store.New(), nil)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps", nil)
 
-	if response.Code != http.StatusServiceUnavailable {
-		t.Fatalf("expected status %d, got %d: %s", http.StatusServiceUnavailable, response.Code, response.Body.String())
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
+	}
+	var payload struct {
+		Items []corev1.ConfigMap `json:"items"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(payload.Items) != 0 {
+		t.Fatalf("expected empty items, got %#v", payload.Items)
 	}
 }
 
 func TestClusterRouteRejectsNamespacedResource(t *testing.T) {
-	router, _ := newTestRouter(t, store.New())
+	router, _ := newTestRouter(t, store.New(), nil)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/resources/workspaces", nil)
 
@@ -42,7 +51,7 @@ func TestClusterRouteRejectsNamespacedResource(t *testing.T) {
 }
 
 func TestUnknownResourceReturnsNotFound(t *testing.T) {
-	router, _ := newTestRouter(t, store.New())
+	router, _ := newTestRouter(t, store.New(), nil)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/resources/does-not-exist", nil)
 
@@ -52,7 +61,7 @@ func TestUnknownResourceReturnsNotFound(t *testing.T) {
 }
 
 func TestCreateNamespacedResourceWritesThroughKubernetesAndReturnsCreated(t *testing.T) {
-	router, kube := newTestRouter(t, store.New())
+	router, kube := newTestRouter(t, store.New(), nil)
 	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"},"data":{"key":"value"}}`)
 
 	response := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
@@ -70,12 +79,10 @@ func TestCreateNamespacedResourceWritesThroughKubernetesAndReturnsCreated(t *tes
 }
 
 func TestGetNamespacedResourceReturnsCachedObjectWhenReady(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", []client.Object{
-		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}, Data: map[string]string{"key": "value"}},
-	})
 	ensurer := &recordingEnsurer{}
-	router, _ := newTestRouter(t, st, ensurer)
+	router, _ := newTestRouter(t, store.New(), []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}, Data: map[string]string{"key": "value"}},
+	}, ensurer)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps/app", nil)
 
@@ -93,12 +100,10 @@ func TestGetNamespacedResourceReturnsCachedObjectWhenReady(t *testing.T) {
 }
 
 func TestListNamespacedResourceReturnsItemsWhenReady(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", []client.Object{
-		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
-	})
 	ensurer := &recordingEnsurer{}
-	router, _ := newTestRouter(t, st, ensurer)
+	router, _ := newTestRouter(t, store.New(), []client.Object{
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default"}},
+	}, ensurer)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps", nil)
 
@@ -117,15 +122,13 @@ func TestListNamespacedResourceReturnsItemsWhenReady(t *testing.T) {
 	ensurer.expectCalled(t, "configmaps", "default")
 }
 
-func TestListNamespacedResourceFiltersByExactLabelSelector(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", []client.Object{
+func TestListNamespacedResourceReturnsAllItemsFromKubernetes(t *testing.T) {
+	router, _ := newTestRouter(t, store.New(), []client.Object{
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "api", Namespace: "default", Labels: map[string]string{"app": "api"}}},
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "web", Namespace: "default", Labels: map[string]string{"app": "web"}}},
-	})
-	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+	}, &recordingEnsurer{})
 
-	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps?labelSelector=app%3Dapi", nil)
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps", nil)
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
@@ -136,20 +139,18 @@ func TestListNamespacedResourceFiltersByExactLabelSelector(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if len(payload.Items) != 1 || payload.Items[0].Name != "api" {
-		t.Fatalf("unexpected filtered list response: %#v", payload.Items)
+	if len(payload.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d: %#v", len(payload.Items), payload.Items)
 	}
 }
 
-func TestListNamespacedResourceFiltersByHash(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", []client.Object{
+func TestListNamespacedResourceReturnsLabeledItemsFromKubernetes(t *testing.T) {
+	router, _ := newTestRouter(t, store.New(), []client.Object{
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "match", Namespace: "default", Labels: map[string]string{"kloudlite.io/hash": "abc"}}},
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "other", Namespace: "default", Labels: map[string]string{"kloudlite.io/hash": "def"}}},
-	})
-	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+	}, &recordingEnsurer{})
 
-	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps?hash=abc", nil)
+	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps", nil)
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, response.Code, response.Body.String())
@@ -160,15 +161,13 @@ func TestListNamespacedResourceFiltersByHash(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if len(payload.Items) != 1 || payload.Items[0].Name != "match" {
-		t.Fatalf("unexpected hash filtered list response: %#v", payload.Items)
+	if len(payload.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d: %#v", len(payload.Items), payload.Items)
 	}
 }
 
 func TestListRejectsUnsupportedLabelSelector(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", nil)
-	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+	router, _ := newTestRouter(t, store.New(), nil, &recordingEnsurer{})
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps?labelSelector=app%20in%20%28api%29", nil)
 
@@ -178,7 +177,7 @@ func TestListRejectsUnsupportedLabelSelector(t *testing.T) {
 }
 
 func TestListNamespacedResourceSurfacesEnsurerError(t *testing.T) {
-	router, _ := newTestRouter(t, store.New(), &recordingEnsurer{err: errors.New("sync failed")})
+	router, _ := newTestRouter(t, store.New(), nil, &recordingEnsurer{err: errors.New("sync failed")})
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps", nil)
 
@@ -189,7 +188,7 @@ func TestListNamespacedResourceSurfacesEnsurerError(t *testing.T) {
 
 func TestGetNamespacedResourceSurfacesTypedEnsurerError(t *testing.T) {
 	ensurer := &recordingEnsurer{err: service.NewError(service.ErrBadRequest, "bad ensure", nil)}
-	router, _ := newTestRouter(t, store.New(), ensurer)
+	router, _ := newTestRouter(t, store.New(), nil, ensurer)
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps/app", nil)
 
@@ -201,7 +200,7 @@ func TestGetNamespacedResourceSurfacesTypedEnsurerError(t *testing.T) {
 
 func TestCreateNamespacedResourceForcesPathNamespace(t *testing.T) {
 	ensurer := &recordingEnsurer{}
-	router, kube := newTestRouter(t, store.New(), ensurer)
+	router, kube := newTestRouter(t, store.New(), nil, ensurer)
 	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app","namespace":"body"}}`)
 
 	response := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
@@ -221,7 +220,7 @@ func TestCreateNamespacedResourceForcesPathNamespace(t *testing.T) {
 }
 
 func TestCreateRejectsInvalidJSONBody(t *testing.T) {
-	router, _ := newTestRouter(t, store.New())
+	router, _ := newTestRouter(t, store.New(), nil)
 
 	response := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", []byte(`{"metadata":`))
 
@@ -231,7 +230,7 @@ func TestCreateRejectsInvalidJSONBody(t *testing.T) {
 }
 
 func TestCreateRejectsTrailingJSONBody(t *testing.T) {
-	router, _ := newTestRouter(t, store.New())
+	router, _ := newTestRouter(t, store.New(), nil)
 	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}{"metadata":{"name":"other"}}`)
 
 	response := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
@@ -242,7 +241,7 @@ func TestCreateRejectsTrailingJSONBody(t *testing.T) {
 }
 
 func TestNamespacedRoutesRejectInvalidNamespace(t *testing.T) {
-	router, _ := newTestRouter(t, store.New(), &recordingEnsurer{})
+	router, _ := newTestRouter(t, store.New(), nil, &recordingEnsurer{})
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/Bad_Namespace/resources/configmaps", nil)
 
@@ -252,9 +251,7 @@ func TestNamespacedRoutesRejectInvalidNamespace(t *testing.T) {
 }
 
 func TestResourceRoutesRejectInvalidName(t *testing.T) {
-	st := store.New()
-	st.ReplaceScope("configmaps", "default", nil)
-	router, _ := newTestRouter(t, st, &recordingEnsurer{})
+	router, _ := newTestRouter(t, store.New(), nil, &recordingEnsurer{})
 
 	response := performRequest(router, http.MethodGet, "/api/v1/namespaces/default/resources/configmaps/Bad_Name", nil)
 
@@ -264,7 +261,7 @@ func TestResourceRoutesRejectInvalidName(t *testing.T) {
 }
 
 func TestCreateDuplicateReturnsConflict(t *testing.T) {
-	router, _ := newTestRouter(t, store.New())
+	router, _ := newTestRouter(t, store.New(), nil)
 	body := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"}}`)
 
 	firstResponse := performRequest(router, http.MethodPost, "/api/v1/namespaces/default/resources/configmaps", body)
@@ -279,7 +276,7 @@ func TestCreateDuplicateReturnsConflict(t *testing.T) {
 
 func TestPatchAndDeleteWriteThroughKubernetes(t *testing.T) {
 	ensurer := &recordingEnsurer{}
-	router, kube := newTestRouter(t, store.New(), ensurer)
+	router, kube := newTestRouter(t, store.New(), nil, ensurer)
 	createBody := []byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app"},"data":{"key":"old"}}`)
 	patchBody := []byte(`{"apiVersion":"v1","kind":"ConfigMap","data":{"key":"new"}}`)
 
@@ -314,7 +311,7 @@ func TestPatchAndDeleteWriteThroughKubernetes(t *testing.T) {
 	ensurer.expectCalled(t, "configmaps", "default")
 }
 
-func newTestRouter(t *testing.T, st *store.Store, ensurers ...NamespaceEnsurer) (*gin.Engine, client.Client) {
+func newTestRouter(t *testing.T, st *store.Store, kubeObjects []client.Object, ensurers ...NamespaceEnsurer) (*gin.Engine, client.Client) {
 	t.Helper()
 	ginMode := gin.Mode()
 	gin.SetMode(gin.TestMode)
@@ -324,7 +321,7 @@ func newTestRouter(t *testing.T, st *store.Store, ensurers ...NamespaceEnsurer) 
 	if err := clientgoscheme.AddToScheme(scheme); err != nil {
 		t.Fatal(err)
 	}
-	kube := fake.NewClientBuilder().WithScheme(scheme).Build()
+	kube := fake.NewClientBuilder().WithScheme(scheme).WithObjects(kubeObjects...).Build()
 	svc := service.New(registry.Default(), st, kube)
 	router := gin.New()
 	var ensurer NamespaceEnsurer

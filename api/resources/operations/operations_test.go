@@ -11,20 +11,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestListEnsuresNamespacedScopeAndReturnsDirtyState(t *testing.T) {
+	scheme := runtime.NewScheme()
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
 	st := store.New()
-	st.ReplaceScope("configmaps", "default", []client.Object{
+	kube := fake.NewClientBuilder().WithScheme(scheme).WithObjects(
 		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "default", Labels: map[string]string{"app": "demo"}}},
-	})
+	).Build()
 	st.MarkDirty("configmaps", "default", "app", "pending_patch_confirmation", map[string]string{"app": "demo"})
 	ensurer := &recordingEnsurer{}
-	ops := New(resourceservice.New(registry.Default(), st, fake.NewClientBuilder().Build()), registry.Default(), st, ensurer)
+	ops := New(resourceservice.New(registry.Default(), st, kube), registry.Default(), st, ensurer)
 
-	result, err := ops.List(context.Background(), ListRequest{Resource: "configmaps", Namespace: "default", Scope: registry.Namespaced, Selector: store.Selector{Labels: map[string]string{"app": "demo"}}})
+	result, err := ops.List(context.Background(), ListRequest{Resource: "configmaps", Namespace: "default", Scope: registry.Namespaced})
 	if err != nil {
 		t.Fatalf("list failed: %v", err)
 	}

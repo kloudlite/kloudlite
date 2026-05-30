@@ -160,8 +160,11 @@ func (m *Manager) EnsureNamespaced(ctx context.Context, alias string, namespace 
 	if namespace == "" {
 		return fmt.Errorf("namespace is required for namespaced resource %q", alias)
 	}
-	if m.store.Ready(alias, namespace) {
-		m.startScope(ctx, resource, namespace)
+	key := resource.Alias + "/" + namespace
+	m.mu.Lock()
+	_, alreadyStarted := m.started[key]
+	m.mu.Unlock()
+	if alreadyStarted {
 		return nil
 	}
 	if err := m.SyncOnce(ctx, resource, namespace); err != nil {
