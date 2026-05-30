@@ -82,6 +82,7 @@ func (s *Service) Create(ctx context.Context, alias string, namespace string, ob
 	}
 	created.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
 	s.markDirty(resource, created.GetNamespace(), created.GetName(), events.DirtyReasonPendingCreate, created.GetLabels())
+	s.store.Upsert(resource.Alias, created)
 	return created.DeepCopyObject().(client.Object), nil
 }
 
@@ -122,6 +123,7 @@ func (s *Service) Patch(ctx context.Context, alias string, namespace string, nam
 	}
 	current.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
 	s.markDirty(resource, current.GetNamespace(), current.GetName(), events.DirtyReasonPendingPatch, current.GetLabels())
+	s.store.Upsert(resource.Alias, current)
 	return current.DeepCopyObject().(client.Object), nil
 }
 
@@ -148,6 +150,7 @@ func (s *Service) Delete(ctx context.Context, alias string, namespace string, na
 		return mapClientError(err)
 	}
 	s.markDirty(resource, object.GetNamespace(), object.GetName(), events.DirtyReasonPendingDelete, labels)
+	s.store.Delete(resource.Alias, object.GetNamespace(), object.GetName())
 	return nil
 }
 
