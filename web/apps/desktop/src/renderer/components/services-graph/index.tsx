@@ -159,7 +159,6 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
     <ReactFlow
       nodes={[]}
       edges={[]}
-      edges={edges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       fitView
