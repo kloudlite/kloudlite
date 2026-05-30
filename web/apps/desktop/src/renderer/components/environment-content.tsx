@@ -209,17 +209,21 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     setLoading(true)
 
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
-      if (result.error) return
+      if (result.error) { window.electronAPI.debugLog?.('[fetch] ERROR: ' + result.error); return }
       const env = (result.items || []).find((e: any) =>
         e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
       )
-        if (!env) {
+      if (!env) {
+        window.electronAPI.debugLog?.('[fetch] env "' + envName + '" not found')
         setServices(SERVICES[envHash] || [])
         setWorkspaces(ENV_WORKSPACES[envHash] || [])
-        setCompose(COMPOSITIONS[envHash] || '')
         setLoading(false)
         return
       }
+      const cs = env.status?.composeStatus
+      const svcCount = cs?.services?.length || 0
+      const svcNames = cs?.services?.map((s: any) => s.name).join(',') || ''
+      window.electronAPI.debugLog?.('[fetch] env "' + envName + '" composeStatus: ' + svcCount + ' services=[' + svcNames + ']')
 
       const cs = env.status?.composeStatus
       if (cs?.services?.length > 0) {
