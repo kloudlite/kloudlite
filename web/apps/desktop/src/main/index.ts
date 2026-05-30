@@ -441,6 +441,35 @@ ipcMain.handle('api:list-workspaces', async (_event, namespace: string) => {
   }
 })
 
+// IPC: Platform API — list generic resources
+ipcMain.handle('api:list-resources', async (_event, namespace: string | null, resource: string) => {
+  try {
+    const result = await platformAPI.listResources(namespace, resource)
+    return { items: result.items }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — create generic resource
+ipcMain.handle('api:create-resource', async (_event, namespace: string | null, resource: string, object: Record<string, unknown>) => {
+  try {
+    return await platformAPI.createResource(namespace, resource, object)
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — delete generic resource
+ipcMain.handle('api:delete-resource', async (_event, namespace: string | null, resource: string, name: string) => {
+  try {
+    await platformAPI.deleteResource(namespace, resource, name)
+    return { success: true }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
 // IPC: Platform API — create workspace
 ipcMain.handle('api:create-workspace', async (_event, namespace: string, name: string, spec: Record<string, unknown>) => {
   try {

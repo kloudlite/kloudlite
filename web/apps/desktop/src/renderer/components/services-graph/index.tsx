@@ -22,6 +22,7 @@ import { WorkspaceNode } from './workspace-node'
 export interface GraphPort {
   port: number
   targetPort: number
+  protocol?: string
   interceptedBy?: string
 }
 
@@ -62,12 +63,12 @@ const edgeTypes: EdgeTypes = {}
 const SERVICE_NODE_W = 340
 const WORKSPACE_NODE_W = 280
 const COL_GAP = 260
-const ROW_GAP = 24
+const ROW_GAP = 40
 const WORKSPACE_H = 100
-const HEADER_H = 68
-const SECTION_H = 28
+const HEADER_H = 64
+const SECTION_H = 32
 const PORT_ROW_H = 36
-const VOLUME_ROW_H = 32
+const VOLUME_ROW_H = 64
 const MIN_ZOOM = 0.5
 const MAX_ZOOM = 1.5
 
@@ -75,7 +76,7 @@ const SERVICE_X = 0
 const WORKSPACE_X = SERVICE_NODE_W + COL_GAP
 
 function getServiceHeight(svc: { ports: unknown[]; volumes: unknown[] }): number {
-  const portSection = svc.ports.length > 0 ? SECTION_H + svc.ports.length * PORT_ROW_H : 0
+  const portSection = svc.ports.length > 0 ? SECTION_H + PORT_ROW_H : 0
   const volSection = svc.volumes.length > 0 ? SECTION_H + svc.volumes.length * VOLUME_ROW_H : 0
   return HEADER_H + portSection + volSection
 }
@@ -136,10 +137,11 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
     for (const svc of services) {
       for (const p of svc.ports) {
         if (p.interceptedBy) {
+          const protocol = p.protocol ?? 'tcp'
           interceptEdges.push({
-            id: `intercept-${svc.id}-${p.port}`,
+            id: `intercept-${svc.id}-${protocol}-${p.port}`,
             source: `svc-${svc.id}`,
-            sourceHandle: `port-${p.port}`,
+            sourceHandle: `port-${protocol}-${p.port}`,
             target: `ws-${p.interceptedBy}`,
             type: 'smoothstep',
             animated: true,
