@@ -278,8 +278,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     )
   }
 
-  window.electronAPI.debugLog('[ui] rendering with ' + services.length + ' services: ' + services.map(s => s.name + ':' + s.ports.map(p => p.port).join(',')).join(' '))
-
   const graphServices = services.map((s) => ({
     id: s.id,
     name: s.name,
@@ -343,7 +341,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                   if (saving || !compose.trim()) return
                   setSaving(true)
                   try {
-                    await window.electronAPI.patchResource(
+                    const result = await window.electronAPI.patchResource(
                       'wm-karthik-dev',
                       'environments',
                       envName,
@@ -360,9 +358,24 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
-                    window.electronAPI.debugLog('[compose] PATCH done, closing + refresh')
+                    // Parse services from the PATCH response spec.compose
+                    const cc = result?.spec?.compose?.composeContent || compose
+                    const parsed: ServiceData[] = []
+                    const lines = cc.split('\n')
+                    let currentSvc: string | null = null
+                    let ports: number[] = []
+                    for (const line of lines) {
+                      const svcMatch = line.match(/^\s{2}(\w[\w-]*):/)
+                      const portMatch = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
+                      if (svcMatch) {
+                        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
+                        currentSvc = svcMatch[1]; ports = []
+                      } else if (portMatch) { ports.push(parseInt(portMatch[1])) }
+                    }
+                    if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
+                    if (parsed.length > 0) setServices(parsed)
+                    window.electronAPI.debugLog('[compose] PATCH done, showing ' + parsed.length + ' services from response')
                     closeCompose(true)
-                    setRefreshKey((k) => k + 1)
                   } catch (err) {
                     window.electronAPI.debugLog('[compose] PATCH failed: ' + String(err))
                   } finally {
