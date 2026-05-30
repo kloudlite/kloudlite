@@ -63,22 +63,35 @@ function apiRequest(
       timeout: 10000,
     }
 
+    const startTime = Date.now()
+    console.log(`[http] >>> ${method} ${url.pathname}${body ? ' body:' + JSON.stringify(body).slice(0, 100) : ''}`)
+
     const lib = API_BASE.startsWith('https') ? https : http
     const req = lib.request(options, (res) => {
       const chunks: Buffer[] = []
       res.on('data', (c: Buffer) => chunks.push(c))
       res.on('end', () => {
         const raw = Buffer.concat(chunks).toString()
+        const elapsed = Date.now() - startTime
         try {
           const parsed = JSON.parse(raw)
+          // Extract just composeStatus services for readability
+          const items = parsed.items || (parsed.status?.composeStatus?.services ? [parsed] : [])
+          const svcSummary = items.map((i: any) => {
+            const name = i.metadata?.name || ''
+            const svcs = i.status?.composeStatus?.services || []
+            return `${name}[${svcs.map((s: any) => s.name).join(',')}]`
+          }).filter(Boolean).join(' ') || parsed.error || 'ok'
+          console.log(`[http] <<< ${res.statusCode} ${url.pathname} (${elapsed}ms) ${svcSummary}`)
           if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error(parsed.error || `HTTP ${res.statusCode}: ${raw.slice(0, 200)}`))
+            reject(new Error(parsed.error || `HTTP ${res.statusCode}`))
           } else {
             resolve(parsed)
           }
         } catch {
+          console.log(`[http] <<< ${res.statusCode} ${url.pathname} (${elapsed}ms) [raw ${raw.length}bytes]`)
           if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error(`HTTP ${res.statusCode}: ${raw.slice(0, 200)}`))
+            reject(new Error(`HTTP ${res.statusCode}`))
           } else {
             resolve(raw)
           }
@@ -86,8 +99,8 @@ function apiRequest(
       })
     })
 
-    req.on('error', reject)
-    req.on('timeout', () => { req.destroy(); reject(new Error(`Request timed out: ${method} ${path}`)) })
+    req.on('error', (e) => { console.log(`[http] ERROR ${url.pathname}: ${e.message}`); reject(e) })
+    req.on('timeout', () => { console.log(`[http] TIMEOUT ${url.pathname}`); req.destroy(); reject(new Error(`Request timed out: ${method} ${path}`)) })
     if (payload) req.write(payload)
     req.end()
   })
