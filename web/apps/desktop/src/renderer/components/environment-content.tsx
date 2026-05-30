@@ -226,15 +226,31 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
         const lines = cc.split('\n')
         let currentSvc: string | null = null
         let ports: { port: number; targetPort: number; protocol: string }[] = []
+        let volumes: { name: string; mountPath: string; type: 'persistent' | 'config' | 'secret' | 'host' }[] = []
+        const skipKeys = new Set(['version', 'volumes', 'networks', 'configs', 'secrets', 'services'])
+        let inServices = false
+
         for (const line of lines) {
+          // Detect 'services:' top-level key
+          if (line.match(/^services:/)) { inServices = true; continue }
+          if (!inServices) continue
+
           const sm = line.match(/^\s{2}([\w][\w-]*):/)
-          const pm = line.match(/^\s{6}-\s*["']?(\d+):(\d+)["']?/)
-          if (sm) {
-            if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes: [] })
-            currentSvc = sm[1]; ports = []
-          } else if (pm) { ports.push({ port: parseInt(pm[1]), targetPort: parseInt(pm[2]), protocol: 'TCP' }) }
+          const portMatch = line.match(/^\s{6}-\s*["']?(\d+):(\d+)["']?/)
+          const volMatch = line.match(/^\s{6}-\s*["']?([^"':]+?):([^"':]+?)["']?\s*$/)
+
+          if (sm && !skipKeys.has(sm[1])) {
+            if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes })
+            currentSvc = sm[1]; ports = []; volumes = []
+          } else if (volMatch && currentSvc) {
+            const volName = volMatch[1].trim()
+            const mountPath = volMatch[2].split(':')[0].trim() // strip off mode like ":ro"
+            volumes.push({ name: volName, mountPath, type: 'persistent' })
+          } else if (portMatch && currentSvc) {
+            ports.push({ port: parseInt(portMatch[1]), targetPort: parseInt(portMatch[2]), protocol: 'TCP' })
+          }
         }
-        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes: [] })
+        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes })
         if (parsed.length > 0) setServices(parsed)
       }
       if (cc && !composeOpen) setCompose(cc)
