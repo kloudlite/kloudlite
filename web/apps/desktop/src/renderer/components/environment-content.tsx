@@ -368,7 +368,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       {/* Graph fills remaining space */}
       <div className="min-h-0 flex-1">
-        <ServicesGraph services={graphServices} workspaces={workspaces} />
+        <ServicesGraph key={`flow-${services.length}-${services.map(s => s.id).join('-')}`} services={graphServices} workspaces={workspaces} />
       </div>
 
       {/* Logs viewer */}
