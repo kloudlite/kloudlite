@@ -357,7 +357,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                     closeCompose(true)
                     setRefreshKey((k) => k + 1)
                   } catch {
-                  } catch {
                   } finally {
                     setSaving(false)
                   }
