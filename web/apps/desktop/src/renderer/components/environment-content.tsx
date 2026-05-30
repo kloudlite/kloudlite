@@ -303,12 +303,17 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
             if (composeOpen) { closeCompose(); return }
             // Fetch compose from API when opening
             if (!compose) {
-              const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
-              const env = (result?.items || []).find((e: any) =>
-                e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
-              )
-              const cc = env?.spec?.compose?.composeContent
-              if (cc) setCompose(cc)
+              try {
+                const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
+                const env = (result?.items || []).find((e: any) =>
+                  e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
+                )
+                const cc = env?.spec?.compose?.composeContent
+                if (cc) setCompose(cc)
+              } catch {}
+            }
+            if (!compose) {
+              setCompose(`version: "3.8"\nservices:\n  web:\n    image: nginx\n    ports:\n      - "80:80"`)
             }
             setComposeOpen(true)
           }}
