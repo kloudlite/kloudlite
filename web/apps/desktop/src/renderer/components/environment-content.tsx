@@ -278,6 +278,8 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     )
   }
 
+  window.electronAPI.debugLog('[ui] rendering with ' + services.length + ' services: ' + services.map(s => s.name + ':' + s.ports.map(p => p.port).join(',')).join(' '))
+
   const graphServices = services.map((s) => ({
     id: s.id,
     name: s.name,
@@ -378,7 +380,11 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       {/* Graph fills remaining space */}
       <div className="min-h-0 flex-1">
-        <ServicesGraph key={'g-' + services.map(s => s.id).join('-')} services={graphServices} workspaces={workspaces} />
+        <ServicesGraph
+          key={'g-' + services.map(s => s.id).join('-') + '-p' + services.map(s => s.ports.map(p => p.port).join(',')).join('-')}
+          services={graphServices}
+          workspaces={workspaces}
+        />
       </div>
 
       {/* Logs viewer */}
