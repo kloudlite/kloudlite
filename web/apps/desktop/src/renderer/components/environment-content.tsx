@@ -231,6 +231,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           volumes: [],
         })))
       }
+      // Always update compose from spec
+      const cc = env.spec?.compose?.composeContent
+      if (cc) setCompose(cc)
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
       setLoading(false)
     }).catch(() => {
@@ -334,7 +337,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                   if (saving || !compose.trim()) return
                   setSaving(true)
                   try {
-                    const result = await window.electronAPI.patchResource(
+                    await window.electronAPI.patchResource(
                       'wm-karthik-dev',
                       'environments',
                       envName,
@@ -351,25 +354,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
-                    // Parse services from the PATCH response's spec.compose (latest data from backend)
-                    const cc = result?.spec?.compose?.composeContent
-                    if (cc) {
-                      const parsed: ServiceData[] = []
-                      const lines = cc.split('\n')
-                      let svc: string | null = null
-                      let ports: number[] = []
-                      for (const line of lines) {
-                        const sm = line.match(/^\s{2}(\w[\w-]*):/)
-                        const pm = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
-                        if (sm) {
-                          if (svc) parsed.push({ id: svc, name: svc, type: 'ClusterIP', clusterIP: '', dns: `${svc}.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
-                          svc = sm[1]; ports = []
-                        } else if (pm) { ports.push(parseInt(pm[1])) }
-                      }
-                      if (svc) parsed.push({ id: svc, name: svc, type: 'ClusterIP', clusterIP: '', dns: `${svc}.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
-                      if (parsed.length > 0) setServices(parsed)
-                    }
                     closeCompose(true)
+                    setRefreshKey((k) => k + 1)
+                  } catch {
                   } catch {
                   } finally {
                     setSaving(false)
