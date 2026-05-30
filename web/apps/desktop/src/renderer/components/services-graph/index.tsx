@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -6,6 +6,8 @@ import {
   BackgroundVariant,
   Panel,
   useReactFlow,
+  useNodesState,
+  useEdgesState,
   type Node,
   type Edge,
   type EdgeTypes,
@@ -77,15 +79,14 @@ function getServiceHeight(svc: { ports: unknown[]; volumes: unknown[] }): number
 }
 
 function GraphInner({ services, workspaces }: ServicesGraphProps) {
-  const { zoomIn, zoomOut, fitView, setNodes, setEdges } = useReactFlow()
+  const { zoomIn, zoomOut, fitView } = useReactFlow()
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showMinimap, setShowMinimap] = useState(false)
-  const apiRef = useRef({ setNodes, setEdges })
-  apiRef.current = { setNodes, setEdges }
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
 
   // Update nodes and edges when services/workspaces change
   useEffect(() => {
-    const { setNodes: sn, setEdges: se } = apiRef.current
     let cursorY = 0
     const serviceNodes: Node[] = services.map((svc) => {
       const interceptedPorts = svc.ports.filter((p) => p.interceptedBy)
@@ -153,18 +154,21 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
       }
     }
 
-    sn([...serviceNodes, ...wsNodes])
-    se(interceptEdges)
+    setNodes([...serviceNodes, ...wsNodes])
+    setEdges(interceptEdges)
   }, [services, workspaces])
 
 
   return (
     <ReactFlow
-      nodes={[]}
-      edges={[]}
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       fitView
+      deleteKeyCode="Delete"
       fitViewOptions={{ padding: 0.1, maxZoom: 1, minZoom: MIN_ZOOM }}
       minZoom={MIN_ZOOM}
       maxZoom={MAX_ZOOM}
