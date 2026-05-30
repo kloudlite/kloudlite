@@ -147,11 +147,9 @@ func convertServiceToStatefulSet(
 
 	if len(service.Entrypoint) > 0 {
 		container.Command = service.Entrypoint
-		if len(service.Command) > 0 {
-			container.Args = service.Command
-		}
-	} else if len(service.Command) > 0 {
-		container.Command = service.Command
+	}
+	if len(service.Command) > 0 {
+		container.Args = service.Command
 	}
 
 	// Add environment variables from service definition
