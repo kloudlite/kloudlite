@@ -223,8 +223,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       const cs = env.status?.composeStatus
       if (cs?.services?.length > 0) {
-        const svcNames = cs.services.map((s: any) => s.name).join(',')
-        window.electronAPI.debugLog(`[fetch] setting ${cs.services.length} services: ${svcNames}`)
         setServices(cs.services.map((s: any, i: number) => ({
           id: s.name || `svc-${i}`,
           name: s.name || `svc-${i}`,
@@ -234,13 +232,8 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           ports: (s.ports || []).map((p: number) => ({ port: p, targetPort: p, protocol: 'TCP' })),
           volumes: [],
         })))
-        window.electronAPI.debugLog(`[fetch] setServices called`)
       }
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
-      setCompose(cs && cs.services ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
-        `  ${s.name}:\n    image: ${s.image}\n    ports:\n` +
-        (s.ports || []).map((p: number) => `      - "${p}:${p}"\n`).join('')
-      ).join('') : COMPOSITIONS[envHash] || '')
       setLoading(false)
     }).catch(() => {
       setServices(SERVICES[envHash] || [])
@@ -306,7 +299,19 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
               ? 'border-primary bg-primary/10 text-primary'
               : 'border-border text-muted-foreground hover:bg-accent'
           )}
-          onClick={() => composeOpen ? closeCompose() : setComposeOpen(true)}
+          onClick={async () => {
+            if (composeOpen) { closeCompose(); return }
+            // Fetch compose from API when opening
+            if (!compose) {
+              const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
+              const env = (result?.items || []).find((e: any) =>
+                e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
+              )
+              const cc = env?.spec?.compose?.composeContent
+              if (cc) setCompose(cc)
+            }
+            setComposeOpen(true)
+          }}
         >
           Composition
         </button>
