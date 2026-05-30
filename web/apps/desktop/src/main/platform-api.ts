@@ -64,7 +64,7 @@ function apiRequest(
     }
 
     const startTime = Date.now()
-    console.log(`[http] >>> ${method} ${url.pathname}${body ? ' body:' + JSON.stringify(body).slice(0, 100) : ''}`)
+    console.log(`[http] >>> ${method} ${url.pathname}${body ? ' body:' + JSON.stringify(body) : ''}`)
 
     const lib = API_BASE.startsWith('https') ? https : http
     const req = lib.request(options, (res) => {
@@ -75,14 +75,7 @@ function apiRequest(
         const elapsed = Date.now() - startTime
         try {
           const parsed = JSON.parse(raw)
-          // Extract just composeStatus services for readability
-          const items = parsed.items || (parsed.status?.composeStatus?.services ? [parsed] : [])
-          const svcSummary = items.map((i: any) => {
-            const name = i.metadata?.name || ''
-            const svcs = i.status?.composeStatus?.services || []
-            return `${name}[${svcs.map((s: any) => s.name).join(',')}]`
-          }).filter(Boolean).join(' ') || parsed.error || 'ok'
-          console.log(`[http] <<< ${res.statusCode} ${url.pathname} (${elapsed}ms) ${svcSummary}`)
+          console.log(`[http] <<< ${res.statusCode} ${url.pathname} (${elapsed}ms) body:${raw}`)
           if (res.statusCode && res.statusCode >= 400) {
             reject(new Error(parsed.error || `HTTP ${res.statusCode}`))
           } else {
