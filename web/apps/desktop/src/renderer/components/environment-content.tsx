@@ -204,6 +204,11 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
   const [saving, setSaving] = useState(false)
   const [logsService, setLogsService] = useState<string | null>(null)
 
+  // Log whenever services change
+  useEffect(() => {
+    window.electronAPI.debugLog(`[services] changed: length=${services.length}, names=${services.map(s => s.name).join(',')}`)
+  }, [services])
+
   // Fetch environment data from API
   useEffect(() => {
     setLoading(true)
@@ -223,6 +228,8 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       const cs = env.status?.composeStatus
       if (cs?.services?.length > 0) {
+        const svcNames = cs.services.map((s: any) => s.name).join(',')
+        window.electronAPI.debugLog(`[fetch] setting ${cs.services.length} services: ${svcNames}`)
         setServices(cs.services.map((s: any, i: number) => ({
           id: s.name || `svc-${i}`,
           name: s.name || `svc-${i}`,
@@ -232,6 +239,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           ports: (s.ports || []).map((p: number) => ({ port: p, targetPort: p, protocol: 'TCP' })),
           volumes: [],
         })))
+        window.electronAPI.debugLog(`[fetch] setServices called`)
       }
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
       setCompose(cs && cs.services ? `version: "3.8"\nservices:\n` + cs.services.map((s: any) =>
