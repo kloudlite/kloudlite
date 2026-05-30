@@ -9,6 +9,7 @@ import (
 	"github.com/kloudlite/kloudlite/api/resources/registry"
 	"github.com/kloudlite/kloudlite/api/resources/store"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -28,30 +29,63 @@ func NewWithEvents(reg *registry.Registry, st *store.Store, kube client.Client, 
 	return &Service{registry: reg, store: st, kube: kube, broker: broker}
 }
 
-func (s *Service) List(ctx context.Context, alias string, namespace string, selector store.Selector) ([]client.Object, error) {
-	_ = ctx
-	if _, err := s.resolve(alias); err != nil {
+func (s *Service) List(ctx context.Context, alias string, namespace string, _ store.Selector) ([]client.Object, error) {
+	resource, err := s.resolve(alias)
+	if err != nil {
 		return nil, err
 	}
-	if !s.store.Ready(alias, namespace) {
-		return nil, NewError(ErrCacheNotReady, fmt.Sprintf("resource %q cache is not ready", alias), nil)
+
+	list := resource.NewList()
+	objectList, ok := list.(client.ObjectList)
+	if !ok {
+		return nil, fmt.Errorf("resource %q list is not a client object list", resource.Alias)
 	}
-	return s.store.List(alias, namespace, selector), nil
+
+	opts := []client.ListOption{}
+	if resource.Scope == registry.Namespaced && namespace != "" {
+		opts = append(opts, client.InNamespace(namespace))
+	}
+
+	if err := s.kube.List(ctx, objectList, opts...); err != nil {
+		return nil, mapClientError(err)
+	}
+
+	items, err := meta.ExtractList(list)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]client.Object, 0, len(items))
+	for _, item := range items {
+		obj, ok := item.(client.Object)
+		if !ok {
+			return nil, fmt.Errorf("list item is not a client object")
+		}
+		result = append(result, obj)
+	}
+	return result, nil
 }
 
 func (s *Service) Get(ctx context.Context, alias string, namespace string, name string) (client.Object, error) {
-	_ = ctx
-	if _, err := s.resolve(alias); err != nil {
+	resource, err := s.resolve(alias)
+	if err != nil {
 		return nil, err
 	}
-	if !s.store.Ready(alias, namespace) {
-		return nil, NewError(ErrCacheNotReady, fmt.Sprintf("resource %q cache is not ready", alias), nil)
+
+	obj, err := newClientObject(resource)
+	if err != nil {
+		return nil, err
 	}
-	object, ok := s.store.Get(alias, namespace, name)
-	if !ok {
-		return nil, NewError(ErrNotFound, fmt.Sprintf("resource %q named %q was not found", alias, name), nil)
+	obj.SetName(name)
+	if resource.Scope == registry.Namespaced {
+		obj.SetNamespace(namespace)
 	}
-	return object, nil
+	obj.GetObjectKind().SetGroupVersionKind(resource.GroupVersionKind())
+
+	if err := s.kube.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
+		return nil, mapClientError(err)
+	}
+	return obj, nil
 }
 
 func (s *Service) Create(ctx context.Context, alias string, namespace string, object client.Object) (client.Object, error) {
