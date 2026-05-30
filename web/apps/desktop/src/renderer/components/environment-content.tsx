@@ -237,15 +237,14 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
           const sm = line.match(/^\s{2}([\w][\w-]*):/)
           const portMatch = line.match(/^\s{6}-\s*["']?(\d+):(\d+)["']?/)
-          const volMatch = line.match(/^\s{6}-\s*["']?([^"':]+?):([^"':]+?)["']?\s*$/)
+          const volMatch = line.match(/^\s{6}-\s*["']([^"']+?)["']/)
 
           if (sm && !skipKeys.has(sm[1])) {
             if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes })
             currentSvc = sm[1]; ports = []; volumes = []
           } else if (volMatch && currentSvc) {
-            const volName = volMatch[1].trim()
-            const mountPath = volMatch[2].split(':')[0].trim() // strip off mode like ":ro"
-            volumes.push({ name: volName, mountPath, type: 'persistent' })
+            const parts = volMatch[1].split(':')
+            volumes.push({ name: parts[0], mountPath: parts[1] || parts[0], type: 'persistent' })
           } else if (portMatch && currentSvc) {
             ports.push({ port: parseInt(portMatch[1]), targetPort: parseInt(portMatch[2]), protocol: 'TCP' })
           }
