@@ -455,10 +455,6 @@ ipcMain.handle('api:list-workmachines', async () => {
 // IPC: Platform API — patch resource (e.g., update compose on environment)
 ipcMain.handle('api:patch-resource', async (_event, namespace: string | null, resource: string, name: string, patch: Record<string, unknown>) => {
   try {
-    const cc = (patch as any)?.spec?.compose?.composeContent || ''
-    const svcs = cc.split('\n').filter((l: string) => /^\s{2}\w/.test(l)).map((l: string) => l.trim().replace(':', ''))
-    console.log(`[api] PATCH ${resource}/${name} services: ${svcs.join(', ')}`)
-    console.log(`[api] PATCH body preview:`, JSON.stringify(patch).slice(0, 300))
     return await platformAPI.patchResource(namespace, resource, name, patch)
   } catch (err) {
     return { error: (err as Error).message }
