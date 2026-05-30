@@ -221,10 +221,11 @@ function ToolButton({ children, onClick, active, tooltip }: { children: React.Re
 }
 
 export function ServicesGraph({ services, workspaces }: ServicesGraphProps) {
+  const key = services.map(s => `${s.id}:${s.ports.map(p => p.port).join(',')}`).join('|')
   return (
     <div className="h-full w-full">
-      <ReactFlowProvider>
-        <GraphInner key={`g-${services.length}`} services={services} workspaces={workspaces} />
+      <ReactFlowProvider key={key}>
+        <GraphInner services={services} workspaces={workspaces} />
       </ReactFlowProvider>
     </div>
   )
