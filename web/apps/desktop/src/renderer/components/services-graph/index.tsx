@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -77,12 +77,12 @@ function getServiceHeight(svc: { ports: unknown[]; volumes: unknown[] }): number
 }
 
 function GraphInner({ services, workspaces }: ServicesGraphProps) {
-  const { zoomIn, zoomOut, fitView } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, setNodes, setEdges } = useReactFlow()
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showMinimap, setShowMinimap] = useState(false)
 
-  const { nodes, edges } = useMemo(() => {
-    // Stack services vertically on the left with consistent gap
+  // Update nodes and edges when services/workspaces change
+  useEffect(() => {
     let cursorY = 0
     const serviceNodes: Node[] = services.map((svc) => {
       const interceptedPorts = svc.ports.filter((p) => p.interceptedBy)
@@ -128,7 +128,6 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
       }
     })
 
-    // One edge per intercepted port
     const interceptEdges: Edge[] = []
     for (const svc of services) {
       for (const p of svc.ports) {
@@ -151,12 +150,15 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
       }
     }
 
-    return { nodes: [...serviceNodes, ...wsNodes], edges: interceptEdges }
-  }, [services, workspaces])
+    setNodes([...serviceNodes, ...wsNodes])
+    setEdges(interceptEdges)
+    setTimeout(() => fitView({ duration: 300 }), 100)
+  }, [services, workspaces, setNodes, setEdges, fitView])
 
   return (
     <ReactFlow
-      nodes={nodes}
+      nodes={[]}
+      edges={[]}
       edges={edges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
