@@ -396,6 +396,14 @@ ipcMain.handle('api:list-environments', async (_event, namespace: string) => {
     const result = await platformAPI.listEnvironments(namespace)
     const count = result.items?.length || 0
     const names = (result.items || []).map((i: any) => i.metadata?.name).join(', ')
+    // Log composeStatus details for each environment
+    for (const item of (result.items || []) as any[]) {
+      const name = item.metadata?.name
+      const cs = item.status?.composeStatus
+      const svcs = cs?.services || []
+      const svcNames = svcs.map((s: any) => s.name).join(',')
+      console.log(`[api] env "${name}": composeStatus.services=[${svcNames}] (${svcs.length})`)
+    }
     console.log(`[api] list-environments: ${count} items: ${names}`)
     return { items: result.items }
   } catch (err) {
@@ -455,8 +463,13 @@ ipcMain.handle('api:list-workmachines', async () => {
 // IPC: Platform API — patch resource (e.g., update compose on environment)
 ipcMain.handle('api:patch-resource', async (_event, namespace: string | null, resource: string, name: string, patch: Record<string, unknown>) => {
   try {
-    return await platformAPI.patchResource(namespace, resource, name, patch)
+    console.log(`[api] PATCH ${resource}/${name} called`)
+    const result = await platformAPI.patchResource(namespace, resource, name, patch)
+    const resultSvcs = (result as any)?.status?.composeStatus?.services || []
+    console.log(`[api] PATCH response composeStatus.services=[${resultSvcs.map((s: any) => s.name).join(',')}]`)
+    return result
   } catch (err) {
+    console.error(`[api] PATCH error:`, (err as Error).message)
     return { error: (err as Error).message }
   }
 })
