@@ -59,15 +59,15 @@ const nodeTypes: NodeTypes = {
 
 const edgeTypes: EdgeTypes = {}
 
-const SERVICE_NODE_W = 320
+const SERVICE_NODE_W = 340
 const WORKSPACE_NODE_W = 280
-const COL_GAP = 280       // gap between services and workspaces columns
-const ROW_GAP = 32        // consistent gap between cards
-const HEADER_H = 64
-const PORT_ROW_H = 36
-const VOLUME_HEADER_H = 28
-const VOLUME_ROW_H = 28
+const COL_GAP = 260
+const ROW_GAP = 24
 const WORKSPACE_H = 100
+const HEADER_H = 68
+const SECTION_H = 28
+const PORT_ROW_H = 36
+const VOLUME_ROW_H = 32
 const MIN_ZOOM = 0.5
 const MAX_ZOOM = 1.5
 
@@ -75,7 +75,9 @@ const SERVICE_X = 0
 const WORKSPACE_X = SERVICE_NODE_W + COL_GAP
 
 function getServiceHeight(svc: { ports: unknown[]; volumes: unknown[] }): number {
-  return HEADER_H + svc.ports.length * PORT_ROW_H + (svc.volumes.length > 0 ? VOLUME_HEADER_H + svc.volumes.length * VOLUME_ROW_H : 0)
+  const portSection = svc.ports.length > 0 ? SECTION_H + svc.ports.length * PORT_ROW_H : 0
+  const volSection = svc.volumes.length > 0 ? SECTION_H + svc.volumes.length * VOLUME_ROW_H : 0
+  return HEADER_H + portSection + volSection
 }
 
 function GraphInner({ services, workspaces }: ServicesGraphProps) {
