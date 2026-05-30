@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -80,9 +80,12 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
   const { zoomIn, zoomOut, fitView, setNodes, setEdges } = useReactFlow()
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showMinimap, setShowMinimap] = useState(false)
+  const apiRef = useRef({ setNodes, setEdges })
+  apiRef.current = { setNodes, setEdges }
 
   // Update nodes and edges when services/workspaces change
   useEffect(() => {
+    const { setNodes: sn, setEdges: se } = apiRef.current
     let cursorY = 0
     const serviceNodes: Node[] = services.map((svc) => {
       const interceptedPorts = svc.ports.filter((p) => p.interceptedBy)
@@ -150,10 +153,10 @@ function GraphInner({ services, workspaces }: ServicesGraphProps) {
       }
     }
 
-    setNodes([...serviceNodes, ...wsNodes])
-    setEdges(interceptEdges)
-    setTimeout(() => fitView({ duration: 300 }), 100)
-  }, [services, workspaces, setNodes, setEdges, fitView])
+    sn([...serviceNodes, ...wsNodes])
+    se(interceptEdges)
+  }, [services, workspaces])
+
 
   return (
     <ReactFlow
