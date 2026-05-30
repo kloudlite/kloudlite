@@ -242,11 +242,11 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           if (sm && !skipKeys.has(sm[1])) {
             if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes })
             currentSvc = sm[1]; ports = []; volumes = []
+          } else if (portMatch && currentSvc) {
+            ports.push({ port: parseInt(portMatch[1]), targetPort: parseInt(portMatch[2]), protocol: 'TCP' })
           } else if (volMatch && currentSvc) {
             const parts = volMatch[1].split(':')
             volumes.push({ name: parts[0], mountPath: parts[1] || parts[0], type: 'persistent' })
-          } else if (portMatch && currentSvc) {
-            ports.push({ port: parseInt(portMatch[1]), targetPort: parseInt(portMatch[2]), protocol: 'TCP' })
           }
         }
         if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes })
