@@ -204,11 +204,6 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
   const [saving, setSaving] = useState(false)
   const [logsService, setLogsService] = useState<string | null>(null)
 
-  // Log whenever services change
-  useEffect(() => {
-    window.electronAPI.debugLog(`[services] changed: length=${services.length}, names=${services.map(s => s.name).join(',')}`)
-  }, [services])
-
   // Fetch environment data from API
   useEffect(() => {
     setLoading(true)
@@ -376,7 +371,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
       {/* Graph fills remaining space */}
       <div className="min-h-0 flex-1">
-        <ServicesGraph key={`flow-${services.length}-${services.map(s => s.id).join('-')}`} services={graphServices} workspaces={workspaces} />
+        <ServicesGraph services={graphServices} workspaces={workspaces} />
       </div>
 
       {/* Logs viewer */}
