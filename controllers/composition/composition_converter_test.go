@@ -29,9 +29,9 @@ func TestCommandEntrypointHandling(t *testing.T) {
 				Image:   "nginx:latest",
 				Command: []string{"nginx", "-g", "daemon off;"},
 			},
-			wantCommand: []string{"nginx", "-g", "daemon off;"},
-			wantArgs:    nil,
-			description: "Command should be set as container.Command when only command is specified",
+			wantCommand: nil,
+			wantArgs:    []string{"nginx", "-g", "daemon off;"},
+			description: "Compose command maps to Args when no entrypoint is set",
 		},
 		{
 			name:        "only entrypoint specified",
@@ -73,9 +73,9 @@ func TestCommandEntrypointHandling(t *testing.T) {
 				Image:   "node:18",
 				Command: []string{"node", "server.js", "--port", "3000"},
 			},
-			wantCommand: []string{"node", "server.js", "--port", "3000"},
-			wantArgs:    nil,
-			description: "Command with multiple arguments should be preserved",
+			wantCommand: nil,
+			wantArgs:    []string{"node", "server.js", "--port", "3000"},
+			description: "Compose command with multiple args maps to container.Args",
 		},
 		{
 			name:        "entrypoint with command as args",
@@ -210,10 +210,10 @@ services:
     command: ["nginx", "-g", "daemon off;"]
 `,
 			serviceName: "web",
-			wantCommand: []string{"nginx", "-g", "daemon off;"},
-			wantArgs:    nil,
+			wantCommand: nil,
+			wantArgs:    []string{"nginx", "-g", "daemon off;"},
 			wantErr:     false,
-			description: "Command should be set in container.Command",
+			description: "Compose command maps to container.Args when no entrypoint",
 		},
 		{
 			name: "service with entrypoint only",
@@ -612,9 +612,9 @@ services:
     command: ["postgres", "-c", "max_connections=200"]
 `,
 			serviceName: "db",
-			expectedCmd: "postgres",
-			expectedArg: "",
-			description: "Command without entrypoint should work correctly",
+			expectedCmd: "",
+			expectedArg: "postgres",
+			description: "Compose command goes to container.Args when no entrypoint",
 		},
 		{
 			name: "regression test - entrypoint-only works",
@@ -658,18 +658,20 @@ services:
 
 			assert.NotNil(t, container, "Should find container for service %s", tt.serviceName)
 
-			// Check that Command is set correctly
-			assert.NotEmpty(t, container.Command, "Command should not be empty - %s", tt.description)
-			assert.Equal(t, tt.expectedCmd, container.Command[0],
-				"First command element should match - %s", tt.description)
+			if tt.expectedCmd != "" {
+				assert.NotEmpty(t, container.Command, "Command should not be empty - %s", tt.description)
+				assert.Equal(t, tt.expectedCmd, container.Command[0],
+					"First command element should match - %s", tt.description)
+			} else {
+				assert.Empty(t, container.Command, "Command should be empty when no entrypoint - %s", tt.description)
+			}
 
-			// Check Args if expected
 			if tt.expectedArg != "" {
-				assert.NotEmpty(t, container.Args, "Args should not be empty when command is specified with entrypoint - %s", tt.description)
+				assert.NotEmpty(t, container.Args, "Args should not be empty - %s", tt.description)
 				assert.Equal(t, tt.expectedArg, container.Args[0],
 					"First arg element should match - %s", tt.description)
 			} else {
-				assert.Empty(t, container.Args, "Args should be empty when no command with entrypoint - %s", tt.description)
+				assert.Empty(t, container.Args, "Args should be empty - %s", tt.description)
 			}
 		})
 	}
