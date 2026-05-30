@@ -225,16 +225,16 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
         const parsed: ServiceData[] = []
         const lines = cc.split('\n')
         let currentSvc: string | null = null
-        let ports: number[] = []
+        let ports: { port: number; targetPort: number; protocol: string }[] = []
         for (const line of lines) {
-          const sm = line.match(/^\s{2}(\w[\w-]*):/)
-          const pm = line.match(/^\s{6}["']?(\d+)["']?\s*:/)
+          const sm = line.match(/^\s{2}([\w][\w-]*):/)
+          const pm = line.match(/^\s{6}-\s*["']?(\d+):(\d+)["']?/)
           if (sm) {
-            if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
+            if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes: [] })
             currentSvc = sm[1]; ports = []
-          } else if (pm) { ports.push(parseInt(pm[1])) }
+          } else if (pm) { ports.push({ port: parseInt(pm[1]), targetPort: parseInt(pm[2]), protocol: 'TCP' }) }
         }
-        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports: ports.map(p => ({ port: p, targetPort: p, protocol: 'TCP' })), volumes: [] })
+        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes: [] })
         if (parsed.length > 0) setServices(parsed)
       }
       if (cc && !composeOpen) setCompose(cc)
