@@ -209,10 +209,11 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     setLoading(true)
 
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
-      if (result.error) return
+      if (result.error) { window.electronAPI.debugLog('[fetch] error: ' + result.error); return }
       const env = (result.items || []).find((e: any) =>
         e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
       )
+      window.electronAPI.debugLog('[fetch] env found: ' + !!env + ' name=' + envName)
       if (!env) {
         setServices(SERVICES[envHash] || [])
         setWorkspaces(ENV_WORKSPACES[envHash] || [])
@@ -222,8 +223,10 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       }
 
       const cs = env.status?.composeStatus
+      const specCompose = env.spec?.compose?.composeContent ? 'yes' : 'no'
+      window.electronAPI.debugLog('[fetch] spec.compose: ' + specCompose + ', composeStatus.services: ' + (cs?.services?.length || 0) + ', spec.workmachineName: ' + (env.spec?.workmachineName || '?'))
       if (cs?.services?.length > 0) {
-        setServices(cs.services.map((s: any, i: number) => ({
+        const svcs = cs.services.map((s: any, i: number) => ({
           id: s.name || `svc-${i}`,
           name: s.name || `svc-${i}`,
           type: 'ClusterIP' as const,
@@ -231,7 +234,9 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           dns: `${s.name}.${env.spec?.targetNamespace || ''}.svc.cluster.local`,
           ports: (s.ports || []).map((p: number) => ({ port: p, targetPort: p, protocol: 'TCP' })),
           volumes: [],
-        })))
+        }))
+        window.electronAPI.debugLog('[fetch] setting services: ' + svcs.map((s:any) => s.name + ':' + s.ports.map((p:any) => p.port).join(',')).join(' '))
+        setServices(svcs)
       }
       setWorkspaces(ENV_WORKSPACES[envHash] || [])
       setLoading(false)
@@ -353,6 +358,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
                         }
                       }
                     )
+                    window.electronAPI.debugLog('[compose] PATCH done, closing + refresh')
                     closeCompose(true)
                     setRefreshKey((k) => k + 1)
                   } catch (err) {
