@@ -165,7 +165,7 @@ export function SidebarEnvironments() {
               key={env.id}
               icon={
                 deletingEnvs.has(env.name) ? (
-                  <span className="text-[9px] font-medium text-amber-400">D</span>
+                  <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
                 ) : (
                   <div className={cn(
                     'h-2 w-2 rounded-full',
@@ -173,7 +173,8 @@ export function SidebarEnvironments() {
                   )} />
                 )
               }
-              label={env.name}
+              label={deletingEnvs.has(env.name) ? `${env.name} (Deleting...)` : env.name}
+              disabled={deletingEnvs.has(env.name)}
               onClick={() => selectEnvironment(env.id, env.name, env.name)}
               onContextMenu={async (e) => {
                 e.preventDefault()
