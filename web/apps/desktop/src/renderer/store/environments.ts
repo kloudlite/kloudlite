@@ -12,7 +12,7 @@ export interface Environment {
   id: string
   name: string
   slug: string
-  status: 'active' | 'inactive' | 'error'
+  status: 'active' | 'inactive' | 'error' | 'deleting'
   services: Service[]
   namespace: string
   ownedBy?: string
@@ -29,6 +29,7 @@ interface EnvironmentStore {
   fetchEnvironments: (namespace: string, silent?: boolean) => Promise<void>
   createEnvironment: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<boolean>
   deleteEnvironment: (namespace: string, name: string) => Promise<boolean>
+  deletingEnvs: Set<string>
 }
 
 export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
@@ -37,6 +38,7 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
   loading: false,
   refreshing: false,
   error: null,
+  deletingEnvs: new Set(),
 
   setSelectedEnvironment: (id) => set({ selectedEnvironmentId: id }),
 
@@ -92,6 +94,11 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
   },
 
   deleteEnvironment: async (namespace, name) => {
+    const prev = get().deletingEnvs
+    const next = new Set(prev)
+    next.add(name)
+    set({ deletingEnvs: next })
+
     try {
       const result = await window.electronAPI.deleteEnvironment(namespace, name)
       if (result.error) {
@@ -103,6 +110,10 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
     } catch (err) {
       set({ error: (err as Error).message })
       return false
+    } finally {
+      const cleared = new Set(get().deletingEnvs)
+      cleared.delete(name)
+      set({ deletingEnvs: cleared })
     }
   },
 }))

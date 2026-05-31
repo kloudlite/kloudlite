@@ -18,7 +18,7 @@ const USER_NAMESPACE = 'wm-karthik-dev'
 export function SidebarEnvironments() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const { selectedEnvId, envActiveTab, selectEnvironment, setEnvActiveTab, clearSelectedEnv, setShowNewEnvDialog } = useModeStore()
-  const { environments: envs, loading, refreshing, error, fetchEnvironments } = useEnvironmentStore()
+  const { environments: envs, loading, refreshing, error, fetchEnvironments, deletingEnvs } = useEnvironmentStore()
   const selectedEnv = envs.find((e) => e.id === selectedEnvId)
 
   async function handleDeleteEnv(envName: string) {
@@ -75,9 +75,13 @@ export function SidebarEnvironments() {
           <div className="flex items-center gap-2">
             <div className={cn(
               'h-2.5 w-2.5 shrink-0 rounded-full',
+              deletingEnvs.has(selectedEnv.name) ? 'bg-amber-400 animate-pulse' :
               selectedEnv.status === 'active' ? 'bg-emerald-400' : selectedEnv.status === 'error' ? 'bg-red-400' : 'bg-sidebar-foreground/25'
             )} />
-            <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-sidebar-foreground/90">{selectedEnv.name}</h2>
+            <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-sidebar-foreground/90">
+              {selectedEnv.name}
+              {deletingEnvs.has(selectedEnv.name) && <span className="ml-2 text-[11px] font-normal text-amber-400">Deleting...</span>}
+            </h2>
             <IconButton
               size="sm"
               onClick={async () => {
@@ -160,10 +164,14 @@ export function SidebarEnvironments() {
             <SidebarListItem
               key={env.id}
               icon={
-                <div className={cn(
-                  'h-2 w-2 rounded-full',
-                  env.status === 'active' ? 'bg-emerald-400' : env.status === 'error' ? 'bg-red-400' : 'bg-sidebar-foreground/25'
-                )} />
+                deletingEnvs.has(env.name) ? (
+                  <span className="text-[9px] font-medium text-amber-400">D</span>
+                ) : (
+                  <div className={cn(
+                    'h-2 w-2 rounded-full',
+                    env.status === 'active' ? 'bg-emerald-400' : env.status === 'error' ? 'bg-red-400' : 'bg-sidebar-foreground/25'
+                  )} />
+                )
               }
               label={env.name}
               onClick={() => selectEnvironment(env.id, env.name, env.name)}
