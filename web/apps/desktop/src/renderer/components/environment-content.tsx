@@ -1255,7 +1255,25 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
     setCreating(true)
     setCreateError(null)
     try {
-      const success = await useEnvironmentStore.getState().createEnvironment(API_NAMESPACE, envName, { visibility })
+      const sampleCompose = `version: "3.8"
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+`
+      const success = await useEnvironmentStore.getState().createEnvironment(API_NAMESPACE, envName, {
+        visibility,
+        compose: {
+          displayName: envName,
+          composeContent: sampleCompose,
+          composeFormat: 'v3.8',
+        },
+      })
       if (success) close()
     } catch (err) {
       setCreateError((err as Error).message)
