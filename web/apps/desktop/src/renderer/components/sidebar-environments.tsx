@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { ChevronLeft, Server, FileText, Settings, Plus, History, MoreHorizontal, Loader2, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModeStore } from '@/store/mode'
@@ -14,36 +14,33 @@ const ENV_TABS = [
 
 const USER_NAMESPACE = 'wm-karthik-dev'
 
-async function showEnvMenu(envId: string, envName: string) {
-  const action = await window.electronAPI.showPopupMenu([
-    { label: 'Refresh', id: 'refresh' },
-    { label: 'Delete Environment', id: 'delete', danger: true },
-  ])
-  if (action === 'refresh') {
-    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE, true)
-  }
-  if (action === 'delete' && window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) {
-    await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
-  }
-}
-
-async function showEnvListMenu(envName: string) {
-  const action = await window.electronAPI.showPopupMenu([
-    { label: 'Refresh', id: 'refresh' },
-    { label: `Delete "${envName}"`, id: 'delete', danger: true },
-  ])
-  if (action === 'refresh') {
-    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE, true)
-  }
-  if (action === 'delete' && window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) {
-    await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
-  }
+function ConfirmDialog({ label, description, onConfirm, onCancel }: { label: string; description: string; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onCancel}>
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="px-5 py-4">
+          <h3 className="text-[15px] font-semibold text-foreground">{label}</h3>
+          <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{description}</p>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-border/30 px-5 py-4">
+          <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={onCancel}>Cancel</button>
+          <button className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600" onClick={onConfirm}>Delete</button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function SidebarEnvironments() {
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const { selectedEnvId, envActiveTab, selectEnvironment, setEnvActiveTab, clearSelectedEnv, setShowNewEnvDialog } = useModeStore()
   const { environments: envs, loading, refreshing, error, fetchEnvironments } = useEnvironmentStore()
   const selectedEnv = envs.find((e) => e.id === selectedEnvId)
+
+  async function handleDeleteEnv(envName: string) {
+    await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
+    setConfirmDelete(null)
+  }
 
   // Fetch environments on mount
   const fetchedRef = useRef(false)
@@ -99,7 +96,14 @@ export function SidebarEnvironments() {
             <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-sidebar-foreground/90">{selectedEnv.name}</h2>
             <button
               className="no-drag rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/70"
-              onClick={() => showEnvMenu(selectedEnv.id, selectedEnv.name)}
+              onClick={async () => {
+                const action = await window.electronAPI.showPopupMenu([
+                  { label: 'Refresh', id: 'refresh' },
+                  { label: 'Delete Environment', id: 'delete', danger: true },
+                ])
+                if (action === 'refresh') fetchEnvironments(USER_NAMESPACE, true)
+                if (action === 'delete') setConfirmDelete(selectedEnv.name)
+              }}
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
@@ -117,10 +121,18 @@ export function SidebarEnvironments() {
               onClick={() => setEnvActiveTab(id)}
             />
           ))}
-        </div>
       </div>
-    )
-  }
+      {confirmDelete && (
+        <ConfirmDialog
+          label={`Delete "${confirmDelete}"`}
+          description="This cannot be undone. All services, configs, and data will be permanently removed."
+          onConfirm={() => handleDeleteEnv(confirmDelete)}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+    </div>
+  )
+}
 
   // List view
   return (
@@ -165,14 +177,27 @@ export function SidebarEnvironments() {
               }
               label={env.name}
               onClick={() => selectEnvironment(env.id, env.name, env.name)}
-              onContextMenu={(e) => {
+              onContextMenu={async (e) => {
                 e.preventDefault()
-                showEnvListMenu(env.name)
+                const action = await window.electronAPI.showPopupMenu([
+                  { label: 'Refresh', id: 'refresh' },
+                  { label: `Delete "${env.name}"`, id: 'delete', danger: true },
+                ])
+                if (action === 'refresh') fetchEnvironments(USER_NAMESPACE, true)
+                if (action === 'delete') setConfirmDelete(env.name)
               }}
             />
           ))}
         </div>
       </div>
+      {confirmDelete && (
+        <ConfirmDialog
+          label={`Delete "${confirmDelete}"`}
+          description="This cannot be undone. All services, configs, and data will be permanently removed."
+          onConfirm={() => handleDeleteEnv(confirmDelete)}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   )
 }

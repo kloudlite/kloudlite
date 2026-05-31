@@ -1092,37 +1092,48 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
   const [deleting, setDeleting] = useState(false)
   const [settingsError, setSettingsError] = useState<string | null>(null)
 
+  const [confirmAction, setConfirmAction] = useState<{ label: string; description: string; action: () => Promise<void> } | null>(null)
+
   async function deactivate() {
-    if (!window.confirm(`Deactivate environment "${envName}"? Services will be suspended.`)) return
-    setDeactivating(true)
-    setSettingsError(null)
-    try {
-      const result = await window.electronAPI.patchResource(API_NAMESPACE, 'environments', envName, {
-        apiVersion: 'environments.kloudlite.io/v1',
-        kind: 'Environment',
-        metadata: { name: envName, namespace: API_NAMESPACE },
-        spec: { activated: false },
-      })
-      if ((result as any).error) throw new Error((result as any).error)
-    } catch (err) {
-      setSettingsError((err as Error).message)
-    } finally {
-      setDeactivating(false)
-    }
+    setConfirmAction({
+      label: `Deactivate "${envName}"`,
+      description: 'Services will be suspended. You can reactivate later.',
+      action: async () => {
+        setDeactivating(true)
+        setSettingsError(null)
+        try {
+          const result = await window.electronAPI.patchResource(API_NAMESPACE, 'environments', envName, {
+            apiVersion: 'environments.kloudlite.io/v1',
+            kind: 'Environment',
+            metadata: { name: envName, namespace: API_NAMESPACE },
+            spec: { activated: false },
+          })
+          if ((result as any).error) throw new Error((result as any).error)
+        } catch (err) {
+          setSettingsError((err as Error).message)
+        } finally {
+          setDeactivating(false)
+        }
+      },
+    })
   }
 
   async function deleteEnvironment() {
-    if (!window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) return
-    setDeleting(true)
-    setSettingsError(null)
-    try {
-      const result = await window.electronAPI.deleteEnvironment(API_NAMESPACE, envName)
-      if (result.error) throw new Error(result.error)
-      onDeleted?.()
-    } catch (err) {
-      setSettingsError((err as Error).message)
-      setDeleting(false)
-    }
+    setConfirmAction({
+      label: `Delete "${envName}"`,
+      description: 'This cannot be undone. All services, configs, and data will be permanently removed.',
+      action: async () => {
+        setDeleting(true)
+        setSettingsError(null)
+        try {
+          await useEnvironmentStore.getState().deleteEnvironment(API_NAMESPACE, envName)
+          onDeleted?.()
+        } catch (err) {
+          setSettingsError((err as Error).message)
+          setDeleting(false)
+        }
+      },
+    })
   }
 
   return (
@@ -1195,6 +1206,54 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
               {deleting ? 'Deleting...' : 'Delete Environment'}
             </button>
           </div>
+        </div>
+      </div>
+
+      {confirmAction && (
+        <ConfirmDialog
+          label={confirmAction.label}
+          description={confirmAction.description}
+          loading={deactivating || deleting}
+          onConfirm={async () => {
+            await confirmAction.action()
+            setConfirmAction(null)
+          }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function ConfirmDialog({ label, description, loading, onConfirm, onCancel }: { label: string; description: string; loading: boolean; onConfirm: () => Promise<void>; onCancel: () => void }) {
+  const [confirming, setConfirming] = useState(false)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onCancel}>
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="px-5 py-4">
+          <h3 className="text-[15px] font-semibold text-foreground">{label}</h3>
+          <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{description}</p>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-border/30 px-5 py-4">
+          <button
+            className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent"
+            onClick={onCancel}
+            disabled={confirming}
+          >
+            Cancel
+          </button>
+          <button
+            className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+            disabled={confirming || loading}
+            onClick={async () => {
+              setConfirming(true)
+              await onConfirm()
+              setConfirming(false)
+            }}
+          >
+            {confirming ? 'Processing...' : 'Confirm'}
+          </button>
         </div>
       </div>
     </div>
