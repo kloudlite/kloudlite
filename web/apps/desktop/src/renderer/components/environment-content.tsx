@@ -14,6 +14,7 @@ interface EnvironmentContentProps {
   envName: string
   envHash: string
   activeTab: string
+  onDeleted?: () => void
 }
 
 // Dummy services data — port-level intercepts + volumes
@@ -1085,7 +1086,42 @@ function SnapshotsView({ envHash, envName }: { envHash: string; envName: string 
   return <SnapshotTree snapshots={snapshots} title="Snapshots" subtitle={`${snapshots.length} snapshots for ${envName}`} />
 }
 
-function SettingsView({ envName, envHash }: { envName: string; envHash: string }) {
+function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHash: string; onDeleted?: () => void }) {
+  const [deactivating, setDeactivating] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+
+  async function deactivate() {
+    setDeactivating(true)
+    setSettingsError(null)
+    try {
+      const result = await window.electronAPI.patchResource(API_NAMESPACE, 'environments', envName, {
+        apiVersion: 'environments.kloudlite.io/v1',
+        kind: 'Environment',
+        metadata: { name: envName, namespace: API_NAMESPACE },
+        spec: { activated: false },
+      })
+      if ((result as any).error) throw new Error((result as any).error)
+    } catch (err) {
+      setSettingsError((err as Error).message)
+    } finally {
+      setDeactivating(false)
+    }
+  }
+
+  async function deleteEnvironment() {
+    setDeleting(true)
+    setSettingsError(null)
+    try {
+      const result = await window.electronAPI.deleteEnvironment(API_NAMESPACE, envName)
+      if (result.error) throw new Error(result.error)
+      onDeleted?.()
+    } catch (err) {
+      setSettingsError((err as Error).message)
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="p-6">
       <h2 className="text-[16px] font-semibold text-foreground">Settings</h2>
@@ -1130,16 +1166,30 @@ function SettingsView({ envName, envHash }: { envName: string; envHash: string }
           </div>
         </div>
 
+        {settingsError && (
+          <div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] px-4 py-3 text-[12px] text-red-500">
+            {settingsError}
+          </div>
+        )}
+
         {/* Danger Zone */}
         <div className="rounded-xl border border-red-500/20 bg-card p-5">
           <h3 className="text-[13px] font-semibold text-red-500">Danger Zone</h3>
           <p className="mt-1 text-[12px] text-muted-foreground">These actions are destructive and cannot be undone.</p>
           <div className="mt-3 flex gap-2">
-            <button className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20">
-              Deactivate Environment
+            <button
+              className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+              onClick={deactivate}
+              disabled={deactivating || deleting}
+            >
+              {deactivating ? 'Deactivating...' : 'Deactivate Environment'}
             </button>
-            <button className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20">
-              Delete Environment
+            <button
+              className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+              onClick={deleteEnvironment}
+              disabled={deactivating || deleting}
+            >
+              {deleting ? 'Deleting...' : 'Delete Environment'}
             </button>
           </div>
         </div>
@@ -1260,7 +1310,7 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
   )
 }
 
-export function EnvironmentContent({ envName, envHash, activeTab }: EnvironmentContentProps) {
+export function EnvironmentContent({ envName, envHash, activeTab, onDeleted }: EnvironmentContentProps) {
   // Services view needs full height (graph), others get scrollable max-width
   if (activeTab === 'services') {
     return (
@@ -1275,7 +1325,7 @@ export function EnvironmentContent({ envName, envHash, activeTab }: EnvironmentC
       <div className="mx-auto max-w-4xl">
         {activeTab === 'configs' && <ConfigsView envHash={envHash} envName={envName} />}
         {activeTab === 'snapshots' && <SnapshotsView envHash={envHash} envName={envName} />}
-        {activeTab === 'settings' && <SettingsView envName={envName} envHash={envHash} />}
+        {activeTab === 'settings' && <SettingsView envName={envName} envHash={envHash} onDeleted={onDeleted} />}
       </div>
     </div>
   )
