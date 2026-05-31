@@ -7,6 +7,7 @@ import { ServicesGraph } from './services-graph'
 import { LogsViewer } from './services-graph/logs-viewer'
 import { parseComposeServices } from '../lib/compose-services'
 import { buildConfigMap, buildEnvSecret, buildFileConfigMap, ENV_CONFIG_NAME, ENV_SECRET_NAME, filenamePattern } from '../lib/config-resource-helpers'
+import { useEnvironmentStore } from '../store/environments'
 
 const API_NAMESPACE = 'wm-karthik-dev'
 
@@ -1240,10 +1241,27 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'shared' | 'open'>('private')
   const [exiting, setExiting] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   function close() {
     setExiting(true)
     setTimeout(onClose, 150)
+  }
+
+  async function createEnvironment() {
+    const envName = name.trim()
+    if (!envName) return
+    setCreating(true)
+    setCreateError(null)
+    try {
+      const success = await useEnvironmentStore.getState().createEnvironment(API_NAMESPACE, envName, { visibility })
+      if (success) close()
+    } catch (err) {
+      setCreateError((err as Error).message)
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
@@ -1259,6 +1277,10 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex flex-col gap-4 px-6 py-5">
+          {createError && (
+            <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{createError}</div>
+          )}
+
           <div>
             <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
             <input
@@ -1296,15 +1318,16 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
           <button
             className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent"
             onClick={close}
+            disabled={creating}
           >
             Cancel
           </button>
           <button
             className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            disabled={!name.trim()}
-            onClick={close}
+            disabled={!name.trim() || creating}
+            onClick={createEnvironment}
           >
-            Create Environment
+            {creating ? 'Creating...' : 'Create Environment'}
           </button>
         </div>
       </div>
