@@ -1092,6 +1092,7 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
   const [settingsError, setSettingsError] = useState<string | null>(null)
 
   async function deactivate() {
+    if (!window.confirm(`Deactivate environment "${envName}"? Services will be suspended.`)) return
     setDeactivating(true)
     setSettingsError(null)
     try {
@@ -1110,6 +1111,7 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
   }
 
   async function deleteEnvironment() {
+    if (!window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) return
     setDeleting(true)
     setSettingsError(null)
     try {
