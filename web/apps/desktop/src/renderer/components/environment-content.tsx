@@ -1353,60 +1353,64 @@ services:
           <p className="mt-0.5 text-[12px] text-muted-foreground">Set up a new isolated environment</p>
         </div>
 
-        <div className="flex flex-col gap-4 px-6 py-5">
-          {createError && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{createError}</div>
-          )}
+        <form onSubmit={(e) => { e.preventDefault(); createEnvironment() }}>
+          <div className="flex flex-col gap-4 px-6 py-5">
+            {createError && (
+              <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{createError}</div>
+            )}
 
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
-            <input
-              type="text"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
-              placeholder="e.g. staging, development"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
-          </div>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
+                placeholder="e.g. staging, development"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+              />
+            </div>
 
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">Visibility</label>
-            <div className="flex gap-2">
-              {(['private', 'shared', 'open'] as const).map((v) => (
-                <button
-                  key={v}
-                  className={cn(
-                    'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
-                    visibility === v
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:bg-accent'
-                  )}
-                  onClick={() => setVisibility(v)}
-                >
-                  {v}
-                </button>
-              ))}
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-foreground">Visibility</label>
+              <div className="flex gap-2">
+                {(['private', 'shared', 'open'] as const).map((v) => (
+                  <button
+                    type="button"
+                    key={v}
+                    className={cn(
+                      'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
+                      visibility === v
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-accent'
+                    )}
+                    onClick={() => setVisibility(v)}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-end gap-2 border-t border-border/30 px-6 py-4">
-          <button
-            className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent"
-            onClick={close}
-            disabled={creating}
-          >
-            Cancel
-          </button>
-          <button
-            className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            disabled={!name.trim() || creating}
-            onClick={createEnvironment}
-          >
-            {creating ? 'Creating...' : 'Create Environment'}
-          </button>
-        </div>
+          <div className="flex justify-end gap-2 border-t border-border/30 px-6 py-4">
+            <button
+              type="button"
+              className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent"
+              onClick={close}
+              disabled={creating}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              disabled={!name.trim() || creating}
+            >
+              {creating ? 'Creating...' : 'Create Environment'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
