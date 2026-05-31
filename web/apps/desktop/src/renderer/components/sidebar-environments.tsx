@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { useModeStore } from '@/store/mode'
 import { useEnvironmentStore } from '@/store/environments'
 import { SidebarListItem } from './sidebar-list-item'
+import { Dialog } from './ui/dialog'
 
 const ENV_TABS = [
   { id: 'services', label: 'Services', icon: Server },
@@ -13,27 +14,6 @@ const ENV_TABS = [
 ]
 
 const USER_NAMESPACE = 'wm-karthik-dev'
-
-function ConfirmDialog({ label, description, onConfirm, onCancel }: { label: string; description: string; onConfirm: () => void; onCancel: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onCancel}>
-      <div
-        className="w-full max-w-sm overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl"
-        style={{ animation: 'popover-in 150ms ease-out' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-5 py-4">
-          <h3 className="text-[15px] font-semibold text-foreground">{label}</h3>
-          <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{description}</p>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-border/30 px-5 py-4">
-          <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={onCancel}>Cancel</button>
-          <button className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600" onClick={onConfirm}>Delete</button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export function SidebarEnvironments() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -127,11 +107,16 @@ export function SidebarEnvironments() {
           ))}
       </div>
       {confirmDelete && (
-        <ConfirmDialog
-          label={`Delete "${confirmDelete}"`}
+        <Dialog
+          title={`Delete "${confirmDelete}"`}
           description="This cannot be undone. All services, configs, and data will be permanently removed."
-          onConfirm={() => handleDeleteEnv(confirmDelete)}
-          onCancel={() => setConfirmDelete(null)}
+          onClose={() => setConfirmDelete(null)}
+          footer={(close) => (
+            <>
+              <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close}>Cancel</button>
+              <button className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600" onClick={() => { handleDeleteEnv(confirmDelete); close() }}>Delete</button>
+            </>
+          )}
         />
       )}
     </div>
