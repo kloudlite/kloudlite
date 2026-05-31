@@ -105,6 +105,7 @@ type WorkspaceReconciler struct {
 	Cfg             *ControllerConfig // Controller configuration
 	OwnNamespace    string
 	WorkMachineName string
+	WorkspaceImage  string          // Workspace container image (from WORKSPACE_COMPREHENSIVE_IMAGE env)
 	CmdExec         CommandExecutor // For host-level commands (btrfs subvolume management)
 }
 
