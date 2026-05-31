@@ -8,6 +8,7 @@ import { LogsViewer } from './services-graph/logs-viewer'
 import { parseComposeServices } from '../lib/compose-services'
 import { buildConfigMap, buildEnvSecret, buildFileConfigMap, ENV_CONFIG_NAME, ENV_SECRET_NAME, filenamePattern } from '../lib/config-resource-helpers'
 import { useEnvironmentStore } from '../store/environments'
+import { Dialog } from './ui/dialog'
 
 const API_NAMESPACE = 'wm-karthik-dev'
 
@@ -1210,56 +1211,30 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
       </div>
 
       {confirmAction && (
-        <ConfirmDialog
-          label={confirmAction.label}
+        <Dialog
+          title={confirmAction.label}
           description={confirmAction.description}
-          loading={deactivating || deleting}
-          onConfirm={async () => {
-            await confirmAction.action()
-            setConfirmAction(null)
-          }}
-          onCancel={() => setConfirmAction(null)}
-        />
+          onClose={() => setConfirmAction(null)}
+          footer={(close) => (
+            <>
+              <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close} disabled={deactivating || deleting}>Cancel</button>
+              <button
+                className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+                disabled={deactivating || deleting}
+                onClick={async () => {
+                  await confirmAction.action()
+                  setConfirmAction(null)
+                  close()
+                }}
+              >
+                {(deactivating || deleting) ? 'Processing...' : 'Confirm'}
+              </button>
+            </>
+          )}
+        >
+          <p className="text-[12px] text-muted-foreground leading-relaxed">{confirmAction.description}</p>
+        </Dialog>
       )}
-    </div>
-  )
-}
-
-function ConfirmDialog({ label, description, loading, onConfirm, onCancel }: { label: string; description: string; loading: boolean; onConfirm: () => Promise<void>; onCancel: () => void }) {
-  const [confirming, setConfirming] = useState(false)
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onCancel}>
-      <div
-        className="w-full max-w-sm overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl"
-        style={{ animation: 'popover-in 150ms ease-out' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-5 py-4">
-          <h3 className="text-[15px] font-semibold text-foreground">{label}</h3>
-          <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{description}</p>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-border/30 px-5 py-4">
-          <button
-            className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent"
-            onClick={onCancel}
-            disabled={confirming}
-          >
-            Cancel
-          </button>
-          <button
-            className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
-            disabled={confirming || loading}
-            onClick={async () => {
-              setConfirming(true)
-              await onConfirm()
-              setConfirming(false)
-            }}
-          >
-            {confirming ? 'Processing...' : 'Confirm'}
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
@@ -1303,14 +1278,8 @@ function CompositionView({ envHash }: { envHash: string }) {
 export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'shared' | 'open'>('private')
-  const [exiting, setExiting] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-
-  function close() {
-    setExiting(true)
-    setTimeout(onClose, 150)
-  }
 
   async function createEnvironment() {
     const envName = name.trim()
@@ -1337,7 +1306,7 @@ services:
           composeFormat: 'v3.8',
         },
       })
-      if (success) close()
+      if (success) close_()
     } catch (err) {
       setCreateError((err as Error).message)
     } finally {
@@ -1345,78 +1314,59 @@ services:
     }
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  function close_() { /* handled by Dialog onClose */ }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={close}>
-      <div
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl"
-        style={{ animation: exiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-[16px] font-semibold text-foreground">Create Environment</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">Set up a new isolated environment</p>
+    <Dialog
+      title="Create Environment"
+      description="Set up a new isolated environment"
+      onClose={onClose}
+      maxWidth="28rem"
+      footer={(close) => (
+        <>
+          <button type="button" className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close} disabled={creating}>Cancel</button>
+          <button type="submit" form="create-env-form" className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50" disabled={!name.trim() || creating}>
+            {creating ? 'Creating...' : 'Create Environment'}
+          </button>
+        </>
+      )}
+    >
+      <form id="create-env-form" onSubmit={(e) => { e.preventDefault(); createEnvironment() }}>
+        {createError && <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{createError}</div>}
+
+        <div className="mb-4">
+          <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
+          <input
+            type="text"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
+            placeholder="e.g. staging, development"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+          />
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); createEnvironment() }}>
-          <div className="flex flex-col gap-4 px-6 py-5">
-            {createError && (
-              <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{createError}</div>
-            )}
-
-            <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
-              <input
-                type="text"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
-                placeholder="e.g. staging, development"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-foreground">Visibility</label>
-              <div className="flex gap-2">
-                {(['private', 'shared', 'open'] as const).map((v) => (
-                  <button
-                    type="button"
-                    key={v}
-                    className={cn(
-                      'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
-                      visibility === v
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:bg-accent'
-                    )}
-                    onClick={() => setVisibility(v)}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-            </div>
+        <div>
+          <label className="mb-1.5 block text-[12px] font-medium text-foreground">Visibility</label>
+          <div className="flex gap-2">
+            {(['private', 'shared', 'open'] as const).map((v) => (
+              <button
+                type="button"
+                key={v}
+                className={cn(
+                  'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
+                  visibility === v ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-accent'
+                )}
+                onClick={() => setVisibility(v)}
+              >
+                {v}
+              </button>
+            ))}
           </div>
-
-          <div className="flex justify-end gap-2 border-t border-border/30 px-6 py-4">
-            <button
-              type="button"
-              className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent"
-              onClick={close}
-              disabled={creating}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-              disabled={!name.trim() || creating}
-            >
-              {creating ? 'Creating...' : 'Create Environment'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </Dialog>
   )
 }
 
