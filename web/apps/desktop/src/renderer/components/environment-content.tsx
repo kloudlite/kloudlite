@@ -1124,15 +1124,11 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
       label: `Delete "${envName}"`,
       description: 'This cannot be undone. All services, configs, and data will be permanently removed.',
       action: async () => {
-        setDeleting(true)
-        setSettingsError(null)
-        try {
-          await useEnvironmentStore.getState().deleteEnvironment(API_NAMESPACE, envName)
-          onDeleted?.()
-        } catch (err) {
-          setSettingsError((err as Error).message)
-          setDeleting(false)
-        }
+        // Close dialog and navigate back immediately
+        setConfirmAction(null)
+        onDeleted?.()
+        // Delete runs in background — store marks as deleting, list shows "Deleting..."
+        useEnvironmentStore.getState().deleteEnvironment(API_NAMESPACE, envName)
       },
     })
   }
