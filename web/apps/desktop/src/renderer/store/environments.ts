@@ -22,10 +22,11 @@ interface EnvironmentStore {
   environments: Environment[]
   selectedEnvironmentId: string | null
   loading: boolean
+  refreshing: boolean
   error: string | null
   setSelectedEnvironment: (id: string) => void
   getSelectedEnvironment: () => Environment | undefined
-  fetchEnvironments: (namespace: string) => Promise<void>
+  fetchEnvironments: (namespace: string, silent?: boolean) => Promise<void>
   createEnvironment: (namespace: string, name: string, spec: Record<string, unknown>) => Promise<boolean>
   deleteEnvironment: (namespace: string, name: string) => Promise<boolean>
 }
@@ -34,6 +35,7 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
   environments: [],
   selectedEnvironmentId: null,
   loading: false,
+  refreshing: false,
   error: null,
 
   setSelectedEnvironment: (id) => set({ selectedEnvironmentId: id }),
@@ -43,12 +45,12 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
     return environments.find((e) => e.id === selectedEnvironmentId)
   },
 
-  fetchEnvironments: async (namespace) => {
-    set({ loading: true, error: null })
+  fetchEnvironments: async (namespace, silent) => {
+    set({ error: null, ...(silent ? { refreshing: true } : { loading: true }) })
     try {
       const result = await window.electronAPI.listEnvironments(namespace)
       if (result.error) {
-        set({ error: result.error, loading: false })
+        set({ error: result.error, loading: false, refreshing: false })
         return
       }
       const envs: Environment[] = (result.items || []).map((item: any) => ({
@@ -63,10 +65,11 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
       set({
         environments: envs,
         loading: false,
+        refreshing: false,
         selectedEnvironmentId: envs.length > 0 ? envs[0].id : null,
       })
     } catch (err) {
-      set({ error: (err as Error).message, loading: false })
+      set({ error: (err as Error).message, loading: false, refreshing: false })
     }
   },
 

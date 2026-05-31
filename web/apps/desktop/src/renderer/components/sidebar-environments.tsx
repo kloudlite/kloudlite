@@ -20,7 +20,7 @@ async function showEnvMenu(envId: string, envName: string) {
     { label: 'Delete Environment', id: 'delete', danger: true },
   ])
   if (action === 'refresh') {
-    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE)
+    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE, true)
   }
   if (action === 'delete' && window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) {
     await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
@@ -33,7 +33,7 @@ async function showEnvListMenu(envName: string) {
     { label: `Delete "${envName}"`, id: 'delete', danger: true },
   ])
   if (action === 'refresh') {
-    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE)
+    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE, true)
   }
   if (action === 'delete' && window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) {
     await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
@@ -42,7 +42,7 @@ async function showEnvListMenu(envName: string) {
 
 export function SidebarEnvironments() {
   const { selectedEnvId, envActiveTab, selectEnvironment, setEnvActiveTab, clearSelectedEnv, setShowNewEnvDialog } = useModeStore()
-  const { environments: envs, loading, error, fetchEnvironments } = useEnvironmentStore()
+  const { environments: envs, loading, refreshing, error, fetchEnvironments } = useEnvironmentStore()
   const selectedEnv = envs.find((e) => e.id === selectedEnvId)
 
   // Fetch environments on mount
@@ -133,9 +133,9 @@ export function SidebarEnvironments() {
           <div className="flex items-center gap-0.5">
             <button
               className="no-drag flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1] hover:text-sidebar-foreground/90"
-              onClick={() => fetchEnvironments(USER_NAMESPACE)}
+              onClick={() => fetchEnvironments(USER_NAMESPACE, true)}
             >
-              <RefreshCw className="h-3.5 w-3.5" />
+              <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
             </button>
             <button
               className="no-drag flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1] hover:text-sidebar-foreground/90"
