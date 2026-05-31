@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import { ChevronLeft, Server, FileText, Settings, Plus, History, MoreHorizontal, Loader2 } from 'lucide-react'
+import { ChevronLeft, Server, FileText, Settings, Plus, History, MoreHorizontal, Loader2, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModeStore } from '@/store/mode'
 import { useEnvironmentStore } from '@/store/environments'
@@ -16,18 +16,26 @@ const USER_NAMESPACE = 'wm-karthik-dev'
 
 async function showEnvMenu(envId: string, envName: string) {
   const action = await window.electronAPI.showPopupMenu([
+    { label: 'Refresh', id: 'refresh' },
     { label: 'Delete Environment', id: 'delete', danger: true },
   ])
-  if (action === 'delete') {
+  if (action === 'refresh') {
+    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE)
+  }
+  if (action === 'delete' && window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) {
     await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
   }
 }
 
 async function showEnvListMenu(envName: string) {
   const action = await window.electronAPI.showPopupMenu([
+    { label: 'Refresh', id: 'refresh' },
     { label: `Delete "${envName}"`, id: 'delete', danger: true },
   ])
-  if (action === 'delete') {
+  if (action === 'refresh') {
+    await useEnvironmentStore.getState().fetchEnvironments(USER_NAMESPACE)
+  }
+  if (action === 'delete' && window.confirm(`Delete environment "${envName}"? This cannot be undone.`)) {
     await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
   }
 }
@@ -122,13 +130,21 @@ export function SidebarEnvironments() {
           <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
             Environments
           </span>
-          <button
-            className="no-drag flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1] hover:text-sidebar-foreground/90"
-            onClick={() => setShowNewEnvDialog(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button
+              className="no-drag flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1] hover:text-sidebar-foreground/90"
+              onClick={() => fetchEnvironments(USER_NAMESPACE)}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+            <button
+              className="no-drag flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1] hover:text-sidebar-foreground/90"
+              onClick={() => setShowNewEnvDialog(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New
+            </button>
+          </div>
         </div>
       </div>
       <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto">
