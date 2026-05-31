@@ -8,7 +8,7 @@ import { LogsViewer } from './services-graph/logs-viewer'
 import { parseComposeServices } from '../lib/compose-services'
 import { buildConfigMap, buildEnvSecret, buildFileConfigMap, ENV_CONFIG_NAME, ENV_SECRET_NAME, filenamePattern } from '../lib/config-resource-helpers'
 import { useEnvironmentStore } from '../store/environments'
-import { Dialog } from './ui/dialog'
+import { Dialog, Button, Badge, FormField, TextInput } from './ui'
 
 const API_NAMESPACE = 'wm-karthik-dev'
 
@@ -891,7 +891,7 @@ function ConfigsView({ envHash, envName }: { envHash: string; envName: string })
       )}
 
       {/* Section tabs */}
-      <div className="mt-4 flex gap-1 rounded-lg bg-accent/50 p-0.5">
+      <div className="mt-4 flex rounded-lg bg-accent/50 p-0.5">
         <button
           className={cn(
             'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors',
@@ -1192,20 +1192,12 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
           <h3 className="text-[13px] font-semibold text-red-500">Danger Zone</h3>
           <p className="mt-1 text-[12px] text-muted-foreground">These actions are destructive and cannot be undone.</p>
           <div className="mt-3 flex gap-2">
-            <button
-              className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
-              onClick={deactivate}
-              disabled={deactivating || deleting}
-            >
-              {deactivating ? 'Deactivating...' : 'Deactivate Environment'}
-            </button>
-            <button
-              className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
-              onClick={deleteEnvironment}
-              disabled={deactivating || deleting}
-            >
-              {deleting ? 'Deleting...' : 'Delete Environment'}
-            </button>
+            <Button variant="danger" size="sm" onClick={deactivate} disabled={deactivating || deleting} loading={deactivating}>
+              Deactivate Environment
+            </Button>
+            <Button variant="danger" size="sm" onClick={deleteEnvironment} disabled={deactivating || deleting} loading={deleting}>
+              Delete Environment
+            </Button>
           </div>
         </div>
       </div>
@@ -1217,18 +1209,10 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
           onClose={() => setConfirmAction(null)}
           footer={(close) => (
             <>
-              <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close} disabled={deactivating || deleting}>Cancel</button>
-              <button
-                className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
-                disabled={deactivating || deleting}
-                onClick={async () => {
-                  await confirmAction.action()
-                  setConfirmAction(null)
-                  close()
-                }}
-              >
+              <Button variant="ghost" onClick={close} disabled={deactivating || deleting}>Cancel</Button>
+              <Button variant="danger" disabled={deactivating || deleting} onClick={async () => { await confirmAction.action(); setConfirmAction(null); close() }}>
                 {(deactivating || deleting) ? 'Processing...' : 'Confirm'}
-              </button>
+              </Button>
             </>
           )}
         >
@@ -1325,10 +1309,10 @@ services:
       maxWidth="28rem"
       footer={(close) => (
         <>
-          <button type="button" className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close} disabled={creating}>Cancel</button>
-          <button type="submit" form="create-env-form" className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50" disabled={!name.trim() || creating}>
-            {creating ? 'Creating...' : 'Create Environment'}
-          </button>
+          <Button variant="ghost" onClick={close} disabled={creating}>Cancel</Button>
+          <Button type="submit" form="create-env-form" disabled={!name.trim() || creating} loading={creating}>
+            Create Environment
+          </Button>
         </>
       )}
     >

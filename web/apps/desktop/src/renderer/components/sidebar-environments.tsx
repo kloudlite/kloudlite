@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { useModeStore } from '@/store/mode'
 import { useEnvironmentStore } from '@/store/environments'
 import { SidebarListItem } from './sidebar-list-item'
-import { Dialog } from './ui/dialog'
+import { Dialog, Button, IconButton } from './ui'
 
 const ENV_TABS = [
   { id: 'services', label: 'Services', icon: Server },
@@ -78,8 +78,8 @@ export function SidebarEnvironments() {
               selectedEnv.status === 'active' ? 'bg-emerald-400' : selectedEnv.status === 'error' ? 'bg-red-400' : 'bg-sidebar-foreground/25'
             )} />
             <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-sidebar-foreground/90">{selectedEnv.name}</h2>
-            <button
-              className="no-drag rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/70"
+            <IconButton
+              size="sm"
               onClick={async () => {
                 const action = await window.electronAPI.showPopupMenu([
                   { label: 'Refresh', id: 'refresh' },
@@ -90,7 +90,7 @@ export function SidebarEnvironments() {
               }}
             >
               <MoreHorizontal className="h-4 w-4" />
-            </button>
+            </IconButton>
           </div>
           <p className="mt-0.5 pl-[18px] text-[11px] text-sidebar-foreground/40">{selectedEnv.ownedBy || 'unknown'} · {selectedEnv.namespace}</p>
         </div>
@@ -113,8 +113,8 @@ export function SidebarEnvironments() {
           onClose={() => setConfirmDelete(null)}
           footer={(close) => (
             <>
-              <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close}>Cancel</button>
-              <button className="rounded-lg bg-red-500 px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600" onClick={() => { handleDeleteEnv(confirmDelete); close() }}>Delete</button>
+              <Button variant="ghost" onClick={close}>Cancel</Button>
+              <Button variant="danger" onClick={() => { handleDeleteEnv(confirmDelete); close() }}>Delete</Button>
             </>
           )}
         />
@@ -132,19 +132,13 @@ export function SidebarEnvironments() {
             Environments
           </span>
           <div className="flex items-center gap-0.5">
-            <button
-              className="no-drag flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1] hover:text-sidebar-foreground/90"
-              onClick={() => fetchEnvironments(USER_NAMESPACE, true)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => fetchEnvironments(USER_NAMESPACE, true)}>
               <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
-            </button>
-            <button
-              className="no-drag flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.1] hover:text-sidebar-foreground/90"
-              onClick={() => setShowNewEnvDialog(true)}
-            >
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowNewEnvDialog(true)}>
               <Plus className="h-3.5 w-3.5" />
               New
-            </button>
+            </Button>
           </div>
         </div>
       </div>
