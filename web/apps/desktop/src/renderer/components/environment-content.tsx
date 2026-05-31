@@ -1230,7 +1230,11 @@ function ConfirmDialog({ label, description, loading, onConfirm, onCancel }: { l
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onCancel}>
-      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="w-full max-w-sm overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl"
+        style={{ animation: 'popover-in 150ms ease-out' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="px-5 py-4">
           <h3 className="text-[15px] font-semibold text-foreground">{label}</h3>
           <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{description}</p>
