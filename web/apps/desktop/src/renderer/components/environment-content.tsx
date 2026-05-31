@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Key, FileText as FileIcon, Loader2, RefreshCw } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CodeEditor } from './code-editor'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { ServicesGraph } from './services-graph'
@@ -1269,6 +1269,7 @@ export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
   const [visibility, setVisibility] = useState<'private' | 'shared' | 'open'>('private')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const closeRef = useRef<() => void>(() => onClose())
 
   async function createEnvironment() {
     const envName = name.trim()
@@ -1295,7 +1296,7 @@ services:
           composeFormat: 'v3.8',
         },
       })
-      if (success) close_()
+      if (success) closeRef.current()
     } catch (err) {
       setCreateError((err as Error).message)
     } finally {
@@ -1303,23 +1304,23 @@ services:
     }
   }
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  function close_() { /* handled by Dialog onClose */ }
-
   return (
     <Dialog
       title="Create Environment"
       description="Set up a new isolated environment"
       onClose={onClose}
       maxWidth="28rem"
-      footer={(close) => (
-        <>
-          <Button variant="ghost" onClick={close} disabled={creating}>Cancel</Button>
-          <Button type="submit" form="create-env-form" disabled={!name.trim() || creating} loading={creating}>
-            Create Environment
-          </Button>
-        </>
-      )}
+      footer={(close) => {
+        closeRef.current = close
+        return (
+          <>
+            <Button variant="ghost" onClick={close} disabled={creating}>Cancel</Button>
+            <Button type="submit" form="create-env-form" disabled={!name.trim() || creating} loading={creating}>
+              Create Environment
+            </Button>
+          </>
+        )
+      }}
     >
       <form id="create-env-form" onSubmit={(e) => { e.preventDefault(); createEnvironment() }}>
         {createError && <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{createError}</div>}
