@@ -24,8 +24,9 @@ type Env struct {
 	JWTSecret               string           `env:"JWT_SECRET" required:"true"`
 	CodeAnalyzerImage       string           `env:"CODE_ANALYZER_IMAGE" required:"true"`
 
-	WorkMachineManagerImage string `env:"WORKMACHINE_MANAGER_IMAGE" required:"true"`
-	PodNamespace            string `env:"POD_NAMESPACE" default:"kloudlite"`
+	WorkMachineManagerImage     string `env:"WORKMACHINE_MANAGER_IMAGE" required:"true"`
+	WorkspaceComprehensiveImage string `env:"WORKSPACE_COMPREHENSIVE_IMAGE" required:"true"`
+	PodNamespace                string `env:"POD_NAMESPACE" default:"kloudlite"`
 
 	SnapshotRegistryEndpoint string `env:"SNAPSHOT_REGISTRY_ENDPOINT" default:"image-registry.kloudlite.svc.cluster.local:5000"`
 	SnapshotRegistryPrefix   string `env:"SNAPSHOT_REGISTRY_PREFIX" default:"snapshots"`

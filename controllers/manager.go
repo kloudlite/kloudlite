@@ -190,6 +190,7 @@ func newMachineScopedManager(cfg *rest.Config, installationCfg *config.Installat
 		Cfg:             workspaceCfg,
 		OwnNamespace:    machineNamespace,
 		WorkMachineName: workMachineName,
+		WorkspaceImage:  os.Getenv("WORKSPACE_COMPREHENSIVE_IMAGE"),
 		CmdExec:         &workspace.HostCommandExecutor{},
 	}
 	if err := workspaceReconciler.SetupWithManager(mgr); err != nil {

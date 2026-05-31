@@ -121,16 +121,17 @@ func TestEnsureWorkMachineManagerCreatesPerWorkMachineStatefulSet(t *testing.T) 
 		DirectClient: fakeClient,
 		Scheme:       scheme,
 		env: Env{
-			KloudliteInstallationID:  "installation-id",
-			InstallationSecret:       "installation-secret",
-			JWTSecret:                "jwt-secret",
-			HostedSubdomain:          "apps.test",
-			CodeAnalyzerImage:        "code-analyzer:test",
-			PodNamespace:             "kloudlite",
-			WorkMachineManagerImage:  "workmachine-manager:test",
-			SnapshotRegistryEndpoint: "registry.test:5000",
-			SnapshotRegistryPrefix:   "wm-snapshots",
-			SnapshotRegistryInsecure: "false",
+			KloudliteInstallationID:     "installation-id",
+			InstallationSecret:          "installation-secret",
+			JWTSecret:                   "jwt-secret",
+			HostedSubdomain:             "apps.test",
+			CodeAnalyzerImage:           "code-analyzer:test",
+			PodNamespace:                "kloudlite",
+			WorkMachineManagerImage:     "workmachine-manager:test",
+			WorkspaceComprehensiveImage: "workspace-comprehensive:test",
+			SnapshotRegistryEndpoint:    "registry.test:5000",
+			SnapshotRegistryPrefix:      "wm-snapshots",
+			SnapshotRegistryInsecure:    "false",
 		},
 	}
 
@@ -292,7 +293,7 @@ func TestEnsureWorkMachineManagerDeletesLegacyPlatformNamespaceResources(t *test
 		Client:       fakeClient,
 		DirectClient: fakeClient,
 		Scheme:       scheme,
-		env:          Env{PodNamespace: "kloudlite", WorkMachineManagerImage: "workmachine-manager:test"},
+		env:          Env{PodNamespace: "kloudlite", WorkMachineManagerImage: "workmachine-manager:test", WorkspaceComprehensiveImage: "workspace-comprehensive:test"},
 	}
 
 	result, err := r.ensureWorkMachineManager(context.Background(), workmachineshared.NewStatusSession(wm))
