@@ -1208,15 +1208,20 @@ function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHas
           description={confirmAction.description}
           onClose={() => setConfirmAction(null)}
           footer={(close) => (
-            <>
-              <Button variant="ghost" onClick={close} disabled={deactivating || deleting}>Cancel</Button>
-              <Button variant="danger" disabled={deactivating || deleting} onClick={async () => { await confirmAction.action(); setConfirmAction(null); close() }}>
-                {(deactivating || deleting) ? 'Processing...' : 'Confirm'}
+            <div className="flex w-full gap-2">
+              <Button variant="secondary" className="flex-1" onClick={close} disabled={deactivating || deleting}>Cancel</Button>
+              <Button variant="danger" className="flex-1" disabled={deactivating || deleting} loading={deactivating || deleting} onClick={async () => { await confirmAction.action(); setConfirmAction(null); close() }}>
+                Confirm
               </Button>
-            </>
+            </div>
           )}
         >
-          <p className="text-[12px] text-muted-foreground leading-relaxed">{confirmAction.description}</p>
+          <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/[0.04] px-4 py-3">
+            <div className="h-8 w-8 shrink-0 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg className="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            </div>
+            <p className="text-[12px] text-foreground leading-relaxed">{confirmAction.description}</p>
+          </div>
         </Dialog>
       )}
     </div>
