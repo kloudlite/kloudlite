@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -63,7 +64,29 @@ window.addEventListener('resize', () => fitAddon.fit());
 const ws = new WebSocket(((location.protocol === 'https:') ? 'wss://' : 'ws://') + location.host + '/ws?cols=' + term.cols + '&rows=' + term.rows);
 
 ws.onopen = () => { term.focus(); };
-ws.onmessage = (e) => { term.write(e.data); };
+ws.onmessage = (e) => {
+  if (typeof e.data === 'string' && e.data.startsWith('{')) {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'clipboard' && msg.data) {
+        const copy = (t) => {
+          const ta = document.createElement('textarea');
+          ta.value = t; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (_) {}
+          document.body.removeChild(ta);
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(msg.data).catch(() => copy(msg.data));
+        } else {
+          copy(msg.data);
+        }
+        return;
+      }
+    } catch (_) {}
+  }
+  term.write(e.data);
+};
 ws.onclose = () => { term.write('\r\n\x1b[31mConnection closed. Reconnecting...\x1b[0m\r\n'); setTimeout(() => location.reload(), 2000); };
 term.onData((data) => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 term.onResize(({cols, rows}) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'resize',cols,rows})); });
@@ -132,6 +155,13 @@ type resizeMsg struct {
 	Cols uint16 `json:"cols"`
 	Rows uint16 `json:"rows"`
 }
+
+type clipboardMsg struct {
+	Type string `json:"type"`
+	Data string `json:"data"`
+}
+
+var osc52Regex = regexp.MustCompile(`\x1b\]52;(?:[^;]*);([a-zA-Z0-9+/=]*)(?:\x07|\x1b\\)`)
 
 func main() {
 	port := os.Getenv("PORT")
@@ -218,7 +248,32 @@ func handleWS(shellCmd string) http.HandlerFunc {
 		done := make(chan struct{}, 1)
 
 		go func() {
-			io.Copy(&wsWriter{conn: conn}, f)
+			buf := make([]byte, 4096)
+			writer := &wsWriter{conn: conn}
+			for {
+				n, err := f.Read(buf)
+				if err != nil {
+					break
+				}
+				data := buf[:n]
+				// Intercept OSC 52 clipboard sequences
+				if idx := osc52Regex.FindSubmatchIndex(data); idx != nil {
+					// Send everything before the OSC 52 sequence
+					writer.Write(data[:idx[0]])
+					// Decode base64 clipboard data
+					b64 := data[idx[2]:idx[3]]
+					decoded, decErr := base64.StdEncoding.DecodeString(string(b64))
+					if decErr == nil {
+						msg, _ := json.Marshal(clipboardMsg{Type: "clipboard", Data: string(decoded)})
+						conn.WriteMessage(websocket.TextMessage, msg)
+					}
+					// Send the rest after the OSC 52 sequence
+					end := idx[1]
+					writer.Write(data[end:])
+				} else {
+					writer.Write(data)
+				}
+			}
 			done <- struct{}{}
 		}()
 
