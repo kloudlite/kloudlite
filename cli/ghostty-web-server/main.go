@@ -26,56 +26,12 @@ const html = `<!doctype html>
 <title>terminal</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  background: #0d1117;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-.terminal-wrap {
-  width: 100%;
-  max-width: 1100px;
-  height: calc(100vh - 48px);
-  background: #161b22;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-}
-.terminal-header {
-  background: #21262d;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid #30363d;
-}
-.dots { display: flex; gap: 6px; }
-.dot { width: 12px; height: 12px; border-radius: 50%; }
-.dot.r { background: #f85149; }
-.dot.y { background: #d29922; }
-.dot.g { background: #3fb950; }
-.terminal-title {
-  color: #8b949e;
-  font: 12px -apple-system, sans-serif;
-  margin-left: 8px;
-}
-#terminal {
-  width: 100%;
-  height: calc(100% - 37px);
-  padding: 8px;
-}
+html, body, #terminal { height: 100%; width: 100%; overflow: hidden; }
+body { background: #161b22; }
 </style>
 </head>
 <body>
-<div class="terminal-wrap">
-  <div class="terminal-header">
-    <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-    <span class="terminal-title">Terminal</span>
-  </div>
-  <div id="terminal"></div>
-</div>
+<div id="terminal"></div>
 <script type="module">
 import { init, Terminal, FitAddon } from '/dist/ghostty-web.js';
 await init();
@@ -113,8 +69,27 @@ term.onData((data) => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 term.onResize(({cols, rows}) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'resize',cols,rows})); });
 
 // Clipboard support
-let selection = '';
-term.onSelectionChange((text) => { selection = text; });
+// Intercept Ctrl+C when text is selected — copy to browser clipboard instead of sending SIGINT
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !e.shiftKey) {
+    const sel = term.getSelection();
+    if (!sel) return; // No selection, let Ctrl+C pass through to PTY (SIGINT)
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const copyViaExec = (t) => {
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(sel).catch(() => copyViaExec(sel));
+    } else {
+      copyViaExec(sel);
+    }
+  }
+}, true); // Capturing phase — fires before terminal canvas
 
 // Paste: send clipboard text to terminal
 document.addEventListener('paste', async (e) => {
