@@ -113,10 +113,32 @@ term.onData((data) => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 term.onResize(({cols, rows}) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'resize',cols,rows})); });
 
 // Clipboard support
+let selection = '';
+term.onSelectionChange((text) => { selection = text; });
+
+// Paste: send clipboard text to terminal
 document.addEventListener('paste', async (e) => {
   const text = e.clipboardData.getData('text');
   if (text && ws.readyState === WebSocket.OPEN) {
     ws.send(text);
+  }
+});
+
+// Copy: Ctrl+Shift+C to copy selection to clipboard
+document.addEventListener('keydown', async (e) => {
+  if (e.key === 'c' && e.ctrlKey && e.shiftKey && selection) {
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(selection);
+    } catch (_) {
+      // Fallback: use execCommand
+      const ta = document.createElement('textarea');
+      ta.value = selection;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
   }
 });
 
