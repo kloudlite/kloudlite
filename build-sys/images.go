@@ -114,9 +114,6 @@ func (m *Kloudlite) ImageWorkspaceComprehensive(
 		WithExec([]string{"chmod", "+x", "/usr/local/bin/kl"}).
 		WithFile("/usr/local/bin/ghostty-web", gw).
 		WithExec([]string{"chmod", "+x", "/usr/local/bin/ghostty-web"}).
-		WithExec([]string{"npm", "install", "-g", "ghostty-web", "--prefix", "/home/kl/.local"}).
-		WithExec([]string{"mkdir", "-p", "/usr/local/share/ghostty-web"}).
-		WithExec([]string{"sh", "-c", "cp /home/kl/.local/lib/node_modules/ghostty-web/dist/ghostty-web.js /usr/local/share/ghostty-web/ && cp /home/kl/.local/lib/node_modules/ghostty-web/ghostty-vt.wasm /usr/local/share/ghostty-web/"}).
 		WithExec([]string{"useradd", "-m", "-s", "/bin/bash", "-u", "1001", "kl"}).
 		WithExec([]string{"sh", "-c", `echo "kl ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers`}).
 		WithExec([]string{"mkdir", "-p", "/workspace"}).
@@ -125,6 +122,9 @@ func (m *Kloudlite) ImageWorkspaceComprehensive(
 		WithExec([]string{"sh", "-c", "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -"}).
 		WithExec([]string{"apt-get", "install", "-y", "nodejs"}).
 		WithExec([]string{"rm", "-rf", "/var/lib/apt/lists/*"}).
+		WithExec([]string{"npm", "install", "-g", "ghostty-web", "--prefix", "/home/kl/.local"}).
+		WithExec([]string{"mkdir", "-p", "/usr/local/share/ghostty-web"}).
+		WithExec([]string{"sh", "-c", "cp /home/kl/.local/lib/node_modules/ghostty-web/dist/ghostty-web.js /usr/local/share/ghostty-web/ && cp /home/kl/.local/lib/node_modules/ghostty-web/ghostty-vt.wasm /usr/local/share/ghostty-web/"}).
 		WithExec([]string{"mkdir", "-p", "/run/sshd"}).
 		WithExec([]string{"sed", "-i", "s/#PermitRootLogin prohibit-password/PermitRootLogin no/", "/etc/ssh/sshd_config"}).
 		WithExec([]string{"sed", "-i", "s/#PasswordAuthentication yes/PasswordAuthentication no/", "/etc/ssh/sshd_config"}).
