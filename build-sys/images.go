@@ -128,7 +128,7 @@ func (m *Kloudlite) ImageWorkspaceComprehensive(
 		WithExec([]string{"sh", "-c", `echo 'AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys' >> /etc/ssh/sshd_config`}).
 		WithExec([]string{"sh", "-c", "curl -fsSL https://code-server.dev/install.sh | sh"}).
 		WithExec([]string{"sh", "-c",
-			"curl -fsSL https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64 -o /usr/local/bin/ttyd && chmod +x /usr/local/bin/ttyd"}).
+			"npm install -g @ghostty-web/demo --prefix /home/kl/.local"}).
 		WithExec([]string{"sh", "-c", "curl -sS https://starship.rs/install.sh | sh -s -- -y"}).
 		WithExec([]string{"mkdir", "-p", "/usr/share/fonts/truetype/nerd-fonts"}).
 		WithExec([]string{"sh", "-c",

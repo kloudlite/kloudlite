@@ -19,7 +19,7 @@ fi
 # Show available tools
 echo "  Shell: bash (with starship prompt)"
 echo "  Shells available: bash, zsh, fish (all with starship)"
-echo "  Tools: code-server (port 8080), ttyd (port 7681)"
+echo "  Tools: code-server (port 8080), ghostty-web (port 7681)"
 echo ""
 echo "  Get started:"
 echo "    • Run 'claude' to start Claude Code"
