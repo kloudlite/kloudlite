@@ -95,6 +95,7 @@ func (m *Kloudlite) ImageWorkspaceComprehensive(
 	baseImage *dagger.Container,
 ) *dagger.Container {
 	kl := m.BuildKlLinux(ctx, source)
+	gw := m.buildGoBinary(ctx, source, "ghostty-web-server", "linux", "amd64", "", false)
 	ctr := baseImage
 	if ctr == nil {
 		ctr = m.ImageWorkspaceBase(ctx, source, tag, registry)
@@ -111,6 +112,11 @@ func (m *Kloudlite) ImageWorkspaceComprehensive(
 		WithExec([]string{"rm", "-rf", "/var/lib/apt/lists/*"}).
 		WithFile("/usr/local/bin/kl", kl).
 		WithExec([]string{"chmod", "+x", "/usr/local/bin/kl"}).
+		WithFile("/usr/local/bin/ghostty-web", gw).
+		WithExec([]string{"chmod", "+x", "/usr/local/bin/ghostty-web"}).
+		WithExec([]string{"npm", "install", "-g", "ghostty-web", "--prefix", "/home/kl/.local"}).
+		WithExec([]string{"mkdir", "-p", "/usr/local/share/ghostty-web"}).
+		WithExec([]string{"sh", "-c", "cp /home/kl/.local/lib/node_modules/ghostty-web/dist/ghostty-web.js /usr/local/share/ghostty-web/ && cp /home/kl/.local/lib/node_modules/ghostty-web/ghostty-vt.wasm /usr/local/share/ghostty-web/"}).
 		WithExec([]string{"useradd", "-m", "-s", "/bin/bash", "-u", "1001", "kl"}).
 		WithExec([]string{"sh", "-c", `echo "kl ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers`}).
 		WithExec([]string{"mkdir", "-p", "/workspace"}).
@@ -128,7 +134,7 @@ func (m *Kloudlite) ImageWorkspaceComprehensive(
 		WithExec([]string{"sh", "-c", `echo 'AuthorizedKeysFile /etc/ssh/kl-authorized-keys/authorized_keys' >> /etc/ssh/sshd_config`}).
 		WithExec([]string{"sh", "-c", "curl -fsSL https://code-server.dev/install.sh | sh"}).
 		WithExec([]string{"sh", "-c",
-			"npm install -g @ghostty-web/demo --prefix /home/kl/.local"}).
+			"curl -fsSL https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64 -o /usr/local/bin/ttyd && chmod +x /usr/local/bin/ttyd"}).
 		WithExec([]string{"sh", "-c", "curl -sS https://starship.rs/install.sh | sh -s -- -y"}).
 		WithExec([]string{"mkdir", "-p", "/usr/share/fonts/truetype/nerd-fonts"}).
 		WithExec([]string{"sh", "-c",

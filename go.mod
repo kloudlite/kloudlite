@@ -31,6 +31,7 @@ require (
 	github.com/aws/smithy-go v1.24.2
 	github.com/codingconcepts/env v0.0.0-20240618133406-5b0845441187
 	github.com/compose-spec/compose-go/v2 v2.9.0
+	github.com/creack/pty v1.1.24
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gin-gonic/gin v1.9.1

@@ -205,6 +205,8 @@ func (m *Kloudlite) buildGoBinary(
 		buildPath, outName = "./cli/kl/", "kl"
 	case "kltun":
 		buildPath, outName = "./cli/kltun/", "kltun"
+	case "ghostty-web-server":
+		buildPath, outName = "./cli/ghostty-web-server/", "ghostty-web-server"
 	}
 	return ctr.
 		WithExec([]string{"go", "build", "-ldflags=" + ldflags, "-o", "/out/" + outName, buildPath}).
