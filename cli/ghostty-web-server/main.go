@@ -69,18 +69,9 @@ ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
       if (msg.type === 'clipboard' && msg.data) {
-        const copy = (t) => {
-          const ta = document.createElement('textarea');
-          ta.value = t; ta.style.position = 'fixed'; ta.style.left = '-9999px';
-          document.body.appendChild(ta); ta.select();
-          try { document.execCommand('copy'); } catch (_) {}
-          document.body.removeChild(ta);
-        };
-        if (navigator.clipboard && window.isSecureContext) {
-          navigator.clipboard.writeText(msg.data).catch(() => copy(msg.data));
-        } else {
-          copy(msg.data);
-        }
+        // Buffer clipboard data — browser requires user gesture for clipboard write.
+        // Flush on next keydown or click event.
+        pendingClipboard = msg.data;
         return;
       }
     } catch (_) {}
@@ -92,7 +83,29 @@ term.onData((data) => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 term.onResize(({cols, rows}) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'resize',cols,rows})); });
 
 // Clipboard support
-// Intercept Ctrl+C when text is selected — copy to browser clipboard instead of sending SIGINT
+// Intercept Ctrl+C when text is selected to copy to browser clipboard
+// Also: buffer OSC-52 clipboard data and flush on next user gesture
+let pendingClipboard = '';
+const flushClipboard = () => {
+  if (!pendingClipboard) return;
+  const t = pendingClipboard;
+  pendingClipboard = '';
+  const copy = (v) => {
+    const ta = document.createElement('textarea');
+    ta.value = v; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(t).catch(() => copy(t));
+  } else {
+    copy(t);
+  }
+};
+document.addEventListener('keydown', flushClipboard, true);
+document.addEventListener('click', flushClipboard);
+
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !e.shiftKey) {
     const sel = term.getSelection();
