@@ -26,34 +26,102 @@ const html = `<!doctype html>
 <title>terminal</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #1e1e1e; overflow: hidden; }
-#terminal { width: 100vw; height: 100vh; }
+html, body { height: 100%; }
+body {
+  background: #0d1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.terminal-wrap {
+  width: 100%;
+  max-width: 1100px;
+  height: calc(100vh - 48px);
+  background: #161b22;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.terminal-header {
+  background: #21262d;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #30363d;
+}
+.dots { display: flex; gap: 6px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot.r { background: #f85149; }
+.dot.y { background: #d29922; }
+.dot.g { background: #3fb950; }
+.terminal-title {
+  color: #8b949e;
+  font: 12px -apple-system, sans-serif;
+  margin-left: 8px;
+}
+#terminal {
+  width: 100%;
+  height: calc(100% - 37px);
+  padding: 8px;
+}
 </style>
 </head>
 <body>
-<div id="terminal"></div>
+<div class="terminal-wrap">
+  <div class="terminal-header">
+    <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    <span class="terminal-title">Terminal</span>
+  </div>
+  <div id="terminal"></div>
+</div>
 <script type="module">
 import { init, Terminal, FitAddon } from '/dist/ghostty-web.js';
 await init();
 const term = new Terminal({
   cols: 80, rows: 24,
   fontSize: 14,
-  fontFamily: 'JetBrainsMono Nerd Font Mono, FiraCode Nerd Font Mono, monospace',
-  theme: { background: '#1e1e1e', foreground: '#d4d4d4' },
+  fontFamily: 'JetBrainsMono Nerd Font Mono, FiraCode Nerd Font Mono, Menlo, monospace',
+  theme: {
+    background: '#161b22',
+    foreground: '#c9d1d9',
+    cursor: '#58a6ff',
+    selectionBackground: '#264f78',
+    selectionForeground: '#c9d1d9',
+    black: '#21262d', red: '#f85149', green: '#3fb950', yellow: '#d29922',
+    blue: '#58a6ff', magenta: '#bc8cff', cyan: '#39d2c0', white: '#c9d1d9',
+    brightBlack: '#6e7681', brightRed: '#ff7b72', brightGreen: '#56d364',
+    brightYellow: '#e3b341', brightBlue: '#79c0ff', brightMagenta: '#d2a8ff',
+    brightCyan: '#56d4dd', brightWhite: '#f0f6fc',
+  },
 });
+
 const fitAddon = new FitAddon();
 term.loadAddon(fitAddon);
-await term.open(document.getElementById('terminal'));
+const container = document.getElementById('terminal');
+await term.open(container);
 fitAddon.fit();
+window.addEventListener('resize', () => fitAddon.fit());
 
 const ws = new WebSocket(((location.protocol === 'https:') ? 'wss://' : 'ws://') + location.host + '/ws?cols=' + term.cols + '&rows=' + term.rows);
 
 ws.onopen = () => { term.focus(); };
 ws.onmessage = (e) => { term.write(e.data); };
-ws.onclose = () => { term.write('\r\n\x1b[31mConnection closed.\x1b[0m\r\n'); };
+ws.onclose = () => { term.write('\r\n\x1b[31mConnection closed. Reconnecting...\x1b[0m\r\n'); setTimeout(() => location.reload(), 2000); };
 term.onData((data) => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 term.onResize(({cols, rows}) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type:'resize',cols,rows})); });
-window.addEventListener('resize', () => fitAddon.fit());
+
+// Clipboard support
+document.addEventListener('paste', async (e) => {
+  const text = e.clipboardData.getData('text');
+  if (text && ws.readyState === WebSocket.OPEN) {
+    ws.send(text);
+  }
+});
+
+// Click to focus terminal
+container.addEventListener('click', () => term.focus());
 </script>
 </body>
 </html>`
