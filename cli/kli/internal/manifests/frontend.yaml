@@ -109,7 +109,7 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 3
         - name: kube-proxy
-          image: bitnami/kubectl:latest
+          image: soldevelo/kubectl:latest
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
