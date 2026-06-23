@@ -165,9 +165,10 @@ interface SnapshotTreeProps {
   snapshots: Snapshot[]
   title: string
   subtitle: string
+  className?: string
 }
 
-export function SnapshotTree({ snapshots, title, subtitle }: SnapshotTreeProps) {
+export function SnapshotTree({ snapshots, title, subtitle, className = 'p-6' }: SnapshotTreeProps) {
   const tree = buildTree(snapshots)
   const flat = tree ? flattenTree(tree) : []
   const maxCol = Math.max(...flat.map((f) => f.col), 0)
@@ -198,7 +199,7 @@ export function SnapshotTree({ snapshots, title, subtitle }: SnapshotTreeProps) 
   }
 
   return (
-    <div className="p-6">
+    <div className={className}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">{title}</h2>

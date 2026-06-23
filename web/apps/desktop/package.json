@@ -70,7 +70,7 @@
       "category": "Development"
     },
     "win": {
-      "icon": "resources/icon.png",
+      "icon": "resources/icon.ico",
       "target": ["nsis"]
     },
     "publish": {

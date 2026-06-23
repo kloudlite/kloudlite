@@ -160,6 +160,12 @@ export const platformAPI = {
   listResources: (namespace: string | null, resource: string) =>
     apiRequest('GET', resourcePath(namespace, resource)) as Promise<{ items: Record<string, unknown>[] }>,
 
+  createResource: (namespace: string | null, resource: string, object: Record<string, unknown>) =>
+    apiRequest('POST', resourcePath(namespace, resource), object) as Promise<Record<string, unknown>>,
+
+  deleteResource: (namespace: string | null, resource: string, name: string) =>
+    apiRequest('DELETE', resourcePath(namespace, resource, name)) as Promise<void>,
+
   // WorkMachines
   listWorkMachines: () =>
     apiRequest('GET', resourcePath(null, 'workmachines')) as Promise<{ items: Record<string, unknown>[] }>,

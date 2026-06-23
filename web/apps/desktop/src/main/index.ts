@@ -19,6 +19,16 @@ if (process.platform === 'darwin') {
   app.setName('Kloudlite')
 }
 
+function sendToMenuWindow(window: Electron.BaseWindow | undefined, channel: string, ...args: string[]): void {
+  if (window instanceof BrowserWindow) window.webContents.send(channel, ...args)
+}
+
+function setDockIcon(): void {
+  if (process.platform !== 'darwin') return
+  const icon = nativeImage.createFromPath(join(__dirname, '../../resources/icon.png'))
+  if (!icon.isEmpty()) app.dock?.setIcon(icon)
+}
+
 function createWindow(): BrowserWindow {
   const iconPath = process.platform === 'darwin'
     ? join(__dirname, '../../resources/icon.icns')
@@ -98,21 +108,21 @@ function createAppMenu(): void {
           label: 'New Tab',
           accelerator: 'CmdOrCtrl+T',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'new-tab')
+            sendToMenuWindow(window, 'shortcut', 'new-tab')
           }
         },
         {
           label: 'Address Bar',
           accelerator: 'CmdOrCtrl+L',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'address-bar')
+            sendToMenuWindow(window, 'shortcut', 'address-bar')
           }
         },
         {
           label: 'Close Tab',
           accelerator: 'CmdOrCtrl+W',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'close-tab')
+            sendToMenuWindow(window, 'shortcut', 'close-tab')
           }
         },
         { type: 'separator' },
@@ -120,21 +130,21 @@ function createAppMenu(): void {
           label: 'Reload Tab',
           accelerator: 'CmdOrCtrl+R',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'reload')
+            sendToMenuWindow(window, 'shortcut', 'reload')
           }
         },
         {
           label: 'Go Back',
           accelerator: 'CmdOrCtrl+[',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-back')
+            sendToMenuWindow(window, 'shortcut', 'go-back')
           }
         },
         {
           label: 'Go Back (Arrow)',
           accelerator: 'CmdOrCtrl+Left',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-back')
+            sendToMenuWindow(window, 'shortcut', 'go-back')
           },
           visible: false
         },
@@ -142,14 +152,14 @@ function createAppMenu(): void {
           label: 'Go Forward',
           accelerator: 'CmdOrCtrl+]',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-forward')
+            sendToMenuWindow(window, 'shortcut', 'go-forward')
           }
         },
         {
           label: 'Go Forward (Arrow)',
           accelerator: 'CmdOrCtrl+Right',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-forward')
+            sendToMenuWindow(window, 'shortcut', 'go-forward')
           },
           visible: false
         },
@@ -162,21 +172,21 @@ function createAppMenu(): void {
           label: 'Environments',
           accelerator: 'CmdOrCtrl+1',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'mode-1')
+            sendToMenuWindow(window, 'shortcut', 'mode-1')
           }
         },
         {
           label: 'Workspaces',
           accelerator: 'CmdOrCtrl+2',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'mode-2')
+            sendToMenuWindow(window, 'shortcut', 'mode-2')
           }
         },
         {
           label: 'Browse',
           accelerator: 'CmdOrCtrl+3',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'mode-3')
+            sendToMenuWindow(window, 'shortcut', 'mode-3')
           }
         },
       ]
@@ -202,7 +212,7 @@ function createAppMenu(): void {
           label: 'Toggle Shell DevTools',
           accelerator: 'Alt+CmdOrCtrl+I',
           click: (_item, window) => {
-            window?.webContents.toggleDevTools()
+            if (window instanceof BrowserWindow) window.webContents.toggleDevTools()
           }
         }
       ]
@@ -441,10 +451,49 @@ ipcMain.handle('api:list-workspaces', async (_event, namespace: string) => {
   }
 })
 
+// IPC: Platform API — list generic resources
+ipcMain.handle('api:list-resources', async (_event, namespace: string | null, resource: string) => {
+  try {
+    const result = await platformAPI.listResources(namespace, resource)
+    return { items: result.items }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — create generic resource
+ipcMain.handle('api:create-resource', async (_event, namespace: string | null, resource: string, object: Record<string, unknown>) => {
+  try {
+    return await platformAPI.createResource(namespace, resource, object)
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — delete generic resource
+ipcMain.handle('api:delete-resource', async (_event, namespace: string | null, resource: string, name: string) => {
+  try {
+    await platformAPI.deleteResource(namespace, resource, name)
+    return { success: true }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
 // IPC: Platform API — create workspace
 ipcMain.handle('api:create-workspace', async (_event, namespace: string, name: string, spec: Record<string, unknown>) => {
   try {
     return await platformAPI.createWorkspace(namespace, name, spec)
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
+// IPC: Platform API — delete workspace
+ipcMain.handle('api:delete-workspace', async (_event, namespace: string, name: string) => {
+  try {
+    await platformAPI.deleteWorkspace(namespace, name)
+    return { success: true }
   } catch (err) {
     return { error: (err as Error).message }
   }
@@ -494,6 +543,8 @@ app.on('web-contents-created', (_event, contents) => {
 })
 
 app.whenReady().then(() => {
+  setDockIcon()
+
   // Critical path: create window ASAP (everything else is deferred)
   const mainWindow = createWindow()
 
@@ -502,14 +553,7 @@ app.whenReady().then(() => {
     // Create menu (not needed for first paint)
     createAppMenu()
 
-    // Set dock icon
-    if (process.platform === 'darwin') {
-      const iconPath = join(__dirname, '../../resources/icon.png')
-      const icon = nativeImage.createFromPath(iconPath)
-      if (!icon.isEmpty()) {
-        app.dock.setIcon(icon)
-      }
-    }
+    setDockIcon()
 
     // Start browser MCP server for AI control
     startMCPServer()

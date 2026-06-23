@@ -1,10 +1,14 @@
 import { cn } from '@/lib/utils'
-import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Plus, Key, FileText as FileIcon, Loader2 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Copy, Check, Pencil, Trash2, Eye, EyeOff, Key, FileText as FileIcon, Loader2, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 import { CodeEditor } from './code-editor'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { ServicesGraph } from './services-graph'
 import { LogsViewer } from './services-graph/logs-viewer'
+import { parseComposeServices } from '../lib/compose-services'
+import { buildConfigMap, buildEnvSecret, buildFileConfigMap, ENV_CONFIG_NAME, ENV_SECRET_NAME, filenamePattern } from '../lib/config-resource-helpers'
+import { useEnvironmentStore } from '../store/environments'
+import { Dialog, Button, Badge, FormField, TextInput } from './ui'
 
 const API_NAMESPACE = 'wm-karthik-dev'
 
@@ -12,6 +16,7 @@ interface EnvironmentContentProps {
   envName: string
   envHash: string
   activeTab: string
+  onDeleted?: () => void
 }
 
 // Dummy services data — port-level intercepts + volumes
@@ -210,7 +215,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
       if (result.error) return
-      const env = (result.items || []).find((e: any) =>
+      const env = ((result.items || []) as any[]).find((e) =>
         e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
       )
       if (!env) {
@@ -222,34 +227,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
       // Parse services from spec.compose.composeContent (source of truth)
       const cc = env.spec?.compose?.composeContent
       if (cc) {
-        const parsed: ServiceData[] = []
-        const lines = cc.split('\n')
-        let currentSvc: string | null = null
-        let ports: { port: number; targetPort: number; protocol: string }[] = []
-        let volumes: { name: string; mountPath: string; type: 'persistent' | 'config' | 'secret' | 'host' }[] = []
-        const skipKeys = new Set(['version', 'volumes', 'networks', 'configs', 'secrets', 'services'])
-        let inServices = false
-
-        for (const line of lines) {
-          // Detect 'services:' top-level key
-          if (line.match(/^services:/)) { inServices = true; continue }
-          if (!inServices) continue
-
-          const sm = line.match(/^\s{2}([\w][\w-]*):/)
-          const portMatch = line.match(/^\s{6}-\s*["']?(\d+):(\d+)["']?/)
-          const volMatch = line.match(/^\s{6}-\s*["']([^"']+?)["']/)
-
-          if (sm && !skipKeys.has(sm[1])) {
-            if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes })
-            currentSvc = sm[1]; ports = []; volumes = []
-          } else if (portMatch && currentSvc) {
-            ports.push({ port: parseInt(portMatch[1]), targetPort: parseInt(portMatch[2]), protocol: 'TCP' })
-          } else if (volMatch && currentSvc) {
-            const parts = volMatch[1].split(':')
-            volumes.push({ name: parts[0], mountPath: parts[1] || parts[0], type: 'persistent' })
-          }
-        }
-        if (currentSvc) parsed.push({ id: currentSvc, name: currentSvc, type: 'ClusterIP', clusterIP: '', dns: `${currentSvc}.${env.spec?.targetNamespace || ''}.svc.cluster.local`, ports, volumes })
+        const parsed = parseComposeServices(cc, env.spec?.targetNamespace || '')
         if (parsed.length > 0) setServices(parsed)
       }
       if (cc && !composeOpen) setCompose(cc)
@@ -298,7 +276,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
     name: s.name,
     dns: s.dns,
     type: s.type,
-    ports: s.ports.map((p) => ({ port: p.port, targetPort: p.targetPort, interceptedBy: p.interceptedBy })),
+    ports: s.ports.map((p) => ({ port: p.port, targetPort: p.targetPort, protocol: p.protocol, interceptedBy: p.interceptedBy })),
     volumes: s.volumes,
   }))
 
@@ -324,7 +302,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
             // Always fetch latest compose from API when opening
             try {
               const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
-              const env = (result?.items || []).find((e: any) =>
+              const env = ((result?.items || []) as any[]).find((e) =>
                 e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
               )
               const cc = env?.spec?.compose?.composeContent
@@ -397,7 +375,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
           </div>
         )}
         <ServicesGraph
-          key={'g-' + services.map(s => s.id).join('-') + '-p' + services.map(s => s.ports.map(p => p.port).join(',')).join('-')}
+          key={'g-' + services.map(s => s.id).join('-') + '-p' + services.map(s => s.ports.map(p => `${p.port}-${p.interceptedBy || ''}`).join(',')).join('-')}
           services={graphServices}
           workspaces={workspaces}
         />
@@ -409,49 +387,304 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
   )
 }
 
-// Dummy envvars
-const ENVVARS: Record<string, { key: string; value: string; type: 'config' | 'secret' }[]> = {
-  'a1b2c3': [
-    { key: 'DATABASE_URL', value: 'postgresql://admin:<set-in-secret>@postgres:5432/app', type: 'secret' },
-    { key: 'REDIS_URL', value: 'redis://redis:6379', type: 'config' },
-    { key: 'API_KEY', value: 'demo_api_key_value', type: 'secret' },
-    { key: 'NODE_ENV', value: 'staging', type: 'config' },
-    { key: 'LOG_LEVEL', value: 'debug', type: 'config' },
-  ],
-  'd4e5f6': [
-    { key: 'DEBUG', value: 'true', type: 'config' },
-    { key: 'LOG_LEVEL', value: 'verbose', type: 'config' },
-    { key: 'PORT', value: '5173', type: 'config' },
-    { key: 'DB_PASSWORD', value: '<set-in-secret>', type: 'secret' },
-  ],
-  'g7h8i9': [
-    { key: 'NODE_ENV', value: 'production', type: 'config' },
-    { key: 'CDN_URL', value: 'https://cdn.kloudlite.io', type: 'config' },
-    { key: 'SENTRY_DSN', value: 'https://example@sentry.io/project-id', type: 'secret' },
-    { key: 'STRIPE_KEY', value: 'demo_stripe_key_value', type: 'secret' },
-  ],
+interface EnvVarRow {
+  id: string
+  key: string
+  value: string
+  type: 'config' | 'secret'
+  source: string
 }
 
-const CONFIG_FILES: Record<string, { name: string; size: string }[]> = {
-  'a1b2c3': [
-    { name: 'nginx.conf', size: '2.4 KB' },
-    { name: 'app-config.json', size: '1.1 KB' },
-  ],
-  'd4e5f6': [
-    { name: 'vite.config.ts', size: '0.8 KB' },
-  ],
-  'g7h8i9': [
-    { name: 'gateway.yaml', size: '3.2 KB' },
-    { name: 'tls.crt', size: '4.1 KB' },
-    { name: 'tls.key', size: '1.6 KB' },
-  ],
+interface ConfigFileRow {
+  id: string
+  name: string
+  configMapName: string
+  source: string
+  content: string
 }
 
-function ConfigsView({ envHash }: { envHash: string }) {
+type ConfigDialogState =
+  | { kind: 'env'; mode: 'create' | 'edit'; item?: EnvVarRow }
+  | { kind: 'file'; mode: 'create' | 'edit'; item?: ConfigFileRow }
+  | null
+
+function decodeSecretValue(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  try {
+    return atob(value)
+  } catch {
+    return value
+  }
+}
+
+function readStringMap(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object') return {}
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => typeof v === 'string')
+      .map(([k, v]) => [k, v as string])
+  )
+}
+
+function getLabels(item: Record<string, unknown>): Record<string, string> {
+  return readStringMap((item as any).metadata?.labels)
+}
+
+function isEnvConfigMap(item: Record<string, unknown>): boolean {
+  const labels = getLabels(item)
+  const name = (item as any).metadata?.name
+  return name === 'env-config'
+    || labels['kloudlite.io/config-type'] === 'envvars'
+    || labels['kloudlite.io/resource-type'] === 'config'
+}
+
+function isEnvSecret(item: Record<string, unknown>): boolean {
+  const labels = getLabels(item)
+  const name = (item as any).metadata?.name
+  return (name === 'env-secret'
+    || labels['kloudlite.io/config-type'] === 'envvars'
+    || labels['kloudlite.io/resource-type'] === 'secret')
+    && (item as any).type !== 'kubernetes.io/service-account-token'
+}
+
+function isConfigFileMap(item: Record<string, unknown>): boolean {
+  return getLabels(item)['kloudlite.io/resource-type'] === 'file'
+}
+
+function mapConfigObjects(configmaps: Record<string, unknown>[], secrets: Record<string, unknown>[]) {
+  const envvars: EnvVarRow[] = []
+  const files: ConfigFileRow[] = []
+
+  for (const item of configmaps.filter(isEnvConfigMap)) {
+    const name = (item as any).metadata?.name || 'configmap'
+    const data = readStringMap((item as any).data)
+    for (const [key, value] of Object.entries(data)) {
+      envvars.push({ id: `config-${name}-${key}`, key, value, type: 'config', source: name })
+    }
+  }
+
+  for (const item of secrets.filter(isEnvSecret)) {
+    const name = (item as any).metadata?.name || 'secret'
+    const data = readStringMap((item as any).data)
+    const stringData = readStringMap((item as any).stringData)
+    const keys = new Set([...Object.keys(data), ...Object.keys(stringData)])
+    for (const key of keys) {
+      const value = key in stringData ? stringData[key] : decodeSecretValue(data[key])
+      envvars.push({ id: `secret-${name}-${key}`, key, value, type: 'secret', source: name })
+    }
+  }
+
+  for (const item of configmaps.filter(isConfigFileMap)) {
+    const labels = getLabels(item)
+    const configMapName = (item as any).metadata?.name || 'config-file'
+    const filename = labels['kloudlite.io/filename'] || configMapName
+    const data = readStringMap((item as any).data)
+    const content = data.content || Object.values(data)[0] || ''
+    files.push({
+      id: `file-${configMapName}`,
+      name: filename,
+      configMapName,
+      source: configMapName,
+      content,
+    })
+  }
+
+  return { envvars, files }
+}
+
+function ConfigEditorDialog({
+  dialog,
+  saving,
+  error,
+  onClose,
+  onSaveEnv,
+  onSaveFile,
+}: {
+  dialog: NonNullable<ConfigDialogState>
+  saving: boolean
+  error: string | null
+  onClose: () => void
+  onSaveEnv: (input: { key: string; value: string; type: 'config' | 'secret'; original?: EnvVarRow }) => void
+  onSaveFile: (input: { filename: string; content: string; original?: ConfigFileRow }) => void
+}) {
+  const envItem = dialog.kind === 'env' ? dialog.item : undefined
+  const fileItem = dialog.kind === 'file' ? dialog.item : undefined
+  const [key, setKey] = useState(envItem?.key || '')
+  const [value, setValue] = useState(envItem?.value || '')
+  const [type, setType] = useState<'config' | 'secret'>(envItem?.type || 'config')
+  const [filename, setFilename] = useState(fileItem?.name || '')
+  const [content, setContent] = useState(fileItem?.content || '')
+
+  const isEnv = dialog.kind === 'env'
+  const filenameValid = filenamePattern.test(filename.trim())
+  const canSubmit = isEnv ? Boolean(key.trim() && value.length > 0) : Boolean(filename.trim() && filenameValid)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="border-b border-border/30 px-5 py-4">
+          <h3 className="text-[15px] font-semibold text-foreground">
+            {dialog.mode === 'create' ? 'Add' : 'Edit'} {isEnv ? 'environment variable' : 'config file'}
+          </h3>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            {isEnv ? 'Used by compose during interpolation and service env injection.' : 'Mounted into compose services with /files/<filename> references.'}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4 px-5 py-4">
+          {error && <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{error}</div>}
+
+          {isEnv ? (
+            <>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-foreground">Key</label>
+                <input
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-[13px] outline-none focus:border-primary"
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  placeholder="DATABASE_URL"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-foreground">Value</label>
+                <textarea
+                  className="h-24 w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-[13px] outline-none focus:border-primary"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder="value"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-foreground">Type</label>
+                <div className="flex gap-2">
+                  {(['config', 'secret'] as const).map((option) => (
+                    <button
+                      key={option}
+                      className={cn(
+                        'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
+                        type === option ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-accent'
+                      )}
+                      onClick={() => setType(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-foreground">Filename</label>
+                <input
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-[13px] outline-none focus:border-primary"
+                  value={filename}
+                  onChange={(e) => setFilename(e.target.value)}
+                  placeholder="app-config.yaml"
+                  autoFocus
+                />
+                {!filenameValid && filename.trim() && (
+                  <p className="mt-1 text-[11px] text-red-500">Use 1-63 label-safe characters. Start/end with a letter or number; use letters, numbers, dots, underscores, or dashes.</p>
+                )}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-foreground">Content</label>
+                <textarea
+                  className="h-52 w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-[12px] leading-relaxed outline-none focus:border-primary"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="file contents"
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-border/30 px-5 py-4">
+          <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={onClose} disabled={saving}>
+            Cancel
+          </button>
+          <button
+            className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            disabled={!canSubmit || saving}
+            onClick={() => {
+              if (isEnv) onSaveEnv({ key: key.trim(), value, type, original: envItem })
+              else onSaveFile({ filename: filename.trim(), content, original: fileItem })
+            }}
+          >
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ConfigsView({ envHash, envName }: { envHash: string; envName: string }) {
   const [activeSection, setActiveSection] = useState<'envvars' | 'files'>('envvars')
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set())
-  const envvars = ENVVARS[envHash] || []
-  const files = CONFIG_FILES[envHash] || []
+  const [envvars, setEnvvars] = useState<EnvVarRow[]>([])
+  const [files, setFiles] = useState<ConfigFileRow[]>([])
+  const [configmaps, setConfigmaps] = useState<Record<string, unknown>[]>([])
+  const [secrets, setSecrets] = useState<Record<string, unknown>[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [mutationError, setMutationError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [dialog, setDialog] = useState<ConfigDialogState>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [targetNamespace, setTargetNamespace] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+
+    window.electronAPI.listEnvironments(API_NAMESPACE).then((envResult) => {
+      if (cancelled) return
+      if (envResult.error) throw new Error(envResult.error)
+      const env = (envResult.items || []).find((e: any) =>
+        e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
+      )
+      const namespace = (env as any)?.spec?.targetNamespace
+      if (!namespace) throw new Error('Environment target namespace not found')
+      setTargetNamespace(namespace)
+      return Promise.all([
+        window.electronAPI.listResources(namespace, 'configmaps'),
+        window.electronAPI.listResources(namespace, 'secrets'),
+      ])
+    }).then((result) => {
+      if (cancelled) return
+      if (!result) return
+      const [configmapsResult, secretsResult] = result
+      if (configmapsResult.error || secretsResult.error) {
+        setError(configmapsResult.error || secretsResult.error || 'Failed to load configs and secrets')
+        setEnvvars([])
+        setFiles([])
+        setConfigmaps([])
+        setSecrets([])
+        return
+      }
+
+      const mapped = mapConfigObjects(configmapsResult.items || [], secretsResult.items || [])
+      setConfigmaps(configmapsResult.items || [])
+      setSecrets(secretsResult.items || [])
+      setEnvvars(mapped.envvars)
+      setFiles(mapped.files)
+    }).catch((err) => {
+      if (cancelled) return
+      setError((err as Error).message)
+      setEnvvars([])
+      setFiles([])
+      setConfigmaps([])
+      setSecrets([])
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+
+    return () => { cancelled = true }
+  }, [envHash, envName, refreshKey])
 
   function toggleReveal(key: string) {
     setRevealedSecrets((prev) => {
@@ -462,21 +695,203 @@ function ConfigsView({ envHash }: { envHash: string }) {
     })
   }
 
+  function openCreateDialog() {
+    setMutationError(null)
+    setDialog(activeSection === 'envvars'
+      ? { kind: 'env', mode: 'create' }
+      : { kind: 'file', mode: 'create' })
+  }
+
+  function dataForConfigMap(name: string): Record<string, string> {
+    const item = configmaps.find((cm: any) => cm.metadata?.name === name)
+    return readStringMap((item as any)?.data)
+  }
+
+  function dataForSecret(name: string): Record<string, string> {
+    const item = secrets.find((secret: any) => secret.metadata?.name === name)
+    const decoded: Record<string, string> = {}
+    for (const [key, value] of Object.entries(readStringMap((item as any)?.data))) {
+      decoded[key] = decodeSecretValue(value)
+    }
+    return decoded
+  }
+
+  async function upsertResource(resource: 'configmaps' | 'secrets', name: string, object: Record<string, unknown>) {
+    if (!targetNamespace) throw new Error('Target namespace not loaded')
+    const exists = resource === 'configmaps'
+      ? configmaps.some((cm: any) => cm.metadata?.name === name)
+      : secrets.some((secret: any) => secret.metadata?.name === name)
+
+    const result = exists
+      ? await window.electronAPI.patchResource(targetNamespace, resource, name, object)
+      : await window.electronAPI.createResource(targetNamespace, resource, object)
+    if ((result as any).error) throw new Error((result as any).error)
+  }
+
+  async function saveEnvVar(input: { key: string; value: string; type: 'config' | 'secret'; original?: EnvVarRow }) {
+    if (!targetNamespace) throw new Error('Target namespace not loaded')
+    const old = input.original
+
+    if (old && old.type === input.type) {
+      const sourceName = old.source || (input.type === 'config' ? ENV_CONFIG_NAME : ENV_SECRET_NAME)
+      const exists = input.type === 'config'
+        ? configmaps.some((cm: any) => cm.metadata?.name === sourceName)
+        : secrets.some((secret: any) => secret.metadata?.name === sourceName)
+
+      if (!exists) {
+        if (input.type === 'config') await upsertResource('configmaps', sourceName, buildConfigMap(targetNamespace, { [input.key]: input.value }))
+        else await upsertResource('secrets', sourceName, buildEnvSecret(targetNamespace, { [input.key]: input.value }))
+        return
+      }
+
+      const dataPatch: Record<string, string | null> = { [input.key]: input.value }
+      if (old.key !== input.key) dataPatch[old.key] = null
+
+      const result = input.type === 'config'
+        ? await window.electronAPI.patchResource(targetNamespace, 'configmaps', sourceName, {
+          apiVersion: 'v1',
+          kind: 'ConfigMap',
+          metadata: { name: sourceName, namespace: targetNamespace },
+          data: dataPatch,
+        })
+        : await window.electronAPI.patchResource(targetNamespace, 'secrets', sourceName, {
+          apiVersion: 'v1',
+          kind: 'Secret',
+          type: 'Opaque',
+          metadata: { name: sourceName, namespace: targetNamespace },
+          data: old.key !== input.key ? { [old.key]: null } : undefined,
+          stringData: { [input.key]: input.value },
+        })
+
+      if ((result as any).error) throw new Error((result as any).error)
+      return
+    }
+
+    if (old && old.type !== input.type) {
+      await deleteEnvVar(old)
+    }
+
+    if (input.type === 'config') {
+      const data = { ...dataForConfigMap(ENV_CONFIG_NAME), [input.key]: input.value }
+      await upsertResource('configmaps', ENV_CONFIG_NAME, buildConfigMap(targetNamespace, data))
+      return
+    }
+
+    const data = { ...dataForSecret(ENV_SECRET_NAME), [input.key]: input.value }
+    await upsertResource('secrets', ENV_SECRET_NAME, buildEnvSecret(targetNamespace, data))
+  }
+
+  async function deleteEnvVar(item: EnvVarRow) {
+    if (!targetNamespace) throw new Error('Target namespace not loaded')
+    if (item.type === 'config') {
+      const sourceName = item.source || ENV_CONFIG_NAME
+      const data = { ...dataForConfigMap(sourceName) }
+      delete data[item.key]
+      if (Object.keys(data).length === 0) {
+        const result = await window.electronAPI.deleteResource(targetNamespace, 'configmaps', sourceName)
+        if (result.error) throw new Error(result.error)
+        return
+      }
+
+      const result = await window.electronAPI.patchResource(targetNamespace, 'configmaps', sourceName, {
+        apiVersion: 'v1',
+        kind: 'ConfigMap',
+        metadata: { name: sourceName, namespace: targetNamespace },
+        data: { [item.key]: null },
+      })
+      if ((result as any).error) throw new Error((result as any).error)
+      return
+    }
+
+    const sourceName = item.source || ENV_SECRET_NAME
+    const data = { ...dataForSecret(sourceName) }
+    delete data[item.key]
+    if (Object.keys(data).length === 0) {
+      const result = await window.electronAPI.deleteResource(targetNamespace, 'secrets', sourceName)
+      if (result.error) throw new Error(result.error)
+      return
+    }
+
+    const result = await window.electronAPI.patchResource(targetNamespace, 'secrets', sourceName, {
+      apiVersion: 'v1',
+      kind: 'Secret',
+      type: 'Opaque',
+      metadata: { name: sourceName, namespace: targetNamespace },
+      data: { [item.key]: null },
+    })
+    if ((result as any).error) throw new Error((result as any).error)
+  }
+
+  async function saveFile(input: { filename: string; content: string; original?: ConfigFileRow }) {
+    if (!targetNamespace) throw new Error('Target namespace not loaded')
+    const object = buildFileConfigMap(targetNamespace, input.filename, input.content)
+    const name = (object.metadata as { name: string }).name
+    const originalName = input.original?.configMapName
+
+    if (originalName && originalName !== name) {
+      const deleted = await window.electronAPI.deleteResource(targetNamespace, 'configmaps', originalName)
+      if (deleted.error) throw new Error(deleted.error)
+    }
+
+    await upsertResource('configmaps', name, object)
+  }
+
+  async function deleteFile(item: ConfigFileRow) {
+    if (!targetNamespace) throw new Error('Target namespace not loaded')
+    const result = await window.electronAPI.deleteResource(targetNamespace, 'configmaps', item.configMapName)
+    if (result.error) throw new Error(result.error)
+  }
+
+  async function runMutation(fn: () => Promise<void>) {
+    setSaving(true)
+    setMutationError(null)
+    try {
+      await fn()
+      setDialog(null)
+      setRefreshKey((k) => k + 1)
+    } catch (err) {
+      setMutationError((err as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">Configs & Secrets</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">Environment variables and configuration files</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Compose environment variables and files{targetNamespace ? ` from ${targetNamespace}` : ''}
+          </p>
         </div>
-        <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-          <Plus className="h-3.5 w-3.5" />
-          Add
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            onClick={openCreateDialog}
+            disabled={loading || !targetNamespace}
+          >
+            Add {activeSection === 'envvars' ? 'Variable' : 'File'}
+          </button>
+          <button
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            onClick={() => setRefreshKey((k) => k + 1)}
+            disabled={loading}
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+            Refresh
+          </button>
+        </div>
       </div>
 
+      {mutationError && (
+        <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/[0.04] px-4 py-3 text-[12px] text-red-500">
+          {mutationError}
+        </div>
+      )}
+
       {/* Section tabs */}
-      <div className="mt-4 flex gap-1 rounded-lg bg-accent/50 p-0.5">
+      <div className="mt-4 flex rounded-lg bg-accent/50 p-0.5">
         <button
           className={cn(
             'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors',
@@ -503,104 +918,165 @@ function ConfigsView({ envHash }: { envHash: string }) {
         </button>
       </div>
 
+      {error && (
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-red-500/20 bg-red-500/[0.04] px-4 py-3">
+          <p className="text-[12px] text-red-500">{error}</p>
+          <button className="text-[12px] font-medium text-red-500 hover:underline" onClick={() => setRefreshKey((k) => k + 1)}>Retry</button>
+        </div>
+      )}
+
+      {loading && (
+        <div className="mt-4 flex h-32 items-center justify-center rounded-xl border border-border/50">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/50" />
+        </div>
+      )}
+
       {/* Envvars table */}
-      {activeSection === 'envvars' && (
+      {!loading && !error && activeSection === 'envvars' && (
         <div className="mt-4 overflow-hidden rounded-xl border border-border/50">
-          <table className="w-full text-left text-[13px]">
-            <thead>
-              <tr className="border-b border-border/50 bg-accent/30">
-                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Key</th>
-                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Value</th>
-                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Type</th>
-                <th className="w-20 px-4 py-2.5"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {envvars.map((env) => (
-                <tr key={env.key} className="h-12 border-b border-border/30 transition-colors hover:bg-accent/20">
-                  <td className="px-4">
-                    <span className="font-mono text-[12px] font-medium text-foreground">{env.key}</span>
-                  </td>
-                  <td className="px-4">
-                    <span className="font-mono text-[12px] text-muted-foreground">
-                      {env.type === 'secret' && !revealedSecrets.has(env.key)
-                        ? '••••••••••••'
-                        : env.value}
-                    </span>
-                  </td>
-                  <td className="px-4">
-                    <span className={cn(
-                      'rounded-full px-2 py-0.5 text-[10px] font-medium',
-                      env.type === 'secret'
-                        ? 'bg-purple-500/10 text-purple-600'
-                        : 'bg-blue-500/10 text-blue-600'
-                    )}>
-                      {env.type === 'secret' ? 'Secret' : 'Config'}
-                    </span>
-                  </td>
-                  <td className="px-4">
-                    <div className="flex items-center justify-end gap-1">
-                      {env.type === 'secret' && (
+          {envvars.length === 0 ? (
+            <div className="px-4 py-10 text-center text-[13px] text-muted-foreground">No ConfigMap or Secret keys found.</div>
+          ) : (
+            <table className="w-full text-left text-[13px]">
+              <thead>
+                <tr className="border-b border-border/50 bg-accent/30">
+                  <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Key</th>
+                  <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Value</th>
+                  <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Source</th>
+                  <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Type</th>
+                  <th className="w-20 px-4 py-2.5"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {envvars.map((env) => (
+                  <tr key={env.id} className="h-12 border-b border-border/30 transition-colors hover:bg-accent/20">
+                    <td className="px-4">
+                      <span className="font-mono text-[12px] font-medium text-foreground">{env.key}</span>
+                    </td>
+                    <td className="max-w-[320px] px-4">
+                      <span className="block truncate font-mono text-[12px] text-muted-foreground">
+                        {env.type === 'secret' && !revealedSecrets.has(env.id)
+                          ? '••••••••••••'
+                          : env.value}
+                      </span>
+                    </td>
+                    <td className="px-4">
+                      <span className="font-mono text-[11px] text-muted-foreground/70">{env.source}</span>
+                    </td>
+                    <td className="px-4">
+                      <span className={cn(
+                        'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                        env.type === 'secret'
+                          ? 'bg-purple-500/10 text-purple-600'
+                          : 'bg-blue-500/10 text-blue-600'
+                      )}>
+                        {env.type === 'secret' ? 'Secret' : 'Config'}
+                      </span>
+                    </td>
+                    <td className="px-4">
+                      <div className="flex items-center justify-end gap-1">
+                        {env.type === 'secret' && (
+                          <button
+                            className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-muted-foreground"
+                            onClick={() => toggleReveal(env.id)}
+                          >
+                            {revealedSecrets.has(env.id)
+                              ? <EyeOff className="h-3.5 w-3.5" />
+                              : <Eye className="h-3.5 w-3.5" />}
+                          </button>
+                        )}
                         <button
                           className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-muted-foreground"
-                          onClick={() => toggleReveal(env.key)}
+                          onClick={() => {
+                            setMutationError(null)
+                            setDialog({ kind: 'env', mode: 'edit', item: env })
+                          }}
                         >
-                          {revealedSecrets.has(env.key)
-                            ? <EyeOff className="h-3.5 w-3.5" />
-                            : <Eye className="h-3.5 w-3.5" />}
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
-                      )}
-                      <button className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-muted-foreground">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-red-500">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        <button
+                          className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-red-500"
+                          onClick={() => runMutation(() => deleteEnvVar(env))}
+                          disabled={saving}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
       {/* Config files table */}
-      {activeSection === 'files' && (
+      {!loading && !error && activeSection === 'files' && (
         <div className="mt-4 overflow-hidden rounded-xl border border-border/50">
-          <table className="w-full text-left text-[13px]">
-            <thead>
-              <tr className="border-b border-border/50 bg-accent/30">
-                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">File Name</th>
-                <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Size</th>
-                <th className="w-20 px-4 py-2.5"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {files.map((file) => (
-                <tr key={file.name} className="h-12 border-b border-border/30 transition-colors hover:bg-accent/20">
-                  <td className="px-4">
-                    <div className="flex items-center gap-2">
-                      <FileIcon className="h-4 w-4 text-muted-foreground/50" />
-                      <span className="font-mono text-[12px] font-medium text-foreground">{file.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 text-[12px] text-muted-foreground">{file.size}</td>
-                  <td className="px-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <button className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-muted-foreground">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-red-500">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
+          {files.length === 0 ? (
+            <div className="px-4 py-10 text-center text-[13px] text-muted-foreground">No file-like config keys found.</div>
+          ) : (
+            <table className="w-full text-left text-[13px]">
+              <thead>
+                <tr className="border-b border-border/50 bg-accent/30">
+                  <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">File Name</th>
+                  <th className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">ConfigMap</th>
+                  <th className="w-20 px-4 py-2.5"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {files.map((file) => (
+                  <tr key={file.id} className="h-12 border-b border-border/30 transition-colors hover:bg-accent/20">
+                    <td className="px-4">
+                      <div className="flex items-center gap-2">
+                        <FileIcon className="h-4 w-4 text-muted-foreground/50" />
+                        <span className="font-mono text-[12px] font-medium text-foreground">{file.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 font-mono text-[11px] text-muted-foreground/70">{file.configMapName}</td>
+                    <td className="px-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-muted-foreground"
+                          onClick={() => {
+                            setMutationError(null)
+                            setDialog({ kind: 'file', mode: 'edit', item: file })
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          className="rounded p-1 text-muted-foreground/40 transition-colors hover:bg-accent hover:text-red-500"
+                          onClick={() => runMutation(() => deleteFile(file))}
+                          disabled={saving}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
+      )}
+
+      {dialog && (
+        <ConfigEditorDialog
+          dialog={dialog}
+          saving={saving}
+          error={mutationError}
+          onClose={() => {
+            if (!saving) {
+              setDialog(null)
+              setMutationError(null)
+            }
+          }}
+          onSaveEnv={(input) => runMutation(() => saveEnvVar(input))}
+          onSaveFile={(input) => runMutation(() => saveFile(input))}
+        />
       )}
     </div>
   )
@@ -612,7 +1088,51 @@ function SnapshotsView({ envHash, envName }: { envHash: string; envName: string 
   return <SnapshotTree snapshots={snapshots} title="Snapshots" subtitle={`${snapshots.length} snapshots for ${envName}`} />
 }
 
-function SettingsView({ envName, envHash }: { envName: string; envHash: string }) {
+function SettingsView({ envName, envHash, onDeleted }: { envName: string; envHash: string; onDeleted?: () => void }) {
+  const [deactivating, setDeactivating] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+
+  const [confirmAction, setConfirmAction] = useState<{ label: string; description: string; action: () => Promise<void> } | null>(null)
+
+  async function deactivate() {
+    setConfirmAction({
+      label: `Deactivate "${envName}"`,
+      description: 'Services will be suspended. You can reactivate later.',
+      action: async () => {
+        setDeactivating(true)
+        setSettingsError(null)
+        try {
+          const result = await window.electronAPI.patchResource(API_NAMESPACE, 'environments', envName, {
+            apiVersion: 'environments.kloudlite.io/v1',
+            kind: 'Environment',
+            metadata: { name: envName, namespace: API_NAMESPACE },
+            spec: { activated: false },
+          })
+          if ((result as any).error) throw new Error((result as any).error)
+        } catch (err) {
+          setSettingsError((err as Error).message)
+        } finally {
+          setDeactivating(false)
+        }
+      },
+    })
+  }
+
+  async function deleteEnvironment() {
+    setConfirmAction({
+      label: `Delete "${envName}"`,
+      description: 'This cannot be undone. All services, configs, and data will be permanently removed.',
+      action: async () => {
+        // Close dialog and navigate back immediately
+        setConfirmAction(null)
+        onDeleted?.()
+        // Delete runs in background — store marks as deleting, list shows "Deleting..."
+        useEnvironmentStore.getState().deleteEnvironment(API_NAMESPACE, envName)
+      },
+    })
+  }
+
   return (
     <div className="p-6">
       <h2 className="text-[16px] font-semibold text-foreground">Settings</h2>
@@ -657,20 +1177,49 @@ function SettingsView({ envName, envHash }: { envName: string; envHash: string }
           </div>
         </div>
 
+        {settingsError && (
+          <div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] px-4 py-3 text-[12px] text-red-500">
+            {settingsError}
+          </div>
+        )}
+
         {/* Danger Zone */}
         <div className="rounded-xl border border-red-500/20 bg-card p-5">
           <h3 className="text-[13px] font-semibold text-red-500">Danger Zone</h3>
           <p className="mt-1 text-[12px] text-muted-foreground">These actions are destructive and cannot be undone.</p>
           <div className="mt-3 flex gap-2">
-            <button className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20">
+            <Button variant="danger" size="sm" onClick={deactivate} disabled={deactivating || deleting} loading={deactivating}>
               Deactivate Environment
-            </button>
-            <button className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/20">
+            </Button>
+            <Button variant="danger" size="sm" onClick={deleteEnvironment} disabled={deactivating || deleting} loading={deleting}>
               Delete Environment
-            </button>
+            </Button>
           </div>
         </div>
       </div>
+
+      {confirmAction && (
+        <Dialog
+          title={confirmAction.label}
+          description={confirmAction.description}
+          onClose={() => setConfirmAction(null)}
+          footer={(close) => (
+            <div className="flex w-full gap-2">
+              <Button variant="secondary" className="flex-1" onClick={close} disabled={deactivating || deleting}>Cancel</Button>
+              <Button variant="danger" className="flex-1" disabled={deactivating || deleting} loading={deactivating || deleting} onClick={async () => { await confirmAction.action(); setConfirmAction(null); close() }}>
+                Confirm
+              </Button>
+            </div>
+          )}
+        >
+          <div className="flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/[0.04] px-4 py-3">
+            <div className="h-8 w-8 shrink-0 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg className="h-4 w-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            </div>
+            <p className="text-[12px] text-foreground leading-relaxed">{confirmAction.description}</p>
+          </div>
+        </Dialog>
+      )}
     </div>
   )
 }
@@ -714,80 +1263,100 @@ function CompositionView({ envHash }: { envHash: string }) {
 export function NewEnvironmentDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'shared' | 'open'>('private')
-  const [exiting, setExiting] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const closeRef = useRef<() => void>(() => onClose())
 
-  function close() {
-    setExiting(true)
-    setTimeout(onClose, 150)
+  async function createEnvironment() {
+    const envName = name.trim()
+    if (!envName) return
+    setCreating(true)
+    setCreateError(null)
+    try {
+      const sampleCompose = `version: "3.8"
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+`
+      const success = await useEnvironmentStore.getState().createEnvironment(API_NAMESPACE, envName, {
+        visibility,
+        compose: {
+          displayName: envName,
+          composeContent: sampleCompose,
+          composeFormat: 'v3.8',
+        },
+      })
+      if (success) closeRef.current()
+    } catch (err) {
+      setCreateError((err as Error).message)
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={close}>
-      <div
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl"
-        style={{ animation: exiting ? 'popover-out 150ms ease-in forwards' : 'popover-in 150ms ease-out' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-[16px] font-semibold text-foreground">Create Environment</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">Set up a new isolated environment</p>
+    <Dialog
+      title="Create Environment"
+      description="Set up a new isolated environment"
+      onClose={onClose}
+      maxWidth="28rem"
+      footer={(close) => {
+        closeRef.current = close
+        return (
+          <>
+            <Button variant="ghost" onClick={close} disabled={creating}>Cancel</Button>
+            <Button type="submit" form="create-env-form" disabled={!name.trim() || creating} loading={creating}>
+              Create Environment
+            </Button>
+          </>
+        )
+      }}
+    >
+      <form id="create-env-form" onSubmit={(e) => { e.preventDefault(); createEnvironment() }}>
+        {createError && <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-[12px] text-red-500">{createError}</div>}
+
+        <div className="mb-4">
+          <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
+          <input
+            type="text"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
+            placeholder="e.g. staging, development"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+          />
         </div>
 
-        <div className="flex flex-col gap-4 px-6 py-5">
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">Name</label>
-            <input
-              type="text"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13px] text-foreground outline-none transition-colors focus:border-primary"
-              placeholder="e.g. staging, development"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
+        <div>
+          <label className="mb-1.5 block text-[12px] font-medium text-foreground">Visibility</label>
+          <div className="flex gap-2">
+            {(['private', 'shared', 'open'] as const).map((v) => (
+              <button
+                type="button"
+                key={v}
+                className={cn(
+                  'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
+                  visibility === v ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-accent'
+                )}
+                onClick={() => setVisibility(v)}
+              >
+                {v}
+              </button>
+            ))}
           </div>
-
-          <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">Visibility</label>
-            <div className="flex gap-2">
-              {(['private', 'shared', 'open'] as const).map((v) => (
-                <button
-                  key={v}
-                  className={cn(
-                    'flex-1 rounded-lg border px-3 py-2 text-[12px] font-medium capitalize transition-colors',
-                    visibility === v
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:bg-accent'
-                  )}
-                  onClick={() => setVisibility(v)}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
-
-        <div className="flex justify-end gap-2 border-t border-border/30 px-6 py-4">
-          <button
-            className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent"
-            onClick={close}
-          >
-            Cancel
-          </button>
-          <button
-            className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            disabled={!name.trim()}
-            onClick={close}
-          >
-            Create Environment
-          </button>
-        </div>
-      </div>
-    </div>
+      </form>
+    </Dialog>
   )
 }
 
-export function EnvironmentContent({ envName, envHash, activeTab }: EnvironmentContentProps) {
+export function EnvironmentContent({ envName, envHash, activeTab, onDeleted }: EnvironmentContentProps) {
   // Services view needs full height (graph), others get scrollable max-width
   if (activeTab === 'services') {
     return (
@@ -800,9 +1369,9 @@ export function EnvironmentContent({ envName, envHash, activeTab }: EnvironmentC
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="mx-auto max-w-4xl">
-        {activeTab === 'configs' && <ConfigsView envHash={envHash} />}
+        {activeTab === 'configs' && <ConfigsView envHash={envHash} envName={envName} />}
         {activeTab === 'snapshots' && <SnapshotsView envHash={envHash} envName={envName} />}
-        {activeTab === 'settings' && <SettingsView envName={envName} envHash={envHash} />}
+        {activeTab === 'settings' && <SettingsView envName={envName} envHash={envHash} onDeleted={onDeleted} />}
       </div>
     </div>
   )

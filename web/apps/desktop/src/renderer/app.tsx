@@ -25,7 +25,7 @@ export function App() {
   const envHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const wsHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const { addTab, closeTab, activeTabId, tabs, setActiveTab } = useTabStore()
-  const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog, selectedWsId, selectedWsName, wsActiveTab, showNewWsDialog, setShowNewWsDialog } = useModeStore()
+  const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog, selectedWsId, selectedWsName, wsActiveTab, showNewWsDialog, setShowNewWsDialog, clearSelectedEnv } = useModeStore()
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [sidebarPeeking, setSidebarPeeking] = useState(false)
@@ -336,6 +336,7 @@ export function App() {
                     envName={selectedEnvName}
                     envHash={selectedEnvHash}
                     activeTab={envActiveTab}
+                    onDeleted={clearSelectedEnv}
                   />
                 </Suspense>
               ) : (

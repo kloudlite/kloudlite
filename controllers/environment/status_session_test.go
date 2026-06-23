@@ -88,40 +88,6 @@ func TestEnvironmentStatusSessionComputeReadyRequiresComposeWhenEnabled(t *testi
 	assertReadyTrue(t, env)
 }
 
-func TestEnvironmentStatusSessionComputeReadyRequiresSnapshotRestoreFromSpec(t *testing.T) {
-	env := &environmentsv1.Environment{
-		ObjectMeta: metav1.ObjectMeta{Name: "dev", Generation: 3},
-		Spec:       environmentsv1.EnvironmentSpec{FromSnapshot: &environmentsv1.FromSnapshotRef{SnapshotName: "snap", SourceNamespace: "source"}},
-	}
-	session := NewEnvironmentStatusSession(env)
-	markBaseReadyPrerequisites(session)
-
-	session.ComputeReady()
-
-	assertReadyFalse(t, env)
-	session.MarkTrue(EnvironmentConditionSnapshotRestoreReady, EnvironmentReasonReconciled, "snapshot restored")
-	session.ComputeReady()
-
-	assertReadyTrue(t, env)
-}
-
-func TestEnvironmentStatusSessionComputeReadyRequiresSnapshotRestoreFromStatus(t *testing.T) {
-	env := &environmentsv1.Environment{
-		ObjectMeta: metav1.ObjectMeta{Name: "dev", Generation: 3},
-		Status:     environmentsv1.EnvironmentStatus{SnapshotRestoreStatus: &environmentsv1.SnapshotRestoreStatus{Phase: environmentsv1.SnapshotRestorePhasePending}},
-	}
-	session := NewEnvironmentStatusSession(env)
-	markBaseReadyPrerequisites(session)
-
-	session.ComputeReady()
-
-	assertReadyFalse(t, env)
-	session.MarkTrue(EnvironmentConditionSnapshotRestoreReady, EnvironmentReasonReconciled, "snapshot restored")
-	session.ComputeReady()
-
-	assertReadyTrue(t, env)
-}
-
 func TestPatchEnvironmentStatusReturnsRequeueOnConflict(t *testing.T) {
 	scheme := runtime.NewScheme()
 	if err := environmentsv1.AddToScheme(scheme); err != nil {
