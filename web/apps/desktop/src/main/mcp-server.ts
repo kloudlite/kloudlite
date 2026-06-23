@@ -237,7 +237,7 @@ function handleJSONRPC(body: Record<string, unknown>, res: ServerResponse) {
       return
     }
 
-    handleToolCall(toolName, toolArgs)
+    handleToolCall(tool.name, toolArgs)
       .then((result) => {
         const content: unknown[] = []
 

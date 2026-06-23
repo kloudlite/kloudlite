@@ -215,7 +215,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
 
     window.electronAPI.listEnvironments(API_NAMESPACE).then((result) => {
       if (result.error) return
-      const env = (result.items || []).find((e: any) =>
+      const env = ((result.items || []) as any[]).find((e) =>
         e.metadata?.name === envName || e.metadata?.name === envHash || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
       )
       if (!env) {
@@ -302,7 +302,7 @@ function ServicesView({ envHash, envName }: { envHash: string; envName: string }
             // Always fetch latest compose from API when opening
             try {
               const result = await window.electronAPI.listEnvironments(API_NAMESPACE)
-              const env = (result?.items || []).find((e: any) =>
+              const env = ((result?.items || []) as any[]).find((e) =>
                 e.metadata?.name === envName || e.metadata?.labels?.['kloudlite.io/environment-name'] === envName
               )
               const cc = env?.spec?.compose?.composeContent

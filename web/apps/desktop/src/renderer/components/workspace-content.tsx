@@ -1,9 +1,12 @@
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { Monitor, Globe, Terminal, Laptop, ExternalLink, Copy, Check, Package, GitBranch, Trash2, Plus } from 'lucide-react'
+import { useWorkspaceStore, type Workspace } from '@/store/workspaces'
 import { SnapshotTree, generateSnapshots } from './snapshot-tree'
 import { EmptyState } from './empty-state'
-import { Dialog, FormField, TextInput } from './ui'
+import { Dialog, FormField, TextInput, Button } from './ui'
+
+const USER_NAMESPACE = 'wm-karthik-dev'
 
 interface WorkspaceContentProps {
   wsName: string
@@ -79,8 +82,11 @@ const IDE_OPTIONS = [
     { name: 'VS Code Web', icon: Globe, accent: '#007ACC' },
     { name: 'Terminal', icon: Terminal, accent: '#22C55E' },
   ]},
-  { category: 'AI Assistants', items: [
+  { category: 'AI', items: [
     { name: 'Claude Code', icon: Terminal, accent: '#D97706' },
+    { name: 'OpenCode', icon: Terminal, accent: '#38BDF8' },
+    { name: 'PI', icon: Terminal, accent: '#A855F7' },
+    { name: 'Codex', icon: Terminal, accent: '#10B981' },
   ]},
 ]
 
@@ -96,12 +102,28 @@ function CopyBtn({ text }: { text: string }) {
   )
 }
 
-function ConnectView({ wsId, wsName }: { wsId: string; wsName: string }) {
-  const data = WS_DATA[wsId]
+function WorkspacePage({ children }: { children: ReactNode }) {
+  return (
+    <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col px-6 py-6">
+      {children}
+    </div>
+  )
+}
+
+function ConnectView({ wsId, wsName, workspace }: { wsId: string; wsName: string; workspace?: Workspace }) {
+  const dummyData = WS_DATA[wsId]
+  const data = workspace ? {
+    status: workspace.status,
+    env: workspace.environmentName || workspace.namespace,
+    git: workspace.git || '',
+    branch: workspace.branch || '',
+    ports: [],
+    packages: [],
+  } : dummyData
   const isRunning = data?.status === 'running'
 
   return (
-    <div className="p-6">
+    <WorkspacePage>
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className={cn(
@@ -194,7 +216,7 @@ function ConnectView({ wsId, wsName }: { wsId: string; wsName: string }) {
           )}
         </>
       )}
-    </div>
+    </WorkspacePage>
   )
 }
 
@@ -203,7 +225,7 @@ function PackagesView({ wsId }: { wsId: string }) {
   const packages = data?.packages || []
 
   return (
-    <div className="p-6">
+    <WorkspacePage>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">Packages</h2>
@@ -245,7 +267,7 @@ function PackagesView({ wsId }: { wsId: string }) {
           </tbody>
         </table>
       </div>
-    </div>
+    </WorkspacePage>
   )
 }
 
@@ -254,16 +276,27 @@ function GitView({ wsId }: { wsId: string }) {
 
   if (!data?.git) {
     return (
-      <EmptyState
-        title="No git repository configured"
-        description="Connect a repository to enable git integration"
-        action={{ label: 'Connect Repository', onClick: () => {} }}
-      />
+      <WorkspacePage>
+        <div className="rounded-xl border border-border/50 bg-card p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground/60">
+              <GitBranch className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[16px] font-semibold text-foreground">No git repository configured</h2>
+              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">Connect a repository to enable git integration for this workspace.</p>
+              <Button variant="secondary" size="sm" className="mt-4" onClick={() => {}}>
+                Connect Repository
+              </Button>
+            </div>
+          </div>
+        </div>
+      </WorkspacePage>
     )
   }
 
   return (
-    <div className="p-6">
+    <WorkspacePage>
       <h2 className="text-[16px] font-semibold text-foreground">Git Repository</h2>
 
       <div className="mt-4 rounded-xl border border-border/50 bg-card p-5">
@@ -281,7 +314,7 @@ function GitView({ wsId }: { wsId: string }) {
           </div>
         </div>
       </div>
-    </div>
+    </WorkspacePage>
   )
 }
 
@@ -289,7 +322,7 @@ function WsSettingsView({ wsName, wsId }: { wsName: string; wsId: string }) {
   const data = WS_DATA[wsId]
 
   return (
-    <div className="p-6">
+    <WorkspacePage>
       <h2 className="text-[16px] font-semibold text-foreground">Settings</h2>
 
       <div className="mt-5 flex flex-col gap-5">
@@ -323,23 +356,28 @@ function WsSettingsView({ wsName, wsId }: { wsName: string; wsId: string }) {
           </div>
         </div>
       </div>
-    </div>
+    </WorkspacePage>
   )
 }
 
 export function WorkspaceContent({ wsName, wsId, activeTab }: WorkspaceContentProps) {
+  const workspace = useWorkspaceStore((s) => s.workspaces.find((w) => w.id === wsId))
+
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto max-w-4xl">
-        {activeTab === 'connect' && <ConnectView wsId={wsId} wsName={wsName} />}
+      <div className="min-h-full">
+        {activeTab === 'connect' && <ConnectView wsId={wsId} wsName={wsName} workspace={workspace} />}
         {activeTab === 'packages' && <PackagesView wsId={wsId} />}
         {activeTab === 'git' && <GitView wsId={wsId} />}
         {activeTab === 'snapshots' && (
-          <SnapshotTree
-            snapshots={generateSnapshots(`ws-${wsId}`)}
-            title="Snapshots"
-            subtitle={`Snapshots for ${wsName}`}
-          />
+          <WorkspacePage>
+            <SnapshotTree
+              snapshots={generateSnapshots(`ws-${wsId}`)}
+              title="Snapshots"
+              subtitle={`Snapshots for ${wsName}`}
+              className=""
+            />
+          </WorkspacePage>
         )}
         {activeTab === 'settings' && <WsSettingsView wsName={wsName} wsId={wsId} />}
       </div>
@@ -351,28 +389,74 @@ export function NewWorkspaceDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'shared'>('private')
   const [gitUrl, setGitUrl] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const closeRef = useRef<(() => void) | null>(null)
+
+  async function createWorkspace(close: () => void) {
+    const workspaceName = name.trim()
+    if (!workspaceName) return
+
+    setCreating(true)
+    setError(null)
+    try {
+      const spec: Record<string, unknown> = {
+        visibility,
+      }
+      if (gitUrl.trim()) {
+        spec.gitRepository = { url: gitUrl.trim() }
+      }
+
+      const ok = await useWorkspaceStore.getState().createWorkspace(USER_NAMESPACE, workspaceName, spec)
+      if (!ok) {
+        setError(useWorkspaceStore.getState().error || 'Failed to create workspace')
+        return
+      }
+      close()
+    } finally {
+      setCreating(false)
+    }
+  }
 
   return (
     <Dialog
       title="Create Workspace"
       description="Set up a new development workspace"
       onClose={onClose}
-      footer={(close) => (
-        <>
-          <button className="rounded-lg px-4 py-2 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-accent" onClick={close}>
-            Cancel
-          </button>
-          <button
-            className="rounded-lg bg-primary px-4 py-2 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            disabled={!name.trim()}
-            onClick={close}
-          >
-            Create Workspace
-          </button>
-        </>
-      )}
+      footer={(close) => {
+        closeRef.current = close
+        return (
+          <div className="flex w-full gap-2">
+            <Button type="button" variant="secondary" className="flex-1" onClick={close} disabled={creating}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="create-workspace-form"
+              className="flex-1"
+              disabled={!name.trim() || creating}
+              loading={creating}
+            >
+              Create Workspace
+            </Button>
+          </div>
+        )
+      }}
     >
-      <div className="flex flex-col gap-4">
+      <form
+        id="create-workspace-form"
+        className="flex flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault()
+          const close = closeRef.current
+          if (close) createWorkspace(close)
+        }}
+      >
+        {error && (
+          <div className="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-3 py-2 text-[12px] text-red-400">
+            {error}
+          </div>
+        )}
         <FormField label="Name">
           <TextInput
             placeholder="e.g. api-dev, frontend-dev"
@@ -386,6 +470,7 @@ export function NewWorkspaceDialog({ onClose }: { onClose: () => void }) {
           <div className="flex gap-2">
             {(['private', 'shared'] as const).map((v) => (
               <button
+                type="button"
                 key={v}
                 className={
                   visibility === v
@@ -407,7 +492,7 @@ export function NewWorkspaceDialog({ onClose }: { onClose: () => void }) {
             onChange={(e) => setGitUrl(e.target.value)}
           />
         </FormField>
-      </div>
+      </form>
     </Dialog>
   )
 }

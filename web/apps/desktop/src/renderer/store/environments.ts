@@ -32,6 +32,21 @@ interface EnvironmentStore {
   deletingEnvs: Set<string>
 }
 
+export function mapEnvironmentResource(item: any, namespace: string): Environment {
+  const name = item.metadata?.name || item.name || 'unknown'
+  const isDeleting = Boolean(item.metadata?.deletionTimestamp)
+
+  return {
+    id: name,
+    name,
+    slug: name,
+    status: isDeleting ? 'deleting' : item.spec?.activated ? 'active' : 'inactive',
+    services: [],
+    namespace: item.metadata?.namespace || namespace,
+    ownedBy: item.spec?.ownedBy,
+  }
+}
+
 export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
   environments: [],
   selectedEnvironmentId: null,
@@ -55,15 +70,7 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
         set({ error: result.error, loading: false, refreshing: false })
         return
       }
-      const envs: Environment[] = (result.items || []).map((item: any) => ({
-        id: item.metadata?.name || item.name,
-        name: item.metadata?.name || item.name || 'unknown',
-        slug: item.metadata?.name || item.name || 'unknown',
-        status: item.spec?.activated ? 'active' : 'inactive',
-        services: [],
-        namespace: item.metadata?.namespace || namespace,
-        ownedBy: item.spec?.ownedBy,
-      }))
+      const envs: Environment[] = (result.items || []).map((item: any) => mapEnvironmentResource(item, namespace))
       set({
         environments: envs,
         loading: false,
@@ -85,7 +92,7 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
         ...spec,
       }
       await window.electronAPI.createEnvironment(namespace, name, fullSpec)
-      await get().fetchEnvironments(namespace)
+      await get().fetchEnvironments(namespace, true)
       return true
     } catch (err) {
       set({ error: (err as Error).message })
@@ -105,7 +112,7 @@ export const useEnvironmentStore = create<EnvironmentStore>((set, get) => ({
         set({ error: result.error })
         return false
       }
-      await get().fetchEnvironments(namespace)
+      await get().fetchEnvironments(namespace, true)
       return true
     } catch (err) {
       set({ error: (err as Error).message })
