@@ -255,7 +255,7 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
           }}
         >
           <div className="h-full overflow-y-auto" style={{ width: `${100 / MODES.length}%` }}>
-            <SidebarEnvironments onNavigate={onDashboardNavigate} />
+            <SidebarEnvironments />
           </div>
           <div className="h-full overflow-y-auto" style={{ width: `${100 / MODES.length}%` }}>
             <SidebarWorkspaces />

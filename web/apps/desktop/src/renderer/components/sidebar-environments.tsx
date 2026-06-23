@@ -20,6 +20,16 @@ export function SidebarEnvironments() {
   const { selectedEnvId, envActiveTab, selectEnvironment, setEnvActiveTab, clearSelectedEnv, setShowNewEnvDialog } = useModeStore()
   const { environments: envs, loading, refreshing, error, fetchEnvironments, deletingEnvs } = useEnvironmentStore()
   const selectedEnv = envs.find((e) => e.id === selectedEnvId)
+  const isEnvDeleting = (env: { name: string; status: string }) => env.status === 'deleting' || deletingEnvs.has(env.name)
+
+  function DeletingBadge() {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/[0.08] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-300/90">
+        <Loader2 className="h-2.5 w-2.5 animate-spin" />
+        Deleting
+      </span>
+    )
+  }
 
   async function handleDeleteEnv(envName: string) {
     await useEnvironmentStore.getState().deleteEnvironment(USER_NAMESPACE, envName)
@@ -73,17 +83,23 @@ export function SidebarEnvironments() {
 
         <div className="shrink-0 px-5 pb-3">
           <div className="flex items-center gap-2">
-            <div className={cn(
-              'h-2.5 w-2.5 shrink-0 rounded-full',
-              deletingEnvs.has(selectedEnv.name) ? 'bg-amber-400 animate-pulse' :
-              selectedEnv.status === 'active' ? 'bg-emerald-400' : selectedEnv.status === 'error' ? 'bg-red-400' : 'bg-sidebar-foreground/25'
-            )} />
+            {isEnvDeleting(selectedEnv) ? (
+              <span className="flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full border border-amber-300/40 bg-amber-400/10">
+                <Loader2 className="h-2 w-2 animate-spin text-amber-300" />
+              </span>
+            ) : (
+              <div className={cn(
+                'h-2.5 w-2.5 shrink-0 rounded-full',
+                selectedEnv.status === 'active' ? 'bg-emerald-400' : selectedEnv.status === 'error' ? 'bg-red-400' : 'bg-sidebar-foreground/25'
+              )} />
+            )}
             <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-sidebar-foreground/90">
               {selectedEnv.name}
-              {deletingEnvs.has(selectedEnv.name) && <span className="ml-2 text-[11px] font-normal text-amber-400">Deleting...</span>}
             </h2>
+            {isEnvDeleting(selectedEnv) && <DeletingBadge />}
             <IconButton
               size="sm"
+              disabled={isEnvDeleting(selectedEnv)}
               onClick={async () => {
                 const action = await window.electronAPI.showPopupMenu([
                   { label: 'Refresh', id: 'refresh' },
@@ -164,8 +180,10 @@ export function SidebarEnvironments() {
             <SidebarListItem
               key={env.id}
               icon={
-                deletingEnvs.has(env.name) ? (
-                  <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                isEnvDeleting(env) ? (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/[0.08] text-amber-300/90">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  </span>
                 ) : (
                   <div className={cn(
                     'h-2 w-2 rounded-full',
@@ -173,8 +191,9 @@ export function SidebarEnvironments() {
                   )} />
                 )
               }
-              label={deletingEnvs.has(env.name) ? `${env.name} (Deleting...)` : env.name}
-              disabled={deletingEnvs.has(env.name)}
+              label={env.name}
+              right={isEnvDeleting(env) ? <DeletingBadge /> : undefined}
+              disabled={isEnvDeleting(env)}
               onClick={() => selectEnvironment(env.id, env.name, env.name)}
               onContextMenu={async (e) => {
                 e.preventDefault()

@@ -19,6 +19,10 @@ if (process.platform === 'darwin') {
   app.setName('Kloudlite')
 }
 
+function sendToMenuWindow(window: Electron.BaseWindow | undefined, channel: string, ...args: string[]): void {
+  if (window instanceof BrowserWindow) window.webContents.send(channel, ...args)
+}
+
 function createWindow(): BrowserWindow {
   const iconPath = process.platform === 'darwin'
     ? join(__dirname, '../../resources/icon.icns')
@@ -98,21 +102,21 @@ function createAppMenu(): void {
           label: 'New Tab',
           accelerator: 'CmdOrCtrl+T',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'new-tab')
+            sendToMenuWindow(window, 'shortcut', 'new-tab')
           }
         },
         {
           label: 'Address Bar',
           accelerator: 'CmdOrCtrl+L',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'address-bar')
+            sendToMenuWindow(window, 'shortcut', 'address-bar')
           }
         },
         {
           label: 'Close Tab',
           accelerator: 'CmdOrCtrl+W',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'close-tab')
+            sendToMenuWindow(window, 'shortcut', 'close-tab')
           }
         },
         { type: 'separator' },
@@ -120,21 +124,21 @@ function createAppMenu(): void {
           label: 'Reload Tab',
           accelerator: 'CmdOrCtrl+R',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'reload')
+            sendToMenuWindow(window, 'shortcut', 'reload')
           }
         },
         {
           label: 'Go Back',
           accelerator: 'CmdOrCtrl+[',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-back')
+            sendToMenuWindow(window, 'shortcut', 'go-back')
           }
         },
         {
           label: 'Go Back (Arrow)',
           accelerator: 'CmdOrCtrl+Left',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-back')
+            sendToMenuWindow(window, 'shortcut', 'go-back')
           },
           visible: false
         },
@@ -142,14 +146,14 @@ function createAppMenu(): void {
           label: 'Go Forward',
           accelerator: 'CmdOrCtrl+]',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-forward')
+            sendToMenuWindow(window, 'shortcut', 'go-forward')
           }
         },
         {
           label: 'Go Forward (Arrow)',
           accelerator: 'CmdOrCtrl+Right',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'go-forward')
+            sendToMenuWindow(window, 'shortcut', 'go-forward')
           },
           visible: false
         },
@@ -162,21 +166,21 @@ function createAppMenu(): void {
           label: 'Environments',
           accelerator: 'CmdOrCtrl+1',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'mode-1')
+            sendToMenuWindow(window, 'shortcut', 'mode-1')
           }
         },
         {
           label: 'Workspaces',
           accelerator: 'CmdOrCtrl+2',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'mode-2')
+            sendToMenuWindow(window, 'shortcut', 'mode-2')
           }
         },
         {
           label: 'Browse',
           accelerator: 'CmdOrCtrl+3',
           click: (_item, window) => {
-            window?.webContents.send('shortcut', 'mode-3')
+            sendToMenuWindow(window, 'shortcut', 'mode-3')
           }
         },
       ]
@@ -202,7 +206,7 @@ function createAppMenu(): void {
           label: 'Toggle Shell DevTools',
           accelerator: 'Alt+CmdOrCtrl+I',
           click: (_item, window) => {
-            window?.webContents.toggleDevTools()
+            if (window instanceof BrowserWindow) window.webContents.toggleDevTools()
           }
         }
       ]
@@ -479,6 +483,16 @@ ipcMain.handle('api:create-workspace', async (_event, namespace: string, name: s
   }
 })
 
+// IPC: Platform API — delete workspace
+ipcMain.handle('api:delete-workspace', async (_event, namespace: string, name: string) => {
+  try {
+    await platformAPI.deleteWorkspace(namespace, name)
+    return { success: true }
+  } catch (err) {
+    return { error: (err as Error).message }
+  }
+})
+
 // IPC: Platform API — list work machines
 ipcMain.handle('api:list-workmachines', async () => {
   try {
@@ -536,7 +550,7 @@ app.whenReady().then(() => {
       const iconPath = join(__dirname, '../../resources/icon.png')
       const icon = nativeImage.createFromPath(iconPath)
       if (!icon.isEmpty()) {
-        app.dock.setIcon(icon)
+        app.dock?.setIcon(icon)
       }
     }
 
