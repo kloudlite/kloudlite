@@ -18,6 +18,30 @@ export interface Environment {
   ownedBy?: string
 }
 
+export const DUMMY_ENVIRONMENTS: Environment[] = [
+  {
+    id: 'demo-production',
+    name: 'demo-production',
+    slug: 'demo-production',
+    status: 'active',
+    namespace: 'wm-demo',
+    services: [
+      { id: 'prod-api', name: 'api', port: 8080, dnsHostname: 'api.demo.local', vpnUrl: 'https://www.google.com' },
+      { id: 'prod-web', name: 'web', port: 3000, dnsHostname: 'web.demo.local', vpnUrl: 'https://news.ycombinator.com' },
+    ],
+  },
+  {
+    id: 'demo-staging',
+    name: 'demo-staging',
+    slug: 'demo-staging',
+    status: 'active',
+    namespace: 'wm-demo',
+    services: [
+      { id: 'stage-dashboard', name: 'dashboard', port: 3001, dnsHostname: 'dashboard.demo.local', vpnUrl: 'https://example.com' },
+    ],
+  },
+]
+
 interface EnvironmentStore {
   environments: Environment[]
   selectedEnvironmentId: string | null

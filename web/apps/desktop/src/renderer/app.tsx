@@ -169,13 +169,19 @@ export function App() {
           break
         }
         case 'reload':
-          getActiveReload()
+          if (currentMode === 'environments') envHandleRef.current?.reload()
+          else if (currentMode === 'workspaces') wsHandleRef.current?.reload()
+          else handleRef.current?.reload()
           break
         case 'go-back':
-          getActiveGoBack()
+          if (currentMode === 'environments') envHandleRef.current?.goBack()
+          else if (currentMode === 'workspaces') wsHandleRef.current?.goBack()
+          else handleRef.current?.goBack()
           break
         case 'go-forward':
-          getActiveGoForward()
+          if (currentMode === 'environments') envHandleRef.current?.goForward()
+          else if (currentMode === 'workspaces') wsHandleRef.current?.goForward()
+          else handleRef.current?.goForward()
           break
         case 'toggle-sidebar':
           setSidebarVisible((v) => !v)
@@ -189,6 +195,56 @@ export function App() {
           break
       }
     })
+  }, [])
+
+  useEffect(() => {
+    function isEditable(target: EventTarget | null) {
+      const el = target as HTMLElement | null
+      if (!el) return false
+      return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
+    }
+
+    function selectRelativeTab(offset: 1 | -1) {
+      const { tabs, activeTabId, setActiveTab } = useTabStore.getState()
+      if (tabs.length < 2) return
+      const idx = tabs.findIndex((t) => t.id === activeTabId)
+      if (idx === -1) return
+      setActiveTab(tabs[(idx + offset + tabs.length) % tabs.length].id)
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      const currentMode = useModeStore.getState().mode
+
+      if (e.ctrlKey && e.key === 'Tab') {
+        e.preventDefault()
+        if (currentMode === 'browse') selectRelativeTab(e.shiftKey ? -1 : 1)
+        return
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') {
+        e.preventDefault()
+        if (currentMode === 'environments') envHandleRef.current?.reload()
+        else if (currentMode === 'workspaces') wsHandleRef.current?.reload()
+        else handleRef.current?.reload()
+        return
+      }
+
+      if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isEditable(e.target)) return
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        if (currentMode === 'environments') envHandleRef.current?.goBack()
+        else if (currentMode === 'workspaces') wsHandleRef.current?.goBack()
+        else handleRef.current?.goBack()
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        if (currentMode === 'environments') envHandleRef.current?.goForward()
+        else if (currentMode === 'workspaces') wsHandleRef.current?.goForward()
+        else handleRef.current?.goForward()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [])
 
   // Loading indicator with fade-out (browse mode only)
