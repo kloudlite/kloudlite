@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { PanelLeft, ArrowLeft, ArrowRight, RotateCw, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModeStore, type AppMode } from '@/store/mode'
@@ -60,6 +61,13 @@ interface NavPopoverProps {
 
 function NavHistoryPopover({ direction, items, currentUrl, onNavigate, onClose, buttonRef }: NavPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null)
+  const [closing, setClosing] = useState(false)
+
+  function close() {
+    if (closing) return
+    setClosing(true)
+    setTimeout(onClose, 140)
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -69,25 +77,38 @@ function NavHistoryPopover({ direction, items, currentUrl, onNavigate, onClose, 
         buttonRef.current &&
         !buttonRef.current.contains(e.target as Node)
       ) {
-        onClose()
+        close()
       }
     }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') close()
+    }
+
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose, buttonRef])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [buttonRef, closing])
 
   if (items.length === 0) return null
 
   const displayItems = direction === 'back' ? items.slice().reverse() : items
 
-  return (
+  return createPortal(
+    <>
+    <div className="fixed inset-0 z-[999]" onMouseDown={close} />
     <div
       ref={popoverRef}
-      className="fixed z-50 w-72 overflow-hidden rounded-xl border border-sidebar-border bg-sidebar shadow-2xl"
-      style={{
+      className="fixed z-[1000] w-72 overflow-hidden rounded-xl border border-sidebar-border bg-sidebar shadow-2xl"
+      style={{ 
         top: buttonRef.current ? buttonRef.current.getBoundingClientRect().bottom + 4 : 0,
         left: buttonRef.current ? buttonRef.current.getBoundingClientRect().left : 0,
-        maxHeight: 'min(300px, 50vh)'
+        maxHeight: 'min(300px, 50vh)',
+        transformOrigin: 'top left',
+        animation: `${closing ? 'dropdown-out 140ms ease-in forwards' : 'dropdown-in 180ms cubic-bezier(0.22,1,0.36,1)'}`
       }}
     >
       <div className="overflow-y-auto py-1">
@@ -102,7 +123,7 @@ function NavHistoryPopover({ direction, items, currentUrl, onNavigate, onClose, 
                   ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
               )}
-              onClick={() => { onNavigate(url); onClose() }}
+              onClick={() => { onNavigate(url); close() }}
             >
               <Globe className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/40" />
               <div className="min-w-0 flex-1">
@@ -113,6 +134,8 @@ function NavHistoryPopover({ direction, items, currentUrl, onNavigate, onClose, 
         })}
       </div>
     </div>
+    </>,
+    document.body
   )
 }
 
