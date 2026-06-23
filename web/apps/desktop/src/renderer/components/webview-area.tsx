@@ -156,6 +156,18 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
               setNavFlash(direction)
               setTimeout(() => setNavFlash(null), 500)
             }
+          } else if (e.channel === 'shortcut') {
+            const store = useTabStore.getState()
+            if (store.activeTabId !== tabId || !readyRefs.current.has(tabId)) return
+            const action = e.args[0] as 'go-back' | 'go-forward' | 'reload' | 'next-tab' | 'prev-tab'
+            if (action === 'go-back') wv.goBack()
+            else if (action === 'go-forward') wv.goForward()
+            else if (action === 'reload') wv.reload()
+            else if (store.tabs.length > 1) {
+              const idx = store.tabs.findIndex((t) => t.id === store.activeTabId)
+              const offset = action === 'next-tab' ? 1 : -1
+              if (idx >= 0) store.setActiveTab(store.tabs[(idx + offset + store.tabs.length) % store.tabs.length].id)
+            }
           } else if (e.channel === 'page-metadata') {
             const metadata = e.args[0] as PageMetadata
             const currentUrl = wv.getURL()

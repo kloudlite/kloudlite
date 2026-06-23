@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, type KeyboardEvent }
 import { Search, ArrowRight, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTabStore, type Tab } from '@/store/tabs'
-import { useEnvironmentStore } from '@/store/environments'
+import { DUMMY_ENVIRONMENTS, useEnvironmentStore } from '@/store/environments'
 
 const ENTER_ANIM = 'popover-in 150ms ease-out'
 const EXIT_ANIM = 'popover-out 150ms ease-in forwards'
@@ -33,7 +33,8 @@ interface NewTabBarProps {
 
 export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
   const { tabs, activeTabId, setActiveTab, addTab } = useTabStore()
-  const selectedEnv = useEnvironmentStore((s) => s.environments.find(e => e.id === s.selectedEnvironmentId))
+  const environments = useEnvironmentStore((s) => s.environments)
+  const browseEnvironments = environments.length > 0 ? environments : DUMMY_ENVIRONMENTS
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [exiting, setExiting] = useState(false)
@@ -59,16 +60,18 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
 
   // Filter available services (not already open)
   const availableServices = useMemo(() => {
-    if (!selectedEnv) return []
-    const services = selectedEnv.services.filter((s) => !openTabUrls.has(normalizeForDedup(s.vpnUrl)))
+    const services = browseEnvironments.flatMap((env) =>
+      env.services.map((svc) => ({ ...svc, envName: env.name }))
+    ).filter((s) => !openTabUrls.has(normalizeForDedup(s.vpnUrl)))
     const q = query.toLowerCase().trim()
     if (!q) return services
     return services.filter((s) =>
       s.name.toLowerCase().includes(q) ||
+      s.envName.toLowerCase().includes(q) ||
       s.dnsHostname.toLowerCase().includes(q) ||
       String(s.port).includes(q)
     )
-  }, [query, selectedEnv, openTabUrls])
+  }, [query, browseEnvironments, openTabUrls])
 
   const totalItems = filteredOpenTabs.length + availableServices.length
 
@@ -133,7 +136,7 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Search services${selectedEnv ? ` in ${selectedEnv.name}` : ''}...`}
+            placeholder="Search services..."
             spellCheck={false}
           />
         </div>
@@ -145,7 +148,7 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
               <div
                 key={tab.id}
                 className={cn(
-                  'mx-1.5 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
+                  'group mx-1.5 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
                   i === selectedIndex ? 'bg-accent/80' : 'hover:bg-accent/50'
                 )}
                 onClick={() => { setActiveTab(tab.id); close() }}
@@ -159,7 +162,10 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
                   <span className="block truncate text-[13px] text-foreground">{tab.title || 'New Tab'}</span>
                   <span className="block truncate text-[11px] text-muted-foreground/60">{extractDomain(tab.url)}</span>
                 </div>
-                <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+                <span className={cn(
+                  'flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100',
+                  i === selectedIndex && 'opacity-100'
+                )}>
                   Switch to Tab <ArrowRight className="h-3 w-3" />
                 </span>
               </div>
@@ -168,28 +174,26 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
             {/* Available services */}
             {availableServices.length > 0 && (
               <>
-                {filteredOpenTabs.length > 0 && (
-                  <div className="mx-4 my-1 flex items-center gap-2 border-t border-border/20 pt-2">
-                    <span className="text-[11px] font-medium text-muted-foreground/50">Services</span>
-                  </div>
-                )}
+                <div className={cn('mx-4 mb-1 flex items-center gap-2', filteredOpenTabs.length > 0 && 'mt-1 border-t border-border/20 pt-2')}>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/45">HTTP services</span>
+                </div>
                 {availableServices.map((svc, i) => (
                   <div
-                    key={svc.id}
+                    key={`${svc.envName}-${svc.id}`}
                     className={cn(
-                      'mx-1.5 flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
-                      filteredOpenTabs.length + i === selectedIndex ? 'bg-accent/80' : 'hover:bg-accent/50'
+                      'mx-1.5 flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors',
+                      filteredOpenTabs.length + i === selectedIndex ? 'bg-accent/75' : 'hover:bg-accent/45'
                     )}
                     onClick={() => { addTab(svc.vpnUrl); close() }}
                   >
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-500/10">
-                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                    </div>
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/10">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] text-foreground">{svc.name}</span>
-                      <span className="block truncate text-[11px] text-muted-foreground/60">{svc.dnsHostname}</span>
+                      <span className="block truncate text-[13px] font-medium text-foreground">{svc.envName}/{svc.name}</span>
+                      <span className="block truncate text-[11px] text-muted-foreground/55">{svc.dnsHostname}</span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground/40">Open</span>
+                    <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">:{svc.port}</span>
                   </div>
                 ))}
               </>

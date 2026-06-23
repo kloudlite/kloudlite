@@ -6,6 +6,35 @@ document.addEventListener('contextmenu', (e) => {
   ipcRenderer.sendToHost('context-menu', e.screenX, e.screenY)
 })
 
+function isEditable(target: EventTarget | null) {
+  const el = target as HTMLElement | null
+  if (!el) return false
+  return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'Tab') {
+    e.preventDefault()
+    ipcRenderer.sendToHost('shortcut', e.shiftKey ? 'prev-tab' : 'next-tab')
+    return
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') {
+    e.preventDefault()
+    ipcRenderer.sendToHost('shortcut', 'reload')
+    return
+  }
+
+  if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isEditable(e.target)) return
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    ipcRenderer.sendToHost('shortcut', 'go-back')
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    ipcRenderer.sendToHost('shortcut', 'go-forward')
+  }
+}, true)
+
 // Simple swipe detection — no visual, just back/forward action
 let accumulator = 0
 let idleTimer: ReturnType<typeof setTimeout> | null = null
