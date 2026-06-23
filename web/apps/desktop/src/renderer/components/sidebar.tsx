@@ -248,7 +248,7 @@ export function Sidebar({ onNavigate, onDashboardNavigate, onGoBack, onGoForward
       {/* Sidebar content — CSS slide transition */}
       <div className="min-h-0 flex-1 overflow-hidden" onWheel={handleWheel}>
         <div
-          className="flex h-full transition-transform duration-250 ease-out"
+          className="flex h-full transition-transform duration-[280ms] ease-out"
           style={{
             width: `${MODES.length * 100}%`,
             transform: `translateX(-${modeIndex * (100 / MODES.length)}%)`

@@ -5,6 +5,7 @@ import { DashboardWebview, type DashboardWebviewHandle } from '@/components/dash
 import { useTabStore } from '@/store/tabs'
 import { useModeStore, type AppMode } from '@/store/mode'
 import { EmptyState } from '@/components/empty-state'
+import { AuthGate } from '@/components/auth-gate'
 import { cn } from '@/lib/utils'
 
 // Lazy-load heavy components — only loaded when needed
@@ -24,7 +25,7 @@ export function App() {
   const handleRef = useRef<WebviewAreaHandle | null>(null)
   const envHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const wsHandleRef = useRef<DashboardWebviewHandle | null>(null)
-  const { addTab, closeTab, activeTabId, tabs, setActiveTab } = useTabStore()
+  const { addTab, closeTab, activeTabId, tabs } = useTabStore()
   const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog, selectedWsId, selectedWsName, wsActiveTab, showNewWsDialog, setShowNewWsDialog, clearSelectedEnv } = useModeStore()
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [sidebarVisible, setSidebarVisible] = useState(true)
@@ -33,6 +34,13 @@ export function App() {
   const [newTabOpen, setNewTabOpen] = useState(false)
   const [showLoading, setShowLoading] = useState(false)
   const [loadingFading, setLoadingFading] = useState(false)
+  const [authenticatedUser, setAuthenticatedUser] = useState<string | null>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('kloudlite.desktop.auth') || 'null')?.user ?? null
+    } catch {
+      return null
+    }
+  })
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null)
   const peekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -124,6 +132,13 @@ export function App() {
     window.electronAPI.onShortcut((action) => {
       const currentMode = useModeStore.getState().mode
       const MODES: AppMode[] = ['environments', 'workspaces', 'browse']
+      const selectRelativeTab = (offset: 1 | -1) => {
+        const { tabs, activeTabId, setActiveTab } = useTabStore.getState()
+        if (tabs.length < 2) return
+        const idx = tabs.findIndex((t) => t.id === activeTabId)
+        if (idx === -1) return
+        setActiveTab(tabs[(idx + offset + tabs.length) % tabs.length].id)
+      }
 
       switch (action) {
         case 'mode-1':
@@ -166,28 +181,12 @@ export function App() {
           setSidebarVisible((v) => !v)
           setSidebarPeeking(false)
           break
-        case 'next-tab': {
-          if (currentMode === 'browse') {
-            const state = useTabStore.getState()
-            const idx = state.tabs.findIndex((t) => t.id === state.activeTabId)
-            if (idx >= 0 && state.tabs.length > 1) {
-              const nextIdx = (idx + 1) % state.tabs.length
-              setActiveTab(state.tabs[nextIdx].id)
-            }
-          }
+        case 'next-tab':
+          if (currentMode === 'browse') selectRelativeTab(1)
           break
-        }
-        case 'prev-tab': {
-          if (currentMode === 'browse') {
-            const state2 = useTabStore.getState()
-            const idx2 = state2.tabs.findIndex((t) => t.id === state2.activeTabId)
-            if (idx2 >= 0 && state2.tabs.length > 1) {
-              const prevIdx = (idx2 - 1 + state2.tabs.length) % state2.tabs.length
-              setActiveTab(state2.tabs[prevIdx].id)
-            }
-          }
+        case 'prev-tab':
+          if (currentMode === 'browse') selectRelativeTab(-1)
           break
-        }
       }
     })
   }, [])
@@ -237,15 +236,35 @@ export function App() {
     if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current)
   }
 
+  if (!authenticatedUser) {
+    return <AuthGate onAuthenticated={setAuthenticatedUser} />
+  }
 
   return (
     <>
     <div className="flex h-full bg-sidebar">
       {/* Sidebar — normal mode */}
-      {sidebarVisible && (
+      <div
+        className="shrink-0 overflow-hidden"
+        style={{
+          width: sidebarVisible ? sidebarWidth : 0,
+          minWidth: sidebarVisible ? sidebarWidth : 0,
+          maxWidth: sidebarVisible ? sidebarWidth : 0,
+          pointerEvents: sidebarVisible ? 'auto' : 'none',
+          transition: 'width 320ms cubic-bezier(0.22,1,0.36,1), min-width 320ms cubic-bezier(0.22,1,0.36,1), max-width 320ms cubic-bezier(0.22,1,0.36,1)',
+          willChange: 'width'
+        }}
+      >
         <div
-          className="flex shrink-0 flex-col"
-          style={{ width: sidebarWidth, overflow: 'hidden' }}
+          className="flex h-full flex-col"
+          style={{
+            width: sidebarWidth,
+            minWidth: sidebarWidth,
+            opacity: sidebarVisible ? 1 : 0,
+            transform: sidebarVisible ? 'translateX(0)' : 'translateX(-16px)',
+            transition: 'transform 320ms cubic-bezier(0.22,1,0.36,1), opacity 180ms ease',
+            willChange: 'transform, opacity'
+          }}
         >
           <Sidebar
             onNavigate={(url) => handleRef.current?.navigate(url)}
@@ -256,7 +275,7 @@ export function App() {
             onToggleSidebar={() => setSidebarVisible(false)}
           />
         </div>
-      )}
+      </div>
 
       {/* Sidebar — peek overlay mode (floating, animated) */}
       {!sidebarVisible && (
@@ -286,15 +305,14 @@ export function App() {
       )}
 
       {/* Resize handle */}
-      {sidebarVisible && (
-        <div
-          className={cn(
-            'relative z-10 flex w-[6px] shrink-0 cursor-col-resize items-center justify-center',
-            isResizing ? 'bg-sidebar-primary/30' : 'hover:bg-sidebar-primary/15'
-          )}
-          onMouseDown={startResize}
-        />
-      )}
+      <div
+        className={cn(
+          'relative z-10 flex shrink-0 cursor-col-resize items-center justify-center transition-[width,opacity,background-color] duration-200',
+          isResizing ? 'bg-sidebar-primary/30' : 'hover:bg-sidebar-primary/15'
+        )}
+        style={{ width: sidebarVisible ? 6 : 0, opacity: sidebarVisible ? 1 : 0, pointerEvents: sidebarVisible ? 'auto' : 'none' }}
+        onMouseDown={startResize}
+      />
 
       {/* Resize overlay */}
       {isResizing && (
@@ -302,10 +320,10 @@ export function App() {
       )}
 
       {/* Content area */}
-      <div className={cn(
-        'relative flex flex-1 flex-col overflow-hidden pb-2.5 pr-2.5 pt-2.5',
-        !sidebarVisible && 'pl-2.5'
-      )}>
+      <div
+        className="relative flex flex-1 flex-col overflow-hidden pb-2.5 pr-2.5 pt-2.5 transition-[padding-left] duration-[320ms] ease-out"
+        style={{ paddingLeft: sidebarVisible ? 0 : 10 }}
+      >
         {/* Left edge hover zone — triggers sidebar peek */}
         {!sidebarVisible && !sidebarPeeking && (
           <div

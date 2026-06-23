@@ -99,7 +99,7 @@ export function SidebarBrowse() {
 
         {/* Tab list */}
         <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto py-1">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col">
             {tabs.map((tab, i) => (
               <TabItem
                 key={tab.id}
