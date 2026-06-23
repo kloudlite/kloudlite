@@ -1,6 +1,6 @@
 // MUST be first import — caches V8 bytecode for 20-30% faster startup
 import 'v8-compile-cache'
-import { app, BrowserWindow, globalShortcut, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
+import { app, BrowserWindow, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
 
 // Disable hardware acceleration check — skip GPU init for faster startup on some systems
 // app.disableHardwareAcceleration()  // Uncomment if GPU init is slow
@@ -27,6 +27,40 @@ function setDockIcon(): void {
   if (process.platform !== 'darwin') return
   const icon = nativeImage.createFromPath(join(__dirname, '../../resources/icon.png'))
   if (!icon.isEmpty()) app.dock?.setIcon(icon)
+}
+
+function shortcutAction(input: Electron.Input): string | null {
+  const key = input.key.toLowerCase()
+  const cmdOrCtrl = input.meta || input.control
+
+  if (input.control && key === 'tab') return input.shift ? 'prev-tab' : 'next-tab'
+  if (cmdOrCtrl && key === 't') return 'new-tab'
+  if (cmdOrCtrl && key === 'l') return 'address-bar'
+  if (cmdOrCtrl && key === 'w') return 'close-tab'
+  if (cmdOrCtrl && key === 'r') return 'reload'
+  if (cmdOrCtrl && key === 's') return 'toggle-sidebar'
+  if (cmdOrCtrl && key === '1') return 'mode-1'
+  if (cmdOrCtrl && key === '2') return 'mode-2'
+  if (cmdOrCtrl && key === '3') return 'mode-3'
+  if (cmdOrCtrl && (key === '[' || key === 'left')) return 'go-back'
+  if (cmdOrCtrl && (key === ']' || key === 'right')) return 'go-forward'
+  if (input.alt && !input.meta && !input.control && !input.shift && key === 'left') return 'go-back'
+  if (input.alt && !input.meta && !input.control && !input.shift && key === 'right') return 'go-forward'
+
+  return null
+}
+
+function sendShortcut(action: string): void {
+  BrowserWindow.getFocusedWindow()?.webContents.send('shortcut', action)
+}
+
+function installWindowShortcuts(contents: Electron.WebContents): void {
+  contents.on('before-input-event', (event, input) => {
+    const action = shortcutAction(input)
+    if (!action) return
+    event.preventDefault()
+    sendShortcut(action)
+  })
 }
 
 function createWindow(): BrowserWindow {
@@ -57,6 +91,7 @@ function createWindow(): BrowserWindow {
     mainWindow.show()
   })
 
+  installWindowShortcuts(mainWindow.webContents)
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -127,6 +162,21 @@ function createAppMenu(): void {
         },
         { type: 'separator' },
         {
+          label: 'Next Tab',
+          accelerator: 'Ctrl+Tab',
+          click: (_item, window) => {
+            sendToMenuWindow(window, 'shortcut', 'next-tab')
+          }
+        },
+        {
+          label: 'Previous Tab',
+          accelerator: 'Ctrl+Shift+Tab',
+          click: (_item, window) => {
+            sendToMenuWindow(window, 'shortcut', 'prev-tab')
+          }
+        },
+        { type: 'separator' },
+        {
           label: 'Reload Tab',
           accelerator: 'CmdOrCtrl+R',
           click: (_item, window) => {
@@ -149,14 +199,6 @@ function createAppMenu(): void {
           visible: false
         },
         {
-          label: 'Go Back (Alt Arrow)',
-          accelerator: 'Alt+Left',
-          click: (_item, window) => {
-            sendToMenuWindow(window, 'shortcut', 'go-back')
-          },
-          visible: false
-        },
-        {
           label: 'Go Forward',
           accelerator: 'CmdOrCtrl+]',
           click: (_item, window) => {
@@ -166,14 +208,6 @@ function createAppMenu(): void {
         {
           label: 'Go Forward (Arrow)',
           accelerator: 'CmdOrCtrl+Right',
-          click: (_item, window) => {
-            sendToMenuWindow(window, 'shortcut', 'go-forward')
-          },
-          visible: false
-        },
-        {
-          label: 'Go Forward (Alt Arrow)',
-          accelerator: 'Alt+Right',
           click: (_item, window) => {
             sendToMenuWindow(window, 'shortcut', 'go-forward')
           },
@@ -544,6 +578,7 @@ ipcMain.handle('api:patch-resource', async (_event, namespace: string | null, re
 // Handle new-window for webview guests — prevent popups, navigate in app instead
 app.on('web-contents-created', (_event, contents) => {
   if (contents.getType() === 'webview') {
+    installWindowShortcuts(contents)
     contents.setWindowOpenHandler(({ url, disposition }) => {
       const win = BrowserWindow.getAllWindows()[0]
       if (win) {
@@ -575,20 +610,6 @@ app.whenReady().then(() => {
 
     // Start browser MCP server for AI control
     startMCPServer()
-
-    // Register global shortcuts
-    globalShortcut.register('Ctrl+Tab', () => {
-      const win = BrowserWindow.getFocusedWindow()
-      win?.webContents.send('shortcut', 'next-tab')
-    })
-    globalShortcut.register('Ctrl+Shift+Tab', () => {
-      const win = BrowserWindow.getFocusedWindow()
-      win?.webContents.send('shortcut', 'prev-tab')
-    })
-    globalShortcut.register('CommandOrControl+S', () => {
-      const win = BrowserWindow.getFocusedWindow()
-      win?.webContents.send('shortcut', 'toggle-sidebar')
-    })
   })
 
   app.on('activate', () => {

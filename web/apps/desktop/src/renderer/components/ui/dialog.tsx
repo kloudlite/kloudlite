@@ -1,4 +1,5 @@
 import { useState, useCallback, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 interface DialogProps {
   title: string
@@ -17,7 +18,7 @@ export function Dialog({ title, description, onClose, children, footer, maxWidth
     setTimeout(onClose, 150)
   }, [onClose])
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={close}>
       <div
         className="w-full overflow-hidden rounded-2xl border border-border/40 bg-popover shadow-2xl"
@@ -44,6 +45,7 @@ export function Dialog({ title, description, onClose, children, footer, maxWidth
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
