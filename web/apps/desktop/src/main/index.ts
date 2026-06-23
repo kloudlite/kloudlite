@@ -23,6 +23,12 @@ function sendToMenuWindow(window: Electron.BaseWindow | undefined, channel: stri
   if (window instanceof BrowserWindow) window.webContents.send(channel, ...args)
 }
 
+function setDockIcon(): void {
+  if (process.platform !== 'darwin') return
+  const icon = nativeImage.createFromPath(join(__dirname, '../../resources/icon.png'))
+  if (!icon.isEmpty()) app.dock?.setIcon(icon)
+}
+
 function createWindow(): BrowserWindow {
   const iconPath = process.platform === 'darwin'
     ? join(__dirname, '../../resources/icon.icns')
@@ -537,6 +543,8 @@ app.on('web-contents-created', (_event, contents) => {
 })
 
 app.whenReady().then(() => {
+  setDockIcon()
+
   // Critical path: create window ASAP (everything else is deferred)
   const mainWindow = createWindow()
 
@@ -545,14 +553,7 @@ app.whenReady().then(() => {
     // Create menu (not needed for first paint)
     createAppMenu()
 
-    // Set dock icon
-    if (process.platform === 'darwin') {
-      const iconPath = join(__dirname, '../../resources/icon.png')
-      const icon = nativeImage.createFromPath(iconPath)
-      if (!icon.isEmpty()) {
-        app.dock?.setIcon(icon)
-      }
-    }
+    setDockIcon()
 
     // Start browser MCP server for AI control
     startMCPServer()
