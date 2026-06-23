@@ -67,9 +67,13 @@ func newPlatformRuntimeComponents(cfg *config.Config, logger *zap.Logger, k8sCli
 	resourceBroker := events.NewBroker()
 
 	// Create a non-cached client for direct reads (no informer cache staleness)
-	kubeDirect, err := client.New(k8sClient.Config, client.Options{Scheme: k8sClient.Scheme})
-	if err != nil {
-		panic(fmt.Sprintf("create direct k8s client: %v", err))
+	var kubeDirect client.Client = k8sClient.RuntimeClient
+	if k8sClient.Config != nil {
+		var err error
+		kubeDirect, err = client.New(k8sClient.Config, client.Options{Scheme: k8sClient.Scheme})
+		if err != nil {
+			panic(fmt.Sprintf("create direct k8s client: %v", err))
+		}
 	}
 	resourceService := service.NewWithEventsAndReadClient(resourceRegistry, resourceStore, k8sClient.RuntimeClient, kubeDirect, resourceBroker)
 	watchManager := watch.NewManagerWithEvents(resourceRegistry, resourceStore, k8sClient.RuntimeClient, logger, resourceBroker)

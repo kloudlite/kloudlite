@@ -6,53 +6,41 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-type StepResult interface {
-	ShouldProceed() bool
-	ReconcilerResponse() (ctrl.Result, error)
-
-	Continue(bool) StepResult
-	RequeueAfter(time.Duration) StepResult
-	Err(error) StepResult
-
-	NoRequeue() StepResult
-}
-
-type stepResult struct {
+type StepResult struct {
 	toContinue bool
 	requeue    ctrl.Result
 	err        error
 }
 
-// NoRequeue implements StepResult.
-func (sr *stepResult) NoRequeue() StepResult {
+func (sr StepResult) NoRequeue() StepResult {
 	sr.err = nil
 	return sr
 }
 
-func (sr *stepResult) ShouldProceed() bool {
+func (sr StepResult) ShouldProceed() bool {
 	return sr.toContinue && sr.err == nil
 }
 
-func (sr *stepResult) ReconcilerResponse() (ctrl.Result, error) {
+func (sr StepResult) ReconcilerResponse() (ctrl.Result, error) {
 	return sr.requeue, sr.err
 }
 
-func (sr *stepResult) Continue(val bool) StepResult {
+func (sr StepResult) Continue(val bool) StepResult {
 	sr.toContinue = val
 	return sr
 }
 
-func (sr *stepResult) RequeueAfter(d time.Duration) StepResult {
+func (sr StepResult) RequeueAfter(d time.Duration) StepResult {
 	sr.requeue = ctrl.Result{RequeueAfter: d}
 	sr.err = nil // because, we can't have requeue, without setting error to nil, as per error logs
 	return sr
 }
 
-func (sr *stepResult) Err(err error) StepResult {
+func (sr StepResult) Err(err error) StepResult {
 	sr.err = err
 	return sr
 }
 
 func newStepResult() StepResult {
-	return &stepResult{}
+	return StepResult{}
 }

@@ -128,24 +128,24 @@ func TestHasActiveSnapshotOperationSameNameDifferentNamespaceIgnoresOtherNamespa
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-env", Namespace: "wm-alice"},
 		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "env-alice"},
 	}
-	otherNamespaceRequest := &environmentsv1.EnvironmentSnapshotRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "snapshot-request", Namespace: "env-bob"},
-		Spec: environmentsv1.EnvironmentSnapshotRequestSpec{
+	otherNamespaceRequest := &environmentsv1.EnvironmentCheckpoint{
+		ObjectMeta: metav1.ObjectMeta{Name: "checkpoint", Namespace: "env-bob"},
+		Spec: environmentsv1.EnvironmentCheckpointSpec{
 			EnvironmentName:      "shared-env",
 			EnvironmentNamespace: "wm-bob",
-			SnapshotName:         "snapshot-bob",
+			CheckpointName:       "checkpoint-bob",
 		},
-		Status: environmentsv1.EnvironmentSnapshotRequestStatus{Phase: environmentsv1.EnvironmentSnapshotRequestPhaseCreatingSnapshot},
+		Status: environmentsv1.EnvironmentCheckpointStatus{Phase: environmentsv1.EnvironmentCheckpointPhaseCreatingCheckpoint},
 	}
-	otherNamespaceRestore := &environmentsv1.EnvironmentSnapshotRestore{
-		ObjectMeta: metav1.ObjectMeta{Name: "snapshot-restore", Namespace: "env-bob"},
-		Spec: environmentsv1.EnvironmentSnapshotRestoreSpec{
+	otherNamespaceRestore := &environmentsv1.EnvironmentCheckpointRestore{
+		ObjectMeta: metav1.ObjectMeta{Name: "checkpoint-restore", Namespace: "env-bob"},
+		Spec: environmentsv1.EnvironmentCheckpointRestoreSpec{
 			EnvironmentName:      "shared-env",
 			EnvironmentNamespace: "wm-bob",
-			SnapshotName:         "snapshot-bob",
+			CheckpointName:       "checkpoint-bob",
 			SourceNamespace:      "env-bob",
 		},
-		Status: environmentsv1.EnvironmentSnapshotRestoreStatus{Phase: environmentsv1.EnvironmentSnapshotRestorePhaseRestoringData},
+		Status: environmentsv1.EnvironmentCheckpointRestoreStatus{Phase: environmentsv1.EnvironmentCheckpointRestorePhaseRestoringData},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, env, otherNamespaceRequest, otherNamespaceRestore).Build()
@@ -163,14 +163,14 @@ func TestHasActiveSnapshotOperationMatchesEnvironmentNameAndNamespace(t *testing
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-env", Namespace: "wm-alice"},
 		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "env-alice"},
 	}
-	matchingRequest := &environmentsv1.EnvironmentSnapshotRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "snapshot-request", Namespace: "env-alice"},
-		Spec: environmentsv1.EnvironmentSnapshotRequestSpec{
+	matchingRequest := &environmentsv1.EnvironmentCheckpoint{
+		ObjectMeta: metav1.ObjectMeta{Name: "checkpoint", Namespace: "env-alice"},
+		Spec: environmentsv1.EnvironmentCheckpointSpec{
 			EnvironmentName:      "shared-env",
 			EnvironmentNamespace: "wm-alice",
-			SnapshotName:         "snapshot-alice",
+			CheckpointName:       "checkpoint-alice",
 		},
-		Status: environmentsv1.EnvironmentSnapshotRequestStatus{Phase: environmentsv1.EnvironmentSnapshotRequestPhaseCreatingSnapshot},
+		Status: environmentsv1.EnvironmentCheckpointStatus{Phase: environmentsv1.EnvironmentCheckpointPhaseCreatingCheckpoint},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, env, matchingRequest).Build()
@@ -181,20 +181,20 @@ func TestHasActiveSnapshotOperationMatchesEnvironmentNameAndNamespace(t *testing
 	assert.True(t, hasActive)
 }
 
-func TestHasActiveSnapshotOperationSnapshotRequestEmptyEnvironmentNamespaceDoesNotMatch(t *testing.T) {
+func TestHasActiveSnapshotOperationCheckpointEmptyEnvironmentNamespaceDoesNotMatch(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 	ctx := context.Background()
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-env", Namespace: "wm-alice"},
 		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "env-alice"},
 	}
-	emptyNamespaceRequest := &environmentsv1.EnvironmentSnapshotRequest{
-		ObjectMeta: metav1.ObjectMeta{Name: "snapshot-request", Namespace: "env-alice"},
-		Spec: environmentsv1.EnvironmentSnapshotRequestSpec{
+	emptyNamespaceRequest := &environmentsv1.EnvironmentCheckpoint{
+		ObjectMeta: metav1.ObjectMeta{Name: "checkpoint", Namespace: "env-alice"},
+		Spec: environmentsv1.EnvironmentCheckpointSpec{
 			EnvironmentName: "shared-env",
-			SnapshotName:    "snapshot-alice",
+			CheckpointName:  "checkpoint-alice",
 		},
-		Status: environmentsv1.EnvironmentSnapshotRequestStatus{Phase: environmentsv1.EnvironmentSnapshotRequestPhaseCreatingSnapshot},
+		Status: environmentsv1.EnvironmentCheckpointStatus{Phase: environmentsv1.EnvironmentCheckpointPhaseCreatingCheckpoint},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, env, emptyNamespaceRequest).Build()
@@ -205,21 +205,21 @@ func TestHasActiveSnapshotOperationSnapshotRequestEmptyEnvironmentNamespaceDoesN
 	assert.False(t, hasActive)
 }
 
-func TestHasActiveSnapshotOperationSnapshotRestoreEmptyEnvironmentNamespaceDoesNotMatch(t *testing.T) {
+func TestHasActiveSnapshotOperationCheckpointRestoreEmptyEnvironmentNamespaceDoesNotMatch(t *testing.T) {
 	scheme := testutil.NewTestScheme()
 	ctx := context.Background()
 	env := &environmentsv1.Environment{
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-env", Namespace: "wm-alice"},
 		Spec:       environmentsv1.EnvironmentSpec{TargetNamespace: "env-alice"},
 	}
-	emptyNamespaceRestore := &environmentsv1.EnvironmentSnapshotRestore{
-		ObjectMeta: metav1.ObjectMeta{Name: "snapshot-restore", Namespace: "env-alice"},
-		Spec: environmentsv1.EnvironmentSnapshotRestoreSpec{
+	emptyNamespaceRestore := &environmentsv1.EnvironmentCheckpointRestore{
+		ObjectMeta: metav1.ObjectMeta{Name: "checkpoint-restore", Namespace: "env-alice"},
+		Spec: environmentsv1.EnvironmentCheckpointRestoreSpec{
 			EnvironmentName: "shared-env",
-			SnapshotName:    "snapshot-alice",
+			CheckpointName:  "checkpoint-alice",
 			SourceNamespace: "env-alice",
 		},
-		Status: environmentsv1.EnvironmentSnapshotRestoreStatus{Phase: environmentsv1.EnvironmentSnapshotRestorePhaseRestoringData},
+		Status: environmentsv1.EnvironmentCheckpointRestoreStatus{Phase: environmentsv1.EnvironmentCheckpointRestorePhaseRestoringData},
 	}
 
 	k8sClient := testutil.NewFakeClient(scheme, env, emptyNamespaceRestore).Build()

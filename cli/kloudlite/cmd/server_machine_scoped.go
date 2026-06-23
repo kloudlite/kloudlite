@@ -7,13 +7,13 @@ import (
 	"syscall"
 
 	"github.com/kloudlite/kloudlite/api/config"
-	"go.uber.org/zap"
 	"github.com/kloudlite/kloudlite/api/k8s"
 	"github.com/kloudlite/kloudlite/api/tunnel"
 	workmachinenodemanager "github.com/kloudlite/kloudlite/cli/workmachine-node-manager"
 	"github.com/kloudlite/kloudlite/controllers"
 	"github.com/kloudlite/kloudlite/pkg/logger"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 func newWorkMachineManagerCommand() *cobra.Command {

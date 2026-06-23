@@ -1,10 +1,10 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background: dark rounded square -->
-  <rect width="1024" height="1024" rx="228" fill="#1a1b2e"/>
+  <!-- macOS app icon safe area: 1024 canvas, 824 artwork, 100px margin -->
+  <rect x="100" y="100" width="824" height="824" rx="184" fill="#1a1b2e"/>
 
   <!-- Subtle gradient overlay for depth -->
   <defs>
-    <linearGradient id="bg-gradient" x1="0" y1="0" x2="1024" y2="1024">
+    <linearGradient id="bg-gradient" x1="100" y1="100" x2="924" y2="924">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.04"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
@@ -18,7 +18,7 @@
     </linearGradient>
   </defs>
 
-  <rect width="1024" height="1024" rx="228" fill="url(#bg-gradient)"/>
+  <rect x="100" y="100" width="824" height="824" rx="184" fill="url(#bg-gradient)"/>
 
   <!-- Kloudlite logo mark — scaled and centered -->
   <g transform="translate(213, 211) scale(4.6)">
