@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect } from 'react'
+import { useEffect, useRef, useState, useLayoutEffect } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Tab } from '@/store/tabs'
@@ -17,6 +17,13 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState<'above' | 'below' | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [closing, setClosing] = useState(false)
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setOpen(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   // FLIP: after DOM update, animate from old position to new
   useLayoutEffect(() => {
@@ -32,19 +39,10 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
 
     if (Math.abs(deltaY) < 1) return
 
-    el.style.transform = `translateY(${deltaY}px)`
-    el.style.transition = 'none'
-
-    requestAnimationFrame(() => {
-      el.style.transition = 'transform 200ms ease-out'
-      el.style.transform = 'translateY(0)'
-      const cleanup = () => {
-        el.style.transform = ''
-        el.style.transition = ''
-        el.removeEventListener('transitionend', cleanup)
-      }
-      el.addEventListener('transitionend', cleanup)
-    })
+    el.animate(
+      [{ transform: `translateY(${deltaY}px)` }, { transform: 'translateY(0)' }],
+      { duration: 260, easing: 'cubic-bezier(0.22,1,0.36,1)' }
+    )
   })
 
   function handleDragStart(e: React.DragEvent) {
@@ -101,8 +99,24 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
     onMove(fromIndex, adjustedTo)
   }
 
+  function closeWithAnimation() {
+    if (closing) return
+    setClosing(true)
+    setOpen(false)
+    setTimeout(onClose, 240)
+  }
+
   return (
-    <div ref={wrapperRef} data-tab-item className="relative mx-2.5">
+    <div
+      ref={wrapperRef}
+      data-tab-item
+      className="relative mx-2.5 overflow-hidden"
+      style={{
+        height: open && !closing ? 44 : 0,
+        opacity: open && !closing ? 1 : 0,
+        transition: 'height 240ms cubic-bezier(0.22,1,0.36,1), opacity 180ms ease'
+      }}
+    >
       {/* Drop indicator — above */}
       {dragOver === 'above' && (
         <div className="absolute -top-[3px] left-2 right-2 z-10 flex items-center">
@@ -115,7 +129,7 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
       <div
         ref={ref}
         className={cn(
-          'group flex h-10 cursor-default items-center gap-3 rounded-[10px] px-3 text-[14px] transition-all duration-150',
+          'group flex h-10 cursor-default items-center gap-3 rounded-[10px] px-3 text-[14px] transition-all duration-200',
           isActive
             ? 'bg-sidebar-foreground/[0.12] text-sidebar-foreground/90 font-medium'
             : 'text-sidebar-foreground/65 hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground/85',
@@ -128,6 +142,10 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={onSelect}
+        style={{
+          transform: open && !closing ? 'translateY(0) scale(1)' : 'translateY(-6px) scale(0.98)',
+          transition: 'transform 240ms cubic-bezier(0.22,1,0.36,1), background-color 150ms ease, color 150ms ease, opacity 180ms ease'
+        }}
       >
         {tab.isLoading ? (
           <Loader2 className="h-5 w-5 shrink-0 animate-spin opacity-50" />
@@ -143,7 +161,7 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
           className="shrink-0 rounded-md p-0.5 opacity-0 transition-all duration-150 hover:bg-sidebar-foreground/10 group-hover:opacity-100"
           onClick={(e) => {
             e.stopPropagation()
-            onClose()
+            closeWithAnimation()
           }}
         >
           <X className="h-3 w-3" />
