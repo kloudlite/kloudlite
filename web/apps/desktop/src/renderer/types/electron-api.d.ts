@@ -14,6 +14,7 @@ declare global {
       onThemeChanged: (callback: (theme: 'dark' | 'light') => void) => void
       onOpenUrlInNewTab: (callback: (url: string) => void) => void
       getCertificate: (url: string) => Promise<any>
+      openExternal: (url: string) => Promise<void>
       onMCPCommand: (callback: (command: { requestId: string; command: string; args: Record<string, unknown> }) => void) => void
       sendMCPResult: (requestId: string, result: unknown, error: string | null) => void
       listEnvironments: (namespace: string) => Promise<{ items: Record<string, unknown>[]; error?: string }>
