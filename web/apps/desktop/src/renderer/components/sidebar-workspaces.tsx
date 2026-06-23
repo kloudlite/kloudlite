@@ -163,7 +163,7 @@ export function SidebarWorkspaces() {
   // Detail view
   if (selectedWs) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col" style={{ animation: 'drill-in-right 180ms ease-out' }}>
         <div className="shrink-0 px-3 pb-2">
           <button
             className="no-drag flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] text-sidebar-foreground/60 transition-colors hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground/80"
@@ -243,7 +243,7 @@ export function SidebarWorkspaces() {
 
   // List view
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col" style={{ animation: 'drill-in-left 180ms ease-out' }}>
       <div className="shrink-0 px-3">
         <div className="flex items-center justify-between px-3 pb-1.5">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">

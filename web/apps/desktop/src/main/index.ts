@@ -149,6 +149,14 @@ function createAppMenu(): void {
           visible: false
         },
         {
+          label: 'Go Back (Alt Arrow)',
+          accelerator: 'Alt+Left',
+          click: (_item, window) => {
+            sendToMenuWindow(window, 'shortcut', 'go-back')
+          },
+          visible: false
+        },
+        {
           label: 'Go Forward',
           accelerator: 'CmdOrCtrl+]',
           click: (_item, window) => {
@@ -158,6 +166,14 @@ function createAppMenu(): void {
         {
           label: 'Go Forward (Arrow)',
           accelerator: 'CmdOrCtrl+Right',
+          click: (_item, window) => {
+            sendToMenuWindow(window, 'shortcut', 'go-forward')
+          },
+          visible: false
+        },
+        {
+          label: 'Go Forward (Alt Arrow)',
+          accelerator: 'Alt+Right',
           click: (_item, window) => {
             sendToMenuWindow(window, 'shortcut', 'go-forward')
           },
@@ -241,6 +257,8 @@ ipcMain.handle('window-control', (event, action: string) => {
 ipcMain.handle('get-theme', () => {
   return nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
 })
+
+ipcMain.handle('open-external', (_event, url: string) => shell.openExternal(url))
 
 // Notify renderer when system theme changes
 nativeTheme.on('updated', () => {

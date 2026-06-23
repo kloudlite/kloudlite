@@ -26,6 +26,13 @@ interface TabStore {
 
 let nextId = 1
 
+function captureTabRects() {
+  if (typeof document === 'undefined') return
+  document.querySelectorAll('[data-tab-item]').forEach((el) => {
+    ;(el as HTMLElement & { __prevRect?: DOMRect }).__prevRect = el.getBoundingClientRect()
+  })
+}
+
 function createTab(url = 'https://google.com'): Tab {
   return {
     id: String(nextId++),
@@ -45,9 +52,10 @@ export const useTabStore = create<TabStore>((set, get) => ({
   activeTabId: null,
 
   addTab: (url?: string) => {
+    captureTabRects()
     const tab = createTab(url)
     set((state) => ({
-      tabs: [...state.tabs, tab],
+      tabs: [tab, ...state.tabs],
       activeTabId: tab.id
     }))
   },
@@ -57,6 +65,7 @@ export const useTabStore = create<TabStore>((set, get) => ({
     const index = tabs.findIndex((t) => t.id === id)
     if (index === -1) return
 
+    captureTabRects()
     const newTabs = tabs.filter((t) => t.id !== id)
 
     let newActiveId = activeTabId
