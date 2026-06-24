@@ -95,7 +95,12 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
       } else if (query.trim()) {
         const raw = query.trim()
         const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(raw)
-        const url = hasScheme ? raw : `https://${raw}`
+        const looksLikeHost = !raw.includes(' ') && raw.includes('.')
+        const url = hasScheme
+          ? raw
+          : looksLikeHost
+            ? `https://${raw}`
+            : `https://www.google.com/search?q=${encodeURIComponent(raw)}`
         addTab(url)
         close()
       } else {
@@ -207,7 +212,7 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
             onClick={() => { addTab(); close() }}
           >
             <Globe className="h-4 w-4" />
-            <span>{query ? `Search "${query}"` : 'New Tab'}</span>
+            <span>{query ? `Google Search "${query}"` : 'New Tab'}</span>
             <span className="ml-auto font-mono text-[10px] text-muted-foreground/30">⏎</span>
           </div>
         )}
