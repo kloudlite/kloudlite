@@ -41,6 +41,7 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
   const updateHistoryMetadata = useHistoryStore((s) => s.updateMetadata)
   const webviewRefs = useRef<Map<string, WebviewElement>>(new Map())
   const readyRefs = useRef<Set<string>>(new Set())
+  const loadingTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const containerRef = useRef<HTMLDivElement>(null)
   const [navFlash, setNavFlash] = useState<'back' | 'forward' | null>(null)
   const navFlashCounter = useRef(0)
@@ -122,6 +123,9 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
           container.removeChild(wv)
           webviewRefs.current.delete(id)
           readyRefs.current.delete(id)
+          const timer = loadingTimers.current.get(id)
+          if (timer) clearTimeout(timer)
+          loadingTimers.current.delete(id)
           webviewRegistry.unregister(id)
         }
       }
@@ -182,10 +186,18 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
         }) as EventListener)
 
         wv.addEventListener('did-start-loading', () => {
-          updateTab(tabId, { isLoading: true })
+          const existing = loadingTimers.current.get(tabId)
+          if (existing) clearTimeout(existing)
+          loadingTimers.current.set(tabId, setTimeout(() => {
+            loadingTimers.current.delete(tabId)
+            updateTab(tabId, { isLoading: true })
+          }, 180))
         })
 
         wv.addEventListener('did-stop-loading', () => {
+          const timer = loadingTimers.current.get(tabId)
+          if (timer) clearTimeout(timer)
+          loadingTimers.current.delete(tabId)
           const currentUrl = wv.getURL()
           const currentTitle = wv.getTitle() || currentUrl
           updateTab(tabId, {

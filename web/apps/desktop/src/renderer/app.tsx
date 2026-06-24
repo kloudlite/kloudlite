@@ -129,7 +129,7 @@ export function App() {
 
   // Shortcuts from main process via IPC
   useEffect(() => {
-    window.electronAPI.onShortcut((action) => {
+    const offShortcut = window.electronAPI.onShortcut((action) => {
       const currentMode = useModeStore.getState().mode
       const MODES: AppMode[] = ['environments', 'workspaces', 'browse']
       const selectRelativeTab = (offset: 1 | -1) => {
@@ -195,6 +195,7 @@ export function App() {
           break
       }
     })
+    return offShortcut
   }, [])
 
   useEffect(() => {
@@ -230,12 +231,12 @@ export function App() {
       }
 
       if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isEditable(e.target)) return
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' || e.key === 'Left') {
         e.preventDefault()
         if (currentMode === 'environments') envHandleRef.current?.goBack()
         else if (currentMode === 'workspaces') wsHandleRef.current?.goBack()
         else handleRef.current?.goBack()
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' || e.key === 'Right') {
         e.preventDefault()
         if (currentMode === 'environments') envHandleRef.current?.goForward()
         else if (currentMode === 'workspaces') wsHandleRef.current?.goForward()

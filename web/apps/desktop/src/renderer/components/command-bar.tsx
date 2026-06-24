@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, type KeyboardEvent }
 import { Search, ArrowRight, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTabStore, type Tab } from '@/store/tabs'
-import { DUMMY_ENVIRONMENTS, useEnvironmentStore } from '@/store/environments'
+import { useEnvironmentStore } from '@/store/environments'
 
 const ENTER_ANIM = 'popover-in 150ms ease-out'
 const EXIT_ANIM = 'popover-out 150ms ease-in forwards'
@@ -33,8 +33,7 @@ interface NewTabBarProps {
 
 export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
   const { tabs, activeTabId, setActiveTab, addTab } = useTabStore()
-  const environments = useEnvironmentStore((s) => s.environments)
-  const browseEnvironments = environments.length > 0 ? environments : DUMMY_ENVIRONMENTS
+  const browseEnvironments = useEnvironmentStore((s) => s.environments)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [exiting, setExiting] = useState(false)
@@ -95,7 +94,12 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
       } else if (query.trim()) {
         const raw = query.trim()
         const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(raw)
-        const url = hasScheme ? raw : `https://${raw}`
+        const looksLikeHost = !raw.includes(' ') && raw.includes('.')
+        const url = hasScheme
+          ? raw
+          : looksLikeHost
+            ? `https://${raw}`
+            : `https://www.google.com/search?q=${encodeURIComponent(raw)}`
         addTab(url)
         close()
       } else {
@@ -207,7 +211,7 @@ export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
             onClick={() => { addTab(); close() }}
           >
             <Globe className="h-4 w-4" />
-            <span>{query ? `Search "${query}"` : 'New Tab'}</span>
+            <span>{query ? `Google Search "${query}"` : 'New Tab'}</span>
             <span className="ml-auto font-mono text-[10px] text-muted-foreground/30">⏎</span>
           </div>
         )}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useLayoutEffect } from 'react'
-import { X, Loader2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Tab } from '@/store/tabs'
 
@@ -19,11 +19,16 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
   const [isDragging, setIsDragging] = useState(false)
   const [open, setOpen] = useState(false)
   const [closing, setClosing] = useState(false)
+  const [faviconFailed, setFaviconFailed] = useState(false)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setOpen(true))
     return () => cancelAnimationFrame(id)
   }, [])
+
+  useEffect(() => {
+    setFaviconFailed(false)
+  }, [tab.favicon])
 
   // FLIP: after DOM update, animate from old position to new
   useLayoutEffect(() => {
@@ -147,14 +152,16 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
           transition: 'transform 240ms cubic-bezier(0.22,1,0.36,1), background-color 150ms ease, color 150ms ease, opacity 180ms ease'
         }}
       >
-        {tab.isLoading ? (
-          <Loader2 className="h-5 w-5 shrink-0 animate-spin opacity-50" />
-        ) : tab.favicon ? (
-          <img src={tab.favicon} alt="" className="h-5 w-5 shrink-0 rounded-sm" draggable={false} />
-        ) : (
-          <div className="h-5 w-5 shrink-0 rounded-full bg-sidebar-foreground/15" />
+        {tab.favicon && !faviconFailed && (
+          <img
+            src={tab.favicon}
+            alt=""
+            className="h-5 w-5 shrink-0 rounded-sm"
+            draggable={false}
+            onError={() => setFaviconFailed(true)}
+          />
         )}
-        <span className="min-w-0 flex-1 truncate">
+        <span className={cn('min-w-0 flex-1 truncate', tab.isLoading && 'loading-text')}>
           {tab.title || 'New Tab'}
         </span>
         <button

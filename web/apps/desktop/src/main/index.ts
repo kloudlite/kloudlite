@@ -1,5 +1,3 @@
-// MUST be first import — caches V8 bytecode for 20-30% faster startup
-import 'v8-compile-cache'
 import { app, BrowserWindow, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
 
 // Disable hardware acceleration check — skip GPU init for faster startup on some systems
@@ -18,6 +16,48 @@ type PeerCertificate = import('tls').PeerCertificate
 if (process.platform === 'darwin') {
   app.setName('Kloudlite')
 }
+
+let mainWindow: BrowserWindow | null = null
+const pendingOpenUrls: string[] = []
+
+function isWebUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function openWebUrl(url: string): void {
+  if (!isWebUrl(url)) return
+  const win = mainWindow ?? BrowserWindow.getAllWindows()[0]
+  if (!win) {
+    pendingOpenUrls.push(url)
+    return
+  }
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+  win.webContents.send('open-url-in-new-tab', url)
+}
+
+function drainPendingOpenUrls(): void {
+  for (const url of pendingOpenUrls.splice(0)) openWebUrl(url)
+}
+
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+if (!gotSingleInstanceLock) app.quit()
+
+app.on('second-instance', (_event, argv) => {
+  const url = argv.find(isWebUrl)
+  if (url) openWebUrl(url)
+})
+
+app.on('open-url', (event, url) => {
+  event.preventDefault()
+  openWebUrl(url)
+})
 
 function sendToMenuWindow(window: Electron.BaseWindow | undefined, channel: string, ...args: string[]): void {
   if (window instanceof BrowserWindow) window.webContents.send(channel, ...args)
@@ -42,10 +82,13 @@ function shortcutAction(input: Electron.Input): string | null {
   if (cmdOrCtrl && key === '1') return 'mode-1'
   if (cmdOrCtrl && key === '2') return 'mode-2'
   if (cmdOrCtrl && key === '3') return 'mode-3'
-  if (cmdOrCtrl && (key === '[' || key === 'left')) return 'go-back'
-  if (cmdOrCtrl && (key === ']' || key === 'right')) return 'go-forward'
-  if (input.alt && !input.meta && !input.control && !input.shift && key === 'left') return 'go-back'
-  if (input.alt && !input.meta && !input.control && !input.shift && key === 'right') return 'go-forward'
+  const left = key === 'left' || key === 'arrowleft'
+  const right = key === 'right' || key === 'arrowright'
+
+  if (cmdOrCtrl && (key === '[' || left)) return 'go-back'
+  if (cmdOrCtrl && (key === ']' || right)) return 'go-forward'
+  if (input.alt && !input.meta && !input.control && !input.shift && left) return 'go-back'
+  if (input.alt && !input.meta && !input.control && !input.shift && right) return 'go-forward'
 
   return null
 }
@@ -68,7 +111,7 @@ function createWindow(): BrowserWindow {
     ? join(__dirname, '../../resources/icon.icns')
     : join(__dirname, '../../resources/icon.png')
 
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 600,
@@ -88,7 +131,12 @@ function createWindow(): BrowserWindow {
   mainWindow.maximize()
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
+    setTimeout(drainPendingOpenUrls, 250)
+  })
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
   })
 
   installWindowShortcuts(mainWindow.webContents)
@@ -600,6 +648,8 @@ app.whenReady().then(() => {
 
   // Critical path: create window ASAP (everything else is deferred)
   const mainWindow = createWindow()
+  const launchUrl = process.argv.find(isWebUrl)
+  if (launchUrl) pendingOpenUrls.push(launchUrl)
 
   // Defer non-critical work until after window is shown
   mainWindow.once('ready-to-show', () => {
