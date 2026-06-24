@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, type KeyboardEvent }
 import { Search, ArrowRight, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTabStore, type Tab } from '@/store/tabs'
-import { DUMMY_ENVIRONMENTS, useEnvironmentStore } from '@/store/environments'
+import { useEnvironmentStore } from '@/store/environments'
 
 const ENTER_ANIM = 'popover-in 150ms ease-out'
 const EXIT_ANIM = 'popover-out 150ms ease-in forwards'
@@ -33,8 +33,7 @@ interface NewTabBarProps {
 
 export function NewTabBar({ onNavigate, onClose }: NewTabBarProps) {
   const { tabs, activeTabId, setActiveTab, addTab } = useTabStore()
-  const environments = useEnvironmentStore((s) => s.environments)
-  const browseEnvironments = environments.length > 0 ? environments : DUMMY_ENVIRONMENTS
+  const browseEnvironments = useEnvironmentStore((s) => s.environments)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [exiting, setExiting] = useState(false)
