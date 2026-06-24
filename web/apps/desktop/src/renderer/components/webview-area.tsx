@@ -38,6 +38,7 @@ interface WebviewAreaProps {
 export function WebviewArea({ onHandle }: WebviewAreaProps) {
   const { tabs, activeTabId, updateTab, addTab } = useTabStore()
   const addHistoryEntry = useHistoryStore((s) => s.addEntry)
+  const updateHistoryEntry = useHistoryStore((s) => s.updateEntry)
   const updateHistoryMetadata = useHistoryStore((s) => s.updateMetadata)
   const webviewRefs = useRef<Map<string, WebviewElement>>(new Map())
   const readyRefs = useRef<Set<string>>(new Set())
@@ -207,9 +208,8 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
             canGoBack: wv.canGoBack(),
             canGoForward: wv.canGoForward()
           })
-          // Record in history
-          const tab = useTabStore.getState().tabs.find(t => t.id === tabId)
-          addHistoryEntry(currentUrl, currentTitle, tab?.favicon || '')
+          // Record in history without guessing favicon from the previous page.
+          addHistoryEntry(currentUrl, currentTitle, '')
         })
 
         wv.addEventListener('page-title-updated', ((e: any) => {
@@ -219,7 +219,9 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
         wv.addEventListener('page-favicon-updated', ((e: any) => {
           const favicons = e.favicons as string[] | undefined
           if (favicons && favicons.length > 0) {
-            updateTab(tabId, { favicon: favicons[0] })
+            const favicon = favicons[0]
+            updateTab(tabId, { favicon })
+            updateHistoryEntry(wv.getURL(), { title: wv.getTitle(), favicon })
           }
         }) as EventListener)
 
