@@ -1,5 +1,3 @@
-// MUST be first import — caches V8 bytecode for 20-30% faster startup
-import 'v8-compile-cache'
 import { app, BrowserWindow, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
 
 // Disable hardware acceleration check — skip GPU init for faster startup on some systems
