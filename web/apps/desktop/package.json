@@ -30,6 +30,12 @@
       "out/**/*",
       "resources/**/*"
     ],
+    "protocols": [
+      {
+        "name": "Web URLs",
+        "schemes": ["http", "https"]
+      }
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "resources/icon.icns",
@@ -67,7 +73,8 @@
     "linux": {
       "icon": "resources/icon.png",
       "target": ["AppImage", "deb"],
-      "category": "Development"
+      "category": "Network",
+      "mimeTypes": ["x-scheme-handler/http", "x-scheme-handler/https"]
     },
     "win": {
       "icon": "resources/icon.ico",

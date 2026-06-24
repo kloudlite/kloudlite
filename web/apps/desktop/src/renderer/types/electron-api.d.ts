@@ -9,7 +9,7 @@ declare global {
       showContextMenu: (webContentsId: number, x: number, y: number) => Promise<void>
       showPopupMenu: (items: { label: string; id: string; type?: string; danger?: boolean }[]) => Promise<string | null>
       openDevTools: (webContentsId: number) => Promise<void>
-      onShortcut: (callback: (action: string) => void) => void
+      onShortcut: (callback: (action: string) => void) => () => void
       getTheme: () => Promise<'dark' | 'light'>
       onThemeChanged: (callback: (theme: 'dark' | 'light') => void) => void
       onOpenUrlInNewTab: (callback: (url: string) => void) => void

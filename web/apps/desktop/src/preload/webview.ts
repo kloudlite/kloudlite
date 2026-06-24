@@ -26,10 +26,10 @@ window.addEventListener('keydown', (e) => {
   }
 
   if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isEditable(e.target)) return
-  if (e.key === 'ArrowLeft') {
+  if (e.key === 'ArrowLeft' || e.key === 'Left') {
     e.preventDefault()
     ipcRenderer.sendToHost('shortcut', 'go-back')
-  } else if (e.key === 'ArrowRight') {
+  } else if (e.key === 'ArrowRight' || e.key === 'Right') {
     e.preventDefault()
     ipcRenderer.sendToHost('shortcut', 'go-forward')
   }
