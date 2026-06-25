@@ -72,7 +72,7 @@ func (m *Kloudlite) BuildWebsite(
 }
 
 // buildWebRuntimeImage creates the runtime container for a web app from its .next build output.
-func (m *Kloudlite) buildWebRuntimeImage(nextBuild *dagger.Directory, appName string) *dagger.Container {
+func (m *Kloudlite) buildWebRuntimeImage(nextBuild *dagger.Directory, appName string, source *dagger.Directory) *dagger.Container {
 	return dag.Container().
 		From("oven/bun:alpine").
 		WithExec([]string{"apk", "add", "--no-cache", "--no-scripts", "openssl"}).
@@ -81,6 +81,7 @@ func (m *Kloudlite) buildWebRuntimeImage(nextBuild *dagger.Directory, appName st
 		WithDirectory("/app/.next/standalone", nextBuild.Directory("standalone")).
 		WithDirectory("/app/.next/static", nextBuild.Directory("static")).
 		WithDirectory(fmt.Sprintf("/app/apps/%s/.next/static", appName), nextBuild.Directory("static")).
+		WithDirectory(fmt.Sprintf("/app/apps/%s/public", appName), source.Directory(fmt.Sprintf("web/apps/%s/public", appName))).
 		WithExposedPort(3000).
 		WithEnvVariable("PORT", "3000").
 		WithEnvVariable("HOSTNAME", "0.0.0.0").
@@ -94,7 +95,7 @@ func (m *Kloudlite) ImageConsole(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite"
+	// +default="ghcr.io/kloudlite/kloudlite"
 	registry string,
 	// +optional
 	nextBuild *dagger.Directory,
@@ -102,7 +103,7 @@ func (m *Kloudlite) ImageConsole(
 	if nextBuild == nil {
 		nextBuild = m.BuildConsole(ctx, source)
 	}
-	return m.buildWebRuntimeImage(nextBuild, "console").
+	return m.buildWebRuntimeImage(nextBuild, "console", source).
 		WithExec([]string{"chown", "-R", "nextjs:nodejs", "/app"}).
 		WithUser("nextjs").
 		WithDefaultArgs([]string{"bun", "apps/console/server.js"})
@@ -115,7 +116,7 @@ func (m *Kloudlite) ImageDashboard(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite"
+	// +default="ghcr.io/kloudlite/kloudlite"
 	registry string,
 	// +optional
 	nextBuild *dagger.Directory,
@@ -123,7 +124,7 @@ func (m *Kloudlite) ImageDashboard(
 	if nextBuild == nil {
 		nextBuild = m.BuildDashboard(ctx, source)
 	}
-	ctr := m.buildWebRuntimeImage(nextBuild, "dashboard").
+	ctr := m.buildWebRuntimeImage(nextBuild, "dashboard", source).
 		WithFile("/app/apps/dashboard/proxy-server.js",
 			source.File("web/apps/dashboard/proxy-server.js")).
 		WithFile("/app/apps/dashboard/start.sh",
@@ -146,7 +147,7 @@ func (m *Kloudlite) ImageWebsite(
 	source *dagger.Directory,
 	// +default="dev-local"
 	tag string,
-	// +default="ghcr.io/kloudlite"
+	// +default="ghcr.io/kloudlite/kloudlite"
 	registry string,
 	// +optional
 	nextBuild *dagger.Directory,
@@ -154,7 +155,7 @@ func (m *Kloudlite) ImageWebsite(
 	if nextBuild == nil {
 		nextBuild = m.BuildWebsite(ctx, source)
 	}
-	return m.buildWebRuntimeImage(nextBuild, "website").
+	return m.buildWebRuntimeImage(nextBuild, "website", source).
 		WithExec([]string{"chown", "-R", "nextjs:nodejs", "/app"}).
 		WithUser("nextjs").
 		WithDefaultArgs([]string{"bun", "apps/website/server.js"})
