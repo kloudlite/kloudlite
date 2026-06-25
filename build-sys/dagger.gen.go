@@ -92,10 +92,16 @@ func (r App) Name() string {
 		return "Kltun"
 	case AppOciInstaller:
 		return "OciInstaller"
+	case AppTunnelServer:
+		return "TunnelServer"
 	case AppWebsite:
 		return "Website"
 	case AppWorkmachineManager:
 		return "WorkmachineManager"
+	case AppWorkspaceBase:
+		return "WorkspaceBase"
+	case AppWorkspaceComprehensive:
+		return "WorkspaceComprehensive"
 	}
 	return ""
 }
@@ -142,13 +148,71 @@ func (r *App) UnmarshalJSON(bs []byte) error {
 		*r = AppKltun
 	case "OciInstaller":
 		*r = AppOciInstaller
+	case "TunnelServer":
+		*r = AppTunnelServer
 	case "Website":
 		*r = AppWebsite
 	case "WorkmachineManager":
 		*r = AppWorkmachineManager
+	case "WorkspaceBase":
+		*r = AppWorkspaceBase
+	case "WorkspaceComprehensive":
+		*r = AppWorkspaceComprehensive
 	default:
 		return fmt.Errorf("invalid enum value %q", s)
 	}
+	return nil
+}
+
+func (r GoChecksResult) MarshalJSON() ([]byte, error) {
+	var concrete struct {
+		Container    *dagger.Container
+		GoModCache   *dagger.Directory
+		GoBuildCache *dagger.Directory
+	}
+	concrete.Container = r.Container
+	concrete.GoModCache = r.GoModCache
+	concrete.GoBuildCache = r.GoBuildCache
+	return json.Marshal(&concrete)
+}
+
+func (r *GoChecksResult) UnmarshalJSON(bs []byte) error {
+	var concrete struct {
+		Container    *dagger.Container
+		GoModCache   *dagger.Directory
+		GoBuildCache *dagger.Directory
+	}
+	err := json.Unmarshal(bs, &concrete)
+	if err != nil {
+		return err
+	}
+	r.Container = concrete.Container
+	r.GoModCache = concrete.GoModCache
+	r.GoBuildCache = concrete.GoBuildCache
+	return nil
+}
+
+func (r WebChecksResult) MarshalJSON() ([]byte, error) {
+	var concrete struct {
+		Container        *dagger.Container
+		NodeModulesCache *dagger.Directory
+	}
+	concrete.Container = r.Container
+	concrete.NodeModulesCache = r.NodeModulesCache
+	return json.Marshal(&concrete)
+}
+
+func (r *WebChecksResult) UnmarshalJSON(bs []byte) error {
+	var concrete struct {
+		Container        *dagger.Container
+		NodeModulesCache *dagger.Directory
+	}
+	err := json.Unmarshal(bs, &concrete)
+	if err != nil {
+		return err
+	}
+	r.Container = concrete.Container
+	r.NodeModulesCache = concrete.NodeModulesCache
 	return nil
 }
 
@@ -642,6 +706,83 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Kloudlite).BuildWebsite(&parent, ctx, source), nil
+		case "ExtractGoBuildCache":
+			var parent Kloudlite
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var goModSeed *dagger.Directory
+			if inputArgs["goModSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["goModSeed"]), &goModSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goModSeed", err))
+				}
+			}
+			var goBuildSeed *dagger.Directory
+			if inputArgs["goBuildSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["goBuildSeed"]), &goBuildSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goBuildSeed", err))
+				}
+			}
+			return (*Kloudlite).ExtractGoBuildCache(&parent, ctx, source, goModSeed, goBuildSeed), nil
+		case "ExtractGoModCache":
+			var parent Kloudlite
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var goModSeed *dagger.Directory
+			if inputArgs["goModSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["goModSeed"]), &goModSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goModSeed", err))
+				}
+			}
+			var goBuildSeed *dagger.Directory
+			if inputArgs["goBuildSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["goBuildSeed"]), &goBuildSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goBuildSeed", err))
+				}
+			}
+			return (*Kloudlite).ExtractGoModCache(&parent, ctx, source, goModSeed, goBuildSeed), nil
+		case "ExtractNodeModules":
+			var parent Kloudlite
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var nodeModulesSeed *dagger.Directory
+			if inputArgs["nodeModulesSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["nodeModulesSeed"]), &nodeModulesSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg nodeModulesSeed", err))
+				}
+			}
+			return (*Kloudlite).ExtractNodeModules(&parent, ctx, source, nodeModulesSeed), nil
 		case "GenerateCRDs":
 			var parent Kloudlite
 			err = json.Unmarshal(parentJSON, &parent)
@@ -908,6 +1049,34 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Kloudlite).ImageOciInstaller(&parent, ctx, source, tag, registry), nil
+		case "ImageTunnelServer":
+			var parent Kloudlite
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var tag string
+			if inputArgs["tag"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["tag"]), &tag)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg tag", err))
+				}
+			}
+			var registry string
+			if inputArgs["registry"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["registry"]), &registry)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg registry", err))
+				}
+			}
+			return (*Kloudlite).ImageTunnelServer(&parent, ctx, source, tag, registry), nil
 		case "ImageWebsite":
 			var parent Kloudlite
 			err = json.Unmarshal(parentJSON, &parent)
@@ -1300,6 +1469,62 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Kloudlite).ReleaseBinaries(&parent, ctx, source, version, gitHubToken, repository, app), nil
+		case "RunGoChecks":
+			var parent Kloudlite
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var goModSeed *dagger.Directory
+			if inputArgs["goModSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["goModSeed"]), &goModSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goModSeed", err))
+				}
+			}
+			var goBuildSeed *dagger.Directory
+			if inputArgs["goBuildSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["goBuildSeed"]), &goBuildSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg goBuildSeed", err))
+				}
+			}
+			return (*Kloudlite).RunGoChecks(&parent, ctx, source, goModSeed, goBuildSeed), nil
+		case "RunWebChecks":
+			var parent Kloudlite
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var source *dagger.Directory
+			if inputArgs["source"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+				}
+			}
+			var app string
+			if inputArgs["app"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["app"]), &app)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg app", err))
+				}
+			}
+			var nodeModulesSeed *dagger.Directory
+			if inputArgs["nodeModulesSeed"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["nodeModulesSeed"]), &nodeModulesSeed)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg nodeModulesSeed", err))
+				}
+			}
+			return (*Kloudlite).RunWebChecks(&parent, ctx, source, app, nodeModulesSeed), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
