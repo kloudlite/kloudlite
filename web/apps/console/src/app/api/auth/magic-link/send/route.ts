@@ -12,7 +12,7 @@ import {
   recordIPRequest,
 } from '@/lib/console/rate-limiter'
 import { createMagicLinkToken } from '@/lib/console/storage/magic-links'
-import { sendMagicLinkEmail } from '@/lib/console/email/sendgrid'
+import { sendMagicLinkEmail } from '@/lib/console/email/resend'
 
 // Email validation schema
 const requestSchema = z.object({
