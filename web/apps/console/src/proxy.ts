@@ -28,7 +28,7 @@ function addSecurityHeaders(response: NextResponse, _req: NextRequest): NextResp
       `script-src ${scriptSrc}`,
       `style-src 'self' 'unsafe-inline'`,
       `connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://cloudflareinsights.com`,
-      `frame-src 'self' https://js.stripe.com https://hooks.stripe.com`,
+      `frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com`,
     ].join('; '),
   )
 
