@@ -78,14 +78,14 @@ func (m *Kloudlite) buildWebRuntimeImage(nextBuild *dagger.Directory, appName st
 		WithExec([]string{"apk", "add", "--no-cache", "--no-scripts", "openssl"}).
 		WithExec([]string{"addgroup", "--system", "--gid", "1001", "nodejs"}).
 		WithExec([]string{"adduser", "--system", "--uid", "1001", "nextjs"}).
-		WithDirectory("/app/.next/standalone", nextBuild.Directory("standalone")).
-		WithDirectory("/app/.next/static", nextBuild.Directory("static")).
+		WithDirectory("/app", nextBuild.Directory("standalone")).
 		WithDirectory(fmt.Sprintf("/app/apps/%s/.next/static", appName), nextBuild.Directory("static")).
 		WithDirectory(fmt.Sprintf("/app/apps/%s/public", appName), source.Directory(fmt.Sprintf("web/apps/%s/public", appName))).
 		WithExposedPort(3000).
 		WithEnvVariable("PORT", "3000").
 		WithEnvVariable("HOSTNAME", "0.0.0.0").
-		WithEnvVariable("NODE_ENV", "production")
+		WithEnvVariable("NODE_ENV", "production").
+		WithWorkdir("/app")
 }
 
 // ImageConsole builds the console Docker runtime image.
