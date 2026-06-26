@@ -7,7 +7,7 @@ export interface ElectronAPI {
   platform: NodeJS.Platform
   webviewPreload: string
   windowControl: (action: 'close' | 'minimize' | 'maximize') => Promise<void>
-  showContextMenu: (webContentsId: number, x: number, y: number) => Promise<void>
+  showContextMenu: (webContentsId: number, x: number, y: number, linkHref?: string) => Promise<void>
   openDevTools: (webContentsId: number) => Promise<void>
   onShortcut: (callback: (action: string) => void) => () => void
   getTheme: () => Promise<'dark' | 'light'>
@@ -37,7 +37,7 @@ const api: ElectronAPI = {
   platform: process.platform,
   webviewPreload: webviewPreloadPath,
   windowControl: (action) => ipcRenderer.invoke('window-control', action),
-  showContextMenu: (webContentsId, x, y) => ipcRenderer.invoke('show-context-menu', webContentsId, x, y),
+  showContextMenu: (webContentsId, x, y, linkHref) => ipcRenderer.invoke('show-context-menu', webContentsId, x, y, linkHref),
   openDevTools: (webContentsId) => ipcRenderer.invoke('open-devtools', webContentsId),
   onShortcut: (callback) => {
     const handler = (_event: Electron.IpcRendererEvent, action: string) => callback(action)

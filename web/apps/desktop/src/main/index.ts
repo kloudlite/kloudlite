@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
+import { app, BrowserWindow, clipboard, Menu, MenuItem, nativeImage, nativeTheme, shell, ipcMain, webContents } from 'electron'
 
 // Disable hardware acceleration check — skip GPU init for faster startup on some systems
 // app.disableHardwareAcceleration()  // Uncomment if GPU init is slow
@@ -417,12 +417,25 @@ ipcMain.handle('get-certificate', async (_event, url: string) => {
 })
 
 // IPC: show context menu for a webview
-ipcMain.handle('show-context-menu', (event, webContentsId: number, x: number, y: number) => {
+ipcMain.handle('show-context-menu', (event, webContentsId: number, x: number, y: number, linkHref?: string) => {
   const wc = webContentsId ? webContents.fromId(webContentsId) : null
   const window = BrowserWindow.fromWebContents(event.sender)
   if (!window) return
 
   const menu = new Menu()
+
+  if (linkHref) {
+    const win = BrowserWindow.getAllWindows()[0]
+    menu.append(new MenuItem({
+      label: 'Open Link in New Tab',
+      click: () => win?.webContents.send('open-url-in-new-tab', linkHref)
+    }))
+    menu.append(new MenuItem({
+      label: 'Copy Link Address',
+      click: () => clipboard.writeText(linkHref)
+    }))
+    menu.append(new MenuItem({ type: 'separator' }))
+  }
 
   if (wc) {
     menu.append(new MenuItem({
@@ -451,15 +464,11 @@ ipcMain.handle('show-context-menu', (event, webContentsId: number, x: number, y:
     menu.append(new MenuItem({ type: 'separator' }))
     menu.append(new MenuItem({
       label: 'Inspect Element',
-      click: () => {
-        wc.inspectElement(x, y)
-      }
+      click: () => wc.inspectElement(x, y)
     }))
     menu.append(new MenuItem({
       label: 'Open DevTools',
-      click: () => {
-        wc.openDevTools({ mode: 'detach' })
-      }
+      click: () => wc.openDevTools({ mode: 'detach' })
     }))
   }
 

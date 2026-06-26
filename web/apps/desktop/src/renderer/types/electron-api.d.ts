@@ -6,7 +6,7 @@ declare global {
       platform: string
       webviewPreload: string
       windowControl: (action: 'close' | 'minimize' | 'maximize') => Promise<void>
-      showContextMenu: (webContentsId: number, x: number, y: number) => Promise<void>
+      showContextMenu: (webContentsId: number, x: number, y: number, linkHref?: string) => Promise<void>
       showPopupMenu: (items: { label: string; id: string; type?: string; danger?: boolean }[]) => Promise<string | null>
       openDevTools: (webContentsId: number) => Promise<void>
       onShortcut: (callback: (action: string) => void) => () => void

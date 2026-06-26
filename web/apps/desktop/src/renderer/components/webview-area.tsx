@@ -149,9 +149,13 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
         // IPC messages from webview preload
         wv.addEventListener('ipc-message', ((e: any) => {
           if (e.channel === 'context-menu') {
-            const [x, y] = e.args
+            const [x, y, linkHref] = e.args
+            const href = typeof linkHref === 'string' && linkHref ? linkHref : undefined
             const wcId = wv.getWebContentsId()
-            window.electronAPI.showContextMenu(wcId, x, y)
+            window.electronAPI.showContextMenu(wcId, x, y, href)
+          } else if (e.channel === 'open-in-new-tab') {
+            const url = e.args[0] as string
+            useTabStore.getState().addTab(url)
           } else if (e.channel === 'swipe-navigate') {
             const direction = e.args[0] as 'back' | 'forward'
             if (readyRefs.current.has(tabId)) {
