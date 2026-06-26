@@ -20,17 +20,19 @@ async function del(name: string, type: string) {
 
 export async function createDnsRecord(name: string, content: string, type = 'A', proxied = false) {
   await del(name, type)
-  return cf('', { method: 'POST', body: JSON.stringify({ type, name, content, ttl: 120, proxied }) })
+  const result: any = await cf('', { method: 'POST', body: JSON.stringify({ type, name, content, ttl: 120, proxied }) })
+  return result?.id || null
 }
 
-export async function createCnameRecord(name: string, target: string) {
-  return createDnsRecord(name, target, 'CNAME', true)
+export async function createCnameRecord(name: string, target: string, proxied?: boolean) {
+  return createDnsRecord(name, target, 'CNAME', proxied ?? true)
 }
 
 export async function updateDnsRecord(name: string, content: string, type = 'A', proxied = false) {
   const existing: any[] = await cf(`?name=${encodeURIComponent(name)}&type=${type}`)
   if (!existing.length) return createDnsRecord(name, content, type, proxied)
-  return cf(`/${existing[0].id}`, { method: 'PATCH', body: JSON.stringify({ content, proxied, ttl: 120 }) })
+  const result: any = await cf(`/${existing[0].id}`, { method: 'PATCH', body: JSON.stringify({ content, proxied, ttl: 120 }) })
+  return result?.id || null
 }
 
 export async function deleteDnsRecord(recordId: string) {
@@ -62,7 +64,8 @@ export async function updateDnsRecords(names: string[], ip: string) {
 }
 
 export async function deleteDnsRecords(names: string[]) {
-  return Promise.all(names.map(n => del(n, 'A')))
+  const results = await Promise.all(names.map(n => del(n, 'A')))
+  return results.reduce((a, b) => a + b, 0) > 0
 }
 
 export async function createDomainRouteCnameRecords(domain: string) {
