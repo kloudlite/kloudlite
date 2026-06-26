@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { cachedInstallationAccess, cachedInstallationById } from '@/lib/console/cached-queries'
-import { getOrgMembers, getOrgMemberRole } from '@/lib/console/storage'
+import { getOrgMembers, getOrgMemberRole, getOrgInvitations } from '@/lib/console/storage'
 import { TeamManagementClient } from '@/components/console/team-client'
 import { InviteMemberButton } from '@/components/invite-member-button'
+import { TeamInvitationsTable } from '@/components/team-invitations-table'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -26,6 +27,11 @@ export default async function TeamManagementPage({ params }: PageProps) {
   const userRole = await getOrgMemberRole(orgId, session.user.id)
   const members = await getOrgMembers(orgId)
 
+  const allInvitations = await getOrgInvitations(orgId)
+  const pendingInvitations = allInvitations.filter(
+    (inv) => inv.status === 'pending'
+  )
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -46,6 +52,23 @@ export default async function TeamManagementPage({ params }: PageProps) {
         currentUserId={session.user.id}
         userRole={userRole || 'member'}
       />
+
+      {pendingInvitations.length > 0 && (
+        <div className="border border-foreground/10 rounded-lg bg-background">
+          <div className="border-b border-foreground/10 px-6 py-4">
+            <h3 className="font-medium text-foreground">Pending Invitations</h3>
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              Invitations waiting to be accepted
+            </p>
+          </div>
+          <div className="p-0">
+            <TeamInvitationsTable
+              invitations={pendingInvitations}
+              orgId={orgId}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
