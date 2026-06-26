@@ -44,15 +44,15 @@ export async function POST(
     const auth = await requireOrgAccess(orgId)
 
     const body = await request.json()
-    const { email } = body as { email?: string }
+    const { email, role } = body as { email?: string; role?: string }
 
     if (!email || !email.trim()) {
       return apiError('Email is required', 400)
     }
 
+    const memberRole: 'admin' | 'member' = role === 'admin' ? 'admin' : 'member'
     const emailLower = email.toLowerCase().trim()
 
-    // Check if the user is already a member
     const existingUser = await getUserByEmail(emailLower)
     if (existingUser) {
       const existingRole = await getOrgMemberRole(orgId, existingUser.userId)
@@ -61,7 +61,7 @@ export async function POST(
       }
     }
 
-    const invitation = await createOrgInvitation(orgId, emailLower, auth.userId)
+    const invitation = await createOrgInvitation(orgId, emailLower, auth.userId, memberRole)
     return NextResponse.json({ invitation }, { status: 201 })
   } catch (error) {
     return apiCatchError(error, 'Failed to invite member')

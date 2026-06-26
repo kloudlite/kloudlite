@@ -23,6 +23,7 @@ export function InviteMemberButton({ orgId }: InviteMemberButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
+  const [role, setRole] = useState<'member' | 'admin'>('member')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,7 +36,7 @@ export function InviteMemberButton({ orgId }: InviteMemberButtonProps) {
       const response = await fetch(`/api/orgs/${orgId}/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role: 'admin' }),
+        body: JSON.stringify({ email, role }),
       })
 
       if (!response.ok) {
@@ -44,6 +45,7 @@ export function InviteMemberButton({ orgId }: InviteMemberButtonProps) {
       }
 
       setEmail('')
+      setRole('member')
       setOpen(false)
       router.refresh()
     } catch (err) {
@@ -66,7 +68,7 @@ export function InviteMemberButton({ orgId }: InviteMemberButtonProps) {
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
             <DialogDescription>
-              Send an invitation to join this organization. They will receive admin access after accepting.
+              Send an invitation to join this organization.
             </DialogDescription>
           </DialogHeader>
 
@@ -84,6 +86,39 @@ export function InviteMemberButton({ orgId }: InviteMemberButtonProps) {
                 required
                 className="mt-2"
               />
+            </div>
+
+            <div>
+              <label className="text-base font-medium">Role</label>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRole('member')}
+                  className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
+                    role === 'member'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-foreground/10 text-muted-foreground hover:border-foreground/30'
+                  }`}
+                >
+                  Member
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('admin')}
+                  className={`flex-1 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
+                    role === 'admin'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-foreground/10 text-muted-foreground hover:border-foreground/30'
+                  }`}
+                >
+                  Admin
+                </button>
+              </div>
+              <p className="text-muted-foreground mt-1.5 text-xs">
+                {role === 'admin'
+                  ? 'Admins can manage members, billing, and installation settings.'
+                  : 'Members can view installations and access resources.'}
+              </p>
             </div>
 
             {error && (

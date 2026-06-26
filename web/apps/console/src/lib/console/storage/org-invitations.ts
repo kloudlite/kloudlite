@@ -16,6 +16,7 @@ export async function createOrgInvitation(
   orgId: string,
   email: string,
   invitedBy: string,
+  role: 'admin' | 'member' = 'member',
 ): Promise<OrgInvitation> {
   const emailLower = email.toLowerCase()
 
@@ -24,7 +25,7 @@ export async function createOrgInvitation(
     .insert({
       org_id: orgId,
       email: emailLower,
-      role: 'admin' as const,
+      role,
       invited_by: invitedBy,
       status: 'pending' as const,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
