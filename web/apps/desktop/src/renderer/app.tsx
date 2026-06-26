@@ -390,6 +390,8 @@ export function App() {
         )}
 
         <div className="relative flex flex-1 flex-col overflow-hidden rounded-[10px] bg-background shadow-[0_0_20px_rgba(0,0,0,0.08),0_0_4px_rgba(0,0,0,0.04)]">
+          {/* Drag region — small area at top to move the window */}
+          <div className="drag-region absolute inset-x-0 top-0 z-20 h-[32px]" />
           {/* Loading indicator — browse mode only */}
           {showLoading && (
             <div
