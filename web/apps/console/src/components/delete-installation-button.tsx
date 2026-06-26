@@ -52,32 +52,7 @@ export function DeleteInstallationButton({
 
   const handleDelete = async () => {
     setDeleting(true)
-
-    if (isManaged) {
-      // Trigger uninstall job, then navigate to list where progress is shown.
-      // The job-lock endpoint auto-deletes the record when uninstall succeeds.
-      try {
-        const response = await fetch(
-          `/api/installations/${installationId}/trigger-managed-uninstall`,
-          { method: 'POST' },
-        )
-        if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.error || 'Failed to trigger uninstall')
-        }
-        toast.success('Uninstall started — infrastructure is being torn down')
-        setOpen(false)
-        setDeleting(false)
-        router.push('/installations')
-        router.refresh()
-      } catch (err) {
-        toast.error(getErrorMessage(err, 'Failed to trigger uninstall'))
-        setDeleting(false)
-      }
-    } else {
-      // Direct delete for BYOC installations
-      await doDelete()
-    }
+    await doDelete()
   }
 
   return (

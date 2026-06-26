@@ -74,7 +74,7 @@ func (m *Kloudlite) BuildWebsite(
 // buildWebRuntimeImage creates the runtime container for a web app from its .next build output.
 func (m *Kloudlite) buildWebRuntimeImage(nextBuild *dagger.Directory, appName string, source *dagger.Directory) *dagger.Container {
 	return dag.Container().
-		From("oven/bun:alpine").
+		From("node:23-alpine").
 		WithExec([]string{"apk", "add", "--no-cache", "--no-scripts", "openssl"}).
 		WithExec([]string{"addgroup", "--system", "--gid", "1001", "nodejs"}).
 		WithExec([]string{"adduser", "--system", "--uid", "1001", "nextjs"}).
@@ -106,7 +106,7 @@ func (m *Kloudlite) ImageConsole(
 	return m.buildWebRuntimeImage(nextBuild, "console", source).
 		WithExec([]string{"chown", "-R", "nextjs:nodejs", "/app"}).
 		WithUser("nextjs").
-		WithDefaultArgs([]string{"bun", "apps/console/server.js"})
+		WithDefaultArgs([]string{"node", "apps/console/server.js"})
 }
 
 // ImageDashboard builds the dashboard Docker runtime image.
@@ -133,7 +133,7 @@ func (m *Kloudlite) ImageDashboard(
 	ctr = ctr.
 		WithExec([]string{"mkdir", "-p", "/tmp/ws-install"}).
 		WithWorkdir("/tmp/ws-install").
-		WithExec([]string{"bun", "add", "ws"}).
+		WithExec([]string{"npm", "install", "ws"}).
 		WithExec([]string{"cp", "-r", "node_modules/ws", "/app/apps/dashboard/node_modules/"}).
 		WithExec([]string{"rm", "-rf", "/tmp/ws-install"}).
 		WithWorkdir("/app")
@@ -158,5 +158,5 @@ func (m *Kloudlite) ImageWebsite(
 	return m.buildWebRuntimeImage(nextBuild, "website", source).
 		WithExec([]string{"chown", "-R", "nextjs:nodejs", "/app"}).
 		WithUser("nextjs").
-		WithDefaultArgs([]string{"bun", "apps/website/server.js"})
+		WithDefaultArgs([]string{"node", "apps/website/server.js"})
 }
