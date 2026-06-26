@@ -15,7 +15,7 @@ import {
   Button,
   Input,
 } from '@kloudlite/ui'
-import { MoreHorizontal, ExternalLink, Settings, Search, Loader2, Trash2, AlertTriangle } from 'lucide-react'
+import { MoreHorizontal, Settings, Search, Loader2, Trash2, AlertTriangle } from 'lucide-react'
 import { NewInstallationButton } from '@/components/new-installation-button'
 import {
   DropdownMenu,
@@ -196,7 +196,6 @@ export function InstallationsList({
     })
   }
 
-  const domain = process.env.NEXT_PUBLIC_INSTALLATION_DOMAIN || 'khost.dev'
   const liveRegionMessage = useMemo(() => {
     const count = filteredInstallations.length
     const label = count === 1 ? 'installation' : 'installations'
@@ -254,7 +253,7 @@ export function InstallationsList({
                     Provider
                   </th>
                   <th className="text-muted-foreground hidden w-[30%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide md:table-cell">
-                    Domain
+                    Location
                   </th>
                   <th className="text-muted-foreground w-[15%] px-6 py-3.5 text-left text-xs font-semibold tracking-wide">
                     Status
@@ -268,14 +267,6 @@ export function InstallationsList({
                 {filteredInstallations.map((installation) => {
                   const { status, statusColor, isPending, isActiveJob, stepInfo } =
                     getInstallationStatus(installation)
-                  // Validate subdomain before constructing URL
-                  const isValidSubdomain =
-                    installation.subdomain &&
-                    installation.subdomain !== '0.0.0.0' &&
-                    !installation.subdomain.includes('0.0.0.0')
-                  const installationUrl = isValidSubdomain
-                    ? `https://${installation.subdomain}.${domain}`
-                    : null
                   const displayName =
                     installation.name || installation.subdomain || 'Unnamed Installation'
 
@@ -299,16 +290,10 @@ export function InstallationsList({
                           )}
                           {/* Show domain on mobile */}
                           <div className="mt-1 md:hidden">
-                            {installationUrl ? (
-                              <a
-                                href={installationUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary/80 hover:text-primary flex items-center gap-1 font-mono text-[11px] transition-colors hover:underline"
-                              >
-                                {installation.subdomain}.{domain}
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
+                            {installation.cloudLocation ? (
+                              <span className="text-muted-foreground/50 font-mono text-[11px]">
+                                {installation.cloudLocation}
+                              </span>
                             ) : (
                               <span className="text-muted-foreground/50 text-xs">
                                 Not configured
@@ -321,16 +306,10 @@ export function InstallationsList({
                         <ProviderBadge provider={installation.cloudProvider} />
                       </td>
                       <td className="hidden px-6 py-3 md:table-cell">
-                        {installationUrl ? (
-                          <a
-                            href={installationUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary/80 hover:text-primary inline-flex items-center gap-1.5 font-mono text-[13px] transition-colors hover:underline"
-                          >
-                            {installation.subdomain}.{domain}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
+                        {installation.cloudLocation ? (
+                          <span className="text-primary/80 font-mono text-[13px]">
+                            {installation.cloudLocation}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground/50 text-sm">Not configured</span>
                         )}
