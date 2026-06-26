@@ -3,6 +3,7 @@ import { getRegistrationSession } from '@/lib/console-auth'
 import { cachedInstallationAccess, cachedInstallationById } from '@/lib/console/cached-queries'
 import { getOrgMembers, getOrgMemberRole } from '@/lib/console/storage'
 import { TeamManagementClient } from '@/components/console/team-client'
+import { InviteMemberButton } from '@/components/invite-member-button'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -27,11 +28,16 @@ export default async function TeamManagementPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-foreground text-2xl font-semibold">Team</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Organization members who can access this installation
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-foreground text-2xl font-semibold">Team</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Organization members who can access this installation
+          </p>
+        </div>
+        {(userRole === 'owner' || userRole === 'admin') && (
+          <InviteMemberButton orgId={orgId} />
+        )}
       </div>
 
       <TeamManagementClient
