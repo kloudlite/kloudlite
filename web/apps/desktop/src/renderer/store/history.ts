@@ -21,6 +21,7 @@ export interface HistoryEntry {
 interface HistoryStore {
   entries: HistoryEntry[]
   addEntry: (url: string, title: string, favicon: string) => void
+  updateEntry: (url: string, updates: Partial<Pick<HistoryEntry, 'title' | 'favicon'>>) => void
   updateMetadata: (url: string, metadata: PageMetadata) => void
   search: (query: string, limit?: number) => HistoryEntry[]
   clear: () => void
@@ -29,6 +30,7 @@ interface HistoryStore {
 const MAX_HISTORY = 5000
 
 function normalizeUrl(url: string): string {
+  if (!url) return ''
   try {
     const u = new URL(url)
     return u.origin + u.pathname.replace(/\/+$/, '')
@@ -36,6 +38,7 @@ function normalizeUrl(url: string): string {
     return url
   }
 }
+
 
 export const useHistoryStore = create<HistoryStore>()(
   persist(
@@ -73,6 +76,16 @@ export const useHistoryStore = create<HistoryStore>()(
         })
       },
 
+      updateEntry: (url, updates) => {
+        const normalized = normalizeUrl(url)
+        if (!normalized) return
+        set((state) => ({
+          entries: state.entries.map((entry) =>
+            normalizeUrl(entry.url) === normalized ? { ...entry, ...updates } : entry
+          )
+        }))
+      },
+
       updateMetadata: (url: string, metadata: PageMetadata) => {
         set((state) => ({
           entries: state.entries.map((e) =>
@@ -83,13 +96,14 @@ export const useHistoryStore = create<HistoryStore>()(
 
       search: (query: string, limit = 8) => {
         const q = query.toLowerCase().trim()
+        const entries = Array.isArray(get().entries) ? get().entries.filter((entry) => entry?.url) : []
         if (!q) {
           const recent: HistoryEntry[] = []
           const seenRecent = new Set<string>()
-          for (const entry of get().entries) {
+          for (const entry of entries) {
             if (recent.length >= limit) break
             const norm = normalizeUrl(entry.url)
-            if (seenRecent.has(norm)) continue
+            if (!norm || seenRecent.has(norm)) continue
             seenRecent.add(norm)
             recent.push(entry)
           }
@@ -98,10 +112,10 @@ export const useHistoryStore = create<HistoryStore>()(
         const words = q.split(/\s+/)
         const results: HistoryEntry[] = []
         const seen = new Set<string>()
-        for (const entry of get().entries) {
+        for (const entry of entries) {
           if (results.length >= limit) break
           const norm = normalizeUrl(entry.url)
-          if (seen.has(norm)) continue
+          if (!norm || seen.has(norm)) continue
           seen.add(norm)
           const meta = entry.metadata
           const searchable = [

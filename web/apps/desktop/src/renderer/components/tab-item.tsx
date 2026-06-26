@@ -12,6 +12,14 @@ interface TabItemProps {
   onMove: (fromIndex: number, toIndex: number) => void
 }
 
+function fallbackFavicon(url: string) {
+  try {
+    return `${new URL(url).origin}/favicon.ico`
+  } catch {
+    return ''
+  }
+}
+
 export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: TabItemProps) {
   const ref = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -28,7 +36,7 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
 
   useEffect(() => {
     setFaviconFailed(false)
-  }, [tab.favicon])
+  }, [tab.favicon, tab.url])
 
   // FLIP: after DOM update, animate from old position to new
   useLayoutEffect(() => {
@@ -152,9 +160,9 @@ export function TabItem({ tab, index, isActive, onSelect, onClose, onMove }: Tab
           transition: 'transform 240ms cubic-bezier(0.22,1,0.36,1), background-color 150ms ease, color 150ms ease, opacity 180ms ease'
         }}
       >
-        {tab.favicon && !faviconFailed && (
+        {(tab.favicon || fallbackFavicon(tab.url)) && !faviconFailed && (
           <img
-            src={tab.favicon}
+            src={tab.favicon || fallbackFavicon(tab.url)}
             alt=""
             className="h-5 w-5 shrink-0 rounded-sm"
             draggable={false}

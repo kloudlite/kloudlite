@@ -1,9 +1,20 @@
 import { ipcRenderer } from 'electron'
 
-// Right-click context menu
+// Right-click context menu — detect link anchor
+function closestLink(target: EventTarget | null): HTMLAnchorElement | null {
+  let el = target as HTMLElement | null
+  while (el) {
+    if (el.tagName === 'A') return el as HTMLAnchorElement
+    el = el.parentElement
+  }
+  return null
+}
+
 document.addEventListener('contextmenu', (e) => {
   e.preventDefault()
-  ipcRenderer.sendToHost('context-menu', e.screenX, e.screenY)
+  const link = closestLink(e.target)
+  const href = link?.href || link?.getAttribute('href') || ''
+  ipcRenderer.sendToHost('context-menu', e.screenX, e.screenY, href)
 })
 
 function isEditable(target: EventTarget | null) {
@@ -11,6 +22,16 @@ function isEditable(target: EventTarget | null) {
   if (!el) return false
   return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
 }
+
+// Middle-click on links — open in new tab
+window.addEventListener('auxclick', (e) => {
+  if (e.button !== 1) return
+  const link = closestLink(e.target)
+  if (link?.href) {
+    e.preventDefault()
+    ipcRenderer.sendToHost('open-in-new-tab', link.href)
+  }
+})
 
 window.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'Tab') {
