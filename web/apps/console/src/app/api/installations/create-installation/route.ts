@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, subdomain, hostingType, orgId } = body
+    const { name, description, hostingType, orgId } = body
 
     if (!orgId || typeof orgId !== 'string') {
       return apiError('Organization ID is required', 400)
@@ -42,26 +42,15 @@ export async function POST(request: Request) {
       return apiError('Installation name is required', 400)
     }
 
-    if (!subdomain || typeof subdomain !== 'string' || subdomain.trim().length === 0) {
-      return apiError('Subdomain is required', 400)
-    }
-
-    // Validate subdomain format
-    const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
-    if (!subdomainRegex.test(subdomain.trim())) {
-      return apiError('Invalid subdomain format', 400)
-    }
-
     // Generate a new installation key
     const installationKey = crypto.randomUUID()
 
-    // Create the installation with subdomain
+    // Create the installation
     const installation = await createInstallation(
       orgId,
       name.trim(),
       description?.trim() || undefined,
       installationKey,
-      subdomain.trim(),
     )
 
     // If Kloudlite Cloud hosting, set cloud provider to OCI
@@ -69,7 +58,7 @@ export async function POST(request: Request) {
       await updateInstallation(installation.id, { cloudProvider: 'oci' })
     }
 
-    // Update the session cookie with the installation key, subdomain, and hosting type
+    // Update the session cookie with the installation key and hosting type
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
     const token = await new SignJWT({
       provider: session.provider,
@@ -77,7 +66,6 @@ export async function POST(request: Request) {
       name: session.user.name,
       image: session.user.image,
       installationKey: installation.installationKey,
-      subdomain: subdomain.trim(),
       userId: session.user.id,
       hostingType: hostingType || 'byoc',
     })
