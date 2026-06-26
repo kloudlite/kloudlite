@@ -52,6 +52,30 @@ export function DeleteInstallationButton({
 
   const handleDelete = async () => {
     setDeleting(true)
+
+    if (isManaged) {
+      try {
+        const response = await fetch(
+          `/api/installations/${installationId}/trigger-managed-uninstall`,
+          { method: 'POST' },
+        )
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Failed to trigger uninstall')
+        }
+        toast.success('Uninstall started — infrastructure is being torn down')
+        setOpen(false)
+        setDeleting(false)
+        router.push('/installations')
+        router.refresh()
+        return
+      } catch (err) {
+        // Fall through to direct delete if uninstall trigger fails
+        toast.error(getErrorMessage(err, 'Failed to trigger uninstall, deleting installation record instead'))
+      }
+    }
+
+    // Direct delete (for BYOC or as fallback)
     await doDelete()
   }
 
