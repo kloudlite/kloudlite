@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from '../supabase'
-import { piiSupabase } from '../supabase-pii'
+import { piiSupabase } from '../supabase'
 import type { OrgRole, OrgMember } from './types'
 
 /**

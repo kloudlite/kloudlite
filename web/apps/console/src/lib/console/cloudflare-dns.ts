@@ -1,544 +1,77 @@
-/**
- * Cloudflare DNS REST API Client
- *
- * Manages DNS A records for Kloudlite installations and workmachines
- */
-
-const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!
-const CLOUDFLARE_ZONE_ID = process.env.CLOUDFLARE_ZONE_ID!
+const CF_TOKEN = process.env.CLOUDFLARE_API_TOKEN!
+const CF_ZONE = process.env.CLOUDFLARE_ZONE_ID!
 export const CLOUDFLARE_DNS_DOMAIN = process.env.CLOUDFLARE_DNS_DOMAIN!
 
-const DNS_API_BASE = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records`
+const BASE = `https://api.cloudflare.com/client/v4/zones/${CF_ZONE}/dns_records`
+const headers = { Authorization: `Bearer ${CF_TOKEN}`, 'Content-Type': 'application/json' }
 
-interface CloudflareDnsResponse<T> {
-  success: boolean
-  errors: Array<{ code: number; message: string }>
-  messages: string[]
-  result: T
+async function cf<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, { headers, ...init })
+  const body = await res.json()
+  if (!body.success) throw new Error(body.errors?.[0]?.message || 'Cloudflare API error')
+  return body.result
 }
 
-interface DnsRecord {
-  id: string
-  type: string
-  name: string
-  content: string
-  proxied: boolean
-  ttl: number
+async function del(name: string, type: string) {
+  const records: any[] = await cf(`?name=${encodeURIComponent(name)}&type=${type}`)
+  for (const r of records) await cf(`/${r.id}`, { method: 'DELETE' })
+  return records.length
 }
 
-/**
- * Delete all existing DNS records for a name
- * @param name - Full domain name
- * @returns Number of deleted records
- */
-async function deleteExistingRecords(name: string): Promise<number> {
-  const existingRecords = await getAllDnsRecords(name)
-  let deleted = 0
-
-  for (const record of existingRecords) {
-    console.log(`Deleting existing ${record.type} record for ${name}: ${record.content} (ID: ${record.id})`)
-    const success = await deleteDnsRecord(record.id)
-    if (success) {
-      deleted++
-    }
-  }
-
-  return deleted
+export async function createDnsRecord(name: string, content: string, type = 'A', proxied = false) {
+  await del(name, type)
+  return cf('', { method: 'POST', body: JSON.stringify({ type, name, content, ttl: 120, proxied }) })
 }
 
-/**
- * Create a DNS A record
- * @param name - Full domain name (e.g., "test.khost.dev" or "*.user1.test.khost.dev")
- * @param ip - IP address
- * @param proxied - Whether to proxy through Cloudflare (default: false)
- * @returns DNS record ID
- */
-export async function createDnsRecord(
-  name: string,
-  ip: string,
-  proxied: boolean = false,
-): Promise<string | null> {
-  try {
-    console.log(`Creating DNS A record: ${name} → ${ip}`)
-
-    const response = await fetch(DNS_API_BASE, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'A',
-        name,
-        content: ip,
-        ttl: 120, // 2 minutes for faster propagation
-        proxied,
-      }),
-    })
-
-    const result: CloudflareDnsResponse<DnsRecord> = await response.json()
-
-    if (!result.success) {
-      // Check if error is "record already exists" (code 81058)
-      const alreadyExistsError = result.errors.find((err) => err.code === 81058)
-      if (alreadyExistsError) {
-        console.log(`DNS A record already exists for ${name}, fetching existing record`)
-        const existingRecord = await getDnsRecord(name, 'A')
-        if (existingRecord) {
-          // Update the existing record if content differs
-          if (existingRecord.content !== ip || existingRecord.proxied !== proxied) {
-            console.log(`Updating existing A record: ${name} → ${ip}`)
-            const updated = await updateDnsRecord(existingRecord.id, name, ip, proxied)
-            if (updated) {
-              return existingRecord.id
-            }
-          }
-          console.log(`Found existing DNS A record: ${name} → ${existingRecord.content} (ID: ${existingRecord.id})`)
-          return existingRecord.id
-        }
-      }
-
-      // Check if error is "conflicting record type exists" (code 81054)
-      const conflictError = result.errors.find((err) => err.code === 81054)
-      if (conflictError) {
-        console.log(`Conflicting record exists for ${name}, deleting existing records and retrying`)
-        const deleted = await deleteExistingRecords(name)
-        if (deleted > 0) {
-          // Retry creating the record
-          return createDnsRecord(name, ip, proxied)
-        }
-      }
-
-      console.error(`DNS CREATE failed for ${name}:`, JSON.stringify(result.errors))
-      return null
-    }
-
-    console.log(`DNS A record created successfully: ${name} → ${ip} (ID: ${result.result.id})`)
-    return result.result.id
-  } catch (error) {
-    console.error(`DNS CREATE error for ${name}:`, error)
-    return null
-  }
+export async function createCnameRecord(name: string, target: string) {
+  return createDnsRecord(name, target, 'CNAME', true)
 }
 
-/**
- * Create a DNS CNAME record
- * @param name - Full domain name (e.g., "api.example.com")
- * @param target - Target domain name (e.g., "ssh.dr-name.subdomain.khost.dev")
- * @param proxied - Whether to proxy through Cloudflare (default: true for route domains)
- * @returns DNS record ID
- */
-export async function createCnameRecord(
-  name: string,
-  target: string,
-  proxied: boolean = true,
-): Promise<string | null> {
-  try {
-    console.log(`Creating DNS CNAME record: ${name} → ${target}`)
-
-    // Check if CNAME record already exists
-    const existingCname = await getDnsRecord(name, 'CNAME')
-    if (existingCname) {
-      console.log(`DNS CNAME record already exists for ${name}: ${existingCname.content} (ID: ${existingCname.id})`)
-
-      // If the existing record points to the same target with same proxy setting, return its ID
-      if (existingCname.content === target && existingCname.proxied === proxied) {
-        console.log(`Existing CNAME record matches desired target, reusing ID: ${existingCname.id}`)
-        return existingCname.id
-      }
-
-      // Otherwise, update the record
-      console.log(`Updating existing CNAME record to point to ${target}`)
-      const updateResponse = await fetch(`${DNS_API_BASE}/${existingCname.id}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'CNAME',
-          name,
-          content: target,
-          ttl: 120,
-          proxied,
-        }),
-      })
-
-      if (updateResponse.ok) {
-        const updateResult: CloudflareDnsResponse<DnsRecord> = await updateResponse.json()
-        if (updateResult.success) {
-          console.log(`DNS CNAME record updated successfully: ${name} → ${target}`)
-          return updateResult.result.id
-        }
-      }
-    }
-
-    // Create new record
-    const response = await fetch(DNS_API_BASE, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'CNAME',
-        name,
-        content: target,
-        ttl: 120,
-        proxied,
-      }),
-    })
-
-    const result: CloudflareDnsResponse<DnsRecord> = await response.json()
-
-    if (!result.success) {
-      // Check if error is "conflicting record type exists" (code 81054)
-      const conflictError = result.errors.find((err) => err.code === 81054)
-      if (conflictError) {
-        console.log(`Conflicting record exists for ${name}, deleting existing records and retrying`)
-        const deleted = await deleteExistingRecords(name)
-        if (deleted > 0) {
-          // Retry creating the record
-          return createCnameRecord(name, target, proxied)
-        }
-      }
-
-      console.error('DNS CNAME CREATE failed for %s:', name, JSON.stringify(result.errors))
-      return null
-    }
-
-    console.log(`DNS CNAME record created successfully: ${name} → ${target} (ID: ${result.result.id})`)
-    return result.result.id
-  } catch (error) {
-    console.error('DNS CNAME CREATE error for %s:', name, error)
-    return null
-  }
+export async function updateDnsRecord(name: string, content: string, type = 'A', proxied = false) {
+  const existing: any[] = await cf(`?name=${encodeURIComponent(name)}&type=${type}`)
+  if (!existing.length) return createDnsRecord(name, content, type, proxied)
+  return cf(`/${existing[0].id}`, { method: 'PATCH', body: JSON.stringify({ content, proxied, ttl: 120 }) })
 }
 
-/**
- * Update an existing DNS A record
- * @param recordId - DNS record ID
- * @param name - Full domain name
- * @param ip - New IP address
- * @param proxied - Whether to proxy through Cloudflare
- * @returns Success status
- */
-export async function updateDnsRecord(
-  recordId: string,
-  name: string,
-  ip: string,
-  proxied: boolean = false,
-): Promise<boolean> {
-  try {
-    console.log(`Updating DNS A record ${recordId}: ${name} → ${ip}`)
-
-    const response = await fetch(`${DNS_API_BASE}/${recordId}`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'A',
-        name,
-        content: ip,
-        ttl: 120,
-        proxied,
-      }),
-    })
-
-    if (!response.ok) {
-      const error = await response.text()
-      console.error(`DNS UPDATE failed for ${recordId}:`, error)
-      return false
-    }
-
-    const result: CloudflareDnsResponse<DnsRecord> = await response.json()
-
-    if (!result.success) {
-      console.error(`DNS UPDATE failed for ${recordId}:`, result.errors)
-      return false
-    }
-
-    console.log(`DNS A record updated successfully: ${name} → ${ip}`)
-    return true
-  } catch (error) {
-    console.error(`DNS UPDATE error for ${recordId}:`, error)
-    return false
-  }
+export async function deleteDnsRecord(recordId: string) {
+  return cf(`/${recordId}`, { method: 'DELETE' })
 }
 
-/**
- * Delete a DNS A record
- * @param recordId - DNS record ID
- * @returns Success status
- */
-export async function deleteDnsRecord(recordId: string): Promise<boolean> {
-  try {
-    console.log(`Deleting DNS A record: ${recordId}`)
-
-    const response = await fetch(`${DNS_API_BASE}/${recordId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-      },
-    })
-
-    if (!response.ok && response.status !== 404) {
-      const error = await response.text()
-      console.error(`DNS DELETE failed for ${recordId}:`, error)
-      return false
-    }
-
-    console.log(`DNS A record deleted successfully: ${recordId}`)
-    return true
-  } catch (error) {
-    console.error(`DNS DELETE error for ${recordId}:`, error)
-    return false
-  }
+export async function getDnsRecord(name: string, type = 'A') {
+  const records: any[] = await cf(`?name=${encodeURIComponent(name)}&type=${type}`)
+  return records[0] || null
 }
 
-/**
- * Get a DNS record by name
- * @param name - Full domain name
- * @param type - Record type (default: 'A')
- * @returns DNS record or null if not found
- */
-export async function getDnsRecord(name: string, type: string = 'A'): Promise<DnsRecord | null> {
-  try {
-    const url = new URL(DNS_API_BASE)
-    url.searchParams.set('name', name)
-    url.searchParams.set('type', type)
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-      },
-    })
-
-    if (!response.ok) {
-      return null
-    }
-
-    const result: CloudflareDnsResponse<DnsRecord[]> = await response.json()
-
-    if (!result.success || result.result.length === 0) {
-      return null
-    }
-
-    return result.result[0]
-  } catch (error) {
-    console.error('DNS GET error for %s:', name, error)
-    return null
-  }
+export async function getAllDnsRecords(name: string) {
+  return cf(`?name=${encodeURIComponent(name)}`)
 }
 
-/**
- * Get all DNS records for a name (any type)
- * @param name - Full domain name
- * @returns Array of DNS records
- */
-export async function getAllDnsRecords(name: string): Promise<DnsRecord[]> {
-  try {
-    const url = new URL(DNS_API_BASE)
-    url.searchParams.set('name', name)
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
-      },
-    })
-
-    if (!response.ok) {
-      return []
-    }
-
-    const result: CloudflareDnsResponse<DnsRecord[]> = await response.json()
-
-    if (!result.success) {
-      return []
-    }
-
-    return result.result
-  } catch (error) {
-    console.error('DNS GET ALL error for %s:', name, error)
-    return []
-  }
+export async function createInstallationDnsRecords(name: string, ip: string) {
+  return [
+    await createDnsRecord(name, ip),
+    await createCnameRecord(`*.${name}`, name),
+  ]
 }
 
-/**
- * Create DNS A records for installation
- * @param subdomain - User's subdomain (e.g., "test")
- * @param ip - Installation IP address
- * @returns Array of created DNS record IDs
- */
-export async function createInstallationDnsRecords(
-  subdomain: string,
-  ip: string,
-): Promise<string[]> {
-  const recordIds: string[] = []
-
-  // Create: {subdomain}.{domain} → IP (proxied through CloudFlare for TLS termination)
-  const fullDomain = `${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
-  const recordId = await createDnsRecord(fullDomain, ip, true)
-
-  if (recordId) {
-    recordIds.push(recordId)
-  }
-
-  return recordIds
+export async function createWorkmachineDnsRecords(name: string, ip: string) {
+  return createDnsRecord(name, ip)
 }
 
-/**
- * Create DNS A records for workmachine
- * @param workMachineName - Workmachine name (e.g., "user1")
- * @param subdomain - User's subdomain (e.g., "test")
- * @param ip - Workmachine IP address
- * @returns Array of created DNS record IDs
- */
-export async function createWorkmachineDnsRecords(
-  workMachineName: string,
-  subdomain: string,
-  ip: string,
-): Promise<string[]> {
-  const recordIds: string[] = []
-
-  // Create: {workMachineName}.{subdomain}.{domain} → IP
-  const exactDomain = `${workMachineName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
-  const exactRecordId = await createDnsRecord(exactDomain, ip)
-
-  if (exactRecordId) {
-    recordIds.push(exactRecordId)
-  }
-
-  // Create: *.{workMachineName}.{subdomain}.{domain} → IP
-  const wildcardDomain = `*.${workMachineName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
-  const wildcardRecordId = await createDnsRecord(wildcardDomain, ip)
-
-  if (wildcardRecordId) {
-    recordIds.push(wildcardRecordId)
-  }
-
-  return recordIds
+export async function updateDnsRecords(names: string[], ip: string) {
+  return Promise.all(names.map(n => updateDnsRecord(n, ip)))
 }
 
-/**
- * Update DNS A records with new IP
- * @param recordIds - Existing DNS record IDs
- * @param name - Domain name (for logging)
- * @param ip - New IP address
- * @param proxied - Whether to proxy through Cloudflare (default: false)
- * @returns Success status
- */
-export async function updateDnsRecords(
-  recordIds: string[],
-  name: string,
-  ip: string,
-  proxied: boolean = false,
-): Promise<boolean> {
-  let allSucceeded = true
-
-  for (const recordId of recordIds) {
-    const success = await updateDnsRecord(recordId, name, ip, proxied)
-    if (!success) {
-      allSucceeded = false
-    }
-  }
-
-  return allSucceeded
+export async function deleteDnsRecords(names: string[]) {
+  return Promise.all(names.map(n => del(n, 'A')))
 }
 
-/**
- * Delete multiple DNS A records
- * @param recordIds - DNS record IDs to delete
- * @returns Success status
- */
-export async function deleteDnsRecords(recordIds: string[]): Promise<boolean> {
-  let allSucceeded = true
-
-  for (const recordId of recordIds) {
-    const success = await deleteDnsRecord(recordId)
-    if (!success) {
-      allSucceeded = false
-    }
-  }
-
-  return allSucceeded
+export async function createDomainRouteCnameRecords(domain: string) {
+  return createCnameRecord(domain, CLOUDFLARE_DNS_DOMAIN)
 }
 
-/**
- * Create only CNAME records for domain routes (reuses existing SSH A record)
- * Used when routes change but SSH A record already exists
- *
- * @param serviceName - Name of the DomainRequest resource
- * @param subdomain - Installation subdomain (e.g., "test")
- * @param domainRoutes - Array of domain routes to create CNAME records for
- * @returns Array of route CNAME record IDs
- */
-export async function createDomainRouteCnameRecords(
-  serviceName: string,
-  subdomain: string,
-  domainRoutes: Array<{ domain: string }>,
-): Promise<string[]> {
-  const routeRecordIds: string[] = []
-  const sshDomain = `ssh.${serviceName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
-
-  console.log(`Creating ${domainRoutes.length} CNAME records pointing to ${sshDomain}`)
-
-  for (const route of domainRoutes) {
-    const cnameRecordId = await createCnameRecord(route.domain, sshDomain, true)
-    if (cnameRecordId) {
-      routeRecordIds.push(cnameRecordId)
-      console.log(`Created route CNAME: ${route.domain} → ${sshDomain}`)
-    } else {
-      console.error(`Failed to create CNAME for ${route.domain}`)
-    }
-  }
-
-  return routeRecordIds
-}
-
-/**
- * Create DNS records for a DomainRequest
- * Creates an A record for SSH access and CNAME records for domain routes
- *
- * @param serviceName - Name of the DomainRequest resource
- * @param subdomain - Installation subdomain (e.g., "test")
- * @param ip - Public IP address
- * @param domainRoutes - Array of domain routes to create CNAME records for
- * @returns Object containing SSH A record ID and array of route CNAME record IDs
- */
-export async function createDomainRequestDnsRecords(
-  serviceName: string,
-  subdomain: string,
-  ip: string,
-  domainRoutes?: Array<{ domain: string }>,
-): Promise<{ sshRecordId: string | null; routeRecordIds: string[] }> {
-  const routeRecordIds: string[] = []
-
-  // Create A record for SSH access: ssh.{domainrequest-name}.{subdomain}.{domain} → IP (no proxy)
-  const sshDomain = `ssh.${serviceName}.${subdomain}.${CLOUDFLARE_DNS_DOMAIN}`
-  const sshRecordId = await createDnsRecord(sshDomain, ip, false)
-
-  if (!sshRecordId) {
-    console.error(`Failed to create SSH A record for ${sshDomain}`)
-    return { sshRecordId: null, routeRecordIds: [] }
-  }
-
-  console.log(`Created SSH A record: ${sshDomain} → ${ip}`)
-
-  // Create CNAME records for domain routes pointing to SSH domain (with proxy)
-  if (domainRoutes && domainRoutes.length > 0) {
-    for (const route of domainRoutes) {
-      const cnameRecordId = await createCnameRecord(route.domain, sshDomain, true)
-      if (cnameRecordId) {
-        routeRecordIds.push(cnameRecordId)
-        console.log(`Created route CNAME: ${route.domain} → ${sshDomain}`)
-      } else {
-        console.error(`Failed to create CNAME for ${route.domain}`)
-      }
-    }
-  }
-
-  return { sshRecordId, routeRecordIds }
+export async function createDomainRequestDnsRecords(subdomain: string, ip: string) {
+  return [
+    await createDnsRecord(subdomain, ip),
+    await createCnameRecord(`*.${subdomain}`, subdomain),
+  ]
 }

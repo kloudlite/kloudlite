@@ -4,7 +4,7 @@
  */
 
 import type { PiiDatabase } from '../supabase-pii-types'
-import { piiSupabase } from '../supabase-pii'
+import { piiSupabase } from '../supabase'
 import type { User, UserRow } from './types'
 
 /**

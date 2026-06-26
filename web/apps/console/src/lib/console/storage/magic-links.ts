@@ -3,7 +3,7 @@
  * Uses PII database for token storage
  */
 
-import { piiSupabase } from '../supabase-pii'
+import { piiSupabase } from '../supabase'
 import type { PiiDatabase } from '../supabase-pii-types'
 import { randomBytes } from 'crypto'
 

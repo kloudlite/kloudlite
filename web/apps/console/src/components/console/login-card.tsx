@@ -214,17 +214,6 @@ export function LoginCard({
             </div>
           </div>
 
-          {/* Development backdoor */}
-          {process.env.NODE_ENV !== 'production' && (
-            <div className="border-t border-border/50 pt-6">
-              <a
-                href="/api/dev-login"
-                className="text-muted-foreground/50 hover:text-foreground text-xs text-center block transition-colors"
-              >
-                [Dev] Quick login as karthik@kloudlite.io
-              </a>
-            </div>
-          )}
         </div>
       </div>
     </>
