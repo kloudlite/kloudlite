@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { cachedInstallationAccess, cachedInstallationById } from '@/lib/console/cached-queries'
+import { getOrgMembers, getOrgMemberRole } from '@/lib/console/storage'
 import { TeamManagementClient } from '@/components/console/team-client'
 
 interface PageProps {
@@ -12,30 +13,32 @@ export default async function TeamManagementPage({ params }: PageProps) {
   const session = await getRegistrationSession()
   if (!session?.user) redirect('/login')
 
-  let userRole: string
+  let orgId: string
   try {
-    const { role } = await cachedInstallationAccess(id)
-    userRole = role
-  } catch {
-    redirect('/installations')
-  }
+    const context = await cachedInstallationAccess(id)
+    orgId = context.orgId
+  } catch { redirect('/installations') }
 
   const installation = await cachedInstallationById(id)
   if (!installation) redirect('/installations')
+
+  const userRole = await getOrgMemberRole(orgId, session.user.id)
+  const members = await getOrgMembers(orgId)
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-foreground text-2xl font-semibold">Team</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Manage users who can access this installation
+          Organization members who can access this installation
         </p>
       </div>
 
       <TeamManagementClient
-        installationId={id}
-        apiServerUrl={installation.apiServerUrl}
-        isOwner={userRole === 'owner'}
+        orgId={orgId}
+        members={members}
+        currentUserId={session.user.id}
+        userRole={userRole || 'member'}
       />
     </div>
   )
