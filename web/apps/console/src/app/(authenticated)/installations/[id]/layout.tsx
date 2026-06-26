@@ -101,7 +101,7 @@ export default async function InstallationLayout({ children, params }: LayoutPro
 
       {/* Tabs — only shown when there are multiple */}
       <div className="border-b border-foreground/10 mb-8">
-        <InstallationDetailsTabs installationId={id} cloudProvider={installation.cloudProvider} />
+        <InstallationDetailsTabs installationId={id} />
       </div>
 
       {/* Page Content */}
