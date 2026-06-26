@@ -53,9 +53,9 @@ export function CreateInstallationPage({ orgId }: CreateInstallationPageProps) {
       toast.success('Installation created')
 
       if (hostingType === 'kloudlite') {
-        router.push(`/installations/${data.installation.id}/install`)
+        router.push(`/installations/${data.installationId}/install`)
       } else {
-        router.push(`/installations/${data.installation.id}`)
+        router.push(`/installations/${data.installationId}`)
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to create installation'))
