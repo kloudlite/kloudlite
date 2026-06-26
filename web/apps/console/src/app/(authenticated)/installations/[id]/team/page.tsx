@@ -36,7 +36,7 @@ export default async function TeamManagementPage({ params }: PageProps) {
 
       <TeamManagementClient
         orgId={orgId}
-        members={members}
+        members={members.map((m) => ({ id: m.id, userId: m.userId, role: m.role, email: m.userEmail, name: m.userName }))}
         currentUserId={session.user.id}
         userRole={userRole || 'member'}
       />
