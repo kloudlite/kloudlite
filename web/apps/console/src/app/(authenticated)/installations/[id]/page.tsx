@@ -76,6 +76,26 @@ export default async function InstallationSettingsPage({ params }: PageProps) {
         </div>
       )}
 
+      {/* Team Management */}
+      {installation.apiServerUrl && (
+        <div className="border border-foreground/10 rounded-lg p-6 bg-background">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-foreground text-lg font-semibold">Team</h2>
+              <p className="text-muted-foreground text-sm mt-1">
+                Manage user access to this installation
+              </p>
+            </div>
+            <a
+              href={`/installations/${installation.id}/team`}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Manage Team
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Danger Zone — only for owner */}
       {userRole === 'owner' && !activeJob && !isUninstalling && (
         <div className="border border-destructive/20 rounded-lg p-6 bg-destructive/[0.03]">

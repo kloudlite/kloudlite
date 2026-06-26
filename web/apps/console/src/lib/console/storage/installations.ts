@@ -17,6 +17,7 @@ function mapToInstallation(data: InstallationRow, dnsConfigurations: DnsConfigur
     secretKey: data.secret_key || undefined,
     setupCompleted: data.setup_completed,
     subdomain: data.subdomain || undefined,
+    apiServerUrl: data.api_server_url || undefined,
     reservedAt: data.reserved_at || undefined,
     deploymentReady: data.deployment_ready || undefined,
     lastHealthCheck: data.last_health_check || undefined,

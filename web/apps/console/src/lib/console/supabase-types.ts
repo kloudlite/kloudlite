@@ -83,6 +83,7 @@ export type Database = {
           secret_key: string | null
           setup_completed: boolean
           subdomain: string | null
+          api_server_url: string | null
           reserved_at: string | null
           deployment_ready: boolean | null
           last_health_check: string | null

@@ -72,6 +72,7 @@ export interface Installation {
   secretKey?: string
   setupCompleted: boolean
   subdomain?: string
+  apiServerUrl?: string
   reservedAt?: string
   dnsConfigurations?: DnsConfiguration[]
   deploymentReady?: boolean
