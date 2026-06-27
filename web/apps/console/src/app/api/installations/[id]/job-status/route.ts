@@ -1,15 +1,65 @@
 import { NextResponse } from 'next/server'
 import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireInstallationAccess } from '@/lib/console/authorization'
-import {
-  getInstallationById,
-  updateInstallation,
-  deleteInstallation,
-  deleteDnsConfigurations,
-  deleteDomainReservation,
-} from '@/lib/console/storage'
-import { deleteDnsRecords } from '@/lib/console/cloudflare-dns'
-import { getJobExecutionStatus } from '@/lib/console/aca-jobs'
+import { getInstallationById, updateInstallation } from '@/lib/console/storage'
+import { readFileSync } from 'fs'
+
+export const runtime = 'nodejs'
+
+function getServiceAccountToken(): string {
+  return readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token', 'utf8')
+}
+
+async function getK8sJobStatus(jobName: string): Promise<{ status: string; error?: string }> {
+  try {
+    const token = getServiceAccountToken()
+    const res = await fetch(
+      `https://kubernetes.default.svc/apis/batch/v1/namespaces/production/jobs/${jobName}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    )
+    if (!res.ok) return { status: 'unknown' }
+
+    const job = await res.json()
+    const conditions = job?.status?.conditions || []
+
+    if (conditions.some((c: any) => c.type === 'Complete' && c.status === 'True')) {
+      return { status: 'succeeded' }
+    }
+    if (conditions.some((c: any) => c.type === 'Failed' && c.status === 'True')) {
+      const reason = conditions.find((c: any) => c.type === 'Failed')?.reason || 'Job failed'
+      return { status: 'failed', error: reason }
+    }
+
+    // Check pod status for detailed progress
+    const podRes = await fetch(
+      `https://kubernetes.default.svc/api/v1/namespaces/production/pods?labelSelector=job-name=${jobName}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    )
+    if (podRes.ok) {
+      const podList = await podRes.json()
+      const pod = podList?.items?.[0]
+      if (pod?.status?.containerStatuses?.[0]?.state?.waiting?.reason === 'ImagePullBackOff') {
+        return { status: 'failed', error: 'Failed to pull OCI installer image' }
+      }
+      if (pod?.status?.phase === 'Running') {
+        return { status: 'running' }
+      }
+      if (pod?.status?.phase === 'Pending') {
+        return { status: 'pending' }
+      }
+      if (pod?.status?.phase === 'Succeeded') {
+        return { status: 'succeeded' }
+      }
+      if (pod?.status?.phase === 'Failed') {
+        return { status: 'failed', error: 'Job execution failed' }
+      }
+    }
+
+    return { status: 'running' }
+  } catch {
+    return { status: 'unknown' }
+  }
+}
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -18,97 +68,44 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     await requireInstallationAccess(id)
 
     const installation = await getInstallationById(id)
-    if (!installation) {
-      return apiError('Installation not found', 404)
-    }
+    if (!installation) return apiError('Installation not found', 404)
 
-    // For BYOC installations (AWS/GCP/Azure), there's no ACA job execution.
-    // Progress is reported via the job-progress endpoint and stored directly in the DB.
-    if (!installation.deployJobExecutionName) {
-      // If there's no ACA execution AND no progress data, return 404
-      if (!installation.deployJobStatus && !installation.deployJobOperation) {
-        return apiError('No job execution found', 404)
-      }
+    // For OCI managed installations, check the K8s Job status
+    if (installation.cloudProvider === 'oci' && installation.deployJobExecutionName) {
+      const jobStatus = await getK8sJobStatus(installation.deployJobExecutionName)
 
-      // Auto-delete after successful uninstall (BYOC path)
-      if (installation.deployJobOperation === 'uninstall' && installation.deployJobStatus === 'succeeded') {
-        try {
-          console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall (BYOC)`)
-        const dnsRecordIds = await deleteDnsConfigurations(id)
-        if (dnsRecordIds.length > 0) {
-          await deleteDnsRecords(dnsRecordIds)
+      if (jobStatus.status !== installation.deployJobStatus) {
+        const updates: Record<string, any> = { deployJobStatus: jobStatus.status }
+        if (jobStatus.status === 'succeeded') {
+          updates.deploymentReady = true
+          updates.setupCompleted = true
+          updates.secretKey = 'auto-deployed'
+          updates.deployJobCompletedAt = new Date().toISOString()
+          updates.deployJobCurrentStep = 9
+          updates.deployJobStepDescription = 'Installation complete'
         }
-        await deleteDomainReservation(id)
-        await deleteInstallation(id)
-        console.log(`[job-status] Installation ${id} auto-deleted (BYOC)`)
-      } catch (deleteErr) {
-        console.error(`[job-status] Failed to auto-delete installation ${id}:`, deleteErr)
+        if (jobStatus.status === 'failed') {
+          updates.deployJobError = jobStatus.error
+          updates.deployJobCompletedAt = new Date().toISOString()
+        }
+        await updateInstallation(id, updates)
       }
-      return NextResponse.json({ status: 'succeeded', operation: 'uninstall', deleted: true })
-    }
 
-    // Return DB-stored progress for BYOC installations
-    return NextResponse.json({
-      status: installation.deployJobStatus || 'unknown',
-      startedAt: installation.deployJobStartedAt,
-      completedAt: installation.deployJobCompletedAt,
-      error: installation.deployJobError,
-      operation: installation.deployJobOperation,
-      currentStep: installation.deployJobCurrentStep,
-      totalSteps: installation.deployJobTotalSteps,
-      stepDescription: installation.deployJobStepDescription,
+      return NextResponse.json({
+        status: jobStatus.status,
+        operation: installation.deployJobOperation,
+        error: jobStatus.error || installation.deployJobError,
+        executionName: installation.deployJobExecutionName,
       })
     }
 
-    const result = await getJobExecutionStatus(installation.deployJobExecutionName)
-
-    // Update installation if status changed
-    if (result.status !== installation.deployJobStatus) {
-      const updates: Record<string, string | undefined> = {
-        deployJobStatus: result.status,
-      }
-      if (result.completedAt) {
-        updates.deployJobCompletedAt = result.completedAt
-      }
-      if (result.error) {
-        updates.deployJobError = result.error
-      }
-      await updateInstallation(id, updates)
-    }
-
-    // Auto-delete after successful uninstall
-    if (installation.deployJobOperation === 'uninstall' && result.status === 'succeeded') {
-      try {
-        console.log(`[job-status] Auto-deleting installation ${id} after successful uninstall`)
-        const dnsRecordIds = await deleteDnsConfigurations(id)
-        if (dnsRecordIds.length > 0) {
-          await deleteDnsRecords(dnsRecordIds)
-        }
-        await deleteDomainReservation(id)
-        await deleteInstallation(id)
-        console.log(`[job-status] Installation ${id} auto-deleted`)
-      } catch (deleteErr) {
-        console.error(`[job-status] Failed to auto-delete installation ${id}:`, deleteErr)
-      }
-      return NextResponse.json({ status: 'succeeded', operation: 'uninstall', deleted: true })
-    }
-
-    // Re-fetch installation to get latest progress fields (may have been updated by job-progress callback)
-    const updatedInstallation = await getInstallationById(id)
-
+    // For installations without a K8s job, return current DB status
     return NextResponse.json({
-      status: result.status,
-      executionName: installation.deployJobExecutionName,
-      startedAt: result.startedAt || installation.deployJobStartedAt,
-      completedAt: result.completedAt || installation.deployJobCompletedAt,
-      error: result.error || installation.deployJobError,
-      operation: updatedInstallation?.deployJobOperation || installation.deployJobOperation,
-      currentStep: updatedInstallation?.deployJobCurrentStep ?? installation.deployJobCurrentStep,
-      totalSteps: updatedInstallation?.deployJobTotalSteps ?? installation.deployJobTotalSteps,
-      stepDescription: updatedInstallation?.deployJobStepDescription || installation.deployJobStepDescription,
+      status: installation.deployJobStatus || 'unknown',
+      operation: installation.deployJobOperation,
+      error: installation.deployJobError,
     })
   } catch (error) {
-    console.error('Error getting job status:', error)
     return apiCatchError(error, 'Failed to get job status')
   }
 }

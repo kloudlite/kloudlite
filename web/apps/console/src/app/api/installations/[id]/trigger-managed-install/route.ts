@@ -53,7 +53,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${await getServiceAccountToken()}`,
+              'Authorization': `Bearer ${getServiceAccountToken()}`,
             },
             body: JSON.stringify({
               apiVersion: 'batch/v1',
