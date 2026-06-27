@@ -53,9 +53,15 @@ export async function POST(request: Request) {
       installationKey,
     )
 
-    // If Kloudlite Cloud hosting, set cloud provider to OCI
+    // If Kloudlite Cloud hosting, trigger the install immediately
     if (hostingType === 'kloudlite') {
       await updateInstallation(installation.id, { cloudProvider: 'oci' })
+
+      // Trigger managed install via background fetch
+      fetch(`http://localhost:3000/api/installations/${installation.id}/trigger-managed-install`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).catch((err) => console.error('Failed to auto-trigger install:', err))
     }
 
     // Update the session cookie with the installation key and hosting type
