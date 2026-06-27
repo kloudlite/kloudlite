@@ -4,6 +4,8 @@ import { requireInstallationOwner } from '@/lib/console/authorization'
 import { getInstallationById, updateInstallation, getBillingAccount } from '@/lib/console/storage'
 import { readFileSync } from 'fs'
 
+export const runtime = 'nodejs'
+
 function getServiceAccountToken(): string {
   return readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token', 'utf8')
 }
@@ -46,7 +48,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
         // Create K8s Job via in-cluster API
         const k8sResponse = await fetch(
-          `https://kubernetes.default.svc/api/v1/namespaces/production/jobs`,
+          `https://kubernetes.default.svc/apis/batch/v1/namespaces/production/jobs`,
           {
             method: 'POST',
             headers: {
