@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server'
 import { apiError, apiCatchError } from '@/lib/api-helpers'
 import { requireInstallationOwner } from '@/lib/console/authorization'
 import { getInstallationById, updateInstallation, getBillingAccount } from '@/lib/console/storage'
-import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
+import { readFileSync } from 'fs'
+
+function getServiceAccountToken(): string {
+  return readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token', 'utf8')
+}
 
 const STALE_TIMEOUT_MS = 30 * 60 * 1000
 
@@ -38,14 +42,61 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (ociTenancy && ociUser && ociFingerprint && ociPrivateKey) {
       try {
-        const result = await triggerOCIInstallerJob({
-          operation: 'install',
-          installationKey: installation.installationKey,
-          ociTenancy, ociUser, ociRegion, ociCompartment: '', ociFingerprint, ociPrivateKey,
-        })
-        executionName = result.executionName
+        const jobName = `oci-installer-${id.substring(0, 8)}`
+
+        // Create K8s Job via in-cluster API
+        const k8sResponse = await fetch(
+          `https://kubernetes.default.svc/api/v1/namespaces/production/jobs`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await getServiceAccountToken()}`,
+            },
+            body: JSON.stringify({
+              apiVersion: 'batch/v1',
+              kind: 'Job',
+              metadata: { name: jobName },
+              spec: {
+                ttlSecondsAfterFinished: 604800,
+                template: {
+                  spec: {
+                    imagePullSecrets: [{ name: 'ghcr-pull-secret' }],
+                    containers: [{
+                      name: 'oci-installer',
+                      image: 'ghcr.io/kloudlite/kloudlite/oci-installer:20260626-fdf5f7d2',
+                      env: [
+                        { name: 'OPERATION', value: 'install' },
+                        { name: 'INSTALLATION_KEY', value: installation.installationKey },
+                        { name: 'CONSOLE_BASE_URL', value: 'https://console.kloudlite.io' },
+                        { name: 'OCI_CLI_TENANCY', value: ociTenancy },
+                        { name: 'OCI_CLI_USER', value: ociUser },
+                        { name: 'OCI_CLI_REGION', value: ociRegion },
+                        { name: 'OCI_CLI_FINGERPRINT', value: ociFingerprint },
+                        { name: 'OCI_CLI_KEY_CONTENT', valueFrom: { secretKeyRef: { name: 'console-secrets', key: 'KLOUDLITE_OCI_PRIVATE_KEY' } } },
+                        { name: 'SKIP_LB', value: 'false' },
+                        { name: 'ENABLE_DELETION_PROTECTION', value: 'true' },
+                      ],
+                      resources: { requests: { cpu: '1', memory: '2Gi' }, limits: { cpu: '2', memory: '4Gi' } },
+                    }],
+                    restartPolicy: 'Never',
+                  },
+                },
+                backoffLimit: 0,
+              },
+            }),
+          },
+        )
+
+        if (!k8sResponse.ok) {
+          const errText = await k8sResponse.text()
+          throw new Error(`K8s API error: ${errText}`)
+        }
+
+        executionName = jobName
+        console.log(`Created K8s job: ${jobName}`)
       } catch (err) {
-        console.error('OCI job unavailable, deploying directly:', err)
+        console.error('Failed to create K8s installer job:', err)
         jobStatus = 'succeeded'
       }
     } else {
