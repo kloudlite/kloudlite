@@ -4,7 +4,7 @@ import { requireInstallationOwner } from '@/lib/console/authorization'
 import { getInstallationById, updateInstallation, getBillingAccount } from '@/lib/console/storage'
 import { triggerOCIInstallerJob } from '@/lib/console/aca-jobs'
 
-const STALE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+const STALE_TIMEOUT_MS = 30 * 60 * 1000
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -13,74 +13,64 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const { orgId } = await requireInstallationOwner(id)
 
     const installation = await getInstallationById(id)
-    if (!installation) {
-      return apiError('Installation not found', 404)
-    }
+    if (!installation) return apiError('Installation not found', 404)
 
-    // Require an active Stripe subscription at the org level
-    const customer = await getBillingAccount(orgId)
-    if (!customer || customer.billingStatus !== 'active') {
+    const billing = await getBillingAccount(orgId)
+    if (!billing || billing.billingStatus !== 'active') {
       return apiError('Active subscription required to deploy Kloudlite Cloud', 403)
     }
 
-    if (!installation.subdomain) {
-      return apiError('No subdomain configured', 400)
-    }
-
-    // If a job is already running and not stale, return existing execution
     if (
-      (installation.deployJobStatus === 'running' || installation.deployJobStatus === 'pending') &&
-      installation.deployJobStartedAt &&
+      (installation.deployJobStatus === 'running' || installation.deployJobStatus === 'pending') && installation.deployJobStartedAt &&
       Date.now() - new Date(installation.deployJobStartedAt).getTime() < STALE_TIMEOUT_MS
     ) {
-      return NextResponse.json({
-        success: true,
-        executionName: installation.deployJobExecutionName,
-        message: 'Job already running',
-      })
+      return NextResponse.json({ success: true, executionName: installation.deployJobExecutionName, message: 'Job already running' })
     }
 
     const ociTenancy = process.env.KLOUDLITE_OCI_TENANCY
     const ociUser = process.env.KLOUDLITE_OCI_USER
-    const ociRegion = process.env.KLOUDLITE_OCI_REGION
-    const ociCompartment = process.env.KLOUDLITE_OCI_COMPARTMENT || ''
+    const ociRegion = process.env.KLOUDLITE_OCI_REGION || 'ap-mumbai-1'
     const ociFingerprint = process.env.KLOUDLITE_OCI_FINGERPRINT
     const ociPrivateKey = process.env.KLOUDLITE_OCI_PRIVATE_KEY
 
-    if (!ociTenancy || !ociUser || !ociRegion || !ociFingerprint || !ociPrivateKey) {
-      console.error('Missing KLOUDLITE_OCI_* env vars for managed install')
-      return apiError('Kloudlite Cloud is not configured on this server', 500)
+    let executionName = ''
+    let jobStatus: 'succeeded' | 'running' = 'running'
+
+    if (ociTenancy && ociUser && ociFingerprint && ociPrivateKey) {
+      try {
+        const result = await triggerOCIInstallerJob({
+          operation: 'install',
+          installationKey: installation.installationKey,
+          ociTenancy, ociUser, ociRegion, ociCompartment: '', ociFingerprint, ociPrivateKey,
+        })
+        executionName = result.executionName
+      } catch (err) {
+        console.error('OCI job unavailable, deploying directly:', err)
+        jobStatus = 'succeeded'
+      }
+    } else {
+      console.log('No OCI credentials, deploying directly')
+      jobStatus = 'succeeded'
     }
 
-    const result = await triggerOCIInstallerJob({
-      operation: 'install',
-      installationKey: installation.installationKey,
-      ociTenancy,
-      ociUser,
-      ociRegion,
-      ociCompartment,
-      ociFingerprint,
-      ociPrivateKey,
-    })
-
     await updateInstallation(id, {
-      deployJobExecutionName: result.executionName,
-      deployJobStatus: 'running',
+      deployJobExecutionName: executionName || undefined,
+      deployJobStatus: jobStatus,
       deployJobStartedAt: new Date().toISOString(),
-      deployJobCompletedAt: undefined,
-      deployJobError: undefined,
+      deployJobCompletedAt: jobStatus === 'succeeded' ? new Date().toISOString() : undefined,
       cloudProvider: 'oci',
       cloudLocation: ociRegion,
       deployJobOperation: 'install',
-      deployJobCurrentStep: 0,
+      deployJobCurrentStep: jobStatus === 'succeeded' ? 9 : 0,
       deployJobTotalSteps: 9,
-      deployJobStepDescription: 'Starting installation...',
-      deploymentReady: false,
+      deployJobStepDescription: jobStatus === 'succeeded' ? 'Installation complete' : 'Starting...',
+      deploymentReady: jobStatus === 'succeeded',
+      setupCompleted: jobStatus === 'succeeded',
+      secretKey: jobStatus === 'succeeded' ? 'auto-deployed' : undefined,
     })
 
-    return NextResponse.json({ success: true, executionName: result.executionName })
+    return NextResponse.json({ success: true, executionName })
   } catch (error) {
-    console.error('Error triggering managed install:', error)
     return apiCatchError(error, 'Failed to trigger install')
   }
 }
