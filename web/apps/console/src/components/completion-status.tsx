@@ -43,6 +43,33 @@ export function CompletionStatus({ installationId, cloudProvider: _cloudProvider
 
   // ... rest of the polling logic remains the same
   useEffect(() => {
+    let triggered = false
+
+    async function init() {
+      // First check if there's a job status
+      const status = await checkJobStatus()
+
+      if (!status && !triggered) {
+        // No job yet — trigger the managed install
+        triggered = true
+        setActiveStatus('provisioning')
+
+        const response = await fetch(`/api/installations/${installationId}/trigger-managed-install`, {
+          method: 'POST',
+        })
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({ error: 'Failed to start' }))
+          setErrorMessage(data.error || 'Failed to start installation')
+          setActiveStatus('error')
+          return
+        }
+      }
+    }
+
+    init()
+
+    // Then start polling
     async function poll() {
       const status = await checkJobStatus()
       if (!status) return
