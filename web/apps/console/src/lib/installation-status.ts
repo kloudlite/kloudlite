@@ -87,7 +87,7 @@ export function getInstallationStatus(installation: Installation): InstallationS
     }
   }
 
-  if (!installation.subdomain) {
+  if (!installation.subdomain && !installation.deploymentReady) {
     return {
       status: 'PENDING',
       statusColor: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20',
@@ -107,6 +107,15 @@ export function getInstallationStatus(installation: Installation): InstallationS
       isActiveJob: false,
       stepInfo: undefined,
     }
+  }
+
+  return {
+    status: 'ACTIVE',
+    statusColor: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
+    description: 'Installation is running',
+    isPending: false,
+    isActiveJob: false,
+    stepInfo: undefined,
   }
 
   return {
