@@ -76,7 +76,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
                         { name: 'OCI_CLI_REGION', value: ociRegion },
                         { name: 'OCI_CLI_FINGERPRINT', value: ociFingerprint },
                         { name: 'OCI_CLI_KEY_CONTENT', valueFrom: { secretKeyRef: { name: 'console-secrets', key: 'KLOUDLITE_OCI_PRIVATE_KEY' } } },
-                        { name: 'SKIP_LB', value: 'false' },
+                        { name: 'SKIP_LB', value: 'true' },
                         { name: 'ENABLE_DELETION_PROTECTION', value: 'true' },
                       ],
                       resources: { requests: { cpu: '1', memory: '2Gi' }, limits: { cpu: '2', memory: '4Gi' } },
