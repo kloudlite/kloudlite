@@ -74,6 +74,7 @@ function shortcutAction(input: Electron.Input): string | null {
   const cmdOrCtrl = input.meta || input.control
 
   if (input.control && key === 'tab') return input.shift ? 'prev-tab' : 'next-tab'
+  if (cmdOrCtrl && input.shift && key === 't') return 'reopen-tab'
   if (cmdOrCtrl && key === 't') return 'new-tab'
   if (cmdOrCtrl && key === 'l') return 'address-bar'
   if (cmdOrCtrl && key === 'w') return 'close-tab'
@@ -89,6 +90,19 @@ function shortcutAction(input: Electron.Input): string | null {
   if (cmdOrCtrl && (key === ']' || right)) return 'go-forward'
   if (input.alt && !input.meta && !input.control && !input.shift && left) return 'go-back'
   if (input.alt && !input.meta && !input.control && !input.shift && right) return 'go-forward'
+
+  if (key === 'f5') return 'reload'
+  if (key === 'f12') return 'toggle-devtools'
+
+  if (cmdOrCtrl && key === 'k') return 'address-bar'
+
+  if (cmdOrCtrl && !input.shift && (key === '=' || key === '+')) return 'zoom-in'
+  if (cmdOrCtrl && input.shift && key === '=') return 'zoom-in'
+  if (cmdOrCtrl && key === '-') return 'zoom-out'
+  if (cmdOrCtrl && !input.shift && key === '0') return 'zoom-reset'
+
+  if (input.control && !input.meta && !input.alt && key === 'pageup') return 'prev-tab'
+  if (input.control && !input.meta && !input.alt && key === 'pagedown') return 'next-tab'
 
   return null
 }
@@ -208,6 +222,13 @@ function createAppMenu(): void {
             sendToMenuWindow(window, 'shortcut', 'close-tab')
           }
         },
+        {
+          label: 'Reopen Closed Tab',
+          accelerator: 'CmdOrCtrl+Shift+T',
+          click: (_item, window) => {
+            sendToMenuWindow(window, 'shortcut', 'reopen-tab')
+          }
+        },
         { type: 'separator' },
         {
           label: 'Next Tab',
@@ -266,6 +287,22 @@ function createAppMenu(): void {
     {
       label: 'View',
       submenu: [
+        {
+          label: 'Zoom In',
+          accelerator: 'CmdOrCtrl+=',
+          click: (_item, window) => sendToMenuWindow(window, 'shortcut', 'zoom-in')
+        },
+        {
+          label: 'Zoom Out',
+          accelerator: 'CmdOrCtrl+-',
+          click: (_item, window) => sendToMenuWindow(window, 'shortcut', 'zoom-out')
+        },
+        {
+          label: 'Reset Zoom',
+          accelerator: 'CmdOrCtrl+0',
+          click: (_item, window) => sendToMenuWindow(window, 'shortcut', 'zoom-reset')
+        },
+        { type: 'separator' },
         {
           label: 'Environments',
           accelerator: 'CmdOrCtrl+1',

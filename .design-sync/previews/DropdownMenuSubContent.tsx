@@ -1,0 +1,62 @@
+import * as React from 'react'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@kloudlite/ui'
+
+export const Open = () => (
+  <div className="flex h-96 w-96 flex-col items-start p-4">
+    <DropdownMenu open modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Environment</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuItem>Open in workspace</DropdownMenuItem>
+        <DropdownMenuSub open>
+          <DropdownMenuSubTrigger>Intercept service</DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent className="w-56">
+              <DropdownMenuItem>payments-api :8080</DropdownMenuItem>
+              <DropdownMenuItem>auth-gateway :4000</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
+)
+
+export const WithLabelAndSeparator = () => (
+  <div className="flex h-96 w-96 flex-col items-start p-4">
+    <DropdownMenu open modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Cluster</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuItem>View nodes</DropdownMenuItem>
+        <DropdownMenuSub open>
+          <DropdownMenuSubTrigger>Node pools</DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent className="w-64">
+              <DropdownMenuLabel>prod-eu-west-1</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>default &middot; 3 nodes</DropdownMenuItem>
+              <DropdownMenuItem>gpu-a10 &middot; 1 node</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Add node pool</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
+)
