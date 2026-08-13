@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getRegistrationSession } from '@/lib/console-auth'
 import { cachedInstallationAccess, cachedInstallationById } from '@/lib/console/cached-queries'
 import { getOrgMembers, getOrgMemberRole, getOrgInvitations } from '@/lib/console/storage'
-import { TeamManagementClient } from '@/components/console/team-client'
+import { TeamMembersTable } from '@/components/team-members-table'
 import { InviteMemberButton } from '@/components/invite-member-button'
 import { TeamInvitationsTable } from '@/components/team-invitations-table'
 
@@ -25,6 +25,7 @@ export default async function TeamManagementPage({ params }: PageProps) {
   if (!installation) redirect('/installations')
 
   const userRole = await getOrgMemberRole(orgId, session.user.id)
+  if (!userRole) redirect('/installations')
   const members = await getOrgMembers(orgId)
 
   const allInvitations = await getOrgInvitations(orgId)
@@ -46,11 +47,11 @@ export default async function TeamManagementPage({ params }: PageProps) {
         )}
       </div>
 
-      <TeamManagementClient
+      <TeamMembersTable
         orgId={orgId}
-        members={members.map((m) => ({ id: m.id, userId: m.userId, role: m.role, email: m.userEmail, name: m.userName }))}
+        members={members}
         currentUserId={session.user.id}
-        userRole={userRole || 'member'}
+        userRole={userRole}
       />
 
       {pendingInvitations.length > 0 && (

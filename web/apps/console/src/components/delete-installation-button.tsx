@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@kloudlite/ui'
+import { Button, DropdownMenuItem, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@kloudlite/ui'
 import { Trash2, Loader2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
@@ -12,7 +12,7 @@ interface DeleteInstallationButtonProps {
   installationName?: string
   hasSecretKey?: boolean
   cloudProvider?: string
-  variant?: 'icon' | 'button'
+  variant?: 'icon' | 'button' | 'menu'
 }
 
 export function DeleteInstallationButton({
@@ -96,6 +96,11 @@ export function DeleteInstallationButton({
               </>
             )}
           </Button>
+        ) : variant === 'menu' ? (
+          <DropdownMenuItem className="text-red-600 focus:text-red-700 dark:text-red-400 dark:focus:text-red-300">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
         ) : (
           <Button variant="ghost" size="sm" disabled={deleting}>
             {deleting ? (

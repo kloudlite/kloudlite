@@ -117,13 +117,4 @@ export function getInstallationStatus(installation: Installation): InstallationS
     isActiveJob: false,
     stepInfo: undefined,
   }
-
-  return {
-    status: 'ACTIVE',
-    statusColor: 'bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20',
-    description: 'Installation is active and running',
-    isPending: false,
-    isActiveJob: false,
-    stepInfo: undefined,
-  }
 }
