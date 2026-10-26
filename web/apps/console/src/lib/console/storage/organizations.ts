@@ -25,6 +25,23 @@ export function isValidSlug(slug: string): boolean {
   return /^[a-z][a-z0-9-]{1,61}[a-z0-9]$/.test(slug)
 }
 
+export function createDefaultOrganization(
+  userId: string,
+  userName: string | undefined,
+  userEmail: string,
+) {
+  const baseSlug = (userName || userEmail.split('@')[0])
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50)
+  let slug = /^[a-z]/.test(baseSlug) ? baseSlug : `org-${baseSlug}`
+  if (slug.length < 3) slug = `${slug}-org`
+
+  return createOrganization(userId, `${userName || 'My'}'s Organization`, slug)
+}
+
 /**
  * Get organization by ID
  */

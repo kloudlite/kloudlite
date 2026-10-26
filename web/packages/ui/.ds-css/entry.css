@@ -1,0 +1,15 @@
+/* design-sync CSS entry: compiles the DS's Tailwind v4 source into a static
+   stylesheet the design bundle can ship. Regenerate with cfg.buildCmd. */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import '../src/globals.css';
+
+@source '../src/**/*.tsx';
+@source '../../../../.design-sync/previews/**/*.tsx';
+
+/* The host app supplies these via next/font; the DS references them but ships
+   neither. Bind them to the same families the console app loads. */
+:root {
+  --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+}
+@source "./safelist.txt";
