@@ -22,6 +22,7 @@ import {
 } from '@kloudlite/ui'
 import { MoreHorizontal, Shield } from 'lucide-react'
 import { toast } from 'sonner'
+import { ListSearch, ListPagination, usePagination } from '@/components/list-controls'
 import type { OrgMember, OrgRole } from '@/lib/console/storage'
 
 interface TeamMembersTableProps {
@@ -51,8 +52,22 @@ export function TeamMembersTable({
   const [removingMember, setRemovingMember] = useState<string | null>(null)
   const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const canManage = userRole === 'owner' || userRole === 'admin'
+
+  const query = searchQuery.trim().toLowerCase()
+  const filteredMembers = query
+    ? members.filter(
+        (m) =>
+          m.userName?.toLowerCase().includes(query) ||
+          m.userEmail?.toLowerCase().includes(query),
+      )
+    : members
+  const { page, pageCount, pagedItems, setPage, totalItems, pageSize } = usePagination(
+    filteredMembers,
+    10,
+  )
 
   const handleSetMemberToRemove = useCallback((memberId: string, memberName: string) => {
     setMemberToRemove({ id: memberId, name: memberName })
@@ -86,6 +101,13 @@ export function TeamMembersTable({
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {announcement}
       </p>
+      <div className="mb-4 flex items-center justify-between">
+        <ListSearch
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search members..."
+        />
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead>
@@ -110,7 +132,7 @@ export function TeamMembersTable({
             </tr>
           </thead>
           <tbody className="bg-background divide-foreground/5 divide-y">
-            {members.map((member) => {
+            {pagedItems.map((member) => {
               const RoleIcon = roleIcons[member.role]
               const isCurrentUser = member.userId === currentUserId
               const isOwner = member.role === 'owner'
@@ -172,6 +194,13 @@ export function TeamMembersTable({
           </tbody>
         </table>
       </div>
+      <ListPagination
+        page={page}
+        pageCount={pageCount}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       {/* Remove Member Confirmation Dialog */}
       <AlertDialog

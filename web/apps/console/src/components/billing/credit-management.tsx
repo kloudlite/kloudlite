@@ -24,6 +24,7 @@ import {
   DialogClose,
 } from '@kloudlite/ui'
 import { useCredits } from '@/hooks/use-credits'
+import { ListSearch, ListPagination, usePagination } from '@/components/list-controls'
 
 interface CreditManagementProps {
   orgId: string
@@ -108,6 +109,24 @@ export function CreditManagement({ orgId, isOwner }: CreditManagementProps) {
   const account = data?.account
   const transactions = data?.transactions ?? []
   const activePeriods = data?.activePeriods ?? []
+
+  const [txSearchQuery, setTxSearchQuery] = useState('')
+  const txQuery = txSearchQuery.trim().toLowerCase()
+  const filteredTransactions = txQuery
+    ? transactions.filter(
+        (tx) =>
+          cleanDescription(tx.description).toLowerCase().includes(txQuery) ||
+          tx.type.toLowerCase().includes(txQuery),
+      )
+    : transactions
+  const {
+    page: txPage,
+    pageCount: txPageCount,
+    pagedItems: pagedTransactions,
+    setPage: setTxPage,
+    totalItems: txTotal,
+    pageSize: txPageSize,
+  } = usePagination(filteredTransactions, 20)
 
   if (loading && !data) {
     return (
@@ -325,8 +344,13 @@ export function CreditManagement({ orgId, isOwner }: CreditManagementProps) {
       {/* Transaction History */}
       {transactions.length > 0 && (
         <div className="border border-foreground/10 rounded-lg bg-background">
-          <div className="border-b border-foreground/10 px-6 py-4">
+          <div className="border-b border-foreground/10 px-6 py-4 flex items-center justify-between">
             <h3 className="font-medium text-foreground">Transaction History</h3>
+            <ListSearch
+              value={txSearchQuery}
+              onChange={setTxSearchQuery}
+              placeholder="Search transactions..."
+            />
           </div>
           <Table>
             <TableHeader>
@@ -338,7 +362,7 @@ export function CreditManagement({ orgId, isOwner }: CreditManagementProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.slice(0, 50).map((tx) => (
+              {pagedTransactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell className="whitespace-nowrap text-sm">
                     {formatDate(tx.createdAt)}
@@ -373,6 +397,13 @@ export function CreditManagement({ orgId, isOwner }: CreditManagementProps) {
               ))}
             </TableBody>
           </Table>
+          <ListPagination
+            page={txPage}
+            pageCount={txPageCount}
+            totalItems={txTotal}
+            pageSize={txPageSize}
+            onPageChange={setTxPage}
+          />
         </div>
       )}
 

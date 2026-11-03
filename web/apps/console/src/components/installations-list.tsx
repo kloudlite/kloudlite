@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button, Input } from '@kloudlite/ui'
+import { Button } from '@kloudlite/ui'
 import { MoreHorizontal, Settings, Search, Loader2 } from 'lucide-react'
+import { ListSearch, ListPagination, usePagination } from '@/components/list-controls'
 import { NewInstallationButton } from '@/components/new-installation-button'
 import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import {
@@ -137,6 +138,11 @@ export function InstallationsList({
     })
   }
 
+  const { page, pageCount, pagedItems, setPage, totalItems, pageSize } = usePagination(
+    filteredInstallations,
+    20,
+  )
+
   const liveRegionMessage = useMemo(() => {
     const count = filteredInstallations.length
     const label = count === 1 ? 'installation' : 'installations'
@@ -155,16 +161,11 @@ export function InstallationsList({
       <div className="mb-6 flex items-center justify-between pb-6">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">Installations</h1>
         <div className="flex items-center gap-3">
-          <div className="relative w-64">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              type="text"
-              placeholder="Search installations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+          <ListSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search installations..."
+          />
           <NewInstallationButton />
         </div>
       </div>
@@ -205,7 +206,7 @@ export function InstallationsList({
                 </tr>
               </thead>
               <tbody className="bg-background divide-foreground/5 divide-y">
-                {filteredInstallations.map((installation) => {
+                {pagedItems.map((installation) => {
                   const { status, statusColor, isPending, isActiveJob, stepInfo } =
                     getInstallationStatus(installation)
                   const displayName =
@@ -325,6 +326,13 @@ export function InstallationsList({
               </tbody>
             </table>
           </div>
+          <ListPagination
+            page={page}
+            pageCount={pageCount}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
         </div>
       ) : (
         <div className="border-foreground/10 bg-muted/10 rounded-lg border py-12 text-center">
