@@ -4,7 +4,7 @@ import { SignJWT } from 'jose'
 import {
   saveUser,
   getUserByEmail,
-  createOrganization,
+  createDefaultOrganization,
   type User,
 } from '@/lib/console/storage'
 
@@ -304,16 +304,7 @@ export async function GET(
 
       // Auto-create a default organization for new users
       try {
-        const baseSlug = (user.name || user.email.split('@')[0])
-          .toLowerCase()
-          .replace(/[^a-z0-9-]/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '')
-          .slice(0, 50)
-        let slug = /^[a-z]/.test(baseSlug) ? baseSlug : `org-${baseSlug}`
-        if (slug.length < 3) slug = `${slug}-org`
-
-        await createOrganization(user.userId, `${user.name}'s Organization`, slug)
+        await createDefaultOrganization(user.userId, user.name, user.email)
       } catch (orgError) {
         // Log but don't block login — org creation is best-effort on signup
         console.error('Failed to auto-create organization:', orgError)

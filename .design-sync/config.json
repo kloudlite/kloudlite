@@ -1,0 +1,1140 @@
+{
+  "projectId": "47740ba1-50e1-463b-8190-d3143bb662ad",
+  "shape": "package",
+  "pkg": "@kloudlite/ui",
+  "globalName": "KloudliteUI",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".ds-css/ui.css",
+  "buildCmd": "node .ds-sync/node_modules/.bin/tailwindcss -i web/packages/ui/.ds-css/entry.css -o web/packages/ui/.ds-css/ui.css",
+  "componentSrcMap": {
+    "Accordion": "src/accordion.tsx",
+    "AccordionItem": "src/accordion.tsx",
+    "AccordionTrigger": "src/accordion.tsx",
+    "AccordionContent": "src/accordion.tsx",
+    "AlertDialog": "src/alert-dialog.tsx",
+    "AlertDialogPortal": "src/alert-dialog.tsx",
+    "AlertDialogOverlay": "src/alert-dialog.tsx",
+    "AlertDialogTrigger": "src/alert-dialog.tsx",
+    "AlertDialogContent": "src/alert-dialog.tsx",
+    "AlertDialogHeader": "src/alert-dialog.tsx",
+    "AlertDialogFooter": "src/alert-dialog.tsx",
+    "AlertDialogTitle": "src/alert-dialog.tsx",
+    "AlertDialogDescription": "src/alert-dialog.tsx",
+    "AlertDialogAction": "src/alert-dialog.tsx",
+    "AlertDialogCancel": "src/alert-dialog.tsx",
+    "Alert": "src/alert.tsx",
+    "AlertTitle": "src/alert.tsx",
+    "AlertDescription": "src/alert.tsx",
+    "AspectRatio": "src/aspect-ratio.tsx",
+    "Avatar": "src/avatar.tsx",
+    "AvatarImage": "src/avatar.tsx",
+    "AvatarFallback": "src/avatar.tsx",
+    "Badge": "src/badge.tsx",
+    "Breadcrumb": "src/breadcrumb.tsx",
+    "BreadcrumbList": "src/breadcrumb.tsx",
+    "BreadcrumbItem": "src/breadcrumb.tsx",
+    "BreadcrumbLink": "src/breadcrumb.tsx",
+    "BreadcrumbPage": "src/breadcrumb.tsx",
+    "BreadcrumbSeparator": "src/breadcrumb.tsx",
+    "BreadcrumbEllipsis": "src/breadcrumb.tsx",
+    "ButtonGroup": "src/button-group.tsx",
+    "ButtonGroupSeparator": "src/button-group.tsx",
+    "ButtonGroupText": "src/button-group.tsx",
+    "Button": "src/button.tsx",
+    "Calendar": "src/calendar.tsx",
+    "CalendarDayButton": "src/calendar.tsx",
+    "Card": "src/card.tsx",
+    "CardHeader": "src/card.tsx",
+    "CardFooter": "src/card.tsx",
+    "CardTitle": "src/card.tsx",
+    "CardDescription": "src/card.tsx",
+    "CardContent": "src/card.tsx",
+    "Carousel": "src/carousel.tsx",
+    "CarouselContent": "src/carousel.tsx",
+    "CarouselItem": "src/carousel.tsx",
+    "CarouselPrevious": "src/carousel.tsx",
+    "CarouselNext": "src/carousel.tsx",
+    "ChartContainer": "src/chart.tsx",
+    "ChartTooltip": "src/chart.tsx",
+    "ChartTooltipContent": "src/chart.tsx",
+    "ChartLegend": "src/chart.tsx",
+    "ChartLegendContent": "src/chart.tsx",
+    "ChartStyle": "src/chart.tsx",
+    "Checkbox": "src/checkbox.tsx",
+    "Collapsible": "src/collapsible.tsx",
+    "CollapsibleTrigger": "src/collapsible.tsx",
+    "CollapsibleContent": "src/collapsible.tsx",
+    "Command": "src/command.tsx",
+    "CommandDialog": "src/command.tsx",
+    "CommandInput": "src/command.tsx",
+    "CommandList": "src/command.tsx",
+    "CommandEmpty": "src/command.tsx",
+    "CommandGroup": "src/command.tsx",
+    "CommandItem": "src/command.tsx",
+    "CommandShortcut": "src/command.tsx",
+    "CommandSeparator": "src/command.tsx",
+    "ContextMenu": "src/context-menu.tsx",
+    "ContextMenuTrigger": "src/context-menu.tsx",
+    "ContextMenuContent": "src/context-menu.tsx",
+    "ContextMenuItem": "src/context-menu.tsx",
+    "ContextMenuCheckboxItem": "src/context-menu.tsx",
+    "ContextMenuRadioItem": "src/context-menu.tsx",
+    "ContextMenuLabel": "src/context-menu.tsx",
+    "ContextMenuSeparator": "src/context-menu.tsx",
+    "ContextMenuShortcut": "src/context-menu.tsx",
+    "ContextMenuGroup": "src/context-menu.tsx",
+    "ContextMenuPortal": "src/context-menu.tsx",
+    "ContextMenuSub": "src/context-menu.tsx",
+    "ContextMenuSubContent": "src/context-menu.tsx",
+    "ContextMenuSubTrigger": "src/context-menu.tsx",
+    "ContextMenuRadioGroup": "src/context-menu.tsx",
+    "Dialog": "src/dialog.tsx",
+    "DialogPortal": "src/dialog.tsx",
+    "DialogOverlay": "src/dialog.tsx",
+    "DialogTrigger": "src/dialog.tsx",
+    "DialogClose": "src/dialog.tsx",
+    "DialogContent": "src/dialog.tsx",
+    "DialogHeader": "src/dialog.tsx",
+    "DialogFooter": "src/dialog.tsx",
+    "DialogTitle": "src/dialog.tsx",
+    "DialogDescription": "src/dialog.tsx",
+    "Drawer": "src/drawer.tsx",
+    "DrawerPortal": "src/drawer.tsx",
+    "DrawerOverlay": "src/drawer.tsx",
+    "DrawerTrigger": "src/drawer.tsx",
+    "DrawerClose": "src/drawer.tsx",
+    "DrawerContent": "src/drawer.tsx",
+    "DrawerHeader": "src/drawer.tsx",
+    "DrawerFooter": "src/drawer.tsx",
+    "DrawerTitle": "src/drawer.tsx",
+    "DrawerDescription": "src/drawer.tsx",
+    "DropdownMenu": "src/dropdown-menu.tsx",
+    "DropdownMenuTrigger": "src/dropdown-menu.tsx",
+    "DropdownMenuContent": "src/dropdown-menu.tsx",
+    "DropdownMenuItem": "src/dropdown-menu.tsx",
+    "DropdownMenuCheckboxItem": "src/dropdown-menu.tsx",
+    "DropdownMenuRadioItem": "src/dropdown-menu.tsx",
+    "DropdownMenuLabel": "src/dropdown-menu.tsx",
+    "DropdownMenuSeparator": "src/dropdown-menu.tsx",
+    "DropdownMenuShortcut": "src/dropdown-menu.tsx",
+    "DropdownMenuGroup": "src/dropdown-menu.tsx",
+    "DropdownMenuPortal": "src/dropdown-menu.tsx",
+    "DropdownMenuSub": "src/dropdown-menu.tsx",
+    "DropdownMenuSubContent": "src/dropdown-menu.tsx",
+    "DropdownMenuSubTrigger": "src/dropdown-menu.tsx",
+    "DropdownMenuRadioGroup": "src/dropdown-menu.tsx",
+    "Empty": "src/empty.tsx",
+    "EmptyHeader": "src/empty.tsx",
+    "EmptyTitle": "src/empty.tsx",
+    "EmptyDescription": "src/empty.tsx",
+    "EmptyContent": "src/empty.tsx",
+    "EmptyMedia": "src/empty.tsx",
+    "ErrorBoundary": "src/error-boundary.tsx",
+    "Field": "src/field.tsx",
+    "FieldLabel": "src/field.tsx",
+    "FieldDescription": "src/field.tsx",
+    "FieldError": "src/field.tsx",
+    "FieldGroup": "src/field.tsx",
+    "FieldLegend": "src/field.tsx",
+    "FieldSeparator": "src/field.tsx",
+    "FieldSet": "src/field.tsx",
+    "FieldContent": "src/field.tsx",
+    "FieldTitle": "src/field.tsx",
+    "Form": "src/form.tsx",
+    "FormItem": "src/form.tsx",
+    "FormLabel": "src/form.tsx",
+    "FormControl": "src/form.tsx",
+    "FormDescription": "src/form.tsx",
+    "FormMessage": "src/form.tsx",
+    "FormField": "src/form.tsx",
+    "GlowingStarsBackgroundCard": "src/glowing-stars.tsx",
+    "GlowingStarsDescription": "src/glowing-stars.tsx",
+    "GlowingStarsTitle": "src/glowing-stars.tsx",
+    "Illustration": "src/glowing-stars.tsx",
+    "HoverCard": "src/hover-card.tsx",
+    "HoverCardTrigger": "src/hover-card.tsx",
+    "HoverCardContent": "src/hover-card.tsx",
+    "AnthropicIcon": "src/icons.tsx",
+    "ClaudeCodeIcon": "src/icons.tsx",
+    "CursorIcon": "src/icons.tsx",
+    "OpenCodeIcon": "src/icons.tsx",
+    "GeminiIcon": "src/icons.tsx",
+    "OpenAIIcon": "src/icons.tsx",
+    "VSCodeIcon": "src/icons.tsx",
+    "JetBrainsIcon": "src/icons.tsx",
+    "AntigravityIcon": "src/icons.tsx",
+    "ZedIcon": "src/icons.tsx",
+    "InputGroup": "src/input-group.tsx",
+    "InputGroupAddon": "src/input-group.tsx",
+    "InputGroupButton": "src/input-group.tsx",
+    "InputGroupText": "src/input-group.tsx",
+    "InputGroupInput": "src/input-group.tsx",
+    "InputGroupTextarea": "src/input-group.tsx",
+    "InputOTP": "src/input-otp.tsx",
+    "InputOTPGroup": "src/input-otp.tsx",
+    "InputOTPSlot": "src/input-otp.tsx",
+    "InputOTPSeparator": "src/input-otp.tsx",
+    "Input": "src/input.tsx",
+    "Kbd": "src/kbd.tsx",
+    "KbdGroup": "src/kbd.tsx",
+    "KloudliteLogo": "src/kloudlite-logo.tsx",
+    "Label": "src/label.tsx",
+    "Menubar": "src/menubar.tsx",
+    "MenubarMenu": "src/menubar.tsx",
+    "MenubarTrigger": "src/menubar.tsx",
+    "MenubarContent": "src/menubar.tsx",
+    "MenubarItem": "src/menubar.tsx",
+    "MenubarSeparator": "src/menubar.tsx",
+    "MenubarLabel": "src/menubar.tsx",
+    "MenubarCheckboxItem": "src/menubar.tsx",
+    "MenubarRadioGroup": "src/menubar.tsx",
+    "MenubarRadioItem": "src/menubar.tsx",
+    "MenubarPortal": "src/menubar.tsx",
+    "MenubarSubContent": "src/menubar.tsx",
+    "MenubarSubTrigger": "src/menubar.tsx",
+    "MenubarGroup": "src/menubar.tsx",
+    "MenubarSub": "src/menubar.tsx",
+    "MenubarShortcut": "src/menubar.tsx",
+    "NavigationMenu": "src/navigation-menu.tsx",
+    "NavigationMenuList": "src/navigation-menu.tsx",
+    "NavigationMenuItem": "src/navigation-menu.tsx",
+    "NavigationMenuContent": "src/navigation-menu.tsx",
+    "NavigationMenuTrigger": "src/navigation-menu.tsx",
+    "NavigationMenuLink": "src/navigation-menu.tsx",
+    "NavigationMenuIndicator": "src/navigation-menu.tsx",
+    "NavigationMenuViewport": "src/navigation-menu.tsx",
+    "Pagination": "src/pagination.tsx",
+    "PaginationContent": "src/pagination.tsx",
+    "PaginationLink": "src/pagination.tsx",
+    "PaginationItem": "src/pagination.tsx",
+    "PaginationPrevious": "src/pagination.tsx",
+    "PaginationNext": "src/pagination.tsx",
+    "PaginationEllipsis": "src/pagination.tsx",
+    "Popover": "src/popover.tsx",
+    "PopoverTrigger": "src/popover.tsx",
+    "PopoverContent": "src/popover.tsx",
+    "PopoverAnchor": "src/popover.tsx",
+    "Progress": "src/progress.tsx",
+    "RadioGroup": "src/radio-group.tsx",
+    "RadioGroupItem": "src/radio-group.tsx",
+    "ResizablePanelGroup": "src/resizable.tsx",
+    "ResizablePanel": "src/resizable.tsx",
+    "ResizableHandle": "src/resizable.tsx",
+    "ScrollArea": "src/scroll-area.tsx",
+    "ScrollBar": "src/scroll-area.tsx",
+    "Select": "src/select.tsx",
+    "SelectGroup": "src/select.tsx",
+    "SelectValue": "src/select.tsx",
+    "SelectTrigger": "src/select.tsx",
+    "SelectContent": "src/select.tsx",
+    "SelectLabel": "src/select.tsx",
+    "SelectItem": "src/select.tsx",
+    "SelectSeparator": "src/select.tsx",
+    "SelectScrollUpButton": "src/select.tsx",
+    "SelectScrollDownButton": "src/select.tsx",
+    "Separator": "src/separator.tsx",
+    "Sheet": "src/sheet.tsx",
+    "SheetPortal": "src/sheet.tsx",
+    "SheetOverlay": "src/sheet.tsx",
+    "SheetTrigger": "src/sheet.tsx",
+    "SheetClose": "src/sheet.tsx",
+    "SheetContent": "src/sheet.tsx",
+    "SheetHeader": "src/sheet.tsx",
+    "SheetFooter": "src/sheet.tsx",
+    "SheetTitle": "src/sheet.tsx",
+    "SheetDescription": "src/sheet.tsx",
+    "Sidebar": "src/sidebar.tsx",
+    "SidebarContent": "src/sidebar.tsx",
+    "SidebarFooter": "src/sidebar.tsx",
+    "SidebarGroup": "src/sidebar.tsx",
+    "SidebarGroupAction": "src/sidebar.tsx",
+    "SidebarGroupContent": "src/sidebar.tsx",
+    "SidebarGroupLabel": "src/sidebar.tsx",
+    "SidebarHeader": "src/sidebar.tsx",
+    "SidebarInput": "src/sidebar.tsx",
+    "SidebarInset": "src/sidebar.tsx",
+    "SidebarMenu": "src/sidebar.tsx",
+    "SidebarMenuAction": "src/sidebar.tsx",
+    "SidebarMenuBadge": "src/sidebar.tsx",
+    "SidebarMenuButton": "src/sidebar.tsx",
+    "SidebarMenuItem": "src/sidebar.tsx",
+    "SidebarMenuSkeleton": "src/sidebar.tsx",
+    "SidebarMenuSub": "src/sidebar.tsx",
+    "SidebarMenuSubButton": "src/sidebar.tsx",
+    "SidebarMenuSubItem": "src/sidebar.tsx",
+    "SidebarProvider": "src/sidebar.tsx",
+    "SidebarRail": "src/sidebar.tsx",
+    "SidebarSeparator": "src/sidebar.tsx",
+    "SidebarTrigger": "src/sidebar.tsx",
+    "Skeleton": "src/skeleton.tsx",
+    "Slider": "src/slider.tsx",
+    "Toaster": "src/sonner.tsx",
+    "Spinner": "src/spinner.tsx",
+    "Switch": "src/switch.tsx",
+    "Table": "src/table.tsx",
+    "TableHeader": "src/table.tsx",
+    "TableBody": "src/table.tsx",
+    "TableFooter": "src/table.tsx",
+    "TableHead": "src/table.tsx",
+    "TableRow": "src/table.tsx",
+    "TableCell": "src/table.tsx",
+    "TableCaption": "src/table.tsx",
+    "Tabs": "src/tabs.tsx",
+    "TabsList": "src/tabs.tsx",
+    "TabsTrigger": "src/tabs.tsx",
+    "TabsContent": "src/tabs.tsx",
+    "Textarea": "src/textarea.tsx",
+    "ThemeSwitcher": "src/theme-switcher.tsx",
+    "ToggleGroup": "src/toggle-group.tsx",
+    "ToggleGroupItem": "src/toggle-group.tsx",
+    "Toggle": "src/toggle.tsx",
+    "Tooltip": "src/tooltip.tsx",
+    "TooltipTrigger": "src/tooltip.tsx",
+    "TooltipContent": "src/tooltip.tsx",
+    "TooltipProvider": "src/tooltip.tsx"
+  },
+  "docsDir": ".ds-docs",
+  "extraEntries": [
+    "./.ds-shim.ts",
+    "sonner"
+  ],
+  "storyImports": {
+    "shim": [
+      "sonner"
+    ]
+  },
+  "overrides": {
+    "Table": {
+      "cardMode": "column"
+    },
+    "TableHeader": {
+      "cardMode": "column"
+    },
+    "TableBody": {
+      "cardMode": "column"
+    },
+    "TableFooter": {
+      "cardMode": "column"
+    },
+    "TableRow": {
+      "cardMode": "column"
+    },
+    "TableHead": {
+      "cardMode": "column"
+    },
+    "TableCell": {
+      "cardMode": "column"
+    },
+    "TableCaption": {
+      "cardMode": "column"
+    },
+    "ButtonGroupText": {
+      "cardMode": "column"
+    },
+    "KbdGroup": {
+      "cardMode": "column"
+    },
+    "ToggleGroup": {
+      "cardMode": "column"
+    },
+    "GlowingStarsBackgroundCard": {
+      "cardMode": "column"
+    },
+    "GlowingStarsDescription": {
+      "cardMode": "column"
+    },
+    "GlowingStarsTitle": {
+      "cardMode": "column"
+    },
+    "Illustration": {
+      "cardMode": "column"
+    },
+    "KloudliteLogo": {
+      "cardMode": "column"
+    },
+    "ThemeSwitcher": {
+      "cardMode": "column"
+    },
+    "AspectRatio": {
+      "cardMode": "column"
+    },
+    "Badge": {
+      "cardMode": "column"
+    },
+    "Card": {
+      "cardMode": "column"
+    },
+    "ChartContainer": {
+      "cardMode": "column"
+    },
+    "ChartLegend": {
+      "cardMode": "column"
+    },
+    "ChartLegendContent": {
+      "cardMode": "column"
+    },
+    "ChartStyle": {
+      "cardMode": "column"
+    },
+    "ChartTooltip": {
+      "cardMode": "column"
+    },
+    "ChartTooltipContent": {
+      "cardMode": "column"
+    },
+    "Empty": {
+      "cardMode": "column"
+    },
+    "EmptyContent": {
+      "cardMode": "column"
+    },
+    "EmptyDescription": {
+      "cardMode": "column"
+    },
+    "EmptyHeader": {
+      "cardMode": "column"
+    },
+    "EmptyMedia": {
+      "cardMode": "column"
+    },
+    "EmptyTitle": {
+      "cardMode": "column"
+    },
+    "Pagination": {
+      "cardMode": "column"
+    },
+    "PaginationContent": {
+      "cardMode": "column"
+    },
+    "PaginationEllipsis": {
+      "cardMode": "column"
+    },
+    "PaginationItem": {
+      "cardMode": "column"
+    },
+    "PaginationLink": {
+      "cardMode": "column"
+    },
+    "PaginationNext": {
+      "cardMode": "column"
+    },
+    "PaginationPrevious": {
+      "cardMode": "column"
+    },
+    "Progress": {
+      "cardMode": "column"
+    },
+    "Skeleton": {
+      "cardMode": "column"
+    },
+    "Alert": {
+      "cardMode": "column"
+    },
+    "AlertDescription": {
+      "cardMode": "column"
+    },
+    "AlertTitle": {
+      "cardMode": "column"
+    },
+    "ErrorBoundary": {
+      "cardMode": "column"
+    },
+    "Field": {
+      "cardMode": "column"
+    },
+    "FieldContent": {
+      "cardMode": "column"
+    },
+    "FieldDescription": {
+      "cardMode": "column"
+    },
+    "FieldError": {
+      "cardMode": "column"
+    },
+    "FieldGroup": {
+      "cardMode": "column"
+    },
+    "FieldLabel": {
+      "cardMode": "column"
+    },
+    "FieldLegend": {
+      "cardMode": "column"
+    },
+    "FieldSeparator": {
+      "cardMode": "column"
+    },
+    "FieldSet": {
+      "cardMode": "column"
+    },
+    "FieldTitle": {
+      "cardMode": "column"
+    },
+    "Form": {
+      "cardMode": "column"
+    },
+    "FormControl": {
+      "cardMode": "column"
+    },
+    "FormDescription": {
+      "cardMode": "column"
+    },
+    "FormField": {
+      "cardMode": "column"
+    },
+    "FormItem": {
+      "cardMode": "column"
+    },
+    "FormLabel": {
+      "cardMode": "column"
+    },
+    "FormMessage": {
+      "cardMode": "column"
+    },
+    "InputGroup": {
+      "cardMode": "column"
+    },
+    "InputGroupAddon": {
+      "cardMode": "column"
+    },
+    "InputGroupButton": {
+      "cardMode": "column"
+    },
+    "InputGroupInput": {
+      "cardMode": "column"
+    },
+    "InputGroupText": {
+      "cardMode": "column"
+    },
+    "InputGroupTextarea": {
+      "cardMode": "column"
+    },
+    "InputOTP": {
+      "cardMode": "column"
+    },
+    "Label": {
+      "cardMode": "column"
+    },
+    "RadioGroup": {
+      "cardMode": "column"
+    },
+    "RadioGroupItem": {
+      "cardMode": "column"
+    },
+    "SelectContent": {
+      "cardMode": "single",
+      "primaryStory": "OpenFlatList"
+    },
+    "SelectGroup": {
+      "cardMode": "single",
+      "primaryStory": "SingleGroup"
+    },
+    "SelectItem": {
+      "cardMode": "single",
+      "primaryStory": "DisabledItem"
+    },
+    "SelectLabel": {
+      "cardMode": "single",
+      "primaryStory": "MultipleSectionLabels"
+    },
+    "SelectScrollDownButton": {
+      "cardMode": "single",
+      "primaryStory": "CompactList"
+    },
+    "SelectScrollUpButton": {
+      "cardMode": "single",
+      "primaryStory": "LastOptionSelected"
+    },
+    "SelectSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BeforeTrailingAction"
+    },
+    "SelectTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "Switch": {
+      "cardMode": "column"
+    },
+    "Textarea": {
+      "cardMode": "column"
+    },
+    "Accordion": {
+      "cardMode": "column"
+    },
+    "AccordionContent": {
+      "cardMode": "column"
+    },
+    "AccordionItem": {
+      "cardMode": "column"
+    },
+    "AccordionTrigger": {
+      "cardMode": "column"
+    },
+    "Carousel": {
+      "cardMode": "column"
+    },
+    "CarouselContent": {
+      "cardMode": "column"
+    },
+    "CarouselItem": {
+      "cardMode": "column"
+    },
+    "CarouselNext": {
+      "cardMode": "column"
+    },
+    "CarouselPrevious": {
+      "cardMode": "column"
+    },
+    "Collapsible": {
+      "cardMode": "column"
+    },
+    "CollapsibleContent": {
+      "cardMode": "column"
+    },
+    "CollapsibleTrigger": {
+      "cardMode": "column"
+    },
+    "ResizableHandle": {
+      "cardMode": "column"
+    },
+    "ResizablePanel": {
+      "cardMode": "column"
+    },
+    "ResizablePanelGroup": {
+      "cardMode": "column"
+    },
+    "ScrollArea": {
+      "cardMode": "column"
+    },
+    "ScrollBar": {
+      "cardMode": "column"
+    },
+    "NavigationMenu": {
+      "cardMode": "column"
+    },
+    "NavigationMenuContent": {
+      "cardMode": "column"
+    },
+    "NavigationMenuIndicator": {
+      "cardMode": "column"
+    },
+    "NavigationMenuItem": {
+      "cardMode": "column"
+    },
+    "NavigationMenuLink": {
+      "cardMode": "column"
+    },
+    "NavigationMenuList": {
+      "cardMode": "column"
+    },
+    "NavigationMenuTrigger": {
+      "cardMode": "column"
+    },
+    "NavigationMenuViewport": {
+      "cardMode": "column"
+    },
+    "Sidebar": {
+      "cardMode": "column"
+    },
+    "SidebarContent": {
+      "cardMode": "column"
+    },
+    "SidebarFooter": {
+      "cardMode": "column"
+    },
+    "SidebarGroup": {
+      "cardMode": "column"
+    },
+    "SidebarGroupAction": {
+      "cardMode": "column"
+    },
+    "SidebarGroupContent": {
+      "cardMode": "column"
+    },
+    "SidebarGroupLabel": {
+      "cardMode": "column"
+    },
+    "SidebarHeader": {
+      "cardMode": "column"
+    },
+    "SidebarInput": {
+      "cardMode": "column"
+    },
+    "SidebarInset": {
+      "cardMode": "column"
+    },
+    "SidebarMenu": {
+      "cardMode": "column"
+    },
+    "SidebarMenuAction": {
+      "cardMode": "column"
+    },
+    "SidebarMenuBadge": {
+      "cardMode": "column"
+    },
+    "SidebarMenuButton": {
+      "cardMode": "column"
+    },
+    "SidebarMenuItem": {
+      "cardMode": "column"
+    },
+    "SidebarMenuSkeleton": {
+      "cardMode": "column"
+    },
+    "SidebarMenuSub": {
+      "cardMode": "column"
+    },
+    "SidebarMenuSubButton": {
+      "cardMode": "column"
+    },
+    "SidebarMenuSubItem": {
+      "cardMode": "column"
+    },
+    "SidebarProvider": {
+      "cardMode": "column"
+    },
+    "SidebarRail": {
+      "cardMode": "column"
+    },
+    "SidebarSeparator": {
+      "cardMode": "column"
+    },
+    "SidebarTrigger": {
+      "cardMode": "column"
+    },
+    "Tabs": {
+      "cardMode": "column"
+    },
+    "TabsContent": {
+      "cardMode": "column"
+    },
+    "TabsList": {
+      "cardMode": "column"
+    },
+    "TabsTrigger": {
+      "cardMode": "column"
+    },
+    "AlertDialog": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "AlertDialogAction": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "AlertDialogCancel": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "AlertDialogContent": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "AlertDialogDescription": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "AlertDialogFooter": {
+      "cardMode": "single",
+      "primaryStory": "CancelAndAction"
+    },
+    "AlertDialogHeader": {
+      "cardMode": "single",
+      "primaryStory": "TitleAndDescription"
+    },
+    "AlertDialogOverlay": {
+      "cardMode": "single",
+      "primaryStory": "BehindContent"
+    },
+    "AlertDialogPortal": {
+      "cardMode": "single",
+      "primaryStory": "PortaledContent"
+    },
+    "AlertDialogTitle": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "Command": {
+      "cardMode": "column"
+    },
+    "CommandDialog": {
+      "cardMode": "single",
+      "primaryStory": "OpenPalette"
+    },
+    "CommandEmpty": {
+      "cardMode": "column"
+    },
+    "CommandGroup": {
+      "cardMode": "column"
+    },
+    "CommandInput": {
+      "cardMode": "column"
+    },
+    "CommandItem": {
+      "cardMode": "column"
+    },
+    "CommandList": {
+      "cardMode": "column"
+    },
+    "CommandSeparator": {
+      "cardMode": "column"
+    },
+    "CommandShortcut": {
+      "cardMode": "column"
+    },
+    "ContextMenu": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "ContextMenuCheckboxItem": {
+      "cardMode": "single",
+      "primaryStory": "Checked"
+    },
+    "ContextMenuContent": {
+      "cardMode": "single",
+      "primaryStory": "Compact"
+    },
+    "ContextMenuGroup": {
+      "cardMode": "single",
+      "primaryStory": "SingleGroup"
+    },
+    "ContextMenuItem": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "ContextMenuLabel": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "ContextMenuPortal": {
+      "cardMode": "single",
+      "primaryStory": "PortalledSubmenu"
+    },
+    "ContextMenuRadioGroup": {
+      "cardMode": "single",
+      "primaryStory": "LogLevel"
+    },
+    "ContextMenuRadioItem": {
+      "cardMode": "single",
+      "primaryStory": "AlongsideItems"
+    },
+    "ContextMenuSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BetweenGroups"
+    },
+    "ContextMenuShortcut": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "ContextMenuSub": {
+      "cardMode": "single",
+      "primaryStory": "OpenSubmenu"
+    },
+    "ContextMenuSubContent": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "ContextMenuSubTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "ContextMenuTrigger": {
+      "cardMode": "single",
+      "primaryStory": "OnCanvas"
+    },
+    "Dialog": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "DialogClose": {
+      "cardMode": "single",
+      "primaryStory": "AsSecondaryButton"
+    },
+    "DialogContent": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DialogDescription": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DialogFooter": {
+      "cardMode": "single",
+      "primaryStory": "CancelAndConfirm"
+    },
+    "DialogHeader": {
+      "cardMode": "single",
+      "primaryStory": "TitleAndDescription"
+    },
+    "DialogOverlay": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DialogPortal": {
+      "cardMode": "single",
+      "primaryStory": "ExplicitPortal"
+    },
+    "DialogTitle": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DialogTrigger": {
+      "cardMode": "single",
+      "primaryStory": "AsButton"
+    },
+    "Drawer": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "DrawerClose": {
+      "cardMode": "single",
+      "primaryStory": "CloseInFooter"
+    },
+    "DrawerContent": {
+      "cardMode": "single",
+      "primaryStory": "Bottom"
+    },
+    "DrawerDescription": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DrawerFooter": {
+      "cardMode": "single",
+      "primaryStory": "StackedActions"
+    },
+    "DrawerHeader": {
+      "cardMode": "single",
+      "primaryStory": "TitleAndDescription"
+    },
+    "DrawerOverlay": {
+      "cardMode": "single",
+      "primaryStory": "OverlayBehindDrawer"
+    },
+    "DrawerPortal": {
+      "cardMode": "single",
+      "primaryStory": "PortalledContent"
+    },
+    "DrawerTitle": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DrawerTrigger": {
+      "cardMode": "single",
+      "primaryStory": "ButtonTrigger"
+    },
+    "DropdownMenu": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DropdownMenuCheckboxItem": {
+      "cardMode": "single",
+      "primaryStory": "Toggles"
+    },
+    "DropdownMenuContent": {
+      "cardMode": "single",
+      "primaryStory": "AlignStart"
+    },
+    "DropdownMenuGroup": {
+      "cardMode": "single",
+      "primaryStory": "TwoGroups"
+    },
+    "DropdownMenuItem": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DropdownMenuLabel": {
+      "cardMode": "single",
+      "primaryStory": "AccountHeader"
+    },
+    "DropdownMenuPortal": {
+      "cardMode": "single",
+      "primaryStory": "PortalledSubmenu"
+    },
+    "DropdownMenuRadioGroup": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DropdownMenuRadioItem": {
+      "cardMode": "single",
+      "primaryStory": "LogLevel"
+    },
+    "DropdownMenuSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BetweenGroups"
+    },
+    "DropdownMenuShortcut": {
+      "cardMode": "single",
+      "primaryStory": "WithShortcuts"
+    },
+    "DropdownMenuSub": {
+      "cardMode": "single",
+      "primaryStory": "OpenSubmenu"
+    },
+    "DropdownMenuSubContent": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "DropdownMenuSubTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Collapsed"
+    },
+    "DropdownMenuTrigger": {
+      "cardMode": "single",
+      "primaryStory": "ButtonTrigger"
+    },
+    "HoverCard": {
+      "cardMode": "single",
+      "primaryStory": "TeammateProfile"
+    },
+    "HoverCardContent": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "HoverCardTrigger": {
+      "cardMode": "single",
+      "primaryStory": "ButtonTrigger"
+    },
+    "Menubar": {
+      "cardMode": "single",
+      "primaryStory": "Closed"
+    },
+    "MenubarCheckboxItem": {
+      "cardMode": "single",
+      "primaryStory": "CheckedAndUnchecked"
+    },
+    "MenubarContent": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarGroup": {
+      "cardMode": "single",
+      "primaryStory": "SingleGroup"
+    },
+    "MenubarItem": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarLabel": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarMenu": {
+      "cardMode": "single",
+      "primaryStory": "OpenMenu"
+    },
+    "MenubarPortal": {
+      "cardMode": "single",
+      "primaryStory": "PortalledMenuContent"
+    },
+    "MenubarRadioGroup": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarRadioItem": {
+      "cardMode": "single",
+      "primaryStory": "Disabled"
+    },
+    "MenubarSeparator": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarShortcut": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarSub": {
+      "cardMode": "single",
+      "primaryStory": "OpenSubmenu"
+    },
+    "MenubarSubContent": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarSubTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MenubarTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "Popover": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "PopoverAnchor": {
+      "cardMode": "single",
+      "primaryStory": "AnchoredToField"
+    },
+    "PopoverContent": {
+      "cardMode": "single",
+      "primaryStory": "AlignedStart"
+    },
+    "PopoverTrigger": {
+      "cardMode": "single",
+      "primaryStory": "ButtonTrigger"
+    },
+    "Sheet": {
+      "cardMode": "single",
+      "primaryStory": "SideRight"
+    },
+    "SheetClose": {
+      "cardMode": "single",
+      "primaryStory": "AsFooterButton"
+    },
+    "SheetContent": {
+      "cardMode": "single",
+      "primaryStory": "DetailPanel"
+    },
+    "SheetDescription": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "SheetFooter": {
+      "cardMode": "single",
+      "primaryStory": "CancelAndConfirm"
+    },
+    "SheetHeader": {
+      "cardMode": "single",
+      "primaryStory": "TitleAndDescription"
+    },
+    "SheetOverlay": {
+      "cardMode": "single",
+      "primaryStory": "DimmingPageBehind"
+    },
+    "SheetPortal": {
+      "cardMode": "single",
+      "primaryStory": "EscapesClippedParent"
+    },
+    "SheetTitle": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "SheetTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Opened"
+    },
+    "Toaster": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "Tooltip": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "TooltipContent": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "TooltipProvider": {
+      "cardMode": "single",
+      "primaryStory": "WrappingOneTooltip"
+    },
+    "TooltipTrigger": {
+      "cardMode": "single",
+      "primaryStory": "ButtonTrigger"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}

@@ -20,6 +20,9 @@ interface WebviewElement extends HTMLElement {
   getWebContentsId: () => number
   executeJavaScript: (code: string) => Promise<unknown>
   capturePage: () => Promise<{ toPNG: () => Buffer; toDataURL: (quality?: number) => string }>
+  getZoomLevel: () => number
+  setZoomLevel: (level: number) => void
+  openDevTools: () => void
   addEventListener: HTMLElement['addEventListener']
   removeEventListener: HTMLElement['removeEventListener']
 }
@@ -29,6 +32,10 @@ export interface WebviewAreaHandle {
   goBack: () => void
   goForward: () => void
   reload: () => void
+  zoomIn: () => void
+  zoomOut: () => void
+  zoomReset: () => void
+  toggleDevTools: () => void
 }
 
 interface WebviewAreaProps {
@@ -77,6 +84,23 @@ export function WebviewArea({ onHandle }: WebviewAreaProps) {
       reload: () => {
         const wv = getActiveWebview()
         if (wv && activeTabId && readyRefs.current.has(activeTabId)) wv.reload()
+      },
+      // ponytail: global zoom level tracking, per-tab zoom if tabs diverge
+      zoomIn: () => {
+        const wv = getActiveWebview()
+        if (wv) wv.setZoomLevel(wv.getZoomLevel() + 0.5)
+      },
+      zoomOut: () => {
+        const wv = getActiveWebview()
+        if (wv) wv.setZoomLevel(wv.getZoomLevel() - 0.5)
+      },
+      zoomReset: () => {
+        const wv = getActiveWebview()
+        if (wv) wv.setZoomLevel(0)
+      },
+      toggleDevTools: () => {
+        const wv = getActiveWebview()
+        if (wv) wv.openDevTools()
       }
     })
   }, [activeTabId, getActiveWebview, onHandle, updateTab])

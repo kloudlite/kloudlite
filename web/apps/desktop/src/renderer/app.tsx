@@ -25,7 +25,7 @@ export function App() {
   const handleRef = useRef<WebviewAreaHandle | null>(null)
   const envHandleRef = useRef<DashboardWebviewHandle | null>(null)
   const wsHandleRef = useRef<DashboardWebviewHandle | null>(null)
-  const { addTab, closeTab, activeTabId, tabs } = useTabStore()
+  const { addTab, closeTab, activeTabId, tabs, reopenLastTab } = useTabStore()
   const { mode, selectedEnvHash, selectedEnvName, envActiveTab, showNewEnvDialog, setShowNewEnvDialog, selectedWsId, selectedWsName, wsActiveTab, showNewWsDialog, setShowNewWsDialog, clearSelectedEnv } = useModeStore()
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [sidebarVisible, setSidebarVisible] = useState(true)
@@ -168,6 +168,9 @@ export function App() {
           }
           break
         }
+        case 'reopen-tab':
+          if (currentMode === 'browse') reopenLastTab()
+          break
         case 'reload':
           if (currentMode === 'environments') envHandleRef.current?.reload()
           else if (currentMode === 'workspaces') wsHandleRef.current?.reload()
@@ -193,10 +196,24 @@ export function App() {
         case 'prev-tab':
           if (currentMode === 'browse') selectRelativeTab(-1)
           break
+        case 'zoom-in':
+          if (currentMode === 'browse') handleRef.current?.zoomIn()
+          break
+        case 'zoom-out':
+          if (currentMode === 'browse') handleRef.current?.zoomOut()
+          break
+        case 'zoom-reset':
+          if (currentMode === 'browse') handleRef.current?.zoomReset()
+          break
+        case 'toggle-devtools':
+          if (currentMode === 'browse') handleRef.current?.toggleDevTools()
+          break
       }
     })
     return offShortcut
   }, [])
+
+
 
   useEffect(() => {
     function isEditable(target: EventTarget | null) {
@@ -390,8 +407,8 @@ export function App() {
         )}
 
         <div className="relative flex flex-1 flex-col overflow-hidden rounded-[10px] bg-background shadow-[0_0_20px_rgba(0,0,0,0.08),0_0_4px_rgba(0,0,0,0.04)]">
-          {/* Drag region — small area at top to move the window */}
-          <div className="drag-region absolute inset-x-0 top-0 z-20 h-[32px]" />
+          {/* Keep native dragging inside the empty top gutter so it never covers page controls. */}
+          <div className="drag-region absolute inset-x-0 top-0 z-20 h-2.5" />
           {/* Loading indicator — browse mode only */}
           {showLoading && (
             <div

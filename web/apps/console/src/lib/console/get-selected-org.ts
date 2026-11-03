@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { getUserOrganizations, createOrganization } from '@/lib/console/storage'
+import { getUserOrganizations, createDefaultOrganization } from '@/lib/console/storage'
 import type { Organization } from '@/lib/console/storage'
 
 const COOKIE_NAME = 'selected_org_id'
@@ -22,16 +22,7 @@ export async function getSelectedOrg(
   // Auto-create org for users with none (pre-migration users)
   if (orgs.length === 0 && userEmail) {
     try {
-      const baseSlug = (userName || userEmail.split('@')[0])
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-        .slice(0, 50)
-      let slug = /^[a-z]/.test(baseSlug) ? baseSlug : `org-${baseSlug}`
-      if (slug.length < 3) slug = `${slug}-org`
-
-      await createOrganization(userId, `${userName || 'My'}'s Organization`, slug)
+      await createDefaultOrganization(userId, userName, userEmail)
       orgs = await getUserOrganizations(userId)
     } catch {
       // Best-effort

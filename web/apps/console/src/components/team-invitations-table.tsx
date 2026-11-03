@@ -15,6 +15,7 @@ import {
 } from '@kloudlite/ui'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
+import { ListSearch, ListPagination, usePagination } from '@/components/list-controls'
 import type { OrgInvitation } from '@/lib/console/storage'
 
 interface TeamInvitationsTableProps {
@@ -30,6 +31,20 @@ export function TeamInvitationsTable({
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const [invitationToCancel, setInvitationToCancel] = useState<{ id: string; email: string } | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const query = searchQuery.trim().toLowerCase()
+  const filteredInvitations = query
+    ? invitations.filter(
+        (inv) =>
+          inv.email.toLowerCase().includes(query) ||
+          inv.inviterName?.toLowerCase().includes(query),
+      )
+    : invitations
+  const { page, pageCount, pagedItems, setPage, totalItems, pageSize } = usePagination(
+    filteredInvitations,
+    10,
+  )
 
   const handleCancel = async () => {
     if (!invitationToCancel) return
@@ -62,6 +77,13 @@ export function TeamInvitationsTable({
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {announcement}
       </p>
+      <div className="flex items-center justify-between px-6 py-4">
+        <ListSearch
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search invitations..."
+        />
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead>
@@ -84,7 +106,7 @@ export function TeamInvitationsTable({
             </tr>
           </thead>
           <tbody className="bg-background divide-y divide-foreground/5">
-            {invitations.map((invitation) => (
+            {pagedItems.map((invitation) => (
               <tr key={invitation.id} className="group hover:bg-muted/20 transition-colors">
                 <td className="px-6 py-3.5 text-sm text-foreground">
                   {invitation.email}
@@ -115,6 +137,13 @@ export function TeamInvitationsTable({
           </tbody>
         </table>
       </div>
+      <ListPagination
+        page={page}
+        pageCount={pageCount}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       {/* Cancel Invitation Confirmation Dialog */}
       <AlertDialog open={!!invitationToCancel} onOpenChange={(open) => !open && setInvitationToCancel(null)}>

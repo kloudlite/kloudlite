@@ -1,22 +1,13 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  Input,
-} from '@kloudlite/ui'
-import { MoreHorizontal, Settings, Search, Loader2, Trash2, AlertTriangle } from 'lucide-react'
+import { Button } from '@kloudlite/ui'
+import { MoreHorizontal, Settings, Search, Loader2 } from 'lucide-react'
+import { ListSearch, ListPagination, usePagination } from '@/components/list-controls'
 import { NewInstallationButton } from '@/components/new-installation-button'
+import { DeleteInstallationButton } from '@/components/delete-installation-button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,8 +16,6 @@ import {
 } from '@kloudlite/ui'
 import { Tabs, TabsList, TabsTrigger } from '@kloudlite/ui'
 import { cn } from '@kloudlite/lib'
-import { toast } from 'sonner'
-import { getErrorMessage } from '@/lib/errors'
 import { getInstallationStatus, hasActiveJob } from '@/lib/installation-status'
 import type { Installation, BillingAccount } from '@/lib/console/storage'
 
@@ -82,12 +71,6 @@ export function InstallationsList({
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'installed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<Installation | null>(null)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-
-  const installationsRef = useRef(installations)
-  installationsRef.current = installations
 
   // Check if installation needs polling (active job or pending uninstall deletion)
   const needsPolling = useCallback((installation: Installation) => {
@@ -112,54 +95,13 @@ export function InstallationsList({
     [router],
   )
 
-  const handleDeleteInstallation = useCallback(
-    async (installation: Installation) => {
-      setDeleting(true)
-      const isManaged = installation.cloudProvider === 'oci' && !!installation.secretKey
-
-      try {
-        if (isManaged) {
-          const response = await fetch(`/api/installations/${installation.id}/trigger-managed-uninstall`, {
-            method: 'POST',
-          })
-          if (!response.ok) {
-            const data = await response.json()
-            throw new Error(data.error || 'Failed to trigger uninstall')
-          }
-          toast.success('Uninstall started — infrastructure is being torn down')
-          setDeleteOpen(false)
-          setDeleteTarget(null)
-          router.refresh()
-          return
-        }
-
-        const response = await fetch(`/api/installations/${installation.id}/delete`, {
-          method: 'DELETE',
-        })
-        if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.error || 'Failed to delete installation')
-        }
-        toast.success('Installation deleted successfully')
-        setDeleteOpen(false)
-        setDeleteTarget(null)
-        router.refresh()
-      } catch (err) {
-        toast.error(getErrorMessage(err, 'Failed to delete installation'))
-      } finally {
-        setDeleting(false)
-      }
-    },
-    [router],
-  )
-
   // Auto-refresh when any installation has an active job or pending uninstall
   const hasAnyActiveJob = installations.some(needsPolling)
   useEffect(() => {
     if (!hasAnyActiveJob) return
     const interval = setInterval(async () => {
       // Sync job status from ACA API → DB for active installations (parallel)
-      const pollingInstallations = installationsRef.current.filter(needsPolling)
+      const pollingInstallations = installations.filter(needsPolling)
       await Promise.allSettled(
         pollingInstallations.map((inst) =>
           fetch(`/api/installations/${inst.id}/job-status`)
@@ -168,7 +110,7 @@ export function InstallationsList({
       router.refresh()
     }, 5000)
     return () => clearInterval(interval)
-  }, [hasAnyActiveJob, router, needsPolling])
+  }, [hasAnyActiveJob, installations, router, needsPolling])
 
   // Apply status filter
   let filteredInstallations = installations
@@ -196,6 +138,11 @@ export function InstallationsList({
     })
   }
 
+  const { page, pageCount, pagedItems, setPage, totalItems, pageSize } = usePagination(
+    filteredInstallations,
+    20,
+  )
+
   const liveRegionMessage = useMemo(() => {
     const count = filteredInstallations.length
     const label = count === 1 ? 'installation' : 'installations'
@@ -214,16 +161,11 @@ export function InstallationsList({
       <div className="mb-6 flex items-center justify-between pb-6">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">Installations</h1>
         <div className="flex items-center gap-3">
-          <div className="relative w-64">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              type="text"
-              placeholder="Search installations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+          <ListSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search installations..."
+          />
           <NewInstallationButton />
         </div>
       </div>
@@ -264,7 +206,7 @@ export function InstallationsList({
                 </tr>
               </thead>
               <tbody className="bg-background divide-foreground/5 divide-y">
-                {filteredInstallations.map((installation) => {
+                {pagedItems.map((installation) => {
                   const { status, statusColor, isPending, isActiveJob, stepInfo } =
                     getInstallationStatus(installation)
                   const displayName =
@@ -366,16 +308,13 @@ export function InstallationsList({
                                     Settings
                                   </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem
-                                  onSelect={() => {
-                                    setDeleteTarget(installation)
-                                    setDeleteOpen(true)
-                                  }}
-                                  className="text-red-600 focus:text-red-700 dark:text-red-400 dark:focus:text-red-300"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
+                                <DeleteInstallationButton
+                                  installationId={installation.id}
+                                  installationName={installation.name}
+                                  hasSecretKey={!!installation.secretKey}
+                                  cloudProvider={installation.cloudProvider}
+                                  variant="menu"
+                                />
                               </DropdownMenuContent>
                             </DropdownMenu>
                           )}
@@ -387,6 +326,13 @@ export function InstallationsList({
               </tbody>
             </table>
           </div>
+          <ListPagination
+            page={page}
+            pageCount={pageCount}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
         </div>
       ) : (
         <div className="border-foreground/10 bg-muted/10 rounded-lg border py-12 text-center">
@@ -413,61 +359,6 @@ export function InstallationsList({
           </div>
         </div>
       )}
-      <AlertDialog
-        open={deleteOpen}
-        onOpenChange={(open) => {
-          setDeleteOpen(open)
-          if (!open && !deleting) {
-            setDeleteTarget(null)
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="text-destructive h-5 w-5" />
-              Delete Installation
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>
-                  Are you sure you want to delete <strong>{deleteTarget?.name || 'this installation'}</strong>?
-                  This action cannot be undone.
-                </p>
-                <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">
-                  <p className="text-sm text-red-900 dark:text-red-200">
-                    <strong>Warning:</strong> {deleteTarget?.cloudProvider === 'oci' && deleteTarget?.secretKey
-                      ? 'This will tear down all managed infrastructure (instance, load balancer, DNS, storage) and permanently delete the installation.'
-                      : 'This will permanently delete the installation. This action cannot be undone.'}
-                  </p>
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={deleting || !deleteTarget}
-              onClick={(e) => {
-                e.preventDefault()
-                if (deleteTarget) {
-                  handleDeleteInstallation(deleteTarget)
-                }
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

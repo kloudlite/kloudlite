@@ -97,10 +97,61 @@ const AZURE_LOCATIONS = [
   { value: 'canadaeast', label: 'Canada East (Quebec)' },
 ]
 
-const getCloudProviderCommands = (installationKey: string, awsRegion: string, gcpRegion: string, azureLocation: string) => {
-  const awsRegionFlag = awsRegion ? ` --region ${awsRegion}` : ''
-  const gcpRegionFlag = gcpRegion ? ` --region ${gcpRegion}` : ''
-  const azureLocationFlag = azureLocation ? ` --location ${azureLocation}` : ''
+const PROVIDER_REGIONS: Record<string, { label: string; options: readonly { value: string; label: string }[] }> = {
+  aws: { label: 'Select AWS Region:', options: AWS_REGIONS },
+  gcp: { label: 'Select GCP Region:', options: GCP_REGIONS },
+  azure: { label: 'Select Azure Location:', options: AZURE_LOCATIONS },
+}
+
+function RegionSelector({
+  provider,
+  value,
+  open,
+  onOpenChange,
+  onSelect,
+}: {
+  provider: string
+  value: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSelect: (value: string) => void
+}) {
+  const { label, options } = PROVIDER_REGIONS[provider]
+  return (
+    <div>
+      <p className="text-foreground mb-3 text-sm font-medium">{label}</p>
+      <Popover open={open} onOpenChange={onOpenChange}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full md:w-80 justify-between rounded-sm">
+            {options.find((option) => option.value === value)?.label || 'Select a region'}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full md:w-80 p-0">
+          <Command>
+            <CommandInput placeholder="Search regions..." />
+            <CommandList>
+              <CommandEmpty>No region found.</CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem key={option.value || 'default'} value={option.label} onSelect={() => onSelect(option.value)}>
+                    <Check className={cn('mr-2 h-4 w-4', value === option.value ? 'opacity-100' : 'opacity-0')} />
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+
+const getCloudProviderCommands = (installationKey: string, regions: Record<string, string>) => {
+  const awsRegionFlag = regions.aws ? ` --region ${regions.aws}` : ''
+  const gcpRegionFlag = regions.gcp ? ` --region ${regions.gcp}` : ''
+  const azureLocationFlag = regions.azure ? ` --location ${regions.azure}` : ''
   return {
     aws: {
       name: 'AWS',
@@ -140,12 +191,12 @@ interface InstallCommandsProps {
 export function InstallCommands({ installationKey, installationId: initialInstallationId }: InstallCommandsProps) {
   const router = useRouter()
   const [selectedProvider, setSelectedProvider] = useState('aws')
-  const [awsRegion, setAwsRegion] = useState('')
-  const [gcpRegion, setGcpRegion] = useState('us-central1')
-  const [azureLocation, setAzureLocation] = useState('eastus')
-  const [awsOpen, setAwsOpen] = useState(false)
-  const [gcpOpen, setGcpOpen] = useState(false)
-  const [azureOpen, setAzureOpen] = useState(false)
+  const [regions, setRegions] = useState<Record<string, string>>({
+    aws: '',
+    gcp: 'us-central1',
+    azure: 'eastus',
+  })
+  const [regionOpen, setRegionOpen] = useState(false)
   const [verificationStatus, setVerificationStatus] = useState<'waiting' | 'verified' | 'dns_pending' | 'complete' | 'error'>(
     'waiting',
   )
@@ -226,7 +277,7 @@ export function InstallCommands({ installationKey, installationId: initialInstal
     toast.success('Command copied to clipboard')
   }
 
-  const CLOUD_PROVIDERS = getCloudProviderCommands(installationKey, awsRegion, gcpRegion, azureLocation)
+  const CLOUD_PROVIDERS = getCloudProviderCommands(installationKey, regions)
 
   return (
     <div className="lg:flex lg:gap-12">
@@ -310,7 +361,10 @@ export function InstallCommands({ installationKey, installationId: initialInstal
             </p>
           </div>
           <div className="p-6 space-y-6">
-          <Tabs value={selectedProvider} onValueChange={setSelectedProvider}>
+          <Tabs value={selectedProvider} onValueChange={(provider) => {
+            setSelectedProvider(provider)
+            setRegionOpen(false)
+          }}>
             <TabsList className="inline-flex gap-1 rounded-lg bg-muted/50 p-1">
               <TabsTrigger value="aws" className="rounded-md px-3.5 py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 AWS
@@ -326,155 +380,16 @@ export function InstallCommands({ installationKey, installationId: initialInstal
             {Object.entries(CLOUD_PROVIDERS).map(([key, config]) => (
               <TabsContent key={key} value={key} className="mt-6 space-y-6">
                 <div className="space-y-5">
-                  {/* AWS Region Selector */}
-                  {key === 'aws' && (
-                    <div>
-                      <p className="text-foreground mb-3 text-sm font-medium">Select AWS Region:</p>
-                      <Popover open={awsOpen} onOpenChange={setAwsOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={awsOpen}
-                            className="w-full md:w-80 justify-between rounded-sm"
-                          >
-                            {awsRegion
-                              ? AWS_REGIONS.find((region) => region.value === awsRegion)?.label
-                              : "Use AWS CLI default region"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full md:w-80 p-0">
-                          <Command>
-                            <CommandInput placeholder="Search regions..." />
-                            <CommandList>
-                              <CommandEmpty>No region found.</CommandEmpty>
-                              <CommandGroup>
-                                {AWS_REGIONS.map((region) => (
-                                  <CommandItem
-                                    key={region.value || 'default'}
-                                    value={region.label}
-                                    onSelect={() => {
-                                      setAwsRegion(region.value || '')
-                                      setAwsOpen(false)
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        awsRegion === region.value ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    {region.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  )}
-
-                  {/* GCP Region Selector */}
-                  {key === 'gcp' && (
-                    <div>
-                      <p className="text-foreground mb-3 text-sm font-medium">Select GCP Region:</p>
-                      <Popover open={gcpOpen} onOpenChange={setGcpOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={gcpOpen}
-                            className="w-full md:w-80 justify-between rounded-sm"
-                          >
-                            {gcpRegion
-                              ? GCP_REGIONS.find((region) => region.value === gcpRegion)?.label
-                              : "Select a region"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full md:w-80 p-0">
-                          <Command>
-                            <CommandInput placeholder="Search regions..." />
-                            <CommandList>
-                              <CommandEmpty>No region found.</CommandEmpty>
-                              <CommandGroup>
-                                {GCP_REGIONS.map((region) => (
-                                  <CommandItem
-                                    key={region.value}
-                                    value={region.label}
-                                    onSelect={() => {
-                                      setGcpRegion(region.value)
-                                      setGcpOpen(false)
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        gcpRegion === region.value ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    {region.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  )}
-
-                  {/* Azure Location Selector */}
-                  {key === 'azure' && (
-                    <div>
-                      <p className="text-foreground mb-3 text-sm font-medium">Select Azure Location:</p>
-                      <Popover open={azureOpen} onOpenChange={setAzureOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={azureOpen}
-                            className="w-full md:w-80 justify-between rounded-sm"
-                          >
-                            {azureLocation
-                              ? AZURE_LOCATIONS.find((location) => location.value === azureLocation)?.label
-                              : "Select a location"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full md:w-80 p-0">
-                          <Command>
-                            <CommandInput placeholder="Search locations..." />
-                            <CommandList>
-                              <CommandEmpty>No location found.</CommandEmpty>
-                              <CommandGroup>
-                                {AZURE_LOCATIONS.map((location) => (
-                                  <CommandItem
-                                    key={location.value}
-                                    value={location.label}
-                                    onSelect={() => {
-                                      setAzureLocation(location.value)
-                                      setAzureOpen(false)
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        azureLocation === location.value ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    {location.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  )}
+                  <RegionSelector
+                    provider={key}
+                    value={regions[key]}
+                    open={regionOpen && selectedProvider === key}
+                    onOpenChange={setRegionOpen}
+                    onSelect={(value) => {
+                      setRegions((current) => ({ ...current, [key]: value }))
+                      setRegionOpen(false)
+                    }}
+                  />
 
                   <div>
                     <p className="text-foreground mb-2 text-sm font-medium">Prerequisites:</p>
